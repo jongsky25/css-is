@@ -92,3 +92,104 @@ def can_work(conn, user, doc):
 
 def can_release(conn, user, doc):
     return officer(conn, user, doc) or assigned(conn, user, doc)
+
+
+class RegistryScope:
+    """Current authority compiled once for a read snapshot, never cached across requests.
+
+    SQL versions below preserve the existing detail predicates, including strict
+    explicit access to restricted records and the linked-work visibility check.
+    Directory/authority policy continues to come from the existing seat helpers.
+    """
+
+    def __init__(self, conn, user):
+        self.user = actor(conn, user)
+        self.uid = self.user['id']
+        current_seats = seats(conn, self.user)
+        self.is_director = (self.uid in st._org_accounts_at_rank(conn, 3)
+                            or any(s['level'] == 'bureau' for s in current_seats))
+        paths = dict(conn.execute('SELECT id,path FROM org_unit'))
+        grants = rows(conn, '''SELECT role,unit_id FROM document_role_grant
+            WHERE user_id=? AND revoked_at IS NULL''', (self.uid,))
+
+        def covered(parents):
+            return sorted(child for child, path in paths.items() if any(
+                parent in paths and (path == paths[parent] or path.startswith(paths[parent] + '/'))
+                for parent in parents if parent is not None))
+
+        records = [g['unit_id'] for g in grants if g['role'] == 'records']
+        workflow = [g['unit_id'] for g in grants if g['role'] == 'workflow_admin']
+        self.officer_all = self.is_director or None in records
+        self.workflow_all = None in workflow
+        self.params = {'registry_actor': self.uid,
+                       'registry_officer_units': json.dumps(covered(records + [s['id'] for s in current_seats])),
+                       'registry_workflow_units': json.dumps(covered(workflow))}
+
+    def officer_sql(self, alias, *, concerned=True):
+        if self.officer_all:
+            return '1'
+        own = f'{alias}.unit_id IN (SELECT value FROM json_each(:registry_officer_units))'
+        if not concerned:
+            return f'COALESCE(({own}),0)'
+        # The detail predicate only treats a dictionary's unit_ids as concerned
+        # units. JSON strings must not turn into integer authority grants.
+        matching = f'''EXISTS (SELECT 1 FROM json_each(CASE
+            WHEN json_valid({alias}.matches_json) THEN CASE
+              WHEN json_type({alias}.matches_json,'$.unit_ids')='array'
+              THEN json_extract({alias}.matches_json,'$.unit_ids') ELSE '[]' END
+            ELSE '[]' END) unit
+            WHERE unit.type IN ('integer','real','true','false')
+              AND unit.value IN (SELECT value FROM json_each(:registry_officer_units)))'''
+        return f'COALESCE(({own} OR {matching}),0)'
+
+    def workflow_sql(self, alias):
+        return '1' if self.workflow_all else (
+            f'{alias}.unit_id IN (SELECT value FROM json_each(:registry_workflow_units))')
+
+    def _base_view_sql(self, alias):
+        explicit = f'''EXISTS (SELECT 1 FROM document_access access
+            WHERE access.document_id={alias}.id AND access.user_id=:registry_actor)'''
+        return f'''COALESCE((CASE WHEN {alias}.visibility='restricted' THEN {explicit}
+            ELSE ({explicit} OR {alias}.creator_id=:registry_actor
+              OR ({alias}.verification='verified' AND {alias}.visibility='bureau')
+              OR {self.officer_sql(alias)}) END),0)'''
+
+    def view_sql(self, alias):
+        # UNION (not UNION ALL) terminates a damaged merge cycle. A missing or
+        # cyclic canonical target has no permitted terminal record: fail closed.
+        return f'''({alias}.id IS NOT NULL AND CASE WHEN {alias}.canonical_id IS NULL
+            THEN {self._base_view_sql(alias)} ELSE EXISTS (
+              WITH RECURSIVE registry_chain AS (
+                SELECT * FROM document WHERE id={alias}.canonical_id
+                UNION SELECT parent.* FROM document parent JOIN registry_chain child
+                  ON parent.id=child.canonical_id)
+              SELECT 1 FROM registry_chain registry_root
+              WHERE registry_root.canonical_id IS NULL AND {self._base_view_sql('registry_root')}
+            ) END)'''
+
+    def assigned_sql(self, alias):
+        case_member = f'''(wc.creator_id=:registry_actor OR wc.lead_id=:registry_actor
+            OR {self.officer_sql('wc', concerned=False)} OR EXISTS (
+              SELECT 1 FROM work_task participant WHERE participant.case_id=wc.id
+                AND ((participant.owner_id=:registry_actor AND participant.status<>'cancelled')
+                     OR {self.officer_sql('participant', concerned=False)})))'''
+        case_visible = f'''({case_member} AND NOT EXISTS (
+            SELECT 1 FROM work_document link LEFT JOIN document linked_doc ON linked_doc.id=link.document_id
+            WHERE link.case_id=wc.id AND NOT {self.view_sql('linked_doc')}))'''
+        return f'''(EXISTS (SELECT 1 FROM work_legacy_document migration
+              JOIN work_case wc ON wc.id=migration.case_id
+              WHERE migration.document_id={alias}.id AND {case_visible}
+                AND ({alias}.lead_id=:registry_actor OR EXISTS (
+                  SELECT 1 FROM work_task owned WHERE owned.case_id=wc.id
+                    AND owned.owner_id=:registry_actor AND owned.status<>'cancelled')))
+            OR (NOT EXISTS (SELECT 1 FROM work_legacy_document migration WHERE migration.document_id={alias}.id)
+              AND EXISTS (SELECT 1 FROM document_assignment assignment
+                WHERE assignment.document_id={alias}.id AND assignment.user_id=:registry_actor
+                  AND assignment.status<>'superseded')))'''
+
+    def work_sql(self, alias):
+        return f'''({alias}.creator_id=:registry_actor OR {alias}.lead_id=:registry_actor
+                    OR {self.officer_sql(alias)} OR {self.assigned_sql(alias)})'''
+
+    def release_sql(self, alias):
+        return f'({self.officer_sql(alias)} OR {self.assigned_sql(alias)})'

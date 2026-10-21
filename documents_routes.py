@@ -6,7 +6,7 @@ import io
 import json
 import sqlite3
 import uuid
-from urllib.parse import quote
+from urllib.parse import quote, urlencode
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 import auth
@@ -128,14 +128,14 @@ def make_router(templates,get_conn):
         conn=get_conn()
         try:
             queue=request.query_params.get('queue','all')
-            more=False
-            if queue=='instruction':
-                docs=d.instruction_page(conn,request.state.user,int(request.query_params.get('before','0')))
-                more=len(docs)>30;docs=docs[:30]
-            else:
-                docs=d.list_visible(conn,request.state.user,request.query_params.get('q',''),queue)
-            return render(request,conn,'index',documents=docs,queue=queue,more=more,
-                          missing_dates=sum(not x['due_date'] for x in docs),metrics=d.metrics(conn,docs))
+            query=request.query_params.get('q','') if queue!='instruction' else ''
+            page=d.list_page(conn,request.state.user,query,queue,
+                             before=request.query_params.get('before','0'))
+            filters={'queue':queue,'q':query}
+            page['newest_url']='/documents?'+urlencode(filters)
+            page['older_url']=('/documents?'+urlencode({**filters,'before':page['next_before']})
+                               if page['more'] else '')
+            return render(request,conn,'index',queue=queue,**page)
         except (p.Denied,ValueError) as e:
             return HTMLResponse(str(e),status_code=403 if isinstance(e,p.Denied) else 400)
         finally:
@@ -163,7 +163,7 @@ def make_router(templates,get_conn):
     def export(request:Request):
         conn=get_conn()
         try:
-            docs=d.list_visible(conn,request.state.user,request.query_params.get('q',''),request.query_params.get('queue','all'))
+            docs=d.list_visible(conn,request.state.user,request.query_params.get('q',''),request.query_params.get('queue','all'),snippets=False)
             month=request.query_params.get('month','')
             if month:
                 docs=[x for x in docs if x['created_at'].startswith(month)]

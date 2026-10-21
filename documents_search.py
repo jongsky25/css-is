@@ -51,6 +51,19 @@ def _match_expression(query):
     return ' AND '.join('"' + term.replace('"', '""') + '"*' for term in terms)
 
 
+def file_access_sql(alias, actor):
+    """Current indexed-file access, shared by bulk and bounded registry search."""
+    return f'''({alias}.source_type<>'file' OR EXISTS (
+          SELECT 1 FROM document_file_index i
+          JOIN document_file_version v ON v.id=i.version_id
+          JOIN document d ON d.id=i.document_id
+          WHERE i.version_id={alias}.source_id AND i.document_id={alias}.document_id
+            AND i.fingerprint=v.fingerprint
+            AND (i.indexed_by={actor} OR EXISTS(SELECT 1 FROM document_access a
+                WHERE a.document_id=i.document_id AND a.user_id={actor}))
+            AND (v.id=d.current_version OR (d.current_version IS NULL AND v.role='reference'))))'''
+
+
 def matches(conn, query, user_id):
     """Return candidate source text; callers must check document access first."""
     expression = _match_expression(query)
@@ -58,17 +71,8 @@ def matches(conn, query, user_id):
         return {}
     found = {}
     for document_id, kind, body in conn.execute('''SELECT f.document_id,f.source_type,f.body
-        FROM document_search_fts f WHERE document_search_fts MATCH ? AND
-        (f.source_type<>'file' OR EXISTS (
-          SELECT 1 FROM document_file_index i
-          JOIN document_file_version v ON v.id=i.version_id
-          JOIN document d ON d.id=i.document_id
-          WHERE i.version_id=f.source_id AND i.document_id=f.document_id
-            AND i.fingerprint=v.fingerprint
-            AND (i.indexed_by=? OR EXISTS(SELECT 1 FROM document_access a
-                WHERE a.document_id=i.document_id AND a.user_id=?))
-            AND (v.id=d.current_version OR (d.current_version IS NULL AND v.role='reference'))))
-        ORDER BY rank''', (expression, user_id, user_id)):
+        FROM document_search_fts f WHERE document_search_fts MATCH ? AND ''' +
+        file_access_sql('f', '?') + ' ORDER BY rank', (expression, user_id, user_id)):
         found.setdefault(int(document_id), (kind, body or ''))
     return found
 

@@ -119,9 +119,9 @@ def bell_rows(conn,user_id,today=None):
               for item in items if item['can_act']]
     if cursor:
         result.append({'text':'Browse My work', 'url':'/work/mine', 'count':0})
-    reviews = d.list_visible(conn, user, queue='review')
+    reviews = d.count_visible(conn, user, queue='review')
     if reviews:
-        result.append({'text':f'{len(reviews)} document reviews awaiting your decision', 'url':'/approvals', 'count':len(reviews)})
+        result.append({'text':f'{reviews} document reviews awaiting your decision', 'url':'/approvals', 'count':reviews})
     mentions = rows(conn, '''SELECT x.document_id FROM document_directive x
         JOIN document_instruction_recipient r ON r.directive_id=x.id
         LEFT JOIN document_instruction_read seen ON seen.directive_id=x.id AND seen.user_id=r.user_id

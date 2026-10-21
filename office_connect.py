@@ -1029,7 +1029,7 @@ def _plural(n, word):
 def _task_approvals(conn, user):
     counts = st.pending_approval_counts(conn, user)
     import documents
-    document_reviews = len(documents.list_visible(conn, user, queue='review')) if documents.enabled(conn) else 0
+    document_reviews = documents.count_visible(conn, user, queue='review') if documents.enabled(conn) else 0
     n = counts["wellness"] + counts["awa"] + document_reviews
     if not n:
         return None

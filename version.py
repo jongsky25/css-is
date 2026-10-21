@@ -17,10 +17,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.65"
+APP_VERSION = "7.66"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "7.66",
+        "date": "October 21, 2026",
+        "summary": "Browse the document register in pages while keeping your search and queue totals.",
+        "changes": [
+            "Browse 30 documents at a time and keep your chosen queue and search when opening older records.",
+            "Counts and measures cover all matching records you can access, and CSV export still includes the complete matching register.",
+            "Access is checked again as you browse, and document searches and approval counts load less data as the register grows."
+        ]
+    },
     {
         "version": "7.65",
         "date": "October 21, 2026",

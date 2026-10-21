@@ -1,3 +1,10 @@
+## 7.66 — October 21, 2026
+
+- Page the document registry in groups of 30 after applying current permissions and queue/search filters; preserve full-register counts, measures and CSV exports.
+- Resolve authority once per read snapshot and use SQL filters for restricted records, organizational grants, merged receipts and legacy/migrated work assignments.
+- Bound search excerpts to page records, skip unused export/global-search snippets, use count queries for approval summaries, and add supporting indexes.
+- Add independent legacy-result comparisons, pagination/revocation/work-boundary checks and a reproducible synthetic query/row-loading benchmark.
+
 ## 7.65 — October 21, 2026
 
 - Add a personal results list to the Type 3 report for staff whose accounts are linked to a resource-person profile, with each activity's score and rating count.

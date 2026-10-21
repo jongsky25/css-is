@@ -190,6 +190,14 @@ def install(conn):
     if 'instruction_state' not in document_columns:
         conn.execute("ALTER TABLE document ADD COLUMN instruction_state TEXT NOT NULL DEFAULT 'not_required'")
     conn.execute('CREATE INDEX IF NOT EXISTS document_instruction_queue ON document(instruction_state,id)')
+    conn.executescript('''
+    CREATE INDEX IF NOT EXISTS document_registry_active ON document(archived_at,canonical_id,id);
+    CREATE INDEX IF NOT EXISTS document_registry_review ON document(reviewer_id,status,archived_at,id);
+    CREATE INDEX IF NOT EXISTS document_assignment_registry ON document_assignment(document_id,user_id,status);
+    CREATE INDEX IF NOT EXISTS document_directive_registry ON document_directive(document_id,id);
+    CREATE INDEX IF NOT EXISTS document_event_registry ON document_event(document_id,action,id);
+    CREATE INDEX IF NOT EXISTS document_grant_registry ON document_role_grant(user_id,role,revoked_at,unit_id);
+    ''')
     for key in ('documents.gmail_review_queue_enabled', 'documents.drive_intake_enabled', 'documents.enabled', 'documents.sending_enabled', 'documents.gmail_intake_enabled'):
         conn.execute('INSERT OR IGNORE INTO app_setting(key,value) VALUES (?,?)', (key, '0'))
     import documents_search
