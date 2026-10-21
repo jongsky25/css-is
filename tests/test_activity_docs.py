@@ -10,7 +10,9 @@ import pytest
 import activity_docs as ad
 import storage as st
 from test_calendar_entry_pages import conn, create, uid, FORM  # noqa: F401  (shared calendar fixtures)
-from test_travel_generate import relay  # noqa: F401
+import gdocs_relay as gr
+import ratelimit
+from test_travel_generate import Recorder, relay  # noqa: F401
 
 
 # -------------------------------------------------------------- the suggestion ---
@@ -368,7 +370,8 @@ def test_a_dpo_for_an_activity_another_office_runs_cites_their_invitation(viewer
                 invitation="  Per\nmemo dated   October 1, 2026, we are requested to  lecture on CALEP. ")
     assert r.status_code == 303 and "ok=" in r.headers["location"]
     assert ad.get_outside(conn, eid) == {"host": "Center for Health Development VII", "invited_as": "resource_person",
-                                         "invitation": "Per memo dated October 1, 2026, we are requested to lecture on CALEP."}
+                                         "invitation": "Per memo dated October 1, 2026, we are requested to lecture on CALEP.",
+                                         "file_url": "", "file_name": ""}
     draft(viewer, eid, "dpo")
     f = relay.calls[0]["fields"]
     assert f["background"].startswith("Center for Health Development VII invited ") and "to serve as resource person in CALEP Field Visit" in f["background"]
@@ -392,3 +395,111 @@ def test_an_outside_activity_needs_a_host_and_a_known_invitation_type(viewer, co
     assert "err=" in outside(viewer, eid, conducted_by="maybe").headers["location"]
     assert ad.get_outside(conn, eid) is None
     assert "Who conducts this activity?" in entry_page(viewer, eid)
+
+
+# ------------------------------------- the uploaded invitation (spot feedback #156) ---
+
+PDF = b"%PDF-1.4 invitation"
+UP = {"Content-Type": "application/octet-stream", "X-Filename": "CHD%20VII%20letter.pdf"}
+LETTER = {"readable": True, "host": "Center for Health Development VII", "invited_as": "resource_person",
+          "key_lines": "CHD VII invites BLHSD to lecture on CALEP on October 12, 2026 in Cebu City. Please send one speaker.",
+          "note": "Check the date."}
+
+
+class UploadRelay(Recorder):
+    def __init__(self):
+        super().__init__()
+        self.uploads = []
+        self.result = gr.RelayResult(True, {"id": "F1", "url": "https://drive.google.com/file/d/F1/view", "name": "n.pdf",
+                                            "folder_url": "https://drive.google.com/drive/folders/FOLDER"})
+
+    def upload_file(self, **kw):
+        self.uploads.append(kw)
+        return self.result
+
+
+@pytest.fixture()
+def up_relay(monkeypatch, conn):
+    r = UploadRelay()
+    monkeypatch.setenv(gr.ENV_URL, "https://script.google.com/macros/s/x/exec"); monkeypatch.setenv(gr.ENV_SECRET, "s" * 40)
+    monkeypatch.setattr(gr, "get_relay", lambda: r)
+    ratelimit._HITS.clear()
+    st.set_setting(conn, "travel.relay_version", "2"); conn.commit()
+    yield r
+    st.set_setting(conn, "travel.relay_version", "0"); conn.commit()
+
+
+def letter_up(viewer, eid, body=PDF, headers=None):
+    return viewer.post(f"/calendar/entries/{eid}/outside/upload", content=body, headers={**UP, **(headers or {})})
+
+
+def test_a_letter_is_kept_in_drive_read_once_and_only_offered_back(viewer, conn, up_relay, monkeypatch):
+    from test_travel_scan import ai_on
+    seen = ai_on(conn, monkeypatch, LETTER)
+    eid = create(viewer, kind="travel", title="CALEP Field Visit")
+    outside(viewer, eid, conducted_by="outside", host="CHD VII", invited_as="attendee")
+    r = letter_up(viewer, eid)
+    j = r.json()
+    assert r.status_code == 200 and j["ok"] and j["reading"]["host"] == "Center for Health Development VII"
+    assert j["reading"]["invited_as"] == "resource_person" and j["url"] == "https://drive.google.com/file/d/F1/view"
+    assert len(up_relay.uploads) == 1 and up_relay.uploads[0]["folder_key"] == f"act-{eid}" and up_relay.uploads[0]["data"] == PDF
+    # kept: the link and name only. The reading is a suggestion: nothing in the saved details changed.
+    got = ad.get_outside(conn, eid)
+    assert got["file_url"] == j["url"] and got["file_name"] == "CHD VII letter.pdf" and got["host"] == "CHD VII"
+    assert got["invitation"] == "" and got["invited_as"] == "attendee"
+    assert "Remove the link to the letter" in entry_page(viewer, eid)
+
+
+def test_a_letter_the_ai_cannot_read_is_still_kept(viewer, conn, up_relay, monkeypatch):
+    from test_travel_scan import ai_on
+    ai_on(conn, monkeypatch, {"readable": False, "host": "", "invited_as": "unknown", "key_lines": "", "note": ""})
+    eid = create(viewer, kind="travel", title="CALEP Field Visit")
+    outside(viewer, eid, conducted_by="outside", host="CHD VII", invited_as="attendee")
+    j = letter_up(viewer, eid).json()
+    assert j["ok"] and j["reading"]["readable"] is False and ad.get_outside(conn, eid)["file_url"]
+
+
+def test_with_ai_off_the_letter_is_kept_and_the_person_is_told(viewer, conn, up_relay, monkeypatch):
+    monkeypatch.delenv("CSS_GEMINI_API_KEY", raising=False)
+    eid = create(viewer, kind="travel", title="CALEP Field Visit")
+    outside(viewer, eid, conducted_by="outside", host="CHD VII", invited_as="attendee")
+    j = letter_up(viewer, eid).json()
+    assert j["ok"] and j["reading"] is None and j["ai_off"] is True
+
+
+def test_the_letter_needs_the_other_office_saved_first_and_a_real_file(viewer, conn, up_relay):
+    eid = create(viewer, kind="travel", title="CALEP Field Visit")
+    assert letter_up(viewer, eid).status_code == 400 and up_relay.uploads == []              # BLHSD: nothing to attach to
+    outside(viewer, eid, conducted_by="outside", host="CHD VII", invited_as="attendee")
+    assert letter_up(viewer, eid, body=b"not a pdf at all").status_code == 415
+    assert letter_up(viewer, eid, body=b"%PDF-" + b"0" * (6 * 1024 * 1024 + 1)).status_code == 413
+    assert up_relay.uploads == []
+
+
+def test_uploading_is_off_until_the_relay_has_the_upload_version(viewer, conn, up_relay):
+    st.set_setting(conn, "travel.relay_version", "0"); conn.commit()
+    eid = create(viewer, kind="travel", title="CALEP Field Visit")
+    outside(viewer, eid, conducted_by="outside", host="CHD VII", invited_as="attendee")
+    assert letter_up(viewer, eid).status_code == 503 and "data-invitation-upload" not in entry_page(viewer, eid)
+
+
+def test_removing_the_link_keeps_the_details_and_the_page_script_loads_only_when_useful(viewer, conn, up_relay, monkeypatch):
+    from test_travel_scan import ai_on
+    ai_on(conn, monkeypatch, LETTER)
+    eid = create(viewer, kind="travel", title="CALEP Field Visit")
+    assert "activity_invitation.js" not in entry_page(viewer, eid)                             # BLHSD: no script
+    outside(viewer, eid, conducted_by="outside", host="CHD VII", invited_as="attendee", invitation="Please send one speaker.")
+    assert "activity_invitation.js" in entry_page(viewer, eid)
+    letter_up(viewer, eid)
+    r = viewer.post(f"/calendar/entries/{eid}/outside/file/remove", content="", headers=FORM, follow_redirects=False)
+    assert r.status_code == 303 and "ok=" in r.headers["location"]
+    got = ad.get_outside(conn, eid)
+    assert got["file_url"] == "" and got["host"] == "CHD VII" and got["invitation"] == "Please send one speaker."
+
+
+def test_the_reading_is_cleaned_and_cannot_carry_a_surprise():
+    import activity_invitation as ai_inv
+    out = ai_inv.clean({"readable": True, "host": "  CHD\n VII ", "invited_as": "boss", "key_lines": "x" * 900, "note": "n"})
+    assert out["host"] == "CHD VII" and out["invited_as"] == "" and len(out["key_lines"]) == 600
+    assert ai_inv.clean("garbage") == {"readable": False, "host": "", "invited_as": "", "key_lines": "", "note": ""}
+    assert ai_inv.clean({"readable": True, "host": "", "key_lines": ""})["readable"] is False

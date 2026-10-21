@@ -667,6 +667,8 @@ def init_db(conn):
         host TEXT NOT NULL DEFAULT '',
         invited_as TEXT NOT NULL DEFAULT 'attendee',
         invitation TEXT NOT NULL DEFAULT '',
+        invitation_url TEXT NOT NULL DEFAULT '',      -- the uploaded letter in Drive (Spot Feedback #156); the file is never stored here
+        invitation_name TEXT NOT NULL DEFAULT '',
         updated_by TEXT, updated_at TEXT
     );
 
@@ -955,6 +957,10 @@ def _add_missing_columns(conn):
     ce_cols = {row[1] for row in conn.execute("PRAGMA table_info(calendar_entry)")}
     if ce_cols and "css_nudged_at" not in ce_cols:
         conn.execute("ALTER TABLE calendar_entry ADD COLUMN css_nudged_at TEXT")
+    co_cols = {row[1] for row in conn.execute("PRAGMA table_info(calendar_entry_outside)")}
+    for col in ("invitation_url", "invitation_name"):
+        if co_cols and col not in co_cols:
+            conn.execute(f"ALTER TABLE calendar_entry_outside ADD COLUMN {col} TEXT NOT NULL DEFAULT ''")
     fi_cols = {row[1] for row in conn.execute("PRAGMA table_info(form_instance)")}
     if "end_date" not in fi_cols:
         # End of a multi-day activity. NULL on pre-existing rows = single-day
