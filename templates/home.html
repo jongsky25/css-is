@@ -20,7 +20,7 @@
   .statbar { display:flex; align-items:center; gap:.55rem; margin-bottom:.7rem; }
   .statbar-lab { font-size:.78rem; font-weight:600; color:var(--soft); }
   .pbtns { display:inline-flex; gap:0; border:1px solid var(--line); border-radius:8px; overflow:hidden; }
-  .pbtns button { font-size:.76rem; font-weight:600; color:var(--soft); cursor:pointer;
+  .pbtns button { min-height:44px; font-size:.76rem; font-weight:600; color:var(--soft); cursor:pointer;
                   background:var(--surface); border:none; border-left:1px solid var(--line);
                   padding:.32rem .7rem; line-height:1.1; transition:background .1s,color .1s; }
   .pbtns button:first-child { border-left:none; }
@@ -63,7 +63,7 @@
                 border:1px solid var(--line); border-radius:999px; padding:.1rem .5rem; white-space:nowrap; }
   .feed-count[hidden] { display:none; }
   .feed-filters { display:inline-flex; border:1px solid var(--line); border-radius:7px; overflow:hidden; flex:0 0 auto; }
-  .feed-filters button { font-size:.72rem; font-weight:600; color:var(--soft); cursor:pointer; background:var(--surface);
+  .feed-filters button { min-height:44px; font-size:.72rem; font-weight:600; color:var(--soft); cursor:pointer; background:var(--surface);
                          border:none; border-left:1px solid var(--line); padding:.28rem .55rem; line-height:1.1; transition:background .1s,color .1s; }
   .feed-filters button:first-child { border-left:none; }
   .feed-filters button:hover { background:var(--accent-bg); color:var(--ink); }
@@ -631,7 +631,7 @@
   </div>
 </div>
 <script>
-(function () {
+document.addEventListener('DOMContentLoaded', function () {
   var uid   = {{ snapshot.user_id }};
   var today = "{{ today }}";
   var KEY   = "css_snapshot_" + uid;
@@ -646,7 +646,9 @@
   if (s.optOut || s.seenDate === today) return;
   var bd = document.getElementById("snapshot-bd");
   bd.removeAttribute("hidden");
-  function close() { bd.setAttribute("hidden", ""); }
+  var releaseFocus = null;
+  function close() { bd.setAttribute('hidden',''); if (releaseFocus) {releaseFocus();releaseFocus=null;} }
+  if (window.OfficeA11y) releaseFocus = OfficeA11y.open(bd, {initialFocus:'#snapshot-close', onDismiss:function () {setState({seenDate:today});close();}});
   document.getElementById("snapshot-close").addEventListener("click", function () {
     setState({ seenDate: today }); close();
   });
@@ -659,7 +661,7 @@
   document.addEventListener("keydown", function (e) {
     if (e.key === "Escape") { setState({ seenDate: today }); close(); }
   });
-})();
+}, {once:true});
 </script>
 {% endif %}
 {% endblock %}

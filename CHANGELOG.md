@@ -1,3 +1,11 @@
+## 7.83 — October 21, 2026
+
+- Deliver the A16 shared accessibility engineering slice: readable muted text, theme-aware Wellness buttons, solid keyboard focus indicators, larger survey N/A and carousel controls, keyboard-scrollable growth stages and separate native avatar actions.
+- Share modal focus containment, background isolation, Escape dismissal and focus restoration across the mobile drawer, search, feedback, tours and daily snapshots, including nested overlays and responsive dismissal.
+- Add a search close control, valid single-control search options, keyboard whole-page feedback with announced errors/status, larger CSS hub filters and Home reflow with doubled text.
+- Verify real Chromium keyboard journeys, accessible names/descriptions and native accessibility trees, mobile/desktop layout and no-JavaScript carousel access; record pinned local axe scans of ordinary and open-dialog states.
+- Manual screen-reader/browser sessions, remaining axe incomplete checks, staff task observations and live production testing remain open; this is not whole-product WCAG certification.
+
 ## 7.82 — October 21, 2026
 
 - Extend A15 to My actions and division follow-up with current document guidance, responsible people/roles, ready/waiting/attention states and direct links to existing controls.

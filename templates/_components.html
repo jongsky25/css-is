@@ -171,15 +171,16 @@
   .deck-cap { font-size:.72rem; font-weight:800; letter-spacing:.04em;
               text-transform:uppercase; color:var(--soft); margin:0 0 .4rem; }
   .deck-nav { display:flex; align-items:center; justify-content:space-between;
-              gap:.6rem; margin-top:.7rem; }
-  .deck-dots { display:inline-flex; gap:.3rem; align-items:center; }
-  .deck-dots button { width:8px; height:8px; padding:0; border:0; cursor:pointer;
-                      border-radius:50%; background:var(--line-strong);
-                      transition:width .15s, background .15s; }
-  .deck-dots button[aria-current="true"] { width:20px; border-radius:4px;
-                                           background:var(--accent); }
+              gap:.6rem; margin-top:.7rem; flex-wrap:wrap; }
+  .deck-dots { display:inline-flex; flex-wrap:wrap; gap:.3rem; align-items:center; }
+  .deck-dots button { min-width:44px; height:44px; padding:0; border:1px solid transparent;
+                      cursor:pointer; border-radius:8px; background:transparent;
+                      display:flex; align-items:center; justify-content:center; }
+  .deck-dots button::after { content:""; width:8px; height:8px; border-radius:50%;
+                            background:var(--soft); }
+  .deck-dots button[aria-current="true"]::after { width:20px; border-radius:4px; background:var(--accent); }
   .deck-btns { display:inline-flex; gap:.4rem; }
-  .deck-btns button { width:30px; height:30px; border-radius:8px; cursor:pointer;
+  .deck-btns button { width:44px; height:44px; border-radius:8px; cursor:pointer;
                       border:1px solid var(--line); background:var(--surface);
                       color:var(--ink); font-size:1.1rem; line-height:1;
                       display:flex; align-items:center; justify-content:center; }
@@ -202,7 +203,7 @@
 {% macro deck(label) %}
 <div class="deck" data-deck role="group" aria-roledescription="carousel"
      aria-label="{{ label }}">
-  <div class="deck-track">{{ caller() }}</div>
+  <div class="deck-track" tabindex="0" role="group" aria-label="{{ label }} views">{{ caller() }}</div>
 </div>
 {% endmacro %}
 
