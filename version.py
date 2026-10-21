@@ -17,18 +17,28 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.71"
+APP_VERSION = "7.72"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
-        "version": "7.71",
+        "version": "7.72",
         "date": "October 21, 2026",
         "summary": "Home and the notification bell share their repeated checks.",
         "changes": [
             "Home and the bell reuse approval counts, document reviews and your work preview while preparing the same page.",
             "Room approval links reuse the same membership check within each request.",
             "Counts and access are checked again on your next request, and actions still check your current permission."
+        ]
+    },
+    {
+        "version": "7.71",
+        "date": "October 21, 2026",
+        "summary": "Say when another office invited you, and the DPO cites their invitation.",
+        "changes": [
+            "On a calendar item, \"Who conducts this activity?\" now lets you mark an activity run by another office, with the office's name and whether you were invited as a resource person or a participant.",
+            "Paste the key lines of their invitation. The DPO background then says that office invited you and repeats those lines; nothing is invented when you leave them out.",
+            "Activities conducted by BLHSD are drafted exactly as before."
         ]
     },
     {

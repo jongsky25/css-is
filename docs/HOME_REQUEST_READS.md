@@ -1,6 +1,6 @@
 # Home and navigation request reads
 
-Introduced in **7.71**, the third A13 performance increment.
+Introduced in **7.72**, the third A13 performance increment.
 
 ## Shared results
 
@@ -48,7 +48,7 @@ synthetic reference database with two sections, a chief, staff, an Administrativ
 Section member, an unlinked administrator, two wellness claims and one restricted
 document review. Schema/session fixture work is complete before tracing.
 
-| One chief's Home request | 7.70 baseline | 7.71 |
+| One chief's Home request | 7.70 baseline | 7.72 |
 |---|---:|---:|
 | Wellness/AWA count builds | 3 | 1 |
 | Document-review count builds | 2 | 1 |
