@@ -13,6 +13,8 @@ from __future__ import annotations
 from datetime import date, timedelta
 from urllib.parse import parse_qs, quote, urlencode
 
+import asyncio
+import hashlib
 import io
 import re
 import zipfile
@@ -22,6 +24,8 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Resp
 from starlette.concurrency import run_in_threadpool
 
 import activity_docs
+import activity_invitation
+import ai_core
 import auth
 import calendar_ics as cics
 import gdocs_relay
@@ -36,6 +40,7 @@ import office_calendar as oc
 import recurrence
 import rooms
 import storage as st
+import travel_scan
 
 MAX_UPLOAD = 8 * 1024 * 1024            # a calendar .docx is well under 1 MB
 MAX_UNZIPPED = 80 * 1024 * 1024         # refuse a zip bomb before python-docx inflates it
@@ -373,6 +378,14 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
         units = oc._units(conn, [e["owner_org_id"]]) if e["owner_org_id"] else {}
         return (units.get(e["owner_org_id"]) or {}).get("label", "")
 
+    def _uploads_ready(conn):
+        """Uploading to Drive is offered only once the relay has answered a test with the version that has it."""
+        try:
+            v = int(st.get_setting(conn, "travel.relay_version", "0") or 0)
+        except ValueError:
+            v = 0
+        return gdocs_relay.configured() and v >= gdocs_relay.UPLOAD_VERSION
+
     def _documents_block(conn, e):
         """The "Documents for this activity" block, or None. Never raises: the page must open regardless."""
         try:
@@ -381,7 +394,8 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
             return {"items": activity_docs.state_for(conn, e, KIND_LABELS.get(e["kind"], "")),
                     "relay": gdocs_relay.configured(),
                     "outside": activity_docs.get_outside(conn, e["id"]),
-                    "invited_as": activity_docs.INVITED_AS}
+                    "invited_as": activity_docs.INVITED_AS,
+                    "uploads_ready": _uploads_ready(conn)}
         except Exception:                                   # noqa: BLE001
             return None
 
@@ -1142,6 +1156,95 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
                 st.audit(conn, user["username"], "activity_outside", target_type="calendar_entry", target_id=entry_id,
                          summary=summary)
                 note = f"ok={quote('Saved. The next DPO draft will use it.')}"
+            except ValueError as ex:
+                note = f"err={quote(str(ex))}"
+        finally:
+            conn.close()
+        return RedirectResponse(f"/calendar/entries/{entry_id}?{note}#documents", status_code=303)
+
+    @router.post("/calendar/entries/{entry_id}/outside/upload")
+    async def calendar_outside_upload(request: Request, entry_id: int):
+        """Keep the other office's invitation or letter in Drive and read it for a suggestion (spot feedback #156).
+        The file is sent to the relay once and dropped; the app keeps only the link. The reading is only offered back
+        to the form: the person edits and saves it. A failed or refused reading never stops the file being kept."""
+        def err(msg, code=400):
+            return JSONResponse({"ok": False, "error": msg}, status_code=code)
+        try:
+            if int(request.headers.get("content-length") or 0) > travel_scan.MAX_BYTES:
+                return err("That file is too large. Use one under 6 MB.", 413)
+        except ValueError:
+            return err("Send the file.")
+        raw = await request.body()
+        if not raw or len(raw) > travel_scan.MAX_BYTES:
+            return err("That file is empty or too large. Use one under 6 MB.", 413)
+        mime = travel_scan.sniff(raw)
+        if not mime:
+            return err("Use a photo (JPG, PNG, WebP) or a PDF.", 415)
+        user = request.state.user
+        conn = get_conn()
+        try:
+            e = oc.viewable_entry(conn, user, entry_id)
+            if e is None:
+                return err("Not found.", 404)
+            if e["status"] == "cancelled" or e["kind"] not in DOC_KINDS:
+                return err("That cannot be added to this item.")
+            if activity_docs.get_outside(conn, entry_id) is None:
+                return err("Choose \u201cAnother office\u201d and save it first, then add the letter.")
+            if not _uploads_ready(conn):
+                return err("Uploading is not switched on yet. Type the key lines of the letter instead.", 503)
+            if not ratelimit.allow("travel_upload", f"u{user['id']}"):
+                return err("Too many uploads. Wait a minute and try again.", 429)
+            from urllib.parse import unquote
+            stem = re.sub(r"[^A-Za-z0-9._ -]", "_", unquote(request.headers.get("x-filename") or "")).strip(" .")[:60]
+            ext = {"image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "application/pdf": "pdf"}[mime]
+            stem = re.sub(r"\.(jpe?g|png|webp|pdf)$", "", stem, flags=re.I) or "letter"
+            digest = hashlib.sha256(raw).hexdigest()[:12]
+            share = [user.get("username")] if user.get("username") else []
+            ip = request.client.host if request.client else None
+            upload = run_in_threadpool(
+                gdocs_relay.get_relay().upload_file, request_id=f"actinv{entry_id}:{digest}", folder_key=f"act-{entry_id}",
+                item_key="invitation", name=f"act{entry_id}_invitation_{stem}.{ext}", mime=mime, data=raw, share_with=share)
+            reading, ai_off = None, False
+            if ratelimit.allow("travel_scan", f"u{user['id']}"):
+                res, found = await asyncio.gather(upload, activity_invitation.read(conn, user, ip, raw, mime),
+                                                  return_exceptions=True)
+                if isinstance(found, dict):
+                    reading = found
+                else:
+                    ai_off = isinstance(found, ai_core.AIError)
+            else:
+                res = await upload
+            del raw
+            if isinstance(res, BaseException):
+                return err("The documents relay failed. Try again.", 502)
+            if not res.ok:
+                return err(gdocs_relay.describe(res.error), 502 if res.error in ("not_configured", "unreachable") else 400)
+            url = (res.data or {}).get("url") or (res.data or {}).get("folder_url") or ""
+            name = f"{stem}.{ext}"
+            try:
+                activity_docs.set_invitation_file(conn, entry_id, url, name, user["username"])
+            except ValueError as ex:
+                return err(str(ex))
+            st.audit(conn, user["username"], "activity_invitation_file", target_type="calendar_entry", target_id=entry_id,
+                     summary=f"uploaded {name}")
+            return JSONResponse({"ok": True, "name": name, "url": url, "reading": reading, "ai_off": ai_off})
+        finally:
+            conn.close()
+
+    @router.post("/calendar/entries/{entry_id}/outside/file/remove")
+    async def calendar_outside_file_remove(request: Request, entry_id: int):
+        """Forget the link to the uploaded letter. The file stays in Drive; only the app's link goes."""
+        user = request.state.user
+        conn = get_conn()
+        try:
+            e = oc.viewable_entry(conn, user, entry_id)
+            if e is None:
+                return _not_found(request)
+            try:
+                activity_docs.set_invitation_file(conn, entry_id, "", "", user["username"])
+                st.audit(conn, user["username"], "activity_invitation_file", target_type="calendar_entry",
+                         target_id=entry_id, summary="link removed")
+                note = f"ok={quote('The link to the letter was removed.')}"
             except ValueError as ex:
                 note = f"err={quote(str(ex))}"
         finally:

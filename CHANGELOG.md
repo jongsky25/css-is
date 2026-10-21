@@ -1,3 +1,7 @@
+## 7.73 — October 21, 2026
+
+- Invitation letter for outside activities (spot feedback #156): on a calendar item marked "Another office", an upload (PDF, JPG, PNG or WebP, under 6 MB) keeps the letter in the office Drive through the existing relay upload (`act-<id>/invitation`, shared with the uploader) and stores only the link and file name (`calendar_entry_outside.invitation_url`, `invitation_name`; added by migration). The same upload is read once by the AI (`activity_invitation.py`, the `travel_scan` feature, so its switch, daily budget and per-account limit apply) and returns the office, whether we were invited as a resource person or a participant, and up to three key lines, as a suggestion for the form: nothing is filled in until the person presses "Use these", and nothing is saved until they press Save. The prompt tells the model not to copy individuals' names, numbers or e-mail addresses. The file is never stored by the app; AI off, over budget or unreadable still keeps the letter. "Remove the link" forgets the link only. Needs the relay with upload support, the same as the travel checklist. Saves and uploads are audited as `activity_invitation_file`.
+
 ## 7.72 — October 21, 2026
 
 - Share wellness/AWA approval counts, document-review counts, document feature state and the three-item work preview between navigation and Home within one request.
