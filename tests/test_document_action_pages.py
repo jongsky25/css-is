@@ -156,9 +156,12 @@ def test_batch_queries_do_not_grow_with_total_records_and_child_bodies_are_cappe
         iid=c.execute("INSERT INTO document_directive(document_id,actor_id,text,created_at) VALUES (?,?,?,'2026-10-21')",(did,u[1]['id'],'Instruction '+str(n))).lastrowid
         c.execute('INSERT INTO document_instruction_recipient VALUES (?,?)',(iid,u[0]['id']))
         c.execute("INSERT INTO document_instruction_tag VALUES (?,'person',?)",(iid,u[0]['id']))
+    c.execute("UPDATE document_assignment SET due_date='2026-10-18' WHERE document_id=? AND action='Task 14'",(did,))
     c.commit()
     before='\n'.join(c.iterdump())
     page=actions.page(c,u[0],limit=1)
+    contributions=[x for x in page['cards'] if x['kind']=='Contribution']
+    assert contributions[0]['detail']=='Task 14' and contributions[0]['overdue']
     assert len(page['cards'])==1+2*actions.CHILD_LIMIT
     assert len([x for x in page['cards'] if x['kind']=='Instruction'])==actions.CHILD_LIMIT
     assert len([x for x in page['cards'] if x['kind']=='Contribution'])==actions.CHILD_LIMIT

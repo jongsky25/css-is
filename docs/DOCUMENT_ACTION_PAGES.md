@@ -36,7 +36,7 @@ There is no unfiltered total or full-register materialization in the response.
 A read savepoint keeps selection and page enrichment consistent. Core page data is
 batched: current draft fingerprints, unresolved effect progress, instructions and
 contributions. Each document shows at most three unread instructions and three
-available legacy contribution steps, plus its workflow card. The page explains
+available legacy contribution steps in deadline order, plus its workflow card. The page explains
 that opening a record shows all instructions and contributions. Only names needed
 for the displayed responsibilities are loaded; full people/unit picker lists are
 not loaded for the action screen.

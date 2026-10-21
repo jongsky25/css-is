@@ -107,7 +107,7 @@ def _load(conn,scope,documents):
     params={**scope.params,'action_ids':json.dumps([d['id'] for d in documents]),'child_limit':CHILD_LIMIT}
     ids='SELECT value FROM json_each(:action_ids)'
     assignments=_group(rows(conn,f"""WITH numbered AS (
-        SELECT a.*,ROW_NUMBER() OVER (PARTITION BY a.document_id ORDER BY a.id) AS position
+        SELECT a.*,ROW_NUMBER() OVER (PARTITION BY a.document_id ORDER BY COALESCE(NULLIF(a.due_date,''),NULLIF(d.due_date,''),'9999-12-31'),a.id) AS position
         FROM document_assignment a JOIN document d ON d.id=a.document_id
         WHERE a.document_id IN ({ids}) AND NOT EXISTS(
           SELECT 1 FROM work_legacy_document m WHERE m.document_id=a.document_id)
