@@ -17,12 +17,12 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.63"
+APP_VERSION = "7.64"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
-        "version": "7.63",
+        "version": "7.64",
         "date": "October 21, 2026",
         "summary": "AI survey answers use checked system facts and calculations.",
         "changes": [
@@ -30,6 +30,15 @@ CHANGELOG = [
             "Broader answers identify the figures and periods used, and simple comparisons are calculated by the system.",
             "If the facts or your access change while an answer is prepared, normal search is used instead.",
             "Satisfaction totals exclude missing and invalid ratings."
+        ]
+    },
+    {
+        "version": "7.63",
+        "date": "October 21, 2026",
+        "summary": "Make one travel form again after you change the entries.",
+        "changes": [
+            "Each form in the list on the Prepare the forms page now has a Make this form again button, so you can change an entry and remake just that form instead of all of them.",
+            "The earlier copy stays in your Drive, and the page now says so."
         ]
     },
     {

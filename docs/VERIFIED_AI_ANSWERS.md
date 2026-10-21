@@ -1,6 +1,6 @@
 # Verified survey answers — A12, contract v1
 
-Introduced in **7.63**. This contains audit finding F15 without expanding AI
+Introduced in **7.64**. This contains audit finding F15 without expanding AI
 authority or adding a new provider, database, dependency or AI write action.
 
 ## What staff see
