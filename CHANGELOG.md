@@ -1,9 +1,15 @@
-## 7.62 — October 21, 2026
+## 7.63 — October 21, 2026
 
 - Replace model-authored survey answers with validated fact selections and server-rendered figures; fixed answers skip the extra AI call.
 - Calculate simple differences on the server, show source labels and periods, and reject invented, changed or incompatible facts.
 - Recheck the current session and AI switches after provider calls; preserve resource-person opt-in and search fallback.
 - Exclude missing and invalid ratings from Home satisfaction totals and broader survey facts.
+
+## 7.62 — October 21, 2026
+
+- Travel Prepare page: itinerary entries can be reordered by dragging their handle, with Move up / Move down buttons and a Sort by date button (spot feedback #147). Entries keep the order shown when the forms are made.
+- Travel forms: each ride that needs a CENRR now gets its own CENRR sheet, like the RER (spot feedback #149). The template is unchanged: it already has one repeating line, which now holds one ride.
+- The Prepare page says each generated form is a Google Doc or Sheet that can be opened and edited (spot feedback #148).
 
 ## 7.61 — October 21, 2026
 

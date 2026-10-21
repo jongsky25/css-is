@@ -7,7 +7,7 @@
     "employee_no": "12345",
     "office": "Manila",
     "division": "PLANNING",
-    "total": "550",
+    "total": "250",
     "purpose": "attend Regional Planning Workshop",
     "dates": "September 01-04, 2026",
     "dpo_ref": "DPO No. 2026-123 dated August 20, 2026",
@@ -25,11 +25,6 @@
           "p_date": "September 1, 2026",
           "p_text": "Fare from Home to Airport by public transport",
           "p_amount": "250"
-        },
-        {
-          "p_date": "September 2, 2026",
-          "p_text": "Fare from Home to Airport by public transport",
-          "p_amount": "300"
         }
       ]
     }
