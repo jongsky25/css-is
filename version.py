@@ -17,10 +17,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.74"
+APP_VERSION = "7.75"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "7.75",
+        "date": "October 21, 2026",
+        "summary": "Interrupted document operations check their existing result after a restart.",
+        "changes": [
+            "Unstarted sends and signatures resume only after current access and approval checks.",
+            "Interrupted operations check their service receipt without automatically sending or signing again.",
+            "Document operations show whether they are pending, running, completed or need review."
+        ]
+    },
     {
         "version": "7.74",
         "date": "October 21, 2026",

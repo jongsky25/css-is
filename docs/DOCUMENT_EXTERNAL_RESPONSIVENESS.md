@@ -92,3 +92,5 @@ survives process shutdown. Existing job/relay receipts support the existing
 explicit recovery flow. Durable leases, restart recovery, operator-facing job
 status improvements and background sync scheduling/admission remain the next
 A14 increment. No new email, Drive or infrastructure credentials are needed.
+
+The next slice, **7.75**, adds [durable ownership and restart recovery](DOCUMENT_JOB_RECOVERY.md) around these jobs and existing receipts. Background synchronization capacity remains separate.

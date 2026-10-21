@@ -1,3 +1,11 @@
+## 7.75 — October 21, 2026
+
+- Add durable, expiring SQLite ownership with fenced completion/failure writes for document service jobs and cross-process reconciliation exclusion.
+- Recover aged unstarted sends/signatures after fresh validation; recover interrupted/uncertain operations through existing receipts without repeating their effects.
+- Bound automatic receipt checks with backoff and an attempt limit; require review for missing receipts, changed authority and interrupted transient extraction.
+- Show clear operation progress and protected minimal status reads; start and cancel the recovery loop with the application lifecycle.
+- Verify real worker exit after remote success, competing processes, stale ownership, authorization changes, receipt safety and transient-data privacy.
+
 ## 7.74 — October 21, 2026
 
 - Move document action processing and source-preview I/O off the request event loop with SQLite connections owned by their worker threads.
