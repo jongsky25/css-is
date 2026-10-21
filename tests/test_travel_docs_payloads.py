@@ -194,15 +194,17 @@ def test_travel_report_day_by_day_follows_the_posted_days_or_seeds_from_the_date
     assert seeded.fields["name_designation"] == "Juan Dela Cruz, Nurse II"
 
 
-def test_cenrr_lists_only_small_unreceipted_rides():
+def test_one_cenrr_per_small_unreceipted_ride():
     rows = [row("2026-09-01", mode="public_noreceipt", route_type="residence_airport", allowance=250),
             row("2026-09-02", mode="public_noreceipt", route_type="residence_airport", allowance=300),
             row("2026-09-03", mode="public_noreceipt", route_type="residence_airport", allowance=450),   # RER
             row("2026-09-04", mode="tnvs", receipt="receipt", route_type="residence_airport", allowance=600)]
-    p = one(["cenrr"], rows)
-    assert [r["p_amount"] for r in p.rows["items"]["data"]] == ["250", "300"] and p.fields["total"] == "550"
-    assert p.fields["employee_no"] == "12345" and p.fields["office"] == "Manila"
-    check_golden("cenrr", p)
+    docs = build(["cenrr"], rows)
+    assert [d.index for d in docs] == [1, 2] and all(d.item_code == "cenrr" for d in docs)
+    assert [d.rows["items"]["data"][0]["p_amount"] for d in docs] == ["250", "300"]
+    assert [d.fields["total"] for d in docs] == ["250", "300"]
+    assert docs[0].fields["employee_no"] == "12345" and docs[0].fields["office"] == "Manila"
+    check_golden("cenrr", docs[0])
 
 
 def test_one_rer_per_ride_with_amount_in_words():
