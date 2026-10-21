@@ -22,6 +22,16 @@ APP_VERSION = "7.68"
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
+        "version": "7.68",
+        "date": "October 21, 2026",
+        "summary": "Drafted activity documents no longer fill in positions on their own.",
+        "changes": [
+            "When you draft a DPO, memorandum or concept note, positions are left blank unless you tick \"Fill in positions from saved profiles\".",
+            "New activity templates keep plain text plain, so only titles and signatories are bold.",
+            "New activity templates size the logos from the picture's own proportions."
+        ]
+    },
+    {
         "version": "7.67",
         "date": "October 21, 2026",
         "summary": "Confirm your designation when you prepare the travel forms, and every form now has the same look.",
