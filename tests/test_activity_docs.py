@@ -352,3 +352,43 @@ def test_a_template_paragraph_never_inherits_bold_from_the_one_above():
     builders = src.split("function at_buildDpo_")[1]
     assert "body.appendParagraph(" not in builders and "body.appendTable(" not in builders
     assert "setBold(false)" in src and "img.getWidth()" in src
+
+
+# ------------------------------------------------ outside activities (spot feedback #155) ---
+
+def outside(viewer, eid, **fields):
+    from urllib.parse import urlencode
+    return viewer.post(f"/calendar/entries/{eid}/outside", content=urlencode(fields), headers=FORM, follow_redirects=False)
+
+
+def test_a_dpo_for_an_activity_another_office_runs_cites_their_invitation(viewer, conn, relay):
+    eid = create(viewer, kind="travel", title="CALEP Field Visit", venue="Cebu City",
+                 start_date="2026-10-12", end_date="2026-10-16", people=[str(uid(conn, "viewer@test.local"))])
+    r = outside(viewer, eid, conducted_by="outside", host="Center for Health Development VII", invited_as="resource_person",
+                invitation="  Per\nmemo dated   October 1, 2026, we are requested to  lecture on CALEP. ")
+    assert r.status_code == 303 and "ok=" in r.headers["location"]
+    assert ad.get_outside(conn, eid) == {"host": "Center for Health Development VII", "invited_as": "resource_person",
+                                         "invitation": "Per memo dated October 1, 2026, we are requested to lecture on CALEP."}
+    draft(viewer, eid, "dpo")
+    f = relay.calls[0]["fields"]
+    assert f["background"].startswith("Center for Health Development VII invited ") and "to serve as resource person in CALEP Field Visit" in f["background"]
+    assert f["background"].endswith("we are requested to lecture on CALEP.")
+    assert "to serve as resource person in CALEP Field Visit" in f["intro"] and "will conduct" not in f["background"]
+
+
+def test_switching_back_to_blhsd_restores_the_usual_dpo_wording(viewer, conn, relay):
+    eid = create(viewer, kind="travel", title="CALEP Field Visit")
+    outside(viewer, eid, conducted_by="outside", host="CHD VII", invited_as="attendee")
+    outside(viewer, eid, conducted_by="blhsd")
+    assert ad.get_outside(conn, eid) is None
+    draft(viewer, eid, "dpo")
+    assert "invited" not in relay.calls[0]["fields"]["background"]
+
+
+def test_an_outside_activity_needs_a_host_and_a_known_invitation_type(viewer, conn):
+    eid = create(viewer, kind="travel", title="CALEP Field Visit")
+    assert "err=" in outside(viewer, eid, conducted_by="outside", host="  ", invited_as="attendee").headers["location"]
+    assert "err=" in outside(viewer, eid, conducted_by="outside", host="CHD VII", invited_as="boss").headers["location"]
+    assert "err=" in outside(viewer, eid, conducted_by="maybe").headers["location"]
+    assert ad.get_outside(conn, eid) is None
+    assert "Who conducts this activity?" in entry_page(viewer, eid)

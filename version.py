@@ -17,10 +17,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.70"
+APP_VERSION = "7.71"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "7.71",
+        "date": "October 21, 2026",
+        "summary": "Say when another office invited you, and the DPO cites their invitation.",
+        "changes": [
+            "On a calendar item, \"Who conducts this activity?\" now lets you mark an activity run by another office, with the office's name and whether you were invited as a resource person or a participant.",
+            "Paste the key lines of their invitation. The DPO background then says that office invited you and repeats those lines; nothing is invented when you leave them out.",
+            "Activities conducted by BLHSD are drafted exactly as before."
+        ]
+    },
     {
         "version": "7.70",
         "date": "October 21, 2026",

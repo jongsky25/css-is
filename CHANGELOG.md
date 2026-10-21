@@ -1,3 +1,7 @@
+## 7.71 — October 21, 2026
+
+- Outside activities (spot feedback #155): a calendar item has a new "Who conducts this activity?" choice, BLHSD or another office. For another office it records the host, whether we were invited as a resource person or a participant, and the key lines of the invitation (pasted, one line, up to 600 characters). The DPO background then reads "{host} invited {unit} personnel to ... {title} ..." followed by the pasted lines, and the authority line says "to serve as resource person in" or "to participate in". BLHSD activities draft as before. New table `calendar_entry_outside` (no row means BLHSD); saving is audited as `activity_outside`. No relay or template change.
+
 ## 7.70 — October 21, 2026
 
 - Activity documents (DPO, memorandum, concept note): positions are no longer filled in from saved profiles on their own. The Draft button now has a "Fill in positions from saved profiles" checkbox, off by default; without it the position cells are left blank for the person to complete (spot feedback #154).

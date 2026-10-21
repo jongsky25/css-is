@@ -379,7 +379,9 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
             if e["status"] == "cancelled" or e["kind"] not in DOC_KINDS:
                 return None
             return {"items": activity_docs.state_for(conn, e, KIND_LABELS.get(e["kind"], "")),
-                    "relay": gdocs_relay.configured()}
+                    "relay": gdocs_relay.configured(),
+                    "outside": activity_docs.get_outside(conn, e["id"]),
+                    "invited_as": activity_docs.INVITED_AS}
         except Exception:                                   # noqa: BLE001
             return None
 
@@ -1111,6 +1113,37 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
                 st.audit(conn, user["username"], "activity_doc_needed", target_type="calendar_entry", target_id=entry_id,
                          summary=f"{key}: {choice}")
                 note = f"ok={quote(activity_docs.DOCS[key]['label'] + ': saved.')}"
+        finally:
+            conn.close()
+        return RedirectResponse(f"/calendar/entries/{entry_id}?{note}#documents", status_code=303)
+
+    @router.post("/calendar/entries/{entry_id}/outside")
+    async def calendar_outside(request: Request, entry_id: int):
+        """Say who runs the activity: BLHSD, or another office that invited us (spot feedback #155)."""
+        raw = parse_qs((await request.body()).decode("utf-8"), keep_blank_values=True)
+        get = lambda k: (raw.get(k) or [""])[0]                                  # noqa: E731
+        user = request.state.user
+        conn = get_conn()
+        try:
+            e = oc.viewable_entry(conn, user, entry_id)
+            if e is None:
+                return _not_found(request)
+            try:
+                if e["status"] == "cancelled" or e["kind"] not in DOC_KINDS:
+                    raise ValueError("That cannot be set for this item.")
+                if get("conducted_by") == "outside":
+                    activity_docs.set_outside(conn, entry_id, get("host"), get("invited_as"), get("invitation"), user["username"])
+                    summary = "outside: " + get("host")[:80]
+                elif get("conducted_by") == "blhsd":
+                    activity_docs.clear_outside(conn, entry_id)
+                    summary = "BLHSD"
+                else:
+                    raise ValueError("That choice was not understood.")
+                st.audit(conn, user["username"], "activity_outside", target_type="calendar_entry", target_id=entry_id,
+                         summary=summary)
+                note = f"ok={quote('Saved. The next DPO draft will use it.')}"
+            except ValueError as ex:
+                note = f"err={quote(str(ex))}"
         finally:
             conn.close()
         return RedirectResponse(f"/calendar/entries/{entry_id}?{note}#documents", status_code=303)
