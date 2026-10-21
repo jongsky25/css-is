@@ -80,6 +80,13 @@ OIC revocation, inactive accounts, canonical chains/cycles, shared-work states,
 full CSV export, search-preserving links, malformed cursors, invalid dates,
 bounded SQL/fetched rows, complete HTTP query growth and indexed seeks.
 
+Shared-work eligibility uses separate SQL relations rather than deeply nested
+subqueries, so it also parses on SQLite builds with a fixed parser stack.
+`tests/test_document_registry_sqlite_compat.py` runs 90 actual page/count/measure
+statements through the OS interpreter's SQLite, when available, using only its
+standard library and a temporary synthetic database. Results are compared with
+the pinned test interpreter; local checks cover SQLite 3.53.1 and 3.46.1.
+
 The reproducible [synthetic benchmark](audits/2026-10-19/evidence/document-registry-pagination.json)
 uses a temporary database, half verified bureau records and half restricted
 records, with no private grant for the reader. Both paths include full-register

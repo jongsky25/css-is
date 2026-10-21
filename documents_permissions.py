@@ -167,25 +167,41 @@ class RegistryScope:
               WHERE registry_root.canonical_id IS NULL AND {self._base_view_sql('registry_root')}
             ) END)'''
 
-    def assigned_sql(self, alias):
+    def assignment_ctes(self):
+        """Flat read relations avoid deep SQL nesting on deployment SQLite builds."""
         case_member = f'''(wc.creator_id=:registry_actor OR wc.lead_id=:registry_actor
             OR {self.officer_sql('wc', concerned=False)} OR EXISTS (
               SELECT 1 FROM work_task participant WHERE participant.case_id=wc.id
                 AND ((participant.owner_id=:registry_actor AND participant.status<>'cancelled')
                      OR {self.officer_sql('participant', concerned=False)})))'''
-        case_visible = f'''({case_member} AND NOT EXISTS (
-            SELECT 1 FROM work_document link LEFT JOIN document linked_doc ON linked_doc.id=link.document_id
-            WHERE link.case_id=wc.id AND NOT {self.view_sql('linked_doc')}))'''
-        return f'''(EXISTS (SELECT 1 FROM work_legacy_document migration
-              JOIN work_case wc ON wc.id=migration.case_id
-              WHERE migration.document_id={alias}.id AND {case_visible}
-                AND ({alias}.lead_id=:registry_actor OR EXISTS (
+        return f'''registry_work_candidates AS (
+            SELECT wc.id AS case_id,migration.document_id
+              FROM work_legacy_document migration JOIN work_case wc ON wc.id=migration.case_id
+              JOIN document target ON target.id=migration.document_id
+              WHERE {case_member}
+                AND (target.lead_id=:registry_actor OR EXISTS (
                   SELECT 1 FROM work_task owned WHERE owned.case_id=wc.id
-                    AND owned.owner_id=:registry_actor AND owned.status<>'cancelled')))
-            OR (NOT EXISTS (SELECT 1 FROM work_legacy_document migration WHERE migration.document_id={alias}.id)
-              AND EXISTS (SELECT 1 FROM document_assignment assignment
-                WHERE assignment.document_id={alias}.id AND assignment.user_id=:registry_actor
-                  AND assignment.status<>'superseded')))'''
+                    AND owned.owner_id=:registry_actor AND owned.status<>'cancelled'))),
+            registry_visible_references AS (
+              SELECT link.case_id,link.document_id FROM work_document link
+                JOIN registry_work_candidates candidate ON candidate.case_id=link.case_id
+                JOIN document linked_doc ON linked_doc.id=link.document_id
+              WHERE {self.view_sql('linked_doc')}),
+            registry_assigned AS (
+              SELECT assignment.document_id FROM document_assignment assignment
+              WHERE assignment.user_id=:registry_actor AND assignment.status<>'superseded'
+                AND NOT EXISTS (SELECT 1 FROM work_legacy_document migration
+                                WHERE migration.document_id=assignment.document_id)
+              UNION ALL
+              SELECT candidate.document_id FROM registry_work_candidates candidate
+              WHERE NOT EXISTS (
+                SELECT 1 FROM work_document link WHERE link.case_id=candidate.case_id
+                  AND NOT EXISTS (SELECT 1 FROM registry_visible_references permitted
+                    WHERE permitted.case_id=link.case_id AND permitted.document_id=link.document_id)))'''
+
+    def assigned_sql(self, alias):
+        return f'''EXISTS (SELECT 1 FROM registry_assigned assignment
+                          WHERE assignment.document_id={alias}.id)'''
 
     def work_sql(self, alias):
         return f'''({alias}.creator_id=:registry_actor OR {alias}.lead_id=:registry_actor

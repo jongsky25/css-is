@@ -364,7 +364,7 @@ def test_migrated_work_predicates_match_detail_authority_for_all_states(registry
         keys.append(doc['id'])
     for user in users:
         scope = permissions.RegistryScope(conn, user)
-        sql = f'''SELECT d.id,{scope.work_sql('d')},{scope.release_sql('d')}
+        sql = f'''WITH {scope.assignment_ctes()} SELECT d.id,{scope.work_sql('d')},{scope.release_sql('d')}
             FROM document d WHERE d.id IN (SELECT value FROM json_each(:test_ids))'''
         for key, can_work, can_release in conn.execute(sql, {**scope.params, 'test_ids': json.dumps(keys)}):
             doc = docs.raw(conn, key)

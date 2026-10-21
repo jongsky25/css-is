@@ -51,6 +51,10 @@ class Selection:
 
     def _queue_sql(self):
         s, scope = 's', self.scope
+        if self.queue == 'release':
+            return f"s.status IN ('approved','ready_to_release') AND {scope.release_sql(s)}"
+        if self.queue == 'mine':
+            return f"s.status NOT IN ('closed','cancelled') AND {scope.work_sql(s)}"
         return {
             'instruction': ("s.instruction_state='pending' AND s.status NOT IN ('closed','cancelled')"
                             if scope.is_director else '0'),
@@ -62,8 +66,6 @@ class Selection:
             'OUT': "s.direction='OUT'",
             'verification': f"s.verification<>'verified' AND {scope.officer_sql(s)}",
             'review': "s.status='in_review' AND s.reviewer_id=:registry_actor",
-            'release': f"s.status IN ('approved','ready_to_release') AND {scope.release_sql(s)}",
-            'mine': f"s.status NOT IN ('closed','cancelled') AND {scope.work_sql(s)}",
             'mentions': '''EXISTS (SELECT 1 FROM document_directive x
                 JOIN document_instruction_recipient r ON r.directive_id=x.id
                 LEFT JOIN document_instruction_read seen ON seen.directive_id=x.id AND seen.user_id=r.user_id
@@ -71,6 +73,10 @@ class Selection:
                   AND EXISTS (SELECT 1 FROM document_instruction_tag t WHERE t.directive_id=x.id))''',
             'unassigned': 's.lead_id IS NULL',
         }.get(self.queue, '1')
+
+    def read_ctes(self):
+        prefix = self.scope.assignment_ctes() + ', ' if self.queue in ('mine', 'release') else ''
+        return f'WITH {prefix}registry_selected AS ({self.sql})'
 
     def _select_sql(self):
         scope = self.scope
@@ -114,7 +120,7 @@ class Selection:
     def page_statement(self, *, before=0, limit=None):
         params = {**self.params, 'registry_before': before}
         seek = 'selected.sort_id<:registry_before' if before else '1'
-        sql = f'''WITH registry_selected AS ({self.sql})
+        sql = f'''{self.read_ctes()}
             SELECT d.*,selected.sort_id AS registry_sort_id,
               EXISTS (SELECT 1 FROM document_email_import i WHERE i.document_id=d.id) AS gmail_imported
             FROM registry_selected selected JOIN document d ON d.id=selected.id
@@ -153,7 +159,7 @@ class Selection:
                 doc['search_excerpt'] = search.excerpt(body, self.query)
 
     def count(self, conn):
-        return conn.execute(f'SELECT COUNT(*) FROM ({self.sql})', self.params).fetchone()[0]
+        return conn.execute(self.read_ctes() + ' SELECT COUNT(*) FROM registry_selected', self.params).fetchone()[0]
 
     def totals(self, conn, *, today=None):
         today = today or tz.today_local()
@@ -169,7 +175,7 @@ class Selection:
 
         conn.create_function('registry_elapsed_days', 2, elapsed, deterministic=True)
         conn.create_function('registry_due_day', 1, due_day, deterministic=True)
-        sql = f'''WITH registry_selected AS ({self.sql}), measured AS (
+        sql = f'''{self.read_ctes()}, measured AS (
             SELECT d.*,d.status NOT IN ('closed','cancelled') AS live,
               CASE WHEN d.status NOT IN ('closed','cancelled') THEN registry_due_day(d.due_date) END AS live_due_day,
               EXISTS (SELECT 1 FROM document_assignment_effective a
