@@ -17,10 +17,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.76"
+APP_VERSION = "7.77"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "7.77",
+        "date": "October 21, 2026",
+        "summary": "The DPO letterhead sits in the real page header, and each DPO ends with a file-copy page.",
+        "changes": [
+            "The seal, the Bagong Pilipinas logo and \"Republic of the Philippines / Department of Health / Office of the Secretary\" are now in the document's header, not in the body text, on all four activity documents.",
+            "Each DPO now ends with a second page holding the same content without the letterhead or address footer, followed by a routing table (BLHSD, Initials, Date) and a table for keywords and related issuances.",
+            "If the extra page cannot be added, the order is still made and the message tells you why."
+        ]
+    },
     {
         "version": "7.76",
         "date": "October 21, 2026",
