@@ -64,6 +64,8 @@ def _docx_base(meta):
     if meta.get("scope"):
         r = doc.add_paragraph().add_run(meta["scope"])
         r.italic = True
+    if meta.get("date_note"):
+        doc.add_paragraph(meta["date_note"])
     fr = doc.add_paragraph().add_run(
         f"Generated {meta.get('generated', '')} · Source: {meta.get('source', 'Office Connect')}")
     fr.italic = True
@@ -196,15 +198,26 @@ def arta_docx(rep, meta):
     return _save(doc)
 
 
+def _servqual_basis(sq):
+    """Keep submission and valid-rating denominators distinct in every format."""
+    n = sq.get("overall", {}).get("n", 0)
+    total = sq.get("respondents", 0)
+    return (f"{total:,} total submission(s); {n:,} rated respondent(s) contributed to overall perception. "
+            "Submissions are form responses, not unique people across activities or speakers. "
+            "Dimension n counts valid item answers. Missing, invalid and N/A answers are excluded from scores. "
+            "Overall averages available dimension means; it need not equal the average of individual submission scores.")
+
+
 def servqual_docx(sq, meta):
     doc = _docx_base(meta)
+    doc.add_paragraph(_servqual_basis(sq))
     if not sq.get("has_data"):
-        doc.add_paragraph("No responses in this scope.")
+        doc.add_paragraph("No valid dimension ratings in this scope.")
         return _save(doc)
     g = sq.get("gap")
     gtxt = f"  ({g['label']} expectation, {g['shown']})" if g else ""
     _kv_line(doc, "Overall perception", f"{sq['overall']['shown']} / 7{gtxt}")
-    _kv_line(doc, "Respondents", f"{sq['respondents']:,}")
+    _kv_line(doc, "Total submissions", f"{sq['respondents']:,}")
 
     doc.add_heading("Service Quality Dimensions", level=1)
     _table_title(doc, 1, "Service-quality dimension scores and gap versus expectation",
@@ -276,13 +289,15 @@ def servqual_xlsx(sq, meta):
     info.column_dimensions["A"].width = 16; info.column_dimensions["B"].width = 72
     lines = [("Report", meta.get("title", "")), ("Scope", meta.get("scope", "")),
              ("Place", meta.get("place", "")), ("Period", meta.get("period", "")),
-             ("Generated", meta.get("generated", "")), ("Source", meta.get("source", ""))]
+             ("Generated", meta.get("generated", "")), ("Source", meta.get("source", "")),
+             ("Counting basis", _servqual_basis(sq)), ("Dates", meta.get("date_note", ""))]
     if not sq.get("has_data"):
-        lines.append(("Note", "No responses in this scope."))
+        lines.append(("Note", "No valid dimension ratings in this scope."))
     for r, (k, v) in enumerate(lines, start=1):
         info.cell(row=r, column=1, value=k).font = Font(bold=True)
         info.cell(row=r, column=2, value=str(v)).alignment = Alignment(wrap_text=True)
-    if not sq.get("has_data"):
+
+    if not sq.get("has_data") and not sq.get("responses"):
         buf = io.BytesIO(); wb.save(buf); return buf.getvalue()
 
     # Dimensions — Mean as a real number (d["value"]) so the sheet is computable;
@@ -297,12 +312,13 @@ def servqual_xlsx(sq, meta):
     servqual = s["servqual"] + (f" ({s['servqual_label']})" if s.get("servqual_label") else "")
     osq = s["osq"] + (f" ({s['osq_band']})" if s.get("osq_band") else "")
     _tab(wb.create_sheet("Summary"), "SERVQUAL summary", ["Metric", "Value"],
-         [["Respondents", sq["respondents"]],
+         [["Total submissions", sq["respondents"]],
           ["Total (sum of dimension means)", s["total"]],
           ["Average (mean of dimension means)", s["average"]],
           ["Expectation", s["expectation"]],
           ["SERVQUAL (Average − Expectation)", servqual],
-          ["Overall Service Quality (item C)", osq]])
+          ["Overall Service Quality (item C)", osq],
+          ["Rated respondents (overall perception)", sq.get("overall", {}).get("n", 0)]])
 
     demo = sq.get("demo")
     if demo and demo.get("has"):
@@ -549,7 +565,7 @@ def _na_arta_profile(rep):
 
 def _na_sq_summary(sq):
     g = sq.get("gap")
-    s = f"{sq['respondents']:,} participants rated their experience {sq['overall']['shown']} out of 7"
+    s = f"{sq['overall'].get('n', 0):,} rated respondent(s) contributed to an overall experience score of {sq['overall']['shown']} out of 7"
     if g and g.get("label"):
         s += f" — {g['label'].lower()} what they expected ({g['shown']})"
     return s + "."
@@ -706,6 +722,8 @@ def _pdf_head(st, meta):
     out = [Paragraph(_xml_escape(meta["title"]), st["title"])]
     if meta.get("scope"):
         out.append(Paragraph(_xml_escape(meta["scope"]), st["scope"]))
+    if meta.get("date_note"):
+        out.append(Paragraph(_xml_escape(meta["date_note"]), st["scope"]))
     out.append(Paragraph(
         f"Generated {_xml_escape(meta.get('generated', ''))} · Source: "
         f"{_xml_escape(meta.get('source', 'Office Connect'))}", st["foot"]))
@@ -765,8 +783,9 @@ def arta_pdf(rep, meta):
 def servqual_pdf(sq, meta):
     st = _pdf_styles()
     f = _pdf_head(st, meta)
+    f.append(Paragraph(_xml_escape(_servqual_basis(sq)), st["body"]))
     if not sq.get("has_data"):
-        f.append(Paragraph("No responses in this scope.", st["body"]))
+        f.append(Paragraph("No valid dimension ratings in this scope.", st["body"]))
         return _pdf_doc(meta, f)
 
     f.append(_box("Summary", [Paragraph(_xml_escape(_na_sq_summary(sq) + " " + _na_sq_osq(sq)),
@@ -916,6 +935,8 @@ def _title_slide(prs, meta):
     _txt(s, meta["title"], 0.8, 2.0, 11.7, 2.4, size=40, bold=True, color="FFFFFF")
     if meta.get("scope"):
         _txt(s, meta["scope"], 0.8, 4.3, 11.7, 0.6, size=18, color="D6E4F0")
+    if meta.get("date_note"):
+        _txt(s, meta["date_note"], 0.8, 5.35, 11.7, 0.8, size=16, color="D6E4F0")
     _txt(s, f"Generated {meta.get('generated', '')} - {meta.get('source', 'Office Connect')}",
          0.8, 6.7, 11.7, 0.4, size=11, color="8FA8C4")
 
@@ -1188,8 +1209,9 @@ def arta_pptx(rep, meta):
 def servqual_pptx(sq, meta):
     prs = _ppt_new()
     _title_slide(prs, meta)
+    _methods_slide(prs, meta, 1, _servqual_basis(sq), "How to read the counts")
     if not sq.get("has_data"):
-        _txt(_slide(prs), "No responses in this scope.", 0.8, 3, 11.7, 1, size=20)
+        _txt(_slide(prs), "No valid dimension ratings in this scope.", 0.8, 3, 11.7, 1, size=20)
         return _ppt_save(prs)
 
     loc = ", ".join(x for x in (meta.get("place"), meta.get("period")) if x)
@@ -1203,11 +1225,11 @@ def servqual_pptx(sq, meta):
             base += f", {loc}"
         return base + f" (N = {nresp:,})"
 
-    pg = 1
+    pg = 2
     g = sq.get("gap")
     vtxt = f" - {g['label'].lower()} expectations" if g and g.get("label") else ""
     _hero(prs, meta, pg, f"{sq['overall']['shown']}/7",
-          "Overall experience rating" + vtxt + f"\n{sq['respondents']:,} participants")
+          "Overall experience rating" + vtxt + f"\n{sq['overall'].get('n', 0):,} rated respondent(s)")
     pg += 1
 
     dims = [d for d in sq["dimensions"] if d.get("value") is not None]

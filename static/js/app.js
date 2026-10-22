@@ -1213,10 +1213,15 @@ window.cssToast = window.cssToast || function (msg) {
     btn.setAttribute("aria-expanded", "false");
     // The native <select> keeps the <label for=…>; mirror it onto the button.
     var lbl = select.id ? document.querySelector('label[for="' + select.id + '"]') : null;
-    if (lbl) btn.setAttribute("aria-label", lbl.textContent.trim());
+
 
     var face = document.createElement("span");
     face.className = "combobox-label";
+    face.id = uid + "-value";
+    if (lbl) {
+      if (!lbl.id) lbl.id = uid + "-label";
+      btn.setAttribute("aria-labelledby", lbl.id + " " + face.id);
+    }
 
     var caret = document.createElement("span");
     caret.className = "combobox-caret";

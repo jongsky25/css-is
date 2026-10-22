@@ -17,10 +17,21 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.90"
+APP_VERSION = "7.91"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "7.91",
+        "date": "October 22, 2026",
+        "summary": "Survey reports explain their filters, dates and response counts more clearly.",
+        "changes": [
+            "Reports show the included date range and distinguish submissions, rated responses and item answers.",
+            "Saved activity filters apply to downloads too, and unavailable filters keep the results empty.",
+            "Excel lists unrated submissions with blank scores so its rows match the report count.",
+            "Empty results explain how to change or reset filters, with an Apply button that works without JavaScript."
+        ]
+    },
     {
         "version": "7.90",
         "date": "October 22, 2026",

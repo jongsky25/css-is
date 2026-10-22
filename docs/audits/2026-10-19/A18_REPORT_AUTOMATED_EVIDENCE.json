@@ -1,0 +1,153 @@
+{
+  "release": "7.91",
+  "scope": "Report filter form, report-context including expanded count definitions, and download menu; local synthetic data only",
+  "axe_version": "4.14.0",
+  "axe_sha256": "20c09fe157a8a34a30e241aaa1fcdade657734f08ab379ecfbeb7d45cc46e878",
+  "browser": "Chromium 154.0.8037.57",
+  "detected_violations": 0,
+  "incomplete_checks": 9,
+  "cases": [
+    {
+      "version": "4.14.0",
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "impact": "serious"
+        }
+      ],
+      "passes": 16,
+      "width": 1440,
+      "theme": "light",
+      "state": "counts-open",
+      "overflow": false
+    },
+    {
+      "version": "4.14.0",
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "impact": "serious"
+        }
+      ],
+      "passes": 19,
+      "width": 1440,
+      "theme": "light",
+      "state": "empty",
+      "overflow": false
+    },
+    {
+      "version": "4.14.0",
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "impact": "serious"
+        }
+      ],
+      "passes": 16,
+      "width": 1440,
+      "theme": "light",
+      "state": "filtered",
+      "overflow": false
+    },
+    {
+      "version": "4.14.0",
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "impact": "serious"
+        }
+      ],
+      "passes": 16,
+      "width": 390,
+      "theme": "dark",
+      "state": "counts-open",
+      "overflow": false
+    },
+    {
+      "version": "4.14.0",
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "impact": "serious"
+        }
+      ],
+      "passes": 19,
+      "width": 390,
+      "theme": "dark",
+      "state": "empty",
+      "overflow": false
+    },
+    {
+      "version": "4.14.0",
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "impact": "serious"
+        }
+      ],
+      "passes": 16,
+      "width": 390,
+      "theme": "dark",
+      "state": "filtered",
+      "overflow": false
+    },
+    {
+      "version": "4.14.0",
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "impact": "serious"
+        }
+      ],
+      "passes": 16,
+      "width": 390,
+      "theme": "light",
+      "state": "counts-open",
+      "overflow": false
+    },
+    {
+      "version": "4.14.0",
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "impact": "serious"
+        }
+      ],
+      "passes": 19,
+      "width": 390,
+      "theme": "light",
+      "state": "empty",
+      "overflow": false
+    },
+    {
+      "version": "4.14.0",
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "impact": "serious"
+        }
+      ],
+      "passes": 16,
+      "width": 390,
+      "theme": "light",
+      "state": "filtered",
+      "overflow": false
+    }
+  ],
+  "manual_remaining": [
+    "Review axe incomplete checks",
+    "Screen-reader sessions",
+    "Other browsers and real devices",
+    "Staff task observations"
+  ],
+  "reproduce": "A18_REPORT_AXE_PATH=/path/to/axe-core-4.14.0/axe.min.js A18_REPORT_EVIDENCE=/tmp/a18-report-evidence python -m pytest -q tests/test_report_scope_browser.py"
+}
