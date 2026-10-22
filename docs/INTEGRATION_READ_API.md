@@ -108,7 +108,7 @@ Receipts are immutable and retained without automatic expiration, preserving ret
 
 ## Verification and remaining A19 work
 
-The original 7.92 read/survey evidence remains below. For 7.93, the API/work/deployment/release regression set passed **271 tests** in shuffled order (seed 311), with no failures or skips. The final read/write API set passed **83 tests** in shuffled order with no failures or skips, including real writer contention, completed-case refusal and recovery with a newly registered session. Required CI verifies the complete final head.
+The original 7.92 read/survey evidence remains below. For 7.93, the API/work/deployment/release regression set passed **271 tests** in shuffled order (seed 311), with no failures or skips. The final read/write API set passed **84 tests** in shuffled order with no failures or skips, including real writer contention, completed-case refusal and recovery with a newly registered session and unresolved migrated-document operations. Required CI verifies the complete final head.
 
 - Broad local API/survey/shared-work/registry/deployment regression: **289 passed**, no failures or skips. Final contract/survey verification in shuffled order: **50 passed**, no failures or skips. Final required CI verifies the complete head.
 - Authenticated HTTP tests cover typed schema/artifact agreement, current session/account/grant revocation, technical-admin boundaries, restricted/canonical document access, linked-case intersection, task reassignment/parent scoping, invalid and duplicate parameters, private errors and read-only business-state invariants.

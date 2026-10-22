@@ -421,3 +421,22 @@ def test_same_actor_can_recover_after_new_login_but_anonymous_requests_cannot_wr
         other.cookies.set(auth.COOKIE_NAME,session_token(u[2]))
         assert body(other,'/operations/'+key) == result
     assert counts(c) == before
+
+
+def test_uncertain_legacy_document_operation_is_a_workflow_blocker_not_a_stale_task(api):
+    from tests.test_work import legacy_setup, migrate
+    import work
+    c, u, unit, clients, app = api
+    doc = legacy_setup(c,u,unit)
+    report = migrate(c,u,doc)
+    item = work.raw(c,report['case_id'])
+    task = work_tasks.list_for_case(c,u[3],item['id'])[0]
+    c.execute('''INSERT INTO document_job(id,document_id,actor_id,kind,payload_json,state,created_at,updated_at)
+        VALUES(?,?,?,'dispatch','{}','unknown','2026-10-22','2026-10-22')''',
+        (str(uuid4()),doc['id'],u[1]['id'])); c.commit()
+    before = counts(c)
+    response = post(clients[3],item,task,str(uuid4()))
+    assert response.status_code == 409, response.text
+    assert response.json()['error']['code'] == 'action_unavailable'
+    assert 'related workflow operation' in response.json()['error']['message']
+    assert counts(c) == before

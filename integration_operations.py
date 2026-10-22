@@ -44,7 +44,7 @@ def acknowledge(conn, payload, case_id, task_id, operation_id, revision, reason)
     with transaction(conn):
         user = session_actor(conn, payload)
         # Check current target visibility before revealing a key collision.
-        work_reads.task(conn, user, case_id, task_id)
+        current_task = work_reads.task(conn, user, case_id, task_id)
         found = rows(conn, 'SELECT * FROM work_api_operation WHERE actor_id=? AND operation_id=?',
                      (user['id'], operation_id))
         if found:
@@ -59,8 +59,11 @@ def acknowledge(conn, payload, case_id, task_id, operation_id, revision, reason)
             updated = work_tasks.mutate_in_transaction(conn, user, case_id, task_id,
                                                        revision, 'acknowledge', {'reason': reason})
         except docs.Conflict:
-            raise OperationError(409, 'revision_conflict',
-                                 'The task changed. Read its current revision before making a new request.') from None
+            if current_task['revision'] != revision:
+                raise OperationError(409, 'revision_conflict',
+                                     'The task changed. Read its current revision before making a new request.') from None
+            raise OperationError(409, 'action_unavailable',
+                                 'A related workflow operation needs attention. Review the task in the system.') from None
         except permissions.Denied:
             raise
         except ValueError:
