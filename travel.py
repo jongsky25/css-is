@@ -17,6 +17,7 @@ SETTING_DEFAULTS = {
     "travel.sig.station": "",
     "travel.template_admins": "",
     "travel.retention_months": "12",
+    "travel.review_required": "1",     # the assigned reviewer must approve the papers before "ready" (spot feedback #174)
 }
 
 ROUTE_TYPES = (("residence_airport", "Residence ⇄ Airport"), ("residence_venue", "Residence ⇄ Venue"))
@@ -1056,6 +1057,10 @@ def mark_ready(conn, filing):
         raise TravelError("Not ready yet: " + missing[0] + (f" (and {len(missing) - 1} more)" if len(missing) > 1 else ""))
     if filing["status"] == "ready":
         return filing
+    import travel_review
+    held = travel_review.gate(conn, filing)
+    if held:
+        raise TravelError(held)
     now = tz.now_iso()
     conn.execute("UPDATE travel_filing SET status='ready', ready_at=?, updated_at=? WHERE id=?", (now, now, filing["id"]))
     conn.commit()

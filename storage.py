@@ -723,7 +723,9 @@ def init_db(conn):
         status TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open','ready','submitted','withdrawn')),
         gen_state TEXT NOT NULL DEFAULT 'idle' CHECK (gen_state IN ('idle','running','done','failed')),
         opened_at TEXT, ready_at TEXT, submitted_at TEXT, withdrawn_at TEXT,
-        created_by TEXT, updated_at TEXT, purged_at TEXT
+        created_by TEXT, updated_at TEXT, purged_at TEXT,
+        review_state TEXT NOT NULL DEFAULT '', reviewer_id INTEGER, review_round INTEGER NOT NULL DEFAULT 0,
+        review_requested_at TEXT, review_decided_at TEXT
     );
     CREATE UNIQUE INDEX IF NOT EXISTS ux_travel_ca_live
         ON travel_filing(user_id, COALESCE(entry_id,-1), COALESCE(event_id,-1))
@@ -769,6 +771,16 @@ def init_db(conn):
         created_at TEXT,
         UNIQUE (filing_id, sig)
     );
+    CREATE TABLE IF NOT EXISTS travel_review_note (
+        id INTEGER PRIMARY KEY,
+        filing_id INTEGER NOT NULL REFERENCES travel_filing(id) ON DELETE CASCADE,
+        round INTEGER NOT NULL DEFAULT 1,
+        item_code TEXT, kind TEXT NOT NULL CHECK (kind IN ('missing','incorrect','other')),
+        note TEXT NOT NULL,
+        state TEXT NOT NULL DEFAULT 'draft' CHECK (state IN ('draft','sent','resolved')),
+        created_by TEXT, created_at TEXT, resolved_at TEXT
+    );
+    CREATE INDEX IF NOT EXISTS ix_travel_review_note_filing ON travel_review_note(filing_id, state);
     CREATE TABLE IF NOT EXISTS travel_route_type (
         code TEXT PRIMARY KEY, label TEXT NOT NULL,
         active INTEGER NOT NULL DEFAULT 1, sort INTEGER NOT NULL DEFAULT 0
@@ -953,6 +965,12 @@ def _add_missing_columns(conn):
         conn.execute("UPDATE calendar_entry_person SET seen_seq = (SELECT sequence FROM calendar_entry "
                      "WHERE id = entry_id) WHERE seen_seq IS NULL")
         set_setting(conn, "cal_seen_backfilled", "1")
+    tf_cols = {row[1] for row in conn.execute("PRAGMA table_info(travel_filing)")}
+    for col, ddl in (("review_state", "TEXT NOT NULL DEFAULT ''"), ("reviewer_id", "INTEGER"),   # admin review (spot feedback #174)
+                     ("review_round", "INTEGER NOT NULL DEFAULT 0"), ("review_requested_at", "TEXT"),
+                     ("review_decided_at", "TEXT")):
+        if tf_cols and col not in tf_cols:
+            conn.execute(f"ALTER TABLE travel_filing ADD COLUMN {col} {ddl}")
     ti_cols = {row[1] for row in conn.execute("PRAGMA table_info(travel_item)")}
     if ti_cols and "drive_source" not in ti_cols:     # 'upload' = a folder the office made; 'link' = pasted by the person
         conn.execute("ALTER TABLE travel_item ADD COLUMN drive_source TEXT")
@@ -4063,6 +4081,9 @@ _AUDIT_ACTIONS = {
     "travel_submit":       ("Marked a travel filing submitted", "Travel filing"),
     "travel_withdraw":     ("Withdrew a travel filing", "Travel filing"),
     "travel_flag_decide":  ("Decided a travel flag", "Travel filing"),
+    "travel_review_request": ("Asked a reviewer to check travel papers", "Travel filing"),
+    "travel_review_feedback": ("Sent travel paper review notes back", "Travel filing"),
+    "travel_review_approve": ("Approved travel papers after review", "Travel filing"),
     "travel_ceiling_save": ("Saved travel ceilings or routes", "Travel filing"),
     "travel_library_save": ("Saved the MC 114 justification library", "Travel filing"),
     "travel_settings_save": ("Saved travel filing settings", "Travel filing"),

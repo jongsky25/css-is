@@ -2,7 +2,7 @@
 import travel_rules as rules
 
 
-def filing(f, items, flags, *, owner, can_verify=False):
+def filing(f, items, flags, *, owner, can_verify=False, review_required=False, reviewer=''):
     base = f"/travel/f/{f['ref_code']}"
     status = f.get('status')
     blockers = rules.readiness(f, items, flags) if status in ('open', 'ready') else []
@@ -51,6 +51,20 @@ def filing(f, items, flags, *, owner, can_verify=False):
             state, heading = 'action', 'Complete the claim details'
             step = 'Review the remaining checklist requirements below before marking this filing ready.'
             action = {'url':'#travel-answers', 'label':'Complete claim details'} if owner else None
+        elif status == 'open' and review_required and f.get('review_state') != 'approved':
+            rs = f.get('review_state') or ''
+            if rs == 'requested':
+                state, heading, actor = 'waiting', 'Waiting for the reviewer', reviewer or 'The assigned reviewer'
+                step = 'The reviewer is checking the generated and uploaded documents. You will get an email when they send notes back or approve. This does not approve or pay the claim.'
+                action = {'url':'#travel-review', 'label':'View the review'}
+            elif rs == 'changes':
+                state, heading = 'attention', 'The reviewer sent notes back'
+                step = 'Read each note below, fix or add the document it names, then ask for the review again. Paper submission waits for the approval.'
+                action = {'url':'#travel-review', 'label':'Read the notes and ask again'} if owner else None
+            else:
+                state, heading = 'action', 'Ask an admin to review your papers'
+                step = 'Every required form and attachment is in. Choose a reviewer from the Administrative Section to check them for completeness before you mark the claim ready.'
+                action = {'url':'#travel-review', 'label':'Choose a reviewer'} if owner else None
         elif status == 'ready':
             state, heading = 'ready', 'Ready to print and sign'
             step = 'Print the listed copies and sign where indicated. Mark submitted only after handing in the papers; this app does not send them for you.'
