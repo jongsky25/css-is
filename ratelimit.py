@@ -24,6 +24,8 @@ def _limits(bucket):
     """(max_requests, window_seconds) for a bucket, env-overridable.
     CSS_RL_<BUCKET>="<max>/<window_seconds>", e.g. CSS_RL_CHECK="120/60"."""
     defaults = {
+        "integration_issue": (5, 900),  # password confirmation attempts per owner
+        "integration_read": (120, 60),  # delegated reads per owner, across credentials
         "check": (300, 60),      # email duplicate-check probe (cheap GET, on keystroke)
         "register": (120, 60),   # POST registration — generous for a busy venue NAT
         "telemetry": (600, 60),  # UX telemetry batches — high-volume, low-value-per-request

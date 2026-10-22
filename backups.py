@@ -468,14 +468,21 @@ def prune_backups(keep, keep_daily=0):
     return deleted
 
 
-def clear_restored_sessions(db_path):
-    """A restored snapshot must not resurrect a previously revoked cookie."""
+def clear_restored_sessions(db_path, *, revoke_integrations=False):
+    """Clear restored browser sessions; deliberate restores also revoke tools.
+
+    Routine boot recovery from the newest snapshot preserves unexpired tool
+    grants. An operator-selected historical restore must not revive old keys.
+    """
     conn = sqlite3.connect(db_path)
     try:
         with conn:
             if conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' "
                             "AND name='login_session'").fetchone():
                 conn.execute("DELETE FROM login_session")
+            if revoke_integrations and conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' "
+                                                     "AND name='integration_credential'").fetchone():
+                conn.execute("UPDATE integration_credential SET revoked_at=COALESCE(revoked_at,CAST(strftime('%s','now') AS INTEGER))")
     finally:
         conn.close()
 
@@ -503,7 +510,7 @@ def restore_backup(name, db_path="css_is.db"):
     # A deliberate restore may legitimately move the live DB to an OLDER state, so
     # realign the high-water mark DOWN to it — otherwise the boot/persist guards
     # would reject the admin's own chosen snapshot as "stale".
-    clear_restored_sessions(db_path)
+    clear_restored_sessions(db_path,revoke_integrations=True)
     reset_highwater(db_path)
     return safety
 

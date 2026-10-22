@@ -1,3 +1,12 @@
+## 7.99 — October 22, 2026
+
+- Start A20 with user-delegated, deployment/API-bound read credentials for document metadata and/or work/task metadata. Each named integration retains its owner's current domain permissions and cannot access browser routes, task writes, write context or human operation receipts.
+- Add browser consent with current-password confirmation, session-bound CSRF, same-origin protection, bounded forms, one-time secret disclosure, 7/30/90-day expiry, owner revocation and account-administrator revocation. Rotation uses an independently issued replacement followed by revocation of the old credential.
+- Persist only SHA-256 hashes of high-entropy opaque secrets. Immutable grants and permanent revocation survive repeatable schema installation; password, role, account-state, directory-link and bureau-access changes revoke existing credentials.
+- Preserve unexpired credentials through routine boot recovery, but revoke restored credentials after an operator-selected historical database restore so old snapshots cannot revive access.
+- Recheck credential expiry, audience, account state and current domain authority on reads. Reject mixed cookie/bearer or duplicate authorization identities without fallback. Attribute minimized credential-use records through the existing serialized audit chain and fail closed when that audit cannot be stored.
+- Publish API contract 1.3.0 with read-only bearer security declarations, owner-wide read and issuance limits, paginated credential history, and an independent standard-library read client. No provider or dependency addition. Service principals, OAuth and machine writes remain later A20 work.
+
 ## 7.98 — October 22, 2026
 
 - Extend A19 with typed task submission for review through `/api/v1`, using the same task service, current owner/scoped-officer permissions, linked-document access and workflow blockers as the screens.

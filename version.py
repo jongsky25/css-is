@@ -17,10 +17,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.98"
+APP_VERSION = "7.99"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "7.99",
+        "date": "October 22, 2026",
+        "summary": "Connect tools with separate, limited read access that you can revoke.",
+        "changes": [
+            "Open Connected tools from My profile to authorize a named tool for selected document or work metadata.",
+            "Each credential expires, is shown only once, and can be revoked without sharing your password or browser session.",
+            "Tool reads follow your current record permissions and are recorded separately; editing and approvals remain unavailable to these credentials."
+        ]
+    },
     {
         "version": "7.98",
         "date": "October 22, 2026",

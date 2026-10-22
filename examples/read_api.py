@@ -15,12 +15,12 @@ class ApiFailure(Exception):
 
 class NoRedirect(HTTPRedirectHandler):
     def redirect_request(self, req, fp, code, msg, headers, newurl):
-        # Never forward the user's session to a redirect destination.
+        # Never forward a session or read credential to a redirect destination.
         return None
 
 
 class ReadClient:
-    def __init__(self, base_url, session, cookie_name='css_session', timeout=15):
+    def __init__(self, base_url, session=None, cookie_name='css_session', timeout=15, *, credential=None):
         parsed = urlsplit(base_url)
         if parsed.username or parsed.password or parsed.query or parsed.fragment:
             raise ValueError('Choose an API base URL without credentials, query or fragment.')
@@ -28,24 +28,32 @@ class ReadClient:
             raise ValueError('Use HTTPS, or HTTP on loopback for a local test.')
         if not parsed.hostname or not parsed.path.rstrip('/').endswith('/api/v1'):
             raise ValueError('The base URL must end with /api/v1.')
-        if not re.fullmatch(r'[A-Za-z0-9._~-]{1,4096}',session):
+        if (session is None)==(credential is None):
+            raise ValueError('Supply one session or one read credential.')
+        if credential is not None and (not isinstance(credential,str) or not re.fullmatch(r'oc_read_[0-9a-f]{32}\.[0-9a-f]{64}',credential)):
+            raise ValueError('The read credential is invalid.')
+        if session is not None and not re.fullmatch(r'[A-Za-z0-9._~-]{1,4096}',session):
             raise ValueError('The session value is invalid.')
         if not re.fullmatch(r'[A-Za-z0-9_-]+',cookie_name):
             raise ValueError('The cookie name is invalid.')
         self.base_url = base_url.rstrip('/')
         self.session, self.cookie_name, self.timeout = session, cookie_name, timeout
+        self.credential = credential
         self.opener = build_opener(NoRedirect())
 
     def get(self, path):
         return self._request(path)
 
     def _request(self, path, *, data=None, headers=None):
+        if self.credential is not None and data is not None:
+            raise ValueError('Read credentials cannot perform writes.')
         if not path.startswith('/') or path.startswith('//') or '\\' in path or '..' in urlsplit(path).path.split('/'):
             raise ValueError('Choose an API-relative read path.')
         if path == '/api/v1' or path.startswith('/api/v1/'):
             path = path[len('/api/v1'):] or '/'
+        identity = {'Authorization':'Bearer ' + self.credential} if self.credential is not None else {'Cookie':self.cookie_name + '=' + self.session}
         request = Request(self.base_url + path,
-                          headers={'Accept': 'application/json', 'Cookie': self.cookie_name + '=' + self.session,
+                          headers={'Accept': 'application/json', **identity,
                                    **(headers or {})}, data=data, method='POST' if data is not None else 'GET')
         try:
             with self.opener.open(request, timeout=self.timeout) as response:
@@ -144,19 +152,22 @@ class TaskClient(ReadClient):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--base-url', required=True)
-    parser.add_argument('--session-file', required=True, help='Local private file containing an existing user session, never a password')
+    identity = parser.add_mutually_exclusive_group(required=True)
+    identity.add_argument('--session-file', help='Local private file containing an existing user session, never a password')
+    identity.add_argument('--credential-file', help='Local private file containing a delegated read credential')
     parser.add_argument('--cookie-name', default='css_session')
     parser.add_argument('--resource', choices=('documents', 'work-items'), default='documents')
     options = parser.parse_args()
     try:
-        session = Path(options.session_file).read_text().strip()
-        client = ReadClient(options.base_url, session, options.cookie_name)
+        value = Path(options.credential_file or options.session_file).read_text().strip()
+        client = (ReadClient(options.base_url,credential=value) if options.credential_file
+                  else ReadClient(options.base_url,value,options.cookie_name))
         for page in client.pages(options.resource):
             for item in page:
                 print(json.dumps(item, ensure_ascii=False))
     except (ApiFailure, ValueError, OSError) as exc:
         # File errors can contain local paths, so only print public error text.
-        parser.exit(1, ('Could not read the local session file.' if isinstance(exc, OSError) else str(exc)) + '\n')
+        parser.exit(1, ('Could not read the local credential/session file.' if isinstance(exc, OSError) else str(exc)) + '\n')
 
 
 if __name__ == '__main__':
