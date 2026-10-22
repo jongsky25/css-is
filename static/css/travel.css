@@ -112,3 +112,6 @@
 .tv-guidance .btn { white-space:normal; }
 .tv-form label { max-width:100%; }
 @media(max-width:640px) { .tv-guidance dl { grid-template-columns:minmax(0,1fr); gap:.3rem; } .tv-guidance dd { margin-bottom:.5rem; } }
+
+/* A required field: the asterisk is drawn here so the label text stays as written (spot feedback #172). */
+.tv-required > label::after { content: " *"; }

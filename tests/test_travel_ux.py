@@ -235,6 +235,7 @@ def test_actual_fare_survives_policy_calculation_and_browser_reload(page, viewer
     page.reload()
     pw.expect(page.get_by_label('Actual fare claimed (₱)', exact=True).first).to_have_value('75')
     pw.expect(page.locator('#draft-status')).to_contain_text('Draft restored')
+    page.get_by_label('Your designation (shown on the forms)').fill('Medical Officer V')
     page.get_by_role('button', name='Make the forms', exact=True).click()
     pw.expect(page.get_by_text('Done. Open each form', exact=False)).to_be_visible(timeout=15000)
     assert items(conn, ref)['appendix_b']['doc_url']
@@ -283,6 +284,7 @@ def test_storage_failure_is_visible_and_hidden_refund_is_not_generated(page, vie
     page.reload()
     page.evaluate("() => { Storage.prototype.setItem = function () { throw new Error('full'); }; }")
     page.get_by_label('Purpose (completes "To …")', exact=True).fill('attend workshop')
+    page.get_by_label('Your designation (shown on the forms)').fill('Medical Officer V')
     pw.expect(page.locator('#draft-status')).to_contain_text('Draft could not be saved')
     page.get_by_role('button', name='Make the forms', exact=True).click()
     pw.expect(page.get_by_text('Done. Open each form', exact=False)).to_be_visible(timeout=15000)

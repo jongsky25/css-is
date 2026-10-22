@@ -1,3 +1,10 @@
+## 7.94 — October 22, 2026
+
+- Travel prepare page: designation and purpose are required (marked *) before the forms are made (spot feedback #172).
+- DPO: laid out like the office's sample (title and number indented, "SUBJECT:" with a justified, underlined subject hanging at 1.5 in, justified body with 0.5 in first lines, signatory block at 2.25 in, 12 pt after each paragraph). The first paragraph gives the invitation's rationale (when there is one) and then who conducts the activity, when and where; the subject reads "Authority for Select Bureau of Local Health Systems Development (BLHSD) Personnel to Conduct / Participate in / Serve as Resource Person in the …" (spot feedback #170). Re-make the Apps Script templates for the layout to apply.
+- New "DPO cites" box in the Documents block of an activity (`calendar_entry_dpo_cites`, created on start-up): the typed text opens the DPO's first paragraph, ahead of the invitation's key lines.
+- No dependency changes.
+
 ## 7.93 — October 22, 2026
 
 - ARTA walk-in reports can now be filtered to any date range of up to a year, down to a single day: pick From and To dates, or tap Today, Last 7 days or This month.

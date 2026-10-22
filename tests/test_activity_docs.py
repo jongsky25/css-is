@@ -158,6 +158,13 @@ def test_a_dpo_follows_the_doh_order_and_leaves_the_blanks(viewer, conn, relay):
     assert f["dpo_no"] == ad.BLANK and f["dpo_date"] == ad.BLANK and f["funding_source"] == ad.BLANK
     assert f["dpo_year"] == "2026"
     assert f["subject"].startswith("Authority for Select") and "CALEP Field Visit" in f["subject"] and "in Cebu City" in f["subject"]
+    # spot feedback #170: the layout of the office's sample DPO. BLHSD conducts the activity, so its personnel conduct it.
+    assert f["subject"] == ("Authority for Select Bureau of Local Health Systems Development (BLHSD) Personnel to Conduct the "
+                            "CALEP Field Visit on October 12-16, 2026, in Cebu City")
+    assert f["background"] == ("The DOH, through the Bureau of Local Health Systems Development (BLHSD), will conduct the "
+                               "CALEP Field Visit on October 12-16, 2026, in Cebu City.")
+    assert f["intro"] == ("Authority is hereby given to the following select BLHSD personnel to conduct the CALEP Field Visit "
+                          "on October 12-16, 2026, in Cebu City:")
     assert "CALEP Field Visit" in f["background"] and f["intro"].startswith("Authority is hereby given to the following select")
     assert f["intro"].endswith(":") and "October 12-16, 2026" in f["intro"]
     assert f["head_name"] == "DR. ANA REYES" and f["head_title"] == "Director IV"      # the signatory is printed in capitals
@@ -376,10 +383,12 @@ def test_a_dpo_for_an_activity_another_office_runs_keeps_a_broad_first_paragraph
                                          "file_url": "", "file_name": ""}
     draft(viewer, eid, "dpo")
     f = relay.calls[0]["fields"]
-    # spot feedback #161: broad about the activity, no host, no invitation lines, no section name
-    assert f["background"] == "CALEP Field Visit will be held on October 12-16, 2026 in Cebu City."
-    assert "Center for Health Development VII" not in f["background"] and "lecture on CALEP" not in f["background"]
-    assert "to serve as resource person in CALEP Field Visit" in f["intro"]
+    # spot feedback #170: the activity, who conducts it and the rationale from the invitation
+    assert f["background"] == ("Per memo dated October 1, 2026, we are requested to lecture on CALEP. In support of this, the "
+                               "Center for Health Development VII will conduct the CALEP Field Visit on October 12-16, 2026, in Cebu City.")
+    assert "to serve as resource person in the CALEP Field Visit" in f["intro"]
+    assert f["subject"] == ("Authority for Select Bureau of Local Health Systems Development (BLHSD) Personnel to Serve as "
+                            "Resource Person in the CALEP Field Visit on October 12-16, 2026, in Cebu City")
     # spot feedback #160: the signatory unit is always the bureau
     assert f["unit_name"] == "Bureau of Local Health Systems Development"
 
@@ -390,7 +399,7 @@ def test_switching_back_to_blhsd_restores_the_usual_dpo_wording(viewer, conn, re
     outside(viewer, eid, conducted_by="blhsd")
     assert ad.get_outside(conn, eid) is None
     draft(viewer, eid, "dpo")
-    assert "invited" not in relay.calls[0]["fields"]["background"]
+    assert "CHD VII" not in relay.calls[0]["fields"]["background"]
 
 
 def test_an_outside_activity_needs_a_host_and_a_known_invitation_type(viewer, conn):
@@ -669,3 +678,54 @@ def test_the_settings_page_says_the_certifying_officer_is_only_a_fallback(admin)
     assert "Certifying officer, fallback" in page and "depends on the division" in page
     assert "used only when the directory has no division head" in page
     assert "Leave the name blank to use the Director from the directory" in page
+
+
+# ----------------------------------------------------------------- "DPO cites" (spot feedback #170) ---
+
+def cites(client, eid, text):
+    return client.post(f"/calendar/entries/{eid}/dpo-cites", content=urlencode({"dpo_cites": text}), headers=FORM,
+                       follow_redirects=False)
+
+
+RA = ("Republic Act No. 7883, or the Barangay Health Workers' Benefits and Incentives Act of 1995, provides for the "
+      "training and continuing education of BHWs.")
+
+
+def test_dpo_cites_open_the_first_paragraph_of_a_bureau_run_activity(viewer, conn, relay):
+    eid = create(viewer, kind="travel", title="CALEP Field Visit", venue="Cebu City", start_date="2026-10-12",
+                 end_date="2026-10-16", people=[str(uid(conn, "viewer@test.local")), str(uid(conn, "encoder@test.local"))])
+    r = cites(viewer, eid, "  " + RA.replace(", or", ",\n or") + "  ")
+    assert r.status_code == 303 and "ok=" in r.headers["location"] and ad.get_dpo_cites(conn, eid) == RA
+    draft(viewer, eid, "dpo")
+    assert relay.calls[0]["fields"]["background"] == (
+        RA + " In support of this, the DOH, through the Bureau of Local Health Systems Development (BLHSD), will conduct "
+        "the CALEP Field Visit on October 12-16, 2026, in Cebu City.")
+    assert 'name="dpo_cites"' in viewer.get(f"/calendar/entries/{eid}").text and "DPO cites" in viewer.get(f"/calendar/entries/{eid}").text
+
+
+def test_dpo_cites_win_over_the_invitation_lines_and_clearing_them_brings_the_invitation_back(viewer, conn, relay):
+    eid = create(viewer, kind="travel", title="CALEP Field Visit", start_date="2026-10-12", end_date="2026-10-12",
+                 people=[str(uid(conn, "viewer@test.local")), str(uid(conn, "encoder@test.local"))])
+    outside(viewer, eid, conducted_by="outside", host="CHD VII", invited_as="attendee", invitation="Per memo of October 1.")
+    cites(viewer, eid, "Per DM 2026-0412.")
+    draft(viewer, eid, "dpo")
+    assert relay.calls[-1]["fields"]["background"].startswith("Per DM 2026-0412. In support of this, the CHD VII will conduct")
+    cites(viewer, eid, "   ")                                                      # empty clears it
+    assert ad.get_dpo_cites(conn, eid) == ""
+    draft(viewer, eid, "dpo")
+    assert relay.calls[-1]["fields"]["background"].startswith("Per memo of October 1. In support of this")
+
+
+def test_without_any_citation_the_first_paragraph_only_says_who_conducts_it(viewer, conn, relay):
+    eid = create(viewer, kind="travel", title="CALEP Field Visit", start_date="2026-10-12", end_date="2026-10-12",
+                 people=[str(uid(conn, "viewer@test.local")), str(uid(conn, "encoder@test.local"))])
+    draft(viewer, eid, "dpo")
+    assert relay.calls[0]["fields"]["background"] == (
+        "The DOH, through the Bureau of Local Health Systems Development (BLHSD), will conduct the CALEP Field Visit on October 12, 2026.")
+
+
+def test_dpo_cites_cannot_be_set_for_an_entry_the_person_cannot_see(viewer, conn):
+    private = st.cal_create(conn, "CALEP Private", "2026-10-12", kind="travel", audience="people",
+                            people=[uid(conn, "admin@test.local")])
+    conn.commit()
+    assert cites(viewer, private, "x").status_code == 404 and ad.get_dpo_cites(conn, private) == ""
