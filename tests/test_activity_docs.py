@@ -376,9 +376,9 @@ def test_a_dpo_for_an_activity_another_office_runs_keeps_a_broad_first_paragraph
                                          "file_url": "", "file_name": ""}
     draft(viewer, eid, "dpo")
     f = relay.calls[0]["fields"]
-    # spot feedback #161: broad about the activity, no host, no invitation lines, no section name
-    assert f["background"] == "CALEP Field Visit will be held on October 12-16, 2026 in Cebu City."
-    assert "Center for Health Development VII" not in f["background"] and "lecture on CALEP" not in f["background"]
+    # spot feedback #170: the activity, who conducts it and the rationale from the invitation
+    assert f["background"] == ("CALEP Field Visit will be held on October 12-16, 2026 in Cebu City, conducted by Center for "
+                               "Health Development VII. Per memo dated October 1, 2026, we are requested to lecture on CALEP.")
     assert "to serve as resource person in CALEP Field Visit" in f["intro"]
     # spot feedback #160: the signatory unit is always the bureau
     assert f["unit_name"] == "Bureau of Local Health Systems Development"
@@ -390,7 +390,7 @@ def test_switching_back_to_blhsd_restores_the_usual_dpo_wording(viewer, conn, re
     outside(viewer, eid, conducted_by="blhsd")
     assert ad.get_outside(conn, eid) is None
     draft(viewer, eid, "dpo")
-    assert "invited" not in relay.calls[0]["fields"]["background"]
+    assert "CHD VII" not in relay.calls[0]["fields"]["background"]
 
 
 def test_an_outside_activity_needs_a_host_and_a_known_invitation_type(viewer, conn):

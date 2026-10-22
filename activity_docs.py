@@ -215,9 +215,13 @@ def payload(conn, entry, key, user, owner_label="", positions=False) -> td.DocPa
         unit = owner_label.strip()
         who = "Select Personnel"       # spot feedback #161: the section the personnel belong to is not named
         outside = get_outside(conn, entry["id"])
-        # The first paragraph stays broad and states the activity, not who was invited; the host's invitation lines are
-        # no longer cited in a DPO (spot feedback #161).
-        background = f"{title} will be held on {days}{in_place}."
+        # The first paragraph states the activity, who is conducting it and, when the person pasted the invitation's key
+        # lines, the rationale (spot feedback #170, which supersedes #161 on this point).
+        conductor = outside["host"] if outside and outside["host"] else BUREAU
+        background = f"{title} will be held on {days}{in_place}, conducted by {conductor}."
+        rationale = (outside or {}).get("invitation", "").strip()
+        if rationale:
+            background += " " + (rationale if rationale[-1] in ".!?" else rationale + ".")
         if outside:
             role = "to serve as resource person in" if outside["invited_as"] == "resource_person" else "to participate in"
         else:

@@ -113,7 +113,7 @@
               {% for k, v in documents['invited_as'].items() %}<option value="{{ k }}" {{ 'selected' if out and out.invited_as == k }}>{{ v }}</option>{% endfor %}
             </select>
           </label>
-          <label>Key lines from the invitation (a note for you; the DPO does not cite them)
+          <label>Key lines from the invitation (the DPO cites them as the reason for the activity)
             <textarea name="invitation" rows="3" maxlength="600">{{ out.invitation if out }}</textarea></label>
         </div>
         <button class="cal-btn" type="submit">Save</button>
