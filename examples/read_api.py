@@ -10,7 +10,9 @@ from urllib.request import HTTPRedirectHandler, Request, build_opener
 
 
 class ApiFailure(Exception):
-    pass
+    def __init__(self, message, *, status=None):
+        super().__init__(message)
+        self.status = status
 
 
 class NoRedirect(HTTPRedirectHandler):
@@ -85,7 +87,7 @@ class ReadClient:
         except HTTPError as exc:
             # Do not print cookies, response bodies, login HTML or internal details.
             recovery = ' Check the saved operation key before retrying.' if data is not None else ''
-            raise ApiFailure(f'API request returned HTTP {exc.code}.' + recovery) from None
+            raise ApiFailure(f'API request returned HTTP {exc.code}.' + recovery, status=exc.code) from None
         except (URLError, OSError, TimeoutError, UnicodeError, HTTPException, json.JSONDecodeError):
             raise ApiFailure('The API request could not be completed. Check the operation result before retrying a write.') from None
 

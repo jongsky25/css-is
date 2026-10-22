@@ -1,6 +1,6 @@
 # Resumable change feed — A21 / 7.100
 
-`GET /api/v1/changes` lets an approved tool read small notices about permitted document, work-item and task revisions. This is a polling feed over the supported API. Signed webhook delivery, remote delivery receipts and provider adapters remain future A21 increments.
+`GET /api/v1/changes` lets an approved tool read small notices about permitted document, work-item and task revisions. This is a polling feed over the supported API. v7.101 adds an [independent signed HTTPS adapter](INTEGRATION_WEBHOOKS.md) with durable delivery history, retries/replay and a receiver receipt example; selecting and connecting a live provider remains later work.
 
 ## Contract and scope
 
@@ -82,4 +82,4 @@ The shuffled API/work/credential/Chromium/backup/release/deployment regression s
 
 Local checks cover domain rollback, failed notice/checkpoint storage, replay, hidden populations, restricted/canonical/linked-record authority, administrator boundaries, scope/identity/audience, expiry, limits, concurrency, repeatable installation and actual snapshot restore. A separate HTTP client recovers a replaced/lost response with its saved checkpoint. The inbox verifies atomic receipt/progress commits and duplicate refusal. Full CI verifies the final head.
 
-Signed push delivery, remote delivery receipts, external replay operations and one owner-selected provider adapter remain later A21 work. Production workflow observations remain deferred.
+The v7.101 [signed HTTPS adapter](INTEGRATION_WEBHOOKS.md) continues A21 on an integration owner's runner, with local synthetic receiver tests. Application-host push delivery, a selected live provider connection and production workflow observations remain deferred.

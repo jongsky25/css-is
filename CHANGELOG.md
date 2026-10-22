@@ -1,3 +1,12 @@
+## 7.101 — October 22, 2026
+
+- Continue A21 with an independent standard-library change-feed to HTTPS webhook adapter. It runs on the integration owner's runner, uses an existing delegated read credential and adds no application-host worker, upstream writes or new dependencies.
+- Commit validated minimal notices and progress together in a private local SQLite store; retain stable delivery IDs, attempt history, bounded retries, lease recovery, delivery status and explicit replay of failed/blocked deliveries. Honor bounded Retry-After and refuse redirects.
+- Re-read current source authority and resource identity/revision before each send, including retries and replay. Revoked credentials stop the invocation; unavailable, obsolete or no-longer-readable records are blocked without forwarding cached notices.
+- Sign versioned canonical JSON with timestamped HMAC-SHA256. Publish receiver verification with bounded freshness, constant-time comparison and an atomic local effect/receipt example that deduplicates lost-response retries. HTTP acceptance does not prove downstream business completion.
+- Require fixed HTTPS destinations (explicit loopback-only HTTP test option), private credential/config/state files and separate state after source/identity/family/receiver/key changes. Preserve runner proxy/CA policy and exclude source credentials, private prose and receiver response bodies from deliveries/history.
+- Document ownership, checkpoint recovery, retention, replay and key rotation. Tests use synthetic local sources/receivers; choosing and connecting a live provider remains separate. API contract stays 1.4.0.
+
 ## 7.100 — October 22, 2026
 
 - Start A21 with an authenticated, permission-filtered `/api/v1/changes` feed for document/work/task revision notices. SQLite triggers capture stable random notice IDs in the same transaction as the entity revision; rolled-back writes leave no notice.

@@ -17,10 +17,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.100"
+APP_VERSION = "7.101"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "7.101",
+        "date": "October 22, 2026",
+        "summary": "Connected tools have a tested way to send signed change notices and recover failed deliveries.",
+        "changes": [
+            "An integration owner can run the supplied adapter to send permitted change notices to an approved HTTPS receiver.",
+            "The adapter saves delivery attempts, retries temporary failures and lets the owner review and retry failed deliveries.",
+            "Access is checked again before sending, and the receiver example prevents a repeated delivery from repeating a saved local action."
+        ]
+    },
     {
         "version": "7.100",
         "date": "October 22, 2026",
