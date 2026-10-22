@@ -6684,20 +6684,31 @@ _WALKIN_SQD = ["SQD0"] + list(eng.ARTA_HEADLINE_ITEMS)
 
 
 @app.get("/arta/entries", response_class=HTMLResponse)
-def arta_entries(request: Request, page: int = 1, archived: int = 0):
+def arta_entries(request: Request, page: int = 1, archived: int = 0,
+                 date_from: str = "", date_to: str = ""):
     if (r := _forbid(request, "manage_walkin_entries")):
         return r
     per_page = 50
+    try:
+        rng = _range_period(_period_from_dates(date_from, date_to))
+    except HTTPException as exc:
+        return templates.TemplateResponse(request, "report_filter_error.html", {
+            "detail": exc.detail, "rtype": 1, "nav_active": "reports",
+        }, status_code=exc.status_code)
     conn = get_conn()
     try:
         rows, total = st.walkin_entries_page(conn, page=page, per_page=per_page,
-                                             include_archived=bool(archived))
+                                             include_archived=bool(archived),
+                                             date_from=rng[0] if rng else None,
+                                             date_to=rng[1] if rng else None)
     finally:
         conn.close()
     pages = max(1, -(-total // per_page))
     return templates.TemplateResponse(request, "arta_entries.html", {
         "rows": rows, "page": page, "pages": pages, "total": total,
         "archived": bool(archived),
+        "date_from": rng[0] if rng else "", "date_to": rng[1] if rng else "",
+        "range_chips": _range_chips(),
     })
 
 
@@ -7960,6 +7971,12 @@ def _csm_period_heading(period):
         b = _dt.strptime(dt, "%Y-%m-%d").strftime("%B %Y")
         phrase = a if a == b else f"{a} to {b}"
         as_of = b
+    if (rng := _range_period(period)):
+        a = _dt.strptime(rng[0], "%Y-%m-%d").strftime("%B %d, %Y")
+        b = _dt.strptime(rng[1], "%Y-%m-%d").strftime("%B %d, %Y")
+        text = a if a == b else f"{a} to {b}"
+        return {"heading": text, "cy": f"CY {rng[0][:4]}", "year": rng[0][:4], "label": text,
+                "phrase": text, "as_of": b}
     if col == "quarter":
         ys, qs = val.split("-Q")
         o = {1: "1st", 2: "2nd", 3: "3rd", 4: "4th"}.get(int(qs), f"{qs}th")
@@ -11298,7 +11315,7 @@ def csm_blhsd_export(request: Request, period: str = "all",
     window); explicit date_from/date_to override it. (org is bureau-level for the
     walk-in form, so it doesn't subdivide here — any org query param is ignored.)"""
     if (r := _forbid(request, "view")): return r
-    period = _report_period(period)
+    period = _report_period(period, allow_range=True)
     p_from, p_to = _period_date_range(period)
     df = date_from or p_from or None
     dt = date_to or p_to or None
@@ -12362,12 +12379,45 @@ def _parse_period(period_val):
     return (col, val) if col in ("year", "quarter", "semester") else (None, None)
 
 
+_RANGE_PERIOD_RE = re.compile(r"range:(\d{4}-\d{2}-\d{2})\.\.(\d{4}-\d{2}-\d{2})")
+MAX_RANGE_DAYS = 366
+
+
+def _range_period(period_val):
+    """'range:2026-10-22..2026-10-28' -> ('2026-10-22', '2026-10-28'), else None.
+    Walk-in (Type 1) only: a custom window over raw submission dates."""
+    m = _RANGE_PERIOD_RE.fullmatch(period_val or "")
+    return (m.group(1), m.group(2)) if m else None
+
+
+def _period_from_dates(date_from, date_to):
+    """Two inclusive dates -> the 'range:' period token. One date alone is that
+    single day. Raises HTTPException(400) for impossible, reversed or over-long windows."""
+    date_from, date_to = (date_from or "").strip(), (date_to or "").strip()
+    if not (date_from or date_to):
+        return ""
+    date_from, date_to = date_from or date_to, date_to or date_from
+    try:
+        a, b = date.fromisoformat(date_from), date.fromisoformat(date_to)
+        if a.isoformat() != date_from or b.isoformat() != date_to:
+            raise ValueError("non-canonical date")
+    except ValueError:
+        raise HTTPException(400, "Choose valid dates for the custom range.")
+    if a > b:
+        raise HTTPException(400, "The custom range must start on or before its end date.")
+    if (b - a).days + 1 > MAX_RANGE_DAYS:
+        raise HTTPException(400, f"Choose a custom range of at most {MAX_RANGE_DAYS} days, or use a year/semester/quarter.")
+    return f"range:{date_from}..{date_to}"
+
+
 def _period_date_range(period_val):
     """Translate the period dropdown value into an inclusive submitted_at window
     ('YYYY-MM-DD', 'YYYY-MM-DD'); ('', '')-equivalent (None, None) for all-time.
 
     Used by the ARTA/CO-CSM official report + Excel export, which key off the raw
     submission date (a walk-in form has no event_date to slice on)."""
+    if (rng := _range_period(period_val)):
+        return rng
     col, val = _parse_period(period_val)
     if not col:
         return None, None
@@ -12391,15 +12441,39 @@ def _period_date_range(period_val):
     return None, None
 
 
-def _report_period(period):
-    """Reject broken report links instead of silently exporting all time."""
+def _report_period(period, allow_range=False):
+    """Reject broken report links instead of silently exporting all time.
+    `allow_range` admits the walk-in-only 'range:START..END' custom window."""
     period = period or "all"
+    if allow_range and period.startswith("range:"):
+        if not _range_period(period):
+            raise HTTPException(400, "Choose valid dates for the custom range.")
+        return _period_from_dates(*_range_period(period))
+    if period.startswith("range:"):
+        raise HTTPException(400, "A custom date range is only available for the ARTA walk-in report.")
     if period != "all" and not re.fullmatch(
             r"(?:year:[0-9]{4}|quarter:[0-9]{4}-Q[1-4]|semester:[0-9]{4}-H[12])", period):
         raise HTTPException(400, "Choose All time, a year, a quarter or a semester from the report filters.")
     if period != "all" and int(period.split(":", 1)[1][:4]) == 0:
         raise HTTPException(400, "Choose a report year from 0001 to 9999.")
     return period
+
+
+def _range_chips():
+    """Quick custom-range links for the walk-in filter: today, last 7 days, this month."""
+    today = _now_local().date()
+    return [{"label": "Today", "from": today.isoformat(), "to": today.isoformat()},
+            {"label": "Last 7 days", "from": (today - timedelta(days=6)).isoformat(), "to": today.isoformat()},
+            {"label": "This month", "from": today.replace(day=1).isoformat(), "to": today.isoformat()}]
+
+
+def _period_label(period):
+    """Short human label for a period value (scope chips, headings)."""
+    if not period or period == "all":
+        return "All time"
+    if (rng := _range_period(period)):
+        return rng[0] if rng[0] == rng[1] else f"{rng[0]} to {rng[1]}"
+    return period.split(":", 1)[1]
 
 
 def _report_period_text(period):
@@ -13106,8 +13180,7 @@ def _csm_draft_prompt(rep, improve_themes):
 
 def _scope_label(org, period, org_opts):
     o = next((x["text"] for x in org_opts if x["value"] == org), "Unavailable scope" if org else "Whole bureau")
-    p = "All time" if (not period or period == "all") else period.split(":", 1)[1]
-    return f"{o} · {p}"
+    return f"{o} · {_period_label(period)}"
 
 
 # Short, human labels for item_ids when showing verbatims (the note already says
@@ -13181,10 +13254,13 @@ def _match_event(events, event_id):
 
 @app.get("/reports", response_class=HTMLResponse)
 def reports(request: Request, org: str = "", period: str = "all", type: int = 1,
-            activity: str = "", msg: str = "", err: str = ""):
+            activity: str = "", msg: str = "", err: str = "",
+            date_from: str = "", date_to: str = ""):
     rtype = type if type in (1, 2, 3) else 1
     try:
-        period = _report_period(period)
+        if rtype == 1 and (date_from or date_to):      # walk-in custom window beats the dropdown
+            period = _period_from_dates(date_from, date_to)
+        period = _report_period(period, allow_range=rtype == 1)
     except HTTPException as exc:
         return templates.TemplateResponse(request, "report_filter_error.html", {
             "detail": exc.detail, "rtype": rtype, "nav_active": "reports",
@@ -13254,7 +13330,9 @@ def reports(request: Request, org: str = "", period: str = "all", type: int = 1,
         "sq": sq,
         "period_opts": period_opts,
         "report_period_text": _report_period_text(period),
-        "period_listed": period == "all" or any(op["value"] == period for g in period_opts for op in g["options"]),
+        "custom_range": _range_period(period),
+        "range_chips": _range_chips(),
+        "period_listed": period == "all" or bool(_range_period(period)) or any(op["value"] == period for g in period_opts for op in g["options"]),
         "org_listed": any(op["value"] == org for op in org_opts),
         "activity_listed": not sel_activity or any(op["value"] == sel_activity for op in activity_opts),
         "selected_count": selected_count,
@@ -13313,7 +13391,7 @@ def reports_export(request: Request, type: int = 1, fmt: str = "docx",
     in-app report style."""
     if (r := _forbid(request, "view")): return r
     rtype = type if type in (1, 2, 3) else 1
-    period = _report_period(period)
+    period = _report_period(period, allow_range=rtype == 1)
     org = "" if rtype == 1 else org
     fmt = fmt if fmt in _REPORT_FMT else "docx"
     # Raw-data Excel is a SERVQUAL-only artifact (servqual_xlsx); Type 1 (ARTA/CO-CSM)
@@ -13534,7 +13612,7 @@ def reports_verbatims(request: Request, survey_type: int = 0, org: str = "", per
     as appreciation / an area to improve / mixed, per period. It is built over the
     org scope with the period filter DROPPED (so it's a real series, not one point),
     and only for a single survey type — the 3-way needs one type's comments."""
-    period = _report_period(period)
+    period = _report_period(period, allow_range=survey_type == 1)
     org = "" if survey_type == 1 else org
     period_col, period_v = _parse_period(period)
     grain = _grain(grain)
