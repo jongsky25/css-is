@@ -10,7 +10,9 @@ import xml.etree.ElementTree as ET
 
 
 def version_key(value: str) -> tuple[int, int]:
-    if not isinstance(value, str) or not re.fullmatch(r"(0|[1-9]\d*)\.(0|[1-9]\d*)", value):
+    # Compare recorded legacy versions too; new releases are checked more
+    # strictly below. Two-digit minors include .00 and .01 without floats.
+    if not isinstance(value, str) or not re.fullmatch(r"(0|[1-9][0-9]*)\.([0-9]{2}|0|[1-9][0-9]*)", value):
         raise ValueError(f"Invalid application version: {value!r}")
     return tuple(map(int, value.split(".")))
 
@@ -31,6 +33,8 @@ def check_release(root: Path, base_source: str) -> str:
     current = metadata((root / "version.py").read_text())
     version = current["APP_VERSION"]
     previous = metadata(base_source)["APP_VERSION"]
+    if not isinstance(version, str) or not re.fullmatch(r"(0|[1-9][0-9]*)\.[0-9]{2}", version):
+        raise ValueError("New application versions must have exactly two digits after the decimal")
     if version_key(version) <= version_key(previous):
         raise ValueError(f"Version {version} must increase from {previous}")
     latest = current["CHANGELOG"][0]

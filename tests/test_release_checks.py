@@ -21,6 +21,23 @@ def test_valid_release(release_tree):
     assert version_key("7.40") > version_key("7.9")
 
 
+def test_two_digit_rollover_accepts_existing_three_digit_base(release_tree):
+    for name in ('version.py', 'CHANGELOG.md', 'static/js/sw.js'):
+        target = release_tree / name
+        target.write_text(target.read_text().replace('7.40', '8.00'))
+    assert check_release(release_tree, 'APP_VERSION = "7.100"') == '8.00'
+    assert version_key('8.01') > version_key('8.00') > version_key('7.100')
+    assert version_key('9.00') > version_key('8.99')
+
+
+@pytest.mark.parametrize('value', ['7.9', '7.100', '8.0', '8.001'])
+def test_new_release_requires_exactly_two_decimal_digits(release_tree, value):
+    target = release_tree / 'version.py'
+    target.write_text(target.read_text().replace('7.40', value))
+    with pytest.raises(ValueError, match='exactly two digits'):
+        check_release(release_tree, 'APP_VERSION = "7.39"')
+
+
 @pytest.mark.parametrize("base", ["7.40", "7.41", "8.0"])
 def test_requires_version_increase(release_tree, base):
     with pytest.raises(ValueError, match="must increase"):
