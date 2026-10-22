@@ -37,6 +37,7 @@ The shared searchable selector now names both its field label and visible select
 ## Verification
 
 - Focused server/export/reference/archive/draft/browser regression: **110 passed**, no failures or skips. The final additional browser disclosure checks also pass separately.
+- CI exposed a pre-existing confirmation-test race: visible receipt HTML can precede the deferred draft initializer. A controlled 300ms script delay reproduces it; the test now waits for matching draft removal rather than equating HTML visibility with completed browser cleanup. Production draft behavior is unchanged.
 - Real authenticated HTTP exports exercise member/stale activity IDs across DOCX/PDF/PPTX/XLSX, roster selection, exact organization boundaries, malformed/unlisted filters, fractional end-of-day receipt dates, archived responses, bureau-wide ARTA and comment return filters.
 - The independent sparse reference runs with object and categorical item columns: eight submissions, two contributing responses, overall 4.00, dimension total 8.00. HTTP HTML and all four export formats agree; Excel retains all eight rows with six blank-score rows. Existing analytics arithmetic tests remain in force.
 - Chromium journeys cover 390px/1440px, light/dark, keyboard Apply/download/reset/search, deliberate filter application and operation without JavaScript. No mutation is sent by these browser journeys. Sampled page overflow is zero.
