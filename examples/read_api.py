@@ -84,9 +84,9 @@ class ReadClient:
 
 
 class TaskClient(ReadClient):
-    """Explicit acknowledgement only. Never generates keys or retries writes.
+    """Explicit acknowledgement/submission. Never generates keys or retries writes.
 
-    Save a fresh UUID v4 key and the exact revision/reason locally before calling;
+    Save a fresh UUID v4 key and the complete exact request locally before calling;
     after a lost response, look up that key or resubmit that identical request.
     """
     def operation(self, operation_id):
@@ -100,6 +100,20 @@ class TaskClient(ReadClient):
             raise ValueError('Supply the saved UUID v4 operation key.')
 
     def acknowledge(self, work_item_id, task_id, *, revision, reason, operation_id):
+        return self._task_action(work_item_id, task_id, action='acknowledge', revision=revision,
+                                 reason=reason, operation_id=operation_id)
+
+    def submit(self, work_item_id, task_id, *, revision, reason, submission, operation_id):
+        if not isinstance(submission, str) or not submission.strip() or len(submission) > 8000:
+            raise ValueError('Supply output or evidence of at most 8000 characters.')
+        try:
+            submission.encode('utf-8')
+        except UnicodeError:
+            raise ValueError('Supply valid UTF-8 output or evidence.') from None
+        return self._task_action(work_item_id, task_id, action='submit', revision=revision,
+                                 reason=reason, operation_id=operation_id, submission=submission)
+
+    def _task_action(self, work_item_id, task_id, *, action, revision, reason, operation_id, submission=None):
         self._operation_key(operation_id)
         for identifier in (work_item_id, task_id):
             if (not isinstance(identifier, str) or not re.fullmatch(r'[1-9][0-9]{0,18}', identifier)
@@ -109,13 +123,20 @@ class TaskClient(ReadClient):
             raise ValueError('Supply the exact current task revision.')
         if not isinstance(reason, str) or not reason.strip() or len(reason) > 2000:
             raise ValueError('Supply a reason of at most 2000 characters.')
+        try:
+            reason.encode('utf-8')
+        except UnicodeError:
+            raise ValueError('Supply a valid UTF-8 reason.') from None
+        data = {'revision': revision, 'reason': reason}
+        if submission is not None:
+            data['submission'] = submission
         context = self.get('/write-context')
         token = context.get('csrf_token') if isinstance(context, dict) else None
         if not isinstance(token, str) or not re.fullmatch(r'[0-9a-f]{64}', token):
             raise ApiFailure('The API returned an invalid write context.')
         parsed = urlsplit(self.base_url)
-        return self._request(f'/work-items/{work_item_id}/tasks/{task_id}/acknowledge',
-            data=json.dumps({'revision': revision, 'reason': reason}, ensure_ascii=False).encode(),
+        return self._request(f'/work-items/{work_item_id}/tasks/{task_id}/{action}',
+            data=json.dumps(data, ensure_ascii=False, separators=(',', ':')).encode(),
             headers={'Origin': f'{parsed.scheme}://{parsed.netloc}', 'X-CSRF-Token': token,
                      'Idempotency-Key': operation_id, 'Content-Type': 'application/json'})
 

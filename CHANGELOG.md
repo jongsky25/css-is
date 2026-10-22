@@ -1,3 +1,12 @@
+## 7.98 — October 22, 2026
+
+- Extend A19 with typed task submission for review through `/api/v1`, using the same task service, current owner/scoped-officer permissions, linked-document access and workflow blockers as the screens.
+- Require exact task revision, reason and bounded output/evidence; reject stale writes and preserve existing review/acceptance authority and revision checks.
+- Share atomic task/history/audit/review-invalidation/receipt transactions with acknowledgement. Submission fingerprints include exact output text; actor-owned keys cannot be reused across actions or changed input.
+- Add a defaulted receipt action column without rewriting immutable acknowledgement rows or changing their retry fingerprints. Return action-aware historical results while keeping submission prose out of API reads/receipts/errors.
+- Publish API contract 1.2.0 and a standalone explicit submission client with no automatic POST retries. Keep acknowledgement's 8 KiB body limit; bound submission requests at 64 KiB and output text at 8,000 characters.
+- No dependency addition or external provider request. Retain action-aware receipt lookup in a versioned forward repair; older receipt renderers assume acknowledgement.
+
 ## 7.97 — October 22, 2026
 
 - Continue A19 with one typed task action: acknowledge an assigned contribution through `/api/v1`, reusing the UI task service and its current owner/officer authority.

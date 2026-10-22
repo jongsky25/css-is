@@ -34,7 +34,7 @@ def install(conn):
       revision INTEGER NOT NULL DEFAULT 1, created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
     CREATE INDEX IF NOT EXISTS work_task_case ON work_task(case_id,id);
     CREATE INDEX IF NOT EXISTS work_task_owner ON work_task(owner_id,case_id);
-    -- The acknowledgement and its recovery receipt commit in the same writer
+    -- The task action and its recovery receipt commit in the same writer
     -- transaction. Keys belong to an actor, never to a browser session.
     CREATE TABLE IF NOT EXISTS work_api_operation (
       actor_id INTEGER NOT NULL REFERENCES admin_user(id),
@@ -44,6 +44,7 @@ def install(conn):
       task_id INTEGER NOT NULL REFERENCES work_task(id),
       result_revision INTEGER NOT NULL CHECK(result_revision > 0),
       completed_at TEXT NOT NULL,
+      action TEXT NOT NULL DEFAULT 'acknowledge' CHECK(action IN ('acknowledge','submit')),
       PRIMARY KEY(actor_id,operation_id));
     CREATE TRIGGER IF NOT EXISTS work_api_operation_no_update BEFORE UPDATE ON work_api_operation
       BEGIN SELECT RAISE(ABORT,'API operation receipts are immutable'); END;
@@ -58,6 +59,10 @@ def install(conn):
     CREATE TRIGGER IF NOT EXISTS work_event_no_delete BEFORE DELETE ON work_event
       BEGIN SELECT RAISE(ABORT,'Work history is append-only'); END;
     ''')
+    if 'action' not in {r[1] for r in conn.execute('PRAGMA table_info(work_api_operation)')}:
+        # The default identifies existing acknowledgements without rewriting
+        # immutable rows or changing their original request digests.
+        conn.execute("ALTER TABLE work_api_operation ADD COLUMN action TEXT NOT NULL DEFAULT 'acknowledge' CHECK(action IN ('acknowledge','submit'))")
     conn.executescript("""
     CREATE TABLE IF NOT EXISTS work_comment (
       id INTEGER PRIMARY KEY,
