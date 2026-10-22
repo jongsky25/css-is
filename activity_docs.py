@@ -213,21 +213,32 @@ def payload(conn, entry, key, user, owner_label="", positions=False) -> td.DocPa
         place = (entry.get("venue") or "").strip()
         in_place = f" in {place}" if place else ""
         unit = owner_label.strip()
-        who = "Select Personnel"       # spot feedback #161: the section the personnel belong to is not named
         outside = get_outside(conn, entry["id"])
-        # The first paragraph states the activity, who is conducting it and, when the person pasted the invitation's key
-        # lines, the rationale (spot feedback #170, which supersedes #161 on this point).
-        conductor = outside["host"] if outside and outside["host"] else BUREAU
-        background = f"{title} will be held on {days}{in_place}, conducted by {conductor}."
+        the_title = title if title.lower().startswith("the ") else f"the {title}"
+        place_part = f", in {place}" if place else ""
+        # The wording follows the office's sample DPO (spot feedback #170): the first paragraph gives the rationale taken from
+        # the invitation's key lines, if there are any, then says who conducts the activity, when and where; the subject names
+        # the select bureau personnel and what they are authorised to do.
+        if outside and outside["host"]:
+            host = outside["host"]
+            conductor = host if host.lower().startswith("the ") else f"the {host}"
+        else:
+            conductor = f"the DOH, through {BUREAU},"
+        sentence = f"{conductor} will conduct {the_title} on {days}{place_part}."
         rationale = (outside or {}).get("invitation", "").strip()
         if rationale:
-            background += " " + (rationale if rationale[-1] in ".!?" else rationale + ".")
-        if outside:
-            role = "to serve as resource person in" if outside["invited_as"] == "resource_person" else "to participate in"
+            background = (rationale if rationale[-1] in ".!?" else rationale + ".") + " In support of this, " + sentence
         else:
-            role = "to participate in"
-        intro = f"Authority is hereby given to the following select personnel {role} {title} on {days}{in_place}:"
-        subject = f"Authority for {who} to Participate in {title}, {days}{in_place}"
+            background = sentence[0].upper() + sentence[1:]
+        if outside and outside["invited_as"] == "resource_person":
+            role, subject_role = "to serve as resource person in", "Serve as Resource Person in"
+        elif outside:
+            role, subject_role = "to participate in", "Participate in"
+        else:
+            role, subject_role = "to conduct", "Conduct"
+        intro = f"Authority is hereby given to the following select BLHSD personnel {role} {the_title} on {days}{place_part}:"
+        subject = (f"Authority for Select {BUREAU.removeprefix('the ')} Personnel to {subject_role} {the_title} "
+                   f"on {days}{place_part}")
         single = len(people) == 1
         if single:
             # One person (spot feedback #157): the subject and the body name them, with no list and no table.

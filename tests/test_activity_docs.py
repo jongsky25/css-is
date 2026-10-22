@@ -158,6 +158,13 @@ def test_a_dpo_follows_the_doh_order_and_leaves_the_blanks(viewer, conn, relay):
     assert f["dpo_no"] == ad.BLANK and f["dpo_date"] == ad.BLANK and f["funding_source"] == ad.BLANK
     assert f["dpo_year"] == "2026"
     assert f["subject"].startswith("Authority for Select") and "CALEP Field Visit" in f["subject"] and "in Cebu City" in f["subject"]
+    # spot feedback #170: the layout of the office's sample DPO. BLHSD conducts the activity, so its personnel conduct it.
+    assert f["subject"] == ("Authority for Select Bureau of Local Health Systems Development (BLHSD) Personnel to Conduct the "
+                            "CALEP Field Visit on October 12-16, 2026, in Cebu City")
+    assert f["background"] == ("The DOH, through the Bureau of Local Health Systems Development (BLHSD), will conduct the "
+                               "CALEP Field Visit on October 12-16, 2026, in Cebu City.")
+    assert f["intro"] == ("Authority is hereby given to the following select BLHSD personnel to conduct the CALEP Field Visit "
+                          "on October 12-16, 2026, in Cebu City:")
     assert "CALEP Field Visit" in f["background"] and f["intro"].startswith("Authority is hereby given to the following select")
     assert f["intro"].endswith(":") and "October 12-16, 2026" in f["intro"]
     assert f["head_name"] == "DR. ANA REYES" and f["head_title"] == "Director IV"      # the signatory is printed in capitals
@@ -377,9 +384,11 @@ def test_a_dpo_for_an_activity_another_office_runs_keeps_a_broad_first_paragraph
     draft(viewer, eid, "dpo")
     f = relay.calls[0]["fields"]
     # spot feedback #170: the activity, who conducts it and the rationale from the invitation
-    assert f["background"] == ("CALEP Field Visit will be held on October 12-16, 2026 in Cebu City, conducted by Center for "
-                               "Health Development VII. Per memo dated October 1, 2026, we are requested to lecture on CALEP.")
-    assert "to serve as resource person in CALEP Field Visit" in f["intro"]
+    assert f["background"] == ("Per memo dated October 1, 2026, we are requested to lecture on CALEP. In support of this, the "
+                               "Center for Health Development VII will conduct the CALEP Field Visit on October 12-16, 2026, in Cebu City.")
+    assert "to serve as resource person in the CALEP Field Visit" in f["intro"]
+    assert f["subject"] == ("Authority for Select Bureau of Local Health Systems Development (BLHSD) Personnel to Serve as "
+                            "Resource Person in the CALEP Field Visit on October 12-16, 2026, in Cebu City")
     # spot feedback #160: the signatory unit is always the bureau
     assert f["unit_name"] == "Bureau of Local Health Systems Development"
 

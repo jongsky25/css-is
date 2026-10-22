@@ -27,8 +27,9 @@ CHANGELOG = [
         "summary": "Travel details are now required, and the DPO explains who runs the activity and why.",
         "changes": [
             "Your designation and the purpose are required before the travel forms are made.",
-            "The first paragraph of a DPO names who is conducting the activity and cites the reason given in the invitation.",
-            "DPO paragraphs have space between them, and a long subject lines up under its own text."
+            "A DPO now follows the office's sample: the title and subject are positioned and aligned as in the sample, with the subject justified and lined up under its own text, and the signatory block moved in.",
+            "The first paragraph gives the reason from the invitation, then says who conducts the activity, when and where; the subject names the select BLHSD personnel and what they are authorised to do.",
+            "DPO paragraphs have space between them."
         ]
     },
     {

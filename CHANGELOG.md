@@ -1,7 +1,7 @@
 ## 7.92 — October 22, 2026
 
 - Travel prepare page: designation and purpose are required (marked *) before the forms are made (spot feedback #172).
-- DPO: the first paragraph names who conducts the activity and cites the invitation's key lines as the rationale; 12 pt space after every paragraph; the subject uses a hanging indent (spot feedback #170). Re-make the Apps Script templates for the layout to apply.
+- DPO: laid out like the office's sample (title and number indented, "SUBJECT:" with a justified, underlined subject hanging at 1.5 in, justified body with 0.5 in first lines, signatory block at 2.25 in, 12 pt after each paragraph). The first paragraph gives the invitation's rationale (when there is one) and then who conducts the activity, when and where; the subject reads "Authority for Select Bureau of Local Health Systems Development (BLHSD) Personnel to Conduct / Participate in / Serve as Resource Person in the …" (spot feedback #170). Re-make the Apps Script templates for the layout to apply.
 - No schema migration or dependency changes.
 
 ## 7.91 — October 22, 2026
