@@ -1318,6 +1318,48 @@ def feedback_update_message(submitter_name, status, reply, link):
     return subject, body, html
 
 
+def travel_review_request_message(reviewer_name, traveller_name, ref, title, link, again=False):
+    """To the chosen reviewer: a travel claim's papers are waiting for their check (spot feedback #174)."""
+    subject = f"{'Travel papers ready to check again' if again else 'Travel papers to review'}: {ref}"
+    intro = (f"{traveller_name or 'A traveller'} fixed the notes and asked you to check the papers again for {title} ({ref})."
+             if again else f"{traveller_name or 'A traveller'} asked you to check the papers for {title} ({ref}) for completeness.")
+    body = (f"Hello {reviewer_name or 'there'},\n\n{intro}\n\n"
+            "Open the claim, check the generated and uploaded documents, then note what is missing or wrong, or approve.\n"
+            f"  {link}\n")
+    html = _email_html(
+        greeting=f"Hi {reviewer_name or 'there'},",
+        heading="Travel papers to review" if not again else "Travel papers to check again",
+        intro=_e(intro),
+        cta_label="Review the papers",
+        link=link,
+    )
+    return subject, body, html
+
+
+def travel_review_result_message(traveller_name, ref, title, approved, notes, link):
+    """To the traveller: the reviewer approved the papers, or sent notes back (`notes` = [(document, kind, text)])."""
+    subject = (f"Your travel papers were approved: {ref}" if approved else f"Your travel papers need changes: {ref}")
+    if approved:
+        intro = f"The reviewer checked the papers for {title} ({ref}) and found them complete. You can now mark the claim ready."
+        lines = ""
+    else:
+        intro = f"The reviewer sent notes back on the papers for {title} ({ref}). Fix each one, then ask for the review again."
+        lines = "".join(f"  - {doc + ': ' if doc else ''}[{kind}] {text}\n" for doc, kind, text in notes)
+    body = f"Hello {traveller_name or 'there'},\n\n{intro}\n\n{lines}\n  {link}\n"
+    extra = ""
+    if notes and not approved:
+        extra = "".join(_note_box_html((f"{doc} · " if doc else "") + kind.capitalize(), text) for doc, kind, text in notes)
+    html = _email_html(
+        greeting=f"Hi {traveller_name or 'there'},",
+        heading="Your travel papers were approved" if approved else "Your travel papers need changes",
+        intro=_e(intro),
+        cta_label="Open the claim",
+        link=link,
+        extra_html=extra,
+    )
+    return subject, body, html
+
+
 # ---- Conference room (docs/ROOM_RESERVATION_PLAN.md section 6) --------------
 
 def _decide_buttons(approve_link, decline_link):
@@ -1503,6 +1545,14 @@ FEATURES = {
     "awa_reopened": (
         "Filing reopened",
         "Staff who missed a deadline are told an admin reopened it.",
+        "transactional"),
+    "travel_review_request": (
+        "Travel papers to review",
+        "The chosen reviewer is told a traveller asked them to check a claim's papers (or asked again after fixing notes).",
+        "transactional"),
+    "travel_review_result": (
+        "Travel papers review result",
+        "The traveller is told the reviewer approved the papers or sent notes back.",
         "transactional"),
     "feedback_update": (
         "Spot Feedback update",
@@ -1706,6 +1756,12 @@ _PREVIEWS = {
         "Juan Reyes", "approved", "October 1-15, 2026", None, _SAMPLE_LINK),
     "awa_reopened": lambda: work_arrangement_reopened_message(
         "Juan Reyes", "October 1-15, 2026", _SAMPLE_LINK),
+    "travel_review_request": lambda: travel_review_request_message(
+        "Gilbert", "Ana Reyes", "TF-2610-0007", "Regional Planning Workshop", _SAMPLE_LINK),
+    "travel_review_result": lambda: travel_review_result_message(
+        "Ana", "TF-2610-0007", "Regional Planning Workshop", False,
+        [("Plane ticket / e-ticket", "missing", "The e-ticket is not attached."),
+         ("Appendix A: Itinerary of Travel", "incorrect", "The second day shows the wrong venue.")], _SAMPLE_LINK),
     "feedback_update": lambda: feedback_update_message(
         "Juan Reyes", "resolved", "Thanks for flagging this — fixed.", _SAMPLE_LINK),
     "event_update": lambda: event_update_message(

@@ -698,6 +698,11 @@ NAV_GROUPS = [
          "kw": "travel claim filing cash advance liquidation reimbursement itinerary dpo personnel order "
                "per diem taxi receipt appendix a appendix b cenrr rer mc 114 deadline policy rates dte "
                "daily travel expense annex airport subsistence allowance", "cap": None},
+        {"key": "travel_review", "url": "/travel/review", "label": "Review travel papers",
+         "section": "Admin Unit",
+         "hint": "Check the papers of travel claims that were sent to you before paper submission",
+         "kw": "review travel papers admin unit documents forms complete missing incorrect feedback approve "
+               "traveller reviewer", "cap": "room_admin"},
         {"key": "travel_verify", "url": "/travel/verify", "label": "Verify travel flags",
          "section": "Admin Unit",
          "hint": "Record the outcome on travel claims that were flagged",
@@ -17311,7 +17316,8 @@ app.include_router(rooms_routes.make_router(templates, get_conn, _today_local,
 app.include_router(rooms_meals_routes.make_router(templates, get_conn, _today_local))
 
 # ---- Travel filing (rules in travel.py / travel_rules.py, pages in travel_routes.py) ----
-app.include_router(travel_routes.make_router(templates, get_conn, _today_local, audit=_audit, base_url=_base_url))
+app.include_router(travel_routes.make_router(templates, get_conn, _today_local, audit=_audit, base_url=_base_url,
+                                             notify=_notify_email))
 
 # Document module: each route enforces account, object access and CSRF.
 import documents_intake_routes

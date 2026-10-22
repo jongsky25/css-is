@@ -1,4 +1,4 @@
-## 7.96 — October 22, 2026
+## 7.97 — October 22, 2026
 
 - Continue A19 with one typed task action: acknowledge an assigned contribution through `/api/v1`, reusing the UI task service and its current owner/officer authority.
 - Require a current registered session, matching origin, session-bound CSRF header, bounded JSON, explicit task revision/reason and a caller-saved UUID v4 idempotency key.
@@ -6,6 +6,12 @@
 - Publish private operation-result reads with fresh linked-document/task access checks. Receipts describe the original result; current task state remains a separate read.
 - Add API contract 1.1.0 and an independent standard-library task client with explicit saved keys and no automatic write retries.
 - Add an additive receipt table through the existing repeatable installer; retain receipts across restarts and rollback. No new dependency or provider call.
+
+## 7.96 — October 22, 2026
+
+- Travel: admin review of the papers before paper submission (spot feedback #174). When every required form and attachment is in, the traveller picks a reviewer from the Administrative Section (never themselves) and sends the claim for review. The reviewer sees the generated and uploaded documents, adds notes (missing / incorrect / other, optionally against one document), and either sends them back or approves. Email goes to the reviewer on a request or a second look and to the traveller on notes or approval; both sides also get a bell row, and reviewers get a "Review travel papers" page.
+- `mark_ready` waits for the approval; any later change to a claim (answers, links, documents) clears it. `travel.review_required` (default on) switches the requirement off. Claims already ready or submitted are not affected until they are edited.
+- New columns on `travel_filing` (`review_state`, `reviewer_id`, `review_round`, `review_requested_at`, `review_decided_at`) and a `travel_review_note` table, added automatically on start-up. New email features `travel_review_request` and `travel_review_result` can be switched off under Email.
 
 ## 7.95 — October 22, 2026
 

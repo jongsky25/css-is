@@ -28,7 +28,11 @@
     </tbody></table></div>
   <div class="tv-actions tv-noprint">
     {% if owner and f.status == 'open' and not missing_list %}
+    {% if review_hold %}
+    <p class="tv-hint">{{ review_hold }} <a href="/travel/f/{{ f.ref_code }}#travel-review">Go to the review</a></p>
+    {% else %}
     <form method="post" action="/travel/f/{{ f.ref_code }}/ready"><button class="btn" type="submit">Mark ready</button></form>
+    {% endif %}
     {% endif %}
     {% if guidance.can_submit %}
     <form method="post" action="/travel/f/{{ f.ref_code }}/submit"><button class="btn" type="submit">Mark submitted</button></form>

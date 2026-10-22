@@ -158,6 +158,11 @@ def app_mod(reference_database, monkeypatch):
         test_db = os.path.join(directory, "test.db")
         with sqlite3.connect(reference_database) as src, sqlite3.connect(test_db) as dst:
             src.backup(dst)
+        # The travel admin review (spot feedback #174) is required in production; the many tests that walk a claim to
+        # ready start with it off and the review tests switch it on.
+        _c = st.connect(test_db)
+        st.set_setting(_c, "travel.review_required", "0")
+        _c.commit(); _c.close()
         monkeypatch.setattr(app_mod, "DB", test_db)
         monkeypatch.setattr(monitoring, "LOG_PATH", os.path.join(directory, "requests.log"))
         # Test-local snapshots prevent direct cache mutation leaking into later cases.

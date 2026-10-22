@@ -17,6 +17,7 @@ SETTING_DEFAULTS = {
     "travel.sig.station": "",
     "travel.template_admins": "",
     "travel.retention_months": "12",
+    "travel.review_required": "1",     # the assigned reviewer must approve the papers before "ready" (spot feedback #174)
 }
 
 ROUTE_TYPES = (("residence_airport", "Residence ⇄ Airport"), ("residence_venue", "Residence ⇄ Venue"))
@@ -832,6 +833,8 @@ def _touch_open(conn, filing, now):
     """An edit to a filing that was ready sends it back to 'open' so it is checked again."""
     if filing["status"] == "ready":
         conn.execute("UPDATE travel_filing SET status='open', ready_at=NULL WHERE id=?", (filing["id"],))
+    if filing.get("review_state") == "approved":       # the reviewer approved the papers as they were: a change needs a new look
+        conn.execute("UPDATE travel_filing SET review_state='', review_decided_at=NULL WHERE id=?", (filing["id"],))
 
 
 def _editable(filing):
@@ -1056,6 +1059,10 @@ def mark_ready(conn, filing):
         raise TravelError("Not ready yet: " + missing[0] + (f" (and {len(missing) - 1} more)" if len(missing) > 1 else ""))
     if filing["status"] == "ready":
         return filing
+    import travel_review
+    held = travel_review.gate(conn, filing)
+    if held:
+        raise TravelError(held)
     now = tz.now_iso()
     conn.execute("UPDATE travel_filing SET status='ready', ready_at=?, updated_at=? WHERE id=?", (now, now, filing["id"]))
     conn.commit()

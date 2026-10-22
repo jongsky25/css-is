@@ -59,6 +59,14 @@ def bell_rows(conn, user_id, today, *, reads=None):
     if rejected:
         rows.append({"text": f"The Admin Unit did not accept {_plural(rejected, 'item', 'items')} on your travel claims",
                      "url": "/travel", "count": rejected})
+    import travel_review
+    to_review, sent_back = travel_review.counts(conn, user_id)
+    if to_review:
+        rows.append({"text": f"{_plural(to_review, 'travel claim', 'travel claims')} to review", "url": "/travel/review",
+                     "count": to_review})
+    if sent_back:
+        rows.append({"text": f"The reviewer sent notes back on {_plural(sent_back, 'travel claim', 'travel claims')}",
+                     "url": "/travel", "count": sent_back})
     flags = conn.execute("SELECT COUNT(*) FROM travel_flag g JOIN travel_filing f ON f.id=g.filing_id "
                          "WHERE g.state='open' AND f.status IN ('open','ready')").fetchone()[0]
     if flags:

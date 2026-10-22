@@ -112,6 +112,36 @@
     {% endif %}
   {% endif %}
 
+  {% if review.required and review.show %}
+  <section class="tv-card" id="travel-review" aria-labelledby="travel-review-h">
+    <h2 id="travel-review-h">Admin review of your papers <span class="badge {{ 'green' if review.state == 'approved' else 'amber' }}">{{ review.label }}</span></h2>
+    {% if review.state == 'approved' %}
+      <p class="tv-hint">{{ review.reviewer_name or 'The reviewer' }} checked the papers and found them complete. You can mark the claim ready.</p>
+    {% elif review.state == 'requested' %}
+      <p class="tv-hint">Sent to {{ review.reviewer_name or 'the reviewer' }}. You will get an email when they send notes back or approve.</p>
+    {% elif review.state == 'changes' %}
+      <p class="tv-hint">{{ review.reviewer_name or 'The reviewer' }} sent these notes back. Fix each one, then ask them to check again.</p>
+      <ul class="tv-missing">{% for n in review.notes %}<li><span class="badge amber">{{ n.kind|capitalize }}</span> {% if n.doc %}<strong>{{ n.doc }}:</strong> {% endif %}{{ n.note }}</li>{% endfor %}</ul>
+    {% else %}
+      <p class="tv-hint">Before you mark this ready, an Administrative Section reviewer checks every generated and uploaded document for completeness and correctness.</p>
+    {% endif %}
+    {% if review.can_ask %}
+    <form method="post" action="/travel/f/{{ f.ref_code }}/review/request" class="tv-form">
+      <label for="review-who">{{ 'Ask the reviewer to check again' if review.state == 'changes' else 'Who should review your papers?' }}</label>
+      <select id="review-who" name="reviewer_id" required>
+        <option value="">Choose a reviewer</option>
+        {% for a in review.reviewers %}<option value="{{ a.id }}" {{ 'selected' if a.id == f.reviewer_id }}>{{ a.name }}</option>{% endfor %}
+      </select>
+      <button class="btn" type="submit">{{ 'Send for review again' if review.state == 'changes' else 'Send for review' }}</button>
+    </form>
+    {% elif owner and f.status == 'open' and review.state in ('', 'changes') %}
+      <p class="tv-hint">You can send the papers for review once everything required above is in.</p>
+    {% endif %}
+    {% if review.past %}<details><summary>Earlier notes (fixed)</summary>
+      <ul class="tv-missing">{% for n in review.past %}<li>{{ n.kind|capitalize }}{% if n.doc %} · {{ n.doc }}{% endif %}: {{ n.note }}</li>{% endfor %}</ul></details>{% endif %}
+  </section>
+  {% endif %}
+
   <div class="tv-actions">
     {% if owner and f.status in ('open', 'ready') %}
       <form method="post" action="/travel/f/{{ f.ref_code }}/withdraw" onsubmit="return confirm('Withdraw this filing?')"><button class="btn danger" type="submit">Withdraw</button></form>
