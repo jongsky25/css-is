@@ -672,6 +672,13 @@ def init_db(conn):
         updated_by TEXT, updated_at TEXT
     );
 
+    -- What the DPO cites as the reason for an activity (Spot Feedback #170): the law, memo or invitation, typed by the person.
+    CREATE TABLE IF NOT EXISTS calendar_entry_dpo_cites (
+        entry_id INTEGER PRIMARY KEY REFERENCES calendar_entry(id) ON DELETE CASCADE,
+        text TEXT NOT NULL DEFAULT '',
+        updated_by TEXT, updated_at TEXT
+    );
+
     -- Other units an entry also involves; owner_org_id stays the primary one (Spot Feedback #129).
     CREATE TABLE IF NOT EXISTS calendar_entry_unit (
         entry_id INTEGER NOT NULL REFERENCES calendar_entry(id) ON DELETE CASCADE,
@@ -4260,14 +4267,24 @@ CSM_META_FIELDS = ["RESPONSE_NO", "SERVICE", "TYPE_OF_SERVICE", "CLIENT_TYPE", "
                    "SEX", "AGE", "REGION", "VERSION", "CC1", "CC2", "CC3", "FEEDBACK_TYPE"]
 
 
-def walkin_entries_page(conn, page=1, per_page=50, include_archived=False):
+def walkin_entries_page(conn, page=1, per_page=50, include_archived=False,
+                        date_from=None, date_to=None):
     """Paginated list of individual Type-1 responses, newest first, for the entries
-    manager. Returns (rows, total_count)."""
+    manager. date_from/date_to are inclusive 'YYYY-MM-DD' submission dates.
+    Returns (rows, total_count)."""
     page = max(1, page)
     where = "WHERE fi.survey_type = 1" + ("" if include_archived else " AND r.archived_at IS NULL")
+    args = []
+    if date_from:
+        where += " AND r.submitted_at >= ?"
+        args.append(date_from)
+    if date_to:
+        # Exclusive next-day bound keeps the whole final day for any timestamp format.
+        where += " AND r.submitted_at < ?"
+        args.append((date.fromisoformat(date_to) + timedelta(days=1)).isoformat())
     total = conn.execute(
-        f"SELECT COUNT(*) FROM response r JOIN form_instance fi ON fi.id = r.form_instance_id {where}"
-    ).fetchone()[0]
+        f"SELECT COUNT(*) FROM response r JOIN form_instance fi ON fi.id = r.form_instance_id {where}",
+        args).fetchone()[0]
     rows = conn.execute(f"""
         SELECT r.id, r.submitted_at, sb.name, r.archived_at,
                (SELECT value FROM answer WHERE response_id = r.id AND item_id = 'SQD0'),
@@ -4280,7 +4297,7 @@ def walkin_entries_page(conn, page=1, per_page=50, include_archived=False):
         {where}
         ORDER BY r.submitted_at DESC, r.id DESC
         LIMIT ? OFFSET ?
-    """, (per_page, (page - 1) * per_page)).fetchall()
+    """, (*args, per_page, (page - 1) * per_page)).fetchall()
     return [{"id": r[0], "submitted_at": r[1], "served_by_name": r[2], "archived": bool(r[3]),
              "sqd0": r[4], "response_no": r[5], "service": r[6], "client_type": r[7]}
             for r in rows], total
@@ -11426,6 +11443,7 @@ def cal_delete(conn, entry_id, *, by=None):
     conn.execute("DELETE FROM calendar_entry_tag WHERE entry_id=?", (entry_id,))
     conn.execute("DELETE FROM calendar_entry_unit WHERE entry_id=?", (entry_id,))
     conn.execute("DELETE FROM calendar_entry_outside WHERE entry_id=?", (entry_id,))
+    conn.execute("DELETE FROM calendar_entry_dpo_cites WHERE entry_id=?", (entry_id,))
     conn.execute("DELETE FROM calendar_entry_revision WHERE entry_id=?", (entry_id,))
     conn.execute("DELETE FROM calendar_entry WHERE id=?", (entry_id,))
     conn.commit()

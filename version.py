@@ -17,12 +17,12 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.94"
+APP_VERSION = "7.96"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
-        "version": "7.94",
+        "version": "7.96",
         "date": "October 22, 2026",
         "summary": "An Administrative Section reviewer now checks a travel claim's papers before paper submission.",
         "changes": [
@@ -30,6 +30,48 @@ CHANGELOG = [
             "The reviewer opens each form and document, notes what is missing or incorrect, and either sends the notes back or approves. You are emailed either way.",
             "After you fix the notes you ask again, and the reviewer is emailed. A claim can be marked ready only after the papers are approved; changing it afterwards asks for a new review.",
             "Reviewers see claims waiting for them under Review travel papers and in the bell."
+        ]
+    },
+    {
+        "version": "7.95",
+        "date": "October 22, 2026",
+        "summary": "The evidence list on Appendix B now fills itself in.",
+        "changes": [
+            "Appendix B lists the DPO with its number and date, Appendix A and B, the Certificate of Appearance and the Post Travel Report automatically.",
+            "Other attachments are optional: add them one per line on the prepare page, or upload them on the checklist."
+        ]
+    },
+    {
+        "version": "7.94",
+        "date": "October 22, 2026",
+        "summary": "Travel details are now required, and the DPO explains who runs the activity and why.",
+        "changes": [
+            "Your designation and the purpose are required before the travel forms are made.",
+            "A DPO now follows the office's sample: the title and subject are positioned and aligned as in the sample, with the subject justified and lined up under its own text, and the signatory block moved in.",
+            "The first paragraph gives the reason from the invitation, then says who conducts the activity, when and where; the subject names the select BLHSD personnel and what they are authorised to do.",
+            "Every activity that needs a DPO has a \u201cDPO cites\u201d box for the law, memo or invitation that gives the reason for the activity; it opens the first paragraph. For another office\u2019s activity the invitation\u2019s key lines are used when it is empty.",
+            "DPO paragraphs have space between them."
+        ]
+    },
+    {
+        "version": "7.93",
+        "date": "October 22, 2026",
+        "summary": "ARTA walk-in reports and entries can now be filtered to any date range, even a single day.",
+        "changes": [
+            "Pick From and To dates, or tap Today, Last 7 days or This month, on the ARTA walk-in report.",
+            "The chosen range carries through the report, Word/PDF/ARTA template, BLHSD Excel and comments.",
+            "The Walk-in entries list has the same date filter, so you can see what came in on a given day.",
+            "Activity and resource-person reports are unchanged."
+        ]
+    },
+    {
+        "version": "7.92",
+        "date": "October 22, 2026",
+        "summary": "Document and task information is available through a documented read-only connection.",
+        "changes": [
+            "Approved tools can read selected document details and shared-work task status without changing records.",
+            "Connected reads follow the same current access rules as the screens, including private linked documents.",
+            "Large result lists arrive in smaller pages with explicit dates, status and revision numbers."
         ]
     },
     {

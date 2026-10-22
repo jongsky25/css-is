@@ -146,9 +146,10 @@
     input.id = 'prep-field-' + (++fieldId);
     if (opts.type === 'number') { input.min = '0'; input.step = '0.01'; }
     if (opts.placeholder) input.setAttribute('placeholder', opts.placeholder);
+    if (opts.required) { input.required = true; input.setAttribute('aria-required', 'true'); }
     input.value = value == null ? '' : value;
     input.addEventListener('input', function () { onInput(input.value); save(); if (opts.refresh) refresh(); });
-    var wrap = el('div', opts.wide ? { 'class': 'tv-row-wide' } : {}, [el('label', { text: label, 'for': input.id }), input]);
+    var wrap = el('div', { 'class': (opts.wide ? 'tv-row-wide' : '') + (opts.required ? ' tv-required' : '') }, [el('label', { text: label, 'for': input.id }), input]);
     return wrap;
   }
   function select(label, value, options, onChange) {
@@ -600,15 +601,16 @@
   var T = state.texts, S = state.signatories;
   app.appendChild(ratesPanel());
   app.appendChild(section('Itinerary of travel', [rowsBox, el('div', { 'class': 'tv-row-actions' }, [addDay, sortDays, sortDaysDesc]), el('p', { 'class': 'tv-hint', text: 'To change the order, drag an entry by its handle, use Move to top, Move up and Move down, or sort by date.' }), totals, breakBox].concat(data.kind === 'liquidation' ? [liqBox] : []).concat([flagsBox,
-    field('Your designation (shown on the forms)', S.traveler_title, function (v) { S.traveler_title = v; }, { wide: true }),
-    field('Purpose (completes "To …")', T.purpose, function (v) { T.purpose = v; }, { wide: true }),
+    field('Your designation (shown on the forms)', S.traveler_title, function (v) { S.traveler_title = v; }, { wide: true, required: true }),
+    field('Purpose (completes "To …")', T.purpose, function (v) { T.purpose = v; }, { wide: true, required: true }),
     field('Itinerary number (optional)', T.itinerary_no, function (v) { T.itinerary_no = v; })])));
   if (needs('appendix_b')) {
     var explanation = textArea('Explanation (if it did not go as planned)', 'explanation');
     explanation.hidden = T.strictness === 'strict';
     var completed = [select('How the travel went', T.strictness,
       [['strict', 'Strictly as in the itinerary'], ['cut', 'Cut short'], ['extended', 'Extended'], ['other', 'Other']],
-      function (v) { T.strictness = v; explanation.hidden = v === 'strict'; }), explanation];
+      function (v) { T.strictness = v; explanation.hidden = v === 'strict'; }), explanation,
+      textArea('Other attachments (optional, one per line)', 'extra_evidence', 'The DPO, Appendix A and B, the Certificate of Appearance and the Post Travel Report are listed for you. Add any others, such as a ticket or receipt.')];
     if (data.kind === 'liquidation' && data.answers.refund) {
       completed = completed.concat([
         field('Refund amount (₱)', T.refund_amount, function (v) { T.refund_amount = v; }, { type: 'number' }),
@@ -744,6 +746,10 @@
   // `only` is the code of one form to make again; without it every form is made.
   function makeForms(only) {
     if (posting || go.disabled || !progressKnown) return;
+    var missing = [];
+    if (!String(S.traveler_title || '').trim()) missing.push('your designation');
+    if (!String(T.purpose || '').trim()) missing.push('the purpose');
+    if (missing.length) { msgBox.textContent = 'Please fill in ' + missing.join(' and ') + ' (marked *) before making the forms.'; return; }
     posting = true; uncertain = false; progressKnown = false; ++progressTicket; clearTimeout(timer);
     busy(true); retryProgress.hidden = true; msgBox.textContent = only ? 'Making that form again…' : 'Making the forms…';
     // Keep hidden answers in the browser draft, but never put stale refund or

@@ -110,7 +110,7 @@ SIGNATORY_KEYS = ("head_name", "head_title", "station", "certifier_name", "certi
                   "traveler_title")
 TEXT_KEYS = ("purpose", "explanation", "refund_amount", "refund_or_no", "refund_or_date", "overview",
              "key_points", "contributions", "support_needed", "recommendations", "conclusion", "activities",
-             "obligations", "itinerary_no")
+             "obligations", "itinerary_no", "extra_evidence")
 
 
 @dataclass
@@ -337,9 +337,26 @@ def _appendix_a(ctx) -> DocPayload:
         rows={"itinerary": {"marker": "r_date", "data": data}})
 
 
-def _evidence(items) -> list:
-    return [f"{i + 1}. {it['label']}" for i, it in enumerate(
-        x for x in items if x["handling"] != "fmis" and x["state"] == "present" or (x["handling"] == "generate" and x.get("doc_url")))]
+# The attachments every claim carries are listed on their own (spot feedback #173); the checklist rows they stand for are
+# left out of the "other" attachments so nothing appears twice.
+_STANDING_EVIDENCE = {"dpo", "appendix_a", "appendix_b", "cert_appearance", "bto_report", "travel_report"}
+
+
+def _evidence(items, filing=None, extra="") -> list:
+    """The numbered "Evidence of Travel attached hereto" lines: the DPO (number and date, blank when not yet known),
+    Appendix A and B, the Certificate of Appearance (the back-to-office report when that replaces it) and the Post Travel
+    Report, then whatever else is uploaded or generated, then the lines the traveller typed under "other attachments"."""
+    codes = {x["code"] for x in items}
+    f = filing or {}
+    no, dt = (f.get("dpo_no") or "").strip() or "________", long_date(f["dpo_date"]) if f.get("dpo_date") else "________"
+    lines = [f"Department Personnel Order (DPO) No. {no} dated {dt}",
+             "Appendix A and B",
+             "Back-to-office report" if "bto_report" in codes else "Certificate of Appearance",
+             "Post Travel Report"]
+    lines += [x["label"] for x in items if x["code"] not in _STANDING_EVIDENCE and (
+        (x["handling"] != "fmis" and x["state"] == "present") or (x["handling"] == "generate" and x.get("doc_url")))]
+    lines += [ln.strip() for ln in (extra or "").splitlines() if ln.strip()]
+    return [f"{i + 1}. {ln}" for i, ln in enumerate(lines)]
 
 
 def _appendix_b(ctx) -> DocPayload:
@@ -356,7 +373,7 @@ def _appendix_b(ctx) -> DocPayload:
         "refund_amount": t["refund_amount"], "refund_or_no": t["refund_or_no"], "refund_or_date": t["refund_or_date"],
         "traveler_name": n, "traveler_designation": ctx["designation"],
         "approver_name": sig["approver_name"], "approver_title": sig["approver_title"]},
-        blocks={"explanation": lines, "evidence_list": _evidence(ctx["items"])})
+        blocks={"explanation": lines, "evidence_list": _evidence(ctx["items"], f, t["extra_evidence"])})
 
 
 def _claim(ctx, kind, asked) -> DocPayload:

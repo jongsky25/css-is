@@ -1,8 +1,38 @@
-## 7.94 — October 22, 2026
+## 7.96 — October 22, 2026
 
 - Travel: admin review of the papers before paper submission (spot feedback #174). When every required form and attachment is in, the traveller picks a reviewer from the Administrative Section (never themselves) and sends the claim for review. The reviewer sees the generated and uploaded documents, adds notes (missing / incorrect / other, optionally against one document), and either sends them back or approves. Email goes to the reviewer on a request or a second look and to the traveller on notes or approval; both sides also get a bell row, and reviewers get a "Review travel papers" page.
 - `mark_ready` waits for the approval; any later change to a claim (answers, links, documents) clears it. `travel.review_required` (default on) switches the requirement off. Claims already ready or submitted are not affected until they are edited.
 - New columns on `travel_filing` (`review_state`, `reviewer_id`, `review_round`, `review_requested_at`, `review_decided_at`) and a `travel_review_note` table, added automatically on start-up. New email features `travel_review_request` and `travel_review_result` can be switched off under Email.
+
+## 7.95 — October 22, 2026
+
+- Appendix B's "Evidence of Travel attached hereto" starts with the DPO (number and date, blank when not yet known), Appendix A and B, the Certificate of Appearance (the back-to-office report when that replaces it) and the Post Travel Report; uploaded or generated extras follow, then an optional "Other attachments" box on the prepare page (spot feedback #173).
+- No schema migration or dependency changes.
+
+## 7.94 — October 22, 2026
+
+- Travel prepare page: designation and purpose are required (marked *) before the forms are made (spot feedback #172).
+- DPO: laid out like the office's sample (title and number indented, "SUBJECT:" with a justified, underlined subject hanging at 1.5 in, justified body with 0.5 in first lines, signatory block at 2.25 in, 12 pt after each paragraph). The first paragraph gives the invitation's rationale (when there is one) and then who conducts the activity, when and where; the subject reads "Authority for Select Bureau of Local Health Systems Development (BLHSD) Personnel to Conduct / Participate in / Serve as Resource Person in the …" (spot feedback #170). Re-make the Apps Script templates for the layout to apply.
+- New "DPO cites" box in the Documents block of an activity (`calendar_entry_dpo_cites`, created on start-up): the typed text opens the DPO's first paragraph, ahead of the invitation's key lines.
+- No dependency changes.
+
+## 7.93 — October 22, 2026
+
+- ARTA walk-in reports can now be filtered to any date range of up to a year, down to a single day: pick From and To dates, or tap Today, Last 7 days or This month.
+- The custom range carries through the on-screen numbers, Word/PDF/ARTA-template reports, the BLHSD Excel file and the comments view.
+- The Walk-in entries list also has From/To dates and quick ranges, so you can see exactly what came in on a given day.
+- Activity and resource-person reports are unchanged; no schema migration or new dependency.
+
+## 7.92 — October 22, 2026
+
+- Start A19 with a supported `/api/v1` read-only contract for selected document metadata, work items and contribution task statuses.
+- Publish an isolated typed OpenAPI contract, string identifiers, offset-aware timestamps, bounded keyset pages and consistent private JSON errors.
+- Authenticate through current registered user sessions, reuse live document/work authority and return identical missing/inaccessible responses; bearer tokens, machine identities and API writes remain later increments.
+- Apply shared-work visibility before paging in SQL for both browser and API lists; linked restricted documents, canonical merges and current grants continue to control access.
+- Keep API projections explicit and exclude file bodies, email metadata, submissions, grants and external-operation details. API requests skip browser navigation hydration.
+- Add a standalone standard-library read client with bounded reads and no redirect forwarding of sessions, plus checked-in generated contract and integration guidance.
+- Repair the remaining combined-survey browser assertion race with delayed-script English/Filipino coverage and an explicit wait for matching draft cleanup; survey runtime behavior is unchanged.
+- No schema migration, dependency addition or provider change.
 
 ## 7.91 — October 22, 2026
 
