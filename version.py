@@ -17,18 +17,27 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.95"
+APP_VERSION = "7.96"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
-        "version": "7.95",
+        "version": "7.96",
         "date": "October 22, 2026",
         "summary": "Connected tools can safely acknowledge assigned tasks and check the saved result.",
         "changes": [
             "Authorized users can mark a task as in progress through the documented connection.",
             "Outdated task changes are refused, and repeating the same request does not create another change.",
             "A saved result can be checked after a lost connection while current access rules still apply."
+        ]
+    },
+    {
+        "version": "7.95",
+        "date": "October 22, 2026",
+        "summary": "The evidence list on Appendix B now fills itself in.",
+        "changes": [
+            "Appendix B lists the DPO with its number and date, Appendix A and B, the Certificate of Appearance and the Post Travel Report automatically.",
+            "Other attachments are optional: add them one per line on the prepare page, or upload them on the checklist."
         ]
     },
     {

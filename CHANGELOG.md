@@ -1,4 +1,4 @@
-## 7.95 — October 22, 2026
+## 7.96 — October 22, 2026
 
 - Continue A19 with one typed task action: acknowledge an assigned contribution through `/api/v1`, reusing the UI task service and its current owner/officer authority.
 - Require a current registered session, matching origin, session-bound CSRF header, bounded JSON, explicit task revision/reason and a caller-saved UUID v4 idempotency key.
@@ -6,6 +6,11 @@
 - Publish private operation-result reads with fresh linked-document/task access checks. Receipts describe the original result; current task state remains a separate read.
 - Add API contract 1.1.0 and an independent standard-library task client with explicit saved keys and no automatic write retries.
 - Add an additive receipt table through the existing repeatable installer; retain receipts across restarts and rollback. No new dependency or provider call.
+
+## 7.95 — October 22, 2026
+
+- Appendix B's "Evidence of Travel attached hereto" starts with the DPO (number and date, blank when not yet known), Appendix A and B, the Certificate of Appearance (the back-to-office report when that replaces it) and the Post Travel Report; uploaded or generated extras follow, then an optional "Other attachments" box on the prepare page (spot feedback #173).
+- No schema migration or dependency changes.
 
 ## 7.94 — October 22, 2026
 

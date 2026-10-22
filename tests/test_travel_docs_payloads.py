@@ -89,16 +89,19 @@ def test_row_count_is_capped_and_bad_values_never_raise():
 # ----------------------------------------------------------------- appendix B ---
 
 def test_appendix_b_checks_one_box_lists_evidence_and_appends_the_justification():
-    items = [{"label": "Plane ticket", "handling": "upload", "state": "present"},
-             {"label": "Boarding pass", "handling": "upload", "state": "missing"},
-             {"label": "FMIS routing slip", "handling": "fmis", "state": "present"},
-             {"label": "Post Travel Report", "handling": "generate", "state": "missing", "doc_url": "https://docs.google.com/d/1"}]
+    items = [{"code": "plane_ticket", "label": "Plane ticket", "handling": "upload", "state": "present"},
+             {"code": "boarding_pass", "label": "Boarding pass", "handling": "upload", "state": "missing"},
+             {"code": "fms_routing_slip", "label": "FMIS routing slip", "handling": "fmis", "state": "present"},
+             {"code": "travel_report", "label": "Post Travel Report", "handling": "generate", "state": "missing",
+              "doc_url": "https://docs.google.com/d/1"}]
     f = filing(mc114_format="appendix_b")
     p = one(["appendix_b"], [], f=f, items=items, texts={"strictness": "cut", "explanation": "Left a day early.\n\nSick."},
             mc114="Because of the schedule.\nIt was necessary.")
     assert p.item_code == "appendix_b" and p.also == ("appendix_a",) and p.template_key == "claim_liq"   # one document, both rows
     assert (p.fields["chk_strict"], p.fields["chk_cut"]) == ("☐", "☒")
-    assert p.blocks["evidence_list"] == ["1. Plane ticket", "2. Post Travel Report"]
+    # spot feedback #173: the standing attachments first (the DPO number and date come from the filing), then the other uploads
+    assert p.blocks["evidence_list"] == ["1. Department Personnel Order (DPO) No. 2026-123 dated August 20, 2026", "2. Appendix A and B",
+                                         "3. Certificate of Appearance", "4. Post Travel Report", "5. Plane ticket"]
     assert p.blocks["explanation"] == ["Left a day early.", "Sick.", "Justification (MC 114):",
                                        "Because of the schedule.", "It was necessary."]
     assert p.fields["date"] == "September 10, 2026" and p.fields["head_name"] == "Dr. Ana Reyes"
