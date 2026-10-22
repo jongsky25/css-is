@@ -158,3 +158,10 @@ def test_the_report_lists_itinerary_days_outside_the_activity():
            "texts": {"day_by_day": ["October 12, 2026: Opening.", "October 13, 2026: Closing."]}}
     assert td._report_days(ctx) == ["October 11, 2026: Travelled from Manila to Cebu by plane.",
                                     "October 12, 2026: Opening.", "October 13, 2026: Closing."]
+
+
+def test_every_sheet_made_for_a_row_gets_a_link():
+    """Spot feedback #159: a CENRR or RER is one sheet per ride; the second and later links are shown, not just kept."""
+    import travel
+    assert travel.extra_doc_urls("More: https://x/1 https://x/2") == ["https://x/1", "https://x/2"]
+    assert travel.extra_doc_urls(None) == [] and travel.extra_doc_urls("a paper note") == []

@@ -57,7 +57,7 @@
     {% elif it.handling == 'fmis' and it.fmis_ref %}<div class="tv-note">FMIS: {{ it.fmis_ref }}</div>
     {% endif %}
     {% if it.drive_url %}<div class="tv-note"><a href="{{ it.drive_url }}" rel="noopener" target="_blank">{{ 'Open the folder' if it.drive_source == 'upload' else 'Open the file' }}</a></div>{% endif %}
-    {% if it.doc_url %}<div class="tv-note"><a href="{{ it.doc_url }}" rel="noopener" target="_blank">Open the form</a>{% if it.doc_state == 'manual' %} (your own copy){% endif %}</div>{% endif %}
+    {% if it.doc_url %}{% set more = travel_extra_docs(it.note) if it.handling == 'generate' else [] %}<div class="tv-note"><a href="{{ it.doc_url }}" rel="noopener" target="_blank">{{ 'Open sheet 1' if more else 'Open the form' }}</a>{% for u in more %} · <a href="{{ u }}" rel="noopener" target="_blank">Open sheet {{ loop.index + 1 }}</a>{% endfor %}{% if it.doc_state == 'manual' %} (your own copy){% endif %}</div>{% endif %}
     {% if it.note and it.handling == 'carry' %}<div class="tv-note">Note: {{ it.note }}</div>{% endif %}
     </details>
   </li>
