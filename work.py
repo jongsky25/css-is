@@ -212,17 +212,9 @@ def can_link(conn, user, case):
 
 
 def list_page(conn, user, before=None, limit=25):
-    """Bounded keyset pagination. Never return counts or titles of hidden records."""
-    user = permissions.actor(conn, user)
-    cursor = int(before) if before else 9223372036854775807
-    found = []
-    scanned = rows(conn, 'SELECT * FROM work_case WHERE id<? ORDER BY id DESC LIMIT 250', (cursor,))
-    for case in scanned:
-        if _can_view(conn, user, case):
-            if len(found) == limit:
-                return found, found[-1]['id']
-            found.append(case)
-    return found, scanned[-1]['id'] if len(scanned) == 250 else None
+    """Permission-filtered keyset page shared by UI and supported API reads."""
+    import work_reads
+    return work_reads.page(conn, user, before=before or 0, limit=limit)
 
 
 def linked_documents(conn, user, case_id):

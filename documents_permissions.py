@@ -183,6 +183,17 @@ class RegistryScope:
               WHERE registry_root.canonical_id IS NULL AND {self._base_view_sql('registry_root')}
             ) END)'''
 
+    def work_view_sql(self, alias):
+        """SQL counterpart of work._can_view; source records limit case access."""
+        member = f'''({alias}.creator_id=:registry_actor OR {alias}.lead_id=:registry_actor
+            OR {self.officer_sql(alias, concerned=False)} OR EXISTS (
+                SELECT 1 FROM work_task participant WHERE participant.case_id={alias}.id
+                  AND ((participant.owner_id=:registry_actor AND participant.status<>'cancelled')
+                       OR {self.officer_sql('participant', concerned=False)})))'''
+        return f'''({member} AND NOT EXISTS (
+            SELECT 1 FROM work_document link LEFT JOIN document linked ON linked.id=link.document_id
+            WHERE link.case_id={alias}.id AND NOT {self.view_sql('linked')}))'''
+
     def assignment_ctes(self):
         """Flat read relations avoid deep SQL nesting on deployment SQLite builds."""
         case_member = f'''(wc.creator_id=:registry_actor OR wc.lead_id=:registry_actor
