@@ -833,6 +833,8 @@ def _touch_open(conn, filing, now):
     """An edit to a filing that was ready sends it back to 'open' so it is checked again."""
     if filing["status"] == "ready":
         conn.execute("UPDATE travel_filing SET status='open', ready_at=NULL WHERE id=?", (filing["id"],))
+    if filing.get("review_state") == "approved":       # the reviewer approved the papers as they were: a change needs a new look
+        conn.execute("UPDATE travel_filing SET review_state='', review_decided_at=NULL WHERE id=?", (filing["id"],))
 
 
 def _editable(filing):

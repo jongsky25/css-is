@@ -17,10 +17,21 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.91"
+APP_VERSION = "7.94"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "7.94",
+        "date": "October 22, 2026",
+        "summary": "An Administrative Section reviewer now checks a travel claim's papers before paper submission.",
+        "changes": [
+            "Once every required form and attachment is in, you choose a reviewer from the Administrative Section and send the claim for review.",
+            "The reviewer opens each form and document, notes what is missing or incorrect, and either sends the notes back or approves. You are emailed either way.",
+            "After you fix the notes you ask again, and the reviewer is emailed. A claim can be marked ready only after the papers are approved; changing it afterwards asks for a new review.",
+            "Reviewers see claims waiting for them under Review travel papers and in the bell."
+        ]
+    },
     {
         "version": "7.91",
         "date": "October 22, 2026",

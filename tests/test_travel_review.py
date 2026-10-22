@@ -163,3 +163,12 @@ def test_an_approved_claim_stays_approved_on_the_ready_page(viewer, encoder, con
     encoder.post(f"/travel/review/{ref}/approve", follow_redirects=False)
     page = viewer.get(f"/travel/f/{ref}/ready").text
     assert "Mark ready" in page and "Go to the review" not in page
+
+
+def test_changing_an_approved_claim_asks_for_a_new_review(viewer, encoder, conn, unit, relay, sent):
+    ref = mk(viewer); complete(conn, ref); ask(viewer, ref, unit[REVIEWER])
+    encoder.post(f"/travel/review/{ref}/approve", follow_redirects=False)
+    assert travel.get_by_ref(conn, ref)["review_state"] == "approved"
+    post(viewer, f"/travel/f/{ref}/item/dpo", drive_url=LINK + "2")
+    f = travel.get_by_ref(conn, ref)
+    assert f["review_state"] == "" and "err=" in post(viewer, f"/travel/f/{ref}/ready").headers["location"]
