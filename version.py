@@ -17,10 +17,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.90"
+APP_VERSION = "7.91"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "7.91",
+        "date": "October 22, 2026",
+        "summary": "Travel details are now required, and the DPO explains who runs the activity and why.",
+        "changes": [
+            "Your designation and the purpose are required before the travel forms are made.",
+            "The first paragraph of a DPO names who is conducting the activity and cites the reason given in the invitation.",
+            "DPO paragraphs have space between them, and a long subject lines up under its own text."
+        ]
+    },
     {
         "version": "7.90",
         "date": "October 22, 2026",

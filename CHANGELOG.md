@@ -1,3 +1,9 @@
+## 7.91 — October 22, 2026
+
+- Travel prepare page: designation and purpose are required (marked *) before the forms are made (spot feedback #172).
+- DPO: the first paragraph names who conducts the activity and cites the invitation's key lines as the rationale; 12 pt space after every paragraph; the subject uses a hanging indent (spot feedback #170). Re-make the Apps Script templates for the layout to apply.
+- No schema migration or dependency changes.
+
 ## 7.90 — October 22, 2026
 
 - Start A18 with accessible survey corrections, retained device drafts and clearer submission progress in English and Filipino; reporting clarity remains the next increment.
