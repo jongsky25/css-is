@@ -1,0 +1,18 @@
+{% extends 'supplies/base.html' %}
+{% block supplies_content %}
+{% set entry=supply_request %}<h1>Record supply handover</h1><p>{{ entry.control_number }} · {{ entry.requester_snapshot }} · {{ entry.unit_snapshot }}</p>
+<p>Enter only quantities actually handed over. Leave unused lines blank. Each handover creates a separate release.</p>
+{% set reserved=entry.lines|selectattr('reserved_quantity','gt',0)|list %}
+{% if reserved and enabled %}<form method="post" action="/supplies/requests/{{ entry.id }}/issues">
+<input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="operation_key" value="{{ new_key() }}"><input type="hidden" name="revision" value="{{ submitted.get('revision',entry.revision) }}">
+<label for="handover-date">Handover date</label><input id="handover-date" name="effective_date" type="date" max="{{ today }}" value="{{ submitted.get('effective_date',today) }}" required>
+<label for="recipient">Staff recipient</label><select id="recipient" name="recipient_id" required><option value="">Choose an active recipient</option>{% for person in recipients %}<option value="{{ person.id }}"{% if person.id|string==submitted.get('recipient_id',entry.requester_id)|string %} selected{% endif %}>{{ person.name }} · {{ person.unit_name }}</option>{% endfor %}</select>
+<label for="alternate-reason">Alternate recipient reason (required when recipient differs from requester)</label><input id="alternate-reason" name="alternate_reason" maxlength="2000" value="{{ submitted.get('alternate_reason','') }}">
+{% for line in reserved %}<fieldset class="supply-panel"><legend>{{ line.code_snapshot }} · {{ line.description_snapshot }}</legend><p>Reserved {{ line.reserved_quantity }} {{ line.unit_snapshot }} · Outstanding {{ line.outstanding_quantity }} · Already issued {{ line.effective_issued_quantity }} · Awaiting stock {{ line.awaiting_stock_quantity }}</p>
+<input type="hidden" name="version_{{ line.line_id }}" value="{{ submitted.get('version_' ~ line.line_id,line.reservation_version) }}">
+<label for="issue-quantity-{{ line.line_id }}">Issue quantity for {{ line.code_snapshot }} ({{ line.unit_snapshot }})</label><input id="issue-quantity-{{ line.line_id }}" name="issue_quantity_{{ line.line_id }}" type="number" min="1" max="{{ line.reserved_quantity }}" step="1" value="{{ submitted.get('issue_quantity_' ~ line.line_id,'') }}"></fieldset>{% endfor %}
+<label for="handover-note">Handover note (optional)</label><input id="handover-note" name="note" maxlength="2000" value="{{ submitted.get('note','') }}">
+<label class="supply-check"><input name="confirmed" type="checkbox" value="yes" required> I confirm these quantities were handed to the selected recipient.</label>
+<p><button type="submit">Post supply handover</button></p></form>{% elif not reserved %}<p>No reserved quantities remain to issue. Review the request for shortages or completed demand.</p>{% endif %}
+<p><a href="/supplies/requests/{{ entry.id }}">View request and remaining quantities</a></p>
+{% endblock %}

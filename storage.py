@@ -44,6 +44,7 @@ import reg_questions as rq  # custom registration questions (pure rules)
 
 def connect(db_path="css_is.db"):
     conn = sqlite3.connect(db_path)
+    conn.execute("PRAGMA busy_timeout = 5000")
     conn.execute("PRAGMA foreign_keys = ON")
     # WAL: readers never block the single writer (and vice-versa), so a long
     # atoms rebuild or a live survey-submission write no longer stalls every
@@ -53,7 +54,6 @@ def connect(db_path="css_is.db"):
     # pages), not a raw file copy. (:memory: silently stays in memory mode.)
     conn.execute("PRAGMA journal_mode = WAL")
     conn.execute("PRAGMA synchronous = NORMAL")
-    conn.execute("PRAGMA busy_timeout = 5000")
     return conn
 
 
@@ -792,6 +792,8 @@ def init_db(conn):
     documents_storage.install(conn)
     import work_storage
     work_storage.install(conn)
+    import supplies_storage
+    supplies_storage.install(conn)
     conn.commit()
 
 

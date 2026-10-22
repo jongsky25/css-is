@@ -1,0 +1,16 @@
+{% extends 'supplies/base.html' %}
+{% block supplies_content %}
+<h1>{{ report.title }}{% if report.item %} · {{ report.item.code }}{% endif %}</h1>
+<p>{{ report.date_note }} · Generated {{ report.generated_at }}. Posting dates determine historical inclusion; effective dates are shown for reference. Figures are in each item's recorded unit.</p>
+{% if report.kind in ('inventory','replenishment','stock-card') %}<p>Source costs, where shown, are draft estimates or receipt records, not official accounting valuation.</p>{% endif %}
+<nav class="supply-actions" aria-label="Supplies reports">
+<a href="/supplies/reports/inventory">Inventory</a><a href="/supplies/reports/fulfillment">Request fulfillment</a><a href="/supplies/reports/consumption">Issue consumption</a><a href="/supplies/reports/replenishment">Outstanding replenishment</a>
+</nav>
+{% if report.kind in ('stock-card','consumption') %}<form method="get" class="supply-fields"><label>Posting date through <input type="date" name="as_of" value="{{ report.as_of or '' }}"></label>{% if report.item %}<input type="hidden" name="item_id" value="{{ report.item.id }}">{% endif %}<button type="submit">Apply date</button></form>{% endif %}
+{% set query = ('?item_id=' ~ report.item.id if report.item else '') ~ ('&as_of=' ~ report.as_of if report.item and report.as_of else '?as_of=' ~ report.as_of if report.as_of else '') %}
+<p><a href="/supplies/reports/{{ report.kind }}/print{{ query }}">Print on A4 or save PDF</a> · <a href="/supplies/reports/{{ report.kind }}/xlsx{{ query }}">Download Excel</a></p>
+{% if report.kind=='consumption' %}<h2>Totals by item and posting date</h2><div class="supply-table" role="region" aria-label="Consumption totals" tabindex="0"><table><thead><tr><th>Posting date</th><th>Item</th><th>Unit</th><th>Issued</th><th>Reversed</th><th>Net issued</th><th>Usable returned</th><th>Unusable returned</th></tr></thead><tbody>{% for row in report.summary %}<tr><td>{{ row.posted_date }}</td><td>{{ row.code }} · {{ row.description }}</td><td>{{ row.unit }}</td><td>{{ row.issued }}</td><td>{{ row.reversed }}</td><td>{{ row.net_issued }}</td><td>{{ row.usable_returned }}</td><td>{{ row.unusable_returned }}</td></tr>{% else %}<tr><td colspan="8">No matching saved issues.</td></tr>{% endfor %}</tbody></table></div><h2>Release detail</h2>{% endif %}
+<div class="supply-table" role="region" aria-label="{{ report.title }}" tabindex="0"><table><thead><tr>{% for name,label in report.headers %}<th scope="col">{{ label }}</th>{% endfor %}</tr></thead><tbody>
+{% for row in report.rows %}<tr>{% for name,label in report.headers %}<td>{% if name=='code' and row.get('item_id') %}<a href="/supplies/items/{{ row.item_id }}">{{ row[name] }}</a>{% elif name=='control_number' and row.get('request_id') %}<a href="/supplies/requests/{{ row.request_id }}">{{ row[name] }}</a>{% elif name=='control_number' and row.get('replenishment_id') %}<a href="/supplies/replenishments/{{ row.replenishment_id }}">{{ row[name] }}</a>{% elif name=='release_number' %}<a href="/supplies/issues/{{ row.issue_id }}">{{ row[name] }}</a>{% else %}{{ row.get(name) if row.get(name) is not none else '—' }}{% endif %}</td>{% endfor %}</tr>
+{% else %}<tr><td colspan="{{ report.headers|length }}">No matching saved records.</td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}

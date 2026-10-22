@@ -1,3 +1,9 @@
+## 7.86 — October 22, 2026
+
+- Add the Supplies module from reviewed opening stock and staff requests through approval, partial issue, acknowledgment, warnings, replenishment, deliveries, corrections and reports.
+- Keep Supplies changes disabled until an administrator verifies staff roles, a dated physical count, the opening ledger and the pilot cutover.
+- Preserve authorized reads and transaction evidence while writes are disabled; no live stock or role grants are imported by this release.
+
 ## 7.85 — October 21, 2026
 
 - Start A17 with current conference-room status and next-step guidance for owned reservations and validated guest tracking links, including standby, moves, replacements, declines, cancellation, withdrawal, expiry and unavailable alternatives.

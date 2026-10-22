@@ -1,0 +1,14 @@
+{% extends 'supplies/base.html' %}
+{% block supplies_content %}
+<h1>Returns and corrections</h1><p><a href="/supplies/{{ entity }}/{{ entity_id }}">Back to original record</a></p>
+<p>These entries preserve original stock movements and handovers. Acknowledgments continue to describe the original release.</p>
+{% for correction in corrections %}<article class="supply-panel" id="correction-{{ correction.id }}"><h2><a href="/supplies/corrections/{{ correction.id }}">Correction {{ correction.id }}</a> · {{ {'return':'Returned supplies','stocktake':'Physical-count adjustment','issue_reversal':'Mistaken issue reversed','receipt_reversal':'Mistaken receipt reversed'}[correction.kind] }}</h2>
+<p>{{ correction.code }} · {{ correction.quantity }} {{ correction.unit }}{% if correction.kind=='stocktake' %} counted{% endif %}{% if correction.condition %} · {{ 'Usable' if correction.condition=='usable' else 'Damaged / unusable — no usable stock added' }}{% endif %}</p>
+<p>Stock: {{ correction.before_on_hand }} → {{ correction.after_on_hand }} · Change {{ '+' if correction.quantity_delta>0 else '' }}{{ correction.quantity_delta }}</p>
+<p>Effective {{ correction.effective_date|humandate }} · Recorded {{ correction.posted_at|humandt }} by {{ correction.actor_snapshot }}</p><p>Reason and evidence: {{ correction.reason }}</p>
+{% if correction.kind=='issue_reversal' %}<p>{{ 'Corrected quantity reopened as outstanding demand.' if correction.reopen_demand else 'Corrected quantity added to cancelled remainder.' }} Existing cancellations were preserved.</p>{% endif %}
+{% if correction.source_movement_id %}<p>Original stock movement: {{ correction.source_movement_id }}{% if correction.movement_id %} · Correction movement: {{ correction.movement_id }}{% endif %}</p>{% endif %}
+{% if correction.impact.affected_requests %}<h3>Reservation changes</h3><ul>{% for affected in correction.impact.affected_requests %}<li><a href="/supplies/requests/{{ affected.request_id }}">{{ affected.control_number }}</a> · Line {{ affected.line_id }}: reserved {{ affected.previous_reserved }} → {{ affected.reserved }}{% if affected.released %} · {{ affected.released }} now awaiting stock{% endif %}</li>{% endfor %}</ul>{% endif %}
+</article>{% else %}<p>No returns or corrections recorded.</p>{% endfor %}
+{% if not single %}<nav class="supply-actions" aria-label="Correction history pages">{% if page>1 %}<a href="?page={{ page-1 }}">Previous page</a>{% endif %}<span>Page {{ page }}</span>{% if has_next %}<a href="?page={{ page+1 }}">Next page</a>{% endif %}</nav>{% endif %}
+{% endblock %}

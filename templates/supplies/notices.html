@@ -1,0 +1,7 @@
+{% extends 'supplies/base.html' %}
+{% block supplies_content %}
+<h1>My stock notices</h1><p>{{ unread_count }} unread active notice{{ '' if unread_count==1 else 's' }}.</p><p><a href="/supplies/notices">All my notices</a> · <a href="/supplies/notices?unread=1">Unread active notices</a> · <a href="/supplies/warnings">Current stock warnings</a></p>
+<p>Notices retain quantities at the time they were created. Check current stock before acting.</p>
+{% for notice in notices %}<article class="supply-panel"><h2><a href="/supplies/notices/{{ notice.id }}">{{ notice.snapshot.code }} · {{ notice.snapshot.availability_label }}</a></h2><p>{{ notice.snapshot.description }} · {{ notice.created_at|humandt }}</p><p>{{ 'Resolved' if notice.resolved_at else 'Active warning episode' }} · {{ 'Read' if notice.read_at else 'Unread' }}</p><p>On hand {{ notice.snapshot.on_hand }} · Reserved {{ notice.snapshot.reserved }} · Available {{ notice.snapshot.available }} {{ notice.snapshot.unit }}</p></article>{% else %}<p>No notices match this view.</p>{% endfor %}
+<nav class="supply-actions" aria-label="Notice pages">{% if page>1 %}<a href="?page={{ page-1 }}&unread={{ '1' if unread_only else '0' }}">Previous page</a>{% endif %}<span>Page {{ page }}</span>{% if has_next %}<a href="?page={{ page+1 }}&unread={{ '1' if unread_only else '0' }}">Next page</a>{% endif %}</nav>
+{% endblock %}

@@ -1,0 +1,12 @@
+{% extends 'supplies/base.html' %}
+{% block supplies_content %}
+<h1>My supply requests</h1>
+{% include 'supplies/_queue_filters.html' %}
+
+{% if enabled %}<p><a href="/supplies/requests/new">New supply request</a></p>{% endif %}
+<p>Draft your request, review its items and submit it for approval. Submission does not reserve or issue stock.</p>
+{% if requests %}<div class="supply-table" role="region" aria-label="My supply requests" tabindex="0"><table><thead><tr><th scope="col">Request</th><th scope="col">Purpose</th><th scope="col">Status</th><th scope="col">Next person / action</th><th scope="col">Updated</th></tr></thead><tbody>
+{% for entry in requests %}<tr><td><a href="/supplies/requests/{{ entry.id }}">{{ entry.control_number or ('Draft #' ~ entry.id) }}</a></td><td>{{ entry.purpose }}</td><td>{{ entry.approval_status|capitalize }}</td><td>{{ entry.next_action }}</td><td>{{ entry.updated_at|humandt }}</td></tr>{% endfor %}
+</tbody></table></div><ul class="supply-mobile-quantities" aria-label="Request actions">{% for entry in requests %}<li><a href="/supplies/requests/{{ entry.id }}">{{ entry.control_number or ('Draft #' ~ entry.id) }}</a> · {{ entry.approval_status|capitalize }} · {{ entry.next_action }}</li>{% endfor %}</ul>{% else %}<p>You have no supply requests yet.</p>{% endif %}
+{% include 'supplies/_queue_pagination.html' %}
+{% endblock %}

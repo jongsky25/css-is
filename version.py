@@ -17,10 +17,21 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.85"
+APP_VERSION = "7.86"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "7.86",
+        "date": "October 22, 2026",
+        "summary": "Supplies can track requests, approvals, stock, handovers and replenishment when the office is ready to start.",
+        "changes": [
+            "Staff can request supplies, and authorized approvers can decide quantities before custodians issue them.",
+            "Custodians can review stock warnings, record returns and deliveries, and request replenishment with separate approval.",
+            "Stock cards and reports show the saved movements behind inventory and request fulfillment.",
+            "Supplies starts paused until an administrator completes the counted-stock and staff setup."
+        ]
+    },
     {
         "version": "7.85",
         "date": "October 21, 2026",

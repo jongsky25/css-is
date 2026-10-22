@@ -1,0 +1,10 @@
+{% macro item_fields(values) %}
+<div class="supply-fields">
+  <label>Item code<input name="code" value="{{ values.get('code', '') }}" maxlength="40" required autocomplete="off"></label>
+  <label>Description<input name="description" value="{{ values.get('description', '') }}" maxlength="240" required></label>
+  <label>Unit of measure<input name="unit" value="{{ values.get('unit', '') }}" maxlength="40" required placeholder="e.g. Ream"></label>
+  <label>Critical level<input name="critical_level" type="number" min="0" max="2147483647" step="1" required value="{{ values.get('critical_level', 0) }}"></label>
+  <label>Target level (optional)<input name="target_level" type="number" min="0" max="2147483647" step="1" value="{{ values.get('target_level') if values.get('target_level') is not none else '' }}"></label>
+</div>
+<p class="supply-hint">Use one unit per item. The target level must be at least the critical level. A critical level of zero disables the positive low-stock band.</p>
+{% endmacro %}

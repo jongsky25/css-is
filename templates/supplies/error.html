@@ -1,0 +1,2 @@
+{% extends 'supplies/base.html' %}
+{% block supplies_content %}<h1>{{ 'Item unavailable' if status == 404 else 'Unable to complete this action' }}</h1><p>Return to the catalog or reload an authorized form to continue.</p>{% endblock %}

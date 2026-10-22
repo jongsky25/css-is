@@ -1,0 +1,17 @@
+{% extends 'supplies/base.html' %}
+{% block supplies_content %}
+<h1>Stock receipt {{ receipt.receipt_number }}</h1>
+{% if receipt.replenishment_id %}<p>Accepted from <a href="/supplies/replenishments/{{ receipt.replenishment_id }}">replenishment {{ receipt.replenishment_id }}</a>.</p>{% endif %}
+<p><a href="/supplies/receipts/{{ receipt.id }}/corrections">Correction history</a>{% if can_maintain and enabled %} · <a href="/supplies/receipts/{{ receipt.id }}/reverse">Reverse a mistaken receipt</a>{% endif %}</p>
+<dl class="supply-details">
+<dt>Supplier</dt><dd>{{ receipt.supplier }}</dd><dt>Receipt date</dt><dd>{{ receipt.effective_date }}</dd>
+<dt>Posted</dt><dd>{{ receipt.posted_at }} · {{ receipt.recipient_snapshot }}</dd>
+<dt>DR number</dt><dd>{{ receipt.dr_number or 'Not recorded' }}</dd><dt>APR number</dt><dd>{{ receipt.apr_number or 'Not recorded' }}</dd>
+<dt>Procurement mode</dt><dd>{{ receipt.procurement_mode or 'Not recorded' }}</dd>
+{% if receipt.note %}<dt>Note</dt><dd>{{ receipt.note }}</dd>{% endif %}
+</dl>
+<div class="supply-table" role="region" aria-label="Accepted receipt lines" tabindex="0"><table><caption>Accepted supplies</caption><thead><tr><th scope="col">Item at receipt</th><th scope="col">Original accepted quantity</th><th scope="col">Reversed</th><th scope="col">Net accepted</th><th scope="col">Unit</th><th scope="col">Unit cost (PHP)</th><th scope="col">Expiry date</th><th scope="col">Stock card</th></tr></thead><tbody>
+{% for line in receipt.lines %}<tr><td>{{ line.code_snapshot }}<br>{{ line.description_snapshot }}</td><td>{{ line.accepted_quantity }}</td><td>{{ line.reversed_quantity }}</td><td>{{ line.net_accepted_quantity }}</td><td>{{ line.unit_snapshot }}</td><td>{{ line.unit_cost if line.unit_cost is not none else 'Not recorded' }}</td><td>{{ line.expiry_date or 'Not recorded' }}</td><td><a href="/supplies/items/{{ line.item_id }}">View stock card</a></td></tr>{% endfor %}
+</tbody></table></div>
+<p>This posted receipt is retained in stock history. Subsequent catalog edits do not change the item details recorded here.</p>
+{% endblock %}

@@ -1,0 +1,16 @@
+# Supplies pilot: short operating guide
+
+Use only after the [cutover gates](SUPPLIES_S6_3_CUTOVER.md) are signed off and Supplies is opened to your pilot office. Sign in with your own account. The **Supplies overview** at `/supplies` links to the actions your current role can use. If the page says changes are disabled, contact the named pilot support owner; existing authorized records stay readable.
+
+| Role | Daily steps | Check before leaving the record |
+|---|---|---|
+| Requester | Open **My requests → New supply request**. Pick catalog items, whole-number quantities in the shown unit, purpose and office; submit. Follow the request detail for approval and fulfillment. | Check the control number and requested quantities. If an approved request needs changing, ask to cancel only its unissued remainder and submit a new request. |
+| Request approver | Open **Approval inbox**. Check requesting unit, purpose, available stock and each requested line; approve/reduce/return/reject with remarks. | Confirm your grant covers the office and you are not the requester. Approval reserves available stock; it does not reduce physical on-hand stock. |
+| Custodian | Open **Ready to issue**, confirm recipient and actual quantity, then post each partial/full handover. Watch **Awaiting stock**, **Stock warnings** and **Receipts**. | Check release number, stock-card movement and remaining approved quantity. Posting the issue deducts stock once; acknowledgment is a separate recipient action. Use reviewed return/stocktake/reversal paths for errors, never direct balance edits. |
+| Recipient | Open **Releases**, inspect the actual handover and acknowledge that release. | Report a discrepancy to the custodian before confirming; the custodian's reasoned paper-receipt entry is shown as a different method. |
+| Replenishment preparer (custodian) | Open **Replenishment**, review shortage/target suggestion, adjust a draft with reason, then submit it. Record procurement references after approval. | Check on-hand, reserved, outstanding demand and incoming separately. Submitting/ordering does not increase on-hand stock. |
+| Replenishment approver | Open **Replenishment** and decide a submitted proposal within your authority. | You must be different from the preparer. Approval creates incoming commitment, not physical stock. |
+| Delivery recorder (custodian) | From the replenishment detail, record each delivery with supplier/DR, delivered, accepted and rejected amounts. | Only accepted quantities add stock and reduce incoming. Check the linked receipt and stock card; use the linked correction path for mistakes. |
+| Auditor/reviewer | Read **Reports → Inventory**, stock cards, fulfillment, consumption and outstanding replenishment; compare with source records. | Reports distinguish on-hand, reserved, available and incoming. Cost fields are source metadata, not official accounting valuation. |
+
+The support owner and escalation contact must be entered in the controlled [cutover record](SUPPLIES_S6_3_CUTOVER.md) before the pilot. Give that person the record number and transaction IDs when reporting a problem. Stop posting if stock, role access, or audit evidence is wrong; the authorized administrator pauses Supplies writes while the team reconciles it.

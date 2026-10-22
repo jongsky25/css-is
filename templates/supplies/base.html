@@ -1,0 +1,27 @@
+{% extends 'dash_layout.html' %}
+{% block title %}Supplies · Office Connect{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/supplies.css">{% endblock %}
+{% block content %}
+<div class="supply-wrap">
+  <nav class="supply-actions" aria-label="Supplies navigation">
+    <a href="/supplies">Overview</a>
+    <a href="/supplies/items">Supply catalog</a>
+    <a href="/supplies/requests">My requests</a>
+    <a href="/supplies/awaiting-stock">Awaiting stock</a>
+    <a href="/supplies/issues">Releases</a>
+    {% if can_maintain %}<a href="/supplies/issuance">Ready to issue</a>{% endif %}
+    {% if can_approve %}<a href="/supplies/approvals">Approval inbox</a>{% endif %}
+    {% if can_read_stock %}<a href="/supplies/warnings">Stock warnings</a>{% endif %}
+    {% if can_maintain %}<a href="/supplies/notices">My stock notices</a>{% endif %}
+    {% if can_read_stock %}<a href="/supplies/receipts">Receipts</a>{% endif %}
+    {% if can_read_stock %}<a href="/supplies/reports/inventory">Reports</a>{% endif %}
+    {% if can_read_stock or can_replenish_approve %}<a href="/supplies/replenishments">Replenishment</a>{% endif %}
+    {% if can_read_stock %}<a href="/supplies/import">Workbook previews</a>{% endif %}
+    {% if can_maintain and enabled %}<a href="/supplies/receipts/new">Record receipt</a>{% endif %}
+    {% if can_configure %}<a href="/supplies/settings">Supplies settings</a>{% endif %}
+  </nav>
+  {% if not enabled %}<p class="supply-notice" role="status">Supplies changes are disabled. Existing records you can access remain readable.</p>{% endif %}
+  {% if error %}<p class="supply-error" role="alert">{{ error }}</p>{% endif %}
+  {% block supplies_content %}{% endblock %}
+</div>
+{% endblock %}

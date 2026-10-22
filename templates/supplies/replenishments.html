@@ -1,0 +1,16 @@
+{% extends 'supplies/base.html' %}
+{% block supplies_content %}
+<h1>Replenishment</h1>
+<p>Suggestions use the current stock ledger, approved demand, and approved incoming quantities. Drafts are proposals and do not change stock or incoming.</p>
+{% if can_maintain and enabled %}<p><a href="/supplies/replenishments/new">Prepare a replenishment draft</a></p>{% endif %}
+{% if suggestions %}
+<h2>Stock suggestions</h2>
+<p class="supply-hint">On a narrow screen, scroll the table sideways to see all calculation inputs.</p>
+<div class="supply-table"><table><thead><tr><th scope="col">Item</th><th scope="col">On hand</th><th scope="col">Reserved</th><th scope="col">Available</th><th scope="col">Outstanding approved demand</th><th scope="col">Approved incoming</th><th scope="col">Target</th><th scope="col">Suggested</th><th scope="col">Open proposals</th></tr></thead><tbody>
+{% for item in suggestions %}<tr><th scope="row">{{ item.code }} · {{ item.description }}{% if can_maintain and enabled %}<br><a href="/supplies/replenishments/new?item={{ item.id }}">Add to new draft</a>{% endif %}</th><td>{{ item.on_hand }}</td><td>{{ item.reserved }}</td><td>{{ item.available }}</td><td>{{ item.outstanding }}</td><td>{{ item.incoming }}</td><td>{{ item.target_level if item.target_level is not none else 'Unset' }}</td><td>{% if item.suggested is none %}Set target or enter quantity{% else %}{{ item.suggested }}{% endif %}{% if item.explanation %}<br><small>{{ item.explanation }}</small>{% endif %}</td><td>{% for existing in item.open_records %}{{ existing.control_number or 'Draft #' ~ existing.id }} ({{ existing.status }}){% if not loop.last %}, {% endif %}{% else %}None{% endfor %}</td></tr>{% endfor %}
+</tbody></table></div>
+{% endif %}
+<h2>Records you can view</h2>
+{% if can_replenish_approve %}<p>Submitted records need an independent replenishment approver. Open a record to compare current stock and incoming before deciding.</p>{% endif %}
+{% if records %}<ul>{% for record in records %}<li><a href="/supplies/replenishments/{{ record.id }}">{{ record.control_number or 'Draft #' ~ record.id }}</a> · {{ record.status }} · {{ record.purpose }}</li>{% endfor %}</ul>{% else %}<p>No replenishment records yet.</p>{% endif %}
+{% endblock %}
