@@ -29,6 +29,7 @@ CHANGELOG = [
             "Your designation and the purpose are required before the travel forms are made.",
             "A DPO now follows the office's sample: the title and subject are positioned and aligned as in the sample, with the subject justified and lined up under its own text, and the signatory block moved in.",
             "The first paragraph gives the reason from the invitation, then says who conducts the activity, when and where; the subject names the select BLHSD personnel and what they are authorised to do.",
+            "Every activity that needs a DPO has a \u201cDPO cites\u201d box for the law, memo or invitation that gives the reason for the activity; it opens the first paragraph. For another office\u2019s activity the invitation\u2019s key lines are used when it is empty.",
             "DPO paragraphs have space between them."
         ]
     },

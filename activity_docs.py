@@ -115,6 +115,27 @@ def set_invitation_file(conn, entry_id, url, name, by) -> None:
     conn.commit()
 
 
+CITES_MAX = 1000
+
+
+def get_dpo_cites(conn, entry_id) -> str:
+    """What the person typed under "DPO cites" for this activity, or ''."""
+    r = conn.execute("SELECT text FROM calendar_entry_dpo_cites WHERE entry_id=?", (entry_id,)).fetchone()
+    return (r[0] or "") if r else ""
+
+
+def set_dpo_cites(conn, entry_id, text, by) -> None:
+    """Keep what the DPO cites as the reason for the activity (one line; empty clears it)."""
+    text = " ".join(str(text or "").split())[:CITES_MAX]
+    if not text:
+        conn.execute("DELETE FROM calendar_entry_dpo_cites WHERE entry_id=?", (entry_id,))
+    else:
+        conn.execute("INSERT INTO calendar_entry_dpo_cites(entry_id, text, updated_by, updated_at) VALUES (?,?,?,?) "
+                     "ON CONFLICT(entry_id) DO UPDATE SET text=excluded.text, updated_by=excluded.updated_by, "
+                     "updated_at=excluded.updated_at", (entry_id, text, by, tz.now_iso()))
+    conn.commit()
+
+
 def clear_outside(conn, entry_id) -> None:
     conn.execute("DELETE FROM calendar_entry_outside WHERE entry_id=?", (entry_id,))
     conn.commit()
@@ -225,7 +246,9 @@ def payload(conn, entry, key, user, owner_label="", positions=False) -> td.DocPa
         else:
             conductor = f"the DOH, through {BUREAU},"
         sentence = f"{conductor} will conduct {the_title} on {days}{place_part}."
-        rationale = (outside or {}).get("invitation", "").strip()
+        # What the person typed under "DPO cites" comes first; for another office's activity the invitation's key lines
+        # stand in when that is empty. Nothing is invented when both are.
+        rationale = get_dpo_cites(conn, entry["id"]).strip() or (outside or {}).get("invitation", "").strip()
         if rationale:
             background = (rationale if rationale[-1] in ".!?" else rationale + ".") + " In support of this, " + sentence
         else:

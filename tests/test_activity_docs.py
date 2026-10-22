@@ -678,3 +678,54 @@ def test_the_settings_page_says_the_certifying_officer_is_only_a_fallback(admin)
     assert "Certifying officer, fallback" in page and "depends on the division" in page
     assert "used only when the directory has no division head" in page
     assert "Leave the name blank to use the Director from the directory" in page
+
+
+# ----------------------------------------------------------------- "DPO cites" (spot feedback #170) ---
+
+def cites(client, eid, text):
+    return client.post(f"/calendar/entries/{eid}/dpo-cites", content=urlencode({"dpo_cites": text}), headers=FORM,
+                       follow_redirects=False)
+
+
+RA = ("Republic Act No. 7883, or the Barangay Health Workers' Benefits and Incentives Act of 1995, provides for the "
+      "training and continuing education of BHWs.")
+
+
+def test_dpo_cites_open_the_first_paragraph_of_a_bureau_run_activity(viewer, conn, relay):
+    eid = create(viewer, kind="travel", title="CALEP Field Visit", venue="Cebu City", start_date="2026-10-12",
+                 end_date="2026-10-16", people=[str(uid(conn, "viewer@test.local")), str(uid(conn, "encoder@test.local"))])
+    r = cites(viewer, eid, "  " + RA.replace(", or", ",\n or") + "  ")
+    assert r.status_code == 303 and "ok=" in r.headers["location"] and ad.get_dpo_cites(conn, eid) == RA
+    draft(viewer, eid, "dpo")
+    assert relay.calls[0]["fields"]["background"] == (
+        RA + " In support of this, the DOH, through the Bureau of Local Health Systems Development (BLHSD), will conduct "
+        "the CALEP Field Visit on October 12-16, 2026, in Cebu City.")
+    assert 'name="dpo_cites"' in viewer.get(f"/calendar/entries/{eid}").text and "DPO cites" in viewer.get(f"/calendar/entries/{eid}").text
+
+
+def test_dpo_cites_win_over_the_invitation_lines_and_clearing_them_brings_the_invitation_back(viewer, conn, relay):
+    eid = create(viewer, kind="travel", title="CALEP Field Visit", start_date="2026-10-12", end_date="2026-10-12",
+                 people=[str(uid(conn, "viewer@test.local")), str(uid(conn, "encoder@test.local"))])
+    outside(viewer, eid, conducted_by="outside", host="CHD VII", invited_as="attendee", invitation="Per memo of October 1.")
+    cites(viewer, eid, "Per DM 2026-0412.")
+    draft(viewer, eid, "dpo")
+    assert relay.calls[-1]["fields"]["background"].startswith("Per DM 2026-0412. In support of this, the CHD VII will conduct")
+    cites(viewer, eid, "   ")                                                      # empty clears it
+    assert ad.get_dpo_cites(conn, eid) == ""
+    draft(viewer, eid, "dpo")
+    assert relay.calls[-1]["fields"]["background"].startswith("Per memo of October 1. In support of this")
+
+
+def test_without_any_citation_the_first_paragraph_only_says_who_conducts_it(viewer, conn, relay):
+    eid = create(viewer, kind="travel", title="CALEP Field Visit", start_date="2026-10-12", end_date="2026-10-12",
+                 people=[str(uid(conn, "viewer@test.local")), str(uid(conn, "encoder@test.local"))])
+    draft(viewer, eid, "dpo")
+    assert relay.calls[0]["fields"]["background"] == (
+        "The DOH, through the Bureau of Local Health Systems Development (BLHSD), will conduct the CALEP Field Visit on October 12, 2026.")
+
+
+def test_dpo_cites_cannot_be_set_for_an_entry_the_person_cannot_see(viewer, conn):
+    private = st.cal_create(conn, "CALEP Private", "2026-10-12", kind="travel", audience="people",
+                            people=[uid(conn, "admin@test.local")])
+    conn.commit()
+    assert cites(viewer, private, "x").status_code == 404 and ad.get_dpo_cites(conn, private) == ""

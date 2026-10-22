@@ -113,7 +113,7 @@
               {% for k, v in documents['invited_as'].items() %}<option value="{{ k }}" {{ 'selected' if out and out.invited_as == k }}>{{ v }}</option>{% endfor %}
             </select>
           </label>
-          <label>Key lines from the invitation (the DPO cites them as the reason for the activity)
+          <label>Key lines from the invitation (the DPO uses them as the reason when &ldquo;DPO cites&rdquo; below is empty)
             <textarea name="invitation" rows="3" maxlength="600">{{ out.invitation if out }}</textarea></label>
         </div>
         <button class="cal-btn" type="submit">Save</button>
@@ -126,7 +126,7 @@
           <div data-offer></div>
         </div>
         {% endif %}
-        <p class="cal-hint">Another office's activity: the DPO keeps a short, broad first paragraph about the activity and does not repeat the invitation or name the host.</p>
+        <p class="cal-hint">Another office's activity: the DPO names that office as the one conducting it.</p>
       </fieldset>
     </form>
     {% if out and out.file_url %}
@@ -135,6 +135,12 @@
       <span class="cal-hint">The file stays in Drive; only the link here goes.</span>
     </form>
     {% endif %}
+    <form method="post" action="/calendar/entries/{{ e.id }}/dpo-cites" class="cal-dpo-cites">
+      <label for="dpo-cites">DPO cites <small>(the law, memo or invitation the DPO gives as the reason for this activity)</small></label>
+      <textarea id="dpo-cites" name="dpo_cites" rows="3" maxlength="1000" placeholder="e.g. Republic Act No. 7883, or the Barangay Health Workers&rsquo; Benefits and Incentives Act of 1995, provides for the training and continuing education of BHWs.">{{ documents['dpo_cites'] }}</textarea>
+      <p class="cal-hint">It opens the DPO&rsquo;s first paragraph, followed by &ldquo;In support of this, &hellip; will conduct &hellip;&rdquo;. Nothing is made up: if this is empty (and there are no invitation lines above), the paragraph only says who conducts the activity, when and where.</p>
+      <button class="cal-btn" type="submit">Save</button>
+    </form>
     <ul class="cal-doc-list">
     {% for d in documents['items'] %}
       <li class="cal-doc {{ 'is-needed' if d.needed }}">
