@@ -24,6 +24,7 @@ import documents_permissions as permissions
 from documents_registry import snapshot
 import integration_operations as operations
 import integration_access as access
+import integration_changes as changes
 import ratelimit as rl
 from request_security import same_origin_write
 import tzutil as tz
@@ -80,6 +81,30 @@ class PageInfo(Model):
     limit: int
     has_more: bool
     next_before: str | None
+
+
+class ChangeQuery(Model):
+    resource: Literal['documents','work-items']
+    cursor: str = Field(default='',max_length=64,pattern=r'^(?:[0-9a-f]{64})?$')
+    limit: int = Field(default=25,ge=1,le=100)
+
+
+class ChangeNotice(Model):
+    id: str
+    schema_version: Literal['1'] = '1'
+    type: Literal['document.changed','work_item.changed','task.changed']
+    resource_id: str
+    work_item_id: str | None
+    revision: int
+    recorded_at: AwareDatetime
+    resource_url: str
+
+
+class ChangePage(Model):
+    data: list[ChangeNotice]
+    next_cursor: str
+    has_more: bool
+    initialized: bool
 
 
 class Page(Model, Generic[T]):
@@ -264,7 +289,7 @@ def make_app(get_conn):
                          description='An existing registered user session. Required for task writes, write context and operation receipts.')
     bearer = HTTPBearer(scheme_name='IntegrationRead',auto_error=False,
                         description='A delegated read credential for this deployment and API v1; selected metadata scopes and current owner permissions apply.')
-    api = FastAPI(title='Office Connect API', version='1.3.0',
+    api = FastAPI(title='Office Connect API', version='1.4.0',
                   description='Permission-checked metadata reads, task acknowledgement and submission for review with durable recovery receipts.',
                   docs_url=None, redoc_url=None, dependencies=[Security(cookie),Security(bearer)],
                   servers=[{'url': API_ROOT}], root_path_in_servers=False)
@@ -342,11 +367,19 @@ def make_app(get_conn):
         if not getattr(request.state, 'user', None):
             return failure(401, 'authentication_required', 'A current signed-in session is required.')
         credential = getattr(request.state,'integration',None)
+        if not credential and get_route_path(request.scope)=='/changes' and not rl.allow('integration_read',str(request.state.user['id'])):
+            return failure(429,'rate_limited','Too many integration reads. Retry later.',{'Retry-After':'60'})
         if credential:
             # Bound admitted audit writes even for denied methods/scopes.
             if not rl.allow('integration_read',str(request.state.user['id'])):
                 return failure(429,'rate_limited','Too many integration reads. Retry later.',{'Retry-After':'60'})
+            if request.method!='GET':
+                return failure(403,'insufficient_scope','This credential does not allow this operation.')
             resource,required = access.resource(get_route_path(request.scope))
+            if resource=='changes':
+                required = {'documents':'documents:read','work-items':'work:read'}.get(request.query_params.get('resource'))
+                if required is None:
+                    return failure(400,'invalid_request','Choose one supported resource family.')
             if request.method!='GET' or resource=='unsupported' or (required and required not in credential['scopes']):
                 return failure(403,'insufficient_scope','This credential does not allow this operation.')
         task_action = re.fullmatch(r'/work-items/[^/]+/tasks/[^/]+/(acknowledge|submit)', get_route_path(request.scope))
@@ -405,7 +438,7 @@ def make_app(get_conn):
                 return failure(500,'internal_error','The read could not be recorded. Retry later.')
         return response
 
-    errors = {n: {'model': ErrorResponse} for n in (400, 401, 403, 404, 405, 429, 500, 503)}
+    errors = {n: {'model': ErrorResponse} for n in (400, 401, 403, 404, 405, 410, 429, 500, 503)}
     write_errors = {**errors, **{n: {'model': ErrorResponse} for n in (403, 409, 413, 415)}}
 
     @api.get('/', response_model=ApiInfo, responses=errors, operation_id='readApiInfo')
@@ -413,6 +446,29 @@ def make_app(get_conn):
         credential = bool(getattr(request.state,'integration',None))
         return ApiInfo(application_version=version.APP_VERSION, openapi=API_ROOT + '/openapi.json',
                        read_only=credential,authentication='scoped_read_credential' if credential else 'registered_user_session')
+
+    @api.get('/changes',response_model=ChangePage,responses=errors,operation_id='readChanges')
+    def change_feed(request: Request,query: Annotated[ChangeQuery,Query()]):
+        try:
+            with read_context(request) as (conn,user):
+                credential = getattr(request.state,'integration',None)
+                selected,more,position,binding = changes.read(conn,user,credential['id'] if credential else '',
+                    query.resource,access.audience(request),query.cursor,query.limit)
+                notices = []
+                for row in selected:
+                    target = (f"{API_ROOT}/documents/{row['entity_id']}" if row['entity']=='document' else
+                              f"{API_ROOT}/work-items/{row['case_id']}" + (f"/tasks/{row['entity_id']}" if row['entity']=='task' else ''))
+                    notices.append(ChangeNotice(id=row['id'],type=row['entity']+'.changed',resource_id=str(row['entity_id']),
+                        work_item_id=_nullable_id(row['case_id']),revision=row['revision'],recorded_at=_stamp(row['recorded_at']),resource_url=target))
+            # The read snapshot closes before the short checkpoint writer starts.
+            conn = get_conn()
+            try:
+                cursor = changes.save(conn,binding,position,fresh=not bool(query.cursor))
+            finally:
+                conn.close()
+            return ChangePage(data=notices,next_cursor=cursor,has_more=more,initialized=not bool(query.cursor))
+        except changes.CheckpointError as exc:
+            raise ApiError(410,'checkpoint_unavailable',str(exc)) from None
 
     @api.get('/write-context', response_model=WriteContext, responses=errors, operation_id='readWriteContext')
     def write_context(request: Request):
@@ -508,6 +564,8 @@ def make_app(get_conn):
                     operation['x-integration-scope']='documents:read'
                 elif name.startswith('/work-items'):
                     operation['x-integration-scope']='work:read'
+                elif name=='/changes':
+                    operation['x-integration-scopes-by-resource']={'documents':'documents:read','work-items':'work:read'}
         for name in ('HTTPValidationError', 'ValidationError'):
             schema.get('components', {}).get('schemas', {}).pop(name, None)
         return schema

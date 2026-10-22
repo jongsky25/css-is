@@ -190,7 +190,7 @@ def snapshots_present():
 # account (deactivation is an UPDATE active=0, rowid unchanged), so admin_user's
 # MAX(rowid) is monotonic and safe as a high-water counter. Missing tables
 # (older/newer schema) score 0 and are simply ignored.
-_HIGHWATER_TABLES = ("response", "answer", "audit_log", "feedback_update", "admin_user")
+_HIGHWATER_TABLES = ("response", "answer", "audit_log", "feedback_update", "admin_user", "integration_change")
 _HIGHWATER_FILE = ".css_highwater.json"
 
 
@@ -483,6 +483,9 @@ def clear_restored_sessions(db_path, *, revoke_integrations=False):
             if revoke_integrations and conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' "
                                                      "AND name='integration_credential'").fetchone():
                 conn.execute("UPDATE integration_credential SET revoked_at=COALESCE(revoked_at,CAST(strftime('%s','now') AS INTEGER))")
+            if revoke_integrations:
+                from integration_changes import reset_after_restore
+                reset_after_restore(conn)
     finally:
         conn.close()
 

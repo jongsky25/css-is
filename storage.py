@@ -813,6 +813,8 @@ def init_db(conn):
     work_storage.install(conn)
     import integration_access
     integration_access.install(conn)
+    import integration_changes
+    integration_changes.install(conn)
     import supplies_storage
     supplies_storage.install(conn)
     conn.commit()

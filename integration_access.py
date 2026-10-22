@@ -125,6 +125,8 @@ def authenticate(conn, request):
 
 
 def resource(path):
+    if path=='/changes':
+        return 'changes',None
     if path in ('/', '/openapi.json'):
         return 'contract', None
     if re.fullmatch(r'/documents(?:/[1-9][0-9]{0,18})?', path):

@@ -41,7 +41,7 @@ def body(client, path, **params):
 def test_versioned_contract_is_separate_authenticated_and_typed(api):
     c, u, unit, clients, app = api
     schema = body(clients[0], '/openapi.json')
-    assert schema['info']['version'] == '1.3.0'
+    assert schema['info']['version'] == '1.4.0'
     from pathlib import Path
     artifact = Path(__file__).parents[1] / 'docs/api/v1/openapi.json'
     assert schema == json.loads(artifact.read_text())
@@ -49,7 +49,7 @@ def test_versioned_contract_is_separate_authenticated_and_typed(api):
     assert set(schema['paths']) == {'/', '/documents', '/documents/{document_id}', '/work-items',
         '/work-items/{work_item_id}', '/work-items/{work_item_id}/tasks', '/work-items/{work_item_id}/tasks/{task_id}',
         '/write-context', '/operations/{operation_id}', '/work-items/{work_item_id}/tasks/{task_id}/acknowledge',
-        '/work-items/{work_item_id}/tasks/{task_id}/submit'}
+        '/work-items/{work_item_id}/tasks/{task_id}/submit','/changes'}
     assert sum('post' in path for path in schema['paths'].values()) == 2
     for name,path in schema['paths'].items():
         operation = path.get('get', path.get('post'))
@@ -285,7 +285,7 @@ def test_standalone_client_reads_real_http_and_never_follows_login_redirect(api)
         data = [r for page in client.pages(limit=2) for r in page]
         assert [r['id'] for r in data] == [str(i) for i in reversed(expected)]
         assert client.get(data[0]['links']['self'])['id'] == data[0]['id']
-        assert client.get('/openapi.json')['info']['version'] == '1.3.0'
+        assert client.get('/openapi.json')['info']['version'] == '1.4.0'
         with pytest.raises(ApiFailure, match='HTTP 302'):
             client.get('/redirect')
         assert not traps

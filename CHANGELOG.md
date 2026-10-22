@@ -1,3 +1,11 @@
+## 7.100 — October 22, 2026
+
+- Start A21 with an authenticated, permission-filtered `/api/v1/changes` feed for document/work/task revision notices. SQLite triggers capture stable random notice IDs in the same transaction as the entity revision; rolled-back writes leave no notice.
+- Add opaque server-held checkpoints bound to owner, credential, resource family, deployment/API audience and stream generation. Resume and replay retain current domain authorization; SQL applies access before pagination. Notices contain identifiers/revision/time and an API link, excluding historical prose and hidden record IDs.
+- Add seven-day checkpoint expiry/renewal with bounded expired-row cleanup, owner admission limits, immutable retained notices and a change-log high-water marker. Historical database restores invalidate saved checkpoints; routine newest-snapshot recovery preserves them.
+- Publish API contract 1.4.0 and an independent standard-library client/local SQLite inbox example. The inbox commits unique notices and its checkpoint together; task writes remain unavailable to read credentials.
+- Document start-now baseline ordering, periodic access/deletion reconciliation, lost-response replay and rollback. This increment does not add webhooks, external delivery receipts or provider adapters. No new dependencies or provider requests.
+
 ## 7.99 — October 22, 2026
 
 - Start A20 with user-delegated, deployment/API-bound read credentials for document metadata and/or work/task metadata. Each named integration retains its owner's current domain permissions and cannot access browser routes, task writes, write context or human operation receipts.
