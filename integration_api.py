@@ -155,6 +155,18 @@ class Acknowledge(Model):
         return value
 
 
+class Submit(Acknowledge):
+    submission: str = Field(strict=True, min_length=1, max_length=8000)
+
+    @field_validator('submission')
+    @classmethod
+    def meaningful_submission(cls, value):
+        if not value.strip():
+            raise ValueError('Output or evidence is required.')
+        value.encode('utf-8')
+        return value
+
+
 class OperationLinks(Model):
     self: str
     task: str
@@ -163,18 +175,19 @@ class OperationLinks(Model):
 
 class OperationRead(Model):
     id: str
-    action: Literal['acknowledge'] = 'acknowledge'
+    action: Literal['acknowledge', 'submit']
     status: Literal['succeeded'] = 'succeeded'
     work_item_id: str
     task_id: str
     result_revision: int
-    result_status: Literal['in_progress'] = 'in_progress'
+    result_status: Literal['in_progress', 'for_review']
     completed_at: AwareDatetime
     links: OperationLinks
 
 
 def operation_read(row):
-    return OperationRead(id=row['operation_id'], work_item_id=str(row['case_id']),
+    return OperationRead(id=row['operation_id'], action=row['action'], result_status=operations.RESULT_STATUS[row['action']],
+        work_item_id=str(row['case_id']),
         task_id=str(row['task_id']), result_revision=row['result_revision'], completed_at=_stamp(row['completed_at']),
         links=OperationLinks(self=f"{API_ROOT}/operations/{row['operation_id']}",
             task=f"{API_ROOT}/work-items/{row['case_id']}/tasks/{row['task_id']}",
@@ -246,8 +259,8 @@ def page_info(limit, next_before):
 def make_app(get_conn):
     cookie = APIKeyCookie(name=auth.COOKIE_NAME, scheme_name='UserSession', auto_error=False,
                          description='An existing registered user session; API keys and bearer tokens are not supported by this increment.')
-    api = FastAPI(title='Office Connect API', version='1.1.0',
-                  description='Permission-checked metadata reads and explicit task acknowledgement with durable recovery receipts.',
+    api = FastAPI(title='Office Connect API', version='1.2.0',
+                  description='Permission-checked metadata reads, task acknowledgement and submission for review with durable recovery receipts.',
                   docs_url=None, redoc_url=None, dependencies=[Security(cookie)],
                   servers=[{'url': API_ROOT}], root_path_in_servers=False)
 
@@ -316,8 +329,8 @@ def make_app(get_conn):
         # fail-closed if it is accidentally mounted without that parent.
         if not getattr(request.state, 'user', None):
             return failure(401, 'authentication_required', 'A current signed-in session is required.')
-        acknowledgement = re.fullmatch(r'/work-items/[^/]+/tasks/[^/]+/acknowledge', get_route_path(request.scope))
-        allowed = 'POST' if acknowledgement else 'GET'
+        task_action = re.fullmatch(r'/work-items/[^/]+/tasks/[^/]+/(acknowledge|submit)', get_route_path(request.scope))
+        allowed = 'POST' if task_action else 'GET'
         if request.method != allowed:
             return failure(405, 'method_not_allowed', 'This method is not supported for this resource.', {'Allow': allowed})
         if any(len(request.query_params.getlist(key)) > 1 for key in request.query_params):
@@ -334,11 +347,14 @@ def make_app(get_conn):
             types = request.headers.getlist('content-type')
             if len(types) != 1 or types[0].split(';')[0].strip().lower() != 'application/json':
                 return failure(415, 'unsupported_media_type', 'Send an application/json request body.')
+            # Submission has a larger bounded body for output plus reason;
+            # acknowledgement retains its original cap.
+            body_limit = 65536 if task_action.group(1) == 'submit' else 8192
             # Bound streamed and chunked requests before FastAPI parses the body.
             payload = bytearray()
             async for chunk in request.stream():
                 payload.extend(chunk)
-                if len(payload) > 8192:
+                if len(payload) > body_limit:
                     return failure(413, 'request_too_large', 'The request body exceeds the supported size.')
             try:
                 json.loads(payload.decode('utf-8'), object_pairs_hook=_unique_object)
@@ -379,6 +395,20 @@ def make_app(get_conn):
             return operation_read(operations.acknowledge(conn,
                 auth.parse_token(request.cookies.get(auth.COOKIE_NAME)), _id(work_item_id), _id(task_id),
                 idempotency_key, data.revision, data.reason))
+        finally:
+            conn.close()
+
+    @api.post('/work-items/{work_item_id}/tasks/{task_id}/submit', response_model=OperationRead,
+              responses=write_errors, operation_id='submitWorkTask')
+    def submit_task(request: Request, work_item_id: Identifier, task_id: Identifier, data: Submit,
+                    idempotency_key: Annotated[str, Header(pattern=OPERATION_PATTERN)],
+                    x_csrf_token: Annotated[str, Header(pattern=r'^[0-9a-f]{64}$')],
+                    origin: Annotated[str, Header(max_length=4096)]):
+        conn = get_conn()
+        try:
+            return operation_read(operations.submit(conn,
+                auth.parse_token(request.cookies.get(auth.COOKIE_NAME)), _id(work_item_id), _id(task_id),
+                idempotency_key, data.revision, data.reason, data.submission))
         finally:
             conn.close()
 

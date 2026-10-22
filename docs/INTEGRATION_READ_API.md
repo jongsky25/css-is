@@ -1,6 +1,6 @@
-# Supported integration API — A19 / 7.97
+# Supported integration API — A19 / 7.98
 
-The read contract introduced in 7.92 now supports one explicit task action: acknowledge a confirmed contribution as in progress. Selected document/work metadata, task status and acknowledgement use existing human sessions and current domain permissions. The API contract is **1.1.0**, mounted at **`/api/v1`**; its version is independent of the application's release number.
+The read contract introduced in 7.92 supports acknowledgement (7.97) and submission of completed contribution work for review (7.98). Selected document/work metadata, task status and both task actions use existing human sessions and current domain permissions. The API contract is **1.2.0**, mounted at **`/api/v1`**; its version is independent of the application's release number.
 
 The [generated OpenAPI artifact](api/v1/openapi.json) is checked against the running contract in tests. The authenticated live contract is `GET /api/v1/openapi.json`. Existing browser form actions and the application's older general OpenAPI output are outside this supported contract.
 
@@ -15,10 +15,10 @@ The [generated OpenAPI artifact](api/v1/openapi.json) is checked against the run
 | `/api/v1/work-items/{work_item_id}` | One permitted shared-work item |
 | `/api/v1/work-items/{work_item_id}/tasks` | Page of contributions within a permitted work item |
 | `/api/v1/work-items/{work_item_id}/tasks/{task_id}` | One contribution and its current status/revision |
-| `/api/v1/write-context` | Session-bound CSRF token for an explicit acknowledgement |
-| `/api/v1/operations/{operation_id}` | The current user’s recorded acknowledgement result, subject to current target access |
+| `/api/v1/write-context` | Session-bound CSRF token for an explicit task action |
+| `/api/v1/operations/{operation_id}` | The current user’s recorded task-action result, subject to current target access |
 
-The only supported POST is `/api/v1/work-items/{work_item_id}/tasks/{task_id}/acknowledge`. It returns an operation receipt; all other resources retain GET-only access.
+The supported POST routes are `/api/v1/work-items/{work_item_id}/tasks/{task_id}/acknowledge` and `/api/v1/work-items/{work_item_id}/tasks/{task_id}/submit`. Both return an operation receipt; other resources retain GET-only access.
 
 Document fields include number, subject, direction, type, status, verification, deadline, revision, timestamps and API/web links. Work fields include title, concerned-unit ID, confirmed-lead ID, deadline, revision, timestamps and links. Task fields include title, work-item ID, confirmed-owner ID, status, deadline, revision, timestamps and links. The contract deliberately projects these fields; it does not serialize database rows wholesale.
 
@@ -39,7 +39,7 @@ Browser clients use same-origin requests. No cross-origin CORS access is enabled
 ## IDs, time and pagination
 
 - Resource IDs, account/unit references and `next_before` are decimal **strings**. This preserves SQLite identifiers beyond JavaScript's exact-integer range. Treat IDs as identifiers rather than numbers; valid resource paths use positive decimal IDs through SQLite's signed 64-bit maximum.
-- `revision` is the current integer revision of that entity. A case's revision is independent of its tasks' revisions. Acknowledgement requires the exact task revision; outdated revisions produce 409 without a new change.
+- `revision` is the current integer revision of that entity. A case's revision is independent of its tasks' revisions. Both task actions require the exact task revision; outdated revisions produce 409 without a new change.
 - Timestamps are ISO 8601 with an explicit offset. Existing naive stored timestamps use the configured application offset (`CSS_TZ_OFFSET`, normally `+08:00`); already-aware timestamps retain their offset. `due_date` is an ISO calendar date or null.
 - Page queries accept `limit` from 1–100 (default 25) and a `before` cursor (default 0 for newest). Pass the previous page's `next_before` unchanged. Records are ordered newest ID first; document cursors use the existing registry's canonical/alias sort position and may differ from a returned canonical resource ID.
 - Document lists also accept `q` (up to 200 characters) and `queue`: `all`, `IN`, `OUT`, `mine`, `review`, `release`, or `archived`. Search reuses the existing permission-filtered registry selection with snippets and full-source bodies omitted.
@@ -67,12 +67,12 @@ Errors use `{"error": {"code": "not_found", "message": "Resource not found or un
 | 409 | `revision_conflict` | Read the current task before deciding on a new request/key |
 | 409 | `idempotency_conflict` | A key already belongs to different input; check the saved original request |
 | 409 | `action_unavailable` | Check feature switches and the current workflow in the screens |
-| 413 | `request_too_large` | Keep the UTF-8 JSON body within 8,192 bytes |
+| 413 | `request_too_large` | Keep the UTF-8 JSON body within 8,192 bytes for acknowledgement or 65,536 bytes for submission |
 | 415 | `unsupported_media_type` | Use `application/json` |
 | 503 | `temporarily_unavailable` | Check the result, then retry the identical request/key if needed |
 | 500 | `internal_error` | Retry reads later; for writes, check the operation result before retrying the identical request/key |
 
-Anonymous requests return JSON 401 without redirecting to login. PUT/PATCH/DELETE, HEAD and OPTIONS are unsupported, as are POSTs outside the acknowledgement route; authenticated requests receive JSON 405 (HEAD has no response body). Validation returns the documented 400 envelope rather than FastAPI's generic 422 body. Browser routes retain their existing forms, redirects and same-origin write checks.
+Anonymous requests return JSON 401 without redirecting to login. PUT/PATCH/DELETE, HEAD and OPTIONS are unsupported, as are POSTs outside the two supported task-action routes; authenticated requests receive JSON 405 (HEAD has no response body). Validation returns the documented 400 envelope rather than FastAPI's generic 422 body. Browser routes retain their existing forms, redirects and same-origin write checks.
 
 ## Standalone client
 
@@ -96,17 +96,33 @@ The session file contains only the cookie value from an authorized signed-in ses
 5. Success is HTTP 200 with `id`, `action: acknowledge`, `status: succeeded`, string `work_item_id`/`task_id`, `result_revision`, `result_status: in_progress`, offset-aware `completed_at` and relative `links.self`/`task`/`web`. Neither reason nor task prose is copied into the public receipt.
 6. After a lost response, use `GET /api/v1/operations/{saved-key}`. If unavailable, first check the session and current target access. A 404 may mean no committed receipt **or** lost access; it does not prove the change failed. Once current access is confirmed, resending the identical request/key safely returns the original receipt or attempts the action once. A received validation/permission/conflict response does not reserve a key.
 
-The request fingerprint includes action, parent/task IDs, revision and exact reason text. An actor reusing a committed key with different input gets 409, subject to current access checks. A different signed-in actor has a separate key namespace. A newly registered session for the **same actor** can recover the receipt. Other users cannot read it, including technical administrators.
+The request fingerprint includes action, parent/task IDs, revision and exact reason text; submission also includes the exact output/evidence text. Existing acknowledgement fingerprints remain byte-for-byte compatible with 7.97. An actor reusing a committed key with different input gets 409, subject to current access checks. A different signed-in actor has a separate key namespace. A newly registered session for the **same actor** can recover the receipt. Other users cannot read it, including technical administrators.
 
 The write acquires SQLite's writer transaction before rechecking the registered session, current grants, linked documents, feature switches, case state, task revision and shared UI action rules. Task update, work history/audit, review invalidation and receipt commit together. A process failure before commit leaves none of these changes; a failure after commit leaves a readable receipt. There is no external side effect or queued background job. Only completed operations are stored; the contract does not invent pending/failed states.
 
-A replay only returns the original recorded result and creates no new task/history changes. Existing receipts remain readable and replayable with current access when write switches are disabled. Reassignment or restricted-document/grant changes may remove both target and receipt access. The receipt's revision/status describes the original acknowledgement, **not the task's current state**; follow `links.task` for the latter.
+A replay only returns the original recorded result and creates no new task/history changes. Existing receipts remain readable and replayable with current access when write switches are disabled. Reassignment or restricted-document/grant changes may remove both target and receipt access. The receipt's revision/status describes the original task action, **not the task's current state**; follow `links.task` for the latter.
 
 Receipts are immutable and retained without automatic expiration, preserving retry protection across restarts and releases. Do not clear this table as routine log cleanup. Database restore can rewind both task state and receipts to the snapshot: after a restore, reconcile with operators before resending old requests. No exactly-once guarantee is made across restore to an older snapshot or independent databases.
 
-`TaskClient` in [examples/read_api.py](../examples/read_api.py) extends `ReadClient` with `acknowledge(work_item_id, task_id, revision=..., reason=..., operation_id=saved_key)` and `operation(saved_key)`. It requires string IDs and an explicitly saved key, fetches the write context, sends the matching origin and never automatically retries POSTs. The existing CLI remains read-only. Protect the saved request because its reason may contain private work information. No password automation, machine identity, AI tool or document-approval authority is added.
+`TaskClient` in [examples/read_api.py](../examples/read_api.py) extends `ReadClient` with `acknowledge(work_item_id, task_id, revision=..., reason=..., operation_id=saved_key)` and `operation(saved_key)`. It requires string IDs and an explicitly saved key, fetches the write context, sends the matching origin and never automatically retries POSTs. The existing CLI remains read-only. Protect the saved request because its reason and output may contain private work information. No password automation, machine identity, AI tool or document-approval authority is added.
+
+## Submit completed work for review
+
+An assigned contributor or currently scoped task officer can submit an `in_progress` contribution using the same domain service as the screens. Recorded blockers, unfinished prerequisites, unresolved changed-decision reviews, disabled write switches and closed/migrated case restrictions remain enforced. A lead, creator or technical administrator does not independently gain submission authority.
+
+1. Read the current task and let the operator decide its output is ready. Save the exact target, task revision, reason, submission text and a **new** UUID v4 key before sending; an acknowledgement's committed key cannot be reused for submission.
+2. Fetch `/write-context` for the current registered session and use the same Origin/CSRF/idempotency/JSON headers described above.
+3. POST `/api/v1/work-items/{work_item_id}/tasks/{task_id}/submit` with `{"revision":3,"reason":"Ready for review","submission":"Completed output or supporting evidence"}`. Revision and reason retain the acknowledgement rules. Submission must be a nonblank, valid UTF-8 string of at most **8,000 characters**. The encoded JSON body, including JSON escaping and reason, is limited to **65,536 bytes**, including streamed requests. Compact UTF-8 JSON avoids unnecessary expansion from Unicode escapes.
+4. HTTP 200 returns the same receipt envelope with `action: submit`, `result_status: for_review` and the saved task revision. Output/reason prose is not copied into receipt responses, ordinary API task reads or private error responses. It remains in the existing task and work history for authorized reviewers in the screens.
+5. Recover a lost response with `/operations/{saved-key}` or resubmit the identical original input/key after confirming current access. Current session/grant/linked-document/task access checks apply to both receipt lookup and replay. Changing output, reason, action, revision or target while reusing a committed key produces 409; it never silently overwrites work.
+
+Submission moves the contribution to **For review**. The ordinary reviewer can return it for correction or accept the exact current version through the existing workflow. After a return, submit a new request with the current revision, corrected output and a new key. Earlier receipts continue to describe their original result, including after later acceptance; follow `links.task` for current status.
+
+`TaskClient.submit(work_item_id, task_id, revision=..., reason=..., submission=..., operation_id=saved_key)` validates bounded inputs, fetches the session-bound context, sends compact UTF-8 JSON and never automatically retries. `TaskClient.operation(saved_key)` retrieves the recorded result. Keep the saved request private; it contains the contributor's output.
 
 ## Verification and remaining A19 work
+
+For 7.98, **305 API/work/release/deployment tests passed** in shuffled order (seed 311), with no failures or skips. Submission checks cover current permissions, stale revisions, blockers, private output, exact-version reviewer acceptance, atomic rollback, concurrent retries, recovery after an actual lost HTTP response and legacy receipt migration. The legacy migration check also passed separately with an exact Unicode acknowledgement fingerprint. Release metadata, dependency-lock inputs, vendored dependency integrity, Python compilation and whitespace checks passed. Required CI verifies the complete final head.
 
 The original 7.92 read/survey evidence remains below. For 7.97, the API/work/deployment/release regression set passed **271 tests** in shuffled order (seed 311), with no failures or skips. The final read/write API set passed **84 tests** in shuffled order with no failures or skips, including real writer contention, completed-case refusal and recovery with a newly registered session and unresolved migrated-document operations. After incorporating main’s 7.93 ARTA date filters, the combined API/ARTA/release set passed **114 tests** in shuffled order with no failures or skips. After also incorporating main 7.95, **118 API/ARTA/release/deployment tests** passed in shuffled order without failures or skips. After incorporating main 7.96, the API/travel-review/release/deployment checks passed **123 tests** in shuffled order without failures or skips. Required CI verifies the complete final head.
 
@@ -116,8 +132,12 @@ The original 7.92 read/survey evidence remains below. For 7.97, the API/work/dep
 - The standalone client reads the real application through an isolated local HTTP bridge, follows pages and self links, refuses an actual 302 trap, and receives 401 after session revocation. No production business records or external providers are used.
 - The remaining combined-survey confirmation race is exercised in English and Filipino with a deliberate 300ms deferred-script delay. The check waits for matching draft removal and retains actual saved-count/skip assertions; survey runtime behavior is unchanged.
 
-The 7.97 increment covers acknowledgement preconditions and its operation-result contract. Other approved task actions and external-operation contracts remain later A19 increments. A20 supplies scoped integration identities; A21 adds reliable events/adapters. Production workflow observations remain deferred, and no production throughput claim is made.
+The 7.97 and 7.98 increments cover acknowledgement/submission preconditions and their operation-result contracts. Other approved task actions and external-operation contracts remain later A19 increments. A20 supplies scoped integration identities; A21 adds reliable events/adapters. Production workflow observations remain deferred, and no production throughput claim is made.
 
 ## Release and rollback
 
-7.97 increments verified main 7.96 with aligned release/cache metadata. The runtime inventory includes `integration_operations.py`. The repeatable shared-work installer adds `work_api_operation` and immutable-receipt triggers; existing tables/rows are not rewritten and no new dependency is required. To disable the new action, deploy a newly versioned forward repair that keeps receipt lookup available. If restoring earlier application behavior, retain the additive table and existing receipts, coordinate clients and preserve acknowledged task/history state. Do not delete successful changes or receipts to roll back code. Existing deployment backup gates and SQLite online backups cover the new table.
+7.98 increments verified main 7.97 with aligned release/cache metadata. The runtime inventory already includes `integration_operations.py`; there is no dependency addition or provider request.
+
+The repeatable shared-work installer adds a defaulted `action` column to `work_api_operation`. Existing immutable rows receive the logical default `acknowledge` without rewriting stored values, changing request digests or removing immutable-receipt triggers. New receipts explicitly record `acknowledge` or `submit`, allowing result status to remain tied to the original action. Repeating installation preserves both old and new results.
+
+Prefer a newly versioned forward repair that disables submission while preserving action-aware receipt lookup. A 7.97 receipt renderer assumes all receipts are acknowledgements, so rolling that code back after submission receipts exist can mislabel their results. Retain the additive column, successful task submissions, work history and receipts; do not delete them to roll back application behavior. Existing deployment backup gates and SQLite online backups cover this state.

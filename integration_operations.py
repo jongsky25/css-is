@@ -1,4 +1,4 @@
-"""Atomic task acknowledgement and actor-owned recovery receipts for API v1."""
+"""Atomic task actions and actor-owned recovery receipts for API v1."""
 import hashlib
 import json
 
@@ -9,6 +9,8 @@ import storage as st
 import tzutil as tz
 import work_reads
 import work_tasks
+
+RESULT_STATUS = {'acknowledge': 'in_progress', 'submit': 'for_review'}
 
 
 class OperationError(Exception):
@@ -38,9 +40,20 @@ def find(conn, user, operation_id):
 
 
 def acknowledge(conn, payload, case_id, task_id, operation_id, revision, reason):
-    digest = hashlib.sha256(json.dumps(
-        ['acknowledge', str(case_id), str(task_id), revision, reason],
-        ensure_ascii=False, separators=(',', ':')).encode()).hexdigest()
+    return _change(conn, payload, case_id, task_id, operation_id, revision, 'acknowledge', {'reason': reason})
+
+
+def submit(conn, payload, case_id, task_id, operation_id, revision, reason, submission):
+    return _change(conn, payload, case_id, task_id, operation_id, revision, 'submit',
+                   {'reason': reason, 'submission': submission})
+
+
+def _change(conn, payload, case_id, task_id, operation_id, revision, action, fields):
+    # Keep the 7.97 acknowledgement fingerprint byte-for-byte compatible.
+    content = [action, str(case_id), str(task_id), revision, fields['reason']]
+    if action == 'submit':
+        content.append(fields['submission'])
+    digest = hashlib.sha256(json.dumps(content, ensure_ascii=False, separators=(',', ':')).encode()).hexdigest()
     with transaction(conn):
         user = session_actor(conn, payload)
         # Check current target visibility before revealing a key collision.
@@ -57,7 +70,7 @@ def acknowledge(conn, payload, case_id, task_id, operation_id, revision, reason)
             # Shared UI service owns feature switches, open-case checks, task
             # revision, owner/officer authority, audit and review invalidation.
             updated = work_tasks.mutate_in_transaction(conn, user, case_id, task_id,
-                                                       revision, 'acknowledge', {'reason': reason})
+                                                       revision, action, fields)
         except docs.Conflict:
             if current_task['revision'] != revision:
                 raise OperationError(409, 'revision_conflict',
@@ -68,9 +81,9 @@ def acknowledge(conn, payload, case_id, task_id, operation_id, revision, reason)
             raise
         except ValueError:
             raise OperationError(409, 'action_unavailable',
-                                 'The task cannot be acknowledged in the current workflow. Review it in the system.') from None
+                                 'The task action is unavailable in the current workflow. Review it in the system.') from None
         conn.execute('''INSERT INTO work_api_operation
-            (actor_id,operation_id,request_digest,case_id,task_id,result_revision,completed_at)
-            VALUES(?,?,?,?,?,?,?)''',
-            (user['id'], operation_id, digest, case_id, task_id, updated['revision'], tz.now_iso()))
+            (actor_id,operation_id,request_digest,case_id,task_id,result_revision,completed_at,action)
+            VALUES(?,?,?,?,?,?,?,?)''',
+            (user['id'], operation_id, digest, case_id, task_id, updated['revision'], tz.now_iso(), action))
         return find(conn, user, operation_id)

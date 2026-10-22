@@ -287,12 +287,16 @@ def test_concurrent_different_keys_cannot_both_change_the_same_revision(api):
     assert counts(c) == tuple(x+1 for x in before)
 
 
-def test_independent_client_recovers_a_committed_write_after_a_lost_response_over_real_http(api):
+@pytest.mark.parametrize('action', ['acknowledge', 'submit'])
+def test_independent_client_recovers_a_committed_write_after_a_lost_response_over_real_http(api, action):
     from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
     from threading import Thread
     from examples.read_api import TaskClient, ApiFailure
     c, u, unit, clients, app = api
-    item, task, _ = ready(api); before = counts(c); key = str(uuid4())
+    item, task, _ = ready(api)
+    if action == 'submit':
+        task = advance(c,u[2],task,'acknowledge')
+    before = counts(c); key = str(uuid4())
     attempts = []
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, *args): pass
@@ -319,13 +323,18 @@ def test_independent_client_recovers_a_committed_write_after_a_lost_response_ove
     thread = Thread(target=server.serve_forever,kwargs={'poll_interval':.05},daemon=True); thread.start()
     client = TaskClient(base+'/api/v1',clients[2].cookies.get(auth.COOKIE_NAME))
     args = {'revision':task['revision'],'reason':'Start','operation_id':key}
+    if action == 'submit': args['submission'] = 'Private evidence after a lost response'
+    send = getattr(client,action)
     try:
         with pytest.raises(ApiFailure,match='HTTP 502'):
-            client.acknowledge(str(item['id']),str(task['id']),**args)
+            send(str(item['id']),str(task['id']),**args)
         assert attempts == [200]
         result = client.operation(key)
         assert result['status'] == 'succeeded'
-        assert client.acknowledge(str(item['id']),str(task['id']),**args) == result
+        assert result['action'] == action
+        assert result['result_status'] == ('for_review' if action == 'submit' else 'in_progress')
+        assert 'Private evidence' not in json.dumps(result)
+        assert send(str(item['id']),str(task['id']),**args) == result
         assert attempts == [200,200]
         assert counts(c) == tuple(x+1 for x in before)
     finally:
