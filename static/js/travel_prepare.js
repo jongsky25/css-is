@@ -146,10 +146,10 @@
     input.id = 'prep-field-' + (++fieldId);
     if (opts.type === 'number') { input.min = '0'; input.step = '0.01'; }
     if (opts.placeholder) input.setAttribute('placeholder', opts.placeholder);
-    if (opts.required) { input.required = true; input.setAttribute('aria-required', 'true'); label += ' *'; }
+    if (opts.required) { input.required = true; input.setAttribute('aria-required', 'true'); }
     input.value = value == null ? '' : value;
     input.addEventListener('input', function () { onInput(input.value); save(); if (opts.refresh) refresh(); });
-    var wrap = el('div', opts.wide ? { 'class': 'tv-row-wide' } : {}, [el('label', { text: label, 'for': input.id }), input]);
+    var wrap = el('div', { 'class': (opts.wide ? 'tv-row-wide' : '') + (opts.required ? ' tv-required' : '') }, [el('label', { text: label, 'for': input.id }), input]);
     return wrap;
   }
   function select(label, value, options, onChange) {

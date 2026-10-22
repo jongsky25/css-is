@@ -114,6 +114,7 @@ def test_lost_generation_response_checks_saved_forms_without_replaying_the_write
         posts.append(1);route.abort('failed')
     page.route(f'**/travel/f/{ref}/generate',lose)
     page.goto(f'/travel/f/{ref}/prepare')
+    page.get_by_label('Your designation (shown on the forms)').fill('Medical Officer V')
     go=page.get_by_role('button',name='Make the forms',exact=True)
     expect(go).to_be_enabled()
     go.click()
@@ -129,6 +130,7 @@ def test_duplicate_make_events_are_one_write_and_failed_replacement_keeps_earlie
     page,state,c,context=travel_page
     ref=mk(viewer)
     page.goto(f'/travel/f/{ref}/prepare')
+    page.get_by_label('Your designation (shown on the forms)').fill('Medical Officer V')
     go=page.get_by_role('button',name='Make the forms',exact=True)
     expect(go).to_be_enabled()
     go.evaluate("el=>{el.click();el.dispatchEvent(new MouseEvent('click',{bubbles:true}));}")
