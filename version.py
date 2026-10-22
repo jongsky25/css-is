@@ -17,10 +17,19 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.91"
+APP_VERSION = "7.93"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "7.93",
+        "date": "October 22, 2026",
+        "summary": "The evidence list on Appendix B now fills itself in.",
+        "changes": [
+            "Appendix B lists the DPO with its number and date, Appendix A and B, the Certificate of Appearance and the Post Travel Report automatically.",
+            "Other attachments are optional: add them one per line on the prepare page, or upload them on the checklist."
+        ]
+    },
     {
         "version": "7.91",
         "date": "October 22, 2026",

@@ -608,7 +608,8 @@
     explanation.hidden = T.strictness === 'strict';
     var completed = [select('How the travel went', T.strictness,
       [['strict', 'Strictly as in the itinerary'], ['cut', 'Cut short'], ['extended', 'Extended'], ['other', 'Other']],
-      function (v) { T.strictness = v; explanation.hidden = v === 'strict'; }), explanation];
+      function (v) { T.strictness = v; explanation.hidden = v === 'strict'; }), explanation,
+      textArea('Other attachments (optional, one per line)', 'extra_evidence', 'The DPO, Appendix A and B, the Certificate of Appearance and the Post Travel Report are listed for you. Add any others, such as a ticket or receipt.')];
     if (data.kind === 'liquidation' && data.answers.refund) {
       completed = completed.concat([
         field('Refund amount (₱)', T.refund_amount, function (v) { T.refund_amount = v; }, { type: 'number' }),
