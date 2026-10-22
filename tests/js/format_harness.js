@@ -57,6 +57,7 @@ const long = 'I hereby certify that the above expenses were incurred in the cour
 const paras = {
   title: new Para('POST TRAVEL REPORT', { bold: true, align: 'center' }),
   capsLeft: new Para('CERTIFICATE OF TRAVEL COMPLETED', { bold: true }),
+  dpoTitle: new Para('DEPARTMENT PERSONNEL ORDER', { bold: true }),
   heading: new Para('overview of the trip', { heading: 'h1', bold: true }),
   body: new Para(long),
   bodyCentered: new Para(long, { align: 'center' }),
@@ -67,7 +68,7 @@ const paras = {
   blank: new Para(''),
   cell: new Para(long),
 };
-const body = new Box('B', [paras.title, paras.capsLeft, paras.heading, paras.body, paras.bodyCentered, paras.bodyRight, paras.short, paras.name, paras.sentenceBold,
+const body = new Box('B', [paras.title, paras.capsLeft, paras.dpoTitle, paras.heading, paras.body, paras.bodyCentered, paras.bodyRight, paras.short, paras.name, paras.sentenceBold,
   paras.blank, new Box(ElementType.TABLE, [new Box(ElementType.TABLE_ROW, [new Box(ElementType.TABLE_CELL, [paras.cell])])])]);
 ctx.formatDoc_(body);
 out.doc = {};

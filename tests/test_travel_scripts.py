@@ -128,6 +128,7 @@ def test_titles_are_bold_and_title_case_but_names_and_sentences_are_not_touched(
     d = formatted["doc"]
     assert (d["title"]["text"], d["title"]["bold"], d["title"]["align"]) == ("Post Travel Report", True, "center")
     assert d["capsLeft"]["text"] == "Certificate of Travel Completed" and d["capsLeft"]["bold"]
+    assert d["dpoTitle"]["text"] == "DEPARTMENT PERSONNEL ORDER" and d["dpoTitle"]["bold"]      # spot feedback #164
     assert d["heading"]["text"] == "Overview of the Trip"
     assert d["name"]["text"] == "MAR WYNN D. BELLO, MD, MPA"                              # has punctuation: a name, not a title
     assert d["sentenceBold"]["text"].startswith("NOTE THAT THIS IS BOLD")

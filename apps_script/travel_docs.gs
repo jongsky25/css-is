@@ -156,6 +156,8 @@ function trashFile_(req) {
 // Done on each copy after it is filled, so the templates need no change. A formatting problem must never stop a form being made.
 const FORM_FONT = 'Times New Roman', FORM_SIZE = 12, JUSTIFY_FROM = 60;      // paragraphs shorter than this stay as they are
 const KEEP_CAPS_ = { DPO: 1, CENRR: 1, RER: 1, MC: 1, DOH: 1, JO: 1, OIC: 1, TNVS: 1, DM: 1, CESO: 1, MD: 1, MPA: 1, II: 1, III: 1, IV: 1, VI: 1, VII: 1, VIII: 1, IX: 1 };
+// Titles that are always printed in capitals (spot feedback #164): the DPO heading is not Title Cased.
+const KEEP_UPPER_TITLES_ = ['DEPARTMENT PERSONNEL ORDER'];
 const SMALL_WORDS_ = { a: 1, an: 1, and: 1, as: 1, at: 1, by: 1, for: 1, from: 1, in: 1, of: 1, on: 1, or: 1, the: 1, to: 1, with: 1 };
 
 // "CERTIFICATION OF EXPENSES" -> "Certification of Expenses". Initials and known acronyms keep their capitals.
@@ -191,6 +193,11 @@ function formatDoc_(body) {
       if (!text.trim()) return;
       const align = p.getAlignment(), heading = p.getHeading ? p.getHeading() : NORMAL;
       const bold = p.editAsText().isBold() === true;
+      if (KEEP_UPPER_TITLES_.indexOf(text.trim().toUpperCase()) >= 0) {
+        if (text !== text.toUpperCase()) p.editAsText().setText(text.toUpperCase());
+        p.editAsText().setBold(true);
+        return;
+      }
       if (looksLikeTitle_(text) && (heading !== NORMAL || (bold && (align === H.CENTER || text === text.toUpperCase())))) {
         const fixed = titleCase_(text);
         if (fixed !== text) p.editAsText().setText(fixed);
@@ -210,6 +217,8 @@ function formatDoc_(body) {
 // Best effort: when it is not switched on, or Google refuses, the order itself is already complete and the result says why.
 const FILE_COPY_MARK = '[[FILE COPY]]';
 const FILE_COPY_SLIP = [['', 'BLHSD'], ['Initials', ''], ['Date', '']];
+// First columns just wide enough for their text; the second columns keep their width (spot feedback #165).
+const FILE_COPY_SLIP_WIDTHS = [60, 234], FILE_COPY_KEYS_WIDTHS = [210, 234];
 const FILE_COPY_KEYS = [['Keywords', ''], ['Related issuances, laws, directives', '']];
 
 // Pure: where the paragraph holding `mark` starts in a Docs API document, or -1.
@@ -232,11 +241,11 @@ function lastSectionBreakIndex_(docJson) {
   return count > 1 ? found : -1;
 }
 
-function plainTable_(body, cells) {
+function plainTable_(body, cells, widths) {
   const t = body.appendTable(cells);
   t.editAsText().setBold(false);
   t.editAsText().setFontFamily(FORM_FONT); t.editAsText().setFontSize(FORM_SIZE);
-  [234, 234].forEach(function (w, c) { t.setColumnWidth(c, w); });
+  (widths || [234, 234]).forEach(function (w, c) { t.setColumnWidth(c, w); });
   return t;
 }
 
@@ -257,9 +266,9 @@ function addFileCopy_(docId) {
       else if (t === T.HORIZONTAL_RULE) body.appendHorizontalRule();
     }
     body.appendParagraph('').setBold(false);
-    plainTable_(body, FILE_COPY_SLIP);
+    plainTable_(body, FILE_COPY_SLIP, FILE_COPY_SLIP_WIDTHS);
     body.appendParagraph('').setBold(false);
-    plainTable_(body, FILE_COPY_KEYS);
+    plainTable_(body, FILE_COPY_KEYS, FILE_COPY_KEYS_WIDTHS);
     doc.saveAndClose();
 
     const at = findMarkIndex_(Docs.Documents.get(docId), FILE_COPY_MARK);
