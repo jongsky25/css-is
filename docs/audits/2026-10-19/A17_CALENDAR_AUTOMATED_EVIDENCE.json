@@ -1,0 +1,2964 @@
+{
+  "scope": "Synthetic local calendar journeys; manual screen-reader/zoom/forced-color/staff review pending",
+  "engine": {
+    "version": "4.14.0",
+    "sha256": "20c09fe157a8a34a30e241aaa1fcdade657734f08ab379ecfbeb7d45cc46e878"
+  },
+  "browser": "154.0.8037.57",
+  "results": [
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-prohibited-attr",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                ".cal-keys"
+              ],
+              "summary": "Fix all of the following:\n  aria-label attribute is not well supported on \"p\" elements with no valid role attribute."
+            },
+            {
+              "target": [
+                ".cal-key"
+              ],
+              "summary": "Fix all of the following:\n  aria-label attribute is not well supported on \"div\" elements with no valid role attribute."
+            },
+            {
+              "target": [
+                "p[aria-label=\"Icon key \u2014 the type of item\"]"
+              ],
+              "summary": "Fix all of the following:\n  aria-label attribute is not well supported on \"p\" elements with no valid role attribute."
+            }
+          ]
+        },
+        {
+          "id": "aria-valid-attr-value",
+          "impact": "critical",
+          "nodes": [
+            {
+              "target": [
+                "#navSearchBtn"
+              ],
+              "summary": "Fix all of the following:\n  Unable to determine if aria-controls referenced ID exists on the page while using aria-haspopup: aria-controls=\"cmdk\""
+            }
+          ]
+        },
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "summary[aria-label=\"More: quick add, birthdays\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "kbd:nth-child(1)"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "kbd:nth-child(2)"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "span:nth-child(8) > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                ".settings:nth-child(2) > summary[aria-label=\"Display settings\"][title=\"Display settings\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "summary[aria-label=\"Help and tours\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                ".fb-bell"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "button[aria-label=\"Add something on Sun, Oct 25\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "button[data-date=\"2026-11-01\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "button[data-date=\"2026-11-02\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Agenda",
+      "width": 1440,
+      "theme": "light"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "button[data-sheet-close=\"\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "button[data-sheet-close=\"\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Item preview",
+      "width": 1440,
+      "theme": "light"
+    },
+    {
+      "violations": [],
+      "incomplete": [],
+      "overflow": false,
+      "surface": "Quick add",
+      "width": 1440,
+      "theme": "light"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-valid-attr-value",
+          "impact": "critical",
+          "nodes": [
+            {
+              "target": [
+                "#navSearchBtn"
+              ],
+              "summary": "Fix all of the following:\n  Unable to determine if aria-controls referenced ID exists on the page while using aria-haspopup: aria-controls=\"cmdk\""
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                ".settings:nth-child(2) > summary[aria-label=\"Display settings\"][title=\"Display settings\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "summary[aria-label=\"Help and tours\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                ".fb-bell"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Confirmed detail",
+      "width": 1440,
+      "theme": "light"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-valid-attr-value",
+          "impact": "critical",
+          "nodes": [
+            {
+              "target": [
+                "#navSearchBtn"
+              ],
+              "summary": "Fix all of the following:\n  Unable to determine if aria-controls referenced ID exists on the page while using aria-haspopup: aria-controls=\"cmdk\""
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                ".settings:nth-child(2) > summary[aria-label=\"Display settings\"][title=\"Display settings\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "summary[aria-label=\"Help and tours\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                ".fb-bell"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Tentative detail",
+      "width": 1440,
+      "theme": "light"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-valid-attr-value",
+          "impact": "critical",
+          "nodes": [
+            {
+              "target": [
+                "#navSearchBtn"
+              ],
+              "summary": "Fix all of the following:\n  Unable to determine if aria-controls referenced ID exists on the page while using aria-haspopup: aria-controls=\"cmdk\""
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                ".settings:nth-child(2) > summary[aria-label=\"Display settings\"][title=\"Display settings\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "summary[aria-label=\"Help and tours\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                ".fb-bell"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Postponed detail",
+      "width": 1440,
+      "theme": "light"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-valid-attr-value",
+          "impact": "critical",
+          "nodes": [
+            {
+              "target": [
+                "#navSearchBtn"
+              ],
+              "summary": "Fix all of the following:\n  Unable to determine if aria-controls referenced ID exists on the page while using aria-haspopup: aria-controls=\"cmdk\""
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                ".settings:nth-child(2) > summary[aria-label=\"Display settings\"][title=\"Display settings\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "summary[aria-label=\"Help and tours\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                ".fb-bell"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Cancelled detail",
+      "width": 1440,
+      "theme": "light"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-valid-attr-value",
+          "impact": "critical",
+          "nodes": [
+            {
+              "target": [
+                "#navSearchBtn"
+              ],
+              "summary": "Fix all of the following:\n  Unable to determine if aria-controls referenced ID exists on the page while using aria-haspopup: aria-controls=\"cmdk\""
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                ".settings:nth-child(2) > summary[aria-label=\"Display settings\"][title=\"Display settings\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "summary[aria-label=\"Help and tours\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                ".fb-bell"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Expired restore detail",
+      "width": 1440,
+      "theme": "light"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-valid-attr-value",
+          "impact": "critical",
+          "nodes": [
+            {
+              "target": [
+                "#navSearchBtn"
+              ],
+              "summary": "Fix all of the following:\n  Unable to determine if aria-controls referenced ID exists on the page while using aria-haspopup: aria-controls=\"cmdk\""
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                ".settings:nth-child(2) > summary[aria-label=\"Display settings\"][title=\"Display settings\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "summary[aria-label=\"Help and tours\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                ".fb-bell"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Cancellation review",
+      "width": 1440,
+      "theme": "light"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-valid-attr-value",
+          "impact": "critical",
+          "nodes": [
+            {
+              "target": [
+                "#navSearchBtn"
+              ],
+              "summary": "Fix all of the following:\n  Unable to determine if aria-controls referenced ID exists on the page while using aria-haspopup: aria-controls=\"cmdk\""
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                ".settings:nth-child(2) > summary[aria-label=\"Display settings\"][title=\"Display settings\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "summary[aria-label=\"Help and tours\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                ".fb-bell"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Edit conflict",
+      "width": 1440,
+      "theme": "light"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-valid-attr-value",
+          "impact": "critical",
+          "nodes": [
+            {
+              "target": [
+                "#navSearchBtn"
+              ],
+              "summary": "Fix all of the following:\n  Unable to determine if aria-controls referenced ID exists on the page while using aria-haspopup: aria-controls=\"cmdk\""
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                ".settings:nth-child(2) > summary[aria-label=\"Display settings\"][title=\"Display settings\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "summary[aria-label=\"Help and tours\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                ".fb-bell"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Validation recovery",
+      "width": 1440,
+      "theme": "light"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-valid-attr-value",
+          "impact": "critical",
+          "nodes": [
+            {
+              "target": [
+                "#navSearchBtn"
+              ],
+              "summary": "Fix all of the following:\n  Unable to determine if aria-controls referenced ID exists on the page while using aria-haspopup: aria-controls=\"cmdk\""
+            }
+          ]
+        },
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                ".ph"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because element contains an image node"
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                ".settings:nth-child(2) > summary[aria-label=\"Display settings\"][title=\"Display settings\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "summary[aria-label=\"Help and tours\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                ".fb-bell"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Subscription off and help",
+      "width": 1440,
+      "theme": "light"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-valid-attr-value",
+          "impact": "critical",
+          "nodes": [
+            {
+              "target": [
+                "#navSearchBtn"
+              ],
+              "summary": "Fix all of the following:\n  Unable to determine if aria-controls referenced ID exists on the page while using aria-haspopup: aria-controls=\"cmdk\""
+            }
+          ]
+        },
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                ".ph"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because element contains an image node"
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                ".settings:nth-child(2) > summary[aria-label=\"Display settings\"][title=\"Display settings\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "summary[aria-label=\"Help and tours\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                ".fb-bell"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Subscription active and help",
+      "width": 1440,
+      "theme": "light"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-prohibited-attr",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                ".cal-keys"
+              ],
+              "summary": "Fix all of the following:\n  aria-label attribute is not well supported on \"p\" elements with no valid role attribute."
+            },
+            {
+              "target": [
+                ".cal-key"
+              ],
+              "summary": "Fix all of the following:\n  aria-label attribute is not well supported on \"div\" elements with no valid role attribute."
+            },
+            {
+              "target": [
+                "p[aria-label=\"Icon key \u2014 the type of item\"]"
+              ],
+              "summary": "Fix all of the following:\n  aria-label attribute is not well supported on \"p\" elements with no valid role attribute."
+            }
+          ]
+        },
+        {
+          "id": "aria-valid-attr-value",
+          "impact": "critical",
+          "nodes": [
+            {
+              "target": [
+                "#navSearchBtn"
+              ],
+              "summary": "Fix all of the following:\n  Unable to determine if aria-controls referenced ID exists on the page while using aria-haspopup: aria-controls=\"cmdk\""
+            }
+          ]
+        },
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "summary[aria-label=\"Menu\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "summary[aria-label=\"More: quick add, birthdays\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "kbd:nth-child(1)"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "kbd:nth-child(2)"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "span:nth-child(8) > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "summary[aria-label=\"Menu\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                ".fb-bell"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "summary[aria-label=\"More: quick add, birthdays\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "button[aria-label=\"Add something on Sun, Oct 25\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "button[data-date=\"2026-11-01\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "button[data-date=\"2026-11-02\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "#sfBtn"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Agenda",
+      "width": 390,
+      "theme": "light"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "button[data-sheet-close=\"\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "button[data-sheet-close=\"\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Item preview",
+      "width": 390,
+      "theme": "light"
+    },
+    {
+      "violations": [],
+      "incomplete": [],
+      "overflow": false,
+      "surface": "Quick add",
+      "width": 390,
+      "theme": "light"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-valid-attr-value",
+          "impact": "critical",
+          "nodes": [
+            {
+              "target": [
+                "#navSearchBtn"
+              ],
+              "summary": "Fix all of the following:\n  Unable to determine if aria-controls referenced ID exists on the page while using aria-haspopup: aria-controls=\"cmdk\""
+            }
+          ]
+        },
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "summary[aria-label=\"Menu\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "summary[aria-label=\"Menu\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                ".fb-bell"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "#sfBtn"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Confirmed detail",
+      "width": 390,
+      "theme": "light"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-valid-attr-value",
+          "impact": "critical",
+          "nodes": [
+            {
+              "target": [
+                "#navSearchBtn"
+              ],
+              "summary": "Fix all of the following:\n  Unable to determine if aria-controls referenced ID exists on the page while using aria-haspopup: aria-controls=\"cmdk\""
+            }
+          ]
+        },
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "summary[aria-label=\"Menu\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "summary[aria-label=\"Menu\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                ".fb-bell"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "#sfBtn"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Tentative detail",
+      "width": 390,
+      "theme": "light"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-valid-attr-value",
+          "impact": "critical",
+          "nodes": [
+            {
+              "target": [
+                "#navSearchBtn"
+              ],
+              "summary": "Fix all of the following:\n  Unable to determine if aria-controls referenced ID exists on the page while using aria-haspopup: aria-controls=\"cmdk\""
+            }
+          ]
+        },
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "summary[aria-label=\"Menu\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "summary[aria-label=\"Menu\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                ".fb-bell"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "#sfBtn"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Postponed detail",
+      "width": 390,
+      "theme": "light"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-valid-attr-value",
+          "impact": "critical",
+          "nodes": [
+            {
+              "target": [
+                "#navSearchBtn"
+              ],
+              "summary": "Fix all of the following:\n  Unable to determine if aria-controls referenced ID exists on the page while using aria-haspopup: aria-controls=\"cmdk\""
+            }
+          ]
+        },
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "summary[aria-label=\"Menu\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "summary[aria-label=\"Menu\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                ".fb-bell"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "#sfBtn"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Cancelled detail",
+      "width": 390,
+      "theme": "light"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-valid-attr-value",
+          "impact": "critical",
+          "nodes": [
+            {
+              "target": [
+                "#navSearchBtn"
+              ],
+              "summary": "Fix all of the following:\n  Unable to determine if aria-controls referenced ID exists on the page while using aria-haspopup: aria-controls=\"cmdk\""
+            }
+          ]
+        },
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "summary[aria-label=\"Menu\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "summary[aria-label=\"Menu\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                ".fb-bell"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "#sfBtn"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Expired restore detail",
+      "width": 390,
+      "theme": "light"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-valid-attr-value",
+          "impact": "critical",
+          "nodes": [
+            {
+              "target": [
+                "#navSearchBtn"
+              ],
+              "summary": "Fix all of the following:\n  Unable to determine if aria-controls referenced ID exists on the page while using aria-haspopup: aria-controls=\"cmdk\""
+            }
+          ]
+        },
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "summary[aria-label=\"Menu\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "summary[aria-label=\"Menu\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                ".fb-bell"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "#sfBtn"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Cancellation review",
+      "width": 390,
+      "theme": "light"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-valid-attr-value",
+          "impact": "critical",
+          "nodes": [
+            {
+              "target": [
+                "#navSearchBtn"
+              ],
+              "summary": "Fix all of the following:\n  Unable to determine if aria-controls referenced ID exists on the page while using aria-haspopup: aria-controls=\"cmdk\""
+            }
+          ]
+        },
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "summary[aria-label=\"Menu\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                ".cf-cancel"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because it partially overlaps other elements"
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "summary[aria-label=\"Menu\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                ".fb-bell"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "#sfBtn"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Edit conflict",
+      "width": 390,
+      "theme": "light"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-valid-attr-value",
+          "impact": "critical",
+          "nodes": [
+            {
+              "target": [
+                "#navSearchBtn"
+              ],
+              "summary": "Fix all of the following:\n  Unable to determine if aria-controls referenced ID exists on the page while using aria-haspopup: aria-controls=\"cmdk\""
+            }
+          ]
+        },
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "summary[aria-label=\"Menu\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                ".primary"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because it partially overlaps other elements"
+            },
+            {
+              "target": [
+                ".cf-cancel"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because it partially overlaps other elements"
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "summary[aria-label=\"Menu\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                ".fb-bell"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "#sfBtn"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Validation recovery",
+      "width": 390,
+      "theme": "light"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-valid-attr-value",
+          "impact": "critical",
+          "nodes": [
+            {
+              "target": [
+                "#navSearchBtn"
+              ],
+              "summary": "Fix all of the following:\n  Unable to determine if aria-controls referenced ID exists on the page while using aria-haspopup: aria-controls=\"cmdk\""
+            }
+          ]
+        },
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "summary[aria-label=\"Menu\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                ".ph"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because element contains an image node"
+            },
+            {
+              "target": [
+                ".locked.gl-step[role=\"listitem\"]:nth-child(4) > .gl-name"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because it's partially obscured by another element"
+            },
+            {
+              "target": [
+                ".locked.gl-step[role=\"listitem\"]:nth-child(4) > .gl-pts"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because it's partially obscured by another element"
+            },
+            {
+              "target": [
+                ".locked.gl-step[role=\"listitem\"]:nth-child(5) > .gl-name"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because it's partially obscured by another element"
+            },
+            {
+              "target": [
+                ".locked.gl-step[role=\"listitem\"]:nth-child(5) > .gl-pts"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because it's partially obscured by another element"
+            },
+            {
+              "target": [
+                ".locked.gl-step[role=\"listitem\"]:nth-child(6) > .gl-name"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because it's partially obscured by another element"
+            },
+            {
+              "target": [
+                ".locked.gl-step[role=\"listitem\"]:nth-child(6) > .gl-pts"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because it's partially obscured by another element"
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "summary[aria-label=\"Menu\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                ".fb-bell"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "#sfBtn"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Subscription off and help",
+      "width": 390,
+      "theme": "light"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-valid-attr-value",
+          "impact": "critical",
+          "nodes": [
+            {
+              "target": [
+                "#navSearchBtn"
+              ],
+              "summary": "Fix all of the following:\n  Unable to determine if aria-controls referenced ID exists on the page while using aria-haspopup: aria-controls=\"cmdk\""
+            }
+          ]
+        },
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "summary[aria-label=\"Menu\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                ".ph"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because element contains an image node"
+            },
+            {
+              "target": [
+                ".locked.gl-step[role=\"listitem\"]:nth-child(4) > .gl-name"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because it's partially obscured by another element"
+            },
+            {
+              "target": [
+                ".locked.gl-step[role=\"listitem\"]:nth-child(4) > .gl-pts"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because it's partially obscured by another element"
+            },
+            {
+              "target": [
+                ".locked.gl-step[role=\"listitem\"]:nth-child(5) > .gl-name"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because it's partially obscured by another element"
+            },
+            {
+              "target": [
+                ".locked.gl-step[role=\"listitem\"]:nth-child(5) > .gl-pts"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because it's partially obscured by another element"
+            },
+            {
+              "target": [
+                ".locked.gl-step[role=\"listitem\"]:nth-child(6) > .gl-name"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because it's partially obscured by another element"
+            },
+            {
+              "target": [
+                ".locked.gl-step[role=\"listitem\"]:nth-child(6) > .gl-pts"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because it's partially obscured by another element"
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "summary[aria-label=\"Menu\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                ".fb-bell"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "#sfBtn"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Subscription active and help",
+      "width": 390,
+      "theme": "light"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-prohibited-attr",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                ".cal-keys"
+              ],
+              "summary": "Fix all of the following:\n  aria-label attribute is not well supported on \"p\" elements with no valid role attribute."
+            },
+            {
+              "target": [
+                ".cal-key"
+              ],
+              "summary": "Fix all of the following:\n  aria-label attribute is not well supported on \"div\" elements with no valid role attribute."
+            },
+            {
+              "target": [
+                "p[aria-label=\"Icon key \u2014 the type of item\"]"
+              ],
+              "summary": "Fix all of the following:\n  aria-label attribute is not well supported on \"p\" elements with no valid role attribute."
+            }
+          ]
+        },
+        {
+          "id": "aria-valid-attr-value",
+          "impact": "critical",
+          "nodes": [
+            {
+              "target": [
+                "#navSearchBtn"
+              ],
+              "summary": "Fix all of the following:\n  Unable to determine if aria-controls referenced ID exists on the page while using aria-haspopup: aria-controls=\"cmdk\""
+            }
+          ]
+        },
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "summary[aria-label=\"More: quick add, birthdays\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "kbd:nth-child(1)"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "kbd:nth-child(2)"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "span:nth-child(8) > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                ".settings:nth-child(2) > summary[aria-label=\"Display settings\"][title=\"Display settings\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "summary[aria-label=\"Help and tours\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                ".fb-bell"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "button[aria-label=\"Add something on Sun, Oct 25\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "button[data-date=\"2026-11-01\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "button[data-date=\"2026-11-02\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Agenda",
+      "width": 1440,
+      "theme": "dark"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "button[data-sheet-close=\"\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "button[data-sheet-close=\"\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Item preview",
+      "width": 1440,
+      "theme": "dark"
+    },
+    {
+      "violations": [],
+      "incomplete": [],
+      "overflow": false,
+      "surface": "Quick add",
+      "width": 1440,
+      "theme": "dark"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-valid-attr-value",
+          "impact": "critical",
+          "nodes": [
+            {
+              "target": [
+                "#navSearchBtn"
+              ],
+              "summary": "Fix all of the following:\n  Unable to determine if aria-controls referenced ID exists on the page while using aria-haspopup: aria-controls=\"cmdk\""
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                ".settings:nth-child(2) > summary[aria-label=\"Display settings\"][title=\"Display settings\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "summary[aria-label=\"Help and tours\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                ".fb-bell"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Confirmed detail",
+      "width": 1440,
+      "theme": "dark"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-valid-attr-value",
+          "impact": "critical",
+          "nodes": [
+            {
+              "target": [
+                "#navSearchBtn"
+              ],
+              "summary": "Fix all of the following:\n  Unable to determine if aria-controls referenced ID exists on the page while using aria-haspopup: aria-controls=\"cmdk\""
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                ".settings:nth-child(2) > summary[aria-label=\"Display settings\"][title=\"Display settings\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "summary[aria-label=\"Help and tours\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                ".fb-bell"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Tentative detail",
+      "width": 1440,
+      "theme": "dark"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-valid-attr-value",
+          "impact": "critical",
+          "nodes": [
+            {
+              "target": [
+                "#navSearchBtn"
+              ],
+              "summary": "Fix all of the following:\n  Unable to determine if aria-controls referenced ID exists on the page while using aria-haspopup: aria-controls=\"cmdk\""
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                ".settings:nth-child(2) > summary[aria-label=\"Display settings\"][title=\"Display settings\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "summary[aria-label=\"Help and tours\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                ".fb-bell"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Postponed detail",
+      "width": 1440,
+      "theme": "dark"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-valid-attr-value",
+          "impact": "critical",
+          "nodes": [
+            {
+              "target": [
+                "#navSearchBtn"
+              ],
+              "summary": "Fix all of the following:\n  Unable to determine if aria-controls referenced ID exists on the page while using aria-haspopup: aria-controls=\"cmdk\""
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                ".settings:nth-child(2) > summary[aria-label=\"Display settings\"][title=\"Display settings\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "summary[aria-label=\"Help and tours\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                ".fb-bell"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Cancelled detail",
+      "width": 1440,
+      "theme": "dark"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-valid-attr-value",
+          "impact": "critical",
+          "nodes": [
+            {
+              "target": [
+                "#navSearchBtn"
+              ],
+              "summary": "Fix all of the following:\n  Unable to determine if aria-controls referenced ID exists on the page while using aria-haspopup: aria-controls=\"cmdk\""
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                ".settings:nth-child(2) > summary[aria-label=\"Display settings\"][title=\"Display settings\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "summary[aria-label=\"Help and tours\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                ".fb-bell"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Expired restore detail",
+      "width": 1440,
+      "theme": "dark"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-valid-attr-value",
+          "impact": "critical",
+          "nodes": [
+            {
+              "target": [
+                "#navSearchBtn"
+              ],
+              "summary": "Fix all of the following:\n  Unable to determine if aria-controls referenced ID exists on the page while using aria-haspopup: aria-controls=\"cmdk\""
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                ".settings:nth-child(2) > summary[aria-label=\"Display settings\"][title=\"Display settings\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "summary[aria-label=\"Help and tours\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                ".fb-bell"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Cancellation review",
+      "width": 1440,
+      "theme": "dark"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-valid-attr-value",
+          "impact": "critical",
+          "nodes": [
+            {
+              "target": [
+                "#navSearchBtn"
+              ],
+              "summary": "Fix all of the following:\n  Unable to determine if aria-controls referenced ID exists on the page while using aria-haspopup: aria-controls=\"cmdk\""
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                ".settings:nth-child(2) > summary[aria-label=\"Display settings\"][title=\"Display settings\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "summary[aria-label=\"Help and tours\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                ".fb-bell"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Edit conflict",
+      "width": 1440,
+      "theme": "dark"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-valid-attr-value",
+          "impact": "critical",
+          "nodes": [
+            {
+              "target": [
+                "#navSearchBtn"
+              ],
+              "summary": "Fix all of the following:\n  Unable to determine if aria-controls referenced ID exists on the page while using aria-haspopup: aria-controls=\"cmdk\""
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                ".settings:nth-child(2) > summary[aria-label=\"Display settings\"][title=\"Display settings\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "summary[aria-label=\"Help and tours\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                ".fb-bell"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Validation recovery",
+      "width": 1440,
+      "theme": "dark"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-valid-attr-value",
+          "impact": "critical",
+          "nodes": [
+            {
+              "target": [
+                "#navSearchBtn"
+              ],
+              "summary": "Fix all of the following:\n  Unable to determine if aria-controls referenced ID exists on the page while using aria-haspopup: aria-controls=\"cmdk\""
+            }
+          ]
+        },
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                ".ph"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because element contains an image node"
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                ".settings:nth-child(2) > summary[aria-label=\"Display settings\"][title=\"Display settings\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "summary[aria-label=\"Help and tours\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                ".fb-bell"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Subscription off and help",
+      "width": 1440,
+      "theme": "dark"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-valid-attr-value",
+          "impact": "critical",
+          "nodes": [
+            {
+              "target": [
+                "#navSearchBtn"
+              ],
+              "summary": "Fix all of the following:\n  Unable to determine if aria-controls referenced ID exists on the page while using aria-haspopup: aria-controls=\"cmdk\""
+            }
+          ]
+        },
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                ".ph"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because element contains an image node"
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                ".settings:nth-child(2) > summary[aria-label=\"Display settings\"][title=\"Display settings\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "summary[aria-label=\"Help and tours\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                ".fb-bell"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Subscription active and help",
+      "width": 1440,
+      "theme": "dark"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-prohibited-attr",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                ".cal-keys"
+              ],
+              "summary": "Fix all of the following:\n  aria-label attribute is not well supported on \"p\" elements with no valid role attribute."
+            },
+            {
+              "target": [
+                ".cal-key"
+              ],
+              "summary": "Fix all of the following:\n  aria-label attribute is not well supported on \"div\" elements with no valid role attribute."
+            },
+            {
+              "target": [
+                "p[aria-label=\"Icon key \u2014 the type of item\"]"
+              ],
+              "summary": "Fix all of the following:\n  aria-label attribute is not well supported on \"p\" elements with no valid role attribute."
+            }
+          ]
+        },
+        {
+          "id": "aria-valid-attr-value",
+          "impact": "critical",
+          "nodes": [
+            {
+              "target": [
+                "#navSearchBtn"
+              ],
+              "summary": "Fix all of the following:\n  Unable to determine if aria-controls referenced ID exists on the page while using aria-haspopup: aria-controls=\"cmdk\""
+            }
+          ]
+        },
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "summary[aria-label=\"Menu\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "summary[aria-label=\"More: quick add, birthdays\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "kbd:nth-child(1)"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "kbd:nth-child(2)"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "span:nth-child(8) > span[aria-hidden=\"true\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "summary[aria-label=\"Menu\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                ".fb-bell"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "summary[aria-label=\"More: quick add, birthdays\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "button[aria-label=\"Add something on Sun, Oct 25\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "button[data-date=\"2026-11-01\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "button[data-date=\"2026-11-02\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "#sfBtn"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Agenda",
+      "width": 390,
+      "theme": "dark"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "button[data-sheet-close=\"\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "button[data-sheet-close=\"\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Item preview",
+      "width": 390,
+      "theme": "dark"
+    },
+    {
+      "violations": [],
+      "incomplete": [],
+      "overflow": false,
+      "surface": "Quick add",
+      "width": 390,
+      "theme": "dark"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-valid-attr-value",
+          "impact": "critical",
+          "nodes": [
+            {
+              "target": [
+                "#navSearchBtn"
+              ],
+              "summary": "Fix all of the following:\n  Unable to determine if aria-controls referenced ID exists on the page while using aria-haspopup: aria-controls=\"cmdk\""
+            }
+          ]
+        },
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "summary[aria-label=\"Menu\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "summary[aria-label=\"Menu\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                ".fb-bell"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "#sfBtn"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Confirmed detail",
+      "width": 390,
+      "theme": "dark"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-valid-attr-value",
+          "impact": "critical",
+          "nodes": [
+            {
+              "target": [
+                "#navSearchBtn"
+              ],
+              "summary": "Fix all of the following:\n  Unable to determine if aria-controls referenced ID exists on the page while using aria-haspopup: aria-controls=\"cmdk\""
+            }
+          ]
+        },
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "summary[aria-label=\"Menu\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "summary[aria-label=\"Menu\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                ".fb-bell"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "#sfBtn"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Tentative detail",
+      "width": 390,
+      "theme": "dark"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-valid-attr-value",
+          "impact": "critical",
+          "nodes": [
+            {
+              "target": [
+                "#navSearchBtn"
+              ],
+              "summary": "Fix all of the following:\n  Unable to determine if aria-controls referenced ID exists on the page while using aria-haspopup: aria-controls=\"cmdk\""
+            }
+          ]
+        },
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "summary[aria-label=\"Menu\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "summary[aria-label=\"Menu\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                ".fb-bell"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "#sfBtn"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Postponed detail",
+      "width": 390,
+      "theme": "dark"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-valid-attr-value",
+          "impact": "critical",
+          "nodes": [
+            {
+              "target": [
+                "#navSearchBtn"
+              ],
+              "summary": "Fix all of the following:\n  Unable to determine if aria-controls referenced ID exists on the page while using aria-haspopup: aria-controls=\"cmdk\""
+            }
+          ]
+        },
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "summary[aria-label=\"Menu\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "summary[aria-label=\"Menu\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                ".fb-bell"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "#sfBtn"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Cancelled detail",
+      "width": 390,
+      "theme": "dark"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-valid-attr-value",
+          "impact": "critical",
+          "nodes": [
+            {
+              "target": [
+                "#navSearchBtn"
+              ],
+              "summary": "Fix all of the following:\n  Unable to determine if aria-controls referenced ID exists on the page while using aria-haspopup: aria-controls=\"cmdk\""
+            }
+          ]
+        },
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "summary[aria-label=\"Menu\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "summary[aria-label=\"Menu\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                ".fb-bell"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "#sfBtn"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Expired restore detail",
+      "width": 390,
+      "theme": "dark"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-valid-attr-value",
+          "impact": "critical",
+          "nodes": [
+            {
+              "target": [
+                "#navSearchBtn"
+              ],
+              "summary": "Fix all of the following:\n  Unable to determine if aria-controls referenced ID exists on the page while using aria-haspopup: aria-controls=\"cmdk\""
+            }
+          ]
+        },
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "summary[aria-label=\"Menu\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "summary[aria-label=\"Menu\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                ".fb-bell"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "#sfBtn"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Cancellation review",
+      "width": 390,
+      "theme": "dark"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-valid-attr-value",
+          "impact": "critical",
+          "nodes": [
+            {
+              "target": [
+                "#navSearchBtn"
+              ],
+              "summary": "Fix all of the following:\n  Unable to determine if aria-controls referenced ID exists on the page while using aria-haspopup: aria-controls=\"cmdk\""
+            }
+          ]
+        },
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "summary[aria-label=\"Menu\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                ".cf-cancel"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because it partially overlaps other elements"
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "summary[aria-label=\"Menu\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                ".fb-bell"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "#sfBtn"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Edit conflict",
+      "width": 390,
+      "theme": "dark"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-valid-attr-value",
+          "impact": "critical",
+          "nodes": [
+            {
+              "target": [
+                "#navSearchBtn"
+              ],
+              "summary": "Fix all of the following:\n  Unable to determine if aria-controls referenced ID exists on the page while using aria-haspopup: aria-controls=\"cmdk\""
+            }
+          ]
+        },
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "summary[aria-label=\"Menu\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                ".primary"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because it partially overlaps other elements"
+            },
+            {
+              "target": [
+                ".cf-cancel"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because it partially overlaps other elements"
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "summary[aria-label=\"Menu\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                ".fb-bell"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "#sfBtn"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Validation recovery",
+      "width": 390,
+      "theme": "dark"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-valid-attr-value",
+          "impact": "critical",
+          "nodes": [
+            {
+              "target": [
+                "#navSearchBtn"
+              ],
+              "summary": "Fix all of the following:\n  Unable to determine if aria-controls referenced ID exists on the page while using aria-haspopup: aria-controls=\"cmdk\""
+            }
+          ]
+        },
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "summary[aria-label=\"Menu\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                ".ph"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because element contains an image node"
+            },
+            {
+              "target": [
+                ".locked.gl-step[role=\"listitem\"]:nth-child(4) > .gl-name"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because it's partially obscured by another element"
+            },
+            {
+              "target": [
+                ".locked.gl-step[role=\"listitem\"]:nth-child(4) > .gl-pts"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because it's partially obscured by another element"
+            },
+            {
+              "target": [
+                ".locked.gl-step[role=\"listitem\"]:nth-child(5) > .gl-name"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because it's partially obscured by another element"
+            },
+            {
+              "target": [
+                ".locked.gl-step[role=\"listitem\"]:nth-child(5) > .gl-pts"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because it's partially obscured by another element"
+            },
+            {
+              "target": [
+                ".locked.gl-step[role=\"listitem\"]:nth-child(6) > .gl-name"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because it's partially obscured by another element"
+            },
+            {
+              "target": [
+                ".locked.gl-step[role=\"listitem\"]:nth-child(6) > .gl-pts"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because it's partially obscured by another element"
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "summary[aria-label=\"Menu\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                ".fb-bell"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "#sfBtn"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Subscription off and help",
+      "width": 390,
+      "theme": "dark"
+    },
+    {
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-valid-attr-value",
+          "impact": "critical",
+          "nodes": [
+            {
+              "target": [
+                "#navSearchBtn"
+              ],
+              "summary": "Fix all of the following:\n  Unable to determine if aria-controls referenced ID exists on the page while using aria-haspopup: aria-controls=\"cmdk\""
+            }
+          ]
+        },
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "summary[aria-label=\"Menu\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                ".ph"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because element contains an image node"
+            },
+            {
+              "target": [
+                ".locked.gl-step[role=\"listitem\"]:nth-child(4) > .gl-name"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because it's partially obscured by another element"
+            },
+            {
+              "target": [
+                ".locked.gl-step[role=\"listitem\"]:nth-child(4) > .gl-pts"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because it's partially obscured by another element"
+            },
+            {
+              "target": [
+                ".locked.gl-step[role=\"listitem\"]:nth-child(5) > .gl-name"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because it's partially obscured by another element"
+            },
+            {
+              "target": [
+                ".locked.gl-step[role=\"listitem\"]:nth-child(5) > .gl-pts"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because it's partially obscured by another element"
+            },
+            {
+              "target": [
+                ".locked.gl-step[role=\"listitem\"]:nth-child(6) > .gl-name"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because it's partially obscured by another element"
+            },
+            {
+              "target": [
+                ".locked.gl-step[role=\"listitem\"]:nth-child(6) > .gl-pts"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because it's partially obscured by another element"
+            }
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "nodes": [
+            {
+              "target": [
+                "summary[aria-label=\"Menu\"]"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                ".fb-bell"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            },
+            {
+              "target": [
+                "#sfBtn"
+              ],
+              "summary": "Fix any of the following:\n  Unable to determine if the visible text is part of the accessible name"
+            }
+          ]
+        }
+      ],
+      "overflow": false,
+      "surface": "Subscription active and help",
+      "width": 390,
+      "theme": "dark"
+    }
+  ],
+  "totals": {
+    "states": 52,
+    "violations": 0,
+    "incomplete": 128,
+    "overflows": 0
+  }
+}

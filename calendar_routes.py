@@ -28,6 +28,7 @@ import activity_invitation
 import ai_core
 import auth
 import calendar_ics as cics
+import calendar_guidance
 import gdocs_relay
 import ratelimit
 import mailer
@@ -41,6 +42,7 @@ import recurrence
 import rooms
 import storage as st
 import travel_scan
+import tzutil as tz
 
 MAX_UPLOAD = 8 * 1024 * 1024            # a calendar .docx is well under 1 MB
 MAX_UNZIPPED = 80 * 1024 * 1024         # refuse a zip bomb before python-docx inflates it
@@ -970,6 +972,8 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
             "nav_active": "calendar", "e": e, "ok": ok, "err": err, "css": css, "heads_up": heads_up, "series": series,
             "calendar_back": entry_calendar_back(request, e["start_date"]),
             "room_link": room_link, "filing": filing, "documents": documents,
+            "guidance": calendar_guidance.entry(e, now=tz.now_local(), restore_days=st.CAL_RESTORE_DAYS,
+                owner=" + ".join(owners), linked=bool(linked), series=series),
             "owner": " + ".join(owners) or None, "owners": owners,
             "attendees": [{**cards.get(p["user_id"], {"name": "?", "initials": "?"}),
                            "role": p["role"]} for p in e["people"]],
@@ -1011,9 +1015,8 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
             if e is None:
                 return _not_found(request)
             if e["status"] == "cancelled":
-                return RedirectResponse(
-                    f"/calendar/entries/{entry_id}?err={quote('Restore it before editing.')}",
-                    status_code=303)
+                return _form_page(request, conn, f, entry=e, status_code=409,
+                    error="This item was cancelled while you were editing. Nothing was saved; your details are kept below. Review the cancelled item before continuing.")
             activity = _activity_of(conn, e)
             if activity:                  # locked to the activity: ignore whatever was posted
                 shown = _entry_form(e, activity)
@@ -1324,6 +1327,18 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
         finally:
             conn.close()
         return JSONResponse({"entries": found[:5]})
+
+    @router.get("/calendar/entries/{entry_id}/cancel", response_class=HTMLResponse)
+    def calendar_cancel_review(request: Request, entry_id: int):
+        conn = get_conn()
+        try:
+            e = oc.viewable_entry(conn, request.state.user, entry_id)
+            if e is None:
+                return _not_found(request)
+            return templates.TemplateResponse(request, "calendar_cancel.html", {
+                "nav_active": "calendar", "e": e, "restore_days": st.CAL_RESTORE_DAYS})
+        finally:
+            conn.close()
 
     @router.post("/calendar/entries/{entry_id}/cancel")
     def calendar_cancel(request: Request, entry_id: int):

@@ -1,20 +1,20 @@
 {% extends "dash_layout.html" %}
 {% from "_components.html" import page_header %}
 {% block title %}{{ "Edit calendar item" if entry else "Add to the calendar" }}{% endblock %}
-{% block head %}<link rel="stylesheet" href="/static/css/calendar.css?v=20261016b"><link rel="stylesheet" href="/static/css/rooms.css?v=7.85"><script src="/static/js/calendar_people_search.js?v=20261019a" defer></script>{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/calendar.css?v=7.87"><link rel="stylesheet" href="/static/css/rooms.css?v=7.85"><script src="/static/js/calendar_people_search.js?v=20261019a" defer></script><script src="/static/js/calendar_form.js?v=7.87" defer></script>{% endblock %}
 {% block content %}
 {{ page_header("Edit calendar item" if entry else "Add to the calendar",
                "Anyone can add or change items. Every change is recorded, and the people on an item see it in their calendar.") }}
 
 <p class="cal-back"><a href="{{ '/calendar/entries/' ~ entry.id if entry else '/calendar' }}">← {{ "Back to the item" if entry else "Back to the calendar" }}</a></p>
 
-{% if error %}<div class="cal-flash err" role="alert">✕ {{ error }}</div>{% endif %}
+{% if error %}<div class="cal-flash err" role="alert" id="cal-form-message" tabindex="-1"><strong>Not saved.</strong> {{ error }}{% if entry and entry.status == 'cancelled' %} <a href="/calendar/entries/{{ entry.id }}" target="_blank" rel="noopener">Review cancelled item in a new tab</a>.{% endif %}</div>{% endif %}
 {% if conflict %}
-<div class="cal-flash warn" role="alert">
+<div class="cal-flash warn" role="alert" id="cal-form-message" tabindex="-1">
   <strong>{{ conflict.who }} changed this item while you were editing</strong>
   {% if conflict.at %}({{ conflict.at.replace("T", " ") }}){% endif %} — they {{ conflict.what }}.
-  Your changes are still in the form below. Saving again replaces their version with yours;
-  to keep theirs, <a href="/calendar/entries/{{ entry.id }}">go back and look at it first</a>.
+  Nothing was saved. Your changes are still in the form below. Review their version before choosing whether to replace it with yours.
+  <a href="/calendar/entries/{{ entry.id }}" target="_blank" rel="noopener">View current item in a new tab</a> to keep this draft open.
 </div>
 {% endif %}
 
@@ -26,11 +26,11 @@
   You can still change who is on it, the audience, tags and notes.</div>
 {% endif %}
 {% if confirm %}
-<div class="cal-flash warn" role="alert">
+<div class="cal-flash warn" role="alert" id="cal-form-message" tabindex="-1">
   <strong>{{ confirm }} {{ "person" if confirm == 1 else "people" }} registered for this activity.</strong>
-  Moving its dates changes it for them too. Tell them by email?
+  Nothing was saved yet. Moving its dates changes it for them too. Request an email notice?
   <div class="cf-actions">
-    <button class="cal-btn primary" type="submit" name="notify" value="yes" form="cal-form">Save and email them</button>
+    <button class="cal-btn primary" type="submit" name="notify" value="yes" form="cal-form">Save and request email</button>
     <button class="cal-btn" type="submit" name="notify" value="no" form="cal-form">Save without emailing</button>
   </div>
 </div>
@@ -54,13 +54,14 @@
   <section class="cf-card" aria-labelledby="cf-h-what">
     <h2 class="cf-h" id="cf-h-what">What</h2>
     <label class="cf-wide">What is it?
-      <input name="title" {{ "readonly" if locked }} value="{{ f.title }}" required maxlength="200" autofocus></label>
+      <input name="title" {{ "readonly" if locked }} value="{{ f.title }}" required maxlength="200" {{ 'autofocus' if not (error or conflict or confirm) }}></label>
     <div class="cf-row">
       <label>Type
         <select name="kind" {{ "disabled" if locked }}>{% for k, label in kinds.items() %}<option value="{{ k }}" {{ "selected" if f.kind == k }}>{{ label }}</option>{% endfor %}</select></label>
       <label>Status
-        <select name="status" {{ "disabled" if locked }}>{% for k, label in statuses.items() if k != "cancelled" %}<option value="{{ k }}" {{ "selected" if f.status == k }}>{{ label }}</option>{% endfor %}</select></label>
+        <select name="status" aria-describedby="cal-status-help" {{ "disabled" if locked }}>{% for k, label in statuses.items() if k != "cancelled" %}<option value="{{ k }}" {{ "selected" if f.status == k }}>{{ label }}</option>{% endfor %}</select></label>
     </div>
+    <p class="cal-hint" id="cal-status-help">Confirmed means the schedule is settled; Tentative means check first; Postponed means the displayed dates need reviewing. Status here does not approve a room or confirm email delivery.</p>
   </section>
 
   <section class="cf-card" aria-labelledby="cf-h-when">
@@ -165,8 +166,8 @@
   </script>
 
   <div class="cf-actions">
-    <button class="cal-btn primary cf-save" type="submit">{{ "Save changes" if entry else "Add to the calendar" }}</button>
-    <a class="cal-btn cf-cancel" href="{{ '/calendar/entries/' ~ entry.id if entry else '/calendar' }}">Cancel</a>
+    {% if not (entry and entry.status == 'cancelled') %}<button class="cal-btn primary cf-save" type="submit">{{ "Replace with my changes" if conflict else ("Save changes" if entry else "Add to the calendar") }}</button>{% endif %}
+    <a class="cal-btn cf-cancel" href="{{ '/calendar/entries/' ~ entry.id if entry else '/calendar' }}">Leave without saving</a>
   </div>
 </form>
 {% endblock %}

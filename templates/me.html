@@ -18,6 +18,14 @@
   .field label { display:block; font-weight:700; margin-bottom:.3rem; }
   .field input[type=text] { width:100%; font:inherit; padding:.55rem .7rem; border:1px solid var(--line);
                             border-radius:10px; background:var(--bg); color:var(--ink); box-sizing:border-box; }
+  #calendar-feed { overflow-wrap:anywhere; }
+  #calendar-feed p > a { display:inline-block; min-height:24px; padding:.2rem 0; }
+  .feed-settings, .feed-actions { display:flex; flex-wrap:wrap; gap:.7rem; align-items:center; margin:.8rem 0; }
+  .feed-settings label { display:flex; flex-wrap:wrap; align-items:center; gap:.4rem; min-width:0; }
+  .feed-settings select { max-width:100%; min-width:0; }
+  .feed-help { margin-top:1rem; }
+  .feed-help summary { cursor:pointer; min-height:24px; }
+  .feed-help li { margin:.5rem 0; }
   .hint { color:var(--soft); font-size:.83rem; margin:.2rem 0 0; }
   .photo-row { display:flex; gap:1.1rem; align-items:center; flex-wrap:wrap; }
   .photo-prev { width:88px; height:88px; border-radius:50%; object-fit:cover; background:var(--line);
@@ -36,7 +44,7 @@
   .avcard:has(input:checked) { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-bg); }
   .avcard:focus-within { outline:2px solid var(--accent); outline-offset:2px; }
   .btn { display:inline-block; font:inherit; font-weight:800; cursor:pointer; border:1px solid var(--accent);
-         background:var(--accent); color:#fff; border-radius:10px; padding:.65rem 1.5rem; }
+         background:var(--accent); color:var(--on-accent); border-radius:10px; padding:.65rem 1.5rem; }
   .actions { text-align:center; }
   /* Signature pad. touch-action:none is load-bearing on a phone: without it the
      first finger stroke scrolls the page instead of drawing. */
@@ -183,29 +191,45 @@
   </form>
 
   {#-- The personal calendar link (office calendar G4): a subscribe URL for Google/Outlook/Apple. --#}
-  <div class="panel" id="calendar-feed">
-    <h2>Calendar link</h2>
-    <p class="hint">Add your office calendar to Google Calendar, Outlook or Apple Calendar. Paste the link into
-      "Add calendar → From URL" (or tap Subscribe). It shows only what you can already see here.
-      Google refreshes subscribed calendars only every 12–24 hours, so changes can take a day to appear there.</p>
+  <section class="panel" id="calendar-feed" aria-labelledby="calendar-feed-h">
+    <h2 id="calendar-feed-h">Calendar link</h2>
+    <p><strong>{{ 'Subscription link active' if feed else 'No active subscription link' }}</strong></p>
+    <p class="hint">Subscribe to a read-only copy of your office calendar in Google Calendar, Outlook or Apple Calendar.
+      Changes made in those apps do not change the office calendar. A downloaded .ics file is a one-time copy, not a subscription.</p>
     {% if feed %}
-    <p><input type="text" readonly value="{{ feed.url }}" style="width:100%;box-sizing:border-box" onclick="this.select()" aria-label="Your calendar link">
+    <p class="hint">Current selection: <strong>{{ feed_scopes[feed.scope] }}</strong>; birthdays {{ 'included when shared with you' if feed.birthdays else 'not included' }}.
+      This selection is separate from the filters on the office calendar page.</p>
+    <p><input type="text" readonly value="{{ feed.url }}" style="width:100%;box-sizing:border-box" onclick="this.select()" aria-label="Your calendar link" aria-describedby="calendar-feed-secret">
        <a href="{{ feed.webcal }}">Subscribe in my calendar app</a></p>
-    <form method="post" action="/me/calendar-feed/settings" style="margin:.6rem 0">
-      <label>Show <select name="scope">{% for k, label in feed_scopes.items() %}<option value="{{ k }}" {{ "selected" if feed.scope == k }}>{{ label }}</option>{% endfor %}</select></label>
-      <label style="font-weight:400;margin-left:.8rem"><input type="checkbox" name="birthdays" {{ "checked" if feed.birthdays }} value="1"> include birthdays shared with me</label>
-      <button class="btn" type="submit" style="margin-left:.6rem">Save</button>
+    <form method="post" action="/me/calendar-feed/settings" class="feed-settings">
+      <label>Show <select name="scope">{% for k, label in feed_scopes.items() %}<option value="{{ k }}" {{ 'selected' if feed.scope == k }}>{{ label }}</option>{% endfor %}</select></label>
+      <label><input type="checkbox" name="birthdays" {{ 'checked' if feed.birthdays }} value="1"> Include birthdays shared with me</label>
+      <button class="btn" type="submit">Save subscription settings</button>
     </form>
-    <form method="post" action="/me/calendar-feed/reset" style="display:inline"
-          data-confirm="Make a new link? The old one stops working, so anything subscribed to it must be re-added.">
-      <button class="btn ghost" type="submit">Make a new link</button></form>
-    <form method="post" action="/me/calendar-feed/off" style="display:inline">
-      <button class="btn ghost" type="submit">Turn the link off</button></form>
-    <p class="hint">Anyone who has this link can see your calendar, so keep it to yourself. If it gets shared, make a new one.</p>
+    <p class="hint" id="calendar-feed-secret">Anyone who has this link can read the calendar shared through it without signing in. Keep it private; if it gets shared, make a new link.</p>
+    <div class="feed-actions">
+      <form method="post" action="/me/calendar-feed/reset"
+            data-confirm="Make a new link? The old one stops working, so anything subscribed to it must be re-added.">
+        <button class="btn ghost" type="submit">Make a new link</button></form>
+      <form method="post" action="/me/calendar-feed/off">
+        <button class="btn ghost" type="submit">Turn the link off</button></form>
+    </div>
+    <p class="hint">A new link stops future reads through the old link; subscribe again with the new one. Turning the link off stops future reads. Neither action erases copies already downloaded by a calendar app.</p>
     {% else %}
+    <p class="hint">Creating a link lets a calendar app read the items shared with you. It does not sign you up in an app automatically.</p>
     <form method="post" action="/me/calendar-feed/reset"><button class="btn" type="submit">Create my calendar link</button></form>
     {% endif %}
-  </div>
+    <details class="feed-help">
+      <summary>How to subscribe and check missing updates</summary>
+      <ol>
+        <li>Create your link above, choose what to show, and save the settings.</li>
+        <li>In Google Calendar, use <strong>Other calendars → From URL</strong>. In Outlook, use <strong>Add calendar → Subscribe from web</strong>. In Apple Calendar, use <strong>File → New Calendar Subscription</strong>, or try Subscribe above. Paste your private link.</li>
+        <li>Use a subscription, not a file import. Your calendar app controls refresh timing; updates can take many hours or a day. Check the office calendar for the latest saved schedule.</li>
+      </ol>
+      <p class="hint">If something is missing, check the saved selection above and your current access here. Page filters are not subscription settings. If you replaced the link, remove the old subscription in the app and subscribe with the new one. An app may keep older copies after access changes or the link is turned off.</p>
+      <p><a href="/calendar">Open the office calendar</a></p>
+    </details>
+  </section>
 </div>
 
 <script src="/static/js/photo-crop.js"></script>
