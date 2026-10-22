@@ -17,18 +17,29 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.93"
+APP_VERSION = "7.94"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
-        "version": "7.93",
+        "version": "7.94",
         "date": "October 22, 2026",
         "summary": "Connected tools can safely acknowledge assigned tasks and check the saved result.",
         "changes": [
             "Authorized users can mark a task as in progress through the documented connection.",
             "Outdated task changes are refused, and repeating the same request does not create another change.",
             "A saved result can be checked after a lost connection while current access rules still apply."
+        ]
+    },
+    {
+        "version": "7.93",
+        "date": "October 22, 2026",
+        "summary": "ARTA walk-in reports and entries can now be filtered to any date range, even a single day.",
+        "changes": [
+            "Pick From and To dates, or tap Today, Last 7 days or This month, on the ARTA walk-in report.",
+            "The chosen range carries through the report, Word/PDF/ARTA template, BLHSD Excel and comments.",
+            "The Walk-in entries list has the same date filter, so you can see what came in on a given day.",
+            "Activity and resource-person reports are unchanged."
         ]
     },
     {

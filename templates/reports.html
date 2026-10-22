@@ -274,6 +274,7 @@
     <label for="period">Period</label>
     <select id="period" name="period">
       <option value="all" {{ 'selected' if sel_period == 'all' or not sel_period }}>All time</option>
+      {% if custom_range %}<option value="" selected>Custom range (dates below)</option>{% endif %}
       {% if not period_listed %}<option value="{{ sel_period }}" selected>{{ sel_period.split(':', 1)[1] }} (no matching period listed)</option>{% endif %}
       {% for g in period_opts %}
       <optgroup label="{{ g.label }}">
@@ -284,6 +285,16 @@
       {% endfor %}
     </select>
   </div>
+  {% if rtype == 1 %}
+  <div class="fld">
+    <label for="date_from">From</label>
+    <input type="date" id="date_from" name="date_from" value="{{ custom_range[0] if custom_range }}">
+  </div>
+  <div class="fld">
+    <label for="date_to">To</label>
+    <input type="date" id="date_to" name="date_to" value="{{ custom_range[1] if custom_range }}">
+  </div>
+  {% endif %}
   {% if rtype == 3 %}
   <div class="fld">
     <label for="activity">Activity</label>
@@ -298,6 +309,10 @@
   </div>
   {% endif %}
   <button class="btn" type="submit">Apply filters</button>
+  {% if rtype == 1 %}
+  <p class="meta" style="flex-basis:100%;margin:0;">Pick a custom From–To (up to 366 days) to override the period. One date alone means that single day. Quick ranges:
+    {% for c in range_chips %}<a href="/reports?type=1&date_from={{ c.from }}&date_to={{ c.to }}">{{ c.label }}</a>{{ ' · ' if not loop.last }}{% endfor %}</p>
+  {% endif %}
   <div class="scope">Showing<br><strong>{{ scope_label }}</strong></div>
 </form>
 

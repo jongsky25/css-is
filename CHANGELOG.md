@@ -1,4 +1,4 @@
-## 7.93 — October 22, 2026
+## 7.94 — October 22, 2026
 
 - Continue A19 with one typed task action: acknowledge an assigned contribution through `/api/v1`, reusing the UI task service and its current owner/officer authority.
 - Require a current registered session, matching origin, session-bound CSRF header, bounded JSON, explicit task revision/reason and a caller-saved UUID v4 idempotency key.
@@ -6,6 +6,13 @@
 - Publish private operation-result reads with fresh linked-document/task access checks. Receipts describe the original result; current task state remains a separate read.
 - Add API contract 1.1.0 and an independent standard-library task client with explicit saved keys and no automatic write retries.
 - Add an additive receipt table through the existing repeatable installer; retain receipts across restarts and rollback. No new dependency or provider call.
+
+## 7.93 — October 22, 2026
+
+- ARTA walk-in reports can now be filtered to any date range of up to a year, down to a single day: pick From and To dates, or tap Today, Last 7 days or This month.
+- The custom range carries through the on-screen numbers, Word/PDF/ARTA-template reports, the BLHSD Excel file and the comments view.
+- The Walk-in entries list also has From/To dates and quick ranges, so you can see exactly what came in on a given day.
+- Activity and resource-person reports are unchanged; no schema migration or new dependency.
 
 ## 7.92 — October 22, 2026
 
