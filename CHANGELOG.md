@@ -1,3 +1,12 @@
+## 7.93 — October 22, 2026
+
+- Continue A19 with one typed task action: acknowledge an assigned contribution through `/api/v1`, reusing the UI task service and its current owner/officer authority.
+- Require a current registered session, matching origin, session-bound CSRF header, bounded JSON, explicit task revision/reason and a caller-saved UUID v4 idempotency key.
+- Commit task changes, existing audit/review effects and an immutable actor-owned recovery receipt in one serialized SQLite transaction; concurrent retries cannot duplicate the effect.
+- Publish private operation-result reads with fresh linked-document/task access checks. Receipts describe the original result; current task state remains a separate read.
+- Add API contract 1.1.0 and an independent standard-library task client with explicit saved keys and no automatic write retries.
+- Add an additive receipt table through the existing repeatable installer; retain receipts across restarts and rollback. No new dependency or provider call.
+
 ## 7.92 — October 22, 2026
 
 - Start A19 with a supported `/api/v1` read-only contract for selected document metadata, work items and contribution task statuses.

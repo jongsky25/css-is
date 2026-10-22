@@ -41,16 +41,17 @@ def body(client, path, **params):
 def test_versioned_contract_is_separate_authenticated_and_typed(api):
     c, u, unit, clients, app = api
     schema = body(clients[0], '/openapi.json')
-    assert schema['info']['version'] == '1.0.0'
+    assert schema['info']['version'] == '1.1.0'
     from pathlib import Path
     artifact = Path(__file__).parents[1] / 'docs/api/v1/openapi.json'
     assert schema == json.loads(artifact.read_text())
     assert schema['servers'] == [{'url': '/api/v1'}]
     assert set(schema['paths']) == {'/', '/documents', '/documents/{document_id}', '/work-items',
-        '/work-items/{work_item_id}', '/work-items/{work_item_id}/tasks', '/work-items/{work_item_id}/tasks/{task_id}'}
-    assert all(set(path) == {'get'} for path in schema['paths'].values())
+        '/work-items/{work_item_id}', '/work-items/{work_item_id}/tasks', '/work-items/{work_item_id}/tasks/{task_id}',
+        '/write-context', '/operations/{operation_id}', '/work-items/{work_item_id}/tasks/{task_id}/acknowledge'}
+    assert sum('post' in path for path in schema['paths'].values()) == 1
     for path in schema['paths'].values():
-        operation = path['get']
+        operation = path.get('get', path.get('post'))
         assert operation['security'] == [{'UserSession': []}]
         assert operation['responses']['200']['content']['application/json']['schema']
         assert operation['responses']['401']['content']['application/json']['schema']
@@ -61,7 +62,7 @@ def test_versioned_contract_is_separate_authenticated_and_typed(api):
         'type': 'apiKey', 'in': 'cookie', 'name': auth.COOKIE_NAME,
         'description': 'An existing registered user session; API keys and bearer tokens are not supported by this increment.'}
     info = body(clients[0], '/')
-    assert info['read_only'] and info['application_version'] == integration_api.version.APP_VERSION
+    assert not info['read_only'] and info['application_version'] == integration_api.version.APP_VERSION
 
 
 @pytest.mark.parametrize('path', ['/', '/documents', '/openapi.json', '/work-items', '/unknown'])
@@ -105,7 +106,7 @@ def test_document_projection_alias_and_current_restricted_authority(api):
 
 def test_session_revocation_and_account_changes_apply_to_next_api_read(api):
     c, u, unit, clients, app = api
-    assert body(clients[0], '/')['read_only']
+    assert not body(clients[0], '/')['read_only']
     token = clients[0].cookies.get(auth.COOKIE_NAME)
     st.revoke_login_session(c, auth.parse_token(token)['sid'])
     assert clients[0].get('/api/v1/openapi.json').status_code == 401
@@ -281,7 +282,7 @@ def test_standalone_client_reads_real_http_and_never_follows_login_redirect(api)
         data = [r for page in client.pages(limit=2) for r in page]
         assert [r['id'] for r in data] == [str(i) for i in reversed(expected)]
         assert client.get(data[0]['links']['self'])['id'] == data[0]['id']
-        assert client.get('/openapi.json')['info']['version'] == '1.0.0'
+        assert client.get('/openapi.json')['info']['version'] == '1.1.0'
         with pytest.raises(ApiFailure, match='HTTP 302'):
             client.get('/redirect')
         assert not traps

@@ -2082,7 +2082,7 @@ async def _auth_gate(request: Request, call_next):
         return await call_next(request)
     request.state.user = await asyncio.to_thread(_user_from_request, request)
     if integration_api.is_api(path):
-        # The supported read namespace uses the same registered-session lookup,
+        # The supported API uses the same registered-session lookup,
         # then its own JSON errors/domain checks without hydrating browser nav.
         if not request.state.user:
             return integration_api.failure(401, 'authentication_required', 'A current signed-in session is required.')

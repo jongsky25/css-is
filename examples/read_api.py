@@ -1,4 +1,4 @@
-"""Standalone Python 3.11+ read client; no Office Connect imports or extra packages."""
+"""Standalone Python 3.11+ API clients; the command line performs reads only."""
 import argparse
 import json
 import re
@@ -37,12 +37,16 @@ class ReadClient:
         self.opener = build_opener(NoRedirect())
 
     def get(self, path):
+        return self._request(path)
+
+    def _request(self, path, *, data=None, headers=None):
         if not path.startswith('/') or path.startswith('//') or '\\' in path or '..' in urlsplit(path).path.split('/'):
             raise ValueError('Choose an API-relative read path.')
         if path == '/api/v1' or path.startswith('/api/v1/'):
             path = path[len('/api/v1'):] or '/'
         request = Request(self.base_url + path,
-                          headers={'Accept': 'application/json', 'Cookie': self.cookie_name + '=' + self.session}, method='GET')
+                          headers={'Accept': 'application/json', 'Cookie': self.cookie_name + '=' + self.session,
+                                   **(headers or {})}, data=data, method='POST' if data is not None else 'GET')
         try:
             with self.opener.open(request, timeout=self.timeout) as response:
                 if response.headers.get_content_type() != 'application/json':
@@ -53,9 +57,10 @@ class ReadClient:
                 return json.loads(payload)
         except HTTPError as exc:
             # Do not print cookies, response bodies, login HTML or internal details.
-            raise ApiFailure(f'API read returned HTTP {exc.code}.') from None
+            recovery = ' Check the saved operation key before retrying.' if data is not None else ''
+            raise ApiFailure(f'API request returned HTTP {exc.code}.' + recovery) from None
         except (URLError, OSError, TimeoutError, UnicodeError, HTTPException, json.JSONDecodeError):
-            raise ApiFailure('The API read could not be completed.') from None
+            raise ApiFailure('The API request could not be completed. Check the operation result before retrying a write.') from None
 
     def pages(self, resource='documents', limit=25):
         if resource not in ('documents', 'work-items') or not 1 <= limit <= 100:
@@ -76,6 +81,43 @@ class ReadClient:
             if before is None:
                 return
             seen.add(before)
+
+
+class TaskClient(ReadClient):
+    """Explicit acknowledgement only. Never generates keys or retries writes.
+
+    Save a fresh UUID v4 key and the exact revision/reason locally before calling;
+    after a lost response, look up that key or resubmit that identical request.
+    """
+    def operation(self, operation_id):
+        self._operation_key(operation_id)
+        return self.get('/operations/' + operation_id)
+
+    @staticmethod
+    def _operation_key(value):
+        if not isinstance(value, str) or not re.fullmatch(
+                r'[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}', value):
+            raise ValueError('Supply the saved UUID v4 operation key.')
+
+    def acknowledge(self, work_item_id, task_id, *, revision, reason, operation_id):
+        self._operation_key(operation_id)
+        for identifier in (work_item_id, task_id):
+            if (not isinstance(identifier, str) or not re.fullmatch(r'[1-9][0-9]{0,18}', identifier)
+                    or int(identifier) > 9223372036854775807):
+                raise ValueError('Supply decimal string resource identifiers.')
+        if type(revision) is not int or not 1 <= revision < 9223372036854775807:
+            raise ValueError('Supply the exact current task revision.')
+        if not isinstance(reason, str) or not reason.strip() or len(reason) > 2000:
+            raise ValueError('Supply a reason of at most 2000 characters.')
+        context = self.get('/write-context')
+        token = context.get('csrf_token') if isinstance(context, dict) else None
+        if not isinstance(token, str) or not re.fullmatch(r'[0-9a-f]{64}', token):
+            raise ApiFailure('The API returned an invalid write context.')
+        parsed = urlsplit(self.base_url)
+        return self._request(f'/work-items/{work_item_id}/tasks/{task_id}/acknowledge',
+            data=json.dumps({'revision': revision, 'reason': reason}, ensure_ascii=False).encode(),
+            headers={'Origin': f'{parsed.scheme}://{parsed.netloc}', 'X-CSRF-Token': token,
+                     'Idempotency-Key': operation_id, 'Content-Type': 'application/json'})
 
 
 def main():
