@@ -1,0 +1,7 @@
+<form method="get" class="supply-actions" aria-label="Filter supply results">
+<label for="queue-query">Search this queue<input id="queue-query" type="search" name="q" value="{{ query }}" maxlength="200"></label>
+{% if filter_options %}<label for="queue-status">{{ 'Movement type' if queue_kind=='activity' else 'Status' }}<select id="queue-status" name="status">{% for value,label in filter_options %}<option value="{{ value }}"{% if status_filter==value %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>{% endif %}
+{% if queue_kind=='releases' %}<label class="supply-check supply-confirm"><input type="checkbox" name="mine" value="1"{% if mine %} checked{% endif %}> Only releases assigned to me</label>{% endif %}
+<button type="submit">Filter results</button>
+</form>
+<p class="supply-result-count">{{ total }} matching {{ 'shortage line' if queue_kind=='shortages' else 'item' if queue_kind=='warnings' else 'stock movement' if queue_kind=='activity' else 'release' if queue_kind=='releases' else 'request' }}{{ '' if total==1 else 's' }}.</p>

@@ -17,10 +17,84 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.78"
+APP_VERSION = "7.85"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "7.85",
+        "date": "October 21, 2026",
+        "summary": "Supplies reports now show inventory, fulfillment, consumption and incoming stock.",
+        "changes": [
+            "Custodians and auditors can view current inventory, request fulfillment and outstanding replenishment reports.",
+            "Stock cards and issue consumption can be filtered by posting date, with corrections included in saved totals.",
+            "Reports can be printed on A4 or downloaded as Excel workbooks."
+        ]
+    },
+    {
+        "version": "7.84",
+        "date": "October 21, 2026",
+        "summary": "Custodians can record partial deliveries against approved replenishments.",
+        "changes": [
+            "Accepted units add stock and reduce incoming quantities in one saved action.",
+            "Rejected units keep a reason and do not add stock.",
+            "Correcting a linked receipt requires choosing whether to reopen incoming stock or cancel that remainder."
+        ]
+    },
+    {
+        "version": "7.83",
+        "date": "October 21, 2026",
+        "summary": "Replenishment requests can be submitted, independently approved, ordered and cancelled.",
+        "changes": [
+            "Numbered submissions preserve item, cost and current-stock snapshots across returned revisions.",
+            "A separate replenishment approver grant controls decisions and prevents self-approval.",
+            "Approval establishes incoming quantities once; recording an order does not increase them again.",
+            "Custodians can record procurement details and cancel unreceived quantities with a reason."
+        ]
+    },
+    {
+        "version": "7.82",
+        "date": "October 21, 2026",
+        "summary": "Custodians can review stock-based replenishment suggestions and save multi-item drafts.",
+        "changes": [
+            "Suggestions show stock, reservations, outstanding approved demand, incoming stock, and the configured target.",
+            "Draft lines capture requested quantity, planning target, estimated cost, and reasons for changes.",
+            "Open replenishments are flagged, and items with open replenishment obligations cannot be deactivated.",
+            "Drafts do not increase stock or approved incoming quantities."
+        ]
+    },
+    {
+        "version": "7.81",
+        "date": "October 21, 2026",
+        "summary": "The Supplies overview shows your requests and the next actions for your role.",
+        "changes": [
+            "Dashboard counts open the matching requests, approvals, handovers, acknowledgments and stock warnings.",
+            "Search and status filters keep their settings when moving between result pages.",
+            "Queues identify who acts next, and custodians and auditors can review recent stock activity.",
+            "Disabled mode keeps authorized records readable while request and stock actions remain paused."
+        ]
+    },
+    {
+        "version": "7.80",
+        "date": "October 21, 2026",
+        "summary": "Stock warnings distinguish physical shortages from fully reserved supplies.",
+        "changes": [
+            "Supply items show physical stock and availability separately, including stockouts at a zero critical level.",
+            "Custodians receive saved notices when shortages begin or worsen, with recovery and recurrence tracked.",
+            "Pending notices can be retried without reposting stock, and access follows current custodian grants."
+        ]
+    },
+    {
+        "version": "7.79",
+        "date": "October 21, 2026",
+        "summary": "Record supply returns and review stock corrections before posting.",
+        "changes": [
+            "Custodians can record usable and damaged returns against original handovers without reopening requests.",
+            "Physical counts show affected reservations before posting and preserve the oldest approved demand.",
+            "Mistaken issues and receipts can be reversed with reasons while original records and acknowledgments remain visible.",
+            "Issue corrections require an explicit choice to reopen or cancel the corrected demand."
+        ]
+    },
     {
         "version": "7.78",
         "date": "October 21, 2026",

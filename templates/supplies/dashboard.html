@@ -1,0 +1,13 @@
+{% extends 'supplies/base.html' %}
+{% block supplies_content %}
+<h1>Supplies overview</h1>
+<p>Your current requests and responsibilities. Counts link to the matching records you can access.</p>
+{% if enabled and can_request %}<p><a class="supply-primary-link" href="/supplies/requests/new">New supply request</a></p>{% elif not can_request %}<p>To make a new request, ask an administrator to link your account to internal staff with an organizational unit.</p>{% endif %}
+{% if not enabled %}<p>Review records below while stock and request changes are paused. Business action forms become available when Supplies is enabled.</p>{% endif %}
+{% for group in card_groups %}<section aria-label="{{ group.title }}"><h2>{{ group.title }}</h2><div class="supply-dashboard-grid">{% for card in group.cards %}<a class="supply-panel supply-dashboard-card" href="{{ card.url }}"><h3>{{ card.title }}</h3><p class="supply-card-count">{{ card.count }}</p><p>{{ card.responsible }}</p></a>{% endfor %}</div></section>{% endfor %}
+<h2>My recent requests</h2>
+{% if recent_requests %}<ul class="supply-work-list">{% for entry in recent_requests %}<li><a href="/supplies/requests/{{ entry.id }}">{{ entry.control_number or ('Draft #' ~ entry.id) }}</a> · {{ entry.approval_status|capitalize }}<p>{{ entry.next_action }}</p></li>{% endfor %}</ul>{% else %}<p>No requests yet.</p>{% endif %}<p><a href="/supplies/requests">View all my requests</a></p>
+{% if show_stock_activity %}<h2>Latest stock activity</h2>
+{% if pending_warning_updates %}<p class="supply-notice" role="status">{{ pending_warning_updates }} warning update{{ '' if pending_warning_updates==1 else 's' }} pending. Stock quantities are current; <a href="/supplies/warnings">review or retry notices</a>.</p>{% endif %}
+{% if activities %}<ul class="supply-work-list">{% for movement in activities %}<li><a href="/supplies/items/{{ movement.item_id }}">{{ movement.code_snapshot }} · {{ movement.description_snapshot }}</a><p>{{ {'opening':'Opening stock','receipt':'Stock received','issue':'Supplies issued','return':'Usable return','adjustment':'Physical-count adjustment','reversal':'Movement reversed'}[movement.kind] }} · {{ '+' if movement.quantity_delta>0 else '' }}{{ movement.quantity_delta }} {{ movement.unit_snapshot }} · {{ movement.posted_at|humandt }} · {{ movement.actor_snapshot }}</p></li>{% endfor %}</ul>{% else %}<p>No stock movements recorded.</p>{% endif %}<p><a href="/supplies/activity">View all stock activity</a></p>{% endif %}
+{% endblock %}

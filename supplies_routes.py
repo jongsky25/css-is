@@ -5,7 +5,7 @@ from urllib.parse import urlencode
 from uuid import uuid4
 
 from fastapi import APIRouter, Request
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, Response
 
 import auth
 import supplies
@@ -18,6 +18,13 @@ import supplies_backorders as backorders
 import supplies_issues as issues
 import supplies_acknowledgments as acknowledgments
 import supplies_print as print_views
+import supplies_corrections as corrections
+import supplies_notify as notify
+import supplies_dashboard as dashboard_views
+import supplies_replenishment as replenishment
+import supplies_replenishment_flow as replenishment_flow
+import supplies_deliveries as deliveries
+import supplies_reports as reports
 from supplies_allocations import availability
 import tzutil as tz
 import supplies_permissions as permissions
@@ -42,6 +49,7 @@ def make_router(templates, get_conn):
             'can_approve': bool(conn.execute("SELECT 1 FROM supply_role_grant WHERE user_id=? AND role='request_approver' AND revoked_at IS NULL",(user['id'],)).fetchone()),
             'can_maintain': permissions.has_role(conn, user, 'custodian'),
             'can_audit': permissions.has_role(conn, user, 'auditor'),
+            'can_replenish_approve': permissions.has_role(conn, user, 'replenishment_approver'),
             'can_read_stock': (permissions.has_role(conn, user, 'custodian') or
                                permissions.has_role(conn, user, 'auditor')),
             'new_key': lambda: str(uuid4()), 'error': '', 'submitted': {}, **values,
@@ -53,6 +61,46 @@ def make_router(templates, get_conn):
             'nav_active': 'supplies', 'enabled': False, 'can_configure': False,
             'can_maintain': False, 'error': str(exc), 'status': status,
         }, status_code=status)
+
+    def report_result(request, conn, kind):
+        return reports.report(conn, request.state.user, kind,
+                              as_of=request.query_params.get('as_of'),
+                              item_id=request.query_params.get('item_id'))
+
+    @router.get('/supplies/reports/{kind}')
+    def supply_report(request: Request, kind: str):
+        conn = get_conn()
+        try:
+            return render(request, conn, 'report', report=report_result(request, conn, kind))
+        except (Denied, Invalid, Conflict, Missing) as exc:
+            return failure(request, exc)
+        finally:
+            conn.close()
+
+    @router.get('/supplies/reports/{kind}/print')
+    def supply_report_print(request: Request, kind: str):
+        conn = get_conn()
+        try:
+            return render(request, conn, 'report_print', report=report_result(request, conn, kind))
+        except (Denied, Invalid, Conflict, Missing) as exc:
+            return failure(request, exc)
+        finally:
+            conn.close()
+
+    @router.get('/supplies/reports/{kind}/xlsx')
+    def supply_report_xlsx(request: Request, kind: str):
+        conn = get_conn()
+        try:
+            result = report_result(request, conn, kind)
+            filename = 'supplies-' + kind + '.xlsx'
+            return Response(reports.xlsx_bytes(result),
+                            media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                            headers={'Content-Disposition': f'attachment; filename="{filename}"',
+                                     'Cache-Control': 'no-store'})
+        except (Denied, Invalid, Conflict, Missing) as exc:
+            return failure(request, exc)
+        finally:
+            conn.close()
 
     def catalog_page(request, conn, *, error='', status_code=200, submitted=None):
         params = request.query_params
@@ -76,7 +124,7 @@ def make_router(templates, get_conn):
               ORDER BY e.id DESC LIMIT 50''', (item_id,))
         totals = {k: card[k] for k in ('on_hand','recorded','movement_count')} if card else stock.stock_totals(conn, request.state.user, item_id)
         return render(request, conn, 'item', item=item, events=events, card=card, totals=totals,
-                      availability=availability(conn, item_id),
+                      availability=availability(conn, item_id), warning=notify.status(conn, request.state.user, item_id),
                       today=tz.today_local().isoformat(), error=error,
                       status_code=status_code, submitted=submitted or {})
 
@@ -100,13 +148,39 @@ def make_router(templates, get_conn):
                           'accepted_quantity': quantity, 'unit_cost': cost, 'expiry_date': expiry})
         return {**fields, 'lines': lines}
 
+    def replenishment_fields(fields):
+        lines = []
+        for i in range(20):
+            item_id = fields.get(f'item_id_{i}', '')
+            if not item_id:
+                continue
+            lines.append({'item_id': item_id, 'requested_quantity': fields.get(f'quantity_{i}', ''),
+                          'intended_target': fields.get(f'target_{i}', ''),
+                          'estimated_unit_cost': fields.get(f'cost_{i}', ''),
+                          'override_reason': fields.get(f'reason_{i}', '')})
+        return {**fields, 'lines': lines}
+
+    def replenishment_form(request, conn, *, draft=None, error='', status_code=200, submitted=None):
+        permissions.require_custodian(conn, request.state.user)
+        suggestions = replenishment.suggest_replenishment(conn, request.state.user)
+        chosen = request.query_params.get('item', '')
+        if chosen:
+            chosen = supplies.integer(chosen, 'Item', 1)
+        selected_suggestion = next((item for item in suggestions if item['id'] == chosen), None)
+        more_open = bool(draft and len(draft['lines']) > 5) or bool(submitted and any(
+            submitted.get(f'item_id_{i}') for i in range(5,20)))
+        return render(request, conn, 'replenishment_form', draft=draft, suggestions=suggestions,
+                      chosen=chosen, selected_suggestion=selected_suggestion, more_open=more_open,
+                      lines=draft['lines'] if draft else [], error=error,
+                      status_code=status_code, submitted=submitted or {})
+
     def settings_page(request, conn, *, error='', status_code=200, submitted=None):
         values = supplies.configuration(conn, request.state.user, page=request.query_params.get('page', '1'))
         return render(request, conn, 'settings', error=error, status_code=status_code,
                       submitted=submitted or {}, **values)
 
     async def posted(request):
-        form = await request.form(max_files=0, max_fields=60, max_part_size=16384)
+        form = await request.form(max_files=0, max_fields=180, max_part_size=16384)
         if not request.cookies.get(auth.COOKIE_NAME) or not hmac.compare_digest(str(form.get('csrf', '')), csrf(request)):
             raise Denied('The form expired. Reload the page and try again.')
         return dict(form)
@@ -163,7 +237,202 @@ def make_router(templates, get_conn):
 
     @router.get('/supplies')
     def home(request: Request):
-        return RedirectResponse('/supplies/items', status_code=303)
+        conn = get_conn()
+        try:
+            return render(request, conn, 'dashboard', **dashboard_views.dashboard(conn, request.state.user))
+        except (Denied, Invalid, Conflict) as exc:
+            return failure(request, exc)
+        finally:
+            conn.close()
+
+    @router.get('/supplies/replenishments')
+    def replenishments(request: Request):
+        conn = get_conn()
+        try:
+            records = replenishment.list_replenishments(conn, request.state.user)
+            can_stock = permissions.has_role(conn,request.state.user,'custodian') or permissions.has_role(conn,request.state.user,'auditor')
+            suggestions = replenishment.suggest_replenishment(conn, request.state.user) if can_stock else []
+            return render(request, conn, 'replenishments', records=records, suggestions=suggestions)
+        except (Denied, Invalid, Conflict) as exc:
+            return failure(request, exc)
+        finally:
+            conn.close()
+
+    @router.get('/supplies/replenishments/new')
+    def new_replenishment(request: Request):
+        conn = get_conn()
+        try:
+            return replenishment_form(request,conn)
+        except (Denied, Invalid, Conflict) as exc:
+            return failure(request,exc)
+        finally:
+            conn.close()
+
+    @router.post('/supplies/replenishments')
+    async def create_replenishment(request: Request):
+        conn = get_conn()
+        fields = {}
+        try:
+            fields = await posted(request)
+            result = replenishment.save_replenishment(conn,request.state.user,replenishment_fields(fields),operation_key=fields.get('operation_key'))
+            return RedirectResponse('/supplies/replenishments/'+str(result['id']),status_code=303)
+        except (Denied,Invalid,Conflict) as exc:
+            if isinstance(exc,Denied):return failure(request,exc)
+            return replenishment_form(request,conn,error=str(exc),status_code=409 if isinstance(exc,Conflict) else 422,submitted=fields)
+        finally:
+            conn.close()
+
+    @router.get('/supplies/replenishments/{replenishment_id}')
+    def replenishment_detail(request: Request, replenishment_id: int):
+        conn=get_conn()
+        try:
+            draft=replenishment_flow.review_inputs(conn,request.state.user,replenishment_id)
+            custodians=rows(conn,'''SELECT DISTINCT u.id,u.username FROM admin_user u
+              JOIN supply_role_grant g ON g.user_id=u.id
+              WHERE u.active=1 AND g.role='custodian' AND g.revoked_at IS NULL ORDER BY u.username''')
+            return render(request,conn,'replenishment',draft=draft,custodians=custodians)
+        except (Denied,Invalid,Conflict) as exc:
+            return failure(request,exc)
+        finally:
+            conn.close()
+
+    async def replenishment_action(request, replenishment_id, action):
+        conn=get_conn();fields={}
+        try:
+            fields=await posted(request)
+            revision=fields.get('revision');key=fields.get('operation_key')
+            if action=='submit':
+                result=replenishment_flow.submit_replenishment(conn,request.state.user,replenishment_id,
+                    expected_revision=revision,operation_key=key,review_reason=fields.get('review_reason',''))
+            elif action=='decide':
+                decision_lines=[{'revision_line_id':name[len('approved_'):],
+                                 'approved_quantity':value,'reason':fields.get('line_reason_'+name[len('approved_'):],'')}
+                                for name,value in fields.items() if name.startswith('approved_')]
+                result=replenishment_flow.decide_replenishment(conn,request.state.user,replenishment_id,
+                    {'decision':fields.get('decision'),'reason':fields.get('reason',''),'lines':decision_lines},
+                    expected_revision=revision,submitted_revision=fields.get('submitted_revision'),operation_key=key)
+            elif action=='order':
+                order_lines=[{'line_id':name[len('ordered_'):],'ordered_quantity':value}
+                             for name,value in fields.items() if name.startswith('ordered_')]
+                result=replenishment_flow.record_order(conn,request.state.user,replenishment_id,
+                    {**fields,'lines':order_lines},expected_revision=revision,operation_key=key)
+            else:
+                cancel_lines=[{'line_id':name[len('cancel_'):],'cancelled_quantity':value}
+                              for name,value in fields.items() if name.startswith('cancel_') and value]
+                result=replenishment_flow.cancel_replenishment_remainder(conn,request.state.user,replenishment_id,
+                    {'reason':fields.get('reason',''),'lines':cancel_lines},expected_revision=revision,operation_key=key)
+            return RedirectResponse('/supplies/replenishments/'+str(result['id']),status_code=303)
+        except (Denied,Invalid,Conflict) as exc:
+            if isinstance(exc,Denied):return failure(request,exc)
+            try:
+                draft=replenishment_flow.review_inputs(conn,request.state.user,replenishment_id)
+                custodians=rows(conn,'''SELECT DISTINCT u.id,u.username FROM admin_user u
+                  JOIN supply_role_grant g ON g.user_id=u.id
+                  WHERE u.active=1 AND g.role='custodian' AND g.revoked_at IS NULL ORDER BY u.username''')
+                return render(request,conn,'replenishment',draft=draft,custodians=custodians,error=str(exc),
+                              status_code=409 if isinstance(exc,Conflict) else 422,submitted=fields)
+            except (Denied,Invalid,Conflict) as read_exc:return failure(request,read_exc)
+        finally:
+            conn.close()
+
+    @router.post('/supplies/replenishments/{replenishment_id}/submit')
+    async def submit_replenishment(request: Request, replenishment_id: int):
+        return await replenishment_action(request,replenishment_id,'submit')
+
+    @router.post('/supplies/replenishments/{replenishment_id}/decide')
+    async def decide_replenishment(request: Request, replenishment_id: int):
+        return await replenishment_action(request,replenishment_id,'decide')
+
+    @router.post('/supplies/replenishments/{replenishment_id}/order')
+    async def order_replenishment(request: Request, replenishment_id: int):
+        return await replenishment_action(request,replenishment_id,'order')
+
+    @router.post('/supplies/replenishments/{replenishment_id}/cancel-remainder')
+    async def cancel_replenishment(request: Request, replenishment_id: int):
+        return await replenishment_action(request,replenishment_id,'cancel')
+
+    @router.get('/supplies/replenishments/{replenishment_id}/edit')
+    def edit_replenishment(request: Request, replenishment_id: int):
+        conn=get_conn()
+        try:
+            draft=replenishment.get_replenishment(conn,request.state.user,replenishment_id)
+            if draft['prepared_by']!=request.state.user['id'] or draft['status'] not in ('draft','returned'):
+                raise Denied('Only the preparer can edit this draft.')
+            return replenishment_form(request,conn,draft=draft)
+        except (Denied,Invalid,Conflict) as exc:
+            return failure(request,exc)
+        finally:
+            conn.close()
+
+    def delivery_form(request, conn, replenishment_id, *, error='', status_code=200, submitted=None):
+        permissions.require_custodian(conn, request.state.user)
+        draft = replenishment_flow.review_inputs(conn, request.state.user, replenishment_id)
+        if draft['status'] not in ('approved','ordered','partially_received'):
+            raise Conflict('This replenishment has no open approved delivery.')
+        for line in draft['lines']:
+            line['item_revision'] = supplies._item(conn,line['item_id'])['revision']
+        return render(request,conn,'delivery_form',draft=draft,today=tz.today_local().isoformat(),
+                      submitted=submitted or {},error=error,status_code=status_code)
+
+    @router.get('/supplies/replenishments/{replenishment_id}/deliveries/new')
+    def new_delivery(request: Request, replenishment_id: int):
+        conn=get_conn()
+        try:return delivery_form(request,conn,replenishment_id)
+        except (Denied,Invalid,Conflict) as exc:return failure(request,exc)
+        finally:conn.close()
+
+    @router.post('/supplies/replenishments/{replenishment_id}/deliveries')
+    async def receive_delivery(request: Request, replenishment_id: int):
+        conn=get_conn();fields={}
+        try:
+            fields=await posted(request)
+            lines=[]
+            for name,value in fields.items():
+                if not name.startswith('delivered_') or not value:
+                    continue
+                line_id=name[len('delivered_'):]
+                lines.append({'replenishment_line_id':line_id,'delivered_quantity':value,
+                              'accepted_quantity':fields.get('accepted_'+line_id,''),
+                              'rejected_quantity':fields.get('rejected_'+line_id,''),
+                              'rejection_reason':fields.get('rejection_reason_'+line_id,''),
+                              'expected_item_revision':fields.get('item_revision_'+line_id,''),
+                              'unit_cost':fields.get('unit_cost_'+line_id,''),
+                              'expiry_date':fields.get('expiry_date_'+line_id,'')})
+            result=deliveries.receive_delivery(conn,request.state.user,replenishment_id,
+                {**fields,'lines':lines},expected_revision=fields.get('revision'),
+                operation_key=fields.get('operation_key'))
+            return RedirectResponse(f"/supplies/replenishments/{replenishment_id}/deliveries/{result['id']}",status_code=303)
+        except (Denied,Invalid,Conflict) as exc:
+            if isinstance(exc,Denied):return failure(request,exc)
+            try:return delivery_form(request,conn,replenishment_id,error=str(exc),
+                                     status_code=409 if isinstance(exc,Conflict) else 422,submitted=fields)
+            except (Denied,Invalid,Conflict) as read_exc:return failure(request,read_exc)
+        finally:conn.close()
+
+    @router.get('/supplies/replenishments/{replenishment_id}/deliveries/{delivery_id}')
+    def delivery_detail(request: Request, replenishment_id: int, delivery_id: int):
+        conn=get_conn()
+        try:return render(request,conn,'delivery',delivery=deliveries.get_delivery(conn,request.state.user,
+                                                                                   replenishment_id,delivery_id))
+        except (Denied,Invalid,Conflict) as exc:return failure(request,exc)
+        finally:conn.close()
+
+    @router.post('/supplies/replenishments/{replenishment_id}/save')
+    async def update_replenishment(request: Request, replenishment_id: int):
+        conn=get_conn(); fields={}
+        try:
+            fields=await posted(request)
+            result=replenishment.save_replenishment(conn,request.state.user,replenishment_fields(fields),
+                       replenishment_id=replenishment_id,expected_revision=fields.get('revision'),operation_key=fields.get('operation_key'))
+            return RedirectResponse('/supplies/replenishments/'+str(result['id']),status_code=303)
+        except (Denied,Invalid,Conflict) as exc:
+            if isinstance(exc,Denied):return failure(request,exc)
+            try:
+                draft=replenishment.get_replenishment(conn,request.state.user,replenishment_id)
+                return replenishment_form(request,conn,draft=draft,error=str(exc),status_code=409 if isinstance(exc,Conflict) else 422,submitted=fields)
+            except (Denied,Invalid,Conflict) as read_exc:return failure(request,read_exc)
+        finally:
+            conn.close()
 
     @router.get('/supplies/items')
     def catalog(request: Request):
@@ -284,7 +553,8 @@ def make_router(templates, get_conn):
         conn = get_conn()
         try:
             return render(request, conn, 'issuance', **issues.issuance_queue(conn, request.state.user,
-                          page=request.query_params.get('page', '1')))
+                          page=request.query_params.get('page', '1'), query=request.query_params.get('q', ''),
+                          state=request.query_params.get('status', '')))
         except (Denied, Invalid, Conflict) as exc:
             return failure(request, exc)
         finally:
@@ -295,7 +565,8 @@ def make_router(templates, get_conn):
         conn = get_conn()
         try:
             return render(request, conn, 'issues', **issues.list_issues(conn, request.state.user,
-                          page=request.query_params.get('page', '1')))
+                          page=request.query_params.get('page', '1'), query=request.query_params.get('q', ''),
+                          state=request.query_params.get('status', ''), mine=request.query_params.get('mine')=='1'))
         except (Denied, Invalid) as exc:
             return failure(request, exc)
         finally:
@@ -405,7 +676,8 @@ def make_router(templates, get_conn):
         conn = get_conn()
         try:
             return render(request, conn, 'awaiting_stock', **backorders.awaiting_stock(conn, request.state.user,
-                          page=request.query_params.get('page', '1')))
+                          page=request.query_params.get('page', '1'), query=request.query_params.get('q', ''),
+                          state=request.query_params.get('status', '')))
         except (Denied, Invalid, Conflict) as exc:
             return failure(request, exc)
         finally:
@@ -451,7 +723,8 @@ def make_router(templates, get_conn):
         conn = get_conn()
         try:
             return render(request, conn, 'approvals', **approvals.inbox(conn, request.state.user,
-                          page=request.query_params.get('page', '1')))
+                          page=request.query_params.get('page', '1'), query=request.query_params.get('q', ''),
+                          state=request.query_params.get('status', '')))
         except (Denied, Invalid) as exc:
             return failure(request, exc)
         finally:
@@ -490,7 +763,8 @@ def make_router(templates, get_conn):
         conn = get_conn()
         try:
             return render(request, conn, 'requests', **requests_service.my_requests(conn, request.state.user,
-                          page=request.query_params.get('page', '1')))
+                          page=request.query_params.get('page', '1'), query=request.query_params.get('q', ''),
+                          state=request.query_params.get('status', '')))
         except (Denied, Invalid) as exc:
             return failure(request, exc)
         finally:
@@ -653,6 +927,152 @@ def make_router(templates, get_conn):
                 return import_page(request, conn, error=str(exc), status_code=409 if isinstance(exc, Conflict) else 422)
             except (Denied, Invalid) as denied:
                 return failure(request, denied)
+        finally:
+            conn.close()
+
+    def correction_page(request, conn, kind, parent_id, *, submitted=None, impact=None, error='', status_code=200):
+        context = corrections.form_context(conn, request.state.user, kind, parent_id)
+        entity = 'items' if kind == 'stocktake' else 'receipts' if kind == 'receipt_reversal' else 'issues'
+        action = 'stocktake' if kind == 'stocktake' else 'returns' if kind == 'return' else 'reverse'
+        return render(request, conn, 'correction_form', **context, impact=impact, submitted=submitted or {},
+                      action_url=f'/supplies/{entity}/{parent_id}/{action}', back_url=f'/supplies/{entity}/{parent_id}',
+                      error=error, status_code=status_code)
+
+    def correction_endpoints(kind):
+        def form(request: Request, parent_id: int):
+            conn = get_conn()
+            try:
+                return correction_page(request, conn, kind, parent_id)
+            except (Denied, Invalid, Conflict) as exc:
+                return failure(request, exc)
+            finally:
+                conn.close()
+
+        async def change(request: Request, parent_id: int):
+            conn, fields = get_conn(), {}
+            try:
+                fields = await posted(request)
+                if request.url.path.endswith('/preview'):
+                    impact = corrections.preview(conn, request.state.user, kind, parent_id, fields)
+                    return correction_page(request, conn, kind, parent_id, submitted=fields, impact=impact)
+                callback = {'return': corrections.post_return, 'stocktake': corrections.post_stocktake,
+                            'issue_reversal': corrections.reverse_issue, 'receipt_reversal': corrections.reverse_receipt}[kind]
+                result = callback(conn, request.state.user, parent_id, fields, operation_key=fields.get('operation_key'))
+                return RedirectResponse('/supplies/corrections/' + str(result['id']), status_code=303)
+            except (Denied, Invalid, Conflict) as exc:
+                if isinstance(exc, Denied):
+                    return failure(request, exc)
+                try:
+                    return correction_page(request, conn, kind, parent_id, submitted=fields, error=str(exc),
+                                           status_code=409 if isinstance(exc, Conflict) else 422)
+                except (Denied, Invalid, Conflict) as render_exc:
+                    return failure(request, render_exc)
+            finally:
+                conn.close()
+        return form, change
+
+    for path, kind in (
+        ('/supplies/issues/{parent_id}/returns', 'return'),
+        ('/supplies/items/{parent_id}/stocktake', 'stocktake'),
+        ('/supplies/issues/{parent_id}/reverse', 'issue_reversal'),
+        ('/supplies/receipts/{parent_id}/reverse', 'receipt_reversal'),
+    ):
+        form, change = correction_endpoints(kind)
+        router.add_api_route(path, form, methods=['GET'], name=kind + '_form')
+        router.add_api_route(path + '/preview', change, methods=['POST'], name=kind + '_preview')
+        router.add_api_route(path, change, methods=['POST'], name=kind + '_post')
+
+    @router.get('/supplies/corrections/{correction_id}')
+    def correction_detail(request: Request, correction_id: int):
+        conn = get_conn()
+        try:
+            return render(request, conn, 'correction_history',
+                          **corrections.get_correction(conn, request.state.user, correction_id))
+        except (Denied, Invalid, Conflict) as exc:
+            return failure(request, exc)
+        finally:
+            conn.close()
+
+    @router.get('/supplies/{entity}/{entity_id}/corrections')
+    def correction_history(request: Request, entity: str, entity_id: int):
+        conn = get_conn()
+        try:
+            context = corrections.history(conn, request.state.user, entity, entity_id,
+                                          page=request.query_params.get('page', '1'))
+            return render(request, conn, 'correction_history', **context)
+        except (Denied, Invalid, Conflict) as exc:
+            return failure(request, exc)
+        finally:
+            conn.close()
+
+    @router.get('/supplies/warnings')
+    def warning_list(request: Request):
+        conn = get_conn()
+        try:
+            return render(request, conn, 'warnings', **notify.list_warnings(conn, request.state.user,
+                          page=request.query_params.get('page', '1'), query=request.query_params.get('q', ''),
+                          state=request.query_params.get('status', '')))
+        except (Denied, Invalid, Conflict) as exc:
+            return failure(request, exc)
+        finally:
+            conn.close()
+
+    @router.post('/supplies/warnings/reconcile')
+    async def reconcile_warnings(request: Request):
+        conn = get_conn()
+        try:
+            fields = await posted(request)
+            notify.reconcile_alerts(conn, request.state.user, operation_key=fields.get('operation_key'))
+            return RedirectResponse('/supplies/warnings', status_code=303)
+        except (Denied, Invalid, Conflict) as exc:
+            return failure(request, exc)
+        finally:
+            conn.close()
+
+    @router.get('/supplies/notices')
+    def notice_list(request: Request):
+        conn = get_conn()
+        try:
+            return render(request, conn, 'notices', **notify.list_notices(conn, request.state.user,
+                          page=request.query_params.get('page', '1'), unread=request.query_params.get('unread')=='1'))
+        except (Denied, Invalid, Conflict) as exc:
+            return failure(request, exc)
+        finally:
+            conn.close()
+
+    @router.get('/supplies/notices/{notice_id}')
+    def notice_detail(request: Request, notice_id: int):
+        conn = get_conn()
+        try:
+            notice = notify.get_notice(conn, request.state.user, notice_id)
+            return render(request, conn, 'notice', notice=notice,
+                          current_warning=notify.status(conn, request.state.user, notice['item_id']))
+        except (Denied, Invalid, Conflict) as exc:
+            return failure(request, exc)
+        finally:
+            conn.close()
+
+    @router.post('/supplies/notices/{notice_id}/read')
+    async def notice_read(request: Request, notice_id: int):
+        conn = get_conn()
+        try:
+            fields = await posted(request)
+            notify.mark_read(conn, request.state.user, notice_id, operation_key=fields.get('operation_key'))
+            return RedirectResponse('/supplies/notices/' + str(notice_id), status_code=303)
+        except (Denied, Invalid, Conflict) as exc:
+            return failure(request, exc)
+        finally:
+            conn.close()
+
+    @router.get('/supplies/activity')
+    def stock_activity(request: Request):
+        conn = get_conn()
+        try:
+            return render(request, conn, 'activity', **dashboard_views.queue(conn, request.state.user, 'activity',
+                          page=request.query_params.get('page','1'),query=request.query_params.get('q',''),
+                          state=request.query_params.get('status','')))
+        except (Denied, Invalid, Conflict) as exc:
+            return failure(request, exc)
         finally:
             conn.close()
 

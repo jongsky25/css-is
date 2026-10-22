@@ -34,16 +34,9 @@ def prepare_issue(conn,user,request_id):
         return {'supply_request':request,'recipients':recipients,'today':tz.today_local().isoformat()}
 
 
-def issuance_queue(conn,user,*,page=1):
-    with stock._snapshot(conn):
-        permissions.require_custodian(conn,user)
-        page=s.integer(page,'Page',1)
-        found=rows(conn,'''SELECT q.id,q.control_number,q.requester_snapshot,q.unit_snapshot FROM supply_request q
-          WHERE q.approval_status='approved' AND EXISTS (
-            SELECT 1 FROM supply_reservation r WHERE r.request_id=q.id AND r.reserved_quantity>0)
-          ORDER BY (SELECT MIN(r.approved_at) FROM supply_reservation r WHERE r.request_id=q.id),q.id
-          LIMIT 26 OFFSET ?''',((page-1)*25,))
-        return {'requests':found[:25],'page':page,'has_next':len(found)>25}
+def issuance_queue(conn, user, *, page=1, query='', state='', mine=False):
+    from supplies_dashboard import queue
+    return queue(conn,user,'issuance',page=page,query=query,state=state,mine=mine)
 
 
 def _number(conn):
@@ -142,12 +135,12 @@ def post_issue(conn,user,request_id,fields,*,expected_revision,operation_key):
 def get_issue(conn,user,issue_id):
     with stock._snapshot(conn):
         user=permissions.require_actor(conn,user)
-        found=rows(conn,'SELECT * FROM supply_issue WHERE id=?',(s.integer(issue_id,'Release',1),))
+        clause,args=permissions.issue_read_clause(conn,user)
+        found=rows(conn,'SELECT i.* FROM supply_issue i JOIN supply_request q ON q.id=i.request_id WHERE i.id=? AND '+clause,
+                   (s.integer(issue_id,'Release',1),*args))
         if not found:
             raise Missing('Supply release not found or unavailable to you.')
         issue=found[0]
-        if issue['recipient_id']!=user['id']:
-            requests._visible(conn,user,issue['request_id'])
         header=rows(conn,'''SELECT q.control_number,v.requester_snapshot,v.unit_snapshot,v.purpose
           FROM supply_request q JOIN supply_request_revision v ON v.request_id=q.id
           WHERE q.id=? AND v.revision=?''',(issue['request_id'],issue['submitted_revision']))[0]
@@ -157,20 +150,10 @@ def get_issue(conn,user,issue_id):
         issue['acknowledgment']=_state(conn,issue['id'])
         issue['can_acknowledge']=issue['recipient_id']==user['id']
         issue['can_record_paper']=permissions.has_role(conn,user,'custodian')
-        return issue
+        from supplies_corrections import issue_summary
+        return issue_summary(conn,issue)
 
 
-def list_issues(conn,user,*,page=1):
-    with stock._snapshot(conn):
-        user=permissions.require_actor(conn,user)
-        page=s.integer(page,'Page',1)
-        global_read=permissions.has_role(conn,user,'custodian') or permissions.has_role(conn,user,'auditor')
-        found=rows(conn,"""SELECT i.id,i.release_number,i.effective_date,i.recipient_snapshot,q.control_number,
-          COALESCE((SELECT a.status FROM supply_issue_acknowledgment a WHERE a.issue_id=i.id ORDER BY a.revision DESC LIMIT 1),'pending') AS acknowledgment_status
-          FROM supply_issue i JOIN supply_request q ON q.id=i.request_id JOIN org_unit o ON o.id=q.unit_id
-          WHERE (? OR i.recipient_id=? OR q.requester_id=? OR EXISTS (
-            SELECT 1 FROM supply_role_grant g JOIN org_unit scope ON scope.id=g.unit_id
-            WHERE g.user_id=? AND g.role='request_approver' AND g.revoked_at IS NULL
-              AND (o.path=scope.path OR substr(o.path,1,length(scope.path)+1)=scope.path||'/')))
-          ORDER BY i.id DESC LIMIT 26 OFFSET ?""",(int(global_read),user['id'],user['id'],user['id'],(page-1)*25))
-        return {'releases':found[:25],'page':page,'has_next':len(found)>25}
+def list_issues(conn, user, *, page=1, query='', state='', mine=False):
+    from supplies_dashboard import queue
+    return queue(conn,user,'releases',page=page,query=query,state=state,mine=mine)

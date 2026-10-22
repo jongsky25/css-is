@@ -1,3 +1,51 @@
+## 7.85 — October 21, 2026
+
+- Add current inventory, request fulfillment and outstanding replenishment reports for custodians and auditors.
+- Show issue consumption and full item stock cards by saved posting date, including correction effects and transaction references.
+- Provide A4 print views and Excel downloads with formula-like text escaped.
+
+## 7.84 — October 21, 2026
+
+- Record delivered, accepted and rejected quantities with supplier, DR, date, costs and rejection reasons against approved replenishments.
+- Post accepted units to physical stock and reduce incoming in one transaction, then allocate available stock to outstanding approved requests.
+- Link each accepted receipt to its replenishment and require an explicit incoming-stock choice when correcting it.
+- Prevent general receipts from bypassing open approved replenishment commitments for the same item.
+
+## 7.83 — October 21, 2026
+
+- Add S5.2 numbered replenishment submissions with immutable revisions and current-stock review.
+- Require a distinct replenishment approver grant for approve, reduce, return or reject decisions; prevent self-approval.
+- Establish approved incoming once, track order references, expected delivery, ordered quantities and responsible custodian without reposting incoming.
+- Allow reasoned partial or full cancellation of unreceived approved quantities while preserving decision and order history.
+
+## 7.82 — October 21, 2026
+
+- Add S5.1 replenishment suggestions from the stock ledger, approved outstanding demand and approved incoming quantities.
+- Let custodians save multi-item replenishment drafts with targets, quantities, estimated costs, dates, references and reasons for overrides.
+- Flag open replenishment records and prevent deactivation of an item with an open draft or commitment.
+- Keep drafts outside physical stock and committed incoming totals until later approval and delivery increments.
+
+## 7.81 — October 21, 2026
+
+- Add S4.2 Supplies overview with role-specific action counts linked to exact filtered, authorized queues.
+- Share submitted-unit request and assigned-recipient release access predicates across detail, lists and counts.
+- Add literal search, status filters and filter-preserving pagination; show the next responsible person/action.
+- Show recent stock activity only to current custodians/auditors, and retain read access while business writes are disabled.
+
+## 7.80 — October 21, 2026
+
+- Add S4.1 physical-stock and availability warning indicators with exact critical-level and zero-stock boundaries.
+- Persist warning snapshots with stock/catalog transactions, then project alert episodes and deduplicated custodian notices after commit.
+- Resolve warnings on recovery, notify on recurrence or meaningful worsening, and retry queued notices without replaying stock movements.
+- Add scoped, paginated warning/notice screens and explicit read marking; revoked grants immediately remove notice access.
+
+## 7.79 — October 21, 2026
+
+- Add S3.3 usable/unusable returns, physical-count adjustments, and linked partial issue/receipt reversals with immutable evidence.
+- Require a fresh impact preview and explicit confirmation; reconcile stock, reservations, request fulfillment and audit atomically with replay protection.
+- Preserve existing cancellations and acknowledgment evidence; require an explicit issue-reversal demand choice and block receipt reversals against consumed or reserved stock.
+- Show corrected totals and scoped, paginated correction history alongside original release/receipt quantities and print records.
+
 ## 7.78 — October 21, 2026
 
 - Add the Supplies module through S3.2: independent role grants and default-off access, catalog, immutable ledger, reviewed opening import and stock receipts.

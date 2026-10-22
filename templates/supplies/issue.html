@@ -6,7 +6,10 @@
 {% if release.alternate_reason %}<p>Alternate recipient reason: {{ release.alternate_reason }}</p>{% endif %}{% if release.note %}<p>Handover note: {{ release.note }}</p>{% endif %}
 <div class="supply-table" role="region" aria-label="Released supplies" tabindex="0"><table><thead><tr><th scope="col">Code</th><th scope="col">Description</th><th scope="col">Unit</th><th scope="col">Issued quantity</th></tr></thead><tbody>{% for line in release.lines %}<tr><td>{{ line.code_snapshot }}</td><td>{{ line.description_snapshot }}</td><td>{{ line.unit_snapshot }}</td><td>{{ line.issued_quantity }}</td></tr>{% endfor %}</tbody></table></div>
 <ul class="supply-mobile-quantities" aria-label="Released quantities">{% for line in release.lines %}<li>{{ line.code_snapshot }}: issued {{ line.issued_quantity }} {{ line.unit_snapshot }}.</li>{% endfor %}</ul>
-<p><a href="/supplies/issues/{{ release.id }}/print">Print release form</a></p>
+<p><a href="/supplies/issues/{{ release.id }}/print">Print release form</a> · <a href="/supplies/issues/{{ release.id }}/corrections">Returns and correction history</a></p>
+{% if can_maintain and enabled %}<p><a href="/supplies/issues/{{ release.id }}/returns">Record returned supplies</a> · <a href="/supplies/issues/{{ release.id }}/reverse">Reverse a mistaken issue</a></p>{% endif %}
+<p>The quantities above record the original handover. Returns and corrections are recorded separately; acknowledgment evidence refers to that original release.</p>
+<ul>{% for line in release.lines %}{% if line.reversed_quantity or line.usable_returned or line.unusable_returned %}<li>{{ line.code_snapshot }}: reversed {{ line.reversed_quantity }}, effective issued {{ line.net_issued_quantity }}, usable returns {{ line.usable_returned }}, damaged/unusable returns {{ line.unusable_returned }} {{ line.unit_snapshot }}.</li>{% endif %}{% endfor %}</ul>
 {% set ack=release.acknowledgment %}<h2>Receipt acknowledgment</h2>
 <p role="status">{{ ack.status|capitalize }}{% if ack.method=='paper_recorded' %} · Paper acknowledgment recorded by custodian{% elif ack.method=='recipient' %} · Recipient response{% endif %} · Revision {{ ack.revision }}</p>
 {% if enabled and release.can_acknowledge %}<form method="post" action="/supplies/issues/{{ release.id }}/acknowledge" class="supply-panel">

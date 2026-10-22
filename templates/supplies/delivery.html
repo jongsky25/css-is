@@ -1,0 +1,10 @@
+{% extends 'supplies/base.html' %}
+{% block supplies_content %}
+<h1>Delivery #{{ delivery.id }}</h1>
+<p><a href="/supplies/replenishments/{{ delivery.replenishment_id }}">Back to replenishment</a>{% if delivery.receipt_id %} · <a href="/supplies/receipts/{{ delivery.receipt_id }}">View accepted stock receipt</a>{% endif %}</p>
+<dl class="supply-details"><dt>Supplier</dt><dd>{{ delivery.supplier }}</dd><dt>DR number</dt><dd>{{ delivery.dr_number }}</dd><dt>APR number</dt><dd>{{ delivery.apr_number or 'Not recorded' }}</dd><dt>Receipt date</dt><dd>{{ delivery.effective_date }}</dd><dt>Recorded</dt><dd>{{ delivery.received_at }}</dd>{% if delivery.note %}<dt>Note</dt><dd>{{ delivery.note }}</dd>{% endif %}</dl>
+{% if not delivery.receipt_id %}<p>All units in this delivery were rejected. No stock receipt or ledger movement was posted.</p>{% endif %}
+<div class="supply-table" role="region" aria-label="Delivery lines" tabindex="0"><table><thead><tr><th scope="col">Item</th><th scope="col">Delivered</th><th scope="col">Accepted</th><th scope="col">Rejected</th><th scope="col">Rejection reason</th><th scope="col">Unit cost</th></tr></thead><tbody>
+{% for line in delivery.lines %}<tr><th scope="row">{{ line.code_snapshot }} · {{ line.unit_snapshot }}</th><td>{{ line.delivered_quantity }}</td><td>{{ line.accepted_quantity }}</td><td>{{ line.rejected_quantity }}</td><td>{{ line.rejection_reason or '—' }}</td><td>{{ line.unit_cost if line.unit_cost is not none else '—' }}</td></tr>{% endfor %}
+</tbody></table></div>
+{% endblock %}

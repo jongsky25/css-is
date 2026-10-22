@@ -85,18 +85,18 @@ def _actor_name(conn, user):
 
 
 def _add_movement(conn, user, item, *, kind, quantity, effective_date, key,
-                  source_id, source_line_id=None, reason=''):
+                  source_id, source_line_id=None, reason='', reverses_movement_id=None):
     total = _totals(conn, item['id'])['on_hand']
     if not 0 <= total + quantity <= MAX_TOTAL:
         raise Invalid('The resulting stock quantity is outside the supported range.')
     return conn.execute('''INSERT INTO supply_stock_movement
       (item_id,kind,quantity_delta,effective_date,posted_at,posted_by,actor_snapshot,
        source_type,source_id,source_line_id,receipt_line_id,reason,code_snapshot,
-       description_snapshot,unit_snapshot,operation_key)
-      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',
+       description_snapshot,unit_snapshot,operation_key,reverses_movement_id)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',
       (item['id'], kind, quantity, effective_date, tz.now_iso(), user['id'], _actor_name(conn, user),
        kind, source_id, source_line_id, source_line_id if kind == 'receipt' else None, reason,
-       item['code'], item['description'], item['unit'], key)).lastrowid
+       item['code'], item['description'], item['unit'], key, reverses_movement_id)).lastrowid
 
 
 def _post_opening(conn, user, item, *, quantity, effective_date, key, reason,
@@ -165,6 +165,14 @@ def post_receipt(conn, user, fields, *, operation_key):
         if prior is not None:
             return prior
         items = [_posting_item(conn, line['item_id'], line['expected_revision']) for line in lines]
+        for item in items:
+            if conn.execute('''SELECT 1 FROM supply_replenishment_commitment c
+              JOIN supply_replenishment_line l ON l.id=c.line_id
+              JOIN supply_replenishment p ON p.id=l.replenishment_id
+              WHERE l.item_id=? AND p.status IN ('approved','ordered','partially_received')
+                AND c.approved_quantity>c.received_quantity+c.cancelled_quantity LIMIT 1''',
+              (item['id'],)).fetchone():
+                raise Conflict('This item has approved replenishment incoming. Record its delivery against the replenishment, or resolve that commitment before a general receipt.')
         # Validate everything before any posting. Same-item lines may have different cost/expiry metadata.
         receipt_id = conn.execute('''INSERT INTO supply_receipt
           (supplier,dr_number,apr_number,procurement_mode,note,effective_date,
@@ -191,7 +199,13 @@ def _receipt(conn, receipt_id):
         raise Missing('Receipt not found or unavailable to you.')
     result = found[0]
     result['receipt_number'] = f"RCV-{result['id']:06d}"
+    if result.get('delivery_id'):
+        result['replenishment_id'] = conn.execute('SELECT replenishment_id FROM supply_delivery WHERE id=?',
+                                                  (result['delivery_id'],)).fetchone()[0]
     result['lines'] = rows(conn, 'SELECT * FROM supply_receipt_line WHERE receipt_id=? ORDER BY id', (receipt_id,))
+    for line in result['lines']:
+        line['reversed_quantity'] = conn.execute('SELECT COALESCE(SUM(quantity),0) FROM supply_correction WHERE receipt_line_id=?', (line['id'],)).fetchone()[0]
+        line['net_accepted_quantity'] = line['accepted_quantity'] - line['reversed_quantity']
     return result
 
 

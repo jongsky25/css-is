@@ -72,28 +72,9 @@ def cancel_remainder(conn, user, request_id, fields, *, expected_revision, opera
         return result
 
 
-def awaiting_stock(conn, user, *, page=1):
-    with stock._snapshot(conn):
-        user = permissions.require_actor(conn,user)
-        page = s.integer(page,'Page',1)
-        global_read = permissions.has_role(conn,user,'custodian') or permissions.has_role(conn,user,'auditor')
-        found = rows(conn,'''SELECT q.id AS request_id,q.control_number,q.requester_snapshot,q.unit_snapshot AS request_unit_snapshot,
-          l.code_snapshot,l.description_snapshot,l.unit_snapshot,l.requested_quantity,d.approved_quantity,
-          r.reserved_quantity,r.effective_issued_quantity,r.cancelled_quantity,r.approved_at,
-          d.approved_quantity-r.effective_issued_quantity-r.cancelled_quantity-r.reserved_quantity AS awaiting_stock_quantity
-          FROM supply_reservation r JOIN supply_request q ON q.id=r.request_id
-          JOIN supply_request_revision_line l ON l.id=r.revision_line_id
-          JOIN supply_request_decision_line d ON d.revision_line_id=l.id
-          JOIN org_unit o ON o.id=q.unit_id
-          WHERE q.approval_status='approved'
-            AND d.approved_quantity-r.effective_issued_quantity-r.cancelled_quantity>r.reserved_quantity
-            AND (? OR q.requester_id=? OR EXISTS (
-              SELECT 1 FROM supply_role_grant g JOIN org_unit scope ON scope.id=g.unit_id
-              WHERE g.user_id=? AND g.role='request_approver' AND g.revoked_at IS NULL
-                AND (o.path=scope.path OR substr(o.path,1,length(scope.path)+1)=scope.path||'/')))
-          ORDER BY r.approved_at,r.request_id,r.line_id LIMIT 26 OFFSET ?''',
-          (int(global_read),user['id'],user['id'],(page-1)*25))
-        return {'shortages':found[:25],'page':page,'has_next':len(found)>25}
+def awaiting_stock(conn, user, *, page=1, query='', state='', mine=False):
+    from supplies_dashboard import queue
+    return queue(conn,user,'shortages',page=page,query=query,state=state,mine=mine)
 
 
 def refresh_reservations(conn, user, *, operation_key):

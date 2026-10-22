@@ -2,7 +2,7 @@
 
 Prepared October 21, 2026 (Asia/Manila). Intended executor: **Sol, medium reasoning effort**.
 
-Status: S0.1, [S1.1 catalog/module foundation](SUPPLIES_MANAGEMENT_S1_1.md), [S1.2 stock ledger/openings/receipts](SUPPLIES_MANAGEMENT_S1_2.md), [S1.3 workbook preview](SUPPLIES_MANAGEMENT_S1_3.md), [S1.4 reviewed opening import](SUPPLIES_MANAGEMENT_S1_4.md), [S2.1 request drafting/submission/tracking](SUPPLIES_MANAGEMENT_S2_1.md), [S2.2 approval decisions/initial reservation](SUPPLIES_MANAGEMENT_S2_2.md), [S2.3 backorders/remainder cancellation](SUPPLIES_MANAGEMENT_S2_3.md), [S3.1 partial/full issuance](SUPPLIES_MANAGEMENT_S3_1.md), and [S3.2 acknowledgment/printing](SUPPLIES_MANAGEMENT_S3_2.md) are **Verified locally**. S3.3 returns, stocktake differences and reversals is next; later increments remain **Planned**. The [S0.1 contract and baseline](SUPPLIES_MANAGEMENT_S0_1.md) fixes role identifiers, field names, route/service boundaries, correction choices and validation limits for implementation. This plan defines the v1 development defaults; it does not claim that staff have accepted the operating policy or that uploaded balances are current physical stock.
+Status: S0.1, [S1.1 catalog/module foundation](SUPPLIES_MANAGEMENT_S1_1.md), [S1.2 stock ledger/openings/receipts](SUPPLIES_MANAGEMENT_S1_2.md), [S1.3 workbook preview](SUPPLIES_MANAGEMENT_S1_3.md), [S1.4 reviewed opening import](SUPPLIES_MANAGEMENT_S1_4.md), [S2.1 request drafting/submission/tracking](SUPPLIES_MANAGEMENT_S2_1.md), [S2.2 approval decisions/initial reservation](SUPPLIES_MANAGEMENT_S2_2.md), [S2.3 backorders/remainder cancellation](SUPPLIES_MANAGEMENT_S2_3.md), [S3.1 partial/full issuance](SUPPLIES_MANAGEMENT_S3_1.md), [S3.2 acknowledgment/printing](SUPPLIES_MANAGEMENT_S3_2.md), [S3.3 returns/stocktakes/reversals](SUPPLIES_MANAGEMENT_S3_3.md), [S4.1 stock warning rules/notices](SUPPLIES_MANAGEMENT_S4_1.md), [S4.2 dashboard/action queues](SUPPLIES_MANAGEMENT_S4_2.md), [S5.1 replenishment suggestions and drafts](SUPPLIES_MANAGEMENT_S5_1.md), [S5.2 replenishment approval and procurement tracking](SUPPLIES_MANAGEMENT_S5_2.md), [S5.3 partial delivery, acceptance and stock receipt](SUPPLIES_MANAGEMENT_S5_3.md), [S6.1 stock cards, inventory and consumption reports](SUPPLIES_MANAGEMENT_S6_1.md), and [S6.2 integrated acceptance, concurrency and recovery](SUPPLIES_MANAGEMENT_S6_2.md) are **Verified locally**. [S6.3 cutover and staff pilot](SUPPLIES_MANAGEMENT_S6_3.md) is **Paused at the user's request**; its guide and evidence record are prepared. The [S0.1 contract and baseline](SUPPLIES_MANAGEMENT_S0_1.md) fixes role identifiers, field names, route/service boundaries, correction choices and validation limits for implementation. This plan defines the v1 development defaults; it does not claim that staff have accepted the operating policy or that uploaded balances are current physical stock.
 
 Repository inspected: `20746ba1f8c6fdde1c9a6dcbeb9340c2651bce64`. Recheck the current checkout before each increment because other application work may continue.
 
@@ -378,15 +378,15 @@ Progress record to update during execution:
 | S2.3 | Verified | [534 tests passed; automatic refill, scoped shortage queues, atomic cancellation and browser workflow verified](SUPPLIES_MANAGEMENT_S2_3.md) |
 | S3.1 | Verified | [567 tests passed; numbered partial/full handovers, atomic stock deduction, concurrency and browser workflow verified](SUPPLIES_MANAGEMENT_S3_1.md) |
 | S3.2 | Verified | [593 tests passed; append-only recipient/paper evidence, scoped A4 print views and browser/PDF checks verified](SUPPLIES_MANAGEMENT_S3_2.md) |
-| S3.3 | Planned | — |
-| S4.1 | Planned | — |
-| S4.2 | Planned | — |
-| S5.1 | Planned | — |
-| S5.2 | Planned | — |
-| S5.3 | Planned | — |
-| S6.1 | Planned | — |
-| S6.2 | Planned | — |
-| S6.3 | Planned | — |
+| S3.3 | Verified | [685 relevant tests passed; reviewed corrections, concurrent postings, scoped history and A4 browser evidence verified locally](SUPPLIES_MANAGEMENT_S3_3.md) |
+| S4.1 | Verified | [709 relevant tests passed; durable episodes, notice failure/retry, scoped reads and real browser evidence verified locally](SUPPLIES_MANAGEMENT_S4_1.md) |
+| S4.2 | Verified | [735 relevant tests passed; exact scoped counts, filters, keyboard workflow and mobile browser evidence verified locally](SUPPLIES_MANAGEMENT_S4_2.md) |
+| S5.1 | Verified | [741 relevant tests passed; suggestion formula, draft controls and real mobile browser workflow verified locally](SUPPLIES_MANAGEMENT_S5_1.md) |
+| S5.2 | Verified | [747 relevant tests passed, 8 final focused cases passed; concurrent decisions and real browser procurement workflow verified locally](SUPPLIES_MANAGEMENT_S5_2.md) |
+| S5.3 | Verified | [755 relevant tests passed; partial/rejected delivery, linked correction, concurrency and real mobile browser workflow verified locally](SUPPLIES_MANAGEMENT_S5_3.md) |
+| S6.1 | Verified | [759 relevant tests passed; ledger/report reconciliation, safe XLSX, scoped reads and A4 browser/PDF evidence verified locally](SUPPLIES_MANAGEMENT_S6_1.md) |
+| S6.2 | Verified | [762 relevant and 5,073 repository tests passed; Chromium workflow, atomic contention and disposable backup/restore verified locally](SUPPLIES_MANAGEMENT_S6_2.md) |
+| S6.3 | Paused | [User paused the feature; local writes disabled, remote status unverified; cutover and staff acceptance pending](SUPPLIES_MANAGEMENT_S6_3.md) |
 
 ## 9. Required end-to-end acceptance scenario
 

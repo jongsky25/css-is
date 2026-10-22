@@ -654,7 +654,7 @@ NAV_GROUPS = [
     # Section who run it are not necessarily app admins (cap manage_users), so it
     # has its own group: everyone requests; room approvers also get the manage items.
     {"name": "Office", "items": [
-        {"key": "supplies", "url": "/supplies", "label": "Supplies", "section": "Supplies", "hint": "Browse supply items and manage the catalog", "kw": "supplies inventory catalog stock custodian", "cap": None},
+        {"key": "supplies", "url": "/supplies", "label": "Supplies", "section": "Supplies", "hint": "Requests, approvals, handovers and stock warnings", "kw": "supplies overview dashboard requests approval inventory catalog stock custodian", "cap": None},
         {"key": "work", "url": "/work/mine", "label": "My work", "section": "Documents", "hint": "Shared outcomes, ownership, and related correspondence", "kw": "work item shared outcome accountable lead", "cap": None},
         {"key": "documents", "url": "/documents", "label": "Documents", "hint": "Incoming and outgoing document register", "kw": "documents correspondence registry incoming outgoing", "cap": None},
         {"key": "rooms", "url": "/rooms", "label": "Conference room",

@@ -18,22 +18,9 @@ def require_approver(conn, user, request):
     return user
 
 
-def inbox(conn, user, *, page=1):
-    with stock._snapshot(conn):
-        user = permissions.require_actor(conn,user)
-        page = s.integer(page,'Page',1)
-        scopes = rows(conn,"SELECT DISTINCT o.path FROM supply_role_grant g JOIN org_unit o ON o.id=g.unit_id WHERE g.user_id=? AND g.role='request_approver' AND g.revoked_at IS NULL",(user['id'],))
-        if not scopes:
-            raise Denied('A current supply request approver grant is required.')
-        clauses, args = [], [user['id']]
-        for scope in scopes:
-            clauses.append('(o.path=? OR substr(o.path,1,length(?)+1)=? )')
-            args.extend([scope['path'],scope['path'],scope['path']+'/'])
-        found = rows(conn,'''SELECT q.id,q.control_number,q.requester_snapshot,q.unit_snapshot,q.purpose,q.submitted_at
-          FROM supply_request q JOIN org_unit o ON o.id=q.unit_id
-          WHERE q.approval_status='submitted' AND q.requester_id<>? AND ('''+ ' OR '.join(clauses)+''')
-          ORDER BY q.submitted_at,q.id LIMIT 26 OFFSET ?''',(*args,(page-1)*25))
-        return {'requests':found[:25],'page':page,'has_next':len(found)>25}
+def inbox(conn, user, *, page=1, query='', state='', mine=False):
+    from supplies_dashboard import queue
+    return queue(conn,user,'approvals',page=page,query=query,state=state,mine=mine)
 
 
 def decide_request(conn, user, request_id, fields, *, expected_revision, submitted_revision, operation_key):

@@ -3,7 +3,6 @@ import supplies as s
 import supplies_requests as requests
 import supplies_issues as issues
 import supplies_stock as stock
-from supplies_acknowledgments import _state
 from supplies_storage import Conflict, rows
 
 
@@ -23,9 +22,7 @@ def request_print(conn,user,request_id,*,revision=None):
           FROM supply_request_revision_line l LEFT JOIN supply_request_decision_line d ON d.revision_line_id=l.id
           LEFT JOIN supply_reservation r ON r.revision_line_id=l.id WHERE l.revision_id=? ORDER BY l.line_id''',(header['id'],))
         releases=rows(conn,'SELECT * FROM supply_issue WHERE request_id=? AND submitted_revision=? ORDER BY id',(current['id'],version))
-        for release in releases:
-            release['lines']=rows(conn,'SELECT * FROM supply_issue_line WHERE issue_id=? ORDER BY id',(release['id'],))
-            release['acknowledgment']=_state(conn,release['id'])
+        releases = [issues.get_issue(conn,user,release['id']) for release in releases]
         decision=rows(conn,'SELECT * FROM supply_request_decision WHERE revision_id=?',(header['id'],))
         return {'print_kind':'request','header':header,'lines':lines,'releases':releases,
                 'decision':decision[0] if decision else None,

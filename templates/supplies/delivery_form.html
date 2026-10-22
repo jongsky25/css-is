@@ -1,0 +1,26 @@
+{% extends 'supplies/base.html' %}
+{% block supplies_content %}
+<h1>Record delivery for {{ draft.control_number }}</h1>
+<p><a href="/supplies/replenishments/{{ draft.id }}">Back to replenishment</a></p>
+<p>Accepted units add stock and reduce approved incoming. Rejected units are recorded with a reason and add no stock. A delivery cannot exceed the remaining approved quantity.</p>
+{% if enabled %}<form method="post" action="/supplies/replenishments/{{ draft.id }}/deliveries">
+<input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="operation_key" value="{{ new_key() }}"><input type="hidden" name="revision" value="{{ draft.revision }}">
+<div class="supply-fields"><label>Supplier <input name="supplier" maxlength="240" required value="{{ submitted.get('supplier','') }}"></label>
+<label>DR number <input name="dr_number" maxlength="120" required value="{{ submitted.get('dr_number','') }}"></label>
+<label>APR number, if any <input name="apr_number" maxlength="120" value="{{ submitted.get('apr_number',draft.procurement_reference or '') }}"></label>
+<label>Procurement mode, if any <input name="procurement_mode" maxlength="120" value="{{ submitted.get('procurement_mode','') }}"></label>
+<label>Receipt date <input name="effective_date" type="date" max="{{ today }}" required value="{{ submitted.get('effective_date',today) }}"></label></div>
+<label>Delivery note <textarea name="note" maxlength="2000">{{ submitted.get('note','') }}</textarea></label>
+<h2>Delivered items</h2>
+{% for line in draft.lines %}{% if line.incoming_quantity > 0 %}
+<fieldset class="supply-delivery-line"><legend>{{ line.code_snapshot }} · {{ line.description_snapshot }} ({{ line.unit_snapshot }}) · up to {{ line.incoming_quantity }} approved units remain</legend>
+<input type="hidden" name="item_revision_{{ line.id }}" value="{{ line.item_revision }}">
+<label>Delivered <input name="delivered_{{ line.id }}" type="number" min="1" max="{{ line.incoming_quantity }}" value="{{ submitted.get('delivered_' ~ line.id,'') }}"></label>
+<label>Accepted <input name="accepted_{{ line.id }}" type="number" min="0" max="{{ line.incoming_quantity }}" value="{{ submitted.get('accepted_' ~ line.id,'') }}"></label>
+<label>Rejected <input name="rejected_{{ line.id }}" type="number" min="0" max="{{ line.incoming_quantity }}" value="{{ submitted.get('rejected_' ~ line.id,'') }}"></label>
+<label>Reason for rejected units <input name="rejection_reason_{{ line.id }}" maxlength="2000" value="{{ submitted.get('rejection_reason_' ~ line.id,'') }}"></label>
+<label>Unit cost, optional <input name="unit_cost_{{ line.id }}" inputmode="decimal" value="{{ submitted.get('unit_cost_' ~ line.id,'') }}"></label>
+<label>Expiry date, optional <input name="expiry_date_{{ line.id }}" type="date" value="{{ submitted.get('expiry_date_' ~ line.id,'') }}"></label>
+</fieldset>{% endif %}{% endfor %}
+<button type="submit">Record delivery</button></form>{% endif %}
+{% endblock %}

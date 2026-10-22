@@ -81,11 +81,16 @@ def catalog(conn, user, *, query='', include_inactive=False, page=1):
     clause = (' WHERE ' + ' AND '.join(where)) if where else ''
     count = conn.execute('SELECT COUNT(*) FROM supply_item' + clause, args).fetchone()[0]
     items = rows(conn, '''SELECT supply_item.*,COALESCE(stock.on_hand,0) AS on_hand,
-      COALESCE(stock.movement_count,0) AS movement_count FROM supply_item LEFT JOIN (
+      COALESCE(stock.movement_count,0) AS movement_count,COALESCE(reservations.reserved,0) AS reserved_quantity FROM supply_item LEFT JOIN (
         SELECT item_id,SUM(quantity_delta) AS on_hand,COUNT(*) AS movement_count
-        FROM supply_stock_movement GROUP BY item_id) stock ON stock.item_id=supply_item.id'''
+        FROM supply_stock_movement GROUP BY item_id) stock ON stock.item_id=supply_item.id
+      LEFT JOIN (SELECT item_id,SUM(reserved_quantity) AS reserved FROM supply_reservation GROUP BY item_id)
+        reservations ON reservations.item_id=supply_item.id'''
         + clause + ' ORDER BY code,supply_item.id LIMIT 50 OFFSET ?',
                  (*args, (page - 1) * 50))
+    from supplies_notify import classify
+    for item in items:
+        item['warning'] = classify(item['on_hand'],item['reserved_quantity'],item['critical_level'],recorded=bool(item['movement_count']),active=item['active'])
     return {'items': items, 'count': count, 'page': page, 'has_next': page * 50 < count,
             'query': query, 'include_inactive': include_inactive}
 
@@ -163,7 +168,11 @@ def deactivate_item(conn, user, item_id, *, expected_revision, operation_key, re
               decision.approved_quantity>reservation.effective_issued_quantity+reservation.cancelled_quantity))) LIMIT 1""",
                         (item_id,)).fetchone():
             raise Conflict('This item has an open supply request obligation. Resolve it before deactivation.')
-        # S5.1 must also guard open replenishment obligations.
+        if conn.execute('''SELECT 1 FROM supply_replenishment_line l
+          JOIN supply_replenishment p ON p.id=l.replenishment_id
+          WHERE l.item_id=? AND p.status IN ('draft','submitted','returned','approved','ordered','partially_received') LIMIT 1''',
+          (item_id,)).fetchone():
+            raise Conflict('This item has an open replenishment obligation. Resolve it before deactivation.')
 
         conn.execute('UPDATE supply_item SET active=0,revision=revision+1,updated_at=? WHERE id=?',
                      (tz.now_iso(), item_id))

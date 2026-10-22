@@ -24,3 +24,20 @@
 
 .supply-mobile-quantities { display: none; }
 @media (max-width: 600px) { .supply-mobile-quantities { display: block; padding-left: 1.3rem; } }
+
+.supply-wrap .supply-confirm { min-height: 2.75rem; gap: .75rem; }
+.supply-wrap .supply-confirm input { flex: 0 0 auto; width: 1.2rem; height: 1.2rem; min-height: 1.2rem; padding: 0; }
+
+.supply-dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 1rem; }
+.supply-dashboard-card { display: block; margin-top: 0; color: inherit; text-decoration: none; }
+.supply-dashboard-card h3 { font-size: 1.05rem; color: var(--accent, #1d4ed8); text-decoration: underline; }
+.supply-card-count { font-size: 1.8rem; font-weight: 700; margin: .4rem 0; }
+.supply-work-list { padding-left: 1.4rem; }
+.supply-work-list li { margin: 1rem 0; }
+.supply-work-list p { margin: .35rem 0; }
+.supply-primary-link { display: inline-block; padding: .7rem 1rem; border: 1px solid currentColor; border-radius: .3rem; }
+.supply-replenishment-form fieldset { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr)); gap: .4rem 1rem; margin: 1rem 0; border: 1px solid var(--line, #cbd5e1); border-radius: .4rem; }
+.supply-replenishment-form legend { font-weight: 600; }
+.supply-replenishment-form details { margin: 1rem 0; }
+.supply-replenishment-form summary { cursor: pointer; }
+.supply-delivery-line { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr)); gap: .4rem 1rem; margin: 1rem 0; border: 1px solid var(--line, #cbd5e1); border-radius: .4rem; }

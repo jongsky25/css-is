@@ -72,7 +72,7 @@ def test_review_requires_decisions_and_confirmed_physical_count(supplies_db):
 
 
 def test_apply_exact_selection_exclusions_evidence_and_replay(supplies_db):
-    c,u,_,_=supplies_db; setup_catalog(c,u); b=stage(c,u); excluded=second_row(c,b)
+    c,u,_,_=supplies_db; setup_catalog(c,u); source=workbook(unit='Pack'); b=stage(c,u,source); excluded=second_row(c,b)
     original=c.execute('SELECT raw_json FROM supply_import_row WHERE id=?',(row_id(c,b),)).fetchone()[0]
     save(c,u,b); save(c,u,b,{'decision':'exclude','reason':'Unit unresolved; require recount.'},row=excluded)
     finish(c,u,b); rev=revision(c,b); digest=review.review_state(c,u[1],b)['selection']['selection_sha256']; op=key()
@@ -87,7 +87,7 @@ def test_apply_exact_selection_exclusions_evidence_and_replay(supplies_db):
     state=review.review_state(c,u[1],b)['selection']
     assert state['included_count']==state['excluded_count']==1 and len(state['posted'])==1
     assert state['rows'][1]['reason']=='Unit unresolved; require recount.'
-    assert state['source_sha256']==imports.parse_workbook(workbook(unit='Pack'),'synthetic.xlsx')['source_sha256']
+    assert state['source_sha256']==imports.parse_workbook(source,'synthetic.xlsx')['source_sha256']
     assert c.execute('SELECT raw_json FROM supply_import_row WHERE id=?',(row_id(c,b),)).fetchone()[0]==original
     with pytest.raises(Conflict): apply(c,u,b)
     with pytest.raises(Conflict): save(c,u,b)

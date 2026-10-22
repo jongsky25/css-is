@@ -185,16 +185,12 @@ def submitted_unit(conn, request):
 
 
 def _visible(conn, user, request_id):
-    found = rows(conn,'SELECT * FROM supply_request WHERE id=?',(s.integer(request_id,'Request',1),))
+    clause,args = permissions.request_read_clause(conn,user)
+    found = rows(conn,'SELECT q.* FROM supply_request q WHERE q.id=? AND '+clause,
+                 (s.integer(request_id,'Request',1),*args))
     if not found:
         raise Missing('Supply request not found or unavailable to you.')
-    request = found[0]
-    if request['requester_id']==user['id']:
-        return request
-    if request['current_revision'] and (permissions.has_role(conn,user,'request_approver',submitted_unit(conn,request)) or
-            permissions.has_role(conn,user,'custodian') or permissions.has_role(conn,user,'auditor')):
-        return request
-    raise Missing('Supply request not found or unavailable to you.')
+    return found[0]
 
 
 def get_request(conn, user, request_id):
@@ -223,8 +219,9 @@ def get_request(conn, user, request_id):
             request['events'] = [event for event in request['events'] if event['action']!='request_save']
         for event in request['events']:
             detail = json.loads(event['detail_json'])
-            event['reason'] = detail.get('reason','') if event['action'] in ('request_withdraw','request_decide','request_cancel_remainder') else ''
+            event['reason'] = detail.get('reason','') if event['action'] in ('request_withdraw','request_decide','request_cancel_remainder','correction_return','correction_issue_reversal','stocktake_reservation_release') else ''
             event['decision'] = detail.get('decision','')
+            event['correction_id'] = detail.get('correction_id')
         request['history'] = rows(conn,"""SELECT v.*,d.decision,d.actor_snapshot,d.decided_at,d.reason AS decision_reason
           FROM supply_request_revision v LEFT JOIN supply_request_decision d ON d.revision_id=v.id
           WHERE v.request_id=? ORDER BY v.revision""",(request['id'],))
@@ -250,9 +247,6 @@ def get_request(conn, user, request_id):
         return request
 
 
-def my_requests(conn, user, *, page=1):
-    user = permissions.require_actor(conn,user)
-    page = s.integer(page,'Page',1)
-    found = rows(conn,'''SELECT id,control_number,purpose,approval_status,updated_at FROM supply_request
-      WHERE requester_id=? ORDER BY id DESC LIMIT 26 OFFSET ?''',(user['id'],(page-1)*25))
-    return {'requests':found[:25],'page':page,'has_next':len(found)>25}
+def my_requests(conn, user, *, page=1, query='', state='', mine=False):
+    from supplies_dashboard import queue
+    return queue(conn,user,'requests',page=page,query=query,state=state,mine=mine)

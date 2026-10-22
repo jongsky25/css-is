@@ -40,6 +40,8 @@ def allocate_outstanding(conn, user, item_ids, operation_key):
               VALUES ('request',?,'reservation_allocate',?,?,?,?)''',
               (line['request_id'],user['id'],json.dumps(detail,sort_keys=True),tz.now_iso(),operation_key))
         availability(conn,item_id)
+        from supplies_notify import enqueue
+        enqueue(conn,[item_id],operation_key)
 
 
 def fulfillment(lines):

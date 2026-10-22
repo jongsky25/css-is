@@ -360,6 +360,245 @@ def install(conn):
     """)
 
 
+    conn.executescript("""
+    CREATE TABLE IF NOT EXISTS supply_correction (
+      id INTEGER PRIMARY KEY, item_id INTEGER NOT NULL REFERENCES supply_item(id),
+      kind TEXT NOT NULL CHECK(kind IN ('return','stocktake','issue_reversal','receipt_reversal')),
+      quantity INTEGER NOT NULL CHECK(typeof(quantity)='integer' AND quantity BETWEEN 0 AND 2147483647),
+      quantity_delta INTEGER NOT NULL CHECK(typeof(quantity_delta)='integer' AND quantity_delta BETWEEN -2147483647 AND 2147483647),
+      issue_line_id INTEGER REFERENCES supply_issue_line(id), receipt_line_id INTEGER REFERENCES supply_receipt_line(id),
+      source_movement_id INTEGER REFERENCES supply_stock_movement(id),
+      movement_id INTEGER UNIQUE REFERENCES supply_stock_movement(id), condition TEXT CHECK(condition IN ('usable','unusable')),
+      reopen_demand INTEGER CHECK(reopen_demand IN (0,1)),
+      before_on_hand INTEGER NOT NULL CHECK(before_on_hand>=0), after_on_hand INTEGER NOT NULL CHECK(after_on_hand>=0),
+      effective_date TEXT NOT NULL, reason TEXT NOT NULL CHECK(length(trim(reason))>0), posted_at TEXT NOT NULL,
+      posted_by INTEGER NOT NULL REFERENCES admin_user(id), actor_snapshot TEXT NOT NULL, impact_json TEXT NOT NULL,
+      operation_key TEXT NOT NULL UNIQUE REFERENCES supply_operation(operation_key) DEFERRABLE INITIALLY DEFERRED,
+      CHECK(after_on_hand=before_on_hand+quantity_delta),
+      CHECK((kind='stocktake' AND issue_line_id IS NULL AND receipt_line_id IS NULL AND source_movement_id IS NULL
+             AND condition IS NULL AND reopen_demand IS NULL AND quantity_delta<>0 AND quantity=after_on_hand) OR
+            (kind='return' AND quantity>0 AND issue_line_id IS NOT NULL AND receipt_line_id IS NULL
+             AND source_movement_id IS NOT NULL AND condition IS NOT NULL AND reopen_demand IS NULL
+             AND ((condition='usable' AND quantity_delta=quantity) OR (condition='unusable' AND quantity_delta=0))) OR
+            (kind='issue_reversal' AND quantity>0 AND quantity_delta=quantity AND issue_line_id IS NOT NULL
+             AND receipt_line_id IS NULL AND source_movement_id IS NOT NULL AND condition IS NULL AND reopen_demand IS NOT NULL) OR
+            (kind='receipt_reversal' AND quantity>0 AND quantity_delta=-quantity AND issue_line_id IS NULL
+             AND receipt_line_id IS NOT NULL AND source_movement_id IS NOT NULL AND condition IS NULL AND reopen_demand IS NULL)),
+      CHECK((quantity_delta=0 AND movement_id IS NULL) OR (quantity_delta<>0 AND movement_id IS NOT NULL)));
+    CREATE INDEX IF NOT EXISTS supply_correction_item ON supply_correction(item_id,id);
+    CREATE INDEX IF NOT EXISTS supply_correction_issue ON supply_correction(issue_line_id,id);
+    CREATE INDEX IF NOT EXISTS supply_correction_receipt ON supply_correction(receipt_line_id,id);
+    CREATE TRIGGER IF NOT EXISTS supply_correction_source_match BEFORE INSERT ON supply_correction
+      WHEN (NEW.issue_line_id IS NOT NULL AND NOT EXISTS (
+        SELECT 1 FROM supply_issue_line l WHERE l.id=NEW.issue_line_id AND l.item_id=NEW.item_id
+          AND l.movement_id=NEW.source_movement_id AND NEW.quantity+(SELECT COALESCE(SUM(c.quantity),0)
+            FROM supply_correction c WHERE c.issue_line_id=l.id)<=l.issued_quantity))
+      OR (NEW.receipt_line_id IS NOT NULL AND NOT EXISTS (
+        SELECT 1 FROM supply_receipt_line l JOIN supply_stock_movement m ON m.receipt_line_id=l.id
+          WHERE l.id=NEW.receipt_line_id AND l.item_id=NEW.item_id AND m.id=NEW.source_movement_id
+          AND NEW.quantity+(SELECT COALESCE(SUM(c.quantity),0) FROM supply_correction c
+            WHERE c.receipt_line_id=l.id)<=l.accepted_quantity))
+      BEGIN SELECT RAISE(ABORT,'Correction must match an eligible original line'); END;
+    CREATE TRIGGER IF NOT EXISTS supply_correction_movement_match BEFORE INSERT ON supply_correction
+      WHEN NEW.movement_id IS NOT NULL AND NOT EXISTS (
+        SELECT 1 FROM supply_stock_movement m WHERE m.id=NEW.movement_id AND m.item_id=NEW.item_id
+          AND m.quantity_delta=NEW.quantity_delta AND m.source_id=NEW.id AND m.operation_key=NEW.operation_key
+          AND m.kind=CASE NEW.kind WHEN 'return' THEN 'return' WHEN 'stocktake' THEN 'adjustment' ELSE 'reversal' END
+          AND ((NEW.kind IN ('return','stocktake') AND m.reverses_movement_id IS NULL) OR
+               (NEW.kind IN ('issue_reversal','receipt_reversal') AND m.reverses_movement_id=NEW.source_movement_id)))
+      BEGIN SELECT RAISE(ABORT,'Correction must match its stock movement'); END;
+    CREATE TRIGGER IF NOT EXISTS supply_correction_no_update BEFORE UPDATE ON supply_correction
+      BEGIN SELECT RAISE(ABORT,'Correction evidence is immutable'); END;
+    CREATE TRIGGER IF NOT EXISTS supply_correction_no_delete BEFORE DELETE ON supply_correction
+      BEGIN SELECT RAISE(ABORT,'Correction evidence is immutable'); END;
+    CREATE TRIGGER IF NOT EXISTS supply_stock_reversal_match BEFORE INSERT ON supply_stock_movement
+      WHEN (NEW.kind='reversal' AND NOT EXISTS (
+        SELECT 1 FROM supply_stock_movement m WHERE m.id=NEW.reverses_movement_id AND m.item_id=NEW.item_id
+          AND ((m.kind='issue' AND NEW.quantity_delta>0) OR (m.kind='receipt' AND NEW.quantity_delta<0))))
+        OR (NEW.kind<>'reversal' AND NEW.reverses_movement_id IS NOT NULL)
+      BEGIN SELECT RAISE(ABORT,'A reversal must link an original issue or receipt'); END;
+    """)
+
+
+    conn.executescript("""
+    CREATE TABLE IF NOT EXISTS supply_alert_event (
+      id INTEGER PRIMARY KEY, item_id INTEGER NOT NULL REFERENCES supply_item(id),
+      operation_key TEXT NOT NULL REFERENCES supply_operation(operation_key) DEFERRABLE INITIALLY DEFERRED,
+      snapshot_json TEXT NOT NULL, created_at TEXT NOT NULL, processed_at TEXT,
+      attempts INTEGER NOT NULL DEFAULT 0 CHECK(attempts>=0), last_error TEXT,
+      UNIQUE(item_id,operation_key));
+    CREATE INDEX IF NOT EXISTS supply_alert_pending ON supply_alert_event(id) WHERE processed_at IS NULL;
+    CREATE INDEX IF NOT EXISTS supply_alert_item ON supply_alert_event(item_id,id);
+    CREATE TABLE IF NOT EXISTS supply_alert_episode (
+      id INTEGER PRIMARY KEY, item_id INTEGER NOT NULL REFERENCES supply_item(id),
+      version INTEGER NOT NULL CHECK(version>0), peak_severity INTEGER NOT NULL CHECK(peak_severity BETWEEN 1 AND 3),
+      notified_available INTEGER NOT NULL CHECK(notified_available>=0),
+      last_event_id INTEGER NOT NULL REFERENCES supply_alert_event(id),
+      started_at TEXT NOT NULL, updated_at TEXT NOT NULL, resolved_at TEXT);
+    CREATE UNIQUE INDEX IF NOT EXISTS supply_alert_active_episode ON supply_alert_episode(item_id) WHERE resolved_at IS NULL;
+    CREATE TABLE IF NOT EXISTS supply_item_alert (
+      item_id INTEGER PRIMARY KEY REFERENCES supply_item(id),
+      last_event_id INTEGER NOT NULL REFERENCES supply_alert_event(id), snapshot_json TEXT NOT NULL, updated_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS supply_notice (
+      id INTEGER PRIMARY KEY, episode_id INTEGER NOT NULL REFERENCES supply_alert_episode(id), version INTEGER NOT NULL CHECK(version>0),
+      event_id INTEGER NOT NULL REFERENCES supply_alert_event(id), item_id INTEGER NOT NULL REFERENCES supply_item(id),
+      recipient_id INTEGER NOT NULL REFERENCES admin_user(id), snapshot_json TEXT NOT NULL, created_at TEXT NOT NULL,
+      read_at TEXT, resolved_at TEXT, UNIQUE(episode_id,version,recipient_id));
+    CREATE INDEX IF NOT EXISTS supply_notice_recipient ON supply_notice(recipient_id,id);
+    CREATE TRIGGER IF NOT EXISTS supply_alert_event_evidence_no_update BEFORE UPDATE OF
+      id,item_id,operation_key,snapshot_json,created_at ON supply_alert_event
+      BEGIN SELECT RAISE(ABORT,'Warning event evidence is immutable'); END;
+    CREATE TRIGGER IF NOT EXISTS supply_alert_event_no_delete BEFORE DELETE ON supply_alert_event
+      BEGIN SELECT RAISE(ABORT,'Warning event evidence is immutable'); END;
+    CREATE TRIGGER IF NOT EXISTS supply_notice_evidence_no_update BEFORE UPDATE OF
+      id,episode_id,version,event_id,item_id,recipient_id,snapshot_json,created_at ON supply_notice
+      BEGIN SELECT RAISE(ABORT,'Notice evidence is immutable'); END;
+    CREATE TRIGGER IF NOT EXISTS supply_notice_no_delete BEFORE DELETE ON supply_notice
+      BEGIN SELECT RAISE(ABORT,'Notice evidence is immutable'); END;
+    """)
+
+    conn.executescript("""
+    CREATE TABLE IF NOT EXISTS supply_replenishment (
+      id INTEGER PRIMARY KEY, control_number TEXT UNIQUE,
+      prepared_by INTEGER NOT NULL REFERENCES admin_user(id),
+      purpose TEXT NOT NULL, procurement_reference TEXT NOT NULL DEFAULT '',
+      expected_need_date TEXT, status TEXT NOT NULL DEFAULT 'draft'
+        CHECK(status IN ('draft','submitted','returned','approved','rejected','ordered','partially_received','received','cancelled')),
+      revision INTEGER NOT NULL DEFAULT 1 CHECK(revision>0),
+      current_revision INTEGER NOT NULL DEFAULT 0 CHECK(current_revision>=0),
+      submitted_at TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
+    CREATE INDEX IF NOT EXISTS supply_replenishment_owner ON supply_replenishment(prepared_by,id);
+    CREATE TABLE IF NOT EXISTS supply_replenishment_line (
+      id INTEGER PRIMARY KEY, replenishment_id INTEGER NOT NULL REFERENCES supply_replenishment(id),
+      item_id INTEGER NOT NULL REFERENCES supply_item(id),
+      code_snapshot TEXT NOT NULL, description_snapshot TEXT NOT NULL, unit_snapshot TEXT NOT NULL,
+      requested_quantity INTEGER NOT NULL CHECK(typeof(requested_quantity)='integer' AND requested_quantity BETWEEN 1 AND 2147483647),
+      estimated_unit_cost TEXT, override_reason TEXT NOT NULL DEFAULT '',
+      intended_target INTEGER NOT NULL CHECK(typeof(intended_target)='integer' AND intended_target BETWEEN 0 AND 2147483647),
+      suggested_quantity INTEGER, on_hand_snapshot INTEGER NOT NULL,
+      reserved_snapshot INTEGER NOT NULL, outstanding_snapshot INTEGER NOT NULL,
+      incoming_snapshot INTEGER NOT NULL,
+      UNIQUE(replenishment_id,item_id));
+    CREATE INDEX IF NOT EXISTS supply_replenishment_line_item ON supply_replenishment_line(item_id,replenishment_id);
+    -- S5.2 approval will populate commitments. Drafts never appear here.
+    CREATE TABLE IF NOT EXISTS supply_replenishment_commitment (
+      line_id INTEGER PRIMARY KEY REFERENCES supply_replenishment_line(id),
+      approved_quantity INTEGER NOT NULL CHECK(typeof(approved_quantity)='integer' AND approved_quantity BETWEEN 0 AND 2147483647),
+      received_quantity INTEGER NOT NULL DEFAULT 0 CHECK(typeof(received_quantity)='integer' AND received_quantity>=0),
+      cancelled_quantity INTEGER NOT NULL DEFAULT 0 CHECK(typeof(cancelled_quantity)='integer' AND cancelled_quantity>=0),
+      CHECK(received_quantity+cancelled_quantity<=approved_quantity));
+    CREATE TABLE IF NOT EXISTS supply_replenishment_revision (
+      id INTEGER PRIMARY KEY, replenishment_id INTEGER NOT NULL REFERENCES supply_replenishment(id),
+      revision INTEGER NOT NULL CHECK(revision>0), purpose TEXT NOT NULL,
+      procurement_reference TEXT NOT NULL, expected_need_date TEXT,
+      review_reason TEXT NOT NULL DEFAULT '',
+      submitted_by INTEGER NOT NULL REFERENCES admin_user(id), submitted_at TEXT NOT NULL,
+      operation_key TEXT NOT NULL UNIQUE REFERENCES supply_operation(operation_key) DEFERRABLE INITIALLY DEFERRED,
+      UNIQUE(replenishment_id,revision));
+    CREATE TABLE IF NOT EXISTS supply_replenishment_revision_line (
+      id INTEGER PRIMARY KEY, revision_id INTEGER NOT NULL REFERENCES supply_replenishment_revision(id),
+      draft_line_id INTEGER NOT NULL,
+      item_id INTEGER NOT NULL REFERENCES supply_item(id),
+      code_snapshot TEXT NOT NULL, description_snapshot TEXT NOT NULL, unit_snapshot TEXT NOT NULL,
+      requested_quantity INTEGER NOT NULL, estimated_unit_cost TEXT,
+      override_reason TEXT NOT NULL, intended_target INTEGER NOT NULL,
+      suggested_quantity INTEGER, on_hand_snapshot INTEGER NOT NULL,
+      reserved_snapshot INTEGER NOT NULL, outstanding_snapshot INTEGER NOT NULL,
+      incoming_snapshot INTEGER NOT NULL, UNIQUE(revision_id,item_id));
+    CREATE TABLE IF NOT EXISTS supply_replenishment_decision (
+      id INTEGER PRIMARY KEY, replenishment_id INTEGER NOT NULL REFERENCES supply_replenishment(id),
+      revision_id INTEGER NOT NULL UNIQUE REFERENCES supply_replenishment_revision(id),
+      decision TEXT NOT NULL CHECK(decision IN ('approved','returned','rejected')),
+      decided_by INTEGER NOT NULL REFERENCES admin_user(id), decided_at TEXT NOT NULL,
+      reason TEXT NOT NULL,
+      operation_key TEXT NOT NULL UNIQUE REFERENCES supply_operation(operation_key) DEFERRABLE INITIALLY DEFERRED);
+    CREATE TABLE IF NOT EXISTS supply_replenishment_decision_line (
+      id INTEGER PRIMARY KEY, decision_id INTEGER NOT NULL REFERENCES supply_replenishment_decision(id),
+      revision_line_id INTEGER NOT NULL UNIQUE REFERENCES supply_replenishment_revision_line(id),
+      approved_quantity INTEGER NOT NULL CHECK(typeof(approved_quantity)='integer' AND approved_quantity BETWEEN 0 AND 2147483647),
+      reason TEXT NOT NULL, current_suggestion INTEGER NOT NULL,
+      current_on_hand INTEGER NOT NULL, current_outstanding INTEGER NOT NULL,
+      current_incoming INTEGER NOT NULL);
+    CREATE TABLE IF NOT EXISTS supply_replenishment_order (
+      id INTEGER PRIMARY KEY, replenishment_id INTEGER NOT NULL UNIQUE REFERENCES supply_replenishment(id),
+      order_reference TEXT NOT NULL, expected_delivery_date TEXT,
+      responsible_custodian_id INTEGER NOT NULL REFERENCES admin_user(id),
+      ordered_by INTEGER NOT NULL REFERENCES admin_user(id), ordered_at TEXT NOT NULL,
+      operation_key TEXT NOT NULL UNIQUE REFERENCES supply_operation(operation_key) DEFERRABLE INITIALLY DEFERRED);
+    CREATE TABLE IF NOT EXISTS supply_replenishment_order_line (
+      id INTEGER PRIMARY KEY, order_id INTEGER NOT NULL REFERENCES supply_replenishment_order(id),
+      line_id INTEGER NOT NULL UNIQUE REFERENCES supply_replenishment_line(id),
+      ordered_quantity INTEGER NOT NULL CHECK(typeof(ordered_quantity)='integer' AND ordered_quantity BETWEEN 0 AND 2147483647));
+    CREATE TABLE IF NOT EXISTS supply_replenishment_cancellation (
+      id INTEGER PRIMARY KEY, replenishment_id INTEGER NOT NULL REFERENCES supply_replenishment(id),
+      reason TEXT NOT NULL, cancelled_by INTEGER NOT NULL REFERENCES admin_user(id),
+      cancelled_at TEXT NOT NULL,
+      operation_key TEXT NOT NULL UNIQUE REFERENCES supply_operation(operation_key) DEFERRABLE INITIALLY DEFERRED);
+    CREATE TABLE IF NOT EXISTS supply_replenishment_cancellation_line (
+      id INTEGER PRIMARY KEY, cancellation_id INTEGER NOT NULL REFERENCES supply_replenishment_cancellation(id),
+      line_id INTEGER NOT NULL REFERENCES supply_replenishment_line(id),
+      cancelled_quantity INTEGER NOT NULL CHECK(typeof(cancelled_quantity)='integer' AND cancelled_quantity BETWEEN 1 AND 2147483647));
+    CREATE TRIGGER IF NOT EXISTS supply_rep_revision_no_update BEFORE UPDATE ON supply_replenishment_revision BEGIN SELECT RAISE(ABORT,'Replenishment submissions are immutable'); END;
+    CREATE TRIGGER IF NOT EXISTS supply_rep_revision_no_delete BEFORE DELETE ON supply_replenishment_revision BEGIN SELECT RAISE(ABORT,'Replenishment submissions are immutable'); END;
+    CREATE TRIGGER IF NOT EXISTS supply_rep_revision_line_no_update BEFORE UPDATE ON supply_replenishment_revision_line BEGIN SELECT RAISE(ABORT,'Replenishment submissions are immutable'); END;
+    CREATE TRIGGER IF NOT EXISTS supply_rep_revision_line_no_delete BEFORE DELETE ON supply_replenishment_revision_line BEGIN SELECT RAISE(ABORT,'Replenishment submissions are immutable'); END;
+    CREATE TRIGGER IF NOT EXISTS supply_rep_decision_no_update BEFORE UPDATE ON supply_replenishment_decision BEGIN SELECT RAISE(ABORT,'Replenishment decisions are immutable'); END;
+    CREATE TRIGGER IF NOT EXISTS supply_rep_decision_no_delete BEFORE DELETE ON supply_replenishment_decision BEGIN SELECT RAISE(ABORT,'Replenishment decisions are immutable'); END;
+    CREATE TRIGGER IF NOT EXISTS supply_rep_decision_line_no_update BEFORE UPDATE ON supply_replenishment_decision_line BEGIN SELECT RAISE(ABORT,'Replenishment decisions are immutable'); END;
+    CREATE TRIGGER IF NOT EXISTS supply_rep_decision_line_no_delete BEFORE DELETE ON supply_replenishment_decision_line BEGIN SELECT RAISE(ABORT,'Replenishment decisions are immutable'); END;
+    CREATE TRIGGER IF NOT EXISTS supply_rep_order_no_update BEFORE UPDATE ON supply_replenishment_order BEGIN SELECT RAISE(ABORT,'Replenishment orders are immutable'); END;
+    CREATE TRIGGER IF NOT EXISTS supply_rep_order_no_delete BEFORE DELETE ON supply_replenishment_order BEGIN SELECT RAISE(ABORT,'Replenishment orders are immutable'); END;
+    CREATE TRIGGER IF NOT EXISTS supply_rep_order_line_no_update BEFORE UPDATE ON supply_replenishment_order_line BEGIN SELECT RAISE(ABORT,'Replenishment orders are immutable'); END;
+    CREATE TRIGGER IF NOT EXISTS supply_rep_order_line_no_delete BEFORE DELETE ON supply_replenishment_order_line BEGIN SELECT RAISE(ABORT,'Replenishment orders are immutable'); END;
+    CREATE TRIGGER IF NOT EXISTS supply_rep_cancel_no_update BEFORE UPDATE ON supply_replenishment_cancellation BEGIN SELECT RAISE(ABORT,'Replenishment cancellation evidence is immutable'); END;
+    CREATE TRIGGER IF NOT EXISTS supply_rep_cancel_no_delete BEFORE DELETE ON supply_replenishment_cancellation BEGIN SELECT RAISE(ABORT,'Replenishment cancellation evidence is immutable'); END;
+    CREATE TRIGGER IF NOT EXISTS supply_rep_cancel_line_no_update BEFORE UPDATE ON supply_replenishment_cancellation_line BEGIN SELECT RAISE(ABORT,'Replenishment cancellation evidence is immutable'); END;
+    CREATE TRIGGER IF NOT EXISTS supply_rep_cancel_line_no_delete BEFORE DELETE ON supply_replenishment_cancellation_line BEGIN SELECT RAISE(ABORT,'Replenishment cancellation evidence is immutable'); END;
+    """)
+
+    conn.executescript("""
+    CREATE TABLE IF NOT EXISTS supply_delivery (
+      id INTEGER PRIMARY KEY, replenishment_id INTEGER NOT NULL REFERENCES supply_replenishment(id),
+      supplier TEXT NOT NULL, dr_number TEXT NOT NULL, apr_number TEXT NOT NULL DEFAULT '',
+      procurement_mode TEXT NOT NULL DEFAULT '', note TEXT NOT NULL DEFAULT '',
+      effective_date TEXT NOT NULL, received_by INTEGER NOT NULL REFERENCES admin_user(id),
+      received_at TEXT NOT NULL,
+      operation_key TEXT NOT NULL UNIQUE REFERENCES supply_operation(operation_key) DEFERRABLE INITIALLY DEFERRED);
+    CREATE INDEX IF NOT EXISTS supply_delivery_replenishment ON supply_delivery(replenishment_id,id);
+    CREATE TABLE IF NOT EXISTS supply_delivery_line (
+      id INTEGER PRIMARY KEY, delivery_id INTEGER NOT NULL REFERENCES supply_delivery(id),
+      replenishment_line_id INTEGER NOT NULL REFERENCES supply_replenishment_line(id),
+      item_id INTEGER NOT NULL REFERENCES supply_item(id),
+      delivered_quantity INTEGER NOT NULL CHECK(typeof(delivered_quantity)='integer' AND delivered_quantity BETWEEN 1 AND 2147483647),
+      accepted_quantity INTEGER NOT NULL CHECK(typeof(accepted_quantity)='integer' AND accepted_quantity BETWEEN 0 AND 2147483647),
+      rejected_quantity INTEGER NOT NULL CHECK(typeof(rejected_quantity)='integer' AND rejected_quantity BETWEEN 0 AND 2147483647),
+      rejection_reason TEXT NOT NULL DEFAULT '', unit_cost TEXT, expiry_date TEXT,
+      receipt_line_id INTEGER UNIQUE REFERENCES supply_receipt_line(id),
+      CHECK(delivered_quantity=accepted_quantity+rejected_quantity),
+      CHECK((rejected_quantity=0 AND rejection_reason='') OR (rejected_quantity>0 AND length(trim(rejection_reason))>0)),
+      CHECK((accepted_quantity=0 AND receipt_line_id IS NULL) OR (accepted_quantity>0 AND receipt_line_id IS NOT NULL)),
+      UNIQUE(delivery_id,replenishment_line_id));
+    CREATE TABLE IF NOT EXISTS supply_replenishment_receipt_reversal (
+      correction_id INTEGER PRIMARY KEY REFERENCES supply_correction(id),
+      replenishment_line_id INTEGER NOT NULL REFERENCES supply_replenishment_line(id),
+      quantity INTEGER NOT NULL CHECK(typeof(quantity)='integer' AND quantity BETWEEN 1 AND 2147483647),
+      reopen_incoming INTEGER NOT NULL CHECK(reopen_incoming IN (0,1)));
+    CREATE TRIGGER IF NOT EXISTS supply_delivery_no_update BEFORE UPDATE ON supply_delivery BEGIN SELECT RAISE(ABORT,'Delivery evidence is immutable'); END;
+    CREATE TRIGGER IF NOT EXISTS supply_delivery_no_delete BEFORE DELETE ON supply_delivery BEGIN SELECT RAISE(ABORT,'Delivery evidence is immutable'); END;
+    CREATE TRIGGER IF NOT EXISTS supply_delivery_line_no_update BEFORE UPDATE ON supply_delivery_line BEGIN SELECT RAISE(ABORT,'Delivery evidence is immutable'); END;
+    CREATE TRIGGER IF NOT EXISTS supply_delivery_line_no_delete BEFORE DELETE ON supply_delivery_line BEGIN SELECT RAISE(ABORT,'Delivery evidence is immutable'); END;
+    CREATE TRIGGER IF NOT EXISTS supply_rep_receipt_reversal_no_update BEFORE UPDATE ON supply_replenishment_receipt_reversal BEGIN SELECT RAISE(ABORT,'Delivery correction evidence is immutable'); END;
+    CREATE TRIGGER IF NOT EXISTS supply_rep_receipt_reversal_no_delete BEFORE DELETE ON supply_replenishment_receipt_reversal BEGIN SELECT RAISE(ABORT,'Delivery correction evidence is immutable'); END;
+    """)
+    if 'delivery_id' not in {r[1] for r in conn.execute('PRAGMA table_info(supply_receipt)')}:
+        conn.execute('ALTER TABLE supply_receipt ADD COLUMN delivery_id INTEGER REFERENCES supply_delivery(id)')
+    if 'replenishment_line_id' not in {r[1] for r in conn.execute('PRAGMA table_info(supply_receipt_line)')}:
+        conn.execute('ALTER TABLE supply_receipt_line ADD COLUMN replenishment_line_id INTEGER REFERENCES supply_replenishment_line(id)')
+    conn.execute('CREATE UNIQUE INDEX IF NOT EXISTS supply_receipt_delivery ON supply_receipt(delivery_id) WHERE delivery_id IS NOT NULL')
+    conn.execute('CREATE INDEX IF NOT EXISTS supply_receipt_replenishment_line ON supply_receipt_line(replenishment_line_id)')
+    conn.commit()
+
+
 @contextmanager
 def transaction(conn):
     if conn.in_transaction:
@@ -373,6 +612,18 @@ def transaction(conn):
         if isinstance(exc, sqlite3.OperationalError) and ('locked' in str(exc) or 'busy' in str(exc)):
             raise Conflict('Supplies is busy. Retry the same form in a moment.') from exc
         raise
+
+    else:
+        # Notice projection runs only after a successful commit. Its failure must
+        # never make a completed stock operation look failed to the caller.
+        try:
+            if conn.execute('SELECT 1 FROM supply_alert_event WHERE processed_at IS NULL LIMIT 1').fetchone():
+                from supplies_notify import process_pending
+                process_pending(conn)
+        except Exception:
+            conn.rollback()
+            import logging
+            logging.getLogger(__name__).warning('Supplies warning processing is pending; retry reconciliation.')
 
 
 def operation(conn, user, key, action, payload):
@@ -401,4 +652,10 @@ def record(conn, user, key, digest, action, entity_type, result, detail):
                  (entity_type, result['id'], action, user['id'], payload, now, key))
     st.audit(conn, user['username'], 'supply_' + action, target_type='supply_' + entity_type,
              target_id=result['id'], after=payload, commit=False)
+    if entity_type == 'item' and action in ('item_create','item_update','item_deactivate'):
+        from supplies_notify import enqueue
+        enqueue(conn,[result['id']],key)
+    elif action == 'role_grant' and detail.get('role') == 'custodian':
+        from supplies_notify import enqueue
+        enqueue(conn,[r[0] for r in conn.execute('SELECT item_id FROM supply_alert_episode WHERE resolved_at IS NULL')],key,force=True)
     return result
