@@ -14,5 +14,6 @@
     {% if closed %}<div class="badge amber" style="font-size:.9rem; padding:.5rem .9rem; border-radius:10px;">{{ t('closed_lbl', lang) }} {{ closed }}</div>{% endif %}
   {% endif %}
   <p class="muted small" style="margin-top:1rem;">{{ t('closed_help', lang) }}</p>
+  {% if survey_draft_key %}<section class="survey-guidance" hidden data-survey-recovery="{{ survey_draft_key }}"></section>{% endif %}
 </div>
 {% endblock %}

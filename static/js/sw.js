@@ -8,7 +8,7 @@
  * whose name differs, so an old app-shell is purged the moment the new SW takes
  * over. Keep this in lockstep with version.py / the ?v= asset tokens.
  */
-const CACHE_VERSION = "v7.89-a";
+const CACHE_VERSION = "v7.90-a";
 const CACHE_NAME = "css-is-" + CACHE_VERSION;
 
 /* ── Edge-retry shield ─────────────────────────────────────────────────────────
@@ -156,14 +156,26 @@ async function flushQueue() {
     try {
       res = await fetch(it.action, {
         method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        headers: { "Content-Type": "application/x-www-form-urlencoded", "Accept":"application/json" },
         body: it.body,
       });
     } catch (_) {
       return;                                    // still offline — stop, sync will fire again
     }
     if (res.ok) {
+      let receipt;
+      try { receipt = await res.json(); } catch (_) { return; }
+      if (!receipt || receipt.ok !== true || receipt.submission_id !== it.id) return;
+      const combined = new URL(it.action, self.location.origin).pathname === '/seq';
+      if (combined && !receipt.deduped && (!Number.isInteger(receipt.recorded) || receipt.recorded < 0 || !Number.isInteger(receipt.unavailable) || receipt.unavailable < 0)) return;
+      if (receipt.unavailable || receipt.recorded === 0 || (receipt.deduped && combined)) {
+        it.status = 'failed'; it.reason = receipt.deduped ? 'previous' : 'partial';
+        await qStore('readwrite').then((s) => s.put(it));
+        continue;
+      }
       await qStore("readwrite").then((s) => s.delete(it.id));
+      const tabs = await self.clients.matchAll({type:'window'});
+      tabs.forEach((tab) => tab.postMessage({type:'survey-confirmed', key:it.draftKey, revision:it.draftRevision}));
     } else if (res.status >= 400 && res.status < 500) {
       it.status = "failed";                      // permanent (window closed / bad token)
       await qStore("readwrite").then((s) => s.put(it));

@@ -1095,6 +1095,9 @@ body:has(.gsearch.js .gsearch-results:not(:empty)) .sf-float { visibility:hidden
 .offline-badge .ob-failed button { margin-left:.4rem; font-size:.72rem; padding:.1rem .5rem;
                  border:1px solid var(--red-ln); border-radius:999px; background:transparent;
                  color:var(--red); cursor:pointer; }
+.offline-badge { max-height:70vh; overflow:auto; align-items:stretch; }
+.offline-badge details { background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:.4rem .7rem; }
+.offline-badge summary, .offline-badge button { min-height:44px; }
 .offline-toast { position:fixed; left:50%; bottom:1rem; transform:translate(-50%,1rem);
                  background:var(--green); color:#fff; font-size:.82rem; font-weight:600;
                  padding:.45rem .9rem; border-radius:999px; z-index:9999; opacity:0;

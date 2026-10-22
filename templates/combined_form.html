@@ -11,6 +11,7 @@
   <h1 style="margin-top:0;">{{ t('nf_title', lang) }}</h1>
   <p class="muted">{{ t('nf_body', lang) }}</p>
   {% endif %}
+  <section class="survey-guidance" hidden data-survey-recovery="{{ survey_draft_key }}"></section>
 </div>
 {% else %}
 <div class="pub-card">
@@ -25,8 +26,9 @@
     {{ t('cf_tick_pre', lang) }} <em>"{{ t('cf_skip', lang) }}"</em> {{ t('cf_tick_post', lang) }}
   </p>
 
-  <form method="post" action="/seq" id="combinedform" data-loading="Submitting…" data-validate novalidate>
+  <form method="post" action="/seq" id="combinedform" class="survey-form" data-survey-draft-key="{{ survey_draft_key }}" data-loading="{{ t('survey_sending', lang) }}" novalidate>
     <input type="hidden" name="tokens" value="{{ tokens }}">
+    {% include "_survey_feedback.html" %}
 
     {# Demographics — asked once for the whole activity (anonymous, standalone). #}
     <fieldset class="aboutyou" style="border:none; padding:0; margin:0 0 1.5rem;">
@@ -50,24 +52,24 @@
     </fieldset>
 
     {% for s in sections %}
-    <div class="spk-section" data-token="{{ s.token }}">
+    <div class="spk-section" data-token="{{ s.token }}" role="group" aria-labelledby="speaker-{{ s.token }}">
       <div class="spk-head">
         <div class="spk-title">
           <span class="spk-n">{{ loop.index }}</span>
           <span>
             {% if loop.length > 1 %}<span class="spk-eyebrow">{{ t('cf_speaker_label', lang) }} {{ loop.index }} {{ t('cf_of', lang) }} {{ loop.length }}</span>{% endif %}
-            <strong>{{ s.ctx.rp_name or s.ctx.topic or t('cf_rp_default', lang) }}</strong>
+            <strong id="speaker-{{ s.token }}">{{ s.ctx.rp_name or s.ctx.topic or t('cf_rp_default', lang) }}</strong>
             {% if s.ctx.rp_name and s.ctx.topic %}<span class="muted small"> · {{ s.ctx.topic }}</span>{% endif %}
           </span>
         </div>
-        <label class="skip"><input type="checkbox" class="skip-toggle"> {{ t('cf_skip', lang) }}</label>
+        <label class="skip"><input type="checkbox" class="skip-toggle" name="skip::{{ s.token }}" value="1"> {{ t('cf_skip', lang) }}</label>
       </div>
       <div class="spk-body">
         {% for group in s.spec.groups %}
         <fieldset style="border:none; padding:0; margin:0 0 1.1rem;">
           <legend class="leg">{{ group.label }}</legend>
           {% for item in group["items"] %}
-          <div class="item" style="margin-bottom:1.25rem;">
+          <div class="item" data-question="{{ item.text }}" style="margin-bottom:1.25rem;">
             <div style="font-weight:550; margin-bottom:.45rem;">{{ loop.index }}. {{ item.text }}</div>
             <div class="scale" role="radiogroup" aria-label="{{ item.text }}">
               {% for val, lbl in item.scale|reverse %}
@@ -99,7 +101,7 @@
           <div class="chips" data-max-chips="{{ max_remark_chips }}" style="display:flex; flex-wrap:wrap; gap:.4rem; margin:.15rem 0 .55rem; align-items:center;">
             <span class="muted small" style="width:100%;">{{ t('chips_hint', lang) }}</span>
             {% for word, group in s.spec.chips %}
-            <button type="button" class="chip" data-word="{{ word }}"
+            <button type="button" class="chip" aria-pressed="false" data-word="{{ word }}"
                     {% if group %}data-group="{{ group }}"{% endif %}
                     onclick="toggleChip(this)"
                     style="font-size:.85rem; padding:.35rem .7rem; border:1px solid var(--line); background:var(--surface); border-radius:999px; cursor:pointer; min-height:34px;">{{ word }}</button>

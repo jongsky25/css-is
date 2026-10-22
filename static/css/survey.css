@@ -1,0 +1,27 @@
+/* Scoped public survey controls and feedback. */
+.survey-form .na-row { align-items:center; min-height:44px; }
+.survey-form .na-row label { display:flex; align-items:center; min-height:44px; padding:.35rem .4rem; }
+.survey-form .chip, .survey-form .add-note-btn, .survey-form .skip,
+.conv-toggle-btn, #draft-banner button { min-height:44px !important; }
+.survey-form .chip { white-space:normal; }
+.survey-form .scale .seg small { font-size:.75rem; overflow-wrap:anywhere; }
+.survey-form .csm-opt, .survey-form .csm-choices label { min-height:44px; padding:.6rem .25rem; }
+.survey-form .csm-opt input, .survey-form .skip input { flex-shrink:0; }
+.survey-form [aria-invalid=true] { outline:2px solid var(--red); outline-offset:2px; }
+.survey-form .scale input[aria-invalid=true] + .seg { border-color:var(--red); }
+.survey-feedback, .survey-guidance { padding:.75rem 1rem; margin:.8rem 0; border:1px solid var(--line); border-radius:10px; overflow-wrap:anywhere; }
+.survey-feedback { border-color:var(--red); }
+.survey-feedback h2 { font-size:1rem; margin:0 0 .5rem; }
+.survey-feedback:focus, .survey-form .item:focus, .survey-form [data-conv]:focus { outline:3px solid var(--accent); outline-offset:3px; }
+.survey-status { min-height:1.5em; }
+.survey-guidance p { margin:.2rem 0; }
+.survey-form .item, .survey-form fieldset { min-width:0; }
+.conv-toggle-btn { white-space:normal !important; }
+@media (max-width:419px) {
+  .survey-form .scale { flex-wrap:wrap; }
+  .survey-form .scale label { flex:1 1 30%; }
+}
+@media (forced-colors:active) {
+  .survey-form .scale input:checked + .seg { outline:3px solid Highlight; }
+  .survey-form .scale input:focus-visible + .seg { outline:3px solid CanvasText; }
+}

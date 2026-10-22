@@ -151,6 +151,31 @@ REMARK_CHIPS_FIL = {
 # Filipino values below are DRAFT — office to refine.
 # ---------------------------------------------------------------------------
 UI = {
+    # A18: device drafts, accessible corrections and truthful submission progress.
+    "survey_help": {"en": "Saving your answers", "fil": "Pag-save ng inyong mga sagot"},
+    "survey_progress": {"en": "{done} of {total} answered", "fil": "Nasagutan: {done} sa {total}"},
+    "survey_draft_notice": {"en": "Drafts can be resumed on this device for seven days. Other people using this device may see them.", "fil": "Maaaring ipagpatuloy ang draft sa device na ito sa loob ng pitong araw. Maaaring makita ito ng ibang gumagamit ng device."},
+    "survey_confirmation_notice": {"en": "A device draft is not a submitted response. Wait for confirmation after Submit; offline answers wait on this device until the server confirms them.", "fil": "Ang draft sa device ay hindi pa naisumiteng sagot. Hintayin ang kumpirmasyon pagkatapos ng Submit; maghihintay sa device ang offline na sagot hanggang makumpirma ng server."},
+    "survey_correct": {"en": "Check your answers", "fil": "Suriin ang inyong mga sagot"},
+    "survey_required": {"en": "Choose an answer.", "fil": "Pumili ng sagot."},
+    "survey_invalid": {"en": "Check this value.", "fil": "Suriin ang halagang ito."},
+    "survey_sending": {"en": "Submitting. Wait for confirmation before closing this page.", "fil": "Isinusumite. Hintayin ang kumpirmasyon bago isara ang pahina."},
+    "survey_returned": {"en": "The previous submission may already be recorded. Check its confirmation before submitting again.", "fil": "Maaaring naitala na ang naunang pagsumite. Suriin ang kumpirmasyon bago muling magsumite."},
+    "survey_queue_failed": {"en": "Your answers could not be saved on this device. They are still on this page. Keep it open and try again when connected.", "fil": "Hindi na-save ang mga sagot sa device na ito. Nasa pahina pa rin ang mga ito. Huwag itong isara at subukang muli kapag may koneksyon."},
+    "survey_storage_failed": {"en": "Device draft saving is unavailable. Keep this page open until submission is confirmed.", "fil": "Hindi magamit ang pag-save ng draft sa device. Huwag isara ang pahina hanggang makumpirma ang pagsumite."},
+    "survey_draft_saved": {"en": "Draft saved on this device", "fil": "Nai-save ang draft sa device na ito"},
+    "survey_resume_prompt": {"en": "An earlier draft is saved on this device. Resume only if this feedback has not already been submitted.", "fil": "May naka-save na draft sa device na ito. Ipagpatuloy lamang kung hindi pa naisumite ang punang ito."},
+    "survey_resume": {"en": "Resume draft", "fil": "Ipagpatuloy ang draft"},
+    "survey_fresh": {"en": "Start fresh", "fil": "Magsimula muli"},
+    "survey_none": {"en": "No feedback recorded", "fil": "Walang naitalang puna"},
+    "survey_review_none": {"en": "No speaker ratings were recorded. Skipped or untouched forms do not create a response.", "fil": "Walang naitalang rating para sa tagapagsalita. Walang sagot na itinatala para sa nilaktawan o hindi sinagutang form."},
+    "survey_review": {"en": "Review the forms", "fil": "Suriin ang mga form"},
+    "survey_remaining": {"en": "This response is recorded. Open the activity page to check the remaining feedback.", "fil": "Naitala ang sagot na ito. Buksan ang pahina ng aktibidad upang suriin ang natitirang puna."},
+    "survey_unavailable": {"en": "form(s) were unavailable and were not recorded. Do not resend the whole set if some forms succeeded; contact the organizer about the remaining forms.", "fil": "form ang hindi magamit at hindi naitala. Huwag ipadala muli ang buong set kung may naitala na; kausapin ang organizer tungkol sa natitirang form."},
+    "survey_needs_review": {"en": "Needs review", "fil": "Kailangang suriin"},
+    "survey_queue_partial": {"en": "Some forms were unavailable or no ratings were recorded. Saved answers remain here for review; contact the organizer before resending.", "fil": "May form na hindi magamit o walang naitalang rating. Nananatili rito ang naka-save na sagot; kausapin ang organizer bago ipadala muli."},
+    "survey_queue_previous": {"en": "This combined request was processed earlier. Its original per-form result is unavailable here; check with the organizer before resending. Your saved copy is kept.", "fil": "Naproseso na ang pinagsamang kahilingang ito. Hindi makuha rito ang orihinal na resulta ng bawat form; kausapin ang organizer bago ipadala muli. Nananatili ang naka-save na kopya."},
+    "survey_saved_answers": {"en": "Show saved answers", "fil": "Ipakita ang naka-save na sagot"},
     # Group headings (survey_spec)
     "grp_arta": {
         "en": "Service Quality Dimensions (1 = Strongly Disagree … 5 = Strongly Agree)",
@@ -370,18 +395,18 @@ UI = {
     # ---------------------------------------------------------------------------
     "offline_saved_h1": {"en": "✓ Saved on your device", "fil": "✓ Nai-save sa inyong device"},
     "offline_saved_msg": {
-        "en": "You're offline, so your answers are saved on this device and will be "
-              "sent automatically the moment you're back online.",
-        "fil": "Wala kayong koneksyon, kaya nai-save ang inyong mga sagot sa device na ito "
-               "at awtomatikong ipapadala sa sandaling bumalik kayo online.",
+        "en": "Your answers are saved on this device, not yet confirmed by the server. "
+              "They will be sent automatically when connected, if the survey still accepts responses.",
+        "fil": "Nai-save sa device na ito ang inyong mga sagot, ngunit hindi pa nakumpirma ng server. "
+               "Awtomatikong ipapadala ang mga ito kapag may koneksyon, kung tumatanggap pa ng sagot ang survey.",
     },
     "offline_waiting": {"en": "waiting to send", "fil": "naghihintay na ipadala"},
     "offline_sending": {"en": "Sending saved responses…", "fil": "Ipinapadala ang mga naka-save na sagot…"},
     "offline_sent_one": {"en": "Saved response sent.", "fil": "Naipadala ang naka-save na sagot."},
     "offline_sent_many": {"en": "Saved responses sent.", "fil": "Naipadala ang mga naka-save na sagot."},
     "offline_failed": {
-        "en": "couldn't be sent (the survey has closed)",
-        "fil": "hindi naipadala (sarado na ang survey)",
+        "en": "the server refused this request; the form may be closed or unavailable. Your saved answers remain on this device",
+        "fil": "tinanggihan ng server ang kahilingan; maaaring sarado o hindi magamit ang form. Nananatili sa device ang naka-save na sagot",
     },
     "offline_failed_label": {"en": "Couldn't send", "fil": "Hindi naipadala"},
     "offline_discard": {"en": "Discard", "fil": "Itapon"},

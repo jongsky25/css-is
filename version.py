@@ -17,10 +17,21 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.89"
+APP_VERSION = "7.90"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "7.90",
+        "date": "October 22, 2026",
+        "summary": "Survey answers are easier to correct and safer to recover on your device.",
+        "changes": [
+            "Survey errors link to the question that needs attention and keep your entered answers.",
+            "Device drafts stay until a matching submission is confirmed, and storage failures explain what to do next.",
+            "Rating and comment controls are easier to tap, and one-question mode waits for you to press Next.",
+            "Offline answers distinguish waiting, confirmed and needs-review states, with a readable saved copy when sending fails."
+        ]
+    },
     {
         "version": "7.89",
         "date": "October 22, 2026",

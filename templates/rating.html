@@ -56,9 +56,10 @@
   </div>
   <div id="conv-step-ctr" class="muted small" style="text-align:right; min-height:1.1em; margin-bottom:.35rem;" aria-live="polite"></div>
 
-  <form method="post" action="/r/{{ qr_token }}" id="surveyform" data-loading="Submitting…">
+  <form method="post" action="/r/{{ qr_token }}" id="surveyform" class="survey-form" data-survey-draft-key="{{ survey_draft_key }}" data-loading="{{ t('survey_sending', lang) }}">
     <input type="hidden" name="seq" value="{{ seq }}">
     <input type="hidden" name="att" value="{{ att }}">
+    {% include "_survey_feedback.html" %}
 
     {% if spec.ask_served_by %}
     <div class="group" style="margin-bottom:1.4rem;">
@@ -151,23 +152,29 @@
         {{ t('csm_cc_title', lang) }} <span class="opt" style="text-transform:none; font-weight:400;">{{ t('optional', lang) }}</span></legend>
       <p class="muted small" style="margin:0 0 1rem;">{{ t('csm_cc_instr', lang) }}</p>
       <div class="csm-q" id="csm-cc1">
-        <div class="csm-qtext">{{ t('csm_cc1_q', lang) }}</div>
+        <div class="csm-qtext" id="cc1-label">{{ t('csm_cc1_q', lang) }}</div>
+        <div role="radiogroup" aria-labelledby="cc1-label">
         {% for opt in spec.cc1_opts %}
         <label class="csm-opt"><input type="radio" name="csm_cc1" value="{{ opt }}" data-ccno="{{ loop.index }}"> {{ loop.index }}. {{ spec.cc1_labels[loop.index0] }}</label>
         {% endfor %}
+        </div>
       </div>
       <p class="csm-skip muted small" id="csm-cc-skip" hidden>{{ t('csm_cc_skip', lang) }}</p>
       <div class="csm-q" id="csm-cc2">
-        <div class="csm-qtext">{{ t('csm_cc2_q', lang) }}</div>
+        <div class="csm-qtext" id="cc2-label">{{ t('csm_cc2_q', lang) }}</div>
+        <div role="radiogroup" aria-labelledby="cc2-label">
         {% for opt in spec.cc2_opts %}
         <label class="csm-opt"><input type="radio" name="csm_cc2" value="{{ opt }}"> {{ loop.index }}. {{ spec.cc2_labels[loop.index0] }}</label>
         {% endfor %}
+        </div>
       </div>
       <div class="csm-q" id="csm-cc3">
-        <div class="csm-qtext">{{ t('csm_cc3_q', lang) }}</div>
+        <div class="csm-qtext" id="cc3-label">{{ t('csm_cc3_q', lang) }}</div>
+        <div role="radiogroup" aria-labelledby="cc3-label">
         {% for opt in spec.cc3_opts %}
         <label class="csm-opt"><input type="radio" name="csm_cc3" value="{{ opt }}"> {{ loop.index }}. {{ spec.cc3_labels[loop.index0] }}</label>
         {% endfor %}
+        </div>
       </div>
     </fieldset>
     {% endif %}
@@ -178,7 +185,7 @@
                      color:var(--soft); border-bottom:1px solid var(--line); padding:0 0 .35rem; margin-bottom:1rem; width:100%;">
         {{ group.label }}</legend>
       {% for item in group["items"] %}
-      <div class="item" data-conv-group="{{ group.label }}" style="margin-bottom:1.35rem;">
+      <div class="item" data-question="{{ item.text }}" role="group" aria-label="{{ item.text }}" data-conv-group="{{ group.label }}" style="margin-bottom:1.35rem;">
         <div style="font-weight:550; margin-bottom:.45rem;">{{ loop.index }}. {{ item.text }}</div>
         <div class="scale" role="radiogroup" aria-label="{{ item.text }}">
           {# Render low→high, left→right (1…7 / Poor…Excellent) — matches the "1 = lowest /
@@ -211,22 +218,22 @@
     {% endfor %}
 
     <div class="group" data-conv="comments" style="margin-bottom:1.2rem;">
-      <div style="font-weight:700; font-size:.8rem; text-transform:uppercase; letter-spacing:.03em;
+      <label for="survey-remarks" style="display:block; font-weight:700; font-size:.8rem; text-transform:uppercase; letter-spacing:.03em;
                   color:var(--soft); border-bottom:1px solid var(--line); padding-bottom:.35rem; margin-bottom:.8rem;">
-        {{ t('csm_suggest', lang) if spec.is_csm else t('comments', lang) }} <span style="text-transform:none; font-weight:400;">{{ t('optional', lang) }}</span></div>
+        {{ t('csm_suggest', lang) if spec.is_csm else t('comments', lang) }} <span style="text-transform:none; font-weight:400;">{{ t('optional', lang) }}</span></label>
       <div id="branch-banner" class="branch-banner" hidden aria-live="polite"></div>
       {% if spec.chips %}
       <div class="chips" data-max-chips="{{ max_remark_chips }}" style="display:flex; flex-wrap:wrap; gap:.4rem; margin-bottom:.6rem; align-items:center;">
         <span class="muted small" style="width:100%;">{{ t('chips_hint', lang) }}</span>
         {% for word, group in spec.chips %}
-        <button type="button" class="chip" data-word="{{ word }}"
+        <button type="button" class="chip" aria-pressed="false" data-word="{{ word }}"
                 {% if group %}data-group="{{ group }}"{% endif %}
                 onclick="toggleChip(this)"
                 style="font-size:.85rem; padding:.35rem .7rem; border:1px solid var(--line); background:var(--surface); border-radius:999px; cursor:pointer; min-height:34px;">{{ word }}</button>
         {% endfor %}
       </div>
       {% endif %}
-      <textarea name="remarks" rows="3" placeholder="{{ t('remarks_ph', lang) }}"
+      <textarea id="survey-remarks" name="remarks" rows="3" placeholder="{{ t('remarks_ph', lang) }}"
                 style="width:100%; padding:.55rem .6rem; border:1px solid var(--line); border-radius:8px; font-size:.95rem; font-family:inherit; resize:vertical;"></textarea>
       {% if spec.is_csm %}
       <div class="field" style="margin-top:.9rem;">
@@ -554,6 +561,7 @@ function toggleChip(btn) {
 
     // Scroll so the step counter is in view
     stepCtr.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    s.el.setAttribute('tabindex','-1'); s.el.focus();
   }
 
   function validateStep(s) {
@@ -570,11 +578,12 @@ function toggleChip(btn) {
           s.el.appendChild(errEl);
         }
         errEl.hidden = false;
+        errEl.setAttribute('role','alert'); errEl.setAttribute('tabindex','-1'); errEl.focus();
         return false;
       }
     } else if (s.type === 'demo') {
-      return Array.from(s.el.querySelectorAll('select[required]'))
-                  .every(function (sel) { return !!sel.value; });
+      var invalid = Array.from(s.el.querySelectorAll('input, select')).find(function (control) { return !control.validity.valid; });
+      if (invalid) { invalid.reportValidity(); invalid.focus(); return false; }
     }
     return true;
   }
@@ -592,22 +601,11 @@ function toggleChip(btn) {
     goToStep(cur + 1);
   });
 
-  // Auto-advance 450 ms after a radio is picked (feels conversational).
-  var autoTimer = null;
-  form.addEventListener('change', function (e) {
+  // Keep the current question until Next; keyboard rating changes never move focus.
+  form.addEventListener('survey-reveal', function (event) {
     if (!form.classList.contains('survey-conv')) return;
-    if (e.target.type !== 'radio' || !e.target.dataset.rate) return;
-    if (!steps[cur] || steps[cur].type !== 'item') return;
-    if (autoTimer) clearTimeout(autoTimer);
-    autoTimer = setTimeout(function () {
-      autoTimer = null;
-      if (!validateStep(steps[cur])) return;
-      // A low/high rating (or a manually opened "+ Add a note") may have
-      // revealed a follow-up note field in this same step. Don't whisk the
-      // user past it — let them type and advance with Next.
-      if (steps[cur].el.querySelector('.note-wrap:not([hidden])')) return;
-      if (cur < steps.length - 1) goToStep(cur + 1);
-    }, 450);
+    var index = steps.findIndex(function (step) { return step.el.contains(event.detail); });
+    if (index >= 0) goToStep(index);
   });
 
   // Toggle button activates / deactivates conv mode.
