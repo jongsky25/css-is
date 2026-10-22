@@ -396,6 +396,7 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
             return {"items": activity_docs.state_for(conn, e, KIND_LABELS.get(e["kind"], "")),
                     "relay": gdocs_relay.configured(),
                     "outside": activity_docs.get_outside(conn, e["id"]),
+                    "dpo_cites": activity_docs.get_dpo_cites(conn, e["id"]),
                     "invited_as": activity_docs.INVITED_AS,
                     "uploads_ready": _uploads_ready(conn)}
         except Exception:                                   # noqa: BLE001
@@ -1159,6 +1160,29 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
                 st.audit(conn, user["username"], "activity_outside", target_type="calendar_entry", target_id=entry_id,
                          summary=summary)
                 note = f"ok={quote('Saved. The next DPO draft will use it.')}"
+            except ValueError as ex:
+                note = f"err={quote(str(ex))}"
+        finally:
+            conn.close()
+        return RedirectResponse(f"/calendar/entries/{entry_id}?{note}#documents", status_code=303)
+
+    @router.post("/calendar/entries/{entry_id}/dpo-cites")
+    async def calendar_dpo_cites(request: Request, entry_id: int):
+        """What the DPO cites as the reason for the activity: the law, memo or invitation (spot feedback #170)."""
+        raw = parse_qs((await request.body()).decode("utf-8"), keep_blank_values=True)
+        user = request.state.user
+        conn = get_conn()
+        try:
+            e = oc.viewable_entry(conn, user, entry_id)
+            if e is None:
+                return _not_found(request)
+            try:
+                if e["status"] == "cancelled" or e["kind"] not in DOC_KINDS:
+                    raise ValueError("That cannot be set for this item.")
+                activity_docs.set_dpo_cites(conn, entry_id, (raw.get("dpo_cites") or [""])[0], user["username"])
+                st.audit(conn, user["username"], "activity_dpo_cites", target_type="calendar_entry", target_id=entry_id,
+                         summary="DPO cites saved")
+                note = f"ok={quote('Saved. The next DPO draft will cite it.')}"
             except ValueError as ex:
                 note = f"err={quote(str(ex))}"
         finally:

@@ -115,6 +115,27 @@ def set_invitation_file(conn, entry_id, url, name, by) -> None:
     conn.commit()
 
 
+CITES_MAX = 1000
+
+
+def get_dpo_cites(conn, entry_id) -> str:
+    """What the person typed under "DPO cites" for this activity, or ''."""
+    r = conn.execute("SELECT text FROM calendar_entry_dpo_cites WHERE entry_id=?", (entry_id,)).fetchone()
+    return (r[0] or "") if r else ""
+
+
+def set_dpo_cites(conn, entry_id, text, by) -> None:
+    """Keep what the DPO cites as the reason for the activity (one line; empty clears it)."""
+    text = " ".join(str(text or "").split())[:CITES_MAX]
+    if not text:
+        conn.execute("DELETE FROM calendar_entry_dpo_cites WHERE entry_id=?", (entry_id,))
+    else:
+        conn.execute("INSERT INTO calendar_entry_dpo_cites(entry_id, text, updated_by, updated_at) VALUES (?,?,?,?) "
+                     "ON CONFLICT(entry_id) DO UPDATE SET text=excluded.text, updated_by=excluded.updated_by, "
+                     "updated_at=excluded.updated_at", (entry_id, text, by, tz.now_iso()))
+    conn.commit()
+
+
 def clear_outside(conn, entry_id) -> None:
     conn.execute("DELETE FROM calendar_entry_outside WHERE entry_id=?", (entry_id,))
     conn.commit()
@@ -213,17 +234,34 @@ def payload(conn, entry, key, user, owner_label="", positions=False) -> td.DocPa
         place = (entry.get("venue") or "").strip()
         in_place = f" in {place}" if place else ""
         unit = owner_label.strip()
-        who = "Select Personnel"       # spot feedback #161: the section the personnel belong to is not named
         outside = get_outside(conn, entry["id"])
-        # The first paragraph stays broad and states the activity, not who was invited; the host's invitation lines are
-        # no longer cited in a DPO (spot feedback #161).
-        background = f"{title} will be held on {days}{in_place}."
-        if outside:
-            role = "to serve as resource person in" if outside["invited_as"] == "resource_person" else "to participate in"
+        the_title = title if title.lower().startswith("the ") else f"the {title}"
+        place_part = f", in {place}" if place else ""
+        # The wording follows the office's sample DPO (spot feedback #170): the first paragraph gives the rationale taken from
+        # the invitation's key lines, if there are any, then says who conducts the activity, when and where; the subject names
+        # the select bureau personnel and what they are authorised to do.
+        if outside and outside["host"]:
+            host = outside["host"]
+            conductor = host if host.lower().startswith("the ") else f"the {host}"
         else:
-            role = "to participate in"
-        intro = f"Authority is hereby given to the following select personnel {role} {title} on {days}{in_place}:"
-        subject = f"Authority for {who} to Participate in {title}, {days}{in_place}"
+            conductor = f"the DOH, through {BUREAU},"
+        sentence = f"{conductor} will conduct {the_title} on {days}{place_part}."
+        # What the person typed under "DPO cites" comes first; for another office's activity the invitation's key lines
+        # stand in when that is empty. Nothing is invented when both are.
+        rationale = get_dpo_cites(conn, entry["id"]).strip() or (outside or {}).get("invitation", "").strip()
+        if rationale:
+            background = (rationale if rationale[-1] in ".!?" else rationale + ".") + " In support of this, " + sentence
+        else:
+            background = sentence[0].upper() + sentence[1:]
+        if outside and outside["invited_as"] == "resource_person":
+            role, subject_role = "to serve as resource person in", "Serve as Resource Person in"
+        elif outside:
+            role, subject_role = "to participate in", "Participate in"
+        else:
+            role, subject_role = "to conduct", "Conduct"
+        intro = f"Authority is hereby given to the following select BLHSD personnel {role} {the_title} on {days}{place_part}:"
+        subject = (f"Authority for Select {BUREAU.removeprefix('the ')} Personnel to {subject_role} {the_title} "
+                   f"on {days}{place_part}")
         single = len(people) == 1
         if single:
             # One person (spot feedback #157): the subject and the body name them, with no list and no table.

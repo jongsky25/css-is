@@ -182,22 +182,36 @@ function at_footer_(doc) {
   footer.editAsText().setFontSize(8);
 }
 
+// DPO layout, in points, measured from the sample the office supplied (spot feedback #170); the text is 468 pt wide.
+var AT_DPO_TITLE_INDENT = 22.5;      // "DEPARTMENT PERSONNEL ORDER" and its number
+var AT_DPO_SUBJECT_LABEL = 36;       // where "SUBJECT:" starts
+var AT_DPO_SUBJECT_TEXT = 108;       // where the subject text starts; its wrapped lines line up under it
+var AT_DPO_BODY_FIRST_LINE = 36;     // first line of each body paragraph
+var AT_DPO_SIGNATORY_INDENT = 162;   // "By Authority of the Secretary of Health:" and the signatory block
+var AT_DPO_SPACE_AFTER = 12;         // points of space after each paragraph
+
 function at_buildDpo_(body, doc) {
   at_letterhead_(doc.addHeader());
-  at_add_(body, '{{dpo_date}}').setAlignment(DocumentApp.HorizontalAlignment.RIGHT);
-  at_add_(body, 'DEPARTMENT PERSONNEL ORDER').setBold(true);
-  at_add_(body, 'No. {{dpo_year}} - {{dpo_no}}');
-  const subject = at_add_(body, 'SUBJECT: {{subject}}');
+  // A space after the subject and after every paragraph (spot feedback #170).
+  const add = function (text) { return at_add_(body, text).setSpacingAfter(AT_DPO_SPACE_AFTER); };
+  add('{{dpo_date}}').setAlignment(DocumentApp.HorizontalAlignment.RIGHT);
+  add('DEPARTMENT PERSONNEL ORDER').setBold(true).setIndentStart(AT_DPO_TITLE_INDENT).setIndentFirstLine(AT_DPO_TITLE_INDENT);
+  add('No. {{dpo_year}} - {{dpo_no}}').setIndentStart(AT_DPO_TITLE_INDENT).setIndentFirstLine(AT_DPO_TITLE_INDENT);
+  // "SUBJECT:" then a tab to the subject text, which is bold, underlined and justified; its wrapped lines line up under
+  // the text, not under the label.
+  const subject = add('SUBJECT:\t{{subject}}');
   const subjectText = subject.editAsText();
   subjectText.setBold(true);
   subjectText.setUnderline(9, subjectText.getText().length - 1, true);
+  subject.setAlignment(DocumentApp.HorizontalAlignment.JUSTIFY);
+  subject.setIndentStart(AT_DPO_SUBJECT_TEXT).setIndentFirstLine(AT_DPO_SUBJECT_LABEL);
   [
     '{{background}}',
     '{{intro}}'
   ].forEach(function (t) {
-    const p = at_add_(body, t);
+    const p = add(t);
     p.setAlignment(DocumentApp.HorizontalAlignment.JUSTIFY);
-    p.setIndentFirstLine(36);
+    p.setIndentFirstLine(AT_DPO_BODY_FIRST_LINE);
   });
   const table = at_table_(body, [['Name', 'Position'], ['{{p_name}}', '{{p_position}}']]);
   table.setBorderWidth(0);
@@ -211,16 +225,16 @@ function at_buildDpo_(body, doc) {
     'Under this Order, traveling expenses such as plane fare, per diem, TNVs (e.g. grab, InDrive), bus, boat, taxi, and other allowable incidental expenses relative to the conduct of the activity of the abovementioned staff shall be charged against the {{funding_source}} funds.',
     'All expenses are subject to the usual accounting and auditing rules and regulations.'
   ].forEach(function (t) {
-    const p = at_add_(body, t);
+    const p = add(t);
     p.setAlignment(DocumentApp.HorizontalAlignment.JUSTIFY);
-    p.setIndentFirstLine(36);
+    p.setIndentFirstLine(AT_DPO_BODY_FIRST_LINE);
   });
-  at_add_(body, 'By Authority of the Secretary of Health:').setIndentStart(216);
-  at_add_(body, '');
-  at_add_(body, '');
-  at_add_(body, '{{head_name}}').setBold(true).setIndentStart(216);
-  at_add_(body, '{{head_title}}').setIndentStart(216);
-  at_add_(body, '{{unit_name}}').setIndentStart(216);
+  add('By Authority of the Secretary of Health:').setIndentStart(AT_DPO_SIGNATORY_INDENT);
+  add('');
+  add('');
+  add('{{head_name}}').setBold(true).setIndentStart(AT_DPO_SIGNATORY_INDENT);
+  add('{{head_title}}').setIndentStart(AT_DPO_SIGNATORY_INDENT);
+  add('{{unit_name}}').setIndentStart(AT_DPO_SIGNATORY_INDENT);
   body.editAsText().setFontFamily('Times New Roman');
   body.editAsText().setFontSize(12);
   at_footer_(doc);
