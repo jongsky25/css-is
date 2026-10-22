@@ -1,19 +1,28 @@
-"""A19 v1 read contract. Session authority and domain services remain authoritative."""
+"""A19 v1 integration contract. Current sessions and domain services own authority."""
 from contextlib import contextmanager
 from datetime import date, datetime
+import hashlib
+import hmac
+import json
+import os
+import re
+import sqlite3
 from typing import Annotated, Generic, Literal, TypeVar
 
-from fastapi import FastAPI, Path, Query, Request, Security
+from fastapi import FastAPI, Header, Path, Query, Request, Security
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.security import APIKeyCookie
-from pydantic import AwareDatetime, BaseModel, ConfigDict, Field
+from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, field_validator
 from starlette.exceptions import HTTPException
+from starlette._utils import get_route_path
 
 import auth
 import documents
 import documents_permissions as permissions
 from documents_registry import snapshot
+import integration_operations as operations
+from request_security import same_origin_write
 import tzutil as tz
 import version
 import work
@@ -22,6 +31,8 @@ import work_reads
 MAX_ID = 9223372036854775807
 API_ROOT = '/api/v1'
 Identifier = Annotated[str, Path(pattern=r'^[1-9][0-9]{0,18}$')]
+OPERATION_PATTERN = r'^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+OperationIdentifier = Annotated[str, Path(pattern=OPERATION_PATTERN)]
 T = TypeVar('T')
 
 
@@ -122,9 +133,66 @@ class TaskRead(Model):
 class ApiInfo(Model):
     api_version: Literal['1'] = '1'
     application_version: str
-    read_only: Literal[True] = True
+    read_only: Literal[False] = False
     authentication: Literal['registered_user_session'] = 'registered_user_session'
     openapi: str
+
+
+class WriteContext(Model):
+    csrf_token: str
+
+
+class Acknowledge(Model):
+    revision: int = Field(strict=True, ge=1, le=MAX_ID - 1)
+    reason: str = Field(strict=True, min_length=1, max_length=2000)
+
+    @field_validator('reason')
+    @classmethod
+    def meaningful_reason(cls, value):
+        if not value.strip():
+            raise ValueError('A reason is required.')
+        value.encode('utf-8')
+        return value
+
+
+class OperationLinks(Model):
+    self: str
+    task: str
+    web: str
+
+
+class OperationRead(Model):
+    id: str
+    action: Literal['acknowledge'] = 'acknowledge'
+    status: Literal['succeeded'] = 'succeeded'
+    work_item_id: str
+    task_id: str
+    result_revision: int
+    result_status: Literal['in_progress'] = 'in_progress'
+    completed_at: AwareDatetime
+    links: OperationLinks
+
+
+def operation_read(row):
+    return OperationRead(id=row['operation_id'], work_item_id=str(row['case_id']),
+        task_id=str(row['task_id']), result_revision=row['result_revision'], completed_at=_stamp(row['completed_at']),
+        links=OperationLinks(self=f"{API_ROOT}/operations/{row['operation_id']}",
+            task=f"{API_ROOT}/work-items/{row['case_id']}/tasks/{row['task_id']}",
+            web=f"/work/{row['case_id']}#task-{row['task_id']}"))
+
+
+def csrf_token(request):
+    return hmac.new(auth._secret(), ('integration-v1:' + request.cookies.get(auth.COOKIE_NAME, '')).encode(),
+                    hashlib.sha256).hexdigest()
+
+
+def _unique_object(pairs):
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError('Duplicate JSON member')
+        result[key] = value
+    return result
 
 
 def _id(value):
@@ -178,8 +246,8 @@ def page_info(limit, next_before):
 def make_app(get_conn):
     cookie = APIKeyCookie(name=auth.COOKIE_NAME, scheme_name='UserSession', auto_error=False,
                          description='An existing registered user session; API keys and bearer tokens are not supported by this increment.')
-    api = FastAPI(title='Office Connect read API', version='1.0.0',
-                  description='Permission-checked metadata and status reads. No write operations.',
+    api = FastAPI(title='Office Connect API', version='1.1.0',
+                  description='Permission-checked metadata reads and explicit task acknowledgement with durable recovery receipts.',
                   docs_url=None, redoc_url=None, dependencies=[Security(cookie)],
                   servers=[{'url': API_ROOT}], root_path_in_servers=False)
 
@@ -205,6 +273,23 @@ def make_app(get_conn):
     async def api_error(request, exc):
         return failure(exc.status, exc.code, exc.message)
 
+    @api.exception_handler(operations.OperationError)
+    async def operation_error(request, exc):
+        return failure(exc.status, exc.code, exc.message)
+
+    @api.exception_handler(permissions.Denied)
+    async def unavailable(request, exc):
+        return failure(404, 'not_found', 'Resource not found or unavailable to you.')
+
+    @api.exception_handler(sqlite3.OperationalError)
+    async def database_error(request, exc):
+        if 'locked' in str(exc).lower() or 'busy' in str(exc).lower():
+            message = ('Check the operation result, then retry the same request and key if needed.'
+                       if request.method == 'POST' else 'The database is busy. Retry this read later.')
+            return failure(503, 'temporarily_unavailable',
+                           message, {'Retry-After': '1'})
+        return failure(500, 'internal_error', 'The request could not be completed. Check the operation result before retrying.')
+
     @api.exception_handler(RequestValidationError)
     async def invalid_request(request, exc):
         # Never echo submitted values, cookies, credentials or validation internals.
@@ -214,34 +299,88 @@ def make_app(get_conn):
     async def http_error(request, exc):
         code, message = {
             404: ('not_found', 'Resource not found or unavailable to you.'),
-            405: ('method_not_allowed', 'This API supports GET reads only.'),
+            405: ('method_not_allowed', 'This method is not supported for this resource.'),
         }.get(exc.status_code, ('request_failed', 'The request could not be completed.'))
         return failure(exc.status_code, code, message, exc.headers)
 
     @api.exception_handler(Exception)
     async def server_error(request, exc):
-        return failure(500, 'internal_error', 'The request could not be completed. Retry later.')
+        message = ('The request could not be completed. Check the operation result before retrying.'
+                   if request.method == 'POST' else 'The request could not be completed. Retry later.')
+        return failure(500, 'internal_error', message)
 
     @api.middleware('http')
-    async def read_boundary(request, call_next):
+    async def api_boundary(request, call_next):
         # The parent middleware authenticates this namespace before dispatch,
         # including the generated contract and unknown paths. Keep this factory
         # fail-closed if it is accidentally mounted without that parent.
         if not getattr(request.state, 'user', None):
             return failure(401, 'authentication_required', 'A current signed-in session is required.')
-        if request.method != 'GET':
-            return failure(405, 'method_not_allowed', 'This API supports GET reads only.', {'Allow': 'GET'})
+        acknowledgement = re.fullmatch(r'/work-items/[^/]+/tasks/[^/]+/acknowledge', get_route_path(request.scope))
+        allowed = 'POST' if acknowledgement else 'GET'
+        if request.method != allowed:
+            return failure(405, 'method_not_allowed', 'This method is not supported for this resource.', {'Allow': allowed})
         if any(len(request.query_params.getlist(key)) > 1 for key in request.query_params):
             return failure(400, 'invalid_request', 'Duplicate request parameters are not supported.')
+        if request.method == 'POST':
+            canonical = os.environ.get('CSS_BASE_URL') or ('https://' + os.environ['SPACE_HOST'] if os.environ.get('SPACE_HOST') else None)
+            supplied = request.headers.getlist('x-csrf-token')
+            if (not same_origin_write(request, canonical) or len(supplied) != 1
+                    or not hmac.compare_digest(supplied[0].encode(), csrf_token(request).encode())):
+                return failure(403, 'request_verification_failed', 'Fetch the current write context and verify the request origin.')
+            keys = request.headers.getlist('idempotency-key')
+            if len(keys) != 1 or not re.fullmatch(OPERATION_PATTERN, keys[0]) or request.query_params:
+                return failure(400, 'invalid_request', 'Use one new UUID v4 operation key and no query parameters.')
+            types = request.headers.getlist('content-type')
+            if len(types) != 1 or types[0].split(';')[0].strip().lower() != 'application/json':
+                return failure(415, 'unsupported_media_type', 'Send an application/json request body.')
+            # Bound streamed and chunked requests before FastAPI parses the body.
+            payload = bytearray()
+            async for chunk in request.stream():
+                payload.extend(chunk)
+                if len(payload) > 8192:
+                    return failure(413, 'request_too_large', 'The request body exceeds the supported size.')
+            try:
+                json.loads(payload.decode('utf-8'), object_pairs_hook=_unique_object)
+            except (ValueError, UnicodeError, RecursionError):
+                return failure(400, 'invalid_request', 'Send a valid JSON object without duplicate members.')
+            request._body = bytes(payload)
         response = await call_next(request)
         response.headers['Cache-Control'] = 'private, no-store'
         return response
 
-    errors = {n: {'model': ErrorResponse} for n in (400, 401, 404, 405, 500)}
+    errors = {n: {'model': ErrorResponse} for n in (400, 401, 404, 405, 500, 503)}
+    write_errors = {**errors, **{n: {'model': ErrorResponse} for n in (403, 409, 413, 415)}}
 
     @api.get('/', response_model=ApiInfo, responses=errors, operation_id='readApiInfo')
     def info():
         return ApiInfo(application_version=version.APP_VERSION, openapi=API_ROOT + '/openapi.json')
+
+    @api.get('/write-context', response_model=WriteContext, responses=errors, operation_id='readWriteContext')
+    def write_context(request: Request):
+        with read_context(request) as (conn, user):
+            operations.session_actor(conn, auth.parse_token(request.cookies.get(auth.COOKIE_NAME)))
+            return WriteContext(csrf_token=csrf_token(request))
+
+    @api.get('/operations/{operation_id}', response_model=OperationRead, responses=errors, operation_id='readTaskOperation')
+    def operation_detail(request: Request, operation_id: OperationIdentifier):
+        with read_context(request) as (conn, user):
+            user = operations.session_actor(conn, auth.parse_token(request.cookies.get(auth.COOKIE_NAME)))
+            return operation_read(operations.find(conn, user, operation_id))
+
+    @api.post('/work-items/{work_item_id}/tasks/{task_id}/acknowledge', response_model=OperationRead,
+              responses=write_errors, operation_id='acknowledgeWorkTask')
+    def acknowledge_task(request: Request, work_item_id: Identifier, task_id: Identifier, data: Acknowledge,
+                         idempotency_key: Annotated[str, Header(pattern=OPERATION_PATTERN)],
+                         x_csrf_token: Annotated[str, Header(pattern=r'^[0-9a-f]{64}$')],
+                         origin: Annotated[str, Header(max_length=4096)]):
+        conn = get_conn()
+        try:
+            return operation_read(operations.acknowledge(conn,
+                auth.parse_token(request.cookies.get(auth.COOKIE_NAME)), _id(work_item_id), _id(task_id),
+                idempotency_key, data.revision, data.reason))
+        finally:
+            conn.close()
 
     @api.get('/documents', response_model=Page[DocumentRead], responses=errors, operation_id='listDocuments')
     def document_list(request: Request, query: Annotated[DocumentQuery, Query()]):
