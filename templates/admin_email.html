@@ -47,6 +47,8 @@
   .dot { font-size:.85rem; }
   .dot.sent { color:var(--green); } .dot.failed { color:var(--red); }
   .dot.skipped_off { color:var(--amber); } .dot.not_configured { color:var(--soft); }
+  .blocked { color:var(--amber); font-weight:600; }
+  .blocked a { color:var(--accent); }
   .status-word { font-size:.78rem; color:var(--soft); }
 </style>
 {% endblock %}
@@ -60,6 +62,9 @@
         {% else %}<span class="state on">ALWAYS ON</span>{% endif %}
       </div>
       <div class="fhint">{{ hint }}</div>
+      {% set h = health.get(key) %}
+      {% if h %}<div class="fhint">Last sent: {{ (h.last_sent or 'never')|replace('T', ' ') }}{% if h.failed %} · <span class="blocked">{{ h.failed }} failed in the last 7 days</span>{% endif %}</div>{% endif %}
+      {% if on and blockers.get(key) %}<div class="fhint blocked">⚠ Won't send right now: {{ blockers[key][0] }} <a href="{{ blockers[key][1] }}">Change this</a></div>{% endif %}
     </div>
     <div class="ractions">
       {% if on is not none %}
@@ -71,7 +76,11 @@
       {% endif %}
       <form method="post" action="/admin/email/test">
         <input type="hidden" name="key" value="{{ key }}">
-        <button class="btn ghost" type="submit">Send test to me</button>
+        <select name="to_account" aria-label="Send the test to" style="padding:.25rem .4rem; border-radius:8px; border:1px solid var(--line); background:var(--surface); color:inherit; max-width:11rem; font-size:.78rem;">
+          <option value="">to me</option>
+          {% for uid, uname in accounts %}<option value="{{ uid }}">{{ uname }}</option>{% endfor %}
+        </select>
+        <button class="btn ghost" type="submit">Send test</button>
       </form>
     </div>
   </div>
@@ -88,6 +97,30 @@
 
   {% if msg %}<div class="flash ok">{{ msg }}</div>{% endif %}
   {% if err %}<div class="flash err">{{ err }}</div>{% endif %}
+
+  {% if attention %}
+  <div class="acard">
+    <h2>Needs attention</h2>
+    <p class="hint">Emails that failed to send in the last 7 days.</p>
+    {% for key, h in attention %}
+    <div class="fblock"><div class="frow">
+      <div><div class="lbl">{{ labels.get(key, key) }} <span class="state off">{{ h.failed }} failed</span></div>
+        {% if h.last_error %}<div class="fhint">Latest error: {{ h.last_error }}</div>{% endif %}</div>
+      <a class="btn ghost" style="text-decoration:none;" href="/admin/email?log_feature={{ key }}&log_status=failed#sends">See them</a>
+    </div></div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="acard">
+    <h2>Pause all email</h2>
+    <p class="hint">Holds every email on the lists below at once — nothing is sent, and nothing else changes. Account mail (invites, password resets, registration-link re-sends) is never paused. Queued room and calendar emails wait and go out after you resume; the daily reminder jobs skip while paused.</p>
+    <form method="post" action="/admin/email/pause" class="frow">
+      <div><span class="state {{ 'off' if paused else 'on' }}">{{ 'PAUSED' if paused else 'RUNNING' }}</span></div>
+      <input type="hidden" name="paused" value="{{ '0' if paused else '1' }}">
+      <button class="btn {{ '' if paused else 'danger' }}" type="submit">{{ 'Resume email' if paused else 'Pause all email' }}</button>
+    </form>
+  </div>
 
   <div class="acard">
     <h2>Transport</h2>
@@ -118,6 +151,38 @@
     <h2>Scheduled</h2>
     <p class="hint">The daily reminder sweep's jobs — each runs once, on its own schedule.</p>
     {% for key, label, hint, on in scheduled %}{{ row(key, label, hint, on) }}{% endfor %}
+  </div>
+
+  <div class="acard">
+    <h2>Delivery policy</h2>
+    <p class="hint">Applies to every message this system sends, account mail included. Leave a box blank to leave it unset.</p>
+    {% if policy.redirect_to %}<div class="flash err">Staging redirect is ON: every email is going to {{ policy.redirect_to }} instead of its real recipient — including password resets and invites. Clear it before real use.</div>{% endif %}
+    <form method="post" action="/admin/email/policy">
+      {% set fld = 'padding:.3rem .5rem; border-radius:8px; border:1px solid var(--line); background:var(--surface); color:inherit; width:16rem; max-width:100%;' %}
+      <div class="fblock"><div class="frow"><div><div class="lbl">Send everything to one address (staging)</div><div class="fhint">For testing: real recipients get nothing. The original address is shown in the subject.</div></div>
+        <input type="email" name="redirect_to" value="{{ policy.redirect_to }}" maxlength="254" style="{{ fld }}"></div></div>
+      <div class="fblock"><div class="frow"><div><div class="lbl">Sender name</div><div class="fhint">What recipients see as the sender. Blank: Office Connect.</div></div>
+        <input type="text" name="from_name" value="{{ policy.from_name }}" maxlength="60" style="{{ fld }}"></div></div>
+      <div class="fblock"><div class="frow"><div><div class="lbl">Reply-to address</div><div class="fhint">Where replies go. Needs the updated mail relay script (docs/MAIL_RELAY_SETUP.md); an older one ignores it.</div></div>
+        <input type="email" name="reply_to" value="{{ policy.reply_to }}" maxlength="254" style="{{ fld }}"></div></div>
+      <div class="fblock"><div class="frow"><div><div class="lbl">Subject prefix</div><div class="fhint">Added to the start of every subject, e.g. [TEST].</div></div>
+        <input type="text" name="subject_prefix" value="{{ policy.subject_prefix }}" maxlength="40" style="{{ fld }}"></div></div>
+      <div class="fblock"><button class="btn" type="submit">Save delivery policy</button></div>
+    </form>
+  </div>
+
+  <div class="acard">
+    <h2>Attachments</h2>
+    <p class="hint">Parts of an email that can be left off while the email itself still sends.</p>
+    {% for key, label, hint, on in options %}
+    <div class="fblock"><div class="frow">
+      <div><div class="lbl">{{ label }} <span class="state {{ 'on' if on else 'off' }}">{{ 'ON' if on else 'OFF' }}</span></div><div class="fhint">{{ hint }}</div></div>
+      <form method="post" action="/admin/email/option">
+        <input type="hidden" name="key" value="{{ key }}"><input type="hidden" name="on" value="{{ '0' if on else '1' }}">
+        <button class="btn {{ 'danger' if on else '' }}" type="submit">{{ 'Turn OFF' if on else 'Turn ON' }}</button>
+      </form>
+    </div></div>
+    {% endfor %}
   </div>
 
   <div class="acard">
@@ -157,15 +222,42 @@
     </form>
   </div>
 
+  <div class="acard">
+    <h2>Sent from other modules</h2>
+    <p class="hint">Mail sent by a deliberate action elsewhere. It has its own switch there, is not affected by the pause above, and its sends show in Recent sends.</p>
+    {% for key, label, why, url, blocker in external %}
+    <div class="fblock"><div class="frow">
+      <div><div class="lbl">{{ label }} <span class="state {{ 'off' if blocker else 'on' }}">{{ 'OFF' if blocker else 'ON' }}</span></div>
+        <div class="fhint">{{ why }}</div>
+        {% if blocker %}<div class="fhint blocked">{{ blocker[0] }}</div>{% endif %}</div>
+      <div class="ractions"><a class="btn ghost" href="{{ url }}" style="text-decoration:none;">Open settings</a></div>
+    </div></div>
+    {% endfor %}
+  </div>
+
   <div class="acard always-on">
     <h2>Always on</h2>
     <p class="hint">Account access mail. Never disableable here — turning any of these off could lock someone out of their own account. Still previewable and test-sendable, so an admin can see what they're not allowed to turn off.</p>
     {% for key, (label, why) in always_on %}{{ row(key, label, why) }}{% endfor %}
   </div>
 
-  <div class="acard">
+  <div class="acard" id="sends">
     <h2>Recent sends</h2>
-    <p class="hint">The newest 50 attempts, across every feature above — including ones turned off (shown as "skipped").</p>
+    <p class="hint">Attempts across every feature above — including ones turned off or paused (shown as "skipped"). Search by address or subject, or filter by feature and result.</p>
+    <form method="get" action="/admin/email" class="frow" style="margin-bottom:.8rem; justify-content:flex-start;">
+      <select name="log_feature" style="padding:.3rem .5rem; border-radius:8px; border:1px solid var(--line); background:var(--surface); color:inherit;">
+        <option value="">All features</option>
+        {% for k in log_features %}<option value="{{ k }}" {{ 'selected' if k == log_filter.feature else '' }}>{{ labels.get(k, k) }}</option>{% endfor %}
+      </select>
+      <select name="log_status" style="padding:.3rem .5rem; border-radius:8px; border:1px solid var(--line); background:var(--surface); color:inherit;">
+        <option value="">Any result</option>
+        {% for k in ['sent', 'failed', 'not_configured', 'skipped_off'] %}<option value="{{ k }}" {{ 'selected' if k == log_filter.status else '' }}>{{ k.replace('_', ' ') }}</option>{% endfor %}
+      </select>
+      <input type="search" name="log_q" value="{{ log_filter.q }}" placeholder="Address or subject" maxlength="100"
+             style="padding:.3rem .5rem; border-radius:8px; border:1px solid var(--line); background:var(--surface); color:inherit;">
+      <button class="btn" type="submit">Filter</button>
+      <a class="btn ghost" style="text-decoration:none;" href="/admin/email/log.csv?log_feature={{ log_filter.feature|urlencode }}&log_status={{ log_filter.status|urlencode }}&log_q={{ log_filter.q|urlencode }}">Download CSV</a>
+    </form>
     {% if recent_sends %}
     <table class="log-table">
       <thead><tr><th></th><th>When</th><th>Feature</th><th>To</th><th>Subject</th></tr></thead>
@@ -183,8 +275,9 @@
         {% endfor %}
       </tbody>
     </table>
+    {% if log_more %}<p style="margin-top:.6rem;"><a class="btn ghost" style="text-decoration:none;" href="/admin/email?log_feature={{ log_filter.feature|urlencode }}&log_status={{ log_filter.status|urlencode }}&log_q={{ log_filter.q|urlencode }}&log_limit={{ log_filter.limit + 100 }}#sends">Show more</a></p>{% endif %}
     {% else %}
-    <p class="hint">Nothing sent yet.</p>
+    <p class="hint">{{ 'Nothing matches.' if log_filter.feature or log_filter.status or log_filter.q else 'Nothing sent yet.' }}</p>
     {% endif %}
   </div>
 </div>

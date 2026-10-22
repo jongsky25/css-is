@@ -571,7 +571,8 @@ def board(conn, week_start, user_id=None, today=None, days=5):
         cells, prev_res = [], None
         for s in slots:
             cell = {"slot": s, "state": "free", "pending": 0, "mine": False, "title": None,
-                    "ref": None, "cont": False, "reason": None, "rid": None}
+                    "ref": None, "cont": False, "reason": None, "rid": None,
+                    "mine_approved": False, "mine_requested": False}
             block = blocks.get((di, s["id"])) or blocks.get((di, None))
             if closed:
                 cell.update(state="closed", reason=closed)
@@ -580,6 +581,7 @@ def board(conn, week_start, user_id=None, today=None, days=5):
             else:
                 for h in held.get((di, s["id"]), []):
                     if h["mine"]:
+                        cell["mine_approved" if h["approved"] else "mine_requested"] = True
                         cell["mine"] = True
                         cell["rid"] = h["id"]
                     if h["approved"]:
@@ -696,15 +698,16 @@ def queue(conn):
             rivals.append({"id": o["id"], "ref": o["ref_code"], "title": o["title"], "who": on,
                            "hours": hours_text(conn, o)})
         moved = get_reservation(conn, res["moves_reservation_id"]) if res["source"] == "move" and res["moves_reservation_id"] else None
-        out.append({**res, "linked": linked_to(conn, res), "requester_name": name, "requester_unit": unit, "is_external": ext, "series": series_summary(conn, res),
+        past = _d(res['day']) < tz.today_local()
+        out.append({**res, "past": past, "linked": linked_to(conn, res), "requester_name": name, "requester_unit": unit, "is_external": ext, "series": series_summary(conn, res),
                     "move_of": ({"ref": moved["ref_code"], "when": queue_when(moved), "status": moved["status"]} if moved else None),
                     "email_unconfirmed": bool(ext and res["ext_email"] and not res["ext_email_verified_at"]),
                     "hours": hours_text(conn, res), "rivals": rivals,
                     "when": f"{_d(res['day']):%a} {_d(res['day']).day} {_d(res['day']):%b %Y}",
                     "held_by": ({"id": held[0], "ref": held[1], "title": held[2]} if held else None),
                     "blocked": block[0] if block else None,
-                    "can_approve": not held and not block,
-                    "can_confirm_standby": bool(res["standby"] and held and not block)})
+                    "can_approve": not held and not block and not past,
+                    "can_confirm_standby": bool(res["standby"] and held and not block and not past)})
     return out
 
 

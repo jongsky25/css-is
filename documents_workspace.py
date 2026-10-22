@@ -5,12 +5,32 @@ Google's reply host, without forwarding the signed body or secret.
 """
 import os
 import time
+from contextvars import ContextVar
 from urllib.parse import urlparse
 import httpx
 import gdocs_relay
 
 MAX_RESPONSE = 1024 * 1024
 CALL_SECONDS = 120
+_CALL_DEADLINE = ContextVar('document_call_deadline',default=None)
+
+
+class BudgetAdapter:
+    """Several calls in one admitted turn share one elapsed service budget."""
+    def __init__(self,adapter):
+        self.adapter=adapter
+        self.deadline=min(time.monotonic()+CALL_SECONDS,_CALL_DEADLINE.get() or float('inf'))
+
+    def call(self,action,payload,operation_id):
+        remaining(self.deadline)
+        token=_CALL_DEADLINE.set(self.deadline)
+        try:
+            return self.adapter.call(action,payload,operation_id)
+        finally:
+            _CALL_DEADLINE.reset(token)
+
+    def available(self):
+        return time.monotonic()<self.deadline
 
 
 def remaining(deadline):
@@ -64,7 +84,7 @@ class WorkspaceRelay:
             raise WorkspaceError('invalid_endpoint', 'Use the existing Google Apps Script /exec deployment URL.')
         request = {**payload, 'action':'document_'+action, 'operation_id':operation_id}
         envelope = gdocs_relay.envelope(request, secret)
-        deadline = time.monotonic() + CALL_SECONDS
+        deadline = min(time.monotonic()+CALL_SECONDS,_CALL_DEADLINE.get() or float('inf'))
         with httpx.Client(timeout=httpx.Timeout(90,connect=10),follow_redirects=False) as client:
             response = _request(client,"POST",endpoint,deadline=deadline,json=envelope)
             # ContentService's 302/303 response is a result location, not another

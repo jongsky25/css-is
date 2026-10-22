@@ -12,14 +12,79 @@
   var cells = Array.prototype.slice.call(wrap.querySelectorAll('button.rm-cell'));
   var anchor = null, dragging = false, moved = false, sel = null;   // sel = {day, a, b} row indexes
 
-  function open(on) {
-    wrap.classList.toggle('panel-open', on);
-    document.body.classList.toggle('rm-sheet-open', on);
-    if (on) { var t = document.getElementById('rm-title'); if (t && !t.value) t.focus({ preventScroll: true }); }
+  var panel = document.getElementById('rm-panel'), openButton = document.getElementById('rm-open');
+  var panelOpen = false, opener = null, releaseFocus = null;
+  var sheet = matchMedia('(max-width:1199px)');
+  var availability = null, checkedDay = '', checkSequence = 0, checking = false;
+  var checkController = null, checkFailed = false;
+  var standby = form.querySelector('input[name="standby"]');
+
+  function syncPanel(active) {
+    var modal = sheet.matches && panelOpen;
+    wrap.classList.toggle('panel-open', panelOpen);
+    document.body.classList.toggle('rm-sheet-open', modal);
+    openButton.setAttribute('aria-expanded', modal ? 'true' : 'false');
+    panel.inert = sheet.matches && !panelOpen;
+    if (panel.inert) panel.setAttribute('aria-hidden', 'true');
+    else panel.removeAttribute('aria-hidden');
+    if (modal) {
+      panel.setAttribute('role', 'dialog'); panel.setAttribute('aria-modal', 'true');
+      panel.setAttribute('aria-labelledby', 'rm-panel-title');
+      if (!releaseFocus && window.OfficeA11y) {
+        releaseFocus = OfficeA11y.open(panel, {initialFocus:active && panel.contains(active) ? active : initialControl(), returnFocus:opener,
+          onDismiss:function () {open(false);}});
+      }
+    } else {
+      panel.removeAttribute('role'); panel.removeAttribute('aria-modal'); panel.removeAttribute('aria-labelledby');
+      if (releaseFocus) { releaseFocus(); releaseFocus = null; }
+    }
   }
-  document.getElementById('rm-open').addEventListener('click', function () { open(true); });
+  function initialControl() {
+    return document.getElementById('rm-form-error') || (!dayEl.value ? dayEl : document.getElementById('rm-title'));
+  }
+  function open(on, trigger) {
+    if (on && !panelOpen) opener = trigger || document.activeElement;
+    panelOpen = on; syncPanel();
+    if (on) { initialControl().focus({preventScroll:true}); checkDay(false); }
+  }
+  openButton.addEventListener('click', function () { open(true, openButton); });
   document.getElementById('rm-close').addEventListener('click', function () { open(false); });
-  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') open(false); });
+  document.getElementById('rm-check').addEventListener('click', function () { checkDay(true); });
+  document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape' && sheet.matches && panelOpen && !window.OfficeA11y) open(false);
+  });
+  window.addEventListener('resize', function () {
+    var active = document.activeElement;
+    if (sheet.matches && panel.contains(active)) panelOpen = true;
+    syncPanel(active);
+    if (!sheet.matches && panel.contains(active)) active.focus({preventScroll:true});
+  });
+  if (standby) standby.addEventListener('change', describe);
+  syncPanel();
+
+  function checkDay(force) {
+    var day = dayEl.value;
+    if (!force && checkedDay === day) return;
+    var sequence = ++checkSequence;
+    if (checkController) checkController.abort();
+    checkedDay = day; availability = null; checkFailed = false; checking = false;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) { describe(); return; }
+    checking = true; describe();
+    checkController = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    var options = {credentials:'same-origin'};
+    if (checkController) options.signal = checkController.signal;
+    fetch('/rooms/api/day?date=' + encodeURIComponent(day), options).then(function (response) {
+      if (!response.ok) throw new Error('Availability unavailable');
+      return response.json();
+    }).then(function (data) {
+      if (sequence !== checkSequence) return;
+      if (data.day !== day || !Array.isArray(data.hours)) throw new Error('Unexpected availability');
+      availability = data; checking = false; describe();
+    }).catch(function () {
+      if (sequence !== checkSequence) return;
+      checking = false; checkFailed = true; describe();
+    });
+  }
 
   function colCells(day) { return cells.filter(function (c) { return c.dataset.day === day; }); }
   function byRow(day, row) { return colCells(day).filter(function (c) { return +c.dataset.row === row; })[0]; }
@@ -40,26 +105,41 @@
     return x.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
   }
   function describe() {
-    var f = fromEl.options[fromEl.selectedIndex], t = toEl.options[toEl.selectedIndex];
-    if (!dayEl.value || !f || !t) return;
-    if (fromEl.selectedIndex > toEl.selectedIndex) { summary.textContent = 'Check the times: "Until" is before "From".'; return; }
-    summary.textContent = label(dayEl.value) + ' · ' + f.textContent + ' – ' + t.textContent;
-    var pending = 0, booked = null;
-    if (sel) for (var r = Math.min(sel.a, sel.b); r <= Math.max(sel.a, sel.b); r++) {
-      var c = byRow(sel.day, r); if (!c) continue;
-      pending = Math.max(pending, +c.dataset.pending || 0);
-      if (c.dataset.booked && !booked) booked = c.dataset.title || 'a booking';
-    }
+    var lo = Math.min(fromEl.selectedIndex, toEl.selectedIndex);
+    var hi = Math.max(fromEl.selectedIndex, toEl.selectedIndex);
+    var first = fromEl.options[lo], last = toEl.options[hi];
+    summary.textContent = dayEl.value && first && last ? label(dayEl.value) + ' · ' +
+      first.textContent + ' – ' + last.textContent : 'Pick a date and hours. Sending a request does not reserve them.';
     clash.className = 'rm-clash';
-    var enc = document.querySelector('.rm-encode');
-    if (booked && enc) {                              // section members: booking over an approved one
-      enc.open = true;
+    if (!dayEl.value) {clash.textContent = ''; return;}
+    if (checking) {clash.textContent = 'Checking availability for this date…'; return;}
+    if (checkFailed) {
+      clash.textContent = 'Could not check availability. Your details are kept. Use Check availability to retry, or submit for a fresh server check.'; return;
+    }
+    if (!availability) {clash.textContent = 'Use Check availability to check these hours.'; return;}
+    if (availability.closed) {
       clash.className = 'rm-clash bad';
-      clash.textContent = 'Already booked: ' + booked + '. To book anyway, use "book it for someone" below.';
+      clash.textContent = 'Date unavailable for new requests: ' + availability.closed; return;
+    }
+    var chosen = Array.prototype.slice.call(fromEl.options, lo, hi + 1).map(function (o) {return +o.value;});
+    var hours = availability.hours.filter(function (h) {return chosen.indexOf(+h.id) >= 0;});
+    if (hours.length !== chosen.length) {
+      clash.textContent = 'The available hours changed. Check availability again before submitting.'; return;
+    }
+    var taken = hours.some(function (h) {return h.state === 'booked' || h.state === 'closed';});
+    var others = hours.some(function (h) {return h.state === 'requested';});
+    if (standby && standby.checked) {
+      clash.textContent = 'Standby only — no hours are reserved. The Administrative Section must confirm it; any room closure must be reopened first.'; return;
+    }
+    if (taken) {
+      clash.className = 'rm-clash bad';
+      clash.textContent = 'Some selected hours are booked or unavailable. Choose other hours, or select standby to ask the Administrative Section.';
+      var encode = document.querySelector('.rm-encode');
+      if (encode) encode.open = true;
       return;
     }
-    clash.textContent = pending ? pending + ' other request' + (pending > 1 ? 's are' : ' is') +
-      ' pending for these hours. The Administrative Section will decide.' : '';
+    clash.textContent = others ? 'Requests are waiting for some of these hours. You can still request; the room is not reserved until approval.' :
+      'Free to request — not reserved. The Administrative Section must approve your request.';
   }
   function apply(day, a, b, openPanel) {
     sel = { day: day, a: a, b: b };
@@ -67,13 +147,14 @@
     dayEl.value = day; fromEl.selectedIndex = lo; toEl.selectedIndex = hi;
     dayEl.dispatchEvent(new Event('input', { bubbles: true }));   // the date-picker overlay listens for this
     paint(); describe();
-    if (openPanel) open(true);
+    checkDay(false);
+    if (openPanel) open(true, byRow(day, a));
   }
   function fromForm() {                           // typed by hand: mirror onto the grid when the day is shown
     var day = dayEl.value, lo = fromEl.selectedIndex, hi = toEl.selectedIndex;
     if (day && colCells(day).length && lo <= hi && rangeFree(day, lo, hi)) sel = { day: day, a: lo, b: hi };
     else sel = null;
-    paint(); describe();
+    paint(); describe(); checkDay(false);
   }
   [dayEl, fromEl, toEl].forEach(function (el) { el.addEventListener('change', fromForm); });
 
@@ -90,7 +171,7 @@
     });
     c.addEventListener('click', function (e) {
       var day = c.dataset.day, row = +c.dataset.row;
-      if (moved) { moved = false; open(true); return; }
+      if (moved) { moved = false; open(true, c); return; }
       if (sel && sel.day === day && sel.a === sel.b && sel.a !== row && rangeFree(day, sel.a, row)) apply(day, sel.a, row, true);
       else if (e.shiftKey && sel && sel.day === day && rangeFree(day, sel.a, row)) apply(day, sel.a, row, true);
       else apply(day, row, row, true);
@@ -126,7 +207,10 @@
       Array.prototype.forEach.call(wrap.querySelectorAll('th[data-day], td[data-day], .rm-daystrip a'), function (el) {
         if (el.closest('.rm-week2')) return;
         el.classList.toggle('is-active-day', el.dataset.day === day);
-        if (el.getAttribute('role') === 'tab') el.setAttribute('aria-selected', el.dataset.day === day ? 'true' : 'false');
+        if (el.matches('.rm-daystrip a')) {
+          if (el.dataset.day === day) el.setAttribute('aria-current', 'true');
+          else el.removeAttribute('aria-current');
+        }
       });
     });
   });

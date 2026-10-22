@@ -1,6 +1,7 @@
 {% extends 'documents/base.html' %}{% from 'documents/forms.html' import start,end,field,text,person,select,receipt_channel %}
 {% block documents_content %}
 <h2>{{ doc.number }} · {{ doc.subject }}</h2>
+{% include 'documents/next_step.html' %}
 {% include 'documents/workspace.html' %}
 {% if enabled and can_work and doc.direction=='OUT' and doc.status not in ['closed','cancelled','released','awaiting_acknowledgment'] and not doc.archived_at %}
 <details class="doc-card"><summary>Start from a memorandum template</summary>
@@ -68,11 +69,11 @@
 {{ start(doc,csrf,'relate','Link a reply or related record') }}{{ field('target_id','Related document ID','number') }}{{ select('kind','Relationship',[('reply','Reply to'),('follow_up','Follow-up'),('related','Related')]) }}{{ end() }}
 {% if doc.direction=='IN' %}{% for action,label in [('in_action','Start internal action'),('awaiting_external','Await external response — deadline continues')] %}{{ start(doc,csrf,action,label) }}{{ text('reason','Note') }}{{ end() }}{% endfor %}{% endif %}
 {{ start(doc,csrf,'calendar_preview','Suggest a calendar follow-up') }}{{ field('day','Date','date') }}{{ end('Check existing events') }}
-{{ start(doc,csrf,'close','Close after completing requirements') }}{% for label in policy.get('closure',[]) %}{{ text('closure:'~label,label) }}{% else %}<p>No closure policy configured. Closure is blocked.</p>{% endfor %}{{ end('Close record') }}
+{{ start(doc,csrf,'close','Close after completing requirements') }}{% for label in policy.get('closure',[]) %}{{ text('closure:'~label,label) }}{% endfor %}{% if 'closure' not in policy %}<p>No closure policy configured. Closure is blocked.</p>{% elif not policy.closure %}<p>No additional closure evidence is required by this policy.</p>{% endif %}{{ end('Close record') }}
 {{ start(doc,csrf,'reopen','Reopen a closed record') }}{{ field('due_date','Reconciled deadline','date') }}{{ text('reason','Reopening reason') }}{{ end() }}
 {% endif %}
 {% if is_director %}{{ start(doc,csrf,'directive','Change Director directive') }}<p>A formal changed directive requires lead reconciliation and renewed approval where applicable.</p>{{ text('reason','Instruction') }}{% include 'documents/instruction_mentions.html' %}{{ end() }}{% endif %}
-{% if doc.reviewer_id==request.state.user.id %}{{ start(doc,csrf,'review','Review the exact current version') }}<input type="hidden" name="version_id" value="{{ doc.current_version }}">{{ select('decision','Decision',[('approved','Approve'),('changes_requested','Return for revision')]) }}{{ text('reason','Review note',value=submitted.get('reason','')) }}{{ end('Record review') }}{% endif %}
+{% if doc.reviewer_id==request.state.user.id and next_step.stage=='review' and next_step.action %}{{ start(doc,csrf,'review','Review the exact current version') }}<input type="hidden" name="version_id" value="{{ doc.current_version }}">{{ select('decision','Decision',[('approved','Approve'),('changes_requested','Return for revision')]) }}{{ text('reason','Review note',value=submitted.get('reason','')) }}{{ end('Record review') }}{% endif %}
 {% if signatory %}
 {{ start(doc,csrf,'external_signature','Record your externally signed final copy') }}{{ field('url','Signed Drive copy','url') }}{{ field('source_fingerprint','Reviewed source fingerprint') }}{{ text('evidence','Signing evidence and confirmation that content matches the approved source') }}{{ end() }}
 {{ start(doc,csrf,'sign_preview','Preview your stored signature placement') }}<p>Place {{ '{{OFFICE_CONNECT_SIGNATURE}}' }} on a paragraph of its own in the Google Doc before review. Existing PDFs can use the external-signature workflow.</p>{{ end('Check final source and placement') }}
@@ -87,9 +88,9 @@
 {% endif %}
 {% for source in merged_sources %}<h3>Merged receipt {{ source.number }}</h3>{{ start(doc,csrf,'history','Read original authored history and files') }}<input type="hidden" name="source_id" value="{{ source.id }}">{{ end('View history') }}{% if enabled and officer %}{{ start(doc,csrf,'reverse_merge','Correct this merge') }}<input type="hidden" name="source_id" value="{{ source.id }}">{{ text('reason','Correction reason') }}<p>The original record reopens with restricted access; prior broad visibility is not restored.</p>{{ end('Reverse merge; retain history') }}{% endif %}{% endfor %}
 <h3>Delivery attempts for you</h3><ul>{% for n in notice_rows %}<li>{{ n.kind }} · {{ n.state }} · {{ n.attempts }} attempts{% if enabled and n.state in ['failed','unknown','sending'] %}{{ start(doc,csrf,'notice_retry','Retry notification after checking delivery') }}<input type="hidden" name="notice_id" value="{{ n.id }}">{{ text('reason','Delivery check / retry reason') }}{{ end('Retry notice') }}{% endif %}</li>{% endfor %}</ul>
-<h3>Recipient outcomes</h3><ul>{% for r in recipient_outcomes %}<li>Dispatch #{{ r.dispatch_id }} · {{ r.recipient }} · {{ r.outcome }} · {{ r.evidence }} · Acknowledged: {{ r.acknowledged_at or 'Not recorded' }}</li>{% endfor %}</ul>
+<h3 id="document-recipient-outcomes" tabindex="-1">Recipient outcomes</h3><ul>{% for r in recipient_outcomes %}<li>Dispatch #{{ r.dispatch_id }} · {{ r.recipient }} · {{ r.outcome }} · {{ r.evidence }} · Acknowledged: {{ r.acknowledged_at or 'Not recorded' }}</li>{% endfor %}</ul>
 <h3>Dispatch evidence</h3><ul>{% for x in dispatches %}<li>#{{ x.id }} · {{ x.created_at }} · {{ x.channel }} · {{ x.sender }} · {{ x.evidence }}</li>{% else %}<li>No dispatch recorded. Approval and signing are not dispatch.</li>{% endfor %}</ul>
-<h3>External operations</h3>
+<h3 id="document-operations" tabindex="-1">External operations</h3>
 <ul>{% for job in jobs %}
 <li><strong>{{ job.kind }} · {{ job.progress.label }}</strong> · <code>{{ job.id }}</code>
 <p>{{ job.progress.message }}</p>
@@ -102,5 +103,5 @@
 <h3>Timeline</h3><ol>{% for e in history %}<li>{{ e.recorded_at }} · {{ e.action|replace('_',' ') }} · {{ names.get(e.actor_id,'Former staff member') }}{% if e.note %}<p>{{ e.note }}</p>{% endif %}<details><summary>Evidence</summary><pre>{{ e.detail|tojson(indent=2) }}</pre></details></li>{% endfor %}</ol>
 </details>
 <script src="/static/js/document_mentions.js?v=1" defer></script>
-<script src="/static/js/document_action_link.js?v=1" defer></script>
+<script src="/static/js/document_action_link.js?v=3" defer></script>
 {% endblock %}

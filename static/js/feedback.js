@@ -9,6 +9,7 @@
 
   var picking = false;
   var hl = null;        // floating highlight overlay
+  var releaseFocus = null;
   var modalEl = null;   // open modal, if any
 
   // --- a stable-ish CSS selector for the picked element -----------------------
@@ -39,7 +40,12 @@
   }
 
   // --- pick mode --------------------------------------------------------------
-  function enterPick() {
+  function enterPick(event) {
+    if (event && event.detail === 0) {
+      openModal('body', {rect:{x:0,y:0,w:innerWidth,h:innerHeight},
+        viewport:{w:innerWidth,h:innerHeight,scrollX:scrollX,scrollY:scrollY}}, 'This page');
+      return;
+    }
     if (picking) return;
     picking = true;
     document.body.classList.add("sf-picking");
@@ -96,8 +102,8 @@
         '<h2>Send feedback</h2>' +
         '<p class="sf-target">About: <code></code></p>' +
         '<textarea class="sf-text" rows="5" maxlength="4000" ' +
-          'placeholder="What\'s off here? What would make it better?"></textarea>' +
-        '<p class="sf-err" hidden></p>' +
+          'aria-label="Your feedback" placeholder="What\'s off here? What would make it better?"></textarea>' +
+        '<p class="sf-err" role="alert" aria-atomic="true" hidden></p>' +
         '<div class="sf-actions">' +
           '<button type="button" class="sf-cancel">Cancel</button>' +
           '<button type="button" class="sf-send">Send feedback</button>' +
@@ -109,7 +115,8 @@
     var ta = back.querySelector(".sf-text");
     var err = back.querySelector(".sf-err");
     var send = back.querySelector(".sf-send");
-    setTimeout(function () { ta.focus(); }, 30);
+    if (window.OfficeA11y) releaseFocus = OfficeA11y.open(back, {initialFocus: ta, returnFocus: btn, onDismiss: closeModal});
+    else ta.focus();
 
     back.addEventListener("click", function (e) { if (e.target === back) closeModal(); });
     back.querySelector(".sf-cancel").addEventListener("click", closeModal);
@@ -150,7 +157,10 @@
       })();
     });
   }
-  function closeModal() { if (modalEl) { modalEl.remove(); modalEl = null; } }
+  function closeModal() {
+    if (releaseFocus) { releaseFocus(); releaseFocus = null; }
+    if (modalEl) { modalEl.remove(); modalEl = null; }
+  }
   function showErr(el, text) { el.textContent = text; el.hidden = false; }
 
   // --- transient toast --------------------------------------------------------
@@ -159,6 +169,8 @@
     clearToast();
     toastEl = document.createElement("div");
     toastEl.className = "sf-toast";
+    toastEl.setAttribute("role", "status");
+    toastEl.setAttribute("aria-atomic", "true");
     toastEl.textContent = text;
     document.body.appendChild(toastEl);
     if (!sticky) toastTimer = setTimeout(clearToast, 3200);

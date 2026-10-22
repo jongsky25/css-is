@@ -28,17 +28,28 @@ class Runner:
     def __init__(self, workers=MAX_WORKERS, wait_seconds=WAIT_SECONDS):
         self.wait_seconds = wait_seconds
         self._slots = threading.BoundedSemaphore(workers)
+        self._background = threading.BoundedSemaphore(1)
         self._pool = ThreadPoolExecutor(max_workers=workers, thread_name_prefix='document-service')
 
-    async def run(self, function, *args):
+    async def run(self, function, *args, background=False):
+        if background and not self._background.acquire(blocking=False):
+            raise Busy()
         if not self._slots.acquire(blocking=False):
+            if background:
+                self._background.release()
             raise Busy()
         try:
             future = self._pool.submit(copy_context().run, function, *args)
         except BaseException:
             self._slots.release()
+            if background:
+                self._background.release()
             raise
-        future.add_done_callback(lambda finished: self._slots.release())
+        def release(finished):
+            self._slots.release()
+            if background:
+                self._background.release()
+        future.add_done_callback(release)
         waiting = asyncio.wrap_future(future)
 
         def consume(finished):
@@ -59,6 +70,11 @@ RUNNER = Runner()
 
 async def run(function, *args):
     return await RUNNER.run(function, *args)
+
+
+async def run_background(function, *args):
+    """Recovery and intake share one slot; no queued background work."""
+    return await RUNNER.run(function, *args, background=True)
 
 
 def failure_response(request, location, error):

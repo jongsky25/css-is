@@ -168,8 +168,8 @@
       var empty = listEl.querySelector(".palette-empty");
       if (empty) empty.parentNode.removeChild(empty);
       listEl.insertAdjacentHTML("beforeend",
-        '<li id="' + idPrefix + idx + '" role="option" class="palette-item palette-exit"' +
-        ' aria-selected="false"><a href="#" tabindex="-1" data-exit>' +
+        '<li role="presentation" class="palette-item palette-exit"><a id="' + idPrefix + idx +
+        '" role="option" aria-selected="false" href="#" tabindex="-1" data-exit>' +
         '<span class="pi-title">' + esc(item.title) + "</span></a></li>");
       current.push(item);
       if (active < 0) { active = idx; syncActive(); }
@@ -190,9 +190,8 @@
           lastSection = it.section;
         }
         var idx = startIdx + i;
-        html += '<li id="' + idPrefix + idx + '" role="option" class="palette-item"' +
-                ' aria-selected="false">' +
-                '<a href="' + esc(it.url) + '" tabindex="-1">' +
+        html += '<li role="presentation" class="palette-item">' +
+                '<a id="' + idPrefix + idx + '" role="option" aria-selected="false" href="' + esc(it.url) + '" tabindex="-1">' +
                 '<span class="pi-title">' + mark(it.title, raw) + "</span>" +
                 '<span class="pi-hint">' + mark(it.hint, raw) + "</span>" +
                 '<span class="pi-tag">' + esc(it.section) + "</span>" +
@@ -315,11 +314,11 @@
         // Inline box stays closed until the user types; the palette shows a hint.
         if (!raw && !showAll) { listEl.innerHTML = ""; }
         else {
-          listEl.innerHTML = '<li class="palette-empty">' +
+          listEl.innerHTML = '<li class="palette-empty" role="presentation">' +
             (raw ? "No matching page. Try another word." :
                    "Type to search pages and actions.") + "</li>";
         }
-        input.setAttribute("aria-activedescendant", "");
+        input.removeAttribute("aria-activedescendant");
         return;
       }
       var html = "";
@@ -332,16 +331,15 @@
           lastSection = it.section;
         }
         if (it.ask) {
-          html += '<li id="' + idPrefix + i + '" role="option" class="palette-item palette-ask' +
-                  (i === active ? " active" : "") + '" aria-selected="' + (i === active) + '">' +
-                  '<a href="#" tabindex="-1" data-ask><span class="pi-title">' + esc(it.title) +
+          html += '<li role="presentation" class="palette-item palette-ask' +
+                  (i === active ? " active" : "") + '"><a id="' + idPrefix + i +
+                  '" role="option" aria-selected="' + (i === active) + '" href="#" tabindex="-1" data-ask><span class="pi-title">' + esc(it.title) +
                   "</span></a></li>";
           continue;
         }
-        html += '<li id="' + idPrefix + i + '" role="option" class="palette-item' +
-                (i === active ? " active" : "") + '" aria-selected="' +
-                (i === active) + '">' +
-                '<a href="' + esc(it.url) + '" tabindex="-1">' +
+        html += '<li role="presentation" class="palette-item' +
+                (i === active ? " active" : "") + '"><a id="' + idPrefix + i +
+                '" role="option" aria-selected="' + (i === active) + '" href="' + esc(it.url) + '" tabindex="-1">' +
                 '<span class="pi-title">' + mark(it.title, raw) + "</span>" +
                 '<span class="pi-hint">' + mark(it.hint, raw) + "</span>" +
                 (raw ? '<span class="pi-tag">' + esc(it.section) + "</span>" : "") +
@@ -352,17 +350,17 @@
     }
 
     function syncActive() {
-      var items = listEl.querySelectorAll(".palette-item");
+      var items = listEl.querySelectorAll(".palette-item [role=option]");
       for (var i = 0; i < items.length; i++) {
         var on = items[i].id === idPrefix + active;
-        items[i].classList.toggle("active", on);
+        items[i].parentElement.classList.toggle("active", on);
         items[i].setAttribute("aria-selected", on);
         if (on) {
           input.setAttribute("aria-activedescendant", items[i].id);
           items[i].scrollIntoView({ block: "nearest" });
         }
       }
-      if (active < 0) input.setAttribute("aria-activedescendant", "");
+      if (active < 0) input.removeAttribute("aria-activedescendant");
     }
 
     function render() {
@@ -413,7 +411,8 @@
     listEl.addEventListener("mousemove", function (e) {
       var li = e.target.closest && e.target.closest(".palette-item");
       if (!li) return;
-      var idx = parseInt(li.id.slice(idPrefix.length), 10);
+      var option = li.querySelector("[role=option]");
+      var idx = option ? parseInt(option.id.slice(idPrefix.length), 10) : NaN;
       if (!isNaN(idx) && idx !== active) { active = idx; syncActive(); }
     });
 
@@ -432,19 +431,24 @@
       onEscape: close
     });
 
+    var releaseFocus = null;
     function open(q) {
       var text = typeof q === "string" ? q : "";
       if (!backdrop.hidden) { if (!text) return; }
       backdrop.hidden = false;
       document.body.classList.add("cmdk-open");
+      if (btn) btn.setAttribute("aria-expanded", "true");
       input.value = text;
       ctrl.render();
+      if (window.OfficeA11y) releaseFocus = OfficeA11y.open(backdrop, { initialFocus: input, onDismiss: close });
       input.focus();
     }
     openPalette = open;
     function close() {
       backdrop.hidden = true;
       document.body.classList.remove("cmdk-open");
+      if (btn) btn.setAttribute("aria-expanded", "false");
+      if (releaseFocus) { releaseFocus(); releaseFocus = null; }
     }
 
     backdrop.addEventListener("mousedown", function (e) {
@@ -453,6 +457,8 @@
 
     var btn = document.getElementById("navSearchBtn");
     if (btn) btn.addEventListener("click", open);
+    var closeBtn = backdrop.querySelector(".palette-close");
+    if (closeBtn) closeBtn.addEventListener("click", close);
 
     document.addEventListener("keydown", function (e) {
       if ((e.ctrlKey || e.metaKey) && (e.key === "k" || e.key === "K")) {

@@ -92,6 +92,7 @@ import documents
 import report_docs
 import csm_report
 import auth
+import email_params
 import mailer
 import send_reminders
 import backups as bk
@@ -120,6 +121,7 @@ import qa_rules
 # The database file. Override with CSS_DB for a throwaway/demo instance so the
 # delivered css_is.db is never touched (mirrors CSS_BASE_URL / CSS_SMTP_*).
 DB = os.environ.get("CSS_DB", "css_is.db")
+email_params.install_policy(lambda: DB)    # the admin's email delivery policy (/admin/email)
 
 # The snapshot shipped inside the repo. In production it is ONLY a one-time
 # seed -- never the live database. See DEPLOY.md for the full rules.
@@ -709,10 +711,6 @@ NAV_GROUPS = [
          "section": "Admin Unit",
          "hint": "The MC 114 justification texts travel forms start from",
          "kw": "travel justification library mc 114 template text appendix b", "cap": "room_admin"},
-        {"key": "admin_travel", "url": "/admin/travel", "label": "Travel filing settings",
-         "hint": "Switch travel filing on or off",
-         "kw": "travel filing settings enable switch signatories relay", "cap": "manage_users",
-         "in_nav": False},
     ]},
     # ---- 5. Calendar (bureau-wide, not part of room booking) ---------------
     {"name": "Calendar", "items": [
@@ -798,6 +796,11 @@ NAV_GROUPS = [
          "hint": "Temporarily reopen a closed filing period",
          "kw": "awa work arrangement reopen deadline override filing period cww wfh "
                "annex c closed open late",
+         "cap": "manage_users"},
+        {"key": "admin_travel", "url": "/admin/travel", "label": "Travel filing settings",
+         "hint": "Travel filing on or off, the signatories and the documents relay",
+         "kw": "travel filing settings enable switch signatories head of office director oic "
+               "certifying officer relay google docs templates administrators station",
          "cap": "manage_users"},
     ]},
 ]
@@ -1410,6 +1413,7 @@ def _seed_office_rules(conn):
 
 
 _schema_ready_for = set()    # DB paths whose schema has been ensured this process
+_schema_ready_lock = threading.RLock()  # first connections can arrive concurrently
 
 def _share_url(url):
     return short_links.share(DB, url)
@@ -1487,17 +1491,25 @@ def get_conn():
     """Fresh connection per request (SQLite + threads). Schema is ensured/seeded
     once per DB path (init_db is idempotent but costs ~2-3 ms; no need to pay it
     on every request). Keyed on the path so tests that repoint DB still init."""
-    conn = st.connect(DB)
-    if DB not in _schema_ready_for:
-        st.init_db(conn)             # safe to re-run; also applies the venue migration
-        st.seed_directory_if_empty(conn)
-        _seed_learned_rules(conn)    # FAQ rules for the AI search bar (fresh install only)
-        _seed_calendar_rules(conn)   # calendar FAQ rules, once, on any install
-        _seed_office_rules(conn)     # office FAQ rules (to-do, wellness, room, who is in), once
-        wabf.run_once(conn)          # ANNEX C Aug 16-31, 2026 — one-shot, marker-guarded
-        st.seed_wa_prepared_by_default(conn)  # ANNEX C "Prepared by" -> Alexander Medel, one-shot
-        _schema_ready_for.add(DB)
-    return conn
+    db_path = DB
+    if db_path in _schema_ready_for:
+        return st.connect(db_path)
+    with _schema_ready_lock:
+        conn = st.connect(db_path)
+        if db_path not in _schema_ready_for:
+            try:
+                st.init_db(conn)             # safe to re-run; also applies the venue migration
+                st.seed_directory_if_empty(conn)
+                _seed_learned_rules(conn)    # FAQ rules for the AI search bar (fresh install only)
+                _seed_calendar_rules(conn)   # calendar FAQ rules, once, on any install
+                _seed_office_rules(conn)     # office FAQ rules (to-do, wellness, room, who is in), once
+                wabf.run_once(conn)          # ANNEX C Aug 16-31, 2026 — one-shot, marker-guarded
+                st.seed_wa_prepared_by_default(conn)  # ANNEX C "Prepared by" -> Alexander Medel, one-shot
+                _schema_ready_for.add(db_path)
+            except Exception:
+                conn.close()
+                raise
+        return conn
 
 
 # =====================================================================
@@ -4483,32 +4495,72 @@ async def admin_rules_edit(request: Request, rid: int):
 # defensively, same reasoning as /admin/rules (see D8).
 # ---------------------------------------------------------------------
 
+def _email_blockers(conn):
+    """key -> (reason, settings URL) for features whose switch here is ON but
+    which another setting keeps from sending. Read-only hints for the console."""
+    out = {}
+    docs_on = st.get_setting(conn, "documents.enabled", "0") == "1"
+    sending_on = st.get_setting(conn, "documents.sending_enabled", "0") == "1"
+    if not docs_on:
+        out["job_documents"] = ("Documents is switched off.", "/admin/documents/setup")
+    elif not sending_on:
+        out["job_documents"] = ("Document sending is switched off.", "/admin/documents/setup")
+    if not sending_on:
+        out["document_dispatch"] = ("Document sending is switched off.", "/admin/documents/setup")
+    if not (docs_on and st.get_setting(conn, "work.enabled", "0") == "1"):
+        out["job_work_updates"] = ("Shared work is switched off.", "/admin/documents/readiness")
+    if st.get_setting(conn, "travel.enabled", "1") == "0":
+        out["job_travel_filing_due"] = ("Travel filing is switched off.", "/admin/travel")
+    return out
+
+
 @app.get("/admin/email", response_class=HTMLResponse)
-def admin_email(request: Request, msg: str = "", err: str = ""):
+def admin_email(request: Request, msg: str = "", err: str = "", log_feature: str = "",
+                log_status: str = "", log_q: str = "", log_limit: int = 50):
     if (r := _forbid(request, "manage_users")):
         return r
     conn = get_conn()
     try:
-        settings = st.get_settings(conn, [f"email_feature.{k}" for k in mailer.FEATURES])
-        recent_sends = st.recent_email_sends(conn, limit=50)
+        settings = st.get_settings(conn, [f"email_feature.{k}" for k in mailer.FEATURES]
+                                   + [f"email_option.{k}" for k in mailer.OPTIONS] + ["email_paused"])
+        log_limit = max(50, min(int(log_limit or 50), 500))
+        recent_sends = st.email_log_query(conn, log_feature, log_status, log_q.strip()[:100], limit=log_limit)
+        health = st.email_log_health(conn, (_now_local() - timedelta(days=7)).isoformat())
         param_values = {k: send_reminders._param(conn, k) for k in send_reminders.PARAMS}
         retention_days = int(st.get_setting(
             conn, "email_log_retention_days", str(ret.EMAIL_LOG_RETENTION_DAYS_DEFAULT)))
+        blockers = _email_blockers(conn)
+        policy = email_params.get_policy(conn)
+        accounts = [(u["id"], u["username"]) for u in st.list_admin_users(conn) if u.get("active") and u.get("username")]
     finally:
         conn.close()
-    states = {k: settings.get(f"email_feature.{k}", "1") != "0" for k in mailer.FEATURES}
+    def _state(k):
+        v = settings.get(f"email_feature.{k}")
+        if v is None and k in st.EMAIL_FEATURE_FALLBACK:
+            v = settings.get(f"email_feature.{st.EMAIL_FEATURE_FALLBACK[k]}")
+        return (v if v is not None else "1") != "0"
+    states = {k: _state(k) for k in mailer.FEATURES}
+    paused = settings.get("email_paused") == "1"
+    options = [(k, label, hint, settings.get(f"email_option.{k}", "1") != "0")
+               for k, (label, hint) in mailer.OPTIONS.items()]
     transactional = [(k, label, hint, states[k]) for k, (label, hint, group)
                      in mailer.FEATURES.items() if group == "transactional"]
     scheduled = [(k, label, hint, states[k]) for k, (label, hint, group)
                 in mailer.FEATURES.items() if group == "scheduled"]
     labels = {k: v[0] for k, v in mailer.FEATURES.items()}
     labels.update({k: v[0] for k, v in mailer.ALWAYS_ON.items()})
+    labels.update({k: v[0] for k, v in mailer.EXTERNAL.items()})
     for row in recent_sends:
         row["label"] = labels.get(row["feature"], row["feature"])
     params = [(k, label, lo, hi, param_values[k]) for k, (label, _default, lo, hi)
              in send_reminders.PARAMS.items()]
     return templates.TemplateResponse(request, "admin_email.html", {
-        "email_configured": mailer.email_configured(),
+        "email_configured": mailer.email_configured(), "paused": paused, "options": options, "policy": policy, "accounts": accounts, "health": health, "labels": labels,
+        "attention": sorted(((k, v) for k, v in health.items() if v["failed"]), key=lambda kv: -kv[1]["failed"]),
+        "log_filter": {"feature": log_feature, "status": log_status, "q": log_q, "limit": log_limit},
+        "log_features": sorted(set(labels)),
+        "log_more": len(recent_sends) >= log_limit and log_limit < 500, "blockers": blockers,
+        "external": [(k, label, why, url, blockers.get(k)) for k, (label, why, url) in mailer.EXTERNAL.items()],
         "relay_configured": mailer.relay_configured(),
         "smtp_configured": mailer.smtp_configured(),
         "transactional": transactional, "scheduled": scheduled,
@@ -4517,6 +4569,30 @@ def admin_email(request: Request, msg: str = "", err: str = ""):
         "params": params, "retention_days": retention_days,
         "msg": msg, "err": err, "show_scope": False, "nav_active": "email",
     })
+
+
+@app.get("/admin/email/log.csv")
+def admin_email_log_csv(request: Request, log_feature: str = "", log_status: str = "", log_q: str = ""):
+    """The send log as CSV, filtered the same as the console. Recipients are personal data, so
+    the export is manage_users-only and audited; cells that could run as spreadsheet formulas are neutralised."""
+    if (r := _forbid(request, "manage_users")):
+        return r
+    conn = get_conn()
+    try:
+        rows = st.email_log_query(conn, log_feature, log_status, log_q.strip()[:100], limit=5000)
+        _audit(request, conn, "email_log_export", target_type="setting", target_id="email_log",
+               summary=f"Exported {len(rows)} send-log rows.")
+    finally:
+        conn.close()
+    import csv, io
+    buf = io.StringIO()
+    w = csv.writer(buf)
+    w.writerow(["when", "feature", "recipient", "subject", "status", "detail"])
+    safe = lambda v: ("'" + v) if isinstance(v, str) and v[:1] in ("=", "+", "-", "@", "\t", "\r") else (v or "")   # noqa: E731
+    for r_ in rows:
+        w.writerow([r_["created_at"], r_["feature"], safe(r_["recipient"]), safe(r_["subject"]), r_["status"], safe(r_["detail"])])
+    return Response(buf.getvalue(), media_type="text/csv",
+                    headers={"Content-Disposition": 'attachment; filename="email-log.csv"'})
 
 
 @app.post("/admin/email/toggle")
@@ -4537,6 +4613,75 @@ async def admin_email_toggle(request: Request):
     finally:
         conn.close()
     return RedirectResponse("/admin/email?msg=" + quote("Saved."), status_code=303)
+
+
+_POLICY_EMAIL_RE = re.compile(r"^[^@\s,;<>]+@[^@\s,;<>]+\.[^@\s,;<>]+$")
+
+
+@app.post("/admin/email/policy")
+async def admin_email_policy(request: Request):
+    """Delivery policy for ALL outgoing mail, account mail included: a staging address that
+    receives everything instead of the real recipients, the sender name, a reply-to, and a
+    subject prefix. Blank clears a field."""
+    if (r := _forbid(request, "manage_users")):
+        return r
+    posted = await _posted(request)
+    clean = lambda k, n: " ".join((posted.get(k) or "").split())[:n]   # noqa: E731
+    values = {"redirect_to": clean("redirect_to", 254).lower(), "reply_to": clean("reply_to", 254).lower(),
+              "from_name": clean("from_name", 60), "subject_prefix": clean("subject_prefix", 40)}
+    for k in ("redirect_to", "reply_to"):
+        if values[k] and not _POLICY_EMAIL_RE.match(values[k]):
+            return RedirectResponse("/admin/email?err=" + quote("Enter a valid email address."), status_code=303)
+    conn = get_conn()
+    try:
+        before = email_params.get_policy(conn)
+        email_params.set_policy(conn, values)
+        changed = [k for k in email_params.POLICY_KEYS if before[k] != values[k]]
+        _audit(request, conn, "email_policy_changed", target_type="setting", target_id="email_policy",
+               summary="Email delivery policy changed: " + (", ".join(changed) or "no change") + "."
+               + (f" All mail now goes to {values['redirect_to']}." if values["redirect_to"] and "redirect_to" in changed else ""))
+    finally:
+        conn.close()
+    return RedirectResponse("/admin/email?msg=" + quote("Saved."), status_code=303)
+
+
+@app.post("/admin/email/option")
+async def admin_email_option(request: Request):
+    if (r := _forbid(request, "manage_users")):
+        return r
+    posted = await _posted(request)
+    key = posted.get("key", "")
+    if key not in mailer.OPTIONS:
+        return RedirectResponse("/admin/email?err=" + quote("Unknown option."), status_code=303)
+    on = posted.get("on") in ("on", "1", "true", "yes")
+    conn = get_conn()
+    try:
+        st.set_email_option(conn, key, on)
+        _audit(request, conn, "email_option_toggle", target_type="setting", target_id=key,
+               summary=f"{mailer.OPTIONS[key][0]} turned {'ON' if on else 'OFF'}.")
+    finally:
+        conn.close()
+    return RedirectResponse("/admin/email?msg=" + quote("Saved."), status_code=303)
+
+
+@app.post("/admin/email/pause")
+async def admin_email_pause(request: Request):
+    """One switch that holds every non-account email (invites, password resets
+    and registration-link re-sends keep working). Queued room and calendar
+    mail waits and goes out after resume; scheduled jobs skip while paused."""
+    if (r := _forbid(request, "manage_users")):
+        return r
+    posted = await _posted(request)
+    paused = posted.get("paused") in ("on", "1", "true", "yes")
+    conn = get_conn()
+    try:
+        st.set_email_paused(conn, paused)
+        _audit(request, conn, "email_pause", target_type="setting", target_id="email_paused",
+               summary=f"All non-account email {'PAUSED' if paused else 'RESUMED'}.")
+    finally:
+        conn.close()
+    return RedirectResponse("/admin/email?msg=" + quote(
+        "All non-account email is paused." if paused else "Email resumed."), status_code=303)
 
 
 @app.post("/admin/email/params")
@@ -4599,17 +4744,30 @@ async def admin_email_test(request: Request):
     subject, body, html = sample
     catalog = mailer.FEATURES.get(key) or mailer.ALWAYS_ON.get(key)
     user = request.state.user
-    result = mailer.send(user["username"], f"[Test] {subject}", body, html=html)
+    target = user["username"]
+    # Optionally another colleague's ACCOUNT address (picked by id, never typed): the form can
+    # only ever reach an address that already belongs to an active account.
+    other = (posted.get("to_account") or "").strip()
+    if other.isdigit():
+        conn = get_conn()
+        try:
+            acct = st.get_admin_user_by_id(conn, int(other))
+        finally:
+            conn.close()
+        if not acct or not acct.get("active") or not acct.get("username") or "@" not in acct["username"]:
+            return RedirectResponse("/admin/email?err=" + quote("Pick an active account."), status_code=303)
+        target = acct["username"]
+    result = mailer.send(target, f"[Test] {subject}", body, html=html)
     conn = get_conn()
     try:
         _audit(request, conn, "email_feature_test", target_type="setting", target_id=key,
-               summary=f"Test send of “{catalog[0]}” to {user['username']}: "
+               summary=f"Test send of “{catalog[0]}” to {target}: "
                        f"{'sent' if result['sent'] else 'failed — ' + result['detail']}.")
     finally:
         conn.close()
     if result["sent"]:
         return RedirectResponse("/admin/email?msg=" + quote(
-            f"Test email sent to {user['username']}."), status_code=303)
+            f"Test email sent to {target}."), status_code=303)
     return RedirectResponse("/admin/email?err=" + quote(result["detail"]), status_code=303)
 
 
@@ -4855,10 +5013,8 @@ async def _start_scheduler():
         c = get_conn()
         c.close()
         _short_link_task = asyncio.create_task(short_links.worker(DB))
-    import documents_intake
-    asyncio.create_task(documents_intake.worker(get_conn))
-    import documents_jobs
-    _document_job_task = asyncio.create_task(documents_jobs.worker(get_conn))
+    import documents_sync
+    _document_job_task = asyncio.create_task(documents_sync.worker(get_conn))
     asyncio.create_task(_scheduler_loop())
     if PERSIST_DIR:                   # durability engine (bucket-backed persistence)
         print(f"[persist] active — snapshotting {DB} to {bk.SCHED_DIR} "
@@ -9396,10 +9552,9 @@ async def activity_messages_save(request: Request, event_token: str):
     return RedirectResponse(f"/activities/{event_token}/manage", status_code=303)
 
 
-UPDATE_EMAIL_COOLDOWN_MIN = 15      # one blast per activity per this many minutes
-UPDATE_EMAIL_DAILY_CAP = 300        # all activities together, per local day: the relay's
-                                    # ~1500/day (docs/MAIL_RELAY_SETUP.md) also carries
-                                    # invites and password resets, so updates get a slice
+# Pinned-update emails: cooldown and the daily cap (all activities together, per local day) are the
+# admin-tunable email_params "update_email_*" — the relay's ~1500/day (docs/MAIL_RELAY_SETUP.md) also
+# carries invites and password resets, so updates get a slice (default 300).
 
 
 def _update_cooldown_key(event_id):
@@ -9436,7 +9591,7 @@ def _queue_update_emails(request, conn, ev, text):
     last = st.get_setting(conn, _update_cooldown_key(ev["id"]))
     if last:
         try:
-            left = UPDATE_EMAIL_COOLDOWN_MIN - int(
+            left = email_params.param(conn, "update_email_cooldown_min") - int(
                 (_now_local() - datetime.fromisoformat(last)).total_seconds() // 60)
             if left > 0:
                 return f"wait:{left}", 0, 0, []
@@ -9446,7 +9601,7 @@ def _queue_update_emails(request, conn, ev, text):
                if not p["purged"] and p.get("email")]
     if not targets:
         return "none", 0, 0, []
-    remaining = max(0, UPDATE_EMAIL_DAILY_CAP - _update_quota_used(conn))
+    remaining = max(0, email_params.param(conn, "update_email_daily_cap") - _update_quota_used(conn))
     chosen = targets[:remaining]
     if not chosen:
         return "cap", 0, len(targets), []

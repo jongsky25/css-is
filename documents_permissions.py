@@ -41,6 +41,13 @@ def director(conn, user):
     return bool(st._org_accounts_at_rank(conn, 3) and user['id'] in st._org_accounts_at_rank(conn, 3)) or any(s['level'] == 'bureau' for s in seats(conn, user))
 
 
+def review_authority(conn, user, doc):
+    """Current directory authority; callers still check the assigned reviewer."""
+    return director(conn, user) if doc['review_class'] == 'director' else any(
+        seat['level'] == 'bureau' or scope_contains(conn, seat['id'], doc['unit_id'])
+        for seat in seats(conn, user))
+
+
 def officer(conn, user, doc):
     evaluation=json.loads(doc.get('matches_json') or '{}')
     concerned={doc['unit_id']} | set(evaluation.get('unit_ids',[]) if isinstance(evaluation,dict) else [])
@@ -121,9 +128,14 @@ class RegistryScope:
         workflow = [g['unit_id'] for g in grants if g['role'] == 'workflow_admin']
         self.officer_all = self.is_director or None in records
         self.workflow_all = None in workflow
+        self.division_units = [s['id'] for s in current_seats if s['level']=='division']
+        signatories = [g['unit_id'] for g in grants if g['role']=='signatory']
+        self.signatory_all = None in signatories
         self.params = {'registry_actor': self.uid,
                        'registry_officer_units': json.dumps(covered(records + [s['id'] for s in current_seats])),
-                       'registry_workflow_units': json.dumps(covered(workflow))}
+                       'registry_workflow_units': json.dumps(covered(workflow)),
+                       'registry_signatory_units': json.dumps(covered(signatories)),
+                       'registry_division_units': json.dumps(covered(self.division_units))}
 
     def officer_sql(self, alias, *, concerned=True):
         if self.officer_all:
@@ -145,6 +157,10 @@ class RegistryScope:
     def workflow_sql(self, alias):
         return '1' if self.workflow_all else (
             f'{alias}.unit_id IN (SELECT value FROM json_each(:registry_workflow_units))')
+
+    def signatory_sql(self, alias):
+        return '1' if self.signatory_all else (
+            f'{alias}.unit_id IN (SELECT value FROM json_each(:registry_signatory_units))')
 
     def _base_view_sql(self, alias):
         explicit = f'''EXISTS (SELECT 1 FROM document_access access

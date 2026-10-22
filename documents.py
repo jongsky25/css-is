@@ -365,6 +365,43 @@ def grant(conn,user,target,role,unit=None,revoke_id=None):
         event(conn,None,user,'grant_changed',{'target':target,'role':role,'unit':unit,'revoked_id':revoke_id})
 
 
+def closure_facts_sql(alias):
+    """Structural evidence flags shared by single-record and paged reads."""
+    return f"""(NOT EXISTS(SELECT 1 FROM document x JOIN document_relation r ON r.source_id=x.id
+        WHERE r.target_id={alias}.id AND r.kind='reply') OR EXISTS(
+        SELECT 1 FROM document x JOIN document_relation r ON r.source_id=x.id
+        WHERE r.target_id={alias}.id AND r.kind='reply'
+          AND x.status NOT IN ('released','awaiting_acknowledgment','closed'))) AS closure_reply_missing,
+        EXISTS(SELECT 1 FROM document_assignment_effective a WHERE a.document_id={alias}.id
+          AND a.mandatory=1 AND a.status NOT IN ('completed','superseded')) AS closure_contributions,
+        EXISTS(SELECT 1 FROM document_dispatch_recipient r JOIN document_dispatch x ON x.id=r.dispatch_id
+          WHERE x.document_id={alias}.id AND r.acknowledged_at IS NULL) AS closure_ack_missing"""
+
+
+def closure_blockers(conn, doc, policy=None, *, facts=None):
+    """Read structural closure gates without submitting evidence or changing state."""
+    policy=json.loads(doc['policy_json']) if policy is None else policy
+    if facts is None:
+        facts=rows(conn,'SELECT '+closure_facts_sql('d')+' FROM document d WHERE d.id=?',(doc['id'],))[0]
+    blockers=[]
+    def add(code,message):
+        blockers.append({'code':code,'message':message})
+    if 'closure' not in policy:
+        add('policy','A workflow administrator must configure closure evidence for this type.')
+    if 'released_reply' in policy.get('closure',[]) and facts['closure_reply_missing']:
+        add('reply','A linked outgoing reply must be released before closure.')
+    if doc['reconcile'] or not doc['lead_id'] or doc['verification']!='verified':
+        add('ownership','Resolve ownership, verification and directives before closure.')
+    if facts['closure_contributions']:
+        add('contributions','Mandatory contributions are incomplete.')
+    if doc['direction']=='OUT' and doc['status'] not in ('released','awaiting_acknowledgment'):
+        add('release','Release the outgoing document before closure.')
+    if policy.get('ack_required') and facts['closure_ack_missing']:
+        add('acknowledgment','Required recipient acknowledgment is missing.')
+    return blockers
+
+
+
 def mutate(conn,user,doc_id,revision,action,data):
     with transaction(conn):
         user,doc=check(conn,user,doc_id,revision)
@@ -548,7 +585,7 @@ def mutate(conn,user,doc_id,revision,action,data):
             changes={'review_class':klass,'reviewer_id':reviewer['id'],'status':'in_review','approved_version':None,'signed_version':None}
         elif action=='review':
             require(doc['reviewer_id']==user['id'])
-            require(p.director(conn,user) if doc['review_class']=='director' else any(s['level']=='bureau' or p.scope_contains(conn,s['id'],doc['unit_id']) for s in p.seats(conn,user)))
+            require(p.review_authority(conn,user,doc))
             if doc['status']!='in_review' or doc['reconcile'] or not doc['current_version']:
                 raise ValueError('This document is not ready for review.')
             import work_review
@@ -581,18 +618,9 @@ def mutate(conn,user,doc_id,revision,action,data):
             evidence=data.get('evidence',{})
             if not isinstance(evidence,dict) or any(not str(evidence.get(k,'')).strip() for k in policy['closure']):
                 raise ValueError('Supply all required closure evidence.')
-            if 'released_reply' in policy['closure']:
-                replies=rows(conn,"SELECT x.* FROM document x JOIN document_relation r ON r.source_id=x.id WHERE r.target_id=? AND r.kind='reply'",(doc_id,))
-                if not replies or any(x['status'] not in ('released','awaiting_acknowledgment','closed') for x in replies):
-                    raise ValueError('A linked outgoing reply must be released before closure.')
-            if doc['reconcile'] or not doc['lead_id'] or doc['verification']!='verified':
-                raise ValueError('Resolve ownership, verification and directives before closure.')
-            if conn.execute("SELECT 1 FROM document_assignment_effective WHERE document_id=? AND mandatory=1 AND status NOT IN ('completed','superseded')",(doc_id,)).fetchone():
-                raise ValueError('Mandatory contributions are incomplete.')
-            if doc['direction']=='OUT' and doc['status'] not in ('released','awaiting_acknowledgment'):
-                raise ValueError('Release the outgoing document before closure.')
-            if policy.get('ack_required') and conn.execute('SELECT 1 FROM document_dispatch_recipient r JOIN document_dispatch d ON d.id=r.dispatch_id WHERE d.document_id=? AND r.acknowledged_at IS NULL',(doc_id,)).fetchone():
-                raise ValueError('Required recipient acknowledgment is missing.')
+            blockers=closure_blockers(conn,doc,policy)
+            if blockers:
+                raise ValueError(blockers[0]['message'])
             changes={'status':'closed'}
         elif action=='reopen':
             require(coordinator)

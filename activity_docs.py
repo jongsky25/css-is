@@ -185,6 +185,18 @@ def _line(i, name, desig):
     return f"{i}. {name}" + (f", {desig}" if desig else "")
 
 
+def head_of_office(conn) -> tuple:
+    """(name, title) of the signatory. The names set under Travel filing settings win (an acting head or OIC); with no name
+    there, the Director in the directory, the same rule the travel forms follow (spot feedback #157)."""
+    name = st.get_setting(conn, "travel.sig.head_name", "")
+    title = st.get_setting(conn, "travel.sig.head_title", "")
+    if not (name or "").strip():
+        director = st.org_seat_holder(conn, 3)
+        if director:
+            name, title = director[0], director[1] or "Director"
+    return name, title
+
+
 def payload(conn, entry, key, user, owner_label="", positions=False) -> td.DocPayload:
     """The relay request for one document. Placeholders left for the person to complete are filled with a blank line,
     so the draft never carries a guess for a number, a source of funds or a signature. Positions (designations) from
@@ -192,8 +204,7 @@ def payload(conn, entry, key, user, owner_label="", positions=False) -> td.DocPa
     profile = st.get_user_profile(conn, user["id"]) or {}
     me = profile.get("person_name") or user.get("username") or ""
     title = entry["title"]
-    head_name = st.get_setting(conn, "travel.sig.head_name", "")
-    head_title = st.get_setting(conn, "travel.sig.head_title", "")
+    head_name, head_title = head_of_office(conn)
     if key == "dpo":
         people = (describe_people(conn, entry, "travel", positions) or describe_people(conn, entry, None, positions)
                   or [(me, (profile.get("designation") or "") if positions else "")])

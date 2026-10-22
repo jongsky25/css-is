@@ -17,93 +17,99 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.85"
+APP_VERSION = "7.86"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
+        "version": "7.86",
+        "date": "October 22, 2026",
+        "summary": "Supplies can track requests, approvals, stock, handovers and replenishment when the office is ready to start.",
+        "changes": [
+            "Staff can request supplies, and authorized approvers can decide quantities before custodians issue them.",
+            "Custodians can review stock warnings, record returns and deliveries, and request replenishment with separate approval.",
+            "Stock cards and reports show the saved movements behind inventory and request fulfillment.",
+            "Supplies starts paused until an administrator completes the counted-stock and staff setup."
+        ]
+    },
+    {
         "version": "7.85",
         "date": "October 21, 2026",
-        "summary": "Supplies reports now show inventory, fulfillment, consumption and incoming stock.",
+        "summary": "Room reservations explain what is booked, who acts next and how to recover from conflicts.",
         "changes": [
-            "Custodians and auditors can view current inventory, request fulfillment and outstanding replenishment reports.",
-            "Stock cards and issue consumption can be filtered by posting date, with corrections included in saved totals.",
-            "Reports can be printed on A4 or downloaded as Excel workbooks."
+            "Your room reservations explain approval, standby, moves and what to do after a decline or cancellation.",
+            "The request panel checks the date and hours you choose, even outside the displayed week, and keeps your details if a check or request fails.",
+            "Mobile requests keep keyboard focus inside the form, and alternative times say whether they create a request or an approved booking."
         ]
     },
     {
         "version": "7.84",
         "date": "October 21, 2026",
-        "summary": "Custodians can record partial deliveries against approved replenishments.",
+        "summary": "The Email page gets a pause button, delivery settings and a searchable send log.",
         "changes": [
-            "Accepted units add stock and reduce incoming quantities in one saved action.",
-            "Rejected units keep a reason and do not add stock.",
-            "Correcting a linked receipt requires choosing whether to reopen incoming stock or cancel that remainder."
-        ]
+            "Administrators can pause all email at once; account emails such as invites and password resets keep working.",
+            "Conference room meal alerts now have their own switch, and calendar files can be left off room and calendar emails.",
+            "The Email page shows when something else (such as Documents sending) is stopping an email, and lists official document emails in the send log.",
+            "More email timings can be set: room summary hours, calendar hold-back, retries and the daily limit for pinned updates.",
+            "The send log can be searched, filtered and downloaded, and failed emails are flagged.",
+            "Administrators can set a sender name, reply-to address and subject prefix, or send all mail to a test address, and can send a test to another staff account.",
+        ],
     },
     {
         "version": "7.83",
         "date": "October 21, 2026",
-        "summary": "Replenishment requests can be submitted, independently approved, ordered and cancelled.",
+        "summary": "Clearer text and easier keyboard and touch controls across shared pages.",
         "changes": [
-            "Numbered submissions preserve item, cost and current-stock snapshots across returned revisions.",
-            "A separate replenishment approver grant controls decisions and prevents self-approval.",
-            "Approval establishes incoming quantities once; recording an order does not increase them again.",
-            "Custodians can record procurement details and cancel unreceived quantities with a reason."
+            "Muted text is easier to read in light and dark themes, and survey choices are easier to tap.",
+            "Menus, search, feedback, tours and snapshots keep keyboard focus inside and return it when closed.",
+            "Card views and companion controls have clearer names, larger buttons and separate keyboard actions."
         ]
     },
     {
         "version": "7.82",
         "date": "October 21, 2026",
-        "summary": "Custodians can review stock-based replenishment suggestions and save multi-item drafts.",
+        "summary": "My actions explains what you can do now and what needs attention.",
         "changes": [
-            "Suggestions show stock, reservations, outstanding approved demand, incoming stock, and the configured target.",
-            "Draft lines capture requested quantity, planning target, estimated cost, and reasons for changes.",
-            "Open replenishments are flagged, and items with open replenishment obligations cannot be deactivated.",
-            "Drafts do not increase stock or approved incoming quantities."
+            "My actions shows the responsible person, the next step and why work may be waiting.",
+            "Cards open the right form and reflect changed drafts, current review authority and uncertain deliveries.",
+            "Long action lists load a page at a time, with earlier deadlines first and unknown dates clearly marked."
         ]
     },
     {
         "version": "7.81",
         "date": "October 21, 2026",
-        "summary": "The Supplies overview shows your requests and the next actions for your role.",
+        "summary": "Documents explain the next step and who is responsible.",
         "changes": [
-            "Dashboard counts open the matching requests, approvals, handovers, acknowledgments and stock warnings.",
-            "Search and status filters keep their settings when moving between result pages.",
-            "Queues identify who acts next, and custodians and auditors can review recent stock activity.",
-            "Disabled mode keeps authorized records readable while request and stock actions remain paused."
+            "Each document now explains what happens next, who handles it and what needs attention.",
+            "Links open the right existing form for your role, including corrections, review, signing and closure.",
+            "Pending or uncertain deliveries point to progress and receipt checks before any new request."
         ]
     },
     {
         "version": "7.80",
         "date": "October 21, 2026",
-        "summary": "Stock warnings distinguish physical shortages from fully reserved supplies.",
+        "summary": "Travel filing settings is now in the Administrator menu.",
         "changes": [
-            "Supply items show physical stock and availability separately, including stockouts at a zero critical level.",
-            "Custodians receive saved notices when shortages begin or worsen, with recovery and recurrence tracked.",
-            "Pending notices can be retried without reposting stock, and access follows current custodian grants."
+            "Administrators can open Travel filing settings from the Administrator menu, under Setup & records, instead of knowing its address. It is where the head of office, the signatories and the documents relay are set."
         ]
     },
     {
         "version": "7.79",
         "date": "October 21, 2026",
-        "summary": "Record supply returns and review stock corrections before posting.",
+        "summary": "Drive checks and filing recover safely without crowding out your work.",
         "changes": [
-            "Custodians can record usable and damaged returns against original handovers without reopening requests.",
-            "Physical counts show affected reservations before posting and preserve the oldest approved demand.",
-            "Mistaken issues and receipts can be reversed with reasons while original records and acknowledgments remain visible.",
-            "Issue corrections require an explicit choice to reopen or cancel the corrected demand."
+            "Drive checks are queued and coordinated so automatic and manual checks do not overlap.",
+            "Failed filing waits before retrying and keeps the same document number and filing request.",
+            "The intake queue shows check and filing progress, with a retry option when attention is needed."
         ]
     },
     {
         "version": "7.78",
         "date": "October 21, 2026",
-        "summary": "Supplies requests, stock management and release acknowledgment are now available.",
+        "summary": "Activity documents are signed by the Director from the directory unless you name an acting head.",
         "changes": [
-            "Supplies supports reviewed opening stock, delivery receipts, requests, approval and partial handovers.",
-            "Reservations and shortages update together, with recorded cancellation reasons and duplicate-posting protection.",
-            "Recipients can acknowledge or dispute releases, and request and release forms can be printed on A4 paper.",
-            "Supplies starts disabled until an administrator configures access and staff reconcile opening counts."
+            "The DPO, memorandum and concept note now use the Director from the directory as the signatory when no head of office is set, the same as the travel forms. Naming a head in Travel filing settings still wins.",
+            "Travel filing settings now explain that the certifying officer comes from the traveller's own division in the directory, and that the two certifying officer boxes are only used when the directory has no division head."
         ]
     },
     {

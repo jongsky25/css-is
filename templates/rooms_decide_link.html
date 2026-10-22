@@ -15,7 +15,7 @@
   {% elif done %}
     <h1 style="font-size:1.25rem; margin:.8rem 0 .2rem;">{{ "Approved" if verb == "approved" else "Declined" }}</h1>
     <p class="muted small" style="margin:0 0 1.2rem;">
-      {{ card.title }} on {{ card.when }}, {{ card.hours }}, was {{ verb }}. The requester has been told.
+      {{ card.title }} on {{ card.when }}, {{ card.hours }}, was {{ verb }}. The decision is saved. The requester can check their reservation.
     </p>
     <div class="small" style="text-align:center;"><a href="/login">Sign in for the full Approvals page</a></div>
 

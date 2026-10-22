@@ -1,57 +1,68 @@
+## 7.86 — October 22, 2026
+
+- Add the Supplies module from reviewed opening stock and staff requests through approval, partial issue, acknowledgment, warnings, replenishment, deliveries, corrections and reports.
+- Keep Supplies changes disabled until an administrator verifies staff roles, a dated physical count, the opening ledger and the pilot cutover.
+- Preserve authorized reads and transaction evidence while writes are disabled; no live stock or role grants are imported by this release.
+
 ## 7.85 — October 21, 2026
 
-- Add current inventory, request fulfillment and outstanding replenishment reports for custodians and auditors.
-- Show issue consumption and full item stock cards by saved posting date, including correction effects and transaction references.
-- Provide A4 print views and Excel downloads with formula-like text escaped.
+- Start A17 with current conference-room status and next-step guidance for owned reservations and validated guest tracking links, including standby, moves, replacements, declines, cancellation, withdrawal, expiry and unavailable alternatives.
+- Distinguish owned pending requests from owned approved slots; retain pending-title privacy, directory-based approval authority and independent mutation checks.
+- Check typed dates/hours through the existing minimal read API with stale-response protection, retained drafts, explicit check retry and fresh server validation on submission.
+- Make mobile request panels contain/restore focus, preserve focus across resizing, use ordinary day links and provide visible server-error recovery; keep the native form usable without JavaScript.
+- Clarify immediate booking versus a new request in alternative buttons, current approval blockers and decision notes; avoid claiming email delivery or universal free hours after withdrawal.
+- Verify lifecycle/ownership/fresh-authority/HTTP behavior and actual Chromium form-to-data journeys; record sampled local accessibility evidence. Calendar/travel refinements, manual screen-reader and staff task observations remain open.
 
 ## 7.84 — October 21, 2026
 
-- Record delivered, accepted and rejected quantities with supplier, DR, date, costs and rejection reasons against approved replenishments.
-- Post accepted units to physical stock and reduce incoming in one transaction, then allocate available stock to outstanding approved requests.
-- Link each accepted receipt to its replenishment and require an explicit incoming-stock choice when correcting it.
-- Prevent general receipts from bypassing open approved replenishment commitments for the same item.
+- Email console (`/admin/email`): add a global **Pause all email** (account mail — invite, reset, registration-link re-send — is never paused; queued room and calendar mail waits and sends after resume; scheduled jobs skip while paused). Audited as `email_pause`.
+- Split conference-room meal alerts into their own `room_meal_alerts` switch (reads the old `room_admin_alerts` value until set, so nothing turns back on). Add attachment options `calendar_ics` and `room_ics`.
+- Show features that are ON but blocked by another setting (Documents, document sending, shared work, travel filing), list official document dispatch under "Sent from other modules", and write one `document_dispatch` send-log row per recipient.
+- Move the admin-tunable timing knobs to `email_params.py` and add room morning/afternoon hours, escalation hours, calendar hold-back, send retries, shared-work digest weekday and the pinned-update cooldown and daily cap (defaults unchanged). `UPDATE_EMAIL_DAILY_CAP`/`UPDATE_EMAIL_COOLDOWN_MIN` constants are now the `update_email_*` settings.
+- Send log: filter by feature/result/address, show more, CSV export (manage_users, audited, formula-safe), last-sent and 7-day failure hints, and a "Needs attention" card.
+- Delivery policy (applies to all mail, account mail included): staging redirect address, sender name, reply-to, subject prefix. Reply-to needs the updated `apps_script/mail_relay.gs` (redeploy). Test-send can target another active account picked from a list.
+- `tests/test_email_coverage.py` fails when a new direct `mailer.send` call, an uncatalogued feature key or an unused catalog entry appears.
+- Not changed: birthday greetings still have no per-person opt-out (a documented decision), birthday and daily-job send times follow the single daily sweep, and message wording is still not editable.
 
 ## 7.83 — October 21, 2026
 
-- Add S5.2 numbered replenishment submissions with immutable revisions and current-stock review.
-- Require a distinct replenishment approver grant for approve, reduce, return or reject decisions; prevent self-approval.
-- Establish approved incoming once, track order references, expected delivery, ordered quantities and responsible custodian without reposting incoming.
-- Allow reasoned partial or full cancellation of unreceived approved quantities while preserving decision and order history.
+- Deliver the A16 shared accessibility engineering slice: readable muted text, theme-aware Wellness buttons, solid keyboard focus indicators, larger survey N/A and carousel controls, keyboard-scrollable growth stages and separate native avatar actions.
+- Share modal focus containment, background isolation, Escape dismissal and focus restoration across the mobile drawer, search, feedback, tours and daily snapshots, including nested overlays and responsive dismissal.
+- Add a search close control, valid single-control search options, keyboard whole-page feedback with announced errors/status, larger CSS hub filters and Home reflow with doubled text.
+- Verify real Chromium keyboard journeys, accessible names/descriptions and native accessibility trees, mobile/desktop layout and no-JavaScript carousel access; record pinned local axe scans of ordinary and open-dialog states.
+- Manual screen-reader/browser sessions, remaining axe incomplete checks, staff task observations and live production testing remain open; this is not whole-product WCAG certification.
 
 ## 7.82 — October 21, 2026
 
-- Add S5.1 replenishment suggestions from the stock ledger, approved outstanding demand and approved incoming quantities.
-- Let custodians save multi-item replenishment drafts with targets, quantities, estimated costs, dates, references and reasons for overrides.
-- Flag open replenishment records and prevent deactivation of an item with an open draft or commitment.
-- Keep drafts outside physical stock and committed incoming totals until later approval and delivery increments.
+- Extend A15 to My actions and division follow-up with current document guidance, responsible people/roles, ready/waiting/attention states and direct links to existing controls.
+- Filter current access and scope before seek pagination; batch ordinary page data and responsibility names, bound instruction/contribution cards, retain deadline ordering and label unknown dates.
+- Share closure facts and legacy contribution choices, preserve authoritative shared-work checks, and retain independent fresh write guards.
+- Protect stale review links after authority changes and restore keyboard focus on cross-page action links without waiting for external previews.
+- Verify workflow/card agreement, private inputs, role and scope changes, interrupted/partial delivery, page boundaries, growing registers, OS SQLite compatibility and real browser navigation. Staff observations remain open.
 
 ## 7.81 — October 21, 2026
 
-- Add S4.2 Supplies overview with role-specific action counts linked to exact filtered, authorized queues.
-- Share submitted-unit request and assigned-recipient release access predicates across detail, lists and counts.
-- Add literal search, status filters and filter-preserving pagination; show the next responsible person/action.
-- Show recent stock activity only to current custodians/auditors, and retain read access while business writes are disabled.
+- Start A15 with a document “What happens next?” panel showing current responsibility, the next permitted action and an explanation of blockers.
+- Cover verification/correction, routing, contributions, exact-version review and returns, signing, delivery, acknowledgment, closure, reopening and archived/read-only states.
+- Reuse structural closure and current reviewer authority checks; retain independent POST authorization, revision and exact-version guards.
+- Link only to permitted shared work and existing forms; open nested details and move keyboard focus without submitting actions or replaying uncertain external requests.
+- Add lifecycle, permission, failure-recovery, read-only HTTP and real-browser navigation coverage. Staff pilot measurements and live production testing remain deferred.
 
 ## 7.80 — October 21, 2026
 
-- Add S4.1 physical-stock and availability warning indicators with exact critical-level and zero-stock boundaries.
-- Persist warning snapshots with stock/catalog transactions, then project alert episodes and deduplicated custodian notices after commit.
-- Resolve warnings on recovery, notify on recurrence or meaningful worsening, and retry queued notices without replaying stock movements.
-- Add scoped, paginated warning/notice screens and explicit read marking; revoked grants immediately remove notice access.
+- Navigation: "Travel filing settings" (`/admin/travel`: travel filing on or off, the head of office and certifying-officer fallback, template administrators and the documents relay) moves from search-only into the Administrator menu under Setup & records, for accounts with `manage_users`. Only the menu entry changed; the page, its permission and its search entry are the same, and the search keywords now include head of office, Director, OIC and certifying officer.
 
 ## 7.79 — October 21, 2026
 
-- Add S3.3 usable/unusable returns, physical-count adjustments, and linked partial issue/receipt reversals with immutable evidence.
-- Require a fresh impact preview and explicit confirmation; reconcile stock, reservations, request fulfillment and audit atomically with replay protection.
-- Preserve existing cancellations and acknowledgment evidence; require an explicit issue-reversal demand choice and block receipt reversals against consumed or reserved stock.
-- Show corrected totals and scoped, paginated correction history alongside original release/receipt quantities and print records.
+- Complete A14 with one alternating document background scheduler and one shared background admission slot, leaving interactive capacity in the two-worker pool.
+- Coordinate Drive discovery and filing across processes through an expiring SQLite lease, fenced cursor/result/error writes and durable manual check requests.
+- Bound listing/filing turns and intake registration checks with a shared elapsed service budget; process one due filing per turn with backoff, attempt limits and review stops.
+- Retain original filing operation markers, payloads and registered numbers after interruptions; expose last/next attempt and protected manual filing retry controls.
+- Verify competing processes, real worker exit after filing, stale workers, scheduler fairness, transport budgets, authority changes, safe diagnostics and responsive HTTP navigation during provider stalls.
 
 ## 7.78 — October 21, 2026
 
-- Add the Supplies module through S3.2: independent role grants and default-off access, catalog, immutable ledger, reviewed opening import and stock receipts.
-- Support staff drafts, scoped approval and reservations, awaiting-stock tracking, reasoned remainder cancellation and numbered partial/full releases.
-- Record recipient acknowledgment/dispute and attributed paper evidence; print submitted request and release forms on A4 with separate release dates and blank signatures.
-- Preserve current main's changes and release history; no live stock import or operational role configuration is performed by installation.
+- Signatory for activity documents (spot feedback #157): the DPO, memorandum and concept note took the head of office only from `travel.sig.head_name`, so they were unsigned unless an administrator typed a name. They now use the same rule as the travel forms (`activity_docs.head_of_office`): the name and title set under Travel filing settings win, and with no name set the Director from the directory is used. Travel filing settings relabels the certifying officer boxes as a fallback and explains that each form takes the head of the traveller's own division from the directory (`travel.directory_signers`, unchanged), and that a blank head of office means the directory's Director. No change to how travel forms pick their signers.
 
 ## 7.77 — October 21, 2026
 

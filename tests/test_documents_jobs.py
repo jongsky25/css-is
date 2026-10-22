@@ -271,7 +271,7 @@ def test_worker_cancellation_does_not_swallow_shutdown(monkeypatch):
     import documents_external as external
     calls=[]
     async def run(fn,*args):calls.append(fn);raise asyncio.CancelledError()
-    monkeypatch.setattr(external,'run',run)
+    monkeypatch.setattr(external,'run_background',run)
     async def exercise():
         with pytest.raises(asyncio.CancelledError):await jobs.worker(lambda:None)
     asyncio.run(exercise())
@@ -308,7 +308,7 @@ def test_application_recovery_startup_opt_out_and_shutdown(app_mod,monkeypatch):
             assert started==[]
             patch.setenv('CSS_NO_SCHEDULER','0')
             await app_mod._start_scheduler()
-        assert any(path.endswith('/documents_jobs.py') for path in started)
+        assert any(path.endswith('/documents_sync.py') for path in started)
         task=original_create(asyncio.Event().wait())
         monkeypatch.setattr(app_mod,'_document_job_task',task)
         await app_mod._stop_short_links()

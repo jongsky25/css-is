@@ -24,6 +24,7 @@ import documents_file_text as file_text
 import documents_registration as registration
 import documents_external as external
 import documents_jobs as jobs
+import documents_guidance as guidance
 import work
 import work_intake
 import work_readiness
@@ -40,12 +41,16 @@ def make_router(templates,get_conn):
 
     def context(request,conn,**values):
         user=p.actor(conn,getattr(request.state,'user',None))
+        compact=values.pop('page_people',False)
+        page_ids=sorted({card['owner_id'] for card in values.get('cards',[]) if card['owner_id']})
+        person_filter=' WHERE u.id IN (SELECT value FROM json_each(?))' if compact else ''
+        person_params=(json.dumps(page_ids),) if compact else ()
         return {'nav_active':'documents','enabled':d.enabled(conn),'csrf':csrf(request),'error':'',
                 'submitted':{},'intake_access':p.has_role(conn,user,'records'),'is_director':p.director(conn,user),'workflow_admin':p.has_role(conn,user,'workflow_admin'),
                 'archive_admin':bool(conn.execute("SELECT 1 FROM document_role_grant WHERE user_id=? AND role='workflow_admin' AND revoked_at IS NULL",(user['id'],)).fetchone()),
-                'people':rows(conn,"SELECT u.id,u.username,COALESCE(NULLIF(r.name,''),u.username) AS name FROM admin_user u LEFT JOIN resource_person r ON r.id=u.rp_id WHERE u.active=1 ORDER BY name"),
-                'names':{r['id']:r['name'] for r in rows(conn,"SELECT u.id,COALESCE(NULLIF(r.name,''),u.username) AS name FROM admin_user u LEFT JOIN resource_person r ON r.id=u.rp_id")},
-                'units':rows(conn,'SELECT id,name FROM org_unit ORDER BY path'),**values}
+                'people':[] if compact else rows(conn,"SELECT u.id,u.username,COALESCE(NULLIF(r.name,''),u.username) AS name FROM admin_user u LEFT JOIN resource_person r ON r.id=u.rp_id WHERE u.active=1 ORDER BY name"),
+                'names':{r['id']:r['name'] for r in rows(conn,"SELECT u.id,COALESCE(NULLIF(r.name,''),u.username) AS name FROM admin_user u LEFT JOIN resource_person r ON r.id=u.rp_id"+person_filter,person_params)},
+                'units':[] if compact else rows(conn,'SELECT id,name FROM org_unit ORDER BY path'),**values}
 
     def render(request,conn,page,**values):
         return templates.TemplateResponse(request,'documents/'+page+'.html',context(request,conn,**values))
@@ -90,14 +95,8 @@ def make_router(templates,get_conn):
             assignment['progress_choices']=[]
             assignment['milestone_allowed']=False
             if not migration and doc['status'] not in ('closed','cancelled') and assignment['status'] not in ('completed','superseded'):
-                if assignment['user_id']==user['id'] or is_officer:
-                    assignment['progress_choices']={'assigned':[('acknowledged','Acknowledge')],
-                        'acknowledged':[('in_progress','Start contribution'),('submitted','Submit for consolidation')],
-                        'in_progress':[('submitted','Submit for consolidation')]}.get(assignment['status'],[])
-                if coordinator:
-                    if assignment['status']=='submitted':
-                        assignment['progress_choices'].append(('completed','Confirm contribution complete'))
-                    assignment['milestone_allowed']=True
+                assignment['progress_choices']=guidance.assignment_choices(user,doc,is_officer,assignment)
+                assignment['milestone_allowed']=coordinator
         for e in details['history']:
             e['detail']=json.loads(e['detail_json'])
             e['note']=e['detail'].get('reason') or e['detail'].get('outcome') or ''
@@ -105,11 +104,11 @@ def make_router(templates,get_conn):
         warnings=rules.coverage(conn,doc['created_at'],doc['due_date'])
         if any(a['due_date'] and a['due_date']<doc['created_at'][:10] for a in details['assignments']):
             warnings.append('The proposed contributor buffer cannot fit before the deadline. The lead must adjust milestones explicitly.')
-        return {'doc':doc,**details,'policy':policy,'duplicates':d.duplicate_candidates(conn,user,doc_id),
+        values={'doc':doc,**details,'policy':policy,'duplicates':d.duplicate_candidates(conn,user,doc_id),
                 'file_indexes':{row['version_id']:row for row in rows(conn,
                     'SELECT version_id,indexed_at,chars FROM document_file_index WHERE document_id=?',(doc_id,))},
                 'email_bodies':rows(conn,"SELECT body_text FROM document_intake_email WHERE document_id=? AND body_text<>''",(doc_id,)),
-                'filing_rows':rows(conn,"SELECT original_name,filing_state,error FROM document_intake WHERE document_id=? AND filing_state<>'none'",(doc_id,)),
+                'filing_rows':rows(conn,"SELECT id,original_name,filing_state,filing_attempts,filing_next_at,filing_last_at,filing_blocked,error FROM document_intake WHERE document_id=? AND filing_state<>'none'",(doc_id,)),
                 'instruction_recipients':rows(conn,'SELECT r.directive_id,r.user_id FROM document_instruction_recipient r JOIN document_directive d ON d.id=r.directive_id WHERE d.document_id=?',(doc_id,)),
                 'unread_instructions':{r['id'] for r in rows(conn,'''SELECT x.id FROM document_directive x
                     JOIN document_instruction_recipient r ON r.directive_id=x.id
@@ -129,6 +128,9 @@ def make_router(templates,get_conn):
                 'notice_rows':rows(conn,"SELECT * FROM document_notice WHERE document_id=? AND user_id=? ORDER BY id DESC",(doc_id,user['id'])),
                 'recipient_outcomes':rows(conn,'SELECT r.* FROM document_dispatch_recipient r JOIN document_dispatch x ON x.id=r.dispatch_id WHERE x.document_id=?',(doc_id,)),
                 'related': [x for x in rows(conn,'SELECT * FROM document WHERE id IN (SELECT target_id FROM document_relation WHERE source_id=? UNION SELECT source_id FROM document_relation WHERE target_id=?)',(doc_id,doc_id)) if p.can_view(conn,user,x)]}
+
+        values['next_step']=guidance.build(conn,user,values)
+        return values
 
     @router.get('/documents',response_class=HTMLResponse)
     def index(request:Request):
@@ -156,13 +158,14 @@ def make_router(templates,get_conn):
             view=request.query_params.get('view','mine')
             if view not in ('mine','division'):
                 return HTMLResponse('Unknown action view.',status_code=400)
-            units=actions.division_units(conn,user)
-            if view=='division' and not units:
-                return HTMLResponse('Division follow-up is for division chiefs or OICs.',status_code=403)
-            cards=actions.team(conn,user) if view=='division' else actions.personal(conn,user)
-            return render(request,conn,'actions',cards=cards,view=view,division_access=bool(units))
-        except p.Denied as e:
-            return HTMLResponse(str(e),status_code=403)
+            page=actions.page(conn,user,view,before=request.query_params.get('before','0'),
+                              before_due=request.query_params.get('due',''))
+            page['first_url']='/documents/actions?'+urlencode({'view':view})
+            page['older_url']=('/documents/actions?'+urlencode({'view':view,'before':page['next_before'],
+                               'due':page['next_due']}) if page['more'] else '')
+            return render(request,conn,'actions',view=view,page_people=True,**page)
+        except (p.Denied,ValueError) as e:
+            return HTMLResponse(str(e),status_code=403 if isinstance(e,p.Denied) else 400)
         finally:
             conn.close()
 

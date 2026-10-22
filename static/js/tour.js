@@ -27,7 +27,7 @@
     return false;
   }
 
-  var backdrop, spot, card, idx = 0, live = null, lastFocus = null;
+  var backdrop, spot, card, idx = 0, live = null, lastFocus = null, releaseFocus = null;
 
   function visible(sel) {
     var el = document.querySelector(sel);
@@ -66,6 +66,7 @@
     document.body.appendChild(backdrop);
     document.body.appendChild(spot);
     document.body.appendChild(card);
+    if (window.OfficeA11y) releaseFocus = OfficeA11y.open(card, {allow:[backdrop,spot], onDismiss:skip, returnFocus:lastFocus});
     window.addEventListener("resize", place);
     window.addEventListener("scroll", place, true);
     document.addEventListener("keydown", onKey, true);
@@ -78,7 +79,8 @@
     document.removeEventListener("keydown", onKey, true);
     [backdrop, spot, card].forEach(function (n) { if (n && n.parentNode) n.parentNode.removeChild(n); });
     backdrop = spot = card = live = null;
-    if (lastFocus && lastFocus.focus) { try { lastFocus.focus(); } catch (_) {} }
+    if (releaseFocus) { releaseFocus(); releaseFocus = null; }
+    else if (lastFocus && lastFocus.focus) { try { lastFocus.focus(); } catch (_) {} }
   }
 
   function skip() { teardown(true); }

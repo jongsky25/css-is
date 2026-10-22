@@ -1,16 +1,14 @@
 """Unnumbered Drive intake and retry-safe filing. No binary files are stored."""
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
-import asyncio
 import json
 import re
-import threading
 import uuid
 import httpx
 import errno
 import socket
 import ssl
-from documents_workspace import WorkspaceError, Unconfigured
+from documents_workspace import WorkspaceError, Unconfigured, BudgetAdapter
 
 import documents as d
 import documents_permissions as p
@@ -19,7 +17,6 @@ from documents_storage import rows, transaction, event
 import storage as st
 import tzutil as tz
 
-_SYNC_LOCK = threading.Lock()
 FIELDS = ('direction','subject','type','sender','document_date','received_at','references','due_date','priority')
 OCR_MIMES = {'application/pdf', 'image/png', 'image/jpeg', 'image/gif', 'text/plain'}
 MIMES = OCR_MIMES | {'application/msword','application/vnd.ms-excel','application/vnd.ms-powerpoint',
@@ -45,19 +42,23 @@ def settings(conn):
 
 def configure(conn, user, fields):
     with transaction(conn):
+        import documents_sync
         user = reviewer(conn, user)
         d.require(p.has_role(conn, user, 'workflow_admin'))
+        if documents_sync.active(documents_sync.state(conn)):
+            raise d.Conflict('A Drive check is running. Wait for it to finish before changing its settings.')
         current = settings(conn)
         enabled = fields.get('enabled') == 'yes'
         inbox, filed = str(fields.get('inbox','')).strip(), str(fields.get('filed','')).strip()
         if enabled and (not all(re.fullmatch(r'[A-Za-z0-9_-]{10,200}', x) for x in (inbox,filed)) or inbox == filed):
             raise ValueError('Choose different To Review and Filed folder IDs.')
         if (inbox,filed) != (current['inbox'],current['filed']) and conn.execute(
-                "SELECT 1 FROM document_intake WHERE state IN ('waiting','attention') OR filing_state IN ('pending','error') LIMIT 1").fetchone():
+                "SELECT 1 FROM document_intake WHERE state IN ('waiting','attention') OR filing_state IN ('pending','running','error') LIMIT 1").fetchone():
             raise ValueError('Finish or dismiss queued scans and complete pending filing before changing folders.')
         for key,value in {'intake_enabled':'1' if enabled else '0','inbox':inbox,'filed':filed,
                           'actor_id':str(user['id']),'cursor':''}.items():
             _setting(conn,key,value)
+        conn.execute("UPDATE document_intake_sync SET lease_owner=NULL,lease_until=NULL,state='pending',next_check_at=?,blocked=0,failures=0 WHERE id=1",(tz.now_iso(),))
         if enabled:
             # Sticky migration: pausing Drive must never resume direct Gmail registration.
             conn.execute("INSERT INTO app_setting(key,value) VALUES ('documents.gmail_review_queue_enabled','1') ON CONFLICT(key) DO UPDATE SET value='1'")
@@ -165,7 +166,11 @@ def list_page(conn, user, state='waiting', page=1):
     visible="""i.email_primary=1 AND (i.document_id IS NULL OR (d.canonical_id IS NULL AND
         (d.visibility<>'restricted' OR EXISTS(SELECT 1 FROM document_access a WHERE a.document_id=d.id AND a.user_id=?))))"""
     items=rows(conn,'''SELECT i.id,i.original_name,i.discovered_at,i.state,i.revision,i.claimed_by,
-        i.claim_until,i.document_id,i.filing_state,i.error,i.email_id,e.subject AS email_subject,u.username AS reviewer
+        i.claim_until,i.document_id,i.filing_state,i.filing_attempts,i.filing_next_at,i.filing_last_at,i.filing_blocked,i.error,i.email_id,e.subject AS email_subject,u.username AS reviewer,
+        (SELECT COUNT(*) FROM document_intake sibling WHERE sibling.email_id=i.email_id
+            AND sibling.filing_state IN ('pending','running','error')) AS filing_remaining,
+        (SELECT COUNT(*) FROM document_intake sibling WHERE sibling.email_id=i.email_id
+            AND sibling.filing_state IN ('pending','running','error') AND sibling.filing_blocked=1) AS filing_review
         FROM document_intake i LEFT JOIN admin_user u ON u.id=i.claimed_by
         LEFT JOIN document_intake_email e ON e.id=i.email_id LEFT JOIN document d ON d.id=i.document_id WHERE ''' + visible +
         ' AND i.state=? ORDER BY i.id LIMIT 31 OFFSET ?',(user['id'],state,(page-1)*30))
@@ -174,11 +179,14 @@ def list_page(conn, user, state='waiting', page=1):
     return items[:30],len(items)>30,counts
 
 
-def discover(conn, config, result):
+def discover(conn, config, result, *, owner=None):
     files=result.get('files')
     if not isinstance(files,list) or len(files)>100 or result.get('inbox') != config['inbox']:
         raise ValueError('Drive returned an invalid intake listing.')
     with transaction(conn):
+        if owner:
+            import documents_sync
+            documents_sync.owned(conn,owner)
         actor=reviewer(conn,{'id':int(config['actor_id'])})
         if _active(conn)['inbox']!=config['inbox']:
             raise d.Conflict('The intake folder changed during discovery.')
@@ -346,7 +354,7 @@ def register(conn,user,item_id,revision,fields,attachments=(),adapter=None):
     picks=[(int(item_id),int(revision))]+[(int(i),int(r)) for i,r in attachments]
     if len(picks)>20 or len({i for i,r in picks})!=len(picks): raise ValueError('Choose up to 20 distinct scans.')
     items=[]
-    adapter=adapter or ops.get_adapter()
+    adapter=BudgetAdapter(adapter or ops.get_adapter())
     for iid,rev in picks:
         _,item=_editable(conn,user,iid,rev,claim=iid==int(item_id))
         if item['email_id'] != prior['email_id']:
@@ -396,29 +404,9 @@ def register(conn,user,item_id,revision,fields,attachments=(),adapter=None):
 
 
 def file_pending(conn, adapter):
-    config=_active(conn)
-    actor=reviewer(conn,{'id':int(config['actor_id'])})
-    pending=rows(conn,"SELECT * FROM document_intake WHERE filing_state IN ('pending','error') ORDER BY updated_at,id LIMIT 5")
-    for item in pending:
-        try:
-            payload=json.loads(item['filing_payload'])
-            # Revalidate the original registration actor; revocation stops their operation.
-            original_actor=reviewer(conn,{'id':payload['actor_id']})
-            d.get(conn,original_actor,item['document_id'])
-            result=adapter.call('intake_file',payload,item['filing_operation'])
-            if result.get('state')!='confirmed' or result.get('file_id')!=item['file_id'] or not result.get('fingerprint'):
-                raise ValueError('Filing not confirmed.')
-            with transaction(conn):
-                _active(conn)
-                conn.execute("UPDATE document_intake SET filing_state='complete',error='',updated_at=? WHERE id=?",
-                             (tz.now_iso(),item['id']))
-                conn.execute("UPDATE document_file_version SET fingerprint=? WHERE document_id=? AND file_id=? AND role='reference' AND fingerprint=''",
-                             (str(result['fingerprint'])[:500],item['document_id'],item['file_id']))
-                event(conn,item['document_id'],actor,'drive_filed',{'intake_id':item['id'],'file_id':item['file_id']})
-        except Exception:
-            with transaction(conn):
-                conn.execute("UPDATE document_intake SET filing_state='error',error=?,updated_at=? WHERE id=?",
-                             ('Drive filing needs attention; the registered record is saved. Check relay permissions and source changes.',tz.now_iso(),item['id']))
+    """One filing attempt, coordinated with discovery across all workers."""
+    import documents_sync
+    return documents_sync.sync(conn,adapter,filing_only=True)
 
 
 def relay_network_failure(exc):
@@ -506,36 +494,10 @@ def sync_failure(exc, phase):
 
 
 def sync(conn, adapter=None):
-    if not _SYNC_LOCK.acquire(blocking=False): return
-    phase='settings'
-    try:
-        config=_active(conn)
-        phase='account'
-        actor=reviewer(conn,{'id':int(config['actor_id'])})
-        phase='relay'
-        adapter=adapter or ops.get_adapter()
-        result=adapter.call('intake_list',{'inbox':config['inbox'],'cursor':config['cursor'],
-                                         'actor_id':actor['id']},str(uuid.uuid4()))
-        phase='listing'
-        discover(conn,config,result)
-        phase='filing'
-        file_pending(conn,adapter)
-    except Exception as exc:
-        if conn.in_transaction: conn.rollback()
-        with transaction(conn):
-            _setting(conn,'cursor','')
-            _setting(conn,'sync_error',sync_failure(exc,phase))
-    finally:
-        _SYNC_LOCK.release()
+    import documents_sync
+    return documents_sync.sync(conn,adapter)
 
 
 async def worker(get_conn):
-    def tick():
-        conn=get_conn()
-        try:
-            if d.enabled(conn) and settings(conn)['intake_enabled']=='1': sync(conn)
-        finally: conn.close()
-    while True:
-        await asyncio.sleep(180)
-        try: await asyncio.to_thread(tick)
-        except Exception: pass  # Per-operation failures are exposed in intake status.
+    import documents_sync
+    await documents_sync.worker(get_conn)

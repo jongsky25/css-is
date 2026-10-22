@@ -1,4 +1,7 @@
 """S4.2 shared queue counts, submitted-unit scopes, filters and dashboard access."""
+from concurrent.futures import ThreadPoolExecutor
+from threading import Barrier
+from time import sleep
 from urllib.parse import urlsplit,parse_qs
 
 import pytest
@@ -21,6 +24,39 @@ from tests.test_supplies_issues import issue, data as issue_data
 from tests.test_supplies_acknowledgments import respond
 from tests.test_supplies_corrections import correction
 from tests.conftest import session_token
+
+
+def test_first_connections_initialize_schema_once_across_threads(app_mod, tmp_path, monkeypatch):
+    db_path = str(tmp_path / 'first-connections.db')
+    old_db = app_mod.DB
+    app_mod.DB = db_path
+    app_mod._schema_ready_for.discard(db_path)
+    initialize = st.init_db
+    calls = []
+    start = Barrier(2)
+
+    def slow_initialize(conn):
+        calls.append(1)
+        sleep(0.05)
+        initialize(conn)
+
+    def open_first_connection():
+        start.wait()
+        conn = app_mod.get_conn()
+        try:
+            return conn.execute("SELECT COUNT(*) FROM sqlite_master WHERE name='supply_item'").fetchone()[0]
+        finally:
+            conn.close()
+
+    monkeypatch.setattr(st, 'init_db', slow_initialize)
+    try:
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            results = list(pool.map(lambda _: open_first_connection(), range(2)))
+        assert results == [1, 1]
+        assert len(calls) == 1
+    finally:
+        app_mod.DB = old_db
+        app_mod._schema_ready_for.discard(db_path)
 
 
 @pytest.fixture

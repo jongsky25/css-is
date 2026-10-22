@@ -1,13 +1,14 @@
 """Focused intake screens, authenticated with the existing Documents session."""
 import asyncio
 import json
-from fastapi import APIRouter, Request, BackgroundTasks
+from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 import documents as d
 import documents_permissions as p
 import documents_intake as intake
 import documents_gmail_settings as gmail_settings
 import documents_external as external
+import documents_sync as sync_jobs
 from documents_routes import csrf
 from documents_storage import rows
 import tzutil as tz
@@ -34,7 +35,7 @@ def make_router(templates,get_conn):
         if state not in ('waiting','attention','registered','dismissed'): state='waiting'
         items,more,counts=intake.list_page(conn,user,state,page)
         return render(request,conn,'intake_queue',status,items=items,more=more,page=page,state=state,
-                      counts=counts,config=intake.settings(conn),now=tz.now_iso(),error=error)
+                      counts=counts,config=intake.settings(conn),sync_progress=sync_jobs.progress(conn),now=tz.now_iso(),error=error)
 
     def review_page(request,conn,item_id,error='',status=200,values=None):
         item=intake.get(conn,request.state.user,item_id)
@@ -113,22 +114,27 @@ def make_router(templates,get_conn):
                           gmail_values=values,error=str(exc))
         finally: conn.close()
 
-    def sync_background():
-        conn=get_conn()
-        try: intake.sync(conn)
-        finally: conn.close()
-
     @router.post('/documents/intake/sync')
-    async def sync(request:Request,background_tasks:BackgroundTasks):
+    async def sync(request:Request):
         conn=get_conn()
         try:
             await posted(request)
-            intake.reviewer(conn,request.state.user);intake._active(conn)
-            background_tasks.add_task(sync_background)
+            sync_jobs.request_check(conn,request.state.user)
             return RedirectResponse('/documents/intake?checking=1',status_code=303)
         except (ValueError,p.Denied) as exc:
             return HTMLResponse(str(exc),status_code=403 if isinstance(exc,p.Denied) else 400)
         finally: conn.close()
+
+    @router.post('/documents/intake/{item_id:int}/filing/retry')
+    async def retry_filing(request:Request,item_id:int):
+        conn=get_conn()
+        try:
+            await posted(request)
+            sync_jobs.retry_file(conn,request.state.user,item_id)
+            return RedirectResponse('/documents/intake?state=registered',status_code=303)
+        except (ValueError,p.Denied) as exc:
+            return HTMLResponse(str(exc),status_code=403 if isinstance(exc,p.Denied) else 409 if isinstance(exc,d.Conflict) else 400)
+        finally:conn.close()
 
     @router.get('/documents/intake/{item_id:int}',response_class=HTMLResponse)
     def review(request:Request,item_id:int):
@@ -187,7 +193,7 @@ def make_router(templates,get_conn):
         except (ValueError,p.Denied) as exc: return HTMLResponse(str(exc),status_code=403 if isinstance(exc,p.Denied) else 400)
         # OCR and Drive checks execute off the event loop, with a connection owned
         # by that worker thread. No SQLite transaction spans external I/O.
-        if data.get('action') in ('extract', 'reread'):
+        if data.get('action') in ('extract', 'reread', 'register', 'register_next'):
             try:
                 return await external.run(handle, request, item_id, data)
             except (external.Busy, external.Unconfirmed) as exc:

@@ -1,6 +1,7 @@
 {% extends "public_layout.html" %}
+{% from "_room_guidance.html" import reservation_guidance %}
 {% block title %}Your conference room request — Office Connect{% endblock %}
-{% block head %}<link rel="stylesheet" href="/static/css/rooms.css?v=20261020a">{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/rooms.css?v=7.85">{% endblock %}
 
 {% block content %}
 <div class="pub-card rp-card">
@@ -12,7 +13,7 @@
   {% else %}
   <h1>Your conference room request</h1>
   {% if new %}<div class="flash ok" role="status"><span>✓ Request sent.
-    {% if r.ext_email %}We emailed a link to <strong>{{ r.ext_email }}</strong>.{% endif %}
+    Updates are shown on this tracking page.{% if r.ext_email %} Contact: <strong>{{ r.ext_email }}</strong>.{% endif %}
     Keep your reference <strong>{{ r.ref_code }}</strong>, and bookmark this page to check on it later.</span></div>{% endif %}
   {% if msg %}<div class="flash ok" role="status">✓ {{ msg }}</div>{% endif %}
   {% if err %}<div class="flash err" role="alert">✕ {{ err }}</div>{% endif %}
@@ -27,8 +28,7 @@
     {% if r.status in ('declined', 'cancelled') and r.decide_note %}<dt>Reason</dt><dd>{{ r.decide_note }}</dd>{% endif %}
   </dl>
 
-  {% if r.status == 'requested' %}<p class="muted">The Administrative Section hasn't decided yet. We'll email you as soon as they do.</p>{% endif %}
-  {% if r.status == 'approved' %}<p class="muted">The room is yours at these hours. If your plans change, please withdraw so others can use it.</p>{% endif %}
+  {{ reservation_guidance(guidance) }}
 
   {% if can_withdraw %}<p><a href="/room/t/{{ token }}/meals">{{ 'Meal form' if r.meals_requested else 'Request meals' }}</a></p>{% endif %}
 
@@ -37,7 +37,7 @@
     {% for o in offers %}
     <form method="post" action="/room/t/{{ token }}/take">
       <input type="hidden" name="day" value="{{ o.day }}"><input type="hidden" name="slots" value="{{ o.slot_ids|join(',') }}">
-      <button class="btn ghost small" type="submit">{{ o.label }}</button></form>
+      <button class="btn ghost small" type="submit">{{ 'Book' if was_bumped else 'Request' }} {{ o.label }}</button></form>
     {% endfor %}
   </div>
   {% endif %}

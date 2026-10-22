@@ -6,7 +6,8 @@
 <title>{% block title %}Dashboard{% endblock %} — Office Connect</title>
 {# Set theme + text size before first paint so the choice never flashes. #}
 <script>(function(){try{var d=document.documentElement;var t=localStorage.getItem("theme");if(t!=="dark"&&t!=="light"&&t!=="contrast"){t=window.matchMedia&&window.matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light";}d.setAttribute("data-theme",t);var s=localStorage.getItem("textscale");if(s!=="sm"&&s!=="lg"&&s!=="md"){s="md";}d.setAttribute("data-textscale",s);var dn=localStorage.getItem("density");if(dn!=="compact"&&dn!=="cozy"){dn="cozy";}d.setAttribute("data-density",dn);var ac=localStorage.getItem("accent");if(["blue","teal","violet","emerald","rose","amber"].indexOf(ac)<0){ac="blue";}d.setAttribute("data-accent",ac);}catch(e){}})();</script>
-<link rel="stylesheet" href="/static/css/app.css?v=20261020csrf">
+<link rel="stylesheet" href="/static/css/app.css?v=7.83">
+<script src="/static/js/accessibility.js?v=7.83" defer></script>
 {% block head %}{% endblock %}
 </head>
 {# page_width: "full" (dense tables), "narrow" (forms/reading), or empty for the default. #}
@@ -122,7 +123,7 @@
     <details class="nav-toggle">
       <summary aria-label="Menu">☰</summary>
       <div class="mm-backdrop" data-mm-close aria-hidden="true"></div>
-      <div class="mobile-menu" role="dialog" aria-label="Menu">
+      <div class="mobile-menu" role="dialog" aria-modal="true" aria-label="Menu">
         <div class="mm-head">
           <span class="mm-title">Menu</span>
           <button type="button" class="mm-close" data-mm-close aria-label="Close menu">✕</button>
@@ -160,7 +161,7 @@
     </details>
 
     <div class="right">
-      {% if u %}<button id="navSearchBtn" type="button" class="nav-search" aria-label="Search (Ctrl K)" title="Search (Ctrl K)"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></button>{% endif %}
+      {% if u %}<button id="navSearchBtn" aria-haspopup="dialog" aria-controls="cmdk" aria-expanded="false" type="button" class="nav-search" aria-label="Search (Ctrl K)" title="Search (Ctrl K)"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></button>{% endif %}
       <details class="settings">
         <summary aria-label="Display settings" title="Display settings">⚙</summary>
         <div class="settings-menu">
@@ -220,7 +221,7 @@
       <button type="button" class="sv-btn" data-sv-save title="Save this filtered view">★ Save view</button>
       <button type="button" class="sv-btn" data-sv-toggle aria-expanded="false" hidden>Saved views <span aria-hidden="true">▾</span></button>
       <button type="button" class="sv-btn" data-sv-copy title="Copy a shareable link to this view">Copy link</button>
-      <div class="sv-menu" data-sv-menu role="menu" hidden></div>
+      <div class="sv-menu" data-sv-menu role="group" aria-label="Saved views" hidden></div>
     </div>
   </form>
 </div>
@@ -237,30 +238,30 @@
   <div class="palette" role="dialog" aria-modal="true" aria-label="Search">
     <div class="palette-head">
       <svg class="palette-ic" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-      <input type="text" id="cmdkInput" class="palette-input" placeholder="Search or jump to a page…"
+      <input type="text" id="cmdkInput" class="palette-input" placeholder="Search or jump to a page…" aria-label="Search pages and records"
              role="combobox" aria-expanded="true" aria-controls="cmdkResults"
              aria-autocomplete="list" autocomplete="off" spellcheck="false">
-      <kbd class="palette-esc">Esc</kbd>
+      <button type="button" class="palette-close" aria-label="Close search">✕</button>
     </div>
     <ul class="palette-results" id="cmdkResults" role="listbox" aria-label="Results"></ul>
   </div>
 </div>
 <script>window.SEARCH_INDEX = {{ search_index_for(u, request.state.is_chief)|tojson }};</script>
-<script src="/static/js/search.js?v=20261009c" defer></script>
+<script src="/static/js/search.js?v=7.83" defer></script>
 <script src="/static/js/assistant.js?v=20261009a" defer></script>
 {% endif %}
 {% if u and request.state.spot_feedback_enabled %}
 <button id="sfBtn" class="sf-float" type="button" aria-label="Send feedback about this page">💬 <span class="sf-lab">Send feedback</span></button>
-<script src="/static/js/feedback.js?v=20261020a" defer></script>
+<script src="/static/js/feedback.js?v=7.83" defer></script>
 {% endif %}
 {% if u %}
 {# Per-page guided tour — only this page's steps are shipped; tours.py is the source. #}
 <script>window.PAGE_KEY="{{ cur }}";window.PAGE_TOUR={{ (tour_for(cur) or [])|tojson }};</script>
-<script src="/static/js/tour.js?v=20260621e" defer></script>
+<script src="/static/js/tour.js?v=7.83" defer></script>
 {# Passive UX-behavior telemetry (docs/UX_TELEMETRY_HANDOFF_PLAN.md) — signed-in shell only. #}
 <script src="/static/js/telemetry.js?v=20260925a" defer></script>
 {% endif %}
-<script src="/static/js/app.js?v=20261009f" defer></script>
+<script src="/static/js/app.js?v=7.83" defer></script>
 <script src="/static/js/short_links.js?v=20261016c" defer></script>
 </body>
 </html>

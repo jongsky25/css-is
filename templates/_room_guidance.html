@@ -1,0 +1,10 @@
+{# Display only. Permissions and mutations stay in the existing room services/routes. #}
+{% macro reservation_guidance(g) %}
+<div class="rm-guidance" data-room-state="{{ g.state }}" role="group" aria-label="Reservation next step">
+  <strong>{{ g.title }}</strong>
+  <p>{{ g.holding }}</p>
+  <p><b>Next:</b> {{ g.actor }}. {{ g.step }}</p>
+  {% if g.related %}<p>Related reservation:
+    {% if g.related.href %}<a href="{{ g.related.href }}">{{ g.related.label }}</a>{% else %}<code>{{ g.related.label }}</code>{% endif %}</p>{% endif %}
+</div>
+{% endmacro %}

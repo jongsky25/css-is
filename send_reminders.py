@@ -175,42 +175,8 @@ JOB_FEATURE = {
     "travel_filing_due": "job_travel_filing_due",
 }
 
-# Admin-tunable schedule/delay knobs for the jobs below (/admin/email "Timing"
-# card). key -> (label, default, lo, hi). Stored as app_setting
-# "email_param.<key>"; read through _param() so a bad/missing value falls
-# back to the default instead of ever raising. Weekdays are Mon=0..Sun=6.
-PARAMS = {
-    "event_reminder_lead_days": (
-        "Day-before activity reminder: days ahead", 1, 1, 14),
-    "wellness_expiry_days_before": (
-        "Wellness decide-link expiry reminder: days before expiry", 3, 1, 13),
-    "digest_weekday": (
-        "Weekly pending-approvals digest: weekday", 0, 0, 6),
-    "csm_results_delay_days": (
-        "CSM results announcement: delay after activity concludes (days)", 3, 0, 30),
-    "wellness_file_weekday": (
-        "Wellness filing nudge: weekday", 3, 0, 6),
-    "awa_file_lead_days": (
-        "Work arrangement filing nudge: days before deadline", 1, 1, 14),
-    "whereabouts_weekday": (
-        "Weekly whereabouts email: weekday", 0, 0, 4),
-    "whereabouts_rollup_weekday": (
-        "Weekly whereabouts chief roll-up: weekday", 1, 0, 4),
-    "travel_filing_lead_days": (
-        "Travel filing reminder: days before", 2, 1, 14),
-}
-
-
-def _param(conn, key):
-    """An admin-tunable schedule param's current value, clamped to its
-    PARAMS range so a hand-edited or stale setting can't push a job outside
-    sane bounds."""
-    _label, default, lo, hi = PARAMS[key]
-    try:
-        n = int(st.get_setting(conn, f"email_param.{key}", str(default)))
-    except (TypeError, ValueError):
-        n = default
-    return max(lo, min(n, hi))
+import email_params
+from email_params import PARAMS, param as _param   # noqa: E402 - admin-tunable knobs live in email_params
 
 
 def remind_wellness_expiring(conn, base, dry_run=False):
@@ -831,6 +797,7 @@ def run(db_path="css_is.db", dry_run=False, jobs=None):
         print(_NO_BASE_URL)
         return {}
     jobs = set(jobs) if jobs else set(_ALL_JOBS)
+    email_params.install_policy(db_path)
     conn = st.connect(db_path)
     report = {}
     try:

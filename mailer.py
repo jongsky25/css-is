@@ -37,6 +37,7 @@ import smtplib
 import socket
 from datetime import datetime
 from email.message import EmailMessage
+from email.utils import formataddr
 
 import time
 
@@ -73,6 +74,45 @@ def _ipv4_only_getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
     latter to this very function while connecting, so looking it up by that
     name here would recurse into itself forever."""
     return _real_getaddrinfo(host, port, socket.AF_INET, type, proto, flags)
+
+
+# ---- Delivery policy (admin-set at /admin/email) -----------------------------
+#
+# mailer stays DB-free: the app and the reminder sweep install a loader that
+# returns {"redirect_to", "from_name", "reply_to", "subject_prefix"} (blank =
+# unset). Applied to every message, account mail included: a staging redirect
+# that let a password reset through to a real person would defeat its purpose.
+
+_policy_loader = None
+
+
+def set_policy_loader(fn):
+    global _policy_loader
+    _policy_loader = fn
+
+
+def delivery_policy():
+    try:
+        pol = _policy_loader() if _policy_loader else None
+    except Exception:                                  # noqa: BLE001 - a broken policy read must never stop mail
+        pol = None
+    return {k: " ".join(str((pol or {}).get(k) or "").split()) for k in
+            ("redirect_to", "from_name", "reply_to", "subject_prefix")}
+
+
+def _apply_policy(to, subject, body, html):
+    """(to, subject, body, html, from_name, reply_to) after the admin's delivery policy."""
+    pol = delivery_policy()
+    if pol["redirect_to"]:
+        note = f"[Staging copy — this would have gone to {to}]"
+        subject = f"[Staging: {to}] {subject}"
+        body = f"{note}\n\n{body}"
+        if html:
+            html = f'<div style="font:12px Arial;background:#fff3cd;padding:6px 10px">{_e(note)}</div>' + html
+        to = pol["redirect_to"]
+    if pol["subject_prefix"]:
+        subject = f"{pol['subject_prefix']} {subject}"
+    return to, subject, body, html, pol["from_name"], pol["reply_to"]
 
 
 def relay_configured():
@@ -166,13 +206,15 @@ def _relay_not_run_reason(resp):
     return None
 
 
-def _send_via_relay(to, subject, body, html=None, attachments=None):
+def _send_via_relay(to, subject, body, html=None, attachments=None, from_name="", reply_to=""):
     """POST the message to the Apps Script web app, which sends it as the
     mailbox the script belongs to. Returns {'sent': bool, 'detail': str}."""
     url = os.environ["CSS_MAIL_RELAY_URL"]
     payload = {"secret": os.environ["CSS_MAIL_RELAY_SECRET"],
                "to": to, "subject": subject, "text": body, "html": html or "",
-               "fromName": os.environ.get("CSS_MAIL_RELAY_NAME", "Office Connect")}
+               "fromName": from_name or os.environ.get("CSS_MAIL_RELAY_NAME", "Office Connect")}
+    if reply_to:
+        payload["replyTo"] = reply_to                  # an older relay script ignores the key
     if attachments:
         # Needs the relay script updated to read `attachments` (docs/MAIL_RELAY_SETUP.md); an older
         # script simply ignores the key and the mail goes out without the file.
@@ -251,11 +293,13 @@ def send(to, subject, body, html=None, attachments=None):
     text+HTML alternatives (a client shows whichever it supports); when
     omitted, plain text only. Returns {'sent': bool, 'detail': str}.
     With no transport configured, records to the outbox and reports sent=False."""
+    to, subject, body, html, from_name, reply_to = _apply_policy(to, subject, body, html)
     if not email_configured():
         _record(to, subject, body, "NOT SENT - no mail transport configured")
         return {"sent": False, "detail": "Email is not configured on this server."}
     if relay_configured():
-        return _send_via_relay(to, subject, body, html=html, attachments=attachments)
+        return _send_via_relay(to, subject, body, html=html, attachments=attachments,
+                               from_name=from_name, reply_to=reply_to)
     host = os.environ["CSS_SMTP_HOST"]
     port = int(os.environ.get("CSS_SMTP_PORT", "587"))
     use_tls = os.environ.get("CSS_SMTP_TLS", "1") != "0"
@@ -263,7 +307,9 @@ def send(to, subject, body, html=None, attachments=None):
     pw = os.environ.get("CSS_SMTP_PASS")
 
     msg = EmailMessage()
-    msg["From"] = _from_addr()
+    msg["From"] = formataddr((from_name, _from_addr())) if from_name else _from_addr()
+    if reply_to:
+        msg["Reply-To"] = reply_to
     msg["To"] = to
     msg["Subject"] = subject
     msg.set_content(body)
@@ -1438,6 +1484,10 @@ FEATURES = {
         "Conference room alerts for the section",
         "The Admin Head is told a request has waited too long, and the section is told of a short-notice withdrawal.",
         "transactional"),
+    "room_meal_alerts": (
+        "Conference room meal alerts",
+        "The Administrative Section is told a meal form is ready to order, was changed, or needs cancelling.",
+        "transactional"),
     "room_digest": (
         "Conference room daily summary",
         "The Administrative Section gets the open requests each morning and tomorrow's room schedule each afternoon.",
@@ -1556,6 +1606,32 @@ FEATURES = {
         "scheduled"),
 }
 
+# Email sent by a deliberate, audited action in another module, with its own
+# switch and receipts there. Not switchable here (and not paused by the global
+# pause), but listed so the console shows every way this system sends mail, and
+# its sends appear in the send log under the same key.
+# key -> (label, why, where to change it)
+EXTERNAL = {
+    "document_dispatch": (
+        "Official document dispatch",
+        "A signed outgoing document is emailed to its recipients by an authorized officer. "
+        "Controlled by Document sending, with its own release checks and receipts.",
+        "/admin/documents/setup"),
+}
+
+# Attachment options: not emails of their own, but a part of one that an admin
+# may want to leave off (a calendar app invite can clash with the person's own
+# calendar). Stored as `email_option.<key>`, default on.
+# key -> (label, hint)
+OPTIONS = {
+    "calendar_ics": (
+        "Calendar changes — attach the calendar file",
+        "Each calendar-change email carries an .ics file so the item lands in the person's own calendar app."),
+    "room_ics": (
+        "Conference room approval — attach the calendar file",
+        "An approved room booking carries an .ics file so it lands in the requester's calendar app."),
+}
+
 # Account/recovery mail: never admin-disableable (see the admin email plan,
 # D3) — turning any of these off could lock someone out of their own account
 # recovery. Listed in the console anyway, greyed, so an admin who goes
@@ -1618,6 +1694,9 @@ _PREVIEWS = {
         "Maria Santos", "a request has waited over a day",
         "Section planning (Thu 15 Oct 2026, 9 AM – 11 AM) from Juan Reyes is still waiting for a decision.",
         _SAMPLE_LINK, approve_link=_SAMPLE_LINK, decline_link=_SAMPLE_LINK),
+    "room_meal_alerts": lambda: room_alert_message(
+        "Maria Santos", "a meal form is ready to order",
+        "Section planning, Thu 15 Oct 2026, 9 AM – 11 AM: 20 meal(s) for 20 pax.", _SAMPLE_LINK),
     "room_digest": lambda: room_digest_message(
         "Maria Santos", ["Thu 15 Oct, 9 AM – 11 AM: Section planning (Juan Reyes)"],
         [], _SAMPLE_LINK),
