@@ -228,3 +228,23 @@ def test_recurring_occurrence_keeps_query_deep_link_and_single_date_controls(cal
     expect(page.get_by_role('link',name='Change just this one',exact=True)).to_have_attribute('href',f'/calendar/entries/{eid}/detach?date=2026-11-01')
     expect(page.get_by_role('region',name='Calendar next step')).to_contain_text('only the selected occurrence')
     assert not writes(state)
+
+
+def test_queued_close_event_cannot_clear_preview_reopened_by_history(calendar_page):
+    page,state,c,context=calendar_page
+    eid=make(c)
+    page.goto(f'/calendar?day={DAY}&item={eid}')
+    sheet=page.locator('#cal-sheet')
+    expect(sheet.get_by_role('region',name='Calendar next step')).to_be_visible()
+    # Deterministically deliver the two traversal states in one task. The native
+    # dialog close event is still queued when the second popstate reopens it.
+    page.evaluate('''() => {
+      const openURL=location.href;
+      const closedURL=new URL(openURL);closedURL.searchParams.delete('item');
+      history.replaceState(null,'',closedURL);dispatchEvent(new PopStateEvent('popstate'));
+      history.replaceState(null,'',openURL);dispatchEvent(new PopStateEvent('popstate'));
+    }''')
+    expect(sheet.get_by_role('region',name='Calendar next step')).to_be_visible()
+    expect(sheet.get_by_role('button',name='Close',exact=True)).to_be_focused()
+    assert page.locator('#cal-f').evaluate('(el)=>el.inert')
+    assert not writes(state) and st.cal_get(c,eid)['sequence']==0

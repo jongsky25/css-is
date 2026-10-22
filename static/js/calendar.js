@@ -47,7 +47,7 @@
     var body = sheet.querySelector("[data-sheet-body]");
     var openLink = sheet.querySelector("[data-sheet-open]");
     var closeBtn = sheet.querySelector("[data-sheet-close]");
-    var ticket = 0, pushed = false, byHistory = false;
+    var ticket = 0, pushed = false, opened = false;
     var returnFocus = null, releaseFocus = null;
 
     var withItem = function (id) {
@@ -69,7 +69,7 @@
       body.appendChild(notice);
       body.setAttribute("aria-busy", "true");
       if (!sheet.open) {
-        returnFocus = document.activeElement; sheet.showModal();
+        returnFocus = document.activeElement; sheet.showModal(); opened = true;
         if (window.OfficeA11y) releaseFocus = OfficeA11y.open(sheet, {initialFocus:closeBtn, returnFocus:returnFocus, onDismiss:closeSheet});
       }
       closeBtn.focus();
@@ -116,26 +116,33 @@
     });
 
     var closeSheet = function () {
-      ticket++;                                                       // drop a fetch still in flight
       if (sheet.open) sheet.close();
+      finishClose(false);
     };
     closeBtn.addEventListener("click", closeSheet);
     sheet.addEventListener("click", function (ev) { if (ev.target === sheet) closeSheet(); });   // the backdrop
-    sheet.addEventListener("close", function () {
-      ticket++;                                                       // native Escape also invalidates pending reads
+    // Clean up synchronously: a queued native close event can arrive AFTER history
+    // navigation has reopened this same dialog. It must not clear the new preview.
+    var finishClose = function (fromHistory) {
+      if (!opened) return;
+      opened = false; ticket++;
       body.removeAttribute("aria-busy");
       while (body.firstChild) body.removeChild(body.firstChild);
       if (releaseFocus) { releaseFocus(); releaseFocus = null; }
       else if (returnFocus && returnFocus.isConnected && returnFocus !== document.body) returnFocus.focus();
       else { var fallback = document.querySelector('.cal-add'); if (fallback) fallback.focus(); }
-      if (byHistory) { byHistory = false; pushed = false; return; }
+      if (fromHistory) { pushed = false; return; }
       if (pushed) { pushed = false; history.back(); }                // take our own entry back off the history
       else if (new URL(location.href).searchParams.has("item")) history.replaceState(null, "", withItem(""));
+    };
+    sheet.addEventListener("cancel", function (ev) { ev.preventDefault(); closeSheet(); });
+    sheet.addEventListener("close", function () {
+      if (!sheet.open) finishClose(false);
     });
     window.addEventListener("popstate", function () {
       var id = new URL(location.href).searchParams.get("item");
       if (id && /^\d+$/.test(id)) { pushed = true; show("/calendar/entries/" + id, false); }
-      else if (sheet.open) { byHistory = true; ticket++; sheet.close(); }
+      else if (sheet.open) { sheet.close(); finishClose(true); }
     });
     var first = new URL(location.href).searchParams.get("item");        // a shared link opens the sheet
     if (first && /^\d+$/.test(first)) { pushed = false; show("/calendar/entries/" + first, false); }
