@@ -43,6 +43,7 @@ _wtest.txt
 full.txt
 qa.txt
 pytest_full.log
+/test-results/
 tmp/
 
 # Hugging Face manual-upload staging folder (rebuilt by build_hf_upload.ps1)
