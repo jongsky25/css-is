@@ -60,14 +60,14 @@
     {% elif it.handling == 'fmis' and it.fmis_ref %}<div class="tv-note">FMIS: {{ it.fmis_ref }}</div>
     {% endif %}
     {% if it.drive_url %}<div class="tv-note"><a href="{{ it.drive_url }}" rel="noopener" target="_blank">{{ 'Open the folder' if it.drive_source == 'upload' else 'Open the file' }}</a></div>{% endif %}
-    {% if it.doc_url %}<div class="tv-note"><a href="{{ it.doc_url }}" rel="noopener" target="_blank">{{ 'Open the earlier form' if pending or failed else 'Open the form' }}</a>{% if it.doc_state == 'manual' %} (your own copy){% endif %}</div>{% endif %}
+    {% if it.doc_url %}{% set more = travel_extra_docs(it.note) if it.handling == 'generate' else [] %}<div class="tv-note"><a href="{{ it.doc_url }}" rel="noopener" target="_blank">{{ 'Open the earlier form' if pending or failed else ('Open sheet 1' if more else 'Open the form') }}</a>{% for u in more %} · <a href="{{ u }}" rel="noopener" target="_blank">{{ 'Open earlier sheet' if pending or failed else 'Open sheet' }} {{ loop.index + 1 }}</a>{% endfor %}{% if it.doc_state == 'manual' %} (your own copy){% endif %}</div>{% endif %}
     {% if failed %}<p class="tv-note">{{ it.note or 'The latest form attempt did not finish.' }}{% if it.doc_url %} The linked copy is from an earlier attempt; check it before using it.{% endif %}</p>{% endif %}
     {% if it.note and it.handling == 'carry' %}<div class="tv-note">Note: {{ it.note }}</div>{% endif %}
     </details>
   </li>
 {% endmacro %}
 {% block title %}{{ 'Travel claim' if missing else f.ref_code }}{% endblock %}
-{% block head %}<link rel="stylesheet" href="/static/css/travel.css?v=7.88"><script src="/static/js/travel_guidance.js?v=7.88" defer></script>{% if uploads_ready %}<script src="/static/js/travel_upload.js?v=7.88" defer></script>{% endif %}{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/travel.css?v=7.89"><script src="/static/js/travel_guidance.js?v=7.89" defer></script>{% if uploads_ready %}<script src="/static/js/travel_upload.js?v=7.89" defer></script>{% endif %}{% endblock %}
 {% block content %}
 {% if missing %}
 {{ page_header("Travel claim not found", "") }}

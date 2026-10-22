@@ -17,12 +17,12 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.88"
+APP_VERSION = "7.89"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
-        "version": "7.88",
+        "version": "7.89",
         "date": "October 22, 2026",
         "summary": "Travel claims explain the next step and recover more clearly from errors.",
         "changes": [
@@ -32,6 +32,13 @@ CHANGELOG = [
             "Marking ready or submitted checks the current checklist, flags and form progress again."
         ]
     },
+    {'version': '7.88',
+     'date': 'October 22, 2026',
+     'summary': 'Cleaner DPOs and post travel reports, and every taxi sheet is linked.',
+     'changes': ['The DPO signatory is always the Bureau, and the first paragraph is short and about the activity only.',
+                 'DPO header logos are bigger, the title stays in capitals, and the file-copy tables have narrow first columns.',
+                 'The post travel report uses the DOH letterhead, keeps only its titles bold, and includes travel days before or after the activity.',
+                 'Taxi question now reads "I travelled by taxi"; each ride\'s CENRR or RER sheet has its own link; itinerary entries can move to the top or sort latest first.']},
     {'version': '7.87',
      'date': 'October 22, 2026',
      'summary': 'Calendar items explain their status, next steps and subscription updates.',

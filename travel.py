@@ -263,6 +263,13 @@ def finish_item(conn, filing_id, code, rev, *, url=None, extra=None, error=None)
     conn.commit()
 
 
+def extra_doc_urls(note) -> list:
+    """The links after the first when one checklist row made several sheets (a CENRR or RER for each ride): finish_item
+    keeps them in the note as "More: <url> <url>" (spot feedback #159)."""
+    text = str(note or "")
+    return text[len("More: "):].split() if text.startswith("More: ") else []
+
+
 def finish_generation(conn, filing_id):
     bad = conn.execute("SELECT 1 FROM travel_item WHERE filing_id=? AND (doc_state LIKE 'failed:%' OR doc_state LIKE 'pending:%') "
                        "LIMIT 1", (filing_id,)).fetchone()
@@ -296,6 +303,7 @@ def generation_status(conn, filing):
         ds = it["doc_state"] or ""
         state = ds.split(":")[0] if ":" in ds else (ds or "idle")
         out.append({"code": it["code"], "label": it["label"], "state": state, "url": it["doc_url"] or "",
+                    "more": extra_doc_urls(it["note"]) if state == "done" else [],
                     "error": it["note"] if state == "failed" else ""})
     return {"gen_state": filing["gen_state"], "items": out}
 

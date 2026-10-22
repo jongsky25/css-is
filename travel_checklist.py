@@ -22,7 +22,7 @@ ANSWER_KEYS = (
     ("plane_fare_differs", "The fare I paid differs from the lowest economy fare", (LIQ,)),
     ("boat_bus", "I travelled by boat or bus", (LIQ, REI)),
     ("terminal_fee", "I paid a terminal fee", (LIQ, REI)),
-    ("taxi_receipt", "I have taxi receipts", (LIQ, REI)),
+    ("taxi_receipt", "I travelled by taxi", (LIQ, REI)),
     ("ride_hailing", "I used ride-hailing (TNVS)", (LIQ, REI)),
     ("gov_vehicle", "I used a government vehicle", (LIQ, REI)),
     ("rfid", "I used an RFID toll account", (LIQ, REI)),

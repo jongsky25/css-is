@@ -1,4 +1,4 @@
-# A17 — travel guidance, review and recovery (7.88)
+# A17 — travel guidance, review and recovery (7.89)
 
 ## Workflow meaning
 
@@ -54,4 +54,4 @@ No live production workflow, real provider outage or manual screen-reader sessio
 
 ## Release and rollback
 
-7.88 increments current main 7.87, with aligned changelogs, service-worker cache and travel asset references. `travel_guidance.py` is included in deployment inventory. No schema migration or new dependency is needed. Roll back by reverting this increment and publishing a new application/cache version through the existing release workflow; no external files are deleted by rollback.
+7.89 increments current main 7.88, with aligned changelogs, service-worker cache and travel asset references. `travel_guidance.py` is included in deployment inventory. No schema migration or new dependency is needed. Roll back by reverting this increment and publishing a new application/cache version through the existing release workflow; no external files are deleted by rollback.

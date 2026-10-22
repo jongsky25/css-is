@@ -146,6 +146,35 @@ def test_duplicate_make_events_are_one_write_and_failed_replacement_keeps_earlie
     expect(page.locator('#item-appendix_a')).to_contain_text('Open the earlier form')
 
 
+def test_merged_sheet_links_and_itinerary_controls_survive_guidance_changes(travel_page,viewer,relay):
+    page,state,c,context=travel_page
+    ref=mk(viewer)
+    f=travel.set_derived_answers(c,travel.get_by_ref(c,ref),{'rides_cenrr':True})
+    links=[f'https://docs.google.com/spreadsheets/d/sheet{i}/edit' for i in range(1,4)]
+    rev=travel.start_generation(c,f,['cenrr'])['cenrr']
+    travel.finish_item(c,f['id'],'cenrr',rev,url=links[0],extra='More: '+' '.join(links[1:]))
+    travel.finish_generation(c,f['id'])
+    page.goto(f'/travel/f/{ref}/prepare')
+    row=page.locator('.tv-docs li').filter(has_text='CENRR')
+    for n,url in enumerate(links,1):
+        expect(row.get_by_role('link',name=f'Open sheet {n}',exact=True)).to_have_attribute('href',url)
+    rows=page.locator('.tv-row')
+    page.get_by_role('button',name='Add itinerary entry',exact=True).click()
+    rows.first.get_by_label('Date',exact=True).fill('2026-10-10')
+    rows.last.get_by_label('Date',exact=True).fill('2026-10-12')
+    rows.last.get_by_role('button',name='Move to top:',exact=False).click()
+    expect(rows.first.get_by_label('Date',exact=True)).to_have_value('2026-10-12')
+    page.get_by_role('button',name='Sort by date (earliest first)',exact=True).click()
+    expect(rows.first.get_by_label('Date',exact=True)).to_have_value('2026-10-10')
+    page.get_by_role('button',name='Sort by date (latest first)',exact=True).click()
+    expect(rows.first.get_by_label('Date',exact=True)).to_have_value('2026-10-12')
+    page.get_by_role('link',name='Continue to checklist',exact=True).click()
+    page.locator('#item-cenrr summary').click()
+    for n,url in enumerate(links,1):
+        expect(page.locator('#item-cenrr').get_by_role('link',name=f'Open sheet {n}',exact=True)).to_have_attribute('href',url)
+    assert mutations(state)==[]
+
+
 @pytest.mark.parametrize('confirmed_before',[0,1])
 @pytest.mark.parametrize('failure',['fetch','body'])
 def test_lost_upload_response_stops_batch_and_checks_saved_files(travel_page,viewer,fake,env,ai_clean,confirmed_before,failure):

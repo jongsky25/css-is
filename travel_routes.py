@@ -41,6 +41,7 @@ _OPERATION_PATH = {'parameters': [{'name': 'operation_id', 'in': 'path', 'requir
 
 def make_router(templates, get_conn, today_local, *, audit, base_url):
     router = APIRouter()
+    templates.env.globals["travel_extra_docs"] = travel.extra_doc_urls
     templates.env.globals["travel_kind_labels"] = travel.KIND_LABELS
     templates.env.globals["travel_status_labels"] = travel.STATUS_LABELS
     templates.env.globals["travel_status_badge"] = STATUS_BADGE
