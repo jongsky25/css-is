@@ -12,15 +12,15 @@ This increment gives each approved tool a separate credential to read selected O
 
 If the create response is lost, check the tool list and revoke any newly created credential you could not save before creating a replacement. Issuance is not an automatically retried client operation. The browser screens are `/account/integrations` (own credentials) and `/admin/integrations` (account administrators' revocation inventory). Lists page 100 entries at a time and never return hashes or recoverable secrets.
 
-The [API contract](INTEGRATION_READ_API.md) and [OpenAPI artifact](api/v1/openapi.json) define the supported resource projections, pagination and errors. Current OpenAPI version: **1.3.0**. Application version: **7.99**.
+The [API contract](INTEGRATION_READ_API.md) and [OpenAPI artifact](api/v1/openapi.json) define the supported resource projections, pagination and errors. Current OpenAPI version: **1.4.0**. Application version: **7.100**; credentials were introduced in 7.99.
 
 ## Allowed reads
 
 | Credential scope | Allowed endpoints |
 |---|---|
 | Either valid scope | `GET /api/v1/`, `GET /api/v1/openapi.json` |
-| `documents:read` | Document metadata list and detail |
-| `work:read` | Work-item list/detail and task list/detail |
+| `documents:read` | Document metadata list/detail and its change feed |
+| `work:read` | Work-item/task list/detail and their change feed |
 
 The API root reports `authentication: scoped_read_credential` and `read_only: true` for these credentials. OpenAPI marks selected metadata reads with `x-integration-scope`; bearer authentication is absent from task-write, write-context and operation-receipt security declarations.
 
@@ -68,7 +68,7 @@ The client uses only the Python standard library. Choose exactly one of `--crede
 
 ## Rollout and recovery
 
-Proposed release 7.99 follows freshly checked main 7.98. Application/cache/changelog metadata move together; runtime packaging includes both credential modules and the template. There are no new dependencies or external provider requests. Existing verified-backup and deployment gates apply.
+The initial credential release 7.99 followed verified main 7.98. Application/cache/changelog metadata move together; runtime packaging includes both credential modules and the template. There are no new dependencies or external provider requests. Existing verified-backup and deployment gates apply.
 
 For an integration incident, revoke the affected credential or revoke all of an owner's credentials by an account security change, then issue replacements only after review. Prefer a forward repair preserving the credential table, revocations and security history. Code 7.98 does not accept these bearer credentials; if temporarily returning to it, retain the additive schema and revoke affected credentials before re-enabling newer code. Never erase revocation/history to restore access. Historical-restore revocation must also be retained if restoring application code.
 
@@ -79,3 +79,5 @@ Local verification: **321 tests passed** in the shuffled API/authentication/secu
 Synthetic local checks cover real password/consent forms, scope ceilings, current linked-document/grant authority, account-change triggers, audience, expiry, mixed/duplicate identities, method/endpoint restrictions, private audit attribution, audit rollback, rate limits, concurrency, repeatable installation and paginated management. Desktop/mobile Chromium journeys use actual HTTP forms and an independent bearer client through read and revocation. Production business-workflow observations remain deferred; no real provider account or production record is used.
 
 Independent service principals, delegated OAuth consent flows, machine writes and external adapters remain later increments based on actual client needs. Existing human approvals remain outside this credential boundary.
+
+The [7.100 change feed](INTEGRATION_CHANGES.md) uses the same selected metadata scopes and current authority. It adds opaque checkpoint storage, restores invalidate checkpoints, and its high-water guard requires the current forward-repair/restore safeguards.

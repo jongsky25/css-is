@@ -44,6 +44,25 @@ class ReadClient:
     def get(self, path):
         return self._request(path)
 
+    def changes(self,resource,*,cursor='',limit=25):
+        """Read one batch. Persist next_cursor only after durable processing.
+
+        An empty cursor starts now. Enumerate the normal resource API for the
+        initial baseline, then resume with that saved cursor. No automatic ack.
+        """
+        if (resource not in ('documents','work-items') or type(limit) is not int or not 1<=limit<=100
+                or not isinstance(cursor,str) or (cursor and not re.fullmatch(r'[0-9a-f]{64}',cursor))):
+            raise ValueError('Choose a supported family, checkpoint and page size.')
+        result=self.get('/changes?'+urlencode({'resource':resource,'cursor':cursor,'limit':limit}))
+        if (not isinstance(result,dict) or not isinstance(result.get('data'),list)
+                or not isinstance(result.get('next_cursor'),str) or not re.fullmatch(r'[0-9a-f]{64}',result['next_cursor'])
+                or type(result.get('has_more')) is not bool or type(result.get('initialized')) is not bool):
+            raise ApiFailure('The API returned an invalid change page.')
+        if any(not isinstance(item,dict) or not isinstance(item.get('id'),str)
+               or not re.fullmatch(r'[0-9a-f]{32}',item['id']) for item in result['data']):
+            raise ApiFailure('The API returned an invalid change notice.')
+        return result
+
     def _request(self, path, *, data=None, headers=None):
         if self.credential is not None and data is not None:
             raise ValueError('Read credentials cannot perform writes.')

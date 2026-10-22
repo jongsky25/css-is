@@ -1,6 +1,6 @@
-# Supported integration API — A19/A20 / 7.99
+# Supported integration API — A19/A20/A21 / 7.100
 
-The read contract introduced in 7.92 supports acknowledgement (7.97) and submission of completed contribution work for review (7.98). 7.99 adds separately revocable, user-delegated credentials for selected metadata reads. Task writes still require existing human sessions. All access retains current domain permissions. The API contract is **1.3.0**, mounted at **`/api/v1`**; its version is independent of the application's release number.
+The read contract introduced in 7.92 supports acknowledgement (7.97) and submission of completed contribution work for review (7.98). 7.99 adds separately revocable, user-delegated credentials for selected metadata reads. Task writes still require existing human sessions. All access retains current domain permissions. 7.100 adds the [resumable change feed](INTEGRATION_CHANGES.md). The API contract is **1.4.0**, mounted at **`/api/v1`**; its version is independent of the application's release number.
 
 The [generated OpenAPI artifact](api/v1/openapi.json) is checked against the running contract in tests. The authenticated live contract is `GET /api/v1/openapi.json`. Existing browser form actions and the application's older general OpenAPI output are outside this supported contract.
 
@@ -8,6 +8,7 @@ The [generated OpenAPI artifact](api/v1/openapi.json) is checked against the run
 
 | GET route | Result |
 |---|---|
+| `/api/v1/changes` | Permission-checked change notices and an opaque checkpoint for the selected family |
 | `/api/v1/` | API/application version, authentication mode, credential-specific `read_only` capability and contract URL |
 | `/api/v1/documents` | Page of permitted document metadata |
 | `/api/v1/documents/{document_id}` | Current permitted canonical document metadata |
@@ -32,7 +33,7 @@ A technical administrator does not gain document/work access through the API. Pr
 
 For unattended metadata reads, authorize a separate credential through **My profile → Connected tools**. The [credential guide](INTEGRATION_ACCESS.md) describes consent, scopes, expiry, audience, storage, revocation and rotation. Send it only as `Authorization: Bearer <credential>` over HTTPS, without a session cookie. Do not put credentials in URLs, repositories, logs or AI prompts. Invalid, expired or mixed authorization never falls back to a browser session. New credentials do not add owner permissions, and technical administration grants no document/work readership.
 
-`documents:read` permits document metadata endpoints; `work:read` permits work/task metadata endpoints. Either credential can read API information and the generated contract. Credentials cannot access write context, operation receipts, task POSTs, browser screens, files or private task prose. `/api/v1/` reports `authentication: scoped_read_credential` and `read_only: true` for these credentials; existing user sessions retain `registered_user_session` and `read_only: false`. OpenAPI advertises the alternative `IntegrationRead` security scheme only on supported reads, with `x-integration-scope` on each metadata route. Service principals, delegated OAuth and machine writes remain later A20 work.
+`documents:read` permits document metadata endpoints; `work:read` permits work/task metadata endpoints. Each also permits its selected `/changes` resource family. Either credential can read API information and the generated contract. Credentials cannot access write context, operation receipts, task POSTs, browser screens, files or private task prose. `/api/v1/` reports `authentication: scoped_read_credential` and `read_only: true` for these credentials; existing user sessions retain `registered_user_session` and `read_only: false`. OpenAPI advertises the alternative `IntegrationRead` security scheme only on supported reads, with `x-integration-scope` on each metadata route. Service principals, delegated OAuth and machine writes remain later A20 work.
 
 All API namespace responses use private/no-store caching. API requests skip browser navigation, notification and feedback hydration. GET requests read business records without marking instructions as read, sending provider requests or creating domain history entries. Credential reads additionally record the owner, credential ID, resource family, method and result status in the existing security audit chain, plus last use; they omit raw URLs/queries, secret values and record prose. A failed audit prevents a successful data response. Rate-limited reads are not separately audited, bounding write amplification. Existing HTTP monitoring identifies credential traffic separately. Existing permitted records remain readable when the Documents/Shared work write switches are off, matching the screens.
 
@@ -68,6 +69,7 @@ Errors use `{"error": {"code": "not_found", "message": "Resource not found or un
 | 401 | `authentication_required` | Sign in through the existing flow |
 | 404 | `not_found` | Check the ID/current access; absence and denied access are indistinguishable |
 | 405 | `method_not_allowed` | Use the method declared by `Allow` |
+| 410 | `checkpoint_unavailable` | Start a fresh change-feed baseline and reconcile current records |
 | 409 | `revision_conflict` | Read the current task before deciding on a new request/key |
 | 409 | `idempotency_conflict` | A key already belongs to different input; check the saved original request |
 | 409 | `action_unavailable` | Check feature switches and the current workflow in the screens |
@@ -140,7 +142,7 @@ The 7.97 and 7.98 increments cover acknowledgement/submission preconditions and 
 
 ## Release and rollback
 
-7.99 increments verified main 7.98 with aligned release/cache metadata. The runtime inventory includes `integration_access.py` and `integration_access_routes.py`; there is no dependency addition or provider request. The additive credential schema, account-change revocation triggers and operational rollback rules are documented in [the credential guide](INTEGRATION_ACCESS.md).
+7.100 increments verified main 7.99 with aligned release/cache metadata. The runtime inventory includes `integration_changes.py` alongside the credential modules; there is no dependency addition or provider request. The [change-feed guide](INTEGRATION_CHANGES.md) covers additive notices/checkpoints, restore invalidation, the high-water counter and forward-repair requirements. The existing credential schema and account-change revocation rules remain documented in [the credential guide](INTEGRATION_ACCESS.md).
 
 The repeatable shared-work installer adds a defaulted `action` column to `work_api_operation`. Existing immutable rows receive the logical default `acknowledge` without rewriting stored values, changing request digests or removing immutable-receipt triggers. New receipts explicitly record `acknowledge` or `submit`, allowing result status to remain tied to the original action. Repeating installation preserves both old and new results.
 
