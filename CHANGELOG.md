@@ -1,3 +1,14 @@
+## 7.92 — October 22, 2026
+
+- Start A19 with a supported `/api/v1` read-only contract for selected document metadata, work items and contribution task statuses.
+- Publish an isolated typed OpenAPI contract, string identifiers, offset-aware timestamps, bounded keyset pages and consistent private JSON errors.
+- Authenticate through current registered user sessions, reuse live document/work authority and return identical missing/inaccessible responses; bearer tokens, machine identities and API writes remain later increments.
+- Apply shared-work visibility before paging in SQL for both browser and API lists; linked restricted documents, canonical merges and current grants continue to control access.
+- Keep API projections explicit and exclude file bodies, email metadata, submissions, grants and external-operation details. API requests skip browser navigation hydration.
+- Add a standalone standard-library read client with bounded reads and no redirect forwarding of sessions, plus checked-in generated contract and integration guidance.
+- Repair the remaining combined-survey browser assertion race with delayed-script English/Filipino coverage and an explicit wait for matching draft cleanup; survey runtime behavior is unchanged.
+- No schema migration, dependency addition or provider change.
+
 ## 7.91 — October 22, 2026
 
 - Continue A18 with visible report scope, inclusive date range, submission/rated-answer denominators, filter reset and a native Apply filters action.

@@ -192,6 +192,7 @@ def test_window_closing_during_completion_offers_readonly_device_copy(survey_pag
 def test_combined_skip_and_completion_use_actual_saved_count(survey_page,language):
     import i18n
     page,context,c,unused,state=survey_page
+    state['script_delay']=.3  # Exercise receipt HTML arriving before deferred cleanup.
     context.set_extra_http_headers({'Accept-Language':language})
     first=speaker_form(c,'First speaker');second=speaker_form(c,'Second speaker')
     tokens=first+','+second
@@ -203,4 +204,6 @@ def test_combined_skip_and_completion_use_actual_saved_count(survey_page,languag
     expect(page.locator('[data-confirmed-draft]')).to_contain_text('1')
     counts=c.execute('SELECT f.qr_token,COUNT(r.id) FROM form_instance f LEFT JOIN response r ON r.form_instance_id=f.id WHERE f.qr_token IN (?,?) GROUP BY f.id',(first,second)).fetchall()
     assert dict(counts)=={first:0,second:1}
-    assert draft(page,'css_draft_v2_'+','.join(sorted([first,second]))) is None
+    key='css_draft_v2_'+','.join(sorted([first,second]))
+    page.wait_for_function('(key)=>localStorage.getItem(key)===null',arg=key,timeout=5000)
+    assert draft(page,key) is None

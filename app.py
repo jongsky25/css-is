@@ -53,6 +53,7 @@ from urllib.parse import parse_qsl, quote, urlencode, urlparse
 from request_security import safe_local_return, same_origin_write, csrf_exempt, SAFE_METHODS
 from browser_security import BrowserSecurityMiddleware, protect_response, secure_cookies_enabled
 from request_reads import RequestReads
+import integration_api
 
 import qrcode
 from fastapi import FastAPI, Request, HTTPException
@@ -2080,6 +2081,12 @@ async def _auth_gate(request: Request, call_next):
             and (path.startswith("/static/") or path in _PUBLIC_ASSET_EXACT)):
         return await call_next(request)
     request.state.user = await asyncio.to_thread(_user_from_request, request)
+    if integration_api.is_api(path):
+        # The supported read namespace uses the same registered-session lookup,
+        # then its own JSON errors/domain checks without hydrating browser nav.
+        if not request.state.user:
+            return integration_api.failure(401, 'authentication_required', 'A current signed-in session is required.')
+        return await call_next(request)
     # Cookie-authenticated writes and public account operations share one
     # browser boundary. _is_public is deliberately NOT a CSRF exemption.
     if (request.method not in SAFE_METHODS
@@ -2183,7 +2190,7 @@ app.add_middleware(BrowserSecurityMiddleware, secure_cookies=lambda: SECURE_COOK
 # Paths whose failures say nothing about a staff task: assets, the telemetry
 # beacon itself, and the live-count stream (a dropped SSE connection).
 _HTTP_ERROR_SKIP = ("/static/", "/telemetry", "/favicon", "/sw.js", "/manifest",
-                    "/api/monitor/")
+                    "/api/monitor/", "/api/v1")
 
 
 def _record_http_error(request, user, status):
@@ -17235,3 +17242,6 @@ app.include_router(documents_routes.make_router(templates, get_conn))
 app.include_router(documents_email.make_router(get_conn))
 app.include_router(work_routes.make_router(templates, get_conn))
 app.include_router(supplies_routes.make_router(templates, get_conn))
+
+# Isolated generated contract: legacy browser actions are not part of API v1.
+app.mount("/api/v1", integration_api.make_app(get_conn))
