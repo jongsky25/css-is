@@ -113,7 +113,7 @@
               {% for k, v in documents['invited_as'].items() %}<option value="{{ k }}" {{ 'selected' if out and out.invited_as == k }}>{{ v }}</option>{% endfor %}
             </select>
           </label>
-          <label>Key lines from the invitation (the DPO cites these)
+          <label>Key lines from the invitation (a note for you; the DPO does not cite them)
             <textarea name="invitation" rows="3" maxlength="600">{{ out.invitation if out }}</textarea></label>
         </div>
         <button class="cal-btn" type="submit">Save</button>
@@ -126,7 +126,7 @@
           <div data-offer></div>
         </div>
         {% endif %}
-        <p class="cal-hint">Another office's activity: the DPO background says they invited us and repeats the lines you paste. Left empty, nothing is invented.</p>
+        <p class="cal-hint">Another office's activity: the DPO keeps a short, broad first paragraph about the activity and does not repeat the invitation or name the host.</p>
       </fieldset>
     </form>
     {% if out and out.file_url %}

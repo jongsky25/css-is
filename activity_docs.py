@@ -27,6 +27,7 @@ DOCS = {
 KEYS = tuple(DOCS)
 INVITE_KINDS = ("training",)           # a training or workshop is announced to the people it is for
 BLANK = "__________"
+SIGNATORY_UNIT = "Bureau of Local Health Systems Development"   # the signatory block of every DPO (spot feedback #160)
 BUREAU = "the Bureau of Local Health Systems Development (BLHSD)"
 # The usual asks in a memorandum to a regional office (Area, Requested assistance). Starting wording only.
 ASSISTANCE = (
@@ -212,20 +213,16 @@ def payload(conn, entry, key, user, owner_label="", positions=False) -> td.DocPa
         place = (entry.get("venue") or "").strip()
         in_place = f" in {place}" if place else ""
         unit = owner_label.strip()
-        who = f"Select {unit} Personnel" if unit else "Select Personnel"
+        who = "Select Personnel"       # spot feedback #161: the section the personnel belong to is not named
         outside = get_outside(conn, entry["id"])
+        # The first paragraph stays broad and states the activity, not who was invited; the host's invitation lines are
+        # no longer cited in a DPO (spot feedback #161).
+        background = f"{title} will be held on {days}{in_place}."
         if outside:
-            # Another office holds it (spot feedback #155): the rationale is the invitation, in the host's name.
             role = "to serve as resource person in" if outside["invited_as"] == "resource_person" else "to participate in"
-            background = (f"{outside['host']} invited {unit + ' ' if unit else ''}personnel {role} {title} on {days}{in_place}."
-                          + (f" {outside['invitation']}" if outside["invitation"] else ""))
-            intro = (f"Authority is hereby given to the following select {unit + ' ' if unit else ''}personnel {role} "
-                     f"{title} on {days}{in_place}:")
         else:
-            background = (f"The {unit} will conduct {title} on {days}{in_place}." if unit
-                          else f"{title} will be held on {days}{in_place}.")
-            intro = (f"Authority is hereby given to the following select {unit + ' ' if unit else ''}personnel to participate in "
-                     f"{title} on {days}{in_place}:")
+            role = "to participate in"
+        intro = f"Authority is hereby given to the following select personnel {role} {title} on {days}{in_place}:"
         subject = f"Authority for {who} to Participate in {title}, {days}{in_place}"
         single = len(people) == 1
         if single:
@@ -239,7 +236,7 @@ def payload(conn, entry, key, user, owner_label="", positions=False) -> td.DocPa
                   "subject": subject,
                   "background": background, "intro": intro,
                   "title": title, "purpose": f"attend {title}", "dates": days, "venue": where_text(entry),
-                  "funding_source": BLANK, "unit_name": unit, "head_name": head_name.upper(), "head_title": head_title,
+                  "funding_source": BLANK, "unit_name": SIGNATORY_UNIT, "head_name": head_name.upper(), "head_title": head_title,
                   "prepared_by": me}
         # The personnel go in as a table (Name | Position) and, for a template that still has a {{personnel}} line, as
         # numbered lines too. Whichever the template carries is filled; the other is skipped.

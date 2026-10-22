@@ -315,6 +315,9 @@
       }
       var up = el('button', { type: 'button', 'class': 'btn ghost small', text: 'Move up', 'aria-label': 'Move entry ' + (i + 1) + ' up' });
       var down = el('button', { type: 'button', 'class': 'btn ghost small', text: 'Move down', 'aria-label': 'Move entry ' + (i + 1) + ' down' });
+      var top = el('button', { type: 'button', 'class': 'btn ghost small', text: 'Move to top', 'aria-label': 'Move entry ' + (i + 1) + ' to the top' });
+      top.disabled = i === 0;
+      top.addEventListener('click', function () { moveRow(i, 0); });
       up.disabled = i === 0; down.disabled = i === state.rows.length - 1;
       up.addEventListener('click', function () { moveRow(i, i - 1); });
       down.addEventListener('click', function () { moveRow(i, i + 1); });
@@ -329,7 +332,7 @@
       box.addEventListener('dragleave', function () { box.classList.remove('tv-drop'); });
       box.addEventListener('drop', function (e) { if (dragFrom < 0) return; e.preventDefault(); var from = dragFrom; dragFrom = -1; moveRow(from, i); });
       box.insertBefore(el('div', { 'class': 'tv-row-wide tv-row-head' }, [grip, el('strong', { text: 'Entry ' + (i + 1) })]), box.firstChild);
-      box.appendChild(el('div', { 'class': 'tv-row-wide tv-row-actions' }, more.concat([up, down, rm])));
+      box.appendChild(el('div', { 'class': 'tv-row-wide tv-row-actions' }, more.concat([top, up, down, rm])));
       rowsBox.appendChild(box);
       uis.push({ cap: capLine, pd: pdLine, pdField: pdField, notes: noteLine, row: r, fields: { fare: fareField, route: routeField, receipt: receiptField, per_diem: pdField } });
     });
@@ -577,22 +580,26 @@
   var addDay = el('button', { type: 'button', 'class': 'btn ghost', text: 'Add itinerary entry' });
   addDay.addEventListener('click', function () { state.rows.push(Object.assign({}, BLANK)); save(); drawRows(); refresh(); });
 
-  var sortDays = el('button', { type: 'button', 'class': 'btn ghost', text: 'Sort by date' });
-  sortDays.addEventListener('click', function () {
+  // Earliest first (or latest first); entries with no date go last, and entries on the same day keep their order.
+  function sortRows(newestFirst) {
     var keyed = state.rows.map(function (r, i) { return { r: r, i: i }; });
-    keyed.sort(function (a, b) {                       // earliest first; entries with no date go last; the same day keeps its order
+    keyed.sort(function (a, b) {
       if (a.r.date === b.r.date) return a.i - b.i;
       if (!a.r.date) return 1;
       if (!b.r.date) return -1;
-      return a.r.date < b.r.date ? -1 : 1;
+      return (a.r.date < b.r.date ? -1 : 1) * (newestFirst ? -1 : 1);
     });
     state.rows = keyed.map(function (k) { return k.r; });
     save(); drawRows(); refresh();
-  });
+  }
+  var sortDays = el('button', { type: 'button', 'class': 'btn ghost', text: 'Sort by date (earliest first)' });
+  sortDays.addEventListener('click', function () { sortRows(false); });
+  var sortDaysDesc = el('button', { type: 'button', 'class': 'btn ghost', text: 'Sort by date (latest first)' });
+  sortDaysDesc.addEventListener('click', function () { sortRows(true); });
 
   var T = state.texts, S = state.signatories;
   app.appendChild(ratesPanel());
-  app.appendChild(section('Itinerary of travel', [rowsBox, el('div', { 'class': 'tv-row-actions' }, [addDay, sortDays]), el('p', { 'class': 'tv-hint', text: 'To change the order, drag an entry by its handle, use Move up and Move down, or press Sort by date.' }), totals, breakBox].concat(data.kind === 'liquidation' ? [liqBox] : []).concat([flagsBox,
+  app.appendChild(section('Itinerary of travel', [rowsBox, el('div', { 'class': 'tv-row-actions' }, [addDay, sortDays, sortDaysDesc]), el('p', { 'class': 'tv-hint', text: 'To change the order, drag an entry by its handle, use Move to top, Move up and Move down, or sort by date.' }), totals, breakBox].concat(data.kind === 'liquidation' ? [liqBox] : []).concat([flagsBox,
     field('Your designation (shown on the forms)', S.traveler_title, function (v) { S.traveler_title = v; }, { wide: true }),
     field('Purpose (completes "To …")', T.purpose, function (v) { T.purpose = v; }, { wide: true }),
     field('Itinerary number (optional)', T.itinerary_no, function (v) { T.itinerary_no = v; })])));
@@ -681,7 +688,12 @@
     docsList.textContent = '';
     items.forEach(function (it) {
       var li = el('li', { 'class': it.state }, [document.createTextNode(it.label + ' ')]);
-      if (it.url) li.appendChild(el('a', { href: it.url, target: '_blank', rel: 'noopener', text: 'Open' }));
+      var more = it.more || [];
+      if (it.url) li.appendChild(el('a', { href: it.url, target: '_blank', rel: 'noopener', text: more.length ? 'Open sheet 1' : 'Open' }));
+      more.forEach(function (u, k) {      // one sheet for each ride that needs a CENRR or an RER
+        li.appendChild(document.createTextNode(' '));
+        li.appendChild(el('a', { href: u, target: '_blank', rel: 'noopener', text: 'Open sheet ' + (k + 2) }));
+      });
       if (it.state === 'failed') li.appendChild(document.createTextNode(' ' + (it.error || 'Failed')));
       if (it.state === 'pending') li.appendChild(document.createTextNode(' making…'));
       if (it.state === 'done' || it.state === 'failed') {

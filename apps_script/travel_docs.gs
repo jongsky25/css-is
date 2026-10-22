@@ -68,6 +68,7 @@ function generateDoc_(req) {
     const doc = DocumentApp.openById(copy.getId()), body = doc.getBody();
     applyRows_(body, req.rows || {}); applyBlocks_(body, req.blocks || {}); applyFields_(body, req.fields || {});
     formatDoc_(body);
+    if (req.template_key === 'travel_report') { reportLetterhead_(doc); formatReport_(body); }
     doc.saveAndClose();
     if (req.extras && req.extras.file_copy) extras = addFileCopy_(copy.getId());
   }
@@ -156,6 +157,8 @@ function trashFile_(req) {
 // Done on each copy after it is filled, so the templates need no change. A formatting problem must never stop a form being made.
 const FORM_FONT = 'Times New Roman', FORM_SIZE = 12, JUSTIFY_FROM = 60;      // paragraphs shorter than this stay as they are
 const KEEP_CAPS_ = { DPO: 1, CENRR: 1, RER: 1, MC: 1, DOH: 1, JO: 1, OIC: 1, TNVS: 1, DM: 1, CESO: 1, MD: 1, MPA: 1, II: 1, III: 1, IV: 1, VI: 1, VII: 1, VIII: 1, IX: 1 };
+// Titles that are always printed in capitals (spot feedback #164): the DPO heading is not Title Cased.
+const KEEP_UPPER_TITLES_ = ['DEPARTMENT PERSONNEL ORDER'];
 const SMALL_WORDS_ = { a: 1, an: 1, and: 1, as: 1, at: 1, by: 1, for: 1, from: 1, in: 1, of: 1, on: 1, or: 1, the: 1, to: 1, with: 1 };
 
 // "CERTIFICATION OF EXPENSES" -> "Certification of Expenses". Initials and known acronyms keep their capitals.
@@ -191,6 +194,11 @@ function formatDoc_(body) {
       if (!text.trim()) return;
       const align = p.getAlignment(), heading = p.getHeading ? p.getHeading() : NORMAL;
       const bold = p.editAsText().isBold() === true;
+      if (KEEP_UPPER_TITLES_.indexOf(text.trim().toUpperCase()) >= 0) {
+        if (text !== text.toUpperCase()) p.editAsText().setText(text.toUpperCase());
+        p.editAsText().setBold(true);
+        return;
+      }
       if (looksLikeTitle_(text) && (heading !== NORMAL || (bold && (align === H.CENTER || text === text.toUpperCase())))) {
         const fixed = titleCase_(text);
         if (fixed !== text) p.editAsText().setText(fixed);
@@ -202,6 +210,60 @@ function formatDoc_(body) {
   } catch (err) { /* keep the form as it is */ }
 }
 
+// ---- The post travel report (spot feedback #168, #169) -----------------------------------------------------------------
+// Same letterhead as the DPO ("Republic of the Philippines / DEPARTMENT OF HEALTH / Office of the Secretary", with the seal
+// and the logo), put in the real header whatever the template carried. at_letterhead_ lives in activity_templates.gs, in this
+// same Apps Script project; without it the template's own header stays.
+function reportLetterhead_(doc) {
+  try {
+    if (typeof at_letterhead_ !== 'function') return;
+    const header = doc.getHeader() || doc.addHeader();
+    header.clear();
+    at_letterhead_(header);
+  } catch (err) { /* keep the template's header */ }
+}
+
+const REPORT_TITLES_ = ['overview', 'day-by-day highlights', 'key points raised', 'key contributions and observations',
+                        'support needed', 'policy recommendations', 'conclusion'];
+
+function isReportTitle_(text) {
+  return REPORT_TITLES_.indexOf(String(text).trim().replace(/:$/, '').toLowerCase()) >= 0;
+}
+
+// Only the section titles are bold; every other paragraph is plain with one blank line's space (12 pt) after it, and a title
+// gets that space before it from the paragraph above. Lines that are centred or all capitals (names, signatures) are left alone.
+function formatReport_(body) {
+  try {
+    const H = DocumentApp.HorizontalAlignment, T = DocumentApp.ElementType;
+    const kids = [];
+    for (let i = 0; i < body.getNumChildren(); i++) kids.push(body.getChild(i));
+    let lastTitle = -1;
+    kids.forEach(function (el, i) { if (el.getType() === T.PARAGRAPH && isReportTitle_(el.asParagraph().getText())) lastTitle = i; });
+    // empty paragraphs before the last title only added space by hand; the spacing below replaces them
+    for (let i = lastTitle - 1; i >= 0; i--) {
+      const el = kids[i];
+      if (el.getType() === T.PARAGRAPH && el.asParagraph().getText().trim() === '' && body.getNumChildren() > 1) {
+        try { body.removeChild(el); kids[i] = null; } catch (e) { /* a paragraph Docs will not drop stays */ }
+      }
+    }
+    const live = kids.filter(function (el) { return el; });
+    let started = false, ended = false;
+    live.forEach(function (el) {
+      if (ended || el.getType() !== T.PARAGRAPH) { if (started && el.getType() !== T.PARAGRAPH) ended = true; return; }
+      const p = el.asParagraph(), text = p.getText();
+      if (isReportTitle_(text)) {
+        started = true;
+        p.setLineSpacing(1); p.setBold(true); p.setSpacingBefore(0); p.setSpacingAfter(0);
+        return;
+      }
+      if (!started || !text.trim()) return;
+      // the signature block follows the conclusion: a short, centred, capitalised or colon-ended line ends the body text
+      if (p.getAlignment() === H.CENTER || text === text.toUpperCase() || text.trim().length < 40 && /:$/.test(text.trim())) { ended = true; return; }
+      p.setLineSpacing(1); p.setBold(false); p.setSpacingBefore(0); p.setSpacingAfter(12);
+    });
+  } catch (err) { /* keep the report as it is */ }
+}
+
 // ---- The file copy (spot feedback #158) --------------------------------------------------------------------------------
 // A DPO can ask for "extras": {file_copy: true}: after the order, a second page with the same content but NO letterhead
 // or address footer, followed by the routing tables (BLHSD / Initials / Date, and Keywords / Related issuances). Google Docs
@@ -210,6 +272,8 @@ function formatDoc_(body) {
 // Best effort: when it is not switched on, or Google refuses, the order itself is already complete and the result says why.
 const FILE_COPY_MARK = '[[FILE COPY]]';
 const FILE_COPY_SLIP = [['', 'BLHSD'], ['Initials', ''], ['Date', '']];
+// First columns just wide enough for their text; the second columns keep their width (spot feedback #165).
+const FILE_COPY_SLIP_WIDTHS = [60, 234], FILE_COPY_KEYS_WIDTHS = [210, 234];
 const FILE_COPY_KEYS = [['Keywords', ''], ['Related issuances, laws, directives', '']];
 
 // Pure: where the paragraph holding `mark` starts in a Docs API document, or -1.
@@ -232,11 +296,11 @@ function lastSectionBreakIndex_(docJson) {
   return count > 1 ? found : -1;
 }
 
-function plainTable_(body, cells) {
+function plainTable_(body, cells, widths) {
   const t = body.appendTable(cells);
   t.editAsText().setBold(false);
   t.editAsText().setFontFamily(FORM_FONT); t.editAsText().setFontSize(FORM_SIZE);
-  [234, 234].forEach(function (w, c) { t.setColumnWidth(c, w); });
+  (widths || [234, 234]).forEach(function (w, c) { t.setColumnWidth(c, w); });
   return t;
 }
 
@@ -257,9 +321,9 @@ function addFileCopy_(docId) {
       else if (t === T.HORIZONTAL_RULE) body.appendHorizontalRule();
     }
     body.appendParagraph('').setBold(false);
-    plainTable_(body, FILE_COPY_SLIP);
+    plainTable_(body, FILE_COPY_SLIP, FILE_COPY_SLIP_WIDTHS);
     body.appendParagraph('').setBold(false);
-    plainTable_(body, FILE_COPY_KEYS);
+    plainTable_(body, FILE_COPY_KEYS, FILE_COPY_KEYS_WIDTHS);
     doc.saveAndClose();
 
     const at = findMarkIndex_(Docs.Documents.get(docId), FILE_COPY_MARK);

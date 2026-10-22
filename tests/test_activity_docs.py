@@ -321,7 +321,7 @@ def test_the_embedded_logos_are_small_transparent_pngs():
 def test_the_letterhead_and_name_position_tables_fit_between_the_margins():
     """Docs' default is equal columns: the title wrapped and the right-hand logo or the Position column fell off the page."""
     dpo = build_templates()["dpo"]["widths"]
-    assert dpo == [84, 300, 84, 234, 234] and sum(dpo[:3]) == 468 and sum(dpo[3:]) == 468
+    assert dpo == [100, 268, 100, 234, 234] and sum(dpo[:3]) == 468 and sum(dpo[3:]) == 468
 
 
 def test_a_draft_says_it_is_shared_without_an_email(viewer, conn, relay):
@@ -365,7 +365,7 @@ def outside(viewer, eid, **fields):
     return viewer.post(f"/calendar/entries/{eid}/outside", content=urlencode(fields), headers=FORM, follow_redirects=False)
 
 
-def test_a_dpo_for_an_activity_another_office_runs_cites_their_invitation(viewer, conn, relay):
+def test_a_dpo_for_an_activity_another_office_runs_keeps_a_broad_first_paragraph(viewer, conn, relay):
     eid = create(viewer, kind="travel", title="CALEP Field Visit", venue="Cebu City", start_date="2026-10-12",
                  end_date="2026-10-16", people=[str(uid(conn, "viewer@test.local")), str(uid(conn, "encoder@test.local"))])
     r = outside(viewer, eid, conducted_by="outside", host="Center for Health Development VII", invited_as="resource_person",
@@ -376,9 +376,12 @@ def test_a_dpo_for_an_activity_another_office_runs_cites_their_invitation(viewer
                                          "file_url": "", "file_name": ""}
     draft(viewer, eid, "dpo")
     f = relay.calls[0]["fields"]
-    assert f["background"].startswith("Center for Health Development VII invited ") and "to serve as resource person in CALEP Field Visit" in f["background"]
-    assert f["background"].endswith("we are requested to lecture on CALEP.")
-    assert "to serve as resource person in CALEP Field Visit" in f["intro"] and "will conduct" not in f["background"]
+    # spot feedback #161: broad about the activity, no host, no invitation lines, no section name
+    assert f["background"] == "CALEP Field Visit will be held on October 12-16, 2026 in Cebu City."
+    assert "Center for Health Development VII" not in f["background"] and "lecture on CALEP" not in f["background"]
+    assert "to serve as resource person in CALEP Field Visit" in f["intro"]
+    # spot feedback #160: the signatory unit is always the bureau
+    assert f["unit_name"] == "Bureau of Local Health Systems Development"
 
 
 def test_switching_back_to_blhsd_restores_the_usual_dpo_wording(viewer, conn, relay):

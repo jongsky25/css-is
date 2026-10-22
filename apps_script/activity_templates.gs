@@ -108,7 +108,7 @@ function at_logo_(side) {
 
 // The letterhead every DOH document starts with: the seal, "Republic of the Philippines / DEPARTMENT OF HEALTH / Office of
 // the Secretary" and the Bagong Pilipinas logo. It is built into the document's real header (spot feedback #157), so it
-// repeats on every page and stays out of the body text. Pictures are 70 pt tall with their own proportions.
+// repeats on every page and stays out of the body text. Pictures are 90 pt tall, larger than the 11 pt text beside them (spot feedback #163) with their own proportions.
 function at_letterhead_(body) {
   const names = ['Republic of the Philippines', 'DEPARTMENT OF HEALTH', 'Office of the Secretary'];
   function fill(container, first) {
@@ -118,6 +118,7 @@ function at_letterhead_(body) {
       p.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
       p.setBold(i === 1);
       p.setItalic(i === 2);
+      p.setFontSize(11);
     });
   }
   const logos = [at_logo_(0), at_logo_(2)];
@@ -126,7 +127,7 @@ function at_letterhead_(body) {
   table.setBorderWidth(0);
   // Fixed widths that add up to the 468 pt between the margins; the Docs default is three equal columns, which wraps the
   // title and can push the right-hand logo off the page.
-  [84, 300, 84].forEach(function (w, c) { table.setColumnWidth(c, w); });
+  [100, 268, 100].forEach(function (w, c) { table.setColumnWidth(c, w); });
   [0, 2].forEach(function (col, i) {
     const logo = logos[i];
     if (!logo) return;
@@ -137,8 +138,8 @@ function at_letterhead_(body) {
     // keep the picture's own proportions: the size read from the inserted image wins over the stated one
     const w = img.getWidth(), h = img.getHeight();
     const ratio = (typeof w === 'number' && typeof h === 'number' && w > 0 && h > 0) ? w / h : logo.size[0] / logo.size[1];
-    img.setHeight(70);
-    img.setWidth(Math.round(70 * ratio));
+    img.setHeight(90);
+    img.setWidth(Math.round(90 * ratio));
   });
   const mid = table.getCell(0, 1);
   fill(mid, mid.getChild(0).asParagraph());

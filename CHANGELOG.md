@@ -1,3 +1,9 @@
+## 7.88 — October 22, 2026
+
+- DPO: signatory unit is always the Bureau; the first paragraph is broad and no longer names the section or cites the host's invitation; larger header logos; heading kept in capitals; narrow first columns on the file-copy page.
+- Post travel report: DOH letterhead header, bold only on titles with single spacing, and itinerary days outside the activity dates are included.
+- Travel: "I travelled by taxi"; links to every CENRR/RER sheet; Move to top and latest-first sort for itinerary entries.
+
 ## 7.87 — October 22, 2026
 
 - Extend A17 to calendar status/next-step guidance, distinguishing schedule confirmation from room approval, email delivery and subscribed-app refresh.
