@@ -28,10 +28,18 @@
              border:1px solid var(--line); border-radius:12px; padding:1rem 1.25rem; margin-bottom:1.25rem; }
   .filters .fld { display:flex; flex-direction:column; gap:.25rem; }
   .filters label { font-size:.72rem; text-transform:uppercase; letter-spacing:.03em; color:var(--soft); font-weight:700; }
-  .filters select { padding:.5rem .6rem; border:1px solid var(--line); border-radius:8px; font-size:.95rem;
+  .filters select { min-height:44px; padding:.5rem .6rem; border:1px solid var(--line); border-radius:8px; font-size:.95rem;
                     background:var(--surface); min-width:200px; max-width:70vw; }
   /* Activity options carry long titles; cap the closed control so it doesn't balloon to full width. */
   .filters select#activity { width:min(360px, 100%); max-width:100%; }
+  .report-context { overflow-wrap:anywhere; }
+  .report-context p { margin:.45rem 0; }
+  .report-context a, .filters button { display:inline-flex; align-items:center; min-height:44px; }
+  .filters .fld { max-width:100%; }
+  .filters .combobox > select#activity { width:1px; min-width:0; max-width:1px; min-height:0; height:1px; }
+  .cardhead { flex-wrap:wrap; }
+  .cardhead > div { min-width:0; max-width:100%; overflow-wrap:anywhere; }
+  .dl-menu { max-width:min(320px, calc(100vw - 64px)); }
   .filters .scope { margin-left:auto; color:var(--soft); font-size:.85rem; text-align:right; }
   .my-rp-list { list-style:none; padding:0; margin:.7rem 0 0; display:grid; gap:.55rem; }
   .my-rp-list a { display:flex; justify-content:space-between; align-items:center; gap:1rem;
@@ -172,7 +180,8 @@
     <div class="dl-group">Raw data</div>
     <a href="/csm-blhsd/export?period={{ period|urlencode }}" download>Excel — BLHSD format</a>
     {% elif rtype == 2 %}
-    <div class="dl-group">Raw data</div>
+    <div class="dl-group">Activity inventory (one row per activity)</div>
+    <a href="/reports/export?type=2&org={{ org|urlencode }}&period={{ period|urlencode }}&fmt=xlsx" download>Excel (.xlsx) — individual submissions</a>
     <a href="/reports/activities-export?org={{ org|urlencode }}&period={{ period|urlencode }}" download>Excel — activity list (MRR format)</a>
     {% elif rtype == 3 %}
     <div class="dl-group">Raw data</div>
@@ -235,7 +244,7 @@
 <span class="official">OFFICIAL REPORTS · for ARTA / SERVQUAL submissions</span>
 {{ page_header(rm[1]) }}
 {{ flash(msg, err) }}
-<p class="lede">{{ rm[2] }} Every score is computed fresh from the raw answers, with item codes and denominators intact. For the plain-language read, use the <a href="/dashboard">dashboard</a>.</p>
+<p class="lede">{{ rm[2] }} Scores use the recorded answers, with item codes and denominators intact. For the plain-language read, use the <a href="/dashboard">dashboard</a>.</p>
 
 <!-- REPORT-TYPE SWITCHER -->
 <nav class="rtabs" aria-label="Report type">
@@ -246,21 +255,26 @@
 </nav>
 
 <!-- FILTER BAR -->
-<form class="filters" method="get" action="/reports" id="filterForm">
+<p id="report-filter-help" class="meta">Choose your filters, then press Apply filters. The report and download links reflect the last applied selection.</p>
+<form class="filters" method="get" action="/reports" id="filterForm" aria-describedby="report-filter-help">
   <input type="hidden" name="type" value="{{ rtype }}">
+  {% if rtype != 1 %}
   <div class="fld">
     <label for="org">Scope</label>
-    <select id="org" name="org" onchange="this.form.submit()">
+    <select id="org" name="org">
+      {% if not org_listed %}<option value="{{ sel_org }}" selected>Unavailable scope (saved filter)</option>{% endif %}
       {% for o in org_opts %}
       <option value="{{ o.value }}" {{ 'selected' if o.value == sel_org }}>
         {{ '— ' * o.depth }}{{ o.text }}</option>
       {% endfor %}
     </select>
   </div>
+  {% endif %}
   <div class="fld">
     <label for="period">Period</label>
-    <select id="period" name="period" onchange="this.form.submit()">
+    <select id="period" name="period">
       <option value="all" {{ 'selected' if sel_period == 'all' or not sel_period }}>All time</option>
+      {% if not period_listed %}<option value="{{ sel_period }}" selected>{{ sel_period.split(':', 1)[1] }} (no matching period listed)</option>{% endif %}
       {% for g in period_opts %}
       <optgroup label="{{ g.label }}">
         {% for op in g.options %}
@@ -273,17 +287,49 @@
   {% if rtype == 3 %}
   <div class="fld">
     <label for="activity">Activity</label>
-    <select id="activity" name="activity" onchange="this.form.submit()"
+    <select id="activity" name="activity"
             data-combobox data-combobox-placeholder="Search activities…">
       <option value="">All activities</option>
+      {% if not activity_listed %}<option value="{{ sel_activity }}" selected>Unavailable activity (saved filter)</option>{% endif %}
       {% for a in activity_opts %}
       <option value="{{ a.value }}" {{ 'selected' if a.value == sel_activity }}>{{ a.text }} — {{ a.date|humandate }}</option>
       {% endfor %}
     </select>
   </div>
   {% endif %}
+  <button class="btn" type="submit">Apply filters</button>
   <div class="scope">Showing<br><strong>{{ scope_label }}</strong></div>
 </form>
+
+<section class="rcard report-context" aria-labelledby="report-context-heading" id="report-context">
+  <h2 id="report-context-heading">Included in this report</h2>
+  <p><strong>{{ selected_count|comma }} total submission(s)</strong> · {{ scope_label }}</p>
+  <p><strong>{{ 'Submission dates' if rtype == 1 else 'Activity start dates' }}:</strong> {{ report_period_text }}.
+    {% if rtype == 1 %}Walk-in reports cover the whole bureau; office scope does not apply.
+    {% else %}Responses follow the activity's start date, even when submitted later. Multi-day activities belong to their start period.{% endif %}</p>
+  {% if rtype != 1 %}
+  <p>{{ sq.overall.n|comma }} rated respondent(s) contributed to overall perception.</p>
+  {% else %}
+  <p>Overall top-box uses {{ arta_report.overall_n|default(0)|comma }} valid SQD1–SQD8 answers, not people.</p>
+  {% endif %}
+  <details class="disclosure">
+    <summary>Count definitions and download contents</summary>
+    {% if rtype != 1 %}
+    <p>Submissions are form responses, not unique people across activities or speakers. Dimension-table n counts valid item answers; one submission can contribute several answers. Missing, invalid and N/A answers do not lower scores to zero.</p>
+    {% else %}
+    <p>Item n counts valid answers; missing and N/A answers are excluded from that item's score.</p>
+    {% endif %}
+    <p>Downloads use these filters when requested. New submissions or corrections can change later downloads.
+      {% if rtype == 1 %}The CO-CSM template uses the same submission period; BLHSD Excel lists individual submissions.
+      {% elif rtype == 2 %}The activity-list Excel contains one row per activity; its row count differs from the submission count.
+      {% else %}The Excel report includes one row per submission, with blank scores for unrated submissions. The roster groups rated speakers by activity and omits the bureau Director from the named list.{% endif %}</p>
+  </details>
+  {% if not org_listed or not activity_listed %}<p role="status">A saved filter is unavailable. Choose another scope or activity; the report has not been widened automatically.</p>{% endif %}
+  {% if selected_count == 0 %}<p role="status">No submissions match these filters. Try All time, a broader scope or another activity. A zero count does not mean a zero satisfaction score.</p>
+  {% elif rtype == 1 and arta_report.overall is none %}<p role="status">Submissions exist, but none has a valid SQD1–SQD8 answer. No overall satisfaction score can be calculated.</p>
+  {% elif rtype != 1 and not sq.has_data %}<p role="status">Submissions exist, but none has a valid dimension rating. Check the source answers; no satisfaction score can be calculated.</p>{% endif %}
+  <a href="/reports?type={{ rtype }}">Reset report filters</a>
+</section>
 
 {% if rtype == 3 and my_rp_id %}
 <section class="rcard" aria-labelledby="my-rp-heading">
@@ -325,7 +371,7 @@
 </details>
 {% endif %}
 
-{% if total_responses == 0 %}
+{% if total_responses == 0 and selected_count == 0 %}
 <div class="rcard">{{ empty_state("No responses recorded yet.", hint="Once people start scanning the QR codes and submitting ratings, their scores appear here.", icon="◔") }}</div>
 {% endif %}
 
@@ -458,7 +504,7 @@
       {% if rtype == 2 %}<a class="vlink" href="/reports/activities?org={{ sel_org }}&period={{ sel_period }}">View individual customer satisfaction survey reports →</a>
       {% if can_curate %}<a class="vlink" href="/reports/activities?org={{ sel_org }}&period={{ sel_period }}">Edit / merge activities →</a>{% endif %}{% endif %}
       {% if rtype == 3 %}<a class="vlink" href="/dashboard/people">View other resource persons →</a>{% endif %}
-      {% if v.has_data %}{{ report_downloads(rtype, sel_org, sel_period, sel_activity) }}{% endif %}
+      {% if selected_count %}{{ report_downloads(rtype, sel_org, sel_period, sel_activity) }}{% endif %}
     </div>
   </div>
   {% if v.answer_quality and v.answer_quality.invalid %}
@@ -499,7 +545,7 @@
     <div class="s"><span class="k">SERVQUAL</span><span class="v">{{ v.summary.servqual }}{% if v.summary.servqual_label %} <span class="badge {{ {'Exceeds':'b-good','Meets':'b-good','Needs Improvement':'b-bad'}.get(v.summary.servqual_label,'b-grey') }}" style="font-size:.62rem;">{{ v.summary.servqual_label }}</span>{% endif %}</span></div>
     <div class="s"><span class="k">OSQ (item C)</span><span class="v">{{ v.summary.osq }}{% if v.summary.osq_band %} <span class="badge {{ {'Excellent':'b-good','Good':'b-good','Fair':'b-mid','Poor':'b-bad'}.get(v.summary.osq_band,'b-grey') }}" style="font-size:.62rem;">{{ v.summary.osq_band }}</span>{% endif %}</span></div>
   </div>
-  <div class="scale-note">Total = sum of the five dimension means. Average = mean of the dimension means (= overall). SERVQUAL = Average − Expectation. Perception items run 1–7; OSQ (C) runs 1–4.</div>
+  <div class="scale-note">Total = sum of available dimension means (not a response count). Average = mean of the available dimension means (= overall). SERVQUAL = Average − Expectation. Perception items run 1–7; OSQ (C) runs 1–4.</div>
 
   <!-- demographics roll-up -->
   {% if v.demo and v.demo.has %}

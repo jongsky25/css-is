@@ -1,5 +1,6 @@
 """Public survey journeys: real local HTTP, SQLite, DOM, IndexedDB and storage failures."""
 import json
+import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from threading import Thread
 from urllib.parse import urlsplit
@@ -24,14 +25,20 @@ def survey_page(browser,client,app_mod,walkin):
             response=client.request(self.command,self.path,content=raw,
                 headers={'Content-Type':self.headers.get('Content-Type',''),'Accept':self.headers.get('Accept',''),'Accept-Language':self.headers.get('Accept-Language','en')},follow_redirects=False)
             body=response.content
+            if self.path.startswith('/static/js/app.js') and state['posts'] and state.get('script_delay'):
+                time.sleep(state['script_delay'])
             if self.command=='POST' and self.path.startswith('/r/'):
                 if state['receipt']=='html':body=b'<h1>Unconfirmed proxy page</h1>'
                 if state['receipt']=='wrong':body=b'{"ok":true,"submission_id":"wrong"}'
                 if state['receipt']=='drop':self.close_connection=True;return
             self.send_response(response.status_code)
             for key,value in response.headers.items():
+                if key.lower()=='cache-control' and state.get('script_delay') and self.path.startswith('/static/js/app.js'):
+                    continue
                 if key.lower() not in ('content-length','content-encoding','set-cookie','connection','transfer-encoding'):
                     self.send_header(key,value)
+            if state.get('script_delay') and self.path.startswith('/static/js/app.js'):
+                self.send_header('Cache-Control','no-store')
             self.send_header('Content-Length',str(len(body)));self.end_headers()
             try:self.wfile.write(body)
             except (BrokenPipeError,ConnectionResetError):pass
@@ -115,10 +122,13 @@ def test_storage_failure_keeps_form_and_does_not_claim_saved(survey_page):
 
 def test_only_confirmed_revision_is_removed_and_duplicate_clicks_are_blocked(survey_page):
     page,context,c,token,state=survey_page
+    state['script_delay']=.3  # Confirmation HTML can arrive before its deferred initializer.
     page.goto(f'/r/{token}');fill_csm(page)
     page.get_by_role('button',name='Submit my answers',exact=True).evaluate("b=>{b.click();document.querySelector('#surveyform').dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));}")
     expect(page.locator('[data-confirmed-draft]')).to_be_visible()
     assert state['posts']==[f'/r/{token}']
+    # Receipt HTML is visible before its deferred browser cleanup necessarily runs.
+    page.wait_for_function('(key)=>localStorage.getItem(key)===null',arg='css_draft_v2_/r/'+token,timeout=5000)
     assert draft(page,'css_draft_v2_/r/'+token) is None
     page.evaluate("localStorage.setItem('newer',JSON.stringify({revision:'new'}));window.clearSurveyDraft('newer','old')")
     assert draft(page,'newer')['revision']=='new'

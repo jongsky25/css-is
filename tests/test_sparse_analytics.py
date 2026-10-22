@@ -91,8 +91,8 @@ def test_reference_official_report_and_exports(reference, app_mod, monkeypatch):
     assert report['answer_quality'] == {'valid': 4, 'na': 1, 'invalid': 5}
     assert report['summary']['average'] == '4.00'
     assert report['summary']['total'] == '8.00'
-    assert len(report['responses']) == 2
-    assert [r['overall'] for r in report['responses']] == [4.5, 3]
+    assert len(report['responses']) == 8  # retain six unrated submissions with blank scores
+    assert [r['overall'] for r in report['responses']] == [4.5, 3, None, None, None, None, None, None]
     meta = {'title': 'Reference report', 'scope': 'Synthetic', 'generated': '2026-01-01'}
     for fmt in ('xlsx', 'docx', 'pptx', 'pdf'):
         data = getattr(report_docs, f'servqual_{fmt}')(report, meta)

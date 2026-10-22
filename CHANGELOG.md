@@ -1,8 +1,18 @@
-## 7.91 — October 22, 2026
+## 7.92 — October 22, 2026
 
 - Travel prepare page: designation and purpose are required (marked *) before the forms are made (spot feedback #172).
 - DPO: the first paragraph names who conducts the activity and cites the invitation's key lines as the rationale; 12 pt space after every paragraph; the subject uses a hanging indent (spot feedback #170). Re-make the Apps Script templates for the layout to apply.
 - No schema migration or dependency changes.
+
+## 7.91 — October 22, 2026
+
+- Continue A18 with visible report scope, inclusive date range, submission/rated-answer denominators, filter reset and a native Apply filters action.
+- Resolve resource-person activity member IDs identically for reports, document exports and roster decks; unavailable activity filters fail closed instead of broadening downloads.
+- Apply exact organization/descendant boundaries to report and comment selection; keep unavailable saved filter values visible.
+- Use active walk-in submission dates for ARTA period options, counts, extracts and comment drill-down; include the complete final day across stored timestamp formats and omit archived source rows.
+- Keep unrated SERVQUAL submissions as blank-score Excel rows and state submission versus rated-response counts in Word, PDF, PowerPoint and Excel.
+- Explain no matching submissions separately from submissions with no valid ratings, and distinguish activity inventories and named rosters from response extracts.
+- No schema migration, new dependency or provider change.
 
 ## 7.90 — October 22, 2026
 
