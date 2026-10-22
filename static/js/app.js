@@ -7,11 +7,24 @@
 // templates' toggleChip() and the draft-restore re-light logic below agree.
 window.refreshChipCap = function (container) {
   if (!container) return;
+  container.querySelectorAll('.chip').forEach(function (chip) {
+    chip.setAttribute('aria-pressed', chip.classList.contains('active') ? 'true' : 'false');
+  });
   var max = parseInt(container.dataset.maxChips || "0", 10);
   if (!max) return;
   var activeCount = container.querySelectorAll(".chip.active").length;
   container.classList.toggle("at-max", activeCount >= max);
 };
+
+function surveyFieldLabel(control) {
+  var question = control.closest('[data-question]');
+  var group = control.closest('[role=radiogroup]');
+  var heading = group && document.getElementById(group.getAttribute('aria-labelledby') || '');
+  var label = question ? question.dataset.question : (heading ? heading.textContent : (control.labels && control.labels[0] ? control.labels[0].textContent : control.getAttribute('aria-label') || control.name));
+  var speaker = control.closest('.spk-section');
+  var title = speaker && speaker.querySelector('.spk-title strong');
+  return (title ? title.textContent.trim() + ' — ' : '') + label.trim();
+}
 
 (function () {
   "use strict";
@@ -59,7 +72,7 @@ window.refreshChipCap = function (container) {
       });
       var pct = gs.length ? Math.round((done / gs.length) * 100) : 0;
       if (fill) fill.style.width = pct + "%";
-      if (note) note.textContent = done + " of " + gs.length + " answered";
+      if (note) note.textContent = ((window.SURVEY_I18N && window.SURVEY_I18N.progress) || '{done} of {total} answered').replace('{done}',done).replace('{total}',gs.length);
     }
     form.addEventListener("change", update);
     update();
@@ -519,6 +532,30 @@ window.refreshChipCap = function (container) {
 // combined form's nameless skip toggles. Format v2.
 (function () {
   var DRAFT_TTL = 7 * 24 * 60 * 60 * 1000; // discard drafts older than 7 days
+  var T = window.SURVEY_I18N || {};
+  // A delayed success must never erase a newer draft from another tab.
+  window.clearSurveyDraft = function (key, revision) {
+    if (!key || !revision) return;
+    try {
+      var saved = JSON.parse(localStorage.getItem(key));
+      if (saved && saved.revision === revision) localStorage.removeItem(key);
+    } catch (_) {}
+  };
+  var confirmed = document.querySelector('[data-confirmed-draft]');
+  if (confirmed) window.clearSurveyDraft(confirmed.dataset.confirmedDraft, confirmed.dataset.draftRevision);
+  var recovery = document.querySelector('[data-survey-recovery]');
+  if (recovery) {
+    try {
+      var copy = JSON.parse(localStorage.getItem(recovery.dataset.surveyRecovery));
+      if (copy && copy.fields && Number.isFinite(new Date(copy.savedAt).getTime()) && Date.now() - new Date(copy.savedAt).getTime() <= DRAFT_TTL) {
+        var details = document.createElement('details'), summary = document.createElement('summary'), text = document.createElement('textarea');
+        summary.textContent = T.saved_answers || 'Show saved answers';
+        text.readOnly = true; text.rows = 8; text.style.width = '100%'; text.setAttribute('aria-label',summary.textContent);
+        text.value = Object.keys(copy.fields).map(function (name) { return (copy.labels && copy.labels[name] || name) + ': ' + copy.fields[name]; }).join('\n');
+        details.appendChild(summary); details.appendChild(text); recovery.appendChild(details); recovery.hidden = false;
+      }
+    } catch (_) {}
+  }
 
   var form = document.getElementById("combinedform") || document.getElementById("surveyform");
   if (!form) return;
@@ -529,14 +566,17 @@ window.refreshChipCap = function (container) {
   var keyBase = (tokInput && tokInput.value.trim())
     ? tokInput.value.split(",").map(function (t) { return t.trim(); }).filter(Boolean).sort().join(",")
     : (form.getAttribute("action") || form.id);
-  var STORE_KEY = "css_draft_v2_" + keyBase;
+  var STORE_KEY = form.dataset.surveyDraftKey || "css_draft_v2_" + keyBase;
+  var revisionInput = document.createElement('input');
+  revisionInput.type = 'hidden'; revisionInput.name = 'draft_saved_at'; form.appendChild(revisionInput);
 
   // ── Collect every named control + nameless skip toggles ──
   function collect() {
-    var fields = {}, skips = {};
+    var fields = {}, skips = {}, labels = {};
     form.querySelectorAll("input[name], select[name], textarea[name]").forEach(function (el) {
       var name = el.name, type = (el.type || "").toLowerCase();
       if (type === "hidden") return;                       // tokens/seq/att are URL-derived
+      labels[name] = surveyFieldLabel(el);
       if (type === "radio") { if (el.checked) fields[name] = el.value; }
       else if (type === "checkbox") { fields[name] = el.checked; }
       else { if (el.value !== "") fields[name] = el.value; }
@@ -546,17 +586,29 @@ window.refreshChipCap = function (container) {
       var sec = t.closest(".spk-section");
       if (sec && sec.dataset.token) skips[sec.dataset.token] = t.checked;
     });
-    return { v: 2, savedAt: new Date().toISOString(), fields: fields, skips: skips };
+    return { v: 2, savedAt: new Date().toISOString(), revision: Date.now() + '-' + Math.random().toString(36).slice(2), fields: fields, skips: skips, labels:labels };
   }
 
   // ── Autosave on input/change (150 ms debounce) ──
   var saveTimer;
+  function saveNow() {
+    clearTimeout(saveTimer); saveTimer = null;
+    if (!form.isConnected) return;
+    var snapshot = collect();
+    revisionInput.value = snapshot.revision;
+    try {
+      localStorage.setItem(STORE_KEY, JSON.stringify(snapshot));
+      flashSaved();
+    } catch (_) {
+      var warning = form.querySelector('[data-draft-warning]');
+      if (warning) { warning.hidden = false; warning.textContent = T.storage_failed || 'Device draft saving is unavailable. Keep this page open until submission is confirmed.'; }
+    }
+    return snapshot.revision;
+  }
+  form.saveSurveyDraft = saveNow;
   function scheduleSave() {
     clearTimeout(saveTimer);
-    saveTimer = setTimeout(function () {
-      try { localStorage.setItem(STORE_KEY, JSON.stringify(collect())); } catch (_) {}
-      flashSaved();
-    }, 150);
+    saveTimer = setTimeout(saveNow, 150);
   }
   form.addEventListener("input",  scheduleSave);
   form.addEventListener("change", scheduleSave);
@@ -565,10 +617,9 @@ window.refreshChipCap = function (container) {
     if (e.target.closest(".chip")) scheduleSave();
   });
 
-  // ── Clear draft once the form is actually submitted ──
-  form.addEventListener("submit", function () {
-    try { localStorage.removeItem(STORE_KEY); } catch (_) {}
-  });
+  // Keep the draft until the matching server confirmation, not merely a submit event.
+  form.addEventListener('submit', function (event) { if (!event.defaultPrevented) saveNow(); });
+  window.addEventListener('pagehide', function () { if (saveTimer) saveNow(); });
 
   // ── "Draft saved" toast (fades after ~2 s) ──
   var flashEl = null;
@@ -576,7 +627,8 @@ window.refreshChipCap = function (container) {
     if (!flashEl) {
       flashEl = document.createElement("div");
       flashEl.id = "draft-flash";
-      flashEl.textContent = "Draft saved";
+      flashEl.textContent = T.draft_saved || "Draft saved on this device";
+      flashEl.setAttribute('role','status');
       document.body.appendChild(flashEl);
     }
     flashEl.classList.remove("draft-flash-on");
@@ -592,33 +644,22 @@ window.refreshChipCap = function (container) {
   var draft;
   try { draft = JSON.parse(raw); } catch (_) { return; }
 
-  if (!draft || !draft.fields || !draft.savedAt ||
+  if (!draft || !draft.fields || !draft.savedAt || !Number.isFinite(new Date(draft.savedAt).getTime()) ||
       (Date.now() - new Date(draft.savedAt).getTime()) > DRAFT_TTL) {
     try { localStorage.removeItem(STORE_KEY); } catch (_) {}
     return;
   }
 
   // ── Resume banner ──
-  function timeAgo(iso) {
-    var ms = Date.now() - new Date(iso).getTime();
-    var m  = Math.round(ms / 60000);
-    if (m < 1)  return "just now";
-    if (m < 60) return m + " min ago";
-    var h = Math.round(m / 60);
-    if (h < 24) return h + " hr ago";
-    var dy = Math.round(h / 24);
-    return dy + " day" + (dy !== 1 ? "s" : "") + " ago";
-  }
 
   var banner = document.createElement("div");
   banner.id = "draft-banner";
   banner.innerHTML =
     '<div class="draft-inner">'
-    + '<span class="draft-msg">You have a saved draft from <strong>'
-    + timeAgo(draft.savedAt) + '</strong>. Resume where you left off?</span>'
+    + '<span class="draft-msg">' + (T.resume_prompt || 'An earlier draft is saved on this device. Resume only if this feedback has not already been submitted.') + '</span>'
     + '<div class="draft-acts">'
-    + '<button type="button" id="draft-resume" class="btn" style="padding:.5rem 1rem;font-size:.9rem;">Resume draft</button>'
-    + '<button type="button" id="draft-discard" style="background:none;border:none;cursor:pointer;font-size:.9rem;color:var(--soft);text-decoration:underline;padding:.5rem .4rem;">Start fresh</button>'
+    + '<button type="button" id="draft-resume" class="btn" style="padding:.5rem 1rem;font-size:.9rem;">' + (T.resume || 'Resume draft') + '</button>'
+    + '<button type="button" id="draft-discard" style="background:none;border:none;cursor:pointer;font-size:.9rem;color:var(--soft);text-decoration:underline;padding:.5rem .4rem;">' + (T.fresh || 'Start fresh') + '</button>'
     + '</div></div>';
 
   // Insert before the first visible element (skip the leading hidden inputs).
@@ -643,6 +684,7 @@ window.refreshChipCap = function (container) {
       var els = form.querySelectorAll('[name="' + (window.CSS && CSS.escape ? CSS.escape(name) : name) + '"]');
       if (!els.length) return;
       var first = els[0], type = (first.type || "").toLowerCase();
+      if (type === 'hidden' || type === 'file') return;
       if (type === "radio") {
         els.forEach(function (r) {
           if (r.value === val) {
@@ -693,6 +735,8 @@ window.refreshChipCap = function (container) {
     // A draft saved before the chip cap existed may have more active chips
     // than the current cap allows — dim the rest to match, same as a live tap.
     form.querySelectorAll(".chips[data-max-chips]").forEach(window.refreshChipCap);
+    var cc1 = form.querySelector('input[name=csm_cc1]:checked');
+    if (cc1) cc1.dispatchEvent(new Event('change', {bubbles:true}));
 
     form.dispatchEvent(new Event("change", { bubbles: true })); // refresh progress bar
   }
@@ -709,13 +753,14 @@ window.refreshChipCap = function (container) {
   if (!("indexedDB" in window)) return;
 
   var T = window.OFFLINE_I18N || {};
+  var surveyText = window.SURVEY_I18N || {};
   var t = {
     saved_h1:  T.saved_h1  || "✓ Saved on your device",
-    saved_msg: T.saved_msg || "You're offline, so your answers are saved on this device and will be sent automatically the moment you're back online.",
+    saved_msg: T.saved_msg || "Saved on this device, not yet confirmed by the server. Answers will be sent when connected if the survey still accepts responses.",
     waiting:   T.waiting   || "waiting to send",
     sent_one:  T.sent_one  || "Saved response sent.",
     sent_many: T.sent_many || "Saved responses sent.",
-    failed:    T.failed    || "couldn't be sent (the survey has closed)",
+    failed:    T.failed    || "the server refused this request; the form may be closed or unavailable. Your saved answers remain on this device",
     failed_label: T.failed_label || "Couldn't send",
     discard:   T.discard   || "Discard"
   };
@@ -766,10 +811,18 @@ window.refreshChipCap = function (container) {
     if (!form || (form.id !== "surveyform" && form.id !== "combinedform")) return;
     if (navigator.onLine) return;                       // online → let the native POST proceed
     e.preventDefault();
+    if (form.dataset.queueSaving === '1') return;
+    form.dataset.queueSaving = '1';
+    if (form.saveSurveyDraft) form.saveSurveyDraft();
     var sid = uuid();
     var body = new URLSearchParams(new FormData(form));  // byte-identical to a native submit
     body.set("submission_id", sid);
+    var labels = {};
+    Array.from(form.elements).forEach(function (control) {
+      if (control.name && control.type !== 'hidden') labels[control.name] = surveyFieldLabel(control);
+    });
     qPut({ id: sid, action: form.action, body: body.toString(),
+           draftKey:form.dataset.surveyDraftKey, draftRevision:body.get('draft_saved_at'), labels:labels,
            label: labelFor(), savedAt: new Date().toISOString(), status: "pending" })
       .then(function () {
         showSavedPanel(form);
@@ -782,7 +835,10 @@ window.refreshChipCap = function (container) {
           }
         } catch (_) {}
       })
-      .catch(function () {});                             // IDB unavailable: leave the form for a retry
+      .catch(function () {
+        delete form.dataset.queueSaving;
+        form.dispatchEvent(new Event('survey-save-failed'));
+      });
   }, true);
 
   function showSavedPanel(form) {
@@ -791,6 +847,7 @@ window.refreshChipCap = function (container) {
     div.innerHTML = '<h1 style="margin-top:0;color:var(--green);">' + esc(t.saved_h1) + "</h1>" +
                     '<p class="muted">' + esc(t.saved_msg) + "</p>";
     form.replaceWith(div);                               // swap just the form; layout stays intact
+    var heading = div.querySelector('h1'); heading.tabIndex = -1; heading.focus();
     window.scrollTo(0, 0);
   }
 
@@ -813,8 +870,14 @@ window.refreshChipCap = function (container) {
       var html = "";
       if (pending.length) html += '<span class="ob-pending">' + pending.length + " " + esc(t.waiting) + "</span>";
       failed.forEach(function (it) {
-        html += '<span class="ob-failed">' + esc(t.failed_label) + ": " + esc(it.label) + " — " + esc(t.failed) +
+        var reason = it.reason === 'partial' ? surveyText.queue_partial : it.reason === 'previous' ? surveyText.queue_previous : t.failed;
+        html += '<span class="ob-failed">' + esc(surveyText.needs_review || t.failed_label) + ": " + esc(it.label) + " — " + esc(reason) +
                 ' <button type="button" data-discard="' + esc(it.id) + '">' + esc(t.discard) + "</button></span>";
+        html += '<details><summary>' + esc(surveyText.saved_answers || 'Show saved answers') + '</summary><pre style="white-space:pre-wrap;overflow-wrap:anywhere">';
+        new URLSearchParams(it.body).forEach(function (value, name) {
+          if (['tokens','seq','att','submission_id','draft_saved_at'].indexOf(name) < 0) html += esc((it.labels && it.labels[name] || name) + ': ' + value) + '\n';
+        });
+        html += '</pre></details>';
       });
       b.innerHTML = html;
       b.hidden = false;
@@ -839,10 +902,21 @@ window.refreshChipCap = function (container) {
           if (stop) return true;
           return fetch(it.action, {
             method: "POST",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            headers: { "Content-Type": "application/x-www-form-urlencoded", "Accept":"application/json" },
             body: it.body
           }).then(function (res) {
-            if (res.ok) { sent++; return qDelete(it.id).then(function () { return false; }); }
+            if (res.ok) return res.json().then(function (receipt) {
+              if (!receipt || receipt.ok !== true || receipt.submission_id !== it.id) return true;
+              var combined = new URL(it.action, location.href).pathname === '/seq';
+              if (combined && !receipt.deduped && (!Number.isInteger(receipt.recorded) || receipt.recorded < 0 || !Number.isInteger(receipt.unavailable) || receipt.unavailable < 0)) return true;
+              if (receipt.unavailable || receipt.recorded === 0 || (receipt.deduped && combined)) {
+                it.status = 'failed'; it.reason = receipt.deduped ? 'previous' : 'partial';
+                return qPut(it).then(function () { return false; });
+              }
+              sent++;
+              if (window.clearSurveyDraft) window.clearSurveyDraft(it.draftKey, it.draftRevision);
+              return qDelete(it.id).then(function () { return false; });
+            });
             if (res.status >= 400 && res.status < 500) {  // permanent (window closed / bad token)
               it.status = "failed"; return qPut(it).then(function () { return false; });
             }
@@ -867,6 +941,12 @@ window.refreshChipCap = function (container) {
   }
 
   window.addEventListener("online", flush);
+  if ('serviceWorker' in navigator) navigator.serviceWorker.addEventListener('message', function (event) {
+    if (event.data && event.data.type === 'survey-confirmed') {
+      if (window.clearSurveyDraft) window.clearSurveyDraft(event.data.key, event.data.revision);
+      refreshBadge();
+    }
+  });
   refreshBadge().then(flush);                            // catch up any queue on every public page load
 }());
 

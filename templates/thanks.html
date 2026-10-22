@@ -15,13 +15,16 @@
     background:#fff; color:#7a4f00; border:2px dashed #e0a93a; }
   .raffle-ticket .rt-note { margin:.6rem 0 0; font-size:.82rem; color:#7a5a1e; line-height:1.45; }
 </style>
-<div class="pub-card" style="text-align:center;">
-  <h1 style="margin-top:0; color:var(--green);">{{ t('thanks_h1', lang) }}</h1>
+<div class="pub-card" style="text-align:center;"{% if confirmed_draft_key %} data-confirmed-draft="{{ confirmed_draft_key }}" data-draft-revision="{{ confirmed_draft_revision }}"{% endif %}>
+  <h1 style="margin-top:0; color:var(--green);">{{ t('survey_none', lang) if combined_count is defined and not combined_count else t('thanks_h1', lang) }}</h1>
   {% if combined_count is defined %}
   <p class="muted">{% if combined_count %}{{ t('thanks_rp_feedback_for', lang) }} <strong>{{ combined_count }}</strong> {{ t('thanks_rp_person', lang) if combined_count == 1 else t('thanks_rp_persons', lang) }} {{ t('thanks_rp_was_recorded', lang) }}{% else %}{{ t('thanks_rp_none', lang) }}{% endif %}</p>
   {% else %}
   <p class="muted">{{ t('thanks_recorded_pre', lang) }}{% if ctx %} {{ t('thanks_recorded_for', lang) }} <strong>{{ ctx.form_id }}</strong>{% endif %}.</p>
   {% endif %}
+  {% if combined_unavailable %}<p class="survey-feedback">{{ combined_unavailable }} {{ t('survey_unavailable', lang) }}</p>{% endif %}
+  {% if recovery_draft_key %}<section class="survey-guidance" hidden data-survey-recovery="{{ recovery_draft_key }}"></section>{% endif %}
+  {% if combined_count is defined and not combined_count %}<p>{{ t('survey_review_none', lang) }}</p><a class="btn" href="/seq?tokens={{ combined_tokens|urlencode }}">{{ t('survey_review', lang) }}</a>{% endif %}
   <p class="muted small">{{ t('thanks_anon_note', lang) }}</p>
 
   {# Comment raffle: show the respondent their claim code(s) — their proof if drawn.
@@ -53,7 +56,7 @@
   {% if next_token %}
     <a class="btn" style="margin-top:.6rem;" href="/r/{{ next_token }}?seq={{ seq }}{% if att %}&att={{ att|urlencode }}{% endif %}">{{ t('thanks_continue', lang) }}</a>
   {% elif event_token %}
-    <p style="font-weight:650; color:var(--green);">{{ t('thanks_all_done_event', lang) }}</p>
+    <p style="font-weight:650;">{{ t('thanks_all_done_event', lang) if feedback_complete else t('survey_remaining', lang) }}</p>
     {% if ending_message %}
     <div class="panel tint-green" style="margin:.8rem 0; padding:.85rem 1rem; text-align:left; white-space:pre-wrap; line-height:1.5;">{{ ending_message }}</div>
     {% endif %}

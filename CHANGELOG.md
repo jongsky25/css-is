@@ -1,3 +1,13 @@
+## 7.90 — October 22, 2026
+
+- Start A18 with accessible survey corrections, retained device drafts and clearer submission progress in English and Filipino; reporting clarity remains the next increment.
+- Keep drafts until their matching confirmation, isolate registered-attendee draft scopes and preserve newer edits when an older request finishes.
+- Explain storage failures, retain offline requests until a matching server receipt, and keep refused/partial combined submissions available for review and copying.
+- Share receipt checks with Background Sync; keep the existing submission identities, window/attendee checks, answer scales and scoring rules.
+- Improve touch controls, group labels, note/comment controls and focus in one-question mode; rating changes no longer advance automatically.
+- Honour named speaker skip controls on the server and distinguish zero/partial combined results from completed feedback. Closed forms offer a read-only device copy when available.
+- No schema migration or dependency changes. Existing multi-process/crash reconciliation limits of the survey ledger remain later operations work.
+
 ## 7.89 — October 22, 2026
 
 - Extend A17 to travel guidance: current filing meaning, responsible traveller/Administrative Section, checklist/flag blockers and useful existing actions; distinguish paper handover from receipt, approval, payment and email delivery.

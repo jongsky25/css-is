@@ -8273,6 +8273,14 @@ def service_worker():
     })
 
 
+def _survey_draft_key(action, *, att="", tokens=""):
+    """Device draft scope; a registered attendee never inherits another attendee's draft."""
+    base = ",".join(sorted(t.strip() for t in tokens.split(",") if t.strip())) if tokens else action
+    if att:
+        base += ":att:" + hashlib.sha256(att.encode()).hexdigest()
+    return "css_draft_v2_" + base
+
+
 @app.get("/r/{qr_token}", response_class=HTMLResponse)
 def rating_form(request: Request, qr_token: str, seq: str = "", att: str = ""):
     lang = i18n.pick(request)
@@ -8302,6 +8310,7 @@ def rating_form(request: Request, qr_token: str, seq: str = "", att: str = ""):
     if state != "open":
         return templates.TemplateResponse(request, "closed.html", {
             "ctx": ctx, "state": state, "lang": lang,
+            "survey_draft_key": _survey_draft_key(f"/r/{qr_token}", att=att),
             "opens": _humandt(opens_at),
             "closed": _humandt(ctx.get("close_at")),
         }, status_code=403)
@@ -8316,6 +8325,7 @@ def rating_form(request: Request, qr_token: str, seq: str = "", att: str = ""):
     today = _now_local()
     return templates.TemplateResponse(request, "rating.html", {
         "ctx": ctx, "qr_token": qr_token, "spec": spec, "seq": seq, "att": att,
+        "survey_draft_key": _survey_draft_key(f"/r/{qr_token}", att=att),
         "staff": staff, "lang": lang, "max_remark_chips": MAX_REMARK_CHIPS,
         "csm_today": f"{today:%B} {today.day}, {today.year}",       # shown on the Type-1 form; the response is dated when it is submitted
     })
@@ -8340,13 +8350,14 @@ async def submit_rating(request: Request, qr_token: str):
         # so the device dequeues it — even if its window has since closed. Checked
         # BEFORE the window gate for exactly that reason.
         if sid and st.submission_seen(conn, sid):
-            return JSONResponse({"ok": True, "deduped": True})
+            return JSONResponse({"ok": True, "deduped": True, "submission_id": sid})
         # Enforce the response window on SUBMIT too — a form opened before the
         # deadline can't be posted after it.
         state, opens_at = _rating_gate(ctx, conn)
         if state != "open":
             return templates.TemplateResponse(request, "closed.html", {
                 "ctx": ctx, "state": state, "lang": lang,
+                "survey_draft_key": _survey_draft_key(f"/r/{qr_token}", att=att),
                 "opens": _humandt(opens_at),
                 "closed": _humandt(ctx.get("close_at")),
             }, status_code=403)
@@ -8459,6 +8470,7 @@ async def submit_rating(request: Request, qr_token: str):
         event_token = None
         ending_message = None
         cert_ready = False
+        feedback_complete = False
         cert_mail = None
         if next_token is None and attendee_id is not None:
             att_row = st.get_attendee(conn, attendee_id)
@@ -8468,6 +8480,7 @@ async def submit_rating(request: Request, qr_token: str):
                 # The certificate + the organizer's ending message unlock on the
                 # same gate: this attendee has finished ALL the activity's feedback.
                 if ev and st.attendee_completed_feedback(conn, ev["id"], attendee_id):
+                    feedback_complete = True
                     if ev.get("ending_message"):
                         ending_message = amsg.personalize(ev["ending_message"], att_row["name"])
                     cert_ready = bool(ev.get("certificate_enabled"))
@@ -8484,11 +8497,18 @@ async def submit_rating(request: Request, qr_token: str):
     finally:
         conn.close()
 
+    if "application/json" in request.headers.get("accept", ""):
+        resp = JSONResponse({"ok": True, "submission_id": sid})
+        resp.background = cert_mail
+        return resp
     resp = templates.TemplateResponse(request, "thanks.html", {
         "ctx": ctx, "seq": seq, "att": att, "next_token": next_token,
         "event_token": event_token, "ending_message": ending_message,
         "cert_ready": cert_ready, "lang": lang,
+        "feedback_complete": feedback_complete,
         "raffle_code": raffle_code, "raffle_prize": raffle_prize,
+        "confirmed_draft_key": _survey_draft_key(f"/r/{qr_token}", att=att),
+        "confirmed_draft_revision": posted.get("draft_saved_at", ""),
     })
     resp.background = cert_mail
     return resp
@@ -8518,6 +8538,7 @@ def respondent_combined(request: Request, tokens: str = ""):
     status = 200 if sections else (403 if closed_any else 404)
     return templates.TemplateResponse(request, "combined_form.html", {
         "sections": sections, "tokens": tokens, "event": event,
+        "survey_draft_key": _survey_draft_key("/seq", tokens=tokens),
         "closed_any": closed_any, "lang": lang, "max_remark_chips": MAX_REMARK_CHIPS,
     }, status_code=status)
 
@@ -8536,7 +8557,7 @@ async def submit_combined(request: Request):
     _dchk = get_conn()
     try:
         if sid and st.submission_seen(_dchk, sid):
-            return JSONResponse({"ok": True, "deduped": True})
+            return JSONResponse({"ok": True, "deduped": True, "submission_id": sid})
     finally:
         _dchk.close()
     # Shared, asked-once demographics (standalone survey — no pre-registration).
@@ -8549,14 +8570,18 @@ async def submit_combined(request: Request):
         demo["AFFIL"] = affil
 
     recorded = 0
+    unavailable = 0
     _live_evs: dict = {}
     raffle_codes: list = []
     raffle_prize = None
     conn = get_conn()
     try:
         for tok in toks:
+            if posted.get(f"skip::{tok}") == "1":
+                continue
             ctx = st.get_form_context(conn, tok)
             if not ctx or _window_state(ctx) != "open":
+                unavailable += 1
                 continue
             spec = survey_spec(ctx)
             answers, item_remarks, answered = [], dict(demo), False
@@ -8603,9 +8628,15 @@ async def submit_combined(request: Request):
         conn.close()
     for _eid, _summ in _live_evs.items():
         await realtime.broadcast(_eid, _summ)
+    if "application/json" in request.headers.get("accept", ""):
+        return JSONResponse({"ok": True, "submission_id": sid, "recorded": recorded, "unavailable": unavailable})
     return templates.TemplateResponse(request, "thanks.html", {
         "ctx": None, "combined_count": recorded, "lang": lang,
         "raffle_codes": raffle_codes, "raffle_prize": raffle_prize,
+        "combined_unavailable": unavailable, "combined_tokens": posted.get("tokens", ""),
+        "recovery_draft_key": _survey_draft_key("/seq", tokens=posted.get("tokens", "")) if unavailable or not recorded else "",
+        "confirmed_draft_key": _survey_draft_key("/seq", tokens=posted.get("tokens", "")) if recorded and not unavailable else "",
+        "confirmed_draft_revision": posted.get("draft_saved_at", ""),
     })
 
 
