@@ -1,7 +1,7 @@
 {% extends "dash_layout.html" %}
 {% from "_components.html" import page_header, empty_state %}
 {% block title %}{{ "Not found" if missing else e.title }}{% endblock %}
-{% block head %}<link rel="stylesheet" href="/static/css/calendar.css?v=20261020a">{% if documents and documents['outside'] and documents['uploads_ready'] %}<script src="/static/js/activity_invitation.js?v=20261021a" defer></script>{% endif %}{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/calendar.css?v=7.86">{% if documents and documents['outside'] and documents['uploads_ready'] %}<script src="/static/js/activity_invitation.js?v=20261021a" defer></script>{% endif %}{% endblock %}
 {% block content %}
 {% if missing %}
   {{ empty_state("That calendar item isn't here.", "It may have been removed, or it isn't shared with you.", "📅") }}
@@ -15,7 +15,7 @@
   <h1 class="page"><span {% if e.status in ("cancelled", "postponed") %}style="text-decoration:line-through;opacity:.75"{% endif %}>{{ e.title }}</span></h1>
   <p class="cal-chips">
     <span class="cal-chip">{{ kind_label }}</span>
-    {% if e.status != "confirmed" %}<span class="cal-chip warn">{{ status_label }}</span>{% endif %}
+    <span class="cal-chip {{ 'warn' if e.status != 'confirmed' }}">{{ status_label }}</span>
     {% for o in owners %}<span class="cal-chip">{{ o }}</span>{% endfor %}
     <span class="cal-chip" title="Who can see this item">{{ audience_label }}</span>
   </p>
@@ -37,7 +37,9 @@
     {% if e.note %}<dt>Notes</dt><dd class="cal-note">{{ e.note }}</dd>{% endif %}
   </dl>
 
-  {% if series %}
+  {% include "_calendar_guidance.html" %}
+
+  {% if series and e.status != 'cancelled' %}
   <div class="cal-flash ok" role="status" id="series">
     {% if series.occ %}
     <strong>{{ series.occ.strftime("%A, %B") }} {{ series.occ.day }}</strong> is one of this item's repeats.
@@ -165,16 +167,19 @@
   </section>
   {% endif %}
 
-  <p class="cal-range"><a href="/calendar/entries/{{ e.id }}/event.ics">Add to my calendar (.ics)</a></p>
+  <section class="cal-calendar-copy" aria-label="Use in another calendar">
+    <h2>Use in another calendar</h2>
+    <p><a href="/calendar/entries/{{ e.id }}/event.ics">Download this item (.ics)</a> — a one-time copy{% if e.rrule %} of the whole series{% endif %}; later changes here do not automatically update an imported copy.</p>
+    <p><a href="/me#calendar-feed">Set up a calendar subscription</a> for ongoing updates. Your calendar app decides when it refreshes; check this office calendar for the latest saved schedule.</p>
+  </section>
 
   <div class="cf-actions">
     {% if e.status == "cancelled" %}
-      <form method="post" action="/calendar/entries/{{ e.id }}/restore"><button class="cal-btn primary" type="submit">Restore</button></form>
+      {% if guidance.can_restore %}<form method="post" action="/calendar/entries/{{ e.id }}/restore"><button class="cal-btn primary" type="submit">Restore</button></form>{% endif %}
     {% else %}
       <a class="cal-btn primary" href="/calendar/entries/{{ e.id }}/edit">Edit</a>
       {% if filing and not filing.chip %}<a class="cal-btn" href="{{ filing.new_url }}">File travel claim</a>{% endif %}
-      <form method="post" action="/calendar/entries/{{ e.id }}/cancel"
-            onsubmit="return confirm('Cancel this item? You can restore it for 30 days.')"><button class="cal-btn" type="submit">Cancel item</button></form>
+      <a class="cal-btn" href="/calendar/entries/{{ e.id }}/cancel">Cancel item — review first</a>
     {% endif %}
   </div>
 

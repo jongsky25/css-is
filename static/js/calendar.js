@@ -48,6 +48,7 @@
     var openLink = sheet.querySelector("[data-sheet-open]");
     var closeBtn = sheet.querySelector("[data-sheet-close]");
     var ticket = 0, pushed = false, byHistory = false;
+    var returnFocus = null, releaseFocus = null;
 
     var withItem = function (id) {
       var u = new URL(location.href);
@@ -59,11 +60,25 @@
       var m = ENTRY.exec(path);
       if (!m) return false;
       var mine = ++ticket;
+      openLink.setAttribute("href", path);
+      sheet.querySelector(".cal-sheet-t").textContent = "Calendar item";
+      while (body.firstChild) body.removeChild(body.firstChild);
+      var notice = document.createElement("p");
+      notice.setAttribute("role", "status");
+      notice.textContent = "Loading the current calendar item…";
+      body.appendChild(notice);
+      body.setAttribute("aria-busy", "true");
+      if (!sheet.open) {
+        returnFocus = document.activeElement; sheet.showModal();
+        if (window.OfficeA11y) releaseFocus = OfficeA11y.open(sheet, {initialFocus:closeBtn, returnFocus:returnFocus, onDismiss:closeSheet});
+      }
+      closeBtn.focus();
+      if (push && !pushed) { history.pushState({ sheet: m[1] }, "", withItem(m[1])); pushed = true; }
       fetch(path, { credentials: "same-origin" }).then(function (r) {
         if (!r.ok) throw new Error(String(r.status));
         return r.text();
       }).then(function (html) {
-        if (mine !== ticket) return;                                 // a newer tap won
+        if (mine !== ticket || !sheet.open) return;                 // a newer tap or dismissal won
         var art = new DOMParser().parseFromString(html, "text/html").querySelector(".cal-detail");
         if (!art) throw new Error("not an item page");
         Array.prototype.forEach.call(art.querySelectorAll("script, iframe, object, embed, link, style"), function (n) { n.remove(); });
@@ -72,11 +87,20 @@
         openLink.setAttribute("href", path);
         var title = art.querySelector("h1");
         sheet.querySelector(".cal-sheet-t").textContent = title ? title.textContent : "Calendar item";
-        if (!sheet.open) sheet.showModal();
+        body.removeAttribute("aria-busy");
         body.scrollTop = 0;
-        if (push && !pushed) { history.pushState({ sheet: m[1] }, "", withItem(m[1])); pushed = true; }
-        closeBtn.focus();
-      }).catch(function () { window.location.href = path; });          // anything odd: just go to the page
+      }).catch(function () {
+        if (mine !== ticket || !sheet.open) return;
+        body.removeAttribute("aria-busy");
+        while (body.firstChild) body.removeChild(body.firstChild);
+        var message = document.createElement("p");
+        message.setAttribute("role", "alert");
+        message.textContent = "Could not load this item. It may be unavailable or your access may have changed. Nothing was changed. Try again or open the full page.";
+        var retry = document.createElement("button");
+        retry.type = "button"; retry.className = "cal-btn"; retry.textContent = "Try loading again";
+        retry.addEventListener("click", function () { show(path, false); });
+        body.appendChild(message); body.appendChild(retry);
+      });
       return true;
     };
 
@@ -98,7 +122,12 @@
     closeBtn.addEventListener("click", closeSheet);
     sheet.addEventListener("click", function (ev) { if (ev.target === sheet) closeSheet(); });   // the backdrop
     sheet.addEventListener("close", function () {
+      ticket++;                                                       // native Escape also invalidates pending reads
+      body.removeAttribute("aria-busy");
       while (body.firstChild) body.removeChild(body.firstChild);
+      if (releaseFocus) { releaseFocus(); releaseFocus = null; }
+      else if (returnFocus && returnFocus.isConnected && returnFocus !== document.body) returnFocus.focus();
+      else { var fallback = document.querySelector('.cal-add'); if (fallback) fallback.focus(); }
       if (byHistory) { byHistory = false; pushed = false; return; }
       if (pushed) { pushed = false; history.back(); }                // take our own entry back off the history
       else if (new URL(location.href).searchParams.has("item")) history.replaceState(null, "", withItem(""));
@@ -169,6 +198,11 @@
   var who = form.querySelector("[data-who]");
   var audience = form.querySelector("[data-audience]");
   var hasOwner = !!form.querySelector("[data-owner]").value;
+  var returnFocus = null, releaseFocus = null;
+  dlg.addEventListener("close", function () {
+    if (releaseFocus) { releaseFocus(); releaseFocus = null; }
+    else if (returnFocus && returnFocus.isConnected) returnFocus.focus();
+  });
 
   Array.prototype.forEach.call(document.querySelectorAll("[hidden][data-quick], .cal-tl-plus"), function (b) { b.hidden = false; });
 
@@ -202,9 +236,11 @@
     if (uid && audience) audience.value = "people";
     var more = form.querySelector("[data-more]");
     more.href = "/calendar/new" + (date ? "?day=" + encodeURIComponent(date) : "");
+    returnFocus = document.activeElement;
     dlg.showModal();
     var first = form.querySelector("[data-first]");
-    if (first) first.focus();
+    if (window.OfficeA11y) releaseFocus = OfficeA11y.open(dlg, {initialFocus:first, returnFocus:returnFocus, onDismiss:function () { dlg.close(); }});
+    else if (first) first.focus();
   }
 
   // "More options…" carries what is already typed into the full form (on a phone the sheet is

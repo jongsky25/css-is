@@ -1,3 +1,12 @@
+## 7.86 — October 22, 2026
+
+- Extend A17 to calendar status/next-step guidance, distinguishing schedule confirmation from room approval, email delivery and subscribed-app refresh.
+- Show series/linked-activity consequences, a native cancellation review page, and restore availability matching the existing 30-day boundary.
+- Preserve drafts after validation, competing edits and cancellation during editing; focus the message and label conflict replacement explicitly.
+- Offer read-only retry in item previews, invalidate delayed successes/failures on dismissal, and use shared modal focus handling for previews and quick add.
+- Explain one-time .ics downloads versus private read-only subscriptions, independent subscription scope, refresh delays and the limits of reset/revocation for cached copies.
+- Preserve visibility/write guards, calendar deep links, iCalendar UIDs/sequences and existing feed routes. No schema, dependency or external integration changes.
+
 ## 7.85 — October 21, 2026
 
 - Start A17 with current conference-room status and next-step guidance for owned reservations and validated guest tracking links, including standby, moves, replacements, declines, cancellation, withdrawal, expiry and unavailable alternatives.

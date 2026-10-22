@@ -694,3 +694,16 @@ a.cal-tt:focus-visible { outline:none; }
 .cal-doc-draft { margin-top:.4rem; }
 .cal-doc-error { color:#a12; font-size:.9rem; }
 @media (prefers-color-scheme: dark) { .cal-doc-error { color:#ff8a97; } }
+
+/* A17: schedule meaning and next steps use text, with wrapping on narrow pages. */
+.cal-guidance, .cal-calendar-copy { border:1px solid var(--line); border-radius:12px; padding:1rem; margin:1rem 0; overflow-wrap:anywhere; }
+.cal-guidance { background:var(--surface-2); }
+.cal-guidance h2, .cal-calendar-copy h2 { font-size:1rem; margin:0 0 .5rem; }
+.cal-guidance p, .cal-calendar-copy p { margin:.5rem 0; }
+.cal-guidance dl { display:grid; grid-template-columns:auto minmax(0,1fr); gap:.5rem 1rem; }
+.cal-guidance dt { font-weight:700; }
+.cal-guidance dd { margin:0; }
+#cal-form-message { scroll-margin-top:5rem; }
+#cal-form-message:focus { outline:3px solid var(--accent); outline-offset:3px; }
+.cal-sheet-body[aria-busy="true"] { min-height:7rem; }
+@media(max-width:640px) { .cal-guidance dl { grid-template-columns:minmax(0,1fr); gap:.3rem; } .cal-guidance dd { margin-bottom:.5rem; } }

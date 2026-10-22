@@ -1,0 +1,26 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header %}
+{% block title %}Review calendar cancellation{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/calendar.css?v=7.86">{% endblock %}
+{% block content %}
+{{ page_header("Review calendar cancellation", "Nothing changes until you confirm below.") }}
+<article class="cal-detail">
+  <h2>{{ e.title }}</h2>
+  <p>{{ e.start_date }}{% if e.end_date %} → {{ e.end_date }}{% endif %}</p>
+  {% if e.status == 'cancelled' %}
+  <p>This item is already cancelled. Open it to review its current status.</p>
+  {% else %}
+  <ul>
+    <li>This removes {{ 'the whole repeating series' if e.rrule else 'this item' }} from normal calendar views, and keeps its history.</li>
+    <li>You can restore the previous status for {{ restore_days }} days. Restoring does not confirm room availability.</li>
+    {% if e.event_id %}<li>This cancels the calendar item only. The linked CSS activity has its own controls.</li>{% endif %}
+    <li>Check linked room and travel records separately; this action does not withdraw a reservation or travel claim.</li>
+    <li>Email notices and subscribed apps update separately. A cancellation saved here is not proof they have received it.</li>
+  </ul>
+  <form method="post" action="/calendar/entries/{{ e.id }}/cancel">
+    <button class="cal-btn primary" type="submit">{{ 'Cancel whole series' if e.rrule else 'Confirm cancellation' }}</button>
+  </form>
+  {% endif %}
+  <p><a class="cal-btn" href="/calendar/entries/{{ e.id }}">{{ 'Back to the item' if e.status == 'cancelled' else 'Keep item and go back' }}</a></p>
+</article>
+{% endblock %}
