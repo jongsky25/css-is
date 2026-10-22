@@ -42,3 +42,7 @@ Reference totals are verified in the official report payload and rendered DOCX, 
 This is a local candidate until merged/deployed. No schema migration is required. Historical scores with unused categories or invalid answers may change because they are recalculated correctly. Existing source values remain available for investigation. Reverting the code would also restore the original calculation defects.
 
 A10 remains next: deterministic fixtures/date handling and required release gates. The full suite is not presumed green; verification results and remaining failures are recorded separately in `docs/phase1/analytics/verification.json`. Production functional verification remains deferred by user direction.
+
+## A18 follow-up — 7.91
+
+The [report clarity increment](REPORT_SCOPE_CLARITY.md) retains this independent arithmetic reference and adds authenticated HTML/export reconciliation for both item-column representations. The Excel Responses sheet now retains all eight represented submissions, with six blank-score rows, instead of only scorable respondents. Count definitions distinguish form submissions from unique humans, and exact node/descendant matching replaces text-prefix matching within technical reports and their downloads. Historical A09 verification statements above describe that earlier increment.

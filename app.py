@@ -55,7 +55,7 @@ from browser_security import BrowserSecurityMiddleware, protect_response, secure
 from request_reads import RequestReads
 
 import qrcode
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import (FileResponse, HTMLResponse, JSONResponse,
                                RedirectResponse, Response, StreamingResponse)
 from fastapi.templating import Jinja2Templates
@@ -11059,17 +11059,26 @@ def _next_csm_response_no(conn, date_str):
     return f"CSM-BLHSD-{year}-{month}-{max_n+1:03d}"
 
 
-def _csm_blhsd_rows(conn, date_from=None, date_to=None):
-    """Return list of dicts in BLHSD column order for all Type-1 responses."""
-    where = "WHERE fi.survey_type = 1"
-    args  = []
+def _csm_response_filter(date_from=None, date_to=None):
+    """One active-row boundary for ARTA screen, extracts and comment drill-down."""
+    where = "WHERE fi.survey_type = 1 AND COALESCE(fi.archived,0)=0 AND r.archived_at IS NULL"
+    args = []
     if date_from:
         where += " AND r.submitted_at >= ?"
         args.append(date_from)
     if date_to:
-        where += " AND r.submitted_at <= ?"
-        args.append(date_to + "T23:59:59")
+        last = date.fromisoformat(date_to)
+        # An exclusive next-date bound accepts both stored timestamp separators
+        # and every fractional second while retaining the timestamp index.
+        upper = (last + timedelta(days=1)).isoformat() if last < date.max else date_to + "\uffff"
+        where += " AND r.submitted_at < ?"
+        args.append(upper)
+    return where, args
 
+
+def _csm_blhsd_rows(conn, date_from=None, date_to=None):
+    """Return list of dicts in BLHSD column order for all Type-1 responses."""
+    where, args = _csm_response_filter(date_from, date_to)
     responses = conn.execute(f"""
         SELECT r.id, r.submitted_at, r.remarks
         FROM response r
@@ -11289,9 +11298,18 @@ def csm_blhsd_export(request: Request, period: str = "all",
     window); explicit date_from/date_to override it. (org is bureau-level for the
     walk-in form, so it doesn't subdivide here — any org query param is ignored.)"""
     if (r := _forbid(request, "view")): return r
+    period = _report_period(period)
     p_from, p_to = _period_date_range(period)
     df = date_from or p_from or None
     dt = date_to or p_to or None
+    try:
+        for boundary in (df, dt):
+            if boundary and date.fromisoformat(boundary).isoformat() != boundary:
+                raise ValueError("non-canonical date")
+        if df and dt and df > dt:
+            raise ValueError("reversed dates")
+    except ValueError:
+        raise HTTPException(400, "Choose valid YYYY-MM-DD dates, with the start on or before the end.")
     conn = get_conn()
     try:
         rows = _csm_blhsd_rows(conn, df, dt)
@@ -11299,12 +11317,7 @@ def csm_blhsd_export(request: Request, period: str = "all",
             _, org_name, _ = st.get_or_create_blhsd(conn)
         except Exception:
             org_name = "Bureau of Local Health Systems Development"
-        if period and period != "all" and ":" in period:
-            period_lbl = period.split(":", 1)[1]
-        elif df or dt:
-            period_lbl = f"{df or '…'} to {dt or '…'}"
-        else:
-            period_lbl = "All time"
+        period_lbl = f"{df or 'Beginning'} to {dt or 'Present'} (submission dates, inclusive)" if df or dt else "All time (submission dates)"
         meta = {"org_name": org_name, "place": "Bureau-wide (walk-in / CO-CSM)",
                 "period": period_lbl, "n": len(rows)}
         _audit(request, conn, "export", target_type="csm_blhsd", target_id="all",
@@ -12060,16 +12073,17 @@ def reports_activities_export(request: Request, org: str = "", period: str = "al
     """Download the Type-2 activity inventory (MRR 'Activity' format) for the scope
     + period: Activity · Date · Staff · Participants, one row per activity."""
     if (r := _forbid(request, "view")): return r
+    period = _report_period(period)
     conn = get_conn()
     try:
         atoms = get_atoms(conn)
-        scoped = _scoped(atoms, org, period)
+        scoped = _report_scope_atoms(atoms, org, period, 2)
         events = [e for e in di.build_events(scoped, st.list_activity_instances(conn)) if e["f2"]]
         events.sort(key=lambda e: (e.get("date") or ""))   # chronological (oldest first)
         _attach_activity_findings(atoms, conn, events)
         org_opts = _org_options(conn)
-        place = next((x["text"] for x in org_opts if x["value"] == org), "Whole bureau")
-        period_lbl = "All time" if (not period or period == "all") else period.split(":", 1)[1]
+        place = next((x["text"] for x in org_opts if x["value"] == org), "Unavailable scope" if org else "Whole bureau")
+        period_lbl = _report_period_text(period) + " · activity start dates"
         try:
             _, org_name, _ = st.get_or_create_blhsd(conn)
         except Exception:
@@ -12377,6 +12391,42 @@ def _period_date_range(period_val):
     return None, None
 
 
+def _report_period(period):
+    """Reject broken report links instead of silently exporting all time."""
+    period = period or "all"
+    if period != "all" and not re.fullmatch(
+            r"(?:year:[0-9]{4}|quarter:[0-9]{4}-Q[1-4]|semester:[0-9]{4}-H[12])", period):
+        raise HTTPException(400, "Choose All time, a year, a quarter or a semester from the report filters.")
+    if period != "all" and int(period.split(":", 1)[1][:4]) == 0:
+        raise HTTPException(400, "Choose a report year from 0001 to 9999.")
+    return period
+
+
+def _report_period_text(period):
+    start, end = _period_date_range(period)
+    return f"{start} to {end} (inclusive)" if start else "All time"
+
+
+def _report_scope_atoms(atoms, org, period, rtype):
+    """Shared HTML/export selection; an org includes itself and descendants."""
+    col, val = _parse_period(period)
+    df = eng.scope(atoms, period_col=col, period=val, survey_type=rtype)
+    if org:
+        paths = df["org_path"].astype("string")
+        df = df[paths.eq(org).fillna(False) | paths.str.startswith(org + "/", na=False)]
+    return df
+
+
+def _csm_period_options(conn):
+    # Walk-in periods come from receipt dates, including submissions without
+    # rated answers; the standing form's creation date is not the report date.
+    rows = conn.execute("SELECT DISTINCT substr(r.submitted_at,1,10) FROM response r "
+                        "JOIN form_instance fi ON fi.id=r.form_instance_id "
+                        "WHERE fi.survey_type=1 AND COALESCE(fi.archived,0)=0 AND r.archived_at IS NULL").fetchall()
+    frame = pd.DataFrame({"event_date": [r[0] for r in rows]})
+    return _period_options(eng.assign_periods(frame))
+
+
 def _period_options(atoms):
     """Period dropdown, grouped by granularity, newest first. Built only from
     periods that actually have data, so you can't pick an empty quarter."""
@@ -12484,8 +12534,6 @@ def _servqual_official(df, dim_map, response_ids, conn):
     captured demographic roll-up (M:F, DOH:Non-DOH) over the scope's responses."""
     block = _servqual_block(df, dim_map)
     block["demo"] = _demo_view(st.demographics_for_responses(conn, response_ids))
-    if not block["has_data"]:
-        return block
     exp = block["expectation"]["value"]
     for d in block["dimensions"]:
         v = d.get("value")
@@ -12514,7 +12562,8 @@ def _servqual_official(df, dim_map, response_ids, conn):
     rowmap = _servqual_response_rows(df, dim_map)
     ctx = st.response_context_for_ids(conn, response_ids)
     responses = []
-    for rid, r in rowmap.items():
+    for rid in sorted(df["response_id"].unique()) if not df.empty else []:
+        r = rowmap.get(int(rid), {})
         m = ctx.get(rid, {})
         responses.append({
             "response_id": rid,
@@ -13029,14 +13078,7 @@ def _csm_draft_schema():
 def _csm_type1_response_ids(conn, date_from=None, date_to=None):
     """response ids behind one period's Type-1 (walk-in CSM) rows — the same
     WHERE clause as _csm_blhsd_rows, but just the ids, for pulling verbatims."""
-    where = "WHERE fi.survey_type = 1"
-    args = []
-    if date_from:
-        where += " AND r.submitted_at >= ?"
-        args.append(date_from)
-    if date_to:
-        where += " AND r.submitted_at <= ?"
-        args.append(date_to + "T23:59:59")
+    where, args = _csm_response_filter(date_from, date_to)
     rows = conn.execute(
         f"SELECT r.id FROM response r JOIN form_instance fi "
         f"ON r.form_instance_id = fi.id {where}", args).fetchall()
@@ -13063,7 +13105,7 @@ def _csm_draft_prompt(rep, improve_themes):
 
 
 def _scope_label(org, period, org_opts):
-    o = next((x["text"] for x in org_opts if x["value"] == org), "Whole bureau")
+    o = next((x["text"] for x in org_opts if x["value"] == org), "Unavailable scope" if org else "Whole bureau")
     p = "All time" if (not period or period == "all") else period.split(":", 1)[1]
     return f"{o} · {p}"
 
@@ -13087,9 +13129,10 @@ def _rp_activity_options(conn, atoms):
     per-activity report (/reports/activities/{id})."""
     events = view_memo("events", ("", "all"),
                        lambda: di.build_events(atoms, st.list_activity_instances(conn)))
+    rp_ids = set(atoms.loc[atoms["survey_type"] == 3, "form_instance_id"])
     return [{"value": str(e["id"]), "text": e["name"], "date": e["date"],
              "instance_ids": e["instance_ids"]}
-            for e in events if e["speakers"]]
+            for e in events if rp_ids.intersection(e["instance_ids"])]
 
 
 def _rp_activity_scope(opts, activity):
@@ -13140,7 +13183,13 @@ def _match_event(events, event_id):
 def reports(request: Request, org: str = "", period: str = "all", type: int = 1,
             activity: str = "", msg: str = "", err: str = ""):
     rtype = type if type in (1, 2, 3) else 1
-    period_col, period_v = _parse_period(period)
+    try:
+        period = _report_period(period)
+    except HTTPException as exc:
+        return templates.TemplateResponse(request, "report_filter_error.html", {
+            "detail": exc.detail, "rtype": rtype, "nav_active": "reports",
+        }, status_code=exc.status_code)
+    org = "" if rtype == 1 else org
     df_from, df_to = _period_date_range(period)
     activity = activity if rtype == 3 else ""      # the Activity filter is RP-only
     conn = get_conn()
@@ -13181,8 +13230,7 @@ def reports(request: Request, org: str = "", period: str = "all", type: int = 1,
                             selected_ids = set(inst_ids or [])
                             my_rp_engagements = [e for e in my_rp_engagements
                                                  if e["event_id"] in selected_ids]
-            sdf = eng.scope(sdf_atoms, org_prefix=org or None, period_col=period_col,
-                            period=period_v, survey_type=rtype)
+            sdf = _report_scope_atoms(sdf_atoms, org, period, rtype)
             rids = sdf["response_id"].unique().tolist() if not sdf.empty else []
             sq = _servqual_official(sdf, dim_map, rids, conn)
             # Per-activity comments (feedback #53): an invited/outside activity is
@@ -13192,6 +13240,8 @@ def reports(request: Request, org: str = "", period: str = "all", type: int = 1,
             if rtype == 3 and sel_activity:
                 story = di.story_panel(st.verbatims_for_responses(conn, rids),
                                        st.get_comment_overrides(conn, rids))
+        period_opts = _csm_period_options(conn) if rtype == 1 else _period_options(atoms[atoms["survey_type"] == rtype])
+        selected_count = arta_report["respondents"] if rtype == 1 else sq["respondents"]
         total_responses = int(atoms["response_id"].nunique()) if not atoms.empty else 0
     finally:
         conn.close()
@@ -13202,7 +13252,12 @@ def reports(request: Request, org: str = "", period: str = "all", type: int = 1,
         "rtype": rtype,
         "arta_report": arta_report,
         "sq": sq,
-        "period_opts": _period_options(atoms),
+        "period_opts": period_opts,
+        "report_period_text": _report_period_text(period),
+        "period_listed": period == "all" or any(op["value"] == period for g in period_opts for op in g["options"]),
+        "org_listed": any(op["value"] == org for op in org_opts),
+        "activity_listed": not sel_activity or any(op["value"] == sel_activity for op in activity_opts),
+        "selected_count": selected_count,
         "org_opts": org_opts,
         "activity_opts": activity_opts,
         "my_rp_id": my_rp_id, "my_rp_engagements": my_rp_engagements,
@@ -13258,6 +13313,8 @@ def reports_export(request: Request, type: int = 1, fmt: str = "docx",
     in-app report style."""
     if (r := _forbid(request, "view")): return r
     rtype = type if type in (1, 2, 3) else 1
+    period = _report_period(period)
+    org = "" if rtype == 1 else org
     fmt = fmt if fmt in _REPORT_FMT else "docx"
     # Raw-data Excel is a SERVQUAL-only artifact (servqual_xlsx); Type 1 (ARTA/CO-CSM)
     # has its own dedicated Excel extracts, so coerce a stray type=1&fmt=xlsx to docx.
@@ -13265,14 +13322,13 @@ def reports_export(request: Request, type: int = 1, fmt: str = "docx",
         fmt = "docx"
     activity = activity if rtype == 3 else ""      # the Activity filter is RP-only
     official = style == "official" and rtype == 1 and fmt in ("docx", "pdf")
-    period_col, period_v = _parse_period(period)
     df_from, df_to = _period_date_range(period)
     conn = get_conn()
     try:
         org_opts = _org_options(conn)
         scope_label = _scope_label(org, period, org_opts)
-        place = next((x["text"] for x in org_opts if x["value"] == org), "Whole bureau")
-        period_lbl = "All time" if (not period or period == "all") else period.split(":", 1)[1]
+        place = next((x["text"] for x in org_opts if x["value"] == org), "Unavailable scope" if org else "Whole bureau")
+        period_lbl = _report_period_text(period)
         try:
             _, org_name, _ = st.get_or_create_blhsd(conn)
         except Exception:
@@ -13313,17 +13369,15 @@ def reports_export(request: Request, type: int = 1, fmt: str = "docx",
             atoms = get_atoms(conn)
             dim_map = eng.DIM_MAP_FORM2 if rtype == 2 else eng.DIM_MAP_FORM3
             sdf_atoms = atoms
-            if rtype == 3 and activity:            # narrow the download to one activity
-                pick = next((a for a in _rp_activity_options(conn, atoms)
-                             if a["value"] == activity), None)
-                if pick:
-                    sdf_atoms = atoms[atoms["form_instance_id"].isin(set(pick["instance_ids"]))]
-                    meta["scope"] = scope_label = f"{scope_label} · {pick['text']}"
-            sdf = eng.scope(sdf_atoms, org_prefix=org or None, period_col=period_col,
-                            period=period_v, survey_type=rtype)
+            if rtype == 3 and activity:
+                _, label, ids = _rp_activity_scope(_rp_activity_options(conn, atoms), activity)
+                sdf_atoms = atoms[atoms["form_instance_id"].isin(set(ids or []))]
+                meta["scope"] = scope_label = f"{scope_label} · {label}"
+            sdf = _report_scope_atoms(sdf_atoms, org, period, rtype)
             rids = sdf["response_id"].unique().tolist() if not sdf.empty else []
             payload = _servqual_official(sdf, dim_map, rids, conn)
             tag = "Activity" if rtype == 2 else "ResourcePerson"
+        meta["date_note"] = _report_period_text(period) + (" · submission date" if rtype == 1 else " · activity start date")
         data = getattr(report_docs, f"{kind}_{fmt}")(payload, meta)
         _audit(request, conn, "export", target_type="report_doc", target_id=f"type{rtype}",
                summary=f"Exported {tag} official report ({fmt.upper()}) · {scope_label}")
@@ -13346,21 +13400,20 @@ def reports_rp_roster_export(request: Request, org: str = "", period: str = "all
     (quarter) scope as the on-screen report, and narrows to one activity when the
     Activity filter is set — same scoping rules as /reports/export."""
     if (r := _forbid(request, "view")): return r
+    period = _report_period(period)
     conn = get_conn()
     try:
         atoms = get_atoms(conn)
         org_opts = _org_options(conn)
         scope_label = _scope_label(org, period, org_opts)
-        place = next((x["text"] for x in org_opts if x["value"] == org), "Whole bureau")
-        period_lbl = "All time" if (not period or period == "all") else period.split(":", 1)[1]
+        place = next((x["text"] for x in org_opts if x["value"] == org), "Unavailable scope" if org else "Whole bureau")
+        period_lbl = _report_period_text(period)
         sdf_atoms = atoms
-        if activity:            # narrow the deck to one activity, like other RP downloads
-            pick = next((a for a in _rp_activity_options(conn, atoms)
-                        if a["value"] == activity), None)
-            if pick:
-                sdf_atoms = atoms[atoms["form_instance_id"].isin(set(pick["instance_ids"]))]
-                scope_label = f"{scope_label} · {pick['text']}"
-        scoped = _scoped(sdf_atoms, org, period)
+        if activity:
+            _, label, ids = _rp_activity_scope(_rp_activity_options(conn, atoms), activity)
+            sdf_atoms = atoms[atoms["form_instance_id"].isin(set(ids or []))]
+            scope_label = f"{scope_label} · {label}"
+        scoped = _report_scope_atoms(sdf_atoms, org, period, 3)
         events = [dict(e, speakers=[sp for sp in e["speakers"] if not sp.get("is_director")])
                  for e in di.build_events(scoped, st.list_activity_instances(conn))]
         # The Director rotates too fast to be meaningfully tracked as a named
@@ -13378,6 +13431,7 @@ def reports_rp_roster_export(request: Request, org: str = "", period: str = "all
         meta = {"title": "Resource-person Roster (per activity)", "scope": scope_label,
                "place": place, "period": period_lbl,
                "generated": _now_local().strftime("%Y-%m-%d %H:%M"), "source": org_name}
+        meta["date_note"] = _report_period_text(period) + " · activity start date"
         data = report_docs.rp_roster_pptx(events, meta)
         _audit(request, conn, "export", target_type="report_doc", target_id="type3_roster",
               summary=f"Exported resource-person roster (PPTX, {len(events)} activities) · {scope_label}")
@@ -13480,6 +13534,8 @@ def reports_verbatims(request: Request, survey_type: int = 0, org: str = "", per
     as appreciation / an area to improve / mixed, per period. It is built over the
     org scope with the period filter DROPPED (so it's a real series, not one point),
     and only for a single survey type — the 3-way needs one type's comments."""
+    period = _report_period(period)
+    org = "" if survey_type == 1 else org
     period_col, period_v = _parse_period(period)
     grain = _grain(grain)
     activity = activity if survey_type == 3 else ""   # the Activity filter is RP-only
@@ -13487,8 +13543,7 @@ def reports_verbatims(request: Request, survey_type: int = 0, org: str = "", per
     conn = get_conn()
     try:
         atoms = get_atoms(conn)
-        df = eng.scope(atoms, org_prefix=org or None, period_col=period_col,
-                       period=period_v, survey_type=(survey_type or None))
+        df = _report_scope_atoms(atoms, org, period, survey_type or None)
         # Narrow to one activity's forms when the report handed us an Activity filter
         # (feedback #53) — same resolver the report uses, so scores + comments align.
         activity_label = ""
@@ -13496,7 +13551,10 @@ def reports_verbatims(request: Request, survey_type: int = 0, org: str = "", per
             _, activity_label, inst_ids = _rp_activity_scope(_rp_activity_options(conn, atoms), activity)
             keep = set(inst_ids or [])
             df = df[df["form_instance_id"].isin(keep)]
-        rids = df["response_id"].unique().tolist() if not df.empty else []
+        if survey_type == 1:
+            rids = _csm_type1_response_ids(conn, *_period_date_range(period))
+        else:
+            rids = df["response_id"].unique().tolist() if not df.empty else []
         verbatims = st.verbatims_for_responses(conn, rids)
         total_comments = len(verbatims)
         # split_mixed: Mixed comments get their own column on this page (feedback
@@ -13507,7 +13565,7 @@ def reports_verbatims(request: Request, survey_type: int = 0, org: str = "", per
         # same activity narrowing, so the trend matches the digest below it.
         sent = None
         if survey_type in (1, 2, 3):
-            tdf = eng.scope(atoms, org_prefix=org or None, survey_type=survey_type)
+            tdf = _report_scope_atoms(atoms, org, "all", survey_type)
             if activity:
                 tdf = tdf[tdf["form_instance_id"].isin(keep)]
             trids = tdf["response_id"].unique().tolist() if not tdf.empty else []
@@ -13515,7 +13573,7 @@ def reports_verbatims(request: Request, survey_type: int = 0, org: str = "", per
             sent = di.sentiment_trend(tdf, tverbs, survey_type, grain,
                                       overrides=st.get_comment_overrides(conn, trids))
         org_opts = _org_options(conn)
-        period_opts = _period_options(atoms)
+        period_opts = _csm_period_options(conn) if survey_type == 1 else _period_options(atoms)
         crumbs = _crumbs(org, org_opts)
     finally:
         conn.close()
@@ -13528,7 +13586,8 @@ def reports_verbatims(request: Request, survey_type: int = 0, org: str = "", per
         scope_label += f" · {activity_label}"
     # Back link returns to the RP report, preserving the activity filter so the user
     # lands where they came from (the per-activity Type-3 report), not the all-RP one.
-    back_qs = f"?type=3&activity={quote(activity)}" if activity else f"?org={org}&period={period}"
+    back_qs = "?" + urlencode({"type": survey_type if survey_type in (1, 2, 3) else 1,
+                                "org": org, "period": period, **({"activity": activity} if activity else {})})
     return templates.TemplateResponse(request, "verbatims.html", {
         "story": story,
         "title": titles.get(survey_type, "All feedback"),

@@ -1,3 +1,13 @@
+## 7.91 — October 22, 2026
+
+- Continue A18 with visible report scope, inclusive date range, submission/rated-answer denominators, filter reset and a native Apply filters action.
+- Resolve resource-person activity member IDs identically for reports, document exports and roster decks; unavailable activity filters fail closed instead of broadening downloads.
+- Apply exact organization/descendant boundaries to report and comment selection; keep unavailable saved filter values visible.
+- Use active walk-in submission dates for ARTA period options, counts, extracts and comment drill-down; include the complete final day across stored timestamp formats and omit archived source rows.
+- Keep unrated SERVQUAL submissions as blank-score Excel rows and state submission versus rated-response counts in Word, PDF, PowerPoint and Excel.
+- Explain no matching submissions separately from submissions with no valid ratings, and distinguish activity inventories and named rosters from response extracts.
+- No schema migration, new dependency or provider change.
+
 ## 7.90 — October 22, 2026
 
 - Start A18 with accessible survey corrections, retained device drafts and clearer submission progress in English and Filipino; reporting clarity remains the next increment.

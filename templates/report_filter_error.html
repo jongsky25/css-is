@@ -1,0 +1,9 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header %}
+{% block title %}Check report filters{% endblock %}
+{% block content %}
+{{ page_header("Check report filters") }}
+<p role="alert">{{ detail }}</p>
+<p>The report was not widened to All time. Reset the filters and choose the period again.</p>
+<a class="btn" href="/reports?type={{ rtype }}">Reset report filters</a>
+{% endblock %}
