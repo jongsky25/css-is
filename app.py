@@ -54,6 +54,8 @@ from request_security import safe_local_return, same_origin_write, csrf_exempt, 
 from browser_security import BrowserSecurityMiddleware, protect_response, secure_cookies_enabled
 from request_reads import RequestReads
 import integration_api
+import integration_access
+import integration_access_routes
 
 import qrcode
 from fastapi import FastAPI, Request, HTTPException
@@ -1925,6 +1927,16 @@ def _user_from_request(request):
         conn.close()
 
 
+def _api_identity(request):
+    if 'authorization' not in request.headers:
+        return _user_from_request(request), None
+    conn = get_conn()
+    try:
+        return integration_access.authenticate(conn,request)
+    finally:
+        conn.close()
+
+
 def _issue_session(user):
     """Register a session for an authenticated account without a change race.
 
@@ -2077,6 +2089,7 @@ async def _auth_gate(request: Request, call_next):
     request.state.notifications = []
     request.state.notif_count = 0
     request.state.reads = None
+    request.state.integration = None
     path = get_route_path(request.scope)
     # The /static mount serves only packaged public files; its own lookup keeps
     # missing/traversal paths inside that boundary. Skip session/authority/nav
@@ -2085,13 +2098,20 @@ async def _auth_gate(request: Request, call_next):
     if (request.method in ("GET", "HEAD")
             and (path.startswith("/static/") or path in _PUBLIC_ASSET_EXACT)):
         return await call_next(request)
-    request.state.user = await asyncio.to_thread(_user_from_request, request)
     if integration_api.is_api(path):
-        # The supported API uses the same registered-session lookup,
-        # then its own JSON errors/domain checks without hydrating browser nav.
+        # Bearer credentials are confined to API v1 and never fall back to a
+        # browser cookie. Current permissions remain the owner's domain rules.
+        try:
+            request.state.user, request.state.integration = await asyncio.to_thread(_api_identity,request)
+        except integration_access.InvalidCredential:
+            return integration_api.failure(401,'authentication_required','A valid integration credential is required.',
+                                           {'WWW-Authenticate':'Bearer'})
+        except sqlite3.OperationalError:
+            return integration_api.failure(503,'temporarily_unavailable','Authentication is temporarily unavailable. Retry later.',{'Retry-After':'1'})
         if not request.state.user:
             return integration_api.failure(401, 'authentication_required', 'A current signed-in session is required.')
         return await call_next(request)
+    request.state.user = await asyncio.to_thread(_user_from_request, request)
     # Cookie-authenticated writes and public account operations share one
     # browser boundary. _is_public is deliberately NOT a CSRF exemption.
     if (request.method not in SAFE_METHODS
@@ -2183,8 +2203,8 @@ async def _metrics_gate(request: Request, call_next):
         user = getattr(request.state, "user", None)
         mon.record(request.method, request.url.path, status, dur_ms,
                    ip=request.client.host if request.client else None,
-                   user=user["username"] if user else None)
-        if user and status >= 400 and status != 401:
+                   user=('integration:' + request.state.integration['id']) if getattr(request.state,'integration',None) else user["username"] if user else None)
+        if user and status >= 400 and status != 401 and not getattr(request.state,'integration',None):
             _record_http_error(request, user, status)
 
 
@@ -17325,6 +17345,7 @@ app.include_router(documents_intake_routes.make_router(templates, get_conn))
 app.include_router(documents_routes.make_router(templates, get_conn))
 app.include_router(documents_email.make_router(get_conn))
 app.include_router(work_routes.make_router(templates, get_conn))
+app.include_router(integration_access_routes.make_router(templates, get_conn))
 app.include_router(supplies_routes.make_router(templates, get_conn))
 
 # Isolated generated contract: legacy browser actions are not part of API v1.

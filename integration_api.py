@@ -1,5 +1,6 @@
-"""A19 v1 integration contract. Current sessions and domain services own authority."""
+"""A19/A20 API v1. Sessions, scoped credentials and domain services own authority."""
 from contextlib import contextmanager
+import asyncio
 from datetime import date, datetime
 import hashlib
 import hmac
@@ -12,7 +13,7 @@ from typing import Annotated, Generic, Literal, TypeVar
 from fastapi import FastAPI, Header, Path, Query, Request, Security
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
-from fastapi.security import APIKeyCookie
+from fastapi.security import APIKeyCookie, HTTPBearer
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, field_validator
 from starlette.exceptions import HTTPException
 from starlette._utils import get_route_path
@@ -22,6 +23,8 @@ import documents
 import documents_permissions as permissions
 from documents_registry import snapshot
 import integration_operations as operations
+import integration_access as access
+import ratelimit as rl
 from request_security import same_origin_write
 import tzutil as tz
 import version
@@ -133,8 +136,8 @@ class TaskRead(Model):
 class ApiInfo(Model):
     api_version: Literal['1'] = '1'
     application_version: str
-    read_only: Literal[False] = False
-    authentication: Literal['registered_user_session'] = 'registered_user_session'
+    read_only: bool = False
+    authentication: Literal['registered_user_session','scoped_read_credential'] = 'registered_user_session'
     openapi: str
 
 
@@ -258,10 +261,12 @@ def page_info(limit, next_before):
 
 def make_app(get_conn):
     cookie = APIKeyCookie(name=auth.COOKIE_NAME, scheme_name='UserSession', auto_error=False,
-                         description='An existing registered user session; API keys and bearer tokens are not supported by this increment.')
-    api = FastAPI(title='Office Connect API', version='1.2.0',
+                         description='An existing registered user session. Required for task writes, write context and operation receipts.')
+    bearer = HTTPBearer(scheme_name='IntegrationRead',auto_error=False,
+                        description='A delegated read credential for this deployment and API v1; selected metadata scopes and current owner permissions apply.')
+    api = FastAPI(title='Office Connect API', version='1.3.0',
                   description='Permission-checked metadata reads, task acknowledgement and submission for review with durable recovery receipts.',
-                  docs_url=None, redoc_url=None, dependencies=[Security(cookie)],
+                  docs_url=None, redoc_url=None, dependencies=[Security(cookie),Security(bearer)],
                   servers=[{'url': API_ROOT}], root_path_in_servers=False)
 
     @contextmanager
@@ -272,7 +277,14 @@ def make_app(get_conn):
         try:
             with snapshot(conn):
                 try:
-                    user = permissions.actor(conn, getattr(request.state, 'user', None))
+                    if getattr(request.state,'integration',None):
+                        user,credential = access.authenticate(conn,request)
+                        if credential['id'] != request.state.integration['id']:
+                            raise access.InvalidCredential('Credential changed.')
+                    else:
+                        user = permissions.actor(conn, getattr(request.state, 'user', None))
+                except access.InvalidCredential:
+                    raise ApiError(401,'authentication_required','A valid integration credential is required.') from None
                 except permissions.Denied:
                     raise ApiError(401, 'authentication_required', 'A current signed-in session is required.') from None
                 yield conn, user
@@ -329,6 +341,14 @@ def make_app(get_conn):
         # fail-closed if it is accidentally mounted without that parent.
         if not getattr(request.state, 'user', None):
             return failure(401, 'authentication_required', 'A current signed-in session is required.')
+        credential = getattr(request.state,'integration',None)
+        if credential:
+            # Bound admitted audit writes even for denied methods/scopes.
+            if not rl.allow('integration_read',str(request.state.user['id'])):
+                return failure(429,'rate_limited','Too many integration reads. Retry later.',{'Retry-After':'60'})
+            resource,required = access.resource(get_route_path(request.scope))
+            if request.method!='GET' or resource=='unsupported' or (required and required not in credential['scopes']):
+                return failure(403,'insufficient_scope','This credential does not allow this operation.')
         task_action = re.fullmatch(r'/work-items/[^/]+/tasks/[^/]+/(acknowledge|submit)', get_route_path(request.scope))
         allowed = 'POST' if task_action else 'GET'
         if request.method != allowed:
@@ -365,12 +385,34 @@ def make_app(get_conn):
         response.headers['Cache-Control'] = 'private, no-store'
         return response
 
-    errors = {n: {'model': ErrorResponse} for n in (400, 401, 404, 405, 500, 503)}
+    def audit_read(request,status):
+        conn = get_conn()
+        try:
+            access.record_use(conn,request.state.user,request.state.integration['id'],
+                              get_route_path(request.scope),request.method,status)
+        finally:
+            conn.close()
+
+    @api.middleware('http')
+    async def integration_audit(request,call_next):
+        response = await call_next(request)
+        if getattr(request.state,'integration',None) and response.status_code!=429:
+            try:
+                await asyncio.to_thread(audit_read,request,response.status_code)
+            except sqlite3.OperationalError:
+                return failure(503,'temporarily_unavailable','The read could not be recorded. Retry later.',{'Retry-After':'1'})
+            except Exception:
+                return failure(500,'internal_error','The read could not be recorded. Retry later.')
+        return response
+
+    errors = {n: {'model': ErrorResponse} for n in (400, 401, 403, 404, 405, 429, 500, 503)}
     write_errors = {**errors, **{n: {'model': ErrorResponse} for n in (403, 409, 413, 415)}}
 
     @api.get('/', response_model=ApiInfo, responses=errors, operation_id='readApiInfo')
-    def info():
-        return ApiInfo(application_version=version.APP_VERSION, openapi=API_ROOT + '/openapi.json')
+    def info(request: Request):
+        credential = bool(getattr(request.state,'integration',None))
+        return ApiInfo(application_version=version.APP_VERSION, openapi=API_ROOT + '/openapi.json',
+                       read_only=credential,authentication='scoped_read_credential' if credential else 'registered_user_session')
 
     @api.get('/write-context', response_model=WriteContext, responses=errors, operation_id='readWriteContext')
     def write_context(request: Request):
@@ -457,9 +499,15 @@ def make_app(get_conn):
         schema = generate_openapi()
         # FastAPI inserts its default 422 declaration even with our validation
         # handler. The supported contract returns the documented ErrorResponse/400.
-        for path in schema['paths'].values():
-            for operation in path.values():
+        for name,path in schema['paths'].items():
+            for method,operation in path.items():
                 operation.get('responses', {}).pop('422', None)
+                if method!='get' or name in ('/write-context','/operations/{operation_id}'):
+                    operation['security']=[{'UserSession':[]}]
+                elif name.startswith('/documents'):
+                    operation['x-integration-scope']='documents:read'
+                elif name.startswith('/work-items'):
+                    operation['x-integration-scope']='work:read'
         for name in ('HTTPValidationError', 'ValidationError'):
             schema.get('components', {}).get('schemas', {}).pop(name, None)
         return schema

@@ -41,7 +41,7 @@ def body(client, path, **params):
 def test_versioned_contract_is_separate_authenticated_and_typed(api):
     c, u, unit, clients, app = api
     schema = body(clients[0], '/openapi.json')
-    assert schema['info']['version'] == '1.2.0'
+    assert schema['info']['version'] == '1.3.0'
     from pathlib import Path
     artifact = Path(__file__).parents[1] / 'docs/api/v1/openapi.json'
     assert schema == json.loads(artifact.read_text())
@@ -51,9 +51,10 @@ def test_versioned_contract_is_separate_authenticated_and_typed(api):
         '/write-context', '/operations/{operation_id}', '/work-items/{work_item_id}/tasks/{task_id}/acknowledge',
         '/work-items/{work_item_id}/tasks/{task_id}/submit'}
     assert sum('post' in path for path in schema['paths'].values()) == 2
-    for path in schema['paths'].values():
+    for name,path in schema['paths'].items():
         operation = path.get('get', path.get('post'))
-        assert operation['security'] == [{'UserSession': []}]
+        restricted = 'post' in path or name in ('/write-context','/operations/{operation_id}')
+        assert operation['security'] == ([{'UserSession': []}] if restricted else [{'UserSession': []},{'IntegrationRead': []}])
         assert operation['responses']['200']['content']['application/json']['schema']
         assert operation['responses']['401']['content']['application/json']['schema']
         # The generic framework validation shape must not be advertised for our
@@ -61,7 +62,8 @@ def test_versioned_contract_is_separate_authenticated_and_typed(api):
         assert '422' not in operation['responses']
     assert schema['components']['securitySchemes']['UserSession'] == {
         'type': 'apiKey', 'in': 'cookie', 'name': auth.COOKIE_NAME,
-        'description': 'An existing registered user session; API keys and bearer tokens are not supported by this increment.'}
+        'description': 'An existing registered user session. Required for task writes, write context and operation receipts.'}
+    assert schema['components']['securitySchemes']['IntegrationRead']['scheme']=='bearer'
     info = body(clients[0], '/')
     assert not info['read_only'] and info['application_version'] == integration_api.version.APP_VERSION
 
@@ -72,7 +74,7 @@ def test_anonymous_api_returns_json_without_login_redirect(client, path):
                           headers={'Authorization': 'Bearer not-a-supported-token'})
     assert response.status_code == 401
     assert 'location' not in response.headers
-    assert response.json() == {'error': {'code': 'authentication_required', 'message': 'A current signed-in session is required.'}}
+    assert response.json() == {'error': {'code': 'authentication_required', 'message': 'A valid integration credential is required.'}}
     assert 'no-store' in response.headers['cache-control']
     assert 'access-control-allow-origin' not in response.headers
 
@@ -283,7 +285,7 @@ def test_standalone_client_reads_real_http_and_never_follows_login_redirect(api)
         data = [r for page in client.pages(limit=2) for r in page]
         assert [r['id'] for r in data] == [str(i) for i in reversed(expected)]
         assert client.get(data[0]['links']['self'])['id'] == data[0]['id']
-        assert client.get('/openapi.json')['info']['version'] == '1.2.0'
+        assert client.get('/openapi.json')['info']['version'] == '1.3.0'
         with pytest.raises(ApiFailure, match='HTTP 302'):
             client.get('/redirect')
         assert not traps

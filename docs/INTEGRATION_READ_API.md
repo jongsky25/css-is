@@ -1,6 +1,6 @@
-# Supported integration API — A19 / 7.98
+# Supported integration API — A19/A20 / 7.99
 
-The read contract introduced in 7.92 supports acknowledgement (7.97) and submission of completed contribution work for review (7.98). Selected document/work metadata, task status and both task actions use existing human sessions and current domain permissions. The API contract is **1.2.0**, mounted at **`/api/v1`**; its version is independent of the application's release number.
+The read contract introduced in 7.92 supports acknowledgement (7.97) and submission of completed contribution work for review (7.98). 7.99 adds separately revocable, user-delegated credentials for selected metadata reads. Task writes still require existing human sessions. All access retains current domain permissions. The API contract is **1.3.0**, mounted at **`/api/v1`**; its version is independent of the application's release number.
 
 The [generated OpenAPI artifact](api/v1/openapi.json) is checked against the running contract in tests. The authenticated live contract is `GET /api/v1/openapi.json`. Existing browser form actions and the application's older general OpenAPI output are outside this supported contract.
 
@@ -8,7 +8,7 @@ The [generated OpenAPI artifact](api/v1/openapi.json) is checked against the run
 
 | GET route | Result |
 |---|---|
-| `/api/v1/` | API version, application version, `read_only: false` capability and contract URL |
+| `/api/v1/` | API/application version, authentication mode, credential-specific `read_only` capability and contract URL |
 | `/api/v1/documents` | Page of permitted document metadata |
 | `/api/v1/documents/{document_id}` | Current permitted canonical document metadata |
 | `/api/v1/work-items` | Page of permitted shared-work items |
@@ -30,9 +30,11 @@ Use an existing registered `css_session` cookie obtained through the normal logi
 
 A technical administrator does not gain document/work access through the API. Proposing a lead/owner does not grant readership. Work visibility requires the existing case audience **and** access to every linked document after canonical merges. Reassignment and restricted-access revocation are checked again on the next request. Missing and inaccessible objects return the same 404 response.
 
-This increment serves authenticated, human-operated clients. Scoped service identities, delegated OAuth and unattended integrations belong to A20. API keys, bearer-token authentication and new token-issuance routes are not introduced here. Clients should use an approved person's current session only for that person's work; session values belong in private local storage and must stay out of repositories, logs and AI prompts.
+For unattended metadata reads, authorize a separate credential through **My profile → Connected tools**. The [credential guide](INTEGRATION_ACCESS.md) describes consent, scopes, expiry, audience, storage, revocation and rotation. Send it only as `Authorization: Bearer <credential>` over HTTPS, without a session cookie. Do not put credentials in URLs, repositories, logs or AI prompts. Invalid, expired or mixed authorization never falls back to a browser session. New credentials do not add owner permissions, and technical administration grants no document/work readership.
 
-All API namespace responses use private/no-store caching. API requests skip browser navigation, notification and feedback hydration. GET requests read business records without marking instructions as read, sending provider requests or creating domain audit/history entries. Existing HTTP monitoring remains active. Existing permitted records remain readable when the Documents/Shared work write switches are off, matching the screens.
+`documents:read` permits document metadata endpoints; `work:read` permits work/task metadata endpoints. Either credential can read API information and the generated contract. Credentials cannot access write context, operation receipts, task POSTs, browser screens, files or private task prose. `/api/v1/` reports `authentication: scoped_read_credential` and `read_only: true` for these credentials; existing user sessions retain `registered_user_session` and `read_only: false`. OpenAPI advertises the alternative `IntegrationRead` security scheme only on supported reads, with `x-integration-scope` on each metadata route. Service principals, delegated OAuth and machine writes remain later A20 work.
+
+All API namespace responses use private/no-store caching. API requests skip browser navigation, notification and feedback hydration. GET requests read business records without marking instructions as read, sending provider requests or creating domain history entries. Credential reads additionally record the owner, credential ID, resource family, method and result status in the existing security audit chain, plus last use; they omit raw URLs/queries, secret values and record prose. A failed audit prevents a successful data response. Rate-limited reads are not separately audited, bounding write amplification. Existing HTTP monitoring identifies credential traffic separately. Existing permitted records remain readable when the Documents/Shared work write switches are off, matching the screens.
 
 Browser clients use same-origin requests. No cross-origin CORS access is enabled. Non-browser clients use HTTPS; the example permits loopback HTTP for isolated local tests.
 
@@ -61,6 +63,8 @@ Errors use `{"error": {"code": "not_found", "message": "Resource not found or un
 |---|---|---|
 | 400 | `invalid_request` | Correct bounded paths, headers, query or JSON fields |
 | 403 | `request_verification_failed` | Fetch the current write context and verify the request origin |
+| 403 | `insufficient_scope` | Use only the credential's selected metadata reads; writes require the existing human workflow |
+| 429 | `rate_limited` | Wait for `Retry-After`; read admission is limited per owner across credentials |
 | 401 | `authentication_required` | Sign in through the existing flow |
 | 404 | `not_found` | Check the ID/current access; absence and denied access are indistinguishable |
 | 405 | `method_not_allowed` | Use the method declared by `Allow` |
@@ -72,11 +76,11 @@ Errors use `{"error": {"code": "not_found", "message": "Resource not found or un
 | 503 | `temporarily_unavailable` | Check the result, then retry the identical request/key if needed |
 | 500 | `internal_error` | Retry reads later; for writes, check the operation result before retrying the identical request/key |
 
-Anonymous requests return JSON 401 without redirecting to login. PUT/PATCH/DELETE, HEAD and OPTIONS are unsupported, as are POSTs outside the two supported task-action routes; authenticated requests receive JSON 405 (HEAD has no response body). Validation returns the documented 400 envelope rather than FastAPI's generic 422 body. Browser routes retain their existing forms, redirects and same-origin write checks.
+Anonymous requests return JSON 401 without redirecting to login. For user sessions, PUT/PATCH/DELETE, HEAD and OPTIONS are unsupported, as are POSTs outside the two supported task-action routes; requests receive JSON 405 (HEAD has no response body). Read credentials receive 403 for every non-GET method and every endpoint outside their supported reads. Validation returns the documented 400 envelope rather than FastAPI's generic 422 body. Browser routes retain their existing forms, redirects and same-origin write checks.
 
 ## Standalone client
 
-[examples/read_api.py](../examples/read_api.py) uses only Python's standard library and has no application imports. It pages documents or work items, preserves string identifiers, bounds response size/time, refuses redirect forwarding of sessions and handles HTTP errors without printing credentials or response bodies.
+[examples/read_api.py](../examples/read_api.py) uses only Python's standard library and has no application imports. It pages documents or work items, preserves string identifiers, bounds response size/time, refuses redirect forwarding of sessions/credentials and handles HTTP errors without printing credentials or response bodies. Choose exactly one of `--session-file` and `--credential-file`; the latter permits unattended reads. In Python, use `ReadClient(base_url, credential=saved_secret)`; the client refuses writes with a read credential.
 
 ```sh
 python examples/read_api.py \
@@ -132,11 +136,11 @@ The original 7.92 read/survey evidence remains below. For 7.97, the API/work/dep
 - The standalone client reads the real application through an isolated local HTTP bridge, follows pages and self links, refuses an actual 302 trap, and receives 401 after session revocation. No production business records or external providers are used.
 - The remaining combined-survey confirmation race is exercised in English and Filipino with a deliberate 300ms deferred-script delay. The check waits for matching draft removal and retains actual saved-count/skip assertions; survey runtime behavior is unchanged.
 
-The 7.97 and 7.98 increments cover acknowledgement/submission preconditions and their operation-result contracts. Other approved task actions and external-operation contracts remain later A19 increments. A20 supplies scoped integration identities; A21 adds reliable events/adapters. Production workflow observations remain deferred, and no production throughput claim is made.
+The 7.97 and 7.98 increments cover acknowledgement/submission preconditions and their operation-result contracts. Other approved task actions and external-operation contracts remain later A19 increments. A20 begins with delegated read credentials in 7.99; service principals/OAuth and machine writes need separate increments. A21 adds reliable events/adapters. Production workflow observations remain deferred, and no production throughput claim is made.
 
 ## Release and rollback
 
-7.98 increments verified main 7.97 with aligned release/cache metadata. The runtime inventory already includes `integration_operations.py`; there is no dependency addition or provider request.
+7.99 increments verified main 7.98 with aligned release/cache metadata. The runtime inventory includes `integration_access.py` and `integration_access_routes.py`; there is no dependency addition or provider request. The additive credential schema, account-change revocation triggers and operational rollback rules are documented in [the credential guide](INTEGRATION_ACCESS.md).
 
 The repeatable shared-work installer adds a defaulted `action` column to `work_api_operation`. Existing immutable rows receive the logical default `acknowledge` without rewriting stored values, changing request digests or removing immutable-receipt triggers. New receipts explicitly record `acknowledge` or `submit`, allowing result status to remain tied to the original action. Repeating installation preserves both old and new results.
 

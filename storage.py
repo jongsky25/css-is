@@ -811,6 +811,8 @@ def init_db(conn):
     documents_storage.install(conn)
     import work_storage
     work_storage.install(conn)
+    import integration_access
+    integration_access.install(conn)
     import supplies_storage
     supplies_storage.install(conn)
     conn.commit()
@@ -4061,6 +4063,9 @@ def audit_insights(conn):
 # form of the code itself (see audit_label / audit_category), so a NEW action type
 # is never blank — it just isn't categorised until added here.
 _AUDIT_ACTIONS = {
+    "integration_issue": ("Connected a read-only tool", "Accounts"),
+    "integration_revoke": ("Revoked a tool credential", "Accounts"),
+    "integration_read": ("Read through a connected tool", "Accounts"),
     # Sign-in
     "login":               ("Signed in", "Sign-in"),
     "login_failed":        ("Failed sign-in", "Sign-in"),
