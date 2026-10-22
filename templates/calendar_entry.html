@@ -1,7 +1,7 @@
 {% extends "dash_layout.html" %}
 {% from "_components.html" import page_header, empty_state %}
 {% block title %}{{ "Not found" if missing else e.title }}{% endblock %}
-{% block head %}<link rel="stylesheet" href="/static/css/calendar.css?v=7.86">{% if documents and documents['outside'] and documents['uploads_ready'] %}<script src="/static/js/activity_invitation.js?v=20261021a" defer></script>{% endif %}{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/calendar.css?v=7.87">{% if documents and documents['outside'] and documents['uploads_ready'] %}<script src="/static/js/activity_invitation.js?v=20261021a" defer></script>{% endif %}{% endblock %}
 {% block content %}
 {% if missing %}
   {{ empty_state("That calendar item isn't here.", "It may have been removed, or it isn't shared with you.", "📅") }}

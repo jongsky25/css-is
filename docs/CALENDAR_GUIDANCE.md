@@ -1,4 +1,4 @@
-# A17 — calendar guidance and recovery (7.86)
+# A17 — calendar guidance and recovery (7.87)
 
 ## This increment
 
@@ -29,6 +29,7 @@ The private link remains a bearer credential, displayed only to its account owne
 
 - `tests/test_calendar_guidance.py`: lifecycle meaning, exact restore boundary/service agreement, current visibility, read-only cancellation review, cancelled-edit draft retention, repeated conflicts, linked-activity consequences, occurrence links and independent subscription settings/revocation.
 - `tests/test_calendar_guidance_browser.py`: actual application responses served over local HTTP, real form POSTs/303s/SQLite results, synthetic signed-in staff, blocked external hosts. Covers mobile/light and desktop/dark, modal focus, cancellation/restore, failed/stale reads, conflicts, validation, subscriptions, no-script cancellation, bookmarked previews/history and occurrence deep links.
+- After integrating the concurrent Supplies 7.86 release, 57 focused calendar guidance/browser, Supplies acceptance, release and email-coverage tests passed. The accessibility evidence was refreshed on the integrated code.
 - Existing calendar, room, home-feed and shared accessibility suites passed **1,228 cases** during the broader local regression run. The final browser run passed all **12 journeys**, including additional history/occurrence cases and a deterministic queued-close/reopen regression added after CI exposed that race; required full CI runs also include them.
 - Pinned axe-core **4.14.0** / Chromium **154.0.8037.57** sampled **52 states** at 1440px and 390px in light/dark: agenda, preview, quick add, confirmed/tentative/postponed/cancelled/expired details, cancellation review, conflict/validation recovery and subscription off/on with help expanded. [Evidence](audits/2026-10-19/A17_CALENDAR_AUTOMATED_EVIDENCE.json) records zero automated violations/overflows and retains **128 incomplete checks** for review. Evidence contains diagnostics/selectors, with private feed URLs redacted. Mobile detail/conflict screenshots were visually reviewed locally.
 
@@ -45,4 +46,4 @@ No live production workflow, real calendar provider refresh or manual screen-rea
 
 ## Release and rollback
 
-Version 7.86 increments main 7.85 with aligned changelogs, service-worker version and calendar asset references. `calendar_guidance.py` is in the deployment inventory. No schema migration or new dependency is required. Roll back by reverting this increment and publishing a new application/cache version through the existing release workflow.
+Version 7.87 increments main 7.86 (the Supplies release) with aligned changelogs, service-worker version and calendar asset references. `calendar_guidance.py` is in the deployment inventory. No schema migration or new dependency is required. Roll back by reverting this increment and publishing a new application/cache version through the existing release workflow.

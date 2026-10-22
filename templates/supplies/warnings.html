@@ -1,0 +1,11 @@
+{% extends 'supplies/base.html' %}
+{% block supplies_content %}
+<h1>Stock warnings</h1>
+{% include 'supplies/_queue_filters.html' %}
+
+<p>Physical stock and availability are shown separately. At exactly the critical level stock is normal. Unrecorded balances are excluded until opening stock is reviewed.</p>
+{% if pending_count %}<p class="supply-notice" role="status">{{ pending_count }} warning update{{ '' if pending_count==1 else 's' }} pending. Current quantities appear below; notices will catch up after reconciliation. Stock postings are already saved.</p>{% endif %}
+{% if can_maintain %}<form method="post" action="/supplies/warnings/reconcile"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="operation_key" value="{{ new_key() }}"><button type="submit">Reconcile warning notices</button><p>Retry pending notices and check current stock. This does not post or replay any stock movement.</p></form>{% endif %}
+{% for item in warnings %}<article class="supply-panel"><h2><a href="/supplies/items/{{ item.id }}">{{ item.code }} · {{ item.description }}</a></h2><p><strong>Physical stock:</strong> {{ item.warning.physical_label }} · <strong>Availability:</strong> {{ item.warning.availability_label }}</p><p>On hand {{ item.on_hand }} · Reserved {{ item.reserved }} · Available {{ item.warning.available }} {{ item.unit }} · Critical level {{ item.critical_level }}</p></article>{% else %}<p>No current warnings for recorded active items.</p>{% endfor %}
+{% include 'supplies/_queue_pagination.html' %}
+{% endblock %}

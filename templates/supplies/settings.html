@@ -1,0 +1,28 @@
+{% extends 'supplies/base.html' %}
+{% block supplies_content %}
+<h1>Supplies settings</h1>
+<p>Assign responsibility for supplies. Administrator access allows setup; catalog maintenance requires a supply custodian grant.</p>
+<section class="supply-panel"><h2>Allow supplies changes</h2>
+<form method="post" action="/supplies/settings/enabled">
+  <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="operation_key" value="{{ new_key() }}"><input type="hidden" name="revision" value="{{ revision }}">
+  <div><label for="supply-enabled">Supplies changes</label><select id="supply-enabled" name="enabled"><option value="0" {% if not enabled %}selected{% endif %}>Disabled — catalog is read only</option><option value="1" {% if enabled %}selected{% endif %}>Enabled</option></select></div>
+  <button type="submit">Save access setting</button>
+</form></section>
+<section class="supply-panel"><h2>Assign a role</h2>
+<form method="post" action="/supplies/settings/grants">
+  <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="operation_key" value="{{ new_key() }}">
+  <div class="supply-fields">
+    <div><label for="supply-staff">Staff account</label><select id="supply-staff" name="user_id" required><option value="">Choose staff</option>{% for person in people %}<option value="{{ person.id }}" {% if submitted.get('user_id')|string == person.id|string %}selected{% endif %}>{{ person.name }}</option>{% endfor %}</select></div>
+    <div><label for="supply-role">Supplies role</label><select id="supply-role" name="role" required><option value="">Choose role</option>{% for key,label in roles.items() %}<option value="{{ key }}" {% if submitted.get('role') == key %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+    <div><label for="supply-unit">Approval unit (request approvers only)</label><select id="supply-unit" name="unit_id"><option value="">Stockroom-wide role</option>{% for unit in units %}<option value="{{ unit.id }}" {% if submitted.get('unit_id')|string == unit.id|string %}selected{% endif %}>{{ unit.path }}</option>{% endfor %}</select></div>
+  </div>
+  <p class="supply-hint">Request approvers require a unit and cover its descendants. Other roles cover the central stockroom; leave the approval unit blank.</p>
+  <button type="submit">Assign role</button>
+</form></section>
+<section class="supply-panel"><h2>Role history</h2>
+<div class="supply-table" role="region" aria-label="Supplies roles" tabindex="0"><table><caption>Current and revoked supplies roles</caption><thead><tr><th scope="col">Staff</th><th scope="col">Role</th><th scope="col">Scope</th><th scope="col">Status</th><th scope="col">Action</th></tr></thead><tbody>
+{% for grant in grants %}<tr><td>{{ grant.name }}</td><td>{{ roles[grant.role] }}</td><td>{{ grant.unit_path or 'Central stockroom' }}</td><td>{{ 'Revoked on ' ~ grant.revoked_at if grant.revoked_at else 'Active' }}</td><td>{% if not grant.revoked_at %}<form method="post" action="/supplies/settings/grants/{{ grant.id }}/revoke"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="operation_key" value="{{ new_key() }}"><input type="hidden" name="revision" value="{{ grant.revision }}"><button type="submit">Revoke<span class="sr-only"> {{ roles[grant.role] }} for {{ grant.name }}</span></button></form>{% else %}—{% endif %}</td></tr>{% else %}<tr><td colspan="5">No supplies roles have been assigned.</td></tr>{% endfor %}
+</tbody></table></div>
+<nav class="supply-actions" aria-label="Role history pages">{% if page > 1 %}<a href="/supplies/settings?page={{ page - 1 }}">Previous page</a>{% endif %}<span>Page {{ page }}</span>{% if has_next %}<a href="/supplies/settings?page={{ page + 1 }}">Next page</a>{% endif %}</nav>
+</section>
+{% endblock %}

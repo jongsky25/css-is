@@ -1,0 +1,8 @@
+{% extends 'supplies/base.html' %}
+{% block supplies_content %}
+<h1>Stock receipts</h1><p>Posted deliveries, newest first.</p>
+<div class="supply-table" role="region" aria-label="Stock receipts" tabindex="0"><table><caption>Posted receipts</caption><thead><tr><th scope="col">Receipt</th><th scope="col">Supplier</th><th scope="col">Effective date</th><th scope="col">Posted</th><th scope="col">DR number</th></tr></thead><tbody>
+{% for receipt in receipts %}<tr><td><a href="/supplies/receipts/{{ receipt.id }}">{{ receipt.receipt_number }}</a></td><td>{{ receipt.supplier }}</td><td>{{ receipt.effective_date }}</td><td>{{ receipt.posted_at }}</td><td>{{ receipt.dr_number or 'Not recorded' }}</td></tr>{% else %}<tr><td colspan="5">No receipts have been posted.</td></tr>{% endfor %}
+</tbody></table></div>
+<nav class="supply-actions" aria-label="Receipt pages">{% if page > 1 %}<a href="/supplies/receipts?page={{ page - 1 }}">Previous page</a>{% endif %}<span>Page {{ page }}</span>{% if has_next %}<a href="/supplies/receipts?page={{ page + 1 }}">Next page</a>{% endif %}</nav>
+{% endblock %}

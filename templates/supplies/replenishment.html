@@ -1,0 +1,57 @@
+{% extends 'supplies/base.html' %}
+{% block supplies_content %}
+<h1>{{ draft.control_number or 'Replenishment draft #' ~ draft.id }}</h1>
+<p>Status: {{ draft.status }} · Revision {{ draft.revision }}</p>
+<p>{{ draft.purpose }}</p>
+<p>Expected need: {{ draft.expected_need_date or 'Unspecified' }} · Procurement reference: {{ draft.procurement_reference or 'Unspecified' }}</p>
+<p>{% if draft.status in ('draft','submitted','returned','rejected') %}These quantities are proposals and do not change stock or committed incoming.{% else %}Approved quantities count as incoming. Stock changes only when an accepted delivery is posted.{% endif %}</p>
+{% if enabled and can_maintain and draft.prepared_by == request.state.user.id and draft.status in ('draft','returned') %}<p><a href="/supplies/replenishments/{{ draft.id }}/edit">Edit draft</a></p>{% endif %}
+<p class="supply-hint">On a narrow screen, scroll the table sideways to see all saved inputs.</p>
+<div class="supply-table"><table><thead><tr><th scope="col">Item</th><th scope="col">Requested</th><th scope="col">Estimated unit cost</th><th scope="col">Intended target</th><th scope="col">Suggestion at save</th><th scope="col">On hand</th><th scope="col">Reserved</th><th scope="col">Outstanding</th><th scope="col">Incoming</th><th scope="col">Reason</th></tr></thead><tbody>
+{% for line in draft.lines %}<tr><th scope="row">{{ line.code_snapshot }} · {{ line.description_snapshot }}</th><td>{{ line.requested_quantity }} {{ line.unit_snapshot }}{% if line.approved_quantity is not none %}<br>Approved {{ line.approved_quantity }} · Incoming {{ line.incoming_quantity }}{% endif %}</td><td>{{ line.estimated_unit_cost if line.estimated_unit_cost is not none else '—' }}</td><td>{{ line.intended_target }}</td><td>{{ line.suggested_quantity if line.suggested_quantity is not none else 'Target unset' }}</td><td>{{ line.on_hand_snapshot }}</td><td>{{ line.reserved_snapshot }}</td><td>{{ line.outstanding_snapshot }}</td><td>{{ line.incoming_snapshot }}</td><td>{{ line.override_reason or '—' }}</td></tr>{% endfor %}
+</tbody></table></div>
+<h2>Current planning check</h2>
+<ul>{% for line in draft.lines %}<li>{{ line.code_snapshot }}: on hand {{ line.current_on_hand }}, outstanding approved demand {{ line.current_outstanding }}, incoming {{ line.current_incoming }}, suggested from intended target {{ line.current_suggestion }}.{% if line.overlaps %} Other open replenishments: {% for other in line.overlaps %}{{ other.control_number or 'Draft #' ~ other.id }} ({{ other.status }}){% if not loop.last %}, {% endif %}{% endfor %}.{% endif %}</li>{% endfor %}</ul>
+
+{% if enabled and can_maintain and draft.prepared_by == request.state.user.id and draft.status in ('draft','returned') %}
+<section class="supply-panel"><h2>Submit for replenishment approval</h2>
+<p>The current stock and incoming calculation is checked again on submission. Explain overlapping replenishments or quantity above current need.</p>
+<form method="post" action="/supplies/replenishments/{{ draft.id }}/submit"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="operation_key" value="{{ new_key() }}"><input type="hidden" name="revision" value="{{ draft.revision }}">
+<label>Changed need or overlap reason <textarea name="review_reason" maxlength="2000">{{ submitted.get('review_reason','') }}</textarea></label>
+<button type="submit">Submit replenishment</button></form></section>
+{% endif %}
+
+{% if enabled and draft.status == 'submitted' and can_replenish_approve and draft.prepared_by != request.state.user.id %}
+<section class="supply-panel"><h2>Decide submitted revision {{ draft.current_revision }}</h2>
+<p>Approval establishes incoming quantities. Explain reductions and any approval above current need or alongside another open replenishment.</p>
+<form method="post" action="/supplies/replenishments/{{ draft.id }}/decide"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="operation_key" value="{{ new_key() }}"><input type="hidden" name="revision" value="{{ draft.revision }}"><input type="hidden" name="submitted_revision" value="{{ draft.current_revision }}">
+{% for line in draft.submitted_lines %}<fieldset><legend>{{ line.code_snapshot }} · submitted {{ line.requested_quantity }} {{ line.unit_snapshot }} · current suggestion {{ line.current_suggestion }}</legend>
+<label>Approved quantity <input type="number" min="0" max="{{ line.requested_quantity }}" name="approved_{{ line.id }}" value="{{ submitted.get('approved_' ~ line.id, line.requested_quantity) }}"></label>
+<label>Reduction reason, if reduced <input name="line_reason_{{ line.id }}" maxlength="2000" value="{{ submitted.get('line_reason_' ~ line.id,'') }}"></label></fieldset>{% endfor %}
+<label>Decision <select name="decision"><option value="approved">Approve</option><option value="returned" {% if submitted.get('decision') == 'returned' %}selected{% endif %}>Return for revision</option><option value="rejected" {% if submitted.get('decision') == 'rejected' %}selected{% endif %}>Reject</option></select></label>
+<label>Decision or overlap reason <textarea name="reason" maxlength="2000">{{ submitted.get('reason','') }}</textarea></label><button type="submit">Record replenishment decision</button></form></section>
+{% endif %}
+
+{% if enabled and can_maintain and draft.status == 'approved' %}
+<section class="supply-panel"><h2>Record procurement order</h2><p>Ordering records the procurement stage. It does not add incoming a second time.</p>
+<form method="post" action="/supplies/replenishments/{{ draft.id }}/order"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="operation_key" value="{{ new_key() }}"><input type="hidden" name="revision" value="{{ draft.revision }}">
+<label>Order reference <input name="order_reference" maxlength="120" required value="{{ submitted.get('order_reference','') }}"></label><label>Expected delivery date <input type="date" name="expected_delivery_date" required value="{{ submitted.get('expected_delivery_date','') }}"></label>
+<label>Responsible custodian <select name="responsible_custodian_id" required>{% for person in custodians %}<option value="{{ person.id }}" {% if submitted.get('responsible_custodian_id',request.state.user.id)|string == person.id|string %}selected{% endif %}>{{ person.username }}</option>{% endfor %}</select></label>
+{% for line in draft.lines %}<label>{{ line.code_snapshot }} ordered quantity (approved {{ line.approved_quantity }}) <input type="number" min="0" max="{{ line.incoming_quantity }}" name="ordered_{{ line.id }}" value="{{ submitted.get('ordered_' ~ line.id,line.incoming_quantity) }}"></label>{% endfor %}
+<button type="submit">Record order</button></form></section>
+{% endif %}
+
+{% if enabled and can_maintain and draft.status in ('approved','ordered','partially_received') %}
+<section class="supply-panel"><h2>Cancel unreceived remainder</h2><p>Enter only quantities that will no longer be received. Earlier approvals and order evidence remain visible.</p>
+<form method="post" action="/supplies/replenishments/{{ draft.id }}/cancel-remainder"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="operation_key" value="{{ new_key() }}"><input type="hidden" name="revision" value="{{ draft.revision }}">
+{% for line in draft.lines %}{% if line.incoming_quantity > 0 %}<label>{{ line.code_snapshot }} cancel quantity (up to {{ line.incoming_quantity }}) <input type="number" min="1" max="{{ line.incoming_quantity }}" name="cancel_{{ line.id }}" value="{{ submitted.get('cancel_' ~ line.id,'') }}"></label>{% endif %}{% endfor %}
+<label>Cancellation reason <textarea name="reason" maxlength="2000" required>{{ submitted.get('reason','') }}</textarea></label><button type="submit">Cancel selected remainder</button></form></section>
+{% endif %}
+
+{% if draft.submissions %}<h2>Submission history</h2><ul>{% for revision in draft.submissions %}<li>Revision {{ revision.revision }} submitted {{ revision.submitted_at }}{% if revision.review_reason %} · {{ revision.review_reason }}{% endif %}</li>{% endfor %}</ul>{% endif %}
+{% if draft.decisions %}<h2>Decision history</h2><ul>{% for decision in draft.decisions %}<li>{{ decision.decision }} by {{ decision.actor_name }} on {{ decision.decided_at }}{% if decision.reason %} · {{ decision.reason }}{% endif %}</li>{% endfor %}</ul>{% endif %}
+{% if draft.order %}<h2>Procurement order</h2><p>{{ draft.order.order_reference }} · Expected delivery {{ draft.order.expected_delivery_date or 'Unspecified' }} · Responsible custodian account #{{ draft.order.responsible_custodian_id }}</p>{% endif %}
+{% if enabled and can_maintain and draft.status in ('approved','ordered','partially_received') %}<p><a class="supply-primary-link" href="/supplies/replenishments/{{ draft.id }}/deliveries/new">Record a delivery</a></p>{% endif %}
+{% if draft.deliveries %}<h2>Deliveries</h2><ul>{% for delivery in draft.deliveries %}<li><a href="/supplies/replenishments/{{ draft.id }}/deliveries/{{ delivery.id }}">DR {{ delivery.dr_number }}</a> · {{ delivery.effective_date }} · Accepted {{ delivery.accepted_quantity }}, rejected {{ delivery.rejected_quantity }}{% if delivery.receipt_id %} · <a href="/supplies/receipts/{{ delivery.receipt_id }}">Stock receipt</a>{% endif %}</li>{% endfor %}</ul>{% endif %}
+{% if draft.cancellations %}<h2>Remainder cancellations</h2><ul>{% for cancellation in draft.cancellations %}<li>{{ cancellation.cancelled_at }} · {{ cancellation.reason }}</li>{% endfor %}</ul>{% endif %}
+{% endblock %}

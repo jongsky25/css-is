@@ -1,0 +1,7 @@
+{% extends 'supplies/base.html' %}
+{% block supplies_content %}
+<h1>Stock activity</h1><p>Posted stock movements, newest first. Open an item's stock card for its full history.</p>
+{% include 'supplies/_queue_filters.html' %}
+{% if activities %}<ul class="supply-work-list">{% for movement in activities %}<li><a href="/supplies/items/{{ movement.item_id }}">{{ movement.code_snapshot }} · {{ movement.description_snapshot }}</a><p>{{ {'opening':'Opening stock','receipt':'Stock received','issue':'Supplies issued','return':'Usable return','adjustment':'Physical-count adjustment','reversal':'Movement reversed'}[movement.kind] }} · {{ '+' if movement.quantity_delta>0 else '' }}{{ movement.quantity_delta }} {{ movement.unit_snapshot }}</p><p>Posted {{ movement.posted_at|humandt }} by {{ movement.actor_snapshot }} · Effective {{ movement.effective_date|humandate }}</p></li>{% endfor %}</ul>{% else %}<p>No movements match these filters.</p>{% endif %}
+{% include 'supplies/_queue_pagination.html' %}
+{% endblock %}

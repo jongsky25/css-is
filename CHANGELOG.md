@@ -1,4 +1,4 @@
-## 7.86 — October 22, 2026
+## 7.87 — October 22, 2026
 
 - Extend A17 to calendar status/next-step guidance, distinguishing schedule confirmation from room approval, email delivery and subscribed-app refresh.
 - Show series/linked-activity consequences, a native cancellation review page, and restore availability matching the existing 30-day boundary.
@@ -6,6 +6,12 @@
 - Offer read-only retry in item previews, invalidate delayed successes/failures on dismissal, and use shared modal focus handling for previews and quick add.
 - Explain one-time .ics downloads versus private read-only subscriptions, independent subscription scope, refresh delays and the limits of reset/revocation for cached copies.
 - Preserve visibility/write guards, calendar deep links, iCalendar UIDs/sequences and existing feed routes. No schema, dependency or external integration changes.
+
+## 7.86 — October 22, 2026
+
+- Add the Supplies module from reviewed opening stock and staff requests through approval, partial issue, acknowledgment, warnings, replenishment, deliveries, corrections and reports.
+- Keep Supplies changes disabled until an administrator verifies staff roles, a dated physical count, the opening ledger and the pilot cutover.
+- Preserve authorized reads and transaction evidence while writes are disabled; no live stock or role grants are imported by this release.
 
 ## 7.85 — October 21, 2026
 

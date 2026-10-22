@@ -1,0 +1,21 @@
+{% extends 'supplies/base.html' %}
+{% block supplies_content %}
+<h1>{{ 'Edit returned supply request' if draft and draft.approval_status=='returned' else 'Edit supply draft' if draft else 'New supply request' }}</h1>
+<p>Requester: {{ identity.requester_snapshot }} · Unit: {{ identity.unit_snapshot }}</p>
+<p>Save a draft first, then review and submit it. Repeated selections of the same item are combined.</p>
+{% if enabled %}<form method="post" action="{{ '/supplies/requests/' ~ draft.id ~ '/save' if draft else '/supplies/requests' }}">
+<input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="operation_key" value="{{ new_key() }}">
+{% if draft %}<input type="hidden" name="revision" value="{{ form_values.revision }}">{% endif %}
+<label for="request-purpose">Purpose</label><textarea id="request-purpose" name="purpose" maxlength="2000" required>{{ form_values.purpose if form_values else '' }}</textarea>
+<label for="request-date">Date needed (optional)</label><input id="request-date" type="date" name="date_needed" value="{{ form_values.date_needed or '' if form_values else '' }}">
+<p>Choose up to {{ max_lines }} item lines. Leave unused lines empty.</p>
+{% for i in range(max_lines) %}{% set line = form_values.lines[i] if form_values and i<form_values.lines|length else none %}
+{% if i==5 %}<details class="supply-panel"><summary>Add more items (up to {{ max_lines }} lines)</summary>{% endif %}
+<fieldset class="supply-panel"><legend>Item {{ i+1 }}</legend>
+<label for="request-item-{{ i }}">Supply item {{ i+1 }}</label><select id="request-item-{{ i }}" name="item_{{ i }}"><option value="">Choose an item</option>
+{% if line and line.active is defined and not line.active %}<option value="{{ line.item_id }}" selected>{{ line.code_snapshot }} · Inactive: replace this item</option>{% endif %}
+{% for item in items %}<option value="{{ item.id }}"{% if line and item.id|string==line.item_id|string %} selected{% endif %}>{{ item.code }} · {{ item.description }} · {{ item.unit }}</option>{% endfor %}</select>
+<label for="request-quantity-{{ i }}">Requested quantity {{ i+1 }}</label><input id="request-quantity-{{ i }}" name="quantity_{{ i }}" type="number" min="1" max="2147483647" step="1" value="{{ line.requested_quantity if line else '' }}">
+</fieldset>{% if loop.last %}</details>{% endif %}{% endfor %}
+<p><button type="submit">Save draft</button></p></form>{% endif %}
+{% endblock %}

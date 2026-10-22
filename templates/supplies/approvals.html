@@ -1,0 +1,7 @@
+{% extends 'supplies/base.html' %}
+{% block supplies_content %}<h1>Supply approval inbox</h1>
+{% include 'supplies/_queue_filters.html' %}
+<p>Pending submitted requests within your current approval scope. Your own requests are excluded.</p>
+{% if requests %}<div class="supply-table" role="region" aria-label="Pending supply approvals" tabindex="0"><table><thead><tr><th>Request</th><th>Requester / unit</th><th>Purpose</th><th>Next person / action</th><th>Submitted</th></tr></thead><tbody>
+{% for entry in requests %}<tr><td><a href="/supplies/requests/{{ entry.id }}">{{ entry.control_number }}</a></td><td>{{ entry.requester_snapshot }} · {{ entry.unit_snapshot }}</td><td>{{ entry.purpose }}</td><td>{{ entry.next_action }}</td><td>{{ entry.submitted_at|humandt }}</td></tr>{% endfor %}</tbody></table></div><ul class="supply-mobile-quantities" aria-label="Approval actions">{% for entry in requests %}<li><a href="/supplies/requests/{{ entry.id }}">{{ entry.control_number }}</a> · {{ entry.requester_snapshot }} · {{ entry.unit_snapshot }} · You: review the submitted request</li>{% endfor %}</ul>{% else %}<p>No pending requests in your scope.</p>{% endif %}
+{% include 'supplies/_queue_pagination.html' %}{% endblock %}

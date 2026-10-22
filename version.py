@@ -17,19 +17,30 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.86"
+APP_VERSION = "7.87"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {'version': '7.87',
+     'date': 'October 22, 2026',
+     'summary': 'Calendar items explain their status, next steps and subscription updates.',
+     'changes': ['Calendar items explain what their status means, who handles changes and whether a change '
+                 'affects a repeating series.',
+                 'Cancellation has a review page, and edit errors or competing changes keep your draft and show '
+                 'what to do next.',
+                 'Calendar links explain subscriptions, refresh delays and the difference from a one-time '
+                 'download.',
+                 'Item previews can retry a failed read, and closing a preview prevents a delayed result from '
+                 'reopening it.']},
     {
         "version": "7.86",
         "date": "October 22, 2026",
-        "summary": "Calendar items explain their status, next steps and subscription updates.",
+        "summary": "Supplies can track requests, approvals, stock, handovers and replenishment when the office is ready to start.",
         "changes": [
-            "Calendar items explain what their status means, who handles changes and whether a change affects a repeating series.",
-            "Cancellation has a review page, and edit errors or competing changes keep your draft and show what to do next.",
-            "Calendar links explain subscriptions, refresh delays and the difference from a one-time download.",
-            "Item previews can retry a failed read, and closing a preview prevents a delayed result from reopening it."
+            "Staff can request supplies, and authorized approvers can decide quantities before custodians issue them.",
+            "Custodians can review stock warnings, record returns and deliveries, and request replenishment with separate approval.",
+            "Stock cards and reports show the saved movements behind inventory and request fulfillment.",
+            "Supplies starts paused until an administrator completes the counted-stock and staff setup."
         ]
     },
     {

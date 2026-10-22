@@ -86,6 +86,7 @@ import travel_routes
 import documents_routes
 import documents_email
 import work_routes
+import supplies_routes
 import documents_notify
 import documents
 import report_docs
@@ -655,6 +656,7 @@ NAV_GROUPS = [
     # Section who run it are not necessarily app admins (cap manage_users), so it
     # has its own group: everyone requests; room approvers also get the manage items.
     {"name": "Office", "items": [
+        {"key": "supplies", "url": "/supplies", "label": "Supplies", "section": "Supplies", "hint": "Requests, approvals, handovers and stock warnings", "kw": "supplies overview dashboard requests approval inventory catalog stock custodian", "cap": None},
         {"key": "work", "url": "/work/mine", "label": "My work", "section": "Documents", "hint": "Shared outcomes, ownership, and related correspondence", "kw": "work item shared outcome accountable lead", "cap": None},
         {"key": "documents", "url": "/documents", "label": "Documents", "hint": "Incoming and outgoing document register", "kw": "documents correspondence registry incoming outgoing", "cap": None},
         {"key": "rooms", "url": "/rooms", "label": "Conference room",
@@ -1411,6 +1413,7 @@ def _seed_office_rules(conn):
 
 
 _schema_ready_for = set()    # DB paths whose schema has been ensured this process
+_schema_ready_lock = threading.RLock()  # first connections can arrive concurrently
 
 def _share_url(url):
     return short_links.share(DB, url)
@@ -1488,17 +1491,25 @@ def get_conn():
     """Fresh connection per request (SQLite + threads). Schema is ensured/seeded
     once per DB path (init_db is idempotent but costs ~2-3 ms; no need to pay it
     on every request). Keyed on the path so tests that repoint DB still init."""
-    conn = st.connect(DB)
-    if DB not in _schema_ready_for:
-        st.init_db(conn)             # safe to re-run; also applies the venue migration
-        st.seed_directory_if_empty(conn)
-        _seed_learned_rules(conn)    # FAQ rules for the AI search bar (fresh install only)
-        _seed_calendar_rules(conn)   # calendar FAQ rules, once, on any install
-        _seed_office_rules(conn)     # office FAQ rules (to-do, wellness, room, who is in), once
-        wabf.run_once(conn)          # ANNEX C Aug 16-31, 2026 — one-shot, marker-guarded
-        st.seed_wa_prepared_by_default(conn)  # ANNEX C "Prepared by" -> Alexander Medel, one-shot
-        _schema_ready_for.add(DB)
-    return conn
+    db_path = DB
+    if db_path in _schema_ready_for:
+        return st.connect(db_path)
+    with _schema_ready_lock:
+        conn = st.connect(db_path)
+        if db_path not in _schema_ready_for:
+            try:
+                st.init_db(conn)             # safe to re-run; also applies the venue migration
+                st.seed_directory_if_empty(conn)
+                _seed_learned_rules(conn)    # FAQ rules for the AI search bar (fresh install only)
+                _seed_calendar_rules(conn)   # calendar FAQ rules, once, on any install
+                _seed_office_rules(conn)     # office FAQ rules (to-do, wellness, room, who is in), once
+                wabf.run_once(conn)          # ANNEX C Aug 16-31, 2026 — one-shot, marker-guarded
+                st.seed_wa_prepared_by_default(conn)  # ANNEX C "Prepared by" -> Alexander Medel, one-shot
+                _schema_ready_for.add(db_path)
+            except Exception:
+                conn.close()
+                raise
+        return conn
 
 
 # =====================================================================
@@ -17133,3 +17144,4 @@ app.include_router(documents_intake_routes.make_router(templates, get_conn))
 app.include_router(documents_routes.make_router(templates, get_conn))
 app.include_router(documents_email.make_router(get_conn))
 app.include_router(work_routes.make_router(templates, get_conn))
+app.include_router(supplies_routes.make_router(templates, get_conn))

@@ -1,0 +1,7 @@
+{% extends 'supplies/base.html' %}{% block supplies_content %}
+<h1>Supplies ready to issue</h1>
+{% include 'supplies/_queue_filters.html' %}
+<p>Approved requests with reserved stock, in approval order.</p>
+{% if requests %}<ul>{% for entry in requests %}<li><a href="/supplies/requests/{{ entry.id }}{{ "/issues/new" if enabled else "" }}">{{ entry.control_number }}</a> · {{ entry.requester_snapshot }} · {{ entry.unit_snapshot }}<br>{{ entry.next_action }}</li>{% endfor %}</ul>{% else %}<p>No reserved requests are ready to issue.</p>{% endif %}
+{% include 'supplies/_queue_pagination.html' %}
+{% endblock %}

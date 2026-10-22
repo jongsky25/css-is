@@ -1,0 +1,7 @@
+{% extends 'supplies/base.html' %}{% block supplies_content %}
+<h1>Supply releases</h1>
+{% include 'supplies/_queue_filters.html' %}
+<p>Posted handovers you can access. The recorded recipient acknowledges receipt; a custodian can follow up or record paper evidence.</p>
+{% if releases %}<ul>{% for release in releases %}<li><a href="/supplies/issues/{{ release.id }}">{{ release.release_number }}</a> · {{ release.control_number }} · {{ release.effective_date|humandate }} · {{ release.recipient_snapshot }} · {{ release.acknowledgment_status|capitalize }}<br>{{ release.next_action }}</li>{% endfor %}</ul>{% else %}<p>No supply releases are available to you.</p>{% endif %}
+{% include 'supplies/_queue_pagination.html' %}
+{% endblock %}
