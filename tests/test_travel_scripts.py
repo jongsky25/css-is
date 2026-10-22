@@ -141,3 +141,20 @@ def test_sheets_get_the_font_and_titles_but_numbers_and_formulas_are_left(format
     assert cells[2][0]["value"] == "Total" and cells[2][1]["value"] == 670
     assert cells[2][2]["value"] == "=SUM(A1)"                                           # a formula is never overwritten
     assert cells[3][0]["value"] == "MAR WYNN D. BELLO, MD"
+
+
+def test_the_report_script_applies_the_letterhead_and_plain_paragraphs():
+    """Spot feedback #168/#169: DPO letterhead on the report; only titles bold; one blank line of space."""
+    src = open("apps_script/travel_docs.gs", encoding="utf-8").read()
+    assert "req.template_key === 'travel_report'" in src and "at_letterhead_(header)" in src
+    assert "setSpacingAfter(12)" in src and "p.setBold(false)" in src and "'conclusion'" in src
+
+
+def test_the_report_lists_itinerary_days_outside_the_activity():
+    """Spot feedback #167: the October 11 trip is in the report even though the activity starts on the 12th."""
+    import travel_docs as td
+    rows = [dict(td.blank_row("2026-10-11"), mode="plane", **{"from": "Manila", "to": "Cebu"}), td.blank_row("2026-10-12")]
+    ctx = {"filing": {"act_start": "2026-10-12", "act_end": "2026-10-13"}, "rows": rows,
+           "texts": {"day_by_day": ["October 12, 2026: Opening.", "October 13, 2026: Closing."]}}
+    assert td._report_days(ctx) == ["October 11, 2026: Travelled from Manila to Cebu by plane.",
+                                    "October 12, 2026: Opening.", "October 13, 2026: Closing."]

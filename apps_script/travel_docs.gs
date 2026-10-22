@@ -68,6 +68,7 @@ function generateDoc_(req) {
     const doc = DocumentApp.openById(copy.getId()), body = doc.getBody();
     applyRows_(body, req.rows || {}); applyBlocks_(body, req.blocks || {}); applyFields_(body, req.fields || {});
     formatDoc_(body);
+    if (req.template_key === 'travel_report') { reportLetterhead_(doc); formatReport_(body); }
     doc.saveAndClose();
     if (req.extras && req.extras.file_copy) extras = addFileCopy_(copy.getId());
   }
@@ -207,6 +208,60 @@ function formatDoc_(body) {
       if ((align === null || align === H.LEFT || align === H.JUSTIFY) && text.trim().length >= JUSTIFY_FROM) p.setAlignment(H.JUSTIFY);
     });
   } catch (err) { /* keep the form as it is */ }
+}
+
+// ---- The post travel report (spot feedback #168, #169) -----------------------------------------------------------------
+// Same letterhead as the DPO ("Republic of the Philippines / DEPARTMENT OF HEALTH / Office of the Secretary", with the seal
+// and the logo), put in the real header whatever the template carried. at_letterhead_ lives in activity_templates.gs, in this
+// same Apps Script project; without it the template's own header stays.
+function reportLetterhead_(doc) {
+  try {
+    if (typeof at_letterhead_ !== 'function') return;
+    const header = doc.getHeader() || doc.addHeader();
+    header.clear();
+    at_letterhead_(header);
+  } catch (err) { /* keep the template's header */ }
+}
+
+const REPORT_TITLES_ = ['overview', 'day-by-day highlights', 'key points raised', 'key contributions and observations',
+                        'support needed', 'policy recommendations', 'conclusion'];
+
+function isReportTitle_(text) {
+  return REPORT_TITLES_.indexOf(String(text).trim().replace(/:$/, '').toLowerCase()) >= 0;
+}
+
+// Only the section titles are bold; every other paragraph is plain with one blank line's space (12 pt) after it, and a title
+// gets that space before it from the paragraph above. Lines that are centred or all capitals (names, signatures) are left alone.
+function formatReport_(body) {
+  try {
+    const H = DocumentApp.HorizontalAlignment, T = DocumentApp.ElementType;
+    const kids = [];
+    for (let i = 0; i < body.getNumChildren(); i++) kids.push(body.getChild(i));
+    let lastTitle = -1;
+    kids.forEach(function (el, i) { if (el.getType() === T.PARAGRAPH && isReportTitle_(el.asParagraph().getText())) lastTitle = i; });
+    // empty paragraphs before the last title only added space by hand; the spacing below replaces them
+    for (let i = lastTitle - 1; i >= 0; i--) {
+      const el = kids[i];
+      if (el.getType() === T.PARAGRAPH && el.asParagraph().getText().trim() === '' && body.getNumChildren() > 1) {
+        try { body.removeChild(el); kids[i] = null; } catch (e) { /* a paragraph Docs will not drop stays */ }
+      }
+    }
+    const live = kids.filter(function (el) { return el; });
+    let started = false, ended = false;
+    live.forEach(function (el) {
+      if (ended || el.getType() !== T.PARAGRAPH) { if (started && el.getType() !== T.PARAGRAPH) ended = true; return; }
+      const p = el.asParagraph(), text = p.getText();
+      if (isReportTitle_(text)) {
+        started = true;
+        p.setLineSpacing(1); p.setBold(true); p.setSpacingBefore(0); p.setSpacingAfter(0);
+        return;
+      }
+      if (!started || !text.trim()) return;
+      // the signature block follows the conclusion: a short, centred, capitalised or colon-ended line ends the body text
+      if (p.getAlignment() === H.CENTER || text === text.toUpperCase() || text.trim().length < 40 && /:$/.test(text.trim())) { ended = true; return; }
+      p.setLineSpacing(1); p.setBold(false); p.setSpacingBefore(0); p.setSpacingAfter(12);
+    });
+  } catch (err) { /* keep the report as it is */ }
 }
 
 // ---- The file copy (spot feedback #158) --------------------------------------------------------------------------------

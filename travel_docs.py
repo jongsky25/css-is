@@ -388,9 +388,40 @@ def _jo_cert(ctx) -> DocPayload:
         blocks={"activities": _para(t["activities"]), "obligations": _para(t["obligations"])})
 
 
+def _ride_phrase(r) -> str:
+    mode = MODE_LABELS.get(r.get("mode"), "").lower()
+    s = "travelled" + (f" from {r['from']}" if r.get("from") else "") + (f" to {r['to']}" if r.get("to") else "") + (f" by {mode}" if mode else "")
+    when = ([f"left {r['dep']}"] if r.get("dep") else []) + ([f"arrived {r['arr']}"] if r.get("arr") else [])
+    return s + (f" ({', '.join(when)})" if when else "")
+
+
+def _report_days(ctx) -> list:
+    """The day-by-day lines of the post travel report: the activity days as written, plus every other day on the
+    itinerary (spot feedback #167: travel the day before the activity belongs in the report), in date order."""
+    f, t = ctx["filing"], ctx["texts"]
+    act = trip_days(f["act_start"], f["act_end"])
+    lines = list(t["day_by_day"])
+    pairs = [(d, (lines[i] if i < len(lines) else "").strip()) for i, d in enumerate(act)]
+    known = set(act)
+    extra = {}
+    for r in ctx["rows"]:
+        try:
+            d = _d(r["date"]) if r.get("date") else None
+        except (ValueError, TypeError):
+            d = None
+        if d and d not in known:
+            extra.setdefault(d, []).append(r)
+    for d, rides in extra.items():
+        said = "; ".join(_ride_phrase(r) for r in rides if r.get("mode") not in (None, "", "none"))
+        pairs.append((d, f"{long_date(d)}: " + (said[:1].upper() + said[1:] + "." if said else "")))
+    pairs.sort(key=lambda x: x[0])
+    out = [x for _d_, x in pairs if x]
+    return out or [f"{long_date(d)}:" for d in act]
+
+
 def _travel_report(ctx) -> DocPayload:
     f, sig, t = ctx["filing"], ctx["sig"], ctx["texts"]
-    days = [x for x in t["day_by_day"] if x.strip()] or [f"{long_date(d)}:" for d in trip_days(f["act_start"], f["act_end"])]
+    days = _report_days(ctx)
     block = lambda k: _para(t[k])                                                         # noqa: E731
     return DocPayload("travel_report", "travel_report", ctx["title"]("travel_report"), {
         "name_designation": f"{ctx['name']}, {ctx['designation']}" if ctx["designation"] else ctx["name"],
