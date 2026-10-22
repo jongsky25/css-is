@@ -14,17 +14,7 @@ from test_travel_generate import conn, relay, mk, items  # shared travel fixture
 pw = pytest.importorskip('playwright.sync_api')
 
 
-@pytest.fixture(scope='module')
-def browser():
-    with pw.sync_playwright() as p:
-        try:
-            browser = p.chromium.launch()
-        except pw.Error as e:
-            if "Executable doesn't exist" in str(e):
-                pytest.skip('Install Chromium with python -m playwright install chromium')
-            raise
-        yield browser
-        browser.close()
+from tests.test_document_guidance_browser import browser
 
 
 @pytest.fixture

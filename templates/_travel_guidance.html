@@ -1,0 +1,7 @@
+<section class="tv-guidance" aria-label="Travel next step" data-state="{{ guidance.state }}">
+  <h2>{{ guidance.heading }}</h2>
+  <dl><dt>Who acts next</dt><dd>{{ guidance.actor }}</dd><dt>What to do</dt><dd>{{ guidance.step }}</dd></dl>
+  {% if guidance.viewer_note %}<p class="tv-hint">{{ guidance.viewer_note }}</p>{% endif %}
+  {% if guidance.action and guidance.action.url != request.url.path %}<a class="btn ghost small" href="{{ guidance.action.url }}">{{ guidance.action.label }}</a>{% endif %}
+  <p class="tv-hint">Checklist readiness, generated files, flag verification and paper submission are separate steps. Approval, payment and email delivery are not confirmed by these labels.</p>
+</section>

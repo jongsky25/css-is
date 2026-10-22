@@ -1,7 +1,7 @@
 {% extends "dash_layout.html" %}
 {% from "_components.html" import page_header, flash, empty_state %}
 {% block title %}My travel claims{% endblock %}
-{% block head %}<link rel="stylesheet" href="/static/css/travel.css?v=20261014a">{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/travel.css?v=7.88">{% endblock %}
 {% block content %}
 {{ page_header("Travel claims", "Cash advances, liquidations and reimbursements for official travel.") }}
 {% if off %}
@@ -37,6 +37,7 @@
 
 <div class="tv-card">
   <h2>My filings</h2>
+  <p class="tv-hint">Open a filing for its current checklist, form progress, flag reviews and next step.</p>
   {% if filings %}
   <div class="table-wrap"><table class="list resp-table">
     <thead><tr><th>Ref</th><th>What</th><th>Activity</th><th>Status</th><th>Due</th></tr></thead>
@@ -46,7 +47,7 @@
       <td data-label="Ref"><a href="/travel/f/{{ f.ref_code }}"><code>{{ f.ref_code }}</code></a></td>
       <td data-label="What">{{ travel_kind_labels[f.kind] }}</td>
       <td data-label="Activity">{{ f.act_title }}<div class="tv-hint">{{ f.act_start }}{% if f.act_end != f.act_start %} to {{ f.act_end }}{% endif %}</div></td>
-      <td data-label="Status"><span class="badge {{ travel_status_badge[f.status] }}">{{ travel_status_labels[f.status] }}</span></td>
+      <td data-label="Status"><span class="badge {{ travel_status_badge[f.status] }}">{{ travel_status_labels[f.status] }}</span><div class="tv-hint">{{ {'open':'Traveller: complete the checklist', 'ready':'Traveller: print, sign and hand in', 'submitted':'Handover recorded; follow up with the receiving office', 'withdrawn':'Closed to changes'}.get(f.status, 'Open the filing to check') }}</div></td>
       <td data-label="Due">{% if f.deadline_text %}<span class="tv-due {{ f.deadline_tone }}">{{ f.deadline_text }}</span><div class="tv-hint">{{ f.deadline_date }}</div>{% else %}–{% endif %}</td>
     </tr>
     {% endfor %}

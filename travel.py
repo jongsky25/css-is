@@ -880,20 +880,31 @@ def valid_drive_link(url) -> str:
     return url if ok else ""
 
 
-def save_item(conn, filing, code, *, drive_url=None, na=None, fmis_ref=None, note=None):
-    """Save what the person entered for one checklist row. Only the fields passed are changed."""
+def validate_item_input(filing, code, *, drive_url=None, na=None, fmis_ref=None):
+    """Validate before either database changes or replacement of uploaded Drive files."""
     _editable(filing)
     spec = _item_spec(filing, code)
-    sync_items(conn, filing)
-    sets = {}
     if drive_url is not None:
         if spec.handling not in ("upload", "carry", "generate"):
             raise TravelError("This document does not take a Drive link.")
+        if drive_url.strip() and not valid_drive_link(drive_url):
+            raise TravelError("Paste a Google Drive link (it starts with https://drive.google.com/).")
+    if na is not None and spec.handling not in ("upload", "carry"):
+        raise TravelError("Only uploaded documents can be marked as not applicable.")
+    if fmis_ref is not None and spec.handling != "fmis":
+        raise TravelError("Only FMIS documents take an FMIS reference.")
+    return spec
+
+
+def save_item(conn, filing, code, *, drive_url=None, na=None, fmis_ref=None, note=None):
+    """Save what the person entered for one checklist row. Only the fields passed are changed."""
+    spec = validate_item_input(filing, code, drive_url=drive_url, na=na, fmis_ref=fmis_ref)
+    sync_items(conn, filing)
+    sets = {}
+    if drive_url is not None:
         manual = spec.handling == "generate"        # a form you made yourself instead of generating it
         if drive_url.strip():
-            link = valid_drive_link(drive_url)
-            if not link:
-                raise TravelError("Paste a Google Drive link (it starts with https://drive.google.com/).")
+            link = drive_url.strip()
             sets.update(doc_url=link, doc_state="manual", state="present") if manual else \
                 sets.update(drive_url=link, drive_file_id=None, drive_source="link", state="present")
         else:
@@ -901,15 +912,11 @@ def save_item(conn, filing, code, *, drive_url=None, na=None, fmis_ref=None, not
                 sets.update(drive_url=None, drive_file_id=None, state="missing",
                             drive_source="removed" if spec.handling == "carry" else None)   # a removed carry row is not filled in again
     if na is not None:
-        if spec.handling not in ("upload", "carry"):
-            raise TravelError("Only uploaded documents can be marked as not applicable.")
         if na:
             sets.update(state="na")
         elif "state" not in sets:
             sets["state"] = "present" if (sets.get("drive_url") or _saved(conn, filing, code, "drive_url")) else "missing"
     if fmis_ref is not None:
-        if spec.handling != "fmis":
-            raise TravelError("Only FMIS documents take an FMIS reference.")
         sets["fmis_ref"] = " ".join(fmis_ref.split())[:120] or None
     if note is not None:
         sets["note"] = " ".join(note.split())[:300] or None
@@ -1033,15 +1040,14 @@ def _saved(conn, filing, code, col):
 
 
 def mark_ready(conn, filing):
-    if filing["status"] == "ready":
-        return filing
-    if filing["status"] != "open":
+    filing = get_filing(conn, filing["id"])
+    if not filing or filing["status"] not in ("open", "ready"):
         raise TravelError("Only a filing in progress can be marked ready.")
-    if filing["gen_state"] == "running":
-        raise TravelError("The documents are still being made. Try again in a minute.")
-    missing = missing_for(conn, filing)
+    missing = tr.readiness(filing, view_items(conn, filing), flags_of(conn, filing["id"]))
     if missing:
         raise TravelError("Not ready yet: " + missing[0] + (f" (and {len(missing) - 1} more)" if len(missing) > 1 else ""))
+    if filing["status"] == "ready":
+        return filing
     now = tz.now_iso()
     conn.execute("UPDATE travel_filing SET status='ready', ready_at=?, updated_at=? WHERE id=?", (now, now, filing["id"]))
     conn.commit()
@@ -1049,8 +1055,12 @@ def mark_ready(conn, filing):
 
 
 def mark_submitted(conn, filing):
-    if filing["status"] != "ready":
+    filing = get_filing(conn, filing["id"])
+    if not filing or filing["status"] != "ready":
         raise TravelError("Mark the filing ready before marking it submitted.")
+    missing = tr.readiness(filing, view_items(conn, filing), flags_of(conn, filing["id"]))
+    if missing:
+        raise TravelError("Not ready yet: " + missing[0] + (f" (and {len(missing) - 1} more)" if len(missing) > 1 else ""))
     now = tz.now_iso()
     conn.execute("UPDATE travel_filing SET status='submitted', submitted_at=?, updated_at=? WHERE id=?",
                  (now, now, filing["id"]))

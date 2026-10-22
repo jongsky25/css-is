@@ -89,7 +89,7 @@ def test_verify_and_reject_record_the_outcome_and_unblock_or_block_ready(viewer,
     assert "Waiting for the Admin Unit" in blocked
     # a rejection needs a note
     r = post(encoder, f"/travel/verify/{fl['id']}", outcome="rejected")
-    assert r.status_code == 303 and "err=" in r.headers["location"] and flags(conn, ref)[0]["state"] == "open"
+    assert r.status_code == 400 and "Decision not saved" in r.text and flags(conn, ref)[0]["state"] == "open"
     post(encoder, f"/travel/verify/{fl['id']}", outcome="rejected", note="Use the DOH van instead")
     [got] = flags(conn, ref)
     assert got["state"] == "rejected" and got["note"] == "Use the DOH van instead" and got["decided_by"] == MEMBER and got["decided_at"]
@@ -106,7 +106,7 @@ def test_participant_only_needs_the_supervisor_confirmation(viewer, encoder, con
     ref = mk(viewer, role="participant"); generate(viewer, ref, [])
     [fl] = flags(conn, ref)
     r = post(encoder, f"/travel/verify/{fl['id']}", outcome="verified")
-    assert "err=" in r.headers["location"] and flags(conn, ref)[0]["state"] == "open"
+    assert r.status_code == 400 and "supervisor" in r.text and flags(conn, ref)[0]["state"] == "open"
     post(encoder, f"/travel/verify/{fl['id']}", outcome="verified", supervisor_confirmed="1", note="Per Dr. Reyes")
     [got] = flags(conn, ref)
     assert got["state"] == "verified" and got["supervisor_confirmed"] == 1
@@ -138,7 +138,7 @@ def test_withdrawn_and_submitted_filings_leave_the_queue(viewer, encoder, conn, 
     assert ref not in encoder.get("/travel/verify").text
     [fl] = flags(conn, ref)
     r = post(encoder, f"/travel/verify/{fl['id']}", outcome="verified")
-    assert "err=" in r.headers["location"] and flags(conn, ref)[0]["state"] == "open"
+    assert r.status_code == 400 and "no longer open" in r.text and flags(conn, ref)[0]["state"] == "open"
 
 
 def test_decisions_check_origin_the_switch_and_unknown_ids(viewer, encoder, admin, conn, relay, unit):   # noqa: F811
@@ -147,7 +147,7 @@ def test_decisions_check_origin_the_switch_and_unknown_ids(viewer, encoder, admi
     bad = encoder.post(f"/travel/verify/{fid}", content="outcome=verified", follow_redirects=False,
                        headers={"Content-Type": "application/x-www-form-urlencoded", "Origin": "https://evil.example"})
     assert bad.status_code == 403 and flags(conn, ref)[0]["state"] == "open"
-    assert "err=" in post(encoder, "/travel/verify/999999", outcome="verified").headers["location"]
+    assert post(encoder, "/travel/verify/999999", outcome="verified").status_code == 404
     post(admin, "/admin/travel")                                                   # switch off
     assert "not switched on" in encoder.get("/travel/verify").text
     post(encoder, f"/travel/verify/{fid}", outcome="verified")
