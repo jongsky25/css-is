@@ -1,3 +1,10 @@
+## 7.93 — October 22, 2026
+
+- ARTA walk-in reports can now be filtered to any date range of up to a year, down to a single day: pick From and To dates, or tap Today, Last 7 days or This month.
+- The custom range carries through the on-screen numbers, Word/PDF/ARTA-template reports, the BLHSD Excel file and the comments view.
+- The Walk-in entries list also has From/To dates and quick ranges, so you can see exactly what came in on a given day.
+- Activity and resource-person reports are unchanged; no schema migration or new dependency.
+
 ## 7.92 — October 22, 2026
 
 - Start A19 with a supported `/api/v1` read-only contract for selected document metadata, work items and contribution task statuses.

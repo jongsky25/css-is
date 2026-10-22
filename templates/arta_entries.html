@@ -30,6 +30,17 @@
   submission. Archiving is reversible; nothing is deleted.
   <a href="/arta/entries{{ '' if archived else '?archived=1' }}">{{ 'View active entries' if archived else 'View archived entries' }}</a>.</p>
 
+<form method="get" action="/arta/entries" class="panel" aria-label="Filter entries by date">
+  {% if archived %}<input type="hidden" name="archived" value="1">{% endif %}
+  <label for="date_from">From</label> <input type="date" id="date_from" name="date_from" value="{{ date_from }}">
+  <label for="date_to">To</label> <input type="date" id="date_to" name="date_to" value="{{ date_to }}">
+  <button class="btn" type="submit">Filter</button>
+  {% if date_from %}<a href="/arta/entries{{ '?archived=1' if archived }}">Clear</a>{% endif %}
+  <span class="meta">Quick:
+    {% for c in range_chips %}<a href="/arta/entries?{{ 'archived=1&' if archived }}date_from={{ c.from }}&date_to={{ c.to }}">{{ c.label }}</a>{{ ' · ' if not loop.last }}{% endfor %}</span>
+  {% if date_from %}<p class="meta" style="margin:.4rem 0 0;">{{ total }} entr{{ 'y' if total == 1 else 'ies' }} from {{ date_from|humandate }}{% if date_to != date_from %} to {{ date_to|humandate }}{% endif %}.</p>{% endif %}
+</form>
+
 {% if rows %}
 <div class="panel">
   <ul class="we-list">
@@ -57,7 +68,7 @@
 </div>
 
 {% if pages and pages > 1 %}
-{% set base = '/arta/entries?' ~ ('archived=1&' if archived else '') %}
+{% set base = '/arta/entries?' ~ ('archived=1&' if archived else '') ~ ('date_from=' ~ date_from ~ '&date_to=' ~ date_to ~ '&' if date_from else '') %}
 <div class="pager">
   {% if page > 1 %}<a href="{{ base }}page={{ page - 1 }}">← Newer</a>{% endif %}
   <span class="page-info">Page {{ page }} of {{ pages }} · {{ total }} entries</span>
@@ -67,7 +78,7 @@
 
 {% else %}
 <div class="panel">
-  {{ empty_state("No archived entries." if archived else "No walk-in entries yet.",
+  {{ empty_state("No entries in this date range." if date_from else ("No archived entries." if archived else "No walk-in entries yet."),
                  hint=("Entries you archive land here." if archived else "Every walk-in / online submission will show up here."),
                  icon="📝") }}
 </div>
