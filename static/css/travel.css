@@ -10,6 +10,7 @@
 .tv-meta { display:flex; flex-wrap:wrap; gap:.3rem 1.2rem; margin:.3rem 0 .8rem; }
 .tv-meta dt { font-size:.75rem; text-transform:uppercase; letter-spacing:.04em; color:var(--soft); }
 .tv-meta dd { margin:0 0 .3rem; font-weight:600; }
+.tv-meta small.tv-hint { display:block; max-width:28rem; }
 .tv-due.late { color:var(--red); font-weight:700; }
 .tv-due.warn { color:var(--amber); font-weight:700; }
 .tv-warn { background:var(--amber-bg); border:1px solid var(--amber-ln); color:var(--ink); border-radius:var(--r2);
@@ -99,3 +100,15 @@
 .tv-row-head { display: flex; align-items: center; gap: .6rem; }
 .tv-grip { cursor: grab; user-select: none; padding: .15rem .5rem; border: 1px dashed var(--line, #d8dde3); border-radius: 6px; font-size: .85rem; }
 .tv-row.tv-drop { outline: 2px solid var(--accent, #2563eb); outline-offset: 2px; }
+
+/* A17 filing meaning, retained drafts and actionable recovery. */
+.tv-guidance { background:var(--surface-2); border:1px solid var(--line); border-radius:var(--r2); padding:1rem; margin:1rem 0; overflow-wrap:anywhere; }
+.tv-guidance h2 { font-size:1rem; }
+.tv-guidance dl { display:grid; grid-template-columns:auto minmax(0,1fr); gap:.5rem 1rem; }
+.tv-guidance dt { font-weight:700; }
+.tv-guidance dd { margin:0; }
+#travel-form-error, .tv-item, #travel-answers, #travel-flags { scroll-margin-top:5rem; overflow-wrap:anywhere; }
+#travel-form-error:focus, .tv-item:focus, #travel-flags:focus { outline:3px solid var(--accent); outline-offset:3px; }
+.tv-guidance .btn { white-space:normal; }
+.tv-form label { max-width:100%; }
+@media(max-width:640px) { .tv-guidance dl { grid-template-columns:minmax(0,1fr); gap:.3rem; } .tv-guidance dd { margin-bottom:.5rem; } }

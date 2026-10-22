@@ -21,8 +21,8 @@
     }).catch(function () { return file; });
   }
 
-  // One request, read as text first so a server error page never looks like "no connection". A network drop or a
-  // 5xx is retried once; every other failure says what the server answered so the person knows what to do.
+  // One write per selected file. A lost response may follow a saved Drive upload;
+  // ask the person to check the checklist rather than automatically replaying it.
   function why(status) {
     if (status === 403) return 'The server could not verify the request. Reload the page, sign in again if asked, and retry.';
     if (status === 401) return 'You were signed out. Sign in again, then retry.';
@@ -32,26 +32,24 @@
     return 'The upload was refused (code ' + status + ').';
   }
 
-  function post(url, f, name, attempt) {
-    var retry = function () { return new Promise(function (go) { setTimeout(go, 1500); }).then(function () { return post(url, f, name, attempt + 1); }); };
+  function post(url, f, name) {
     return fetch(url, { method: 'POST', credentials: 'same-origin', body: f, headers: { 'X-Filename': encodeURIComponent(name) } })
       .then(function (r) {
         return r.text().then(function (t) {
           var j = null; try { j = JSON.parse(t); } catch (e) { /* not JSON: a proxy or error page */ }
+          if (r.status >= 500 || (r.ok && (!j || typeof j.ok !== 'boolean'))) return {ok:false, uncertain:true, error:'The upload result was not confirmed. Open the checklist and check the saved files before selecting them again.'};
           if (j && typeof j === 'object') return j;
-          if (r.status >= 500 && attempt < 1) return retry();
           return { ok: false, error: why(r.status) };
         });
-      }, function () {
-        if (attempt < 1) return retry();
-        return { ok: false, error: 'The upload did not go through. Check your connection and try again, or paste a Google Drive link instead.' };
+      }).catch(function () {
+        return { ok: false, uncertain:true, error: 'The upload result was not confirmed. Check the saved files on the checklist before selecting them again.' };
       });
   }
 
   function send(box, file) {
     return shrink(file).then(function (f) {
       if (f.size > MAX) return { ok: false, error: file.name + ' is too large (over 6 MB). Paste a Google Drive link instead.' };
-      return post(box.dataset.url + '?code=' + encodeURIComponent(box.dataset.code), f, file.name, 0);
+      return post(box.dataset.url + '?code=' + encodeURIComponent(box.dataset.code), f, file.name);
     });
   }
 
@@ -108,12 +106,13 @@
       var files = Array.prototype.slice.call(pick.files || []);
       if (!files.length) return;
       pick.disabled = true;
-      var done = 0, failed = '', notes = [];
+      var done = 0, failed = '', notes = [], uncertain = false;
       files.reduce(function (p, file, i) {
         return p.then(function () {
+          if (uncertain) return;
           out.textContent = 'Uploading ' + (i + 1) + ' of ' + files.length + '…';
           return send(box, file).then(function (j) {
-            if (j.ok) { done++; var n = remember(box, j); if (n) notes.push(n); } else failed = failed || j.error || 'That file did not upload.';
+            if (j.ok) { done++; var n = remember(box, j); if (n) notes.push(n); } else { failed = failed || j.error || 'That file did not upload.'; uncertain = !!j.uncertain; }
           });
         });
       }, Promise.resolve()).then(function () {
@@ -125,6 +124,12 @@
           location.href = location.pathname + '?ok=' + encodeURIComponent(saved) + '#item-' + box.dataset.code; return;
         }
         out.textContent = (failed || 'Nothing was uploaded.') + (done ? ' (' + saved + ')' : '');
+        if (uncertain) {
+          var check = document.createElement('a'); check.href = location.pathname + '#item-' + box.dataset.code;
+          check.className = 'btn ghost small'; check.textContent = 'Check saved files';
+          check.addEventListener('click', function (event) { event.preventDefault(); location.hash = '#item-' + box.dataset.code; location.reload(); });
+          out.appendChild(document.createTextNode(' ')); out.appendChild(check); return;
+        }
         if (done) { store('set', msgKey, out.textContent); setTimeout(function () { location.reload(); }, 3000); }
       });
     });

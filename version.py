@@ -17,10 +17,21 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.88"
+APP_VERSION = "7.89"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "7.89",
+        "date": "October 22, 2026",
+        "summary": "Travel claims explain the next step and recover more clearly from errors.",
+        "changes": [
+            "Travel claims explain who acts next and distinguish checklist readiness, flag review, making forms and handing in papers.",
+            "Rejected checklist edits and review notes stay on the page so you can correct them.",
+            "Form progress can be checked again without making extra copies, and uncertain uploads ask you to check saved files first.",
+            "Marking ready or submitted checks the current checklist, flags and form progress again."
+        ]
+    },
     {'version': '7.88',
      'date': 'October 22, 2026',
      'summary': 'Cleaner DPOs and post travel reports, and every taxi sheet is linked.',

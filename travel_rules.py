@@ -206,6 +206,12 @@ def build_checklist(kind, answers) -> list:
     return out
 
 
+def readiness(filing, items, flags) -> list:
+    """Current blockers shared by guidance and the ready/submitted write guards."""
+    return (["The documents are still being made. Check form progress before continuing."]
+            if filing.get("gen_state") == "running" else []) + completeness(filing, items, flags)
+
+
 def completeness(filing, items, flags) -> list:
     """What still stands between this filing and 'ready', as sentences. FMIS rows and optional
     rows never count. `items` are dicts with code, label, handling, requirement, state,

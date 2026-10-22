@@ -25,6 +25,7 @@ import ratelimit
 import rooms
 import storage as st
 import travel
+import travel_guidance
 import travel_submissions as submissions
 import travel_checklist as tc
 import travel_rules as tr
@@ -360,23 +361,32 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
             return None, _forbidden(request, "changing someone else's travel filing")
         return filing, None
 
-    def _detail(request, conn, filing, *, status_code=200, error=None):
+    def _detail(request, conn, filing, *, status_code=200, error=None, draft_answers=None, draft_item=None):
         q = dict(request.query_params)
         today = today_local()
         filing = travel.refresh_deadline(conn, filing)
         travel.carry_from_ca(conn, filing)
         items = travel.view_items(conn, filing)
         flags = travel.flags_of(conn, filing["id"])
-        missing = travel.missing_for(conn, filing)
+        missing = tr.readiness(filing, items, flags)
         ans = travel.answers_of(filing)
+        owner = travel.is_owner(request.state.user, filing)
+        guidance = travel_guidance.filing(filing, items, flags, owner=owner,
+            can_verify=rooms.is_room_admin(conn, request.state.user))
+        answer_values = {**ans, "dpo_no":filing["dpo_no"] or "", "dpo_date":filing["dpo_date"] or "",
+                         "mc114_format":filing["mc114_format"], "advance_amount":filing["advance_amount"] or ""}
+        if draft_answers is not None:
+            answer_values.update(travel.clean_answers(draft_answers, filing["kind"]))
+            answer_values.update({k:draft_answers.get(k, "") for k in ("dpo_no","dpo_date","mc114_format","advance_amount")})
         liqs = travel.liquidations_of(conn, filing["id"]) if filing["kind"] == "ca" else []
         ca = travel.get_filing(conn, filing["ca_filing_id"]) if filing["ca_filing_id"] else None
         questions = [q_ for q_ in tc.ANSWER_KEYS if filing["kind"] in q_[2]]
         return templates.TemplateResponse(request, "travel_filing.html", {
             "nav_active": "travel_mine", "tab": "mine", "missing": False, "f": _decorate(filing, today),
-            "items": items, "flags": flags, "missing_list": missing, "ans": ans, "owner": travel.is_owner(request.state.user, filing),
-            "next_action": travel.next_action(filing, items, flags, missing),
-            "draftable": travel.forms_ready_to_draft(items) if filing["status"] in ("open", "ready") else [],
+            "items": items, "flags": flags, "missing_list": missing, "ans": ans, "owner": owner,
+            "guidance":guidance, "answer_values":answer_values, "draft_answers":draft_answers, "draft_item":draft_item,
+            "unmatched_item_draft":bool(draft_item and not any(it["code"] == draft_item["code"] for it in items)),
+            "draftable": travel.forms_ready_to_draft(items) if filing["status"] in ("open", "ready") and filing["gen_state"] != "running" else [],
             "questions": questions, "roles": tc.ROLES,
             "role_label": dict(tc.ROLES).get(ans.get("role"), ""), "yes_answers": [label for key, label, _k in questions if ans.get(key)],
             "mc114": travel.MC114_FORMATS, "liquidations": liqs, "ca": ca, "editable": filing["status"] in ("open", "ready"),
@@ -409,7 +419,8 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
                                       dpo_no=f.get("dpo_no"), dpo_date=f.get("dpo_date"),
                                       advance_amount=f.get("advance_amount") if "advance_amount" in f else None)
             except travel.TravelError as e:
-                return _go(f"/travel/f/{ref}", err=str(e))
+                return _detail(request, conn, filing, status_code=400 if filing["status"] in ("open","ready") else 409,
+                    error=str(e), draft_answers=f)
             return _go(f"/travel/f/{ref}", msg="Answers saved. The checklist has been updated.")
         finally:
             conn.close()
@@ -424,11 +435,18 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
             filing, bad = _load(request, conn, ref, owner=True)
             if bad:
                 return bad
+            try:
+                travel.validate_item_input(filing, code,
+                    drive_url=f.get("drive_url"), na=(f["na"] == "1") if "na" in f else None,
+                    fmis_ref=f.get("fmis_ref"))
+            except travel.TravelError as e:
+                return _detail(request, conn, filing, status_code=400 if filing["status"] in ("open","ready") else 409,
+                    error=str(e), draft_item={"code":code,"fields":f})
             if "drive_url" in f:
                 folder = travel.uploaded_folder(conn, filing, code)
                 if folder and not _trash(folder):
-                    return _go(f"/travel/f/{ref}#item-{code}", err="The files you uploaded could not be removed from "
-                                                                  "Drive just now. Try again in a minute.")
+                    return _detail(request, conn, filing, status_code=400, draft_item={"code":code,"fields":f},
+                        error="The files you uploaded could not be removed from Drive just now. Your entered link is kept below; check the existing files before trying again.")
             try:
                 travel.save_item(conn, filing, code,
                                  drive_url=f["drive_url"] if "drive_url" in f else None,
@@ -436,7 +454,8 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
                                  fmis_ref=f["fmis_ref"] if "fmis_ref" in f else None,
                                  note=f["note"] if "note" in f else None)
             except travel.TravelError as e:
-                return _go(f"/travel/f/{ref}#item-{code}", err=str(e))
+                return _detail(request, conn, filing, status_code=400 if filing["status"] in ("open","ready") else 409,
+                    error=str(e), draft_item={"code":code,"fields":f})
             said = "Saved."
             if f.get("everyone") == "1" and "na" in f:        # "apply to everyone on this DPO"
                 n = travel.apply_na_to_peers(conn, filing, code, f["na"] == "1", by=request.state.user["username"])
@@ -846,7 +865,7 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
             filing = travel.get_by_ref(conn, ref) if _REF.match(ref) else None
             if not travel.can_view(conn, request.state.user, filing):
                 return _jerr("Not found.", 404)
-            return JSONResponse({"ok": True, **travel.generation_status(conn, filing)})
+            return JSONResponse({"ok": True, **travel.generation_status(conn, filing)}, headers={"Cache-Control":"no-store"})
         finally:
             conn.close()
 
@@ -860,18 +879,22 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
             return _forbidden(request, "the travel verify queue (Administrative Section only)")
         return None
 
+    def _verify_page(request, conn, *, error=None, draft=None, status_code=200):
+        q = dict(request.query_params)
+        return templates.TemplateResponse(request, "travel_verify.html", {
+            "nav_active":"travel_verify", "queue":travel.flag_queue(conn,"open"),
+            "decided":travel.flag_queue(conn,"decided",limit=30), "flag_labels":tr.FLAG_LABELS,
+            "msg":(q.get("ok") or "")[:200] or None, "err":error or (q.get("err") or "")[:200] or None,
+            "verify_draft":draft}, status_code=status_code)
+
     @router.get("/travel/verify", response_class=HTMLResponse)
     def travel_verify(request: Request):
-        q = dict(request.query_params)
         conn = get_conn()
         try:
             bad = _admin_unit(request, conn)
             if bad:
                 return bad
-            return templates.TemplateResponse(request, "travel_verify.html", {
-                "nav_active": "travel_verify", "queue": travel.flag_queue(conn, "open"),
-                "decided": travel.flag_queue(conn, "decided", limit=30), "flag_labels": tr.FLAG_LABELS,
-                "msg": (q.get("ok") or "")[:200] or None, "err": (q.get("err") or "")[:200] or None})
+            return _verify_page(request, conn)
         finally:
             conn.close()
 
@@ -887,15 +910,16 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
                 return bad
             flag = travel.get_flag(conn, flag_id)
             if not flag:
-                return _go("/travel/verify", err="That flag does not exist.")
+                return _verify_page(request, conn, error="That flag is no longer available. Review the current queue before continuing.",
+                    draft={**f,"id":flag_id}, status_code=404)
             try:
                 done = travel.decide_flag(conn, flag, request.state.user.get("username") or "",
                                           f.get("outcome", ""), f.get("note", ""), f.get("supervisor_confirmed") == "1")
             except travel.TravelError as e:
-                return _go("/travel/verify", err=str(e))
+                return _verify_page(request, conn, error=str(e), draft={**f,"id":flag_id}, status_code=400)
             audit(request, conn, "travel_flag_decide", target_type="travel_flag", target_id=str(flag_id),
                   summary=f"{done['state']} {flag['kind']} on filing {flag['filing_id']}")
-            return _go("/travel/verify", msg=f"Marked {done['state']}.")
+            return _go("/travel/verify", msg=f"Recorded {done['state']}. The traveller can review the current checklist; this does not record claim approval or payment.")
         finally:
             conn.close()
 
@@ -1007,10 +1031,12 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
             if bad:
                 return bad
             items = travel.view_items(conn, filing)
+            flags = travel.flags_of(conn, filing["id"])
             printed = [i for i in items if i["requirement"] == "required" and i["state"] != "na"]
             return templates.TemplateResponse(request, "travel_ready.html", {
                 "nav_active": "travel_mine", "tab": "mine", "f": _decorate(filing, today_local()),
-                "printed": printed, "missing_list": travel.missing_for(conn, filing),
+                "printed": printed, "missing_list": tr.readiness(filing, items, flags),
+                "guidance":travel_guidance.filing(filing, items, flags, owner=travel.is_owner(request.state.user, filing)),
                 "owner": travel.is_owner(request.state.user, filing),
                 "msg": (request.query_params.get("ok") or "")[:200] or None,
                 "err": (request.query_params.get("err") or "")[:200] or None})
@@ -1041,7 +1067,7 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
         return handler
 
     _transition("ready", travel.mark_ready, "travel_ready", "Marked ready. Print the documents below and sign where it says.", "marked ready")
-    _transition("submit", travel.mark_submitted, "travel_submit", "Marked submitted. Good work.", "marked submitted")
+    _transition("submit", travel.mark_submitted, "travel_submit", "Paper submission recorded. This does not confirm receipt, approval or payment.", "marked submitted")
     _transition("withdraw", travel.withdraw, "travel_withdraw", "Filing withdrawn.", "withdrew")
 
     # ------------------------------------------------- app admin: the switch ---

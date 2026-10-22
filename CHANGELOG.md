@@ -1,3 +1,13 @@
+## 7.89 — October 22, 2026
+
+- Extend A17 to travel guidance: current filing meaning, responsible traveller/Administrative Section, checklist/flag blockers and useful existing actions; distinguish paper handover from receipt, approval, payment and email delivery.
+- Share readiness blockers between display and fresh ready/submitted service checks; retain ownership, feature-switch, origin and directory-based review authority checks.
+- Keep invalid checklist links, answer edits and verification notes on focused server-rendered error pages; show unsaved details read-only when a filing closes during editing.
+- Distinguish an earlier valid form from a pending/failed replacement, preserve existing Drive copies and show the latest failure reason.
+- Recover generation progress through explicit GET retry, prevent concurrent make clicks and ignore superseded reads. Unconfirmed form requests check saved progress without replaying the write.
+- Stop automatic browser upload retries and stop the remaining batch after an uncertain result; offer a saved-file check before another selection.
+- Keep existing submission identities, generated document formats and provider contracts. No schema migration or new dependency is required.
+
 ## 7.88 — October 22, 2026
 
 - DPO: signatory unit is always the Bureau; the first paragraph is broad and no longer names the section or cites the host's invitation; larger header logos; heading kept in capitals; narrow first columns on the file-copy page.

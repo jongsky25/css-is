@@ -1,13 +1,15 @@
 {% extends "dash_layout.html" %}
 {% from "_components.html" import page_header, flash %}
 {% block title %}Print list {{ f.ref_code }}{% endblock %}
-{% block head %}<link rel="stylesheet" href="/static/css/travel.css?v=20261014a">{% endblock %}
+{% block head %}<script src="/static/js/travel_guidance.js?v=7.89" defer></script><link rel="stylesheet" href="/static/css/travel.css?v=7.89">{% endblock %}
 {% block content %}
 {{ page_header("Print list · " ~ f.ref_code, f.act_title) }}
 {% include "_travel_tabs.html" %}
-{{ flash(msg=msg, err=err) }}
+{{ flash(msg=msg) }}
+{% if err %}<div class="tv-warn" id="travel-form-error" tabindex="-1" role="alert"><strong>Filing not updated.</strong> {{ err }}</div>{% endif %}
 
-{% if f.status == 'open' and missing_list %}
+{% include "_travel_guidance.html" %}
+{% if f.status in ('open','ready') and missing_list %}
 <div class="tv-warn"><strong>Not ready yet:</strong>
   <ul class="tv-missing">{% for m in missing_list %}<li>{{ m }}</li>{% endfor %}</ul></div>
 {% endif %}
@@ -28,9 +30,9 @@
     {% if owner and f.status == 'open' and not missing_list %}
     <form method="post" action="/travel/f/{{ f.ref_code }}/ready"><button class="btn" type="submit">Mark ready</button></form>
     {% endif %}
-    {% if owner and f.status == 'ready' %}
+    {% if guidance.can_submit %}
     <form method="post" action="/travel/f/{{ f.ref_code }}/submit"><button class="btn" type="submit">Mark submitted</button></form>
-    <p class="tv-hint">Tap this once you have handed the papers in. The calendar shows "Filed" only after this.</p>
+    <p class="tv-hint">Tap this once you have handed the papers in. The calendar shows "Filed" only after this; that label records your handover, not receipt, approval or payment. No papers or email are sent by this button.</p>
     {% endif %}
     <button class="btn ghost" type="button" onclick="window.print()">Print this page</button>
     <a class="btn ghost" href="/travel/f/{{ f.ref_code }}">Back to the checklist</a>

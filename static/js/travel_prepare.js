@@ -313,9 +313,9 @@
         more.push(rideButton('Add TNVS to the airport', i, { mode: 'tnvs', receipt: 'receipt', to: 'Airport' }));
         more.push(rideButton('Add TNVS from the airport', i, { mode: 'tnvs', receipt: 'receipt', from: 'Airport' }));
       }
-      var up = el('button', { type: 'button', 'class': 'btn ghost small', text: 'Move up', 'aria-label': 'Move entry ' + (i + 1) + ' up' });
-      var down = el('button', { type: 'button', 'class': 'btn ghost small', text: 'Move down', 'aria-label': 'Move entry ' + (i + 1) + ' down' });
-      var top = el('button', { type: 'button', 'class': 'btn ghost small', text: 'Move to top', 'aria-label': 'Move entry ' + (i + 1) + ' to the top' });
+      var up = el('button', { type: 'button', 'class': 'btn ghost small', text: 'Move up', 'aria-label': 'Move up: entry ' + (i + 1) });
+      var down = el('button', { type: 'button', 'class': 'btn ghost small', text: 'Move down', 'aria-label': 'Move down: entry ' + (i + 1) });
+      var top = el('button', { type: 'button', 'class': 'btn ghost small', text: 'Move to top', 'aria-label': 'Move to top: entry ' + (i + 1) });
       top.disabled = i === 0;
       top.addEventListener('click', function () { moveRow(i, 0); });
       up.disabled = i === 0; down.disabled = i === state.rows.length - 1;
@@ -679,17 +679,26 @@
   app.appendChild(signers);
 
   var go = el('button', { type: 'button', 'class': 'btn', text: 'Make the forms' });
-  if (app.getAttribute('data-has-relay') !== '1') go.disabled = true;
+  go.disabled = true; // First establish the current generation state.
+  var retryProgress = el('button', {type:'button', 'class':'btn ghost', text:'Check form progress', hidden:''});
   app.appendChild(el('div', { 'class': 'tv-card' }, [go, el('p', { 'class': 'tv-hint', text: 'Each form is saved as a Google Doc or Sheet in your Drive. You can open it from the list below and edit any part of it. If you change the entries here instead, use Make this form again next to that form. The earlier copy stays in your Drive. Rides that need a CENRR or an RER get one sheet each.' }), msgBox, docsList,
-    el('a', { href: data.filing_url, 'class': 'btn ghost', text: 'Continue to checklist' })]));
+    retryProgress, el('a', { href: data.filing_url, 'class': 'btn ghost', text: 'Continue to checklist' })]));
 
-  var timer = null;
+  var timer = null, progressTicket = 0, posting = false, uncertain = false, progressKnown = false;
+  function busy(value) {
+    go.disabled = value || app.getAttribute('data-has-relay') !== '1';
+    docsList.querySelectorAll('button').forEach(function (button) { button.disabled = go.disabled; });
+  }
+  function pauseProgress(message) {
+    progressKnown = false; busy(true); retryProgress.hidden = false;
+    msgBox.textContent = message + ' Your draft stays here. Check form progress before making another copy.';
+  }
   function drawDocs(items, busy) {
     docsList.textContent = '';
     items.forEach(function (it) {
       var li = el('li', { 'class': it.state }, [document.createTextNode(it.label + ' ')]);
       var more = it.more || [];
-      if (it.url) li.appendChild(el('a', { href: it.url, target: '_blank', rel: 'noopener', text: more.length ? 'Open sheet 1' : 'Open' }));
+      if (it.url) li.appendChild(el('a', { href: it.url, target: '_blank', rel: 'noopener', text: it.state === 'pending' || it.state === 'failed' ? 'Open earlier copy' : more.length ? 'Open sheet 1' : 'Open' }));
       more.forEach(function (u, k) {      // one sheet for each ride that needs a CENRR or an RER
         li.appendChild(document.createTextNode(' '));
         li.appendChild(el('a', { href: u, target: '_blank', rel: 'noopener', text: 'Open sheet ' + (k + 2) }));
@@ -707,17 +716,36 @@
     });
   }
   function poll() {
-    fetch(data.status_url, { credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (j) {
-      if (!j.ok) { msgBox.textContent = j.error || 'Could not check progress.'; return; }
+    clearTimeout(timer);
+    var ticket = ++progressTicket;
+    retryProgress.hidden = true;
+    fetch(data.status_url, { credentials: 'same-origin', cache:'no-store' }).then(function (r) {
+      if (!r.ok) throw new Error('Progress check failed (code ' + r.status + ').');
+      return r.json();
+    }).then(function (j) {
+      if (ticket !== progressTicket || posting) return;
+      if (!j.ok || !Array.isArray(j.items) || ['idle','running','done','failed'].indexOf(j.gen_state) < 0) {
+        pauseProgress('Could not confirm the saved form progress.'); return;
+      }
+      progressKnown = true;
       drawDocs(j.items, j.gen_state === 'running');
-      if (j.gen_state === 'running') { timer = setTimeout(poll, 2500); return; }
-      go.disabled = app.getAttribute('data-has-relay') !== '1';
+      busy(j.gen_state === 'running');
+      if (j.gen_state === 'running') { msgBox.textContent = 'Forms are being made. This does not mark the filing submitted.'; timer = setTimeout(poll, 2500); return; }
+      if (uncertain) {
+        msgBox.textContent = 'The make-forms response was not confirmed. The current saved form status is shown below; check the linked copies before choosing to make new ones. No extra copies were requested automatically.';
+        return;
+      }
       msgBox.textContent = j.gen_state === 'idle' ? '' : j.gen_state === 'done' ? 'Done. Open each form, check it, and sign where it says. Every form is a Google Doc or Sheet that you can open and edit, so change anything that is wrong before you sign. Then go back to the filing page.' : 'Some forms did not finish. Each one says why below. Press the button to try again. If it still fails, tell the Admin Unit and give them this reference: ' + data.ref + '.';
-    }).catch(function () { timer = setTimeout(poll, 5000); });
+    }).catch(function () {
+      if (ticket === progressTicket && !posting) pauseProgress('Could not check form progress.');
+    });
   }
+  retryProgress.addEventListener('click', poll);
   // `only` is the code of one form to make again; without it every form is made.
   function makeForms(only) {
-    go.disabled = true; msgBox.textContent = only ? 'Making that form again…' : 'Making the forms…';
+    if (posting || go.disabled || !progressKnown) return;
+    posting = true; uncertain = false; progressKnown = false; ++progressTicket; clearTimeout(timer);
+    busy(true); retryProgress.hidden = true; msgBox.textContent = only ? 'Making that form again…' : 'Making the forms…';
     // Keep hidden answers in the browser draft, but never put stale refund or
     // deviation details onto a form when they no longer apply to this claim.
     var texts = Object.assign({}, state.texts);
@@ -727,11 +755,21 @@
     }
     fetch(data.post_url, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ rows: state.rows, rates: state.rates, texts: texts, signatories: state.signatories, mc114_text: state.mc114_text, codes: only ? [only] : undefined }) })
-      .then(function (r) { return r.json().catch(function () { return { ok: false, error: 'The server could not make the forms (code ' + r.status + '). Reload the page and try again.' }; }); }).then(function (j) {
-        if (!j.ok) { go.disabled = false; msgBox.textContent = j.error || 'That did not work.'; return; }
+      .then(function (r) {
+        if (r.status >= 500) throw new Error('Unconfirmed form request');
+        return r.json();
+      }).then(function (j) {
+        posting = false;
+        if (!j.ok) {
+          pauseProgress((j.error || 'The request was not accepted.') + ' Check the saved status before continuing.'); return;
+        }
         if (j.flags) msgBox.textContent = 'Making the forms… ' + j.flags + ' item(s) go to the Admin Unit to verify.';
         poll();
-      }).catch(function () { go.disabled = false; msgBox.textContent = 'No connection to the server. Check your internet and try again.'; });
+      }).catch(function () {
+        posting = false; uncertain = true;
+        pauseProgress('The make-forms result was not confirmed. Check the current saved forms before trying again.');
+        poll(); // Only a GET; never replay a request that may have created files.
+      });
   }
   go.addEventListener('click', function () { makeForms(); });
 

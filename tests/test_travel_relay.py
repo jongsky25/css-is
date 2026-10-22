@@ -392,7 +392,7 @@ def test_a_link_is_not_replaced_when_the_uploaded_files_cannot_be_trashed(viewer
     up(viewer, ref)
     fake.trash_ok = False
     r = post(viewer, f"/travel/f/{ref}/item/dpo", drive_url="https://drive.google.com/file/d/ABC/view")
-    assert "err=" in r.headers["location"] and row(conn)["drive_source"] == "upload"
+    assert r.status_code == 400 and "could not be removed" in r.text and row(conn)["drive_source"] == "upload"
 
 
 def test_purge_trashes_uploaded_folders_and_waits_when_drive_will_not(viewer, conn, fake, on):

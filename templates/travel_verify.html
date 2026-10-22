@@ -1,24 +1,27 @@
 {% extends "dash_layout.html" %}
 {% from "_components.html" import page_header, flash, empty_state %}
 {% block title %}Verify travel flags{% endblock %}
-{% block head %}<link rel="stylesheet" href="/static/css/travel.css?v=20261014c">{% endblock %}
+{% block head %}<script src="/static/js/travel_guidance.js?v=7.89" defer></script><link rel="stylesheet" href="/static/css/travel.css?v=7.89">{% endblock %}
 {% block content %}
 {{ page_header("Verify travel flags", "Claims where a fare, route or role needs the Administrative Section's say-so. Record what was decided; nothing here pays or approves a claim.") }}
-{{ flash(msg=msg, err=err) }}
+{{ flash(msg=msg) }}
+{% if err %}<div class="tv-warn" id="travel-form-error" tabindex="-1" role="alert"><strong>Decision not saved.</strong> {{ err }}{% if verify_draft %}<p>Unsaved note: {{ verify_draft.note or '(empty)' }}</p>{% endif %}</div>{% endif %}
 
 <div class="tv-card">
   <h2>Waiting ({{ queue|length }})</h2>
   {% if not queue %}<p class="tv-hint">Nothing is waiting.</p>{% endif %}
   <ul class="tv-items">
   {% for g in queue %}
+    {% set draft = verify_draft if verify_draft and verify_draft.id == g.id else {} %}
     <li class="tv-item" id="flag-{{ g.id }}">
       <div class="tv-item-head"><strong>{{ travel_flag_label(g.kind, g.detail) }}</strong>
         <span class="badge amber">Open</span></div>
       <div class="tv-note">{{ g.detail }}</div>
       <div class="tv-note">{{ g.who }} · <a href="/travel/f/{{ g.ref_code }}">{{ g.ref_code }}</a> · {{ g.act_title }} · {{ g.act_start }}{% if g.act_end != g.act_start %} to {{ g.act_end }}{% endif %}</div>
+      <p class="tv-hint">Next: Administrative Section records its review of this flag; the traveller then checks the remaining requirements. This decision does not approve or pay the claim.</p>
       <form method="post" action="/travel/verify/{{ g.id }}" class="tv-form">
-        <label>Note (needed to reject) <input type="text" name="note" maxlength="500"></label>
-        {% if g.kind == 'participant_only' %}<div class="tv-checks"><label><input type="checkbox" name="supervisor_confirmed" value="1"> <span>The supervisor confirmed this travel was necessary</span></label></div>{% endif %}
+        <label for="flag-note-{{ g.id }}">Note (needed to reject)</label><input id="flag-note-{{ g.id }}" type="text" name="note" maxlength="500" value="{{ draft.get('note','') }}">
+        {% if g.kind == 'participant_only' %}<div class="tv-checks"><label><input type="checkbox" name="supervisor_confirmed" value="1" {{ 'checked' if draft.get('supervisor_confirmed') == '1' }}> <span>The supervisor confirmed this travel was necessary</span></label></div>{% endif %}
         <button class="btn small" type="submit" name="outcome" value="verified">Verified</button>
         <button class="btn danger small" type="submit" name="outcome" value="rejected">Reject</button>
       </form>

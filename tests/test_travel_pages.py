@@ -263,8 +263,8 @@ def fill(client, conn, ref):
 def test_links_must_be_google_drive(viewer, conn):
     ref = ref_of(blank(viewer))
     r = post(viewer, f"/travel/f/{ref}/item/dpo", drive_url="https://evil.example/x")
-    assert "Google%20Drive" in r.headers["location"]
-    assert post(viewer, f"/travel/f/{ref}/item/dpo", drive_url="javascript:alert(1)").status_code == 303
+    assert r.status_code == 400 and "Google Drive" in r.text and 'value="https://evil.example/x"' in r.text
+    assert post(viewer, f"/travel/f/{ref}/item/dpo", drive_url="javascript:alert(1)").status_code == 400
     f = travel.get_by_ref(conn, ref)
     assert next(i for i in travel.view_items(conn, f) if i["code"] == "dpo")["drive_url"] is None
     post(viewer, f"/travel/f/{ref}/item/dpo", drive_url=LINK)
@@ -278,7 +278,8 @@ def test_unknown_rows_and_wrong_kinds_of_input_are_refused(viewer, conn):
                        (f"/travel/f/{ref}/item/ors", {"drive_url": LINK}),           # FMIS rows take a reference
                        (f"/travel/f/{ref}/item/dpo", {"fmis_ref": "x"}),
                        (f"/travel/f/{ref}/item/travel_report", {"na": "1"})):          # a generated form cannot be N/A
-        assert "err=" in post(viewer, path, **data).headers["location"], path
+        response = post(viewer, path, **data)
+        assert response.status_code == 400 and "Not saved." in response.text, path
 
 
 def test_ready_needs_everything_then_submit_then_calendar_label(viewer, conn):
@@ -296,7 +297,7 @@ def test_ready_needs_everything_then_submit_then_calendar_label(viewer, conn):
     assert f["status"] == "submitted" and f["submitted_at"]
     assert travel.filing_summaries(conn, f["user_id"], [], [])  == {}
     # no further edits, no withdrawal after submission
-    assert "err=" in post(viewer, f"/travel/f/{ref}/item/dpo", drive_url=LINK).headers["location"]
+    assert post(viewer, f"/travel/f/{ref}/item/dpo", drive_url=LINK).status_code == 409
     assert "err=" in post(viewer, f"/travel/f/{ref}/withdraw").headers["location"]
     acts = {r_[0] for r_ in conn.execute("SELECT action FROM audit_log")}
     assert {"travel_ready", "travel_submit"} <= acts
@@ -500,9 +501,12 @@ def test_next_action_follows_missing_documents_then_review(viewer, conn):
     ref = ref_of(blank(viewer, kind='reimbursement'))
     url = f'/travel/f/{ref}'
     page = viewer.get(url).text
-    assert 'href="#item-dpo">Add Department Personnel Order (DPO)</a>' in page
+    assert f'href="{url}#item-dpo">Add Department Personnel Order (DPO)</a>' in page
     assert 'href="' + url + '/ready">Review and mark ready</a>' not in page
     post(viewer, url + '/item/dpo', drive_url='https://drive.google.com/file/d/dpo/view')
+    page = viewer.get(url).text
+    assert f'href="{url}#item-bto_report">Add Back-to-office report</a>' in page
+    post(viewer, url + '/item/bto_report', drive_url='https://drive.google.com/file/d/report/view')
     page = viewer.get(url).text
     assert f'href="{url}/prepare">Prepare the missing forms</a>' in page
     # Completed attachments are collapsed; the missing forms stay expanded.
