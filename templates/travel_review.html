@@ -1,0 +1,76 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header, flash %}
+{% block title %}Review {{ f.ref_code }}{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/travel.css?v=7.89">{% endblock %}
+{% block content %}
+{{ page_header("Review the papers · " ~ f.ref_code, f.act_title) }}
+{{ flash(msg=msg) }}
+{% if err %}<div class="tv-warn" id="travel-form-error" tabindex="-1" role="alert"><strong>Not saved.</strong> {{ err }}</div>{% endif %}
+
+<div class="tv-card">
+  <p class="tv-note">{{ traveller }} · {{ f.act_start }}{% if f.act_end != f.act_start %} to {{ f.act_end }}{% endif %}{% if f.act_venue %} · {{ f.act_venue }}{% endif %} · Round {{ f.review_round }} · <span class="badge amber">{{ state_label }}</span></p>
+  <p class="tv-hint">Open each generated form and uploaded document and check that it is complete and correct. Note what is missing or wrong; the traveller fixes it and asks again. Approve only when everything is in order. This does not approve or pay the claim.</p>
+</div>
+
+<div class="tv-card">
+  <h2>Documents</h2>
+  <ul class="tv-items">
+  {% for it in items %}
+    {% set link = it.doc_url if it.handling == 'generate' else it.drive_url %}
+    <li class="tv-item">
+      <div class="tv-item-head"><strong>{{ it.label }}</strong>
+        <span>
+        {% if it.handling == 'fmis' %}<span class="badge grey">In FMIS</span>
+        {% elif link %}<a class="btn ghost small" href="{{ link }}" target="_blank" rel="noopener">Open</a>
+        {% elif it.handling == 'carry' and it.note %}<span class="badge green">Note: {{ it.note }}</span>
+        {% else %}<span class="badge amber">○ Missing</span>{% endif %}
+        </span></div>
+    </li>
+  {% endfor %}
+  </ul>
+</div>
+
+{% if waiting %}
+<div class="tv-card" id="notes">
+  <h2>Your notes ({{ drafts|length }})</h2>
+  {% if not drafts %}<p class="tv-hint">No notes yet. Add one for each missing or incorrect item, or approve below.</p>{% endif %}
+  <ul class="tv-missing">
+  {% for n in drafts %}
+    <li><span class="badge amber">{{ n.kind|capitalize }}</span> {% if n.doc %}<strong>{{ n.doc }}:</strong> {% endif %}{{ n.note }}
+      <form method="post" action="/travel/review/{{ f.ref_code }}/note/{{ n.id }}/delete" style="display:inline"><button class="btn ghost small" type="submit">Remove</button></form></li>
+  {% endfor %}
+  </ul>
+  <form method="post" action="/travel/review/{{ f.ref_code }}/note" class="tv-form">
+    <label for="rn-item">Document</label>
+    <select id="rn-item" name="item_code">
+      <option value="">The claim in general</option>
+      {% for it in items %}<option value="{{ it.code }}" {{ 'selected' if draft.get('item_code') == it.code }}>{{ it.label }}</option>{% endfor %}
+    </select>
+    <label for="rn-kind">What is wrong</label>
+    <select id="rn-kind" name="kind">
+      {% for k, label in kinds %}<option value="{{ k }}" {{ 'selected' if draft.get('kind') == k }}>{{ label }}</option>{% endfor %}
+    </select>
+    <label for="rn-note">Note for the traveller</label>
+    <textarea id="rn-note" name="note" rows="3" maxlength="600" required>{{ draft.get('note', '') }}</textarea>
+    <button class="btn ghost" type="submit">Add the note</button>
+  </form>
+  <div class="tv-actions">
+    <form method="post" action="/travel/review/{{ f.ref_code }}/feedback"><button class="btn" type="submit" {{ 'disabled' if not drafts }}>Send notes to the traveller</button></form>
+    <form method="post" action="/travel/review/{{ f.ref_code }}/approve"><button class="btn" type="submit" {{ 'disabled' if drafts }}>Approve the papers</button></form>
+  </div>
+  <p class="tv-hint">Sending emails the traveller and moves the claim back to them. Approving emails the traveller and lets them mark the claim ready.</p>
+</div>
+{% else %}
+<div class="tv-card"><p class="tv-hint">This claim is not waiting for your review ({{ state_label|lower }}).</p>
+  <a class="btn ghost small" href="/travel/review">Back to the queue</a></div>
+{% endif %}
+
+{% if sent or resolved %}
+<div class="tv-card"><h2>Earlier rounds</h2>
+  <ul class="tv-missing">
+  {% for n in sent + resolved %}
+    <li><span class="badge {{ 'green' if n.state == 'resolved' else 'amber' }}">{{ 'Fixed' if n.state == 'resolved' else 'Sent' }}</span> {{ n.kind|capitalize }}{% if n.doc %} · {{ n.doc }}{% endif %}: {{ n.note }}</li>
+  {% endfor %}
+  </ul></div>
+{% endif %}
+{% endblock %}

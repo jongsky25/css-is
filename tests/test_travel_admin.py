@@ -259,11 +259,15 @@ EXPECTED_COLUMNS = {
     "travel_filing": {"id", "ref_code", "user_id", "kind", "source_kind", "entry_id", "event_id", "act_title", "act_start",
                       "act_end", "act_venue", "dpo_no", "dpo_date", "answers_json", "advance_amount", "ca_filing_id",
                       "mc114_format", "deadline_date", "deadline_rule", "status", "gen_state", "opened_at", "ready_at",
-                      "submitted_at", "withdrawn_at", "created_by", "updated_at", "purged_at"},
+                      "submitted_at", "withdrawn_at", "created_by", "updated_at", "purged_at",
+                      "review_state", "reviewer_id", "review_round", "review_requested_at", "review_decided_at"},   # admin review (#174)
     "travel_item": {"filing_id", "item_code", "handling", "state", "drive_url", "drive_file_id", "doc_url", "doc_state", "drive_source",
                     "fmis_ref", "note", "updated_at"},
     "travel_flag": {"id", "filing_id", "kind", "sig", "detail", "state", "supervisor_confirmed", "note", "decided_by",
                     "decided_at", "created_at"},
+    # the reviewer's own notes about missing or wrong documents, not what the traveller entered on a form
+    "travel_review_note": {"id", "filing_id", "round", "item_code", "kind", "note", "state", "created_by", "created_at",
+                           "resolved_at"},
 }
 
 
@@ -274,7 +278,8 @@ def test_no_table_can_quietly_start_storing_form_contents(conn):
 
 
 NOT_AUDITED = {"travel_answers", "travel_item", "travel_link_check", "admin_travel_ping",
-               "travel_rates_calc", "travel_scan_document"}      # drafts and read-only checks (the calculator and the ticket reader store nothing)
+               "travel_rates_calc", "travel_scan_document",
+               "travel_review_note", "travel_review_note_delete"}      # drafts and read-only checks (the calculator and the ticket reader store nothing)
 
 
 def test_every_travel_post_is_audited_unless_it_is_a_draft_edit():

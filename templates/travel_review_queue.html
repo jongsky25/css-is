@@ -1,0 +1,23 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header, flash %}
+{% block title %}Review travel papers{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/travel.css?v=7.89">{% endblock %}
+{% block content %}
+{{ page_header("Review travel papers", "Travellers who chose you to check their forms and attachments before paper submission. Approving records that the papers are complete; it does not approve or pay the claim.") }}
+{{ flash(msg=msg) }}
+{% if err %}<div class="tv-warn" role="alert">{{ err }}</div>{% endif %}
+<div class="tv-card">
+  <h2>Waiting for you ({{ queue|length }})</h2>
+  {% if not queue %}<p class="tv-hint">Nothing is waiting for your review.</p>{% endif %}
+  <ul class="tv-items">
+  {% for q in queue %}
+    <li class="tv-item">
+      <div class="tv-item-head"><strong>{{ q.act_title }}</strong>
+        <span class="badge amber">{{ 'Asked again' if q.review_round > 1 else 'New' }}</span></div>
+      <div class="tv-note">{{ q.who }} · {{ q.ref_code }} · {{ q.act_start }}{% if q.act_end != q.act_start %} to {{ q.act_end }}{% endif %}</div>
+      <a class="btn small" href="/travel/review/{{ q.ref_code }}">Review the papers</a>
+    </li>
+  {% endfor %}
+  </ul>
+</div>
+{% endblock %}

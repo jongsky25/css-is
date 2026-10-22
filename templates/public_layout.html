@@ -6,7 +6,7 @@
 <title>{% block title %}Office Connect{% endblock %}</title>
 {# Set theme + text size before first paint so the choice never flashes. #}
 <script>(function(){try{var d=document.documentElement;var t=localStorage.getItem("theme");if(t!=="dark"&&t!=="light"&&t!=="contrast"){t=window.matchMedia&&window.matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light";}d.setAttribute("data-theme",t);var s=localStorage.getItem("textscale");if(s!=="sm"&&s!=="lg"&&s!=="md"){s="md";}d.setAttribute("data-textscale",s);var dn=localStorage.getItem("density");if(dn!=="compact"&&dn!=="cozy"){dn="cozy";}d.setAttribute("data-density",dn);var ac=localStorage.getItem("accent");if(["blue","teal","violet","emerald","rose","amber"].indexOf(ac)<0){ac="blue";}d.setAttribute("data-accent",ac);}catch(e){}})();</script>
-<link rel="stylesheet" href="/static/css/app.css?v=7.95">
+<link rel="stylesheet" href="/static/css/app.css?v=7.96">
 <script src="/static/js/accessibility.js?v=7.83" defer></script>
 {# Installable PWA: manifest start_url points back to THIS page so an installed
    survey link reopens the same survey. theme/icon hints for Android + iOS. #}
@@ -22,9 +22,9 @@
 <script>if("serviceWorker" in navigator){addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){});});}</script>
 {% block head %}{% endblock %}
 {% if survey_draft_key is defined or confirmed_draft_key is defined or combined_count is defined %}
-<link rel="stylesheet" href="/static/css/survey.css?v=7.95">
+<link rel="stylesheet" href="/static/css/survey.css?v=7.96">
 {% endif %}
-{% if survey_draft_key is defined %}<script src="/static/js/survey_guidance.js?v=7.95" defer></script>{% endif %}
+{% if survey_draft_key is defined %}<script src="/static/js/survey_guidance.js?v=7.96" defer></script>{% endif %}
 </head>
 <body>
 {% from "_components.html" import notif_bell %}
@@ -113,6 +113,6 @@
 {% endfor %}
 };</script>
 {% endif %}
-<script src="/static/js/app.js?v=7.95" defer></script>
+<script src="/static/js/app.js?v=7.96" defer></script>
 </body>
 </html>

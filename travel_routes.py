@@ -19,6 +19,7 @@ from starlette.concurrency import run_in_threadpool
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 
 import gdocs_relay
+import mailer
 import travel_docs
 import travel_rates
 import ratelimit
@@ -26,6 +27,7 @@ import rooms
 import storage as st
 import travel
 import travel_guidance
+import travel_review as review
 import travel_submissions as submissions
 import travel_checklist as tc
 import travel_rules as tr
@@ -39,7 +41,7 @@ _OPERATION_PATH = {'parameters': [{'name': 'operation_id', 'in': 'path', 'requir
                                   'schema': {'type': 'string', 'format': 'uuid'}}]}
 
 
-def make_router(templates, get_conn, today_local, *, audit, base_url):
+def make_router(templates, get_conn, today_local, *, audit, base_url, notify=None):
     router = APIRouter()
     templates.env.globals["travel_extra_docs"] = travel.extra_doc_urls
     templates.env.globals["travel_kind_labels"] = travel.KIND_LABELS
@@ -76,6 +78,18 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
         q = f"?ok={quote(msg[:200])}" if msg else (f"?err={quote(err[:200])}" if err else "")
         base, hash_, fragment = path.partition("#")          # the query goes before the #fragment, or it is never sent
         return RedirectResponse(base + q + hash_ + fragment, status_code=303)
+
+    def _person(conn, user_id):
+        """(login email, display name) of an account, or ('', '')."""
+        u = st.get_admin_user_by_id(conn, user_id) if user_id else None
+        return ((u or {}).get("username") or "", (st._account_display_name(conn, user_id) if u else "") or "")
+
+    def _mail(conn, to, message, feature):
+        """Best-effort email from the app's notify funnel (a no-op in a standalone router or when `to` is empty)."""
+        if notify and to:
+            subject, body, html = message
+            notify(conn, to, subject, body, html=html, feature=feature)
+
 
     def _decorate(f, today):
         words, tone = travel.deadline_words(f, today) if f["status"] in ("open", "ready") else (None, None)
@@ -361,6 +375,19 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
             return None, _forbidden(request, "changing someone else's travel filing")
         return filing, None
 
+    def _review_context(conn, filing, items, missing, owner):
+        """What the review panel on the filing page shows (spot feedback #174)."""
+        state = filing.get("review_state") or ""
+        _u, reviewer_name = _person(conn, filing.get("reviewer_id"))
+        labels = {it["code"]: it["label"] for it in items}
+        notes = [{**n, "doc": labels.get(n["item_code"], "")} for n in review.notes_of(conn, filing["id"], ("sent", "resolved"))]
+        return {"required": review.required(conn), "state": state, "label": review.LABELS.get(state, ""),
+                "reviewer_name": reviewer_name,
+                "notes": [n for n in notes if n["state"] == "sent"], "past": [n for n in notes if n["state"] == "resolved"],
+                "reviewers": review.reviewers(conn, exclude_user_id=filing["user_id"]) if owner else [],
+                "can_ask": bool(owner and filing["status"] == "open" and not missing and state in ("", "changes")),
+                "show": filing["status"] == "open" or state == "approved"}
+
     def _detail(request, conn, filing, *, status_code=200, error=None, draft_answers=None, draft_item=None):
         q = dict(request.query_params)
         today = today_local()
@@ -371,8 +398,10 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
         missing = tr.readiness(filing, items, flags)
         ans = travel.answers_of(filing)
         owner = travel.is_owner(request.state.user, filing)
+        rv = _review_context(conn, filing, items, missing, owner)
         guidance = travel_guidance.filing(filing, items, flags, owner=owner,
-            can_verify=rooms.is_room_admin(conn, request.state.user))
+            can_verify=rooms.is_room_admin(conn, request.state.user),
+            review_required=rv["required"], reviewer=rv["reviewer_name"])
         answer_values = {**ans, "dpo_no":filing["dpo_no"] or "", "dpo_date":filing["dpo_date"] or "",
                          "mc114_format":filing["mc114_format"], "advance_amount":filing["advance_amount"] or ""}
         if draft_answers is not None:
@@ -384,7 +413,7 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
         return templates.TemplateResponse(request, "travel_filing.html", {
             "nav_active": "travel_mine", "tab": "mine", "missing": False, "f": _decorate(filing, today),
             "items": items, "flags": flags, "missing_list": missing, "ans": ans, "owner": owner,
-            "guidance":guidance, "answer_values":answer_values, "draft_answers":draft_answers, "draft_item":draft_item,
+            "guidance":guidance, "review":rv, "answer_values":answer_values, "draft_answers":draft_answers, "draft_item":draft_item,
             "unmatched_item_draft":bool(draft_item and not any(it["code"] == draft_item["code"] for it in items)),
             "draftable": travel.forms_ready_to_draft(items) if filing["status"] in ("open", "ready") and filing["gen_state"] != "running" else [],
             "questions": questions, "roles": tc.ROLES,
@@ -1021,6 +1050,168 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
         finally:
             conn.close()
 
+    # ------------------------------------------------ admin review of the papers (spot feedback #174) ---
+
+    @router.post("/travel/f/{ref}/review/request")
+    async def travel_review_request(request: Request, ref: str):
+        if not _same_origin(request):
+            return _forbidden(request, "this request (it came from another site)")
+        f = await _posted(request)
+        conn = get_conn()
+        try:
+            filing, bad = _load(request, conn, ref, owner=True)
+            if bad:
+                return bad
+            again = (filing.get("review_state") or "") == "changes"
+            try:
+                done = review.request_review(conn, filing, f.get("reviewer_id"), request.state.user.get("username") or "")
+            except travel.TravelError as e:
+                return _go(f"/travel/f/{ref}#travel-review", err=str(e))
+            to, rname = _person(conn, done["reviewer_id"])
+            _u, tname = _person(conn, done["user_id"])
+            _mail(conn, to, mailer.travel_review_request_message(
+                rname, tname or request.state.user.get("username") or "", done["ref_code"], done["act_title"],
+                f"{base_url(request)}/travel/review/{done['ref_code']}", again=again), "travel_review_request")
+            audit(request, conn, "travel_review_request", target_type="travel_filing", target_id=done["id"],
+                  summary=f"asked {rname or to} to review {done['ref_code']}")
+            return _go(f"/travel/f/{ref}#travel-review", msg=f"Sent to {rname or to} to check. You will get an email with their answer.")
+        finally:
+            conn.close()
+
+    def _reviewer_load(request, conn, ref):
+        """(filing, None) for the chosen reviewer, else (None, response)."""
+        bad = _admin_unit(request, conn)
+        if bad:
+            return None, bad
+        filing = travel.get_by_ref(conn, ref) if _REF.match(ref) else None
+        if not filing:
+            return None, _missing(request)
+        if not review.can_review(conn, request.state.user, filing):
+            return None, _forbidden(request, "reviewing this claim (the traveller chose another reviewer)")
+        return filing, None
+
+    @router.get("/travel/review", response_class=HTMLResponse)
+    def travel_review_queue(request: Request):
+        conn = get_conn()
+        try:
+            bad = _admin_unit(request, conn)
+            if bad:
+                return bad
+            q = dict(request.query_params)
+            return templates.TemplateResponse(request, "travel_review_queue.html", {
+                "nav_active": "travel_review", "queue": review.queue(conn, request.state.user["id"]),
+                "msg": (q.get("ok") or "")[:200] or None, "err": (q.get("err") or "")[:200] or None})
+        finally:
+            conn.close()
+
+    def _review_page(request, conn, filing, *, error=None, draft=None, status_code=200):
+        q = dict(request.query_params)
+        items = travel.view_items(conn, filing)
+        labels = {it["code"]: it["label"] for it in items}
+        notes = [{**n, "doc": labels.get(n["item_code"], "")} for n in review.notes_of(conn, filing["id"])]
+        _u, tname = _person(conn, filing["user_id"])
+        return templates.TemplateResponse(request, "travel_review.html", {
+            "nav_active": "travel_review", "f": filing, "items": [i for i in items if i["requirement"] == "required" and i["state"] != "na"],
+            "flags": travel.flags_of(conn, filing["id"]), "traveller": tname or _u,
+            "drafts": [n for n in notes if n["state"] == "draft"], "sent": [n for n in notes if n["state"] == "sent"],
+            "resolved": [n for n in notes if n["state"] == "resolved"], "kinds": review.NOTE_KINDS,
+            "waiting": filing["review_state"] == "requested", "state_label": review.LABELS.get(filing["review_state"], ""),
+            "msg": (q.get("ok") or "")[:200] or None, "err": error or (q.get("err") or "")[:200] or None,
+            "draft": draft or {}}, status_code=status_code)
+
+    @router.get("/travel/review/{ref}", response_class=HTMLResponse)
+    def travel_review_page(request: Request, ref: str):
+        conn = get_conn()
+        try:
+            filing, bad = _reviewer_load(request, conn, ref)
+            return bad or _review_page(request, conn, filing)
+        finally:
+            conn.close()
+
+    @router.post("/travel/review/{ref}/note")
+    async def travel_review_note(request: Request, ref: str):
+        if not _same_origin(request):
+            return _forbidden(request, "this request (it came from another site)")
+        f = await _posted(request)
+        conn = get_conn()
+        try:
+            filing, bad = _reviewer_load(request, conn, ref)
+            if bad:
+                return bad
+            try:
+                review.add_note(conn, filing, f.get("item_code"), f.get("kind"), f.get("note"),
+                                request.state.user.get("username") or "")
+            except travel.TravelError as e:
+                return _review_page(request, conn, filing, error=str(e), draft=f, status_code=400)
+            return _go(f"/travel/review/{ref}#notes", msg="Note added. The traveller sees it when you send your notes.")
+        finally:
+            conn.close()
+
+    @router.post("/travel/review/{ref}/note/{note_id}/delete")
+    async def travel_review_note_delete(request: Request, ref: str, note_id: int):
+        if not _same_origin(request):
+            return _forbidden(request, "this request (it came from another site)")
+        conn = get_conn()
+        try:
+            filing, bad = _reviewer_load(request, conn, ref)
+            if bad:
+                return bad
+            try:
+                review.delete_note(conn, filing, note_id)
+            except travel.TravelError as e:
+                return _go(f"/travel/review/{ref}", err=str(e))
+            return _go(f"/travel/review/{ref}#notes", msg="Note removed.")
+        finally:
+            conn.close()
+
+    def _tell_traveller(request, conn, done, approved, notes):
+        to, tname = _person(conn, done["user_id"])
+        labels = {it["code"]: it["label"] for it in travel.view_items(conn, done)}
+        lines = [(labels.get(n["item_code"], ""), n["kind"], n["note"]) for n in notes]
+        _mail(conn, to, mailer.travel_review_result_message(
+            tname, done["ref_code"], done["act_title"], approved, lines, f"{base_url(request)}/travel/f/{done['ref_code']}"),
+            "travel_review_result")
+
+    @router.post("/travel/review/{ref}/feedback")
+    async def travel_review_feedback(request: Request, ref: str):
+        if not _same_origin(request):
+            return _forbidden(request, "this request (it came from another site)")
+        conn = get_conn()
+        try:
+            filing, bad = _reviewer_load(request, conn, ref)
+            if bad:
+                return bad
+            try:
+                done, notes = review.send_feedback(conn, filing, request.state.user.get("username") or "")
+            except travel.TravelError as e:
+                return _review_page(request, conn, filing, error=str(e), status_code=400)
+            _tell_traveller(request, conn, done, False, notes)
+            audit(request, conn, "travel_review_feedback", target_type="travel_filing", target_id=done["id"],
+                  summary=f"sent {len(notes)} note(s) on {done['ref_code']} back to the traveller")
+            return _go("/travel/review", msg="Notes sent. The traveller was emailed and will ask again once they are fixed.")
+        finally:
+            conn.close()
+
+    @router.post("/travel/review/{ref}/approve")
+    async def travel_review_approve(request: Request, ref: str):
+        if not _same_origin(request):
+            return _forbidden(request, "this request (it came from another site)")
+        conn = get_conn()
+        try:
+            filing, bad = _reviewer_load(request, conn, ref)
+            if bad:
+                return bad
+            try:
+                done = review.approve(conn, filing, request.state.user.get("username") or "")
+            except travel.TravelError as e:
+                return _review_page(request, conn, filing, error=str(e), status_code=400)
+            _tell_traveller(request, conn, done, True, [])
+            audit(request, conn, "travel_review_approve", target_type="travel_filing", target_id=done["id"],
+                  summary=f"approved the papers of {done['ref_code']}")
+            return _go("/travel/review", msg="Approved. The traveller can now mark the claim ready. This does not approve or pay the claim.")
+        finally:
+            conn.close()
+
     # ------------------------------------------------------- ready / submitted ---
 
     @router.get("/travel/f/{ref}/ready", response_class=HTMLResponse)
@@ -1036,8 +1227,10 @@ def make_router(templates, get_conn, today_local, *, audit, base_url):
             return templates.TemplateResponse(request, "travel_ready.html", {
                 "nav_active": "travel_mine", "tab": "mine", "f": _decorate(filing, today_local()),
                 "printed": printed, "missing_list": tr.readiness(filing, items, flags),
-                "guidance":travel_guidance.filing(filing, items, flags, owner=travel.is_owner(request.state.user, filing)),
+                "guidance":travel_guidance.filing(filing, items, flags, owner=travel.is_owner(request.state.user, filing),
+                    review_required=review.required(conn), reviewer=_person(conn, filing.get("reviewer_id"))[1]),
                 "owner": travel.is_owner(request.state.user, filing),
+                "review_hold": review.gate(conn, filing) if filing["status"] == "open" else None,
                 "msg": (request.query_params.get("ok") or "")[:200] or None,
                 "err": (request.query_params.get("err") or "")[:200] or None})
         finally:
