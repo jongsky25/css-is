@@ -6,8 +6,9 @@ SINGLE SOURCE OF TRUTH for the version number shown on the sign-in screen.
 HOW TO BUMP (do this on EVERY push that changes what people see/use)
 ────────────────────────────────────────────────────────────────────────
 1. Raise APP_VERSION by one step:
-     • small change / fix .......... bump the minor:  1.1 → 1.2 → 1.3 …
-     • big release / milestone ..... bump the major:  1.9 → 2.0
+     • always use exactly two digits after the decimal: 8.00 → 8.01 → 8.02 …
+     • after .99, increase the major and restart at .00: 8.99 → 9.00
+     • historical entries retain the version actually released
 2. Prepend a NEW entry to the TOP of CHANGELOG (newest first) describing
    the change in LAYMAN terms — no jargon, written for the people who use
    the system, not for developers. Keep each bullet to one plain sentence.
@@ -17,12 +18,12 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "7.101"
+APP_VERSION = "8.00"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
-        "version": "7.101",
+        "version": "8.00",
         "date": "October 22, 2026",
         "summary": "Connected tools have a tested way to send signed change notices and recover failed deliveries.",
         "changes": [

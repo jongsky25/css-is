@@ -1,4 +1,4 @@
-# Signed HTTPS adapter — A21 / 7.101
+# Signed HTTPS adapter — A21 / 8.00
 
 This independent Python 3.11+ adapter turns the [resumable change feed](INTEGRATION_CHANGES.md) into signed HTTPS deliveries. It uses the published API and an existing [delegated read credential](INTEGRATION_ACCESS.md). Run it on the integration owner's approved runner or scheduler. This release does not install an outbound worker on the Office Connect host or automatically connect a provider account.
 
@@ -105,7 +105,7 @@ Keep signing keys separate from source credentials and database backups; neither
 
 ## Rollout and rollback
 
-Release **7.101** follows freshly checked main **7.100**. The API contract remains **1.4.0** and the application database schema is unchanged. The adapter and receiver helper use the standard library. No provider credentials are provisioned or live webhooks sent by this release.
+Release **8.00** follows freshly checked main **7.100**. The API contract remains **1.4.0** and the application database schema is unchanged. The adapter and receiver helper use the standard library. No provider credentials are provisioned or live webhooks sent by this release.
 
 Validate the selected receiver in its sandbox using the local signature/receipt contract before connecting real notices. Check success, response loss, duplicates, bad signatures, access revocation, expiry, recovery and receiver retention with its owner. Production business workflow observations remain deferred.
 

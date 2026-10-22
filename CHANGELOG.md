@@ -1,4 +1,6 @@
-## 7.101 — October 22, 2026
+## 8.00 — October 22, 2026
+
+- Restore exactly two digits after the decimal for new application releases: 8.00, 8.01 … 8.99, 9.00. Enforce that format in the release gate while retaining recorded historical versions and allowing comparison against the existing 7.100 release.
 
 - Continue A21 with an independent standard-library change-feed to HTTPS webhook adapter. It runs on the integration owner's runner, uses an existing delegated read credential and adds no application-host worker, upstream writes or new dependencies.
 - Commit validated minimal notices and progress together in a private local SQLite store; retain stable delivery IDs, attempt history, bounded retries, lease recovery, delivery status and explicit replay of failed/blocked deliveries. Honor bounded Retry-After and refuse redirects.
