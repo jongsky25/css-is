@@ -1,3 +1,8 @@
+## 7.95 — October 22, 2026
+
+- Appendix B's "Evidence of Travel attached hereto" starts with the DPO (number and date, blank when not yet known), Appendix A and B, the Certificate of Appearance (the back-to-office report when that replaces it) and the Post Travel Report; uploaded or generated extras follow, then an optional "Other attachments" box on the prepare page (spot feedback #173).
+- No schema migration or dependency changes.
+
 ## 7.94 — October 22, 2026
 
 - Travel prepare page: designation and purpose are required (marked *) before the forms are made (spot feedback #172).
