@@ -1,6 +1,6 @@
-# AI assistance evaluation — A22 / 8.21
+# AI assistance evaluation — A22 / 8.22
 
-Evaluation suite **1.10.0** contains **389 named scenarios**: 38 answer-route cases from 8.01, 60 MRR/CO-CSM report-draft cases from 8.04, 48 feedback-triage cases from 8.07, 49 verbatim comment cases from 8.10, 32 participant-message cases from 8.12, 30 UX Insights analysis cases from 8.13, 32 directory duplicate-suggestion cases from 8.14, 31 landing-assistant action cases from 8.15, 19 direct travel scan cases from 8.17, 27 travel checklist upload cases from 8.19, and 23 calendar invitation upload cases from 8.21. It turns selected safeguards into a reproducible, versioned release gate and produces a small report by category and case. The retained suite ID `existing-ai-answers` is a historical identifier; all eleven surfaces must pass.
+Evaluation suite **1.11.0** contains **423 named scenarios**: 38 answer-route cases from 8.01, 60 MRR/CO-CSM report-draft cases from 8.04, 48 feedback-triage cases from 8.07, 49 verbatim comment cases from 8.10, 32 participant-message cases from 8.12, 30 UX Insights analysis cases from 8.13, 32 directory duplicate-suggestion cases from 8.14, 31 landing-assistant action cases from 8.15, 19 direct travel scan cases from 8.17, 27 travel checklist upload cases from 8.19, 23 calendar invitation upload cases from 8.21, and 34 landing-assistant help/navigation cases from 8.22. It turns selected safeguards into a reproducible, versioned release gate and produces a small report by category and case. The retained suite ID `existing-ai-answers` is a historical identifier; all twelve surfaces must pass.
 
 ## What it checks
 
@@ -153,6 +153,12 @@ Twenty-three `invitation_upload` scenarios call the signed-in calendar upload ro
 
 Provider readings require complete typed fields and bounded plain text. Missing or extra fields, markup, links, contact details and oversized text are rejected. A bad AI reading does not prevent a valid upload. If AI is disabled while a file is processing, the file can still be kept but no reading is offered. Suggestions fill the form only after the person clicks “Use these”; saving remains a separate action. The provider sees the uploaded image or PDF, which may contain personal information. Interaction logs retain outcome/timing metadata without prompt, response or provider error bodies. These offline checks do not establish real-model reading accuracy or production latency.
 
+## Landing assistant help and navigation: current links and access
+
+Thirty-four `help_navigation` scenarios call the signed-in assistant route using fake Gemini HTTP. They cover registered-session loss, role and access changes, disabled switches, changed page/guide catalogs, malformed or unavailable keys, low confidence, timeout/503 replies and budget refusal. The model chooses only a server catalog key; labels, guide text and URLs come from the application. Before a valid suggestion returns, the route checks the current account, role, access flags, AI switches and the same offered catalog under a short write lock. A stale or invalid result falls back to normal search.
+
+These cases verify application routing and current permission checks with simulated model selections. They do not establish that a real model picks the most useful page or guide. The provider receives the typed request and offered catalog, which may contain the user's own text; no live provider is called by the suite.
+
 ## Gates and evidence lifecycle
 
 [scripts/ai_evaluation.py](../scripts/ai_evaluation.py) is a pytest plugin and command-line gate. Default pytest configuration loads it; recording is enabled only when `--ai-evaluation-report=PATH` is supplied. Release CI supplies that option to the existing full normal/shuffled test jobs, then validates the resulting report before the final required-check gate. Reports are uploaded in the existing test artifact bundles with **14-day retention**.
@@ -176,7 +182,7 @@ Before broader AI capability or live-model comparisons, the owner must define re
 
 ## Rollout and repair
 
-Release **8.19** follows the merged 8.18 main branch. No schema migration, new feature flag, dependency or production provider configuration is required. The application and service-worker cache versions use exactly two digits after the decimal.
+Release **8.22** follows the merged 8.21 main branch. No schema migration, new feature flag, dependency or production provider configuration is required. The application and service-worker cache versions use exactly two digits after the decimal.
 
 Existing AI/human comment tags are not rewritten. UX analysis remains a review aid and displays its evidence window and sample status. Production workflow observations and real-model quality remain deferred. Both normal and shuffled full CI must pass for the final PR head, including all 366 scenarios and the minimized report gate.
 

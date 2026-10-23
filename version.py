@@ -18,10 +18,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "8.22"
+APP_VERSION = "8.23"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "8.23",
+        "date": "October 23, 2026",
+        "summary": "The assistant checks your current access before suggesting a page or guide.",
+        "changes": [
+            "A page or help suggestion stops if your sign-in, access or available pages change while AI is working.",
+            "Invalid AI selections are set aside, so you can use the normal search instead.",
+            "Release checks now cover these suggestions and provider failures."
+        ]
+    },
     {
         "version": "8.22",
         "date": "October 23, 2026",
