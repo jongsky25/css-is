@@ -554,6 +554,12 @@ def _log_interaction(conn, *, user, feature, mode, outcome, result=None, error=N
                       provider="gemini", question=None):
     user_id = user.get("id") if user else None
     role = user.get("role") if user else None
+    if feature == "report_draft":
+        # Drafts retain outcome/token/timing metadata only, even when content
+        # logging is enabled for other features. Rejecting provider prose must
+        # not copy it (or provider error bodies) into the interaction log.
+        log_prompts = False
+        error = "report_draft_provider_failure" if error else None
     # The clean, normalized user question (for the learned-rules FAQ miner in
     # storage.top_questions). Only stored when prompt logging is on, since it's
     # the same user-typed content the prompt-logging toggle governs.
