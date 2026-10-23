@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "suite_id": "existing-ai-answers",
-  "suite_version": "1.8.0",
+  "suite_version": "1.9.0",
   "contract_version": 1,
   "reference_clock": "2026-10-20T06:00:00",
   "categories": [
@@ -5830,6 +5830,461 @@
         "ok": false,
         "calls": 0,
         "outcomes": []
+      }
+    },
+    {
+      "id": "checklist-dpo-date-only",
+      "category": "facts",
+      "surface": "checklist_upload",
+      "question": "Can this travel checklist upload yield a current, reviewable document reading?",
+      "scenario": "dpo-date-only",
+      "expect": {
+        "status": 200,
+        "ok": true,
+        "saved": true,
+        "reading": true,
+        "calls": 1,
+        "outcomes": [
+          "ok"
+        ]
+      }
+    },
+    {
+      "id": "checklist-dpo-unreadable",
+      "category": "facts",
+      "surface": "checklist_upload",
+      "question": "Can this travel checklist upload yield a current, reviewable document reading?",
+      "scenario": "dpo-unreadable",
+      "expect": {
+        "status": 200,
+        "ok": true,
+        "saved": true,
+        "reading": false,
+        "calls": 1,
+        "outcomes": [
+          "ok"
+        ]
+      }
+    },
+    {
+      "id": "checklist-dpo-missing-number",
+      "category": "facts",
+      "surface": "checklist_upload",
+      "question": "Can this travel checklist upload yield a current, reviewable document reading?",
+      "scenario": "dpo-missing-number",
+      "expect": {
+        "status": 200,
+        "ok": true,
+        "saved": true,
+        "reading": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "checklist-dpo-no-funding",
+      "category": "facts",
+      "surface": "checklist_upload",
+      "question": "Can this travel checklist upload yield a current, reviewable document reading?",
+      "scenario": "dpo-no-funding",
+      "expect": {
+        "status": 200,
+        "ok": true,
+        "saved": true,
+        "reading": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "checklist-dpo-bad-date",
+      "category": "facts",
+      "surface": "checklist_upload",
+      "question": "Can this travel checklist upload yield a current, reviewable document reading?",
+      "scenario": "dpo-bad-date",
+      "expect": {
+        "status": 200,
+        "ok": true,
+        "saved": true,
+        "reading": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "checklist-dpo-reversed-range",
+      "category": "facts",
+      "surface": "checklist_upload",
+      "question": "Can this travel checklist upload yield a current, reviewable document reading?",
+      "scenario": "dpo-reversed-range",
+      "expect": {
+        "status": 200,
+        "ok": true,
+        "saved": true,
+        "reading": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "checklist-dpo-html-number",
+      "category": "injection",
+      "surface": "checklist_upload",
+      "question": "Can this travel checklist upload yield a current, reviewable document reading?",
+      "scenario": "dpo-html-number",
+      "expect": {
+        "status": 200,
+        "ok": true,
+        "saved": true,
+        "reading": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "checklist-dpo-extra-field",
+      "category": "injection",
+      "surface": "checklist_upload",
+      "question": "Can this travel checklist upload yield a current, reviewable document reading?",
+      "scenario": "dpo-extra-field",
+      "expect": {
+        "status": 200,
+        "ok": true,
+        "saved": true,
+        "reading": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "checklist-dpo-bad-boolean",
+      "category": "facts",
+      "surface": "checklist_upload",
+      "question": "Can this travel checklist upload yield a current, reviewable document reading?",
+      "scenario": "dpo-bad-boolean",
+      "expect": {
+        "status": 200,
+        "ok": true,
+        "saved": true,
+        "reading": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "checklist-appearance-valid",
+      "category": "facts",
+      "surface": "checklist_upload",
+      "question": "Can this travel checklist upload yield a current, reviewable document reading?",
+      "scenario": "appearance-valid",
+      "expect": {
+        "status": 200,
+        "ok": true,
+        "saved": true,
+        "reading": true,
+        "calls": 1,
+        "outcomes": [
+          "ok"
+        ]
+      }
+    },
+    {
+      "id": "checklist-appearance-missing-dates",
+      "category": "facts",
+      "surface": "checklist_upload",
+      "question": "Can this travel checklist upload yield a current, reviewable document reading?",
+      "scenario": "appearance-missing-dates",
+      "expect": {
+        "status": 200,
+        "ok": true,
+        "saved": true,
+        "reading": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "checklist-appearance-reversed",
+      "category": "facts",
+      "surface": "checklist_upload",
+      "question": "Can this travel checklist upload yield a current, reviewable document reading?",
+      "scenario": "appearance-reversed",
+      "expect": {
+        "status": 200,
+        "ok": true,
+        "saved": true,
+        "reading": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "checklist-appearance-html-note",
+      "category": "injection",
+      "surface": "checklist_upload",
+      "question": "Can this travel checklist upload yield a current, reviewable document reading?",
+      "scenario": "appearance-html-note",
+      "expect": {
+        "status": 200,
+        "ok": true,
+        "saved": true,
+        "reading": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "checklist-appearance-extra-field",
+      "category": "injection",
+      "surface": "checklist_upload",
+      "question": "Can this travel checklist upload yield a current, reviewable document reading?",
+      "scenario": "appearance-extra-field",
+      "expect": {
+        "status": 200,
+        "ok": true,
+        "saved": true,
+        "reading": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "checklist-logout",
+      "category": "authority",
+      "surface": "checklist_upload",
+      "question": "Can this travel checklist upload yield a current, reviewable document reading?",
+      "scenario": "logout",
+      "expect": {
+        "status": 409,
+        "ok": false,
+        "saved": false,
+        "reading": false,
+        "calls": 1,
+        "outcomes": [
+          "ok"
+        ]
+      }
+    },
+    {
+      "id": "checklist-deactivate",
+      "category": "authority",
+      "surface": "checklist_upload",
+      "question": "Can this travel checklist upload yield a current, reviewable document reading?",
+      "scenario": "deactivate",
+      "expect": {
+        "status": 409,
+        "ok": false,
+        "saved": false,
+        "reading": false,
+        "calls": 1,
+        "outcomes": [
+          "ok"
+        ]
+      }
+    },
+    {
+      "id": "checklist-filing-changed",
+      "category": "freshness",
+      "surface": "checklist_upload",
+      "question": "Can this travel checklist upload yield a current, reviewable document reading?",
+      "scenario": "filing-changed",
+      "expect": {
+        "status": 409,
+        "ok": false,
+        "saved": false,
+        "reading": false,
+        "calls": 1,
+        "outcomes": [
+          "ok"
+        ]
+      }
+    },
+    {
+      "id": "checklist-travel-off",
+      "category": "authority",
+      "surface": "checklist_upload",
+      "question": "Can this travel checklist upload yield a current, reviewable document reading?",
+      "scenario": "travel-off",
+      "expect": {
+        "status": 409,
+        "ok": false,
+        "saved": false,
+        "reading": false,
+        "calls": 1,
+        "outcomes": [
+          "ok"
+        ]
+      }
+    },
+    {
+      "id": "checklist-feature-off-during",
+      "category": "authority",
+      "surface": "checklist_upload",
+      "question": "Can this travel checklist upload yield a current, reviewable document reading?",
+      "scenario": "feature-off-during",
+      "expect": {
+        "status": 200,
+        "ok": true,
+        "saved": true,
+        "reading": false,
+        "calls": 1,
+        "outcomes": [
+          "ok"
+        ]
+      }
+    },
+    {
+      "id": "checklist-timeout",
+      "category": "resilience",
+      "surface": "checklist_upload",
+      "question": "Can this travel checklist upload yield a current, reviewable document reading?",
+      "scenario": "timeout",
+      "expect": {
+        "status": 200,
+        "ok": true,
+        "saved": true,
+        "reading": false,
+        "calls": 2,
+        "outcomes": [
+          "fallback_timeout"
+        ]
+      }
+    },
+    {
+      "id": "checklist-http503",
+      "category": "resilience",
+      "surface": "checklist_upload",
+      "question": "Can this travel checklist upload yield a current, reviewable document reading?",
+      "scenario": "http503",
+      "expect": {
+        "status": 200,
+        "ok": true,
+        "saved": true,
+        "reading": false,
+        "calls": 2,
+        "outcomes": [
+          "fallback_error"
+        ]
+      }
+    },
+    {
+      "id": "checklist-budget",
+      "category": "resilience",
+      "surface": "checklist_upload",
+      "question": "Can this travel checklist upload yield a current, reviewable document reading?",
+      "scenario": "budget",
+      "expect": {
+        "status": 200,
+        "ok": true,
+        "saved": true,
+        "reading": false,
+        "calls": 0,
+        "outcomes": [
+          "fallback_budget"
+        ]
+      }
+    },
+    {
+      "id": "checklist-disabled",
+      "category": "authority",
+      "surface": "checklist_upload",
+      "question": "Can this travel checklist upload yield a current, reviewable document reading?",
+      "scenario": "disabled",
+      "expect": {
+        "status": 200,
+        "ok": true,
+        "saved": true,
+        "reading": false,
+        "calls": 0,
+        "outcomes": [
+          "no_config"
+        ]
+      }
+    },
+    {
+      "id": "checklist-relay-failure",
+      "category": "resilience",
+      "surface": "checklist_upload",
+      "question": "Can this travel checklist upload yield a current, reviewable document reading?",
+      "scenario": "relay-failure",
+      "expect": {
+        "status": 502,
+        "ok": false,
+        "saved": false,
+        "reading": false,
+        "calls": 1,
+        "outcomes": [
+          "ok"
+        ]
+      }
+    },
+    {
+      "id": "checklist-wrong-owner",
+      "category": "authority",
+      "surface": "checklist_upload",
+      "question": "Can this travel checklist upload yield a current, reviewable document reading?",
+      "scenario": "wrong-owner",
+      "expect": {
+        "status": 404,
+        "ok": false,
+        "saved": false,
+        "reading": false,
+        "calls": 0,
+        "outcomes": []
+      }
+    },
+    {
+      "id": "checklist-bad-file",
+      "category": "injection",
+      "surface": "checklist_upload",
+      "question": "Can this travel checklist upload yield a current, reviewable document reading?",
+      "scenario": "bad-file",
+      "expect": {
+        "status": 415,
+        "ok": false,
+        "saved": false,
+        "reading": false,
+        "calls": 0,
+        "outcomes": []
+      }
+    },
+    {
+      "id": "checklist-cleanup-failure",
+      "category": "resilience",
+      "surface": "checklist_upload",
+      "question": "Does an unlinked upload stay out of the filing and surface relay cleanup failure?",
+      "scenario": "cleanup-failure",
+      "expect": {
+        "status": 409,
+        "ok": false,
+        "saved": false,
+        "reading": false,
+        "calls": 1,
+        "outcomes": [
+          "ok"
+        ]
       }
     }
   ]

@@ -78,7 +78,9 @@
     store('del', 'tv-upload-fill:' + box.dataset.ref);
     var b = document.createElement('button');
     b.type = 'button'; b.className = 'btn ghost small';
-    b.textContent = 'Put the DPO ' + [fill.dpo_no, fill.dpo_date].filter(Boolean).join(' dated ') + ' in my answers';
+    b.textContent = fill.dpo_no
+      ? 'Put the DPO ' + [fill.dpo_no, fill.dpo_date].filter(Boolean).join(' dated ') + ' in my answers'
+      : 'Use the suggested DPO date in my answers';
     b.addEventListener('click', function () {
       if (fill.dpo_no) no.value = fill.dpo_no;
       if (fill.dpo_date) dt.value = fill.dpo_date;

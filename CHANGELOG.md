@@ -1,3 +1,10 @@
+## 8.19 — October 23, 2026
+
+- Continue A22 with 27 offline travel checklist upload cases, bringing the evaluation suite to 366 named scenarios.
+- Recheck the registered account and unchanged filing after provider and relay work, before saving the confirmed upload. Request removal of the uploaded file if that check fails.
+- Reject malformed DPO and appearance readings, keep the file when only AI fails, and require the person to choose and save a suggested DPO date.
+- Continue metadata-only AI logs for document readings. No schema migration or new provider configuration.
+
 ## 8.18 — October 23, 2026
 
 - Save up to ten personal document views with queue, search, applied filters, sorting, visible columns and widths; reopen a view on any device.

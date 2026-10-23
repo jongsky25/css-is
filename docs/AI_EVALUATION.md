@@ -1,6 +1,6 @@
-# AI assistance evaluation — A22 / 8.17
+# AI assistance evaluation — A22 / 8.19
 
-Evaluation suite **1.8.0** contains **339 named scenarios**: 38 answer-route cases from 8.01, 60 MRR/CO-CSM report-draft cases from 8.04, 48 feedback-triage cases from 8.07, 49 verbatim comment cases from 8.10, 32 participant-message cases from 8.12, 30 UX Insights analysis cases from 8.13, 32 directory duplicate-suggestion cases from 8.14, 31 landing-assistant action cases from 8.15, and 19 direct travel scan cases from 8.17. It turns selected safeguards into a reproducible, versioned release gate and produces a small report by category and case. The retained suite ID `existing-ai-answers` is a historical identifier; all nine surfaces must pass.
+Evaluation suite **1.9.0** contains **366 named scenarios**: 38 answer-route cases from 8.01, 60 MRR/CO-CSM report-draft cases from 8.04, 48 feedback-triage cases from 8.07, 49 verbatim comment cases from 8.10, 32 participant-message cases from 8.12, 30 UX Insights analysis cases from 8.13, 32 directory duplicate-suggestion cases from 8.14, 31 landing-assistant action cases from 8.15, 19 direct travel scan cases from 8.17, and 27 travel checklist upload cases from 8.19. It turns selected safeguards into a reproducible, versioned release gate and produces a small report by category and case. The retained suite ID `existing-ai-answers` is a historical identifier; all ten surfaces must pass.
 
 ## What it checks
 
@@ -139,6 +139,14 @@ Nineteen `travel_scan` scenarios exercise the signed-in `/travel/f/{ref}/scan` r
 
 The provider sees the uploaded image or PDF, so it may contain personal and financial information. The image is not retained by the direct scan route, and travel-scan interaction logs now omit prompts, replies and provider error bodies. The existing 25-second read timeout can be attempted twice. The suite tests application safeguards with fake provider choices; it cannot establish OCR accuracy or prove that a suggested amount appears on the document. Checklist upload readings and calendar invitation readings share the provider feature but are not part of these nineteen direct-route cases.
 
+## Checklist upload readings: current owner and explicit DPO choice
+
+Twenty-seven `checklist_upload` scenarios exercise the real travel upload route with a fake Drive relay and simulated Gemini HTTP. DPO and appearance replies require complete typed fields, valid dates and bounded plain text before a reading or filing check is offered. Malformed AI replies leave the confirmed file upload intact and offer manual entry. A matching DPO number no longer saves an AI supplied date automatically: the person must choose the existing button, review the filled form and save it. A Chromium check confirms the date field stays unchanged until that button is clicked.
+
+After relay and provider work, the route takes a short write lock and rechecks the registered account, travel setting, unchanged filing, editability and applicable checklist row before saving the upload. If that check fails, it asks the relay to remove the uploaded file and returns no reading. A failed relay cleanup leaves an unlinked file requiring records staff review; the route logs the filing reference and row for investigation without logging file contents. AI feature disablement during the request suppresses the reading while allowing an otherwise valid upload.
+
+These synthetic checks establish the application's boundary, not document reading accuracy. Calendar invitation reading is still a separate unevaluated path. The existing provider and relay receive uploaded files under their current data contracts; no live documents are used in this suite.
+
 ## Gates and evidence lifecycle
 
 [scripts/ai_evaluation.py](../scripts/ai_evaluation.py) is a pytest plugin and command-line gate. Default pytest configuration loads it; recording is enabled only when `--ai-evaluation-report=PATH` is supplied. Release CI supplies that option to the existing full normal/shuffled test jobs, then validates the resulting report before the final required-check gate. Reports are uploaded in the existing test artifact bundles with **14-day retention**.
@@ -162,8 +170,8 @@ Before broader AI capability or live-model comparisons, the owner must define re
 
 ## Rollout and repair
 
-Release **8.17** follows the merged 8.16 main branch. No schema migration, new feature flag, dependency or production provider configuration is required. The application and service-worker cache versions use exactly two digits after the decimal.
+Release **8.19** follows the merged 8.18 main branch. No schema migration, new feature flag, dependency or production provider configuration is required. The application and service-worker cache versions use exactly two digits after the decimal.
 
-Existing AI/human comment tags are not rewritten. UX analysis remains a review aid and displays its evidence window and sample status. Production workflow observations and real-model quality remain deferred. Both normal and shuffled full CI must pass for the final PR head, including all 339 scenarios and the minimized report gate.
+Existing AI/human comment tags are not rewritten. UX analysis remains a review aid and displays its evidence window and sample status. Production workflow observations and real-model quality remain deferred. Both normal and shuffled full CI must pass for the final PR head, including all 366 scenarios and the minimized report gate.
 
 For a failing gate, inspect the case ID and repair the application, fixture or expectation with a reviewed explanation. Increase the suite version for case/reference edits and rerun current evidence; do not reuse an old report or omit failed cases.
