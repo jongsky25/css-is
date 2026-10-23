@@ -1,6 +1,6 @@
-# AI assistance evaluation — A22 / 8.13
+# AI assistance evaluation — A22 / 8.14
 
-Evaluation suite **1.5.0** contains **257 named scenarios**: 38 answer-route cases from 8.01, 60 MRR/CO-CSM report-draft cases from 8.04, 48 feedback-triage cases from 8.07, 49 verbatim comment cases from 8.10, 32 participant-message cases from 8.12, and 30 UX Insights analysis cases from 8.13. It turns selected safeguards into a reproducible, versioned release gate and produces a small report by category and case. The retained suite ID `existing-ai-answers` is a historical identifier; all six surfaces must pass.
+Evaluation suite **1.6.0** contains **289 named scenarios**: 38 answer-route cases from 8.01, 60 MRR/CO-CSM report-draft cases from 8.04, 48 feedback-triage cases from 8.07, 49 verbatim comment cases from 8.10, 32 participant-message cases from 8.12, 30 UX Insights analysis cases from 8.13, and 32 directory duplicate-suggestion cases from 8.14. It turns selected safeguards into a reproducible, versioned release gate and produces a small report by category and case. The retained suite ID `existing-ai-answers` is a historical identifier; all seven surfaces must pass.
 
 ## What it checks
 
@@ -117,6 +117,14 @@ The provider receives the existing self-describing UX handoff after contact emai
 
 The route rechecks the registered admin, AI switches and current telemetry/feedback snapshot after provider I/O. Audit and successful outcome commit together. Logs retain outcome/token/timing metadata without prompt, response or raw provider error bodies, including when general content logging is on. The request allows at most 1,024 output tokens and an eight-second read timeout, with the existing retry and budget limits. This is not a production latency or real-model quality score.
 
+## Directory duplicate suggestions: current records and staff decision
+
+Thirty-two `harmonize` scenarios exercise the existing admin route with synthetic directory names and fake provider HTTP. They cover current admin access, deactivation/demotion/logout, AI switches, renamed/deleted/changed records, invalid relations and reasons, hostile source names, budgets, timeout/503, and audit rollback. A Chromium check confirms hints are escaped and shown beside the separate human merge action. Every case is required in both CI orders.
+
+Names remain professional personal data sent to Gemini only when an administrator explicitly enables the existing `harmonize` flag. The prompt includes only the two current candidate names, rating counts and staff markers, with common email and digit runs masked. No additional provider is used. The route accepts exactly `same`, `different` or `unsure` plus a bounded, plain-text reason. It rechecks the registered admin, opt-in, and both current candidate records after provider I/O. Only a validated hint is returned; it cannot merge records. Logs retain outcome/token/timing metadata without prompts, replies or raw provider errors, including when general content logging is enabled. Audit records identify the pair by IDs and omit names.
+
+The request allows at most 256 output tokens and an eight-second provider read timeout, with the existing retry and budget limits. These synthetic checks establish application safeguards, not real-model duplicate-identification accuracy. Staff must inspect both records before using the existing merge action.
+
 ## Gates and evidence lifecycle
 
 [scripts/ai_evaluation.py](../scripts/ai_evaluation.py) is a pytest plugin and command-line gate. Default pytest configuration loads it; recording is enabled only when `--ai-evaluation-report=PATH` is supplied. Release CI supplies that option to the existing full normal/shuffled test jobs, then validates the resulting report before the final required-check gate. Reports are uploaded in the existing test artifact bundles with **14-day retention**.
@@ -134,14 +142,14 @@ Case/reference edits also require an increased `suite_version` in the manifest. 
 
 The existing provider/data contract remains [verified facts v1](VERIFIED_AI_ANSWERS.md). A broader survey selection receives the user question and bounded fact IDs/descriptions/groups, without numeric values. Names and user questions are untrusted text and can still contain personal material; these checks do not establish universal anonymization. Current consent, settings, logging/retention and provider governance remain in force.
 
-The scenarios check the existing bounded provider request settings (at most eight seconds per read timeout, three-second connect timeout and bounded output tokens), one retry where supported, and daily-budget refusal. They introduce no real spend. A timeout can involve two attempts; these are not an eight-second end-to-end service promise. Groq quality/fallback routing, OCR and other AI surfaces need their own future evaluation sets. Report draft, feedback-triage, verbatim, activity-message and UX-analysis safeguards are now included; real-model style-choice quality is not measured.
+The scenarios check the existing bounded provider request settings (at most eight seconds per read timeout, three-second connect timeout and bounded output tokens), one retry where supported, and daily-budget refusal. They introduce no real spend. A timeout can involve two attempts; these are not an eight-second end-to-end service promise. Groq quality/fallback routing, OCR and other AI surfaces need their own future evaluation sets. Report draft, feedback-triage, verbatim, activity-message, UX-analysis and directory-suggestion safeguards are now included; real-model style-choice quality is not measured.
 
 Before broader AI capability or live-model comparisons, the owner must define representative question quality targets, approved provider/data retention terms, expected scope/refusals, spend/token budgets and representative latency measurements. Evaluate live-model quality separately from this deterministic safeguard score; do not infer one from the other. Production workflow observations remain deferred.
 
 ## Rollout and repair
 
-Release **8.13** follows the freshly checked 8.12 main branch. No schema migration, new feature flag, dependency or production provider configuration is required. The application and service-worker cache versions use exactly two digits after the decimal.
+Release **8.14** follows the deployed 8.13 main branch. No schema migration, new feature flag, dependency or production provider configuration is required. The application and service-worker cache versions use exactly two digits after the decimal.
 
-Existing AI/human comment tags are not rewritten. UX analysis remains a review aid and displays its evidence window and sample status. Production workflow observations and real-model quality remain deferred. Both normal and shuffled full CI must pass for the final PR head, including all 257 scenarios and the minimized report gate.
+Existing AI/human comment tags are not rewritten. UX analysis remains a review aid and displays its evidence window and sample status. Production workflow observations and real-model quality remain deferred. Both normal and shuffled full CI must pass for the final PR head, including all 289 scenarios and the minimized report gate.
 
 For a failing gate, inspect the case ID and repair the application, fixture or expectation with a reviewed explanation. Increase the suite version for case/reference edits and rerun current evidence; do not reuse an old report or omit failed cases.

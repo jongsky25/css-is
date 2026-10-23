@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "suite_id": "existing-ai-answers",
-  "suite_version": "1.5.0",
+  "suite_version": "1.6.0",
   "contract_version": 1,
   "reference_clock": "2026-10-20T06:00:00",
   "categories": [
@@ -4665,6 +4665,450 @@
       "surface": "ux_analysis",
       "question": "Does UX analysis remain reviewable and source-scoped? (audit-fail)",
       "scenario": "audit-fail",
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "harmonize-baseline",
+      "category": "facts",
+      "surface": "harmonize",
+      "question": "Can the directory administrator review a possible duplicate pair when baseline occurs?",
+      "scenario": "baseline",
+      "expect": {
+        "ok": true,
+        "calls": 1,
+        "outcomes": [
+          "ok"
+        ]
+      }
+    },
+    {
+      "id": "harmonize-different",
+      "category": "facts",
+      "surface": "harmonize",
+      "question": "Can the directory administrator review a possible duplicate pair when different occurs?",
+      "scenario": "different",
+      "expect": {
+        "ok": true,
+        "calls": 1,
+        "outcomes": [
+          "ok"
+        ]
+      }
+    },
+    {
+      "id": "harmonize-unsure",
+      "category": "facts",
+      "surface": "harmonize",
+      "question": "Can the directory administrator review a possible duplicate pair when unsure occurs?",
+      "scenario": "unsure",
+      "expect": {
+        "ok": true,
+        "calls": 1,
+        "outcomes": [
+          "ok"
+        ]
+      }
+    },
+    {
+      "id": "harmonize-hostile-name",
+      "category": "injection",
+      "surface": "harmonize",
+      "question": "Can the directory administrator review a possible duplicate pair when hostile name occurs?",
+      "scenario": "hostile-name",
+      "expect": {
+        "ok": true,
+        "calls": 1,
+        "outcomes": [
+          "ok"
+        ]
+      }
+    },
+    {
+      "id": "harmonize-viewer",
+      "category": "authority",
+      "surface": "harmonize",
+      "question": "Can the directory administrator review a possible duplicate pair when viewer occurs?",
+      "scenario": "viewer",
+      "expect": {
+        "ok": false,
+        "calls": 0,
+        "outcomes": []
+      }
+    },
+    {
+      "id": "harmonize-manager",
+      "category": "authority",
+      "surface": "harmonize",
+      "question": "Can the directory administrator review a possible duplicate pair when manager occurs?",
+      "scenario": "manager",
+      "expect": {
+        "ok": false,
+        "calls": 0,
+        "outcomes": []
+      }
+    },
+    {
+      "id": "harmonize-deactivate",
+      "category": "authority",
+      "surface": "harmonize",
+      "question": "Can the directory administrator review a possible duplicate pair when deactivate occurs?",
+      "scenario": "deactivate",
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "harmonize-demote",
+      "category": "authority",
+      "surface": "harmonize",
+      "question": "Can the directory administrator review a possible duplicate pair when demote occurs?",
+      "scenario": "demote",
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "harmonize-logout",
+      "category": "authority",
+      "surface": "harmonize",
+      "question": "Can the directory administrator review a possible duplicate pair when logout occurs?",
+      "scenario": "logout",
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "harmonize-disable-during",
+      "category": "authority",
+      "surface": "harmonize",
+      "question": "Can the directory administrator review a possible duplicate pair when disable during occurs?",
+      "scenario": "disable-during",
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "harmonize-off-during",
+      "category": "authority",
+      "surface": "harmonize",
+      "question": "Can the directory administrator review a possible duplicate pair when off during occurs?",
+      "scenario": "off-during",
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "harmonize-rename-a",
+      "category": "freshness",
+      "surface": "harmonize",
+      "question": "Can the directory administrator review a possible duplicate pair when rename a occurs?",
+      "scenario": "rename-a",
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "harmonize-rename-b",
+      "category": "freshness",
+      "surface": "harmonize",
+      "question": "Can the directory administrator review a possible duplicate pair when rename b occurs?",
+      "scenario": "rename-b",
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "harmonize-delete-b",
+      "category": "freshness",
+      "surface": "harmonize",
+      "question": "Can the directory administrator review a possible duplicate pair when delete b occurs?",
+      "scenario": "delete-b",
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "harmonize-flag-change",
+      "category": "freshness",
+      "surface": "harmonize",
+      "question": "Can the directory administrator review a possible duplicate pair when flag change occurs?",
+      "scenario": "flag-change",
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "harmonize-bad-relation",
+      "category": "injection",
+      "surface": "harmonize",
+      "question": "Can the directory administrator review a possible duplicate pair when bad relation occurs?",
+      "scenario": "bad-relation",
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "harmonize-extra-field",
+      "category": "injection",
+      "surface": "harmonize",
+      "question": "Can the directory administrator review a possible duplicate pair when extra field occurs?",
+      "scenario": "extra-field",
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "harmonize-wrong-type",
+      "category": "injection",
+      "surface": "harmonize",
+      "question": "Can the directory administrator review a possible duplicate pair when wrong type occurs?",
+      "scenario": "wrong-type",
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "harmonize-empty-reason",
+      "category": "injection",
+      "surface": "harmonize",
+      "question": "Can the directory administrator review a possible duplicate pair when empty reason occurs?",
+      "scenario": "empty-reason",
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "harmonize-long-reason",
+      "category": "injection",
+      "surface": "harmonize",
+      "question": "Can the directory administrator review a possible duplicate pair when long reason occurs?",
+      "scenario": "long-reason",
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "harmonize-html",
+      "category": "injection",
+      "surface": "harmonize",
+      "question": "Can the directory administrator review a possible duplicate pair when html occurs?",
+      "scenario": "html",
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "harmonize-url",
+      "category": "injection",
+      "surface": "harmonize",
+      "question": "Can the directory administrator review a possible duplicate pair when url occurs?",
+      "scenario": "url",
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "harmonize-email",
+      "category": "injection",
+      "surface": "harmonize",
+      "question": "Can the directory administrator review a possible duplicate pair when email occurs?",
+      "scenario": "email",
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "harmonize-phone",
+      "category": "injection",
+      "surface": "harmonize",
+      "question": "Can the directory administrator review a possible duplicate pair when phone occurs?",
+      "scenario": "phone",
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "harmonize-control",
+      "category": "injection",
+      "surface": "harmonize",
+      "question": "Can the directory administrator review a possible duplicate pair when control occurs?",
+      "scenario": "control",
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "harmonize-budget",
+      "category": "resilience",
+      "surface": "harmonize",
+      "question": "Can the directory administrator review a possible duplicate pair when budget occurs?",
+      "scenario": "budget",
+      "expect": {
+        "ok": false,
+        "calls": 0,
+        "outcomes": [
+          "fallback_budget"
+        ]
+      }
+    },
+    {
+      "id": "harmonize-disabled",
+      "category": "resilience",
+      "surface": "harmonize",
+      "question": "Can the directory administrator review a possible duplicate pair when disabled occurs?",
+      "scenario": "disabled",
+      "expect": {
+        "ok": false,
+        "calls": 0,
+        "outcomes": [
+          "no_config"
+        ]
+      }
+    },
+    {
+      "id": "harmonize-off",
+      "category": "resilience",
+      "surface": "harmonize",
+      "question": "Can the directory administrator review a possible duplicate pair when off occurs?",
+      "scenario": "off",
+      "expect": {
+        "ok": false,
+        "calls": 0,
+        "outcomes": [
+          "no_config"
+        ]
+      }
+    },
+    {
+      "id": "harmonize-timeout",
+      "category": "resilience",
+      "surface": "harmonize",
+      "question": "Can the directory administrator review a possible duplicate pair when timeout occurs?",
+      "scenario": "timeout",
+      "expect": {
+        "ok": false,
+        "calls": 2,
+        "outcomes": [
+          "fallback_timeout"
+        ]
+      }
+    },
+    {
+      "id": "harmonize-http503",
+      "category": "resilience",
+      "surface": "harmonize",
+      "question": "Can the directory administrator review a possible duplicate pair when http503 occurs?",
+      "scenario": "http503",
+      "expect": {
+        "ok": false,
+        "calls": 2,
+        "outcomes": [
+          "fallback_error"
+        ]
+      }
+    },
+    {
+      "id": "harmonize-audit-fail",
+      "category": "resilience",
+      "surface": "harmonize",
+      "question": "Can the directory administrator review a possible duplicate pair when audit fail occurs?",
+      "scenario": "audit-fail",
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "harmonize-unsupported-number",
+      "category": "injection",
+      "surface": "harmonize",
+      "question": "Can a directory hint invent a rating count?",
+      "scenario": "unsupported-number",
       "expect": {
         "ok": false,
         "calls": 1,

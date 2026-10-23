@@ -18,18 +18,28 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "8.14"
+APP_VERSION = "8.15"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
-        "version": "8.14",
+        "version": "8.15",
         "date": "October 23, 2026",
         "summary": "Find and organize documents with an optional interactive register.",
         "changes": [
             "Switch to the interactive document table to sort matching records by subject, deadline, workflow or lead.",
             "Filter by workflow and verification, resize columns and choose which columns to show.",
             "Return to the standard table at any time; document links and the existing full-register CSV export remain available."
+        ]
+    },
+    {
+        "version": "8.14",
+        "date": "October 23, 2026",
+        "summary": "AI directory duplicate hints now stay current and clearly require staff review.",
+        "changes": [
+            "A duplicate hint stops if your access or either directory record changes while AI is working.",
+            "Unsafe or malformed hints are rejected, and the final merge remains your decision.",
+            "Release checks now cover directory hint privacy, permissions, changed records and provider failures."
         ]
     },
     {

@@ -1,9 +1,16 @@
-## 8.14 — October 23, 2026
+## 8.15 — October 23, 2026
 
 - Add an opt-in Tabulator document-register view with server-side sorting, workflow and verification filters, resizable columns, a column chooser and 30-row pagination across the authorized result set.
 - Reuse the registry selection and page-only FTS snippets, keep the standard table as a fallback, and retain full-register CSV and measure semantics. The read-only JSON endpoint returns display fields with no-store headers.
 - Vendor unmodified Tabulator 6.7.1 assets and MIT license with verified npm archive integrity and SHA-256 hashes; extend CI integrity/advisory checks to cover the added library.
 - Add permission/search parity, bounded retrieval and browser checks for filters, pagination, safe text rendering, column choices, mobile controls and loading failures.
+
+## 8.14 — October 23, 2026
+
+- Continue A22 with evaluation suite 1.6.0: add 32 offline directory duplicate-suggestion cases to the existing 257, for 289 named cases required in both CI orders.
+- Recheck the current administrator session, AI settings and both directory records after provider I/O. Reject malformed, unsafe and stale suggestions; audit validated hints without storing names, and leave merging to staff.
+- Keep directory interaction logs to outcome/token/timing metadata without prompts, replies or raw provider errors. Use the existing opt-in for sending names to Gemini, with an eight-second provider read timeout and bounded output.
+- Label hints for review and escape model text in the browser. No schema migration, new dependency or provider configuration. Offline tests do not measure real-model duplicate recognition.
 
 ## 8.13 — October 23, 2026
 
