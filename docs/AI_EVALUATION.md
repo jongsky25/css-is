@@ -1,6 +1,6 @@
-# AI assistance evaluation — A22 / 8.14
+# AI assistance evaluation — A22 / 8.15
 
-Evaluation suite **1.6.0** contains **289 named scenarios**: 38 answer-route cases from 8.01, 60 MRR/CO-CSM report-draft cases from 8.04, 48 feedback-triage cases from 8.07, 49 verbatim comment cases from 8.10, 32 participant-message cases from 8.12, 30 UX Insights analysis cases from 8.13, and 32 directory duplicate-suggestion cases from 8.14. It turns selected safeguards into a reproducible, versioned release gate and produces a small report by category and case. The retained suite ID `existing-ai-answers` is a historical identifier; all seven surfaces must pass.
+Evaluation suite **1.7.0** contains **320 named scenarios**: 38 answer-route cases from 8.01, 60 MRR/CO-CSM report-draft cases from 8.04, 48 feedback-triage cases from 8.07, 49 verbatim comment cases from 8.10, 32 participant-message cases from 8.12, 30 UX Insights analysis cases from 8.13, 32 directory duplicate-suggestion cases from 8.14, and 31 landing-assistant action cases from 8.15. It turns selected safeguards into a reproducible, versioned release gate and produces a small report by category and case. The retained suite ID `existing-ai-answers` is a historical identifier; all eight surfaces must pass.
 
 ## What it checks
 
@@ -125,6 +125,14 @@ Names remain professional personal data sent to Gemini only when an administrato
 
 The request allows at most 256 output tokens and an eight-second provider read timeout, with the existing retry and budget limits. These synthetic checks establish application safeguards, not real-model duplicate-identification accuracy. Staff must inspect both records before using the existing merge action.
 
+## Landing assistant actions: current authority and confirmation
+
+Thirty-one `assistant_action` cases exercise the signed-in `/api/ai/route` path with synthetic activities and fake Gemini HTTP. They cover create, archive and export suggestions, denied roles, deactivation/demotion/logout, changed AI switches, renamed/archived/new activity candidates, malformed or injected selections, low confidence, typed and exact action arguments, budget, timeouts and 503 replies. A Chromium check confirms that the description is escaped and only an explicit Confirm click submits the existing action form. Every case is required in both CI orders.
+
+The model selects a key from a role-filtered server catalog; it never supplies the destination URL. The route now rechecks the registered account, role, AI mode and switches after provider I/O. For archive suggestions it also rechecks the full current candidate list; a changed list or record yields the normal fallback. Action arguments must have exactly the supported fields and expected string types, and oversized names or unsupported IDs are rejected. Successful suggestions are logged only after the current check. The actual create/archive/export endpoints still enforce their own authorization and audit when staff confirms; this route does not execute a write.
+
+These deterministic cases verify the application boundary, not whether a real model correctly understands a staff request. The user must review the confirmation card. Production workflow observations remain deferred.
+
 ## Gates and evidence lifecycle
 
 [scripts/ai_evaluation.py](../scripts/ai_evaluation.py) is a pytest plugin and command-line gate. Default pytest configuration loads it; recording is enabled only when `--ai-evaluation-report=PATH` is supplied. Release CI supplies that option to the existing full normal/shuffled test jobs, then validates the resulting report before the final required-check gate. Reports are uploaded in the existing test artifact bundles with **14-day retention**.
@@ -142,14 +150,14 @@ Case/reference edits also require an increased `suite_version` in the manifest. 
 
 The existing provider/data contract remains [verified facts v1](VERIFIED_AI_ANSWERS.md). A broader survey selection receives the user question and bounded fact IDs/descriptions/groups, without numeric values. Names and user questions are untrusted text and can still contain personal material; these checks do not establish universal anonymization. Current consent, settings, logging/retention and provider governance remain in force.
 
-The scenarios check the existing bounded provider request settings (at most eight seconds per read timeout, three-second connect timeout and bounded output tokens), one retry where supported, and daily-budget refusal. They introduce no real spend. A timeout can involve two attempts; these are not an eight-second end-to-end service promise. Groq quality/fallback routing, OCR and other AI surfaces need their own future evaluation sets. Report draft, feedback-triage, verbatim, activity-message, UX-analysis and directory-suggestion safeguards are now included; real-model style-choice quality is not measured.
+The scenarios check the existing bounded provider request settings (at most eight seconds per read timeout, three-second connect timeout and bounded output tokens), one retry where supported, and daily-budget refusal. They introduce no real spend. A timeout can involve two attempts; these are not an eight-second end-to-end service promise. Groq quality/fallback routing, OCR and other AI surfaces need their own future evaluation sets. Report draft, feedback-triage, verbatim, activity-message, UX-analysis and directory-suggestion and assistant-action safeguards are now included; real-model style-choice quality is not measured.
 
 Before broader AI capability or live-model comparisons, the owner must define representative question quality targets, approved provider/data retention terms, expected scope/refusals, spend/token budgets and representative latency measurements. Evaluate live-model quality separately from this deterministic safeguard score; do not infer one from the other. Production workflow observations remain deferred.
 
 ## Rollout and repair
 
-Release **8.14** follows the deployed 8.13 main branch. No schema migration, new feature flag, dependency or production provider configuration is required. The application and service-worker cache versions use exactly two digits after the decimal.
+Release **8.15** follows the merged 8.14 main branch. No schema migration, new feature flag, dependency or production provider configuration is required. The application and service-worker cache versions use exactly two digits after the decimal.
 
-Existing AI/human comment tags are not rewritten. UX analysis remains a review aid and displays its evidence window and sample status. Production workflow observations and real-model quality remain deferred. Both normal and shuffled full CI must pass for the final PR head, including all 289 scenarios and the minimized report gate.
+Existing AI/human comment tags are not rewritten. UX analysis remains a review aid and displays its evidence window and sample status. Production workflow observations and real-model quality remain deferred. Both normal and shuffled full CI must pass for the final PR head, including all 320 scenarios and the minimized report gate.
 
 For a failing gate, inspect the case ID and repair the application, fixture or expectation with a reviewed explanation. Increase the suite version for case/reference edits and rerun current evidence; do not reuse an old report or omit failed cases.

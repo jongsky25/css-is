@@ -1154,26 +1154,51 @@ def ai_archive_candidates(conn, user):
         conn, user["username"], limit=15, all_creators=(user["role"] == "admin"))
 
 
+def _ai_action_current(request, conn, user, action_key, archive_candidates):
+    """Check the same registered actor, switches and action scope after AI I/O."""
+    payload = auth.parse_token(request.cookies.get(auth.COOKIE_NAME))
+    current = st.session_actor(conn, payload) if payload else None
+    return (current is not None
+            and all(current[k] == user[k] for k in ("id", "username", "role"))
+            and st.bureau_access_of(conn, current) == user.get("bureau_access")
+            and rooms.is_room_admin(conn, current) == user.get("room_approver")
+            and ai.mode_at_least(conn, "assistant")
+            and ai.feature_enabled(conn, "assistant_action")
+            and ai.feature_enabled(conn, "nl_router")
+            and action_key in ai_action_catalog(current)
+            and (action_key != "archive_activity"
+                 or ai_archive_candidates(conn, current) == archive_candidates))
+
+
 def _ai_validate_action_args(action_key, args_in, archive_candidates):
     """Server-side allow-list check on the model's proposed `args` for one
     action — mirrors the real endpoint's own validation, never trusts the
     model's types or ranges. Returns the cleaned args dict the confirmation
     card + the real POST/GET will use, or None to reject (-> fallback)."""
-    args_in = args_in if isinstance(args_in, dict) else {}
+    if not isinstance(args_in, dict):
+        return None
     if action_key == "create_activity_draft":
-        name = str(args_in.get("activity_name") or "").strip()[:200]
-        event_date = str(args_in.get("event_date") or "").strip()
-        if not name or not _valid_date(event_date) or event_date > _event_date_bounds()[1]:
+        if (set(args_in) != {"activity_name", "event_date"}
+                or not all(isinstance(args_in[key], str) for key in args_in)):
+            return None
+        name = args_in["activity_name"].strip()
+        event_date = args_in["event_date"].strip()
+        if not name or len(name) > 200 or not _valid_date(event_date) or event_date > _event_date_bounds()[1]:
             return None
         return {"activity_name": name, "event_date": event_date, "event_type": "bureau"}
     if action_key == "archive_activity":
-        fid = str(args_in.get("fid") or "").strip()
+        if set(args_in) != {"fid"} or not isinstance(args_in["fid"], str):
+            return None
+        fid = args_in["fid"].strip()
         if fid not in {str(c["fid"]) for c in archive_candidates}:
             return None
         return {"fid": fid}
     if action_key == "export_report":
-        rtype = str(args_in.get("report_type") or "").strip()
-        fmt = str(args_in.get("report_fmt") or "").strip()
+        if (set(args_in) != {"report_type", "report_fmt"}
+                or not all(isinstance(args_in[key], str) for key in args_in)):
+            return None
+        rtype = args_in["report_type"].strip()
+        fmt = args_in["report_fmt"].strip()
         if rtype not in ("1", "2", "3") or fmt not in ("docx", "pdf", "xlsx"):
             return None
         return {"type": rtype, "fmt": fmt}
@@ -6290,9 +6315,19 @@ async def api_ai_route(request: Request):
             if validated is None:
                 st.update_ai_interaction_outcome(conn, interaction_id, "rejected_validation")
                 return JSONResponse({"kind": "fallback"})
+            st.update_ai_interaction_outcome(conn, interaction_id, "rejected_validation")
+            conn.execute("BEGIN IMMEDIATE")
+            try:
+                if not _ai_action_current(request, conn, user, action_key, archive_candidates):
+                    return JSONResponse({"kind": "fallback"})
+                st.update_ai_interaction_outcome(conn, interaction_id, "ok",
+                                                 confidence=confidence, feature="assistant_action",
+                                                 commit=False)
+                conn.commit()
+            finally:
+                if conn.in_transaction:
+                    conn.rollback()
             method, url = _ai_action_method_url(action_key, validated)
-            st.update_ai_interaction_outcome(conn, interaction_id, "ok",
-                                             confidence=confidence, feature="assistant_action")
             return JSONResponse({
                 "kind": "action", "action": action_key, "label": action["label"],
                 "description": _ai_describe_action(action_key, validated, archive_candidates),
