@@ -6,11 +6,13 @@ Deployment: [equityinhealth/office-connect](https://huggingface.co/spaces/equity
 
 This is the durable record of research into public Hugging Face Spaces and widely used GitHub projects that could improve Office Connect. Customer Satisfaction Survey (CSS) is one module of this platform.
 
-The user wants a broad set of worthwhile candidates, explained and evaluated one at a time. Research is complete enough to begin individual discussions; no candidate has been approved for implementation or deployed through this work.
+The user wants a broad set of worthwhile candidates, explained and evaluated one at a time. The Tabulator registry pilot has been selected and implemented in [PR #424](https://github.com/jongsky25/css-is/pull/424). Other candidates remain research items. Check the PR and deployment workflow for current release status.
 
 ## Resume here
 
-**Current topic: explain the value of Tabulator in Office Connect in plain language.**
+**Current topic: review and release the Tabulator document-registry pilot in [PR #424](https://github.com/jongsky25/css-is/pull/424).**
+
+The user authorized implementation with “execute”. The pilot provides an opt-in interactive table with remote sorting/filtering, column choices and resizing, 30-row pages, and a standard-table fallback. Local regression/browser checks passed; full CI and deployment status must be checked on the PR. Read [the pilot guide](https://github.com/jongsky25/css-is/blob/feat/document-registry-tabulator/docs/TABULATOR_PILOT.md) before continuing.
 
 The next session should:
 1. Read this file and the three linked catalogs.
@@ -98,7 +100,7 @@ Suggested pilot, if authorized:
 - Verify that hidden/unauthorized rows never reach the browser or exports, calculated values remain correct, and normal actions continue to work.
 - Compare time to complete a few real lookup tasks against the existing page.
 
-No pilot has been implemented.
+The read-only pilot is implemented in [PR #424](https://github.com/jongsky25/css-is/pull/424), on branch feat/document-registry-tabulator. It adds server-side workflow and verification filters, sorting over all authorized matches, column resizing/visibility and a fallback. No merge or deployment is recorded by this research update; consult the PR for current status.
 
 ## Hugging Face recommendations
 
@@ -161,6 +163,6 @@ These are findings from the research date; verify selected versions before adopt
 | 2026-10-23 | Completed initial review of 26 HF Spaces and 23 possible feature increments. |
 | 2026-10-23 | Expanded review to 51 GitHub repositories with stars, deployment fit, license and maintenance notes. |
 | 2026-10-23 | User requested durable GitHub documentation so this work can resume in future sessions. |
-| 2026-10-23 | Current discussion is Tabulator's practical value; implementation remains unselected. |
+| 2026-10-23 | User authorized the Tabulator pilot with “execute”. Implemented on feat/document-registry-tabulator in [PR #424](https://github.com/jongsky25/css-is/pull/424); check CI and release status before proceeding. |
 
 When work resumes, record accepted/rejected candidates, rationale, implementation/PR links, verification results and the next topic here. Preserve the distinction between a researched recommendation, an approved implementation and a deployed feature.
