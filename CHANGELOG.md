@@ -3,6 +3,7 @@
 - Increase release test jobs from 30 to 45 minutes so OCR/browser setup, both full suite orders and report gates can finish.
 - Add Export current view (CSV) with the applied queue/search, workflow, verification and deadline filters, current sort order and visible columns across all matching pages.
 - Recheck current access server-side, neutralize spreadsheet formulas, preserve UTF-8 text, and reject exports above 10,000 matches without truncating them. The existing full-register export remains available separately.
+- Update pypdf from 6.21.1 to 6.21.2 to resolve three PDF parsing advisories reported by the release audit; regenerate runtime and test hash locks.
 
 ## 8.21 — October 23, 2026
 
