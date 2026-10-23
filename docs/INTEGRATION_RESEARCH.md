@@ -122,7 +122,7 @@ The read-only pilot is implemented in [PR #424](https://github.com/jongsky25/css
 
 ### Tabulator next improvements under consideration
 
-Saved per-user views, column preferences and overdue/due-soon highlighting are live in 8.18 (PR #427). Remaining candidates include deadline quick filters; filters for lead, direction and date range; and a server-generated export that matches the interactive filters and permitted columns. Grouped workflow/lead views and reuse in Supplies can follow. The remaining items are recommendations and have not been selected for implementation.
+Saved per-user views, column preferences and overdue/due-soon highlighting are live in 8.18 (PR #427). Deadline quick filters are now selected and implemented in PR #430, pending release verification. Remaining candidates include filters for lead, direction and date range; and a server-generated export that matches the interactive filters and permitted columns. Grouped workflow/lead views and reuse in Supplies can follow. The remaining items are recommendations and have not been selected for implementation.
 
 The initial full CI runs for PR #424 each passed 6,045 tests but failed the runtime import-closure check. The new documents_grid.py module was omitted from deploy_hf.RUNTIME_PY. Commit 310efad corrects the allowlist and the four local deployment tests pass. The subsequent full normal/shuffled checks passed on d81151a. After preserving main's intervening AI action release, the metadata was reconciled to 8.16 and PR #424 was merged. The initial 8.16 and follow-up 8.18 deployments are verified; their linked workflow logs record the live-version checks.
 
