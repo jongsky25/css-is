@@ -1,3 +1,10 @@
+## 8.01 — October 23, 2026
+
+- Fix ARTA walk-in reports, official exports and the comments view omitting every response on the standing walk-in form after it was marked archived (24 entries, April 10 to October 22, 2026).
+- Keep the standing walk-in form out of every form-level archive path (single, inline and bulk); individual entries can still be archived or restored from Walk-in entries.
+- Tests cover report counts with an archived standing form and refusal to archive it.
+- No schema migration or new dependency.
+
 ## 8.00 — October 22, 2026
 
 - Restore exactly two digits after the decimal for new application releases: 8.00, 8.01 … 8.99, 9.00. Enforce that format in the release gate while retaining recorded historical versions and allowing comparison against the existing 7.100 release.
