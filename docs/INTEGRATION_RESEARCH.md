@@ -102,6 +102,13 @@ Suggested pilot, if authorized:
 
 The read-only pilot is implemented in [PR #424](https://github.com/jongsky25/css-is/pull/424), on branch feat/document-registry-tabulator. It adds server-side workflow and verification filters, sorting over all authorized matches, column resizing/visibility and a fallback. No merge or deployment is recorded by this research update; consult the PR for current status.
 
+
+### Tabulator next improvements under consideration
+
+After releasing the first pilot, the highest-value candidates are saved per-user views and column preferences; overdue/due-soon highlighting and quick filters using the existing date rules; filters for lead, direction and date range; and a server-generated export that matches the interactive filters and permitted columns. Grouped workflow/lead views and reuse in Supplies can follow. These additions have been discussed as recommendations, not selected for implementation.
+
+The initial full CI runs for PR #424 each passed 6,045 tests but failed the runtime import-closure check. The new documents_grid.py module was omitted from deploy_hf.RUNTIME_PY. Commit 310efad corrects the allowlist and the four local deployment tests pass. The corrected head still needs full CI and release verification; the PR remains unmerged at this update.
+
 ## Hugging Face recommendations
 
 The first proposed sequence was redaction preview → OCR benchmark and one chosen integration → structured intake fields → scanned-table preview → semantic search → CSS topics → meeting transcription. Alternatives serving the same purpose should compete in evaluation rather than become separate user-facing tools.
