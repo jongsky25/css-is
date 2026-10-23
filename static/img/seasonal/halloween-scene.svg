@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 420" fill="none">
+<defs>
+ <linearGradient id="sky" x2="0" y2="420" gradientUnits="userSpaceOnUse"><stop stop-color="#211535"/><stop offset="1" stop-color="#70406a"/></linearGradient>
+ <linearGradient id="moon" x2="1" y2="1"><stop stop-color="#fff4c8"/><stop offset="1" stop-color="#f1bf70"/></linearGradient>
+ <linearGradient id="pumpkin" x2="0" y2="1"><stop stop-color="#ffb443"/><stop offset="1" stop-color="#df591d"/></linearGradient>
+ <radialGradient id="glow"><stop stop-color="#ffb455" stop-opacity=".4"/><stop offset="1" stop-color="#ffb455" stop-opacity="0"/></radialGradient>
+ <g id="bat"><path d="M0 5Q-15-15-31-9L-24 5Q-14 0-10 14L0 9 10 14Q14 0 24 5L31-9Q15-15 0 5" fill="#21152f"/><path d="M-4 5-3-3 0 0 3-3 4 5" fill="#21152f"/></g>
+ <g id="jack"><path d="M0-23Q-7-34 4-39" stroke="#75915c" stroke-width="7" stroke-linecap="round"/><ellipse rx="34" ry="27" fill="url(#pumpkin)"/><ellipse rx="23" ry="27" stroke="#c85620" stroke-width="2"/><ellipse rx="10" ry="27" stroke="#c85620" stroke-width="2"/><path d="M-20-5-11-16-6-4M6-4 11-16 20-5M-21 7-10 12 0 9 11 12 21 7Q12 27 0 20-12 27-21 7" fill="#3c2031"/><path d="M-14-6-11-10-9-5M9-5 11-10 14-6" fill="#ffdf83"/></g>
+</defs>
+<path fill="url(#sky)" d="M0 0h800v420H0z"/>
+<circle cx="567" cy="112" r="108" fill="#fae6a2" opacity=".06"/><circle cx="567" cy="112" r="91" fill="#fae6a2" opacity=".07"/>
+<circle cx="567" cy="112" r="72" fill="url(#moon)"/><circle cx="537" cy="87" r="15" fill="#c7a16e" opacity=".16"/><circle cx="590" cy="138" r="21" fill="#c7a16e" opacity=".12"/>
+<g fill="#ffe7b0"><circle cx="240" cy="48" r="2"/><circle cx="388" cy="66" r="2"/><circle cx="697" cy="53" r="2"/><circle cx="735" cy="153" r="1.5"/><circle cx="155" cy="120" r="1.5"/><path d="m430 26 2 6 6 2-6 2-2 6-2-6-6-2 6-2Z"/></g>
+<use href="#bat" transform="translate(454 116) scale(.8) rotate(-12)"/><use href="#bat" transform="translate(667 97) scale(.56) rotate(15)"/><use href="#bat" transform="translate(714 205) scale(.7) rotate(-8)"/><use href="#bat" transform="translate(318 68) scale(.38)"/>
+<path d="M0 338Q180 285 323 328T800 313v107H0Z" fill="#34203f"/>
+<path d="M0 375Q205 326 415 364T800 346v74H0Z" fill="#21182e"/>
+<!-- A crooked office, lit for the season. -->
+<g transform="rotate(-3 415 250)">
+<path d="m302 362 9-175 82-52 112 58 13 169Z" fill="#291b36" stroke="#9d6582" stroke-width="3"/>
+<path d="m282 195 109-84 132 94-23 4-107-63-88 55Z" fill="#171327"/>
+<path d="m347 160 8-83 41-13 15 95" fill="#37223f"/><path d="m343 82 31-35 28 25Z" fill="#171327"/>
+<path d="m367 89 19-4 1 31-21 3Z" fill="#f8bb62"/><path d="M377 87v30" stroke="#38203d" stroke-width="3"/>
+<path d="m329 220 37-7-2 46-36 5Z" fill="#ffc36e"/><path d="m398 211 41 3 2 47-41-3Z" fill="#ffd68a"/><path d="m462 224 29 6 3 42-30-6Z" fill="#ffb55d"/>
+<path d="M347 216v43m-18-19 36-5m55-20 1 45m-22-24 42 2m36-11 1 41m-15-22 30 6" stroke="#49304a" stroke-width="4"/>
+<path d="m378 364 2-64q23-37 46 0l4 64" fill="#eea24d"/><path d="m390 364 1-60q13-20 24 1l3 59" fill="#321d36"/><circle cx="410" cy="335" r="3" fill="#ffdf9b"/>
+<rect x="346" y="274" width="130" height="23" rx="4" fill="#56354e" stroke="#ba865b"/><text x="411" y="290" text-anchor="middle" fill="#ffdda2" font-size="12" font-family="sans-serif" letter-spacing="2">OFFICE CONNECT</text>
+</g>
+<!-- Bare trees and a crooked fence. -->
+<g stroke="#21152f" stroke-linecap="round"><path d="m132 373 4-130-17-66m17 87 39-53 15-56m-51 142-49-45-17-54m65 39-45-40m78 28 41-13" stroke-width="13"/><path d="m738 364-8-133 23-75m-21 120-39-53-14-59m53 143 38-30 16-52" stroke-width="10"/></g>
+<path d="m40 369 225-14m-214-9 6 49m31-52 5 47m29-49 4 45m35-48 1 46m34-48 2 47m32-49 2 47m32-50 2 48m340-17 159 12m-149-35-3 47m34-46-2 48m34-46-2 48m35-47-2 50m35-46-2 47" stroke="#725167" stroke-width="6"/>
+<!-- Friendly spirit. -->
+<g transform="translate(597 244) rotate(9)"><path d="M-27 30v-45a27 27 0 0 1 54 0v45l-9-9-9 9-9-9-9 9-9-9Z" fill="#fff0de"/><ellipse cx="-9" cy="-9" rx="4" ry="6" fill="#44324b"/><ellipse cx="10" cy="-9" rx="4" ry="6" fill="#44324b"/><path d="M-5 7q5 6 10 0" stroke="#44324b" stroke-width="3" stroke-linecap="round"/><ellipse cx="-16" cy="2" rx="5" ry="2.5" fill="#efb8a3"/><ellipse cx="17" cy="2" rx="5" ry="2.5" fill="#efb8a3"/></g>
+<ellipse cx="400" cy="396" rx="350" ry="58" fill="url(#glow)"/>
+<use href="#jack" transform="translate(205 365) scale(1.15) rotate(-7)"/><use href="#jack" transform="translate(263 386) scale(.8) rotate(8)"/><use href="#jack" transform="translate(675 369) scale(1.3) rotate(6)"/><use href="#jack" transform="translate(612 391) scale(.7) rotate(-8)"/>
+<path d="M0 410q80-34 160 0t160 0 160 0 160 0 160 0v10H0Z" fill="#160f24"/>
+</svg>

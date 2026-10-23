@@ -20,7 +20,8 @@ MANIFEST = json.loads((PACK / 'manifest.json').read_text())
 def audio_page(browser):
     env = Environment(loader=FileSystemLoader(ROOT / 'templates'), autoescape=True)
     env.globals.update(avatar_family=st.avatar_family, avatar_care_verb=st.avatar_care_verb,
-                       avatar_is_swimmer=st.avatar_is_swimmer, avatar_month=lambda: 0)
+                       avatar_is_swimmer=st.avatar_is_swimmer, avatar_month=lambda: 0,
+                       avatar_outfit=lambda: 'default')
     context = browser.new_context(viewport={'width': 390, 'height': 850},
                                   reduced_motion='reduce', service_workers='block')
     # Observe actual AudioBufferSourceNodes without replacing the audio engine.

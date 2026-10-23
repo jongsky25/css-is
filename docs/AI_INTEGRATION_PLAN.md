@@ -265,6 +265,8 @@ Batch, ~30 comments/call (RPM-aware):
   actor `ai` — human re-tags (`/dashboard/comment-tag`, `app.py:8100`) still
   win, the lexicon stays as fallback, and override rows double as the
   AI-vs-lexicon **eval set** before trusting AI more broadly.
+
+In **8.10**, [evaluation suite 1.3.0](AI_EVALUATION.md#verbatim-comment-analysis-complete-batches-and-human-precedence) adds 49 offline provider cases for classification and summaries. Every classification batch must return one exact valid sentiment per comment; the app commits all batches only after rechecking current access, settings, comments and human tags. A failed later batch leaves prior tags intact. Summary text is bounded and escaped, but live-model accuracy remains unmeasured.
 - **"AI summary"**: 3-bullet panel beside `story_panel` on the activity report.
 
 **PII rule: comment text only, masked; never respondent identity.** Injection:
@@ -288,6 +290,8 @@ passed in the prompt; the returned id is validated against that list.
 Suggestions render as one-click prefills on the existing update form — the
 admin confirms, the existing `_audit` path records the human as actor.
 Feedback text is masked before sending.
+
+In **8.07**, [evaluation suite 1.2.0](AI_EVALUATION.md#feedback-triage-contract-v1-and-independent-evidence) adds 48 synthetic provider cases for this route. The provider sees at most 30 current open candidates with bounded masked snippets, and cannot propose a duplicate outside that offered set. Session, AI switches and the feedback/candidate snapshot are rechecked after the provider call. Metadata-only logging omits prompt and reply content. The form protects edits made while AI was working, escapes the model reason, and requires an explicit human Save. Masking is partial; real-model triage quality remains unmeasured.
 
 ### Phase 7 — Activity message drafting (`messages`, v2.10)
 

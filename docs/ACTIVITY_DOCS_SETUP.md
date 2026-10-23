@@ -30,12 +30,13 @@ Both templates are plain Google Docs in the `_templates` folder under the relay'
 | `dpo` | `dpo_year`, `dpo_no`, `dpo_date`, `subject`, `background`, `intro`, `funding_source`, `p_name` and `p_position` (one table row, copied per person), `head_name`, `head_title`, `unit_name`. Also available: `title`, `purpose`, `dates`, `venue`, `prepared_by`, and a `{{personnel}}` line of numbered names |
 | `invitation` (the DOH memorandum) | `date`, `for_name`, `for_title`, `for_office`, `from_name`, `from_title`, `unit_name`, `subject`, `opening`, `details` (a block of What / When / Where lines), `a_area` and `a_request` (one table row, copied per request), `contact_name`, `contact_email`, `contact_phone`. Also available: `title`, `invited`, `sender_name`, `sender_title`, `contact`, `head_name`, `head_title` |
 | `concept_note` | `title`, `date_duration`, `venue`, `participant_count`, `facilitators`, `budget`, `prepared_by`, `prepared_title`, `noted_by_name`, `noted_by_title`, `recommended_name`, `recommended_title`, `unit_name`; blocks `background`, `objectives`, `outputs`, `participants`, `methodology`; one table row `pd_day` / `pd_am` / `pd_pm` copied per day |
+| `minutes` | `title`, `meeting_when`, `venue`, `prepared_by`, `prepared_title`, `approved_by`, `unit_name`; blocks `attendees`, `agenda`, `discussion`, `next_steps`; one table row `m_action` / `m_who` / `m_due` |
 | `program_flow` | `title`; one table row `pf_time` / `pf_topic` / `pf_person` copied for each day heading and each empty row |
 
 ## What the app fills in, and what it leaves for you
 
-- The DPO number, DPO date and funding source are left as blank lines to complete by hand. The app never guesses
-  a number, a source of funds or a signature.
+- The DPO number and DPO date are left as blank lines to complete by hand. The funding source is cited as "BLHSD - Local Health Systems Development Assistance funds". The venue is blank when the item has none. The app never guesses
+  a number or a signature.
 - The signatory is the Director settings already used by the travel forms (`travel.sig.head_name` and `head_title`).
 - The personnel are the people marked as travelling on the item; if none, the people on the item; if none, the person
   drafting.

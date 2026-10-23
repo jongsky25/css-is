@@ -1049,7 +1049,8 @@ def _task_wellness(conn, user, today):
     uid = user["id"]
     claims = st.list_my_wellness_claims(conn, uid)
     iso = today.isoformat()
-    to_check_in = [c for c in claims if c["status"] == "approved" and c["break_date"] <= iso]
+    to_check_in = [c for c in claims if c["status"] == "approved"
+                   and st.wellness_check_in_ready(c)]
     if to_check_in:
         c = to_check_in[-1]                      # the oldest one still open
         more = len(to_check_in) - 1

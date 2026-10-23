@@ -85,6 +85,8 @@ def _calendar_entry_doc_any_key(conn):
 def init_db(conn):
     """Create all the tables (safe to run again -- it won't duplicate)."""
     short_links.init_db(conn)
+    import appearance_storage
+    appearance_storage.init_db(conn)
     conn.executescript("""
     CREATE TABLE IF NOT EXISTS org_unit (
         id         INTEGER PRIMARY KEY,
@@ -2563,6 +2565,14 @@ def get_spot_feedback(conn, fid):
     return _spot_row(r) if r else None
 
 
+def spot_feedback_triage_candidates(conn, fid, limit=30):
+    """Bounded open candidates for the existing admin-only feedback board."""
+    rows = conn.execute(_SPOT_COLS + " WHERE id<>? AND status NOT IN (" +
+                        ','.join('?' for _ in SPOT_RESOLVED_STATUSES) +
+                        ") ORDER BY id DESC LIMIT ?", (fid, *SPOT_RESOLVED_STATUSES, min(max(int(limit), 1), 30)))
+    return [_spot_row(r) for r in rows]
+
+
 def update_spot_feedback(conn, fid, *, status, admin_note, severity=None, duplicate_of=None):
     """Triage an entry: set its status + internal note (+ optional severity /
     duplicate-of, Phase 6) and stamp updated_at. The submitter-facing phase
@@ -4436,7 +4446,7 @@ def set_response_archived(conn, response_id, archived):
     return cur.rowcount
 
 
-def set_comment_override(conn, response_id, item_id, tag, actor=None):
+def set_comment_override(conn, response_id, item_id, tag, actor=None, *, commit=True):
     """Manually re-tag a verbatim as 'appreciate', 'improve', or 'mixed' (correcting
     the auto-classification; 'mixed' shows on both columns). item_id='' is the
     response's overall remark. Upserts; returns the previous tag (or None) so the
@@ -4453,7 +4463,8 @@ def set_comment_override(conn, response_id, item_id, tag, actor=None):
     else:
         conn.execute("INSERT INTO comment_override(response_id, item_id, tag, actor, set_at) "
                      "VALUES (?,?,?,?,?)", (response_id, item_id, tag, actor, now))
-    conn.commit()
+    if commit:
+        conn.commit()
     return prev[0] if prev else None
 
 
@@ -8300,6 +8311,15 @@ def _wellness_yesno(v):
     return None
 
 
+def wellness_check_in_ready(claim, now=None):
+    """Whether the scheduled break has finished in the app's local time."""
+    now = now if now is not None else tz.now_local()
+    end = (datetime.combine(date.fromisoformat(claim["break_date"]),
+                            time.fromisoformat(claim["start_time"]))
+           + timedelta(hours=claim["hours"]))
+    return now >= end
+
+
 def complete_wellness_claim(conn, claim_id, user_id, mood_before, mood_after,
                             activity_done, takeaway, usefulness=None,
                             felt_refreshed=None, managed_stress=None,
@@ -8314,8 +8334,8 @@ def complete_wellness_claim(conn, claim_id, user_id, mood_before, mood_after,
         raise ValueError("That break request isn't yours.")
     if claim["status"] != "approved":
         raise ValueError("Only an approved break can be completed.")
-    if claim["break_date"] > tz.today_local().isoformat():
-        raise ValueError("You can check in once the break's day arrives.")
+    if not wellness_check_in_ready(claim):
+        raise ValueError("You can check in once your scheduled wellness break has ended.")
     try:
         mb, ma = int(mood_before), int(mood_after)
     except (TypeError, ValueError):

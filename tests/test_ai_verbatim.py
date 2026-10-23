@@ -8,9 +8,9 @@ actor='ai'; a comment a HUMAN already re-tagged is never touched even if the
 mocked model disagrees (human > ai > lexicon — human wins); more comments than
 one batch's worth makes more than one ai.ask() call (chunking, ~30/call); an
 out-of-range index or an invalid sentiment value from a (mocked) misbehaving
-model is dropped rather than applied (schema-pinned enum + server-side
-revalidation); any AIError falls back to a plain notice with nothing changed;
-the AI summary panel renders up to 3 bullets from a mocked response or reports
+model rejects the complete batch before any tag is applied; any AIError falls
+back to a plain notice with nothing changed;
+the AI summary panel renders bounded bullets from a mocked response or reports
 unavailable, never a raw error.
 
 Autouse fixture below guarantees this file never reaches the real network —
@@ -143,9 +143,8 @@ def test_reanalyze_never_overwrites_a_human_retag(manager, app_mod, monkeypatch)
     # A human already re-tagged the first comment as "appreciate".
     st.set_comment_override(conn, rids[0], "", "appreciate", actor="analyst@x")
     conn.commit(); conn.close()
-    # The mocked model would classify BOTH as "improve" — disagreeing with the
-    # human's "appreciate" on the first one.
-    _mock_classify(monkeypatch, [{0: "improve", 1: "improve"}])
+    # The human-tagged item is omitted from the provider batch altogether.
+    _mock_classify(monkeypatch, [{0: "improve"}])
 
     manager.post(f"/reports/activities/{fid}/ai-reanalyze")
 
@@ -187,23 +186,19 @@ def test_reanalyze_chunks_in_batches_of_30(manager, app_mod, monkeypatch):
     assert all(overrides[(rid, "")] == ("mixed", "ai") for rid in rids)
 
 
-def test_reanalyze_drops_out_of_range_or_invalid_sentiment(manager, app_mod, monkeypatch):
+def test_reanalyze_rejects_the_whole_invalid_selection(manager, app_mod, monkeypatch):
     fid, rids = _activity(app_mod, ["Comment A", "Comment B"])
     conn = st.connect(app_mod.DB); _reset(conn)
     _configure(conn, monkeypatch)
     conn.commit(); conn.close()
-    # index 0 is valid; index 1 has a bogus sentiment; index 99 is out of range —
-    # a misbehaving/adversarial model output must not crash or apply either.
+    # A partial result would leave a misleading mixture of AI and lexicon tags.
     _mock_classify(monkeypatch, [{0: "improve", 1: "not_a_real_sentiment", 99: "mixed"}])
 
     r = manager.post(f"/reports/activities/{fid}/ai-reanalyze", follow_redirects=False)
     assert r.status_code == 303
-    assert "Re-analyzed 1 comment(s)" in _redirect_msg(r)
-    # ev["response_ids"] (a de-duped set under the hood) doesn't promise the same
-    # order as `rids`, so assert on the set of outcomes rather than a fixed index.
+    assert "nothing was changed" in _redirect_msg(r)
     overrides = _overrides(app_mod, rids)
-    assert len(overrides) == 1
-    assert list(overrides.values())[0] == ("improve", "ai")
+    assert not overrides
 
 
 def test_reanalyze_falls_back_when_ai_unavailable(manager, app_mod, monkeypatch):

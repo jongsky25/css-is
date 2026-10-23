@@ -23,12 +23,16 @@ DOCS = {
                      "blurb": "Explains why the activity is held, who takes part and what it costs, with the program of activities."},
     "program_flow": {"label": "Program flow",
                      "blurb": "The day-by-day schedule: when, what, and who is responsible."},
+    "minutes": {"label": "Minutes of the meeting",
+                "blurb": "The record of a meeting: who attended, what was discussed and decided, and the action points."},
 }
 KEYS = tuple(DOCS)
 INVITE_KINDS = ("training",)           # a training or workshop is announced to the people it is for
 BLANK = "__________"
 SIGNATORY_UNIT = "Bureau of Local Health Systems Development"   # the signatory block of every DPO (spot feedback #160)
 BUREAU = "the Bureau of Local Health Systems Development (BLHSD)"
+# Cited as the DPO's source of funds (spot feedback #179); the template adds " funds." after it.
+DPO_FUNDING = "BLHSD - Local Health Systems Development Assistance"
 # The usual asks in a memorandum to a regional office (Area, Requested assistance). Starting wording only.
 ASSISTANCE = (
     ("Participants", "Identify and designate the personnel who will participate in the activity."),
@@ -66,6 +70,10 @@ def suggest(entry, kind_label="") -> dict:
         out["program_flow"] = (True, "A training or an activity lasting several days needs a program.")
     else:
         out["program_flow"] = (False, "A single short item rarely needs a program.")
+    if entry.get("kind") == "meeting":
+        out["minutes"] = (True, "A meeting is usually followed by minutes.")
+    else:
+        out["minutes"] = (False, "Only a meeting usually needs minutes.")
     return out
 
 
@@ -189,9 +197,10 @@ def where_text(entry) -> str:
     return venue or (mod.capitalize() if mod else "To be announced")
 
 
-def describe_people(conn, entry, role=None, positions=True) -> list:
+def describe_people(conn, entry, role=None, positions=True, designations=None) -> list:
     """[(name, designation)] for the people on the entry, optionally only one role, in the order they were added.
-    With positions=False the designation is left empty: a position is only written when the person asked for it."""
+    With positions=False the designation is left empty: a position is only written when the person asked for it.
+    `designations` ({user_id: text}) holds designations typed on the draft form (spot feedback #178); a typed one wins."""
     out = []
     for p in entry.get("people") or []:
         if role and p.get("role") != role:
@@ -199,12 +208,37 @@ def describe_people(conn, entry, role=None, positions=True) -> list:
         prof = st.get_user_profile(conn, p["user_id"]) or {}
         name = prof.get("person_name") or prof.get("username") or ""
         if name:
-            out.append((name, (prof.get("designation") or "") if positions else ""))
+            typed = ((designations or {}).get(p["user_id"]) or "").strip()
+            out.append((name, typed or ((prof.get("designation") or "") if positions else "")))
+    return out
+
+
+def dpo_travellers(conn, entry) -> list:
+    """[{user_id, name}] of the people a DPO will name (the travellers, else everyone on the item), for the designation fields."""
+    out = []
+    for role in ("travel", None):
+        for p in entry.get("people") or []:
+            if role and p.get("role") != role:
+                continue
+            prof = st.get_user_profile(conn, p["user_id"]) or {}
+            name = prof.get("person_name") or prof.get("username") or ""
+            if name:
+                out.append({"user_id": p["user_id"], "name": name})
+        if out:
+            break
     return out
 
 
 def _line(i, name, desig):
     return f"{i}. {name}" + (f", {desig}" if desig else "")
+
+
+def _names(text, host) -> bool:
+    """Whether `text` already names `host`, ignoring case, spacing and a leading "the"."""
+    squash = lambda v: " ".join(str(v).lower().split())
+    h = squash(host)
+    h = h[4:] if h.startswith("the ") else h
+    return bool(h) and h in squash(text)
 
 
 def head_of_office(conn) -> tuple:
@@ -219,7 +253,7 @@ def head_of_office(conn) -> tuple:
     return name, title
 
 
-def payload(conn, entry, key, user, owner_label="", positions=False) -> td.DocPayload:
+def payload(conn, entry, key, user, owner_label="", positions=False, designations=None) -> td.DocPayload:
     """The relay request for one document. Placeholders left for the person to complete are filled with a blank line,
     so the draft never carries a guess for a number, a source of funds or a signature. Positions (designations) from
     saved profiles are written only when `positions` is True (spot feedback #154: ask first, do not fill them on their own)."""
@@ -228,15 +262,18 @@ def payload(conn, entry, key, user, owner_label="", positions=False) -> td.DocPa
     title = entry["title"]
     head_name, head_title = head_of_office(conn)
     if key == "dpo":
-        people = (describe_people(conn, entry, "travel", positions) or describe_people(conn, entry, None, positions)
-                  or [(me, (profile.get("designation") or "") if positions else "")])
+        people = (describe_people(conn, entry, "travel", positions, designations)
+                  or describe_people(conn, entry, None, positions, designations)
+                  or [(me, ((designations or {}).get(user["id"]) or "").strip()
+                       or ((profile.get("designation") or "") if positions else ""))])
         days = days_text(entry)
-        place = (entry.get("venue") or "").strip()
-        in_place = f" in {place}" if place else ""
+        # Spot feedback #178: the venue is always in the subject and the body; with none on the item it is a blank to fill.
+        place = (entry.get("venue") or "").strip() or BLANK
+        in_place = f" in {place}"
         unit = owner_label.strip()
         outside = get_outside(conn, entry["id"])
         the_title = title if title.lower().startswith("the ") else f"the {title}"
-        place_part = f", in {place}" if place else ""
+        place_part = f", in {place}"
         # The wording follows the office's sample DPO (spot feedback #170): the first paragraph gives the rationale taken from
         # the invitation's key lines, if there are any, then says who conducts the activity, when and where; the subject names
         # the select bureau personnel and what they are authorised to do.
@@ -250,7 +287,10 @@ def payload(conn, entry, key, user, owner_label="", positions=False) -> td.DocPa
         # stand in when that is empty. Nothing is invented when both are.
         rationale = get_dpo_cites(conn, entry["id"]).strip() or (outside or {}).get("invitation", "").strip()
         if rationale:
-            background = (rationale if rationale[-1] in ".!?" else rationale + ".") + " In support of this, " + sentence
+            background = rationale if rationale[-1] in ".!?" else rationale + "."
+            # The invitation's own lines may already say who holds the activity; do not say it again.
+            if not (outside and outside["host"] and _names(rationale, outside["host"])):
+                background += " In support of this, " + sentence
         else:
             background = sentence[0].upper() + sentence[1:]
         if outside and outside["invited_as"] == "resource_person":
@@ -274,11 +314,12 @@ def payload(conn, entry, key, user, owner_label="", positions=False) -> td.DocPa
                   "subject": subject,
                   "background": background, "intro": intro,
                   "title": title, "purpose": f"attend {title}", "dates": days, "venue": where_text(entry),
-                  "funding_source": BLANK, "unit_name": SIGNATORY_UNIT, "head_name": head_name.upper(), "head_title": head_title,
+                  "funding_source": DPO_FUNDING, "unit_name": SIGNATORY_UNIT, "head_name": head_name.upper(), "head_title": head_title,
                   "prepared_by": me}
         # The personnel go in as a table (Name | Position) and, for a template that still has a {{personnel}} line, as
         # numbered lines too. Whichever the template carries is filled; the other is skipped.
-        rows = {"personnel": {"marker": "p_name", "data": [{"p_name": f"{i}. {n}", "p_position": d} for i, (n, d) in enumerate(people, 1)]}}
+        rows = {"personnel": {"marker": "p_name", "fit": True,           # fit: widths follow the text (spot feedback #181)
+                              "data": [{"p_name": f"{i}. {n}", "p_position": d} for i, (n, d) in enumerate(people, 1)]}}
         blocks = {"personnel": [_line(i, n, d) for i, (n, d) in enumerate(people, 1)]}
         if single:
             # "remove" asks the relay to drop the whole Name | Position table; a relay without it leaves one blank row.
@@ -319,6 +360,8 @@ def payload(conn, entry, key, user, owner_label="", positions=False) -> td.DocPa
         return _concept_note(conn, entry, title, me, profile, head_name, head_title, owner_label.strip(), positions)
     if key == "program_flow":
         return _program_flow(entry, title)
+    if key == "minutes":
+        return _minutes(conn, entry, title, me, profile, head_name, owner_label.strip(), positions)
     raise ValueError("Unknown document.")
 
 
@@ -351,6 +394,26 @@ def _concept_note(conn, entry, title, me, profile, head_name, head_title, unit, 
     rows = {"program": {"marker": "pd_day", "data": [{"pd_day": _day_label(i, d), "pd_am": "", "pd_pm": ""}
                                                      for i, d in enumerate(days, 1)]}}
     return td.DocPayload("concept_note", "concept_note", f"Concept Note - {title}"[:120], fields, blocks=blocks, rows=rows)
+
+
+MINUTES_PROMPTS = {
+    "agenda": ["1. [first agenda item]", "2. [second agenda item]"],
+    "discussion": ["[What was discussed under each agenda item, and what was decided.]"],
+    "next_steps": ["[When and where the next meeting is, if one is set.]"],
+}
+
+
+def _minutes(conn, entry, title, me, profile, head_name, unit, positions=False) -> td.DocPayload:
+    """Minutes of the meeting (spot feedback #177). The app knows the date, place and who was invited; what was said,
+    decided and assigned is the person's to write, so those parts are prompts and an empty action table."""
+    people = describe_people(conn, entry, None, positions)
+    attendees = [_line(i, n, d) for i, (n, d) in enumerate(people, 1)] or ["[List who attended.]"]
+    fields = {"title": title, "unit_name": unit, "meeting_when": when_text(entry), "venue": where_text(entry),
+              "prepared_by": me, "prepared_title": (profile.get("designation") or "") if positions else "",
+              "approved_by": head_name.upper() if head_name else BLANK}
+    blocks = {**MINUTES_PROMPTS, "attendees": attendees}
+    rows = {"actions": {"marker": "m_action", "data": [{"m_action": "", "m_who": "", "m_due": ""} for _ in range(3)]}}
+    return td.DocPayload("minutes", "minutes", f"Minutes - {title}"[:120], fields, blocks=blocks, rows=rows)
 
 
 def _program_flow(entry, title) -> td.DocPayload:
@@ -387,9 +450,9 @@ class Prepared:
         self.entry_id, self.key, self.rev, self.call = entry_id, key, rev, call
 
 
-def prepare(conn, entry, key, user, owner_label="", relay=None, positions=False) -> Prepared:
+def prepare(conn, entry, key, user, owner_label="", relay=None, positions=False, designations=None) -> Prepared:
     """Build the relay request for a new revision of one document (reads the database)."""
-    pl = payload(conn, entry, key, user, owner_label, positions)
+    pl = payload(conn, entry, key, user, owner_label, positions, designations)
     rev = int((get_rows(conn, entry["id"]).get(key) or {"rev": 0})["rev"]) + 1
     relay = relay or gdocs_relay.get_relay()
     share = [user["username"]] if user.get("username") else []
@@ -414,7 +477,7 @@ def record(conn, prep, res, user) -> dict:
     return {"ok": bool(url), "url": url or "", "error": err, "warning": warning}
 
 
-def draft(conn, entry, key, user, owner_label="", relay=None, positions=False) -> dict:
+def draft(conn, entry, key, user, owner_label="", relay=None, positions=False, designations=None) -> dict:
     """Prepare, send and record in one step (for callers that are not on an event loop)."""
-    prep = prepare(conn, entry, key, user, owner_label, relay, positions)
+    prep = prepare(conn, entry, key, user, owner_label, relay, positions, designations)
     return record(conn, prep, prep.call(), user)

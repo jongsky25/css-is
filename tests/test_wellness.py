@@ -30,6 +30,12 @@ def _monday_this_week():
 
 
 @pytest.fixture()
+def after_break_time(monkeypatch):
+    today = tz.today_local()
+    monkeypatch.setattr(tz, "now_local", lambda: datetime.combine(today, time(23)))
+
+
+@pytest.fixture()
 def wellness_org(app_mod):
     """A section with a chief (section_manager account), an employee (viewer
     account, directory-linked) and a loner (viewer account, no directory link).
@@ -382,7 +388,7 @@ def test_title_names_the_seat_even_without_an_account(wellness_chain):
 
 # ------------------------------------------- the full flow + gamification
 
-def test_approve_complete_reflect_awards_points_and_badges(app_mod, wellness_org):
+def test_approve_complete_reflect_awards_points_and_badges(app_mod, wellness_org, after_break_time):
     conn, emp, chief = wellness_org["conn"], wellness_org["emp"], wellness_org["chief"]
     u_chief = {"id": chief, "username": "w-chief@test.local", "role": "section_manager"}
     monday = _monday_this_week().isoformat()     # always a weekday <= today
@@ -428,6 +434,40 @@ def test_completion_guards(wellness_org, future_weekday):
         st.complete_wellness_claim(conn, cid, wellness_org["loner"], 3, 4, "walk", None)
 
 
+def test_check_in_waits_until_scheduled_break_ends(app_mod, wellness_org, monkeypatch):
+    import office_connect as oc
+
+    conn, emp = wellness_org["conn"], wellness_org["emp"]
+    day = tz.today_local()
+    cid = conn.execute(
+        "INSERT INTO wellness_claim(user_id, week_start, break_date, start_time,"
+        " hours, activity, status, created_at) VALUES (?,?,?,?,2,'exercise','approved',?)",
+        (emp, st.wellness_week_start(day), day.isoformat(), "14:00", tz.now_iso())
+    ).lastrowid
+    conn.commit()
+    client = _client_for_id(app_mod, emp)
+    path = f"/wellness/claims/{cid}/complete"
+    answer = {"mood_before": "2", "mood_after": "4", "activity_done": "walk"}
+
+    for hour in (13, 14, 15):
+        monkeypatch.setattr(tz, "now_local", lambda hour=hour: datetime.combine(day, time(hour)))
+        assert not st.wellness_check_in_ready(st.get_wellness_claim(conn, cid))
+        assert path not in client.get("/wellness").text
+        assert all(t["url"] != path for t in oc.home_tasks(conn, _account(conn, emp)))
+        assert client.get(path, follow_redirects=False).headers["location"].startswith("/wellness?err=")
+        response = client.post(path, data=answer, follow_redirects=False)
+        assert response.status_code == 303 and "err=" in response.headers["location"]
+        assert st.get_wellness_claim(conn, cid)["status"] == "approved"
+
+    monkeypatch.setattr(tz, "now_local", lambda: datetime.combine(day, time(16)))
+    assert path in client.get("/wellness").text
+    assert any(t["url"] == path for t in oc.home_tasks(conn, _account(conn, emp)))
+    assert client.get(path).status_code == 200
+    response = client.post(path, data=answer, follow_redirects=False)
+    assert response.status_code == 303 and "cheer=" in response.headers["location"]
+    assert st.get_wellness_claim(conn, cid)["status"] == "completed"
+
+
 # ----------------------------------------------------------------- HTTP layer
 
 def test_http_apply_flow_and_hub(app_mod, wellness_org, future_weekday):
@@ -457,7 +497,7 @@ def test_http_apply_flow_and_hub(app_mod, wellness_org, future_weekday):
     assert r.status_code == 400 and "entitlement" in r.text
 
 
-def test_http_approve_and_reflect(app_mod, wellness_org):
+def test_http_approve_and_reflect(app_mod, wellness_org, after_break_time):
     conn, emp = wellness_org["conn"], wellness_org["emp"]
     monday = _monday_this_week().isoformat()
     ws = st.wellness_week_start(date.fromisoformat(monday))
@@ -506,7 +546,7 @@ def test_chief_pages_are_gated(app_mod, wellness_org, viewer, admin, future_week
                         data={"action": "approve"}).status_code == 403
 
 
-def test_register_export(app_mod, wellness_org, admin):
+def test_register_export(app_mod, wellness_org, admin, after_break_time):
     conn, emp = wellness_org["conn"], wellness_org["emp"]
     monday = _monday_this_week().isoformat()
     ws = st.wellness_week_start(date.fromisoformat(monday))
@@ -653,7 +693,7 @@ def test_request_beyond_window_is_rejected(wellness_org):
 
 # ------------------------------------------- richer post-activity report fields
 
-def test_completion_records_post_activity_fields(app_mod, wellness_org):
+def test_completion_records_post_activity_fields(app_mod, wellness_org, after_break_time):
     conn, emp, chief = wellness_org["conn"], wellness_org["emp"], wellness_org["chief"]
     u_chief = {"id": chief, "username": "w-chief@test.local", "role": "section_manager"}
     monday = _monday_this_week().isoformat()
@@ -674,7 +714,7 @@ def test_completion_records_post_activity_fields(app_mod, wellness_org):
     assert claim["suggestions"] == "more shaded areas"
 
 
-def test_completion_validates_new_fields(wellness_org):
+def test_completion_validates_new_fields(wellness_org, after_break_time):
     conn, emp = wellness_org["conn"], wellness_org["emp"]
     monday = _monday_this_week().isoformat()
     ws = st.wellness_week_start(date.fromisoformat(monday))
@@ -1010,7 +1050,7 @@ def test_home_tasks_offer_a_break_when_hours_are_left(app_mod, wellness_org):
     assert f"{st.WELLNESS_WEEKLY_HOURS} hours" in w["title"]
 
 
-def test_home_tasks_lead_with_a_check_in_and_approvals(app_mod, wellness_org):
+def test_home_tasks_lead_with_a_check_in_and_approvals(app_mod, wellness_org, after_break_time):
     import office_connect as oc
     conn, emp = wellness_org["conn"], wellness_org["emp"]
     monday = _monday_this_week().isoformat()

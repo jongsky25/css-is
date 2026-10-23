@@ -32,7 +32,10 @@ const AT_TEMPLATES = [
              'venue', 'facilitators', 'budget', 'pd_day', 'pd_am', 'pd_pm', 'prepared_by', 'prepared_title', 'noted_by_name',
              'noted_by_title', 'recommended_name', 'recommended_title', 'unit_name'] },
   { key: 'program_flow', title: 'Template - program flow', build: at_buildProgramFlow_,
-    expect: ['title', 'pf_time', 'pf_topic', 'pf_person'] }
+    expect: ['title', 'pf_time', 'pf_topic', 'pf_person'] },
+  { key: 'minutes', title: 'Template - minutes of the meeting', build: at_buildMinutes_,
+    expect: ['title', 'meeting_when', 'venue', 'attendees', 'agenda', 'discussion', 'm_action', 'm_who', 'm_due', 'next_steps',
+             'prepared_by', 'prepared_title', 'approved_by', 'unit_name'] }
 ];
 
 // Rebuilds all four templates even when they are already good, for a new letterhead or logos. TPL_<key> then points to the
@@ -183,11 +186,11 @@ function at_footer_(doc) {
 }
 
 // DPO layout, in points, measured from the sample the office supplied (spot feedback #170); the text is 468 pt wide.
-var AT_DPO_TITLE_INDENT = 22.5;      // "DEPARTMENT PERSONNEL ORDER" and its number
+var AT_DPO_TITLE_INDENT = 0;         // "DEPARTMENT PERSONNEL ORDER" and its number: flush left, like the lines of the first paragraph (spot feedback #180)
 var AT_DPO_SUBJECT_LABEL = 36;       // where "SUBJECT:" starts
 var AT_DPO_SUBJECT_TEXT = 108;       // where the subject text starts; its wrapped lines line up under it
 var AT_DPO_BODY_FIRST_LINE = 36;     // first line of each body paragraph
-var AT_DPO_SIGNATORY_INDENT = 162;   // "By Authority of the Secretary of Health:" and the signatory block
+var AT_DPO_SIGNATORY_INDENT = 144;   // "By Authority of the Secretary of Health:" and the signatory block: the 2-inch mark (spot feedback #182)
 var AT_DPO_SPACE_AFTER = 12;         // points of space after each paragraph
 
 function at_buildDpo_(body, doc) {
@@ -195,7 +198,8 @@ function at_buildDpo_(body, doc) {
   // A space after the subject and after every paragraph (spot feedback #170).
   const add = function (text) { return at_add_(body, text).setSpacingAfter(AT_DPO_SPACE_AFTER); };
   add('{{dpo_date}}').setAlignment(DocumentApp.HorizontalAlignment.RIGHT);
-  add('DEPARTMENT PERSONNEL ORDER').setBold(true).setIndentStart(AT_DPO_TITLE_INDENT).setIndentFirstLine(AT_DPO_TITLE_INDENT);
+  // no space between the title and its number (spot feedback #180)
+  add('DEPARTMENT PERSONNEL ORDER').setBold(true).setIndentStart(AT_DPO_TITLE_INDENT).setIndentFirstLine(AT_DPO_TITLE_INDENT).setSpacingAfter(0);
   add('No. {{dpo_year}} - {{dpo_no}}').setIndentStart(AT_DPO_TITLE_INDENT).setIndentFirstLine(AT_DPO_TITLE_INDENT);
   // "SUBJECT:" then a tab to the subject text, which is bold, underlined and justified; its wrapped lines line up under
   // the text, not under the label.
@@ -213,7 +217,7 @@ function at_buildDpo_(body, doc) {
     p.setAlignment(DocumentApp.HorizontalAlignment.JUSTIFY);
     p.setIndentFirstLine(AT_DPO_BODY_FIRST_LINE);
   });
-  const table = at_table_(body, [['Name', 'Position'], ['{{p_name}}', '{{p_position}}']]);
+  const table = at_table_(body, [['Name', 'Designation'], ['{{p_name}}', '{{p_position}}']]);
   table.setBorderWidth(0);
   [234, 234].forEach(function (w, c) { table.setColumnWidth(c, w); });
   table.getRow(0).editAsText().setBold(true);
@@ -229,12 +233,14 @@ function at_buildDpo_(body, doc) {
     p.setAlignment(DocumentApp.HorizontalAlignment.JUSTIFY);
     p.setIndentFirstLine(AT_DPO_BODY_FIRST_LINE);
   });
-  add('By Authority of the Secretary of Health:').setIndentStart(AT_DPO_SIGNATORY_INDENT);
+  add('By Authority of the Secretary of Health:').setIndentStart(AT_DPO_SIGNATORY_INDENT).setIndentFirstLine(AT_DPO_SIGNATORY_INDENT);
   add('');
   add('');
-  add('{{head_name}}').setBold(true).setIndentStart(AT_DPO_SIGNATORY_INDENT);
-  add('{{head_title}}').setIndentStart(AT_DPO_SIGNATORY_INDENT);
-  add('{{unit_name}}').setIndentStart(AT_DPO_SIGNATORY_INDENT);
+  // the first-line indent is set too: with only the start indent, a one-line paragraph begins at the left margin (spot feedback #182)
+  // the signatory's name, title and unit sit on consecutive lines with no space between them (spot feedback #183)
+  add('{{head_name}}').setBold(true).setIndentStart(AT_DPO_SIGNATORY_INDENT).setIndentFirstLine(AT_DPO_SIGNATORY_INDENT).setSpacingAfter(0);
+  add('{{head_title}}').setIndentStart(AT_DPO_SIGNATORY_INDENT).setIndentFirstLine(AT_DPO_SIGNATORY_INDENT).setSpacingAfter(0);
+  add('{{unit_name}}').setIndentStart(AT_DPO_SIGNATORY_INDENT).setIndentFirstLine(AT_DPO_SIGNATORY_INDENT);
   body.editAsText().setFontFamily('Times New Roman');
   body.editAsText().setFontSize(12);
   at_footer_(doc);
@@ -349,6 +355,39 @@ function at_buildProgramFlow_(body, doc) {
   at_add_(body, 'Tentative Program Flow:');
   const table = at_table_(body, [['Date/Time', 'Topic/Activity', 'Person Responsible'], ['{{pf_time}}', '{{pf_topic}}', '{{pf_person}}']]);
   table.getRow(0).editAsText().setBold(true);
+  body.editAsText().setFontFamily('Times New Roman');
+  body.editAsText().setFontSize(12);
+  at_footer_(doc);
+  const first = body.getChild(0);
+  if (first.getType() === DocumentApp.ElementType.PARAGRAPH && first.asParagraph().getText() === '') body.removeChild(first);
+}
+
+// Minutes of the meeting (spot feedback #177): title, when and where, who attended, the agenda, what was discussed and
+// decided, a table of action points and the signatures. {{attendees}}, {{agenda}}, {{discussion}} and {{next_steps}} are
+// blocks; {{m_action}}, {{m_who}} and {{m_due}} sit in ONE table row.
+function at_buildMinutes_(body, doc) {
+  at_letterhead_(doc.addHeader());
+  at_add_(body, 'MINUTES OF THE MEETING').setBold(true).setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+  at_add_(body, '{{title}}').setBold(true).setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+  at_add_(body, 'Date and time: {{meeting_when}}');
+  at_add_(body, 'Venue: {{venue}}');
+  at_add_(body, 'Attendees:').setBold(true);
+  at_add_(body, '{{attendees}}');
+  at_add_(body, 'Agenda:').setBold(true);
+  at_add_(body, '{{agenda}}');
+  at_add_(body, 'Discussion and decisions:').setBold(true);
+  at_add_(body, '{{discussion}}').setAlignment(DocumentApp.HorizontalAlignment.JUSTIFY);
+  at_add_(body, 'Action points:').setBold(true);
+  const table = at_table_(body, [['Action', 'Person responsible', 'Due'], ['{{m_action}}', '{{m_who}}', '{{m_due}}']]);
+  table.getRow(0).editAsText().setBold(true);
+  at_add_(body, 'Next steps:').setBold(true);
+  at_add_(body, '{{next_steps}}');
+  at_add_(body, 'Prepared by:').setBold(true);
+  at_add_(body, '{{prepared_by}}');
+  at_add_(body, '{{prepared_title}}');
+  at_add_(body, 'Approved by:').setBold(true);
+  at_add_(body, '{{approved_by}}');
+  at_add_(body, '{{unit_name}}');
   body.editAsText().setFontFamily('Times New Roman');
   body.editAsText().setFontSize(12);
   at_footer_(doc);

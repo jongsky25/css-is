@@ -1,4 +1,4 @@
-## 8.05 — October 23, 2026
+## 8.11 — October 23, 2026
 
 - Replace companion voice blips with 27 locally hosted recordings and natural effects: animal calls, cat purring, quiet movement and water effects, and a separate sound identity for every plant.
 - Play the companion signature when tapped; use quieter, infrequent idle calls and a shared mixer to prevent overlapping voices.
@@ -6,6 +6,49 @@
 - Include source credits, individual audio licenses, pinned source checksums and a rebuild script. The two rabbit excerpts retain CC BY-SA 4.0; the remaining recordings and foley use CC0.
 - Load only requested clips after opting into sound. Existing static asset delivery and service-worker caching cover the pack; update script and service-worker versions.
 
+## 8.10 — October 23, 2026
+
+- Continue A22 with evaluation suite 1.3.0: retain 146 answer, report-draft and feedback-triage scenarios and add 49 versioned offline cases for activity-comment re-analysis and AI summary. Use synthetic comments, provider HTTP fakes, current route/auth/storage paths and minimized CI evidence in both orders.
+- Read current activity comments without the dashboard cache. Validate every classification index and sentiment, every batch, current account/session/settings and unchanged comments/human tags before atomically saving AI tags and audit. A failed later batch, changed source or failed audit leaves all tags unchanged; prior human corrections remain authoritative.
+- Bound partially masked comment snippets and summary output; omit the activity name from the summary prompt. Keep verbatim interaction logs to outcome/token/timing metadata without prompts, replies or raw provider error bodies, including when general content logging is enabled. This masking is not universal anonymization.
+- Validate summary shape and length, recheck access and source after provider I/O, and escape model-authored text in the browser. A summary is shown for human review and is not saved to an official report.
+- Use eight-second provider read timeouts with existing retry, rate and budget settings. No database migration, new provider configuration or dependency is required. These deterministic tests do not measure live-model classification or summary quality.
+
+## 8.09 — October 23, 2026
+
+- DPO: start the signature block ("By Authority of the Secretary of Health:" and the signatory's name, title and office) at the 2-inch mark on its first line too (Spot Feedback #182). The paragraphs set only the start indent, so single lines began at the left margin.
+- DPO: when the invitation's key lines (or "DPO cites") already name the office holding the activity, skip the generated "In support of this, [office] will conduct…" sentence (it repeated the same fact).
+- Google side: re-run `rebuildActivityTemplates()` and redeploy `activity_templates.gs`. No schema migration or new dependency.
+
+## 8.08 — October 23, 2026
+
+- Open wellness check-in only after the scheduled approved break ends in local time, including two-hour breaks.
+- Hide early check-in links and home reminders; reject early direct visits and submissions.
+- Cover the time boundary in tests. No schema migration or new dependency.
+
+## 8.07 — October 23, 2026
+
+- Extend A22 evaluation suite 1.2.0 to 146 scenarios: retain 38 answer and 60 report-draft cases; add 48 feedback-triage cases using synthetic records and fake provider HTTP. Require every case in both full CI orders and bind reports to the new triage code and form.
+- Limit the provider request to the current feedback text and 30 open candidates with bounded, partially masked snippets. Omit submitter identity, admin notes, page metadata and history; keep triage logs to outcome/token/timing metadata even when general content logging is enabled.
+- Reject unsupported status/severity values, extra fields, malformed reasons, and duplicate IDs outside the offered candidates. Recheck the admin session, AI settings, feedback and candidates after the provider call before returning a suggestion. Provider failure or stale data leaves the manual form available.
+- Keep suggestions as explicit form prefills: preserve human edits made while AI is working, clear a stale duplicate field when no match is suggested, escape the reason in the browser and require Save for any business change. Verify these behaviors in Chromium without external network or real provider use.
+- No database migration, new dependency or production AI configuration is required. These tests measure deterministic application safeguards, not a real model's judgment or production latency. Keep the release version at two digits after the decimal.
+
+## 8.06 — October 23, 2026
+
+- Add administrator-only Appearance controls for independent page themes and avatar outfits, private desktop/mobile previews, drafts, publishing, manual overrides, fallback settings and seasonal schedules.
+- Add a complete Halloween scene with an illustrated haunted-office banner, moon, bats, ghosts, pumpkins, seasonal navigation and cards, companion props, and witch, vampire and pumpkin costumes across all species and growth stages. Retain Default and Christmas presets.
+- Make scenery, ambient animation and the banner message configurable; preserve personal light/dark and contrast settings, reduced motion and print behavior. Refresh styling and costume layers on open pages without discarding forms or companion state.
+- Store configuration, revision-checked history and hash-chained audit entries atomically. Reject overlapping published schedules and ambiguous local times, resolve expiry without a cron worker, and keep old settings/history compatible.
+- Include all appearance modules in the deployment runtime and advance the application and service-worker cache to 8.06. Add backend and Chromium coverage for access, previews, schedules, restoration, live changes, accessibility and mobile layout.
+
+## 8.05 — October 23, 2026
+
+- Fix calendar birthday items opening a "Not Found" page: they now open that month's celebrants list (Spot Feedback #175); month and week views no longer render a missing link as `None`.
+- Show a Region column on an activity's Monitor roster when its registration form has a Region question (#176).
+- DPO: cite "BLHSD - Local Health Systems Development Assistance" as the funding source (#179); always name the venue in the subject and body, blank when the item has none (#178); type each named person's designation on the draft form (#178); title flush left with no space before its number (#180); several travellers go in a Name | Designation table sized to its text, Times New Roman 12, single spacing (#181); signature block at the 2-inch mark (#182) with no space between its lines (#183).
+- New "Minutes of the meeting" document, suggested for meetings (#177).
+- Google side: re-run `rebuildActivityTemplates()` and redeploy `travel_docs.gs` / `activity_templates.gs` for the layout changes and the minutes template. No schema migration or new dependency.
 ## 8.04 — October 23, 2026
 
 - Continue A22 with evaluation suite 1.1.0: retain the 38 answer-route scenarios and add 60 report-draft scenarios for MRR and official CO-CSM reports, with literal independently reviewed source figures and simulated provider HTTP.

@@ -22,7 +22,7 @@
   themselves are the CSS keyframes below. All motion — CSS *and* the JS
   engine — is disabled under prefers-reduced-motion.
 #}
-{% from "_avatars_art.html" import species_art %}
+{% from "_avatars_art.html" import species_art, costume_back %}
 
 {% macro avatar_defs() %}
 <style>
@@ -316,15 +316,17 @@
       <stop offset="0" stop-color="#eaf4fa"/><stop offset="1" stop-color="#c2dced"/></linearGradient>
   </defs>
 </svg>
-<script src="/static/js/avatar-audio.js?v=8.05" defer></script>
-<script src="/static/js/avatars.js?v=8.05" defer></script>
+<script src="/static/js/avatar-audio.js?v=8.11" defer></script>
+<script src="/static/js/avatars.js?v=8.11" defer></script>
 {% endmacro %}
 
 
 {#-- one species at a stage; returns just the <svg> so pickers/heroes can size it --#}
-{% macro avatar_svg(kind, stage) %}
+{% macro avatar_svg(kind, stage, outfit_month=none, outfit=none) %}
 {% set s = [[stage|int, 6]|min, 1]|max %}
-<svg viewBox="0 0 120 140" role="img" width="100%" height="100%" aria-hidden="true" focusable="false">
+{% set accessory = avatar_month() if outfit_month is none else outfit_month %}
+{% set costume = outfit if outfit is not none else (avatar_outfit() if outfit_month is none else ('halloween' if accessory == 10 else ('christmas' if accessory == 12 else 'default'))) %}
+<svg viewBox="0 0 120 140" role="img" width="100%" height="100%" aria-hidden="true" focusable="false" data-avatar-kind="{{ kind }}" data-avatar-stage="{{ s }}" data-avatar-month="{{ accessory }}" data-avatar-outfit="{{ costume }}">
   {#-- swimmers glide (the JS moves .avmove), so their home water is drawn
        HERE, behind and OUTSIDE the moving layer, and stays put while the
        creature swims around it (avatars.js/_avatars_art rely on this split). --#}
@@ -335,7 +337,7 @@
   </g>
   {% endif %}
   <g class="avmove">
-    <g class="avstage">{{ species_art(kind, s, avatar_month()) }}</g>
+    <g class="avstage">{{ costume_back(kind, s, costume) }}{{ species_art(kind, s, accessory, costume) }}</g>
     {% if avatar_family(kind) == "plant" %}
     <g class="av-drops" fill="#5fa8d8">
       <path d="M46 18 c3.2 5 3.2 8.4 0 9.6 c-3.2 -1.2 -3.2 -4.6 0 -9.6 Z"/>
