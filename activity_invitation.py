@@ -10,6 +10,7 @@ from __future__ import annotations
 import re
 
 import ai_core
+import storage as st
 
 FEATURE = "travel_scan"             # shares the image-reading feature's switch, daily budget and per-account limit
 INVITED_AS = ("resource_person", "attendee", "unknown")
@@ -39,24 +40,41 @@ SCHEMA = {"type": "OBJECT", "properties": {
 HOST_MAX, KEY_LINES_MAX = 160, 600
 
 
+_CONTACT = re.compile(r"(?:https?://|www\.|[\w.+-]+@[\w.-]+\.[a-z]{2,}|(?:\+?\d[\d ()-]{6,}\d))", re.I)
+
+
 def _text(v, n) -> str:
-    return re.sub(r"\s+", " ", str(v or "")).strip()[:n]
+    if (not isinstance(v, str) or len(v) > n or any(ord(c) < 32 for c in v)
+            or any(c in v for c in "<>") or _CONTACT.search(v)):
+        raise ai_core.AIBadResponse("Invalid invitation text")
+    return re.sub(r"\s+", " ", v).strip()
 
 
 def clean(parsed) -> dict:
-    """The model's answer as the form may show it. Nothing raises; anything odd becomes empty."""
-    p = parsed if isinstance(parsed, dict) else {}
-    host, lines = _text(p.get("host"), HOST_MAX), _text(p.get("key_lines"), KEY_LINES_MAX)
-    invited = p.get("invited_as") if p.get("invited_as") in INVITED_AS else "unknown"
-    return {"readable": bool(p.get("readable")) and bool(host or lines), "host": host,
-            "invited_as": invited if invited != "unknown" else "", "key_lines": lines,
-            "note": _text(p.get("note"), 200)}
+    """Validate the provider reply before it can be shown in the editable form."""
+    if not isinstance(parsed, dict) or set(parsed) != set(SCHEMA["required"]):
+        raise ai_core.AIBadResponse("Incomplete invitation reading")
+    if not isinstance(parsed["readable"], bool) or parsed["invited_as"] not in INVITED_AS:
+        raise ai_core.AIBadResponse("Invalid invitation reading")
+    host, lines = _text(parsed["host"], HOST_MAX), _text(parsed["key_lines"], KEY_LINES_MAX)
+    note = _text(parsed["note"], 200)
+    if not parsed["readable"]:
+        return {"readable": False, "host": "", "invited_as": "", "key_lines": "", "note": note}
+    if not host or not lines:
+        raise ai_core.AIBadResponse("Incomplete invitation reading")
+    return {"readable": True, "host": host,
+            "invited_as": parsed["invited_as"] if parsed["invited_as"] != "unknown" else "",
+            "key_lines": lines, "note": note}
 
 
 async def read(conn, user, ip, raw: bytes, mime: str) -> dict:
     """One Gemini call over the file. Returns clean(); raises ai_core.AIError when AI is off, over budget or failing,
     so the caller can say the lines are to be typed."""
-    result, _iid = await ai_core.ask_async(
+    result, iid = await ai_core.ask_async(
         conn, user, FEATURE, PROMPT, ip=ip, system=SYSTEM, response_schema=SCHEMA,
         temperature=0.0, max_output_tokens=512, timeout=25.0, images=[(mime, raw)])
-    return clean(result.get("parsed"))
+    try:
+        return clean(result.get("parsed"))
+    except ai_core.AIBadResponse:
+        st.update_ai_interaction_outcome(conn, iid, "rejected_validation")
+        raise

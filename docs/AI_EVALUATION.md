@@ -1,6 +1,6 @@
-# AI assistance evaluation — A22 / 8.19
+# AI assistance evaluation — A22 / 8.21
 
-Evaluation suite **1.9.0** contains **366 named scenarios**: 38 answer-route cases from 8.01, 60 MRR/CO-CSM report-draft cases from 8.04, 48 feedback-triage cases from 8.07, 49 verbatim comment cases from 8.10, 32 participant-message cases from 8.12, 30 UX Insights analysis cases from 8.13, 32 directory duplicate-suggestion cases from 8.14, 31 landing-assistant action cases from 8.15, 19 direct travel scan cases from 8.17, and 27 travel checklist upload cases from 8.19. It turns selected safeguards into a reproducible, versioned release gate and produces a small report by category and case. The retained suite ID `existing-ai-answers` is a historical identifier; all ten surfaces must pass.
+Evaluation suite **1.10.0** contains **389 named scenarios**: 38 answer-route cases from 8.01, 60 MRR/CO-CSM report-draft cases from 8.04, 48 feedback-triage cases from 8.07, 49 verbatim comment cases from 8.10, 32 participant-message cases from 8.12, 30 UX Insights analysis cases from 8.13, 32 directory duplicate-suggestion cases from 8.14, 31 landing-assistant action cases from 8.15, 19 direct travel scan cases from 8.17, 27 travel checklist upload cases from 8.19, and 23 calendar invitation upload cases from 8.21. It turns selected safeguards into a reproducible, versioned release gate and produces a small report by category and case. The retained suite ID `existing-ai-answers` is a historical identifier; all eleven surfaces must pass.
 
 ## What it checks
 
@@ -145,7 +145,13 @@ Twenty-seven `checklist_upload` scenarios exercise the real travel upload route 
 
 After relay and provider work, the route takes a short write lock and rechecks the registered account, travel setting, unchanged filing, editability and applicable checklist row before saving the upload. If that check fails, it asks the relay to remove the uploaded file and returns no reading. A failed relay cleanup leaves an unlinked file requiring records staff review; the route logs the filing reference and row for investigation without logging file contents. AI feature disablement during the request suppresses the reading while allowing an otherwise valid upload.
 
-These synthetic checks establish the application's boundary, not document reading accuracy. Calendar invitation reading is still a separate unevaluated path. The existing provider and relay receive uploaded files under their current data contracts; no live documents are used in this suite.
+These synthetic checks establish the application's boundary, not document reading accuracy. The existing provider and relay receive uploaded files under their current data contracts; no live documents are used in this suite.
+
+## Calendar invitation reading: current activity and staff review
+
+Twenty-three `invitation_upload` scenarios call the signed-in calendar upload route with a synthetic PDF, fake Drive relay and fake Gemini HTTP. They cover changed or revoked access, changed or cancelled activities, changed outside-office details, malformed or unsafe readings, budget and feature switches, timeout/503 replies, failed relay uploads and cleanup. The route checks the current registered session, visibility, activity and outside-office details under a short write lock before saving the uploaded link. If those checks fail, it asks the relay to remove the file; a failed cleanup is reported for records staff review.
+
+Provider readings require complete typed fields and bounded plain text. Missing or extra fields, markup, links, contact details and oversized text are rejected. A bad AI reading does not prevent a valid upload. If AI is disabled while a file is processing, the file can still be kept but no reading is offered. Suggestions fill the form only after the person clicks “Use these”; saving remains a separate action. The provider sees the uploaded image or PDF, which may contain personal information. Interaction logs retain outcome/timing metadata without prompt, response or provider error bodies. These offline checks do not establish real-model reading accuracy or production latency.
 
 ## Gates and evidence lifecycle
 

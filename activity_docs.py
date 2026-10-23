@@ -111,7 +111,7 @@ def set_outside(conn, entry_id, host, invited_as, invitation, by) -> None:
     conn.commit()
 
 
-def set_invitation_file(conn, entry_id, url, name, by) -> None:
+def set_invitation_file(conn, entry_id, url, name, by, *, commit=True) -> None:
     """Keep the link to the uploaded letter (or clear it with an empty url). Needs the activity marked as another office's."""
     url = str(url or "").strip()
     if url and not url.startswith("https://"):
@@ -120,7 +120,8 @@ def set_invitation_file(conn, entry_id, url, name, by) -> None:
                        "WHERE entry_id=?", (url, (str(name or "").strip()[:100] if url else ""), by, tz.now_iso(), entry_id))
     if cur.rowcount == 0:
         raise ValueError("Choose \u201cAnother office\u201d and save it first, then add the letter.")
-    conn.commit()
+    if commit:
+        conn.commit()
 
 
 CITES_MAX = 1000
