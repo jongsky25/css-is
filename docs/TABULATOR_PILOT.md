@@ -1,6 +1,6 @@
 # Tabulator document register pilot
 
-The document register offers an optional interactive table. Open `/documents`, then choose **Interactive table**. Sorting and workflow/verification filters apply to all permitted records matching the current queue and search. Each request retrieves at most 30 rows. Column resizing and visibility affect the current view.
+The document register offers an optional interactive table. Open `/documents`, then choose **Interactive table**. Sorting and workflow/verification filters apply to all permitted records matching the current queue and search. Each request retrieves at most 30 rows. Column resizing and visibility affect the current view. The table body scrolls within a bounded height so headings and pagination remain available.
 
 The standard table is the initial view and remains available through **Standard table**. Missing JavaScript or vendor files leave that view usable. A failed table request clears the interactive view and restores the standard table with a retry message. Reload to refresh the standard table's snapshot.
 

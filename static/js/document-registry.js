@@ -102,7 +102,7 @@
     toggle.setAttribute('aria-expanded', 'true');
     try {
       table = new Tabulator(element, {
-        layout: 'fitColumns', renderVertical: 'basic', placeholder: 'No matching documents.',
+        layout: 'fitColumns', maxHeight: '65vh', renderVertical: 'basic', placeholder: 'No matching documents.',
         pagination: true, paginationMode: 'remote', paginationSize: 30, paginationButtonCount: 3,
         paginationOutOfRange: 'last', sortMode: 'remote', columnHeaderSortMulti: false,
         initialSort: [{column: 'registered', dir: 'desc'}], ajaxURL: panel.dataset.url,
