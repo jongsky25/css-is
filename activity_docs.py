@@ -233,6 +233,14 @@ def _line(i, name, desig):
     return f"{i}. {name}" + (f", {desig}" if desig else "")
 
 
+def _names(text, host) -> bool:
+    """Whether `text` already names `host`, ignoring case, spacing and a leading "the"."""
+    squash = lambda v: " ".join(str(v).lower().split())
+    h = squash(host)
+    h = h[4:] if h.startswith("the ") else h
+    return bool(h) and h in squash(text)
+
+
 def head_of_office(conn) -> tuple:
     """(name, title) of the signatory. The names set under Travel filing settings win (an acting head or OIC); with no name
     there, the Director in the directory, the same rule the travel forms follow (spot feedback #157)."""
@@ -279,7 +287,10 @@ def payload(conn, entry, key, user, owner_label="", positions=False, designation
         # stand in when that is empty. Nothing is invented when both are.
         rationale = get_dpo_cites(conn, entry["id"]).strip() or (outside or {}).get("invitation", "").strip()
         if rationale:
-            background = (rationale if rationale[-1] in ".!?" else rationale + ".") + " In support of this, " + sentence
+            background = rationale if rationale[-1] in ".!?" else rationale + "."
+            # The invitation's own lines may already say who holds the activity; do not say it again.
+            if not (outside and outside["host"] and _names(rationale, outside["host"])):
+                background += " In support of this, " + sentence
         else:
             background = sentence[0].upper() + sentence[1:]
         if outside and outside["invited_as"] == "resource_person":

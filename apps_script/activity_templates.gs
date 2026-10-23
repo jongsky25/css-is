@@ -233,13 +233,14 @@ function at_buildDpo_(body, doc) {
     p.setAlignment(DocumentApp.HorizontalAlignment.JUSTIFY);
     p.setIndentFirstLine(AT_DPO_BODY_FIRST_LINE);
   });
-  add('By Authority of the Secretary of Health:').setIndentStart(AT_DPO_SIGNATORY_INDENT);
+  add('By Authority of the Secretary of Health:').setIndentStart(AT_DPO_SIGNATORY_INDENT).setIndentFirstLine(AT_DPO_SIGNATORY_INDENT);
   add('');
   add('');
+  // the first-line indent is set too: with only the start indent, a one-line paragraph begins at the left margin (spot feedback #182)
   // the signatory's name, title and unit sit on consecutive lines with no space between them (spot feedback #183)
-  add('{{head_name}}').setBold(true).setIndentStart(AT_DPO_SIGNATORY_INDENT).setSpacingAfter(0);
-  add('{{head_title}}').setIndentStart(AT_DPO_SIGNATORY_INDENT).setSpacingAfter(0);
-  add('{{unit_name}}').setIndentStart(AT_DPO_SIGNATORY_INDENT);
+  add('{{head_name}}').setBold(true).setIndentStart(AT_DPO_SIGNATORY_INDENT).setIndentFirstLine(AT_DPO_SIGNATORY_INDENT).setSpacingAfter(0);
+  add('{{head_title}}').setIndentStart(AT_DPO_SIGNATORY_INDENT).setIndentFirstLine(AT_DPO_SIGNATORY_INDENT).setSpacingAfter(0);
+  add('{{unit_name}}').setIndentStart(AT_DPO_SIGNATORY_INDENT).setIndentFirstLine(AT_DPO_SIGNATORY_INDENT);
   body.editAsText().setFontFamily('Times New Roman');
   body.editAsText().setFontSize(12);
   at_footer_(doc);
