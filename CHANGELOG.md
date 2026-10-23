@@ -1,3 +1,10 @@
+## 8.12 — October 23, 2026
+
+- Continue A22 with a versioned offline evaluation set for AI drafted activity messages, including unsupported numeric claims, private information, malformed replies, access changes and provider failures.
+- Validate bounded plain-text drafts, an exact name placeholder and source-supported numbers before returning a suggestion. Recheck current access, AI settings and activity details after provider I/O; keep message logs to outcome/token/timing metadata.
+- Show the complete AI draft for explicit review before replacing the organizer's text. Edits made while AI is working remain in place. A draft is not saved or sent until the organizer applies it.
+- No schema migration, new provider or dependency. Synthetic checks do not establish real-model writing quality.
+
 ## 8.11 — October 23, 2026
 
 - Replace companion voice blips with 27 locally hosted recordings and natural effects: animal calls, cat purring, quiet movement and water effects, and a separate sound identity for every plant.

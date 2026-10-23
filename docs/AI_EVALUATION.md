@@ -1,6 +1,6 @@
-# AI assistance evaluation — A22 / 8.10
+# AI assistance evaluation — A22 / 8.12
 
-Evaluation suite **1.3.0** contains **195 named scenarios**: 38 answer-route cases from 8.01, 60 MRR/CO-CSM report-draft cases from 8.04, 48 feedback-triage cases from 8.07, and 49 verbatim comment cases from 8.10. It turns selected safeguards into a reproducible, versioned release gate and produces a small report by category and case. The retained suite ID `existing-ai-answers` is a historical identifier; all four surfaces must pass.
+Evaluation suite **1.4.0** contains **227 named scenarios**: 38 answer-route cases from 8.01, 60 MRR/CO-CSM report-draft cases from 8.04, 48 feedback-triage cases from 8.07, 49 verbatim comment cases from 8.10, and 32 participant-message cases from 8.12. It turns selected safeguards into a reproducible, versioned release gate and produces a small report by category and case. The retained suite ID `existing-ai-answers` is a historical identifier; all five surfaces must pass.
 
 ## What it checks
 
@@ -101,6 +101,14 @@ The JSON report is authoritative. Its companion `.md` gives per-category counts 
 
 Use the failing case ID to find its reviewed question and expectation in the manifest, then inspect the local test failure. Do not upload production records/prompts as debugging artifacts. The two CI orders have their own reports; each must independently pass every case.
 
+## Activity message drafting: reviewable plain text
+
+Thirty-two `messages` scenarios exercise the real activity draft route with synthetic activity details and fake provider HTTP. They cover welcome and ending drafts, changed role/session/settings/activity details, malformed output, unsupported numbers, HTML, links, private email content, timeout/retry, budget refusal and audit rollback. Every case is required in both CI orders. No attendee record is sent to the provider.
+
+The response contract is a single `text` field: bounded plain text with exactly one literal `{name}` placeholder. Extra fields, tags, links, control characters, and numeric details absent from current activity metadata are rejected. This is a narrow safeguard, not a semantic proof that every venue, organizer, or claim is accurate. Organizers see the complete suggestion and must explicitly apply it. Edits made during the AI request are preserved. The existing message autosave acts only after application.
+
+The route rechecks the registered account, permission, AI switches and current activity after provider I/O. Success outcome and audit commit together; failures leave stored messages alone. Participant-message interaction logs retain outcome/token/timing metadata without prompts, replies or provider error bodies, including when general content logging is on. The request allows up to 300 output tokens and an eight-second read timeout, with the existing retry and budget limits. Synthetic tests do not measure real-model writing quality or production latency.
+
 ## Gates and evidence lifecycle
 
 [scripts/ai_evaluation.py](../scripts/ai_evaluation.py) is a pytest plugin and command-line gate. Default pytest configuration loads it; recording is enabled only when `--ai-evaluation-report=PATH` is supplied. Release CI supplies that option to the existing full normal/shuffled test jobs, then validates the resulting report before the final required-check gate. Reports are uploaded in the existing test artifact bundles with **14-day retention**.
@@ -118,14 +126,14 @@ Case/reference edits also require an increased `suite_version` in the manifest. 
 
 The existing provider/data contract remains [verified facts v1](VERIFIED_AI_ANSWERS.md). A broader survey selection receives the user question and bounded fact IDs/descriptions/groups, without numeric values. Names and user questions are untrusted text and can still contain personal material; these checks do not establish universal anonymization. Current consent, settings, logging/retention and provider governance remain in force.
 
-The scenarios check the existing bounded provider request settings (at most eight seconds per read timeout, three-second connect timeout and bounded output tokens), one retry where supported, and daily-budget refusal. They introduce no real spend. A timeout can involve two attempts; these are not an eight-second end-to-end service promise. Groq quality/fallback routing, OCR and other AI surfaces need their own future evaluation sets. Report draft, feedback-triage and verbatim safeguards are now included; real-model style-choice quality is not measured.
+The scenarios check the existing bounded provider request settings (at most eight seconds per read timeout, three-second connect timeout and bounded output tokens), one retry where supported, and daily-budget refusal. They introduce no real spend. A timeout can involve two attempts; these are not an eight-second end-to-end service promise. Groq quality/fallback routing, OCR and other AI surfaces need their own future evaluation sets. Report draft, feedback-triage, verbatim and activity-message safeguards are now included; real-model style-choice quality is not measured.
 
 Before broader AI capability or live-model comparisons, the owner must define representative question quality targets, approved provider/data retention terms, expected scope/refusals, spend/token budgets and representative latency measurements. Evaluate live-model quality separately from this deterministic safeguard score; do not infer one from the other. Production workflow observations remain deferred.
 
 ## Rollout and repair
 
-Release **8.10** follows the freshly checked 8.09 main branch. No schema migration, new feature flag, dependency or production provider configuration is required. The application and service-worker cache versions use exactly two digits after the decimal.
+Release **8.12** follows the freshly checked 8.11 main branch. No schema migration, new feature flag, dependency or production provider configuration is required. The application and service-worker cache versions use exactly two digits after the decimal.
 
-Existing AI/human comment tags are not rewritten. Re-analysis now saves a complete validated batch set or leaves existing tags intact, including a human correction made during provider I/O. Summary prose remains a reviewable on-screen suggestion. Production workflow observations and real-model quality remain deferred. Both normal and shuffled full CI must pass for the final PR head, including all 195 scenarios and the minimized report gate.
+Existing AI/human comment tags are not rewritten. Message suggestions remain reviewable and do not replace an organizer’s edits made during AI work. Production workflow observations and real-model quality remain deferred. Both normal and shuffled full CI must pass for the final PR head, including all 227 scenarios and the minimized report gate.
 
 For a failing gate, inspect the case ID and repair the application, fixture or expectation with a reviewed explanation. Increase the suite version for case/reference edits and rerun current evidence; do not reuse an old report or omit failed cases.

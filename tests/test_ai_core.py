@@ -398,7 +398,7 @@ def test_ask_success_logs_ok_with_masked_prompt_and_response(db_path, monkeypatc
     conn = st.connect(db_path); st.init_db(conn); _reset_ai(conn)
     try:
         st.set_setting(conn, "ai_mode", "router")
-        st.set_setting(conn, "ai_cap_messages", "10")
+        st.set_setting(conn, "ai_cap_nl_help", "10")
         st.set_setting(conn, "ai_daily_cap", "10")
 
         def fake_http_generate(prompt, **kw):
@@ -406,7 +406,7 @@ def test_ask_success_logs_ok_with_masked_prompt_and_response(db_path, monkeypatc
                     "tokens_in": 1, "tokens_out": 1, "latency_ms": 5, "model": "gemini-test"}
         monkeypatch.setattr(ai, "_http_generate", fake_http_generate)
 
-        result, interaction_id = ai.ask(conn, {"id": 1, "role": "admin"}, "messages",
+        result, interaction_id = ai.ask(conn, {"id": 1, "role": "admin"}, "nl_help",
                                         "call 09171234567 about it")
         assert result["text"] == "call 09171234567 back"
         row = conn.execute(
@@ -552,7 +552,7 @@ def test_ask_gemini_429_groq_also_429s_folds_error(db_path, monkeypatch):
         monkeypatch.setattr(httpx, "post", lambda *a, **kw: _FakeResp(429, text="groq rate limited"))
 
         with pytest.raises(ai.AIUnavailable):
-            ai.ask(conn, {"id": 1, "role": "admin"}, "messages", "hi")
+            ai.ask(conn, {"id": 1, "role": "admin"}, "nl_help", "hi")
 
         assert ai.cooldown_remaining() > 0
         assert ai.groq_cooldown_remaining() > 0
@@ -806,13 +806,13 @@ def test_ask_groq_standalone_ratelimit_exhausted_raises_unavailable(db_path, mon
     try:
         st.set_setting(conn, "ai_mode", "router")
         st.set_setting(conn, "ai_fallback_enabled", "1")
-        st.set_setting(conn, "ai_cap_messages", "10")
+        st.set_setting(conn, "ai_cap_nl_help", "10")
         monkeypatch.setattr(rl, "allow", lambda bucket, key: bucket != "ai_groq")
         groq_called = []
         monkeypatch.setattr(ai, "_http_generate_groq", lambda *a, **kw: groq_called.append(1))
 
         with pytest.raises(ai.AIUnavailable):
-            ai.ask(conn, {"id": 1, "role": "admin"}, "messages", "hi")
+            ai.ask(conn, {"id": 1, "role": "admin"}, "nl_help", "hi")
         assert not groq_called
         row = conn.execute(
             "SELECT outcome, error FROM ai_interaction ORDER BY id DESC LIMIT 1").fetchone()
@@ -829,14 +829,14 @@ def test_ask_groq_standalone_error_propagates_and_logs(db_path, monkeypatch):
     try:
         st.set_setting(conn, "ai_mode", "router")
         st.set_setting(conn, "ai_fallback_enabled", "1")
-        st.set_setting(conn, "ai_cap_messages", "10")
+        st.set_setting(conn, "ai_cap_nl_help", "10")
 
         def boom(*a, **kw):
             raise ai.AIBadResponse("Groq returned 503 after retry")
         monkeypatch.setattr(ai, "_http_generate_groq", boom)
 
         with pytest.raises(ai.AIBadResponse):
-            ai.ask(conn, {"id": 1, "role": "admin"}, "messages", "hi")
+            ai.ask(conn, {"id": 1, "role": "admin"}, "nl_help", "hi")
         row = conn.execute(
             "SELECT outcome, error FROM ai_interaction ORDER BY id DESC LIMIT 1").fetchone()
         assert row[0] == "fallback_error"

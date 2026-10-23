@@ -567,5 +567,14 @@
       "The room temperature needs attention.",
       "Participants appreciated the session."
     ]
+  },
+  "messages": {
+    "title": "Immunization Forum",
+    "date": "2099-03-03",
+    "venue": "Probe Hall",
+    "organizer": "BLHSD",
+    "welcome": "Hello {name}! Welcome to Immunization Forum.",
+    "ending": "Thank you, {name}, for joining Immunization Forum.",
+    "private_attendee": "private.attendee@example.test"
   }
 }
