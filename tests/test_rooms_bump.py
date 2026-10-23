@@ -69,10 +69,10 @@ def test_extra_taken_hides_the_slot_about_to_be_booked(conn):
     assert not any(g["day"] == "2030-03-07" and g["slot_ids"] == S(conn, 10) for g in got)
 
 
-def test_lead_time_applies_to_a_declined_requesters_suggestions_only(conn):
+def test_suggestions_have_no_room_notice_cutoff(conn):
     ok = rooms.suggest(conn, MON, S(conn, 9), n=3, today=MON, respect_lead=False)
     strict = rooms.suggest(conn, MON, S(conn, 9), n=3, today=MON, respect_lead=True)
-    assert ok[0]["day"] == "2030-03-05" and strict[0]["day"] == "2030-03-06"
+    assert ok[0]["day"] == "2030-03-05" and strict[0]["day"] == "2030-03-05"
 
 
 # ---------------------------------------------------------------------- encode ---
@@ -88,8 +88,7 @@ def test_encode_is_approved_at_once_for_a_guest_or_an_account(conn, users):
 def test_encode_rules(conn, users):
     with pytest.raises(rooms.RoomError, match="Who is this booking for"):
         enc(conn, THU, 9, ext=None)
-    with pytest.raises(rooms.RoomError, match="reason"):
-        enc(conn, date(2030, 3, 5), 9)                               # inside the notice, no reason
+    assert enc(conn, MON, 9)["status"] == "approved"
     r = enc(conn, date(2030, 3, 5), 9, note="Urgent call from the Secretary")
     assert r["decide_note"].startswith("Urgent") and r["status"] == "approved"
     with pytest.raises(rooms.RoomError, match="weekends"):

@@ -61,6 +61,32 @@ def test_ticking_meals_on_the_request_creates_the_form(viewer, conn):
     assert f"/rooms/meals/{rid}" in viewer.get("/rooms/mine").text
 
 
+def test_same_day_room_without_meals_succeeds_and_meals_cannot_be_added_later(viewer, conn):
+    response = viewer.post("/rooms/request", data={"day": tz.today_local().isoformat(),
+                           "from_slot": S(conn, 9)[0], "to_slot": S(conn, 10)[0],
+                           "title": "Same-day room", "modality": "f2f"}, follow_redirects=False)
+    assert response.status_code == 303
+    rid = conn.execute("SELECT id FROM room_reservation").fetchone()[0]
+    assert "deadline has passed" in viewer.get(f"/rooms/meals/{rid}").text
+    for path, data in ((f"/rooms/meals/{rid}/start", {}),
+                       (f"/rooms/meals/{rid}", {"pax": "10", "want_lunch": "1", "time_lunch": "12:00"})):
+        response = viewer.post(path, data=data)
+        assert response.status_code == 400 and "2 calendar days" in response.text
+    assert rm.get_form(conn, rid) is None
+    assert not rooms.get_reservation(conn, rid)["meals_requested"]
+
+
+def test_guest_cannot_add_meals_after_deadline(client, conn):
+    res = rooms.request_external(conn, name="Guest", org="City", email="guest@example.org", phone="",
+                                 title="Same-day visit", day=tz.today_local(), slot_ids=S(conn, 9), consent=True)
+    token = auth.make_room_track_token(res["id"])
+    base = f"/room/t/{quote(token)}/meals"
+    for path, data in ((base + "/start", {}), (base, {"pax": "5", "want_lunch": "1", "time_lunch": "12:00"})):
+        response = client.post(path, data=data)
+        assert response.status_code == 400 and "2 calendar days" in response.text
+    assert rm.get_form(conn, res["id"]) is None
+
+
 # ------------------------------------------------------------------ the form page ---
 
 def test_the_requester_fills_in_the_form_the_way_it_was_described(encoder, conn):

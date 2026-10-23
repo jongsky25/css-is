@@ -83,6 +83,7 @@ import office_answers
 import calendar_routes
 import rooms
 import rooms_notify
+import meals_routes
 import rooms_meals_routes
 import rooms_routes
 import travel_routes
@@ -670,16 +671,18 @@ NAV_GROUPS = [
         {"key": "rooms_mine", "url": "/rooms/mine", "label": "My room reservations",
          "hint": "Your requests, their status, and withdrawing or moving them",
          "kw": "my room reservations requests withdraw move conference room status booked", "cap": None},
-        {"key": "rooms_meals_mine", "url": "/rooms/mine", "label": "Request meals",
-         "hint": "Ask for meals, or open the meal form, on your room reservations",
-         "kw": "request meals meal requested food snacks lunch catering meal form my room reservations", "cap": None},
+        {"key": "rooms_meals_mine", "url": "/meals/new", "label": "Request meals",
+         "hint": "Request meals for any activity or venue, without a room reservation",
+         "kw": "request meals meal requested food snacks lunch catering meal form", "cap": None},
+        {"key": "meals_mine", "url": "/meals/mine", "label": "My meal requests",
+         "hint": "Monitor your meals, ordering and delivery status", "kw": "my meal requests food catering status track monitor delivery", "cap": None},
         {"key": "rooms_requests", "url": "/approvals", "label": "Room requests",
          "section": "Manage the room",
          "hint": "Approve or decline conference room requests",
          "kw": "room requests approve decline decide queue pending conference room reservation "
                "administrative section book anyway", "cap": "room_admin"},
-        {"key": "rooms_meals", "url": "/rooms/meals", "label": "Room meals",
-         "hint": "Meal requests and forms for room bookings",
+        {"key": "rooms_meals", "url": "/meals", "label": "Meal requests",
+         "hint": "Order and track meals for all activities",
          "kw": "meals food snacks lunch meal form catering conference room", "cap": "room_admin"},
         {"key": "rooms_blocks", "url": "/rooms/blocks", "label": "Room closures",
          "hint": "Close the room for maintenance or events",
@@ -6452,7 +6455,7 @@ async def create_survey(request: Request):
         rc = get_conn()
         try:
             try:
-                rooms.precheck(rc, event_date, rooms.slot_range(rc, room_from, room_to), _today_local(), standby=room_standby)
+                rooms.precheck(rc, event_date, rooms.slot_range(rc, room_from, room_to), _today_local(), standby=room_standby, meals_requested=room_meals)
             except rooms.RoomError as e:
                 errors.append(f"Conference room: {e} Untick the room line to save the activity without it.")
         finally:
@@ -17334,6 +17337,7 @@ app.include_router(calendar_routes.make_router(
 app.include_router(rooms_routes.make_router(templates, get_conn, _today_local,
                                            base_url=_base_url, qr_data_uri=_qr_data_uri))
 app.include_router(rooms_meals_routes.make_router(templates, get_conn, _today_local))
+app.include_router(meals_routes.make_router(templates, get_conn, _today_local))
 
 # ---- Travel filing (rules in travel.py / travel_rules.py, pages in travel_routes.py) ----
 app.include_router(travel_routes.make_router(templates, get_conn, _today_local, audit=_audit, base_url=_base_url,

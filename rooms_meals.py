@@ -66,7 +66,7 @@ def derive(conn, res):
     return [{"meal": m, "label": lab, "wanted": hour_of(cfg, m) in covered, "deliver_at": time_of(cfg, m)} for m, lab in MEALS]
 
 
-def ensure_form(conn, rid, by=None, force=False):
+def ensure_form(conn, rid, by=None, force=False, today=None):
     """Create the form for a reservation that asked for meals (or, with force, for one that now does).
     Safe to call again. A reservation that came from a move copies its predecessor's form."""
     res = rooms.get_reservation(conn, rid)
@@ -74,6 +74,8 @@ def ensure_form(conn, rid, by=None, force=False):
         return None
     if conn.execute("SELECT 1 FROM room_meal WHERE reservation_id=?", (rid,)).fetchone():
         return get_form(conn, rid)
+    if reason := rooms.meal_request_reason(res["day"], today):
+        raise MealError(reason)
     now = tz.now_iso()
     pax, special, lines = res["attendees"], None, derive(conn, res)
     prev = res["moves_reservation_id"] if res["source"] == "move" else None
@@ -163,7 +165,7 @@ def _clean_time(value, label):
     return v
 
 
-def save_form(conn, rid, by, *, pax, special_request, wanted, times, is_admin=False):
+def save_form(conn, rid, by, *, pax, special_request, wanted, times, is_admin=False, today=None):
     """Save the requester's (or an admin's) entries. `wanted` = set of meal keys ticked yes; `times` = {meal: 'HH:MM'}.
 
     A requester can change the form only until the Administrative Section starts ordering from it; after
@@ -172,7 +174,9 @@ def save_form(conn, rid, by, *, pax, special_request, wanted, times, is_admin=Fa
     res = rooms.get_reservation(conn, rid)
     if res is None or res["status"] not in ("requested", "approved"):
         raise MealError("This reservation is no longer active, so its meal form can't be changed.")
-    form = ensure_form(conn, rid, by, force=True)
+    if wanted and (reason := rooms.meal_request_reason(res["day"], today)):
+        raise MealError(reason)
+    form = ensure_form(conn, rid, by, force=True, today=today)
     if form["locked"] and not is_admin:
         raise MealError("The Administrative Section has already started ordering these meals. Please ask them to change anything.")
     try:

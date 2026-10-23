@@ -519,6 +519,34 @@ def init_db(conn):
         PRIMARY KEY (reservation_id, meal)
     );
 
+    -- Meal requests for any activity or venue, independent of room reservations.
+    CREATE TABLE IF NOT EXISTS meal_request (
+        id INTEGER PRIMARY KEY,
+        ref_code TEXT UNIQUE,
+        requester_user_id INTEGER NOT NULL REFERENCES admin_user(id),
+        title TEXT NOT NULL,
+        day TEXT NOT NULL,
+        venue TEXT NOT NULL,
+        pax INTEGER NOT NULL CHECK (pax BETWEEN 1 AND 1000),
+        special_request TEXT,
+        status TEXT NOT NULL DEFAULT 'submitted' CHECK (status IN ('submitted','withdrawn')),
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS ix_meal_request_user ON meal_request(requester_user_id, day);
+    CREATE INDEX IF NOT EXISTS ix_meal_request_day ON meal_request(day, status);
+    CREATE TABLE IF NOT EXISTS meal_request_item (
+        request_id INTEGER NOT NULL REFERENCES meal_request(id) ON DELETE CASCADE,
+        meal TEXT NOT NULL CHECK (meal IN ('breakfast','am_snack','lunch','pm_snack')),
+        deliver_at TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'pending'
+            CHECK (status IN ('pending','requested','delivered','not_delivered','cancelled')),
+        status_by TEXT,
+        status_at TEXT,
+        status_note TEXT,
+        PRIMARY KEY (request_id, meal)
+    );
+
     -- Maintenance / admin holds. slot_id NULL = the whole day.
     CREATE TABLE IF NOT EXISTS room_block (
         id         INTEGER PRIMARY KEY,
@@ -4099,6 +4127,9 @@ _AUDIT_ACTIONS = {
     "room_withdraw":       ("Withdrew a room reservation", "Conference room"),
     "room_expire":         ("Expired a room request", "Conference room"),
     "room_purge_guests":   ("Removed old guest details", "Conference room"),
+    "meal_request":        ("Requested meals", "Meals"),
+    "meal_tag":            ("Updated a meal order", "Meals"),
+    "meal_withdraw":       ("Withdrew a meal request", "Meals"),
     "room_meal_edit":      ("Edited a room meal form", "Conference room"),
     "room_series":         ("Requested a repeating room booking", "Conference room"),
     # Travel filing

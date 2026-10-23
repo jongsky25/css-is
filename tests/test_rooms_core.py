@@ -53,16 +53,17 @@ def test_seeding_is_idempotent_and_respects_admin_edits(conn):
 
 # -------------------------------------------------------------- lead time ---
 
-def test_two_working_days_notice(conn):
-    assert rooms.earliest_bookable(conn, MON) == date(2030, 3, 6)          # Mon -> Wed
-    assert rooms.earliest_bookable(conn, FRI) == date(2030, 3, 12)         # Fri -> Tue
-    assert rooms.day_closed_reason(conn, date(2030, 3, 5), MON)            # tomorrow: too soon
+def test_same_day_room_requests_are_allowed(conn):
+    assert rooms.earliest_bookable(conn, MON) == MON
+    assert rooms.earliest_bookable(conn, FRI) == FRI
+    assert rooms.day_closed_reason(conn, MON, MON) is None
+    assert rooms.day_closed_reason(conn, date(2030, 3, 5), MON) is None
     assert rooms.day_closed_reason(conn, date(2030, 3, 6), MON) is None
 
 
 def test_holidays_do_not_count_as_working_days(conn):
     st.set_holiday(conn, "2030-03-05", "Test holiday")
-    assert rooms.earliest_bookable(conn, MON) == date(2030, 3, 7)          # Tue skipped
+    assert rooms.earliest_bookable(conn, MON) == MON
     assert "Test holiday" in rooms.day_closed_reason(conn, date(2030, 3, 5), MON)
 
 
@@ -86,8 +87,8 @@ def test_request_rules(conn, users):
     day = date(2030, 3, 7)
     with pytest.raises(rooms.RoomError, match="title"):
         ask(conn, users[0], day, 9, title=" ")
-    with pytest.raises(rooms.RoomError, match="notice"):
-        ask(conn, users[0], date(2030, 3, 5), 9)
+    with pytest.raises(rooms.RoomError, match="2 calendar days"):
+        ask(conn, users[0], date(2030, 3, 5), 9, meals_requested=True)
     with pytest.raises(rooms.RoomError, match="back-to-back"):
         ask(conn, users[0], day, 9, 11)
     with pytest.raises(rooms.RoomError, match="at least one"):
@@ -241,3 +242,29 @@ def test_standby_request_for_booked_hours_and_emergency_confirm(tmp_path):
     out = rooms.confirm_standby(c, sb["id"], "boss@test.local", "Emergency briefing", today=mon)
     assert out["status"] == "approved" and out["bumped"] == [first["id"]]
     assert rooms.get_reservation(c, first["id"])["status"] == "cancelled"
+
+
+def test_same_day_room_availability_is_still_enforced(conn, users):
+    r = ask(conn, users[0], MON, 9)
+    rooms.approve(conn, r["id"], "admin", today=MON)
+    with pytest.raises(rooms.SlotTaken):
+        ask(conn, users[1], MON, 9)
+    assert ask(conn, users[1], MON, 10)["status"] == "requested"
+
+
+@pytest.mark.parametrize("offset, allowed", [(0, False), (1, False), (2, True), (3, True)])
+def test_meals_need_two_calendar_days_while_rooms_do_not(conn, users, offset, allowed):
+    day = MON + timedelta(days=offset)
+    if allowed:
+        assert ask(conn, users[0], day, 9, meals_requested=True)["meals_requested"]
+    else:
+        with pytest.raises(rooms.RoomError, match="2 calendar days"):
+            ask(conn, users[0], day, 9, meals_requested=True)
+        assert conn.execute("SELECT COUNT(*) FROM room_reservation").fetchone()[0] == 0
+        assert ask(conn, users[0], day, 9)["status"] == "requested"
+
+
+def test_meal_notice_counts_weekends_and_holidays(conn, users):
+    st.set_holiday(conn, "2030-03-05", "Holiday")
+    assert ask(conn, users[0], MON + timedelta(days=2), 9, meals_requested=True)["meals_requested"]
+    assert ask(conn, users[0], MON + timedelta(days=7), 9, today=MON + timedelta(days=5), meals_requested=True)["meals_requested"]

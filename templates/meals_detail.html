@@ -1,0 +1,39 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header, flash %}
+{% block title %}Meal request {{ r.ref_code }}{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/rooms.css?v=7.85">{% endblock %}
+{% block content %}
+{{ page_header("Meal request " ~ r.ref_code, r.title) }}
+{% include "_meals_tabs.html" %}
+{{ flash(err=err) }}
+<section class="card">
+  <p><strong>{{ r.overall }}</strong></p>
+  <dl><dt>Activity date</dt><dd>{{ r.day }}</dd><dt>Venue / delivery location</dt><dd>{{ r.venue }}</dd>
+    <dt>Number of pax</dt><dd>{{ r.pax }}</dd><dt>Requested by</dt><dd>{{ r.requester_name }}</dd>
+    <dt>Special request / dietary needs</dt><dd>{{ r.special_request or 'None' }}</dd>
+    <dt>Submitted</dt><dd>{{ r.created_at[:16].replace('T', ' ') }} (Philippine time)</dd></dl>
+  {% if r.status == 'submitted' %}<p>The Administrative Section orders these meals and records delivery. No conference room approval is needed.</p>
+  {% else %}<p>This request was withdrawn. The Administrative Section should cancel any outstanding supplier orders.</p>{% endif %}
+</section>
+<div class="table-wrap"><table class="list resp-table"><thead><tr><th>Meal</th><th>Deliver at</th><th>Status</th><th>Last update / note</th>{% if meal_admin %}<th>Update</th>{% endif %}</tr></thead>
+<tbody>{% for i in r["items"] %}<tr>
+  <td data-label="Meal">{{ meal_labels[i.meal] }}</td><td data-label="Deliver at">{{ i.deliver_at }}</td>
+  <td data-label="Status"><span class="badge {{ status_badges[i.status] }}">{{ status_labels[i.status] }}</span></td>
+  <td data-label="Last update / note">{% if i.status_at %}{{ i.status_at[:16].replace('T', ' ') }} · {{ i.status_by }}<br>{% endif %}{{ i.status_note or '—' }}</td>
+  {% if meal_admin %}<td data-label="Update">{% if r.status == 'submitted' %}
+    <form method="post" action="/meals/{{ r.id }}/tag">
+      <input type="hidden" name="meal" value="{{ i.meal }}">
+      <label for="status-{{ i.meal }}">Status for {{ meal_labels[i.meal] }}</label>
+      <select id="status-{{ i.meal }}" name="status" required><option value="" disabled selected>Choose status</option>{% for status in moves[i.status] %}
+        <option value="{{ status }}" {{ 'disabled' if status in ('delivered','not_delivered') and r.day > today.isoformat() }}>{{ status_labels[status] }}</option>
+      {% endfor %}</select>
+      <label for="note-{{ i.meal }}">Note (optional)</label><input id="note-{{ i.meal }}" name="note" maxlength="200">
+      <button class="btn small" type="submit">Update {{ meal_labels[i.meal] }}</button>
+    </form>{% endif %}</td>{% endif %}
+</tr>{% endfor %}</tbody></table></div>
+{% if r.status == 'submitted' and r.requester_user_id == meal_user_id %}
+<details class="card"><summary>Withdraw this meal request</summary>
+<p>Any meals not yet delivered will be cancelled. If meals have been ordered, the Administrative Section must cancel with the supplier.</p>
+<form method="post" action="/meals/{{ r.id }}/withdraw"><button class="btn danger" type="submit">Withdraw meal request</button></form></details>
+{% endif %}
+{% endblock %}

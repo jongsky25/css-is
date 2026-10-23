@@ -7,7 +7,7 @@
   <div class="rp-brand">CSS<span>·</span>IS</div>
   <h1>Request the conference room</h1>
   <p class="muted">Pick a day, choose your hours and tell us about your meeting. The Administrative Section will decide and
-    email you. Requests need at least 2 working days' notice (earliest: <strong>{{ earliest.strftime('%a') }} {{ earliest.day }} {{ earliest.strftime('%b') }}</strong>).</p>
+    email you. Same-day room requests are welcome when available. Meals require at least 2 calendar days’ notice. Earliest room request: <strong>{{ earliest.strftime('%a') }} {{ earliest.day }} {{ earliest.strftime('%b') }}</strong>.</p>
 
   {% if sent %}<div class="flash ok" role="status">✓ Request received. We'll be in touch.</div>{% endif %}
   {% if error %}<div class="flash err" role="alert">✕ {{ error }}</div>{% endif %}
@@ -69,7 +69,7 @@
     <fieldset class="field rm-modality"><legend>How will it be held?</legend>
       {% for k, lab in room_modalities.items() %}<label><input type="radio" name="modality" value="{{ k }}" {{ 'checked' if (f.modality or 'f2f') == k }}> {{ lab }}</label>{% endfor %}
     </fieldset>
-    <label class="rm-meals"><input type="checkbox" name="meals" value="1" {{ 'checked' if f.meals }}> Will meals be requested?
+    <label class="rm-meals"><input type="checkbox" name="meals" value="1" {{ 'checked' if f.meals }}> Will meals be requested? (At least 2 calendar days before the activity.)
       <small>We prepare the meal form for you once the request is approved.</small></label>
 
     <h2 class="rp-step"><span>4</span> Who are you?</h2>
