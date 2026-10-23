@@ -34,7 +34,7 @@ def grid_page(grid_browser, app_mod, viewer):
     conn.commit()
     context = grid_browser.new_context()
     page = context.new_page()
-    state = {'requests': [], 'fail': False, 'block_vendor': False, 'errors': []}
+    state = {'requests': [], 'fail': False, 'block_vendor': False, 'fail_view_save': False, 'errors': []}
     page.on('pageerror', lambda error: state['errors'].append(str(error)))
     def serve(route):
         url = urlsplit(route.request.url)
@@ -46,7 +46,13 @@ def grid_page(grid_browser, app_mod, viewer):
             state['requests'].append(url.query)
             if state['fail']:
                 route.abort(); return
-        response = viewer.get(url.path + ('?' + url.query if url.query else ''), follow_redirects=False)
+        if url.path == '/documents/grid-views' and route.request.method == 'POST' and state['fail_view_save']:
+            route.fulfill(status=409, content_type='application/json', body='{"error":"This saved view changed in another tab. Reload the page before changing it."}')
+            return
+        response = viewer.request(route.request.method, url.path + ('?' + url.query if url.query else ''),
+            content=route.request.post_data_buffer,
+            headers={k:v for k,v in route.request.headers.items() if k.lower() in ('content-type','x-csrf-token')},
+            follow_redirects=False)
         route.fulfill(status=response.status_code, body=response.content,
             headers={k:v for k,v in response.headers.items() if k.lower() not in ('content-length','content-encoding','set-cookie')})
     page.route('**/*', serve)
@@ -140,3 +146,97 @@ def test_mobile_sort_and_column_controls_fit_viewport(grid_page):
     page.keyboard.press('Enter')
     page.get_by_role('button', name='Standard table', exact=True).click()
     assert page.locator('#registry-standard').is_visible()
+
+
+def test_saved_view_restores_filters_sort_columns_widths_and_can_be_updated_deleted(grid_page):
+    page, state = grid_page
+    open_grid(page)
+    page.locator('[name=status]').select_option('in_action')
+    page.get_by_role('button', name='Apply filters', exact=True).click()
+    page.wait_for_function("document.getElementById('registry-table-status').textContent.includes('17 matching records')")
+    page.select_option('#registry-sort', 'due_date:asc')
+    page.wait_for_function("document.querySelector('.tabulator-row [tabulator-field=due_date]').textContent === '2026-11-02'")
+    page.locator('#registry-columns summary').click()
+    page.get_by_label('Lead', exact=True).uncheck()
+    number = page.locator('.tabulator-col[tabulator-field=number]')
+    number.scroll_into_view_if_needed()
+    handle = page.locator('.tabulator-col[tabulator-field=number] + .tabulator-col-resize-handle').bounding_box()
+    page.mouse.move(handle['x'] + handle['width']/2, handle['y'] + handle['height']/2)
+    page.mouse.down()
+    page.mouse.move(handle['x'] + handle['width']/2 + 50, handle['y'] + handle['height']/2, steps=5)
+    page.mouse.up()
+    width = number.bounding_box()['width']
+    page.locator('#registry-views summary').click()
+    name = '<img src=x onerror="window.viewInjected=true">'
+    page.get_by_label('View name', exact=True).fill(name)
+    page.get_by_role('button', name='Save new view', exact=True).click()
+    page.wait_for_function("document.getElementById('registry-view-status').textContent === 'View saved to your account.'")
+    assert 'saved_view=' in page.url
+    assert page.evaluate('window.viewInjected') is None
+    page.reload()
+    page.wait_for_function("document.getElementById('registry-table-status').textContent.includes('17 matching records')")
+    page.locator('.tabulator-row').first.wait_for()
+    assert page.locator('[name=status]').input_value() == 'in_action'
+    assert page.locator('#registry-sort').input_value() == 'due_date:asc'
+    assert not page.locator('.tabulator-cell[tabulator-field=lead]:visible').count()
+    assert abs(page.locator('.tabulator-col[tabulator-field=number]').bounding_box()['width'] - width) < 2
+    page.locator('#registry-views summary').click()
+    assert page.get_by_label('View name', exact=True).input_value() == name
+    page.get_by_label('View name', exact=True).fill('Renamed view')
+    page.get_by_role('button', name='Update selected view', exact=True).click()
+    page.wait_for_function("document.querySelector('#registry-saved-view option:checked').textContent === 'Renamed view'")
+    page.get_by_role('button', name='Reset table', exact=True).click()
+    page.wait_for_function("document.getElementById('registry-table-status').textContent.includes('36 matching records')")
+    assert 'saved_view=' not in page.url
+    page.select_option('#registry-saved-view', label='Renamed view')
+    page.get_by_role('button', name='Open view', exact=True).click()
+    page.wait_for_function("document.getElementById('registry-table-status').textContent.includes('17 matching records')")
+    page.locator('#registry-views summary').click()
+    page.get_by_role('button', name='Delete selected view', exact=True).click()
+    page.wait_for_function("document.getElementById('registry-view-status').textContent.includes('deleted')")
+    assert page.locator('#registry-saved-view option').count() == 1
+    assert page.locator('.tabulator-row').count() == 17
+    assert page.evaluate('window.viewInjected') is None
+
+
+def test_deadline_labels_in_standard_and_interactive_tables(grid_page, app_mod):
+    page, _ = grid_page
+    conn = st.connect(app_mod.DB)
+    conn.execute("UPDATE document SET due_date='2026-10-19',status='in_action' WHERE id=(SELECT MAX(id) FROM document)")
+    conn.commit(); conn.close()
+    page.reload()
+    assert page.locator('#registry-standard [data-deadline=overdue]').count() == 1
+    assert page.locator('#registry-standard [data-deadline=overdue]').inner_text() == 'Overdue'
+    open_grid(page)
+    assert page.locator('#registry-grid [data-deadline=overdue]').count() == 1
+    assert '2026-10-19' in page.locator('.tabulator-row').first.inner_text()
+
+
+def test_saved_view_restores_queue_search_and_failed_save_keeps_current_table(grid_page, app_mod):
+    page, state = grid_page
+    conn = st.connect(app_mod.DB)
+    conn.execute("UPDATE document SET subject='Searchneedle record' WHERE id=(SELECT MIN(id) FROM document)")
+    conn.commit(); conn.close()
+    page.goto('http://office.test/documents?queue=OUT&q=Searchneedle')
+    open_grid(page)
+    assert page.locator('.tabulator-row').count() == 1
+    page.locator('#registry-views summary').click()
+    page.get_by_label('View name', exact=True).fill('Outgoing search')
+    page.get_by_role('button', name='Save new view', exact=True).click()
+    page.wait_for_function("document.getElementById('registry-view-status').textContent === 'View saved to your account.'")
+    state['fail_view_save'] = True
+    page.get_by_label('View name', exact=True).fill('Unsaved rename')
+    page.get_by_role('button', name='Update selected view', exact=True).click()
+    page.wait_for_function("document.getElementById('registry-view-status').textContent.includes('another tab')")
+    assert page.locator('.tabulator-row').count() == 1
+    assert page.get_by_label('View name', exact=True).input_value() == 'Unsaved rename'
+    state['fail_view_save'] = False
+    page.goto('http://office.test/documents')
+    open_grid(page)
+    page.locator('#registry-views summary').click()
+    page.select_option('#registry-saved-view', label='Outgoing search')
+    page.get_by_role('button', name='Open view', exact=True).click()
+    page.wait_for_function("document.getElementById('registry-table-status').textContent.includes('1 matching records')")
+    assert 'queue=OUT' in page.url
+    assert page.locator('input[name=q]').input_value() == 'Searchneedle'
+    assert page.locator('.tabulator-row').count() == 1

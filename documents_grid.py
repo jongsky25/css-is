@@ -1,9 +1,13 @@
-"""Read-only, bounded table pages over the existing authorized registry selection."""
+"""Bounded authorized registry pages and account-owned display preferences."""
 import math
+import json
+from datetime import date
 
 import documents_permissions as permissions
+import documents_rules as rules
+import tzutil as tz
 from documents_registry import PAGE_SIZE, Selection, snapshot
-from documents_storage import rows
+from documents_storage import rows, transaction
 
 
 QUEUES = {'all', 'IN', 'OUT', 'verification', 'review', 'release', 'mine',
@@ -64,4 +68,129 @@ def page(conn, user, params):
             selection._snippets(conn, documents)
         for doc in documents:
             doc['registered'] = doc.pop('registry_sort_id')
+        decorate_deadlines(conn, documents)
         return {'data': documents, 'last_page': last_page, 'last_row': total, 'page': number}
+
+
+def decorate_deadlines(conn, documents, *, today=None):
+    """Use the register's calendar-day overdue and three-working-day soon rules."""
+    if not documents:
+        return
+    today = today or tz.today_local()
+    soon = rules.shift(conn, today, 3)
+    for doc in documents:
+        try:
+            due = date.fromisoformat(doc['due_date']) if doc.get('due_date') else None
+        except (TypeError, ValueError):
+            due = None
+        if doc['status'] in ('closed', 'cancelled'):
+            state, label = 'inactive', ''
+        elif due is None:
+            state, label = 'unknown', 'Unknown deadline'
+        elif due < today:
+            state, label = 'overdue', 'Overdue'
+        elif due == today:
+            state, label = 'due_today', 'Due today'
+        elif due <= soon:
+            state, label = 'due_soon', 'Due soon'
+        else:
+            state, label = 'scheduled', ''
+        doc.update(deadline_state=state, deadline_label=label)
+
+
+VISIBLE_COLUMNS = ('number', 'subject', 'verification', 'status', 'due_date', 'lead')
+MAX_VIEWS = 10
+
+
+class ViewConflict(ValueError):
+    pass
+
+
+def view_state(value):
+    """Persist only versioned display options, never records or access authority."""
+    keys = {'schema', 'queue', 'q', 'status', 'verification', 'sort', 'dir', 'columns'}
+    if not isinstance(value, dict) or set(value) != keys or type(value['schema']) is not int or value['schema'] != 1:
+        raise ValueError('Unsupported saved view. Reset the table and save a new view.')
+    result = {key: value[key] for key in keys - {'columns'}}
+    if any(not isinstance(result[key], str) for key in keys - {'columns', 'schema'}):
+        raise ValueError('Invalid saved view options.')
+    if (result['queue'] not in QUEUES or len(result['q']) > 120
+            or result['status'] not in ('', *STATUSES)
+            or result['verification'] not in ('', *VERIFICATIONS)
+            or result['sort'] not in SORTS or result['dir'] not in ('asc', 'desc')):
+        raise ValueError('Invalid saved view options.')
+    if result['queue'] == 'instruction':
+        result['q'] = ''
+    columns = value['columns']
+    if not isinstance(columns, dict) or set(columns) != set(VISIBLE_COLUMNS):
+        raise ValueError('Invalid saved columns.')
+    result['columns'] = {}
+    for field, options in columns.items():
+        if (not isinstance(options, dict) or set(options) - {'visible', 'width'}
+                or type(options.get('visible')) is not bool
+                or (field == 'number' and not options['visible'])):
+            raise ValueError('The Number column must remain visible; check saved columns.')
+        width = options.get('width')
+        if width is not None and (type(width) is not int or not 75 <= width <= 4096):
+            raise ValueError('Column widths must be between 75 and 4096 pixels.')
+        result['columns'][field] = {'visible': options['visible']}
+        if width is not None:
+            result['columns'][field]['width'] = width
+    return result
+
+
+def views(conn, user):
+    owner = permissions.actor(conn, user)
+    found = rows(conn, 'SELECT id,name,revision,state_json FROM document_registry_view '
+                      'WHERE user_id=? ORDER BY name,id', (owner['id'],))
+    for view in found:
+        view['state'] = view_state(json.loads(view.pop('state_json')))
+    return found
+
+
+def save_view(conn, user, data):
+    if not isinstance(data, dict) or set(data) - {'action', 'id', 'revision', 'name', 'state'}:
+        raise ValueError('Invalid saved view request.')
+    action = data.get('action')
+    if action not in ('create', 'update', 'delete'):
+        raise ValueError('Choose a saved view action.')
+    if action != 'create' and any(type(data.get(key)) is not int or not 1 <= data[key] <= 9223372036854775807
+                                  for key in ('id', 'revision')):
+        raise ValueError('Choose a saved view and reload its current revision.')
+    if action != 'delete':
+        name = data.get('name')
+        if not isinstance(name, str) or not 1 <= len(name.strip()) <= 60 or any(ord(c) < 32 or ord(c) == 127 for c in name):
+            raise ValueError('Use a view name of 1–60 characters on one line.')
+        name = name.strip()
+        state = view_state(data.get('state'))
+    with transaction(conn):
+        owner = permissions.actor(conn, user)
+        if action != 'delete' and state['queue'] == 'instruction' and not permissions.director(conn, owner):
+            raise permissions.Denied('This inbox is for the Director or bureau OIC.')
+        saved_id = None
+        if action != 'create':
+            current = conn.execute('SELECT revision FROM document_registry_view WHERE id=? AND user_id=?',
+                                   (data['id'], owner['id'])).fetchone()
+            if not current:
+                raise ValueError('Saved view not found or unavailable to you.')
+            if current[0] != data['revision']:
+                raise ViewConflict('This saved view changed in another tab. Reload the page before changing it.')
+        if action == 'delete':
+            conn.execute('DELETE FROM document_registry_view WHERE id=? AND user_id=?', (data['id'], owner['id']))
+        else:
+            duplicate = conn.execute('SELECT id FROM document_registry_view WHERE user_id=? AND name=? AND id<>?',
+                                     (owner['id'], name, data.get('id') if action == 'update' else -1)).fetchone()
+            if duplicate:
+                raise ValueError('You already have a view with that name. Choose another name or update it.')
+            now, encoded = tz.now_iso(), json.dumps(state, sort_keys=True)
+            if action == 'create':
+                count = conn.execute('SELECT COUNT(*) FROM document_registry_view WHERE user_id=?', (owner['id'],)).fetchone()[0]
+                if count >= MAX_VIEWS:
+                    raise ValueError('You can save up to 10 views. Delete one before adding another.')
+                saved_id = conn.execute('INSERT INTO document_registry_view(user_id,name,state_json,created_at,updated_at) '
+                                        'VALUES (?,?,?,?,?)', (owner['id'], name, encoded, now, now)).lastrowid
+            else:
+                saved_id = data['id']
+                conn.execute('UPDATE document_registry_view SET name=?,state_json=?,revision=revision+1,updated_at=? '
+                             'WHERE id=? AND user_id=?', (name, encoded, now, saved_id, owner['id']))
+    return {'views': views(conn, user), 'saved_id': saved_id}

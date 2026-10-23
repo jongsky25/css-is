@@ -143,6 +143,7 @@ def make_router(templates,get_conn):
                              before=request.query_params.get('before','0'))
             filters={'queue':queue,'q':query}
             page['grid_url']='/documents/grid-data?'+urlencode(filters)
+            grid.decorate_deadlines(conn,page['documents'])
             page['newest_url']='/documents?'+urlencode(filters)
             page['older_url']=('/documents?'+urlencode({**filters,'before':page['next_before']})
                                if page['more'] else '')
@@ -161,6 +162,30 @@ def make_router(templates,get_conn):
         except (p.Denied,ValueError) as e:
             return JSONResponse({'error':str(e)},status_code=403 if isinstance(e,p.Denied) else 400,
                                 headers=headers)
+        finally:
+            conn.close()
+
+    @router.get('/documents/grid-views')
+    def registry_views(request:Request):
+        conn=get_conn()
+        headers={'Cache-Control':'no-store','Pragma':'no-cache'}
+        try:
+            return JSONResponse({'views':grid.views(conn,request.state.user)},headers=headers)
+        except (p.Denied,ValueError) as e:
+            return JSONResponse({'error':str(e)},status_code=403 if isinstance(e,p.Denied) else 400,headers=headers)
+        finally:
+            conn.close()
+
+    @router.post('/documents/grid-views')
+    async def registry_save_view(request:Request):
+        conn=get_conn()
+        headers={'Cache-Control':'no-store','Pragma':'no-cache'}
+        try:
+            data=await posted(request)
+            return JSONResponse(grid.save_view(conn,request.state.user,data),headers=headers)
+        except (p.Denied,ValueError) as e:
+            code=403 if isinstance(e,p.Denied) else 409 if isinstance(e,grid.ViewConflict) else 400
+            return JSONResponse({'error':str(e)},status_code=code,headers=headers)
         finally:
             conn.close()
 

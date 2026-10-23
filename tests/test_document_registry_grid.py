@@ -49,7 +49,8 @@ def test_sort_and_filter_apply_before_limit_and_only_return_display_fields(regis
     assert [r['id'] for r in first['data'] + second['data']] == expected
     assert calls == [30, 3]
     assert all(set(row) == {'id', 'number', 'subject', 'verification', 'status', 'due_date',
-                           'archived_at', 'reconcile', 'lead', 'registered', 'gmail_imported'} for row in first['data'])
+                           'archived_at', 'reconcile', 'lead', 'registered', 'gmail_imported',
+                           'deadline_state', 'deadline_label'} for row in first['data'])
 
 
 def test_missing_deadlines_sort_last_and_ties_are_stable(registry):
