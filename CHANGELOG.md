@@ -1,3 +1,12 @@
+## 8.03 — October 23, 2026
+
+- Allow same-day requests and staff-encoded bookings for available conference room hours; retain approval, conflict, closure and booking horizon checks.
+- Require two calendar days of notice for meals, including meals added to an existing room booking, guest forms, activity/calendar prechecks, moves and repeating requests.
+- Add standalone meal requests for any activity and venue, with their own references, pax, dietary needs, delivery times and per-meal ordering/delivery status.
+- Add Office → Request meals and My meal requests, an Administrative Section management queue, owner withdrawal and audit records; retain access to existing room-linked forms.
+- Create standalone meal tables idempotently without changing existing room records or adding dependencies.
+- Validate room/meal rules, complete request-to-delivery flow, owner isolation, administrative permissions, guest forms and storage reinitialization.
+
 ## 8.02 — October 23, 2026
 
 - Fix ARTA walk-in reports, official exports and the comments view omitting every response on the standing walk-in form after it was marked archived (24 entries, April 10 to October 22, 2026).
