@@ -154,7 +154,8 @@ def save_view(conn, user, data):
     action = data.get('action')
     if action not in ('create', 'update', 'delete'):
         raise ValueError('Choose a saved view action.')
-    if action != 'create' and any(type(data.get(key)) is not int or data[key] < 1 for key in ('id', 'revision')):
+    if action != 'create' and any(type(data.get(key)) is not int or not 1 <= data[key] <= 9223372036854775807
+                                  for key in ('id', 'revision')):
         raise ValueError('Choose a saved view and reload its current revision.')
     if action != 'delete':
         name = data.get('name')

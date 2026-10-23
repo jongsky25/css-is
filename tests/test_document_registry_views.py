@@ -88,6 +88,13 @@ def test_deleted_view_id_cannot_target_a_replacement_from_an_old_tab(registry):
     assert grid.views(conn, users[0]) == [replacement]
 
 
+@pytest.mark.parametrize('identifier', [True, 1.5, 0, -1, 9223372036854775808])
+def test_invalid_view_identifiers_are_validation_errors(registry, identifier):
+    conn, users, _, _ = registry
+    with pytest.raises(ValueError):
+        grid.save_view(conn, users[0], {'action': 'delete', 'id': identifier, 'revision': 1})
+
+
 @pytest.mark.parametrize('mutate', [
     lambda v: v.update(schema=2), lambda v: v.update(schema=True),
     lambda v: v.update(queue='elsewhere'), lambda v: v.update(q='x'*121),
