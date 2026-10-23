@@ -274,15 +274,11 @@ change the schema.
 
 ### Phase 5 — Report narrative drafting (`report_draft`, v2.08)
 
-Manager/admin "Draft with AI" buttons:
-- `_activity_mrr_analysis` (`app.py:6667`): 4 MRR columns drafted from the
-  aggregate score/dimension table as **editable prefill** — "the analyst
-  refines these" stays true.
-- `csm_report.py`: "V. Agency Action Plan" (:397) and "VI. Continuous
-  Improvement" drafted from period scores + Phase-4 improve-themes.
+Manager/admin "Draft with AI" buttons produce editable MRR and official CO-CSM report sections. The original v2.08 free-form provider prose was superseded in **8.02** by [report draft contract v1](AI_EVALUATION.md#report-drafts-contract-v1-and-independent-evidence): AI chooses concise/detailed style, and the server renders current aggregate figures and verified wording. Names, venues, comments and comment themes are omitted. Human narrative editing remains available.
 
-Report **export never depends on AI** — DOCX/PDF/PPTX generation falls back to
-today's templates/"N/A" and always works.
+Current sources, registered session/role, AI switches and saved human edits are rechecked before the complete draft and audit commit together. Missing, invalid, changed or unavailable inputs preserve existing drafts. The versioned release evaluation covers both report types using synthetic sources and simulated provider HTTP.
+
+Report **export never depends on AI** — exports read saved fields or use today's templates/"N/A". Previously saved text and later source changes require human review; generated wording does not certify subsequent human edits.
 
 ### Phase 6 — Spot feedback auto-triage (`feedback_triage`, v2.09)
 

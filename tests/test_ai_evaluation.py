@@ -71,7 +71,7 @@ def evaluation_world(db_path, viewer, admin, monkeypatch):
 
 
 @pytest.mark.parametrize('case', [
-    pytest.param(case, id=case['id'], marks=pytest.mark.ai_evaluation(case['id'])) for case in SUITE['cases']
+    pytest.param(case, id=case['id'], marks=pytest.mark.ai_evaluation(case['id'])) for case in SUITE['cases'] if case.get('surface', 'answers') == 'answers'
 ])
 def test_existing_ai_scenario(case, evaluation_world):
     conn, clients, monkeypatch = evaluation_world

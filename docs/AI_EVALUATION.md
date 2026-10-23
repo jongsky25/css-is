@@ -1,6 +1,6 @@
-# Existing AI answer evaluation — A22 / 8.01
+# AI answer and report draft evaluation — A22 / 8.02
 
-Evaluation suite **1.0.0** contains 38 named scenarios for the existing answer route, `/api/ai/route`. This is the first A22 increment. It turns selected safeguards into a reproducible, versioned release gate and produces a small report that can be reviewed by category and case.
+Evaluation suite **1.1.0** contains **98 named scenarios**: the 38 answer-route scenarios introduced in 8.01, plus 60 MRR/CO-CSM report-draft scenarios added in 8.02. It turns selected safeguards into a reproducible, versioned release gate and produces a small report by category and case. The retained suite ID `existing-ai-answers` is a historical identifier; both surfaces must pass.
 
 ## What it checks
 
@@ -37,6 +37,34 @@ Reference arithmetic:
 
 Home's retained archive treatment differs from active survey breakdowns. This dataset makes that distinction explicit; this increment does not change those production definitions. Missing/invalid ratings are excluded in both. Professional names are off by default, while existing bureau-wide aggregate counts retain their current scope.
 
+## Report drafts: contract v1 and independent evidence
+
+The real `POST /reports/activities/{id}/ai-mrr-draft` and `POST /reports/csm-draft` routes are exercised with registered manager/viewer accounts, a private synthetic database and simulated provider HTTP. [tests/test_ai_report_evaluation.py](../tests/test_ai_report_evaluation.py) covers both styles, missing/empty data, denied users, revoked accounts/sessions, changed roles/settings, edits/new submissions/archives/period moves, day rollover, concurrent human edits, malformed or injected selections, timeouts, 503 retries, 429, budget/feature refusal and failures midway through field/audit writes.
+
+The previous routes trusted model-written prose and saved it directly into exportable report fields. A JSON string schema alone could not establish that a claim was supported. In **8.02**, [ai_report_drafts.py](../ai_report_drafts.py) therefore accepts only exactly:
+
+```json
+{"contract_version": 1, "style": "detailed"}
+```
+
+`style` may be `concise` or `detailed`; version must be integer 1. Extra fields, free-form narrative, actions, wrong types and unsupported styles are rejected. The provider chooses presentation only. The server writes fixed evidence and clearly proposed recommendations, without invented owners, commitments, funding decisions or completed actions. **This reduces free-form AI drafting**: analysts can still write and save their own narrative. Human edits are not certified by this renderer.
+
+Only aggregate counts/scores, fixed dimension labels, validated dates/periods and the as-of date enter the provider prompt. Activity/service/person names, venues, raw comments and comment themes are omitted. Report-draft interaction logs keep outcome/token/timing metadata but omit prompts, replies and raw provider error bodies, even when content logging is enabled for other features. A successful provider reply remains `rejected_validation` until the validated draft and its audit commit successfully. Existing retention/provider settings apply; this is not universal anonymization or approval of a provider's terms.
+
+Fresh source reads bypass the dashboard's stale-while-revalidate caches. MRR atom loading is restricted to the current event's member forms. The official five-dimension SERVQUAL gap is used, rather than the activity card's three-dimension summary. Locally hashed form/response/answer content, event membership, existing saved fields and the reference day are compared after the provider call. No raw source hash input is sent to AI or added to the evaluation report. Current registered session/role/capability and AI mode/feature switch are rechecked under a write transaction. All generated fields and the audit commit together; source/access changes, concurrent human edits, failed selections and failed writes preserve the previous draft. No lock is held during provider I/O.
+
+Reviewed report reference arithmetic (the `report_drafts` section of `reference-v1.json`):
+
+| Measure | Expected result |
+|---|---|
+| MRR | Two identical responses: C=3 gives **3.0/4**; dimension means are Reliability **6**, Responsiveness **2**, Assurance **4**, Empathy **5**, Tangible **3** |
+| MRR gap | Five-dimension average (6+2+4+5+3)/5 = **4**; expectation **6**; gap **−2.00** |
+| CO-CSM | Two Q4 submissions: SQD1 ratings 5 and 3 give **50%** positive; the other seven official dimensions each give **100%**; overall 15/16 = **93.8%** after rounding |
+| Period scope | An additional 2025 submission is excluded, even though its form event date is in 2026; official CSM uses submission date |
+| Missing | CSM responses without valid ratings retain **N/A**, not zero; an MRR activity without usable satisfaction evidence makes no provider call |
+
+The requests allow at most **96 output tokens**, an **eight-second read timeout** and a three-second connect timeout. The existing retry may make two attempts; this is not an eight-second end-to-end promise. Existing daily budgets and rate limits remain. All these tests use fakes, with no real spend.
+
 ## Run and read a report
 
 Use the repository's locked test environment (Python 3.11 in release CI):
@@ -70,14 +98,16 @@ Case/reference edits also require an increased `suite_version` in the manifest. 
 
 The existing provider/data contract remains [verified facts v1](VERIFIED_AI_ANSWERS.md). A broader survey selection receives the user question and bounded fact IDs/descriptions/groups, without numeric values. Names and user questions are untrusted text and can still contain personal material; these checks do not establish universal anonymization. Current consent, settings, logging/retention and provider governance remain in force.
 
-The scenarios check the existing bounded provider request settings (at most eight seconds per read timeout, three-second connect timeout and bounded output tokens), one retry where supported, and daily-budget refusal. They introduce no real spend. A timeout can involve two attempts; these are not an eight-second end-to-end service promise. Groq quality/fallback routing, OCR, report drafting, feedback triage and other AI surfaces need their own future evaluation sets.
+The scenarios check the existing bounded provider request settings (at most eight seconds per read timeout, three-second connect timeout and bounded output tokens), one retry where supported, and daily-budget refusal. They introduce no real spend. A timeout can involve two attempts; these are not an eight-second end-to-end service promise. Groq quality/fallback routing, OCR, feedback triage and other AI surfaces need their own future evaluation sets. Report draft safeguards are now included; real-model style-choice quality is not measured.
 
 Before broader AI capability or live-model comparisons, the owner must define representative question quality targets, approved provider/data retention terms, expected scope/refusals, spend/token budgets and representative latency measurements. Evaluate live-model quality separately from this deterministic safeguard score; do not infer one from the other. Production workflow observations remain deferred.
 
 ## Rollout and repair
 
-Release **8.01** follows freshly checked **8.00**. No application database migration, new AI feature flag or production provider configuration is required. The two-digit application-version policy remains enforced.
+Release **8.02** follows freshly checked **8.01**. No schema migration, new feature flag, dependency or production provider configuration is required. The runtime module is included in deployment packaging. The two-digit application-version policy remains enforced.
 
-Local shuffled verification passed **384 tests** (seed 319), including all 38 scenarios, the report/contract gate, existing AI, private calendar/office answers, release rules and deployment packaging. The JUnit report contains no failures or skips. All five evaluation categories passed. Earlier focused evaluation/gate checks passed 64 tests; those overlap with the broader run. Release metadata, evaluation-contract introduction, dependency-lock inputs, vendored PDF.js integrity, compilation and whitespace checks passed. Full normal/shuffled CI remains required for the final PR head.
+Previously saved AI/human drafts are not rewritten or certified. Saved drafts are not automatically invalidated by source changes after generation: review or regenerate before official use. Exports continue reading saved fields without another AI call and retain their existing defaults when no draft exists. Clicking the drafting button explicitly replaces the current prefill, as before; an edit made during that request is protected. Current report creation permissions remain the existing bureau-wide capability boundary.
+
+Both normal and shuffled full CI must pass for the final PR head, including all 98 scenarios and the minimized report gate. Local verification evidence is recorded in the PR. This increment does not publish a report, connect a new provider, evaluate live-model quality or resume manual production testing.
 
 For a failing gate, repair the application, fixture or expectation with a reviewed explanation and a new suite version when reference inputs change; then rerun. Preserve failed evidence until the issue is understood. Do not relax the gate, omit cases, reuse an old report or restore model-authored official figures to obtain a green release. If a future broader lookup is unsuitable, the existing `catalog` engine remains the operational fallback.

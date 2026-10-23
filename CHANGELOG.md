@@ -1,3 +1,12 @@
+## 8.02 — October 23, 2026
+
+- Continue A22 with evaluation suite 1.1.0: retain the 38 answer-route scenarios and add 60 report-draft scenarios for MRR and official CO-CSM reports, with literal independently reviewed source figures and simulated provider HTTP.
+- Close the unchecked-prose path into official drafts: report draft contract v1 accepts only a version and concise/detailed style; the server renders aggregate figures, missing-data statements and clearly proposed follow-up wording. Reject extra prose, invented figures/actions, missing selections, wrong types and forged contract versions. Human editing and existing export fallbacks remain available.
+- Send only aggregate evidence, fixed dimension labels and validated period/date values to the provider. Omit activity/service/person names, venues, comments and comment themes; report-draft logs retain outcome/token/timing metadata without prompts, replies or raw provider error bodies, including when general content logging is enabled.
+- Read current scoped sources without dashboard caches; recheck account/session/role, AI switches, source content/group membership, reference day and existing saved edits after the provider call. Preserve existing drafts after failures or concurrent human edits. Save all generated fields, the success outcome and their audit in one transaction; rejected or stale replies retain a rejection outcome.
+- Bound draft generation to 96 output tokens and eight-second read timeouts; existing budget/rate gates, retry and provider settings remain. No real-provider call, new dependency, schema migration or automatic report publication is introduced. Previously saved drafts are not rewritten or certified; later source changes still require human review or regeneration.
+- Require all 98 evaluation scenarios in both existing CI orders. Bind reports to the extended source fingerprint and increased suite version; document arithmetic, provider contract, reduced free-form drafting and rollout limits. Keep the application version at exactly two digits after the decimal.
+
 ## 8.01 — October 22, 2026
 
 - Start A22 with evaluation suite 1.0.0: 38 named questions/scenarios and an independent synthetic reference dataset covering server-owned figures/evidence, missing/stale sources, current account/session/calendar authority, injected instructions and provider failures/budgets.
