@@ -1,6 +1,6 @@
-# AI assistance evaluation — A22 / 8.22
+# AI assistance evaluation — A22 / 8.23
 
-Evaluation suite **1.11.0** contains **423 named scenarios**: 38 answer-route cases from 8.01, 60 MRR/CO-CSM report-draft cases from 8.04, 48 feedback-triage cases from 8.07, 49 verbatim comment cases from 8.10, 32 participant-message cases from 8.12, 30 UX Insights analysis cases from 8.13, 32 directory duplicate-suggestion cases from 8.14, 31 landing-assistant action cases from 8.15, 19 direct travel scan cases from 8.17, 27 travel checklist upload cases from 8.19, 23 calendar invitation upload cases from 8.21, and 34 landing-assistant help/navigation cases from 8.22. It turns selected safeguards into a reproducible, versioned release gate and produces a small report by category and case. The retained suite ID `existing-ai-answers` is a historical identifier; all twelve surfaces must pass.
+Evaluation suite **1.11.0** contains **423 named scenarios**: 38 answer-route cases from 8.01, 60 MRR/CO-CSM report-draft cases from 8.04, 48 feedback-triage cases from 8.07, 49 verbatim comment cases from 8.10, 32 participant-message cases from 8.12, 30 UX Insights analysis cases from 8.13, 32 directory duplicate-suggestion cases from 8.14, 31 landing-assistant action cases from 8.15, 19 direct travel scan cases from 8.17, 27 travel checklist upload cases from 8.19, 23 calendar invitation upload cases from 8.21, and 34 landing-assistant help/navigation cases from 8.23. It turns selected safeguards into a reproducible, versioned release gate and produces a small report by category and case. The retained suite ID `existing-ai-answers` is a historical identifier; all twelve surfaces must pass.
 
 ## What it checks
 
@@ -182,7 +182,7 @@ Before broader AI capability or live-model comparisons, the owner must define re
 
 ## Rollout and repair
 
-Release **8.22** follows the merged 8.21 main branch. No schema migration, new feature flag or production provider configuration is required. The pinned `pypdf` version advances to 6.21.2 to resolve three reported malformed-PDF runtime advisories. The application and service-worker cache versions use exactly two digits after the decimal.
+Release **8.23** follows the merged 8.22 main branch. No schema migration, new feature flag or production provider configuration is required. The pinned `pypdf` version is already 6.21.2 on main. The application and service-worker cache versions use exactly two digits after the decimal.
 
 Existing AI/human comment tags are not rewritten. UX analysis remains a review aid and displays its evidence window and sample status. Production workflow observations and real-model quality remain deferred. Both normal and shuffled full CI must pass for the final PR head, including all 366 scenarios and the minimized report gate.
 
