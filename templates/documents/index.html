@@ -1,9 +1,9 @@
 {% extends "documents/base.html" %}
 {% block head %}{{ super() }}
 <link rel="stylesheet" href="/static/vendor/tabulator/tabulator.min.css?v=6.7.1">
-<link rel="stylesheet" href="/static/css/document-registry.css?v=8.17">
+<link rel="stylesheet" href="/static/css/document-registry.css?v=8.18">
 <script src="/static/vendor/tabulator/tabulator.min.js?v=6.7.1" defer></script>
-<script src="/static/js/document-registry.js?v=8.17" defer></script>
+<script src="/static/js/document-registry.js?v=8.18" defer></script>
 {% endblock %}
 {% block documents_content %}
 {% if queue=='instruction' %}<h2>For my instruction</h2><p>Incoming documents reviewed by records staff and waiting for your routing slip.</p>{% elif queue=='mentions' %}<h2>Instructions for me</h2><p>Documents with instructions you have not marked read. Only records you can currently access appear here.</p>{% elif queue=='gmail_review' %}<h2>Gmail: needs verification</h2><p>Imported records awaiting your verification or correction. Open a record to check its attachments, confirm fields, and review routing. Closed, cancelled and merged records are excluded.</p>{% elif queue=='gmail' %}<h2>Documents imported from Gmail</h2>{% elif queue=='archived' %}<h2>Archived documents</h2><p>Closed and cancelled records filed by Documents workflow administrators. Open a record to review its history or restore it.</p>{% endif %}

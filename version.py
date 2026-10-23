@@ -18,18 +18,28 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "8.17"
+APP_VERSION = "8.18"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
-        "version": "8.17",
+        "version": "8.18",
         "date": "October 23, 2026",
         "summary": "Save your document table layouts and spot approaching deadlines.",
         "changes": [
             "Save personal document views with your search, filters, sorting and column layout, then reopen them on another device.",
             "Overdue, due-today, due-soon and unknown deadlines have clear labels in both document tables.",
             "Deadline labels follow working days and holidays, while closed and cancelled records stay free of deadline alerts."
+        ]
+    },
+    {
+        "version": "8.17",
+        "date": "October 23, 2026",
+        "summary": "Travel document AI suggestions now check your access and the filing again before appearing.",
+        "changes": [
+            "A scan stops if your sign-in or the filing changes while AI is reading the document.",
+            "Malformed amounts and unsafe text fall back to manual entry instead of appearing as suggestions.",
+            "Release checks now cover changed filings, invalid readings and provider failures."
         ]
     },
     {

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "suite_id": "existing-ai-answers",
-  "suite_version": "1.7.0",
+  "suite_version": "1.8.0",
   "contract_version": 1,
   "reference_clock": "2026-10-20T06:00:00",
   "categories": [
@@ -5549,6 +5549,287 @@
         "outcomes": [
           "fallback_error"
         ]
+      }
+    },
+    {
+      "id": "travel-scan-valid",
+      "category": "facts",
+      "surface": "travel_scan",
+      "question": "Can this uploaded travel document produce a current, safe suggestion?",
+      "scenario": "valid",
+      "expect": {
+        "status": 200,
+        "ok": true,
+        "calls": 1,
+        "outcomes": [
+          "ok"
+        ]
+      }
+    },
+    {
+      "id": "travel-scan-unreadable",
+      "category": "facts",
+      "surface": "travel_scan",
+      "question": "Can this uploaded travel document produce a current, safe suggestion?",
+      "scenario": "unreadable",
+      "expect": {
+        "status": 200,
+        "ok": true,
+        "calls": 1,
+        "outcomes": [
+          "ok"
+        ]
+      }
+    },
+    {
+      "id": "travel-scan-negative-amount",
+      "category": "facts",
+      "surface": "travel_scan",
+      "question": "Can this uploaded travel document produce a current, safe suggestion?",
+      "scenario": "negative-amount",
+      "expect": {
+        "status": 200,
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "travel-scan-boolean-amount",
+      "category": "facts",
+      "surface": "travel_scan",
+      "question": "Can this uploaded travel document produce a current, safe suggestion?",
+      "scenario": "boolean-amount",
+      "expect": {
+        "status": 200,
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "travel-scan-bad-date",
+      "category": "facts",
+      "surface": "travel_scan",
+      "question": "Can this uploaded travel document produce a current, safe suggestion?",
+      "scenario": "bad-date",
+      "expect": {
+        "status": 200,
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "travel-scan-bad-currency",
+      "category": "facts",
+      "surface": "travel_scan",
+      "question": "Can this uploaded travel document produce a current, safe suggestion?",
+      "scenario": "bad-currency",
+      "expect": {
+        "status": 200,
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "travel-scan-html-vendor",
+      "category": "injection",
+      "surface": "travel_scan",
+      "question": "Can this uploaded travel document produce a current, safe suggestion?",
+      "scenario": "html-vendor",
+      "expect": {
+        "status": 200,
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "travel-scan-extra-field",
+      "category": "injection",
+      "surface": "travel_scan",
+      "question": "Can this uploaded travel document produce a current, safe suggestion?",
+      "scenario": "extra-field",
+      "expect": {
+        "status": 200,
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "travel-scan-missing-amount",
+      "category": "facts",
+      "surface": "travel_scan",
+      "question": "Can this uploaded travel document produce a current, safe suggestion?",
+      "scenario": "missing-amount",
+      "expect": {
+        "status": 200,
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "travel-scan-logout",
+      "category": "authority",
+      "surface": "travel_scan",
+      "question": "Can this uploaded travel document produce a current, safe suggestion?",
+      "scenario": "logout",
+      "expect": {
+        "status": 409,
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "ok"
+        ]
+      }
+    },
+    {
+      "id": "travel-scan-deactivate",
+      "category": "authority",
+      "surface": "travel_scan",
+      "question": "Can this uploaded travel document produce a current, safe suggestion?",
+      "scenario": "deactivate",
+      "expect": {
+        "status": 409,
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "ok"
+        ]
+      }
+    },
+    {
+      "id": "travel-scan-filing-changed",
+      "category": "freshness",
+      "surface": "travel_scan",
+      "question": "Can this uploaded travel document produce a current, safe suggestion?",
+      "scenario": "filing-changed",
+      "expect": {
+        "status": 409,
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "ok"
+        ]
+      }
+    },
+    {
+      "id": "travel-scan-feature-off-during",
+      "category": "authority",
+      "surface": "travel_scan",
+      "question": "Can this uploaded travel document produce a current, safe suggestion?",
+      "scenario": "feature-off-during",
+      "expect": {
+        "status": 409,
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "ok"
+        ]
+      }
+    },
+    {
+      "id": "travel-scan-timeout",
+      "category": "resilience",
+      "surface": "travel_scan",
+      "question": "Can this uploaded travel document produce a current, safe suggestion?",
+      "scenario": "timeout",
+      "expect": {
+        "status": 200,
+        "ok": false,
+        "calls": 2,
+        "outcomes": [
+          "fallback_timeout"
+        ]
+      }
+    },
+    {
+      "id": "travel-scan-http503",
+      "category": "resilience",
+      "surface": "travel_scan",
+      "question": "Can this uploaded travel document produce a current, safe suggestion?",
+      "scenario": "http503",
+      "expect": {
+        "status": 200,
+        "ok": false,
+        "calls": 2,
+        "outcomes": [
+          "fallback_error"
+        ]
+      }
+    },
+    {
+      "id": "travel-scan-budget",
+      "category": "resilience",
+      "surface": "travel_scan",
+      "question": "Can this uploaded travel document produce a current, safe suggestion?",
+      "scenario": "budget",
+      "expect": {
+        "status": 200,
+        "ok": false,
+        "calls": 0,
+        "outcomes": [
+          "fallback_budget"
+        ]
+      }
+    },
+    {
+      "id": "travel-scan-disabled",
+      "category": "authority",
+      "surface": "travel_scan",
+      "question": "Can this uploaded travel document produce a current, safe suggestion?",
+      "scenario": "disabled",
+      "expect": {
+        "status": 200,
+        "ok": false,
+        "calls": 0,
+        "outcomes": [
+          "no_config"
+        ]
+      }
+    },
+    {
+      "id": "travel-scan-wrong-owner",
+      "category": "authority",
+      "surface": "travel_scan",
+      "question": "Can this uploaded travel document produce a current, safe suggestion?",
+      "scenario": "wrong-owner",
+      "expect": {
+        "status": 404,
+        "ok": false,
+        "calls": 0,
+        "outcomes": []
+      }
+    },
+    {
+      "id": "travel-scan-bad-file",
+      "category": "injection",
+      "surface": "travel_scan",
+      "question": "Can this uploaded travel document produce a current, safe suggestion?",
+      "scenario": "bad-file",
+      "expect": {
+        "status": 415,
+        "ok": false,
+        "calls": 0,
+        "outcomes": []
       }
     }
   ]
