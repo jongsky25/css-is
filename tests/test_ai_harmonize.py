@@ -235,7 +235,7 @@ def test_suggest_rejects_nonexistent_ids(admin, db_path, monkeypatch):
     conn = st.connect(db_path); _reset(conn); conn.close()
 
 
-def test_suggest_invalid_relation_falls_back_to_unsure(admin, db_path, monkeypatch):
+def test_suggest_invalid_relation_is_rejected(admin, db_path, monkeypatch):
     conn = st.connect(db_path); st.init_db(conn); _reset(conn)
     try:
         _configure(conn, monkeypatch)
@@ -244,6 +244,6 @@ def test_suggest_invalid_relation_falls_back_to_unsure(admin, db_path, monkeypat
         _mock_suggestion(monkeypatch, relation="definitely-yes")
         r = admin.post("/directory/cleanup/ai-suggest", data={"a_id": a, "b_id": b})
         assert r.status_code == 200
-        assert r.json()["relation"] == "unsure"
+        assert r.json()["ok"] is False
     finally:
         conn = st.connect(db_path); _reset(conn); conn.close()

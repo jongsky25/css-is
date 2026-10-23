@@ -554,7 +554,7 @@ def _log_interaction(conn, *, user, feature, mode, outcome, result=None, error=N
                       provider="gemini", question=None):
     user_id = user.get("id") if user else None
     role = user.get("role") if user else None
-    if feature in ("report_draft", "feedback_triage", "verbatim", "messages", "ux_analysis"):
+    if feature in ("report_draft", "feedback_triage", "verbatim", "messages", "ux_analysis", "harmonize"):
         # These analytic and draft surfaces retain metadata only, even when content
         # logging is enabled for other features. Rejecting provider prose must
         # not copy it (or provider error bodies) into the interaction log.
