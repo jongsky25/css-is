@@ -6,11 +6,11 @@ Deployment: [equityinhealth/office-connect](https://huggingface.co/spaces/equity
 
 This is the durable record of research into public Hugging Face Spaces and widely used GitHub projects that could improve Office Connect. Customer Satisfaction Survey (CSS) is one module of this platform.
 
-The user wants a broad set of worthwhile candidates, explained and evaluated one at a time. The Tabulator registry pilot was merged in [PR #424](https://github.com/jongsky25/css-is/pull/424) as release 8.16. The saved-view and deadline-label follow-up is live as 8.18 in PR #427. Other candidates remain research items.
+The user wants a broad set of worthwhile candidates, explained and evaluated one at a time. The Tabulator registry pilot was merged in [PR #424](https://github.com/jongsky25/css-is/pull/424) as release 8.16. The saved-view and deadline-label follow-up went live as 8.18 in PR #427. Deadline quick filters from PR #430 are included in verified live v8.21. Other candidates remain research items.
 
 ## Resume here
 
-**Current topic: deadline quick filters merged in PR #430 (v8.20); included in newer main v8.21 (PR #431), with deployment verification pending. An obsolete queued v8.20 retry must be cancelled to avoid deploying it after v8.21.**
+**Current topic: deadline quick filters are complete, merged in PR #430 and verified live in Office Connect v8.21. No further implementation is selected.**
 
 The initial Tabulator release 8.16 was verified before this follow-up began. [Workflow 39953481637](https://github.com/jongsky25/css-is/actions/runs/39953481637) reached RUNNING and logged `Live /login version check: OK (expected v8.16)` at 2026-10-23 12:48 UTC (Space commit be3fa42ff10b4d4e53ebd78fec6d0d17bf17b4b5).
 
@@ -28,9 +28,13 @@ Both complete PR CI orders passed 6,158 tests each on db17bd7d391052d3500391a2b2
 
 A 45-minute CI budget proposal was prepared in [PR #429](https://github.com/jongsky25/css-is/pull/429) after the runner delay; 29 release-gate checks passed. The deployment retry succeeded, so that proposal was closed without merging. Its branch `fix/release-verification-time-budget` is retained for future pipeline work. **No v8.19 release or timeout change was deployed by this task.**
 
-**Release state at 2026-10-23 17:28 UTC:** v8.20 deployment workflow 39986164250 attempts 1 and 2 hit the 30-minute normal-job budget after slow setup. Attempt 1 printed all 6,190 tests passed but was cancelled before report gates; attempt 2 reached 94% without a reported failure. Attempt 3 is pending behind newer v8.21 deployment 39990837900. PR #431 merged as dcec77c3261a6d53f961aa9c28a33a6f9c7395d7 on top of PR #430 and preserves the deadline filter files. The user has been asked to cancel run 39986164250 because the connector has no cancellation tool and local gh cancellation is blocked by the environment network policy. Verify cancellation before declaring delivery complete; then verify the newer deployment's exact live v8.21 check.
+**Deadline filters delivered:** [PR #430](https://github.com/jongsky25/css-is/pull/430) merged as b86bb7f30f70215b75ca7397b40d7b7d248037e7 (v8.20), after both CI orders passed 6,190 tests with no failures/skips and all 366 offline AI cases in workflow 39982506921. Overdue, Due today, Due soon (including today), and Unknown deadline combine with queue/search and workflow/verification before counting and pagination. Saved views retain the deadline choice; older views default to all deadlines. A shared classifier and request-wide date/holiday window keep filtering and labels consistent; closed/cancelled records never match urgency filters.
 
-**Next action:** verify [deployment workflow 39986164250](https://github.com/jongsky25/css-is/actions/runs/39986164250), including its exact live-version check, then record the evidence here. PR #430 passed both 6,190-test CI orders with no failures/skips and all 366 offline AI cases in workflow 39982506921; merged as b86bb7f30f70215b75ca7397b40d7b7d248037e7. The user authorized deadline quick filters with “do it” after they were recommended as the next step. Overdue, Due today, Due soon (including today), and Unknown deadline combine with existing filters and persist in saved views; older views default to all deadlines. The intervening v8.19 AI checklist release was preserved. Remaining lead/date filters, matching-view export, grouped views, Supplies reuse and other candidates remain recommendations.
+**Deployment verified in newer v8.21:** intervening [PR #431](https://github.com/jongsky25/css-is/pull/431) merged on top of PR #430 as dcec77c3261a6d53f961aa9c28a33a6f9c7395d7 and preserved its deadline-filter files. [Workflow 39990837900](https://github.com/jongsky25/css-is/actions/runs/39990837900) passed both 6,213-test orders, no failures/skips, and all 389 offline AI cases. Deploy job 120564200778 uploaded Space commit f3fedea881e482b7ddd920068e6f0c1a28fc096d, reached RUNNING and logged `Live /login version check: OK (expected v8.21)` at 2026-10-23 17:43 UTC.
+
+**Obsolete deploy safely cancelled:** v8.20 workflow 39986164250 attempts 1 and 2 hit the 30-minute normal-job limit after slow setup; attempt 1 printed all 6,190 tests passed before cancellation interrupted report gates, and attempt 2 reached 94% without a reported failure. Attempt 3 was queued behind newer v8.21. The GitHub connector lacked a cancel tool and local gh API access was blocked by the environment network policy. An isolated operational branch `ops/clear-obsolete-deploy-20261023`, commit 0f1c179, added a no-permission, no-deploy queue job using the existing `hf-deploy` concurrency group with `cancel-in-progress: false`. [Queue workflow 39996976941](https://github.com/jongsky25/css-is/actions/runs/39996976941) replaced the obsolete pending v8.20 retry through native queue behavior, while preserving the active v8.21 release. Run 39986164250 is confirmed cancelled. **No manual cancellation is required. Do not merge this operational workflow into main.**
+
+**Next action:** choose the next feature when the user requests it. The user's “do it” authorized deadline quick filters, now delivered. Lead/date filters, an authorized export matching the current view, grouped workflow/lead views, Supplies reuse and other candidates remain recommendations. Operational follow-up worth considering: give setup plus tests enough CI time (see closed PR #429), improve dependency setup, and prevent older reruns from deploying over newer main releases. These are recommendations, not additional implementation authorization.
 
 The next session should:
 1. Read this file and the three linked catalogs.
@@ -62,7 +66,7 @@ No model inference, uploads of Office Connect records, production integrations o
 The reviewed application uses FastAPI, Jinja and SQLite, deployed as a Docker Space. It includes CSS scoring and reports; document intake, registry, search and signing workflows; work items and approvals; activities and minutes templates; calendars and rooms; travel receipt suggestions; supplies; and notifications.
 
 Important existing capabilities:
-- [documents_grid.py](../documents_grid.py): bounded Tabulator registry reads, account-owned saved views and deadline labels, live as 8.18; see [TABULATOR_PILOT.md](TABULATOR_PILOT.md).
+- [documents_grid.py](../documents_grid.py): bounded Tabulator registry reads, account-owned saved views, deadline labels and quick filters, live in 8.21; see [TABULATOR_PILOT.md](TABULATOR_PILOT.md).
 - [documents_intake.py](../documents_intake.py): reviewed OCR-assisted document metadata.
 - [documents_search.py](../documents_search.py): SQLite FTS5, indexed-file provenance and access checks.
 - [search_sources.py](../search_sources.py): role-aware cross-module search sources.
@@ -124,7 +128,7 @@ The read-only pilot is implemented in [PR #424](https://github.com/jongsky25/css
 
 ### Tabulator next improvements under consideration
 
-Saved per-user views, column preferences and overdue/due-soon highlighting are live in 8.18 (PR #427). Deadline quick filters are now selected and implemented in PR #430, merged with release verification pending. Remaining candidates include filters for lead, direction and date range; and a server-generated export that matches the interactive filters and permitted columns. Grouped workflow/lead views and reuse in Supplies can follow. The remaining items are recommendations and have not been selected for implementation.
+Saved per-user views, column preferences and overdue/due-soon highlighting are live in 8.18 (PR #427). Deadline quick filters from PR #430 are complete and verified live in v8.21. Remaining candidates include filters for lead, direction and date range; and a server-generated export that matches the interactive filters and permitted columns. Grouped workflow/lead views and reuse in Supplies can follow. The remaining items are recommendations and have not been selected for implementation.
 
 The initial full CI runs for PR #424 each passed 6,045 tests but failed the runtime import-closure check. The new documents_grid.py module was omitted from deploy_hf.RUNTIME_PY. Commit 310efad corrects the allowlist and the four local deployment tests pass. The subsequent full normal/shuffled checks passed on d81151a. After preserving main's intervening AI action release, the metadata was reconciled to 8.16 and PR #424 was merged. The initial 8.16 and follow-up 8.18 deployments are verified; their linked workflow logs record the live-version checks.
 
@@ -190,7 +194,7 @@ These are findings from the research date; verify selected versions before adopt
 | 2026-10-23 | Expanded review to 51 GitHub repositories with stars, deployment fit, license and maintenance notes. |
 | 2026-10-23 | User requested durable GitHub documentation so this work can resume in future sessions. |
 | 2026-10-23 | User authorized the Tabulator pilot with “execute” and then requested merging first. [PR #424](https://github.com/jongsky25/css-is/pull/424) merged as ed54b9b (version 8.16); [deployment run](https://github.com/jongsky25/css-is/actions/runs/39953481637) pending at the merge check. |
-| 2026-10-23 | User authorized deadline quick filters with “do it”; implemented in [PR #430](https://github.com/jongsky25/css-is/pull/430), release v8.20, merged after both 6,190-test CI orders passed; deployment verification pending. |
+| 2026-10-23 | User authorized deadline quick filters with “do it”; implemented in [PR #430](https://github.com/jongsky25/css-is/pull/430), release v8.20, merged after both 6,190-test CI orders passed; verified live in v8.21 through workflow 39990837900. The obsolete v8.20 retry was safely cancelled through native concurrency queue housekeeping. |
 | 2026-10-23 | User authorized saved views and deadline highlighting after deployment verification; PR #427 merged, both CI orders and post-merge gates passed, and live v8.18 was verified in workflow 39962997557. |
 
 When work resumes, record accepted/rejected candidates, rationale, implementation/PR links, verification results and the next topic here. Preserve the distinction between a researched recommendation, an approved implementation and a deployed feature.
