@@ -29,6 +29,10 @@ jobs:
         run: |
           python scripts/lock_dependencies.py --check
           python scripts/check_vendor_dependencies.py
+      - name: Check evaluation contract version
+        env:
+          BASE_SHA: ${{ inputs.base_sha }}
+        run: python scripts/ai_evaluation.py contract --base "$BASE_SHA"
 
   dependencies:
     name: Dependency audit
@@ -121,9 +125,11 @@ jobs:
           mkdir -p test-results
           args=()
           if [ "$TEST_ORDER" = shuffled ]; then args+=(--shuffle-seed=311); fi
-          python -m pytest "${args[@]}" --tb=short --junitxml=test-results/results.xml
+          python -m pytest "${args[@]}" --tb=short --junitxml=test-results/results.xml --ai-evaluation-report=test-results/ai-evaluation.json
       - name: Reject empty reports, failures and skipped tests
         run: python scripts/check_release.py junit test-results/results.xml
+      - name: Require complete current AI evaluation evidence
+        run: python scripts/ai_evaluation.py check test-results/ai-evaluation.json
       - name: Record resolved dependencies
         if: always()
         run: |
