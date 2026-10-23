@@ -1,4 +1,4 @@
-## 8.02 — October 23, 2026
+## 8.03 — October 23, 2026
 
 - Continue A22 with evaluation suite 1.1.0: retain the 38 answer-route scenarios and add 60 report-draft scenarios for MRR and official CO-CSM reports, with literal independently reviewed source figures and simulated provider HTTP.
 - Close the unchecked-prose path into official drafts: report draft contract v1 accepts only a version and concise/detailed style; the server renders aggregate figures, missing-data statements and clearly proposed follow-up wording. Reject extra prose, invented figures/actions, missing selections, wrong types and forged contract versions. Human editing and existing export fallbacks remain available.

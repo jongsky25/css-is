@@ -13214,7 +13214,7 @@ def _csm_official_report(rows):
 
 # ---------------------------------------------------------------------
 # CSM closing-section AI drafting (docs/AI_INTEGRATION_PLAN.md Phase 5,
-# v2.08; contract v1 in v8.02). "Draft with AI" selects a style for the official
+# v2.08; contract v1 in v8.03). "Draft with AI" selects a style for the official
 # CO-CSM report's Section V (Agency Action Plan) and VI (Continuous
 # Improvement) into report_draft (scope='csm_closing', keyed by period — the
 # walk-in CSM form is one standing bureau-level form with no org scope, same

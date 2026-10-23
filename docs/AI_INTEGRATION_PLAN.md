@@ -274,7 +274,7 @@ change the schema.
 
 ### Phase 5 — Report narrative drafting (`report_draft`, v2.08)
 
-Manager/admin "Draft with AI" buttons produce editable MRR and official CO-CSM report sections. The original v2.08 free-form provider prose was superseded in **8.02** by [report draft contract v1](AI_EVALUATION.md#report-drafts-contract-v1-and-independent-evidence): AI chooses concise/detailed style, and the server renders current aggregate figures and verified wording. Names, venues, comments and comment themes are omitted. Human narrative editing remains available.
+Manager/admin "Draft with AI" buttons produce editable MRR and official CO-CSM report sections. The original v2.08 free-form provider prose was superseded in **8.03** by [report draft contract v1](AI_EVALUATION.md#report-drafts-contract-v1-and-independent-evidence): AI chooses concise/detailed style, and the server renders current aggregate figures and verified wording. Names, venues, comments and comment themes are omitted. Human narrative editing remains available.
 
 Current sources, registered session/role, AI switches and saved human edits are rechecked before the complete draft and audit commit together. Missing, invalid, changed or unavailable inputs preserve existing drafts. The versioned release evaluation covers both report types using synthetic sources and simulated provider HTTP.
 
