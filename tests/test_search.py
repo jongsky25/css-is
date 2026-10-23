@@ -77,13 +77,13 @@ def test_conference_room_lives_under_office_not_awa(app_mod):
     awa_urls = {it["url"] for it in group(U(), "AWA")["items"]}
     assert "/rooms" not in awa_urls and "/calendar" not in awa_urls
     staff = {it["url"] for it in group(U(), "Office")["items"]}
-    assert {"/rooms", "/rooms/mine"} <= staff
-    assert not staff & {"/rooms/meals", "/rooms/blocks", "/calendar"}
+    assert {"/rooms", "/rooms/mine", "/meals/new", "/meals/mine"} <= staff
+    assert not staff & {"/meals", "/rooms/meals", "/rooms/blocks", "/calendar"}
     assert {it["url"] for it in group(U(), "Calendar")["items"]} == {"/calendar"}
     assert next(e["section"] for e in app_mod.search_index_for(U())
                 if e["url"] == "/calendar" and e["title"] == "Office calendar") == "Calendar"
     mgr = {it["url"] for it in group(R(), "Office")["items"]}
-    assert {"/rooms/meals", "/rooms/blocks", "/approvals"} <= mgr
+    assert {"/meals", "/rooms/blocks", "/approvals"} <= mgr
     sec = [s["name"] for s in group(R(), "Office")["sections"]]
     assert sec == ["Supplies", "Documents", "Reserve", "Manage the room"]
     assert "/supplies" in staff
@@ -91,7 +91,7 @@ def test_conference_room_lives_under_office_not_awa(app_mod):
     class A(U):
         role = "admin"          # app admin who is NOT in the Administrative Section
     adm = {it["url"] for it in group(A(), "Office")["items"]}
-    assert not adm & {"/rooms/meals", "/rooms/blocks"}
+    assert not adm & {"/meals", "/rooms/meals", "/rooms/blocks"}
     assert [s["name"] for s in group(A(), "Office")["sections"]] == ["Supplies", "Documents", "Reserve"]
     sections = {e["url"]: e["section"] for e in app_mod.search_index_for(R())}
     assert sections["/rooms"] == "Office" and sections["/rooms/poster"] == "Office"
