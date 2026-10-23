@@ -10,7 +10,7 @@ The user wants a broad set of worthwhile candidates, explained and evaluated one
 
 ## Resume here
 
-**Current topic: deadline quick filters are complete, merged in PR #430 and verified live in Office Connect v8.21. No further implementation is selected.**
+**Current topic: user authorized fixing CI time first, then current-view CSV export. Both are implemented in PR #432 (v8.22), pending full CI, merge and deployment verification. Deadline filters remain verified live in v8.21.**
 
 The initial Tabulator release 8.16 was verified before this follow-up began. [Workflow 39953481637](https://github.com/jongsky25/css-is/actions/runs/39953481637) reached RUNNING and logged `Live /login version check: OK (expected v8.16)` at 2026-10-23 12:48 UTC (Space commit be3fa42ff10b4d4e53ebd78fec6d0d17bf17b4b5).
 
@@ -34,7 +34,7 @@ A 45-minute CI budget proposal was prepared in [PR #429](https://github.com/jong
 
 **Obsolete deploy safely cancelled:** v8.20 workflow 39986164250 attempts 1 and 2 hit the 30-minute normal-job limit after slow setup; attempt 1 printed all 6,190 tests passed before cancellation interrupted report gates, and attempt 2 reached 94% without a reported failure. Attempt 3 was queued behind newer v8.21. The GitHub connector lacked a cancel tool and local gh API access was blocked by the environment network policy. An isolated operational branch `ops/clear-obsolete-deploy-20261023`, commit 0f1c179, added a no-permission, no-deploy queue job using the existing `hf-deploy` concurrency group with `cancel-in-progress: false`. [Queue workflow 39996976941](https://github.com/jongsky25/css-is/actions/runs/39996976941) replaced the obsolete pending v8.20 retry through native queue behavior, while preserving the active v8.21 release. Run 39986164250 is confirmed cancelled. **No manual cancellation is required. Do not merge this operational workflow into main.**
 
-**Next action:** choose the next feature when the user requests it. The user's “do it” authorized deadline quick filters, now delivered. Lead/date filters, an authorized export matching the current view, grouped workflow/lead views, Supplies reuse and other candidates remain recommendations. Operational follow-up worth considering: give setup plus tests enough CI time (see closed PR #429), improve dependency setup, and prevent older reruns from deploying over newer main releases. These are recommendations, not additional implementation authorization.
+**Next action:** finish [PR #432](https://github.com/jongsky25/css-is/pull/432): complete both CI orders using the new 45-minute budget, merge on current main when green, and verify the exact live-version check. Commit d7cf42f fixes the test-job time budget first without removing gates; subsequent commits add a server-generated CSV matching applied queue/search, workflow, verification, deadline, sorting and visible columns across all pages. Exports recheck authorization, neutralize formulas, use UTF-8 and no-store, and refuse more than 10,000 matches without truncation. Local domain, route, real-browser, release and deployment-closure checks passed. Preserve intervening main releases; do not retry an obsolete deployment after a newer release takes over. Other features remain recommendations.
 
 The next session should:
 1. Read this file and the three linked catalogs.
@@ -196,5 +196,7 @@ These are findings from the research date; verify selected versions before adopt
 | 2026-10-23 | User authorized the Tabulator pilot with “execute” and then requested merging first. [PR #424](https://github.com/jongsky25/css-is/pull/424) merged as ed54b9b (version 8.16); [deployment run](https://github.com/jongsky25/css-is/actions/runs/39953481637) pending at the merge check. |
 | 2026-10-23 | User authorized deadline quick filters with “do it”; implemented in [PR #430](https://github.com/jongsky25/css-is/pull/430), release v8.20, merged after both 6,190-test CI orders passed; verified live in v8.21 through workflow 39990837900. The obsolete v8.20 retry was safely cancelled through native concurrency queue housekeeping. |
 | 2026-10-23 | User authorized saved views and deadline highlighting after deployment verification; PR #427 merged, both CI orders and post-merge gates passed, and live v8.18 was verified in workflow 39962997557. |
+
+| 2026-10-23 | User authorized “fix ci time first then do 1” (current-view export). Implemented CI 45-minute budget first, then export, in [PR #432](https://github.com/jongsky25/css-is/pull/432), pending full CI and verified deployment. |
 
 When work resumes, record accepted/rejected candidates, rationale, implementation/PR links, verification results and the next topic here. Preserve the distinction between a researched recommendation, an approved implementation and a deployed feature.
