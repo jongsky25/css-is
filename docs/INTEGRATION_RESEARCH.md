@@ -10,7 +10,7 @@ The user wants a broad set of worthwhile candidates, explained and evaluated one
 
 ## Resume here
 
-**Current topic: deadline quick filters are merged in PR #430 (v8.20); post-merge deployment verification is pending. Saved views and deadline highlighting are already live from v8.18.**
+**Current topic: deadline quick filters merged in PR #430 (v8.20); included in newer main v8.21 (PR #431), with deployment verification pending. An obsolete queued v8.20 retry must be cancelled to avoid deploying it after v8.21.**
 
 The initial Tabulator release 8.16 was verified before this follow-up began. [Workflow 39953481637](https://github.com/jongsky25/css-is/actions/runs/39953481637) reached RUNNING and logged `Live /login version check: OK (expected v8.16)` at 2026-10-23 12:48 UTC (Space commit be3fa42ff10b4d4e53ebd78fec6d0d17bf17b4b5).
 
@@ -27,6 +27,8 @@ Both complete PR CI orders passed 6,158 tests each on db17bd7d391052d3500391a2b2
 **Deployment verified:** [workflow 39962997557, attempt 2](https://github.com/jongsky25/css-is/actions/runs/39962997557/attempts/2) succeeded, uploaded Space commit bd9a6382b57484a7927cec1d759b958c92ae8c20, reached RUNNING and logged `Live /login version check: OK (expected v8.18)` at 2026-10-23 14:38 UTC.
 
 A 45-minute CI budget proposal was prepared in [PR #429](https://github.com/jongsky25/css-is/pull/429) after the runner delay; 29 release-gate checks passed. The deployment retry succeeded, so that proposal was closed without merging. Its branch `fix/release-verification-time-budget` is retained for future pipeline work. **No v8.19 release or timeout change was deployed by this task.**
+
+**Release state at 2026-10-23 17:28 UTC:** v8.20 deployment workflow 39986164250 attempts 1 and 2 hit the 30-minute normal-job budget after slow setup. Attempt 1 printed all 6,190 tests passed but was cancelled before report gates; attempt 2 reached 94% without a reported failure. Attempt 3 is pending behind newer v8.21 deployment 39990837900. PR #431 merged as dcec77c3261a6d53f961aa9c28a33a6f9c7395d7 on top of PR #430 and preserves the deadline filter files. The user has been asked to cancel run 39986164250 because the connector has no cancellation tool and local gh cancellation is blocked by the environment network policy. Verify cancellation before declaring delivery complete; then verify the newer deployment's exact live v8.21 check.
 
 **Next action:** verify [deployment workflow 39986164250](https://github.com/jongsky25/css-is/actions/runs/39986164250), including its exact live-version check, then record the evidence here. PR #430 passed both 6,190-test CI orders with no failures/skips and all 366 offline AI cases in workflow 39982506921; merged as b86bb7f30f70215b75ca7397b40d7b7d248037e7. The user authorized deadline quick filters with “do it” after they were recommended as the next step. Overdue, Due today, Due soon (including today), and Unknown deadline combine with existing filters and persist in saved views; older views default to all deadlines. The intervening v8.19 AI checklist release was preserved. Remaining lead/date filters, matching-view export, grouped views, Supplies reuse and other candidates remain recommendations.
 
