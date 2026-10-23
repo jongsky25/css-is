@@ -10,11 +10,13 @@ The user wants a broad set of worthwhile candidates, explained and evaluated one
 
 ## Resume here
 
-**Current topic: verify the Hugging Face deployment of merged Tabulator release 8.16, then select the next enhancement.**
+**Current topic: release personal Tabulator saved views and deadline highlighting in [PR #427](https://github.com/jongsky25/css-is/pull/427).**
 
-PR #424 merged as commit ed54b9b58f779a0dc902e05f4e56f032e6eb4cec. The [Hugging Face release workflow](https://github.com/jongsky25/css-is/actions/runs/39953481637) was pending immediately after the merge. Live availability has not yet been confirmed. Check that workflow and the running app version before telling users the feature is live.
+The initial Tabulator release 8.16 is live and verified. PR #424 merged as ed54b9b58f779a0dc902e05f4e56f032e6eb4cec; [workflow 39953481637](https://github.com/jongsky25/css-is/actions/runs/39953481637) passed all gates and deployed Space commit be3fa42ff10b4d4e53ebd78fec6d0d17bf17b4b5. The deployment reached RUNNING and logged `Live /login version check: OK (expected v8.16)` at 2026-10-23 12:48 UTC.
 
-The user authorized implementation with “execute”. The pilot provides an opt-in interactive table with remote sorting/filtering, column choices and resizing, 30-row pages, and a standard-table fallback. The full normal/shuffled CI passed on d81151a. A later main release required metadata reconciliation to 8.16; the combined branch passed 224 focused checks plus the separate AI action browser check. The post-merge release workflow runs the full gates before deployment. Read [the pilot guide](https://github.com/jongsky25/css-is/blob/main/docs/TABULATOR_PILOT.md) before continuing.
+The user then authorized: “once verified deployment. add the saved views and deadline highlighting”. Only after that deployment verification, implementation began on `feat/document-registry-saved-views`, now PR #427 (release 8.17; initial head d60c2fa406792d2f838edcacb1dff873e0e65dac). It adds up to ten account-owned named views with queue/search, applied filters, sorting and column visibility/widths; create/update/delete controls; CSRF, ownership, validation and revision-conflict checks; and deadline labels in both table modes using existing working-day/holiday rules. Saved preferences contain no record snapshots or access authority. Read [the updated guide](https://github.com/jongsky25/css-is/blob/feat/document-registry-saved-views/docs/TABULATOR_PILOT.md).
+
+Focused server/browser checks cover preferences, current permissions, concurrent updates, quotas, holiday boundaries, reload restoration, cross-queue/search reopening, unsafe names and failed writes. Full CI is pending. **Next action: inspect PR #427 checks, resolve failures or intervening main releases, merge once green, then verify its Hugging Face deployment and live version. Do not claim the enhancements are live until verified.**
 
 The next session should:
 1. Read this file and the three linked catalogs.
@@ -102,12 +104,12 @@ Suggested pilot, if authorized:
 - Verify that hidden/unauthorized rows never reach the browser or exports, calculated values remain correct, and normal actions continue to work.
 - Compare time to complete a few real lookup tasks against the existing page.
 
-The read-only pilot is implemented in [PR #424](https://github.com/jongsky25/css-is/pull/424), on branch feat/document-registry-tabulator. It adds server-side workflow and verification filters, sorting over all authorized matches, column resizing/visibility and a fallback. The pilot is merged as 8.16; consult the deployment workflow for current live status.
+The read-only pilot is implemented in [PR #424](https://github.com/jongsky25/css-is/pull/424), on branch feat/document-registry-tabulator. It adds server-side workflow and verification filters, sorting over all authorized matches, column resizing/visibility and a fallback. The pilot is merged and its 8.16 live deployment is verified. Personal saved views and deadline highlighting are implemented in PR #427, pending its release checks and deployment.
 
 
 ### Tabulator next improvements under consideration
 
-After releasing the first pilot, the highest-value candidates are saved per-user views and column preferences; overdue/due-soon highlighting and quick filters using the existing date rules; filters for lead, direction and date range; and a server-generated export that matches the interactive filters and permitted columns. Grouped workflow/lead views and reuse in Supplies can follow. These additions have been discussed as recommendations, not selected for implementation.
+Saved per-user views, column preferences and overdue/due-soon highlighting are now being released in PR #427. Remaining candidates include deadline quick filters; filters for lead, direction and date range; and a server-generated export that matches the interactive filters and permitted columns. Grouped workflow/lead views and reuse in Supplies can follow. These additions have been discussed as recommendations, not selected for implementation.
 
 The initial full CI runs for PR #424 each passed 6,045 tests but failed the runtime import-closure check. The new documents_grid.py module was omitted from deploy_hf.RUNTIME_PY. Commit 310efad corrects the allowlist and the four local deployment tests pass. The subsequent full normal/shuffled checks passed on d81151a. After preserving main's intervening AI action release, the metadata was reconciled to 8.16 and PR #424 was merged. The post-merge deployment workflow remains the source of truth for live release status.
 
