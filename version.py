@@ -18,10 +18,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "8.19"
+APP_VERSION = "8.20"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "8.20",
+        "date": "October 23, 2026",
+        "summary": "Find urgent documents with deadline filters and save them in your personal views.",
+        "changes": [
+            "Filter the interactive document table to overdue, due today, due soon or unknown deadlines.",
+            "Due soon includes today and the next three working days, allowing for weekends and holidays.",
+            "Saved views remember the deadline filter, and your existing views continue to work."
+        ]
+    },
     {
         "version": "8.19",
         "date": "October 23, 2026",

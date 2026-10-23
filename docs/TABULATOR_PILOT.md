@@ -1,21 +1,23 @@
 # Tabulator document register pilot
 
-The document register offers an optional interactive table. Open `/documents`, then choose **Interactive table**. Sorting and workflow/verification filters apply to all permitted records matching the current queue and search. Each request retrieves at most 30 rows. Column resizing and visibility affect the current view. The table body scrolls within a bounded height so headings and pagination remain available.
+The document register offers an optional interactive table. Open `/documents`, then choose **Interactive table**. Sorting and workflow/verification/deadline filters apply to all permitted records matching the current queue and search. Each request retrieves at most 30 rows. Column resizing and visibility affect the current view. The table body scrolls within a bounded height so headings and pagination remain available.
 
 The standard table is the initial view and remains available through **Standard table**. Missing JavaScript or vendor files leave that view usable. A failed table request clears the interactive view and restores the standard table with a retry message. Reload to refresh the standard table's snapshot.
 
 ## Saved views and deadlines
 
-In the interactive table, expand **My saved views**, enter a name and choose **Save new view**. Each account can keep ten named views. A view retains the queue, search, applied workflow/verification filters, sorting, visible columns and widths. **Update selected view** replaces its settings or changes its name; **Delete selected view** removes the preference without changing the current table or any documents. **Reset table** restores default filters and columns for the current queue/search without deleting saved views.
+In the interactive table, expand **My saved views**, enter a name and choose **Save new view**. Each account can keep ten named views. A view retains the queue, search, applied workflow/verification/deadline filters, sorting, visible columns and widths. **Update selected view** replaces its settings or changes its name; **Delete selected view** removes the preference without changing the current table or any documents. **Reset table** restores default filters and columns for the current queue/search without deleting saved views.
 
 Saving puts the view ID in the page URL, so reloading restores it. Choose a saved view and **Open view** to reopen it on another device. Opening starts at page one and checks current document access; sharing the URL does not share the view or its records. Preferences live in the account-owned `document_registry_view` table, with no record snapshots or browser storage. Writes require the session's CSRF token, and stale revisions return 409 instead of overwriting another tab's changes. The GET/POST `/documents/grid-views` responses use `no-store`.
 
 Both table modes label active documents **Overdue** before today, **Due today**, **Due soon** through three working days after today, or **Unknown deadline**. Working days exclude weekends and configured holidays. Closed and cancelled records have no deadline alert. Labels accompany color; existing date rules, measures, escalation cutoffs and exports retain their behavior. Labels refresh when records are fetched, including on a reload, sort or page change.
 
+The **Deadline** filter offers **Overdue**, **Due today**, **Due soon (including today)** and **Unknown deadline**. Choose a deadline and **Apply filters**; it combines with the queue, search, workflow and verification before counting and pagination. Due soon includes today through the next three working days, matching the register measure. Urgency filters exclude closed/cancelled records, and missing or malformed dates count as unknown. Saved views retain this choice; older views without a deadline option open with **All deadlines**. No schema migration is needed. The current date and holiday window are fixed once per grid request, so filtering and badges agree.
+
 ## Behavior and boundaries
 
 - Number and subject links open the existing document screen. The Number column stays visible so every row remains actionable.
-- Queue and search parameters are carried into every request. Workflow and verification choices narrow the interactive table only; the existing full-register measures and CSV export are explicitly labelled as covering the queue and search.
+- Queue and search parameters are carried into every request. Workflow, verification and deadline choices narrow the interactive table only; the existing full-register measures and CSV export are explicitly labelled as covering the queue and search.
 - Deadline sorts put unknown deadlines last in either direction. Every sort has a stable record-ID tie-breaker.
 - The grid uses numbered pages with SQL LIMIT/OFFSET after permission, search and state filtering. Concurrent additions or changes can move rows between numbered pages; refresh to see the latest register. Requests clamp a page removed by deletion or permission changes to the current last page.
 - Existing keyset pagination remains unchanged for the standard view.

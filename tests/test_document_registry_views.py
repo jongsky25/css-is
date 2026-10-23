@@ -167,3 +167,20 @@ def test_saved_views_http_csrf_owner_revision_and_no_store(app_mod, viewer, admi
     delete['revision'] = 1
     assert viewer.post('/documents/grid-views', json=delete, headers={'X-CSRF-Token': csrf}).json()['views'] == []
     assert client.get('/documents/grid-views', follow_redirects=False).status_code in (302, 303, 401, 403)
+
+
+def test_old_saved_views_default_to_all_deadlines_and_new_filters_round_trip(registry):
+    import json
+    conn, users, _, _ = registry
+    old = state()
+    conn.execute('INSERT INTO document_registry_view(user_id,name,state_json,created_at,updated_at) VALUES (?,?,?,?,?)',
+                 (users[0]['id'], 'Before deadline filters', json.dumps(old), '2026-10-23', '2026-10-23'))
+    conn.commit()
+    restored = grid.views(conn, users[0])[0]['state']
+    assert restored == {**old, 'deadline': ''}
+    for deadline in grid.DEADLINES:
+        view = create(conn, users[0], deadline, deadline=deadline)
+        assert view['state']['deadline'] == deadline
+    for invalid in ('inactive', 'scheduled', 'unknown;DROP TABLE document', None, True, []):
+        with pytest.raises(ValueError):
+            grid.view_state(state(deadline=invalid))

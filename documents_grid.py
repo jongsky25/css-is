@@ -16,6 +16,7 @@ STATUSES = ('registered', 'draft', 'in_action', 'in_review', 'changes_requested'
             'approved', 'ready_to_release', 'released', 'awaiting_acknowledgment',
             'awaiting_external', 'closed', 'cancelled')
 VERIFICATIONS = ('pending', 'verified', 'needs_correction')
+DEADLINES = ('overdue', 'due_today', 'due_soon', 'unknown')
 SORTS = {'registered': 'selected.sort_id', 'number': 'd.number COLLATE NOCASE',
          'subject': 'd.subject COLLATE NOCASE', 'verification': 'd.verification',
          'status': 'd.status', 'due_date': 'NULLIF(d.due_date,\'\')',
@@ -26,9 +27,10 @@ def page(conn, user, params):
     queue, query = params.get('queue', 'all'), params.get('q', '')
     sort, direction = params.get('sort', 'registered'), params.get('dir', 'desc')
     status, verification = params.get('status', ''), params.get('verification', '')
+    deadline = params.get('deadline', '')
     if (queue not in QUEUES or sort not in SORTS or direction not in ('asc', 'desc')
             or status not in ('', *STATUSES) or verification not in ('', *VERIFICATIONS)
-            or len(query) > 120):
+            or deadline not in ('', *DEADLINES) or len(query) > 120):
         raise ValueError('Invalid table options. Reset the table and try again.')
     try:
         number = int(params.get('page', '1'))
@@ -41,9 +43,21 @@ def page(conn, user, params):
         selection = Selection(conn, user, '' if queue == 'instruction' else query, queue)
         if queue == 'instruction' and not selection.scope.is_director:
             raise permissions.Denied('This inbox is for the Director or bureau OIC.')
+        today = tz.today_local()
+        soon = rules.shift(conn, today, 3)
+        # Share the exact date parser/classifier with badges, including malformed dates.
+        # SQLite filters/counts before LIMIT; no unbounded records reach the client.
+        if deadline:
+            conn.create_function('registry_deadline_state', 2,
+                lambda status, due: deadline_state(status, due, today, soon), deterministic=True)
+        deadline_where = ("registry_deadline_state(d.status,d.due_date) IN ('due_today','due_soon')"
+                          if deadline == 'due_soon' else
+                          'registry_deadline_state(d.status,d.due_date)=:grid_deadline')
         where = ' AND '.join(['1'] + (["d.status=:grid_status"] if status else [])
-                             + (["d.verification=:grid_verification"] if verification else []))
-        values = {**selection.params, 'grid_status': status, 'grid_verification': verification}
+                             + (["d.verification=:grid_verification"] if verification else [])
+                             + ([deadline_where] if deadline else []))
+        values = {**selection.params, 'grid_status': status, 'grid_verification': verification,
+                  'grid_deadline': deadline}
         source = (selection.read_ctes() + ' SELECT {columns} FROM registry_selected selected '
                   'JOIN document d ON d.id=selected.id LEFT JOIN admin_user u ON u.id=d.lead_id '
                   f'WHERE {where}')
@@ -68,34 +82,38 @@ def page(conn, user, params):
             selection._snippets(conn, documents)
         for doc in documents:
             doc['registered'] = doc.pop('registry_sort_id')
-        decorate_deadlines(conn, documents)
+        decorate_deadlines(conn, documents, today=today, soon=soon)
         return {'data': documents, 'last_page': last_page, 'last_row': total, 'page': number}
 
 
-def decorate_deadlines(conn, documents, *, today=None):
+def deadline_state(status, value, today, soon):
+    """One classifier for filtering and labels; inactive records never signal urgency."""
+    if status in ('closed', 'cancelled'):
+        return 'inactive'
+    try:
+        due = date.fromisoformat(value) if value else None
+    except (TypeError, ValueError):
+        due = None
+    if due is None:
+        return 'unknown'
+    if due < today:
+        return 'overdue'
+    if due == today:
+        return 'due_today'
+    return 'due_soon' if due <= soon else 'scheduled'
+
+
+def decorate_deadlines(conn, documents, *, today=None, soon=None):
     """Use the register's calendar-day overdue and three-working-day soon rules."""
     if not documents:
         return
     today = today or tz.today_local()
-    soon = rules.shift(conn, today, 3)
+    soon = soon or rules.shift(conn, today, 3)
+    labels = {'overdue': 'Overdue', 'due_today': 'Due today',
+              'due_soon': 'Due soon', 'unknown': 'Unknown deadline'}
     for doc in documents:
-        try:
-            due = date.fromisoformat(doc['due_date']) if doc.get('due_date') else None
-        except (TypeError, ValueError):
-            due = None
-        if doc['status'] in ('closed', 'cancelled'):
-            state, label = 'inactive', ''
-        elif due is None:
-            state, label = 'unknown', 'Unknown deadline'
-        elif due < today:
-            state, label = 'overdue', 'Overdue'
-        elif due == today:
-            state, label = 'due_today', 'Due today'
-        elif due <= soon:
-            state, label = 'due_soon', 'Due soon'
-        else:
-            state, label = 'scheduled', ''
-        doc.update(deadline_state=state, deadline_label=label)
+        state = deadline_state(doc['status'], doc.get('due_date'), today, soon)
+        doc.update(deadline_state=state, deadline_label=labels.get(state, ''))
 
 
 VISIBLE_COLUMNS = ('number', 'subject', 'verification', 'status', 'due_date', 'lead')
@@ -109,14 +127,17 @@ class ViewConflict(ValueError):
 def view_state(value):
     """Persist only versioned display options, never records or access authority."""
     keys = {'schema', 'queue', 'q', 'status', 'verification', 'sort', 'dir', 'columns'}
-    if not isinstance(value, dict) or set(value) != keys or type(value['schema']) is not int or value['schema'] != 1:
+    if not isinstance(value, dict) or set(value) not in (keys, keys | {'deadline'}) or type(value['schema']) is not int or value['schema'] != 1:
         raise ValueError('Unsupported saved view. Reset the table and save a new view.')
+    # Schema 1 views saved before deadline filters default to all deadlines.
     result = {key: value[key] for key in keys - {'columns'}}
-    if any(not isinstance(result[key], str) for key in keys - {'columns', 'schema'}):
+    result['deadline'] = value.get('deadline', '')
+    if any(not isinstance(result[key], str) for key in (keys | {'deadline'}) - {'columns', 'schema'}):
         raise ValueError('Invalid saved view options.')
     if (result['queue'] not in QUEUES or len(result['q']) > 120
             or result['status'] not in ('', *STATUSES)
             or result['verification'] not in ('', *VERIFICATIONS)
+            or result['deadline'] not in ('', *DEADLINES)
             or result['sort'] not in SORTS or result['dir'] not in ('asc', 'desc')):
         raise ValueError('Invalid saved view options.')
     if result['queue'] == 'instruction':

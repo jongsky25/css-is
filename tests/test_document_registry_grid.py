@@ -102,3 +102,52 @@ def test_grid_http_authority_cache_and_read_only_contract(app_mod, viewer, admin
     assert viewer.post('/documents/grid-data').status_code == 405
     assert conn.total_changes == before
     conn.close()
+
+
+def test_deadline_filters_calendar_unknowns_and_inactive_records(registry, monkeypatch):
+    from datetime import date
+    conn, users, unit, _ = registry
+    monkeypatch.setattr(grid.tz, 'today_local', lambda: date(2026, 10, 23))
+    st.set_holiday(conn, '2026-10-26', 'Monday holiday')
+    ids = seed_many(conn, users[0], unit, 11)
+    dates = ['2026-10-22', '2026-10-23', '2026-10-24', '2026-10-29',
+             '2026-10-30', None, '', 'not-a-date', '2026-02-30', '2026-10-22', None]
+    for index, (identifier, due) in enumerate(zip(ids, dates)):
+        conn.execute('UPDATE document SET due_date=?,status=? WHERE id=?',
+                     (due, 'closed' if index == 9 else 'cancelled' if index == 10 else 'in_action', identifier))
+    conn.commit()
+    expected = {'overdue': ids[:1], 'due_today': ids[1:2], 'due_soon': ids[1:4], 'unknown': ids[5:9]}
+    for deadline, matches in expected.items():
+        result = grid.page(conn, users[4], {'deadline': deadline})
+        assert result['last_row'] == len(matches)
+        assert {row['id'] for row in result['data']} == set(matches)
+        assert all(row['deadline_state'] in ({'due_today', 'due_soon'} if deadline == 'due_soon' else {deadline})
+                   for row in result['data'])
+    assert grid.page(conn, users[4], {'deadline': ''})['last_row'] == 11
+    for invalid in ('inactive', 'scheduled', 'overdue;DROP TABLE document', None, []):
+        with pytest.raises(ValueError):
+            grid.page(conn, users[4], {'deadline': invalid})
+
+
+def test_deadline_filter_combines_scope_search_state_before_count_and_limit(registry, monkeypatch):
+    from datetime import date
+    conn, users, unit, _ = registry
+    monkeypatch.setattr(grid.tz, 'today_local', lambda: date(2026, 10, 23))
+    ids = seed_many(conn, users[0], unit, 65, subject='Urgencyneedle')
+    seed_many(conn, users[0], unit, 10, subject='Unrelated')
+    seed_many(conn, users[0], unit, 10, subject='Urgencyneedle hidden', visibility='restricted')
+    conn.execute("UPDATE document SET due_date='2026-10-22',verification='verified',status='in_action'")
+    conn.execute("UPDATE document SET due_date='2026-10-30' WHERE id>? AND id<=?", (ids[30], ids[-1]))
+    conn.commit()
+    options = {'queue': 'OUT', 'q': 'Urgencyneedle', 'status': 'in_action',
+               'verification': 'verified', 'deadline': 'overdue'}
+    first = grid.page(conn, users[4], options)
+    second = grid.page(conn, users[4], {**options, 'page': '2'})
+    assert first['last_row'] == 31 and first['last_page'] == 2
+    assert len(first['data']) == 30 and len(second['data']) == 1
+    assert [row['id'] for row in first['data'] + second['data']] == list(reversed(ids[:31]))
+    assert grid.page(conn, users[4], {**options, 'verification': 'pending'})['last_row'] == 0
+    conn.execute("UPDATE document SET visibility='restricted' WHERE id=?", (ids[0],))
+    conn.commit()
+    refreshed = grid.page(conn, users[4], {**options, 'page': '2'})
+    assert refreshed['page'] == 1 and refreshed['last_row'] == 30
