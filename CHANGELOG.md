@@ -1,3 +1,9 @@
+## 8.17 — October 23, 2026
+
+- Save up to ten personal document views with queue, search, applied filters, sorting, visible columns and widths; reopen a view on any device.
+- Create, rename, update or delete your views without changing document records; opening a view checks current access and starts at page one.
+- Both document tables label overdue, due-today, due-soon and unknown deadlines using the register's three-working-day window and configured holidays; closed and cancelled records have no deadline alert.
+
 ## 8.16 — October 23, 2026
 
 - Add an opt-in Tabulator document-register view with server-side sorting, workflow and verification filters, resizable columns, a column chooser and 30-row pagination across the authorized result set.

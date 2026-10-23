@@ -18,3 +18,9 @@
 #registry-grid .tabulator-cell:focus-visible,#registry-grid .tabulator-col:focus-visible{outline:3px solid var(--accent,#17794b);outline-offset:-3px}
 #registry-grid .tabulator-tableholder{overflow-x:auto}
 @media(max-width:600px){.registry-toolbar{display:block}.registry-toolbar label{max-width:none}#registry-grid .tabulator-footer .tabulator-pages{display:none}}
+
+.registry-deadline{display:inline-block;border:1px solid currentColor;border-radius:.25rem;padding:.1rem .35rem;font-weight:600;font-size:.9em}
+.registry-deadline[data-deadline=overdue]{color:#8b1616;background:#fff0f0}
+.registry-deadline[data-deadline=due_today],.registry-deadline[data-deadline=due_soon]{color:#704600;background:#fff4ce}
+.registry-deadline[data-deadline=unknown]{color:#374151;background:#f3f4f6}
+#registry-views{margin:.75rem 0}

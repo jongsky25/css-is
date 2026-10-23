@@ -12,6 +12,11 @@ def rows(conn, sql, args=()):
 
 def install(conn):
     conn.executescript('''
+    CREATE TABLE IF NOT EXISTS document_registry_view (
+      id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES admin_user(id),
+      name TEXT NOT NULL COLLATE NOCASE, state_json TEXT NOT NULL,
+      revision INTEGER NOT NULL DEFAULT 1, created_at TEXT NOT NULL, updated_at TEXT NOT NULL,
+      UNIQUE(user_id,name));
     CREATE TABLE IF NOT EXISTS document_email_import (
       id INTEGER PRIMARY KEY, mailbox TEXT NOT NULL, message_id TEXT NOT NULL,
       payload_hash TEXT NOT NULL, document_id INTEGER NOT NULL REFERENCES document(id),
