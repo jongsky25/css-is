@@ -25,6 +25,7 @@ REPORT_KEYS = {'schema_version', 'suite_id', 'suite_version', 'contract_version'
                'python_version', 'manifest_sha256', 'reference_sha256', 'source_sha256', 'git_commit',
                'application_version', 'status', 'pytest_exitstatus', 'errors', 'cases'}
 PROVENANCE = ('app.py', 'ai_core.py', 'ai_facts.py', 'auth.py', 'storage.py',
+              'travel_routes.py', 'travel_scan.py', 'tests/test_ai_travel_scan_evaluation.py',
               'calendar_answers.py', 'office_answers.py', 'rooms.py', 'ratelimit.py',
               'version.py', 'ai_report_drafts.py', 'css_is_engine.py', 'dashboard_insights.py',
               'tests/test_ai_evaluation.py', 'tests/test_ai_report_evaluation.py',
@@ -260,6 +261,7 @@ def main():
                        'tests/test_ai_messages_evaluation.py', 'tests/test_ai_ux_evaluation.py',
                        'tests/test_ai_harmonize_evaluation.py',
                        'tests/test_ai_action_evaluation.py',
+                       'tests/test_ai_travel_scan_evaluation.py',
                        '--ai-evaluation-report=' + str(output)]
             if args.shuffle_seed is not None:
                 command.append('--shuffle-seed=' + str(args.shuffle_seed))

@@ -1,3 +1,10 @@
+## 8.17 — October 23, 2026
+
+- Continue A22 with 19 offline direct travel scan cases, bringing the versioned evaluation suite to 339 scenarios.
+- Recheck the registered session, AI switch, travel switch, filing owner and unchanged filing after the document provider returns.
+- Reject malformed amounts, dates, currencies and unsafe text before returning a suggestion. Keep travel scan logs to outcome and timing metadata.
+- Keep the uploaded image out of application storage. This release covers the direct receipt scan; checklist uploads and invitation reading remain separate paths.
+
 ## 8.16 — October 23, 2026
 
 - Add an opt-in Tabulator document-register view with server-side sorting, workflow and verification filters, resizable columns, a column chooser and 30-row pagination across the authorized result set.

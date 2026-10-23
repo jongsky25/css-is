@@ -1,6 +1,6 @@
-# AI assistance evaluation — A22 / 8.15
+# AI assistance evaluation — A22 / 8.17
 
-Evaluation suite **1.7.0** contains **320 named scenarios**: 38 answer-route cases from 8.01, 60 MRR/CO-CSM report-draft cases from 8.04, 48 feedback-triage cases from 8.07, 49 verbatim comment cases from 8.10, 32 participant-message cases from 8.12, 30 UX Insights analysis cases from 8.13, 32 directory duplicate-suggestion cases from 8.14, and 31 landing-assistant action cases from 8.15. It turns selected safeguards into a reproducible, versioned release gate and produces a small report by category and case. The retained suite ID `existing-ai-answers` is a historical identifier; all eight surfaces must pass.
+Evaluation suite **1.8.0** contains **339 named scenarios**: 38 answer-route cases from 8.01, 60 MRR/CO-CSM report-draft cases from 8.04, 48 feedback-triage cases from 8.07, 49 verbatim comment cases from 8.10, 32 participant-message cases from 8.12, 30 UX Insights analysis cases from 8.13, 32 directory duplicate-suggestion cases from 8.14, 31 landing-assistant action cases from 8.15, and 19 direct travel scan cases from 8.17. It turns selected safeguards into a reproducible, versioned release gate and produces a small report by category and case. The retained suite ID `existing-ai-answers` is a historical identifier; all nine surfaces must pass.
 
 ## What it checks
 
@@ -133,6 +133,12 @@ The model selects a key from a role-filtered server catalog; it never supplies t
 
 These deterministic cases verify the application boundary, not whether a real model correctly understands a staff request. The user must review the confirmation card. Production workflow observations remain deferred.
 
+## Travel receipt scanning: current filing and bounded suggestions
+
+Nineteen `travel_scan` scenarios exercise the signed-in `/travel/f/{ref}/scan` route with a synthetic image and fake Gemini HTTP response. They cover owner access, revoked sessions/accounts, changes to the filing and feature switch during provider I/O, malformed amount/date/currency/text fields, budget refusal, timeout and HTTP errors. The route rechecks the registered actor and entire filing before returning a reading. Invalid readings fall back to manual entry; a scan never saves an amount to the filing.
+
+The provider sees the uploaded image or PDF, so it may contain personal and financial information. The image is not retained by the direct scan route, and travel-scan interaction logs now omit prompts, replies and provider error bodies. The existing 25-second read timeout can be attempted twice. The suite tests application safeguards with fake provider choices; it cannot establish OCR accuracy or prove that a suggested amount appears on the document. Checklist upload readings and calendar invitation readings share the provider feature but are not part of these nineteen direct-route cases.
+
 ## Gates and evidence lifecycle
 
 [scripts/ai_evaluation.py](../scripts/ai_evaluation.py) is a pytest plugin and command-line gate. Default pytest configuration loads it; recording is enabled only when `--ai-evaluation-report=PATH` is supplied. Release CI supplies that option to the existing full normal/shuffled test jobs, then validates the resulting report before the final required-check gate. Reports are uploaded in the existing test artifact bundles with **14-day retention**.
@@ -156,8 +162,8 @@ Before broader AI capability or live-model comparisons, the owner must define re
 
 ## Rollout and repair
 
-Release **8.15** follows the merged 8.14 main branch. No schema migration, new feature flag, dependency or production provider configuration is required. The application and service-worker cache versions use exactly two digits after the decimal.
+Release **8.17** follows the merged 8.16 main branch. No schema migration, new feature flag, dependency or production provider configuration is required. The application and service-worker cache versions use exactly two digits after the decimal.
 
-Existing AI/human comment tags are not rewritten. UX analysis remains a review aid and displays its evidence window and sample status. Production workflow observations and real-model quality remain deferred. Both normal and shuffled full CI must pass for the final PR head, including all 320 scenarios and the minimized report gate.
+Existing AI/human comment tags are not rewritten. UX analysis remains a review aid and displays its evidence window and sample status. Production workflow observations and real-model quality remain deferred. Both normal and shuffled full CI must pass for the final PR head, including all 339 scenarios and the minimized report gate.
 
 For a failing gate, inspect the case ID and repair the application, fixture or expectation with a reviewed explanation. Increase the suite version for case/reference edits and rerun current evidence; do not reuse an old report or omit failed cases.

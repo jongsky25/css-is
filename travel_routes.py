@@ -34,6 +34,7 @@ import travel_rules as tr
 import travel_readings
 import travel_scan
 import ai_core
+import auth
 
 _REF = re.compile(r"^TF-\d{4}-\d{4,}$")
 STATUS_BADGE = {"open": "amber", "ready": "blue", "submitted": "green", "withdrawn": "grey"}
@@ -60,6 +61,16 @@ def make_router(templates, get_conn, today_local, *, audit, base_url, notify=Non
         if not canonical and os.environ.get("SPACE_HOST"):
             canonical = "https://" + os.environ["SPACE_HOST"]
         return same_origin_write(request, canonical)
+
+    def _scan_current(request, conn, user, filing):
+        payload = auth.parse_token(request.cookies.get(auth.COOKIE_NAME))
+        current = st.session_actor(conn, payload) if payload else None
+        latest = travel.get_by_ref(conn, filing["ref_code"])
+        return (current is not None
+                and all(current[key] == user[key] for key in ("id", "username", "role"))
+                and travel.enabled(conn) and ai_core.mode_at_least(conn, "router")
+                and ai_core.feature_enabled(conn, "travel_scan")
+                and latest == filing and travel.is_owner(current, latest))
 
     def _forbidden(request, why="this page"):
         return templates.TemplateResponse(request, "forbidden.html",
@@ -881,6 +892,10 @@ def make_router(templates, get_conn, today_local, *, audit, base_url, notify=Non
             except ai_core.AIError:
                 return JSONResponse({"ok": False, "ai": False,
                                      "error": "Reading documents is not available right now. Type the amount in."})
+            if not _scan_current(request, conn, user, filing):
+                return JSONResponse({"ok": False, "ai": False,
+                                     "error": "Your access or filing changed while the document was read. Check the filing and try again."},
+                                    status_code=409)
             return JSONResponse({"ok": True, **found})
         finally:
             conn.close()
