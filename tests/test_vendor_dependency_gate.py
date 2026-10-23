@@ -45,3 +45,21 @@ def test_vendor_scan_rejects_advisories_and_malformed_results(vendor, monkeypatc
     else:
         with pytest.raises(ValueError, match='advisory scan'):
             audit_vendor(check_vendor(vendor), report)
+
+
+def test_tabulator_gate_requires_matching_identity_and_files(vendor):
+    source = vendor / 'static/vendor/tabulator'
+    source.mkdir()
+    (source / 'tabulator.min.js').write_text('synthetic table')
+    manifest = {'package': 'tabulator-tables', 'version': '6.7.1', 'files': {
+        'tabulator.min.js': hashlib.sha256(b'synthetic table').hexdigest()}}
+    path = vendor / 'docs/dependencies/tabulator-manifest.json'
+    path.write_text(json.dumps(manifest))
+    assert check_vendor(vendor, name='tabulator', package='tabulator-tables')['version'] == '6.7.1'
+    (source / 'tabulator.min.js').write_text('modified table')
+    with pytest.raises(ValueError, match='differ'):
+        check_vendor(vendor, name='tabulator', package='tabulator-tables')
+    manifest['package'] = 'unexpected-package'
+    path.write_text(json.dumps(manifest))
+    with pytest.raises(ValueError, match='identity'):
+        check_vendor(vendor, name='tabulator', package='tabulator-tables')

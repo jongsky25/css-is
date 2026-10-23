@@ -1,4 +1,4 @@
-"""Verify vendored PDF.js integrity and, optionally, its npm advisories."""
+"""Verify vendored browser dependencies and, optionally, their npm advisories."""
 import argparse
 from datetime import datetime, timezone
 import hashlib
@@ -12,15 +12,15 @@ ROOT = Path(__file__).resolve().parents[1]
 SERVICE = 'https://registry.npmjs.org/-/npm/v1/security/advisories/bulk'
 
 
-def check_vendor(root=ROOT):
-    manifest = json.loads((root / 'docs/dependencies/pdfjs-manifest.json').read_text())
-    if manifest.get('package') != 'pdfjs-dist' or not re.fullmatch(r'\d+\.\d+\.\d+', manifest.get('version', '')):
-        raise ValueError('Invalid PDF.js manifest identity')
-    vendor = root / 'static/vendor/pdfjs'
+def check_vendor(root=ROOT, *, name='pdfjs', package='pdfjs-dist'):
+    manifest = json.loads((root / f'docs/dependencies/{name}-manifest.json').read_text())
+    if manifest.get('package') != package or not re.fullmatch(r'\d+\.\d+\.\d+', manifest.get('version', '')):
+        raise ValueError(f'Invalid {name} manifest identity')
+    vendor = root / 'static/vendor' / name
     observed = {path.relative_to(vendor).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
                 for path in vendor.rglob('*') if path.is_file() and path.name != 'README.txt'}
     if not observed or observed != manifest.get('files'):
-        raise ValueError('Vendored PDF.js files differ from the reviewed upstream manifest')
+        raise ValueError(f'Vendored {name} files differ from the reviewed upstream manifest')
     return manifest
 
 
@@ -45,6 +45,10 @@ if __name__ == '__main__':
     parser.add_argument('--audit-output', help='Also query npm and save the advisory receipt')
     args = parser.parse_args()
     manifest = check_vendor()
+    tabulator = check_vendor(name='tabulator', package='tabulator-tables')
     if args.audit_output:
         audit_vendor(manifest, args.audit_output)
+        report = Path(args.audit_output)
+        audit_vendor(tabulator, report.with_name(report.stem + '-tabulator' + report.suffix))
     print(f"Vendor gate OK: PDF.js {manifest['version']}, {len(manifest['files'])} verified files")
+    print(f"Vendor gate OK: Tabulator {tabulator['version']}, {len(tabulator['files'])} verified files")
