@@ -60,7 +60,7 @@ No model inference, uploads of Office Connect records, production integrations o
 The reviewed application uses FastAPI, Jinja and SQLite, deployed as a Docker Space. It includes CSS scoring and reports; document intake, registry, search and signing workflows; work items and approvals; activities and minutes templates; calendars and rooms; travel receipt suggestions; supplies; and notifications.
 
 Important existing capabilities:
-- [documents_grid.py](../documents_grid.py): bounded Tabulator registry reads, account-owned saved views and deadline labels, live as 8.18; see [TABULATOR_PILOT.md](../TABULATOR_PILOT.md).
+- [documents_grid.py](../documents_grid.py): bounded Tabulator registry reads, account-owned saved views and deadline labels, live as 8.18; see [TABULATOR_PILOT.md](TABULATOR_PILOT.md).
 - [documents_intake.py](../documents_intake.py): reviewed OCR-assisted document metadata.
 - [documents_search.py](../documents_search.py): SQLite FTS5, indexed-file provenance and access checks.
 - [search_sources.py](../search_sources.py): role-aware cross-module search sources.
@@ -188,7 +188,6 @@ These are findings from the research date; verify selected versions before adopt
 | 2026-10-23 | Expanded review to 51 GitHub repositories with stars, deployment fit, license and maintenance notes. |
 | 2026-10-23 | User requested durable GitHub documentation so this work can resume in future sessions. |
 | 2026-10-23 | User authorized the Tabulator pilot with “execute” and then requested merging first. [PR #424](https://github.com/jongsky25/css-is/pull/424) merged as ed54b9b (version 8.16); [deployment run](https://github.com/jongsky25/css-is/actions/runs/39953481637) pending at the merge check. |
-
 | 2026-10-23 | User authorized saved views and deadline highlighting after deployment verification; PR #427 merged, both CI orders and post-merge gates passed, and live v8.18 was verified in workflow 39962997557. |
 
 When work resumes, record accepted/rejected candidates, rationale, implementation/PR links, verification results and the next topic here. Preserve the distinction between a researched recommendation, an approved implementation and a deployed feature.
