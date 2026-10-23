@@ -90,7 +90,8 @@ jobs:
   tests:
     name: Python 3.11 (${{ matrix.order }})
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # Dependency and browser setup can take 15 minutes before the full suite starts.
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:

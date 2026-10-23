@@ -1,3 +1,8 @@
+## 8.19 — October 23, 2026
+
+- Allow 45 minutes for each full-suite job, including dependency and browser setup, so a slow installation can finish alongside the approximately 17-minute test suite.
+- Require the complete normal/shuffled suites, zero skipped tests, current AI evaluation evidence, dependency audits and release metadata before deploying.
+
 ## 8.18 — October 23, 2026
 
 - Save up to ten personal document views with queue, search, applied filters, sorting, visible columns and widths; reopen a view on any device.

@@ -18,10 +18,18 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "8.18"
+APP_VERSION = "8.19"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "8.19",
+        "date": "October 23, 2026",
+        "summary": "Improve the reliability of application updates.",
+        "changes": [
+            "Updates get enough time to finish their required checks when setup is slow."
+        ]
+    },
     {
         "version": "8.18",
         "date": "October 23, 2026",
