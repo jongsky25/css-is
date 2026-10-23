@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "suite_id": "existing-ai-answers",
-  "suite_version": "1.1.0",
+  "suite_version": "1.2.0",
   "contract_version": 1,
   "reference_clock": "2026-10-20T06:00:00",
   "categories": [
@@ -2063,6 +2063,1071 @@
         "saved": false,
         "calls": 1,
         "status": 303,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "triage-choice-new",
+      "surface": "feedback_triage",
+      "category": "facts",
+      "question": "Suggest feedback triage: choice-new.",
+      "scenario": "baseline",
+      "reply": {
+        "status": "New",
+        "severity": "Low",
+        "duplicate_of": 0,
+        "reason": "Blocks saving edits."
+      },
+      "expect": {
+        "ok": true,
+        "calls": 1,
+        "status": 200,
+        "outcomes": [
+          "ok"
+        ],
+        "suggestion": {
+          "status": "New",
+          "severity": "Low",
+          "duplicate_of": null,
+          "reason": "Blocks saving edits."
+        }
+      }
+    },
+    {
+      "id": "triage-choice-reviewing",
+      "surface": "feedback_triage",
+      "category": "facts",
+      "question": "Suggest feedback triage: choice-reviewing.",
+      "scenario": "baseline",
+      "reply": {
+        "status": "Reviewing",
+        "severity": "Medium",
+        "duplicate_of": 0,
+        "reason": "Blocks saving edits."
+      },
+      "expect": {
+        "ok": true,
+        "calls": 1,
+        "status": 200,
+        "outcomes": [
+          "ok"
+        ],
+        "suggestion": {
+          "status": "Reviewing",
+          "severity": "Medium",
+          "duplicate_of": null,
+          "reason": "Blocks saving edits."
+        }
+      }
+    },
+    {
+      "id": "triage-choice-will-address",
+      "surface": "feedback_triage",
+      "category": "facts",
+      "question": "Suggest feedback triage: choice-will-address.",
+      "scenario": "baseline",
+      "reply": {
+        "status": "Will address",
+        "severity": "High",
+        "duplicate_of": 0,
+        "reason": "Blocks saving edits."
+      },
+      "expect": {
+        "ok": true,
+        "calls": 1,
+        "status": 200,
+        "outcomes": [
+          "ok"
+        ],
+        "suggestion": {
+          "status": "Will address",
+          "severity": "High",
+          "duplicate_of": null,
+          "reason": "Blocks saving edits."
+        }
+      }
+    },
+    {
+      "id": "triage-choice-done",
+      "surface": "feedback_triage",
+      "category": "facts",
+      "question": "Suggest feedback triage: choice-done.",
+      "scenario": "baseline",
+      "reply": {
+        "status": "Done",
+        "severity": "Critical",
+        "duplicate_of": 0,
+        "reason": "Blocks saving edits."
+      },
+      "expect": {
+        "ok": true,
+        "calls": 1,
+        "status": 200,
+        "outcomes": [
+          "ok"
+        ],
+        "suggestion": {
+          "status": "Done",
+          "severity": "Critical",
+          "duplicate_of": null,
+          "reason": "Blocks saving edits."
+        }
+      }
+    },
+    {
+      "id": "triage-choice-wont-fix",
+      "surface": "feedback_triage",
+      "category": "facts",
+      "question": "Suggest feedback triage: choice-wont-fix.",
+      "scenario": "baseline",
+      "reply": {
+        "status": "Won't fix",
+        "severity": "Low",
+        "duplicate_of": 0,
+        "reason": "Blocks saving edits."
+      },
+      "expect": {
+        "ok": true,
+        "calls": 1,
+        "status": 200,
+        "outcomes": [
+          "ok"
+        ],
+        "suggestion": {
+          "status": "Won't fix",
+          "severity": "Low",
+          "duplicate_of": null,
+          "reason": "Blocks saving edits."
+        }
+      }
+    },
+    {
+      "id": "triage-duplicate",
+      "surface": "feedback_triage",
+      "category": "facts",
+      "question": "Suggest feedback triage: duplicate.",
+      "scenario": "baseline",
+      "reply": {
+        "status": "Reviewing",
+        "severity": "Medium",
+        "duplicate_of": 3002,
+        "reason": "Blocks saving edits."
+      },
+      "expect": {
+        "ok": true,
+        "calls": 1,
+        "status": 200,
+        "outcomes": [
+          "ok"
+        ],
+        "suggestion": {
+          "status": "Reviewing",
+          "severity": "Medium",
+          "duplicate_of": 3002,
+          "reason": "Blocks saving edits."
+        }
+      }
+    },
+    {
+      "id": "triage-no-candidates",
+      "surface": "feedback_triage",
+      "category": "facts",
+      "question": "Suggest feedback triage: no-candidates.",
+      "scenario": "empty-candidates",
+      "reply": {
+        "status": "Reviewing",
+        "severity": "Medium",
+        "duplicate_of": 0,
+        "reason": "Blocks saving edits."
+      },
+      "expect": {
+        "ok": true,
+        "calls": 1,
+        "status": 200,
+        "outcomes": [
+          "ok"
+        ],
+        "suggestion": {
+          "status": "Reviewing",
+          "severity": "Medium",
+          "duplicate_of": null,
+          "reason": "Blocks saving edits."
+        }
+      }
+    },
+    {
+      "id": "triage-empty-message",
+      "surface": "feedback_triage",
+      "category": "facts",
+      "question": "Suggest feedback triage: empty-message.",
+      "scenario": "empty-message",
+      "reply": {
+        "status": "Reviewing",
+        "severity": "Medium",
+        "duplicate_of": 0,
+        "reason": "Blocks saving edits."
+      },
+      "expect": {
+        "ok": true,
+        "calls": 1,
+        "status": 200,
+        "outcomes": [
+          "ok"
+        ],
+        "suggestion": {
+          "status": "Reviewing",
+          "severity": "Medium",
+          "duplicate_of": null,
+          "reason": "Blocks saving edits."
+        }
+      }
+    },
+    {
+      "id": "triage-missing",
+      "surface": "feedback_triage",
+      "category": "freshness",
+      "question": "Suggest feedback triage: missing.",
+      "scenario": "missing",
+      "reply": {
+        "status": "Reviewing",
+        "severity": "Medium",
+        "duplicate_of": 0,
+        "reason": "Blocks saving edits."
+      },
+      "expect": {
+        "ok": false,
+        "calls": 0,
+        "status": 404,
+        "outcomes": []
+      }
+    },
+    {
+      "id": "triage-viewer",
+      "surface": "feedback_triage",
+      "category": "authority",
+      "question": "Suggest feedback triage: viewer.",
+      "scenario": "viewer",
+      "reply": {
+        "status": "Reviewing",
+        "severity": "Medium",
+        "duplicate_of": 0,
+        "reason": "Blocks saving edits."
+      },
+      "expect": {
+        "ok": false,
+        "calls": 0,
+        "status": 403,
+        "outcomes": []
+      }
+    },
+    {
+      "id": "triage-manager",
+      "surface": "feedback_triage",
+      "category": "authority",
+      "question": "Suggest feedback triage: manager.",
+      "scenario": "manager",
+      "reply": {
+        "status": "Reviewing",
+        "severity": "Medium",
+        "duplicate_of": 0,
+        "reason": "Blocks saving edits."
+      },
+      "expect": {
+        "ok": false,
+        "calls": 0,
+        "status": 403,
+        "outcomes": []
+      }
+    },
+    {
+      "id": "triage-deactivate",
+      "surface": "feedback_triage",
+      "category": "authority",
+      "question": "Suggest feedback triage: deactivate.",
+      "scenario": "deactivate",
+      "reply": {
+        "status": "Reviewing",
+        "severity": "Medium",
+        "duplicate_of": 0,
+        "reason": "Blocks saving edits."
+      },
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "status": 200,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "triage-demote",
+      "surface": "feedback_triage",
+      "category": "authority",
+      "question": "Suggest feedback triage: demote.",
+      "scenario": "demote",
+      "reply": {
+        "status": "Reviewing",
+        "severity": "Medium",
+        "duplicate_of": 0,
+        "reason": "Blocks saving edits."
+      },
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "status": 200,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "triage-logout",
+      "surface": "feedback_triage",
+      "category": "authority",
+      "question": "Suggest feedback triage: logout.",
+      "scenario": "logout",
+      "reply": {
+        "status": "Reviewing",
+        "severity": "Medium",
+        "duplicate_of": 0,
+        "reason": "Blocks saving edits."
+      },
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "status": 200,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "triage-disable-during",
+      "surface": "feedback_triage",
+      "category": "authority",
+      "question": "Suggest feedback triage: disable-during.",
+      "scenario": "disable-during",
+      "reply": {
+        "status": "Reviewing",
+        "severity": "Medium",
+        "duplicate_of": 0,
+        "reason": "Blocks saving edits."
+      },
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "status": 200,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "triage-off-during",
+      "surface": "feedback_triage",
+      "category": "authority",
+      "question": "Suggest feedback triage: off-during.",
+      "scenario": "off-during",
+      "reply": {
+        "status": "Reviewing",
+        "severity": "Medium",
+        "duplicate_of": 0,
+        "reason": "Blocks saving edits."
+      },
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "status": 200,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "triage-edit-source",
+      "surface": "feedback_triage",
+      "category": "freshness",
+      "question": "Suggest feedback triage: edit-source.",
+      "scenario": "edit-source",
+      "reply": {
+        "status": "Reviewing",
+        "severity": "Medium",
+        "duplicate_of": 0,
+        "reason": "Blocks saving edits."
+      },
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "status": 200,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "triage-delete-source",
+      "surface": "feedback_triage",
+      "category": "freshness",
+      "question": "Suggest feedback triage: delete-source.",
+      "scenario": "delete-source",
+      "reply": {
+        "status": "Reviewing",
+        "severity": "Medium",
+        "duplicate_of": 0,
+        "reason": "Blocks saving edits."
+      },
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "status": 200,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "triage-edit-candidate",
+      "surface": "feedback_triage",
+      "category": "freshness",
+      "question": "Suggest feedback triage: edit-candidate.",
+      "scenario": "edit-candidate",
+      "reply": {
+        "status": "Reviewing",
+        "severity": "Medium",
+        "duplicate_of": 0,
+        "reason": "Blocks saving edits."
+      },
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "status": 200,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "triage-close-candidate",
+      "surface": "feedback_triage",
+      "category": "freshness",
+      "question": "Suggest feedback triage: close-candidate.",
+      "scenario": "close-candidate",
+      "reply": {
+        "status": "Reviewing",
+        "severity": "Medium",
+        "duplicate_of": 0,
+        "reason": "Blocks saving edits."
+      },
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "status": 200,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "triage-new-candidate",
+      "surface": "feedback_triage",
+      "category": "freshness",
+      "question": "Suggest feedback triage: new-candidate.",
+      "scenario": "new-candidate",
+      "reply": {
+        "status": "Reviewing",
+        "severity": "Medium",
+        "duplicate_of": 0,
+        "reason": "Blocks saving edits."
+      },
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "status": 200,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "triage-human-triage",
+      "surface": "feedback_triage",
+      "category": "freshness",
+      "question": "Suggest feedback triage: human-triage.",
+      "scenario": "human-triage",
+      "reply": {
+        "status": "Reviewing",
+        "severity": "Medium",
+        "duplicate_of": 0,
+        "reason": "Blocks saving edits."
+      },
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "status": 200,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "triage-duplicate-resolved",
+      "surface": "feedback_triage",
+      "category": "injection",
+      "question": "Suggest feedback triage: duplicate-resolved.",
+      "scenario": "baseline",
+      "reply": {
+        "status": "Reviewing",
+        "severity": "Medium",
+        "duplicate_of": 3003,
+        "reason": "Blocks saving edits."
+      },
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "status": 200,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "triage-duplicate-invented",
+      "surface": "feedback_triage",
+      "category": "injection",
+      "question": "Suggest feedback triage: duplicate-invented.",
+      "scenario": "baseline",
+      "reply": {
+        "status": "Reviewing",
+        "severity": "Medium",
+        "duplicate_of": 3999,
+        "reason": "Blocks saving edits."
+      },
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "status": 200,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "triage-duplicate-self",
+      "surface": "feedback_triage",
+      "category": "injection",
+      "question": "Suggest feedback triage: duplicate-self.",
+      "scenario": "baseline",
+      "reply": {
+        "status": "Reviewing",
+        "severity": "Medium",
+        "duplicate_of": 3001,
+        "reason": "Blocks saving edits."
+      },
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "status": 200,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "triage-duplicate-bool",
+      "surface": "feedback_triage",
+      "category": "injection",
+      "question": "Suggest feedback triage: duplicate-bool.",
+      "scenario": "baseline",
+      "reply": {
+        "status": "Reviewing",
+        "severity": "Medium",
+        "duplicate_of": true,
+        "reason": "Blocks saving edits."
+      },
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "status": 200,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "triage-duplicate-fraction",
+      "surface": "feedback_triage",
+      "category": "injection",
+      "question": "Suggest feedback triage: duplicate-fraction.",
+      "scenario": "baseline",
+      "reply": {
+        "status": "Reviewing",
+        "severity": "Medium",
+        "duplicate_of": 3002.5,
+        "reason": "Blocks saving edits."
+      },
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "status": 200,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "triage-duplicate-string",
+      "surface": "feedback_triage",
+      "category": "injection",
+      "question": "Suggest feedback triage: duplicate-string.",
+      "scenario": "baseline",
+      "reply": {
+        "status": "Reviewing",
+        "severity": "Medium",
+        "duplicate_of": "3002",
+        "reason": "Blocks saving edits."
+      },
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "status": 200,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "triage-duplicate-negative",
+      "surface": "feedback_triage",
+      "category": "injection",
+      "question": "Suggest feedback triage: duplicate-negative.",
+      "scenario": "baseline",
+      "reply": {
+        "status": "Reviewing",
+        "severity": "Medium",
+        "duplicate_of": -1,
+        "reason": "Blocks saving edits."
+      },
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "status": 200,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "triage-beyond-cap",
+      "surface": "feedback_triage",
+      "category": "authority",
+      "question": "Suggest feedback triage: beyond-cap.",
+      "scenario": "cap",
+      "reply": {
+        "status": "Reviewing",
+        "severity": "Medium",
+        "duplicate_of": 3002,
+        "reason": "Blocks saving edits."
+      },
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "status": 200,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "triage-invalid-status",
+      "surface": "feedback_triage",
+      "category": "injection",
+      "question": "Suggest feedback triage: invalid-status.",
+      "scenario": "baseline",
+      "reply": {
+        "status": "Archive all",
+        "severity": "Medium",
+        "duplicate_of": 0,
+        "reason": "Blocks saving edits."
+      },
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "status": 200,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "triage-invalid-severity",
+      "surface": "feedback_triage",
+      "category": "injection",
+      "question": "Suggest feedback triage: invalid-severity.",
+      "scenario": "baseline",
+      "reply": {
+        "status": "Reviewing",
+        "severity": "Emergency",
+        "duplicate_of": 0,
+        "reason": "Blocks saving edits."
+      },
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "status": 200,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "triage-extra-action",
+      "surface": "feedback_triage",
+      "category": "injection",
+      "question": "Suggest feedback triage: extra-action.",
+      "scenario": "baseline",
+      "reply": {
+        "status": "Reviewing",
+        "severity": "Medium",
+        "duplicate_of": 0,
+        "reason": "Blocks saving edits.",
+        "execute": "delete_feedback"
+      },
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "status": 200,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "triage-wrong-root",
+      "surface": "feedback_triage",
+      "category": "injection",
+      "question": "Suggest feedback triage: wrong-root.",
+      "scenario": "baseline",
+      "reply": [
+        "Reviewing"
+      ],
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "status": 200,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "triage-missing-field",
+      "surface": "feedback_triage",
+      "category": "injection",
+      "question": "Suggest feedback triage: missing-field.",
+      "scenario": "baseline",
+      "reply": {
+        "status": "Reviewing",
+        "severity": "Medium",
+        "duplicate_of": 0
+      },
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "status": 200,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "triage-numeric-reason",
+      "surface": "feedback_triage",
+      "category": "injection",
+      "question": "Suggest feedback triage: numeric-reason.",
+      "scenario": "baseline",
+      "reply": {
+        "status": "Reviewing",
+        "severity": "Medium",
+        "duplicate_of": 0,
+        "reason": 123
+      },
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "status": 200,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "triage-oversize-reason",
+      "surface": "feedback_triage",
+      "category": "injection",
+      "question": "Suggest feedback triage: oversize-reason.",
+      "scenario": "baseline",
+      "reply": {
+        "status": "Reviewing",
+        "severity": "Medium",
+        "duplicate_of": 0,
+        "reason": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      },
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "status": 200,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "triage-html-reason",
+      "surface": "feedback_triage",
+      "category": "injection",
+      "question": "Suggest feedback triage: html-reason.",
+      "scenario": "baseline",
+      "reply": {
+        "status": "Reviewing",
+        "severity": "Medium",
+        "duplicate_of": 0,
+        "reason": "<img src=x onerror=\"window.__triage_pwned=1\">"
+      },
+      "expect": {
+        "ok": true,
+        "calls": 1,
+        "status": 200,
+        "outcomes": [
+          "ok"
+        ],
+        "suggestion": {
+          "status": "Reviewing",
+          "severity": "Medium",
+          "duplicate_of": null,
+          "reason": "<img src=x onerror=\"window.__triage_pwned=1\">"
+        }
+      }
+    },
+    {
+      "id": "triage-masked-reason",
+      "surface": "feedback_triage",
+      "category": "injection",
+      "question": "Suggest feedback triage: masked-reason.",
+      "scenario": "baseline",
+      "reply": {
+        "status": "Reviewing",
+        "severity": "Medium",
+        "duplicate_of": 0,
+        "reason": "Call 09171234567 or private@example.test."
+      },
+      "expect": {
+        "ok": true,
+        "calls": 1,
+        "status": 200,
+        "outcomes": [
+          "ok"
+        ],
+        "suggestion": {
+          "status": "Reviewing",
+          "severity": "Medium",
+          "duplicate_of": null,
+          "reason": "Call ### or [email]"
+        }
+      }
+    },
+    {
+      "id": "triage-hostile-input",
+      "surface": "feedback_triage",
+      "category": "injection",
+      "question": "Suggest feedback triage: hostile-input.",
+      "scenario": "hostile",
+      "reply": {
+        "status": "Done",
+        "severity": "Critical",
+        "duplicate_of": 0,
+        "reason": "Blocks saving edits."
+      },
+      "expect": {
+        "ok": true,
+        "calls": 1,
+        "status": 200,
+        "outcomes": [
+          "ok"
+        ],
+        "suggestion": {
+          "status": "Done",
+          "severity": "Critical",
+          "duplicate_of": null,
+          "reason": "Blocks saving edits."
+        }
+      }
+    },
+    {
+      "id": "triage-timeout",
+      "surface": "feedback_triage",
+      "category": "resilience",
+      "question": "Suggest feedback triage: timeout.",
+      "scenario": "timeout",
+      "reply": {
+        "status": "Reviewing",
+        "severity": "Medium",
+        "duplicate_of": 0,
+        "reason": "Blocks saving edits."
+      },
+      "expect": {
+        "ok": false,
+        "calls": 2,
+        "status": 200,
+        "outcomes": [
+          "fallback_timeout"
+        ]
+      }
+    },
+    {
+      "id": "triage-http503",
+      "surface": "feedback_triage",
+      "category": "resilience",
+      "question": "Suggest feedback triage: http503.",
+      "scenario": "http503",
+      "reply": {
+        "status": "Reviewing",
+        "severity": "Medium",
+        "duplicate_of": 0,
+        "reason": "Blocks saving edits."
+      },
+      "expect": {
+        "ok": false,
+        "calls": 2,
+        "status": 200,
+        "outcomes": [
+          "fallback_error"
+        ]
+      }
+    },
+    {
+      "id": "triage-http429",
+      "surface": "feedback_triage",
+      "category": "resilience",
+      "question": "Suggest feedback triage: http429.",
+      "scenario": "http429",
+      "reply": {
+        "status": "Reviewing",
+        "severity": "Medium",
+        "duplicate_of": 0,
+        "reason": "Blocks saving edits."
+      },
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "status": 200,
+        "outcomes": [
+          "fallback_error"
+        ]
+      }
+    },
+    {
+      "id": "triage-malformed",
+      "surface": "feedback_triage",
+      "category": "resilience",
+      "question": "Suggest feedback triage: malformed.",
+      "scenario": "malformed",
+      "reply": {
+        "status": "Reviewing",
+        "severity": "Medium",
+        "duplicate_of": 0,
+        "reason": "Blocks saving edits."
+      },
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "status": 200,
+        "outcomes": [
+          "fallback_error"
+        ]
+      }
+    },
+    {
+      "id": "triage-budget",
+      "surface": "feedback_triage",
+      "category": "resilience",
+      "question": "Suggest feedback triage: budget.",
+      "scenario": "budget",
+      "reply": {
+        "status": "Reviewing",
+        "severity": "Medium",
+        "duplicate_of": 0,
+        "reason": "Blocks saving edits."
+      },
+      "expect": {
+        "ok": false,
+        "calls": 0,
+        "status": 200,
+        "outcomes": [
+          "fallback_budget"
+        ]
+      }
+    },
+    {
+      "id": "triage-disabled",
+      "surface": "feedback_triage",
+      "category": "resilience",
+      "question": "Suggest feedback triage: disabled.",
+      "scenario": "disabled",
+      "reply": {
+        "status": "Reviewing",
+        "severity": "Medium",
+        "duplicate_of": 0,
+        "reason": "Blocks saving edits."
+      },
+      "expect": {
+        "ok": false,
+        "calls": 0,
+        "status": 200,
+        "outcomes": [
+          "no_config"
+        ]
+      }
+    },
+    {
+      "id": "triage-off",
+      "surface": "feedback_triage",
+      "category": "resilience",
+      "question": "Suggest feedback triage: off.",
+      "scenario": "off",
+      "reply": {
+        "status": "Reviewing",
+        "severity": "Medium",
+        "duplicate_of": 0,
+        "reason": "Blocks saving edits."
+      },
+      "expect": {
+        "ok": false,
+        "calls": 0,
+        "status": 200,
+        "outcomes": [
+          "no_config"
+        ]
+      }
+    },
+    {
+      "id": "triage-audit-failure",
+      "surface": "feedback_triage",
+      "category": "resilience",
+      "question": "Suggest feedback triage: audit-failure.",
+      "scenario": "audit-failure",
+      "reply": {
+        "status": "Reviewing",
+        "severity": "Medium",
+        "duplicate_of": 0,
+        "reason": "Blocks saving edits."
+      },
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "status": 500,
         "outcomes": [
           "rejected_validation"
         ]

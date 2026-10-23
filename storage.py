@@ -2563,6 +2563,14 @@ def get_spot_feedback(conn, fid):
     return _spot_row(r) if r else None
 
 
+def spot_feedback_triage_candidates(conn, fid, limit=30):
+    """Bounded open candidates for the existing admin-only feedback board."""
+    rows = conn.execute(_SPOT_COLS + " WHERE id<>? AND status NOT IN (" +
+                        ','.join('?' for _ in SPOT_RESOLVED_STATUSES) +
+                        ") ORDER BY id DESC LIMIT ?", (fid, *SPOT_RESOLVED_STATUSES, min(max(int(limit), 1), 30)))
+    return [_spot_row(r) for r in rows]
+
+
 def update_spot_feedback(conn, fid, *, status, admin_note, severity=None, duplicate_of=None):
     """Triage an entry: set its status + internal note (+ optional severity /
     duplicate-of, Phase 6) and stamp updated_at. The submitter-facing phase

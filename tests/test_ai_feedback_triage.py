@@ -208,7 +208,7 @@ def test_suggest_rejects_duplicate_of_outside_candidate_allowlist(admin, db_path
     _mock_suggestion(monkeypatch, duplicate_of=resolved)
     r = admin.post(f"/admin/feedback/{fid}/ai-suggest")
     assert r.status_code == 200
-    assert r.json()["duplicate_of"] is None
+    assert r.json()["ok"] is False
     conn = st.connect(db_path); _reset(conn); conn.close()
 
 

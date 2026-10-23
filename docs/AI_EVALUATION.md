@@ -1,6 +1,6 @@
-# AI answer and report draft evaluation — A22 / 8.04
+# AI assistance evaluation — A22 / 8.05
 
-Evaluation suite **1.1.0** contains **98 named scenarios**: the 38 answer-route scenarios introduced in 8.01, plus 60 MRR/CO-CSM report-draft scenarios added in 8.04. It turns selected safeguards into a reproducible, versioned release gate and produces a small report by category and case. The retained suite ID `existing-ai-answers` is a historical identifier; both surfaces must pass.
+Evaluation suite **1.2.0** contains **146 named scenarios**: 38 answer-route cases from 8.01, 60 MRR/CO-CSM report-draft cases from 8.04 and 48 feedback-triage cases from 8.05. It turns selected safeguards into a reproducible, versioned release gate and produces a small report by category and case. The retained suite ID `existing-ai-answers` is a historical identifier; all three surfaces must pass.
 
 ## What it checks
 
@@ -65,6 +65,16 @@ Reviewed report reference arithmetic (the `report_drafts` section of `reference-
 
 The requests allow at most **96 output tokens**, an **eight-second read timeout** and a three-second connect timeout. The existing retry may make two attempts; this is not an eight-second end-to-end promise. Existing daily budgets and rate limits remain. All these tests use fakes, with no real spend.
 
+## Feedback triage: contract v1 and independent evidence
+
+The 48 `feedback_triage` scenarios call the real admin route against synthetic feedback and provider HTTP fakes. They cover valid status/severity values, a bounded open candidate list, unknown or wrong-type duplicate IDs, malformed provider selections, hostile feedback, access/settings revocation, source/candidate changes during the request, budgets, retries, timeouts and audit failure. The provider returns a strict four-field selection: `status`, `severity`, integer `duplicate_of` (0 means none), and a reason of 1–500 characters. Extra fields, invalid enums, noninteger or unlisted duplicate IDs and malformed reasons reject the whole suggestion. The response states `contract_version: 1` and `review_required: true`.
+
+The prompt contains only a bounded, partially masked message and up to 30 newest open candidate IDs/snippets. Submitter identity, admin note, page URL, selector, region and history are omitted. Masking recognizes common email and phone forms but does **not** guarantee anonymity of arbitrary text. The free-form reason remains untrusted text, masked and escaped when shown. Metadata-only interaction logs omit prompts, replies and raw provider error bodies even when general content logging is set to `masked`.
+
+The admin's current session, role/capability and AI switches, plus the feedback and candidate snapshot, are checked again after provider I/O before a suggestion returns. Only the existing admin `triage_feedback` capability can request this board-wide suggestion; the board has no per-record unit boundary. The route writes no feedback, update or submitter notification. A real Chromium test verifies that suggestions only fill fields for human review, an in-flight human edit prevents prefill, a no-match clears the previous duplicate field, and escaped model text cannot create an HTML element. The existing Save action remains the human decision. These tests do not measure whether a real model assigns the right severity/status or recognizes actual duplicates, and do not certify edits made after the suggestion appears.
+
+The route uses at most 512 output tokens and an eight-second read timeout (three-second connect timeout). Existing provider retry means elapsed time may exceed one timeout. All evaluation cases use fakes with no real spend or production records.
+
 ## Run and read a report
 
 Use the repository's locked test environment (Python 3.11 in release CI):
@@ -98,16 +108,14 @@ Case/reference edits also require an increased `suite_version` in the manifest. 
 
 The existing provider/data contract remains [verified facts v1](VERIFIED_AI_ANSWERS.md). A broader survey selection receives the user question and bounded fact IDs/descriptions/groups, without numeric values. Names and user questions are untrusted text and can still contain personal material; these checks do not establish universal anonymization. Current consent, settings, logging/retention and provider governance remain in force.
 
-The scenarios check the existing bounded provider request settings (at most eight seconds per read timeout, three-second connect timeout and bounded output tokens), one retry where supported, and daily-budget refusal. They introduce no real spend. A timeout can involve two attempts; these are not an eight-second end-to-end service promise. Groq quality/fallback routing, OCR, feedback triage and other AI surfaces need their own future evaluation sets. Report draft safeguards are now included; real-model style-choice quality is not measured.
+The scenarios check the existing bounded provider request settings (at most eight seconds per read timeout, three-second connect timeout and bounded output tokens), one retry where supported, and daily-budget refusal. They introduce no real spend. A timeout can involve two attempts; these are not an eight-second end-to-end service promise. Groq quality/fallback routing, OCR and other AI surfaces need their own future evaluation sets. Report draft and feedback-triage safeguards are now included; real-model style-choice quality is not measured.
 
 Before broader AI capability or live-model comparisons, the owner must define representative question quality targets, approved provider/data retention terms, expected scope/refusals, spend/token budgets and representative latency measurements. Evaluate live-model quality separately from this deterministic safeguard score; do not infer one from the other. Production workflow observations remain deferred.
 
 ## Rollout and repair
 
-Release **8.04** follows freshly checked main **8.03**. PR #410 (8.02, standing walk-in reporting) and PR #412 (8.03, rooms/meals) are merged into this candidate. Recheck main and release ordering before merge. No schema migration, new feature flag, dependency or production provider configuration is required. The runtime module is included in deployment packaging. The two-digit application-version policy remains enforced.
+Release **8.05** follows the freshly checked 8.04 main branch. No schema migration, new feature flag, dependency or production provider configuration is required. The application version and service-worker cache version use exactly two digits after the decimal.
 
-Previously saved AI/human drafts are not rewritten or certified. Saved drafts are not automatically invalidated by source changes after generation: review or regenerate before official use. Exports continue reading saved fields without another AI call and retain their existing defaults when no draft exists. Clicking the drafting button explicitly replaces the current prefill, as before; an edit made during that request is protected. Current report creation permissions remain the existing bureau-wide capability boundary.
+The feedback suggestion remains a human-reviewed prefill. Existing saved triage decisions are not rewritten. A subsequent human Save can make a new choice, so this evaluation checks the suggestion boundary and browser review flow, not every later human decision. Production workflow observations and real-model relevance/quality remain deferred. Both normal and shuffled full CI must pass for the final PR head, including all 146 scenarios and the minimized report gate.
 
-Both normal and shuffled full CI must pass for the final PR head, including all 98 scenarios and the minimized report gate. Local verification evidence is recorded in the PR. This increment does not publish a report, connect a new provider, evaluate live-model quality or resume manual production testing.
-
-For a failing gate, repair the application, fixture or expectation with a reviewed explanation and a new suite version when reference inputs change; then rerun. Preserve failed evidence until the issue is understood. Do not relax the gate, omit cases, reuse an old report or restore model-authored official figures to obtain a green release. If a future broader lookup is unsuitable, the existing `catalog` engine remains the operational fallback.
+For a failing gate, inspect the case ID and repair the application, fixture or expectation with a reviewed explanation. Increase the suite version for case/reference edits and rerun current evidence; do not reuse an old report or omit failed cases.

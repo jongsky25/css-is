@@ -1,3 +1,11 @@
+## 8.05 — October 23, 2026
+
+- Extend A22 evaluation suite 1.2.0 to 146 scenarios: retain 38 answer and 60 report-draft cases; add 48 feedback-triage cases using synthetic records and fake provider HTTP. Require every case in both full CI orders and bind reports to the new triage code and form.
+- Limit the provider request to the current feedback text and 30 open candidates with bounded, partially masked snippets. Omit submitter identity, admin notes, page metadata and history; keep triage logs to outcome/token/timing metadata even when general content logging is enabled.
+- Reject unsupported status/severity values, extra fields, malformed reasons, and duplicate IDs outside the offered candidates. Recheck the admin session, AI settings, feedback and candidates after the provider call before returning a suggestion. Provider failure or stale data leaves the manual form available.
+- Keep suggestions as explicit form prefills: preserve human edits made while AI is working, clear a stale duplicate field when no match is suggested, escape the reason in the browser and require Save for any business change. Verify these behaviors in Chromium without external network or real provider use.
+- No database migration, new dependency or production AI configuration is required. These tests measure deterministic application safeguards, not a real model's judgment or production latency. Keep the release version at two digits after the decimal.
+
 ## 8.04 — October 23, 2026
 
 - Continue A22 with evaluation suite 1.1.0: retain the 38 answer-route scenarios and add 60 report-draft scenarios for MRR and official CO-CSM reports, with literal independently reviewed source figures and simulated provider HTTP.

@@ -223,20 +223,27 @@
 
   btn.addEventListener("click", function () {
     btn.disabled = true;
+    var form = document.getElementById("triage-status").form;
+    var formBefore = new URLSearchParams(new FormData(form)).toString();
     var origText = btn.textContent;
     btn.textContent = "Thinking…";
     fetch("/admin/feedback/{{ e.id }}/ai-suggest", { method: "POST" })
       .then(function (r) { return r.json(); })
       .then(function (data) {
         if (data.ok) {
+          if (new URLSearchParams(new FormData(form)).toString() !== formBefore) {
+            box.textContent = "Your edits changed while AI was working — nothing was filled in. Review your edits or request another suggestion.";
+            box.className = "ai-suggestion shown";
+            return;
+          }
           if (data.status) document.getElementById("triage-status").value = data.status;
           if (data.severity) document.getElementById("triage-severity").value = data.severity;
-          if (data.duplicate_of) document.getElementById("triage-duplicate-of").value = data.duplicate_of;
+          document.getElementById("triage-duplicate-of").value = data.duplicate_of || "";
           var fb = '<span class="ai-fb">' +
             '<button type="button" class="fb-btn" data-r="up" aria-label="Helpful">👍</button>' +
             '<button type="button" class="fb-btn" data-r="down" aria-label="Not helpful">👎</button>' +
             '</span>';
-          box.innerHTML = 'Suggestion applied above — <span class="ai-reason">' +
+          box.innerHTML = 'Suggestion filled in — review and click Save to apply.  <span class="ai-reason">' +
             esc(data.reason) + '</span>' + fb;
           box.className = "ai-suggestion shown";
           var fbBtns = box.querySelectorAll(".fb-btn");

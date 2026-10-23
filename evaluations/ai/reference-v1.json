@@ -530,5 +530,31 @@
         ]
       }
     }
+  },
+  "feedback_triage": {
+    "items": [
+      {
+        "id": 3001,
+        "message": "The save button is broken. Contact private@example.test or 09171234567.",
+        "status": "New"
+      },
+      {
+        "id": 3002,
+        "message": "Save button does nothing on the edit screen.",
+        "status": "Reviewing"
+      },
+      {
+        "id": 3003,
+        "message": "EVAL-RESOLVED-PRIVATE old feedback.",
+        "status": "Done"
+      }
+    ],
+    "expected_feedback": "The save button is broken. Contact [email] or ###.",
+    "expected_candidates": [
+      {
+        "id": 3002,
+        "snippet": "Save button does nothing on the edit screen."
+      }
+    ]
   }
 }
