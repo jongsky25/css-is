@@ -1,3 +1,8 @@
+## 8.08 — October 23, 2026
+
+- DPO: start the signature block ("By Authority of the Secretary of Health:" and the signatory's name, title and office) at the 2-inch mark on its first line too (Spot Feedback #182). The paragraphs set only the start indent, so single lines began at the left margin.
+- Google side: re-run `rebuildActivityTemplates()` and redeploy `activity_templates.gs`. No schema migration or new dependency.
+
 ## 8.07 — October 23, 2026
 
 - Extend A22 evaluation suite 1.2.0 to 146 scenarios: retain 38 answer and 60 report-draft cases; add 48 feedback-triage cases using synthetic records and fake provider HTTP. Require every case in both full CI orders and bind reports to the new triage code and form.
