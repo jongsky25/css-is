@@ -18,18 +18,40 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "8.03"
+APP_VERSION = "8.04"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
-        "version": "8.03",
+        "version": "8.04",
         "date": "October 23, 2026",
         "summary": "AI report drafts now use verified figures and wording, with more release checks.",
         "changes": [
             "AI chooses a concise or detailed draft using current report figures, while you can still edit the text.",
             "Drafting stops if access, source data or a saved human edit changes while AI is working.",
             "Release checks now cover report drafts, private information, invented claims and failed saves."
+        ]
+    },
+    {
+        "version": "8.03",
+        "date": "October 23, 2026",
+        "summary": "Book available rooms the same day and request meals for any venue.",
+        "changes": [
+            "Available conference room hours can now be requested on the same day.",
+            "Meal requests require at least two calendar days before the activity.",
+            "Request meals for any venue without reserving the conference room.",
+            "Follow ordering and delivery under Office → My meal requests."
+        ]
+    },
+    {
+        "version": "8.02",
+        "date": "October 23, 2026",
+        "date": "October 23, 2026",
+        "summary": "Walk-in feedback no longer disappears from ARTA reports.",
+        "changes": [
+            "Walk-in responses submitted since April were missing from ARTA reports, exports and comments; they now count again.",
+            "The standing walk-in form can no longer be archived by accident, so its posted link always keeps counting.",
+            "Archiving an individual walk-in entry works as before."
         ]
     },
     {

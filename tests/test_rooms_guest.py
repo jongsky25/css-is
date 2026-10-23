@@ -60,8 +60,7 @@ def test_a_phone_alone_is_enough(conn):
 
 
 def test_the_notice_and_horizon_rules_apply_to_guests(conn):
-    with pytest.raises(rooms.RoomError, match="notice"):
-        ask(conn, date(2030, 3, 5))
+    assert ask(conn, MON)["day"] == MON.isoformat()
     with pytest.raises(rooms.RoomError, match="60 days"):
         ask(conn, MON + timedelta(days=77))
     ask(conn, MON + timedelta(days=58))                                   # inside 60 days is fine
@@ -98,7 +97,7 @@ def test_guests_see_free_requested_booked_and_closed_but_never_a_title(conn):
 def test_the_day_list_starts_at_the_earliest_date_and_skips_closed_days(conn):
     st.set_holiday(conn, "2030-03-07", "Test holiday")
     days = rooms.public_days(conn, MON)
-    assert days[0]["day"] == "2030-03-06" and days[0]["open"] == 12
+    assert days[0]["day"] == MON.isoformat() and days[0]["open"] == 12
     got = [d["day"] for d in days]
     assert "2030-03-07" not in got and "2030-03-09" not in got            # holiday and a Saturday
     assert got[-1] <= (MON + timedelta(days=60)).isoformat()

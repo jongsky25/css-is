@@ -20,8 +20,9 @@
             <small>A provisional use. The Administrative Section can confirm it if the room frees up or in an emergency.</small></span></label>
         <label class="room-chip-tick rc-row rc-meals"><input type="checkbox" class="rc-switch" name="room_meals" value="1" {% if f.room_meals %}checked{% endif %}>
           <span class="rc-text"><b>Will meals be requested?</b>
-            <small>Switch on if food will be served.</small></span></label>
-        <p class="hint rc-note">The Administrative Section approves the request. It books the first day of the {{ noun|default('activity') }}, at least 2 working days ahead, and you can follow it under Conference room → My reservations.</p>
+            <small>Request at least 2 calendar days before the activity.</small></span></label>
+        <p class="hint rc-note">For meals at another venue, <a href="/meals/new">request meals separately</a>.</p>
+        <p class="hint rc-note">The Administrative Section approves the request. It books the first day of the {{ noun|default('activity') }}, including the same day when available, and you can follow it under Conference room → My reservations.</p>
         </div>
         </div>
       </details>

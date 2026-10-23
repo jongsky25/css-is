@@ -1,6 +1,6 @@
-# AI answer and report draft evaluation — A22 / 8.03
+# AI answer and report draft evaluation — A22 / 8.04
 
-Evaluation suite **1.1.0** contains **98 named scenarios**: the 38 answer-route scenarios introduced in 8.01, plus 60 MRR/CO-CSM report-draft scenarios added in 8.03. It turns selected safeguards into a reproducible, versioned release gate and produces a small report by category and case. The retained suite ID `existing-ai-answers` is a historical identifier; both surfaces must pass.
+Evaluation suite **1.1.0** contains **98 named scenarios**: the 38 answer-route scenarios introduced in 8.01, plus 60 MRR/CO-CSM report-draft scenarios added in 8.04. It turns selected safeguards into a reproducible, versioned release gate and produces a small report by category and case. The retained suite ID `existing-ai-answers` is a historical identifier; both surfaces must pass.
 
 ## What it checks
 
@@ -41,7 +41,7 @@ Home's retained archive treatment differs from active survey breakdowns. This da
 
 The real `POST /reports/activities/{id}/ai-mrr-draft` and `POST /reports/csm-draft` routes are exercised with registered manager/viewer accounts, a private synthetic database and simulated provider HTTP. [tests/test_ai_report_evaluation.py](../tests/test_ai_report_evaluation.py) covers both styles, missing/empty data, denied users, revoked accounts/sessions, changed roles/settings, edits/new submissions/archives/period moves, day rollover, concurrent human edits, malformed or injected selections, timeouts, 503 retries, 429, budget/feature refusal and failures midway through field/audit writes.
 
-The previous routes trusted model-written prose and saved it directly into exportable report fields. A JSON string schema alone could not establish that a claim was supported. In **8.03**, [ai_report_drafts.py](../ai_report_drafts.py) therefore accepts only exactly:
+The previous routes trusted model-written prose and saved it directly into exportable report fields. A JSON string schema alone could not establish that a claim was supported. In **8.04**, [ai_report_drafts.py](../ai_report_drafts.py) therefore accepts only exactly:
 
 ```json
 {"contract_version": 1, "style": "detailed"}
@@ -104,7 +104,7 @@ Before broader AI capability or live-model comparisons, the owner must define re
 
 ## Rollout and repair
 
-The release candidate is **8.03**. Freshly checked main is **8.01**; concurrently open PR #410 already targets **8.02**, so this PR reserves the next number to avoid a duplicate. Recheck main and release ordering before merge. No schema migration, new feature flag, dependency or production provider configuration is required. The runtime module is included in deployment packaging. The two-digit application-version policy remains enforced.
+Release **8.04** follows freshly checked main **8.03**. PR #410 (8.02, standing walk-in reporting) and PR #412 (8.03, rooms/meals) are merged into this candidate. Recheck main and release ordering before merge. No schema migration, new feature flag, dependency or production provider configuration is required. The runtime module is included in deployment packaging. The two-digit application-version policy remains enforced.
 
 Previously saved AI/human drafts are not rewritten or certified. Saved drafts are not automatically invalidated by source changes after generation: review or regenerate before official use. Exports continue reading saved fields without another AI call and retain their existing defaults when no draft exists. Clicking the drafting button explicitly replaces the current prefill, as before; an edit made during that request is protected. Current report creation permissions remain the existing bureau-wide capability boundary.
 

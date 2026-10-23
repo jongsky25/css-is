@@ -555,7 +555,7 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
             return ""
         try:
             rooms.precheck(conn, date.fromisoformat(f["start_date"]), rooms.slot_range(conn, f["room_from"], f["room_to"]),
-                           today_local(), standby=bool(f.get("room_standby")))
+                           today_local(), standby=bool(f.get("room_standby")), meals_requested=bool(f.get("room_meals")))
         except rooms.RoomError as e:
             return f"Conference room: {e} Untick the room line to save the item without it."
         except ValueError:

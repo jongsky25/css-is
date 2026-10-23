@@ -83,6 +83,7 @@ import office_answers
 import calendar_routes
 import rooms
 import rooms_notify
+import meals_routes
 import rooms_meals_routes
 import rooms_routes
 import travel_routes
@@ -671,16 +672,18 @@ NAV_GROUPS = [
         {"key": "rooms_mine", "url": "/rooms/mine", "label": "My room reservations",
          "hint": "Your requests, their status, and withdrawing or moving them",
          "kw": "my room reservations requests withdraw move conference room status booked", "cap": None},
-        {"key": "rooms_meals_mine", "url": "/rooms/mine", "label": "Request meals",
-         "hint": "Ask for meals, or open the meal form, on your room reservations",
-         "kw": "request meals meal requested food snacks lunch catering meal form my room reservations", "cap": None},
+        {"key": "rooms_meals_mine", "url": "/meals/new", "label": "Request meals",
+         "hint": "Request meals for any activity or venue, without a room reservation",
+         "kw": "request meals meal requested food snacks lunch catering meal form", "cap": None},
+        {"key": "meals_mine", "url": "/meals/mine", "label": "My meal requests",
+         "hint": "Monitor your meals, ordering and delivery status", "kw": "my meal requests food catering status track monitor delivery", "cap": None},
         {"key": "rooms_requests", "url": "/approvals", "label": "Room requests",
          "section": "Manage the room",
          "hint": "Approve or decline conference room requests",
          "kw": "room requests approve decline decide queue pending conference room reservation "
                "administrative section book anyway", "cap": "room_admin"},
-        {"key": "rooms_meals", "url": "/rooms/meals", "label": "Room meals",
-         "hint": "Meal requests and forms for room bookings",
+        {"key": "rooms_meals", "url": "/meals", "label": "Meal requests",
+         "hint": "Order and track meals for all activities",
          "kw": "meals food snacks lunch meal form catering conference room", "cap": "room_admin"},
         {"key": "rooms_blocks", "url": "/rooms/blocks", "label": "Room closures",
          "hint": "Close the room for maintenance or events",
@@ -6453,7 +6456,7 @@ async def create_survey(request: Request):
         rc = get_conn()
         try:
             try:
-                rooms.precheck(rc, event_date, rooms.slot_range(rc, room_from, room_to), _today_local(), standby=room_standby)
+                rooms.precheck(rc, event_date, rooms.slot_range(rc, room_from, room_to), _today_local(), standby=room_standby, meals_requested=room_meals)
             except rooms.RoomError as e:
                 errors.append(f"Conference room: {e} Untick the room line to save the activity without it.")
         finally:
@@ -11111,7 +11114,7 @@ def _next_csm_response_no(conn, date_str):
 
 def _csm_response_filter(date_from=None, date_to=None):
     """One active-row boundary for ARTA screen, extracts and comment drill-down."""
-    where = "WHERE fi.survey_type = 1 AND COALESCE(fi.archived,0)=0 AND r.archived_at IS NULL"
+    where = f"WHERE fi.survey_type = 1 AND {st.WALKIN_FORM_ACTIVE_SQL} AND r.archived_at IS NULL"
     args = []
     if date_from:
         where += " AND r.submitted_at >= ?"
@@ -12591,7 +12594,7 @@ def _csm_period_options(conn):
     # rated answers; the standing form's creation date is not the report date.
     rows = conn.execute("SELECT DISTINCT substr(r.submitted_at,1,10) FROM response r "
                         "JOIN form_instance fi ON fi.id=r.form_instance_id "
-                        "WHERE fi.survey_type=1 AND COALESCE(fi.archived,0)=0 AND r.archived_at IS NULL").fetchall()
+                        f"WHERE fi.survey_type=1 AND {st.WALKIN_FORM_ACTIVE_SQL} AND r.archived_at IS NULL").fetchall()
     frame = pd.DataFrame({"event_date": [r[0] for r in rows]})
     return _period_options(eng.assign_periods(frame))
 
@@ -13214,7 +13217,7 @@ def _csm_official_report(rows):
 
 # ---------------------------------------------------------------------
 # CSM closing-section AI drafting (docs/AI_INTEGRATION_PLAN.md Phase 5,
-# v2.08; contract v1 in v8.03). "Draft with AI" selects a style for the official
+# v2.08; contract v1 in v8.04). "Draft with AI" selects a style for the official
 # CO-CSM report's Section V (Agency Action Plan) and VI (Continuous
 # Improvement) into report_draft (scope='csm_closing', keyed by period — the
 # walk-in CSM form is one standing bureau-level form with no org scope, same
@@ -17303,6 +17306,7 @@ app.include_router(calendar_routes.make_router(
 app.include_router(rooms_routes.make_router(templates, get_conn, _today_local,
                                            base_url=_base_url, qr_data_uri=_qr_data_uri))
 app.include_router(rooms_meals_routes.make_router(templates, get_conn, _today_local))
+app.include_router(meals_routes.make_router(templates, get_conn, _today_local))
 
 # ---- Travel filing (rules in travel.py / travel_rules.py, pages in travel_routes.py) ----
 app.include_router(travel_routes.make_router(templates, get_conn, _today_local, audit=_audit, base_url=_base_url,

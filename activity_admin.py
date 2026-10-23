@@ -164,8 +164,8 @@ def archive_activities(conn, instance_ids, actor, batch):
     changed = 0
     for fid in instance_ids:
         row = conn.execute("SELECT archived FROM form_instance WHERE id=?", (fid,)).fetchone()
-        if not row or row[0]:
-            continue
+        if not row or row[0] or st.is_standing_walkin_form(conn, fid):
+            continue                     # the standing walk-in form is never archived
         hz._journal(conn, batch, "fi_archive", fid, None)
         conn.execute("UPDATE form_instance SET archived=1 WHERE id=?", (fid,))
         changed += 1

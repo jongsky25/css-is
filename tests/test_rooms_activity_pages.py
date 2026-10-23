@@ -76,8 +76,8 @@ def test_ticking_the_room_files_a_request_tied_to_the_new_activity(manager, conn
 
 def test_a_room_choice_that_cannot_work_stops_before_the_activity_is_saved(manager, conn):
     s9, s10 = S(conn, 9, 10)
-    r = create(manager, conn, "R8 too soon", d=tz.today_local(), reserve_room="1", room_from=s9, room_to=s10)
-    assert r.status_code == 400 and "Conference room:" in r.text and "notice" in r.text and "Untick the room line" in r.text
+    r = create(manager, conn, "R8 too soon", d=tz.today_local(), reserve_room="1", room_from=s9, room_to=s10, room_meals="1")
+    assert r.status_code == 400 and "Conference room:" in r.text and "2 calendar days" in r.text and "Untick the room line" in r.text
     assert event_of(conn, "R8 too soon") is None and conn.execute("SELECT COUNT(*) FROM room_reservation").fetchone()[0] == 0
     assert 'name="reserve_room" value="1" id="room-chip-box" checked' in r.text                 # what they chose is kept
 
