@@ -6,13 +6,15 @@ Deployment: [equityinhealth/office-connect](https://huggingface.co/spaces/equity
 
 This is the durable record of research into public Hugging Face Spaces and widely used GitHub projects that could improve Office Connect. Customer Satisfaction Survey (CSS) is one module of this platform.
 
-The user wants a broad set of worthwhile candidates, explained and evaluated one at a time. The Tabulator registry pilot has been selected and implemented in [PR #424](https://github.com/jongsky25/css-is/pull/424). Other candidates remain research items. Check the PR and deployment workflow for current release status.
+The user wants a broad set of worthwhile candidates, explained and evaluated one at a time. The Tabulator registry pilot was merged in [PR #424](https://github.com/jongsky25/css-is/pull/424) as release 8.16. Other candidates remain research items. Check the PR and deployment workflow for current release status.
 
 ## Resume here
 
-**Current topic: review and release the Tabulator document-registry pilot in [PR #424](https://github.com/jongsky25/css-is/pull/424).**
+**Current topic: verify the Hugging Face deployment of merged Tabulator release 8.16, then select the next enhancement.**
 
-The user authorized implementation with “execute”. The pilot provides an opt-in interactive table with remote sorting/filtering, column choices and resizing, 30-row pages, and a standard-table fallback. Local regression/browser checks passed; full CI and deployment status must be checked on the PR. Read [the pilot guide](https://github.com/jongsky25/css-is/blob/feat/document-registry-tabulator/docs/TABULATOR_PILOT.md) before continuing.
+PR #424 merged as commit ed54b9b58f779a0dc902e05f4e56f032e6eb4cec. The [Hugging Face release workflow](https://github.com/jongsky25/css-is/actions/runs/39953481637) was pending immediately after the merge. Live availability has not yet been confirmed. Check that workflow and the running app version before telling users the feature is live.
+
+The user authorized implementation with “execute”. The pilot provides an opt-in interactive table with remote sorting/filtering, column choices and resizing, 30-row pages, and a standard-table fallback. The full normal/shuffled CI passed on d81151a. A later main release required metadata reconciliation to 8.16; the combined branch passed 224 focused checks plus the separate AI action browser check. The post-merge release workflow runs the full gates before deployment. Read [the pilot guide](https://github.com/jongsky25/css-is/blob/main/docs/TABULATOR_PILOT.md) before continuing.
 
 The next session should:
 1. Read this file and the three linked catalogs.
@@ -100,14 +102,14 @@ Suggested pilot, if authorized:
 - Verify that hidden/unauthorized rows never reach the browser or exports, calculated values remain correct, and normal actions continue to work.
 - Compare time to complete a few real lookup tasks against the existing page.
 
-The read-only pilot is implemented in [PR #424](https://github.com/jongsky25/css-is/pull/424), on branch feat/document-registry-tabulator. It adds server-side workflow and verification filters, sorting over all authorized matches, column resizing/visibility and a fallback. No merge or deployment is recorded by this research update; consult the PR for current status.
+The read-only pilot is implemented in [PR #424](https://github.com/jongsky25/css-is/pull/424), on branch feat/document-registry-tabulator. It adds server-side workflow and verification filters, sorting over all authorized matches, column resizing/visibility and a fallback. The pilot is merged as 8.16; consult the deployment workflow for current live status.
 
 
 ### Tabulator next improvements under consideration
 
 After releasing the first pilot, the highest-value candidates are saved per-user views and column preferences; overdue/due-soon highlighting and quick filters using the existing date rules; filters for lead, direction and date range; and a server-generated export that matches the interactive filters and permitted columns. Grouped workflow/lead views and reuse in Supplies can follow. These additions have been discussed as recommendations, not selected for implementation.
 
-The initial full CI runs for PR #424 each passed 6,045 tests but failed the runtime import-closure check. The new documents_grid.py module was omitted from deploy_hf.RUNTIME_PY. Commit 310efad corrects the allowlist and the four local deployment tests pass. The corrected head still needs full CI and release verification; the PR remains unmerged at this update.
+The initial full CI runs for PR #424 each passed 6,045 tests but failed the runtime import-closure check. The new documents_grid.py module was omitted from deploy_hf.RUNTIME_PY. Commit 310efad corrects the allowlist and the four local deployment tests pass. The subsequent full normal/shuffled checks passed on d81151a. After preserving main's intervening AI action release, the metadata was reconciled to 8.16 and PR #424 was merged. The post-merge deployment workflow remains the source of truth for live release status.
 
 ## Hugging Face recommendations
 
@@ -170,6 +172,6 @@ These are findings from the research date; verify selected versions before adopt
 | 2026-10-23 | Completed initial review of 26 HF Spaces and 23 possible feature increments. |
 | 2026-10-23 | Expanded review to 51 GitHub repositories with stars, deployment fit, license and maintenance notes. |
 | 2026-10-23 | User requested durable GitHub documentation so this work can resume in future sessions. |
-| 2026-10-23 | User authorized the Tabulator pilot with “execute”. Implemented on feat/document-registry-tabulator in [PR #424](https://github.com/jongsky25/css-is/pull/424); check CI and release status before proceeding. |
+| 2026-10-23 | User authorized the Tabulator pilot with “execute” and then requested merging first. [PR #424](https://github.com/jongsky25/css-is/pull/424) merged as ed54b9b (version 8.16); [deployment run](https://github.com/jongsky25/css-is/actions/runs/39953481637) pending at the merge check. |
 
 When work resumes, record accepted/rejected candidates, rationale, implementation/PR links, verification results and the next topic here. Preserve the distinction between a researched recommendation, an approved implementation and a deployed feature.
