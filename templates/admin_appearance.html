@@ -1,0 +1,119 @@
+{% extends "dash_layout.html" %}
+{% from "_avatars.html" import avatar_defs, avatar_svg %}
+{% block title %}Appearance{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="/static/css/appearance-admin.css?v=1">
+<script src="/static/js/appearance-admin.js?v=2" defer></script>
+{% endblock %}
+
+{% macro fields() %}
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<input type="hidden" name="revision" value="{{ config.revision }}">
+{% endmacro %}
+
+{% macro picks(value, prefix, cards=false) %}
+<fieldset><legend>Page theme</legend>
+<div class="appearance-options {{ 'appearance-cards' if cards }}">
+{% for key, preset in themes.items() %}
+<label class="appearance-option" data-preset="{{ key }}">
+  <input type="radio" name="theme" value="{{ key }}" {{ 'checked' if key == value.theme }} required>
+  <span><span class="appearance-icon" aria-hidden="true">{{ preset.icon }}</span><strong>{{ preset.name }}</strong>
+  {% if cards %}<small>{{ preset.description }}</small>{% endif %}</span>
+</label>
+{% endfor %}
+</div></fieldset>
+<label for="{{ prefix }}-outfit">Avatar outfit</label>
+<select name="outfit" id="{{ prefix }}-outfit">
+{% for key, outfit in outfits.items() %}<option value="{{ key }}" {{ 'selected' if key == value.outfit }}>{{ outfit.name }}</option>{% endfor %}
+</select>
+<button type="button" class="btn ghost" data-match-outfit>Use matching outfit</button>
+<input type="hidden" name="artwork_present" value="1">
+<label class="appearance-check"><input type="checkbox" name="artwork" value="1" {{ 'checked' if value.artwork }}> Illustrated scenery and seasonal banner (Halloween)</label>
+<label class="appearance-check"><input type="checkbox" name="effects" value="1" {{ 'checked' if value.effects }}> Ambient animation · drifting mist, bats, or snow</label>
+<label for="{{ prefix }}-banner">Halloween banner message</label>
+<input id="{{ prefix }}-banner" name="banner" maxlength="100" value="{{ value.banner }}">
+{% endmacro %}
+
+{% block content %}
+{{ avatar_defs() }}
+<header class="appearance-heading"><div><p class="eyebrow">Administrator</p><h1>Themes &amp; avatar</h1>
+<p class="muted">Dress Office Connect for the season. Preview, publish, or plan ahead.</p></div>
+<span class="badge">Asia/Manila · UTC+08:00</span></header>
+{% if error %}<div class="flash err" role="alert">{{ error }}</div>{% endif %}
+{% if saved %}<div class="flash ok" role="status">Appearance settings saved.</div>{% endif %}
+
+<section class="appearance-panel" aria-labelledby="active-heading">
+<h2 id="active-heading">On the page now</h2>
+<div class="appearance-status"><strong data-appearance-active-theme>{{ themes[active.theme].name }}</strong>
+<span data-appearance-active-outfit>{{ outfits[active.outfit].name }}</span><span class="badge" data-appearance-active-source>{{ active.source|capitalize }}</span></div>
+<p data-appearance-active-detail{% if active.source == 'default' %} hidden{% endif %} class="{{ 'appearance-warning' if active.source == 'manual' }}">{% if active.source == 'scheduled' %}Scheduled event: {{ active.event_name }}{% elif active.source == 'manual' %}Manual override is active. Scheduled appearances are paused {% if config.override.expires_at %}until {{ date_label(config.override.expires_at) }} Asia/Manila{% else %}until you turn it off{% endif %}.{% endif %}</p>
+{% if upcoming %}<p>Next scheduled event: <strong>{{ upcoming.name }}</strong> · {{ date_label(upcoming.start, upcoming.timezone) }} {{ upcoming.timezone }}<span data-appearance-override-note {{ 'hidden' if active.source != 'manual' }}> (subject to manual override)</span></p>{% endif %}
+<div class="appearance-actions">
+<form method="post" action="/admin/appearance">{{ fields() }}<button class="btn ghost" name="action" value="resume">Return to schedule</button></form>
+<form method="post" action="/admin/appearance">{{ fields() }}<button class="btn ghost" name="action" value="reset">Restore default</button></form>
+</div>
+</section>
+
+<div class="appearance-columns">
+<section class="appearance-panel" aria-labelledby="editor-heading">
+<h2 id="editor-heading">Choose an appearance</h2><p class="muted">Outfits style everyone’s existing companion. Their species, name, and growth stay personal.</p>
+<form method="post" action="/admin/appearance" id="appearance-editor" data-dirty-track>
+{{ fields() }}{{ picks(selected, 'editor', true) }}
+<div class="appearance-outfit-gallery" data-appearance-sample aria-label="Outfit examples">
+{% for key in ['default', 'halloween', 'halloween_vampire', 'halloween_pumpkin', 'christmas'] %}
+<div><div class="appearance-example">{{ avatar_svg('cat', 3, outfits[key].month, key) }}{{ avatar_svg('plant', 3, outfits[key].month, key) }}</div><small>{{ outfits[key].name }}</small></div>
+{% endfor %}
+</div>
+<label for="override-expires">Manual override ends (Asia/Manila)</label>
+<input type="datetime-local" name="expires" id="override-expires" value="{{ override_expires }}">
+<p class="muted">Leave blank to keep it active until you turn it off. This expiry applies to “Publish now”.</p>
+<div class="appearance-actions">
+<button class="btn" name="action" value="publish">Publish now</button>
+<button class="btn ghost" name="action" value="draft">Save draft</button>
+<button type="button" class="btn ghost" id="appearance-preview-button">Update preview</button>
+</div>
+<details><summary>Default appearance</summary><p>The fallback used when no override or scheduled event is active.</p>
+<p>Current default: {{ themes[config.default.theme].name }} · {{ outfits[config.default.outfit].name }}.</p>
+<button class="btn ghost" name="action" value="defaults">Save selections as default</button></details>
+</form>
+</section>
+
+<section class="appearance-panel appearance-preview-panel" aria-labelledby="preview-heading">
+<div class="appearance-preview-title"><h2 id="preview-heading">Private page preview</h2><div class="appearance-actions" role="group" aria-label="Preview width">
+<button type="button" class="btn ghost" data-preview-width="100%" aria-pressed="true">Desktop</button>
+<button type="button" class="btn ghost" data-preview-width="390px" aria-pressed="false">Mobile</button></div></div>
+<p class="muted">Your actual home page and companion. Changes update this private preview automatically.</p>
+<div class="appearance-preview-frame"><iframe id="appearance-preview" title="Private home page appearance preview" loading="lazy" sandbox="allow-scripts allow-same-origin" src="/?appearance_preview=1&amp;view=me&amp;theme={{ selected.theme }}&amp;outfit={{ selected.outfit }}&amp;effects={{ '1' if selected.effects else '0' }}&amp;artwork={{ '1' if selected.artwork else '0' }}&amp;banner={{ selected.banner|urlencode }}"></iframe></div>
+</section>
+</div>
+
+<section class="appearance-panel" aria-labelledby="schedule-heading">
+<h2 id="schedule-heading">Seasonal schedule</h2><p class="muted">Events begin at the start time and stop at the end time. Published events cannot overlap. Draft and disabled events never change the page.</p>
+{% for event in events %}
+<article class="appearance-event"><div><strong>{{ event.name }}</strong> <span class="badge">{{ event.status|capitalize }}</span>
+<p>{{ themes[event.selection.theme].name }} · {{ outfits[event.selection.outfit].name }}<br>
+{{ date_label(event.start, event.timezone) }} → {{ date_label(event.end, event.timezone) }} · {{ event.timezone }}</p></div>
+<div class="appearance-actions"><a class="btn ghost" href="/admin/appearance?edit={{ event.id }}#event-editor">Edit</a>
+<form method="post" action="/admin/appearance">{{ fields() }}<input type="hidden" name="event_id" value="{{ event.id }}"><button class="btn ghost" name="action" value="delete_event">Remove</button></form></div>
+</article>
+{% else %}<p>No events yet. Add Halloween, Christmas, or another celebration below.</p>{% endfor %}
+<details id="event-editor" {{ 'open' if editing or event_values }}><summary>{{ 'Edit event' if editing else 'Add seasonal event' }}</summary>
+<form method="post" action="/admin/appearance" data-dirty-track>
+{{ fields() }}<input type="hidden" name="event_id" value="{{ event_values.get('event_id', '') }}">
+<label for="event-name">Event name</label><input id="event-name" name="name" maxlength="100" required value="{{ event_values.get('name', '') }}" placeholder="Christmas celebration">
+{{ picks(event_selection, 'event') }}
+<div class="appearance-date-grid"><div><label for="event-start">Start</label><input type="datetime-local" id="event-start" name="start" required value="{{ event_values.get('start', '') }}"></div>
+<div><label for="event-end">End</label><input type="datetime-local" id="event-end" name="end" required value="{{ event_values.get('end', '') }}"></div></div>
+<label for="event-zone">Timezone (IANA name)</label><input id="event-zone" name="timezone" required value="{{ event_values.get('timezone', 'Asia/Manila') }}" placeholder="Asia/Manila">
+<label for="event-status">Status</label><select id="event-status" name="status">{% for status in ['draft', 'published', 'disabled'] %}<option value="{{ status }}" {{ 'selected' if event_values.get('status', 'draft') == status }}>{{ status|capitalize }}</option>{% endfor %}</select>
+<div class="appearance-actions"><button class="btn" name="action" value="event">Save event</button>{% if editing %}<a class="btn ghost" href="/admin/appearance#event-editor">Cancel editing</a>{% endif %}</div>
+</form></details>
+</section>
+
+<section class="appearance-panel" aria-labelledby="history-heading"><h2 id="history-heading">Publication history</h2>
+<p class="muted">Restore a saved configuration, including its defaults, overrides, and schedules. Restoring creates a new history entry. Showing the latest 50 entries.</p>
+{% for entry in history %}<div class="appearance-event"><div><strong>{{ entry.action|replace('_', ' ')|capitalize }}</strong><p>{{ entry.actor }} · {{ date_label(entry.created_at) }} Asia/Manila</p></div>
+<form method="post" action="/admin/appearance">{{ fields() }}<input type="hidden" name="history_id" value="{{ entry.id }}"><button class="btn ghost" name="action" value="restore">Restore</button></form></div>
+{% else %}<p>No published changes yet.</p>{% endfor %}
+</section>
+{% endblock %}

@@ -1,5 +1,6 @@
 <!doctype html>
-<html lang="en">
+{% set seasonal = request.state.appearance if request.state.appearance is defined else none %}
+<html lang="en" data-season="{{ seasonal.theme if seasonal else 'default' }}" data-season-effects="{{ '1' if seasonal and seasonal.effects else '0' }}" data-season-artwork="{{ '1' if seasonal and seasonal.artwork else '0' }}"{% if seasonal and seasonal.preview %} data-appearance-preview="1"{% endif %}>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,11 +8,16 @@
 {# Set theme + text size before first paint so the choice never flashes. #}
 <script>(function(){try{var d=document.documentElement;var t=localStorage.getItem("theme");if(t!=="dark"&&t!=="light"&&t!=="contrast"){t=window.matchMedia&&window.matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light";}d.setAttribute("data-theme",t);var s=localStorage.getItem("textscale");if(s!=="sm"&&s!=="lg"&&s!=="md"){s="md";}d.setAttribute("data-textscale",s);var dn=localStorage.getItem("density");if(dn!=="compact"&&dn!=="cozy"){dn="cozy";}d.setAttribute("data-density",dn);var ac=localStorage.getItem("accent");if(["blue","teal","violet","emerald","rose","amber"].indexOf(ac)<0){ac="blue";}d.setAttribute("data-accent",ac);}catch(e){}})();</script>
 <link rel="stylesheet" href="/static/css/app.css?v=7.96">
+<link rel="stylesheet" href="/static/css/appearance.css?v=2">
+<script src="/static/js/appearance.js?v=2" defer></script>
 <script src="/static/js/accessibility.js?v=7.83" defer></script>
 {% block head %}{% endblock %}
 </head>
 {# page_width: "full" (dense tables), "narrow" (forms/reading), or empty for the default. #}
 <body data-width="{% block page_width %}{% endblock %}">
+{% if seasonal and seasonal.preview %}<div class="season-preview-notice" role="status">Private appearance preview · Your changes are not published.</div>{% endif %}
+<div class="season-decoration" aria-hidden="true"></div>
+<div class="season-landscape" aria-hidden="true"></div>
 {% from "_components.html" import notif_bell %}
 {% macro display_settings() %}
 <div class="set-group">
@@ -229,9 +235,11 @@
 {% endif %}
 
 <main id="maincontent" class="wrap" tabindex="-1">
+{% include "_seasonal_scene.html" %}
 {% block crumbs %}{% endblock %}
 {% block content %}{% endblock %}
 </main>
+<div class="halloween-footer" aria-hidden="true"></div>
 {% if u %}
 {# ---- global command palette (Ctrl/⌘-K). One engine, role-aware index. ---- #}
 <div class="palette-backdrop" id="cmdk" hidden>
@@ -256,7 +264,7 @@
 {% endif %}
 {% if u %}
 {# Per-page guided tour — only this page's steps are shipped; tours.py is the source. #}
-<script>window.PAGE_KEY="{{ cur }}";window.PAGE_TOUR={{ (tour_for(cur) or [])|tojson }};</script>
+<script>window.PAGE_KEY="{{ cur }}";window.PAGE_TOUR={{ ([] if seasonal and seasonal.preview else (tour_for(cur) or []))|tojson }};</script>
 <script src="/static/js/tour.js?v=7.83" defer></script>
 {# Passive UX-behavior telemetry (docs/UX_TELEMETRY_HANDOFF_PLAN.md) — signed-in shell only. #}
 <script src="/static/js/telemetry.js?v=20260925a" defer></script>

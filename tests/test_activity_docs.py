@@ -155,7 +155,9 @@ def test_a_dpo_follows_the_doh_order_and_leaves_the_blanks(viewer, conn, relay):
     f = call["fields"]
     assert call["template_key"] == "dpo"
     # the number, date and funding source are never guessed
-    assert f["dpo_no"] == ad.BLANK and f["dpo_date"] == ad.BLANK and f["funding_source"] == ad.BLANK
+    assert f["dpo_no"] == ad.BLANK and f["dpo_date"] == ad.BLANK
+    # the funding source is cited (spot feedback #179); the template adds " funds."
+    assert f["funding_source"] == "BLHSD - Local Health Systems Development Assistance"
     assert f["dpo_year"] == "2026"
     assert f["subject"].startswith("Authority for Select") and "CALEP Field Visit" in f["subject"] and "in Cebu City" in f["subject"]
     # spot feedback #170: the layout of the office's sample DPO. BLHSD conducts the activity, so its personnel conduct it.
@@ -175,12 +177,12 @@ def test_a_dpo_follows_the_doh_order_and_leaves_the_blanks(viewer, conn, relay):
     assert len(call["blocks"]["personnel"]) == 2 and call["blocks"]["personnel"][0].startswith("1. ")
 
 
-def test_a_dpo_without_a_venue_or_unit_still_reads_as_a_sentence(viewer, conn, relay):
+def test_a_dpo_without_a_venue_leaves_a_blank_for_it(viewer, conn, relay):
     eid = create(viewer, kind="travel", title="CALEP Field Visit", venue="", owner_org_id="")
     draft(viewer, eid, "dpo")
     f = relay.calls[0]["fields"]
-    assert " in " not in f["subject"].split("CALEP Field Visit")[1] and f["subject"].startswith("Authority for ")
-    assert f["subject"].endswith("on October 12, 2026") or " on " in f["subject"].split("CALEP Field Visit")[1]
+    # spot feedback #178: the venue is always named, a blank line to complete when the item has none
+    assert f["subject"].startswith("Authority for ") and f"in {ad.BLANK} on October 12, 2026" in f["subject"]
     assert f["intro"].startswith("Authority is hereby given to ") and f["intro"].endswith(".")
 
 
@@ -721,7 +723,7 @@ def test_without_any_citation_the_first_paragraph_only_says_who_conducts_it(view
                  people=[str(uid(conn, "viewer@test.local")), str(uid(conn, "encoder@test.local"))])
     draft(viewer, eid, "dpo")
     assert relay.calls[0]["fields"]["background"] == (
-        "The DOH, through the Bureau of Local Health Systems Development (BLHSD), will conduct the CALEP Field Visit on October 12, 2026.")
+        "The DOH, through the Bureau of Local Health Systems Development (BLHSD), will conduct the CALEP Field Visit on October 12, 2026, in __________.")
 
 
 def test_dpo_cites_cannot_be_set_for_an_entry_the_person_cannot_see(viewer, conn):
@@ -729,3 +731,21 @@ def test_dpo_cites_cannot_be_set_for_an_entry_the_person_cannot_see(viewer, conn
                             people=[uid(conn, "admin@test.local")])
     conn.commit()
     assert cites(viewer, private, "x").status_code == 404 and ad.get_dpo_cites(conn, private) == ""
+
+
+def test_a_typed_designation_is_written_and_a_funding_cited(viewer, conn, relay):
+    a, b = uid(conn, "viewer@test.local"), uid(conn, "encoder@test.local")
+    eid = create(viewer, kind="travel", title="CALEP Field Visit", venue="Cebu City", people=[str(a), str(b)])
+    r = viewer.post(f"/calendar/entries/{eid}/documents/dpo/draft", data={f"designation_{a}": "Nurse III"}, follow_redirects=False)
+    assert r.status_code == 303
+    data = relay.calls[0]["rows"]["personnel"]["data"]
+    assert data[0]["p_position"] == "Nurse III" and data[1]["p_position"] == ""
+    assert relay.calls[0]["rows"]["personnel"]["fit"] is True
+
+
+def test_a_meeting_can_draft_minutes(viewer, conn, relay):
+    eid = create(viewer, kind="meeting", title="Planning Meeting")
+    assert draft(viewer, eid, "minutes").status_code == 303
+    call = relay.calls[0]
+    assert call["template_key"] == "minutes" and call["fields"]["title"] == "Planning Meeting"
+    assert "actions" in call["rows"]

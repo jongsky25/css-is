@@ -192,6 +192,7 @@
         <th>Contact</th>
         <th class="ctr">Sex</th>
         <th class="ctr">Affiliation</th>
+        {% if asks_region %}<th>Region</th>{% endif %}
         <th>Registered</th>
         <th>CSS status</th>
         <th>Recovery link</th>
@@ -219,6 +220,7 @@
         <td data-label="Contact">{% if p.purged %}<span class="who-sub">—</span>{% else %}{{ p.contact or "—" }}{% endif %}</td>
         <td class="ctr" data-label="Sex">{{ p.sex or "—" }}</td>
         <td class="ctr" data-label="Affiliation">{{ p.affiliation or "—" }}</td>
+        {% if asks_region %}<td data-label="Region">{{ p.region or "—" }}</td>{% endif %}
         <td data-label="Registered">{{ p.consent_at or "—" }}</td>
         <td data-label="CSS status">
           {% if p.n_answered and not p.purged %}

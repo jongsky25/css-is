@@ -397,6 +397,7 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
                     "relay": gdocs_relay.configured(),
                     "outside": activity_docs.get_outside(conn, e["id"]),
                     "dpo_cites": activity_docs.get_dpo_cites(conn, e["id"]),
+                    "dpo_people": activity_docs.dpo_travellers(conn, e),
                     "invited_as": activity_docs.INVITED_AS,
                     "uploads_ready": _uploads_ready(conn)}
         except Exception:                                   # noqa: BLE001
@@ -1285,6 +1286,10 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
         user = request.state.user
         raw = parse_qs((await request.body()).decode("utf-8"), keep_blank_values=True)
         positions = (raw.get("positions") or [""])[0] == "1"          # positions are written only when asked for
+        designations = {}                                               # designation typed for each person (spot feedback #178)
+        for k, v in raw.items():
+            if k.startswith("designation_") and k[12:].isdigit() and (v[0] or "").strip():
+                designations[int(k[12:])] = v[0].strip()[:160]
         conn = get_conn()
         try:
             e = oc.viewable_entry(conn, user, entry_id)
@@ -1297,7 +1302,8 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
             elif not ratelimit.allow("activity_doc_draft", f"u{user['id']}"):
                 note = f"err={quote('Too many requests. Wait a minute and try again.')}"
             else:
-                prep = activity_docs.prepare(conn, e, key, user, _doc_owner_label(conn, e), positions=positions)
+                prep = activity_docs.prepare(conn, e, key, user, _doc_owner_label(conn, e), positions=positions,
+                                             designations=designations)
                 relay_res = await run_in_threadpool(prep.call)        # only the network call leaves this thread
                 res = activity_docs.record(conn, prep, relay_res, user)
                 st.audit(conn, user["username"], "activity_doc_draft", target_type="calendar_entry", target_id=entry_id,

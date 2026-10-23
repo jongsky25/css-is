@@ -410,6 +410,33 @@ function applyBlocks_(body, blocks) {
   });
 }
 
+// Column widths that fit the text (spot feedback #181): each column as wide as its longest line needs, within the 468 pt
+// between the margins, in Times New Roman 12 with single spacing and no space between rows.
+function fitTable_(table) {
+  const n = table.getRow(0).getNumCells(), longest = [];
+  for (let c = 0; c < n; c++) longest.push(0);
+  for (let r = 0; r < table.getNumRows(); r++) {
+    for (let c = 0; c < n; c++) longest[c] = Math.max(longest[c], table.getCell(r, c).getText().length);
+  }
+  const want = longest.map(function (len) { return Math.max(60, len * 6.4 + 16); });
+  const total = want.reduce(function (a, b) { return a + b; }, 0), scale = total > 468 ? 468 / total : 1;
+  want.forEach(function (w, c) { table.setColumnWidth(c, Math.floor(w * scale)); });
+  const text = table.editAsText();
+  text.setFontFamily('Times New Roman');
+  text.setFontSize(12);
+  for (let r = 0; r < table.getNumRows(); r++) {
+    for (let c = 0; c < n; c++) {
+      const cell = table.getCell(r, c);
+      for (let k = 0; k < cell.getNumChildren(); k++) {
+        const ch = cell.getChild(k);
+        if (ch.getType() === DocumentApp.ElementType.PARAGRAPH) {
+          ch.asParagraph().setLineSpacing(1).setSpacingBefore(0).setSpacingAfter(0);
+        }
+      }
+    }
+  }
+}
+
 function applyRows_(body, rows) {
   Object.keys(rows).forEach(function (k) {
     const spec = rows[k], hit = body.findText('\\{\\{' + spec.marker + '\\}\\}'); if (!hit) return;
@@ -428,5 +455,6 @@ function applyRows_(body, rows) {
       const r = table.getRow(idx + i);
       Object.keys(d).forEach(function (c) { r.replaceText('\\{\\{' + c + '\\}\\}', esc_(d[c])); });
     });
+    if (spec.fit) fitTable_(table);
   });
 }

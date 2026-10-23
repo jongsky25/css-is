@@ -1,4 +1,4 @@
-## 8.05 — October 23, 2026
+## 8.07 — October 23, 2026
 
 - Extend A22 evaluation suite 1.2.0 to 146 scenarios: retain 38 answer and 60 report-draft cases; add 48 feedback-triage cases using synthetic records and fake provider HTTP. Require every case in both full CI orders and bind reports to the new triage code and form.
 - Limit the provider request to the current feedback text and 30 open candidates with bounded, partially masked snippets. Omit submitter identity, admin notes, page metadata and history; keep triage logs to outcome/token/timing metadata even when general content logging is enabled.
@@ -6,6 +6,21 @@
 - Keep suggestions as explicit form prefills: preserve human edits made while AI is working, clear a stale duplicate field when no match is suggested, escape the reason in the browser and require Save for any business change. Verify these behaviors in Chromium without external network or real provider use.
 - No database migration, new dependency or production AI configuration is required. These tests measure deterministic application safeguards, not a real model's judgment or production latency. Keep the release version at two digits after the decimal.
 
+## 8.06 — October 23, 2026
+
+- Add administrator-only Appearance controls for independent page themes and avatar outfits, private desktop/mobile previews, drafts, publishing, manual overrides, fallback settings and seasonal schedules.
+- Add a complete Halloween scene with an illustrated haunted-office banner, moon, bats, ghosts, pumpkins, seasonal navigation and cards, companion props, and witch, vampire and pumpkin costumes across all species and growth stages. Retain Default and Christmas presets.
+- Make scenery, ambient animation and the banner message configurable; preserve personal light/dark and contrast settings, reduced motion and print behavior. Refresh styling and costume layers on open pages without discarding forms or companion state.
+- Store configuration, revision-checked history and hash-chained audit entries atomically. Reject overlapping published schedules and ambiguous local times, resolve expiry without a cron worker, and keep old settings/history compatible.
+- Include all appearance modules in the deployment runtime and advance the application and service-worker cache to 8.06. Add backend and Chromium coverage for access, previews, schedules, restoration, live changes, accessibility and mobile layout.
+
+## 8.05 — October 23, 2026
+
+- Fix calendar birthday items opening a "Not Found" page: they now open that month's celebrants list (Spot Feedback #175); month and week views no longer render a missing link as `None`.
+- Show a Region column on an activity's Monitor roster when its registration form has a Region question (#176).
+- DPO: cite "BLHSD - Local Health Systems Development Assistance" as the funding source (#179); always name the venue in the subject and body, blank when the item has none (#178); type each named person's designation on the draft form (#178); title flush left with no space before its number (#180); several travellers go in a Name | Designation table sized to its text, Times New Roman 12, single spacing (#181); signature block at the 2-inch mark (#182) with no space between its lines (#183).
+- New "Minutes of the meeting" document, suggested for meetings (#177).
+- Google side: re-run `rebuildActivityTemplates()` and redeploy `travel_docs.gs` / `activity_templates.gs` for the layout changes and the minutes template. No schema migration or new dependency.
 ## 8.04 — October 23, 2026
 
 - Continue A22 with evaluation suite 1.1.0: retain the 38 answer-route scenarios and add 60 report-draft scenarios for MRR and official CO-CSM reports, with literal independently reviewed source figures and simulated provider HTTP.

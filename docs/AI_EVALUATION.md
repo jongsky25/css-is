@@ -1,6 +1,6 @@
-# AI assistance evaluation — A22 / 8.05
+# AI assistance evaluation — A22 / 8.07
 
-Evaluation suite **1.2.0** contains **146 named scenarios**: 38 answer-route cases from 8.01, 60 MRR/CO-CSM report-draft cases from 8.04 and 48 feedback-triage cases from 8.05. It turns selected safeguards into a reproducible, versioned release gate and produces a small report by category and case. The retained suite ID `existing-ai-answers` is a historical identifier; all three surfaces must pass.
+Evaluation suite **1.2.0** contains **146 named scenarios**: 38 answer-route cases from 8.01, 60 MRR/CO-CSM report-draft cases from 8.04 and 48 feedback-triage cases from 8.07. It turns selected safeguards into a reproducible, versioned release gate and produces a small report by category and case. The retained suite ID `existing-ai-answers` is a historical identifier; all three surfaces must pass.
 
 ## What it checks
 
@@ -114,7 +114,7 @@ Before broader AI capability or live-model comparisons, the owner must define re
 
 ## Rollout and repair
 
-Release **8.05** follows the freshly checked 8.04 main branch. No schema migration, new feature flag, dependency or production provider configuration is required. The application version and service-worker cache version use exactly two digits after the decimal.
+Release **8.07** follows the freshly checked 8.06 main branch. No schema migration, new feature flag, dependency or production provider configuration is required. The application version and service-worker cache version use exactly two digits after the decimal.
 
 The feedback suggestion remains a human-reviewed prefill. Existing saved triage decisions are not rewritten. A subsequent human Save can make a new choice, so this evaluation checks the suggestion boundary and browser review flow, not every later human decision. Production workflow observations and real-model relevance/quality remain deferred. Both normal and shuffled full CI must pass for the final PR head, including all 146 scenarios and the minimized report gate.
 
