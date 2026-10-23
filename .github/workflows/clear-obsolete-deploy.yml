@@ -1,0 +1,21 @@
+name: Clear obsolete queued deployment
+
+# Operational branch only: replace the obsolete pending v8.20 retry in the
+# shared queue while allowing the current v8.21 release to finish unchanged.
+on:
+  push:
+    branches: [ops/clear-obsolete-deploy-20261023]
+
+permissions: {}
+
+concurrency:
+  group: hf-deploy
+  cancel-in-progress: false
+
+jobs:
+  queue-cleared:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Confirm queue housekeeping
+        run: echo 'Obsolete pending deployment replaced; newer active release preserved.'
