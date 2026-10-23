@@ -3432,8 +3432,8 @@ async def admin_feedback_triage(request: Request, fid: int):
 # until the admin reviews the prefill and submits that existing form — this
 # endpoint never calls update_spot_feedback itself. Feedback text is masked
 # before it leaves the server (ai.mask_for_log), and any suggested
-# duplicate_of id is checked against the candidate list this endpoint itself
-# built, so the model can never point at an item it wasn't shown.
+# duplicate_of id is checked against the current candidate list. Session,
+# settings, feedback and candidate changes are rechecked after the AI call.
 # ---------------------------------------------------------------------
 
 FEEDBACK_TRIAGE_CANDIDATE_CAP = 30
@@ -3461,6 +3461,41 @@ def _feedback_triage_ai_schema():
     }, "required": ["status", "severity", "duplicate_of", "reason"]}
 
 
+def _feedback_triage_snapshot(conn, fid):
+    conn.execute("SAVEPOINT feedback_triage_snapshot")
+    try:
+        entry = st.get_spot_feedback(conn, fid)
+        if not entry:
+            return None
+        return {"entry": entry, "candidates": st.spot_feedback_triage_candidates(
+                    conn, fid, FEEDBACK_TRIAGE_CANDIDATE_CAP)}
+    finally:
+        conn.execute("RELEASE feedback_triage_snapshot")
+
+
+def _feedback_triage_current(request, conn, user):
+    payload = auth.parse_token(request.cookies.get(auth.COOKIE_NAME))
+    current = st.session_actor(conn, payload) if payload else None
+    return (current is not None and all(current[k] == user[k] for k in ("id", "username", "role"))
+            and auth.can(current["role"], "triage_feedback")
+            and ai.ai_mode(conn) != "off" and ai.feature_enabled(conn, "feedback_triage"))
+
+
+def _validated_feedback_suggestion(parsed, candidate_ids):
+    if (not isinstance(parsed, dict) or set(parsed) != {"status", "severity", "duplicate_of", "reason"}
+            or parsed["status"] not in st.SPOT_STATUSES
+            or parsed["severity"] not in st.SPOT_SEVERITIES
+            or type(parsed["duplicate_of"]) is not int
+            or parsed["duplicate_of"] < 0
+            or (parsed["duplicate_of"] != 0 and parsed["duplicate_of"] not in candidate_ids)
+            or not isinstance(parsed["reason"], str) or not parsed["reason"].strip()
+            or len(parsed["reason"]) > 500):
+        raise ValueError("Unverified triage suggestion")
+    return {"status": parsed["status"], "severity": parsed["severity"],
+            "duplicate_of": parsed["duplicate_of"] or None,
+            "reason": ai.mask_for_log(parsed["reason"])[:500]}
+
+
 @app.post("/admin/feedback/{fid}/ai-suggest")
 async def admin_feedback_ai_suggest(request: Request, fid: int):
     if (r := _forbid(request, "triage_feedback")):
@@ -3468,55 +3503,48 @@ async def admin_feedback_ai_suggest(request: Request, fid: int):
     ip = request.client.host if request.client else None
     user = request.state.user
     conn = get_conn()
+    unavailable = {"ok": False, "notice": "AI triage suggestions aren't available or could not be verified — set these fields by hand."}
     try:
-        entry = st.get_spot_feedback(conn, fid)
-        if not entry:
-            return JSONResponse({"ok": False, "notice": "That feedback no longer exists."},
-                                status_code=404)
-        candidates = [e for e in st.list_spot_feedback(conn)
-                     if e["id"] != fid and e["status"] not in st.SPOT_RESOLVED_STATUSES]
-        candidates = candidates[:FEEDBACK_TRIAGE_CANDIDATE_CAP]
+        snapshot = _feedback_triage_snapshot(conn, fid)
+        if snapshot is None:
+            return JSONResponse({"ok": False, "notice": "That feedback no longer exists."}, status_code=404)
+        candidates = snapshot["candidates"]
         candidate_ids = {c["id"] for c in candidates}
-        lines = [f"Statuses: {', '.join(st.SPOT_STATUSES)}",
-                 f"Severities: {', '.join(st.SPOT_SEVERITIES)}",
-                 "", "New feedback item:",
-                 ai.mask_for_log(entry["message"])[:FEEDBACK_TRIAGE_SNIPPET_LEN * 4],
-                 "", "Other open items (id: snippet):"]
-        for c in candidates:
-            snippet = ai.mask_for_log(c["message"])[:FEEDBACK_TRIAGE_SNIPPET_LEN]
-            lines.append(f"{c['id']}: {snippet}")
-        prompt = "\n".join(lines)
+        # No submitter identity, private admin note, page/region metadata or
+        # conversation history is sent. Masking free text is not anonymization.
+        prompt = json.dumps({"statuses": st.SPOT_STATUSES, "severities": st.SPOT_SEVERITIES,
+            "feedback": (ai.mask_for_log(snapshot["entry"]["message"]) or "")[:FEEDBACK_TRIAGE_SNIPPET_LEN * 4],
+            "candidates": [{"id": c["id"], "snippet": (ai.mask_for_log(c["message"]) or "")[:FEEDBACK_TRIAGE_SNIPPET_LEN]}
+                           for c in candidates]}, ensure_ascii=False)
         try:
             result, interaction_id = await ai.ask_async(
                 conn, user, "feedback_triage", prompt, ip=ip,
                 system=_AI_FEEDBACK_TRIAGE_SYSTEM_PROMPT,
                 response_schema=_feedback_triage_ai_schema(),
-                temperature=0.1, max_output_tokens=512, timeout=15.0)
-        except ai.AIError:
-            return JSONResponse({"ok": False,
-                                 "notice": "AI triage suggestions aren't available right now — "
-                                           "set these fields by hand."})
-        parsed = result.get("parsed") or {}
-        status = parsed.get("status")
-        if status not in st.SPOT_STATUSES:
-            status = None
-        severity = parsed.get("severity")
-        if severity not in st.SPOT_SEVERITIES:
-            severity = None
+                temperature=0.1, max_output_tokens=512, timeout=8.0)
+            st.update_ai_interaction_outcome(conn, interaction_id, "rejected_validation")
+            suggestion = _validated_feedback_suggestion(result.get("parsed"), candidate_ids)
+        except (ai.AIError, ValueError):
+            return JSONResponse(unavailable)
+        # Serialize the final authority/source check and minimized audit. The
+        # feedback itself is never updated here; only the human Save does that.
+        conn.execute("BEGIN IMMEDIATE")
         try:
-            duplicate_of = int(parsed.get("duplicate_of"))
-        except (TypeError, ValueError):
-            duplicate_of = 0
-        if duplicate_of not in candidate_ids:
-            duplicate_of = None
-        reason = str(parsed.get("reason") or "")[:500]
-        _audit(request, conn, "ai_feedback_suggest", target_type="spot_feedback",
-               target_id=fid, summary=f"Ran AI triage suggestion on feedback #{fid}.")
+            if (not _feedback_triage_current(request, conn, user)
+                    or _feedback_triage_snapshot(conn, fid) != snapshot):
+                return JSONResponse({"ok": False, "notice": "Access or feedback changed while AI was working — review the current item and try again."})
+            st.audit(conn, user["username"], "ai_feedback_suggest", target_type="spot_feedback",
+                     target_id=fid, summary=f"Validated AI triage suggestion for feedback #{fid}; human review required.",
+                     ip=ip, commit=False)
+            st.update_ai_interaction_outcome(conn, interaction_id, "ok", commit=False)
+            conn.commit()
+        finally:
+            if conn.in_transaction:
+                conn.rollback()
+        return JSONResponse({"ok": True, **suggestion, "interaction_id": interaction_id,
+                             "contract_version": 1, "review_required": True})
     finally:
         conn.close()
-    return JSONResponse({"ok": True, "status": status, "severity": severity,
-                        "duplicate_of": duplicate_of, "reason": reason,
-                        "interaction_id": interaction_id})
 
 
 @app.get("/admin/feedback/export")

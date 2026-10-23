@@ -18,10 +18,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "8.06"
+APP_VERSION = "8.07"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "8.07",
+        "date": "October 23, 2026",
+        "summary": "AI feedback suggestions now protect your edits and get more release checks.",
+        "changes": [
+            "AI feedback suggestions now stop if your access or the feedback changes while AI is working.",
+            "Suggestions fill the form only after you review them, and edits you make while waiting stay in place.",
+            "Release checks now cover duplicate links, misleading feedback, private details and provider failures."
+        ]
+    },
     {
         "version": "8.06",
         "date": "October 23, 2026",
