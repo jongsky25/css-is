@@ -18,10 +18,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "8.16"
+APP_VERSION = "8.17"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "8.17",
+        "date": "October 23, 2026",
+        "summary": "Travel document AI suggestions now check your access and the filing again before appearing.",
+        "changes": [
+            "A scan stops if your sign-in or the filing changes while AI is reading the document.",
+            "Malformed amounts and unsafe text fall back to manual entry instead of appearing as suggestions.",
+            "Release checks now cover changed filings, invalid readings and provider failures."
+        ]
+    },
     {
         "version": "8.16",
         "date": "October 23, 2026",

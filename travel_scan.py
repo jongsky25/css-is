@@ -10,6 +10,7 @@ from datetime import date
 from decimal import Decimal, InvalidOperation
 
 import ai_core
+import storage as st
 
 FEATURE = "travel_scan"
 MAX_BYTES = 6 * 1024 * 1024
@@ -105,6 +106,42 @@ def clean(parsed) -> dict:
             "note": _text(p.get("note"), 200)}
 
 
+def validated_receipt(parsed) -> dict:
+    """Reject malformed model fields before offering a receipt suggestion."""
+    fields = set(SCHEMA["properties"])
+    if not isinstance(parsed, dict) or set(parsed) - fields or not isinstance(parsed.get("readable"), bool):
+        raise ai_core.AIBadResponse("Invalid document reading")
+    if not parsed["readable"]:
+        return {**clean({}), "note": "The document could not be read. Enter the details yourself."}
+    required = ("kind", "amount", "currency", "date", "origin", "destination", "vendor", "reference", "note")
+    if any(key not in parsed for key in required) or parsed["kind"] not in KINDS:
+        raise ai_core.AIBadResponse("Incomplete document reading")
+    value = parsed["amount"]
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise ai_core.AIBadResponse("Invalid document amount")
+    try:
+        amount = Decimal(str(value))
+    except InvalidOperation as exc:
+        raise ai_core.AIBadResponse("Invalid document amount") from exc
+    if not amount.is_finite() or not (0 < amount <= MAX_AMOUNT):
+        raise ai_core.AIBadResponse("Invalid document amount")
+    limits = {"currency": 5, "date": 10, "origin": 80, "destination": 80,
+              "vendor": 80, "reference": 40, "depart_time": 5, "arrive_time": 5, "note": 200}
+    for key, limit in limits.items():
+        value = parsed.get(key, "")
+        if (not isinstance(value, str) or len(value) > limit or any(ord(c) < 32 for c in value)
+                or "<" in value or ">" in value):
+            raise ai_core.AIBadResponse("Invalid document text")
+    currency = parsed["currency"].strip().upper()
+    if currency not in ("PHP", "PESO", "PESOS", "P", "₱") and not re.fullmatch(r"[A-Z]{3}", currency):
+        raise ai_core.AIBadResponse("Invalid document currency")
+    if parsed["date"] and not _day(parsed["date"]):
+        raise ai_core.AIBadResponse("Invalid document date")
+    if any(parsed.get(key) and not _TIME.fullmatch(parsed[key]) for key in ("depart_time", "arrive_time")):
+        raise ai_core.AIBadResponse("Invalid document time")
+    return clean(parsed)
+
+
 def _hhmm(v) -> str:
     v = _text(v, 5)
     return v if _TIME.match(v) else ""
@@ -113,10 +150,14 @@ def _hhmm(v) -> str:
 async def read(conn, user, ip, raw: bytes, mime: str) -> dict:
     """One Gemini call over the file. Returns clean(); raises ai_core.AIError when AI is off, over
     budget or failing, so the caller can tell the person to type the amount."""
-    result, _iid = await ai_core.ask_async(
+    result, iid = await ai_core.ask_async(
         conn, user, FEATURE, PROMPT, ip=ip, system=SYSTEM, response_schema=SCHEMA,
         temperature=0.0, max_output_tokens=512, timeout=25.0, images=[(mime, raw)])
-    return clean(result.get("parsed"))
+    try:
+        return validated_receipt(result.get("parsed"))
+    except ai_core.AIBadResponse:
+        st.update_ai_interaction_outcome(conn, iid, "rejected_validation")
+        raise
 
 
 # ---- the DPO and the Certificate of Appearance (read on upload, checked against the filing) ----------------
