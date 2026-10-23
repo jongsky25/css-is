@@ -1,0 +1,11 @@
+{
+  "package": "tabulator-tables",
+  "version": "6.7.1",
+  "integrity": "sha512-6CMy17XdemQaIdg1BOqD5K6nzF2xoD47eRNiBYJBK+QrLWji7sgukyPjKXYrjRdWLwbGENdUsiAYJrNS3XeUfw==",
+  "source": "https://registry.npmjs.org/tabulator-tables/-/tabulator-tables-6.7.1.tgz",
+  "files": {
+    "LICENSE": "191a2ee554684e1064c897b432f0e1bc6dfa714ca045d3f6ea2cf692cbd398b7",
+    "tabulator.min.css": "ff598d8e961398e09a8e52ab21740e5ed952c84feebbdacec8f8a362dd3f73db",
+    "tabulator.min.js": "4e218e8d309e9b704089e7808f5484f5257ea645ba4e4808c0ae13969500d55c"
+  }
+}

@@ -25,6 +25,7 @@ import documents_registration as registration
 import documents_external as external
 import documents_jobs as jobs
 import documents_guidance as guidance
+import documents_grid as grid
 import work
 import work_intake
 import work_readiness
@@ -141,12 +142,25 @@ def make_router(templates,get_conn):
             page=d.list_page(conn,request.state.user,query,queue,
                              before=request.query_params.get('before','0'))
             filters={'queue':queue,'q':query}
+            page['grid_url']='/documents/grid-data?'+urlencode(filters)
             page['newest_url']='/documents?'+urlencode(filters)
             page['older_url']=('/documents?'+urlencode({**filters,'before':page['next_before']})
                                if page['more'] else '')
-            return render(request,conn,'index',queue=queue,**page)
+            return render(request,conn,'index',queue=queue,grid_statuses=grid.STATUSES,**page)
         except (p.Denied,ValueError) as e:
             return HTMLResponse(str(e),status_code=403 if isinstance(e,p.Denied) else 400)
+        finally:
+            conn.close()
+
+    @router.get('/documents/grid-data')
+    def registry_grid(request:Request):
+        conn=get_conn()
+        headers={'Cache-Control':'no-store','Pragma':'no-cache'}
+        try:
+            return JSONResponse(grid.page(conn,request.state.user,request.query_params),headers=headers)
+        except (p.Denied,ValueError) as e:
+            return JSONResponse({'error':str(e)},status_code=403 if isinstance(e,p.Denied) else 400,
+                                headers=headers)
         finally:
             conn.close()
 

@@ -1,3 +1,10 @@
+## 8.14 — October 23, 2026
+
+- Add an opt-in Tabulator document-register view with server-side sorting, workflow and verification filters, resizable columns, a column chooser and 30-row pagination across the authorized result set.
+- Reuse the registry selection and page-only FTS snippets, keep the standard table as a fallback, and retain full-register CSV and measure semantics. The read-only JSON endpoint returns display fields with no-store headers.
+- Vendor unmodified Tabulator 6.7.1 assets and MIT license with verified npm archive integrity and SHA-256 hashes; extend CI integrity/advisory checks to cover the added library.
+- Add permission/search parity, bounded retrieval and browser checks for filters, pagination, safe text rendering, column choices, mobile controls and loading failures.
+
 ## 8.13 — October 23, 2026
 
 - Continue A22 with evaluation suite 1.5.0: add 30 offline UX Insights analysis cases to the existing 227, for 257 named cases required in both CI orders.
