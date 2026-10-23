@@ -1,3 +1,10 @@
+## 8.05 — October 23, 2026
+
+- Fix calendar birthday items opening a "Not Found" page: they now open that month's celebrants list (Spot Feedback #175); month and week views no longer render a missing link as `None`.
+- Show a Region column on an activity's Monitor roster when its registration form has a Region question (#176).
+- DPO: cite "BLHSD - Local Health Systems Development Assistance" as the funding source (#179); always name the venue in the subject and body, blank when the item has none (#178); type each named person's designation on the draft form (#178); title flush left with no space before its number (#180); several travellers go in a Name | Designation table sized to its text, Times New Roman 12, single spacing (#181); signature block at the 2-inch mark (#182) with no space between its lines (#183).
+- New "Minutes of the meeting" document, suggested for meetings (#177).
+- Google side: re-run `rebuildActivityTemplates()` and redeploy `travel_docs.gs` / `activity_templates.gs` for the layout changes and the minutes template. No schema migration or new dependency.
 ## 8.04 — October 23, 2026
 
 - Continue A22 with evaluation suite 1.1.0: retain the 38 answer-route scenarios and add 60 report-draft scenarios for MRR and official CO-CSM reports, with literal independently reviewed source figures and simulated provider HTTP.

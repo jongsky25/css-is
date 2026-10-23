@@ -18,10 +18,22 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "8.04"
+APP_VERSION = "8.05"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "8.05",
+        "date": "October 23, 2026",
+        "summary": "Calendar birthdays open properly, rosters show Region, and the DPO follows the latest feedback.",
+        "changes": [
+            "Clicking a birthday on the calendar now opens that month's celebrants instead of an error page.",
+            "An activity's roster shows a Region column once its registration form asks for the region.",
+            "The DPO cites the BLHSD Local Health Systems Development Assistance funds, always shows the venue (blank to fill in if none), and lets you type each traveller's designation before drafting.",
+            "The DPO title sits flush left with no gap above its number, the signature block lines up at the 2-inch mark with no spacing between its lines, and a table of several travellers fits its text.",
+            "Meetings can now draft minutes of the meeting in Google Docs."
+        ]
+    },
     {
         "version": "8.04",
         "date": "October 23, 2026",

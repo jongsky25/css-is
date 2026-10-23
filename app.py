@@ -10555,6 +10555,9 @@ def monitor_event(request: Request, event_token: str, flash: str = "", show: str
         answers = st.event_answers(conn, ev["id"]) if questions else {}
         for p in people:
             p["extra"] = rq.answer_rows(questions, answers.get(p["id"]))
+            # Spot Feedback #176: a Region question's answer gets its own roster column
+            # (it stays in "Registration answers" too).
+            p["region"] = next((v for lbl, v in p["extra"] if lbl.strip().casefold() == "region"), "")
         answer_tally = rq.tally(questions, answers)
         remind_last, remind_wait = _remind_cooldown_left(conn, ev["id"])
         # So the roster header can say "open until <date>" / "closed" without the
@@ -10585,7 +10588,7 @@ def monitor_event(request: Request, event_token: str, flash: str = "", show: str
         "base_url": _base_url(request),
         "entry_window": entry_window, "is_closed": is_closed,
         "report_url": report_url,
-        "can_add_region": can_add_region,
+        "can_add_region": can_add_region, "asks_region": asks_region,
         "flash": flash,
         "remind_count": (0 if _window_over((entry_window or {}).get("close_at"))
                          else len(_unfinished_with_email(people))),
