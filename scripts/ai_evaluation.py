@@ -29,7 +29,8 @@ PROVENANCE = ('app.py', 'ai_core.py', 'ai_facts.py', 'auth.py', 'storage.py',
               'version.py', 'ai_report_drafts.py', 'css_is_engine.py', 'dashboard_insights.py',
               'tests/test_ai_evaluation.py', 'tests/test_ai_report_evaluation.py',
               'tests/test_ai_triage_evaluation.py', 'tests/test_ai_feedback_triage_browser.py',
-              'templates/feedback_detail.html', 'scripts/ai_evaluation.py',
+              'tests/test_ai_verbatim_evaluation.py', 'tests/test_ai_verbatim_browser.py',
+              'templates/feedback_detail.html', 'static/js/activity_ai.js', 'scripts/ai_evaluation.py',
               'evaluations/ai/cases-v1.json', 'evaluations/ai/reference-v1.json')
 
 
@@ -246,7 +247,8 @@ def main():
             suite = load_suite()
             env = dict(os.environ, CSS_TEST_NOW=suite['reference_clock'])
             command = [sys.executable, '-m', 'pytest', '-p', 'scripts.ai_evaluation', '-o', 'addopts=',
-                       '-q', 'tests/test_ai_evaluation.py', 'tests/test_ai_report_evaluation.py', 'tests/test_ai_triage_evaluation.py',
+                       '-q', 'tests/test_ai_evaluation.py', 'tests/test_ai_report_evaluation.py',
+                       'tests/test_ai_triage_evaluation.py', 'tests/test_ai_verbatim_evaluation.py',
                        '--ai-evaluation-report=' + str(output)]
             if args.shuffle_seed is not None:
                 command.append('--shuffle-seed=' + str(args.shuffle_seed))

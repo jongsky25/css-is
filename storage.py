@@ -4446,7 +4446,7 @@ def set_response_archived(conn, response_id, archived):
     return cur.rowcount
 
 
-def set_comment_override(conn, response_id, item_id, tag, actor=None):
+def set_comment_override(conn, response_id, item_id, tag, actor=None, *, commit=True):
     """Manually re-tag a verbatim as 'appreciate', 'improve', or 'mixed' (correcting
     the auto-classification; 'mixed' shows on both columns). item_id='' is the
     response's overall remark. Upserts; returns the previous tag (or None) so the
@@ -4463,7 +4463,8 @@ def set_comment_override(conn, response_id, item_id, tag, actor=None):
     else:
         conn.execute("INSERT INTO comment_override(response_id, item_id, tag, actor, set_at) "
                      "VALUES (?,?,?,?,?)", (response_id, item_id, tag, actor, now))
-    conn.commit()
+    if commit:
+        conn.commit()
     return prev[0] if prev else None
 
 

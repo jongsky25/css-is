@@ -14673,84 +14673,131 @@ def _event_or_404(conn, event_id):
     return ev if (ev and ev["f2"]) else None
 
 
-def _eligible_verbatim_quotes(conn, ev):
-    """This activity's quotes minus any a HUMAN already re-tagged (actor != 'ai')
-    — the human > ai > lexicon precedence Phase 4 must respect. A quote an
-    earlier AI pass tagged is still fair game for a fresh "Re-analyze"."""
-    verbatims = st.verbatims_for_responses(conn, ev["response_ids"])
-    quotes = di.flatten_quotes(verbatims)
-    overrides = st.get_comment_overrides_with_actor(conn, ev["response_ids"])
-    out = []
-    for q in quotes:
-        _tag, actor = overrides.get((q.get("rid"), q.get("item") or ""), (None, None))
-        if actor and actor != "ai":
-            continue
-        out.append(q)
-    return out
+def _verbatim_snapshot(conn, event_id):
+    """Read current scoped comments without the dashboard's stale atom cache."""
+    conn.execute("SAVEPOINT verbatim_snapshot")
+    try:
+        instances = st.list_activity_instances(conn)
+        target = next((row for row in instances if row["id"] == event_id), None)
+        if target is None:
+            return None
+        group_key = di._event_group_key(target)
+        selected = [row for row in instances if di._event_group_key(row) == group_key]
+        ids = [row["id"] for row in selected]
+        events = di.build_events(st.load_atoms(conn, instance_ids=ids), selected)
+        ev = _match_event(events, event_id)
+        if not ev or not ev["f2"]:
+            return None
+        rids = sorted(ev["response_ids"])
+        verbatims = st.verbatims_for_responses(conn, rids)
+        return {"form_ids": ids, "response_ids": rids, "verbatims": verbatims,
+                "quotes": di.flatten_quotes(verbatims),
+                "overrides": st.get_comment_overrides_with_actor(conn, rids)}
+    finally:
+        conn.execute("RELEASE verbatim_snapshot")
+
+
+def _verbatim_current(request, conn, user):
+    payload = auth.parse_token(request.cookies.get(auth.COOKIE_NAME))
+    current = st.session_actor(conn, payload) if payload else None
+    return (current is not None and all(current[k] == user[k] for k in ("id", "username", "role"))
+            and auth.can(current["role"], "create_activity")
+            and ai.ai_mode(conn) != "off" and ai.feature_enabled(conn, "verbatim"))
+
+
+def _validated_verbatim_items(parsed, count):
+    if not isinstance(parsed, dict) or set(parsed) != {"items"} or not isinstance(parsed["items"], list):
+        raise ValueError("Unverified comment classification")
+    items = parsed["items"]
+    if len(items) != count:
+        raise ValueError("Incomplete comment classification")
+    result = {}
+    for item in items:
+        if (not isinstance(item, dict) or set(item) != {"i", "sentiment"}
+                or type(item["i"]) is not int or item["i"] in result
+                or item["i"] < 0 or item["i"] >= count
+                or item["sentiment"] not in ("appreciate", "improve", "mixed")):
+            raise ValueError("Unverified comment classification")
+        result[item["i"]] = item["sentiment"]
+    return result
+
+
+def _validated_verbatim_bullets(parsed):
+    if (not isinstance(parsed, dict) or set(parsed) != {"bullets"}
+            or not isinstance(parsed["bullets"], list)
+            or not 1 <= len(parsed["bullets"]) <= 3):
+        raise ValueError("Unverified summary")
+    bullets = []
+    for bullet in parsed["bullets"]:
+        if (not isinstance(bullet, str) or not bullet.strip()
+                or len(bullet) > 240 or any(c in bullet for c in "\r\n")):
+            raise ValueError("Unverified summary")
+        bullets.append(ai.mask_for_log(bullet.strip()))
+    return bullets
 
 
 @app.post("/reports/activities/{event_id}/ai-reanalyze")
 async def activity_ai_reanalyze(request: Request, event_id: int):
-    """"Re-analyze with AI": re-runs Gemini sentiment classification (batched,
-    ~30 comments/call) over this activity's comments, skipping anything a
-    human already re-tagged, and writes the result into the existing
-    comment_override table with actor='ai'. Any AIError stops the batch where
-    it is — whatever already succeeded is kept, never rolled back — and the
-    page shows a plain notice instead of an error."""
+    """Classify current activity comments; commit all validated tags together."""
     if (r := _forbid(request, "create_activity")):
         return r
     ip = request.client.host if request.client else None
     user = request.state.user
     conn = get_conn()
     try:
-        ev = _event_or_404(conn, event_id)
-        if not ev:
+        snapshot = _verbatim_snapshot(conn, event_id)
+        if snapshot is None:
             return RedirectResponse("/reports/activities", status_code=303)
-        eligible = _eligible_verbatim_quotes(conn, ev)
+        # An older override without an actor may be a human correction.
+        eligible = [q for q in snapshot["quotes"]
+                    if snapshot["overrides"].get((q["rid"], q.get("item") or ""),
+                                                   (None, "ai"))[1] == "ai"]
         if not eligible:
             msg = quote("No comments here are eligible for AI re-analysis "
                         "(none yet, or every one is already manually tagged).")
             return RedirectResponse(f"/reports/activities/{event_id}?msg={msg}", status_code=303)
 
-        updated, cut_short = 0, False
+        selections, interactions = [], []
         for start in range(0, len(eligible), VERBATIM_AI_BATCH_SIZE):
+            if start and (not _verbatim_current(request, conn, user)
+                          or _verbatim_snapshot(conn, event_id) != snapshot):
+                msg = quote("Comments, human tags or access changed while AI was working — nothing was changed. Please review and try again.")
+                return RedirectResponse(f"/reports/activities/{event_id}?msg={msg}", status_code=303)
             batch = eligible[start:start + VERBATIM_AI_BATCH_SIZE]
-            prompt = "\n".join(f"{i}. {ai.mask_for_log(q['text'])}" for i, q in enumerate(batch))
+            prompt = "\n".join(f"{i}. {(ai.mask_for_log(q['text']) or '')[:500]}"
+                               for i, q in enumerate(batch))
             try:
-                result, _interaction_id = await ai.ask_async(
+                result, interaction_id = await ai.ask_async(
                     conn, user, "verbatim", prompt, ip=ip,
                     system=VERBATIM_AI_SYSTEM_PROMPT, response_schema=_verbatim_ai_schema(),
-                    temperature=0.1, max_output_tokens=1024, timeout=20.0)
-            except ai.AIError:
-                cut_short = True
-                break
-            sentiment_by_i = {}
-            for it in (result.get("parsed") or {}).get("items") or []:
-                try:
-                    i = int(it.get("i"))
-                except (TypeError, ValueError):
-                    continue
-                sentiment = it.get("sentiment")
-                if 0 <= i < len(batch) and sentiment in ("appreciate", "improve", "mixed"):
-                    sentiment_by_i[i] = sentiment
-            for i, q in enumerate(batch):
-                sentiment = sentiment_by_i.get(i)
-                if sentiment is None:
-                    continue    # no valid classification for this one — lexicon default stands
-                st.set_comment_override(conn, q["rid"], q.get("item") or "", sentiment, actor="ai")
-                updated += 1
+                    temperature=0.1, max_output_tokens=1024, timeout=8.0)
+                interactions.append(interaction_id)
+                st.update_ai_interaction_outcome(conn, interaction_id, "rejected_validation")
+                sentiments = _validated_verbatim_items(result.get("parsed"), len(batch))
+                selections.extend((q, sentiments[i]) for i, q in enumerate(batch))
+            except (ai.AIError, ValueError):
+                msg = quote("AI re-analysis is unavailable or returned an unverified result — nothing was changed.")
+                return RedirectResponse(f"/reports/activities/{event_id}?msg={msg}", status_code=303)
 
-        _audit(request, conn, "ai_verbatim_reanalyze", target_type="event", target_id=event_id,
-               summary=f"AI re-analyzed {updated} of {len(eligible)} eligible comment(s)"
-                       f"{' (stopped early — AI became unavailable)' if cut_short else ''}.")
-        if cut_short and updated == 0:
-            msg = quote("AI re-analysis is unavailable right now (off, unconfigured, or the "
-                        "daily limit was reached) — nothing was changed.")
-        elif cut_short:
-            msg = quote(f"Re-analyzed {updated} comment(s) before AI became unavailable — "
-                        "the rest are unchanged; try again later.")
-        else:
-            msg = quote(f"Re-analyzed {updated} comment(s) with AI.")
+        conn.execute("BEGIN IMMEDIATE")
+        try:
+            if (not _verbatim_current(request, conn, user)
+                    or _verbatim_snapshot(conn, event_id) != snapshot):
+                msg = quote("Comments, human tags or access changed while AI was working — nothing was changed. Please review and try again.")
+                return RedirectResponse(f"/reports/activities/{event_id}?msg={msg}", status_code=303)
+            for q, sentiment in selections:
+                st.set_comment_override(conn, q["rid"], q.get("item") or "", sentiment,
+                                        actor="ai", commit=False)
+            st.audit(conn, user["username"], "ai_verbatim_reanalyze", target_type="event",
+                     target_id=event_id, summary=f"AI re-analyzed {len(selections)} comment(s).",
+                     ip=ip, commit=False)
+            for interaction_id in interactions:
+                st.update_ai_interaction_outcome(conn, interaction_id, "ok", commit=False)
+            conn.commit()
+        finally:
+            if conn.in_transaction:
+                conn.rollback()
+        msg = quote(f"Re-analyzed {len(selections)} comment(s) with AI.")
         return RedirectResponse(f"/reports/activities/{event_id}?msg={msg}", status_code=303)
     finally:
         conn.close()
@@ -14768,22 +14815,23 @@ async def activity_ai_summary(request: Request, event_id: int):
     user = request.state.user
     conn = get_conn()
     try:
-        ev = _event_or_404(conn, event_id)
-        if not ev:
+        snapshot = _verbatim_snapshot(conn, event_id)
+        if snapshot is None:
             return JSONResponse({"ok": False})
-        verbatims = st.verbatims_for_responses(conn, ev["response_ids"])
+        verbatims = snapshot["verbatims"]
         if not verbatims:
             return JSONResponse({"ok": False})
-        story = di.story_panel(verbatims, st.get_comment_overrides(conn, ev["response_ids"]))
+        story = di.story_panel(verbatims, {key: value[0] for key, value in snapshot["overrides"].items()})
 
-        lines = [f"Activity: {ev['name']} — {story['total']} comment(s) total.\n"]
+        lines = [f"{story['total']} comment(s) total.\n"]
         for side, title in (("appreciate", "Appreciated"), ("improve", "To improve")):
             lines.append(f"{title}:")
             for b in story[side]["buckets"][:4]:
                 if not b["count"]:
                     continue
                 lines.append(f"- {b['name']} ({b['count']}): " +
-                             " / ".join(f"\"{ai.mask_for_log(q['text'])}\"" for q in b["quotes"][:3]))
+                             " / ".join(f"\"{(ai.mask_for_log(q['text']) or '')[:200]}\""
+                                        for q in b["quotes"][:3]))
         prompt = "\n".join(lines)
 
         try:
@@ -14796,17 +14844,26 @@ async def activity_ai_summary(request: Request, event_id: int):
                 response_schema={"type": "OBJECT", "properties": {
                     "bullets": {"type": "ARRAY", "items": {"type": "STRING"}}},
                     "required": ["bullets"]},
-                temperature=0.2, max_output_tokens=512, timeout=15.0)
-        except ai.AIError:
+                temperature=0.2, max_output_tokens=512, timeout=8.0)
+            st.update_ai_interaction_outcome(conn, interaction_id, "rejected_validation")
+            bullets = _validated_verbatim_bullets(result.get("parsed"))
+        except (ai.AIError, ValueError):
             return JSONResponse({"ok": False})
-
-        bullets = [b.strip() for b in (result.get("parsed") or {}).get("bullets") or []
-                  if isinstance(b, str) and b.strip()][:3]
-        if not bullets:
-            return JSONResponse({"ok": False})
-        _audit(request, conn, "ai_verbatim_summary", target_type="event", target_id=event_id,
-               summary=f"AI summary generated for activity {event_id}.")
-        return JSONResponse({"ok": True, "bullets": bullets, "interaction_id": interaction_id})
+        conn.execute("BEGIN IMMEDIATE")
+        try:
+            if (not _verbatim_current(request, conn, user)
+                    or _verbatim_snapshot(conn, event_id) != snapshot):
+                return JSONResponse({"ok": False})
+            st.audit(conn, user["username"], "ai_verbatim_summary", target_type="event",
+                     target_id=event_id, summary="Validated AI comment summary; human review required.",
+                     ip=ip, commit=False)
+            st.update_ai_interaction_outcome(conn, interaction_id, "ok", commit=False)
+            conn.commit()
+        finally:
+            if conn.in_transaction:
+                conn.rollback()
+        return JSONResponse({"ok": True, "bullets": bullets, "interaction_id": interaction_id,
+                             "contract_version": 1, "review_required": True})
     finally:
         conn.close()
 

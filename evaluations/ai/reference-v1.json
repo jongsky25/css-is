@@ -556,5 +556,16 @@
         "snippet": "Save button does nothing on the edit screen."
       }
     ]
+  },
+  "verbatim": {
+    "comments": [
+      "Great session. Contact private@example.test or 09171234567",
+      "Room was too cold."
+    ],
+    "classify_sentiment": "improve",
+    "summary_bullets": [
+      "The room temperature needs attention.",
+      "Participants appreciated the session."
+    ]
   }
 }

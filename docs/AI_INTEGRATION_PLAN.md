@@ -265,6 +265,8 @@ Batch, ~30 comments/call (RPM-aware):
   actor `ai` — human re-tags (`/dashboard/comment-tag`, `app.py:8100`) still
   win, the lexicon stays as fallback, and override rows double as the
   AI-vs-lexicon **eval set** before trusting AI more broadly.
+
+In **8.10**, [evaluation suite 1.3.0](AI_EVALUATION.md#verbatim-comment-analysis-complete-batches-and-human-precedence) adds 49 offline provider cases for classification and summaries. Every classification batch must return one exact valid sentiment per comment; the app commits all batches only after rechecking current access, settings, comments and human tags. A failed later batch leaves prior tags intact. Summary text is bounded and escaped, but live-model accuracy remains unmeasured.
 - **"AI summary"**: 3-bullet panel beside `story_panel` on the activity report.
 
 **PII rule: comment text only, masked; never respondent identity.** Injection:

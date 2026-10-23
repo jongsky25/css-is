@@ -1,6 +1,6 @@
-# AI assistance evaluation — A22 / 8.07
+# AI assistance evaluation — A22 / 8.10
 
-Evaluation suite **1.2.0** contains **146 named scenarios**: 38 answer-route cases from 8.01, 60 MRR/CO-CSM report-draft cases from 8.04 and 48 feedback-triage cases from 8.07. It turns selected safeguards into a reproducible, versioned release gate and produces a small report by category and case. The retained suite ID `existing-ai-answers` is a historical identifier; all three surfaces must pass.
+Evaluation suite **1.3.0** contains **195 named scenarios**: 38 answer-route cases from 8.01, 60 MRR/CO-CSM report-draft cases from 8.04, 48 feedback-triage cases from 8.07, and 49 verbatim comment cases from 8.10. It turns selected safeguards into a reproducible, versioned release gate and produces a small report by category and case. The retained suite ID `existing-ai-answers` is a historical identifier; all four surfaces must pass.
 
 ## What it checks
 
@@ -75,6 +75,16 @@ The admin's current session, role/capability and AI switches, plus the feedback 
 
 The route uses at most 512 output tokens and an eight-second read timeout (three-second connect timeout). Existing provider retry means elapsed time may exceed one timeout. All evaluation cases use fakes with no real spend or production records.
 
+## Verbatim comment analysis: complete batches and human precedence
+
+The 49 `verbatim` scenarios exercise both activity-comment routes through registered users, current storage reads and the real provider adapter, with synthetic comments and fake HTTP replies. Thirty-three cases cover classification; sixteen cover the on-screen AI summary. A network guard prevents actual provider calls. The test set covers human corrections before and during AI work, changed/new/archived comments, revoked sessions or roles, disabled AI, two batches, malformed or injected selections, later-batch failure, provider retry/budget refusal and audit rollback.
+
+A classification response must have exactly one valid `{i, sentiment}` for every comment in its batch, with an integer index and `appreciate`, `improve` or `mixed`. Missing, repeated, wrong-type, out-of-range or extra selections reject the whole run. The route collects all batches before writing; under a final write transaction it rechecks the current session, capability, AI settings and fresh activity/comment/human-tag snapshot. AI tags, a minimal audit entry and success outcomes commit together. A failed later batch or a human correction made during the call leaves all previous tags intact. Existing human tags are excluded from provider batches; a later human tag still takes precedence through the existing manual workflow.
+
+The summary route sends bounded, partially masked quote excerpts and fixed theme/count information, omitting the activity name. It accepts one to three nonempty bullets of at most 240 characters, rejects extra fields and rechecks the same authority/source boundary before returning. Summary text is still untrusted free-form prose. The browser escapes it, and the response is for human review; it does not save or certify an official report. Prompt/reply/error-body content is omitted from verbatim interaction logs even when general content logging is enabled. Masking common email/phone strings is partial, not universal anonymization.
+
+Both routes use an eight-second provider read timeout and three-second connect timeout; retries can extend total elapsed time. These cases establish deterministic application safeguards, not a real model's sentiment accuracy, theme relevance, refusal behavior or summary factuality. No live provider spend or production comments enter the test set.
+
 ## Run and read a report
 
 Use the repository's locked test environment (Python 3.11 in release CI):
@@ -108,14 +118,14 @@ Case/reference edits also require an increased `suite_version` in the manifest. 
 
 The existing provider/data contract remains [verified facts v1](VERIFIED_AI_ANSWERS.md). A broader survey selection receives the user question and bounded fact IDs/descriptions/groups, without numeric values. Names and user questions are untrusted text and can still contain personal material; these checks do not establish universal anonymization. Current consent, settings, logging/retention and provider governance remain in force.
 
-The scenarios check the existing bounded provider request settings (at most eight seconds per read timeout, three-second connect timeout and bounded output tokens), one retry where supported, and daily-budget refusal. They introduce no real spend. A timeout can involve two attempts; these are not an eight-second end-to-end service promise. Groq quality/fallback routing, OCR and other AI surfaces need their own future evaluation sets. Report draft and feedback-triage safeguards are now included; real-model style-choice quality is not measured.
+The scenarios check the existing bounded provider request settings (at most eight seconds per read timeout, three-second connect timeout and bounded output tokens), one retry where supported, and daily-budget refusal. They introduce no real spend. A timeout can involve two attempts; these are not an eight-second end-to-end service promise. Groq quality/fallback routing, OCR and other AI surfaces need their own future evaluation sets. Report draft, feedback-triage and verbatim safeguards are now included; real-model style-choice quality is not measured.
 
 Before broader AI capability or live-model comparisons, the owner must define representative question quality targets, approved provider/data retention terms, expected scope/refusals, spend/token budgets and representative latency measurements. Evaluate live-model quality separately from this deterministic safeguard score; do not infer one from the other. Production workflow observations remain deferred.
 
 ## Rollout and repair
 
-Release **8.07** follows the freshly checked 8.06 main branch. No schema migration, new feature flag, dependency or production provider configuration is required. The application version and service-worker cache version use exactly two digits after the decimal.
+Release **8.10** follows the freshly checked 8.09 main branch. No schema migration, new feature flag, dependency or production provider configuration is required. The application and service-worker cache versions use exactly two digits after the decimal.
 
-The feedback suggestion remains a human-reviewed prefill. Existing saved triage decisions are not rewritten. A subsequent human Save can make a new choice, so this evaluation checks the suggestion boundary and browser review flow, not every later human decision. Production workflow observations and real-model relevance/quality remain deferred. Both normal and shuffled full CI must pass for the final PR head, including all 146 scenarios and the minimized report gate.
+Existing AI/human comment tags are not rewritten. Re-analysis now saves a complete validated batch set or leaves existing tags intact, including a human correction made during provider I/O. Summary prose remains a reviewable on-screen suggestion. Production workflow observations and real-model quality remain deferred. Both normal and shuffled full CI must pass for the final PR head, including all 195 scenarios and the minimized report gate.
 
 For a failing gate, inspect the case ID and repair the application, fixture or expectation with a reviewed explanation. Increase the suite version for case/reference edits and rerun current evidence; do not reuse an old report or omit failed cases.
