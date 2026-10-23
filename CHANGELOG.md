@@ -1,3 +1,11 @@
+## 8.03 — October 23, 2026
+
+- Fix calendar birthday items opening a "Not Found" page: they now open that month's celebrants list (Spot Feedback #175); month and week views no longer render a missing link as `None`.
+- Show a Region column on an activity's Monitor roster when its registration form has a Region question (#176).
+- DPO: cite "BLHSD - Local Health Systems Development Assistance" as the funding source (#179); always name the venue in the subject and body, blank when the item has none (#178); type each named person's designation on the draft form (#178); title flush left with no space before its number (#180); several travellers go in a Name | Designation table sized to its text, Times New Roman 12, single spacing (#181); signature block at the 2-inch mark (#182) with no space between its lines (#183).
+- New "Minutes of the meeting" document, suggested for meetings (#177).
+- Google side: re-run `rebuildActivityTemplates()` and redeploy `travel_docs.gs` / `activity_templates.gs` for the layout changes and the minutes template. No schema migration or new dependency.
+
 ## 8.02 — October 23, 2026
 
 - Fix ARTA walk-in reports, official exports and the comments view omitting every response on the standing walk-in form after it was marked archived (24 entries, April 10 to October 22, 2026).

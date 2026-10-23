@@ -39,7 +39,7 @@
     {% endfor %}
     {% for b in w.bars %}
     {% set i = b.item %}
-    <a class="cal-bar-item {{ 'cut-l' if b.left_cut }} {{ 'cut-r' if b.right_cut }}" href="{{ i.url }}"
+    <a class="cal-bar-item {{ 'cut-l' if b.left_cut }} {{ 'cut-r' if b.right_cut }}" href="{{ i.url or '#' }}"
        data-tone="{{ i.tone }}" data-status="{{ i.status }}" data-kind="{{ i.kind }}"
        style="grid-column:{{ b.col }} / span {{ b.span }}; grid-row:{{ b.lane + 1 }}"
        title="{{ i.title }}{% if i.owner_label %} · {{ i.owner_label }}{% endif %}{% if i.venue %} · {{ i.venue }}{% endif %}{% if i.status != 'confirmed' %} · {{ i.status|capitalize }}{% endif %}{% if i.css %} · {{ i.css.chip }}{% endif %}">
