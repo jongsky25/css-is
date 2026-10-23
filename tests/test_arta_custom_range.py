@@ -93,3 +93,58 @@ def test_range_rejected_for_activity_and_rp_reports(admin):
         assert admin.get(f"/reports/export?type={typ}&period={tok}&fmt=docx").status_code == 400
     # a stray date range on a non-walk-in report is ignored, not applied
     assert admin.get("/reports?type=2&date_from=2026-10-22&date_to=2026-10-22").status_code == 200
+
+
+# --- the standing walk-in form must never drop out of reports ----------------------
+
+def _standing_fid(app_mod):
+    conn = st.connect(app_mod.DB)
+    try:
+        return st.get_or_create_walkin_form(conn)["id"]
+    finally:
+        conn.close()
+
+
+def test_report_counts_survive_a_form_level_archive_of_the_standing_form(app_mod):
+    fid = _standing_fid(app_mod)
+    conn = st.connect(app_mod.DB)
+    try:
+        rid = conn.execute(
+            "SELECT r.id FROM response r JOIN form_instance fi ON fi.id=r.form_instance_id "
+            "WHERE fi.survey_type=1 AND fi.id<>? AND r.archived_at IS NULL LIMIT 1", (fid,)).fetchone()[0]
+        conn.execute("UPDATE response SET form_instance_id=?, submitted_at='2026-10-22 10:00:00' WHERE id=?",
+                     (fid, rid))
+        conn.execute("UPDATE form_instance SET archived=1 WHERE id=?", (fid,))
+        conn.commit()
+        assert rid in app_mod._csm_type1_response_ids(conn, "2026-10-22", "2026-10-22")
+        assert any(o["value"] == "year:2026" for g in app_mod._csm_period_options(conn) for o in g["options"])
+    finally:
+        conn.close()
+
+
+def test_standing_walkin_form_cannot_be_archived(admin, app_mod):
+    import activity_admin as aa
+    fid = _standing_fid(app_mod)
+    conn = st.connect(app_mod.DB)
+    try:
+        assert st.set_form_archived(conn, fid, archived=True) == 0
+        assert aa.archive_activities(conn, [fid], "tester", "batch-1") == 0
+        assert conn.execute("SELECT COALESCE(archived,0) FROM form_instance WHERE id=?", (fid,)).fetchone()[0] == 0
+    finally:
+        conn.close()
+    admin.post(f"/activities/instance/{fid}/archive", data={}, follow_redirects=False)
+    admin.post(f"/activities/form/{fid}/archive", data={}, follow_redirects=False)
+    conn = st.connect(app_mod.DB)
+    assert conn.execute("SELECT COALESCE(archived,0) FROM form_instance WHERE id=?", (fid,)).fetchone()[0] == 0
+    conn.close()
+
+
+def test_other_forms_can_still_be_archived(app_mod):
+    fid = _standing_fid(app_mod)
+    conn = st.connect(app_mod.DB)
+    try:
+        other = conn.execute(
+            "SELECT id FROM form_instance WHERE id<>? AND COALESCE(archived,0)=0 LIMIT 1", (fid,)).fetchone()[0]
+        assert st.set_form_archived(conn, other, archived=True) == 1
+    finally:
+        conn.close()

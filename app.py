@@ -11113,7 +11113,7 @@ def _next_csm_response_no(conn, date_str):
 
 def _csm_response_filter(date_from=None, date_to=None):
     """One active-row boundary for ARTA screen, extracts and comment drill-down."""
-    where = "WHERE fi.survey_type = 1 AND COALESCE(fi.archived,0)=0 AND r.archived_at IS NULL"
+    where = f"WHERE fi.survey_type = 1 AND {st.WALKIN_FORM_ACTIVE_SQL} AND r.archived_at IS NULL"
     args = []
     if date_from:
         where += " AND r.submitted_at >= ?"
@@ -12531,7 +12531,7 @@ def _csm_period_options(conn):
     # rated answers; the standing form's creation date is not the report date.
     rows = conn.execute("SELECT DISTINCT substr(r.submitted_at,1,10) FROM response r "
                         "JOIN form_instance fi ON fi.id=r.form_instance_id "
-                        "WHERE fi.survey_type=1 AND COALESCE(fi.archived,0)=0 AND r.archived_at IS NULL").fetchall()
+                        f"WHERE fi.survey_type=1 AND {st.WALKIN_FORM_ACTIVE_SQL} AND r.archived_at IS NULL").fetchall()
     frame = pd.DataFrame({"event_date": [r[0] for r in rows]})
     return _period_options(eng.assign_periods(frame))
 

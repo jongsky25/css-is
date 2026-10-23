@@ -3369,6 +3369,21 @@ def get_or_create_blhsd(conn):
     return new_id, BLHSD_NAME, BLHSD_PATH
 
 
+# The standing walk-in form is identified by carrying no baked staff/service/org.
+_WALKIN_FORM_WHERE = ("survey_type=1 AND form='F1' AND serving_staff IS NULL "
+                      "AND serving_staff_org_id IS NULL AND service IS NULL AND lead_org_id IS NULL")
+# Active-form test for Type-1 reports: an archived form hides its responses EXCEPT the
+# standing walk-in form, whose link is permanently posted -- hiding it would silently
+# drop every walk-in since (only an individual entry may be archived).
+WALKIN_FORM_ACTIVE_SQL = ("(COALESCE(fi.archived,0)=0 OR fi.id = "
+                          f"(SELECT MIN(id) FROM form_instance WHERE {_WALKIN_FORM_WHERE}))")
+
+
+def is_standing_walkin_form(conn, form_instance_id):
+    row = conn.execute(f"SELECT MIN(id) FROM form_instance WHERE {_WALKIN_FORM_WHERE}").fetchone()
+    return bool(row and row[0] is not None and row[0] == form_instance_id)
+
+
 def get_or_create_walkin_form(conn):
     """The single, permanent bureau-wide walk-in (ARTA) form.
 
@@ -3378,11 +3393,9 @@ def get_or_create_walkin_form(conn):
     (the period) and its own 'who served you' pick (the attribution). Returns
     {id, qr_token, form_id}.
     """
-    row = conn.execute("""
+    row = conn.execute(f"""
         SELECT id, qr_token FROM form_instance
-        WHERE survey_type=1 AND form='F1'
-          AND serving_staff IS NULL AND serving_staff_org_id IS NULL
-          AND service IS NULL AND lead_org_id IS NULL
+        WHERE {_WALKIN_FORM_WHERE}
         ORDER BY id LIMIT 1
     """).fetchone()
     if row:
@@ -6392,7 +6405,11 @@ def set_form_archived(conn, form_instance_id, archived):
     """Archive (hide from every list, feed and analytic) or restore a single form
     instance. The standalone-activity counterpart to `set_event_archived` — used for
     forms that have NO event record, so the event-level archive can't reach them.
-    Keeps the row; just flips the reversible `archived` flag. Returns rows updated."""
+    Keeps the row; just flips the reversible `archived` flag. The standing walk-in
+    form can never be archived (returns 0): its posted link must keep counting.
+    Returns rows updated."""
+    if archived and is_standing_walkin_form(conn, form_instance_id):
+        return 0
     cur = conn.execute(
         "UPDATE form_instance SET archived=? WHERE id=?",
         (1 if archived else 0, form_instance_id))

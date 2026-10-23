@@ -74,7 +74,10 @@ match the question well. Explicit subject/metric/period labels let staff see wha
 was answered. This contract guarantees server-owned claims and arithmetic, not
 perfect interpretation, complete source-data quality or a measured real-model
 accuracy rate. Independent provider evaluations remain A22 work before expanding
-the contract.
+the contract. The first A22 increment, [evaluation suite 1.0.0](AI_EVALUATION.md)
+in v8.01, adds versioned synthetic questions/reference data, independent expected
+results and current-source CI reports. Its simulated providers do not measure
+real-model relevance or inference quality.
 
 ## Settings, budgets and telemetry
 
@@ -111,3 +114,6 @@ claimed. No schema migration is required. After deployment, use existing AI
 outcomes to watch fallback frequency. If broader lookups have compatibility
 problems, switch the engine to `catalog`; keep deterministic containment enabled
 instead of restoring model-authored official figures.
+
+v8.01 additionally requires [complete A22 evidence](AI_EVALUATION.md) from both
+test orders. The original A12 regressions remain in the full suite.
