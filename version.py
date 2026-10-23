@@ -18,18 +18,36 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "8.08"
+APP_VERSION = "8.10"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
-        "version": "8.08",
+        "version": "8.10",
         "date": "October 23, 2026",
         "summary": "AI comment analysis now protects human corrections and checks every batch before saving.",
         "changes": [
             "Re-analyzing comments saves results only when every AI batch is valid and your access and comments are still current.",
             "Human corrections made while AI is working stay in place; failed analysis leaves the existing tags unchanged.",
             "AI summaries reject malformed replies, and release checks now cover comment analysis and summaries."
+        ]
+    },
+    {
+        "version": "8.09",
+        "date": "October 23, 2026",
+        "summary": "DPO signature block sits at the 2-inch mark; no repeated host sentence.",
+        "changes": [
+            "On a new Department Personnel Order, \"By Authority of the Secretary of Health:\" and the signatory's name, title and office start at the 2-inch mark instead of the left margin.",
+            "A DPO for another office's activity no longer repeats who conducts it when the invitation lines already name that office."
+        ]
+    },
+    {
+        "version": "8.08",
+        "date": "October 23, 2026",
+        "summary": "Wellness check-in now opens after your scheduled break ends.",
+        "changes": [
+            "Your check-in opens once your approved wellness break has finished.",
+            "The wellness page and home reminder show Check in when it is time."
         ]
     },
     {

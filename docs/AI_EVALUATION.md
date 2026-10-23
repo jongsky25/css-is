@@ -1,6 +1,6 @@
-# AI assistance evaluation — A22 / 8.08
+# AI assistance evaluation — A22 / 8.10
 
-Evaluation suite **1.3.0** contains **195 named scenarios**: 38 answer-route cases from 8.01, 60 MRR/CO-CSM report-draft cases from 8.04, 48 feedback-triage cases from 8.07, and 49 verbatim comment cases from 8.08. It turns selected safeguards into a reproducible, versioned release gate and produces a small report by category and case. The retained suite ID `existing-ai-answers` is a historical identifier; all four surfaces must pass.
+Evaluation suite **1.3.0** contains **195 named scenarios**: 38 answer-route cases from 8.01, 60 MRR/CO-CSM report-draft cases from 8.04, 48 feedback-triage cases from 8.07, and 49 verbatim comment cases from 8.10. It turns selected safeguards into a reproducible, versioned release gate and produces a small report by category and case. The retained suite ID `existing-ai-answers` is a historical identifier; all four surfaces must pass.
 
 ## What it checks
 
@@ -124,7 +124,7 @@ Before broader AI capability or live-model comparisons, the owner must define re
 
 ## Rollout and repair
 
-Release **8.08** follows the freshly checked 8.07 main branch. No schema migration, new feature flag, dependency or production provider configuration is required. The application and service-worker cache versions use exactly two digits after the decimal.
+Release **8.10** follows the freshly checked 8.09 main branch. No schema migration, new feature flag, dependency or production provider configuration is required. The application and service-worker cache versions use exactly two digits after the decimal.
 
 Existing AI/human comment tags are not rewritten. Re-analysis now saves a complete validated batch set or leaves existing tags intact, including a human correction made during provider I/O. Summary prose remains a reviewable on-screen suggestion. Production workflow observations and real-model quality remain deferred. Both normal and shuffled full CI must pass for the final PR head, including all 195 scenarios and the minimized report gate.
 

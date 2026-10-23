@@ -15965,7 +15965,9 @@ def wellness_hub(request: Request, cheer: str = "", badges: str = "", err: str =
         "claims": claims, "is_chief": is_chief, "queue_n": queue_n,
         "register_months": register_months,
         "cheer": cheer, "cheer_badges": [b for b in badges.split("|") if b],
-        "err": err, "today": _today_local().isoformat(),
+        "err": err,
+        "check_in_ready": {c["id"]: st.wellness_check_in_ready(c) for c in claims
+                           if c["status"] == "approved"},
     })
 
 
@@ -16267,6 +16269,10 @@ def wellness_reflect_form(request: Request, claim_id: int, err: str = ""):
         conn.close()
     if not claim or claim["user_id"] != user["id"]:
         return RedirectResponse("/wellness", status_code=303)
+    if claim["status"] == "approved" and not st.wellness_check_in_ready(claim):
+        return RedirectResponse(
+            "/wellness?err=" + quote("You can check in once your scheduled wellness break has ended."),
+            status_code=303)
     return templates.TemplateResponse(request, "wellness_reflect.html", {
         "nav_active": "wellness", "show_scope": False,
         "claim": claim, "err": err,
