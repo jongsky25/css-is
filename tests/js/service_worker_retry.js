@@ -127,9 +127,41 @@ async function cachePrivacy() {
   }
 }
 
+async function companionAudioCache() {
+  const listeners = {}, stored = new Map();
+  let offline = false;
+  const body = fs.readFileSync('static/audio/avatars/dog-1.mp3');
+  const context = vm.createContext({
+    URL, Response, setTimeout: fn => fn(),
+    fetch: async () => {
+      if (offline) throw new Error('offline');
+      return new Response(body, {headers: {'Content-Type': 'audio/mpeg'}});
+    },
+    caches: {open: async () => ({
+      match: async req => stored.has(req.url) ? stored.get(req.url).clone() : undefined,
+      put: async (req, res) => stored.set(req.url, res.clone()),
+      delete: async req => stored.delete(req.url),
+    })},
+    self: {location: {origin: 'https://office.test'},
+      addEventListener: (name, fn) => {listeners[name] = fn;}},
+  });
+  vm.runInContext(source, context);
+  for (const disconnected of [false, true]) {
+    offline = disconnected;
+    const request = {url: 'https://office.test/static/audio/avatars/dog-1.mp3',
+      method: 'GET', mode: 'cors', clone() {return this;}};
+    let pending;
+    listeners.fetch({request, respondWith: p => {pending = p;}});
+    const response = await pending;
+    assert.equal(response.headers.get('Content-Type'), 'audio/mpeg');
+    assert.deepEqual(Buffer.from(await response.arrayBuffer()), body);
+  }
+}
+
 (async () => {
   await lifecycle();
   await cachePrivacy();
+  await companionAudioCache();
   for (const method of ['POST', 'PUT', 'PATCH', 'DELETE']) {
     for (const status of [500, 502, 503, 504]) {
       // The server commits; a proxy replaces its response. Missing header

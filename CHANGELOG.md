@@ -1,3 +1,11 @@
+## 8.05 — October 23, 2026
+
+- Replace companion voice blips with 27 locally hosted recordings and natural effects: animal calls, cat purring, quiet movement and water effects, and a separate sound identity for every plant.
+- Play the companion signature when tapped; use quieter, infrequent idle calls and a shared mixer to prevent overlapping voices.
+- Show sound controls beside the interactive avatar on Home and Wellness, with a remembered volume setting; keep sound off by default and cancel playback and pending audio when muted or hidden.
+- Include source credits, individual audio licenses, pinned source checksums and a rebuild script. The two rabbit excerpts retain CC BY-SA 4.0; the remaining recordings and foley use CC0.
+- Load only requested clips after opting into sound. Existing static asset delivery and service-worker caching cover the pack; update script and service-worker versions.
+
 ## 8.04 — October 23, 2026
 
 - Continue A22 with evaluation suite 1.1.0: retain the 38 answer-route scenarios and add 60 report-draft scenarios for MRR and official CO-CSM reports, with literal independently reviewed source figures and simulated provider HTTP.
