@@ -10,7 +10,7 @@ The user wants a broad set of worthwhile candidates, explained and evaluated one
 
 ## Resume here
 
-**Current topic: saved views and deadline highlighting are complete and live in Office Connect v8.18. Select the next enhancement or candidate when requested.**
+**Current topic: deadline quick filters are implemented in PR #430 (v8.20), awaiting required CI, merge and deployment verification. Saved views and deadline highlighting are already live from v8.18.**
 
 The initial Tabulator release 8.16 was verified before this follow-up began. [Workflow 39953481637](https://github.com/jongsky25/css-is/actions/runs/39953481637) reached RUNNING and logged `Live /login version check: OK (expected v8.16)` at 2026-10-23 12:48 UTC (Space commit be3fa42ff10b4d4e53ebd78fec6d0d17bf17b4b5).
 
@@ -28,7 +28,7 @@ Both complete PR CI orders passed 6,158 tests each on db17bd7d391052d3500391a2b2
 
 A 45-minute CI budget proposal was prepared in [PR #429](https://github.com/jongsky25/css-is/pull/429) after the runner delay; 29 release-gate checks passed. The deployment retry succeeded, so that proposal was closed without merging. Its branch `fix/release-verification-time-budget` is retained for future pipeline work. **No v8.19 release or timeout change was deployed by this task.**
 
-**Next action:** choose the next feature when the user requests it. Remaining ideas include deadline quick filters; lead/date filters; an authorized export matching interactive filters; grouped workflow/lead views; reuse in Supplies; or the next researched candidate. These remain recommendations, not implementation authorization.
+**Next action:** complete CI for [PR #430](https://github.com/jongsky25/css-is/pull/430), merge when green, verify the Hugging Face live-version check, then record the evidence here. The user authorized deadline quick filters with “do it” after they were recommended as the next step. Overdue, Due today, Due soon (including today), and Unknown deadline combine with existing filters and persist in saved views; older views default to all deadlines. The intervening v8.19 AI checklist release was preserved. Remaining lead/date filters, matching-view export, grouped views, Supplies reuse and other candidates remain recommendations.
 
 The next session should:
 1. Read this file and the three linked catalogs.
@@ -188,6 +188,7 @@ These are findings from the research date; verify selected versions before adopt
 | 2026-10-23 | Expanded review to 51 GitHub repositories with stars, deployment fit, license and maintenance notes. |
 | 2026-10-23 | User requested durable GitHub documentation so this work can resume in future sessions. |
 | 2026-10-23 | User authorized the Tabulator pilot with “execute” and then requested merging first. [PR #424](https://github.com/jongsky25/css-is/pull/424) merged as ed54b9b (version 8.16); [deployment run](https://github.com/jongsky25/css-is/actions/runs/39953481637) pending at the merge check. |
+| 2026-10-23 | User authorized deadline quick filters with “do it”; implemented in [PR #430](https://github.com/jongsky25/css-is/pull/430), release v8.20, pending CI/merge/deployment verification. |
 | 2026-10-23 | User authorized saved views and deadline highlighting after deployment verification; PR #427 merged, both CI orders and post-merge gates passed, and live v8.18 was verified in workflow 39962997557. |
 
 When work resumes, record accepted/rejected candidates, rationale, implementation/PR links, verification results and the next topic here. Preserve the distinction between a researched recommendation, an approved implementation and a deployed feature.
