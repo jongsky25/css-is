@@ -23,7 +23,7 @@ The server rechecks current authorization in a fresh snapshot and shares the gri
 ## Behavior and boundaries
 
 - Number and subject links open the existing document screen. The Number column stays visible so every row remains actionable.
-- Queue and search parameters are carried into every request. Workflow, verification and deadline choices narrow the interactive table only; the existing full-register measures and CSV export are explicitly labelled as covering the queue and search.
+- Queue and search parameters are carried into every request. Workflow, verification and deadline choices narrow the interactive table and its current-view CSV; the existing full-register measures and CSV export are explicitly labelled as covering the queue and search.
 - Deadline sorts put unknown deadlines last in either direction. Every sort has a stable record-ID tie-breaker.
 - The grid uses numbered pages with SQL LIMIT/OFFSET after permission, search and state filtering. Concurrent additions or changes can move rows between numbered pages; refresh to see the latest register. Requests clamp a page removed by deletion or permission changes to the current last page.
 - Existing keyset pagination remains unchanged for the standard view.
