@@ -146,6 +146,10 @@
   .av-sound-btn:hover, .av-sound-btn:focus-visible,
   .av-explore-btn:hover, .av-explore-btn:focus-visible { border-color:var(--accent); color:var(--accent); transform:translateY(-1px); }
   .av-sound-btn, .av-explore-btn { padding:.24rem .55rem; }
+  .av-sound-controls { display:inline-flex; flex-wrap:wrap; justify-content:center; align-items:center; gap:.3rem; max-width:100%; }
+  .av-volume { width:72px; max-width:100%; min-height:44px; margin:0; accent-color:var(--accent); }
+  .av-volume[hidden] { display:none; }
+  .av-audio-credits { font-size:.75rem; flex-basis:100%; }
   .av-sound-btn[aria-pressed="true"], .av-explore-btn[aria-pressed="true"] { border-color:var(--accent); color:var(--accent); background:var(--accent-bg); }
   .av-caring-water .av-drops path { animation:av-drop 1.2s ease-in; }
   .av-caring-water .av-drops path:nth-child(2) { animation-delay:.18s; }
@@ -312,7 +316,8 @@
       <stop offset="0" stop-color="#eaf4fa"/><stop offset="1" stop-color="#c2dced"/></linearGradient>
   </defs>
 </svg>
-<script src="/static/js/avatars.js?v=7.83" defer></script>
+<script src="/static/js/avatar-audio.js?v=8.11" defer></script>
+<script src="/static/js/avatars.js?v=8.11" defer></script>
 {% endmacro %}
 
 
@@ -381,13 +386,20 @@
   <button type="button" class="av-care-btn" data-care-action="{{ verb }}"
           aria-label="{{ 'Water' if verb == 'water' else 'Feed' }} {{ name or 'your companion' }}">
     {{ '💧 Water' if verb == 'water' else '🍽️ Feed' }}</button>
-  <button type="button" class="av-sound-btn" aria-pressed="false"
-          aria-label="Turn companion sounds on or off" title="Companion sounds (off by default)">🔇</button>
   {% if avatar_is_swimmer(kind) %}
   <button type="button" class="av-explore-btn" aria-pressed="false"
           aria-label="Let {{ name or 'your companion' }} swim around the whole page"
           title="Let it explore the page">🌊</button>
   {% endif %}
+  {% endif %}
+  {% if interactive %}
+  <span class="av-sound-controls">
+    <button type="button" class="av-sound-btn" aria-pressed="false"
+            aria-label="Turn companion sounds on or off" title="Companion sounds (off by default)">🔇</button>
+    <input type="range" class="av-volume" min="0" max="100" step="5" value="35"
+           aria-label="Companion volume" aria-valuetext="35 percent" hidden>
+    {% if kind == 'rabbit' %}<a class="av-audio-credits" href="/static/audio/avatars/credits.html">Sound credits</a>{% endif %}
+  </span>
   {% endif %}
 </span>
 {% endmacro %}

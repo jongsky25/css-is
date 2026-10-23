@@ -1,0 +1,717 @@
+{
+  "version": 1,
+  "processing": "Mono 44.1 kHz, trimmed with 15/60 ms margins, RMS target -22 dBFS, peak limited to -6 dBFS, 12 ms attack / 80 ms release, MP3 96 kbps. No pitch changes. See layers for source intervals and filters.",
+  "species": {
+    "dog": {
+      "voice": [
+        "dog-1.mp3",
+        "dog-2.mp3"
+      ],
+      "feed": [
+        "feed.mp3"
+      ]
+    },
+    "cat": {
+      "voice": [
+        "cat-1.mp3",
+        "cat-2.mp3"
+      ],
+      "feed": [
+        "feed.mp3"
+      ],
+      "pet": [
+        "cat-purr.mp3"
+      ]
+    },
+    "owl": {
+      "voice": [
+        "owl-1.mp3",
+        "owl-2.mp3"
+      ],
+      "feed": [
+        "feed.mp3"
+      ]
+    },
+    "dolphin": {
+      "voice": [
+        "dolphin-1.mp3",
+        "dolphin-2.mp3"
+      ],
+      "feed": [
+        "feed.mp3"
+      ]
+    },
+    "rabbit": {
+      "voice": [
+        "rabbit-1.mp3",
+        "rabbit-2.mp3"
+      ],
+      "feed": [
+        "feed.mp3"
+      ]
+    },
+    "bird": {
+      "voice": [
+        "bird-1.mp3"
+      ],
+      "feed": [
+        "feed.mp3"
+      ]
+    },
+    "bat": {
+      "voice": [
+        "bat-1.mp3",
+        "bat-2.mp3"
+      ],
+      "feed": [
+        "feed.mp3"
+      ]
+    },
+    "fish": {
+      "voice": [
+        "fish-1.mp3",
+        "fish-2.mp3"
+      ],
+      "feed": [
+        "feed.mp3"
+      ]
+    },
+    "turtle": {
+      "voice": [
+        "turtle-1.mp3",
+        "turtle-2.mp3"
+      ],
+      "feed": [
+        "feed.mp3"
+      ]
+    },
+    "plant": {
+      "voice": [
+        "plant-1.mp3"
+      ]
+    },
+    "cactus": {
+      "voice": [
+        "cactus-1.mp3"
+      ]
+    },
+    "bonsai": {
+      "voice": [
+        "bonsai-1.mp3"
+      ]
+    },
+    "sunflower": {
+      "voice": [
+        "sunflower-1.mp3"
+      ]
+    },
+    "fern": {
+      "voice": [
+        "fern-1.mp3"
+      ]
+    },
+    "mushroom": {
+      "voice": [
+        "mushroom-1.mp3"
+      ]
+    },
+    "succulent": {
+      "voice": [
+        "succulent-1.mp3"
+      ]
+    }
+  },
+  "events": {
+    "water": [
+      "water.mp3"
+    ]
+  },
+  "sources": {
+    "dog": {
+      "title": "Dog recording",
+      "author": "Joseph SARDIN / BigSoundBank",
+      "url": "https://bigsoundbank.com/2-dogs-barking-s0868.html",
+      "license": "CC0-1.0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "download": "https://raw.githubusercontent.com/andlo/ovos-skill-sound-like/77d00889839d6e13af953bf0ee70afb067852aa1/sounds/animals/dog.mp3",
+      "sha256": "c1f3aefdd182c112951cc49f930c2382f7a232c37c4c22ba4a5d88e6c7f0cdba"
+    },
+    "cat": {
+      "title": "Cat recording",
+      "author": "Joseph SARDIN / BigSoundBank",
+      "url": "https://bigsoundbank.com/detail-1889-meow-cat-1.html",
+      "license": "CC0-1.0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "download": "https://raw.githubusercontent.com/andlo/ovos-skill-sound-like/77d00889839d6e13af953bf0ee70afb067852aa1/sounds/animals/cat.mp3",
+      "sha256": "3563b04aa2c7d5774cc36cf9cc333245c4e80053b08b0cb1aaa74ec61d14400d"
+    },
+    "owl": {
+      "title": "Owl recording",
+      "author": "Joseph SARDIN / BigSoundBank",
+      "url": "https://bigsoundbank.com/detail-1763-tawny-owl-1.html",
+      "license": "CC0-1.0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "download": "https://raw.githubusercontent.com/andlo/ovos-skill-sound-like/77d00889839d6e13af953bf0ee70afb067852aa1/sounds/animals/owl.mp3",
+      "sha256": "a8987f5f2d134f72f9ea8eda6b415ac7530b1e69666c4d3097937acd14c8a7a7"
+    },
+    "dolphin": {
+      "title": "Dolphins underwater in Caribbean Sea",
+      "author": "felix.blume",
+      "url": "https://freesound.org/people/felix.blume/sounds/161691/",
+      "license": "CC0-1.0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "download": "https://raw.githubusercontent.com/shiv19/animal-sounds/f5dc4e45303036fea7e36e48a2f7701d11b650a3/assets-src/sounds/dolphin.wav",
+      "sha256": "d4d87f54efef98417c6d7910d4d1eff8162a93d7b87390e41f88c8a4b6eb4452"
+    },
+    "rabbit": {
+      "title": "Sounds of a rollicking House Rabbit",
+      "author": "Fiver, der Hellseher",
+      "url": "https://commons.wikimedia.org/wiki/File:Sounds_of_a_rollicking_House_Rabbit.flac",
+      "license": "CC-BY-SA-4.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "download": "https://raw.githubusercontent.com/shiv19/animal-sounds/f5dc4e45303036fea7e36e48a2f7701d11b650a3/assets-src/sounds/rabbit.flac",
+      "sha256": "de4d2b3d204b47f0e4aa78f79f90b38beb7bd0f982df58b92d43227f51ff505c"
+    },
+    "purr": {
+      "title": "Cat purr.wav",
+      "author": "rareguy27",
+      "url": "https://freesound.org/people/rareguy27/sounds/690620/",
+      "license": "CC0-1.0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "download": "https://raw.githubusercontent.com/cyberdaddyleo/yutang/8e335f9559ddb42e85d92c53cefeeec0ce2fc3f6/public/assets/cats/audio/purr.wav",
+      "sha256": "13ccb3f315b64224df3fa4c11a1ea855cfc735c43f4acfff6b8e1078b98847f6"
+    },
+    "food": {
+      "title": "Cat eating dry-food (croquettes)",
+      "author": "Sadiquecat",
+      "url": "https://freesound.org/people/Sadiquecat/sounds/801808/",
+      "license": "CC0-1.0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "download": "https://raw.githubusercontent.com/cyberdaddyleo/yutang/8e335f9559ddb42e85d92c53cefeeec0ce2fc3f6/public/assets/cats/audio/food.wav",
+      "sha256": "5227e75ec7ba1db908fe18a02a9070b74fb8ffd1dcd63fcdb9891496d26bf977"
+    },
+    "bird": {
+      "title": "White-crowned Sparrow Chirp",
+      "author": "Zott820",
+      "url": "https://freesound.org/people/Zott820/sounds/695297/",
+      "license": "CC0-1.0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "download": "https://raw.githubusercontent.com/cyberdaddyleo/yutang/8e335f9559ddb42e85d92c53cefeeec0ce2fc3f6/public/assets/cats/audio/bird.wav",
+      "sha256": "c0bfabd4bb807aa04a0c707f3db3a95d81b8610b07059334ffc3981ad9df97ce"
+    },
+    "leaves": {
+      "title": "Leaves Rustling (edited foliage recording)",
+      "author": "Eric Norcross",
+      "url": "https://freesound.org/people/ericnorcross81/sounds/570759/",
+      "license": "CC0-1.0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "download": "https://raw.githubusercontent.com/Jamsers/Bistro-Demo-Tweaked/6844fe7fc07be37b768d5fbc02c0602f2817b259/Audio/foliage_rustling.wav",
+      "sha256": "b465cc741d83c73a63c534fab31fe32df95cf745f0a807903b45ec6fcfb792ef"
+    },
+    "swish": {
+      "title": "Gentle Swish",
+      "author": "Ben Burnes",
+      "url": "https://abstractionmusic.com/",
+      "license": "CC0-1.0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "download": "https://raw.githubusercontent.com/lavenderdotpet/CC0-Public-Domain-Sounds/f2b6264f9ab89fabc266914c3654685d68c5a39b/Micro%20Pack%20-%20Organic%20Wooshes/Gentle%20Swish.wav",
+      "sha256": "11d39fa96334ef67edd9ba8c09880b4eae1fb1d4bbfd978bf9a845bebffc5885"
+    },
+    "swish2": {
+      "title": "Classic Swish 1",
+      "author": "Ben Burnes",
+      "url": "https://abstractionmusic.com/",
+      "license": "CC0-1.0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "download": "https://raw.githubusercontent.com/lavenderdotpet/CC0-Public-Domain-Sounds/f2b6264f9ab89fabc266914c3654685d68c5a39b/Micro%20Pack%20-%20Organic%20Wooshes/Classic%20Swish%201.wav",
+      "sha256": "672db5f3decc2c6de750ac8d8d9095f9868c37d64af2ae518d0377c915ead1bd"
+    },
+    "airy": {
+      "title": "Plop - Airy 1",
+      "author": "Ben Burnes",
+      "url": "https://abstractionmusic.com/",
+      "license": "CC0-1.0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "download": "https://raw.githubusercontent.com/lavenderdotpet/CC0-Public-Domain-Sounds/f2b6264f9ab89fabc266914c3654685d68c5a39b/bb%20-%20Bottle%20Plops%20%28Apr%202021%29/Plop%20-%20Airy%201.wav",
+      "sha256": "e00758f4b25256814b372dd4784efcded9824c8c497b4080439a3797491f03dd"
+    },
+    "viscous": {
+      "title": "Plop - Viscous 1",
+      "author": "Ben Burnes",
+      "url": "https://abstractionmusic.com/",
+      "license": "CC0-1.0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "download": "https://raw.githubusercontent.com/lavenderdotpet/CC0-Public-Domain-Sounds/f2b6264f9ab89fabc266914c3654685d68c5a39b/bb%20-%20Bottle%20Plops%20%28Apr%202021%29/Plop%20-%20Viscous%201.wav",
+      "sha256": "73b73f2317f76af460f46c0f71fffc07d19115a8cb936aa36b63105e93ff2f50"
+    },
+    "grass": {
+      "title": "Grass footstep 000",
+      "author": "Kenney",
+      "url": "https://kenney.nl/assets/impact-sounds",
+      "license": "CC0-1.0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "download": "https://raw.githubusercontent.com/lavenderdotpet/CC0-Public-Domain-Sounds/f2b6264f9ab89fabc266914c3654685d68c5a39b/kenney_impactsounds/Audio/footstep_grass_000.ogg",
+      "sha256": "9d49497777405d78d7cf7f2888e28277f3a23192300cfd1d79d54876b20f479f"
+    },
+    "wood": {
+      "title": "Light wood impact 000",
+      "author": "Kenney",
+      "url": "https://kenney.nl/assets/impact-sounds",
+      "license": "CC0-1.0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "download": "https://raw.githubusercontent.com/lavenderdotpet/CC0-Public-Domain-Sounds/f2b6264f9ab89fabc266914c3654685d68c5a39b/kenney_impactsounds/Audio/impactWood_light_000.ogg",
+      "sha256": "eb45e35b4bed784d3f120de4afec4b0d6ac09d9e143cce8cfcb7d739e1b1f3c3"
+    },
+    "woodstep": {
+      "title": "Wood footstep 000",
+      "author": "Kenney",
+      "url": "https://kenney.nl/assets/impact-sounds",
+      "license": "CC0-1.0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "download": "https://raw.githubusercontent.com/lavenderdotpet/CC0-Public-Domain-Sounds/f2b6264f9ab89fabc266914c3654685d68c5a39b/kenney_impactsounds/Audio/footstep_wood_000.ogg",
+      "sha256": "5f1c252942a220d658121bd9417448cd19649ded9fff2ff15f6e50899373ce8e"
+    }
+  },
+  "clips": {
+    "dog-1.mp3": {
+      "description": "Recorded dog call",
+      "license": "CC0-1.0",
+      "layers": [
+        {
+          "source": "dog",
+          "start": 0.7,
+          "duration": 0.9,
+          "filter": "highpass=f=110,lowpass=f=7000",
+          "gain": 1
+        }
+      ],
+      "duration_seconds": 0.9,
+      "sha256": "1dcc7cd7c1f8593f7981c005f68d75a41b04f385078776ac04830d8166807305"
+    },
+    "dog-2.mp3": {
+      "description": "Recorded dog call",
+      "license": "CC0-1.0",
+      "layers": [
+        {
+          "source": "dog",
+          "start": 4.6,
+          "duration": 0.9,
+          "filter": "highpass=f=110,lowpass=f=7000",
+          "gain": 1
+        }
+      ],
+      "duration_seconds": 0.9,
+      "sha256": "77d87fec6a8f97359faddeb802bd5497411ef24f666dff73c9aa55c22f69bc80"
+    },
+    "cat-1.mp3": {
+      "description": "Recorded cat call",
+      "license": "CC0-1.0",
+      "layers": [
+        {
+          "source": "cat",
+          "start": 0,
+          "duration": 1.2,
+          "filter": "highpass=f=100,lowpass=f=7000",
+          "gain": 1
+        }
+      ],
+      "duration_seconds": 0.6907,
+      "sha256": "6eb88407d1a732387ed304e9aa37ed27a3f2f3c0e6c8e6fe2b2fb8367c86f884"
+    },
+    "cat-2.mp3": {
+      "description": "Recorded cat call",
+      "license": "CC0-1.0",
+      "layers": [
+        {
+          "source": "cat",
+          "start": 1.3,
+          "duration": 1.2,
+          "filter": "highpass=f=100,lowpass=f=7000",
+          "gain": 1
+        }
+      ],
+      "duration_seconds": 1.1907,
+      "sha256": "6d9cbca635dfe324798619e9b441647ca2d2faa0e1918b0285eb702d1eb0614e"
+    },
+    "owl-1.mp3": {
+      "description": "Recorded owl call",
+      "license": "CC0-1.0",
+      "layers": [
+        {
+          "source": "owl",
+          "start": 0.2,
+          "duration": 1.9,
+          "filter": "highpass=f=180,lowpass=f=4500",
+          "gain": 1
+        }
+      ],
+      "duration_seconds": 1.3535,
+      "sha256": "c069915699b5054e25a86e3c9bee447b7c024e60949c1b3cacc6468ea4392953"
+    },
+    "owl-2.mp3": {
+      "description": "Recorded owl call",
+      "license": "CC0-1.0",
+      "layers": [
+        {
+          "source": "owl",
+          "start": 4.6,
+          "duration": 1.9,
+          "filter": "highpass=f=180,lowpass=f=4500",
+          "gain": 1
+        }
+      ],
+      "duration_seconds": 1.9,
+      "sha256": "30cbcea54398e6801682235f840763a5b6242ac2c978a29671091737067dec18"
+    },
+    "dolphin-1.mp3": {
+      "description": "Recorded dolphin call",
+      "license": "CC0-1.0",
+      "layers": [
+        {
+          "source": "dolphin",
+          "start": 12.1,
+          "duration": 1.2,
+          "filter": "highpass=f=800,lowpass=f=8500",
+          "gain": 1
+        }
+      ],
+      "duration_seconds": 1.2,
+      "sha256": "cc8d72cd8dcb51d142e8ccf25eb7294cef3ab6100cf4be47388ab538cdecf4ae"
+    },
+    "dolphin-2.mp3": {
+      "description": "Recorded dolphin call",
+      "license": "CC0-1.0",
+      "layers": [
+        {
+          "source": "dolphin",
+          "start": 38.8,
+          "duration": 1.2,
+          "filter": "highpass=f=800,lowpass=f=8500",
+          "gain": 1
+        }
+      ],
+      "duration_seconds": 1.2,
+      "sha256": "5971f3263679a97c405bf34a842c2171e502611afb5d9dd74f6cce0406ea039a"
+    },
+    "rabbit-1.mp3": {
+      "description": "Recorded rabbit movement",
+      "license": "CC-BY-SA-4.0",
+      "layers": [
+        {
+          "source": "rabbit",
+          "start": 5,
+          "duration": 1.0,
+          "filter": "highpass=f=100,lowpass=f=5000",
+          "gain": 1
+        }
+      ],
+      "duration_seconds": 1.0,
+      "sha256": "0623f3e83efa7d0cdd7db2c7381024782d15318c38776341eb5652a1e009c1d0"
+    },
+    "rabbit-2.mp3": {
+      "description": "Recorded rabbit movement",
+      "license": "CC-BY-SA-4.0",
+      "layers": [
+        {
+          "source": "rabbit",
+          "start": 10.6,
+          "duration": 1.0,
+          "filter": "highpass=f=100,lowpass=f=5000",
+          "gain": 1
+        }
+      ],
+      "duration_seconds": 1.0,
+      "sha256": "24a0003021f90836c1f6f32367c420dba38c8d42db7628bfde1e7844868876a2"
+    },
+    "bird-1.mp3": {
+      "description": "Recorded sparrow chirp",
+      "license": "CC0-1.0",
+      "layers": [
+        {
+          "source": "bird",
+          "start": 0,
+          "duration": 2.245375,
+          "filter": "",
+          "gain": 1
+        }
+      ],
+      "duration_seconds": 2.115,
+      "sha256": "5494e9aa561dd5c285a3deab5fa2dc2febab36938c717788cdc3b232868c7df0"
+    },
+    "bat-1.mp3": {
+      "description": "Soft wing-flutter foley",
+      "license": "CC0-1.0",
+      "layers": [
+        {
+          "source": "swish",
+          "start": 0,
+          "duration": 0.65,
+          "filter": "highpass=f=300,lowpass=f=6500",
+          "gain": 1
+        }
+      ],
+      "duration_seconds": 0.4896,
+      "sha256": "51264a4bd2ff76e016218ea81261be796ce99e6c3fc4aa49d6618064462f9ee4"
+    },
+    "bat-2.mp3": {
+      "description": "Soft wing-flutter foley",
+      "license": "CC0-1.0",
+      "layers": [
+        {
+          "source": "swish2",
+          "start": 0,
+          "duration": 0.65,
+          "filter": "highpass=f=300,lowpass=f=6500",
+          "gain": 1
+        }
+      ],
+      "duration_seconds": 0.3657,
+      "sha256": "027a93e709055936b8340c4e6a9ad1f4e0a2c82a6592fc21e4c2bb293f1397a9"
+    },
+    "fish-1.mp3": {
+      "description": "Water bubble foley",
+      "license": "CC0-1.0",
+      "layers": [
+        {
+          "source": "airy",
+          "start": 0,
+          "duration": 0.7,
+          "filter": "lowpass=f=2400",
+          "gain": 1
+        }
+      ],
+      "duration_seconds": 0.7,
+      "sha256": "ac0251963456dc5ec10b88f66f38ca33c4f4c94e1b9d547a2e0dc7c447381741"
+    },
+    "fish-2.mp3": {
+      "description": "Water bubble foley",
+      "license": "CC0-1.0",
+      "layers": [
+        {
+          "source": "viscous",
+          "start": 0,
+          "duration": 0.7,
+          "filter": "lowpass=f=2400",
+          "gain": 1
+        }
+      ],
+      "duration_seconds": 0.7,
+      "sha256": "ea4af594919f4a150b6f4f889b483ee85bcc6167d5c0eba29a64076a1ff8c252"
+    },
+    "turtle-1.mp3": {
+      "description": "Gentle footstep foley",
+      "license": "CC0-1.0",
+      "layers": [
+        {
+          "source": "woodstep",
+          "start": 0,
+          "duration": 0.65,
+          "filter": "lowpass=f=2800",
+          "gain": 1
+        }
+      ],
+      "duration_seconds": 0.2714,
+      "sha256": "cf4e993636a620988149b76179b64cd82d0ab1b6aae54eb0d71656097358668d"
+    },
+    "turtle-2.mp3": {
+      "description": "Gentle footstep foley",
+      "license": "CC0-1.0",
+      "layers": [
+        {
+          "source": "grass",
+          "start": 0,
+          "duration": 0.65,
+          "filter": "lowpass=f=2800",
+          "gain": 1
+        }
+      ],
+      "duration_seconds": 0.6471,
+      "sha256": "78b92e3a6f8264dbc1fe92fdcb9319376bdca43aeb79ee561ce907c0e9cce0d1"
+    },
+    "plant-1.mp3": {
+      "description": "Soft leafy flutter",
+      "license": "CC0-1.0",
+      "layers": [
+        {
+          "source": "leaves",
+          "start": 1,
+          "duration": 0.85,
+          "filter": "highpass=f=250,lowpass=f=6500",
+          "gain": 1
+        }
+      ],
+      "duration_seconds": 0.85,
+      "sha256": "dfc29d00b6f4e6fd03ca4ede2c43459e5b474b7f568a135b8c0e363f3ca1d397"
+    },
+    "cactus-1.mp3": {
+      "description": "Dry brush with muted woody tick",
+      "license": "CC0-1.0",
+      "layers": [
+        {
+          "source": "grass",
+          "start": 0,
+          "duration": 0.55,
+          "filter": "highpass=f=600",
+          "gain": 1
+        },
+        {
+          "source": "wood",
+          "start": 0,
+          "duration": 0.3,
+          "filter": "lowpass=f=2300",
+          "gain": 0.25
+        }
+      ],
+      "duration_seconds": 0.2251,
+      "sha256": "54a19969a56fcf0e8c13f8bc13cbf2ddd8826b815f7d63fbbb979056a3c0e480"
+    },
+    "bonsai-1.mp3": {
+      "description": "Fine leaves and woody movement",
+      "license": "CC0-1.0",
+      "layers": [
+        {
+          "source": "wood",
+          "start": 0,
+          "duration": 0.4,
+          "filter": "lowpass=f=1600",
+          "gain": 0.4
+        },
+        {
+          "source": "leaves",
+          "start": 4,
+          "duration": 0.8,
+          "filter": "lowpass=f=3200",
+          "gain": 1
+        }
+      ],
+      "duration_seconds": 0.8,
+      "sha256": "8bf1074bd5b3697ad043b9ee3ec55988baf1b140fdebfd7aaf615f854cc5e074"
+    },
+    "sunflower-1.mp3": {
+      "description": "Broad leaf swish",
+      "license": "CC0-1.0",
+      "layers": [
+        {
+          "source": "leaves",
+          "start": 8,
+          "duration": 1.1,
+          "filter": "lowpass=f=4500",
+          "gain": 1
+        },
+        {
+          "source": "swish2",
+          "start": 0,
+          "duration": 0.6,
+          "filter": "lowpass=f=2200",
+          "gain": 0.3
+        }
+      ],
+      "duration_seconds": 1.1,
+      "sha256": "18ce9ff24fa02c1099aaedb3c64e41b05814c56062bf2165a445dba99925c5b6"
+    },
+    "fern-1.mp3": {
+      "description": "Light frond brushing",
+      "license": "CC0-1.0",
+      "layers": [
+        {
+          "source": "leaves",
+          "start": 12,
+          "duration": 0.9,
+          "filter": "highpass=f=1200,lowpass=f=8500",
+          "gain": 1
+        },
+        {
+          "source": "swish",
+          "start": 0,
+          "duration": 0.65,
+          "filter": "highpass=f=2000",
+          "gain": 0.3
+        }
+      ],
+      "duration_seconds": 0.9,
+      "sha256": "1c4340740dee63807e9e228cfc17e3da4e4ee3a821a552d5738196a096b96337"
+    },
+    "mushroom-1.mp3": {
+      "description": "Rounded airy spore pop",
+      "license": "CC0-1.0",
+      "layers": [
+        {
+          "source": "airy",
+          "start": 0,
+          "duration": 0.7,
+          "filter": "lowpass=f=4000",
+          "gain": 1
+        }
+      ],
+      "duration_seconds": 0.7,
+      "sha256": "50de062ab8f6518cb586592e2c348691505322a32f5bef7ccfcc0c86ede6a87c"
+    },
+    "succulent-1.mp3": {
+      "description": "Soft rounded leaf plop",
+      "license": "CC0-1.0",
+      "layers": [
+        {
+          "source": "viscous",
+          "start": 0,
+          "duration": 0.65,
+          "filter": "lowpass=f=1700",
+          "gain": 1
+        }
+      ],
+      "duration_seconds": 0.65,
+      "sha256": "4408cc7d829d114132e0dc106ddc27ca97be33023aaf549aec6a02a7779fc9f3"
+    },
+    "cat-purr.mp3": {
+      "description": "Recorded cat purr",
+      "license": "CC0-1.0",
+      "layers": [
+        {
+          "source": "purr",
+          "start": 0,
+          "duration": 1.65,
+          "filter": "highpass=f=65,lowpass=f=1800",
+          "gain": 1
+        }
+      ],
+      "duration_seconds": 1.65,
+      "sha256": "3a4330bf72c1d0eea42811f76f646bedc1cdca2af8e75cabfd0cb841657d7542"
+    },
+    "feed.mp3": {
+      "description": "Recorded dry-food crunch",
+      "license": "CC0-1.0",
+      "layers": [
+        {
+          "source": "food",
+          "start": 0,
+          "duration": 0.66,
+          "filter": "highpass=f=150,lowpass=f=6000",
+          "gain": 1
+        }
+      ],
+      "duration_seconds": 0.66,
+      "sha256": "c7b03c974ed12fa4a3322e94841b8b8fb93dda6627f9ce76a39f5c793ddc7bfe"
+    },
+    "water.mp3": {
+      "description": "Watering plop foley",
+      "license": "CC0-1.0",
+      "layers": [
+        {
+          "source": "viscous",
+          "start": 0,
+          "duration": 0.7,
+          "filter": "lowpass=f=3500",
+          "gain": 1
+        },
+        {
+          "source": "airy",
+          "start": 0,
+          "duration": 0.7,
+          "filter": "lowpass=f=4500",
+          "gain": 0.4
+        }
+      ],
+      "duration_seconds": 0.7,
+      "sha256": "b5b166541d354dd10bb7c6089211514e9e397ae68d5eff207a9215ebdf5a89de"
+    }
+  }
+}

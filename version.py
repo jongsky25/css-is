@@ -18,10 +18,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "8.10"
+APP_VERSION = "8.11"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "8.11",
+        "date": "October 23, 2026",
+        "summary": "Companions have natural sounds and easier sound controls.",
+        "changes": [
+            "Hear recorded animal calls and a different natural sound for each plant when you play with your companion.",
+            "Adjust companion volume or turn sounds off beside your companion on Home and Wellness.",
+            "Companion sounds stay quiet by default, pause in background tabs and avoid overlapping calls."
+        ]
+    },
     {
         "version": "8.10",
         "date": "October 23, 2026",
