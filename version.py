@@ -18,10 +18,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "8.20"
+APP_VERSION = "8.21"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "8.21",
+        "date": "October 23, 2026",
+        "summary": "Invitation uploads now check current access and offer safer AI readings for review.",
+        "changes": [
+            "A letter upload stops if your sign-in or activity changes while it is being processed.",
+            "Unsafe or incomplete readings are set aside while a valid file can still be kept.",
+            "The suggested details still wait for you to choose, review and save them."
+        ]
+    },
     {
         "version": "8.20",
         "date": "October 23, 2026",

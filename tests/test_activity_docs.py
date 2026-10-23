@@ -426,12 +426,18 @@ class UploadRelay(Recorder):
     def __init__(self):
         super().__init__()
         self.uploads = []
+        self.trashed = []
+        self.trash_ok = True
         self.result = gr.RelayResult(True, {"id": "F1", "url": "https://drive.google.com/file/d/F1/view", "name": "n.pdf",
                                             "folder_url": "https://drive.google.com/drive/folders/FOLDER"})
 
     def upload_file(self, **kw):
         self.uploads.append(kw)
         return self.result
+
+    def trash_file(self, file_id):
+        self.trashed.append(file_id)
+        return gr.RelayResult(self.trash_ok)
 
 
 @pytest.fixture()
@@ -515,10 +521,13 @@ def test_removing_the_link_keeps_the_details_and_the_page_script_loads_only_when
 
 def test_the_reading_is_cleaned_and_cannot_carry_a_surprise():
     import activity_invitation as ai_inv
-    out = ai_inv.clean({"readable": True, "host": "  CHD\n VII ", "invited_as": "boss", "key_lines": "x" * 900, "note": "n"})
-    assert out["host"] == "CHD VII" and out["invited_as"] == "" and len(out["key_lines"]) == 600
-    assert ai_inv.clean("garbage") == {"readable": False, "host": "", "invited_as": "", "key_lines": "", "note": ""}
-    assert ai_inv.clean({"readable": True, "host": "", "key_lines": ""})["readable"] is False
+    import ai_core
+    out = ai_inv.clean({"readable": True, "host": "  CHD  VII ", "invited_as": "unknown", "key_lines": "A workshop.", "note": ""})
+    assert out["host"] == "CHD VII" and out["invited_as"] == ""
+    for bad in ("garbage", {"readable": True, "host": "", "key_lines": ""},
+                {"readable": True, "host": "CHD", "invited_as": "boss", "key_lines": "x" * 900, "note": ""}):
+        with pytest.raises(ai_core.AIBadResponse):
+            ai_inv.clean(bad)
 
 
 # ------------------------------------- one person on a DPO (spot feedback #157) ---

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "suite_id": "existing-ai-answers",
-  "suite_version": "1.9.0",
+  "suite_version": "1.10.0",
   "contract_version": 1,
   "reference_clock": "2026-10-20T06:00:00",
   "categories": [
@@ -6275,6 +6275,395 @@
       "category": "resilience",
       "surface": "checklist_upload",
       "question": "Does an unlinked upload stay out of the filing and surface relay cleanup failure?",
+      "scenario": "cleanup-failure",
+      "expect": {
+        "status": 409,
+        "ok": false,
+        "saved": false,
+        "reading": false,
+        "calls": 1,
+        "outcomes": [
+          "ok"
+        ]
+      }
+    },
+    {
+      "id": "invitation-valid",
+      "category": "facts",
+      "surface": "invitation_upload",
+      "question": "Upload an outside-office invitation; check valid.",
+      "scenario": "valid",
+      "expect": {
+        "status": 200,
+        "ok": true,
+        "saved": true,
+        "reading": true,
+        "calls": 1,
+        "outcomes": [
+          "ok"
+        ]
+      }
+    },
+    {
+      "id": "invitation-unreadable",
+      "category": "facts",
+      "surface": "invitation_upload",
+      "question": "Upload an outside-office invitation; check unreadable.",
+      "scenario": "unreadable",
+      "expect": {
+        "status": 200,
+        "ok": true,
+        "saved": true,
+        "reading": false,
+        "calls": 1,
+        "outcomes": [
+          "ok"
+        ]
+      }
+    },
+    {
+      "id": "invitation-missing-field",
+      "category": "injection",
+      "surface": "invitation_upload",
+      "question": "Upload an outside-office invitation; check missing field.",
+      "scenario": "missing-field",
+      "expect": {
+        "status": 200,
+        "ok": true,
+        "saved": true,
+        "reading": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "invitation-wrong-type",
+      "category": "injection",
+      "surface": "invitation_upload",
+      "question": "Upload an outside-office invitation; check wrong type.",
+      "scenario": "wrong-type",
+      "expect": {
+        "status": 200,
+        "ok": true,
+        "saved": true,
+        "reading": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "invitation-extra-field",
+      "category": "injection",
+      "surface": "invitation_upload",
+      "question": "Upload an outside-office invitation; check extra field.",
+      "scenario": "extra-field",
+      "expect": {
+        "status": 200,
+        "ok": true,
+        "saved": true,
+        "reading": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "invitation-html",
+      "category": "injection",
+      "surface": "invitation_upload",
+      "question": "Upload an outside-office invitation; check html.",
+      "scenario": "html",
+      "expect": {
+        "status": 200,
+        "ok": true,
+        "saved": true,
+        "reading": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "invitation-contact",
+      "category": "injection",
+      "surface": "invitation_upload",
+      "question": "Upload an outside-office invitation; check contact.",
+      "scenario": "contact",
+      "expect": {
+        "status": 200,
+        "ok": true,
+        "saved": true,
+        "reading": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "invitation-long-text",
+      "category": "injection",
+      "surface": "invitation_upload",
+      "question": "Upload an outside-office invitation; check long text.",
+      "scenario": "long-text",
+      "expect": {
+        "status": 200,
+        "ok": true,
+        "saved": true,
+        "reading": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "invitation-false-string",
+      "category": "injection",
+      "surface": "invitation_upload",
+      "question": "Upload an outside-office invitation; check false string.",
+      "scenario": "false-string",
+      "expect": {
+        "status": 200,
+        "ok": true,
+        "saved": true,
+        "reading": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "invitation-empty-host",
+      "category": "facts",
+      "surface": "invitation_upload",
+      "question": "Upload an outside-office invitation; check empty host.",
+      "scenario": "empty-host",
+      "expect": {
+        "status": 200,
+        "ok": true,
+        "saved": true,
+        "reading": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "invitation-logout",
+      "category": "authority",
+      "surface": "invitation_upload",
+      "question": "Upload an outside-office invitation; check logout.",
+      "scenario": "logout",
+      "expect": {
+        "status": 409,
+        "ok": false,
+        "saved": false,
+        "reading": false,
+        "calls": 1,
+        "outcomes": [
+          "ok"
+        ]
+      }
+    },
+    {
+      "id": "invitation-deactivate",
+      "category": "authority",
+      "surface": "invitation_upload",
+      "question": "Upload an outside-office invitation; check deactivate.",
+      "scenario": "deactivate",
+      "expect": {
+        "status": 409,
+        "ok": false,
+        "saved": false,
+        "reading": false,
+        "calls": 1,
+        "outcomes": [
+          "ok"
+        ]
+      }
+    },
+    {
+      "id": "invitation-entry-changed",
+      "category": "freshness",
+      "surface": "invitation_upload",
+      "question": "Upload an outside-office invitation; check entry changed.",
+      "scenario": "entry-changed",
+      "expect": {
+        "status": 409,
+        "ok": false,
+        "saved": false,
+        "reading": false,
+        "calls": 1,
+        "outcomes": [
+          "ok"
+        ]
+      }
+    },
+    {
+      "id": "invitation-entry-cancelled",
+      "category": "freshness",
+      "surface": "invitation_upload",
+      "question": "Upload an outside-office invitation; check entry cancelled.",
+      "scenario": "entry-cancelled",
+      "expect": {
+        "status": 409,
+        "ok": false,
+        "saved": false,
+        "reading": false,
+        "calls": 1,
+        "outcomes": [
+          "ok"
+        ]
+      }
+    },
+    {
+      "id": "invitation-outside-changed",
+      "category": "freshness",
+      "surface": "invitation_upload",
+      "question": "Upload an outside-office invitation; check outside changed.",
+      "scenario": "outside-changed",
+      "expect": {
+        "status": 409,
+        "ok": false,
+        "saved": false,
+        "reading": false,
+        "calls": 1,
+        "outcomes": [
+          "ok"
+        ]
+      }
+    },
+    {
+      "id": "invitation-feature-off-during",
+      "category": "authority",
+      "surface": "invitation_upload",
+      "question": "Upload an outside-office invitation; check feature off during.",
+      "scenario": "feature-off-during",
+      "expect": {
+        "status": 200,
+        "ok": true,
+        "saved": true,
+        "reading": false,
+        "calls": 1,
+        "outcomes": [
+          "ok"
+        ]
+      }
+    },
+    {
+      "id": "invitation-timeout",
+      "category": "resilience",
+      "surface": "invitation_upload",
+      "question": "Upload an outside-office invitation; check timeout.",
+      "scenario": "timeout",
+      "expect": {
+        "status": 200,
+        "ok": true,
+        "saved": true,
+        "reading": false,
+        "calls": 2,
+        "outcomes": [
+          "fallback_timeout"
+        ]
+      }
+    },
+    {
+      "id": "invitation-http503",
+      "category": "resilience",
+      "surface": "invitation_upload",
+      "question": "Upload an outside-office invitation; check http503.",
+      "scenario": "http503",
+      "expect": {
+        "status": 200,
+        "ok": true,
+        "saved": true,
+        "reading": false,
+        "calls": 2,
+        "outcomes": [
+          "fallback_error"
+        ]
+      }
+    },
+    {
+      "id": "invitation-budget",
+      "category": "resilience",
+      "surface": "invitation_upload",
+      "question": "Upload an outside-office invitation; check budget.",
+      "scenario": "budget",
+      "expect": {
+        "status": 200,
+        "ok": true,
+        "saved": true,
+        "reading": false,
+        "calls": 0,
+        "outcomes": [
+          "fallback_budget"
+        ]
+      }
+    },
+    {
+      "id": "invitation-disabled",
+      "category": "resilience",
+      "surface": "invitation_upload",
+      "question": "Upload an outside-office invitation; check disabled.",
+      "scenario": "disabled",
+      "expect": {
+        "status": 200,
+        "ok": true,
+        "saved": true,
+        "reading": false,
+        "calls": 0,
+        "outcomes": [
+          "no_config"
+        ]
+      }
+    },
+    {
+      "id": "invitation-relay-failure",
+      "category": "resilience",
+      "surface": "invitation_upload",
+      "question": "Upload an outside-office invitation; check relay failure.",
+      "scenario": "relay-failure",
+      "expect": {
+        "status": 502,
+        "ok": false,
+        "saved": false,
+        "reading": false,
+        "calls": 1,
+        "outcomes": [
+          "ok"
+        ]
+      }
+    },
+    {
+      "id": "invitation-bad-file",
+      "category": "resilience",
+      "surface": "invitation_upload",
+      "question": "Upload an outside-office invitation; check bad file.",
+      "scenario": "bad-file",
+      "expect": {
+        "status": 415,
+        "ok": false,
+        "saved": false,
+        "reading": false,
+        "calls": 0,
+        "outcomes": []
+      }
+    },
+    {
+      "id": "invitation-cleanup-failure",
+      "category": "resilience",
+      "surface": "invitation_upload",
+      "question": "Upload an outside-office invitation; check cleanup failure.",
       "scenario": "cleanup-failure",
       "expect": {
         "status": 409,

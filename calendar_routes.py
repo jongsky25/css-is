@@ -16,6 +16,7 @@ from urllib.parse import parse_qs, quote, urlencode
 import asyncio
 import hashlib
 import io
+import logging
 import re
 import zipfile
 
@@ -387,6 +388,21 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
         except ValueError:
             v = 0
         return gdocs_relay.configured() and v >= gdocs_relay.UPLOAD_VERSION
+
+    def _invitation_upload_current(request, conn, user, entry, outside):
+        token = auth.parse_token(request.cookies.get(auth.COOKIE_NAME))
+        current = st.session_actor(conn, token) if token else None
+        if current is None or any(current[k] != user[k] for k in ("id", "username", "role")):
+            return False
+        latest = oc.viewable_entry(conn, current, entry["id"])
+        return (latest == entry and latest["status"] != "cancelled" and latest["kind"] in DOC_KINDS
+                and activity_docs.get_outside(conn, entry["id"]) == outside and _uploads_ready(conn))
+
+    def _trash_invitation(file_id):
+        try:
+            return gdocs_relay.get_relay().trash_file(file_id).ok
+        except Exception:  # noqa: BLE001 - report failed cleanup without exposing file contents
+            return False
 
     def _documents_block(conn, e):
         """The "Documents for this activity" block, or None. Never raises: the page must open regardless."""
@@ -1216,7 +1232,8 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
                 return err("Not found.", 404)
             if e["status"] == "cancelled" or e["kind"] not in DOC_KINDS:
                 return err("That cannot be added to this item.")
-            if activity_docs.get_outside(conn, entry_id) is None:
+            outside = activity_docs.get_outside(conn, entry_id)
+            if outside is None:
                 return err("Choose \u201cAnother office\u201d and save it first, then add the letter.")
             if not _uploads_ready(conn):
                 return err("Uploading is not switched on yet. Type the key lines of the letter instead.", 503)
@@ -1249,12 +1266,26 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
                 return err(gdocs_relay.describe(res.error), 502 if res.error in ("not_configured", "unreachable") else 400)
             url = (res.data or {}).get("url") or (res.data or {}).get("folder_url") or ""
             name = f"{stem}.{ext}"
+            conn.execute("BEGIN IMMEDIATE")
+            if not _invitation_upload_current(request, conn, user, e, outside):
+                conn.rollback()
+                file_id = (res.data or {}).get("id")
+                cleaned = bool(file_id) and await run_in_threadpool(_trash_invitation, file_id)
+                if not cleaned:
+                    logging.warning("Calendar invitation upload cleanup needs review: entry=%s", entry_id)
+                    return err("Your access or activity changed. The file was not added; ask records staff to check the uploaded file.", 409)
+                return err("Your access or activity changed while the file was uploading. Check the activity and try again.", 409)
+            if reading and (not ai_core.mode_at_least(conn, "router")
+                            or not ai_core.feature_enabled(conn, "travel_scan")):
+                reading, ai_off = None, True
             try:
-                activity_docs.set_invitation_file(conn, entry_id, url, name, user["username"])
+                activity_docs.set_invitation_file(conn, entry_id, url, name, user["username"], commit=False)
             except ValueError as ex:
+                conn.rollback()
                 return err(str(ex))
             st.audit(conn, user["username"], "activity_invitation_file", target_type="calendar_entry", target_id=entry_id,
-                     summary=f"uploaded {name}")
+                     summary=f"uploaded {name}", commit=False)
+            conn.commit()
             return JSONResponse({"ok": True, "name": name, "url": url, "reading": reading, "ai_off": ai_off})
         finally:
             conn.close()

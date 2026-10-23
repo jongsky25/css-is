@@ -1,3 +1,10 @@
+## 8.21 — October 23, 2026
+
+- Continue A22 with 23 offline calendar invitation upload cases, bringing the evaluation suite to 389 named scenarios.
+- Recheck the registered account, activity visibility and unchanged outside-office details after provider and relay work, before saving the uploaded link. Request removal of the uploaded file if that check fails.
+- Reject malformed or unsafe invitation readings. Keep valid uploads when only AI fails, and keep suggestions behind the person's explicit review and save.
+- Keep document-reading AI logs to outcome and timing metadata. No schema migration or new provider configuration.
+
 ## 8.20 — October 23, 2026
 
 - Filter the interactive document register by overdue, due today, due soon or unknown deadline before pagination and counting.
