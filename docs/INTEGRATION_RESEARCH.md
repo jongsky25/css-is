@@ -10,7 +10,7 @@ The user wants a broad set of worthwhile candidates, explained and evaluated one
 
 ## Resume here
 
-**Current topic: deadline quick filters are implemented in PR #430 (v8.20), awaiting required CI, merge and deployment verification. Saved views and deadline highlighting are already live from v8.18.**
+**Current topic: deadline quick filters are merged in PR #430 (v8.20); post-merge deployment verification is pending. Saved views and deadline highlighting are already live from v8.18.**
 
 The initial Tabulator release 8.16 was verified before this follow-up began. [Workflow 39953481637](https://github.com/jongsky25/css-is/actions/runs/39953481637) reached RUNNING and logged `Live /login version check: OK (expected v8.16)` at 2026-10-23 12:48 UTC (Space commit be3fa42ff10b4d4e53ebd78fec6d0d17bf17b4b5).
 
@@ -28,7 +28,7 @@ Both complete PR CI orders passed 6,158 tests each on db17bd7d391052d3500391a2b2
 
 A 45-minute CI budget proposal was prepared in [PR #429](https://github.com/jongsky25/css-is/pull/429) after the runner delay; 29 release-gate checks passed. The deployment retry succeeded, so that proposal was closed without merging. Its branch `fix/release-verification-time-budget` is retained for future pipeline work. **No v8.19 release or timeout change was deployed by this task.**
 
-**Next action:** complete CI for [PR #430](https://github.com/jongsky25/css-is/pull/430), merge when green, verify the Hugging Face live-version check, then record the evidence here. The user authorized deadline quick filters with “do it” after they were recommended as the next step. Overdue, Due today, Due soon (including today), and Unknown deadline combine with existing filters and persist in saved views; older views default to all deadlines. The intervening v8.19 AI checklist release was preserved. Remaining lead/date filters, matching-view export, grouped views, Supplies reuse and other candidates remain recommendations.
+**Next action:** verify [deployment workflow 39986164250](https://github.com/jongsky25/css-is/actions/runs/39986164250), including its exact live-version check, then record the evidence here. PR #430 passed both 6,190-test CI orders with no failures/skips and all 366 offline AI cases in workflow 39982506921; merged as b86bb7f30f70215b75ca7397b40d7b7d248037e7. The user authorized deadline quick filters with “do it” after they were recommended as the next step. Overdue, Due today, Due soon (including today), and Unknown deadline combine with existing filters and persist in saved views; older views default to all deadlines. The intervening v8.19 AI checklist release was preserved. Remaining lead/date filters, matching-view export, grouped views, Supplies reuse and other candidates remain recommendations.
 
 The next session should:
 1. Read this file and the three linked catalogs.
@@ -122,7 +122,7 @@ The read-only pilot is implemented in [PR #424](https://github.com/jongsky25/css
 
 ### Tabulator next improvements under consideration
 
-Saved per-user views, column preferences and overdue/due-soon highlighting are live in 8.18 (PR #427). Deadline quick filters are now selected and implemented in PR #430, pending release verification. Remaining candidates include filters for lead, direction and date range; and a server-generated export that matches the interactive filters and permitted columns. Grouped workflow/lead views and reuse in Supplies can follow. The remaining items are recommendations and have not been selected for implementation.
+Saved per-user views, column preferences and overdue/due-soon highlighting are live in 8.18 (PR #427). Deadline quick filters are now selected and implemented in PR #430, merged with release verification pending. Remaining candidates include filters for lead, direction and date range; and a server-generated export that matches the interactive filters and permitted columns. Grouped workflow/lead views and reuse in Supplies can follow. The remaining items are recommendations and have not been selected for implementation.
 
 The initial full CI runs for PR #424 each passed 6,045 tests but failed the runtime import-closure check. The new documents_grid.py module was omitted from deploy_hf.RUNTIME_PY. Commit 310efad corrects the allowlist and the four local deployment tests pass. The subsequent full normal/shuffled checks passed on d81151a. After preserving main's intervening AI action release, the metadata was reconciled to 8.16 and PR #424 was merged. The initial 8.16 and follow-up 8.18 deployments are verified; their linked workflow logs record the live-version checks.
 
@@ -188,7 +188,7 @@ These are findings from the research date; verify selected versions before adopt
 | 2026-10-23 | Expanded review to 51 GitHub repositories with stars, deployment fit, license and maintenance notes. |
 | 2026-10-23 | User requested durable GitHub documentation so this work can resume in future sessions. |
 | 2026-10-23 | User authorized the Tabulator pilot with “execute” and then requested merging first. [PR #424](https://github.com/jongsky25/css-is/pull/424) merged as ed54b9b (version 8.16); [deployment run](https://github.com/jongsky25/css-is/actions/runs/39953481637) pending at the merge check. |
-| 2026-10-23 | User authorized deadline quick filters with “do it”; implemented in [PR #430](https://github.com/jongsky25/css-is/pull/430), release v8.20, pending CI/merge/deployment verification. |
+| 2026-10-23 | User authorized deadline quick filters with “do it”; implemented in [PR #430](https://github.com/jongsky25/css-is/pull/430), release v8.20, merged after both 6,190-test CI orders passed; deployment verification pending. |
 | 2026-10-23 | User authorized saved views and deadline highlighting after deployment verification; PR #427 merged, both CI orders and post-merge gates passed, and live v8.18 was verified in workflow 39962997557. |
 
 When work resumes, record accepted/rejected candidates, rationale, implementation/PR links, verification results and the next topic here. Preserve the distinction between a researched recommendation, an approved implementation and a deployed feature.
