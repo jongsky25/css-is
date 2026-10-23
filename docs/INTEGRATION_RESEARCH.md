@@ -6,17 +6,29 @@ Deployment: [equityinhealth/office-connect](https://huggingface.co/spaces/equity
 
 This is the durable record of research into public Hugging Face Spaces and widely used GitHub projects that could improve Office Connect. Customer Satisfaction Survey (CSS) is one module of this platform.
 
-The user wants a broad set of worthwhile candidates, explained and evaluated one at a time. The Tabulator registry pilot was merged in [PR #424](https://github.com/jongsky25/css-is/pull/424) as release 8.16. Other candidates remain research items. Check the PR and deployment workflow for current release status.
+The user wants a broad set of worthwhile candidates, explained and evaluated one at a time. The Tabulator registry pilot was merged in [PR #424](https://github.com/jongsky25/css-is/pull/424) as release 8.16. The saved-view and deadline-label follow-up is live as 8.18 in PR #427. Other candidates remain research items.
 
 ## Resume here
 
-**Current topic: verify the Hugging Face deployment of merged saved views and deadline highlighting, release 8.18.**
+**Current topic: saved views and deadline highlighting are complete and live in Office Connect v8.18. Select the next enhancement or candidate when requested.**
 
-The initial Tabulator release 8.16 is live and verified. PR #424 merged as ed54b9b58f779a0dc902e05f4e56f032e6eb4cec; [workflow 39953481637](https://github.com/jongsky25/css-is/actions/runs/39953481637) passed all gates and deployed Space commit be3fa42ff10b4d4e53ebd78fec6d0d17bf17b4b5. The deployment reached RUNNING and logged `Live /login version check: OK (expected v8.16)` at 2026-10-23 12:48 UTC.
+The initial Tabulator release 8.16 was verified before this follow-up began. [Workflow 39953481637](https://github.com/jongsky25/css-is/actions/runs/39953481637) reached RUNNING and logged `Live /login version check: OK (expected v8.16)` at 2026-10-23 12:48 UTC (Space commit be3fa42ff10b4d4e53ebd78fec6d0d17bf17b4b5).
 
-The user then authorized: “once verified deployment. add the saved views and deadline highlighting”. Only after that deployment verification, implementation began on `feat/document-registry-saved-views`, now PR #427 (release 8.18; current head db17bd7d391052d3500391a2b22aee914da316cc). It adds up to ten account-owned named views with queue/search, applied filters, sorting and column visibility/widths; create/update/delete controls; CSRF, ownership, validation and revision-conflict checks; and deadline labels in both table modes using existing working-day/holiday rules. Saved preferences contain no record snapshots or access authority. Read [the updated guide](https://github.com/jongsky25/css-is/blob/feat/document-registry-saved-views/docs/TABULATOR_PILOT.md).
+The user then authorized: “once verified deployment. add the saved views and deadline highlighting”. [PR #427](https://github.com/jongsky25/css-is/pull/427) implemented both and merged as 72316d375e51199e661321d8bc2e20f10940106e. An intervening main release was preserved, so this follow-up became 8.18. Read [the user and technical guide on main](https://github.com/jongsky25/css-is/blob/main/docs/TABULATOR_PILOT.md).
 
-Focused server/browser checks cover preferences, current permissions, concurrent updates, quotas, holiday boundaries, reload restoration, cross-queue/search reopening, unsafe names and failed writes. Review also added non-reusable IDs to protect replacement views from old tabs and bounded identifiers before database binding. Main's separate travel-scan release 8.17 was preserved, and 55 combined focused checks passed after that merge. Both complete CI orders passed 6,158 tests each on db17bd7d391052d3500391a2b22aee914da316cc; all required metadata/dependency checks passed. PR #427 merged as 72316d375e51199e661321d8bc2e20f10940106e. [Deployment workflow 39962997557](https://github.com/jongsky25/css-is/actions/runs/39962997557) is running its post-merge checks. Post-merge shuffled tests passed all 6,158 cases; the normal runner spent approximately 15 minutes installing dependencies, then was canceled at its 30-minute budget with tests at 88%. The normal job (120445511528) and its dependent gates were requested for rerun on the same commit; passed checks are preserved. The fresh normal runner also took substantial setup time. [PR #429](https://github.com/jongsky25/css-is/pull/429), branch `fix/release-verification-time-budget`, head 87a0c7fd0d986aed376bb11736d681e10a8a2dc1, prepares a 45-minute full-suite budget with every test/audit gate retained. Release metadata is 8.19 because main pushes require a version increase; 29 focused release-gate checks pass and its full CI is running. **Next action: monitor the v8.18 retry and PR #429. If the retry cannot finish, merge the budget fix once green and verify that release's deployment. Confirm RUNNING and a successful live /login version check before claiming the requested features are live; then update this guide.**
+Delivered behavior:
+- Up to ten private, account-owned named views with queue/search, applied workflow/verification filters, sorting, column visibility and widths; create, update/rename, open and delete controls.
+- Preferences contain display settings only. Opening starts at page one and rechecks current record access. CSRF, ownership, strict option validation, non-reusable IDs and revision checks protect writes.
+- Both standard and interactive tables label overdue, due today, due soon and unknown deadlines using the existing three-working-day window and configured holidays; closed and cancelled records have no deadline alert.
+- Full-register measures/CSV keep their explicit queue/search scope. Saved views do not add matching-filter exports, inline editing or new document mutations.
+
+Both complete PR CI orders passed 6,158 tests each on db17bd7d391052d3500391a2b22aee914da316cc; all required checks passed. Post-merge normal and shuffled verification also passed all 6,158 tests each. The first post-merge normal job was canceled at its 30-minute budget after approximately 15 minutes of setup; a targeted retry completed successfully.
+
+**Deployment verified:** [workflow 39962997557, attempt 2](https://github.com/jongsky25/css-is/actions/runs/39962997557/attempts/2) succeeded, uploaded Space commit bd9a6382b57484a7927cec1d759b958c92ae8c20, reached RUNNING and logged `Live /login version check: OK (expected v8.18)` at 2026-10-23 14:38 UTC.
+
+A 45-minute CI budget proposal was prepared in [PR #429](https://github.com/jongsky25/css-is/pull/429) after the runner delay; 29 release-gate checks passed. The deployment retry succeeded, so that proposal was closed without merging. Its branch `fix/release-verification-time-budget` is retained for future pipeline work. **No v8.19 release or timeout change was deployed by this task.**
+
+**Next action:** choose the next feature when the user requests it. Remaining ideas include deadline quick filters; lead/date filters; an authorized export matching interactive filters; grouped workflow/lead views; reuse in Supplies; or the next researched candidate. These remain recommendations, not implementation authorization.
 
 The next session should:
 1. Read this file and the three linked catalogs.
@@ -48,6 +60,7 @@ No model inference, uploads of Office Connect records, production integrations o
 The reviewed application uses FastAPI, Jinja and SQLite, deployed as a Docker Space. It includes CSS scoring and reports; document intake, registry, search and signing workflows; work items and approvals; activities and minutes templates; calendars and rooms; travel receipt suggestions; supplies; and notifications.
 
 Important existing capabilities:
+- [documents_grid.py](../documents_grid.py): bounded Tabulator registry reads, account-owned saved views and deadline labels, live as 8.18; see [TABULATOR_PILOT.md](../TABULATOR_PILOT.md).
 - [documents_intake.py](../documents_intake.py): reviewed OCR-assisted document metadata.
 - [documents_search.py](../documents_search.py): SQLite FTS5, indexed-file provenance and access checks.
 - [search_sources.py](../search_sources.py): role-aware cross-module search sources.
@@ -104,14 +117,14 @@ Suggested pilot, if authorized:
 - Verify that hidden/unauthorized rows never reach the browser or exports, calculated values remain correct, and normal actions continue to work.
 - Compare time to complete a few real lookup tasks against the existing page.
 
-The read-only pilot is implemented in [PR #424](https://github.com/jongsky25/css-is/pull/424), on branch feat/document-registry-tabulator. It adds server-side workflow and verification filters, sorting over all authorized matches, column resizing/visibility and a fallback. The pilot is merged and its 8.16 live deployment is verified. Personal saved views and deadline highlighting are implemented in PR #427, pending its release checks and deployment.
+The read-only pilot is implemented in [PR #424](https://github.com/jongsky25/css-is/pull/424), on branch feat/document-registry-tabulator. It adds server-side workflow and verification filters, sorting over all authorized matches, column resizing/visibility and a fallback. The pilot's 8.16 deployment is verified. Personal saved views and deadline highlighting are merged and verified live as 8.18 in PR #427.
 
 
 ### Tabulator next improvements under consideration
 
-Saved per-user views, column preferences and overdue/due-soon highlighting are now being released in PR #427. Remaining candidates include deadline quick filters; filters for lead, direction and date range; and a server-generated export that matches the interactive filters and permitted columns. Grouped workflow/lead views and reuse in Supplies can follow. These additions have been discussed as recommendations, not selected for implementation.
+Saved per-user views, column preferences and overdue/due-soon highlighting are live in 8.18 (PR #427). Remaining candidates include deadline quick filters; filters for lead, direction and date range; and a server-generated export that matches the interactive filters and permitted columns. Grouped workflow/lead views and reuse in Supplies can follow. The remaining items are recommendations and have not been selected for implementation.
 
-The initial full CI runs for PR #424 each passed 6,045 tests but failed the runtime import-closure check. The new documents_grid.py module was omitted from deploy_hf.RUNTIME_PY. Commit 310efad corrects the allowlist and the four local deployment tests pass. The subsequent full normal/shuffled checks passed on d81151a. After preserving main's intervening AI action release, the metadata was reconciled to 8.16 and PR #424 was merged. The post-merge deployment workflow remains the source of truth for live release status.
+The initial full CI runs for PR #424 each passed 6,045 tests but failed the runtime import-closure check. The new documents_grid.py module was omitted from deploy_hf.RUNTIME_PY. Commit 310efad corrects the allowlist and the four local deployment tests pass. The subsequent full normal/shuffled checks passed on d81151a. After preserving main's intervening AI action release, the metadata was reconciled to 8.16 and PR #424 was merged. The initial 8.16 and follow-up 8.18 deployments are verified; their linked workflow logs record the live-version checks.
 
 ## Hugging Face recommendations
 
@@ -175,5 +188,7 @@ These are findings from the research date; verify selected versions before adopt
 | 2026-10-23 | Expanded review to 51 GitHub repositories with stars, deployment fit, license and maintenance notes. |
 | 2026-10-23 | User requested durable GitHub documentation so this work can resume in future sessions. |
 | 2026-10-23 | User authorized the Tabulator pilot with “execute” and then requested merging first. [PR #424](https://github.com/jongsky25/css-is/pull/424) merged as ed54b9b (version 8.16); [deployment run](https://github.com/jongsky25/css-is/actions/runs/39953481637) pending at the merge check. |
+
+| 2026-10-23 | User authorized saved views and deadline highlighting after deployment verification; PR #427 merged, both CI orders and post-merge gates passed, and live v8.18 was verified in workflow 39962997557. |
 
 When work resumes, record accepted/rejected candidates, rationale, implementation/PR links, verification results and the next topic here. Preserve the distinction between a researched recommendation, an approved implementation and a deployed feature.
