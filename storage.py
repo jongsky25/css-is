@@ -8310,6 +8310,15 @@ def _wellness_yesno(v):
     return None
 
 
+def wellness_check_in_ready(claim, now=None):
+    """Whether the scheduled break has finished in the app's local time."""
+    now = now if now is not None else tz.now_local()
+    end = (datetime.combine(date.fromisoformat(claim["break_date"]),
+                            time.fromisoformat(claim["start_time"]))
+           + timedelta(hours=claim["hours"]))
+    return now >= end
+
+
 def complete_wellness_claim(conn, claim_id, user_id, mood_before, mood_after,
                             activity_done, takeaway, usefulness=None,
                             felt_refreshed=None, managed_stress=None,
@@ -8324,8 +8333,8 @@ def complete_wellness_claim(conn, claim_id, user_id, mood_before, mood_after,
         raise ValueError("That break request isn't yours.")
     if claim["status"] != "approved":
         raise ValueError("Only an approved break can be completed.")
-    if claim["break_date"] > tz.today_local().isoformat():
-        raise ValueError("You can check in once the break's day arrives.")
+    if not wellness_check_in_ready(claim):
+        raise ValueError("You can check in once your scheduled wellness break has ended.")
     try:
         mb, ma = int(mood_before), int(mood_after)
     except (TypeError, ValueError):
