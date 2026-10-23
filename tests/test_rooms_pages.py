@@ -61,7 +61,7 @@ def test_board_shows_twelve_hours_and_a_free_cell(viewer, conn):
 
 def test_board_marks_closed_days_with_a_reason(viewer, conn):
     html = viewer.get(f"/rooms?week={tz.today_local().isoformat()}").text
-    assert "rm-cell st-closed" in html            # today is inside the two-working-day notice
+    assert "rm-cell st-closed" in html            # earlier dates in the displayed week are past
 
 
 def test_approved_booking_shows_its_title_and_cannot_be_clicked(viewer, conn):
@@ -106,8 +106,8 @@ def test_errors_come_back_on_the_board_with_what_you_typed(viewer, conn):
     day = bookable_day(conn)
     r = viewer.post("/rooms/request", data=form(conn, day, title=""))
     assert r.status_code == 400 and "title" in r.text.lower()
-    r = viewer.post("/rooms/request", data=form(conn, tz.today_local(), title="Too soon"))
-    assert r.status_code == 400 and "notice" in r.text and 'value="Too soon"' in r.text
+    r = viewer.post("/rooms/request", data=form(conn, tz.today_local(), title="Too soon", meals="1"))
+    assert r.status_code == 400 and "2 calendar days" in r.text and 'value="Too soon"' in r.text
     r = viewer.post("/rooms/request", data=form(conn, day, attendees="lots"))
     assert r.status_code == 400 and "number" in r.text
     r = viewer.post("/rooms/request", data={"title": "x"})

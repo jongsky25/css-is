@@ -327,3 +327,25 @@ def test_todo_lists_what_is_left_on_a_meal_request():
     form.update(pax=20, reservation={"status": "approved"})
     form["wanted"][0]["status"] = "delivered"
     assert [t["done"] for t in rm.todo(form)] == [True, True, True, True, False, True, True]
+
+
+@pytest.mark.parametrize("admin", [False, True])
+def test_cannot_add_meals_late_through_form_save(conn, me, admin):
+    r = book(conn, me, meals=False)
+    with pytest.raises(rm.MealError, match="2 calendar days"):
+        rm.save_form(conn, r["id"], "me", pax=20, special_request="", wanted={"lunch"},
+                     times={"lunch": "12:00"}, is_admin=admin, today=THU)
+    assert rm.get_form(conn, r["id"]) is None
+    assert not rooms.get_reservation(conn, r["id"])["meals_requested"]
+
+
+def test_meal_form_start_enforces_deadline_but_existing_orders_can_be_delivered(conn, me):
+    r = book(conn, me, meals=False)
+    with pytest.raises(rm.MealError, match="2 calendar days"):
+        rm.ensure_form(conn, r["id"], force=True, today=THU)
+    assert rm.get_form(conn, r["id"]) is None
+    rm.ensure_form(conn, r["id"], force=True, today=MON)
+    rm.tag(conn, r["id"], "am_snack", "requested", "admin", today=MON)
+    assert rm.ensure_form(conn, r["id"], force=True, today=THU)
+    rm.tag(conn, r["id"], "am_snack", "delivered", "admin", today=THU)
+    assert lines(rm.get_form(conn, r["id"]))["am_snack"][2] == "delivered"

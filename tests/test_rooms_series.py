@@ -91,7 +91,7 @@ def test_requesting_only_the_dates_that_work(conn, me):
 def test_no_date_works_and_bad_input(conn, me):
     with pytest.raises(rooms.SeriesIssues, match="None of those"):
         rooms.request_series(conn, every_weeks=1, until=date(2030, 3, 7), skip_bad=True, title="x", day=date(2030, 3, 5),
-                             slot_ids=S(conn, 9), requester_user_id=me, today=MON)             # too soon
+                             slot_ids=S(conn, 9), requester_user_id=me, today=MON, meals_requested=True)  # meals need two calendar days
     with pytest.raises(rooms.RoomError, match="every week or every 2 weeks"):
         series(conn, me, every=3)
     with pytest.raises(rooms.RoomError, match="end on or after"):

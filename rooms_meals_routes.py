@@ -65,12 +65,13 @@ def make_router(templates, get_conn, today_local):
         form = rm.get_form(conn, rid)
         guest = token is not None
         admin = bool(user) and rooms.is_room_admin(conn, user)
+        meal_cutoff = rooms.meal_request_reason(res["day"], today_local()) if res else None
         live = bool(res) and res["status"] in ("requested", "approved")
         return templates.TemplateResponse(request, "rooms_meal_form.html", {
             "layout": "public_layout.html" if guest else "dash_layout.html", "nav_active": "rooms", "tab": "meals_form",
             "res": res, "when": rooms.queue_when(res), "hours": rooms.hours_text(conn, res), "f": form, "base": base, "guest": guest,
             "admin": admin, "live": live, "todo": rm.todo(form) if form else [], "err": err, "ok": ok, "show_scope": False, "meals": rm.MEALS,
-            "can_edit": live and (admin or not (form and form["locked"])), "room_pending": None, "mine_open": 0,
+            "meal_cutoff": meal_cutoff, "can_edit": live and not meal_cutoff and (admin or not (form and form["locked"])), "room_pending": None, "mine_open": 0,
         }, status_code=status_code)
 
     @router.get("/rooms/meals/{rid}", response_class=HTMLResponse)
@@ -96,7 +97,10 @@ def make_router(templates, get_conn, today_local):
                 return _forbidden(request)
             if res["status"] not in ("requested", "approved"):
                 return RedirectResponse(f"/rooms/meals/{rid}?" + urlencode({"err": "This reservation is no longer active."}), status_code=303)
-            rm.ensure_form(conn, rid, user["username"], force=True)
+            try:
+                rm.ensure_form(conn, rid, user["username"], force=True, today=today_local())
+            except rm.MealError as e:
+                return _form_page(request, conn, rid, base=f"/rooms/meals/{rid}", user=user, err=str(e), status_code=400)
         finally:
             conn.close()
         return RedirectResponse(f"/rooms/meals/{rid}", status_code=303)
@@ -112,7 +116,7 @@ def make_router(templates, get_conn, today_local):
             pax, special, wanted, times = _read_form(f)
             try:
                 out = rm.save_form(conn, rid, user["username"], pax=pax, special_request=special, wanted=wanted, times=times,
-                                   is_admin=rooms.is_room_admin(conn, user))
+                                   is_admin=rooms.is_room_admin(conn, user), today=today_local())
             except rm.MealError as e:
                 page = _form_page(request, conn, rid, base=f"/rooms/meals/{rid}", user=user, err=str(e), status_code=400)
                 return page
@@ -165,7 +169,10 @@ def make_router(templates, get_conn, today_local):
             if not res:
                 return _gone(request)
             if res["status"] in ("requested", "approved"):
-                rm.ensure_form(conn, res["id"], f"guest:{res['ref_code']}", force=True)
+                try:
+                    rm.ensure_form(conn, res["id"], f"guest:{res['ref_code']}", force=True, today=today_local())
+                except rm.MealError as e:
+                    return _form_page(request, conn, res["id"], base=f"/room/t/{quote(token)}/meals", token=token, err=str(e), status_code=400)
         finally:
             conn.close()
         return RedirectResponse(f"/room/t/{quote(token)}/meals", status_code=303)
@@ -180,7 +187,7 @@ def make_router(templates, get_conn, today_local):
                 return _gone(request)
             pax, special, wanted, times = _read_form(f)
             try:
-                rm.save_form(conn, res["id"], f"guest:{res['ref_code']}", pax=pax, special_request=special, wanted=wanted, times=times)
+                rm.save_form(conn, res["id"], f"guest:{res['ref_code']}", pax=pax, special_request=special, wanted=wanted, times=times, today=today_local())
             except rm.MealError as e:
                 return _form_page(request, conn, res["id"], base=f"/room/t/{quote(token)}/meals", token=token, err=str(e), status_code=400)
         finally:

@@ -16,7 +16,8 @@ import storage as st
 import tzutil as tz
 
 OPEN_HOUR, CLOSE_HOUR = 7, 19      # room hours: 07:00-19:00
-LEAD_WORKING_DAYS = 2              # a request must be made 2 working days ahead
+LEAD_WORKING_DAYS = 0              # available rooms may be requested the same day
+MEAL_LEAD_DAYS = 2                 # calendar days before the activity
 MAX_DAYS_AHEAD = 90                # booking horizon for signed-in users
 GUEST_MAX_DAYS_AHEAD = 60          # ... and for guests using the public QR page
 GUEST_OPEN_LIMIT = 3               # open requests allowed per guest email address
@@ -41,12 +42,12 @@ def _emit(event, conn, *args):
             pass
 
 
-def _meal_form(conn, rid, by=None):
+def _meal_form(conn, rid, by=None, today=None):
     """Prepare the meal form for a reservation that asked for meals. A meal-form problem must never undo
     the booking that already committed."""
     try:
         import rooms_meals
-        rooms_meals.ensure_form(conn, rid, by)
+        rooms_meals.ensure_form(conn, rid, by, today=today)
     except Exception:                                       # noqa: BLE001
         try:
             conn.rollback()
@@ -128,8 +129,15 @@ def add_working_days(conn, start, n):
 
 
 def earliest_bookable(conn, today=None):
-    """First date an ordinary request may be for: two working days from today."""
+    """Room requests open from today, subject to closures and availability."""
     return add_working_days(conn, today or tz.today_local(), LEAD_WORKING_DAYS)
+
+
+def meal_request_reason(day, today=None):
+    """Meal requests need two calendar days' notice, using the local activity date."""
+    if _d(day) < (today or tz.today_local()) + timedelta(days=MEAL_LEAD_DAYS):
+        return "Meals must be requested at least 2 calendar days before the activity. You can still request the room without meals."
+    return None
 
 
 def day_closed(conn, day, today=None, *, override_lead=False, max_ahead=MAX_DAYS_AHEAD):
@@ -143,9 +151,6 @@ def day_closed(conn, day, today=None, *, override_lead=False, max_ahead=MAX_DAYS
         return h["name"], f"Closed: {h['name']}."
     if day < today:
         return "Past", "That date has already passed."
-    if not override_lead and day < earliest_bookable(conn, today):
-        return "Too soon", (f"Requests need at least {LEAD_WORKING_DAYS} working days' notice "
-                            f"(earliest: {earliest_bookable(conn, today).strftime('%b %d')}).")
     if day > today + timedelta(days=max_ahead):
         return "Too far ahead", f"Requests open up to {max_ahead} days ahead."
     return None
@@ -286,6 +291,8 @@ def request(conn, *, title, day, slot_ids, requester_user_id=None, ext=None, pur
     reason = day_closed_reason(conn, day, today, max_ahead=max_ahead)
     if reason:
         raise RoomError(reason)
+    if meals_requested and (reason := meal_request_reason(day, today)):
+        raise RoomError(reason)
     order = _validate_slots(conn, slot_ids)
     states = slot_states(conn, day)
     taken = [sid for sid in order if states[sid]["state"] in ("approved", "blocked")]
@@ -320,7 +327,7 @@ def request(conn, *, title, day, slot_ids, requester_user_id=None, ext=None, pur
              summary=f"{title} on {day_iso}" + (" (standby: hours already taken)" if is_standby else ""))
     out = get_reservation(conn, rid)
     if meals_requested:
-        _meal_form(conn, rid, actor)
+        _meal_form(conn, rid, actor, today)
     if not quiet:                                          # a series tells the section once, not once per date
         _emit("requested", conn, out)
         if requester_user_id is None:
@@ -834,7 +841,7 @@ def encode(conn, *, by, title, day, slot_ids, requester_user_id=None, ext=None, 
            today=None):
     """An admin books the room for someone: approved at once (source 'encoded').
 
-    Inside the 2-working-day notice a reason (`note`) is needed. If an approved booking
+    Same-day bookings are allowed. If an approved booking
     holds the hours, raises NeedsBump listing what would be cancelled; call again with
     `bump_reason` and the new booking and the cancellations happen in ONE transaction, so
     nobody can slip into the gap."""
@@ -846,8 +853,8 @@ def encode(conn, *, by, title, day, slot_ids, requester_user_id=None, ext=None, 
     closed = day_closed(conn, day, today, override_lead=True)
     if closed:
         raise RoomError(closed[1])
-    if _d(day) < earliest_bookable(conn, today) and not (note or "").strip():
-        raise RoomError(f"This is inside the {LEAD_WORKING_DAYS}-working-day notice. Please add a reason.")
+    if meals_requested and (reason := meal_request_reason(day, today)):
+        raise RoomError(reason)
     order = _validate_slots(conn, slot_ids)
     day_iso = _d(day).isoformat()
     block = _blocked_reason(conn, day_iso, order)
@@ -886,7 +893,7 @@ def encode(conn, *, by, title, day, slot_ids, requester_user_id=None, ext=None, 
     out = get_reservation(conn, rid)
     out["bumped"] = held
     if meals_requested:
-        _meal_form(conn, rid, by)
+        _meal_form(conn, rid, by, today)
     _emit("encoded", conn, out, by)
     for old in held:
         _meals_over(conn, old, f"The booking was cancelled: {bump_reason.strip()}")
@@ -934,6 +941,8 @@ def _book_accepted(conn, old, kw):
     """A bumped person's chosen alternative: approved immediately, source 'bump_accept',
     notice rule waived (the cancellation, not the requester, caused the short notice)."""
     ids, day_iso = kw["slot_ids"], _d(kw["day"]).isoformat()
+    if kw.get("meals_requested") and (reason := meal_request_reason(day_iso, kw.get("today"))):
+        raise RoomError(reason)
     if _approved_overlapping(conn, day_iso, ids) or _blocked_reason(conn, day_iso, ids):
         raise RoomError("That time was just taken. Pick one of the fresh suggestions.")
     now = _stamp()
@@ -1062,8 +1071,8 @@ _EMAIL_OK = __import__("re").compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 def request_external(conn, *, name, org, email, phone, title, day, slot_ids, consent, purpose=None,
                      attendees=None, modality="f2f", meals_requested=False, today=None):
-    """A request from the public QR page. Same rules as a signed-in one (two working days'
-    notice, back-to-back hours), a shorter horizon (60 days), a consent tick, a sane email
+    """A request from the public QR page. Same rules as a signed-in one (same-day room requests,
+    back-to-back hours, two calendar days for meals), a shorter horizon (60 days), a consent tick, a sane email
     and at most three open requests per email address."""
     name, org, email, phone = (name or "").strip(), (org or "").strip(), (email or "").strip(), (phone or "").strip()
     if not consent:
@@ -1158,12 +1167,14 @@ def purge_guest_details(conn, today=None, months=GUEST_RETENTION_MONTHS):
 
 # ------------------------------------------------ CSS activity link (R8) ---
 
-def precheck(conn, day, slot_ids, today=None, max_ahead=MAX_DAYS_AHEAD, standby=False):
+def precheck(conn, day, slot_ids, today=None, max_ahead=MAX_DAYS_AHEAD, standby=False, meals_requested=False):
     """Would a request for these hours be refused right now? Raises the same RoomError / SlotTaken
     request() would, writing nothing: the activity form uses it to stop a bad room choice BEFORE
     the activity is saved. With `standby` taken hours are fine (a provisional request is allowed)."""
     reason = day_closed_reason(conn, day, today or tz.today_local(), max_ahead=max_ahead)
     if reason:
+        raise RoomError(reason)
+    if meals_requested and (reason := meal_request_reason(day, today)):
         raise RoomError(reason)
     order = _validate_slots(conn, slot_ids)
     states = slot_states(conn, day)
@@ -1266,6 +1277,8 @@ def request_move(conn, rid, new_day, user, today=None):
     except SlotTaken as e:
         alts = suggest(conn, new_day, slot_ids, n=3, today=today)
         raise SlotTaken(f"{e} " + ("Nearest free times: " + "; ".join(a["label"] for a in alts) + "." if alts else ""))
+    if res["meals_requested"] and (reason := meal_request_reason(new_day, today)):
+        raise RoomError(reason)
     if res["status"] == "requested":
         before = res["day"]
         conn.execute("UPDATE room_reservation SET day=?, updated_at=? WHERE id=?", (new_day_iso, _stamp(), rid))
@@ -1458,6 +1471,10 @@ def request_series(conn, *, every_weeks, until, skip_bad=False, day, slot_ids, *
     told once, and can approve or decline the whole series or one date at a time."""
     max_ahead = kw.get("max_ahead", MAX_DAYS_AHEAD)
     plan = plan_series(conn, day, slot_ids, every_weeks, until, kw.get("today"), max_ahead)
+    if kw.get("meals_requested"):
+        for p in plan:
+            if p["ok"] and (reason := meal_request_reason(p["day"], kw.get("today"))):
+                p.update(ok=False, reason=reason)
     bad, good = [p for p in plan if not p["ok"]], [p for p in plan if p["ok"]]
     if bad and not skip_bad:
         raise SeriesIssues(f"{len(bad)} of the {len(plan)} dates can't be requested.", plan)
