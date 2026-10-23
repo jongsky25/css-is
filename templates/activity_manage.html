@@ -457,7 +457,7 @@
         var slot = btn.dataset.slot, ta = document.getElementById(btn.dataset.target);
         var note = document.querySelector('.ai-note[data-slot="' + slot + '"]');
         btn.addEventListener('click', function () {
-          if (ta.value.trim() && !confirm('Replace the current ' + slot + ' message with an AI-personalized draft?')) return;
+          var before = ta.value;
           btn.disabled = true;
           if (note) { note.hidden = false; note.textContent = 'Personalizing…'; note.className = 'ai-note'; }
           fetch(msgForm.action + '/ai-draft', {
@@ -468,6 +468,15 @@
             .then(function (data) {
               btn.disabled = false;
               if (data && data.ok && data.text) {
+                if (ta.value !== before) {
+                  if (note) { note.textContent = 'Your message changed while AI was working. Your edits were kept; try again if needed.'; note.className = 'ai-note err'; }
+                  return;
+                }
+                if (!confirm('Review this AI draft before applying it. Check all activity details and wording.\n\n' + data.text + '\n\nApply this draft to the ' + slot + ' message?')) {
+                  if (note) { note.textContent = 'AI draft was not applied. Your message was kept.'; note.className = 'ai-note'; }
+                  return;
+                }
+                if (ta.value !== before) return;
                 ta.value = data.text;
                 ta.dispatchEvent(new Event('input'));
                 ta.focus();

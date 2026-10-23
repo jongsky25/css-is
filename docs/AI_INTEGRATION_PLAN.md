@@ -300,6 +300,8 @@ In **8.07**, [evaluation suite 1.2.0](AI_EVALUATION.md#feedback-triage-contract-
 modality — **no attendee data**). Static drafts remain the initial render and
 the fallback.
 
+In **8.12**, [evaluation suite 1.4.0](AI_EVALUATION.md#activity-message-drafting-reviewable-plain-text) adds 32 offline provider cases and explicit organizer review before an AI draft replaces text. The route rejects malformed and unsupported numeric claims, rechecks current access/activity after provider I/O, and keeps message interaction logs metadata-only. Other invented prose can still escape deterministic checks and requires human review; live-model quality remains unmeasured.
+
 ### Phase 8 — Entity-resolution assist (`harmonize`, v2.11)
 
 "Ask AI" on `harmonize.py` REVIEW-tier pairs (similarity 0.62–0.90):

@@ -9831,6 +9831,37 @@ def _messages_ai_prompt(ev, slot, tone):
     return "\n".join(lines)
 
 
+def _validated_message_draft(parsed, ev):
+    """Accept a bounded plain-text suggestion; activity facts still need review."""
+    if not isinstance(parsed, dict) or set(parsed) != {"text"} or not isinstance(parsed["text"], str):
+        raise ValueError("Invalid message draft")
+    text = parsed["text"].strip()
+    source = " ".join(str(ev.get(key) or "") for key in
+                      ("title", "event_date", "venue", "organizer", "lead_name"))
+    source_numbers = set(re.findall(r"\d+", source))
+    if (not text or len(text) > _MSG_MAX or text.count(amsg.NAME_TOKEN) != 1
+            or any(ord(char) < 32 and char not in "\n\t" for char in text)
+            or "<" in text or ">" in text or "`" in text
+            or re.search(r"(?i)\b(?:https?://|www\.)\S+|\b\S+@\S+\.\S+", text)
+            or re.search(r"(?<!\d)(?:\+?63|0)9\d{9}(?!\d)", text)
+            or re.search(r"(?i)\b(?:send|share|provide|reply with|enter|submit|upload)\b.{0,40}"
+                         r"\b(?:password|otp|one-time code|bank account|credit card)\b", text)
+            or re.search(r"\[[^\]]+\]\([^)]*\)", text)
+            or any(number not in source_numbers for number in re.findall(r"\d+", text))):
+        raise ValueError("Unverified message draft")
+    return text
+
+
+def _messages_ai_current(request, conn, user, ev):
+    payload = auth.parse_token(request.cookies.get(auth.COOKIE_NAME))
+    current = st.session_actor(conn, payload) if payload else None
+    fresh = st.get_event(conn, ev["event_token"])
+    return (current is not None
+            and all(current[key] == user[key] for key in ("id", "username", "role"))
+            and fresh == ev and _can_manage_event(current, fresh, conn)
+            and ai.ai_mode(conn) != "off" and ai.feature_enabled(conn, "messages"))
+
+
 @app.post("/activities/{event_token}/messages/ai-draft")
 async def activity_messages_ai_draft(request: Request, event_token: str):
     posted = await _posted(request)
@@ -9853,16 +9884,28 @@ async def activity_messages_ai_draft(request: Request, event_token: str):
             result, interaction_id = await ai.ask_async(
                 conn, user, "messages", _messages_ai_prompt(ev, slot, tone), ip=ip,
                 system=_AI_MESSAGE_SYSTEM_PROMPT, response_schema=_messages_ai_schema(),
-                temperature=0.5, max_output_tokens=300, timeout=12.0)
+                temperature=0.3, max_output_tokens=300, timeout=8.0)
         except ai.AIError:
             return unavailable
-        text = str((result.get("parsed") or {}).get("text") or "").strip()[:_MSG_MAX]
-        if amsg.NAME_TOKEN not in text:
-            st.update_ai_interaction_outcome(conn, interaction_id, "rejected_validation")
+        st.update_ai_interaction_outcome(conn, interaction_id, "rejected_validation")
+        try:
+            text = _validated_message_draft(result.get("parsed"), ev)
+        except ValueError:
             return unavailable
-        _audit(request, conn, "ai_message_draft", target_type="event", target_id=ev["id"],
-               summary=f"AI-personalized the {slot} message ({tone} tone) for activity {ev['id']}.")
-        return JSONResponse({"ok": True, "text": text, "interaction_id": interaction_id})
+        conn.execute("BEGIN IMMEDIATE")
+        try:
+            if not _messages_ai_current(request, conn, user, ev):
+                return JSONResponse({"ok": False, "notice": "Access or activity details changed while AI was working — reload and try again."})
+            st.audit(conn, user["username"], "ai_message_draft", target_type="event", target_id=ev["id"],
+                     summary=f"Validated {slot} message suggestion for activity {ev['id']}; review required.",
+                     ip=ip, commit=False)
+            st.update_ai_interaction_outcome(conn, interaction_id, "ok", commit=False)
+            conn.commit()
+        finally:
+            if conn.in_transaction:
+                conn.rollback()
+        return JSONResponse({"ok": True, "text": text, "interaction_id": interaction_id,
+                             "contract_version": 1, "review_required": True})
     finally:
         conn.close()
 

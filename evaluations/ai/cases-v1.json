@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "suite_id": "existing-ai-answers",
-  "suite_version": "1.3.0",
+  "suite_version": "1.4.0",
   "contract_version": 1,
   "reference_clock": "2026-10-20T06:00:00",
   "categories": [
@@ -3811,6 +3811,450 @@
           "ok"
         ],
         "ok": true
+      }
+    },
+    {
+      "id": "messages-welcome-baseline",
+      "category": "facts",
+      "surface": "messages",
+      "question": "Can the organizer review a safe activity message draft? (welcome-baseline)",
+      "scenario": "welcome-baseline",
+      "expect": {
+        "ok": true,
+        "calls": 1,
+        "outcomes": [
+          "ok"
+        ]
+      }
+    },
+    {
+      "id": "messages-ending-baseline",
+      "category": "facts",
+      "surface": "messages",
+      "question": "Can the organizer review a safe activity message draft? (ending-baseline)",
+      "scenario": "ending-baseline",
+      "expect": {
+        "ok": true,
+        "calls": 1,
+        "outcomes": [
+          "ok"
+        ]
+      }
+    },
+    {
+      "id": "messages-viewer",
+      "category": "authority",
+      "surface": "messages",
+      "question": "Can the organizer review a safe activity message draft? (viewer)",
+      "scenario": "viewer",
+      "expect": {
+        "ok": false,
+        "calls": 0,
+        "outcomes": []
+      }
+    },
+    {
+      "id": "messages-missing",
+      "category": "freshness",
+      "surface": "messages",
+      "question": "Can the organizer review a safe activity message draft? (missing)",
+      "scenario": "missing",
+      "expect": {
+        "ok": false,
+        "calls": 0,
+        "outcomes": []
+      }
+    },
+    {
+      "id": "messages-deactivate",
+      "category": "authority",
+      "surface": "messages",
+      "question": "Can the organizer review a safe activity message draft? (deactivate)",
+      "scenario": "deactivate",
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "messages-demote",
+      "category": "authority",
+      "surface": "messages",
+      "question": "Can the organizer review a safe activity message draft? (demote)",
+      "scenario": "demote",
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "messages-logout",
+      "category": "authority",
+      "surface": "messages",
+      "question": "Can the organizer review a safe activity message draft? (logout)",
+      "scenario": "logout",
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "messages-disable-during",
+      "category": "authority",
+      "surface": "messages",
+      "question": "Can the organizer review a safe activity message draft? (disable-during)",
+      "scenario": "disable-during",
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "messages-off-during",
+      "category": "authority",
+      "surface": "messages",
+      "question": "Can the organizer review a safe activity message draft? (off-during)",
+      "scenario": "off-during",
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "messages-edit-title",
+      "category": "freshness",
+      "surface": "messages",
+      "question": "Can the organizer review a safe activity message draft? (edit-title)",
+      "scenario": "edit-title",
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "messages-edit-date",
+      "category": "freshness",
+      "surface": "messages",
+      "question": "Can the organizer review a safe activity message draft? (edit-date)",
+      "scenario": "edit-date",
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "messages-edit-message",
+      "category": "freshness",
+      "surface": "messages",
+      "question": "Can the organizer review a safe activity message draft? (edit-message)",
+      "scenario": "edit-message",
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "messages-transfer-owner",
+      "category": "authority",
+      "surface": "messages",
+      "question": "Can the organizer review a safe activity message draft? (transfer-owner)",
+      "scenario": "transfer-owner",
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "messages-unsupported-number",
+      "category": "facts",
+      "surface": "messages",
+      "question": "Can the organizer review a safe activity message draft? (unsupported-number)",
+      "scenario": "unsupported-number",
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "messages-bad-root",
+      "category": "injection",
+      "surface": "messages",
+      "question": "Can the organizer review a safe activity message draft? (bad-root)",
+      "scenario": "bad-root",
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "messages-extra-field",
+      "category": "injection",
+      "surface": "messages",
+      "question": "Can the organizer review a safe activity message draft? (extra-field)",
+      "scenario": "extra-field",
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "messages-no-name",
+      "category": "injection",
+      "surface": "messages",
+      "question": "Can the organizer review a safe activity message draft? (no-name)",
+      "scenario": "no-name",
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "messages-duplicate-name",
+      "category": "injection",
+      "surface": "messages",
+      "question": "Can the organizer review a safe activity message draft? (duplicate-name)",
+      "scenario": "duplicate-name",
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "messages-too-long",
+      "category": "injection",
+      "surface": "messages",
+      "question": "Can the organizer review a safe activity message draft? (too-long)",
+      "scenario": "too-long",
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "messages-html",
+      "category": "injection",
+      "surface": "messages",
+      "question": "Can the organizer review a safe activity message draft? (html)",
+      "scenario": "html",
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "messages-url",
+      "category": "injection",
+      "surface": "messages",
+      "question": "Can the organizer review a safe activity message draft? (url)",
+      "scenario": "url",
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "messages-email",
+      "category": "injection",
+      "surface": "messages",
+      "question": "Can the organizer review a safe activity message draft? (email)",
+      "scenario": "email",
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "messages-phone",
+      "category": "injection",
+      "surface": "messages",
+      "question": "Can the organizer review a safe activity message draft? (phone)",
+      "scenario": "phone",
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "messages-credential-request",
+      "category": "injection",
+      "surface": "messages",
+      "question": "Can the organizer review a safe activity message draft? (credential-request)",
+      "scenario": "credential-request",
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "messages-markdown-link",
+      "category": "injection",
+      "surface": "messages",
+      "question": "Can the organizer review a safe activity message draft? (markdown-link)",
+      "scenario": "markdown-link",
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "messages-control",
+      "category": "injection",
+      "surface": "messages",
+      "question": "Can the organizer review a safe activity message draft? (control)",
+      "scenario": "control",
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "messages-timeout",
+      "category": "resilience",
+      "surface": "messages",
+      "question": "Can the organizer review a safe activity message draft? (timeout)",
+      "scenario": "timeout",
+      "expect": {
+        "ok": false,
+        "calls": 2,
+        "outcomes": [
+          "fallback_timeout"
+        ]
+      }
+    },
+    {
+      "id": "messages-http503",
+      "category": "resilience",
+      "surface": "messages",
+      "question": "Can the organizer review a safe activity message draft? (http503)",
+      "scenario": "http503",
+      "expect": {
+        "ok": false,
+        "calls": 2,
+        "outcomes": [
+          "fallback_error"
+        ]
+      }
+    },
+    {
+      "id": "messages-budget",
+      "category": "resilience",
+      "surface": "messages",
+      "question": "Can the organizer review a safe activity message draft? (budget)",
+      "scenario": "budget",
+      "expect": {
+        "ok": false,
+        "calls": 0,
+        "outcomes": [
+          "fallback_budget"
+        ]
+      }
+    },
+    {
+      "id": "messages-disabled",
+      "category": "resilience",
+      "surface": "messages",
+      "question": "Can the organizer review a safe activity message draft? (disabled)",
+      "scenario": "disabled",
+      "expect": {
+        "ok": false,
+        "calls": 0,
+        "outcomes": [
+          "no_config"
+        ]
+      }
+    },
+    {
+      "id": "messages-off",
+      "category": "resilience",
+      "surface": "messages",
+      "question": "Can the organizer review a safe activity message draft? (off)",
+      "scenario": "off",
+      "expect": {
+        "ok": false,
+        "calls": 0,
+        "outcomes": [
+          "no_config"
+        ]
+      }
+    },
+    {
+      "id": "messages-audit-fail",
+      "category": "resilience",
+      "surface": "messages",
+      "question": "Can the organizer review a safe activity message draft? (audit-fail)",
+      "scenario": "audit-fail",
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
       }
     }
   ]
