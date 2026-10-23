@@ -13,7 +13,7 @@ def rows(conn, sql, args=()):
 def install(conn):
     conn.executescript('''
     CREATE TABLE IF NOT EXISTS document_registry_view (
-      id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES admin_user(id),
+      id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL REFERENCES admin_user(id),
       name TEXT NOT NULL COLLATE NOCASE, state_json TEXT NOT NULL,
       revision INTEGER NOT NULL DEFAULT 1, created_at TEXT NOT NULL, updated_at TEXT NOT NULL,
       UNIQUE(user_id,name));

@@ -75,6 +75,19 @@ def test_updates_and_deletes_reject_stale_revisions_and_quota_is_per_account(reg
     assert len(grid.views(conn, users[0])) == 10
 
 
+def test_deleted_view_id_cannot_target_a_replacement_from_an_old_tab(registry):
+    conn, users, _, _ = registry
+    old = create(conn, users[0], 'Old view')
+    grid.save_view(conn, users[0], {'action': 'delete', 'id': old['id'], 'revision': 1})
+    replacement = create(conn, users[0], 'Replacement')
+    assert replacement['id'] != old['id']
+    for action in ('delete', 'update'):
+        with pytest.raises(ValueError, match='not found'):
+            grid.save_view(conn, users[0], {'action': action, 'id': old['id'], 'revision': 1,
+                                          'name': 'Stale write', 'state': state()})
+    assert grid.views(conn, users[0]) == [replacement]
+
+
 @pytest.mark.parametrize('mutate', [
     lambda v: v.update(schema=2), lambda v: v.update(schema=True),
     lambda v: v.update(queue='elsewhere'), lambda v: v.update(q='x'*121),
