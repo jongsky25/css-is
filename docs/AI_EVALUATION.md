@@ -182,7 +182,7 @@ Before broader AI capability or live-model comparisons, the owner must define re
 
 ## Rollout and repair
 
-Release **8.22** follows the merged 8.21 main branch. No schema migration, new feature flag, dependency or production provider configuration is required. The application and service-worker cache versions use exactly two digits after the decimal.
+Release **8.22** follows the merged 8.21 main branch. No schema migration, new feature flag or production provider configuration is required. The pinned `pypdf` version advances to 6.21.2 to resolve three reported malformed-PDF runtime advisories. The application and service-worker cache versions use exactly two digits after the decimal.
 
 Existing AI/human comment tags are not rewritten. UX analysis remains a review aid and displays its evidence window and sample status. Production workflow observations and real-model quality remain deferred. Both normal and shuffled full CI must pass for the final PR head, including all 366 scenarios and the minimized report gate.
 

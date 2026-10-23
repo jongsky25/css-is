@@ -29,7 +29,8 @@ CHANGELOG = [
         "changes": [
             "A page or help suggestion stops if your sign-in, access or available pages change while AI is working.",
             "Invalid AI selections are set aside, so you can use the normal search instead.",
-            "Release checks now cover these suggestions and provider failures."
+            "Release checks now cover these suggestions and provider failures.",
+            "PDF handling now uses an updated library that fixes newly reported security issues."
         ]
     },
     {
