@@ -18,10 +18,21 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "8.01"
+APP_VERSION = "8.02"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "8.02",
+        "date": "October 23, 2026",
+        "date": "October 23, 2026",
+        "summary": "Walk-in feedback no longer disappears from ARTA reports.",
+        "changes": [
+            "Walk-in responses submitted since April were missing from ARTA reports, exports and comments; they now count again.",
+            "The standing walk-in form can no longer be archived by accident, so its posted link always keeps counting.",
+            "Archiving an individual walk-in entry works as before."
+        ]
+    },
     {
         "version": "8.01",
         "date": "October 22, 2026",

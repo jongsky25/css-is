@@ -1,3 +1,10 @@
+## 8.02 — October 23, 2026
+
+- Fix ARTA walk-in reports, official exports and the comments view omitting every response on the standing walk-in form after it was marked archived (24 entries, April 10 to October 22, 2026).
+- Keep the standing walk-in form out of every form-level archive path (single, inline and bulk); individual entries can still be archived or restored from Walk-in entries.
+- Tests cover report counts with an archived standing form and refusal to archive it.
+- No schema migration or new dependency.
+
 ## 8.01 — October 22, 2026
 
 - Start A22 with evaluation suite 1.0.0: 38 named questions/scenarios and an independent synthetic reference dataset covering server-owned figures/evidence, missing/stale sources, current account/session/calendar authority, injected instructions and provider failures/budgets.
