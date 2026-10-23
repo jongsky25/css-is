@@ -7695,6 +7695,41 @@ def _harmonize_ai_schema():
     }, "required": ["relation", "reason"]}
 
 
+def _harmonize_pair_snapshot(conn, a_id, b_id):
+    people = {row["id"]: row for row in ncl.list_people(conn)}
+    a, b = people.get(a_id), people.get(b_id)
+    if not a or not b or not any(d["id"] == b_id for d in a["dupes"]):
+        return None
+    return tuple((p["id"], p["name"], p["n"], p["internal"], p["hidden"])
+                 for p in (a, b))
+
+
+def _harmonize_current(request, conn, user):
+    payload = auth.parse_token(request.cookies.get(auth.COOKIE_NAME))
+    current = st.session_actor(conn, payload) if payload else None
+    return (current is not None
+            and all(current[k] == user[k] for k in ("id", "username", "role"))
+            and auth.can(current["role"], "manage_users")
+            and ai.ai_mode(conn) != "off" and ai.feature_enabled(conn, "harmonize"))
+
+
+def _validated_harmonize_suggestion(parsed, prompt):
+    if (not isinstance(parsed, dict) or set(parsed) != {"relation", "reason"}
+            or parsed["relation"] not in ("same", "different", "unsure")
+            or not isinstance(parsed["reason"], str)):
+        raise ValueError("Unverified directory suggestion")
+    reason = parsed["reason"].strip()
+    if (not reason or len(reason) > 300
+            or any(ord(char) < 32 for char in reason)
+            or any(char in reason for char in "<>`")
+            or re.search(r"(?i)\b(?:https?://|www\.)\S+|\b\S+@\S+\.\S+", reason)
+            or re.search(r"(?<!\d)(?:\+?63|0)9\d{9}(?!\d)", reason)
+            or re.search(r"\[[^\]]+\]\([^)]*\)", reason)
+            or any(number not in re.findall(r"\d+", prompt) for number in re.findall(r"\d+", reason))):
+        raise ValueError("Unverified directory suggestion")
+    return parsed["relation"], reason
+
+
 @app.post("/directory/cleanup/ai-suggest")
 async def cleanup_ai_suggest(request: Request):
     p = await _posted(request)
@@ -7710,44 +7745,52 @@ async def cleanup_ai_suggest(request: Request):
     user = request.state.user
     conn = get_conn()
     try:
-        people = {q["id"]: q for q in ncl.list_people(conn)}
-        a, b = people.get(a_id), people.get(b_id)
+        snapshot = _harmonize_pair_snapshot(conn, a_id, b_id)
         # Only ever adjudicate a pair the UI itself already surfaced as a
         # duplicate candidate for `a` — never an arbitrary id pair a caller
         # might post, and never one the model was allowed to invent.
-        if not a or not b or not any(d["id"] == b_id for d in a["dupes"]):
+        if snapshot is None:
             return JSONResponse(
                 {"ok": False, "notice": "That pair isn't a current duplicate candidate."},
                 status_code=400)
+        a, b = snapshot
         prompt = (
-            f"Record A: \"{ai.mask_for_log(a['name'])}\" "
-            f"({a['n']} rating{'s' if a['n'] != 1 else ''}"
-            f"{', BLHSD staff' if a['internal'] else ''})\n"
-            f"Record B: \"{ai.mask_for_log(b['name'])}\" "
-            f"({b['n']} rating{'s' if b['n'] != 1 else ''}"
-            f"{', BLHSD staff' if b['internal'] else ''})")
+            f"Record A: \"{ai.mask_for_log(a[1])}\" ({a[2]} ratings"
+            f"{', BLHSD staff' if a[3] else ''})\n"
+            f"Record B: \"{ai.mask_for_log(b[1])}\" ({b[2]} ratings"
+            f"{', BLHSD staff' if b[3] else ''})")
         try:
             result, interaction_id = await ai.ask_async(
                 conn, user, "harmonize", prompt, ip=ip,
                 system=_AI_HARMONIZE_SYSTEM_PROMPT,
                 response_schema=_harmonize_ai_schema(),
-                temperature=0.1, max_output_tokens=256, timeout=15.0)
+                temperature=0.1, max_output_tokens=256, timeout=8.0)
         except ai.AIError:
             return JSONResponse({"ok": False,
                                  "notice": "AI adjudication isn't available right now — "
                                            "decide by hand."})
-        parsed = result.get("parsed") or {}
-        relation = parsed.get("relation")
-        if relation not in ("same", "different", "unsure"):
-            relation = "unsure"
-        reason = str(parsed.get("reason") or "")[:300]
-        _audit(request, conn, "ai_harmonize_suggest", target_type="resource_person",
-               target_id=a_id,
-               summary=f"Ran AI adjudication on #{a_id} “{a['name']}” vs #{b_id} “{b['name']}”.")
+        st.update_ai_interaction_outcome(conn, interaction_id, "rejected_validation")
+        try:
+            relation, reason = _validated_harmonize_suggestion(result.get("parsed"), prompt)
+        except ValueError:
+            return JSONResponse({"ok": False, "notice": "AI suggestion could not be verified — decide by hand."})
+        conn.execute("BEGIN IMMEDIATE")
+        try:
+            if not _harmonize_current(request, conn, user) or _harmonize_pair_snapshot(conn, a_id, b_id) != snapshot:
+                return JSONResponse({"ok": False, "notice": "Access or directory records changed while AI was working — reload and try again."})
+            st.audit(conn, user["username"], "ai_harmonize_suggest", target_type="resource_person",
+                     target_id=a_id, summary=f"Validated AI suggestion for directory pair #{a_id}/#{b_id}; human review required.",
+                     ip=ip, commit=False)
+            st.update_ai_interaction_outcome(conn, interaction_id, "ok", commit=False)
+            conn.commit()
+        finally:
+            if conn.in_transaction:
+                conn.rollback()
     finally:
         conn.close()
     return JSONResponse({"ok": True, "relation": relation, "reason": reason,
-                         "interaction_id": interaction_id})
+                         "interaction_id": interaction_id, "contract_version": 1,
+                         "review_required": True})
 
 
 @app.post("/directory/cleanup/split")

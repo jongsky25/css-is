@@ -338,7 +338,7 @@
             '<button type="button" class="fb-btn" data-r="down" aria-label="Not helpful">👎</button>' +
             '</span>';
           box.innerHTML = '<span class="rel rel-' + esc(data.relation) + '">' + esc(data.relation) +
-            '</span>' + esc(data.reason) + fb;
+            '</span>' + esc(data.reason) + ' <span class="muted">AI hint — review both records before merging.</span>' + fb;
           box.className = 'ai-hint shown';
           var fbBtns = box.querySelectorAll('.fb-btn');
           for (var i = 0; i < fbBtns.length; i++) {
