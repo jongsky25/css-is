@@ -1,9 +1,9 @@
 {% extends "documents/base.html" %}
 {% block head %}{{ super() }}
 <link rel="stylesheet" href="/static/vendor/tabulator/tabulator.min.css?v=6.7.1">
-<link rel="stylesheet" href="/static/css/document-registry.css?v=8.20">
+<link rel="stylesheet" href="/static/css/document-registry.css?v=8.22">
 <script src="/static/vendor/tabulator/tabulator.min.js?v=6.7.1" defer></script>
-<script src="/static/js/document-registry.js?v=8.20" defer></script>
+<script src="/static/js/document-registry.js?v=8.22" defer></script>
 {% endblock %}
 {% block documents_content %}
 {% if queue=='instruction' %}<h2>For my instruction</h2><p>Incoming documents reviewed by records staff and waiting for your routing slip.</p>{% elif queue=='mentions' %}<h2>Instructions for me</h2><p>Documents with instructions you have not marked read. Only records you can currently access appear here.</p>{% elif queue=='gmail_review' %}<h2>Gmail: needs verification</h2><p>Imported records awaiting your verification or correction. Open a record to check its attachments, confirm fields, and review routing. Closed, cancelled and merged records are excluded.</p>{% elif queue=='gmail' %}<h2>Documents imported from Gmail</h2>{% elif queue=='archived' %}<h2>Archived documents</h2><p>Closed and cancelled records filed by Documents workflow administrators. Open a record to review its history or restore it.</p>{% endif %}
@@ -28,6 +28,9 @@
 <label>Sort by <select id="registry-sort"><option value="registered:desc">Newest records</option><option value="registered:asc">Oldest records</option><option value="due_date:asc">Earliest deadline</option><option value="due_date:desc">Latest deadline</option>{% for field,label in [('number','Number'),('subject','Subject'),('verification','Verification'),('status','Workflow'),('lead','Lead')] %}<option value="{{ field }}:asc">{{ label }} A–Z</option><option value="{{ field }}:desc">{{ label }} Z–A</option>{% endfor %}</select></label>
 <button type="submit">Apply filters</button><button type="button" id="registry-reset">Reset table</button>
 </form>
+<div class="registry-toolbar"><button type="button" id="registry-export" disabled>Export current view (CSV)</button></div>
+<p>Current-view export includes all matching pages in the applied sort order and only your visible columns. Exports over 10,000 records require narrower filters.</p>
+<p id="registry-export-status" role="status" aria-live="polite"></p>
 <details id="registry-columns"><summary>Choose columns</summary><div class="registry-column-choices"></div></details>
 <p>Resize columns by dragging their edges. Use Sort by to order records with the keyboard.</p>
 <p>Deadline labels: overdue means before today; due soon includes the next three working days, excluding weekends and configured holidays. Closed and cancelled records have no deadline alert. Unknown dates are never overdue.</p>

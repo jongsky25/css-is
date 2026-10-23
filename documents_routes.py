@@ -165,6 +165,21 @@ def make_router(templates,get_conn):
         finally:
             conn.close()
 
+    @router.get('/documents/grid-export.csv')
+    def registry_export(request:Request):
+        conn=get_conn()
+        headers={'Cache-Control':'no-store','Pragma':'no-cache'}
+        try:
+            content,count=grid.export_csv(conn,request.state.user,request.query_params)
+            return Response(content,media_type='text/csv',headers={**headers,
+                'Content-Disposition':'attachment; filename="document-view.csv"',
+                'X-Export-Rows':str(count)})
+        except (p.Denied,ValueError) as e:
+            return JSONResponse({'error':str(e)},status_code=403 if isinstance(e,p.Denied) else 400,
+                                headers=headers)
+        finally:
+            conn.close()
+
     @router.get('/documents/grid-views')
     def registry_views(request:Request):
         conn=get_conn()

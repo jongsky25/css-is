@@ -138,3 +138,8 @@ unchanged. A local strict audit of all 32 installed tooling packages passed
 with complete coverage and no known reported advisories. Full CI evidence is
 recorded on PR #364; the earlier verification.json remains historical 7.50
 evidence rather than a current advisory claim.
+
+
+## pypdf patch in v8.22
+
+The release audit reported CVE-2026-115572, CVE-2026-115585 and CVE-2026-115580 in pypdf 6.21.1. The reviewed [6.21.2 release](https://github.com/py-pdf/pypdf/releases/tag/6.21.2) fixes repeated full-file loads and malformed cross-reference table limits. The runtime pin is now 6.21.2; runtime/test lock hashes were regenerated with the locked uv 0.13.4. All other package selections were retained. No advisory is suppressed. PDF reader, intake and OCR checks plus the full release suites verify compatibility.

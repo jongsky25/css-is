@@ -14,6 +14,9 @@
   const viewName = document.getElementById('registry-view-name');
   const viewStatus = document.getElementById('registry-view-status');
   const viewForm = document.getElementById('registry-save-view');
+  const exportButton = document.getElementById('registry-export');
+  const exportStatus = document.getElementById('registry-export-status');
+  let exportReady = false, exporting = false;
   const fields = ['number', 'subject', 'verification', 'status', 'due_date', 'lead'];
   let savedViews = null, loadingViews = null, saving = false;
   let table = null, controller = null, generation = 0;
@@ -66,6 +69,7 @@
   }
   function showStandard(message = '') {
     generation++;
+    exportReady = false; updateExportButton();
     if (controller) controller.abort();
     panel.hidden = true;
     standard.hidden = false;
@@ -86,6 +90,7 @@
     target.searchParams.set('sort', order.field);
     target.searchParams.set('dir', order.dir);
     for (const [key, value] of Object.entries(applied)) target.searchParams.set(key, value);
+    exportReady = false; updateExportButton();
     element.setAttribute('aria-busy', 'true');
     status.textContent = 'Loading matching documents…';
     try {
@@ -100,6 +105,7 @@
         throw new Error('Unexpected table response');
       }
       status.textContent = data.last_row ? `${data.last_row} matching records · page ${data.page} of ${data.last_page}.` : 'No matching documents.';
+      exportReady = true;
       return data;
     } catch (error) {
       if (current === generation) {
@@ -111,7 +117,7 @@
       throw error;
     } finally {
       clearTimeout(timer);
-      if (current === generation) element.removeAttribute('aria-busy');
+      if (current === generation) { element.removeAttribute('aria-busy'); updateExportButton(); }
     }
   }
   function start(saved = null) {
@@ -234,6 +240,31 @@
     return {schema: 1, queue: scope.get('queue') || 'all', q: scope.get('q') || '',
       ...applied, sort: order.field, dir: order.dir, columns};
   }
+  function updateExportButton() { exportButton.disabled = !exportReady || exporting; }
+  exportButton.addEventListener('click', async () => {
+    if (!table || !exportReady || exporting) return;
+    const state = currentState(), target = new URL('/documents/grid-export.csv', window.location.origin);
+    for (const key of ['queue', 'q', 'status', 'verification', 'deadline', 'sort', 'dir']) {
+      target.searchParams.set(key, state[key]);
+    }
+    target.searchParams.set('columns', fields.filter(field => state.columns[field].visible).join(','));
+    exporting = true; updateExportButton(); exportStatus.textContent = 'Preparing CSV for all matching pages…';
+    try {
+      const response = await fetch(target, {credentials: 'same-origin', cache: 'no-store', redirect: 'error',
+        signal: AbortSignal.timeout(60000), headers: {Accept: 'text/csv'}});
+      if (!response.ok) {
+        const data = response.headers.get('content-type')?.includes('application/json') ? await response.json() : {};
+        throw new Error(data.error || 'CSV export could not load. Reload the page and try again.');
+      }
+      if (!response.headers.get('content-type')?.includes('text/csv')) throw new Error('Unexpected export response. Reload the page and try again.');
+      const blob = await response.blob(), url = URL.createObjectURL(blob), anchor = document.createElement('a');
+      anchor.href = url; anchor.download = 'document-view.csv';
+      document.body.append(anchor); anchor.click(); anchor.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      exportStatus.textContent = 'CSV downloaded for the view selected when export started.';
+    } catch (error) { exportStatus.textContent = error.message || 'CSV export failed. Try again.'; }
+    finally { exporting = false; updateExportButton(); }
+  });
   async function changeView(action) {
     if (saving || !table) return;
     const selected = selectedView();

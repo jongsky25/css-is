@@ -1,5 +1,8 @@
 """Bounded authorized registry pages and account-owned display preferences."""
 import math
+import csv
+import io
+from contextlib import contextmanager
 import json
 from datetime import date
 
@@ -23,7 +26,8 @@ SORTS = {'registered': 'selected.sort_id', 'number': 'd.number COLLATE NOCASE',
          'lead': "COALESCE(u.username,'') COLLATE NOCASE"}
 
 
-def page(conn, user, params):
+@contextmanager
+def selected_query(conn, user, params):
     queue, query = params.get('queue', 'all'), params.get('q', '')
     sort, direction = params.get('sort', 'registered'), params.get('dir', 'desc')
     status, verification = params.get('status', ''), params.get('verification', '')
@@ -32,13 +36,6 @@ def page(conn, user, params):
             or status not in ('', *STATUSES) or verification not in ('', *VERIFICATIONS)
             or deadline not in ('', *DEADLINES) or len(query) > 120):
         raise ValueError('Invalid table options. Reset the table and try again.')
-    try:
-        number = int(params.get('page', '1'))
-    except (ValueError, TypeError, OverflowError):
-        raise ValueError('Invalid table page.') from None
-    if not 1 <= number <= 1_000_000:
-        raise ValueError('Invalid table page.')
-
     with snapshot(conn):
         selection = Selection(conn, user, '' if queue == 'instruction' else query, queue)
         if queue == 'instruction' and not selection.scope.is_director:
@@ -61,16 +58,28 @@ def page(conn, user, params):
         source = (selection.read_ctes() + ' SELECT {columns} FROM registry_selected selected '
                   'JOIN document d ON d.id=selected.id LEFT JOIN admin_user u ON u.id=d.lead_id '
                   f'WHERE {where}')
-        total = conn.execute(source.format(columns='COUNT(*)'), values).fetchone()[0]
-        last_page = max(1, math.ceil(total / PAGE_SIZE))
-        # A concurrent deletion or permission change may remove the requested last page.
-        number = min(number, last_page)
-        values.update(grid_limit=PAGE_SIZE, grid_offset=(number - 1) * PAGE_SIZE)
         # Sort expressions/directions are allowlisted, never interpolated from user input.
         order = SORTS[sort] + ' ' + direction.upper()
         if sort == 'due_date':
             order = "(d.due_date IS NULL OR d.due_date='') ASC," + order
         order += ',selected.sort_id DESC'
+        yield selection, source, values, order, today, soon
+
+
+def page(conn, user, params):
+    try:
+        number = int(params.get('page', '1'))
+    except (ValueError, TypeError, OverflowError):
+        raise ValueError('Invalid table page.') from None
+    if not 1 <= number <= 1_000_000:
+        raise ValueError('Invalid table page.')
+
+    with selected_query(conn, user, params) as (selection, source, values, order, today, soon):
+        total = conn.execute(source.format(columns='COUNT(*)'), values).fetchone()[0]
+        last_page = max(1, math.ceil(total / PAGE_SIZE))
+        # A concurrent deletion or permission change may remove the requested last page.
+        number = min(number, last_page)
+        values.update(grid_limit=PAGE_SIZE, grid_offset=(number - 1) * PAGE_SIZE)
         columns = '''d.id,d.number,d.subject,d.verification,d.status,d.due_date,
             d.archived_at,d.reconcile,COALESCE(u.username,'Unresolved') AS lead,
             selected.sort_id AS registry_sort_id,
@@ -84,6 +93,48 @@ def page(conn, user, params):
             doc['registered'] = doc.pop('registry_sort_id')
         decorate_deadlines(conn, documents, today=today, soon=soon)
         return {'data': documents, 'last_page': last_page, 'last_row': total, 'page': number}
+
+
+EXPORT_COLUMNS = {
+    'number': ('Number', 'd.number'),
+    'subject': ('Subject', 'd.subject'),
+    'verification': ('Verification', 'd.verification'),
+    'status': ('Workflow', 'd.status'),
+    'due_date': ('Due date', 'd.due_date'),
+    'lead': ('Lead', "COALESCE(u.username,'Unresolved')"),
+}
+MAX_EXPORT_ROWS = 10_000
+
+
+def export_csv(conn, user, params):
+    """Export all authorized matches, with a declared bound and no silent truncation."""
+    fields = params.get('columns', ','.join(EXPORT_COLUMNS)).split(',')
+    if (not fields or len(fields) > len(EXPORT_COLUMNS) or 'number' not in fields
+            or len(set(fields)) != len(fields) or any(field not in EXPORT_COLUMNS for field in fields)):
+        raise ValueError('Choose valid export columns, including Number.')
+    with selected_query(conn, user, params) as (_, source, values, order, _today, _soon):
+        projection = ','.join(EXPORT_COLUMNS[field][1] + ' AS ' + field for field in fields)
+        records = rows(conn, source.format(columns=projection) +
+                       f' ORDER BY {order} LIMIT :export_limit', {**values, 'export_limit': MAX_EXPORT_ROWS + 1})
+        if len(records) > MAX_EXPORT_ROWS:
+            raise ValueError('More than 10,000 records match. Narrow the queue, search or filters before exporting.')
+        stream = io.StringIO(newline='')
+        writer = csv.writer(stream)
+        writer.writerow([EXPORT_COLUMNS[field][0] for field in fields])
+        for record in records:
+            values_out = []
+            for field in fields:
+                value = str(record[field] or ('Unknown' if field == 'due_date' else ''))
+                if field == 'verification':
+                    value = 'Awaiting verification' if value == 'pending' else value.replace('_', ' ')
+                elif field == 'status':
+                    value = value.replace('_', ' ')
+                # CSV quoting preserves text; an apostrophe stops spreadsheet execution.
+                if value.lstrip().startswith(('=', '+', '-', '@')) or value.startswith(('\t', '\r', '\n')):
+                    value = "'" + value
+                values_out.append(value)
+            writer.writerow(values_out)
+        return '\ufeff' + stream.getvalue(), len(records)
 
 
 def deadline_state(status, value, today, soon):
