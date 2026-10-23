@@ -159,6 +159,11 @@
         <div class="cal-doc-draft">
           {% if documents['relay'] %}
           <form method="post" action="/calendar/entries/{{ e.id }}/documents/{{ d.key }}/draft">
+            {% if d.key == 'dpo' and documents['dpo_people'] %}
+            <fieldset class="cal-dpo-desig"><legend class="cal-hint">Designation of each person the DPO names (leave blank to fill in by hand)</legend>
+              {% for p in documents['dpo_people'] %}<label class="cal-hint">{{ p.name }} <input type="text" name="designation_{{ p.user_id }}" maxlength="160" autocomplete="off"></label>
+              {% endfor %}</fieldset>
+            {% endif %}
             {% if d.key in ('dpo', 'concept_note', 'invitation') %}<label class="cal-hint"><input type="checkbox" name="positions" value="1"> Fill in positions from saved profiles (otherwise they are left blank for you to complete)</label>{% endif %}
             <button class="cal-btn primary" type="submit">{{ 'Draft again in Google Docs' if d.doc_url else 'Draft in Google Docs' }}</button></form>
           {% else %}<p class="cal-hint">Drafting in Google Docs is not switched on yet.</p>{% endif %}

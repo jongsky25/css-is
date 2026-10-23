@@ -597,7 +597,8 @@ def _birthdays_layer(conn, ctx, start, end, scope):
                 "kind": "birthday", "status": "confirmed", "owner_org_id": None,
                 "owner_label": p["unit"], "tone": "grey",
                 "people": [{"user_id": p["user_id"], "role": "celebrant", **p["card"]}],
-                "tags": [], "venue": None, "modality": None, "meeting_url": None, "url": None,
+                "tags": [], "venue": None, "modality": None, "meeting_url": None,
+                "url": f"/calendar/birthdays?month={d.month}",
                 "css": None, "flags": [], "editable": False, "private": False,
                 "section_path": p["section_path"],
             })

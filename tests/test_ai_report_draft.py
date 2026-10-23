@@ -3,8 +3,8 @@ Report narrative drafting — docs/AI_INTEGRATION_PLAN.md Phase 5.
 
 Covers:
   * MRR analysis columns (POST .../ai-mrr-draft, .../mrr-draft): gated the
-    same as "Manage this activity" (create_activity); a mocked draft call
-    saves into report_draft with actor='ai'; a human Save overrides it with
+    same as "Manage this activity" (create_activity); a mocked style-selection call
+    saves server-verified wording into report_draft with actor='ai'; a human Save overrides it with
     actor=username; a blank field on Save reverts to the computed default;
     any AIError falls back to a plain notice with nothing changed; the Excel
     export (both the scope+period and the "selected activities" routes)
@@ -55,7 +55,8 @@ def _configure(conn, monkeypatch, mode="router"):
     st.set_setting(conn, "ai_mode", mode)
 
 
-def _mock_draft(monkeypatch, payload):
+def _mock_draft(monkeypatch):
+    payload = {"contract_version": 1, "style": "detailed"}
     def _fake(prompt, *, system=None, response_schema=None, **kw):
         return {"text": json.dumps(payload), "parsed": payload,
                 "tokens_in": 10, "tokens_out": 10, "latency_ms": 30, "model": "gemini-test"}
@@ -111,8 +112,7 @@ def test_mrr_ai_draft_saves_report_draft_with_ai_actor(manager, app_mod, monkeyp
     conn = st.connect(app_mod.DB); _reset(conn)
     _configure(conn, monkeypatch)
     conn.commit(); conn.close()
-    _mock_draft(monkeypatch, {"analysis": "AI analysis text.", "action": "AI action text.",
-                             "next_steps": "AI next steps text.", "resources": "AI resources text."})
+    _mock_draft(monkeypatch)
 
     r = manager.post(f"/reports/activities/{fid}/ai-mrr-draft", follow_redirects=False)
     assert r.status_code == 303
@@ -121,10 +121,10 @@ def test_mrr_ai_draft_saves_report_draft_with_ai_actor(manager, app_mod, monkeyp
     conn = st.connect(app_mod.DB)
     drafts = st.get_report_drafts(conn, "activity_mrr", str(fid))
     conn.close()
-    assert drafts["analysis"]["text"] == "AI analysis text." and drafts["analysis"]["actor"] == "ai"
-    assert drafts["action"]["text"] == "AI action text."
-    assert drafts["next_steps"]["text"] == "AI next steps text."
-    assert drafts["resources"]["text"] == "AI resources text."
+    assert drafts["analysis"]["text"].startswith("Based on 1 respondent(s), overall service quality is 3.0/4.") and drafts["analysis"]["actor"] == "ai"
+    assert drafts["action"]["text"].startswith("Recommended action: review")
+    assert drafts["next_steps"]["text"].startswith("Proposed next steps:")
+    assert drafts["resources"]["text"].startswith("Resource needs are not established")
 
 
 def test_mrr_ai_draft_falls_back_when_ai_unavailable(manager, app_mod):
@@ -146,8 +146,7 @@ def test_mrr_human_save_overrides_ai_draft(manager, app_mod, monkeypatch):
     conn = st.connect(app_mod.DB); _reset(conn)
     _configure(conn, monkeypatch)
     conn.commit(); conn.close()
-    _mock_draft(monkeypatch, {"analysis": "AI analysis.", "action": "AI action.",
-                             "next_steps": "AI next steps.", "resources": "AI resources."})
+    _mock_draft(monkeypatch)
     manager.post(f"/reports/activities/{fid}/ai-mrr-draft")
 
     r = manager.post(f"/reports/activities/{fid}/mrr-draft", data={
@@ -189,7 +188,7 @@ def test_mrr_draft_writes_audit_rows(manager, app_mod, monkeypatch):
     conn = st.connect(app_mod.DB); _reset(conn)
     _configure(conn, monkeypatch)
     conn.commit(); conn.close()
-    _mock_draft(monkeypatch, {"analysis": "a", "action": "b", "next_steps": "c", "resources": "d"})
+    _mock_draft(monkeypatch)
     manager.post(f"/reports/activities/{fid}/ai-mrr-draft")
     manager.post(f"/reports/activities/{fid}/mrr-draft",
                  data={"analysis": "e", "action": "b", "next_steps": "c", "resources": "d"})
@@ -205,10 +204,7 @@ def test_mrr_export_reads_saved_draft_not_the_template(manager, app_mod, monkeyp
     conn = st.connect(app_mod.DB); _reset(conn)
     _configure(conn, monkeypatch)
     conn.commit(); conn.close()
-    _mock_draft(monkeypatch, {"analysis": "Distinctive AI analysis sentence.",
-                             "action": "Distinctive AI action.",
-                             "next_steps": "Distinctive AI next steps.",
-                             "resources": "Distinctive AI resources."})
+    _mock_draft(monkeypatch)
     manager.post(f"/reports/activities/{fid}/ai-mrr-draft")
 
     r = manager.get("/reports/activities-export")
@@ -216,7 +212,7 @@ def test_mrr_export_reads_saved_draft_not_the_template(manager, app_mod, monkeyp
     wb = load_workbook(io.BytesIO(r.content))
     ws = wb["AGENDA 4_Sheet1"]
     col_c = [ws.cell(row=row, column=3).value for row in range(7, ws.max_row + 1)]
-    assert any(v and "Distinctive AI analysis sentence." in v for v in col_c)
+    assert any(v and "Based on 1 respondent(s), overall service quality is 3.0/4." in v for v in col_c)
 
 
 def test_mrr_export_selected_reads_saved_draft(manager, app_mod, monkeypatch):
@@ -224,8 +220,7 @@ def test_mrr_export_selected_reads_saved_draft(manager, app_mod, monkeypatch):
     conn = st.connect(app_mod.DB); _reset(conn)
     _configure(conn, monkeypatch)
     conn.commit(); conn.close()
-    _mock_draft(monkeypatch, {"analysis": "Selected-export AI analysis.",
-                             "action": "a", "next_steps": "b", "resources": "c"})
+    _mock_draft(monkeypatch)
     manager.post(f"/reports/activities/{fid}/ai-mrr-draft")
 
     r = manager.post("/reports/activities/export-selected", data={"ids": str(fid)})
@@ -233,7 +228,7 @@ def test_mrr_export_selected_reads_saved_draft(manager, app_mod, monkeypatch):
     wb = load_workbook(io.BytesIO(r.content))
     ws = wb["AGENDA 4_Sheet1"]
     col_c = [ws.cell(row=row, column=3).value for row in range(7, ws.max_row + 1)]
-    assert any(v and "Selected-export AI analysis." in v for v in col_c)
+    assert any(v and "Based on 1 respondent(s), overall service quality is 3.0/4." in v for v in col_c)
 
 
 # ---- Official CO-CSM report Sections V-VI ---------------------------------------
@@ -269,8 +264,7 @@ def test_csm_ai_draft_saves_report_draft_with_ai_actor(manager, app_mod, monkeyp
     conn = st.connect(app_mod.DB); _reset(conn)
     _configure(conn, monkeypatch)
     conn.commit(); conn.close()
-    _mock_draft(monkeypatch, {"action_plan": "AI drafted action plan.",
-                             "continuous_improvement": "AI drafted continuous improvement."})
+    _mock_draft(monkeypatch)
 
     r = manager.post("/reports/csm-draft", data={"period": _CSM_PERIOD}, follow_redirects=False)
     assert r.status_code == 303
@@ -279,9 +273,9 @@ def test_csm_ai_draft_saves_report_draft_with_ai_actor(manager, app_mod, monkeyp
     conn = st.connect(app_mod.DB)
     drafts = st.get_report_drafts(conn, "csm_closing", _CSM_PERIOD)
     conn.close()
-    assert drafts["action_plan"]["text"] == "AI drafted action plan."
+    assert drafts["action_plan"]["text"].startswith("For quarter:2026-Q1, 1 respondent(s)")
     assert drafts["action_plan"]["actor"] == "ai"
-    assert drafts["continuous_improvement"]["text"] == "AI drafted continuous improvement."
+    assert drafts["continuous_improvement"]["text"].startswith("Proposed follow-up:")
 
 
 def test_csm_ai_draft_no_data_period_short_circuits(manager, app_mod, monkeypatch):

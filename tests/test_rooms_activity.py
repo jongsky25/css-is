@@ -63,8 +63,8 @@ def status(conn, ev, user, today=MON):
 
 def test_precheck_says_what_request_would_say_and_writes_nothing(conn, me):
     assert rooms.precheck(conn, THU, S(conn, 9, 10), MON) == S(conn, 9, 10)
-    with pytest.raises(rooms.RoomError, match="notice"):
-        rooms.precheck(conn, date(2030, 3, 5), S(conn, 9), MON)
+    with pytest.raises(rooms.RoomError, match="passed"):
+        rooms.precheck(conn, date(2030, 3, 1), S(conn, 9), MON)
     with pytest.raises(rooms.RoomError, match="back-to-back"):
         rooms.precheck(conn, THU, S(conn, 9, 11), MON)
     book(conn, me)
@@ -220,8 +220,8 @@ def test_move_rules(conn, me, other, boss):
         rooms.request_move(conn, old["id"], NEXT_THU, other, today=MON)
     with pytest.raises(rooms.RoomError, match="already on that day"):
         rooms.request_move(conn, old["id"], THU, me, today=MON)
-    with pytest.raises(rooms.RoomError, match="notice"):
-        rooms.request_move(conn, old["id"], date(2030, 3, 5), me, today=MON)
+    with pytest.raises(rooms.RoomError, match="passed"):
+        rooms.request_move(conn, old["id"], date(2030, 3, 1), me, today=MON)
     with pytest.raises(rooms.RoomError, match="weekends"):
         rooms.request_move(conn, old["id"], date(2030, 3, 16), me, today=MON)
     assert rooms.request_move(conn, old["id"], NEXT_THU, boss, today=MON)["source"] == "move"   # the section may move it for them

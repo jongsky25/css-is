@@ -1,3 +1,51 @@
+## 8.06 — October 23, 2026
+
+- Add administrator-only Appearance controls for independent page themes and avatar outfits, private desktop/mobile previews, drafts, publishing, manual overrides, fallback settings and seasonal schedules.
+- Add a complete Halloween scene with an illustrated haunted-office banner, moon, bats, ghosts, pumpkins, seasonal navigation and cards, companion props, and witch, vampire and pumpkin costumes across all species and growth stages. Retain Default and Christmas presets.
+- Make scenery, ambient animation and the banner message configurable; preserve personal light/dark and contrast settings, reduced motion and print behavior. Refresh styling and costume layers on open pages without discarding forms or companion state.
+- Store configuration, revision-checked history and hash-chained audit entries atomically. Reject overlapping published schedules and ambiguous local times, resolve expiry without a cron worker, and keep old settings/history compatible.
+- Include all appearance modules in the deployment runtime and advance the application and service-worker cache to 8.06. Add backend and Chromium coverage for access, previews, schedules, restoration, live changes, accessibility and mobile layout.
+
+## 8.05 — October 23, 2026
+
+- Fix calendar birthday items opening a "Not Found" page: they now open that month's celebrants list (Spot Feedback #175); month and week views no longer render a missing link as `None`.
+- Show a Region column on an activity's Monitor roster when its registration form has a Region question (#176).
+- DPO: cite "BLHSD - Local Health Systems Development Assistance" as the funding source (#179); always name the venue in the subject and body, blank when the item has none (#178); type each named person's designation on the draft form (#178); title flush left with no space before its number (#180); several travellers go in a Name | Designation table sized to its text, Times New Roman 12, single spacing (#181); signature block at the 2-inch mark (#182) with no space between its lines (#183).
+- New "Minutes of the meeting" document, suggested for meetings (#177).
+- Google side: re-run `rebuildActivityTemplates()` and redeploy `travel_docs.gs` / `activity_templates.gs` for the layout changes and the minutes template. No schema migration or new dependency.
+## 8.04 — October 23, 2026
+
+- Continue A22 with evaluation suite 1.1.0: retain the 38 answer-route scenarios and add 60 report-draft scenarios for MRR and official CO-CSM reports, with literal independently reviewed source figures and simulated provider HTTP.
+- Close the unchecked-prose path into official drafts: report draft contract v1 accepts only a version and concise/detailed style; the server renders aggregate figures, missing-data statements and clearly proposed follow-up wording. Reject extra prose, invented figures/actions, missing selections, wrong types and forged contract versions. Human editing and existing export fallbacks remain available.
+- Send only aggregate evidence, fixed dimension labels and validated period/date values to the provider. Omit activity/service/person names, venues, comments and comment themes; report-draft logs retain outcome/token/timing metadata without prompts, replies or raw provider error bodies, including when general content logging is enabled.
+- Read current scoped sources without dashboard caches; recheck account/session/role, AI switches, source content/group membership, reference day and existing saved edits after the provider call. Preserve existing drafts after failures or concurrent human edits. Save all generated fields, the success outcome and their audit in one transaction; rejected or stale replies retain a rejection outcome.
+- Bound draft generation to 96 output tokens and eight-second read timeouts; existing budget/rate gates, retry and provider settings remain. No real-provider call, new dependency, schema migration or automatic report publication is introduced. Previously saved drafts are not rewritten or certified; later source changes still require human review or regeneration.
+- Require all 98 evaluation scenarios in both existing CI orders. Bind reports to the extended source fingerprint and increased suite version; document arithmetic, provider contract, reduced free-form drafting and rollout limits. Keep the application version at exactly two digits after the decimal.
+
+## 8.03 — October 23, 2026
+
+- Allow same-day requests and staff-encoded bookings for available conference room hours; retain approval, conflict, closure and booking horizon checks.
+- Require two calendar days of notice for meals, including meals added to an existing room booking, guest forms, activity/calendar prechecks, moves and repeating requests.
+- Add standalone meal requests for any activity and venue, with their own references, pax, dietary needs, delivery times and per-meal ordering/delivery status.
+- Add Office → Request meals and My meal requests, an Administrative Section management queue, owner withdrawal and audit records; retain access to existing room-linked forms.
+- Create standalone meal tables idempotently without changing existing room records or adding dependencies.
+- Validate room/meal rules, complete request-to-delivery flow, owner isolation, administrative permissions, guest forms and storage reinitialization.
+
+## 8.02 — October 23, 2026
+
+- Fix ARTA walk-in reports, official exports and the comments view omitting every response on the standing walk-in form after it was marked archived (24 entries, April 10 to October 22, 2026).
+- Keep the standing walk-in form out of every form-level archive path (single, inline and bulk); individual entries can still be archived or restored from Walk-in entries.
+- Tests cover report counts with an archived standing form and refusal to archive it.
+- No schema migration or new dependency.
+
+## 8.01 — October 22, 2026
+
+- Start A22 with evaluation suite 1.0.0: 38 named questions/scenarios and an independent synthetic reference dataset covering server-owned figures/evidence, missing/stale sources, current account/session/calendar authority, injected instructions and provider failures/budgets.
+- Exercise the real HTTP route, registered users, database and provider adapter; intercept only provider HTTP and reject attempted network I/O. Expected values/source labels are reviewed literals, not values generated by the renderer or provider. No real-provider call or new dependency is added.
+- Produce minimized JSON and Markdown evidence by category/case, bound to the case/reference hashes, selected source files, application version and checked-out Git commit. Reject missing/duplicate/failed/skipped/xfail cases, fixture errors, unsuccessful sessions, unrecognized evidence fields and stale provenance; partial runs cannot reuse a previous passing artifact.
+- Require the evaluation report in both normal and shuffled release CI, alongside the existing full-suite/dependency gates. Case/reference edits require a suite-version increase; evidence remains in the existing 14-day CI artifacts.
+- Document reproducible runs, reference arithmetic, coverage boundaries, privacy and remaining A22 work. This measures deterministic application safeguards with simulated providers; it does not measure real-model answer relevance, production latency, provider cost or all AI features. Release format remains two digits after the decimal.
+
 ## 8.00 — October 22, 2026
 
 - Restore exactly two digits after the decimal for new application releases: 8.00, 8.01 … 8.99, 9.00. Enforce that format in the release gate while retaining recorded historical versions and allowing comparison against the existing 7.100 release.

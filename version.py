@@ -18,10 +18,75 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "8.00"
+APP_VERSION = "8.06"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "8.06",
+        "date": "October 23, 2026",
+        "summary": "Celebrate the season with page themes and costumes managed by your administrator.",
+        "changes": [
+            "Administrators can preview, publish and schedule seasonal page themes and companion outfits from Appearance.",
+            "Halloween brings an illustrated haunted office, pumpkins, seasonal colors and witch, vampire or pumpkin costumes.",
+            "Artwork, gentle animation and the welcome message can be adjusted, with readable light and dark versions.",
+            "Scheduled appearances change automatically while you work, and administrators can restore earlier settings."
+        ]
+    },
+    {
+        "version": "8.05",
+        "date": "October 23, 2026",
+        "summary": "Calendar birthdays open properly, rosters show Region, and the DPO follows the latest feedback.",
+        "changes": [
+            "Clicking a birthday on the calendar now opens that month's celebrants instead of an error page.",
+            "An activity's roster shows a Region column once its registration form asks for the region.",
+            "The DPO cites the BLHSD Local Health Systems Development Assistance funds, always shows the venue (blank to fill in if none), and lets you type each traveller's designation before drafting.",
+            "The DPO title sits flush left with no gap above its number, the signature block lines up at the 2-inch mark with no spacing between its lines, and a table of several travellers fits its text.",
+            "Meetings can now draft minutes of the meeting in Google Docs."
+        ]
+    },
+    {
+        "version": "8.04",
+        "date": "October 23, 2026",
+        "summary": "AI report drafts now use verified figures and wording, with more release checks.",
+        "changes": [
+            "AI chooses a concise or detailed draft using current report figures, while you can still edit the text.",
+            "Drafting stops if access, source data or a saved human edit changes while AI is working.",
+            "Release checks now cover report drafts, private information, invented claims and failed saves."
+        ]
+    },
+    {
+        "version": "8.03",
+        "date": "October 23, 2026",
+        "summary": "Book available rooms the same day and request meals for any venue.",
+        "changes": [
+            "Available conference room hours can now be requested on the same day.",
+            "Meal requests require at least two calendar days before the activity.",
+            "Request meals for any venue without reserving the conference room.",
+            "Follow ordering and delivery under Office → My meal requests."
+        ]
+    },
+    {
+        "version": "8.02",
+        "date": "October 23, 2026",
+        "date": "October 23, 2026",
+        "summary": "Walk-in feedback no longer disappears from ARTA reports.",
+        "changes": [
+            "Walk-in responses submitted since April were missing from ARTA reports, exports and comments; they now count again.",
+            "The standing walk-in form can no longer be archived by accident, so its posted link always keeps counting.",
+            "Archiving an individual walk-in entry works as before."
+        ]
+    },
+    {
+        "version": "8.01",
+        "date": "October 22, 2026",
+        "summary": "Updates now include a repeatable check of existing AI answers and safe fallbacks.",
+        "changes": [
+            "A reference set checks survey figures, source labels and missing or outdated information.",
+            "Checks cover private calendar access, access changes, misleading instructions and provider failures.",
+            "Each release produces a pass or fail report and requires every reference case to pass."
+        ]
+    },
     {
         "version": "8.00",
         "date": "October 22, 2026",

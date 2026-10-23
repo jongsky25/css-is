@@ -6,6 +6,7 @@
 {% block content %}
 {{ page_header("Conference room meals", "Order from the filled-up forms, then tag each meal as requested, delivered, not delivered or cancelled.") }}
 {% include "_rooms_tabs.html" %}
+<p><a href="/meals">Manage independent meal requests</a> · <a href="/meals/new">Request meals for any activity</a></p>
 {{ flash(msg=msg, err=err) }}
 
 <form method="get" action="/rooms/meals" class="rm-mfilter card">

@@ -9,16 +9,18 @@
 {% include "_rooms_tabs.html" %}{% endif %}
 
 {{ flash(msg=ok, err=err) }}
+<p class="rm-hint">Meals must be requested at least 2 calendar days before the activity.</p>
+{% if meal_cutoff %}<p class="rm-hint">The meal request deadline has passed. Existing meal orders can still be tracked by the Administrative Section.</p>{% endif %}
 <p class="rm-hint">Conference room · <code>{{ res.ref_code }}</code> · {{ when }}, {{ hours }} ·
   <span class="badge {{ 'green' if res.status == 'approved' else 'amber' }}">{{ '✓ Room approved' if res.status == 'approved' else '○ Room ' ~ res.status }}</span></p>
 
 {% if not f %}
 <div class="card">
   <p>No meals have been requested for this booking yet.</p>
-  {% if live %}
+  {% if live and not meal_cutoff %}
   <form method="post" action="{{ base }}/start"><button class="btn" type="submit">Request meals</button></form>
   <p class="rm-hint">We fill in the meals from your hours (breakfast, AM snack, lunch, PM snack) and you correct them.</p>
-  {% else %}<p class="rm-hint">This reservation is no longer active.</p>{% endif %}
+  {% elif not live %}<p class="rm-hint">This reservation is no longer active.</p>{% endif %}
 </div>
 {% else %}
 {% if f.locked %}<div class="flash info" role="status"><span>{{ 'The Administrative Section has started ordering from this form. You can still change it, but a meal you change goes back to "Not yet requested" and is ordered again.' if admin else 'The Administrative Section has started ordering from this form, so it can no longer be changed here. Please ask them if something needs to change.' }}</span></div>{% endif %}

@@ -228,7 +228,7 @@ def make_router(templates, get_conn, today_local, *, base_url=None, qr_data_uri=
     @router.get("/rooms/api/day")
     def rooms_api_day(request: Request, date: str = ""):
         """One day's hours for the activity form's room chip (signed in): free / requested / booked /
-        closed, never a title. Uses the staff rules: two working days' notice, 90 days ahead."""
+        closed, never a title. Uses the staff rules: same-day requests, 90 days ahead."""
         d = _date_or_none(date)
         if d is None:
             return JSONResponse({"error": "Pick a date."}, status_code=400)

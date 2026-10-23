@@ -20,7 +20,7 @@
       </div>
       <button type="button" class="btn rm-open-panel" id="rm-open" aria-controls="rm-panel" aria-expanded="false">+ Request</button>
     </div>
-    <p class="rm-hint">Earliest date you can request: <strong>{{ earliest.strftime('%a') }} {{ earliest.day }} {{ earliest.strftime('%b') }}</strong> (2 working days' notice).
+    <p class="rm-hint">Earliest date you can request: <strong>{{ earliest.strftime('%a') }} {{ earliest.day }} {{ earliest.strftime('%b') }}</strong> (same-day requests are welcome when the room is available). Meals require at least 2 calendar days’ notice.
       Click an hour, then another in the same day to pick a range. <span class="rm-legend"><span>✓ Free to request</span><span>○ Requested, not reserved</span><span>● Booked</span><span>★ Your request or booking</span><span>✕ Unavailable</span></span></p>
 
     <nav class="rm-daystrip" aria-label="Choose a day">
@@ -114,7 +114,7 @@
       </fieldset>
       <label class="rm-meals"><input type="checkbox" name="standby" value="1" {{ 'checked' if f.standby }}> These hours may be taken: file it as a provisional (standby) request
         <small>Use this when the hours above are already booked or closed. Nothing is held; the Administrative Section can confirm it if the hours free up or in an emergency.</small></label>
-      <label class="rm-meals"><input type="checkbox" name="meals" value="1" {{ 'checked' if f.meals }}> Will meals be requested?
+      <label class="rm-meals"><input type="checkbox" name="meals" value="1" {{ 'checked' if f.meals }}> Will meals be requested? (At least 2 calendar days before the activity.)
         <small>The meal form is prepared for you from your hours once the request is approved.</small></label>
 
       {% if can_encode %}
@@ -130,7 +130,7 @@
           <input id="rm-for-name" name="for_name" value="{{ f.for_name }}" maxlength="120"></div>
         <div class="field"><label for="rm-for-org">Organization <span class="opt">(optional)</span></label>
           <input id="rm-for-org" name="for_org" value="{{ f.for_org }}" maxlength="120"></div>
-        <div class="field"><label for="rm-note">Reason <span class="opt">(needed inside the 2-working-day notice)</span></label>
+        <div class="field"><label for="rm-note">Reason <span class="opt">(optional)</span></label>
           <input id="rm-note" name="note" value="{{ f.note }}" maxlength="200"></div>
         <button class="btn block" type="submit" formaction="/rooms/encode">Book it now (approved)</button>
       </details>
