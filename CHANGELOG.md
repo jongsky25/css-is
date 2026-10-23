@@ -1,3 +1,9 @@
+## 8.08 — October 23, 2026
+
+- Open wellness check-in only after the scheduled approved break ends in local time, including two-hour breaks.
+- Hide early check-in links and home reminders; reject early direct visits and submissions.
+- Cover the time boundary in tests. No schema migration or new dependency.
+
 ## 8.07 — October 23, 2026
 
 - Extend A22 evaluation suite 1.2.0 to 146 scenarios: retain 38 answer and 60 report-draft cases; add 48 feedback-triage cases using synthetic records and fake provider HTTP. Require every case in both full CI orders and bind reports to the new triage code and form.
