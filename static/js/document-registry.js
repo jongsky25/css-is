@@ -17,7 +17,7 @@
   const fields = ['number', 'subject', 'verification', 'status', 'due_date', 'lead'];
   let savedViews = null, loadingViews = null, saving = false;
   let table = null, controller = null, generation = 0;
-  let applied = {status: '', verification: ''};
+  let applied = {status: '', verification: '', deadline: ''};
 
   function text(value) { return String(value ?? '').replaceAll('_', ' '); }
   function paragraph(parent, value, className) {
@@ -157,11 +157,12 @@
   }
   toggle.addEventListener('click', () => {
     if (table) showStandard();
-    else { resetSelection(); filters.reset(); applied = {status: '', verification: ''}; start(); loadViews().catch(viewError); }
+    else { resetSelection(); filters.reset(); applied = {status: '', verification: '', deadline: ''}; start(); loadViews().catch(viewError); }
   });
   filters.addEventListener('submit', event => {
     event.preventDefault();
-    applied = {status: filters.elements.status.value, verification: filters.elements.verification.value};
+    applied = {status: filters.elements.status.value, verification: filters.elements.verification.value,
+      deadline: filters.elements.deadline.value};
     const [column, dir] = sort.value.split(':');
     table?.setSort(column, dir);
   });
@@ -170,7 +171,7 @@
     table?.setSort(column, dir);
   });
   document.getElementById('registry-reset').addEventListener('click', () => {
-    showStandard(); resetSelection(); filters.reset(); applied = {status: '', verification: ''}; start();
+    showStandard(); resetSelection(); filters.reset(); applied = {status: '', verification: '', deadline: ''}; start();
   });
 
   function selectedView() { return savedViews?.find(view => String(view.id) === viewSelect.value); }
@@ -270,7 +271,7 @@
       window.location.replace(viewURL(view)); return;
     }
     renderViews(requested);
-    applied = {status: view.state.status, verification: view.state.verification};
+    applied = {status: view.state.status, verification: view.state.verification, deadline: view.state.deadline || ''};
     for (const [field, value] of Object.entries(applied)) filters.elements[field].value = value;
     sort.value = view.state.sort + ':' + view.state.dir;
     start(view.state);

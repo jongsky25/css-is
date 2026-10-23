@@ -240,3 +240,38 @@ def test_saved_view_restores_queue_search_and_failed_save_keeps_current_table(gr
     assert 'queue=OUT' in page.url
     assert page.locator('input[name=q]').input_value() == 'Searchneedle'
     assert page.locator('.tabulator-row').count() == 1
+
+
+def test_deadline_quick_filters_save_reload_and_reset(grid_page, app_mod):
+    import tzutil as tz
+    from datetime import timedelta
+    page, state = grid_page
+    conn = st.connect(app_mod.DB)
+    today = tz.today_local()
+    identifiers = [r[0] for r in conn.execute('SELECT id FROM document ORDER BY id DESC LIMIT 5')]
+    for identifier, due, workflow in zip(identifiers,
+            [(today-timedelta(days=1)).isoformat(), today.isoformat(), None, None, today.isoformat()],
+            ['in_action', 'in_action', 'in_action', 'closed', 'cancelled']):
+        conn.execute('UPDATE document SET due_date=?,status=? WHERE id=?', (due, workflow, identifier))
+    conn.commit(); conn.close()
+    open_grid(page)
+    for deadline in ('overdue', 'due_today', 'due_soon', 'unknown'):
+        page.get_by_label('Deadline', exact=True).select_option(deadline)
+        page.get_by_role('button', name='Apply filters', exact=True).click()
+        page.wait_for_function("document.getElementById('registry-table-status').textContent.includes('1 matching records')")
+        badge = 'due_today' if deadline == 'due_soon' else deadline
+        page.locator(f'#registry-grid [data-deadline={badge}]').wait_for()
+        assert 'deadline=' + deadline in state['requests'][-1]
+        assert page.locator('.tabulator-row').count() == 1
+    page.locator('#registry-views summary').click()
+    page.get_by_label('View name', exact=True).fill('Missing deadlines')
+    page.get_by_role('button', name='Save new view', exact=True).click()
+    page.wait_for_function("document.getElementById('registry-view-status').textContent === 'View saved to your account.'")
+    page.reload()
+    page.locator('#registry-grid [data-deadline=unknown]').wait_for()
+    assert page.get_by_label('Deadline', exact=True).input_value() == 'unknown'
+    assert page.locator('.tabulator-row').count() == 1
+    page.get_by_role('button', name='Reset table', exact=True).click()
+    page.wait_for_function("document.getElementById('registry-table-status').textContent.includes('36 matching records')")
+    assert page.get_by_label('Deadline', exact=True).input_value() == ''
+    assert 'deadline=' in state['requests'][-1]

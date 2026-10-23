@@ -1,3 +1,9 @@
+## 8.20 — October 23, 2026
+
+- Filter the interactive document register by overdue, due today, due soon or unknown deadline before pagination and counting.
+- Use the same deadline classification as labels; due soon includes today through three working days, excluding configured holidays, and urgency filters exclude closed/cancelled records.
+- Save and restore deadline filters in personal views; older views default to all deadlines without a database migration.
+
 ## 8.19 — October 23, 2026
 
 - Continue A22 with 27 offline travel checklist upload cases, bringing the evaluation suite to 366 named scenarios.
