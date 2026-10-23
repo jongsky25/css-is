@@ -171,7 +171,7 @@
             {% if c.status == 'denied' and c.decide_note %}<span style="color:var(--soft); font-size:.78rem;"> — {{ c.decide_note }}</span>{% endif %}
             {% if c.status == 'cancelled' and c.cancel_reason %}<span style="color:var(--soft); font-size:.78rem;"> — {{ c.cancel_reason }}</span>{% endif %}</td>
         <td class="row-act">
-          {% if c.status == 'approved' and c.break_date <= today %}
+          {% if c.status == 'approved' and check_in_ready.get(c.id) %}
             <a class="go" href="/wellness/claims/{{ c.id }}/complete">Check in ✓</a>
           {% endif %}
           {% if c.status in ('pending', 'approved') %}
