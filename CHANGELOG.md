@@ -1,3 +1,11 @@
+## 8.06 — October 23, 2026
+
+- Add administrator-only Appearance controls for independent page themes and avatar outfits, private desktop/mobile previews, drafts, publishing, manual overrides, fallback settings and seasonal schedules.
+- Add a complete Halloween scene with an illustrated haunted-office banner, moon, bats, ghosts, pumpkins, seasonal navigation and cards, companion props, and witch, vampire and pumpkin costumes across all species and growth stages. Retain Default and Christmas presets.
+- Make scenery, ambient animation and the banner message configurable; preserve personal light/dark and contrast settings, reduced motion and print behavior. Refresh styling and costume layers on open pages without discarding forms or companion state.
+- Store configuration, revision-checked history and hash-chained audit entries atomically. Reject overlapping published schedules and ambiguous local times, resolve expiry without a cron worker, and keep old settings/history compatible.
+- Include all appearance modules in the deployment runtime and advance the application and service-worker cache to 8.06. Add backend and Chromium coverage for access, previews, schedules, restoration, live changes, accessibility and mobile layout.
+
 ## 8.05 — October 23, 2026
 
 - Fix calendar birthday items opening a "Not Found" page: they now open that month's celebrants list (Spot Feedback #175); month and week views no longer render a missing link as `None`.

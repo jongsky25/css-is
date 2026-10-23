@@ -85,6 +85,8 @@ def _calendar_entry_doc_any_key(conn):
 def init_db(conn):
     """Create all the tables (safe to run again -- it won't duplicate)."""
     short_links.init_db(conn)
+    import appearance_storage
+    appearance_storage.init_db(conn)
     conn.executescript("""
     CREATE TABLE IF NOT EXISTS org_unit (
         id         INTEGER PRIMARY KEY,

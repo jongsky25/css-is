@@ -26,26 +26,60 @@
 
 {#-- public dispatcher — the only cross-file import point. m = month 1..12
      picks the seasonal accessory (0/none = bare). --#}
-{% macro species_art(kind, s, m=0) %}
-{% if kind == "plant" %}{{ _plant(s, m) }}
-{% elif kind == "cactus" %}{{ _cactus(s, m) }}
-{% elif kind == "bonsai" %}{{ _bonsai(s, m) }}
-{% elif kind == "sunflower" %}{{ _sunflower(s, m) }}
-{% elif kind == "fern" %}{{ _fern(s, m) }}
-{% elif kind == "mushroom" %}{{ _mushroom(s, m) }}
-{% elif kind == "succulent" %}{{ _succulent(s, m) }}
-{% elif kind == "cat" %}{{ _cat(s, m) }}
-{% elif kind == "bird" %}{{ _bird(s, m) }}
-{% elif kind == "turtle" %}{{ _turtle(s, m) }}
-{% elif kind == "dog" %}{{ _dog(s, m) }}
-{% elif kind == "rabbit" %}{{ _rabbit(s, m) }}
-{% elif kind == "fish" %}{{ _fish(s, m) }}
-{% elif kind == "dolphin" %}{{ _dolphin(s, m) }}
-{% elif kind == "owl" %}{{ _owl(s, m) }}
-{% elif kind == "bat" %}{{ _bat(s, m) }}
-{% else %}{{ _plant(s, m) }}{% endif %}
+{% macro species_art(kind, s, m=0, costume="") %}
+{% if kind == "plant" %}{{ _plant(s, m, costume) }}
+{% elif kind == "cactus" %}{{ _cactus(s, m, costume) }}
+{% elif kind == "bonsai" %}{{ _bonsai(s, m, costume) }}
+{% elif kind == "sunflower" %}{{ _sunflower(s, m, costume) }}
+{% elif kind == "fern" %}{{ _fern(s, m, costume) }}
+{% elif kind == "mushroom" %}{{ _mushroom(s, m, costume) }}
+{% elif kind == "succulent" %}{{ _succulent(s, m, costume) }}
+{% elif kind == "cat" %}{{ _cat(s, m, costume) }}
+{% elif kind == "bird" %}{{ _bird(s, m, costume) }}
+{% elif kind == "turtle" %}{{ _turtle(s, m, costume) }}
+{% elif kind == "dog" %}{{ _dog(s, m, costume) }}
+{% elif kind == "rabbit" %}{{ _rabbit(s, m, costume) }}
+{% elif kind == "fish" %}{{ _fish(s, m, costume) }}
+{% elif kind == "dolphin" %}{{ _dolphin(s, m, costume) }}
+{% elif kind == "owl" %}{{ _owl(s, m, costume) }}
+{% elif kind == "bat" %}{{ _bat(s, m, costume) }}
+{% else %}{{ _plant(s, m, costume) }}{% endif %}
 {% endmacro %}
 
+
+{# Stable costume layers let live updates preserve the animated head/body DOM.
+   Headwear follows each species' existing anchor. Cloaks and pumpkin suits use
+   the same growth scale; plants wear a decorated pot instead of an animal suit. #}
+{% macro costume_back(kind, s, costume) %}
+{% set plant = kind in ['plant','cactus','bonsai','sunflower','fern','mushroom','succulent'] %}
+{% set scale = 1 if plant else (0.62 + (s - 1) * 0.076) %}
+<g class="av-costume-back" transform="translate(60 96) scale({{ scale }}) translate(-60 -96)">
+{% if costume in ['halloween', 'halloween_vampire'] %}
+  {% set top = 106 if plant else 84 %}
+  <path d="M42 {{ top }} Q23 {{ top + 5 }} 23 130 L43 121 60 130 77 121 97 130 Q97 {{ top + 5 }} 78 {{ top }} Z" fill="{{ '#32203f' if costume == 'halloween' else '#261b33' }}" stroke="{{ '#9363ae' if costume == 'halloween' else '#a44258' }}" stroke-width="1.4"/>
+  <path d="M42 {{ top }} 31 123 46 116 60 125 74 116 89 123 78 {{ top }}" fill="{{ '#7d4191' if costume == 'halloween' else '#b43851' }}"/>
+  {% if costume == 'halloween_vampire' %}<path d="M42 {{ top + 8 }} 27 {{ top - 17 }} 49 {{ top }} M78 {{ top + 8 }} 93 {{ top - 17 }} 71 {{ top }}" fill="#b43851" stroke="#281a35" stroke-width="2"/>{% endif %}
+{% elif costume == 'halloween_pumpkin' %}
+  <ellipse cx="60" cy="{{ 120 if plant else 104 }}" rx="31" ry="{{ 15 if plant else 21 }}" fill="#ef8d32" stroke="#b85822" stroke-width="2"/>
+  <path d="M42 {{ 109 if plant else 88 }} Q32 113 44 130 M78 {{ 109 if plant else 88 }} Q88 113 76 130" stroke="#c86b27" stroke-width="2" fill="none"/>
+{% endif %}
+</g>
+{% endmacro %}
+
+{% macro costume_front(kind, s, costume, scaled=false) %}
+{% set plant = kind in ['plant','cactus','bonsai','sunflower','fern','mushroom','succulent'] %}
+{% set scale = 1 if plant or scaled else (0.62 + (s - 1) * 0.076) %}
+<g class="av-costume-front" transform="translate(60 96) scale({{ scale }}) translate(-60 -96)">
+{% if costume == 'halloween_pumpkin' %}
+  {% set y = 123 if plant else 107 %}
+  <ellipse cx="60" cy="{{ y }}" rx="22" ry="11" fill="#f59a36"/>
+  <path d="M45 {{ y - 1 }} 50 {{ y - 7 }} 54 {{ y - 1 }} M66 {{ y - 1 }} 70 {{ y - 7 }} 75 {{ y - 1 }} M47 {{ y + 3 }} 55 {{ y + 5 }} 60 {{ y + 2 }} 65 {{ y + 5 }} 73 {{ y + 3 }} Q60 {{ y + 17 }} 47 {{ y + 3 }}" fill="#41243d"/>
+{% elif plant and costume in ['halloween', 'halloween_vampire'] %}
+  <path d="M44 119h32l-3 15H47Z" fill="{{ '#593361' if costume == 'halloween' else '#4a223c' }}"/>
+  <path d="m60 120 2 4 5 1-4 3 1 5-4-3-4 3 1-5-4-3 5-1Z" fill="#ffbb57"/>
+{% endif %}
+</g>
+{% endmacro %}
 
 {# ========================== shared little helpers ========================= #}
 
@@ -83,10 +117,21 @@
      on the head, pointing up) and placed with translate/scale. Species with a
      head embed this INSIDE .av-head so it rides along with tilts and chews;
      headless potted plants wear _pot_bow instead. --#}
-{% macro _accessory(m, x, y, k=1) %}
-{% if m %}
+{% macro _accessory(m, x, y, k=1, costume="") %}
 <g class="av-acc" transform="translate({{ x }} {{ y }}) scale({{ k }})">
-  {% if m == 1 %}{# January — party hat #}
+  {% if costume == 'halloween' %}
+    <path d="M-13 0 -3-28 8-22 5-18 12 0Z" fill="#482357" stroke="#281332" stroke-width="1.5"/>
+    <path d="m-9-8 18-1 2 6-22 1Z" fill="#ee893c"/>
+    <rect x="-3" y="-9" width="7" height="7" rx="1" fill="#ffc45e"/><rect x="-1" y="-7" width="3" height="3" fill="#54233e"/>
+    <ellipse cy="1" rx="20" ry="4" fill="#35203f" stroke="#8c5b9e" stroke-width="1"/>
+    <path d="m1-20 1 3 3 1-3 1-1 3-1-3-3-1 3-1Z" fill="#ffd88d"/>
+  {% elif costume == 'halloween_vampire' %}
+    <path d="M-15-1Q0-12 15-1L9 2 0-3-9 2Z" fill="#2b1739"/><path d="m-5-4 5-7 5 7" fill="#9b2945"/>
+    <path d="m-14-2-5-7 2 10m31-3 5-7-2 10" stroke="#6e345a" stroke-width="2"/>
+  {% elif costume == 'halloween_pumpkin' %}
+    <ellipse cy="-3" rx="13" ry="7" fill="#f38c29" stroke="#bf5c24"/>
+    <path d="M0-9Q-5-18 4-20" stroke="#527c3e" stroke-width="4" stroke-linecap="round"/><path d="M2-12Q14-23 16-12 9-9 2-12" fill="#7d9c4c"/>
+  {% elif m == 1 %}{# January — party hat #}
     <path d="M-7 0 L0 -17 L7 0 Z" fill="url(#avg-petal2)"/>
     <path d="M-4.5 -6 L4.5 -6 L5.7 -3 L-5.7 -3 Z" fill="url(#avg-sun)"/>
     <circle cy="-17.5" r="2.2" fill="url(#avg-sun)"/>
@@ -139,23 +184,22 @@
     <circle cx="9.6" cy="-8" r="2.4" fill="#f7f2e8"/>
   {% endif %}
 </g>
-{% endif %}
 {% endmacro %}
 
 {#-- the potted plants' seasonal ribbon: a small bow on the pot rim, tinted by
      month. Same origin convention as _accessory. --#}
 {% macro _pot_bow(m, x=41, y=110) %}
+<g class="av-acc" transform="translate({{ x }} {{ y }})">
 {% if m %}
 {% set tint = ["#e07a9f", "#e0607e", "#f2a9c4", "#8cc898", "#e2c98a", "#5fa8d8",
                "#f6c445", "#5fb3af", "#b0824a", "#f08c3a", "#c47a8a", "#c04a4a"][m - 1] %}
-<g class="av-acc" transform="translate({{ x }} {{ y }})">
   <path d="M-1 0 Q-8 -6 -7 -1 Q-6.4 2 -1 1 Z" fill="{{ tint }}"/>
   <path d="M1 0 Q8 -6 7 -1 Q6.4 2 1 1 Z" fill="{{ tint }}"/>
   <path d="M-1 1 l-1.6 4.6 M1 1 l1.6 4.6" stroke="{{ tint }}" stroke-width="1.8" stroke-linecap="round"/>
   <circle cy=".4" r="1.7" fill="#fff" opacity=".85"/>
   <circle cy=".4" r="1.7" fill="{{ tint }}" opacity=".6"/>
-</g>
 {% endif %}
+</g>
 {% endmacro %}
 
 {#-- the earned RANK regalia — unrelated to the calendar (_accessory/_pot_bow
@@ -246,10 +290,11 @@
 
 {# ============================ plant family ============================ #}
 
-{% macro _plant(s, m=0) %}
+{% macro _plant(s, m=0, costume="") %}
   {{ _pot() }}
   {{ _pot_bow(m) }}
-  {{ _pot_regalia(s) }}
+  {{ costume_front("plant", s, costume, scaled=true) }}
+    {{ _pot_regalia(s) }}
   {% if s == 1 %}
     <ellipse cx="60" cy="103" rx="7" ry="4.6" fill="#e8d3a8"/>
     <ellipse cx="58" cy="102" rx="2.6" ry="1.6" fill="#f6ecd2"/>
@@ -300,11 +345,12 @@
 {% endmacro %}
 
 
-{% macro _cactus(s, m=0) %}
+{% macro _cactus(s, m=0, costume="") %}
   {% set h = 78 - (s - 1) * 8 %}
   {{ _pot("url(#avg-pot)", "#dda069") }}
   {{ _pot_bow(m) }}
-  {{ _pot_regalia(s) }}
+  {{ costume_front("cactus", s, costume, scaled=true) }}
+    {{ _pot_regalia(s) }}
   {# main trunk grows taller with stage #}
   <rect x="51" y="{{ h }}" width="18" height="{{ 106 - h }}" rx="9" fill="url(#avg-cactus)"/>
   <rect x="53" y="{{ h + 2 }}" width="5" height="{{ 102 - h }}" rx="2.5" fill="#ffffff2a"/>
@@ -341,7 +387,7 @@
 {% endmacro %}
 
 
-{% macro _bonsai(s, m=0) %}
+{% macro _bonsai(s, m=0, costume="") %}
   <path d="M34 116 L86 116 L80 130 L40 130 Z" fill="url(#avg-pot2)"/>
   <path d="M40 116 L48 116 L45 130 L41 130 Z" fill="#ffffff22"/>
   <rect x="30" y="110" width="60" height="9" rx="4" fill="#93809f"/>
@@ -349,7 +395,8 @@
   <ellipse class="av-soil" cx="60" cy="110" rx="26" ry="4.5" fill="#4a3a58"/>
   <ellipse class="av-soilwet" cx="60" cy="110" rx="26" ry="4.5" fill="#241830"/>
   {{ _pot_bow(m, 37, 114) }}
-  {{ _pot_regalia(s, 60, 114) }}
+  {{ costume_front("bonsai", s, costume, scaled=true) }}
+    {{ _pot_regalia(s, 60, 114) }}
   {# gnarled trunk + branches grow with stage #}
   <path d="M60 108 C58 96 66 92 62 {{ 92 - (s * 6) }}" stroke="url(#avg-trunk)" stroke-width="6.5" fill="none" stroke-linecap="round"/>
   <path d="M59 104 C58 98 62 96 61 {{ 96 - (s * 5) }}" stroke="#ffffff1e" stroke-width="2" fill="none" stroke-linecap="round"/>
@@ -379,10 +426,11 @@
 {% endmacro %}
 
 
-{% macro _sunflower(s, m=0) %}
+{% macro _sunflower(s, m=0, costume="") %}
   {{ _pot() }}
   {% if s < 4 %}{{ _pot_bow(m) }}{% endif %}
-  {{ _pot_regalia(s) }}
+  {{ costume_front("sunflower", s, costume, scaled=true) }}
+    {{ _pot_regalia(s) }}
   {% if s == 1 %}
     <ellipse cx="60" cy="103" rx="7" ry="4.6" fill="#e8d3a8"/>
     <circle cx="60" cy="101" r="3" fill="#8a6a3a"/>
@@ -423,7 +471,7 @@
       {% for dx, dy in [(-2, -2), (2, -1), (0, 2), (-3, 1), (3, 2)] %}
       <circle cx="{{ 60 + dx }}" cy="{{ bc + dy }}" r=".9" fill="#5a3a1a"/>
       {% endfor %}
-      {{ _accessory(m, 60, bc - br, 0.7) }}
+      {{ _accessory(m, 60, bc - br, 0.7, costume=costume) }}
     </g>
   {% endif %}
   {% if s >= 5 %}
@@ -440,10 +488,11 @@
 {% endmacro %}
 
 
-{% macro _fern(s, m=0) %}
+{% macro _fern(s, m=0, costume="") %}
   {{ _pot("url(#avg-pot)", "#d8916a") }}
   {{ _pot_bow(m) }}
-  {{ _pot_regalia(s) }}
+  {{ costume_front("fern", s, costume, scaled=true) }}
+    {{ _pot_regalia(s) }}
   {# each frond = rib + paired herringbone leaflets tapering to the tip;
      grouped so the ripple can cascade 1..6. The newest frond also carries
      av-frond-top (unfurl flourish on watering). Leaflet rows: (x, y, rib
@@ -481,9 +530,10 @@
 {% endmacro %}
 
 
-{% macro _mushroom(s, m=0) %}
+{% macro _mushroom(s, m=0, costume="") %}
   {{ _pot("url(#avg-pot)", "#d8916a") }}
-  {{ _pot_regalia(s) }}
+  {{ costume_front("mushroom", s, costume, scaled=true) }}
+    {{ _pot_regalia(s) }}
   {% set capw = 12 + s * 4 %}      {# cap half-width grows with stage #}
   {% set capt = 92 - s * 4 %}      {# cap top rises with stage #}
   {# stout stem with a friendly face — the mushroom is the one plant that blinks #}
@@ -509,7 +559,7 @@
     {% if s >= 3 %}<circle cx="60" cy="{{ capt + 1 }}" r="1.6" fill="#fff3ea"/>{% endif %}
     {% if s >= 4 %}<circle cx="{{ 60 - capw + 5 }}" cy="{{ capt + 10 }}" r="1.3" fill="#fff3ea"/>
     <circle cx="{{ 60 + capw - 6 }}" cy="{{ capt + 10 }}" r="1.3" fill="#fff3ea"/>{% endif %}
-    {{ _accessory(m, 60, capt, 0.9) }}
+    {{ _accessory(m, 60, capt, 0.9, costume=costume) }}
   </g>
   {# spores puff out on its quirky idle #}
   <g class="av-spore" fill="#e8d8f0">
@@ -532,10 +582,11 @@
 {% endmacro %}
 
 
-{% macro _succulent(s, m=0) %}
+{% macro _succulent(s, m=0, costume="") %}
   {{ _pot("url(#avg-pot2)", "#93809f") }}
   {{ _pot_bow(m) }}
-  {{ _pot_regalia(s) }}
+  {{ costume_front("succulent", s, costume, scaled=true) }}
+    {{ _pot_regalia(s) }}
   {# plump rosette — outer ring first so inner leaves overlap it #}
   {% set petal = "M0 0 C-7 -7 -8 -18 0 -24 C8 -18 7 -7 0 0 Z" %}
   {% if s >= 2 %}
@@ -573,7 +624,7 @@
 
 {# ============================ animal family ============================ #}
 
-{% macro _cat(s, m=0) %}
+{% macro _cat(s, m=0, costume="") %}
   {% set sc = 0.62 + (s - 1) * 0.076 %}
   {{ _shadow(26) }}
   <g transform="translate(60 96) scale({{ '%.3f'|format(sc) }}) translate(-60 -96)">
@@ -615,8 +666,9 @@
       {% endif %}
       <ellipse cx="50" cy="80" rx="2.6" ry="1.4" fill="#f2b8a0" opacity=".55"/>
       <ellipse cx="70" cy="80" rx="2.6" ry="1.4" fill="#f2b8a0" opacity=".55"/>
-      {{ _accessory(m, 60, 58, 1) }}
+      {{ _accessory(m, 60, 58, 1, costume=costume) }}
     </g>
+    {{ costume_front("cat", s, costume, scaled=true) }}
     {{ _regalia(s, 60, 94) }}
     {% if s >= 6 %}
     <path d="M88 56 l2 4.4 4.8 .7 -3.5 3.4 .9 4.8 -4.2 -2.3 -4.2 2.3 .9 -4.8 -3.5 -3.4 4.8 -.7 Z" fill="url(#avg-sun)"/>
@@ -631,7 +683,7 @@
 {% endmacro %}
 
 
-{% macro _bird(s, m=0) %}
+{% macro _bird(s, m=0, costume="") %}
   {% set sc = 0.6 + (s - 1) * 0.08 %}
   {{ _shadow(22) }}
   <g transform="translate(60 98) scale({{ '%.3f'|format(sc) }}) translate(-60 -98)">
@@ -657,6 +709,7 @@
       <path d="M76 94 q8 -3 12 -8" stroke="#4d9a97" stroke-width="1" fill="none" opacity=".6"/>
     </g>
     {% endif %}
+    {{ costume_front("bird", s, costume, scaled=true) }}
     {{ _regalia(s, 60, 90, 0.7) }}
     <g class="av-head">
       <circle cx="60" cy="78" r="13" fill="url(#avg-bird)"/>
@@ -667,7 +720,7 @@
       <ellipse cx="52" cy="81" rx="2.2" ry="1.2" fill="#f2b8a0" opacity=".5"/>
       {% if s >= 5 %}<path d="M52 66 q8 -8 16 0" stroke="#f2a63a" stroke-width="2" fill="none" stroke-linecap="round"/>{% endif %}
       {% if s >= 6 %}<path d="M60 62 q-3 -10 3 -14 q2 8 6 8 q-4 3 -3 9 Z" fill="url(#avg-beak)"/>{% endif %}
-      {{ _accessory(m, 60, 65, 0.8) }}
+      {{ _accessory(m, 60, 65, 0.8, costume=costume) }}
     </g>
     {# tail feathers #}
     {% if s >= 2 %}
@@ -686,7 +739,7 @@
 {% endmacro %}
 
 
-{% macro _turtle(s, m=0) %}
+{% macro _turtle(s, m=0, costume="") %}
   {% set sc = 0.62 + (s - 1) * 0.074 %}
   {{ _shadow(30) }}
   <g transform="translate(60 100) scale({{ '%.3f'|format(sc) }}) translate(-60 -100)">
@@ -701,7 +754,7 @@
       {{ _eye(92, 93.5, 2.2, "#375237", "#9ccb97") }}
       <path d="M95 98 q2.6 .4 3.6 -1" stroke="#4a7a48" stroke-width="1" fill="none" stroke-linecap="round"/>
       <ellipse cx="88" cy="98" rx="1.8" ry="1" fill="#f2b8a0" opacity=".5"/>
-      {{ _accessory(m, 90, 88, 0.55) }}
+      {{ _accessory(m, 90, 88, 0.55, costume=costume) }}
     </g>
     {# domed shell: dark rim, lit dome, scute pattern #}
     <path d="M30 104 Q32 {{ '%.0f'|format(90 - s * 2.2) }} 60 {{ '%.0f'|format(86 - s * 2.6) }} Q88 {{ '%.0f'|format(90 - s * 2.2) }} 90 104 Z" fill="url(#avg-shell2)"/>
@@ -713,6 +766,7 @@
     {% if s >= 4 %}
       {% for cx, cy in [(50, 98), (70, 98), (60, 96)] %}<path d="M{{ cx }} {{ cy }} l3 0 -1.5 -3 Z" fill="#2f6a44" opacity=".8"/>{% endfor %}
     {% endif %}
+    {{ costume_front("turtle", s, costume, scaled=true) }}
     {{ _regalia(s, 60, 94, 0.7) }}
     {% if s >= 6 %}
       <path d="M60 {{ '%.0f'|format(88 - s * 2.6) }} l1.6 4 4 .6 -3 3 .8 4.2 -3.4 -2 -3.4 2 .8 -4.2 -3 -3 4 -.6 Z" fill="url(#avg-sun)"/>
@@ -726,7 +780,7 @@
 {% endmacro %}
 
 
-{% macro _dog(s, m=0) %}
+{% macro _dog(s, m=0, costume="") %}
   {% set sc = 0.62 + (s - 1) * 0.076 %}
   {{ _shadow(27) }}
   <g transform="translate(60 96) scale({{ '%.3f'|format(sc) }}) translate(-60 -96)">
@@ -739,6 +793,7 @@
     <ellipse cx="52" cy="117" rx="6.4" ry="4.2" fill="url(#avg-dogfur2)"/>
     <ellipse cx="68" cy="117" rx="6.4" ry="4.2" fill="url(#avg-dogfur2)"/>
     <path d="M50 116 l0 3 M54 116 l0 3 M66 116 l0 3 M70 116 l0 3" stroke="#a5763a" stroke-width=".9"/>
+    {{ costume_front("dog", s, costume, scaled=true) }}
     {{ _regalia(s, 60, 90) }}
     <g class="av-head">
       <g class="av-ear-l">
@@ -761,7 +816,7 @@
       {% if s >= 2 %}
       <path d="M60 83 q1.4 4.4 4.6 4 q-1 -3 -1.6 -4.6" fill="#e0788e"/>
       {% endif %}
-      {{ _accessory(m, 60, 54, 1) }}
+      {{ _accessory(m, 60, 54, 1, costume=costume) }}
     </g>
     {% if s >= 5 %}
     <ellipse cx="44" cy="70" rx="2.6" ry="1.4" fill="#f2b8a0" opacity=".6" transform="rotate(-12 44 70)"/>
@@ -780,7 +835,7 @@
 {% endmacro %}
 
 
-{% macro _rabbit(s, m=0) %}
+{% macro _rabbit(s, m=0, costume="") %}
   {% set sc = 0.62 + (s - 1) * 0.076 %}
   {{ _shadow(24) }}
   <g transform="translate(60 96) scale({{ '%.3f'|format(sc) }}) translate(-60 -96)">
@@ -789,6 +844,7 @@
     <path d="M52 118 Q53 102 60 100 Q67 102 68 118 Z" fill="url(#avg-rabbit2)"/>
     <ellipse cx="51" cy="118" rx="7.5" ry="3.6" fill="url(#avg-rabbit2)"/>
     <ellipse cx="69" cy="118" rx="7.5" ry="3.6" fill="url(#avg-rabbit2)"/>
+    {{ costume_front("rabbit", s, costume, scaled=true) }}
     {{ _regalia(s, 60, 88, 0.8) }}
     <g class="av-head">
       <g class="av-ear-l">
@@ -819,7 +875,7 @@
       {% endfor %}
       <circle cx="46" cy="54" r="1.5" fill="url(#avg-sun)"/>
       {% endif %}
-      {{ _accessory(m, 60, 55, 0.85) }}
+      {{ _accessory(m, 60, 55, 0.85, costume=costume) }}
     </g>
     {% if s >= 6 %}
     <path d="M88 54 l2 4.4 4.8 .7 -3.5 3.4 .9 4.8 -4.2 -2.3 -4.2 2.3 .9 -4.8 -3.5 -3.4 4.8 -.7 Z" fill="url(#avg-sun)"/>
@@ -834,7 +890,7 @@
 {% endmacro %}
 
 
-{% macro _fish(s, m=0) %}
+{% macro _fish(s, m=0, costume="") %}
   {% set sc = 0.62 + (s - 1) * 0.074 %}
   {# home water is drawn by avatar_svg() OUTSIDE the roaming layer, so it stays
      put while the fish glides around it (avatar_is_swimmer gate). #}
@@ -859,12 +915,13 @@
     {% if s >= 3 %}
     <path d="M64 84 q4 4 0 8 M70 85 q4 4 0 7 M75 87 q3 3 0 5" stroke="#c65f14" stroke-width="1" fill="none" opacity=".6"/>
     {% endif %}
+    {{ costume_front("fish", s, costume, scaled=true) }}
     {{ _regalia(s, 56, 84, 0.45) }}
     <g class="av-head">
       {{ _eye(72, 89, 3.1, "#2c3a4a", "#f0a04c") }}
       <path d="M80 95 q2.6 1 3.6 -.6" stroke="#b25412" stroke-width="1.2" fill="none" stroke-linecap="round"/>
       <ellipse cx="76" cy="95" rx="1.8" ry="1" fill="#ffc9a8" opacity=".6"/>
-      {{ _accessory(m, 72, 79, 0.55) }}
+      {{ _accessory(m, 72, 79, 0.55, costume=costume) }}
     </g>
     {% if s >= 6 %}
     <path d="M66 76 l2 -6 3 4 3 -4 2 6 Z" fill="url(#avg-sun)"/>
@@ -885,7 +942,7 @@
 {% endmacro %}
 
 
-{% macro _dolphin(s, m=0) %}
+{% macro _dolphin(s, m=0, costume="") %}
   {% set sc = 0.62 + (s - 1) * 0.074 %}
   {# home water is drawn by avatar_svg() OUTSIDE the roaming layer (see _fish):
      the dolphin glides/leaps around it while the surface stays put. #}
@@ -915,12 +972,13 @@
     <circle cx="58" cy="86" r="1" fill="#ffffff55"/><circle cx="66" cy="92" r=".9" fill="#ffffff55"/>
     <circle cx="52" cy="90" r=".8" fill="#ffffff55"/>
     {% endif %}
+    {{ costume_front("dolphin", s, costume, scaled=true) }}
     {{ _regalia(s, 58, 80, 0.4) }}
     <g class="av-head">
       {{ _eye(75, 84, 3, "#22303c", "#5f95b8") }}
       <ellipse cx="80" cy="90" rx="1.8" ry="1" fill="#bfe0ef" opacity=".6"/>
       {% if s >= 5 %}<ellipse cx="70" cy="90" rx="2.2" ry="1.2" fill="#f2b8a0" opacity=".45"/>{% endif %}
-      {{ _accessory(m, 70, 72, 0.55) }}
+      {{ _accessory(m, 70, 72, 0.55, costume=costume) }}
     </g>
     {% if s >= 6 %}
     <path d="M64 70 l1.6 -6 3 4 3 -4 1.6 6 Z" fill="url(#avg-sun)"/>
@@ -941,7 +999,7 @@
 {% endmacro %}
 
 
-{% macro _owl(s, m=0) %}
+{% macro _owl(s, m=0, costume="") %}
   {% set sc = 0.62 + (s - 1) * 0.074 %}
   {{ _shadow(26) }}
   {# perch branch #}
@@ -965,6 +1023,7 @@
     {# feet on the branch #}
     <path d="M52 114 l-2 4 M52 114 l0 4.6 M52 114 l2 4 M68 114 l-2 4 M68 114 l0 4.6 M68 114 l2 4"
           stroke="#d98a2a" stroke-width="1.6" stroke-linecap="round"/>
+    {{ costume_front("owl", s, costume, scaled=true) }}
     {{ _regalia(s, 60, 81, 0.7) }}
     {# the swivelling facial disc (pointer-follow rotates this) #}
     <g class="av-head">
@@ -980,7 +1039,7 @@
       {% if s >= 2 %}
       <path d="M47 55 q5 -3 10 -1 M63 54 q5 -2 10 1" stroke="#8a6432" stroke-width="1.2" fill="none" stroke-linecap="round"/>
       {% endif %}
-      {{ _accessory(m, 60, 47, 0.9) }}
+      {{ _accessory(m, 60, 47, 0.9, costume=costume) }}
     </g>
     {% if s >= 5 %}
     <path d="M60 34 q-2 -5 2 -8 q1 4 4 5 q-3 2 -2 6 Z" fill="url(#avg-sun)" opacity=".9"/>
@@ -998,7 +1057,7 @@
 {% endmacro %}
 
 
-{% macro _bat(s, m=0) %}
+{% macro _bat(s, m=0, costume="") %}
   {% set sc = 0.62 + (s - 1) * 0.074 %}
   <ellipse cx="60" cy="124" rx="18" ry="4" fill="#00000010"/>
   <g transform="translate(60 88) scale({{ '%.3f'|format(sc) }}) translate(-60 -88)">
@@ -1019,6 +1078,7 @@
     <ellipse cx="60" cy="96" rx="7.5" ry="8" fill="url(#avg-bat2)"/>
     {# dangly feet #}
     <path d="M55 104 q-1 5 -3 6 M65 104 q1 5 3 6" stroke="#57517d" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+    {{ costume_front("bat", s, costume, scaled=true) }}
     {{ _regalia(s, 60, 83, 0.65) }}
     <g class="av-head">
       <g class="av-ear-l">
@@ -1038,7 +1098,7 @@
       <path d="M61.5 75.8 l1 2.6 1 -2.6 Z" fill="#fff"/>
       {% endif %}
       <path d="M60 71.5 l-1.6 1.8 h3.2 Z" fill="#b06a8a"/>
-      {{ _accessory(m, 60, 56, 0.75) }}
+      {{ _accessory(m, 60, 56, 0.75, costume=costume) }}
     </g>
     {% if s >= 5 %}
     <path d="M32 46 q-6 4 -4 11 q4 -2 5 -6 q3 3 7 2 q-2 -6 -8 -7 Z" fill="url(#avg-sun)" opacity=".85"/>

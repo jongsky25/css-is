@@ -56,6 +56,8 @@ from request_reads import RequestReads
 import integration_api
 import integration_access
 import integration_access_routes
+import appearance
+import appearance_routes
 
 import qrcode
 from fastapi import FastAPI, Request, HTTPException
@@ -509,7 +511,8 @@ templates.env.globals["t"] = i18n.t
 templates.env.globals["avatar_family"] = st.avatar_family
 templates.env.globals["avatar_care_verb"] = st.avatar_care_verb
 templates.env.globals["avatar_is_swimmer"] = st.avatar_is_swimmer
-templates.env.globals["avatar_month"] = st.avatar_accessory_month
+templates.env.globals["avatar_month"] = appearance.accessory_month
+templates.env.globals["avatar_outfit"] = appearance.avatar_outfit
 
 
 # =====================================================================
@@ -737,6 +740,9 @@ NAV_GROUPS = [
     # screen in the app (53 views/30d) while Audit (2) and Sharing (1) are the
     # least-used of everything. Name cleanup stays search-only (0 views).
     {"name": "Administrator", "items": [
+        {"key": "appearance", "url": "/admin/appearance", "label": "Appearance",
+         "section": "Day to day", "hint": "Seasonal page themes, avatar outfits & schedules",
+         "kw": "appearance theme seasonal halloween christmas costume avatar outfit schedule", "cap": "manage_users"},
         {"key": "feedback", "url": "/admin/feedback", "label": "Feedback",
          "section": "Day to day",
          "hint": "In-page comments from users",
@@ -2080,6 +2086,9 @@ def _notification_items(conn, user, feedback_unread, *, reads=None):
     except Exception:                      # noqa: BLE001 — the bell must never break a page
         pass
     return items
+
+
+appearance_routes.install_context(app, get_conn)
 
 
 @app.middleware("http")
@@ -17322,6 +17331,7 @@ app.include_router(documents_routes.make_router(templates, get_conn))
 app.include_router(documents_email.make_router(get_conn))
 app.include_router(work_routes.make_router(templates, get_conn))
 app.include_router(integration_access_routes.make_router(templates, get_conn))
+app.include_router(appearance_routes.make_router(templates, get_conn))
 app.include_router(supplies_routes.make_router(templates, get_conn))
 
 # Isolated generated contract: legacy browser actions are not part of API v1.

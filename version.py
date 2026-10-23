@@ -18,10 +18,21 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "8.05"
+APP_VERSION = "8.06"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "8.06",
+        "date": "October 23, 2026",
+        "summary": "Celebrate the season with page themes and costumes managed by your administrator.",
+        "changes": [
+            "Administrators can preview, publish and schedule seasonal page themes and companion outfits from Appearance.",
+            "Halloween brings an illustrated haunted office, pumpkins, seasonal colors and witch, vampire or pumpkin costumes.",
+            "Artwork, gentle animation and the welcome message can be adjusted, with readable light and dark versions.",
+            "Scheduled appearances change automatically while you work, and administrators can restore earlier settings."
+        ]
+    },
     {
         "version": "8.05",
         "date": "October 23, 2026",
