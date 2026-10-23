@@ -1,6 +1,7 @@
 ## 8.08 — October 23, 2026
 
 - DPO: start the signature block ("By Authority of the Secretary of Health:" and the signatory's name, title and office) at the 2-inch mark on its first line too (Spot Feedback #182). The paragraphs set only the start indent, so single lines began at the left margin.
+- DPO: when the invitation's key lines (or "DPO cites") already name the office holding the activity, skip the generated "In support of this, [office] will conduct…" sentence (it repeated the same fact).
 - Google side: re-run `rebuildActivityTemplates()` and redeploy `activity_templates.gs`. No schema migration or new dependency.
 
 ## 8.07 — October 23, 2026

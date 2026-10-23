@@ -25,9 +25,10 @@ CHANGELOG = [
     {
         "version": "8.08",
         "date": "October 23, 2026",
-        "summary": "The DPO signature block now sits at the 2-inch mark.",
+        "summary": "DPO signature block sits at the 2-inch mark; no repeated host sentence.",
         "changes": [
-            "On a new Department Personnel Order, \"By Authority of the Secretary of Health:\" and the signatory's name, title and office start at the 2-inch mark instead of the left margin."
+            "On a new Department Personnel Order, \"By Authority of the Secretary of Health:\" and the signatory's name, title and office start at the 2-inch mark instead of the left margin.",
+            "A DPO for another office's activity no longer repeats who conducts it when the invitation lines already name that office."
         ]
     },
     {

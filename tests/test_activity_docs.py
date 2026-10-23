@@ -718,6 +718,18 @@ def test_dpo_cites_win_over_the_invitation_lines_and_clearing_them_brings_the_in
     assert relay.calls[-1]["fields"]["background"].startswith("Per memo of October 1. In support of this")
 
 
+def test_the_conducting_sentence_is_skipped_when_the_invitation_lines_already_name_the_host(viewer, conn, relay):
+    eid = create(viewer, kind="travel", title="Update on Health Promotion", start_date="2026-10-20", end_date="2026-10-20",
+                 people=[str(uid(conn, "viewer@test.local")), str(uid(conn, "encoder@test.local"))])
+    outside(viewer, eid, conducted_by="outside", host="METRO MANILA center for health development",
+            invited_as="resource_person", invitation="The Metro Manila Center For Health Development will conduct the Update.")
+    draft(viewer, eid, "dpo")
+    assert relay.calls[-1]["fields"]["background"] == "The Metro Manila Center For Health Development will conduct the Update."
+    outside(viewer, eid, conducted_by="outside", host="CHD VII", invited_as="resource_person", invitation="Per memo of October 1.")
+    draft(viewer, eid, "dpo")
+    assert relay.calls[-1]["fields"]["background"].startswith("Per memo of October 1. In support of this, the CHD VII will conduct")
+
+
 def test_without_any_citation_the_first_paragraph_only_says_who_conducts_it(viewer, conn, relay):
     eid = create(viewer, kind="travel", title="CALEP Field Visit", start_date="2026-10-12", end_date="2026-10-12",
                  people=[str(uid(conn, "viewer@test.local")), str(uid(conn, "encoder@test.local"))])
