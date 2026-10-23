@@ -34,7 +34,7 @@ def grid_page(grid_browser, app_mod, viewer):
     conn.commit()
     context = grid_browser.new_context()
     page = context.new_page()
-    state = {'requests': [], 'fail': False, 'block_vendor': False, 'fail_view_save': False, 'errors': []}
+    state = {'requests': [], 'fail': False, 'block_vendor': False, 'fail_view_save': False, 'fail_export': False, 'export_requests': [], 'errors': []}
     page.on('pageerror', lambda error: state['errors'].append(str(error)))
     def serve(route):
         url = urlsplit(route.request.url)
@@ -46,6 +46,11 @@ def grid_page(grid_browser, app_mod, viewer):
             state['requests'].append(url.query)
             if state['fail']:
                 route.abort(); return
+        if url.path == '/documents/grid-export.csv':
+            state['export_requests'].append(url.query)
+            if state['fail_export']:
+                route.fulfill(status=400, content_type='application/json', body='{"error":"Narrow your filters before exporting."}')
+                return
         if url.path == '/documents/grid-views' and route.request.method == 'POST' and state['fail_view_save']:
             route.fulfill(status=409, content_type='application/json', body='{"error":"This saved view changed in another tab. Reload the page before changing it."}')
             return
@@ -275,3 +280,57 @@ def test_deadline_quick_filters_save_reload_and_reset(grid_page, app_mod):
     page.wait_for_function("document.getElementById('registry-table-status').textContent.includes('36 matching records')")
     assert page.get_by_label('Deadline', exact=True).input_value() == ''
     assert 'deadline=' in state['requests'][-1]
+
+
+
+def download_view(page):
+    import csv
+    import io
+    with page.expect_download() as received:
+        page.get_by_role('button', name='Export current view (CSV)', exact=True).click()
+    download = received.value
+    assert download.suggested_filename == 'document-view.csv'
+    return list(csv.reader(io.StringIO(Path(download.path()).read_text(encoding='utf-8-sig'))))
+
+
+def test_current_view_download_all_pages_applied_filters_columns_and_saved_view(grid_page):
+    page, state = grid_page
+    open_grid(page)
+    page.select_option('#registry-sort', 'subject:asc')
+    page.wait_for_function("document.querySelector('.tabulator-row [tabulator-field=subject]').textContent.includes('<img')")
+    page.locator('.tabulator-page[data-page=next]').click()
+    page.wait_for_function("document.getElementById('registry-table-status').textContent.includes('page 2 of 2')")
+    page.locator('#registry-columns summary').click()
+    page.get_by_label('Lead', exact=True).uncheck()
+    page.locator('[name=status]').select_option('in_action')  # Draft choice is not applied yet.
+    data = download_view(page)
+    assert data[0] == ['Number', 'Subject', 'Verification', 'Workflow', 'Due date']
+    assert len(data) == 37 and data[1][1].startswith('<img src=x')
+    assert [r[1] for r in data[2:]] == [f'Register item {i:02}' for i in range(35)]
+    assert 'page=' not in state['export_requests'][-1]
+    assert 'status=in_action' not in state['export_requests'][-1]
+    page.get_by_role('button', name='Apply filters', exact=True).click()
+    page.wait_for_function("document.getElementById('registry-table-status').textContent.includes('17 matching records')")
+    page.locator('#registry-views summary').click()
+    page.get_by_label('View name', exact=True).fill('Export action records')
+    page.get_by_role('button', name='Save new view', exact=True).click()
+    page.wait_for_function("document.getElementById('registry-view-status').textContent === 'View saved to your account.'")
+    page.reload()
+    page.wait_for_function("document.getElementById('registry-table-status').textContent.includes('17 matching records')")
+    data = download_view(page)
+    assert len(data) == 18 and data[0][-1] == 'Due date'
+    assert [r[1] for r in data[1:]] == [f'Register item {i:02}' for i in range(1,35,2)]
+    assert all(r[3] == 'in action' for r in data[1:])
+    assert 'status=in_action' in state['export_requests'][-1]
+
+
+def test_failed_export_keeps_grid_and_can_retry(grid_page):
+    page, state = grid_page
+    open_grid(page)
+    state['fail_export'] = True
+    page.get_by_role('button', name='Export current view (CSV)', exact=True).click()
+    page.wait_for_function("document.getElementById('registry-export-status').textContent.includes('Narrow your filters')")
+    assert page.locator('.tabulator-row').count() == 30
+    assert page.locator('#registry-standard').is_hidden()
+    state['fail_export'] = False
+    assert len(download_view(page)) == 37

@@ -18,10 +18,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "8.21"
+APP_VERSION = "8.22"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "8.22",
+        "date": "October 23, 2026",
+        "summary": "Export the document view you have chosen to a spreadsheet.",
+        "changes": [
+            "Download all matching pages using your applied filters, sort order and visible columns.",
+            "Exports check your current access and ask for narrower filters when more than 10,000 records match.",
+            "Release checks have more time to finish after installing their tools."
+        ]
+    },
     {
         "version": "8.21",
         "date": "October 23, 2026",

@@ -1,3 +1,9 @@
+## 8.22 — October 23, 2026
+
+- Increase release test jobs from 30 to 45 minutes so OCR/browser setup, both full suite orders and report gates can finish.
+- Add Export current view (CSV) with the applied queue/search, workflow, verification and deadline filters, current sort order and visible columns across all matching pages.
+- Recheck current access server-side, neutralize spreadsheet formulas, preserve UTF-8 text, and reject exports above 10,000 matches without truncating them. The existing full-register export remains available separately.
+
 ## 8.21 — October 23, 2026
 
 - Continue A22 with 23 offline calendar invitation upload cases, bringing the evaluation suite to 389 named scenarios.
