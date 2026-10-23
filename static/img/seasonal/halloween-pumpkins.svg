@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 130" fill="none">
+<defs><linearGradient id="p" x2="0" y2="1"><stop stop-color="#ffb44d"/><stop offset="1" stop-color="#dd591e"/></linearGradient></defs>
+<ellipse cx="170" cy="117" rx="163" ry="10" fill="#502e4420"/>
+<g transform="translate(56 82)"><path d="M0-24q-5-15 6-18" stroke="#577a49" stroke-width="7"/><ellipse rx="38" ry="30" fill="url(#p)"/><ellipse rx="24" ry="30" stroke="#ba4e22" stroke-width="2"/><ellipse rx="9" ry="30" stroke="#ba4e22" stroke-width="2"/><path d="m-23-5 10-13 6 12m14 0 6-12 10 13M-23 8-11 13 0 10 11 13 23 8Q0 37-23 8" fill="#38213e"/></g>
+<g transform="translate(283 86) scale(.85)"><path d="M0-24q-5-15 6-18" stroke="#577a49" stroke-width="7"/><ellipse rx="38" ry="30" fill="url(#p)"/><ellipse rx="24" ry="30" stroke="#ba4e22" stroke-width="2"/><path d="m-23-5 10-13 6 12m14 0 6-12 10 13M-23 8-11 13 0 10 11 13 23 8Q0 37-23 8" fill="#38213e"/></g>
+<g transform="translate(107 105) scale(.52)"><ellipse rx="38" ry="30" fill="url(#p)"/><path d="M0-24q-5-15 6-18" stroke="#577a49" stroke-width="7"/><path d="m-16-5 7-10 6 11m7 0 6-11 7 10M-17 10Q0 27 17 10" stroke="#38213e" stroke-width="4"/></g>
+<g transform="translate(226 94)"><path d="M-11-23h22l5 38h-32Z" fill="#43283f"/><path d="M-8-18H8l3 27h-22Z" fill="#ffc774"/><path d="M-14-24h28M-14 16h28" stroke="#43283f" stroke-width="5"/><path d="M-8-26v-6a8 8 0 0 1 16 0v6" stroke="#43283f" stroke-width="3"/></g>
+<g fill="#b67b42"><path d="m18 112 15-9-2 15ZM308 119l15-11 4 10ZM139 120l13-9 3 9Z"/></g>
+</svg>
