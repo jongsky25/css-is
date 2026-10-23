@@ -230,16 +230,66 @@ def clean_appearance(parsed) -> dict:
     return {"readable": bool(p.get("readable")) and bool(a), "date_from": a, "date_to": b, "note": _text(p.get("note"), 200)}
 
 
+def _document_fields(parsed, schema, limits):
+    if not isinstance(parsed, dict) or set(parsed) - set(schema["properties"]):
+        raise ai_core.AIBadResponse("Invalid document reading")
+    if not isinstance(parsed.get("readable"), bool):
+        raise ai_core.AIBadResponse("Invalid document reading")
+    if not parsed["readable"]:
+        return False
+    if set(parsed) != set(schema["required"]):
+        raise ai_core.AIBadResponse("Incomplete document reading")
+    for key, limit in limits.items():
+        value = parsed[key]
+        if (not isinstance(value, str) or len(value) > limit
+                or any(ord(c) < 32 for c in value) or "<" in value or ">" in value):
+            raise ai_core.AIBadResponse("Invalid document text")
+    return True
+
+
+def validated_dpo(parsed) -> dict:
+    limits = {"dpo_no": 60, "dpo_date": 10, "travel_start": 10, "travel_end": 10,
+              "funding": 80, "note": 200}
+    if not _document_fields(parsed, DPO_SCHEMA, limits):
+        return clean_dpo({"readable": False})
+    if (not isinstance(parsed["funding_stated"], bool) or not parsed["dpo_no"].strip()
+            or (parsed["funding_stated"] and not parsed["funding"].strip())):
+        raise ai_core.AIBadResponse("Invalid DPO reading")
+    for key in ("dpo_date", "travel_start", "travel_end"):
+        if parsed[key] and not _day(parsed[key]):
+            raise ai_core.AIBadResponse("Invalid DPO date")
+    start, end = parsed["travel_start"], parsed["travel_end"]
+    if start and end and end < start:
+        raise ai_core.AIBadResponse("Invalid DPO date range")
+    return clean_dpo(parsed)
+
+
+def validated_appearance(parsed) -> dict:
+    if not _document_fields(parsed, APPEAR_SCHEMA, {"date_from": 10, "date_to": 10, "note": 200}):
+        return clean_appearance({"readable": False})
+    start, end = parsed["date_from"], parsed["date_to"]
+    if (not (start or end) or (start and not _day(start)) or (end and not _day(end))
+            or (start and end and end < start)):
+        raise ai_core.AIBadResponse("Invalid appearance dates")
+    return clean_appearance(parsed)
+
+
 async def read_doc(doc, conn, user, ip, raw: bytes, mime: str) -> dict:
     """The cleaned reading for one kind of upload (DOC_RECEIPT, DOC_DPO or DOC_APPEARANCE). Raises ai_core.AIError."""
     if doc == DOC_RECEIPT:
         return await read(conn, user, ip, raw, mime)
-    system, prompt, schema, clean_fn = ((DPO_SYSTEM, DPO_PROMPT, DPO_SCHEMA, clean_dpo) if doc == DOC_DPO
-                                        else (APPEAR_SYSTEM, APPEAR_PROMPT, APPEAR_SCHEMA, clean_appearance))
-    result, _iid = await ai_core.ask_async(
+    if doc not in (DOC_DPO, DOC_APPEARANCE):
+        raise ai_core.AIBadResponse("Unknown document type")
+    system, prompt, schema, validate = ((DPO_SYSTEM, DPO_PROMPT, DPO_SCHEMA, validated_dpo) if doc == DOC_DPO
+                                        else (APPEAR_SYSTEM, APPEAR_PROMPT, APPEAR_SCHEMA, validated_appearance))
+    result, iid = await ai_core.ask_async(
         conn, user, FEATURE, prompt, ip=ip, system=system, response_schema=schema,
         temperature=0.0, max_output_tokens=512, timeout=25.0, images=[(mime, raw)])
-    return clean_fn(result.get("parsed"))
+    try:
+        return validate(result.get("parsed"))
+    except ai_core.AIBadResponse:
+        st.update_ai_interaction_outcome(conn, iid, "rejected_validation")
+        raise
 
 
 def _key(no: str) -> str:

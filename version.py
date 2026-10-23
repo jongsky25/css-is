@@ -18,10 +18,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "8.18"
+APP_VERSION = "8.19"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "8.19",
+        "date": "October 23, 2026",
+        "summary": "Travel checklist AI readings now require current access and your review before changing DPO details.",
+        "changes": [
+            "A file upload stops if your sign-in or filing changes while it is being processed.",
+            "Unsafe DPO and appearance readings are rejected while the file can still be kept.",
+            "A suggested DPO date waits for you to choose and save it."
+        ]
+    },
     {
         "version": "8.18",
         "date": "October 23, 2026",

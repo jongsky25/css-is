@@ -197,15 +197,15 @@ def test_an_uploaded_ticket_is_drafted_into_appendix_a_on_the_prepare_page(viewe
     assert "rid" not in norm["rows"][0] and "src" not in norm["rows"][0]
 
 
-def test_the_dpo_date_is_added_from_the_uploaded_dpo_when_the_filing_has_none(viewer, conn, fake, on, ai_clean, monkeypatch):
+def test_the_dpo_date_is_offered_for_review_when_the_filing_has_none(viewer, conn, fake, on, ai_clean, monkeypatch):
     ref = mk(viewer)
     assert travel.get_by_ref(conn, ref)["dpo_date"] is None
     dpo = {"readable": True, "dpo_no": "2026-100", "dpo_date": "2026-09-20", "travel_start": "2000-01-01", "travel_end": "2099-12-31",
            "funding_stated": True, "funding": "GAA MOOE", "note": ""}
     ai_on(conn, monkeypatch, dpo)
     j = up(viewer, ref, code="dpo").json()
-    assert j["ok"] and j["fill"] is None and any("DPO date" in c and "added" in c for c in j["checks"])
-    assert travel.get_by_ref(conn, ref)["dpo_date"] == "2026-09-20"
+    assert j["ok"] and j["fill"] == {"dpo_no": "", "dpo_date": "2026-09-20"}
+    assert travel.get_by_ref(conn, ref)["dpo_date"] is None
     # a different number is a conflict for the person to settle, so nothing is changed and the button is offered
     conn.execute("UPDATE travel_filing SET dpo_date=NULL WHERE ref_code=?", (ref,)); conn.commit()
     ai_on(conn, monkeypatch, {**dpo, "dpo_no": "2026-999"})

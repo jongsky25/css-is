@@ -67,7 +67,7 @@
   </li>
 {% endmacro %}
 {% block title %}{{ 'Travel claim' if missing else f.ref_code }}{% endblock %}
-{% block head %}<link rel="stylesheet" href="/static/css/travel.css?v=7.89"><script src="/static/js/travel_guidance.js?v=7.89" defer></script>{% if uploads_ready %}<script src="/static/js/travel_upload.js?v=7.89" defer></script>{% endif %}{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/travel.css?v=7.89"><script src="/static/js/travel_guidance.js?v=7.89" defer></script>{% if uploads_ready %}<script src="/static/js/travel_upload.js?v={{ APP_VERSION }}" defer></script>{% endif %}{% endblock %}
 {% block content %}
 {% if missing %}
 {{ page_header("Travel claim not found", "") }}

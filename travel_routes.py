@@ -72,6 +72,20 @@ def make_router(templates, get_conn, today_local, *, audit, base_url, notify=Non
                 and ai_core.feature_enabled(conn, "travel_scan")
                 and latest == filing and travel.is_owner(current, latest))
 
+    def _upload_current(request, conn, user, filing, code):
+        payload = auth.parse_token(request.cookies.get(auth.COOKIE_NAME))
+        current = st.session_actor(conn, payload) if payload else None
+        latest = travel.get_by_ref(conn, filing["ref_code"])
+        if (current is None or any(current[key] != user[key] for key in ("id", "username", "role"))
+                or not travel.enabled(conn) or latest != filing
+                or not travel.is_owner(current, latest) or not _uploads_ready(conn)):
+            return False
+        try:
+            travel._editable(latest)
+            return travel._item_spec(latest, code).handling in ("upload", "carry")
+        except travel.TravelError:
+            return False
+
     def _forbidden(request, why="this page"):
         return templates.TemplateResponse(request, "forbidden.html",
                                           {"capability": why, "show_scope": False}, status_code=403)
@@ -587,17 +601,30 @@ def make_router(templates, get_conn, today_local, *, audit, base_url, notify=Non
                 return _jerr("The documents relay failed. Try again.", 502)
             if not res.ok:
                 return _jerr(gdocs_relay.describe(res.error), 502 if res.error in ("not_configured", "unreachable") else 400)
+            # Serialize the final authority/source check with the local save.
+            # The relay and provider work above ran without holding this lock.
+            conn.execute("BEGIN IMMEDIATE")
+            if not _upload_current(request, conn, user, filing, code):
+                conn.rollback()
+                cleaned = False
+                if (res.data or {}).get("id"):
+                    cleaned = await run_in_threadpool(_trash, res.data["id"])
+                if not cleaned:
+                    logging.warning("Travel upload cleanup needs review: filing=%s row=%s", ref, code)
+                    return _jerr("Your access or filing changed. The file was not added to this filing; "
+                                 "ask records staff to check the uploaded file.", 409)
+                return _jerr("Your access or filing changed while the file was uploading. Check the filing and try again.", 409)
+            if reading and (not ai_core.mode_at_least(conn, "router")
+                            or not ai_core.feature_enabled(conn, "travel_scan")):
+                reading, ai_off = None, True
             try:
                 travel.save_upload(conn, filing, code, res.data.get("folder_id"), res.data.get("folder_url"))
             except travel.TravelError as e:
+                conn.rollback()
                 return _jerr(str(e))
             checks, fill = travel_scan.check(doc, reading, filing) if reading else ([], None)
             if reading and doc in (travel_scan.DOC_RECEIPT, travel_scan.DOC_APPEARANCE):
                 travel_readings.save(conn, filing["id"], code, doc, reading)
-            if fill and doc == travel_scan.DOC_DPO and fill.get("dpo_date") and not fill.get("dpo_no") and not filing["dpo_date"]:
-                travel.set_dpo_date(conn, filing, fill["dpo_date"])          # the number matches and the date was empty: no button needed
-                checks = checks + [f"The DPO date ({fill['dpo_date']}) was added to this filing from your DPO."]
-                fill = None
             audit(request, conn, "travel_upload", target_type="travel_filing", target_id=ref,
                   summary=f"stored a file for {code}")
             return JSONResponse({"ok": True, "name": res.data.get("name", ""), "count": res.data.get("count"),
