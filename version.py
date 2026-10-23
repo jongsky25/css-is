@@ -18,10 +18,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "8.12"
+APP_VERSION = "8.13"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "8.13",
+        "date": "October 23, 2026",
+        "summary": "UX Insights AI suggestions now show their data scope and get more release checks.",
+        "changes": [
+            "AI UX analysis shows how many recorded events it used and whether the data was a recent sample.",
+            "Analysis stops if your access or the UX data changes while AI is working.",
+            "Release checks now cover misleading numbers, private details, unsafe text and provider failures."
+        ]
+    },
     {
         "version": "8.12",
         "date": "October 23, 2026",

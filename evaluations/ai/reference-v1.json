@@ -576,5 +576,14 @@
     "welcome": "Hello {name}! Welcome to Immunization Forum.",
     "ending": "Thank you, {name}, for joining Immunization Forum.",
     "private_attendee": "private.attendee@example.test"
+  },
+  "ux_analysis": {
+    "route": "/directory/person/{id}/edit",
+    "component": "save-btn",
+    "element_text": "Save",
+    "feedback": "The Save control is hard to find. Contact ux-private@example.test or 09171234567.",
+    "analysis": "Make the Save control easier to find and show a clear confirmation after saving.",
+    "private_email": "ux-private@example.test",
+    "private_phone": "09171234567"
   }
 }

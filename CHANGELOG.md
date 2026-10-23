@@ -1,3 +1,11 @@
+## 8.13 — October 23, 2026
+
+- Continue A22 with evaluation suite 1.5.0: add 30 offline UX Insights analysis cases to the existing 227, for 257 named cases required in both CI orders.
+- Recheck the current admin session, AI settings and telemetry/feedback snapshot after provider I/O. Reject empty, oversized, unsafe or unsupported numeric output. Commit the success outcome with its audit only after validation.
+- Mask email and mobile contact details in the provider handoff, retain only outcome/token/timing metadata in UX analysis interaction logs, and use an eight-second provider read timeout with bounded output.
+- Show the analysis window, event count and partial-sample warning beside suggestions; keep model text escaped in the browser. This is a review aid, not a verified causal finding.
+- No schema migration, new dependency or production provider configuration. Offline provider fakes do not measure live-model quality or production latency.
+
 ## 8.12 — October 23, 2026
 
 - Continue A22 with a versioned offline evaluation set for AI drafted activity messages, including unsupported numeric claims, private information, malformed replies, access changes and provider failures.

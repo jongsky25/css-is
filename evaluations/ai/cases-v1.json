@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "suite_id": "existing-ai-answers",
-  "suite_version": "1.4.0",
+  "suite_version": "1.5.0",
   "contract_version": 1,
   "reference_clock": "2026-10-20T06:00:00",
   "categories": [
@@ -4248,6 +4248,422 @@
       "category": "resilience",
       "surface": "messages",
       "question": "Can the organizer review a safe activity message draft? (audit-fail)",
+      "scenario": "audit-fail",
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "ux-baseline",
+      "category": "facts",
+      "surface": "ux_analysis",
+      "question": "Does UX analysis remain reviewable and source-scoped? (baseline)",
+      "scenario": "baseline",
+      "expect": {
+        "ok": true,
+        "calls": 1,
+        "outcomes": [
+          "ok"
+        ]
+      }
+    },
+    {
+      "id": "ux-empty-window",
+      "category": "facts",
+      "surface": "ux_analysis",
+      "question": "Does UX analysis remain reviewable and source-scoped? (empty-window)",
+      "scenario": "empty-window",
+      "expect": {
+        "ok": true,
+        "calls": 1,
+        "outcomes": [
+          "ok"
+        ]
+      }
+    },
+    {
+      "id": "ux-viewer",
+      "category": "authority",
+      "surface": "ux_analysis",
+      "question": "Does UX analysis remain reviewable and source-scoped? (viewer)",
+      "scenario": "viewer",
+      "expect": {
+        "ok": false,
+        "calls": 0,
+        "outcomes": []
+      }
+    },
+    {
+      "id": "ux-manager",
+      "category": "authority",
+      "surface": "ux_analysis",
+      "question": "Does UX analysis remain reviewable and source-scoped? (manager)",
+      "scenario": "manager",
+      "expect": {
+        "ok": false,
+        "calls": 0,
+        "outcomes": []
+      }
+    },
+    {
+      "id": "ux-deactivate",
+      "category": "authority",
+      "surface": "ux_analysis",
+      "question": "Does UX analysis remain reviewable and source-scoped? (deactivate)",
+      "scenario": "deactivate",
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "ux-demote",
+      "category": "authority",
+      "surface": "ux_analysis",
+      "question": "Does UX analysis remain reviewable and source-scoped? (demote)",
+      "scenario": "demote",
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "ux-logout",
+      "category": "authority",
+      "surface": "ux_analysis",
+      "question": "Does UX analysis remain reviewable and source-scoped? (logout)",
+      "scenario": "logout",
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "ux-disable-during",
+      "category": "authority",
+      "surface": "ux_analysis",
+      "question": "Does UX analysis remain reviewable and source-scoped? (disable-during)",
+      "scenario": "disable-during",
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "ux-off-during",
+      "category": "authority",
+      "surface": "ux_analysis",
+      "question": "Does UX analysis remain reviewable and source-scoped? (off-during)",
+      "scenario": "off-during",
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "ux-new-event",
+      "category": "freshness",
+      "surface": "ux_analysis",
+      "question": "Does UX analysis remain reviewable and source-scoped? (new-event)",
+      "scenario": "new-event",
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "ux-edit-event",
+      "category": "freshness",
+      "surface": "ux_analysis",
+      "question": "Does UX analysis remain reviewable and source-scoped? (edit-event)",
+      "scenario": "edit-event",
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "ux-new-feedback",
+      "category": "freshness",
+      "surface": "ux_analysis",
+      "question": "Does UX analysis remain reviewable and source-scoped? (new-feedback)",
+      "scenario": "new-feedback",
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "ux-edit-feedback",
+      "category": "freshness",
+      "surface": "ux_analysis",
+      "question": "Does UX analysis remain reviewable and source-scoped? (edit-feedback)",
+      "scenario": "edit-feedback",
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "ux-retention-change",
+      "category": "freshness",
+      "surface": "ux_analysis",
+      "question": "Does UX analysis remain reviewable and source-scoped? (retention-change)",
+      "scenario": "retention-change",
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "ux-unsupported-number",
+      "category": "facts",
+      "surface": "ux_analysis",
+      "question": "Does UX analysis remain reviewable and source-scoped? (unsupported-number)",
+      "scenario": "unsupported-number",
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "ux-empty-text",
+      "category": "injection",
+      "surface": "ux_analysis",
+      "question": "Does UX analysis remain reviewable and source-scoped? (empty-text)",
+      "scenario": "empty-text",
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "ux-too-long",
+      "category": "injection",
+      "surface": "ux_analysis",
+      "question": "Does UX analysis remain reviewable and source-scoped? (too-long)",
+      "scenario": "too-long",
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "ux-html",
+      "category": "injection",
+      "surface": "ux_analysis",
+      "question": "Does UX analysis remain reviewable and source-scoped? (html)",
+      "scenario": "html",
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "ux-url",
+      "category": "injection",
+      "surface": "ux_analysis",
+      "question": "Does UX analysis remain reviewable and source-scoped? (url)",
+      "scenario": "url",
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "ux-email",
+      "category": "injection",
+      "surface": "ux_analysis",
+      "question": "Does UX analysis remain reviewable and source-scoped? (email)",
+      "scenario": "email",
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "ux-phone",
+      "category": "injection",
+      "surface": "ux_analysis",
+      "question": "Does UX analysis remain reviewable and source-scoped? (phone)",
+      "scenario": "phone",
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "ux-markdown",
+      "category": "injection",
+      "surface": "ux_analysis",
+      "question": "Does UX analysis remain reviewable and source-scoped? (markdown)",
+      "scenario": "markdown",
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "ux-control",
+      "category": "injection",
+      "surface": "ux_analysis",
+      "question": "Does UX analysis remain reviewable and source-scoped? (control)",
+      "scenario": "control",
+      "expect": {
+        "ok": false,
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "ux-hostile-input",
+      "category": "injection",
+      "surface": "ux_analysis",
+      "question": "Does UX analysis remain reviewable and source-scoped? (hostile-input)",
+      "scenario": "hostile-input",
+      "expect": {
+        "ok": true,
+        "calls": 1,
+        "outcomes": [
+          "ok"
+        ]
+      }
+    },
+    {
+      "id": "ux-timeout",
+      "category": "resilience",
+      "surface": "ux_analysis",
+      "question": "Does UX analysis remain reviewable and source-scoped? (timeout)",
+      "scenario": "timeout",
+      "expect": {
+        "ok": false,
+        "calls": 2,
+        "outcomes": [
+          "fallback_timeout"
+        ]
+      }
+    },
+    {
+      "id": "ux-http503",
+      "category": "resilience",
+      "surface": "ux_analysis",
+      "question": "Does UX analysis remain reviewable and source-scoped? (http503)",
+      "scenario": "http503",
+      "expect": {
+        "ok": false,
+        "calls": 2,
+        "outcomes": [
+          "fallback_error"
+        ]
+      }
+    },
+    {
+      "id": "ux-budget",
+      "category": "resilience",
+      "surface": "ux_analysis",
+      "question": "Does UX analysis remain reviewable and source-scoped? (budget)",
+      "scenario": "budget",
+      "expect": {
+        "ok": false,
+        "calls": 0,
+        "outcomes": [
+          "fallback_budget"
+        ]
+      }
+    },
+    {
+      "id": "ux-disabled",
+      "category": "resilience",
+      "surface": "ux_analysis",
+      "question": "Does UX analysis remain reviewable and source-scoped? (disabled)",
+      "scenario": "disabled",
+      "expect": {
+        "ok": false,
+        "calls": 0,
+        "outcomes": [
+          "no_config"
+        ]
+      }
+    },
+    {
+      "id": "ux-off",
+      "category": "resilience",
+      "surface": "ux_analysis",
+      "question": "Does UX analysis remain reviewable and source-scoped? (off)",
+      "scenario": "off",
+      "expect": {
+        "ok": false,
+        "calls": 0,
+        "outcomes": [
+          "no_config"
+        ]
+      }
+    },
+    {
+      "id": "ux-audit-fail",
+      "category": "resilience",
+      "surface": "ux_analysis",
+      "question": "Does UX analysis remain reviewable and source-scoped? (audit-fail)",
       "scenario": "audit-fail",
       "expect": {
         "ok": false,
