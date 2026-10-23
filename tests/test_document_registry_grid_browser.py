@@ -72,8 +72,9 @@ def test_real_grid_remote_sort_filters_columns_and_safe_record_links(grid_page):
     assert page.evaluate('window.gridInjected') is None
     assert '<img src=x' in page.locator('#registry-grid').inner_text()
     number = page.locator('.tabulator-col[tabulator-field=number]')
+    number.scroll_into_view_if_needed()
     original_width = number.bounding_box()['width']
-    handle = number.locator('.tabulator-col-resize-handle').last.bounding_box()
+    handle = page.locator('.tabulator-col[tabulator-field=number] + .tabulator-col-resize-handle').bounding_box()
     page.mouse.move(handle['x'] + handle['width']/2, handle['y'] + handle['height']/2)
     page.mouse.down()
     page.mouse.move(handle['x'] + handle['width']/2 + 40, handle['y'] + handle['height']/2, steps=5)
