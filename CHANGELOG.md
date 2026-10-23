@@ -1,3 +1,11 @@
+## 8.08 — October 23, 2026
+
+- Continue A22 with evaluation suite 1.3.0: retain 146 answer, report-draft and feedback-triage scenarios and add 49 versioned offline cases for activity-comment re-analysis and AI summary. Use synthetic comments, provider HTTP fakes, current route/auth/storage paths and minimized CI evidence in both orders.
+- Read current activity comments without the dashboard cache. Validate every classification index and sentiment, every batch, current account/session/settings and unchanged comments/human tags before atomically saving AI tags and audit. A failed later batch, changed source or failed audit leaves all tags unchanged; prior human corrections remain authoritative.
+- Bound partially masked comment snippets and summary output; omit the activity name from the summary prompt. Keep verbatim interaction logs to outcome/token/timing metadata without prompts, replies or raw provider error bodies, including when general content logging is enabled. This masking is not universal anonymization.
+- Validate summary shape and length, recheck access and source after provider I/O, and escape model-authored text in the browser. A summary is shown for human review and is not saved to an official report.
+- Use eight-second provider read timeouts with existing retry, rate and budget settings. No database migration, new provider configuration or dependency is required. These deterministic tests do not measure live-model classification or summary quality.
+
 ## 8.07 — October 23, 2026
 
 - Extend A22 evaluation suite 1.2.0 to 146 scenarios: retain 38 answer and 60 report-draft cases; add 48 feedback-triage cases using synthetic records and fake provider HTTP. Require every case in both full CI orders and bind reports to the new triage code and form.

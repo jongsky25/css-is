@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "suite_id": "existing-ai-answers",
-  "suite_version": "1.2.0",
+  "suite_version": "1.3.0",
   "contract_version": 1,
   "reference_clock": "2026-10-20T06:00:00",
   "categories": [
@@ -3131,6 +3131,686 @@
         "outcomes": [
           "rejected_validation"
         ]
+      }
+    },
+    {
+      "id": "verbatim-classify-baseline",
+      "surface": "verbatim",
+      "category": "facts",
+      "question": "Offline classify evaluation: baseline",
+      "scenario": "classify-baseline",
+      "expect": {
+        "calls": 1,
+        "outcomes": [
+          "ok"
+        ],
+        "ok": true
+      }
+    },
+    {
+      "id": "verbatim-classify-human-prior",
+      "surface": "verbatim",
+      "category": "authority",
+      "question": "Offline classify evaluation: human prior",
+      "scenario": "classify-human-prior",
+      "expect": {
+        "calls": 1,
+        "outcomes": [
+          "ok"
+        ],
+        "ok": true
+      }
+    },
+    {
+      "id": "verbatim-classify-batched",
+      "surface": "verbatim",
+      "category": "facts",
+      "question": "Offline classify evaluation: batched",
+      "scenario": "classify-batched",
+      "expect": {
+        "calls": 2,
+        "outcomes": [
+          "ok",
+          "ok"
+        ],
+        "ok": true
+      }
+    },
+    {
+      "id": "verbatim-classify-missing",
+      "surface": "verbatim",
+      "category": "freshness",
+      "question": "Offline classify evaluation: missing",
+      "scenario": "classify-missing",
+      "expect": {
+        "calls": 0,
+        "outcomes": [],
+        "ok": false
+      }
+    },
+    {
+      "id": "verbatim-classify-viewer",
+      "surface": "verbatim",
+      "category": "authority",
+      "question": "Offline classify evaluation: viewer",
+      "scenario": "classify-viewer",
+      "expect": {
+        "calls": 0,
+        "outcomes": [],
+        "ok": false
+      }
+    },
+    {
+      "id": "verbatim-classify-deactivate",
+      "surface": "verbatim",
+      "category": "authority",
+      "question": "Offline classify evaluation: deactivate",
+      "scenario": "classify-deactivate",
+      "expect": {
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ],
+        "ok": false
+      }
+    },
+    {
+      "id": "verbatim-classify-demote",
+      "surface": "verbatim",
+      "category": "authority",
+      "question": "Offline classify evaluation: demote",
+      "scenario": "classify-demote",
+      "expect": {
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ],
+        "ok": false
+      }
+    },
+    {
+      "id": "verbatim-classify-logout",
+      "surface": "verbatim",
+      "category": "authority",
+      "question": "Offline classify evaluation: logout",
+      "scenario": "classify-logout",
+      "expect": {
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ],
+        "ok": false
+      }
+    },
+    {
+      "id": "verbatim-classify-disable-during",
+      "surface": "verbatim",
+      "category": "authority",
+      "question": "Offline classify evaluation: disable during",
+      "scenario": "classify-disable-during",
+      "expect": {
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ],
+        "ok": false
+      }
+    },
+    {
+      "id": "verbatim-classify-off-during",
+      "surface": "verbatim",
+      "category": "authority",
+      "question": "Offline classify evaluation: off during",
+      "scenario": "classify-off-during",
+      "expect": {
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ],
+        "ok": false
+      }
+    },
+    {
+      "id": "verbatim-classify-edit-source",
+      "surface": "verbatim",
+      "category": "freshness",
+      "question": "Offline classify evaluation: edit source",
+      "scenario": "classify-edit-source",
+      "expect": {
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ],
+        "ok": false
+      }
+    },
+    {
+      "id": "verbatim-classify-new-source",
+      "surface": "verbatim",
+      "category": "freshness",
+      "question": "Offline classify evaluation: new source",
+      "scenario": "classify-new-source",
+      "expect": {
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ],
+        "ok": false
+      }
+    },
+    {
+      "id": "verbatim-classify-archive-source",
+      "surface": "verbatim",
+      "category": "freshness",
+      "question": "Offline classify evaluation: archive source",
+      "scenario": "classify-archive-source",
+      "expect": {
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ],
+        "ok": false
+      }
+    },
+    {
+      "id": "verbatim-classify-human-during",
+      "surface": "verbatim",
+      "category": "freshness",
+      "question": "Offline classify evaluation: human during",
+      "scenario": "classify-human-during",
+      "expect": {
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ],
+        "ok": false
+      }
+    },
+    {
+      "id": "verbatim-classify-missing-item",
+      "surface": "verbatim",
+      "category": "injection",
+      "question": "Offline classify evaluation: missing item",
+      "scenario": "classify-missing-item",
+      "expect": {
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ],
+        "ok": false
+      }
+    },
+    {
+      "id": "verbatim-classify-duplicate-index",
+      "surface": "verbatim",
+      "category": "injection",
+      "question": "Offline classify evaluation: duplicate index",
+      "scenario": "classify-duplicate-index",
+      "expect": {
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ],
+        "ok": false
+      }
+    },
+    {
+      "id": "verbatim-classify-string-index",
+      "surface": "verbatim",
+      "category": "injection",
+      "question": "Offline classify evaluation: string index",
+      "scenario": "classify-string-index",
+      "expect": {
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ],
+        "ok": false
+      }
+    },
+    {
+      "id": "verbatim-classify-bool-index",
+      "surface": "verbatim",
+      "category": "injection",
+      "question": "Offline classify evaluation: bool index",
+      "scenario": "classify-bool-index",
+      "expect": {
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ],
+        "ok": false
+      }
+    },
+    {
+      "id": "verbatim-classify-wrong-sentiment",
+      "surface": "verbatim",
+      "category": "injection",
+      "question": "Offline classify evaluation: wrong sentiment",
+      "scenario": "classify-wrong-sentiment",
+      "expect": {
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ],
+        "ok": false
+      }
+    },
+    {
+      "id": "verbatim-classify-extra-field",
+      "surface": "verbatim",
+      "category": "injection",
+      "question": "Offline classify evaluation: extra field",
+      "scenario": "classify-extra-field",
+      "expect": {
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ],
+        "ok": false
+      }
+    },
+    {
+      "id": "verbatim-classify-bad-root",
+      "surface": "verbatim",
+      "category": "injection",
+      "question": "Offline classify evaluation: bad root",
+      "scenario": "classify-bad-root",
+      "expect": {
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ],
+        "ok": false
+      }
+    },
+    {
+      "id": "verbatim-classify-hostile-input",
+      "surface": "verbatim",
+      "category": "injection",
+      "question": "Offline classify evaluation: hostile input",
+      "scenario": "classify-hostile-input",
+      "expect": {
+        "calls": 1,
+        "outcomes": [
+          "ok"
+        ],
+        "ok": true
+      }
+    },
+    {
+      "id": "verbatim-classify-timeout",
+      "surface": "verbatim",
+      "category": "resilience",
+      "question": "Offline classify evaluation: timeout",
+      "scenario": "classify-timeout",
+      "expect": {
+        "calls": 2,
+        "outcomes": [
+          "fallback_timeout"
+        ],
+        "ok": false
+      }
+    },
+    {
+      "id": "verbatim-classify-http503",
+      "surface": "verbatim",
+      "category": "resilience",
+      "question": "Offline classify evaluation: http503",
+      "scenario": "classify-http503",
+      "expect": {
+        "calls": 2,
+        "outcomes": [
+          "fallback_error"
+        ],
+        "ok": false
+      }
+    },
+    {
+      "id": "verbatim-classify-http429",
+      "surface": "verbatim",
+      "category": "resilience",
+      "question": "Offline classify evaluation: http429",
+      "scenario": "classify-http429",
+      "expect": {
+        "calls": 1,
+        "outcomes": [
+          "fallback_error"
+        ],
+        "ok": false
+      }
+    },
+    {
+      "id": "verbatim-classify-second-fail",
+      "surface": "verbatim",
+      "category": "resilience",
+      "question": "Offline classify evaluation: second fail",
+      "scenario": "classify-second-fail",
+      "expect": {
+        "calls": 3,
+        "outcomes": [
+          "rejected_validation",
+          "fallback_timeout"
+        ],
+        "ok": false
+      }
+    },
+    {
+      "id": "verbatim-classify-budget",
+      "surface": "verbatim",
+      "category": "resilience",
+      "question": "Offline classify evaluation: budget",
+      "scenario": "classify-budget",
+      "expect": {
+        "calls": 0,
+        "outcomes": [
+          "fallback_budget"
+        ],
+        "ok": false
+      }
+    },
+    {
+      "id": "verbatim-classify-disabled",
+      "surface": "verbatim",
+      "category": "resilience",
+      "question": "Offline classify evaluation: disabled",
+      "scenario": "classify-disabled",
+      "expect": {
+        "calls": 0,
+        "outcomes": [
+          "no_config"
+        ],
+        "ok": false
+      }
+    },
+    {
+      "id": "verbatim-classify-off",
+      "surface": "verbatim",
+      "category": "resilience",
+      "question": "Offline classify evaluation: off",
+      "scenario": "classify-off",
+      "expect": {
+        "calls": 0,
+        "outcomes": [
+          "no_config"
+        ],
+        "ok": false
+      }
+    },
+    {
+      "id": "verbatim-classify-audit-fail",
+      "surface": "verbatim",
+      "category": "resilience",
+      "question": "Offline classify evaluation: audit fail",
+      "scenario": "classify-audit-fail",
+      "expect": {
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ],
+        "ok": false
+      }
+    },
+    {
+      "id": "verbatim-summary-baseline",
+      "surface": "verbatim",
+      "category": "facts",
+      "question": "Offline summary evaluation: baseline",
+      "scenario": "summary-baseline",
+      "expect": {
+        "calls": 1,
+        "outcomes": [
+          "ok"
+        ],
+        "ok": true
+      }
+    },
+    {
+      "id": "verbatim-summary-missing",
+      "surface": "verbatim",
+      "category": "freshness",
+      "question": "Offline summary evaluation: missing",
+      "scenario": "summary-missing",
+      "expect": {
+        "calls": 0,
+        "outcomes": [],
+        "ok": false
+      }
+    },
+    {
+      "id": "verbatim-summary-viewer",
+      "surface": "verbatim",
+      "category": "authority",
+      "question": "Offline summary evaluation: viewer",
+      "scenario": "summary-viewer",
+      "expect": {
+        "calls": 0,
+        "outcomes": [],
+        "ok": false
+      }
+    },
+    {
+      "id": "verbatim-summary-deactivate",
+      "surface": "verbatim",
+      "category": "authority",
+      "question": "Offline summary evaluation: deactivate",
+      "scenario": "summary-deactivate",
+      "expect": {
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ],
+        "ok": false
+      }
+    },
+    {
+      "id": "verbatim-summary-off-during",
+      "surface": "verbatim",
+      "category": "authority",
+      "question": "Offline summary evaluation: off during",
+      "scenario": "summary-off-during",
+      "expect": {
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ],
+        "ok": false
+      }
+    },
+    {
+      "id": "verbatim-summary-edit-source",
+      "surface": "verbatim",
+      "category": "freshness",
+      "question": "Offline summary evaluation: edit source",
+      "scenario": "summary-edit-source",
+      "expect": {
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ],
+        "ok": false
+      }
+    },
+    {
+      "id": "verbatim-summary-human-during",
+      "surface": "verbatim",
+      "category": "freshness",
+      "question": "Offline summary evaluation: human during",
+      "scenario": "summary-human-during",
+      "expect": {
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ],
+        "ok": false
+      }
+    },
+    {
+      "id": "verbatim-summary-empty-bullets",
+      "surface": "verbatim",
+      "category": "injection",
+      "question": "Offline summary evaluation: empty bullets",
+      "scenario": "summary-empty-bullets",
+      "expect": {
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ],
+        "ok": false
+      }
+    },
+    {
+      "id": "verbatim-summary-four-bullets",
+      "surface": "verbatim",
+      "category": "injection",
+      "question": "Offline summary evaluation: four bullets",
+      "scenario": "summary-four-bullets",
+      "expect": {
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ],
+        "ok": false
+      }
+    },
+    {
+      "id": "verbatim-summary-extra-field",
+      "surface": "verbatim",
+      "category": "injection",
+      "question": "Offline summary evaluation: extra field",
+      "scenario": "summary-extra-field",
+      "expect": {
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ],
+        "ok": false
+      }
+    },
+    {
+      "id": "verbatim-summary-long-bullet",
+      "surface": "verbatim",
+      "category": "injection",
+      "question": "Offline summary evaluation: long bullet",
+      "scenario": "summary-long-bullet",
+      "expect": {
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ],
+        "ok": false
+      }
+    },
+    {
+      "id": "verbatim-summary-html-bullet",
+      "surface": "verbatim",
+      "category": "injection",
+      "question": "Offline summary evaluation: html bullet",
+      "scenario": "summary-html-bullet",
+      "expect": {
+        "calls": 1,
+        "outcomes": [
+          "ok"
+        ],
+        "ok": true
+      }
+    },
+    {
+      "id": "verbatim-summary-timeout",
+      "surface": "verbatim",
+      "category": "resilience",
+      "question": "Offline summary evaluation: timeout",
+      "scenario": "summary-timeout",
+      "expect": {
+        "calls": 2,
+        "outcomes": [
+          "fallback_timeout"
+        ],
+        "ok": false
+      }
+    },
+    {
+      "id": "verbatim-summary-http503",
+      "surface": "verbatim",
+      "category": "resilience",
+      "question": "Offline summary evaluation: http503",
+      "scenario": "summary-http503",
+      "expect": {
+        "calls": 2,
+        "outcomes": [
+          "fallback_error"
+        ],
+        "ok": false
+      }
+    },
+    {
+      "id": "verbatim-summary-budget",
+      "surface": "verbatim",
+      "category": "resilience",
+      "question": "Offline summary evaluation: budget",
+      "scenario": "summary-budget",
+      "expect": {
+        "calls": 0,
+        "outcomes": [
+          "fallback_budget"
+        ],
+        "ok": false
+      }
+    },
+    {
+      "id": "verbatim-summary-audit-fail",
+      "surface": "verbatim",
+      "category": "resilience",
+      "question": "Offline summary evaluation: audit fail",
+      "scenario": "summary-audit-fail",
+      "expect": {
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ],
+        "ok": false
+      }
+    },
+    {
+      "id": "verbatim-classify-revoke-between",
+      "surface": "verbatim",
+      "category": "authority",
+      "question": "Offline classify evaluation: revoke between",
+      "scenario": "classify-revoke-between",
+      "expect": {
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ],
+        "ok": false
+      }
+    },
+    {
+      "id": "verbatim-classify-edit-between",
+      "surface": "verbatim",
+      "category": "freshness",
+      "question": "Offline classify evaluation: edit between",
+      "scenario": "classify-edit-between",
+      "expect": {
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ],
+        "ok": false
+      }
+    },
+    {
+      "id": "verbatim-classify-legacy-prior",
+      "surface": "verbatim",
+      "category": "authority",
+      "question": "Offline classify evaluation: preserve an older correction without an actor",
+      "scenario": "classify-legacy-prior",
+      "expect": {
+        "calls": 1,
+        "outcomes": [
+          "ok"
+        ],
+        "ok": true
       }
     }
   ]
