@@ -31,8 +31,10 @@ PROVENANCE = ('app.py', 'ai_core.py', 'ai_facts.py', 'auth.py', 'storage.py',
               'tests/test_ai_triage_evaluation.py', 'tests/test_ai_feedback_triage_browser.py',
               'tests/test_ai_verbatim_evaluation.py', 'tests/test_ai_verbatim_browser.py',
               'tests/test_ai_messages_evaluation.py', 'tests/test_ai_messages_browser.py',
+              'tests/test_ai_ux_evaluation.py', 'tests/test_ai_ux_browser.py',
               'activity_messages.py', 'templates/feedback_detail.html', 'static/js/activity_ai.js', 'scripts/ai_evaluation.py',
               'templates/activity_manage.html',
+              'ux_handoff.py', 'ui_telemetry.py', 'templates/ux_insights.html',
               'evaluations/ai/cases-v1.json', 'evaluations/ai/reference-v1.json')
 
 

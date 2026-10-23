@@ -284,6 +284,9 @@
         if (data.ok) {
           var card = showCard(
             '<h2>AI analysis</h2>' +
+            '<p class="hint">Based on ' + esc(data.event_count) + ' recorded event(s) in the last ' +
+            esc(data.window_days) + ' day(s)' + (data.truncated ? ' (recent sample)' : '') +
+            '. Review suggestions against the handoff before acting.</p>' +
             '<p class="ai-result">' + esc(data.text) + '</p>' +
             '<div class="ai-result-actions"><span class="ai-fb">' +
             '<button type="button" class="fb-btn" data-r="up" aria-label="Helpful">👍</button>' +

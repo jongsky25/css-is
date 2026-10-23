@@ -257,6 +257,8 @@ max_output_tokens=2048, timeout=30)` → analysis rendered in-page + feedback
 chips. Fallback: the existing download-and-paste flow with a notice. Cap
 default 5/day. Also dogfoods `ai_core` on a long-context call.
 
+In **8.13**, [evaluation suite 1.5.0](AI_EVALUATION.md#ux-insights-analysis-current-data-and-review-scope) adds 30 offline UX-analysis cases. The route rechecks current admin access and telemetry after provider I/O, bounds and validates displayed prose, masks contact details in the provider prompt and keeps interaction logs metadata-only. The UI shows source scope and partial-sample status. These cases do not measure a live model’s judgment.
+
 ### Phase 4 — Verbatim comment analysis (`verbatim`, v2.07)
 
 Batch, ~30 comments/call (RPM-aware):
