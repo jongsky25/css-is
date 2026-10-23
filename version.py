@@ -18,12 +18,12 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "8.03"
+APP_VERSION = "8.05"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
-        "version": "8.03",
+        "version": "8.05",
         "date": "October 23, 2026",
         "summary": "Calendar birthdays open properly, rosters show Region, and the DPO follows the latest feedback.",
         "changes": [
@@ -32,6 +32,27 @@ CHANGELOG = [
             "The DPO cites the BLHSD Local Health Systems Development Assistance funds, always shows the venue (blank to fill in if none), and lets you type each traveller's designation before drafting.",
             "The DPO title sits flush left with no gap above its number, the signature block lines up at the 2-inch mark with no spacing between its lines, and a table of several travellers fits its text.",
             "Meetings can now draft minutes of the meeting in Google Docs."
+        ]
+    },
+    {
+        "version": "8.04",
+        "date": "October 23, 2026",
+        "summary": "AI report drafts now use verified figures and wording, with more release checks.",
+        "changes": [
+            "AI chooses a concise or detailed draft using current report figures, while you can still edit the text.",
+            "Drafting stops if access, source data or a saved human edit changes while AI is working.",
+            "Release checks now cover report drafts, private information, invented claims and failed saves."
+        ]
+    },
+    {
+        "version": "8.03",
+        "date": "October 23, 2026",
+        "summary": "Book available rooms the same day and request meals for any venue.",
+        "changes": [
+            "Available conference room hours can now be requested on the same day.",
+            "Meal requests require at least two calendar days before the activity.",
+            "Request meals for any venue without reserving the conference room.",
+            "Follow ordering and delivery under Office → My meal requests."
         ]
     },
     {

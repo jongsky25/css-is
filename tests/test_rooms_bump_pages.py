@@ -76,7 +76,7 @@ def test_encode_for_an_account_lands_in_their_my_reservations(admin, encoder, co
 def test_encode_errors_come_back_on_the_board(admin, conn):
     r = admin.post("/rooms/encode", data=form(conn, for_name=""))
     assert r.status_code == 400 and "Who is this booking for" in r.text
-    r = admin.post("/rooms/encode", data=form(conn, day=tz.today_local().isoformat()))
+    r = admin.post("/rooms/encode", data=form(conn, day=tz.today_local().isoformat(), meals="1"))
     assert r.status_code == 400
     assert conn.execute("SELECT COUNT(*) FROM room_reservation").fetchone()[0] == 0
 

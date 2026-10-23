@@ -519,6 +519,34 @@ def init_db(conn):
         PRIMARY KEY (reservation_id, meal)
     );
 
+    -- Meal requests for any activity or venue, independent of room reservations.
+    CREATE TABLE IF NOT EXISTS meal_request (
+        id INTEGER PRIMARY KEY,
+        ref_code TEXT UNIQUE,
+        requester_user_id INTEGER NOT NULL REFERENCES admin_user(id),
+        title TEXT NOT NULL,
+        day TEXT NOT NULL,
+        venue TEXT NOT NULL,
+        pax INTEGER NOT NULL CHECK (pax BETWEEN 1 AND 1000),
+        special_request TEXT,
+        status TEXT NOT NULL DEFAULT 'submitted' CHECK (status IN ('submitted','withdrawn')),
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS ix_meal_request_user ON meal_request(requester_user_id, day);
+    CREATE INDEX IF NOT EXISTS ix_meal_request_day ON meal_request(day, status);
+    CREATE TABLE IF NOT EXISTS meal_request_item (
+        request_id INTEGER NOT NULL REFERENCES meal_request(id) ON DELETE CASCADE,
+        meal TEXT NOT NULL CHECK (meal IN ('breakfast','am_snack','lunch','pm_snack')),
+        deliver_at TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'pending'
+            CHECK (status IN ('pending','requested','delivered','not_delivered','cancelled')),
+        status_by TEXT,
+        status_at TEXT,
+        status_note TEXT,
+        PRIMARY KEY (request_id, meal)
+    );
+
     -- Maintenance / admin holds. slot_id NULL = the whole day.
     CREATE TABLE IF NOT EXISTS room_block (
         id         INTEGER PRIMARY KEY,
@@ -3685,7 +3713,7 @@ def create_ai_interaction(conn, *, user_id=None, role=None, feature, mode, model
 
 
 def update_ai_interaction_outcome(conn, interaction_id, outcome, *, destination=None,
-                                  confidence=None, feature=None):
+                                  confidence=None, feature=None, commit=True):
     """Let a feature backfill router-only columns (destination/confidence) and/or
     override the outcome ai_core.ask() already logged — used by the NL router
     (docs/AI_INTEGRATION_PLAN.md Phase 1) when its own server-side validation
@@ -3703,7 +3731,8 @@ def update_ai_interaction_outcome(conn, interaction_id, outcome, *, destination=
         "UPDATE ai_interaction SET outcome=?, destination=COALESCE(?, destination), "
         "confidence=COALESCE(?, confidence), feature=COALESCE(?, feature) WHERE id=?",
         (outcome, destination, confidence, feature, interaction_id))
-    conn.commit()
+    if commit:
+        conn.commit()
 
 
 def set_ai_feedback(conn, interaction_id, user_id, rating, comment=None, is_admin=False):
@@ -3930,7 +3959,7 @@ def top_questions(conn, since=None, limit=50):
 # nothing has been saved — export never depends on AI being available.
 # ---------------------------------------------------------------------
 
-def set_report_draft(conn, scope, scope_key, field, text, actor):
+def set_report_draft(conn, scope, scope_key, field, text, actor, *, commit=True):
     """Upsert one drafted/edited report-narrative field. `actor` is 'ai' for
     an AI draft or the editing user's username for a human save."""
     now = tz.now_iso()
@@ -3940,7 +3969,8 @@ def set_report_draft(conn, scope, scope_key, field, text, actor):
         "ON CONFLICT(scope, scope_key, field) DO UPDATE SET "
         "text=excluded.text, actor=excluded.actor, updated_at=excluded.updated_at",
         (scope, scope_key, field, text, actor, now))
-    conn.commit()
+    if commit:
+        conn.commit()
 
 
 def clear_report_draft(conn, scope, scope_key, field):
@@ -4099,6 +4129,9 @@ _AUDIT_ACTIONS = {
     "room_withdraw":       ("Withdrew a room reservation", "Conference room"),
     "room_expire":         ("Expired a room request", "Conference room"),
     "room_purge_guests":   ("Removed old guest details", "Conference room"),
+    "meal_request":        ("Requested meals", "Meals"),
+    "meal_tag":            ("Updated a meal order", "Meals"),
+    "meal_withdraw":       ("Withdrew a meal request", "Meals"),
     "room_meal_edit":      ("Edited a room meal form", "Conference room"),
     "room_series":         ("Requested a repeating room booking", "Conference room"),
     # Travel filing
@@ -6844,7 +6877,7 @@ WHERE COALESCE(fi.archived, 0) = 0          -- archived forms vanish from all an
 """
 
 
-def load_atoms(conn, after_answer_id=None, upto_answer_id=None):
+def load_atoms(conn, after_answer_id=None, upto_answer_id=None, *, instance_ids=None):
     """Return the atoms table in exactly the shape css_is_engine expects.
 
     after_answer_id: if given, load ONLY answers with id > that value
@@ -6859,7 +6892,13 @@ def load_atoms(conn, after_answer_id=None, upto_answer_id=None):
     incremental cache honest: any answer another connection commits after the
     snapshot is > that id, excluded from this frame, and picked up cleanly by the
     next (after_answer_id=that id) append instead of being silently skipped."""
+    # instance_ids optionally limits a fresh frame to a report event.
     sql = _LOAD_SQL
+    if instance_ids is not None:
+        # A fresh report snapshot needs only its selected event, not the entire
+        # dashboard frame. An empty scope must stay empty.
+        ids = ','.join(str(int(i)) for i in instance_ids) or 'NULL'
+        sql += f"\n  AND fi.id IN ({ids})"
     if after_answer_id is not None:
         # int() guard — never interpolate untrusted text into SQL.
         sql = sql + f"\n  AND a.id > {int(after_answer_id)}"

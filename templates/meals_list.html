@@ -1,0 +1,32 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header, empty_state %}
+{% block title %}{{ 'Manage meal requests' if managing else 'My meal requests' }}{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/rooms.css?v=7.85">{% endblock %}
+{% block content %}
+{{ page_header("Manage meal requests" if managing else "My meal requests", "Track each meal from request through ordering and delivery.") }}
+{% include "_meals_tabs.html" %}
+{% if managing %}<p>Requests can be ordered without conference room approval. Open a request to update each meal. Withdrawals remain visible so any supplier order can be cancelled.</p>{% endif %}
+{% if records %}
+<div class="table-wrap"><table class="list resp-table">
+  <thead><tr><th>Reference</th><th>Activity / venue</th><th>Date</th>{% if managing %}<th>Requested by</th>{% endif %}<th>Pax</th><th>Status</th></tr></thead>
+  <tbody>{% for r in records %}<tr>
+    <td data-label="Reference"><a href="/meals/{{ r.id }}">{{ r.ref_code }}</a></td>
+    <td data-label="Activity / venue"><a href="/meals/{{ r.id }}">{{ r.title }}</a><br>{{ r.venue }}</td>
+    <td data-label="Date">{{ r.day }}{% if r.day < today.isoformat() %} <span class="muted">(past)</span>{% endif %}</td>
+    {% if managing %}<td data-label="Requested by">{{ r.requester_name }}</td>{% endif %}
+    <td data-label="Pax">{{ r.pax }}</td><td data-label="Status"><strong>{{ r.overall }}</strong><br>
+      {% for i in r["items"] %}{{ meal_labels[i.meal] }}: {{ status_labels[i.status] }}{% if not loop.last %}<br>{% endif %}{% endfor %}
+      {% if r.status == 'withdrawn' %}{% for i in r["items"] %}{% if i.status_note and 'supplier' in i.status_note %}<p class="rm-hint">Cancel the {{ meal_labels[i.meal] }} order with the supplier.</p>{% endif %}{% endfor %}{% endif %}
+    </td>
+  </tr>{% endfor %}</tbody>
+</table></div>
+{% else %}{{ empty_state("No meal requests yet", "Choose Request meals to submit a request for your activity.", "🍽") }}{% endif %}
+{% if linked %}
+<h2>Existing room-linked meal requests</h2>
+<p>These earlier forms remain with their room bookings. You can open them here to check each meal.</p>
+<div class="table-wrap"><table class="list resp-table"><thead><tr><th>Reference / activity</th><th>When</th><th>Status</th></tr></thead>
+<tbody>{% for f in linked %}<tr><td data-label="Reference / activity"><a href="/rooms/meals/{{ f.reservation_id }}">{{ f.reservation.ref_code }} — {{ f.title }}</a></td>
+<td data-label="When">{{ f.when }}</td><td data-label="Status">{{ f.overall }}{% if f.reservation.status == 'requested' %} · Waiting for room approval{% endif %}</td></tr>{% endfor %}</tbody></table></div>
+{% endif %}
+{% if managing %}<p><a href="/rooms/meals">Manage existing room-linked meal forms</a></p>{% endif %}
+{% endblock %}

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "suite_id": "existing-ai-answers",
-  "suite_version": "1.0.0",
+  "suite_version": "1.1.0",
   "contract_version": 1,
   "reference_clock": "2026-10-20T06:00:00",
   "categories": [
@@ -924,6 +924,1148 @@
         "text_contains": [],
         "calls": 1,
         "outcomes": []
+      }
+    },
+    {
+      "id": "draft-mrr-detailed",
+      "surface": "report_draft",
+      "report": "mrr",
+      "category": "facts",
+      "question": "Generate MRR draft: detailed.",
+      "scenario": "baseline",
+      "reply": {
+        "contract_version": 1,
+        "style": "detailed"
+      },
+      "expect": {
+        "saved": true,
+        "calls": 1,
+        "status": 303,
+        "outcomes": [
+          "ok"
+        ]
+      }
+    },
+    {
+      "id": "draft-mrr-concise",
+      "surface": "report_draft",
+      "report": "mrr",
+      "category": "facts",
+      "question": "Generate MRR draft: concise.",
+      "scenario": "baseline",
+      "reply": {
+        "contract_version": 1,
+        "style": "concise"
+      },
+      "expect": {
+        "saved": true,
+        "calls": 1,
+        "status": 303,
+        "outcomes": [
+          "ok"
+        ]
+      }
+    },
+    {
+      "id": "draft-mrr-missing-ratings",
+      "surface": "report_draft",
+      "report": "mrr",
+      "category": "facts",
+      "question": "Generate MRR draft: missing-ratings.",
+      "scenario": "missing",
+      "reply": {
+        "contract_version": 1,
+        "style": "detailed"
+      },
+      "expect": {
+        "saved": false,
+        "calls": 0,
+        "status": 303,
+        "outcomes": []
+      }
+    },
+    {
+      "id": "draft-mrr-no-data",
+      "surface": "report_draft",
+      "report": "mrr",
+      "category": "resilience",
+      "question": "Generate MRR draft: no-data.",
+      "scenario": "no-data",
+      "reply": null,
+      "expect": {
+        "saved": false,
+        "calls": 0,
+        "status": 303,
+        "outcomes": []
+      }
+    },
+    {
+      "id": "draft-mrr-viewer",
+      "surface": "report_draft",
+      "report": "mrr",
+      "category": "authority",
+      "question": "Generate MRR draft: viewer.",
+      "scenario": "viewer",
+      "reply": null,
+      "expect": {
+        "saved": false,
+        "calls": 0,
+        "status": 403,
+        "outcomes": []
+      }
+    },
+    {
+      "id": "draft-mrr-deactivated",
+      "surface": "report_draft",
+      "report": "mrr",
+      "category": "authority",
+      "question": "Generate MRR draft: deactivated.",
+      "scenario": "deactivate",
+      "reply": {
+        "contract_version": 1,
+        "style": "detailed"
+      },
+      "expect": {
+        "saved": false,
+        "calls": 1,
+        "status": 303,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "draft-mrr-role-changed",
+      "surface": "report_draft",
+      "report": "mrr",
+      "category": "authority",
+      "question": "Generate MRR draft: role-changed.",
+      "scenario": "demote",
+      "reply": {
+        "contract_version": 1,
+        "style": "detailed"
+      },
+      "expect": {
+        "saved": false,
+        "calls": 1,
+        "status": 303,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "draft-mrr-logged-out",
+      "surface": "report_draft",
+      "report": "mrr",
+      "category": "authority",
+      "question": "Generate MRR draft: logged-out.",
+      "scenario": "logout",
+      "reply": {
+        "contract_version": 1,
+        "style": "detailed"
+      },
+      "expect": {
+        "saved": false,
+        "calls": 1,
+        "status": 303,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "draft-mrr-edited-source",
+      "surface": "report_draft",
+      "report": "mrr",
+      "category": "freshness",
+      "question": "Generate MRR draft: edited-source.",
+      "scenario": "edit",
+      "reply": {
+        "contract_version": 1,
+        "style": "detailed"
+      },
+      "expect": {
+        "saved": false,
+        "calls": 1,
+        "status": 303,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "draft-mrr-new-response",
+      "surface": "report_draft",
+      "report": "mrr",
+      "category": "freshness",
+      "question": "Generate MRR draft: new-response.",
+      "scenario": "new-response",
+      "reply": {
+        "contract_version": 1,
+        "style": "detailed"
+      },
+      "expect": {
+        "saved": false,
+        "calls": 1,
+        "status": 303,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "draft-mrr-archived-source",
+      "surface": "report_draft",
+      "report": "mrr",
+      "category": "freshness",
+      "question": "Generate MRR draft: archived-source.",
+      "scenario": "archive",
+      "reply": {
+        "contract_version": 1,
+        "style": "detailed"
+      },
+      "expect": {
+        "saved": false,
+        "calls": 1,
+        "status": 303,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "draft-mrr-moved-date",
+      "surface": "report_draft",
+      "report": "mrr",
+      "category": "freshness",
+      "question": "Generate MRR draft: moved-date.",
+      "scenario": "move-date",
+      "reply": {
+        "contract_version": 1,
+        "style": "detailed"
+      },
+      "expect": {
+        "saved": false,
+        "calls": 1,
+        "status": 303,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "draft-mrr-day-rollover",
+      "surface": "report_draft",
+      "report": "mrr",
+      "category": "freshness",
+      "question": "Generate MRR draft: day-rollover.",
+      "scenario": "day",
+      "reply": {
+        "contract_version": 1,
+        "style": "detailed"
+      },
+      "expect": {
+        "saved": false,
+        "calls": 1,
+        "status": 303,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "draft-mrr-human-edited",
+      "surface": "report_draft",
+      "report": "mrr",
+      "category": "freshness",
+      "question": "Generate MRR draft: human-edited.",
+      "scenario": "human-edit",
+      "reply": {
+        "contract_version": 1,
+        "style": "detailed"
+      },
+      "expect": {
+        "saved": false,
+        "calls": 1,
+        "status": 303,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "draft-mrr-invented-figure",
+      "surface": "report_draft",
+      "report": "mrr",
+      "category": "injection",
+      "question": "Generate MRR draft: invented-figure.",
+      "scenario": "baseline",
+      "reply": {
+        "analysis": "The score is 999999%.",
+        "contract_version": 1,
+        "style": "detailed"
+      },
+      "expect": {
+        "saved": false,
+        "calls": 1,
+        "status": 303,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "draft-mrr-private-prose",
+      "surface": "report_draft",
+      "report": "mrr",
+      "category": "injection",
+      "question": "Generate MRR draft: private-prose.",
+      "scenario": "baseline",
+      "reply": {
+        "contract_version": 1,
+        "style": "EVAL-DRAFT-PRIVATE-NAME"
+      },
+      "expect": {
+        "saved": false,
+        "calls": 1,
+        "status": 303,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "draft-mrr-forged-contract",
+      "surface": "report_draft",
+      "report": "mrr",
+      "category": "injection",
+      "question": "Generate MRR draft: forged-contract.",
+      "scenario": "baseline",
+      "reply": {
+        "contract_version": true,
+        "style": "detailed"
+      },
+      "expect": {
+        "saved": false,
+        "calls": 1,
+        "status": 303,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "draft-mrr-missing-selection",
+      "surface": "report_draft",
+      "report": "mrr",
+      "category": "injection",
+      "question": "Generate MRR draft: missing-selection.",
+      "scenario": "baseline",
+      "reply": {
+        "contract_version": 1
+      },
+      "expect": {
+        "saved": false,
+        "calls": 1,
+        "status": 303,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "draft-mrr-wrong-type",
+      "surface": "report_draft",
+      "report": "mrr",
+      "category": "injection",
+      "question": "Generate MRR draft: wrong-type.",
+      "scenario": "baseline",
+      "reply": [
+        "detailed"
+      ],
+      "expect": {
+        "saved": false,
+        "calls": 1,
+        "status": 303,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "draft-mrr-extra-action",
+      "surface": "report_draft",
+      "report": "mrr",
+      "category": "injection",
+      "question": "Generate MRR draft: extra-action.",
+      "scenario": "baseline",
+      "reply": {
+        "contract_version": 1,
+        "style": "concise",
+        "action": "archive_activity"
+      },
+      "expect": {
+        "saved": false,
+        "calls": 1,
+        "status": 303,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "draft-mrr-timeout",
+      "surface": "report_draft",
+      "report": "mrr",
+      "category": "resilience",
+      "question": "Generate MRR draft: timeout.",
+      "scenario": "timeout",
+      "reply": null,
+      "expect": {
+        "saved": false,
+        "calls": 2,
+        "status": 303,
+        "outcomes": [
+          "fallback_timeout"
+        ]
+      }
+    },
+    {
+      "id": "draft-mrr-http503",
+      "surface": "report_draft",
+      "report": "mrr",
+      "category": "resilience",
+      "question": "Generate MRR draft: http503.",
+      "scenario": "http503",
+      "reply": null,
+      "expect": {
+        "saved": false,
+        "calls": 2,
+        "status": 303,
+        "outcomes": [
+          "fallback_error"
+        ]
+      }
+    },
+    {
+      "id": "draft-mrr-http429",
+      "surface": "report_draft",
+      "report": "mrr",
+      "category": "resilience",
+      "question": "Generate MRR draft: http429.",
+      "scenario": "http429",
+      "reply": null,
+      "expect": {
+        "saved": false,
+        "calls": 1,
+        "status": 303,
+        "outcomes": [
+          "fallback_error"
+        ]
+      }
+    },
+    {
+      "id": "draft-mrr-invalid-json",
+      "surface": "report_draft",
+      "report": "mrr",
+      "category": "resilience",
+      "question": "Generate MRR draft: invalid-json.",
+      "scenario": "malformed",
+      "reply": null,
+      "expect": {
+        "saved": false,
+        "calls": 1,
+        "status": 303,
+        "outcomes": [
+          "fallback_error"
+        ]
+      }
+    },
+    {
+      "id": "draft-mrr-budget",
+      "surface": "report_draft",
+      "report": "mrr",
+      "category": "resilience",
+      "question": "Generate MRR draft: budget.",
+      "scenario": "budget",
+      "reply": null,
+      "expect": {
+        "saved": false,
+        "calls": 0,
+        "status": 303,
+        "outcomes": [
+          "fallback_budget"
+        ]
+      }
+    },
+    {
+      "id": "draft-mrr-disabled",
+      "surface": "report_draft",
+      "report": "mrr",
+      "category": "resilience",
+      "question": "Generate MRR draft: disabled.",
+      "scenario": "disabled",
+      "reply": null,
+      "expect": {
+        "saved": false,
+        "calls": 0,
+        "status": 303,
+        "outcomes": [
+          "no_config"
+        ]
+      }
+    },
+    {
+      "id": "draft-mrr-disabled-during-call",
+      "surface": "report_draft",
+      "report": "mrr",
+      "category": "authority",
+      "question": "Generate MRR draft: disabled-during-call.",
+      "scenario": "disable-during",
+      "reply": {
+        "contract_version": 1,
+        "style": "detailed"
+      },
+      "expect": {
+        "saved": false,
+        "calls": 1,
+        "status": 303,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "draft-mrr-off-during-call",
+      "surface": "report_draft",
+      "report": "mrr",
+      "category": "authority",
+      "question": "Generate MRR draft: off-during-call.",
+      "scenario": "off-during",
+      "reply": {
+        "contract_version": 1,
+        "style": "detailed"
+      },
+      "expect": {
+        "saved": false,
+        "calls": 1,
+        "status": 303,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "draft-mrr-atomic-audit",
+      "surface": "report_draft",
+      "report": "mrr",
+      "category": "resilience",
+      "question": "Generate MRR draft: atomic-audit.",
+      "scenario": "audit-failure",
+      "reply": {
+        "contract_version": 1,
+        "style": "detailed"
+      },
+      "expect": {
+        "saved": false,
+        "calls": 1,
+        "status": 303,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "draft-mrr-atomic-fields",
+      "surface": "report_draft",
+      "report": "mrr",
+      "category": "resilience",
+      "question": "Generate MRR draft: atomic-fields.",
+      "scenario": "save-failure",
+      "reply": {
+        "contract_version": 1,
+        "style": "detailed"
+      },
+      "expect": {
+        "saved": false,
+        "calls": 1,
+        "status": 303,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "draft-csm-detailed",
+      "surface": "report_draft",
+      "report": "csm",
+      "category": "facts",
+      "question": "Generate CSM draft: detailed.",
+      "scenario": "baseline",
+      "reply": {
+        "contract_version": 1,
+        "style": "detailed"
+      },
+      "expect": {
+        "saved": true,
+        "calls": 1,
+        "status": 303,
+        "outcomes": [
+          "ok"
+        ]
+      }
+    },
+    {
+      "id": "draft-csm-concise",
+      "surface": "report_draft",
+      "report": "csm",
+      "category": "facts",
+      "question": "Generate CSM draft: concise.",
+      "scenario": "baseline",
+      "reply": {
+        "contract_version": 1,
+        "style": "concise"
+      },
+      "expect": {
+        "saved": true,
+        "calls": 1,
+        "status": 303,
+        "outcomes": [
+          "ok"
+        ]
+      }
+    },
+    {
+      "id": "draft-csm-missing-ratings",
+      "surface": "report_draft",
+      "report": "csm",
+      "category": "facts",
+      "question": "Generate CSM draft: missing-ratings.",
+      "scenario": "missing",
+      "reply": {
+        "contract_version": 1,
+        "style": "detailed"
+      },
+      "expect": {
+        "saved": true,
+        "calls": 1,
+        "status": 303,
+        "outcomes": [
+          "ok"
+        ]
+      }
+    },
+    {
+      "id": "draft-csm-no-data",
+      "surface": "report_draft",
+      "report": "csm",
+      "category": "resilience",
+      "question": "Generate CSM draft: no-data.",
+      "scenario": "no-data",
+      "reply": null,
+      "expect": {
+        "saved": false,
+        "calls": 0,
+        "status": 303,
+        "outcomes": []
+      }
+    },
+    {
+      "id": "draft-csm-viewer",
+      "surface": "report_draft",
+      "report": "csm",
+      "category": "authority",
+      "question": "Generate CSM draft: viewer.",
+      "scenario": "viewer",
+      "reply": null,
+      "expect": {
+        "saved": false,
+        "calls": 0,
+        "status": 403,
+        "outcomes": []
+      }
+    },
+    {
+      "id": "draft-csm-deactivated",
+      "surface": "report_draft",
+      "report": "csm",
+      "category": "authority",
+      "question": "Generate CSM draft: deactivated.",
+      "scenario": "deactivate",
+      "reply": {
+        "contract_version": 1,
+        "style": "detailed"
+      },
+      "expect": {
+        "saved": false,
+        "calls": 1,
+        "status": 303,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "draft-csm-role-changed",
+      "surface": "report_draft",
+      "report": "csm",
+      "category": "authority",
+      "question": "Generate CSM draft: role-changed.",
+      "scenario": "demote",
+      "reply": {
+        "contract_version": 1,
+        "style": "detailed"
+      },
+      "expect": {
+        "saved": false,
+        "calls": 1,
+        "status": 303,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "draft-csm-logged-out",
+      "surface": "report_draft",
+      "report": "csm",
+      "category": "authority",
+      "question": "Generate CSM draft: logged-out.",
+      "scenario": "logout",
+      "reply": {
+        "contract_version": 1,
+        "style": "detailed"
+      },
+      "expect": {
+        "saved": false,
+        "calls": 1,
+        "status": 303,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "draft-csm-edited-source",
+      "surface": "report_draft",
+      "report": "csm",
+      "category": "freshness",
+      "question": "Generate CSM draft: edited-source.",
+      "scenario": "edit",
+      "reply": {
+        "contract_version": 1,
+        "style": "detailed"
+      },
+      "expect": {
+        "saved": false,
+        "calls": 1,
+        "status": 303,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "draft-csm-new-response",
+      "surface": "report_draft",
+      "report": "csm",
+      "category": "freshness",
+      "question": "Generate CSM draft: new-response.",
+      "scenario": "new-response",
+      "reply": {
+        "contract_version": 1,
+        "style": "detailed"
+      },
+      "expect": {
+        "saved": false,
+        "calls": 1,
+        "status": 303,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "draft-csm-archived-source",
+      "surface": "report_draft",
+      "report": "csm",
+      "category": "freshness",
+      "question": "Generate CSM draft: archived-source.",
+      "scenario": "archive",
+      "reply": {
+        "contract_version": 1,
+        "style": "detailed"
+      },
+      "expect": {
+        "saved": false,
+        "calls": 1,
+        "status": 303,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "draft-csm-moved-date",
+      "surface": "report_draft",
+      "report": "csm",
+      "category": "freshness",
+      "question": "Generate CSM draft: moved-date.",
+      "scenario": "move-date",
+      "reply": {
+        "contract_version": 1,
+        "style": "detailed"
+      },
+      "expect": {
+        "saved": false,
+        "calls": 1,
+        "status": 303,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "draft-csm-day-rollover",
+      "surface": "report_draft",
+      "report": "csm",
+      "category": "freshness",
+      "question": "Generate CSM draft: day-rollover.",
+      "scenario": "day",
+      "reply": {
+        "contract_version": 1,
+        "style": "detailed"
+      },
+      "expect": {
+        "saved": false,
+        "calls": 1,
+        "status": 303,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "draft-csm-human-edited",
+      "surface": "report_draft",
+      "report": "csm",
+      "category": "freshness",
+      "question": "Generate CSM draft: human-edited.",
+      "scenario": "human-edit",
+      "reply": {
+        "contract_version": 1,
+        "style": "detailed"
+      },
+      "expect": {
+        "saved": false,
+        "calls": 1,
+        "status": 303,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "draft-csm-invented-figure",
+      "surface": "report_draft",
+      "report": "csm",
+      "category": "injection",
+      "question": "Generate CSM draft: invented-figure.",
+      "scenario": "baseline",
+      "reply": {
+        "analysis": "The score is 999999%.",
+        "contract_version": 1,
+        "style": "detailed"
+      },
+      "expect": {
+        "saved": false,
+        "calls": 1,
+        "status": 303,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "draft-csm-private-prose",
+      "surface": "report_draft",
+      "report": "csm",
+      "category": "injection",
+      "question": "Generate CSM draft: private-prose.",
+      "scenario": "baseline",
+      "reply": {
+        "contract_version": 1,
+        "style": "EVAL-DRAFT-PRIVATE-NAME"
+      },
+      "expect": {
+        "saved": false,
+        "calls": 1,
+        "status": 303,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "draft-csm-forged-contract",
+      "surface": "report_draft",
+      "report": "csm",
+      "category": "injection",
+      "question": "Generate CSM draft: forged-contract.",
+      "scenario": "baseline",
+      "reply": {
+        "contract_version": true,
+        "style": "detailed"
+      },
+      "expect": {
+        "saved": false,
+        "calls": 1,
+        "status": 303,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "draft-csm-missing-selection",
+      "surface": "report_draft",
+      "report": "csm",
+      "category": "injection",
+      "question": "Generate CSM draft: missing-selection.",
+      "scenario": "baseline",
+      "reply": {
+        "contract_version": 1
+      },
+      "expect": {
+        "saved": false,
+        "calls": 1,
+        "status": 303,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "draft-csm-wrong-type",
+      "surface": "report_draft",
+      "report": "csm",
+      "category": "injection",
+      "question": "Generate CSM draft: wrong-type.",
+      "scenario": "baseline",
+      "reply": [
+        "detailed"
+      ],
+      "expect": {
+        "saved": false,
+        "calls": 1,
+        "status": 303,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "draft-csm-extra-action",
+      "surface": "report_draft",
+      "report": "csm",
+      "category": "injection",
+      "question": "Generate CSM draft: extra-action.",
+      "scenario": "baseline",
+      "reply": {
+        "contract_version": 1,
+        "style": "concise",
+        "action": "archive_activity"
+      },
+      "expect": {
+        "saved": false,
+        "calls": 1,
+        "status": 303,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "draft-csm-timeout",
+      "surface": "report_draft",
+      "report": "csm",
+      "category": "resilience",
+      "question": "Generate CSM draft: timeout.",
+      "scenario": "timeout",
+      "reply": null,
+      "expect": {
+        "saved": false,
+        "calls": 2,
+        "status": 303,
+        "outcomes": [
+          "fallback_timeout"
+        ]
+      }
+    },
+    {
+      "id": "draft-csm-http503",
+      "surface": "report_draft",
+      "report": "csm",
+      "category": "resilience",
+      "question": "Generate CSM draft: http503.",
+      "scenario": "http503",
+      "reply": null,
+      "expect": {
+        "saved": false,
+        "calls": 2,
+        "status": 303,
+        "outcomes": [
+          "fallback_error"
+        ]
+      }
+    },
+    {
+      "id": "draft-csm-http429",
+      "surface": "report_draft",
+      "report": "csm",
+      "category": "resilience",
+      "question": "Generate CSM draft: http429.",
+      "scenario": "http429",
+      "reply": null,
+      "expect": {
+        "saved": false,
+        "calls": 1,
+        "status": 303,
+        "outcomes": [
+          "fallback_error"
+        ]
+      }
+    },
+    {
+      "id": "draft-csm-invalid-json",
+      "surface": "report_draft",
+      "report": "csm",
+      "category": "resilience",
+      "question": "Generate CSM draft: invalid-json.",
+      "scenario": "malformed",
+      "reply": null,
+      "expect": {
+        "saved": false,
+        "calls": 1,
+        "status": 303,
+        "outcomes": [
+          "fallback_error"
+        ]
+      }
+    },
+    {
+      "id": "draft-csm-budget",
+      "surface": "report_draft",
+      "report": "csm",
+      "category": "resilience",
+      "question": "Generate CSM draft: budget.",
+      "scenario": "budget",
+      "reply": null,
+      "expect": {
+        "saved": false,
+        "calls": 0,
+        "status": 303,
+        "outcomes": [
+          "fallback_budget"
+        ]
+      }
+    },
+    {
+      "id": "draft-csm-disabled",
+      "surface": "report_draft",
+      "report": "csm",
+      "category": "resilience",
+      "question": "Generate CSM draft: disabled.",
+      "scenario": "disabled",
+      "reply": null,
+      "expect": {
+        "saved": false,
+        "calls": 0,
+        "status": 303,
+        "outcomes": [
+          "no_config"
+        ]
+      }
+    },
+    {
+      "id": "draft-csm-disabled-during-call",
+      "surface": "report_draft",
+      "report": "csm",
+      "category": "authority",
+      "question": "Generate CSM draft: disabled-during-call.",
+      "scenario": "disable-during",
+      "reply": {
+        "contract_version": 1,
+        "style": "detailed"
+      },
+      "expect": {
+        "saved": false,
+        "calls": 1,
+        "status": 303,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "draft-csm-off-during-call",
+      "surface": "report_draft",
+      "report": "csm",
+      "category": "authority",
+      "question": "Generate CSM draft: off-during-call.",
+      "scenario": "off-during",
+      "reply": {
+        "contract_version": 1,
+        "style": "detailed"
+      },
+      "expect": {
+        "saved": false,
+        "calls": 1,
+        "status": 303,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "draft-csm-atomic-audit",
+      "surface": "report_draft",
+      "report": "csm",
+      "category": "resilience",
+      "question": "Generate CSM draft: atomic-audit.",
+      "scenario": "audit-failure",
+      "reply": {
+        "contract_version": 1,
+        "style": "detailed"
+      },
+      "expect": {
+        "saved": false,
+        "calls": 1,
+        "status": 303,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "draft-csm-atomic-fields",
+      "surface": "report_draft",
+      "report": "csm",
+      "category": "resilience",
+      "question": "Generate CSM draft: atomic-fields.",
+      "scenario": "save-failure",
+      "reply": {
+        "contract_version": 1,
+        "style": "detailed"
+      },
+      "expect": {
+        "saved": false,
+        "calls": 1,
+        "status": 303,
+        "outcomes": [
+          "rejected_validation"
+        ]
       }
     }
   ]

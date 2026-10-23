@@ -1,0 +1,32 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header, flash %}
+{% block title %}Request meals{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/rooms.css?v=7.85">{% endblock %}
+{% block content %}
+{{ page_header("Request meals", "For any activity or venue. No conference room reservation is required.") }}
+{% include "_meals_tabs.html" %}
+{{ flash(err=err) }}
+<p>Submit at least 2 calendar days before the activity. The Administrative Section orders and records delivery; follow progress under My meal requests.</p>
+<form method="post" action="/meals/new" class="card rm-mealform">
+  <div class="field"><label for="meal-title">Title of the activity</label>
+    <input id="meal-title" name="title" maxlength="240" value="{{ f.get('title', '') }}" required></div>
+  <div class="field"><label for="meal-day">Activity date</label>
+    <input id="meal-day" name="day" type="date" min="{{ earliest }}" value="{{ f.get('day', '') }}" required></div>
+  <div class="field"><label for="meal-venue">Venue / delivery location</label>
+    <input id="meal-venue" name="venue" maxlength="240" value="{{ f.get('venue', '') }}" required></div>
+  <div class="field"><label for="meal-pax">Number of pax</label>
+    <input id="meal-pax" name="pax" type="number" min="1" max="1000" value="{{ f.get('pax', '') }}" required></div>
+  <div class="field"><label for="meal-special">Special request / dietary needs (optional)</label>
+    <textarea id="meal-special" name="special" maxlength="800" rows="3">{{ f.get('special', '') }}</textarea></div>
+  <fieldset><legend>Meals and requested delivery times</legend>
+  {% for m, label in meal_types %}
+    <div class="field">
+      <label for="want-{{ m }}"><input id="want-{{ m }}" type="checkbox" name="want_{{ m }}" value="1" {{ 'checked' if f.get('want_' ~ m) == '1' }}> {{ label }}</label>
+      <label for="time-{{ m }}">{{ label }} delivery time</label>
+      <input id="time-{{ m }}" type="time" name="time_{{ m }}" min="06:00" max="19:00" value="{{ f.get('time_' ~ m, times[m]) }}">
+    </div>
+  {% endfor %}
+  </fieldset>
+  <button class="btn" type="submit">Submit meal request</button>
+</form>
+{% endblock %}
