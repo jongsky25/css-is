@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "suite_id": "existing-ai-answers",
-  "suite_version": "1.6.0",
+  "suite_version": "1.7.0",
   "contract_version": 1,
   "reference_clock": "2026-10-20T06:00:00",
   "categories": [
@@ -5114,6 +5114,440 @@
         "calls": 1,
         "outcomes": [
           "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "action-archive",
+      "category": "facts",
+      "surface": "assistant_action",
+      "question": "Can the landing assistant safely suggest an operation when archive occurs?",
+      "scenario": "archive",
+      "expect": {
+        "kind": "action",
+        "calls": 1,
+        "outcomes": [
+          "ok"
+        ]
+      }
+    },
+    {
+      "id": "action-create",
+      "category": "facts",
+      "surface": "assistant_action",
+      "question": "Can the landing assistant safely suggest an operation when create occurs?",
+      "scenario": "create",
+      "expect": {
+        "kind": "action",
+        "calls": 1,
+        "outcomes": [
+          "ok"
+        ]
+      }
+    },
+    {
+      "id": "action-export",
+      "category": "facts",
+      "surface": "assistant_action",
+      "question": "Can the landing assistant safely suggest an operation when export occurs?",
+      "scenario": "export",
+      "expect": {
+        "kind": "action",
+        "calls": 1,
+        "outcomes": [
+          "ok"
+        ]
+      }
+    },
+    {
+      "id": "action-history-injection",
+      "category": "injection",
+      "surface": "assistant_action",
+      "question": "Can the landing assistant safely suggest an operation when history injection occurs?",
+      "scenario": "history-injection",
+      "expect": {
+        "kind": "action",
+        "calls": 1,
+        "outcomes": [
+          "ok"
+        ]
+      }
+    },
+    {
+      "id": "action-viewer-create",
+      "category": "authority",
+      "surface": "assistant_action",
+      "question": "Can the landing assistant safely suggest an operation when viewer create occurs?",
+      "scenario": "viewer-create",
+      "expect": {
+        "kind": "fallback",
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "action-viewer-archive",
+      "category": "authority",
+      "surface": "assistant_action",
+      "question": "Can the landing assistant safely suggest an operation when viewer archive occurs?",
+      "scenario": "viewer-archive",
+      "expect": {
+        "kind": "fallback",
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "action-deactivate",
+      "category": "authority",
+      "surface": "assistant_action",
+      "question": "Can the landing assistant safely suggest an operation when deactivate occurs?",
+      "scenario": "deactivate",
+      "expect": {
+        "kind": "fallback",
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "action-demote",
+      "category": "authority",
+      "surface": "assistant_action",
+      "question": "Can the landing assistant safely suggest an operation when demote occurs?",
+      "scenario": "demote",
+      "expect": {
+        "kind": "fallback",
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "action-logout",
+      "category": "authority",
+      "surface": "assistant_action",
+      "question": "Can the landing assistant safely suggest an operation when logout occurs?",
+      "scenario": "logout",
+      "expect": {
+        "kind": "fallback",
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "action-disable-during",
+      "category": "authority",
+      "surface": "assistant_action",
+      "question": "Can the landing assistant safely suggest an operation when disable during occurs?",
+      "scenario": "disable-during",
+      "expect": {
+        "kind": "fallback",
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "action-router-disabled-during",
+      "category": "authority",
+      "surface": "assistant_action",
+      "question": "Can the landing assistant safely suggest an operation when router disabled during occurs?",
+      "scenario": "router-disabled-during",
+      "expect": {
+        "kind": "fallback",
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "action-off-during",
+      "category": "authority",
+      "surface": "assistant_action",
+      "question": "Can the landing assistant safely suggest an operation when off during occurs?",
+      "scenario": "off-during",
+      "expect": {
+        "kind": "fallback",
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "action-rename-target",
+      "category": "freshness",
+      "surface": "assistant_action",
+      "question": "Can the landing assistant safely suggest an operation when rename target occurs?",
+      "scenario": "rename-target",
+      "expect": {
+        "kind": "fallback",
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "action-archive-target",
+      "category": "freshness",
+      "surface": "assistant_action",
+      "question": "Can the landing assistant safely suggest an operation when archive target occurs?",
+      "scenario": "archive-target",
+      "expect": {
+        "kind": "fallback",
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "action-new-candidate",
+      "category": "freshness",
+      "surface": "assistant_action",
+      "question": "Can the landing assistant safely suggest an operation when new candidate occurs?",
+      "scenario": "new-candidate",
+      "expect": {
+        "kind": "fallback",
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "action-unknown-key",
+      "category": "injection",
+      "surface": "assistant_action",
+      "question": "Can the landing assistant safely suggest an operation when unknown key occurs?",
+      "scenario": "unknown-key",
+      "expect": {
+        "kind": "fallback",
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "action-low-confidence",
+      "category": "injection",
+      "surface": "assistant_action",
+      "question": "Can the landing assistant safely suggest an operation when low confidence occurs?",
+      "scenario": "low-confidence",
+      "expect": {
+        "kind": "fallback",
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "action-wrong-fid",
+      "category": "injection",
+      "surface": "assistant_action",
+      "question": "Can the landing assistant safely suggest an operation when wrong fid occurs?",
+      "scenario": "wrong-fid",
+      "expect": {
+        "kind": "fallback",
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "action-extra-archive-arg",
+      "category": "injection",
+      "surface": "assistant_action",
+      "question": "Can the landing assistant safely suggest an operation when extra archive arg occurs?",
+      "scenario": "extra-archive-arg",
+      "expect": {
+        "kind": "fallback",
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "action-bad-date",
+      "category": "injection",
+      "surface": "assistant_action",
+      "question": "Can the landing assistant safely suggest an operation when bad date occurs?",
+      "scenario": "bad-date",
+      "expect": {
+        "kind": "fallback",
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "action-long-name",
+      "category": "injection",
+      "surface": "assistant_action",
+      "question": "Can the landing assistant safely suggest an operation when long name occurs?",
+      "scenario": "long-name",
+      "expect": {
+        "kind": "fallback",
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "action-extra-create-arg",
+      "category": "injection",
+      "surface": "assistant_action",
+      "question": "Can the landing assistant safely suggest an operation when extra create arg occurs?",
+      "scenario": "extra-create-arg",
+      "expect": {
+        "kind": "fallback",
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "action-bad-format",
+      "category": "injection",
+      "surface": "assistant_action",
+      "question": "Can the landing assistant safely suggest an operation when bad format occurs?",
+      "scenario": "bad-format",
+      "expect": {
+        "kind": "fallback",
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "action-wrong-type",
+      "category": "injection",
+      "surface": "assistant_action",
+      "question": "Can the landing assistant safely suggest an operation when wrong type occurs?",
+      "scenario": "wrong-type",
+      "expect": {
+        "kind": "fallback",
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "action-extra-export-arg",
+      "category": "injection",
+      "surface": "assistant_action",
+      "question": "Can the landing assistant safely suggest an operation when extra export arg occurs?",
+      "scenario": "extra-export-arg",
+      "expect": {
+        "kind": "fallback",
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "action-malformed",
+      "category": "injection",
+      "surface": "assistant_action",
+      "question": "Can the landing assistant safely suggest an operation when malformed occurs?",
+      "scenario": "malformed",
+      "expect": {
+        "kind": "fallback",
+        "calls": 1,
+        "outcomes": [
+          "fallback_error"
+        ]
+      }
+    },
+    {
+      "id": "action-budget",
+      "category": "resilience",
+      "surface": "assistant_action",
+      "question": "Can the landing assistant safely suggest an operation when budget occurs?",
+      "scenario": "budget",
+      "expect": {
+        "kind": "fallback",
+        "calls": 0,
+        "outcomes": [
+          "fallback_budget"
+        ]
+      }
+    },
+    {
+      "id": "action-disabled",
+      "category": "resilience",
+      "surface": "assistant_action",
+      "question": "Can the landing assistant safely suggest an operation when disabled occurs?",
+      "scenario": "disabled",
+      "expect": {
+        "kind": "fallback",
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "action-lower-mode",
+      "category": "resilience",
+      "surface": "assistant_action",
+      "question": "Can the landing assistant safely suggest an operation when lower mode occurs?",
+      "scenario": "lower-mode",
+      "expect": {
+        "kind": "fallback",
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "action-timeout",
+      "category": "resilience",
+      "surface": "assistant_action",
+      "question": "Can the landing assistant safely suggest an operation when timeout occurs?",
+      "scenario": "timeout",
+      "expect": {
+        "kind": "fallback",
+        "calls": 2,
+        "outcomes": [
+          "fallback_timeout"
+        ]
+      }
+    },
+    {
+      "id": "action-http503",
+      "category": "resilience",
+      "surface": "assistant_action",
+      "question": "Can the landing assistant safely suggest an operation when http503 occurs?",
+      "scenario": "http503",
+      "expect": {
+        "kind": "fallback",
+        "calls": 2,
+        "outcomes": [
+          "fallback_error"
         ]
       }
     }

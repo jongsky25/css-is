@@ -34,6 +34,8 @@ PROVENANCE = ('app.py', 'ai_core.py', 'ai_facts.py', 'auth.py', 'storage.py',
               'tests/test_ai_ux_evaluation.py', 'tests/test_ai_ux_browser.py',
               'tests/test_ai_harmonize_evaluation.py', 'tests/test_ai_harmonize_browser.py',
               'tests/test_ai_harmonize.py', 'tests/test_ai_evaluation_gate.py', 'templates/cleanup.html',
+              'tests/test_ai_action_evaluation.py', 'tests/test_ai_action_browser.py',
+              'tests/test_ai_assistant.py', 'static/js/assistant.js',
               'activity_messages.py', 'templates/feedback_detail.html', 'static/js/activity_ai.js', 'scripts/ai_evaluation.py',
               'templates/activity_manage.html',
               'ux_handoff.py', 'ui_telemetry.py', 'templates/ux_insights.html',
@@ -257,6 +259,7 @@ def main():
                        'tests/test_ai_triage_evaluation.py', 'tests/test_ai_verbatim_evaluation.py',
                        'tests/test_ai_messages_evaluation.py', 'tests/test_ai_ux_evaluation.py',
                        'tests/test_ai_harmonize_evaluation.py',
+                       'tests/test_ai_action_evaluation.py',
                        '--ai-evaluation-report=' + str(output)]
             if args.shuffle_seed is not None:
                 command.append('--shuffle-seed=' + str(args.shuffle_seed))
