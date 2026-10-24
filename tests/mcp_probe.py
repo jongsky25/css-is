@@ -43,6 +43,10 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
                  (owned_doc, owner, 'synthetic-probe'))
     conn.execute('INSERT INTO document_access(document_id,user_id,source) VALUES (?,?,?)',
                  (hidden_doc, other, 'synthetic-probe'))
+    visible_event = st.cal_create(conn, 'Visible synthetic meeting', '2026-10-24', audience='people',
+                                  people=[owner], by=other, meeting_url='https://private.example/meeting')
+    st.cal_create(conn, 'Hidden synthetic meeting', '2026-10-24', audience='people',
+                  people=[other], by=other)
     conn.commit()
     conn.close()
 
@@ -54,7 +58,7 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
         metadata = client.get('/.well-known/oauth-protected-resource/mcp')
         assert metadata.status_code == 200
         assert metadata.json()['resource'] == 'https://office.example/mcp'
-        assert set(metadata.json()['scopes_supported']) == {'work:read', 'documents:read'}
+        assert set(metadata.json()['scopes_supported']) == {'calendar:read', 'work:read', 'documents:read'}
         denied = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 1, 'method': 'initialize',
                                           'params': {'protocolVersion': '2025-06-18',
                                                      'capabilities': {}, 'clientInfo': {'name': 'probe', 'version': '1'}}},
@@ -72,7 +76,7 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
             'grant_types': ['authorization_code', 'refresh_token'],
             'response_types': ['code']})
         assert registered.status_code == 201, registered.text
-        assert set(registered.json()['scope'].split()) == {'work:read', 'documents:read'}
+        assert set(registered.json()['scope'].split()) == {'calendar:read', 'work:read', 'documents:read'}
         client_id = registered.json()['client_id']
         auth_url = client.get('/authorize', params={
             'response_type': 'code', 'client_id': client_id, 'redirect_uri': callback,
@@ -88,6 +92,7 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
         assert page.status_code == 200, page.text
         assert 'Your visible work items' in page.text
         assert 'Your visible document metadata' in page.text
+        assert 'Your visible calendar events and activities' in page.text
         assert page.headers['referrer-policy'] == 'same-origin'
         ticket = re.search(r'name="ticket" value="([^"]+)"', page.text).group(1)
         csrf = re.search(r'name="csrf" value="([^"]+)"', page.text).group(1)
@@ -128,13 +133,48 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
         names = {tool['name'] for tool in listed.json()['result']['tools']}
         assert {'my_work', 'find_documents', 'get_document'} <= names
         assert names == {'my_work', 'find_documents', 'get_document',
-                         'list_work_items', 'get_work_item', 'list_work_tasks'}
+                         'list_work_items', 'get_work_item', 'list_work_tasks', 'list_calendar_events'}
         api_token = client.get('/api/v1/work-items', headers={'Authorization': 'Bearer ' + access})
         assert api_token.status_code == 401
         called = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 3, 'method': 'tools/call',
             'params': {'name': 'my_work', 'arguments': {}}}, headers=headers)
         assert called.status_code == 200, called.text
         assert not called.json()['result'].get('isError'), called.text
+        calendar = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 10, 'method': 'tools/call',
+            'params': {'name': 'list_calendar_events', 'arguments': {
+                'start_date': '2026-10-24', 'end_date': '2026-10-24', 'scope': 'bureau'}}}, headers=headers)
+        assert calendar.status_code == 200 and not calendar.json()['result'].get('isError'), calendar.text
+        assert 'Visible synthetic meeting' in calendar.text
+        assert 'Hidden synthetic meeting' not in calendar.text
+        assert 'private.example' not in calendar.text
+        conn = st.connect(os.environ['CSS_DB'])
+        conn.execute('DELETE FROM calendar_entry_person WHERE entry_id=? AND user_id=?',
+                     (visible_event, owner))
+        conn.commit(); conn.close()
+        calendar_withdrawn = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 13, 'method': 'tools/call',
+            'params': {'name': 'list_calendar_events', 'arguments': {
+                'start_date': '2026-10-24', 'end_date': '2026-10-24', 'scope': 'bureau'}}}, headers=headers)
+        assert calendar_withdrawn.status_code == 200 and not calendar_withdrawn.json()['result'].get('isError')
+        assert 'Visible synthetic meeting' not in calendar_withdrawn.text
+        invalid_range = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 11, 'method': 'tools/call',
+            'params': {'name': 'list_calendar_events', 'arguments': {
+                'start_date': '2026-10-01', 'end_date': '2026-12-31'}}}, headers=headers)
+        assert invalid_range.status_code == 200 and invalid_range.json()['result'].get('isError')
+        import mcp_auth
+        conn = st.connect(os.environ['CSS_DB'])
+        work_only = mcp_auth.Provider._tokens(conn, client_id, owner, ['work:read'],
+                                             'https://office.example/mcp')
+        conn.commit(); conn.close()
+        limited = dict(headers, Authorization='Bearer ' + work_only.access_token)
+        no_scope = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 12, 'method': 'tools/call',
+            'params': {'name': 'list_calendar_events', 'arguments': {
+                'start_date': '2026-10-24', 'end_date': '2026-10-24'}}}, headers=limited)
+        assert no_scope.status_code == 200 and no_scope.json()['result'].get('isError')
+        assert 'Visible synthetic meeting' not in no_scope.text
+        conn = st.connect(os.environ['CSS_DB'])
+        conn.execute('UPDATE mcp_oauth_grant SET revoked_at=1 WHERE access_hash=?',
+                     (hashlib.sha256(work_only.access_token.encode()).hexdigest(),))
+        conn.commit(); conn.close()
         visible = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 5, 'method': 'tools/call',
             'params': {'name': 'get_document', 'arguments': {'document_id': owned_doc}}}, headers=headers)
         assert visible.status_code == 200 and not visible.json()['result'].get('isError'), visible.text

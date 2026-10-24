@@ -1,3 +1,9 @@
+## 8.34 — October 24, 2026
+
+- Let ChatGPT list calendar events and activities visible to the connected user, with dates, status, venue and links back to Office Connect.
+- Require a separate calendar read permission and check current calendar visibility on every request; exclude attendee names, meeting links, leave and birthdays.
+- Limit each calendar request to 31 days and 25 returned items; existing ChatGPT connections must reconnect to approve the new permission.
+
 ## 8.33 — October 24, 2026
 
 - Show a readable error and retry path when ChatGPT connection approval fails, instead of letting the browser download the response.
