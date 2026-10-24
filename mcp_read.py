@@ -162,11 +162,12 @@ def build_server(get_conn, origin):
     @server.tool(title='List calendar events', annotations=READ_ONLY)
     async def list_calendar_events(start_date: str = '', end_date: str = '',
                                    scope: str = 'blend', limit: int = 10, offset: int = 0) -> dict:
-        """List visible calendar entries and activities, with dates, status and Office Connect links.
+        """List visible calendar entries, activities and room bookings with dates and links.
 
         Dates use YYYY-MM-DD in the Office Connect local calendar. Defaults to the next 14 days.
         Scope narrows visibility: blend, mine, section, division or bureau. No attendee names,
-        meeting links, leave, birthdays or room bookings are returned.
+        meeting links, leave or birthdays are returned. Room requests are shown only
+        to their requester or room approvers; approved bookings are visible to everyone.
         """
         if type(limit) is not int or not 1 <= limit <= 25 or type(offset) is not int or not 0 <= offset <= 5000:
             raise ValueError('Choose a page size from 1 to 25 and an offset from 0 to 5000.')
@@ -185,13 +186,16 @@ def build_server(get_conn, origin):
 
         def run(conn, user):
             items = office_calendar.items_between(conn, user, start, end, scope=scope,
-                                                  layers=('entries', 'activities'))
+                                                  layers=('entries', 'activities', 'rooms'))
             selected = items[offset:offset + limit]
             return {'data': [{
                 'title': item['title'], 'kind': item['kind'], 'status': item['status'],
                 'start_date': item['start'], 'end_date': item['end'],
                 'start_time': item['start_time'], 'end_time': item['end_time'],
                 'venue': item['venue'],
+                'room_booking_status': (
+                    'approved' if item['status'] == 'confirmed' else 'requested'
+                ) if item['layer'] == 'rooms' else None,
                 'web_url': origin + item['url'] if item['url'] else None,
             } for item in selected], 'next_offset': offset + limit if len(items) > offset + limit else None,
                 'start_date': start.isoformat(), 'end_date': end.isoformat(), 'scope': scope}

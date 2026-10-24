@@ -47,6 +47,17 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
                                   people=[owner], by=other, meeting_url='https://private.example/meeting')
     st.cal_create(conn, 'Hidden synthetic meeting', '2026-10-24', audience='people',
                   people=[other], by=other)
+    slot = conn.execute("INSERT INTO room_slot(code,label,start_time,end_time,sort,active) "
+                        "VALUES ('MCP10','10:00-11:00','10:00','11:00',10,1)").lastrowid
+    def booking(title, requester, status):
+        rid = conn.execute('INSERT INTO room_reservation(title,day,status,requester_user_id) '
+                           'VALUES (?,?,?,?)', (title, '2026-10-24', status, requester)).lastrowid
+        conn.execute('INSERT INTO room_reservation_slot(reservation_id,day,slot_id,is_approved) '
+                     'VALUES (?,?,?,?)', (rid, '2026-10-24', slot, int(status == 'approved')))
+        return rid
+    booking('Approved shared room booking', other, 'approved')
+    own_pending_room = booking('My pending room request', owner, 'requested')
+    booking('Another private pending room request', other, 'requested')
     conn.commit()
     conn.close()
 
@@ -92,7 +103,7 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
         assert page.status_code == 200, page.text
         assert 'Your visible work items' in page.text
         assert 'Your visible document metadata' in page.text
-        assert 'Your visible calendar events and activities' in page.text
+        assert 'Your visible calendar events, activities and room bookings' in page.text
         assert page.headers['referrer-policy'] == 'same-origin'
         ticket = re.search(r'name="ticket" value="([^"]+)"', page.text).group(1)
         csrf = re.search(r'name="csrf" value="([^"]+)"', page.text).group(1)
@@ -147,15 +158,27 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
         assert 'Visible synthetic meeting' in calendar.text
         assert 'Hidden synthetic meeting' not in calendar.text
         assert 'private.example' not in calendar.text
+        assert 'Approved shared room booking' in calendar.text
+        assert 'My pending room request' in calendar.text
+        assert 'Another private pending room request' not in calendar.text
+        assert 'room_booking_status' in calendar.text and 'approved' in calendar.text
+        own_calendar = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 14, 'method': 'tools/call',
+            'params': {'name': 'list_calendar_events', 'arguments': {
+                'start_date': '2026-10-24', 'end_date': '2026-10-24', 'scope': 'mine'}}}, headers=headers)
+        assert own_calendar.status_code == 200 and not own_calendar.json()['result'].get('isError')
+        assert 'My pending room request' in own_calendar.text
+        assert 'Approved shared room booking' not in own_calendar.text
         conn = st.connect(os.environ['CSS_DB'])
         conn.execute('DELETE FROM calendar_entry_person WHERE entry_id=? AND user_id=?',
                      (visible_event, owner))
+        conn.execute("UPDATE room_reservation SET status='withdrawn' WHERE id=?", (own_pending_room,))
         conn.commit(); conn.close()
         calendar_withdrawn = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 13, 'method': 'tools/call',
             'params': {'name': 'list_calendar_events', 'arguments': {
                 'start_date': '2026-10-24', 'end_date': '2026-10-24', 'scope': 'bureau'}}}, headers=headers)
         assert calendar_withdrawn.status_code == 200 and not calendar_withdrawn.json()['result'].get('isError')
         assert 'Visible synthetic meeting' not in calendar_withdrawn.text
+        assert 'My pending room request' not in calendar_withdrawn.text
         invalid_range = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 11, 'method': 'tools/call',
             'params': {'name': 'list_calendar_events', 'arguments': {
                 'start_date': '2026-10-01', 'end_date': '2026-12-31'}}}, headers=headers)
