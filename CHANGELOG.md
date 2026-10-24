@@ -1,3 +1,9 @@
+## 8.32 — October 24, 2026
+
+- Show a readable error and retry path when ChatGPT connection approval fails, instead of letting the browser download the response.
+- Support approval requests from browsers that send a same-site referrer; keep cross-site requests blocked.
+- Advertise both read permissions and request work and document metadata by default for new ChatGPT connections.
+
 ## 8.31 — October 24, 2026
 
 - Add an optional ChatGPT connection for a user's visible shared work and document status, with direct links back to Office Connect.

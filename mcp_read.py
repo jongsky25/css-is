@@ -54,7 +54,7 @@ def build_server(get_conn, origin):
                           required_scopes=[],
                           client_registration_options=ClientRegistrationOptions(
                               enabled=True, valid_scopes=sorted(mcp_auth.SCOPES),
-                              default_scopes=['work:read']),
+                              default_scopes=sorted(mcp_auth.SCOPES)),
                           revocation_options=RevocationOptions(enabled=True)),
         host='0.0.0.0', streamable_http_path='/mcp',
         stateless_http=True, json_response=True, max_request_body_size=65536,
