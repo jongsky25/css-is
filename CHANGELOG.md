@@ -5,6 +5,18 @@
 - Commit durable per-notice/per-day/week claims before I/O, bound scheduler ticks, avoid uncertain/crash retries, and revoke bindings on deliberate restore or account deletion. Preserve existing email/bell flows.
 - Pin/audit the new dependency graph and exercise the actual provider with mocked HTTP plus native browser setup/disconnect flows; live activation requires hosting credentials and user opt-in.
 
+## 8.45 — October 24, 2026
+
+- Add bureau-wide quarterly Type 2 satisfaction summaries under separate surveys:activities:read consent and a default-off CSS_MCP_ACTIVITY_SURVEYS_ENABLED switch.
+- Share the report's SERVQUAL block/metric formatting without loading respondent context; preserve 1–7 A/B scores, 1–4 C scores, sparse dimension arithmetic and activity-start-date selection.
+- Distinguish receipt totals, historical answer-backed report submissions and rated respondents. Withhold all scores for small populated item cells and refuse over-cap results without partial scores.
+
+## 8.44 — October 24, 2026
+
+- Start M1.2 with fixed-month, bureau-wide Type 1 CSM aggregates under surveys:csm:read and a default-off CSS_MCP_CSM_ENABLED switch.
+- Extract shared date predicates and SQD scoring from the existing report so screen/export and MCP calculations remain aligned; MCP reads no comments, demographic remarks or respondent identities.
+- Distinguish empty, unrated, small-sample and capacity-limited results. Withhold all score fields if any populated SQD item has fewer than ten responses; cap monthly retrieval at 5,000 responses without truncating scores.
+
 ## 8.43 — October 24, 2026
 
 - Fix the flaky outside-activity QR test by inspecting actual anchor destinations instead of searching encoded image data, with a deterministic embedded-image regression case.
