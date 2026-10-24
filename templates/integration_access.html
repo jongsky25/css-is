@@ -50,5 +50,14 @@
 </article>{% else %}<p>No tool credentials yet.</p>{% endfor %}
 <p><a href="{{ '/admin/integrations' if admin else '/account/integrations' }}">Newest credentials</a>{% if next_cursor %} · <a href="?before={{ next_cursor }}">Older credentials</a>{% endif %}</p>
 </section>
+{% if not admin %}<section aria-labelledby="mcp-connections-title"><h2 id="mcp-connections-title">ChatGPT connections</h2>
+<p>These read-only connections were approved through your Office Connect sign-in. Disconnect one here to stop its current access and refresh tokens.</p>
+{% for entry in mcp_entries %}<article class="integration-panel">
+<h3>{{ entry.name }}</h3><p><strong>{{ entry.status }}</strong> · {{ entry.scopes|join(', ') }}</p>
+<p>Connected: {{ entry.created_at_label }}<br>Refresh expires: {{ entry.expires_at_label }}</p>
+{% if entry.status == 'Active' %}<form method="post" action="/account/mcp/{{ entry.id }}/revoke">
+<input type="hidden" name="csrf" value="{{ csrf }}"><button type="submit">Disconnect {{ entry.name }}</button></form>{% endif %}
+</article>{% else %}<p>No ChatGPT connections yet.</p>{% endfor %}
+</section>{% endif %}
 </div>
 {% endblock %}

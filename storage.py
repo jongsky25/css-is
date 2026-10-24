@@ -843,6 +843,8 @@ def init_db(conn):
     work_storage.install(conn)
     import integration_access
     integration_access.install(conn)
+    import mcp_auth
+    mcp_auth.install(conn)
     import integration_changes
     integration_changes.install(conn)
     import supplies_storage

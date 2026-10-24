@@ -483,6 +483,11 @@ def clear_restored_sessions(db_path, *, revoke_integrations=False):
             if revoke_integrations and conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' "
                                                      "AND name='integration_credential'").fetchone():
                 conn.execute("UPDATE integration_credential SET revoked_at=COALESCE(revoked_at,CAST(strftime('%s','now') AS INTEGER))")
+            if revoke_integrations and conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' "
+                                                     "AND name='mcp_oauth_grant'").fetchone():
+                conn.execute("UPDATE mcp_oauth_grant SET revoked_at=COALESCE(revoked_at,CAST(strftime('%s','now') AS INTEGER))")
+                conn.execute("DELETE FROM mcp_oauth_code")
+                conn.execute("DELETE FROM mcp_oauth_pending")
             if revoke_integrations:
                 from integration_changes import reset_after_restore
                 reset_after_restore(conn)

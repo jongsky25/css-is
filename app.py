@@ -37,6 +37,7 @@ import logging
 import asyncio
 import hashlib
 import hmac
+import html
 import json
 import os
 import re
@@ -1941,6 +1942,13 @@ _PUBLIC_EXACT = {"/room", "/room/", "/room/day", "/seq", "/login", "/logout", "/
 # _PUBLIC_*: public surveys, directory photos and machine callbacks still use
 # their normal request/session and handler checks.
 _PUBLIC_ASSET_EXACT = frozenset({"/sw.js", "/manifest.webmanifest", "/favicon.ico"})
+_MCP_ORIGIN = (os.environ.get('CSS_BASE_URL') or
+               ('https://' + os.environ['SPACE_HOST'] if os.environ.get('SPACE_HOST') else '')).rstrip('/')
+_MCP_ENABLED = os.environ.get('CSS_MCP_ENABLED') == '1'
+_MCP_PROTOCOL_PATHS = frozenset({
+    '/mcp', '/authorize', '/token', '/register', '/revoke',
+    '/.well-known/oauth-authorization-server', '/.well-known/oauth-protected-resource/mcp',
+})
 
 
 def _base_url(request):
@@ -2168,6 +2176,23 @@ async def _auth_gate(request: Request, call_next):
             return integration_api.failure(503,'temporarily_unavailable','Authentication is temporarily unavailable. Retry later.',{'Retry-After':'1'})
         if not request.state.user:
             return integration_api.failure(401, 'authentication_required', 'A current signed-in session is required.')
+        return await call_next(request)
+    if _MCP_ENABLED and (path in _MCP_PROTOCOL_PATHS or path == '/mcp-consent'):
+        # The MCP SDK authenticates protocol requests. Consent uses the current
+        # browser session and its own CSRF check below; a login redirect must
+        # retain the opaque consent ticket in the query string.
+        if path in {'/register', '/authorize', '/token', '/revoke'}:
+            if not rl.allow('mcp_oauth', request.client.host if request.client else ''):
+                return Response('Too many connection requests. Retry later.', status_code=429)
+            if len(str(request.url)) > 4096:
+                return Response('Connection request is too large.', status_code=413)
+            if request.method == 'POST':
+                payload = bytearray()
+                async for chunk in request.stream():
+                    payload.extend(chunk)
+                    if len(payload) > 8192:
+                        return Response('Connection request is too large.', status_code=413)
+                request._body = bytes(payload)
         return await call_next(request)
     request.state.user = await asyncio.to_thread(_user_from_request, request)
     # Cookie-authenticated writes and public account operations share one
@@ -17643,3 +17668,107 @@ app.include_router(supplies_routes.make_router(templates, get_conn))
 
 # Isolated generated contract: legacy browser actions are not part of API v1.
 app.mount("/api/v1", integration_api.make_app(get_conn))
+
+# A24 is opt-in. A configured canonical HTTPS origin is mandatory for OAuth
+# audience validation; never infer an issuer from forwarded request headers.
+if _MCP_ENABLED:
+    if not _MCP_ORIGIN.startswith('https://') or urlparse(_MCP_ORIGIN).path not in ('', '/'):
+        raise RuntimeError('CSS_MCP_ENABLED requires a canonical HTTPS CSS_BASE_URL or SPACE_HOST.')
+    import mcp_read
+    _mcp_server, _mcp_provider = mcp_read.build_server(get_conn, _MCP_ORIGIN)
+
+    def _mcp_consent_token(request, ticket):
+        cookie = request.cookies.get(auth.COOKIE_NAME, '')
+        return hmac.new(auth._secret(), ('mcp-consent:' + cookie + ':' + ticket).encode(), hashlib.sha256).hexdigest()
+
+    @app.get('/mcp-consent', response_class=HTMLResponse)
+    def mcp_consent(request: Request, ticket: str = ''):
+        user = _user_from_request(request)
+        if not user:
+            return RedirectResponse('/login?next=' + quote('/mcp-consent?ticket=' + ticket, safe=''), status_code=303)
+        pending = _mcp_provider.pending(ticket)
+        if not pending:
+            return HTMLResponse('This connection request has expired. Start again in ChatGPT.', status_code=410)
+        _, params = pending
+        labels = {'work:read': 'Your visible work items and task status',
+                  'documents:read': 'Your visible document metadata'}
+        scopes = ''.join('<li>' + html.escape(labels[s]) + '</li>' for s in params['scopes'])
+        page = ('<!doctype html><html lang="en"><meta charset="utf-8">'
+                '<meta name="viewport" content="width=device-width,initial-scale=1">'
+                '<title>Connect Office Connect to ChatGPT</title>'
+                '<main><h1>Connect Office Connect to ChatGPT?</h1>'
+                '<p>This lets ChatGPT read the following information as '
+                + html.escape(user['username']) + ':</p><ul>' + scopes + '</ul>'
+                '<p>No files, private task submissions or changes to records are included. '
+                'You can disconnect this access later.</p>'
+                '<form method="post" action="/mcp-consent">'
+                '<input type="hidden" name="ticket" value="' + html.escape(ticket, quote=True) + '">'
+                '<input type="hidden" name="csrf" value="' + _mcp_consent_token(request, ticket) + '">'
+                '<label>Confirm your Office Connect password '
+                '<input type="password" name="password" autocomplete="current-password" required></label>'
+                '<button name="decision" value="approve" type="submit">Allow read access</button> '
+                '<button name="decision" value="deny" type="submit">Decline</button>'
+                '</form></main></html>')
+        return HTMLResponse(page, headers={'Cache-Control': 'private, no-store', 'Referrer-Policy': 'no-referrer'})
+
+    @app.post('/mcp-consent')
+    async def mcp_consent_submit(request: Request):
+        user = _user_from_request(request)
+        if not user:
+            return Response('Sign in again before linking.', status_code=401)
+        canonical = _MCP_ORIGIN
+        if not same_origin_write(request, canonical):
+            return Response('Request verification failed.', status_code=403)
+        raw = await request.body()
+        if len(raw) > 4096:
+            return Response('Request is too large.', status_code=413)
+        try:
+            pairs = parse_qsl(raw.decode('utf-8'), keep_blank_values=True)
+            form = dict(pairs)
+            ticket, supplied, decision = form['ticket'], form['csrf'], form['decision']
+            if len(form) != len(pairs) or decision not in ('approve', 'deny') or not hmac.compare_digest(
+                    supplied, _mcp_consent_token(request, ticket)):
+                raise ValueError
+            if not rl.allow('integration_issue', str(user['id'])):
+                return Response('Too many attempts. Try again later.', status_code=429)
+            conn = get_conn()
+            try:
+                account = st.get_admin_user_by_id(conn, user['id'])
+                verified = (account and isinstance(form.get('password'), str)
+                            and 1 <= len(form['password']) <= 1024
+                            and await asyncio.to_thread(auth.verify_password, form['password'],
+                                                        account['pw_hash'], account['salt']))
+            finally:
+                conn.close()
+            if not verified:
+                return Response('The password could not be verified.', status_code=403)
+            params, code = await asyncio.to_thread(_mcp_provider.complete, ticket, user['id'], decision == 'approve')
+        except (ValueError, UnicodeError, KeyError):
+            return Response('Connection request expired or invalid.', status_code=400)
+        from urllib.parse import urlsplit, urlunsplit, parse_qsl as _parse_qsl
+        parts = urlsplit(params['redirect_uri'])
+        query = list(_parse_qsl(parts.query, keep_blank_values=True))
+        query += [('code', code)] if code else [('error', 'access_denied')]
+        if params.get('state') is not None:
+            query.append(('state', params['state']))
+        redirect = urlunsplit((parts.scheme, parts.netloc, parts.path, urlencode(query), ''))
+        return RedirectResponse(redirect, status_code=303,
+                                headers={'Cache-Control': 'no-store', 'Referrer-Policy': 'no-referrer'})
+
+    _mcp_http = _mcp_server.streamable_http_app()
+    _mcp_lifespan = None
+
+    @app.on_event('startup')
+    async def _start_mcp():
+        global _mcp_lifespan
+        _mcp_lifespan = _mcp_server.session_manager.run()
+        await _mcp_lifespan.__aenter__()
+
+    @app.on_event('shutdown')
+    async def _stop_mcp():
+        if _mcp_lifespan is not None:
+            await _mcp_lifespan.__aexit__(None, None, None)
+
+    # Route this last so the existing app keeps ownership of every prior path.
+    # Mount at root: MCP OAuth discovery endpoints must live at /.well-known/.
+    app.mount('/', _mcp_http)

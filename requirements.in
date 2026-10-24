@@ -19,6 +19,7 @@ python-pptx==1.0.2
 python-docx==1.2.0
 reportlab==5.0.1
 httpx==0.28.1
+mcp==1.30.0
 # Pin the packaging tools bundled into the runtime image, too.
 pip==26.2.1
 setuptools==84.2.0
