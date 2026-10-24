@@ -114,3 +114,7 @@ Add a separately consented annual Type 3 summary for one currently visible resou
 ### Individual activity discovery/detail implementation — v8.48
 
 Add metadata-only quarter/title discovery and a full Type 2 scorecard for one selected merged activity. Shared grouping preserves representative/member links and current group changes. New detail-read consent and an independent default-off pilot flag prevent broadening old quarterly/progress grants. Exclude respondents and speaker scores; preserve suppression/capacity gates and distinguish unavailable source scorecards. See [discovery/detail pilot](MCP_READ_ADAPTER.md#individual-activity-discovery-and-satisfaction-details). Earlier live pilot acceptance remains pending; this implementation does not mark it complete. Unit trends, comparisons and writes remain separate work.
+
+### Unit Type 2 summary implementation — v8.49
+
+Add current reporting-unit discovery and quarterly summaries for one lead unit and its descendants. Match existing report-view authority and exact slash-delimited unit selection; reuse consolidated Type 2 arithmetic, suppression and capacity refusals. New `surveys:units:read` consent and independent default-off `CSS_MCP_UNIT_SURVEYS_ENABLED` preserve older grants. No comments, individuals, speaker ratings or rankings. See [unit pilot contract](MCP_READ_ADAPTER.md#unit-discovery-and-quarterly-type-2-summaries--v849). Live acceptance remains pending, including earlier survey pilots. Period comparisons and writes remain subsequent increments.

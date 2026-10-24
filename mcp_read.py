@@ -286,6 +286,27 @@ def build_server(get_conn, origin):
             return {'data': [_web(origin, api.task_read(row)) for row in rows], 'next_before': cursor}
         return await perform('work:read', 'work', run)
 
+    @server.tool(title='Find survey reporting units', annotations=READ_ONLY)
+    async def find_survey_units(query: str = '', limit: int = 10, offset: int = 0) -> dict:
+        """Find current report unit IDs by name/path; metadata only, up to 25 results.
+
+        Use the returned unit_id for get_unit_activity_survey_summary.
+        Unit lookup does not imply that the unit has survey responses.
+        """
+        return await perform('surveys:units:read', 'unit_surveys',
+                             lambda conn, user: survey_reports.find_survey_units(conn, user, query, limit, offset))
+
+    @server.tool(title='Unit quarterly activity satisfaction', annotations=READ_ONLY)
+    async def get_unit_activity_survey_summary(unit_id: int, year: int, quarter: int) -> dict:
+        """Read Type 2 satisfaction for one lead unit and its descendants in a start-date quarter.
+
+        Discover unit_id with find_survey_units. Shares the report's five-dimension
+        calculations; no respondents, comments or speaker ratings. Small samples
+        withhold all scores. Current report viewers share the report's unit access.
+        """
+        return await perform('surveys:units:read', 'unit_surveys',
+                             lambda conn, user: survey_reports.unit_activity_summary(conn, user, origin, unit_id, year, quarter))
+
     @server.tool(title='Find activities with satisfaction surveys', annotations=READ_ONLY)
     async def find_survey_activities(year: int, quarter: int, query: str = '', limit: int = 10, offset: int = 0) -> dict:
         """Find current merged Type 2 activities by start quarter and bounded title search.

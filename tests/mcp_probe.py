@@ -108,6 +108,11 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
     conn.close()
 
     import app
+    import tzutil
+    from datetime import date, datetime
+    # Fixed-date fixtures must not expire when the real local day advances.
+    tzutil.today_local = lambda: date(2026, 10, 24)
+    tzutil.now_local = lambda: datetime(2026, 10, 24, 9)
     callback = 'https://chatgpt.com/connector_platform_oauth_redirect'
     verifier = 'synthetic-verifier-0123456789-abcdefghijklmnopqrstuvwxyz'
     challenge = base64.urlsafe_b64encode(hashlib.sha256(verifier.encode()).digest()).decode().rstrip('=')
@@ -115,7 +120,7 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
         metadata = client.get('/.well-known/oauth-protected-resource/mcp')
         assert metadata.status_code == 200
         assert metadata.json()['resource'] == 'https://office.example/mcp'
-        scopes = {'activities:read', 'calendar:read', 'documents:read',
+        scopes = {'surveys:units:read', 'activities:read', 'calendar:read', 'documents:read',
                   'supplies:read', 'travel:read', 'work:read', 'notifications:read', 'surveys:csm:read', 'surveys:activities:read', 'surveys:resource_persons:read', 'surveys:activity_details:read'}
         assert set(metadata.json()['scopes_supported']) == scopes
         denied = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 1, 'method': 'initialize',
@@ -149,6 +154,7 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
             {'id': owner, 'username': 'mcp@example.invalid', 'role': 'viewer'}))
         page = browser.get(consent_url)
         assert page.status_code == 200, page.text
+        assert 'Unit discovery and quarterly activity satisfaction aggregates' in page.text
         assert 'Your visible work items' in page.text
         assert 'Your visible document metadata' in page.text
         assert 'Your visible calendar events, activities and room bookings' in page.text
@@ -194,7 +200,7 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
         assert listed.status_code == 200, listed.text
         names = {tool['name'] for tool in listed.json()['result']['tools']}
         assert {'my_work', 'find_documents', 'get_document'} <= names
-        assert names == {'my_work', 'find_documents', 'get_document',
+        assert names == {'find_survey_units', 'get_unit_activity_survey_summary', 'my_work', 'find_documents', 'get_document',
                          'list_work_items', 'get_work_item', 'list_work_tasks', 'list_calendar_events',
                          'list_supply_queue', 'list_my_travel_filings', 'list_activity_progress',
                          'my_office_overview', 'list_my_notifications', 'get_room_availability', 'get_csm_summary', 'get_activity_survey_summary', 'get_resource_person_survey_summary', 'find_survey_activities', 'get_activity_survey_detail'}
@@ -264,7 +270,7 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
         assert 'Hidden synthetic meeting' not in calendar.text
         assert 'private.example' not in calendar.text
         assert 'Approved shared room booking' in calendar.text
-        assert 'My pending room request' in calendar.text
+        assert 'My pending room request' in calendar.text, calendar.text
         assert 'Another private pending room request' not in calendar.text
         assert 'room_booking_status' in calendar.text and 'approved' in calendar.text
         own_calendar = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 14, 'method': 'tools/call',
@@ -322,6 +328,20 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
             disabled_detail = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 119, 'method': 'tools/call',
                 'params': {'name': tool, 'arguments': arguments}}, headers=headers)
             assert disabled_detail.status_code == 200 and 'not_available' in disabled_detail.text
+        for tool, arguments in (('find_survey_units', {}), ('get_unit_activity_survey_summary', {'unit_id': unit, 'year': 2026, 'quarter': 4})):
+            denied_unit = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 120, 'method': 'tools/call',
+                'params': {'name': tool, 'arguments': arguments}}, headers=dict(headers, Authorization='Bearer ' + quarter_only.access_token))
+            assert denied_unit.status_code == 200 and denied_unit.json()['result'].get('isError')
+            disabled_unit = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 121, 'method': 'tools/call',
+                'params': {'name': tool, 'arguments': arguments}}, headers=headers)
+            assert disabled_unit.status_code == 200 and 'not_available' in disabled_unit.text
+        os.environ['CSS_MCP_UNIT_SURVEYS_ENABLED'] = '1'
+        for tool, arguments in (('find_survey_units', {'query': 'MCP Unit'}), ('get_unit_activity_survey_summary', {'unit_id': unit, 'year': 2026, 'quarter': 4})):
+            allowed_unit = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 122, 'method': 'tools/call',
+                'params': {'name': tool, 'arguments': arguments}}, headers=headers)
+            assert allowed_unit.status_code == 200 and not allowed_unit.json()['result'].get('isError')
+            assert 'available' in allowed_unit.text
+        del os.environ['CSS_MCP_UNIT_SURVEYS_ENABLED']
         conn = st.connect(os.environ['CSS_DB'])
         conn.execute('UPDATE mcp_oauth_grant SET revoked_at=1 WHERE access_hash=?', (mcp_auth._digest(quarter_only.access_token),))
         conn.commit(); conn.close()
