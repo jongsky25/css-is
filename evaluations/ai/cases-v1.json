@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "suite_id": "existing-ai-answers",
-  "suite_version": "1.11.0",
+  "suite_version": "1.12.0",
   "contract_version": 1,
   "reference_clock": "2026-10-20T06:00:00",
   "categories": [
@@ -7149,6 +7149,433 @@
         "calls": 1,
         "outcomes": [
           "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "groq-gemini-preferred",
+      "category": "facts",
+      "surface": "groq_routing",
+      "question": "Use the signed-in assistant with simulated provider state: gemini preferred.",
+      "scenario": "gemini-preferred",
+      "expect": {
+        "kind": "navigate",
+        "calls": [
+          "gemini"
+        ],
+        "rows": [
+          [
+            "ok",
+            "gemini"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "groq-budget-ok",
+      "category": "resilience",
+      "surface": "groq_routing",
+      "question": "Use the signed-in assistant with simulated provider state: budget ok.",
+      "scenario": "budget-ok",
+      "expect": {
+        "kind": "navigate",
+        "calls": [
+          "groq"
+        ],
+        "rows": [
+          [
+            "ok",
+            "groq"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "groq-budget-no-optin",
+      "category": "authority",
+      "surface": "groq_routing",
+      "question": "Use the signed-in assistant with simulated provider state: budget no optin.",
+      "scenario": "budget-no-optin",
+      "expect": {
+        "kind": "fallback",
+        "calls": [],
+        "rows": [
+          [
+            "fallback_budget",
+            "gemini"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "groq-budget-no-key",
+      "category": "resilience",
+      "surface": "groq_routing",
+      "question": "Use the signed-in assistant with simulated provider state: budget no key.",
+      "scenario": "budget-no-key",
+      "expect": {
+        "kind": "fallback",
+        "calls": [],
+        "rows": [
+          [
+            "fallback_budget",
+            "gemini"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "groq-budget-groq-throttled",
+      "category": "resilience",
+      "surface": "groq_routing",
+      "question": "Use the signed-in assistant with simulated provider state: budget groq throttled.",
+      "scenario": "budget-groq-throttled",
+      "expect": {
+        "kind": "fallback",
+        "calls": [],
+        "rows": [
+          [
+            "fallback_budget",
+            "gemini"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "groq-budget-groq-unknown-key",
+      "category": "injection",
+      "surface": "groq_routing",
+      "question": "Use the signed-in assistant with simulated provider state: budget groq unknown key.",
+      "scenario": "budget-groq-unknown-key",
+      "expect": {
+        "kind": "fallback",
+        "calls": [
+          "groq"
+        ],
+        "rows": [
+          [
+            "rejected_validation",
+            "groq"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "groq-gemini-429",
+      "category": "resilience",
+      "surface": "groq_routing",
+      "question": "Use the signed-in assistant with simulated provider state: gemini 429.",
+      "scenario": "gemini-429",
+      "expect": {
+        "kind": "navigate",
+        "calls": [
+          "gemini",
+          "groq"
+        ],
+        "rows": [
+          [
+            "ok",
+            "groq"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "groq-gemini-and-groq-429",
+      "category": "resilience",
+      "surface": "groq_routing",
+      "question": "Use the signed-in assistant with simulated provider state: gemini and groq 429.",
+      "scenario": "gemini-and-groq-429",
+      "expect": {
+        "kind": "fallback",
+        "calls": [
+          "gemini",
+          "groq"
+        ],
+        "rows": [
+          [
+            "fallback_error",
+            "gemini"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "groq-gemini-503",
+      "category": "resilience",
+      "surface": "groq_routing",
+      "question": "Use the signed-in assistant with simulated provider state: gemini 503.",
+      "scenario": "gemini-503",
+      "expect": {
+        "kind": "fallback",
+        "calls": [
+          "gemini",
+          "gemini"
+        ],
+        "rows": [
+          [
+            "fallback_error",
+            "gemini"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "groq-gemini-timeout",
+      "category": "resilience",
+      "surface": "groq_routing",
+      "question": "Use the signed-in assistant with simulated provider state: gemini timeout.",
+      "scenario": "gemini-timeout",
+      "expect": {
+        "kind": "fallback",
+        "calls": [
+          "gemini",
+          "gemini"
+        ],
+        "rows": [
+          [
+            "fallback_timeout",
+            "gemini"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "groq-gemini-malformed",
+      "category": "resilience",
+      "surface": "groq_routing",
+      "question": "Use the signed-in assistant with simulated provider state: gemini malformed.",
+      "scenario": "gemini-malformed",
+      "expect": {
+        "kind": "fallback",
+        "calls": [
+          "gemini"
+        ],
+        "rows": [
+          [
+            "fallback_error",
+            "gemini"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "groq-standalone-ok",
+      "category": "facts",
+      "surface": "groq_routing",
+      "question": "Use the signed-in assistant with simulated provider state: standalone ok.",
+      "scenario": "standalone-ok",
+      "expect": {
+        "kind": "navigate",
+        "calls": [
+          "groq"
+        ],
+        "rows": [
+          [
+            "ok",
+            "groq"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "groq-standalone-no-optin",
+      "category": "authority",
+      "surface": "groq_routing",
+      "question": "Use the signed-in assistant with simulated provider state: standalone no optin.",
+      "scenario": "standalone-no-optin",
+      "expect": {
+        "kind": "fallback",
+        "calls": [],
+        "rows": [
+          [
+            "no_config",
+            "gemini"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "groq-standalone-no-key",
+      "category": "resilience",
+      "surface": "groq_routing",
+      "question": "Use the signed-in assistant with simulated provider state: standalone no key.",
+      "scenario": "standalone-no-key",
+      "expect": {
+        "kind": "fallback",
+        "calls": [],
+        "rows": [
+          [
+            "no_config",
+            "gemini"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "groq-standalone-mode-off",
+      "category": "authority",
+      "surface": "groq_routing",
+      "question": "Use the signed-in assistant with simulated provider state: standalone mode off.",
+      "scenario": "standalone-mode-off",
+      "expect": {
+        "kind": "fallback",
+        "calls": [],
+        "rows": [
+          [
+            "no_config",
+            "gemini"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "groq-standalone-feature-off",
+      "category": "authority",
+      "surface": "groq_routing",
+      "question": "Use the signed-in assistant with simulated provider state: standalone feature off.",
+      "scenario": "standalone-feature-off",
+      "expect": {
+        "kind": "fallback",
+        "calls": [],
+        "rows": [
+          [
+            "no_config",
+            "gemini"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "groq-standalone-budget",
+      "category": "resilience",
+      "surface": "groq_routing",
+      "question": "Use the signed-in assistant with simulated provider state: standalone budget.",
+      "scenario": "standalone-budget",
+      "expect": {
+        "kind": "fallback",
+        "calls": [],
+        "rows": [
+          [
+            "fallback_budget",
+            "gemini"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "groq-standalone-groq-429",
+      "category": "resilience",
+      "surface": "groq_routing",
+      "question": "Use the signed-in assistant with simulated provider state: standalone groq 429.",
+      "scenario": "standalone-groq-429",
+      "expect": {
+        "kind": "fallback",
+        "calls": [
+          "groq"
+        ],
+        "rows": [
+          [
+            "fallback_error",
+            "gemini"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "groq-standalone-groq-503",
+      "category": "resilience",
+      "surface": "groq_routing",
+      "question": "Use the signed-in assistant with simulated provider state: standalone groq 503.",
+      "scenario": "standalone-groq-503",
+      "expect": {
+        "kind": "fallback",
+        "calls": [
+          "groq",
+          "groq"
+        ],
+        "rows": [
+          [
+            "fallback_error",
+            "gemini"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "groq-standalone-groq-malformed",
+      "category": "resilience",
+      "surface": "groq_routing",
+      "question": "Use the signed-in assistant with simulated provider state: standalone groq malformed.",
+      "scenario": "standalone-groq-malformed",
+      "expect": {
+        "kind": "fallback",
+        "calls": [
+          "groq"
+        ],
+        "rows": [
+          [
+            "fallback_error",
+            "gemini"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "groq-standalone-stale-session",
+      "category": "authority",
+      "surface": "groq_routing",
+      "question": "Use the signed-in assistant with simulated provider state: standalone stale session.",
+      "scenario": "standalone-stale-session",
+      "expect": {
+        "kind": "fallback",
+        "calls": [
+          "groq"
+        ],
+        "rows": [
+          [
+            "rejected_validation",
+            "groq"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "groq-harmonize-budget",
+      "category": "authority",
+      "surface": "groq_exclusion",
+      "question": "Exclude Groq for protected feature or image input: harmonize budget.",
+      "scenario": "harmonize-budget",
+      "expect": {
+        "row": [
+          "fallback_budget",
+          "gemini"
+        ]
+      }
+    },
+    {
+      "id": "groq-image-budget",
+      "category": "authority",
+      "surface": "groq_exclusion",
+      "question": "Exclude Groq for protected feature or image input: image budget.",
+      "scenario": "image-budget",
+      "expect": {
+        "row": [
+          "fallback_budget",
+          "gemini"
+        ]
+      }
+    },
+    {
+      "id": "groq-image-standalone",
+      "category": "authority",
+      "surface": "groq_exclusion",
+      "question": "Exclude Groq for protected feature or image input: image standalone.",
+      "scenario": "image-standalone",
+      "expect": {
+        "row": [
+          "no_config",
+          "gemini"
         ]
       }
     }

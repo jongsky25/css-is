@@ -1,3 +1,9 @@
+## 8.24 — October 24, 2026
+
+- Continue A22 with 24 offline Groq routing and exclusion cases, bringing the evaluation suite to 447 named scenarios.
+- Check admin opt-in, Gemini preference, quota fallback, Groq-only mode, current session, provider failures and existing AI switches through the assistant route.
+- Keep Groq and Gemini request settings and per-provider logs inside the versioned release gate; no live provider calls, schema migration or new configuration.
+
 ## 8.23 — October 23, 2026
 
 - Continue A22 with 34 offline landing-assistant help and navigation cases, bringing the evaluation suite to 423 named scenarios.
