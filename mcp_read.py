@@ -296,6 +296,18 @@ def build_server(get_conn, origin):
         return await perform('surveys:units:read', 'unit_surveys',
                              lambda conn, user: survey_reports.find_survey_units(conn, user, query, limit, offset))
 
+    @server.tool(title='Compare unit activity satisfaction quarters', annotations=READ_ONLY)
+    async def compare_unit_activity_surveys(unit_id: int, year: int, quarter: int) -> dict:
+        """Compare a unit's selected Type 2 quarter with its immediately preceding quarter.
+
+        Discover unit_id with find_survey_units (separate unit-read permission).
+        Current lead-unit descendants apply to both periods. No scores or changes
+        if either period is small, empty, unrated or over capacity. Changes are
+        raw scale points, not percentages or evidence of causation/significance.
+        """
+        return await perform('surveys:unit_trends:read', 'unit_survey_trends',
+                             lambda conn, user: survey_reports.compare_unit_activity_surveys(conn, user, origin, unit_id, year, quarter))
+
     @server.tool(title='Unit quarterly activity satisfaction', annotations=READ_ONLY)
     async def get_unit_activity_survey_summary(unit_id: int, year: int, quarter: int) -> dict:
         """Read Type 2 satisfaction for one lead unit and its descendants in a start-date quarter.

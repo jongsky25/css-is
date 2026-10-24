@@ -170,7 +170,7 @@ def activity_summary(conn, user, origin, year, quarter):
     return _activity_summary(conn, user, origin, year, quarter)
 
 
-def unit_activity_summary(conn, user, origin, unit_id, year, quarter):
+def _survey_unit(conn, user, unit_id):
     user = permissions.actor(conn, user)
     if not auth.can(user['role'], 'view'):
         raise permissions.Denied('Report unavailable.')
@@ -179,7 +179,54 @@ def unit_activity_summary(conn, user, origin, unit_id, year, quarter):
     unit = conn.execute('SELECT id,name,path FROM org_unit WHERE id=?', (unit_id,)).fetchone()
     if not unit or not unit[2]:
         raise permissions.Denied('Unit not found or unavailable.')
+    return unit
+
+
+def unit_activity_summary(conn, user, origin, unit_id, year, quarter):
+    unit = _survey_unit(conn, user, unit_id)
     return _activity_summary(conn, user, origin, year, quarter, unit=unit)
+
+
+def compare_unit_activity_surveys(conn, user, origin, unit_id, year, quarter):
+    """Two disjoint fixed quarters, selected in the caller's authorization snapshot."""
+    unit = _survey_unit(conn, user, unit_id)
+    if (type(year) is not int or not 1900 <= year <= 9998
+            or type(quarter) is not int or not 1 <= quarter <= 4
+            or (year == 1900 and quarter == 1)):
+        raise ValueError('Choose a valid quarter after 1900 Q1, through year 9998.')
+    if os.environ.get('CSS_MCP_UNIT_TRENDS_ENABLED') != '1':
+        return {'availability': 'not_available'}
+    previous_year, previous_quarter = (year, quarter-1) if quarter > 1 else (year-1, 4)
+    previous = _activity_summary(conn, user, origin, previous_year, previous_quarter,
+                                 unit=unit, enabled_flag='CSS_MCP_UNIT_TRENDS_ENABLED')
+    current = _activity_summary(conn, user, origin, year, quarter,
+                                unit=unit, enabled_flag='CSS_MCP_UNIT_TRENDS_ENABLED')
+    result = {'as_of': tz.now_iso(), 'survey_type': 2,
+              'comparison_basis': 'Selected quarter versus immediately preceding calendar quarter; current unit membership in both periods.',
+              'delta_basis': 'Current minus previous, in original scale points, not percent change. A/B: 1–7; C: 1–4.',
+              'note': 'Response counts are not unique people across activities. Changes may reflect different activities, samples or current unit assignment; no causal or statistical-significance claim.'}
+    if any(p.get('state') != 'rated' for p in (previous, current)):
+        # Never leak a valid period's scores through a partially withheld comparison.
+        allowed = {'availability', 'reason', 'state', 'web_url', 'start_date', 'end_date',
+                   'submissions', 'report_submissions', 'rated_respondents', 'minimum_sample',
+                   'unit_id', 'unit_name', 'unit_path', 'scope', 'date_basis'}
+        return dict(result, availability='not_available' if any(
+            p.get('availability') != 'available' for p in (previous,current)) else 'available',
+                    comparison_state='not_comparable',
+                    previous={k:v for k,v in previous.items() if k in allowed},
+                    current={k:v for k,v in current.items() if k in allowed})
+
+    def delta(before, after):
+        return after-before if before is not None and after is not None else None
+
+    previous_dims = {d['dimension']:d['mean'] for d in previous['dimensions']}
+    changes = {k:delta(previous[k], current[k]) for k in
+               ('overall_mean', 'expectation_mean', 'osq_mean', 'gap')}
+    changes['dimensions'] = [{'dimension':d['dimension'],
+                              'mean_change':delta(previous_dims.get(d['dimension']), d['mean'])}
+                             for d in current['dimensions']]
+    return dict(result, availability='available', comparison_state='comparable',
+                previous=previous, current=current, changes=changes)
 
 
 def find_survey_units(conn, user, query='', limit=10, offset=0):
@@ -201,7 +248,7 @@ def find_survey_units(conn, user, query='', limit=10, offset=0):
             'next_offset': offset+limit if len(found) > offset+limit else None}
 
 
-def _activity_summary(conn, user, origin, year, quarter, unit=None):
+def _activity_summary(conn, user, origin, year, quarter, unit=None, enabled_flag=None):
     """Fresh Type 2 consolidated quarter; caller owns the read snapshot."""
     user = permissions.actor(conn, user)
     if not auth.can(user['role'], 'view'):
@@ -221,7 +268,7 @@ def _activity_summary(conn, user, origin, year, quarter, unit=None):
         result.update(scope='unit_and_descendants', unit_id=str(unit[0]), unit_name=unit[1],
                       unit_path=unit[2], web_url=origin + '/reports?' + urlencode(
                           {'type': 2, 'period': f'quarter:{year}-Q{quarter}', 'org': unit[2]}))
-    flag = 'CSS_MCP_UNIT_SURVEYS_ENABLED' if unit else 'CSS_MCP_ACTIVITY_SURVEYS_ENABLED'
+    flag = enabled_flag or ('CSS_MCP_UNIT_SURVEYS_ENABLED' if unit else 'CSS_MCP_ACTIVITY_SURVEYS_ENABLED')
     if os.environ.get(flag) != '1':
         # Do not disclose unit identity while this pilot is disabled.
         return {'availability': 'not_available'} if unit else dict(result, availability='not_available')
