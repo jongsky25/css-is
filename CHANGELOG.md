@@ -1,3 +1,9 @@
+## 8.50 — October 24, 2026
+
+- Add compare_unit_activity_surveys for a selected unit's quarter versus its immediately preceding quarter, under new surveys:unit_trends:read consent and default-off CSS_MCP_UNIT_TRENDS_ENABLED.
+- Reuse current report unit attribution, five-dimension calculations, per-period capacity limits and small-cell suppression. Withhold both scorecards and all changes when either period is unavailable, empty, unrated or too small.
+- Return original-scale-point deltas and report links, without rankings or claims of causation/statistical significance. Unit discovery keeps its separate existing scope; no existing grant expands.
+
 ## 8.49 — October 24, 2026
 
 - Add bounded unit discovery and quarterly Type 2 unit summaries under separate surveys:units:read consent and default-off CSS_MCP_UNIT_SURVEYS_ENABLED.
