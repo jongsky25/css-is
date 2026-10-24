@@ -1,3 +1,10 @@
+## 8.38 — October 24, 2026
+
+- Add unchecked optional read scopes to MCP OAuth consent when a client requests only a subset of its registered permissions.
+- Recheck selected scopes against the current registration inside the approval transaction; preserve existing grants and token/refresh scope parity.
+- Explain how to recreate a legacy ChatGPT app registration when a needed permission is absent; refreshing tools alone cannot expand a grant.
+- Verify narrow consent, calendar opt-in and forged-scope denial through the synthetic OAuth/MCP journey; hosted acceptance remains pending.
+
 ## 8.36 — October 24, 2026
 
 - Add a phased plan for further read-only and carefully confirmed write features in the Office Connect ChatGPT connection.
