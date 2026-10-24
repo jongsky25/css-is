@@ -14,13 +14,15 @@
   const viewName = document.getElementById('registry-view-name');
   const viewStatus = document.getElementById('registry-view-status');
   const viewForm = document.getElementById('registry-save-view');
+  const groupSummary = document.getElementById('registry-group-summary');
+  let groupCounts = new Map();
   const exportButton = document.getElementById('registry-export');
   const exportStatus = document.getElementById('registry-export-status');
   let exportReady = false, exporting = false;
   const fields = ['number', 'subject', 'verification', 'status', 'due_date', 'lead'];
   let savedViews = null, loadingViews = null, saving = false;
   let table = null, controller = null, generation = 0;
-  const filterFields = ['status', 'verification', 'deadline', 'lead_id', 'due_from', 'due_to'];
+  const filterFields = ['status', 'verification', 'deadline', 'lead_id', 'due_from', 'due_to', 'group_by'];
   const defaultFilters = () => Object.fromEntries(filterFields.map(field => [field, '']));
   let applied = defaultFilters();
 
@@ -71,6 +73,7 @@
   }
   function showStandard(message = '') {
     generation++;
+    groupSummary.replaceChildren();
     exportReady = false; updateExportButton();
     if (controller) controller.abort();
     panel.hidden = true;
@@ -95,6 +98,7 @@
     exportReady = false; updateExportButton();
     element.setAttribute('aria-busy', 'true');
     status.textContent = 'Loading matching documents…';
+    groupSummary.replaceChildren();
     try {
       const response = await fetch(target, {credentials: 'same-origin', cache: 'no-store',
         redirect: 'error', signal: active.signal, headers: {Accept: 'application/json'}});
@@ -107,6 +111,17 @@
         throw new Error('Unexpected table response');
       }
       status.textContent = data.last_row ? `${data.last_row} matching records · page ${data.page} of ${data.last_page}.` : 'No matching documents.';
+      groupCounts = new Map((data.groups || []).map(group => [group.group_key, group]));
+      if (applied.group_by) {
+        paragraph(groupSummary, 'Group totals across all matching pages:');
+        const list = document.createElement('ul');
+        for (const group of data.groups) {
+          const item = document.createElement('li');
+          item.textContent = `${group.group_label}: ${group.count}`;
+          list.append(item);
+        }
+        groupSummary.append(list);
+      }
       exportReady = true;
       return data;
     } catch (error) {
@@ -133,6 +148,12 @@
         pagination: true, paginationMode: 'remote', paginationSize: 30, paginationButtonCount: 3,
         paginationOutOfRange: 'last', sortMode: 'remote', columnHeaderSortMulti: false,
         initialSort: [{column: saved?.sort || 'registered', dir: saved?.dir || 'desc'}], ajaxURL: panel.dataset.url,
+        groupBy: applied.group_by ? 'group_key' : false,
+        groupStartOpen: true, groupToggleElement: false,
+        groupHeader: (value, count, data) => {
+          const group = groupCounts.get(value);
+          return plain(`${group?.group_label || data[0]?.group_label || ''} · ${group?.count ?? count} matching records · ${count} on this page`);
+        },
         ajaxRequestFunc: request, dataLoaderError: 'Unable to load documents.',
         columns: [
           {title: 'Number', field: 'number', minWidth: 155, formatter: link},
@@ -181,7 +202,14 @@
     const reversed = next.due_from && next.due_to && next.due_from > next.due_to;
     filters.elements.due_to.setCustomValidity(reversed ? 'Choose a Due through date on or after Due from.' : '');
     if (!filters.reportValidity()) return;
+    const regroup = next.group_by !== applied.group_by;
     applied = next;
+    if (regroup && table) {
+      const saved = currentState();
+      const [field, direction] = sort.value.split(':');
+      saved.sort = field; saved.dir = direction;
+      showStandard(); start(saved); return;
+    }
     const [column, dir] = sort.value.split(':');
     table?.setSort(column, dir);
   });

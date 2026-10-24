@@ -22,6 +22,14 @@ Lead choices come only from records in the authorized queue/search, including in
 
 The shared server query applies these filters before counts, pagination, sorting and current-view CSV export. The standard table, full-register measures and original CSV above it retain their queue/search scope. Reversed or invalid ranges are rejected, and Reset table clears the lead/date choices without deleting saved views.
 
+## Group by workflow or assigned lead
+
+Choose **Group by → Workflow** or **Assigned lead**, then **Apply filters**. The server groups the full authorized queue/search after all applied filters, before slicing it into 30-record pages. Groups appear alphabetically, with the selected sort inside each group. The summary lists counts across all matching pages; each table group header distinguishes that total from the records on the current page. A group can continue on the next page. Group headers stay expanded; paging remains the way to browse large groups.
+
+Lead groups use account IDs, including inactive historical assignees, and collect missing or dangling assignments under Unresolved. Labels are displayed as text. Counts, page records and export selection recheck current access; no record snapshot is stored in a preference. Saved views retain grouping, while older views default to no grouping without rewriting their stored JSON. Reset table clears grouping. Unapplied choices do not affect the displayed groups or export.
+
+Grouped current-view CSV downloads place a **Group: Workflow** or **Group: Assigned lead** column first and keep group order across all pages, even if the corresponding display column is hidden. The normal 10,000-record bound and formula escaping apply. The separate full-register export retains its existing behavior.
+
 ## Export the current view
 
 Choose **Export current view (CSV)** in the interactive table. The download uses the applied queue/search, workflow, verification and deadline filters, current sorting and visible columns across **all matching pages**. Unapplied form choices do not change it. A saved view restores these settings before export; the export itself creates no preferences or document changes.
@@ -53,7 +61,7 @@ The server rechecks current authorization in a fresh snapshot and shares the gri
 Run the focused registry, route and browser checks:
 
 ```sh
-python -m pytest tests/test_document_registry_lead_dates.py tests/test_document_registry_export.py tests/test_document_registry_views.py tests/test_document_registry_grid.py tests/test_document_registry_grid_browser.py tests/test_document_registry_pagination.py tests/test_document_registry_sqlite_compat.py tests/test_documents_routes.py tests/test_vendor_dependency_gate.py
+python -m pytest tests/test_document_registry_groups.py tests/test_document_registry_lead_dates.py tests/test_document_registry_export.py tests/test_document_registry_views.py tests/test_document_registry_grid.py tests/test_document_registry_grid_browser.py tests/test_document_registry_pagination.py tests/test_document_registry_sqlite_compat.py tests/test_documents_routes.py tests/test_vendor_dependency_gate.py
 python scripts/check_vendor_dependencies.py
 node --check static/js/document-registry.js
 ```

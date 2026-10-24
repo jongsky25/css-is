@@ -26,3 +26,8 @@
 #registry-views{margin:.75rem 0}
 
 .registry-toolbar .datefix-disp{min-height:44px}
+
+#registry-grid .tabulator-row.tabulator-group{background:var(--surface-2,#eef3f7);color:var(--ink,#172b40);white-space:normal}
+#registry-grid .tabulator-group span{color:inherit;margin-left:0}
+#registry-grid .tabulator-group .tabulator-arrow{display:none}
+#registry-group-summary ul{display:flex;flex-wrap:wrap;gap:.5rem 1.5rem;padding-left:1.5rem}

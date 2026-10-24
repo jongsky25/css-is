@@ -1,3 +1,9 @@
+## 8.28 — October 24, 2026
+
+- Group the interactive document register by workflow or assigned lead before pagination, with full-result counts and explicit counts for each page fragment.
+- Keep grouping in private saved views and current-view CSV downloads; grouped exports add a formula-safe group column even when the corresponding display column is hidden.
+- Recheck access and all filters for group counts, rows and exports within the same request snapshot. Older saved views default to no grouping; no schema migration or new dependency.
+
 ## 8.27 — October 24, 2026
 
 - Add a seven-day provider summary to the admin AI page using existing interaction metadata across the full window, separate from the 200-row log browser.

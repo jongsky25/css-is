@@ -26,6 +26,24 @@ SORTS = {'registered': 'selected.sort_id', 'number': 'd.number COLLATE NOCASE',
          'lead': "COALESCE(u.username,'') COLLATE NOCASE"}
 
 
+GROUPS = {'': None, 'status': 'd.status', 'lead': "COALESCE(u.id,0)"}
+GROUP_ORDERS = {'status': 'd.status ASC',
+                'lead': "COALESCE(u.username,'Unresolved') COLLATE NOCASE ASC,COALESCE(u.id,0) ASC"}
+
+
+def grouping(value):
+    choice = value.get('group_by', '')
+    if not isinstance(choice, str) or choice not in GROUPS:
+        raise ValueError('Group by workflow, assigned lead or no grouping.')
+    return choice
+
+
+def group_projection(choice):
+    if choice == 'lead':
+        return "CAST(COALESCE(u.id,0) AS TEXT) AS group_key,COALESCE(u.username,'Unresolved') AS group_label"
+    return "d.status AS group_key,REPLACE(d.status,'_',' ') AS group_label"
+
+
 LEAD_DATE_FIELDS = ('lead_id', 'due_from', 'due_to')
 
 
@@ -66,6 +84,7 @@ def selected_query(conn, user, params):
     status, verification = params.get('status', ''), params.get('verification', '')
     deadline = params.get('deadline', '')
     extra = lead_date_filters(params)
+    group = grouping(params)
     if (queue not in QUEUES or sort not in SORTS or direction not in ('asc', 'desc')
             or status not in ('', *STATUSES) or verification not in ('', *VERIFICATIONS)
             or deadline not in ('', *DEADLINES) or len(query) > 120):
@@ -105,6 +124,9 @@ def selected_query(conn, user, params):
         if sort == 'due_date':
             order = "(d.due_date IS NULL OR d.due_date='') ASC," + order
         order += ',selected.sort_id DESC'
+        if group:
+            # Group the complete authorized result before applying the page boundary.
+            order = GROUP_ORDERS[group] + ',' + order
         yield selection, source, values, order, today, soon
 
 
@@ -126,6 +148,9 @@ def page(conn, user, params):
 
     with selected_query(conn, user, params) as (selection, source, values, order, today, soon):
         total = conn.execute(source.format(columns='COUNT(*)'), values).fetchone()[0]
+        group = grouping(params)
+        groups = (rows(conn, source.format(columns=group_projection(group) + ',COUNT(*) AS count') +
+                       f' GROUP BY {GROUPS[group]} ORDER BY {GROUP_ORDERS[group]}', values) if group else [])
         last_page = max(1, math.ceil(total / PAGE_SIZE))
         # A concurrent deletion or permission change may remove the requested last page.
         number = min(number, last_page)
@@ -134,6 +159,8 @@ def page(conn, user, params):
             d.archived_at,d.reconcile,COALESCE(u.username,'Unresolved') AS lead,
             selected.sort_id AS registry_sort_id,
             EXISTS (SELECT 1 FROM document_email_import i WHERE i.document_id=d.id) AS gmail_imported'''
+        if group:
+            columns += ',' + group_projection(group)
         documents = rows(conn, source.format(columns=columns) +
                          f' ORDER BY {order} LIMIT :grid_limit OFFSET :grid_offset', values)
         # Reuse the registry's page-only snippets and current indexed-file access checks.
@@ -142,7 +169,8 @@ def page(conn, user, params):
         for doc in documents:
             doc['registered'] = doc.pop('registry_sort_id')
         decorate_deadlines(conn, documents, today=today, soon=soon)
-        return {'data': documents, 'last_page': last_page, 'last_row': total, 'page': number}
+        return {'data': documents, 'last_page': last_page, 'last_row': total, 'page': number,
+                'group_by': group, 'groups': groups}
 
 
 EXPORT_COLUMNS = {
@@ -163,17 +191,21 @@ def export_csv(conn, user, params):
             or len(set(fields)) != len(fields) or any(field not in EXPORT_COLUMNS for field in fields)):
         raise ValueError('Choose valid export columns, including Number.')
     with selected_query(conn, user, params) as (_, source, values, order, _today, _soon):
+        group = grouping(params)
         projection = ','.join(EXPORT_COLUMNS[field][1] + ' AS ' + field for field in fields)
+        if group:
+            projection += ',' + group_projection(group)
         records = rows(conn, source.format(columns=projection) +
                        f' ORDER BY {order} LIMIT :export_limit', {**values, 'export_limit': MAX_EXPORT_ROWS + 1})
         if len(records) > MAX_EXPORT_ROWS:
             raise ValueError('More than 10,000 records match. Narrow the queue, search or filters before exporting.')
         stream = io.StringIO(newline='')
         writer = csv.writer(stream)
-        writer.writerow([EXPORT_COLUMNS[field][0] for field in fields])
+        writer.writerow((['Group: ' + ('Workflow' if group == 'status' else 'Assigned lead')] if group else []) +
+                        [EXPORT_COLUMNS[field][0] for field in fields])
         for record in records:
             values_out = []
-            for field in fields:
+            for field in (['group_label'] if group else []) + fields:
                 value = str(record[field] or ('Unknown' if field == 'due_date' else ''))
                 if field == 'verification':
                     value = 'Awaiting verification' if value == 'pending' else value.replace('_', ' ')
@@ -225,13 +257,14 @@ class ViewConflict(ValueError):
 def view_state(value):
     """Persist only versioned display options, never records or access authority."""
     keys = {'schema', 'queue', 'q', 'status', 'verification', 'sort', 'dir', 'columns'}
-    optional = {'deadline', *LEAD_DATE_FIELDS}
+    optional = {'deadline', 'group_by', *LEAD_DATE_FIELDS}
     if (not isinstance(value, dict) or not keys <= set(value) or set(value) - keys - optional
             or type(value['schema']) is not int or value['schema'] != 1):
         raise ValueError('Unsupported saved view. Reset the table and save a new view.')
     # Older schema-1 views gain unrestricted defaults without rewriting stored preferences.
     result = {key: value[key] for key in keys - {'columns'}}
     result['deadline'] = value.get('deadline', '')
+    result['group_by'] = grouping(value)
     if any(not isinstance(result[key], str) for key in (keys | {'deadline'}) - {'columns', 'schema'}):
         raise ValueError('Invalid saved view options.')
     if (result['queue'] not in QUEUES or len(result['q']) > 120
