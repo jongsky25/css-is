@@ -20,7 +20,9 @@
   const fields = ['number', 'subject', 'verification', 'status', 'due_date', 'lead'];
   let savedViews = null, loadingViews = null, saving = false;
   let table = null, controller = null, generation = 0;
-  let applied = {status: '', verification: '', deadline: ''};
+  const filterFields = ['status', 'verification', 'deadline', 'lead_id', 'due_from', 'due_to'];
+  const defaultFilters = () => Object.fromEntries(filterFields.map(field => [field, '']));
+  let applied = defaultFilters();
 
   function text(value) { return String(value ?? '').replaceAll('_', ' '); }
   function paragraph(parent, value, className) {
@@ -161,23 +163,35 @@
       showStandard('The interactive table is unavailable. You can continue using the standard table.');
     }
   }
+  function syncDateControls() {
+    // Keep the shared, locale-independent date display aligned with programmatic values.
+    for (const field of ['due_from', 'due_to']) filters.elements[field].dispatchEvent(new Event('input', {bubbles: true}));
+  }
+  function resetFilters() {
+    filters.reset(); filters.elements.due_to.setCustomValidity(''); applied = defaultFilters();
+    syncDateControls();
+  }
   toggle.addEventListener('click', () => {
     if (table) showStandard();
-    else { resetSelection(); filters.reset(); applied = {status: '', verification: '', deadline: ''}; start(); loadViews().catch(viewError); }
+    else { resetSelection(); resetFilters(); start(); loadViews().catch(viewError); }
   });
   filters.addEventListener('submit', event => {
     event.preventDefault();
-    applied = {status: filters.elements.status.value, verification: filters.elements.verification.value,
-      deadline: filters.elements.deadline.value};
+    const next = Object.fromEntries(filterFields.map(field => [field, filters.elements[field].value]));
+    const reversed = next.due_from && next.due_to && next.due_from > next.due_to;
+    filters.elements.due_to.setCustomValidity(reversed ? 'Choose a Due through date on or after Due from.' : '');
+    if (!filters.reportValidity()) return;
+    applied = next;
     const [column, dir] = sort.value.split(':');
     table?.setSort(column, dir);
   });
+  for (const field of ['due_from', 'due_to']) filters.elements[field].addEventListener('input', () => filters.elements.due_to.setCustomValidity(''));
   sort.addEventListener('change', () => {
     const [column, dir] = sort.value.split(':');
     table?.setSort(column, dir);
   });
   document.getElementById('registry-reset').addEventListener('click', () => {
-    showStandard(); resetSelection(); filters.reset(); applied = {status: '', verification: '', deadline: ''}; start();
+    showStandard(); resetSelection(); resetFilters(); start();
   });
 
   function selectedView() { return savedViews?.find(view => String(view.id) === viewSelect.value); }
@@ -244,7 +258,7 @@
   exportButton.addEventListener('click', async () => {
     if (!table || !exportReady || exporting) return;
     const state = currentState(), target = new URL('/documents/grid-export.csv', window.location.origin);
-    for (const key of ['queue', 'q', 'status', 'verification', 'deadline', 'sort', 'dir']) {
+    for (const key of ['queue', 'q', ...filterFields, 'sort', 'dir']) {
       target.searchParams.set(key, state[key]);
     }
     target.searchParams.set('columns', fields.filter(field => state.columns[field].visible).join(','));
@@ -302,8 +316,13 @@
       window.location.replace(viewURL(view)); return;
     }
     renderViews(requested);
-    applied = {status: view.state.status, verification: view.state.verification, deadline: view.state.deadline || ''};
+    applied = Object.fromEntries(filterFields.map(field => [field, view.state[field] || '']));
+    const lead = filters.elements.lead_id;
+    if (applied.lead_id && !Array.from(lead.options).some(option => option.value === applied.lead_id)) {
+      lead.add(new Option('Saved lead (no matching records)', applied.lead_id));
+    }
     for (const [field, value] of Object.entries(applied)) filters.elements[field].value = value;
+    syncDateControls();
     sort.value = view.state.sort + ':' + view.state.dir;
     start(view.state);
   }).catch(error => { status.textContent = error.message; });

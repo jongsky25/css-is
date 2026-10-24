@@ -1,9 +1,9 @@
 {% extends "documents/base.html" %}
 {% block head %}{{ super() }}
 <link rel="stylesheet" href="/static/vendor/tabulator/tabulator.min.css?v=6.7.1">
-<link rel="stylesheet" href="/static/css/document-registry.css?v=8.22">
+<link rel="stylesheet" href="/static/css/document-registry.css?v=8.25">
 <script src="/static/vendor/tabulator/tabulator.min.js?v=6.7.1" defer></script>
-<script src="/static/js/document-registry.js?v=8.22" defer></script>
+<script src="/static/js/document-registry.js?v=8.25" defer></script>
 {% endblock %}
 {% block documents_content %}
 {% if queue=='instruction' %}<h2>For my instruction</h2><p>Incoming documents reviewed by records staff and waiting for your routing slip.</p>{% elif queue=='mentions' %}<h2>Instructions for me</h2><p>Documents with instructions you have not marked read. Only records you can currently access appear here.</p>{% elif queue=='gmail_review' %}<h2>Gmail: needs verification</h2><p>Imported records awaiting your verification or correction. Open a record to check its attachments, confirm fields, and review routing. Closed, cancelled and merged records are excluded.</p>{% elif queue=='gmail' %}<h2>Documents imported from Gmail</h2>{% elif queue=='archived' %}<h2>Archived documents</h2><p>Closed and cancelled records filed by Documents workflow administrators. Open a record to review its history or restore it.</p>{% endif %}
@@ -15,7 +15,7 @@
 <div id="registry-view-controls" hidden><button type="button" id="registry-toggle" aria-expanded="false" aria-controls="registry-interactive">Interactive table</button>
 <p id="registry-table-status" role="status" aria-live="polite"></p></div>
 <section id="registry-interactive" data-url="{{ grid_url }}" data-csrf="{{ csrf }}" aria-label="Interactive document register" hidden>
-<p>Sort and filter all matching records in this queue. Deadline filters exclude closed and cancelled records; Due soon includes today through the next three working days. The measures and CSV export above describe the full queue and search.</p>
+<p>Sort and filter all matching records in this queue. Deadline filters exclude closed and cancelled records; Due soon includes today through the next three working days. Lead and due-date ranges combine with these filters. Date bounds include both endpoints and exclude unknown dates. The measures and CSV export above describe the full queue and search.</p>
 <details class="doc-card" id="registry-views"><summary>My saved views</summary>
 <p>Save up to 10 personal views with this queue, search, applied filters, sorting, column choices and widths. Opening a view starts at page one and checks your current access.</p>
 <div class="registry-toolbar"><label>Saved view <select id="registry-saved-view"><option value="">Choose a saved view</option></select></label><button type="button" id="registry-open-view" disabled>Open view</button></div>
@@ -25,6 +25,9 @@
 <label>Workflow <select name="status"><option value="">All workflows</option>{% for value in grid_statuses %}<option value="{{ value }}">{{ value|replace('_',' ') }}</option>{% endfor %}</select></label>
 <label>Verification <select name="verification"><option value="">All verification states</option><option value="pending">Awaiting verification</option><option value="verified">Verified</option><option value="needs_correction">Needs correction</option></select></label>
 <label><span id="registry-deadline-label">Deadline</span><select name="deadline" aria-labelledby="registry-deadline-label"><option value="">All deadlines</option><option value="overdue">Overdue</option><option value="due_today">Due today</option><option value="due_soon">Due soon (including today)</option><option value="unknown">Unknown deadline</option></select></label>
+<label><span id="registry-lead-label">Assigned lead</span><select name="lead_id" aria-labelledby="registry-lead-label"><option value="">All leads</option><option value="unresolved">Unresolved</option>{% for lead in grid_leads %}<option value="{{ lead.id }}">{{ lead.name }}</option>{% endfor %}</select></label>
+<label><span id="registry-due-from-label">Due from</span><input type="date" name="due_from" aria-labelledby="registry-due-from-label"></label>
+<label><span id="registry-due-to-label">Due through</span><input type="date" name="due_to" aria-labelledby="registry-due-to-label"></label>
 <label>Sort by <select id="registry-sort"><option value="registered:desc">Newest records</option><option value="registered:asc">Oldest records</option><option value="due_date:asc">Earliest deadline</option><option value="due_date:desc">Latest deadline</option>{% for field,label in [('number','Number'),('subject','Subject'),('verification','Verification'),('status','Workflow'),('lead','Lead')] %}<option value="{{ field }}:asc">{{ label }} A–Z</option><option value="{{ field }}:desc">{{ label }} Z–A</option>{% endfor %}</select></label>
 <button type="submit">Apply filters</button><button type="button" id="registry-reset">Reset table</button>
 </form>

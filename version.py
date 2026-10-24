@@ -18,10 +18,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "8.24"
+APP_VERSION = "8.25"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "8.25",
+        "date": "October 24, 2026",
+        "summary": "Find documents by assigned lead and deadline period.",
+        "changes": [
+            "Choose a lead or Unresolved and set inclusive Due from and Due through dates.",
+            "Save these filters in personal views and use them in current-view CSV exports.",
+            "Older saved views continue to open without lead or date restrictions."
+        ]
+    },
     {
         "version": "8.24",
         "date": "October 24, 2026",

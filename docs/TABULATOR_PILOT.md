@@ -14,6 +14,14 @@ Both table modes label active documents **Overdue** before today, **Due today**,
 
 The **Deadline** filter offers **Overdue**, **Due today**, **Due soon (including today)** and **Unknown deadline**. Choose a deadline and **Apply filters**; it combines with the queue, search, workflow and verification before counting and pagination. Due soon includes today through the next three working days, matching the register measure. Urgency filters exclude closed/cancelled records, and missing or malformed dates count as unknown. Saved views retain this choice; older views without a deadline option open with **All deadlines**. No schema migration is needed. The current date and holiday window are fixed once per grid request, so filtering and badges agree.
 
+## Lead and deadline date ranges
+
+Use **Assigned lead** to choose a person or **Unresolved**, then optionally set **Due from** and **Due through** and choose **Apply filters**. Both endpoints are inclusive; either bound can be used alone. These are deadline dates, not registration dates. Missing or invalid deadlines do not match a date bound. Closed/cancelled records can match the date range when the selected queue/workflow permits them; deadline urgency filters retain their existing exclusions.
+
+Lead choices come only from records in the authorized queue/search, including inactive people with historical assignments. Reload to refresh the choices. A saved lead that no longer appears stays selected as **Saved lead (no matching records)**; the server still applies its ID and current access rather than broadening to all leads. Options and date validation grant no document access. Saved views retain the lead and fixed date bounds; older views default to all leads and no date bounds, with no database migration.
+
+The shared server query applies these filters before counts, pagination, sorting and current-view CSV export. The standard table, full-register measures and original CSV above it retain their queue/search scope. Reversed or invalid ranges are rejected, and Reset table clears the lead/date choices without deleting saved views.
+
 ## Export the current view
 
 Choose **Export current view (CSV)** in the interactive table. The download uses the applied queue/search, workflow, verification and deadline filters, current sorting and visible columns across **all matching pages**. Unapplied form choices do not change it. A saved view restores these settings before export; the export itself creates no preferences or document changes.
@@ -45,7 +53,7 @@ The server rechecks current authorization in a fresh snapshot and shares the gri
 Run the focused registry, route and browser checks:
 
 ```sh
-python -m pytest tests/test_document_registry_export.py tests/test_document_registry_views.py tests/test_document_registry_grid.py tests/test_document_registry_grid_browser.py tests/test_document_registry_pagination.py tests/test_document_registry_sqlite_compat.py tests/test_documents_routes.py tests/test_vendor_dependency_gate.py
+python -m pytest tests/test_document_registry_lead_dates.py tests/test_document_registry_export.py tests/test_document_registry_views.py tests/test_document_registry_grid.py tests/test_document_registry_grid_browser.py tests/test_document_registry_pagination.py tests/test_document_registry_sqlite_compat.py tests/test_documents_routes.py tests/test_vendor_dependency_gate.py
 python scripts/check_vendor_dependencies.py
 node --check static/js/document-registry.js
 ```
