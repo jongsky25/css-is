@@ -18,10 +18,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "8.27"
+APP_VERSION = "8.28"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "8.28",
+        "date": "October 24, 2026",
+        "summary": "Group your document register by workflow or assigned lead.",
+        "changes": [
+            "See group counts across all matching pages while browsing records in manageable pages.",
+            "Save your grouping with personal views and keep it in current-view CSV downloads.",
+            "Combine grouping with your existing search, lead and deadline filters."
+        ],
+    },
     {
         "version": "8.27",
         "date": "October 24, 2026",

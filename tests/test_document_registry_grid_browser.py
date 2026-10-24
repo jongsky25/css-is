@@ -408,3 +408,48 @@ def test_saved_lead_without_current_matches_never_broadens_to_all_leads(grid_pag
     page.get_by_label('Assigned lead',exact=True).select_option('unresolved')
     page.get_by_role('button',name='Apply filters',exact=True).click()
     page.wait_for_function("document.getElementById('registry-table-status').textContent.includes('36 matching records')")
+
+
+def test_grouped_workflow_global_counts_pages_saved_view_csv_and_reset(grid_page):
+    page, state = grid_page
+    open_grid(page)
+    page.get_by_label('Group by', exact=True).select_option('status')
+    page.get_by_role('button', name='Apply filters', exact=True).click()
+    page.wait_for_function("document.querySelector('#registry-group-summary').textContent.includes('draft: 19')")
+    assert 'in action: 17' in page.locator('#registry-group-summary').inner_text()
+    headers = page.locator('.tabulator-group')
+    assert headers.count() == 2
+    assert '19 matching records · 19 on this page' in headers.nth(0).inner_text()
+    assert '17 matching records · 11 on this page' in headers.nth(1).inner_text()
+    page.locator('.tabulator-page[data-page=next]').click()
+    page.wait_for_function("document.getElementById('registry-table-status').textContent.includes('page 2 of 2')")
+    assert page.locator('.tabulator-group').count() == 1
+    assert '17 matching records · 6 on this page' in page.locator('.tabulator-group').inner_text()
+    assert 'draft: 19' in page.locator('#registry-group-summary').inner_text()
+    page.locator('#registry-columns summary').click()
+    page.get_by_label('Workflow', exact=True).uncheck()
+    data = download_view(page)
+    assert data[0][0] == 'Group: Workflow' and 'Workflow' not in data[0][1:]
+    assert len(data) == 37 and [r[0] for r in data[1:]] == ['draft'] * 19 + ['in action'] * 17
+    page.locator('#registry-views summary').click()
+    page.get_by_label('View name', exact=True).fill('Workflow groups')
+    page.get_by_role('button', name='Save new view', exact=True).click()
+    page.wait_for_function("document.getElementById('registry-view-status').textContent.includes('View saved')")
+    page.reload()
+    page.wait_for_function("document.querySelector('#registry-group-summary').textContent.includes('draft: 19')")
+    assert page.get_by_label('Group by', exact=True).input_value() == 'status'
+    assert 'page 1 of 2' in page.locator('#registry-table-status').inner_text()
+    assert download_view(page)[0][0] == 'Group: Workflow'
+    # Draft choices do not alter the applied export or groups.
+    page.get_by_label('Group by', exact=True).select_option('lead')
+    assert download_view(page)[0][0] == 'Group: Workflow'
+    page.get_by_role('button', name='Apply filters', exact=True).click()
+    page.wait_for_function("document.querySelector('#registry-group-summary').textContent.includes('Unresolved: 36')")
+    assert '36 matching records · 30 on this page' in page.locator('.tabulator-group').inner_text()
+    assert download_view(page)[0][0] == 'Group: Assigned lead'
+    page.get_by_role('button', name='Reset table', exact=True).click()
+    page.wait_for_function("document.getElementById('registry-table-status').textContent.includes('36 matching records')")
+    assert page.get_by_label('Group by', exact=True).input_value() == ''
+    assert page.locator('.tabulator-group').count() == 0
+    assert page.locator('#registry-group-summary').inner_text() == ''
+    assert download_view(page)[0][0] == 'Number'
