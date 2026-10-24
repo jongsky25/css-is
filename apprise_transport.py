@@ -29,20 +29,36 @@ def enabled():
     return os.environ.get('CSS_APPRISE_TELEGRAM_ENABLED','0')=='1'
 
 
-def target(binding):
-    if not isinstance(binding,str) or not BINDING.fullmatch(binding):return None
+def target_check(binding):
+    """Return only this account's validated target or a credential-free reason."""
+    if not isinstance(binding,str) or not BINDING.fullmatch(binding):
+        return None,'Save a Telegram preference to generate your personal setup code.'
     raw=os.environ.get('CSS_APPRISE_TELEGRAM_TARGETS','')
-    if not raw or len(raw)>65536:return None
+    if not raw:
+        return None,'The hosting secret CSS_APPRISE_TELEGRAM_TARGETS is missing.'
+    if len(raw)>65536:
+        return None,'The hosting secret CSS_APPRISE_TELEGRAM_TARGETS exceeds the size limit.'
     try:
         values=json.loads(raw)
-        value=values.get(binding) if isinstance(values,dict) else None
-        if not isinstance(value,dict) or set(value)!={'bot_token','chat_id'}:return None
+        if not isinstance(values,dict):
+            return None,'CSS_APPRISE_TELEGRAM_TARGETS must be a JSON object keyed by personal setup code.'
+        if binding not in values:
+            return None,'Your current setup code has no entry in CSS_APPRISE_TELEGRAM_TARGETS. Ask the hosting administrator to match the code under Connect my private Telegram chat.'
+        value=values[binding]
+        if not isinstance(value,dict) or set(value)!={'bot_token','chat_id'}:
+            return None,'Your Telegram configuration must contain exactly bot_token and chat_id string fields.'
         token=value['bot_token'];chat=value['chat_id']
-        if not isinstance(token,str) or not TOKEN.fullmatch(token):return None
-        if not isinstance(chat,str) or not CHAT.fullmatch(chat):return None
-        return {'bot_token':token,'chat_id':chat}
+        if not isinstance(token,str) or not TOKEN.fullmatch(token):
+            return None,'Your configured bot_token has an invalid format. The hosting administrator must check the complete BotFather token.'
+        if not isinstance(chat,str) or not CHAT.fullmatch(chat):
+            return None,'Your configured chat_id must be a positive private chat ID enclosed in JSON quotation marks.'
+        return {'bot_token':token,'chat_id':chat},''
     except (ValueError,TypeError,RecursionError):
-        return None
+        return None,'The hosting secret CSS_APPRISE_TELEGRAM_TARGETS is not valid JSON.'
+
+
+def target(binding):
+    return target_check(binding)[0]
 
 
 def fingerprint(value,binding=''):

@@ -45,9 +45,33 @@
     </form>
   {% endif %}
   {% if not preview %}
-    <section class="doc-card">
+    <section class="doc-card" id="collaborative-work">
+      <h2>Collaborative work</h2>
+      <p>Collaborative work switch: <strong>{{ 'Enabled' if work_switch_enabled else 'Disabled' }}</strong>. Documents must also be enabled for shared-work changes and discussion reminders to run.</p>
+      <p>This controls shared work across the whole instance using existing staff permissions. It does not change document sending, role grants or personal notification preferences.</p>
+      {% if work_switch_enabled %}
+        {% if not module_enabled %}<p class="doc-alert">Collaborative work is paused because Documents is disabled. Enable Documents below to resume it, or disable the Collaborative work switch here.</p>{% endif %}
+      {% elif not module_enabled %}
+        <p class="doc-alert">First <a href="#documents-feature">enable Documents in the Documents feature section below</a>. Then return here to enable Collaborative work.</p>
+      {% endif %}
+      {% if work_switch_enabled or (module_enabled and can_enable) %}
+        <form method="post">
+          <input type="hidden" name="csrf" value="{{ csrf }}">
+          <input type="hidden" name="action" value="{{ 'disable_work' if work_switch_enabled else 'enable_work' }}">
+          <input type="hidden" name="settings_revision" value="{{ settings_revision }}">
+          <label>Reason for {{ 'disabling' if work_switch_enabled else 'enabling' }} Collaborative work<textarea name="authorization" required maxlength="4000"></textarea></label>
+          <label><input type="checkbox" name="confirmed" value="yes" required style="display:inline;width:auto"> {{ 'Disable' if work_switch_enabled else 'Enable' }} Collaborative work for this instance.</label>
+          <button type="submit">{{ 'Disable' if work_switch_enabled else 'Enable' }} Collaborative work</button>
+        </form>
+      {% elif module_enabled %}
+        <p>Enabling requires a system administrator with an explicit Documents permissions-administrator appointment across all units.</p>
+      {% endif %}
+      <p><a href="/work/notification-preferences">Return to notification preferences</a></p>
+    </section>
+    <section class="doc-card" id="documents-feature">
       <h2>Documents feature</h2>
       {% if module_enabled or sending_enabled %}
+        {% if not module_enabled %}<p class="doc-alert">Documents is disabled, but its separate sending switch is on. Disable Documents and sending below first; then enable Documents with sending disabled.</p>{% endif %}
         <p><a href="/documents">Open Documents</a> to register and review documents. <a href="/documents/rules">Rules and policies</a> controls workflow configuration.</p>
         <p>Disabling stops new document writes and sending. Existing permitted records remain readable.</p>
         <form method="post">

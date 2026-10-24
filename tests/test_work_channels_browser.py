@@ -67,7 +67,7 @@ def test_private_channel_mobile_preferences_conflicts_disconnect_and_no_script(g
             page.wait_for_url('**/work/notification-preferences?saved=true')
             assert page.locator('#telegram-cadence').input_value()=='off'
             assert page.locator('details code').text_content()!=binding
-            assert 'Telegram delivery is not available' in page.locator('.work-wrap').inner_text()
+            assert 'Your current setup code has no entry' in page.locator('.work-wrap').inner_text()
             assert not attempts and not errors
         finally:context.close()
     c.close()

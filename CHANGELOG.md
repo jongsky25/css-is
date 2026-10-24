@@ -1,3 +1,9 @@
+## 8.49 — October 24, 2026
+
+- Add an explicit administrator control for Collaborative work on Documents setup, requiring Documents first, current all-unit permissions authority for enabling, confirmation/reason, shared settings revision and atomic audit. System administrators retain emergency pause; deployment does not enable modules or change document sending.
+- Replace generic Telegram unavailability with credential-free diagnostics for each disabled module, host switch, public URL and account target configuration, including setup-code mismatch and malformed token/chat ID. Link administrators to module setup; retain provider validation and delivery semantics.
+- Verify permission/revocation/rollback/stale-form gates and the complete phone-sized, script-disabled Documents → Collaborative work → Telegram-ready journey without external sends. Document prerequisites before hosting setup.
+
 ## 8.48 — October 24, 2026
 
 - Add bounded title/quarter discovery and individual merged-activity Type 2 scorecards under new surveys:activity_details:read consent and default-off CSS_MCP_ACTIVITY_DETAILS_ENABLED.

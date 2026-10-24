@@ -7,7 +7,7 @@
 <section class="doc-card"><h2>Rollout controls</h2>
 <ul>{% for key, enabled in readiness.flags.items() %}<li>{{ {'documents.enabled':'Documents', 'work.enabled':'Collaborative work', 'documents.sending_enabled':'Document sending'}[key] }}: <strong>{{ 'Enabled' if enabled else 'Disabled' }}</strong></li>{% endfor %}</ul>
 <p>Collaborative work requires both Documents and Collaborative work to be enabled. A disabled sending switch blocks direct dispatch even when email is configured.</p>
-<p>System administrators with explicit all-unit permissions authority can change Documents in <a href="/admin/documents/setup">Documents setup</a>. Ask the deployment maintainer to review the Collaborative work switch under the approved rollout plan. Sending requires separate operational authorization; this checklist never enables it.</p>
+<p>System administrators with explicit all-unit permissions authority can change Documents and <a href="/admin/documents/setup#collaborative-work">Collaborative work in Documents setup</a>. Enable Documents first, then Collaborative work. Sending requires separate operational authorization; this checklist never enables it.</p>
 </section>
 <h2>Setup and verification checklist</h2>
 <p>Start with authorized staff and unit coverage, then policies and holiday years. Complete controlled integration checks before operational rollout. Links retain the destination’s existing permissions; ask the named owner if you cannot open a setup screen.</p>
