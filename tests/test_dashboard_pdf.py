@@ -25,17 +25,17 @@ def test_supply_pdf_complete_rows_precise_quantities_safe_text_and_empty(supplie
     for index in range(33):
         item=create(c,u[1],code=f'PDF-{index:03}',description=('Niño & <tag> report '*11).strip(),target_level='')
         opening(c,u[1],item,quantity='0' if index==0 else '2')
-    unknown=create(c,u[1],code='UNKNOWN-PDF')
+    unknown=create(c,u[1],code='PDF-UNKNOWN')
     data=supplies.report(c,u[2],{'q':'PDF-'},presentation=True)
     before=c.total_changes;payload=pdf.supplies(data)
     (tmp_path/'supplies-dashboard.pdf').write_bytes(payload)
     reader,text=content(payload)
     assert c.total_changes==before and len(reader.pages)>5
     assert all(page.extract_text().count('On hand')<=1 for page in reader.pages)
-    assert '33 matching catalog items' in text and '33 below critical level' in text
+    assert '34 matching catalog items' in text and '33 below critical level' in text
     assert 'Niño & <tag> report' in text and 'Not set' in text
     assert all(f'PDF-{index:03}' in text for index in range(33))
-    assert 'UNKNOWN-PDF' not in text and 'On hand' in text and 'Reserved' in text and 'Available' in text
+    assert 'PDF-UNKNOWN' not in text and 'On hand' in text and 'Reserved' in text and 'Available' in text
     empty=supplies.report(c,u[2],{'q':'not found'},presentation=True)
     assert 'No matching records.' in content(pdf.supplies(empty))[1]
 

@@ -1,8 +1,14 @@
-## 8.42 — October 24, 2026
+## 8.43 — October 24, 2026
 
 - Fix the flaky outside-activity QR test by inspecting actual anchor destinations instead of searching encoded image data, with a deterministic embedded-image regression case.
 - Add direct PDF exports to the Documents workload and Supplies stock dashboards, using fresh authorized snapshots, vector charts, complete repeated-header tables, applied filters and snapshot dates.
 - Reuse existing ReportLab and DejaVu fonts instead of adding a Gotenberg conversion service; retain existing 1,000-group/item export bounds, exact quantities, deadline rules, access checks and no-store headers, without new dependencies, schema changes or business writes.
+
+## 8.42 — October 24, 2026
+
+- Implement M1.1 metadata-only own unread shared-work notifications with a separate notifications:read scope, bounded cursor pagination, source links and as-of timestamp; do not mark messages seen or expose titles, authors, bodies, wellness or approval queues.
+- Add single-day, paginated conference-room availability under calendar:read, reusing signed-in picker rules without booking details or block reasons. Pending requests hold nothing; no reservation is made.
+- Keep both new tools behind independent default-off environment switches and report not_available separately from successful empty data. Existing grants remain unchanged.
 
 ## 8.41 — October 24, 2026
 

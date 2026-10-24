@@ -89,3 +89,8 @@ Document MCP tool schemas, error codes and versions alongside the existing API/O
 ## First eligible increment
 
 After M0 acceptance, build **M1.1: own notifications and calendar availability reads**. They answer common questions without exposing file content or committing business changes. Define a separate scope for personal notifications, reuse their existing owner checks, and return at most 25 entries with links and clear unread state. Compare against the signed-in screens and confirm immediate denial after disconnect. Then choose the next M1 read from actual usage evidence; do not open M2 write access before the common action contract is accepted.
+
+
+### M1.1 implementation record — v8.42
+
+The first delivery adds own unread **shared-work notice metadata** and **conference-room request-slot availability**. Other notification domains and personal free/busy remain outside this delivery. See [pilot setup and acceptance](MCP_READ_ADAPTER.md#m11-pilot-switches-and-acceptance). Both tools are independently disabled by default. New notifications require `notifications:read`; room availability uses `calendar:read`. No existing grant is expanded and no business state is written. Automated permission, pagination, source-parity and privacy checks are included; hosted acceptance and capacity evidence are pending. Broader M1 reads and M2 writes remain separate increments.

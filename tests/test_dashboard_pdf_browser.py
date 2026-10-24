@@ -34,6 +34,8 @@ def test_supplies_pdf_applied_scope_fresh_data_no_script_and_revoked_access(inve
     assert 'Unit: Ream' in text and '31 matching catalog items' in text
     assert all(f'INV-{i:03}' in text for i in range(31)) and 'INV-031' not in text
     assert 'Not set' in text and '<img src=x' in text
+    first_row=text.split('INV-000',1)[1].split('INV-001',1)[0]
+    assert 'Ream 1 0 1 50 Not set' in first_row
     assert page.evaluate('document.documentElement.scrollWidth <= innerWidth+1')
     session=page.context.new_cdp_session(page);session.send('Emulation.setScriptExecutionDisabled',{'value':True})
     page.goto('http://office.test/supplies/stock-dashboard?unit=Ream&q=INV-')
