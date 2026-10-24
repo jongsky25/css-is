@@ -29,6 +29,8 @@ Design decisions (resolved)
 
 from __future__ import annotations
 
+import survey_reports
+
 import base64
 import calendar
 import csv
@@ -8048,18 +8050,7 @@ LIKERT5 = [(5, "Strongly agree"), (4, "Agree"), (3, "Neither"),
 SCALE7 = [(7, "7"), (6, "6"), (5, "5"), (4, "4"), (3, "3"), (2, "2"), (1, "1")]
 OSQ4 = [(4, "Excellent"), (3, "Good"), (2, "Fair"), (1, "Poor")]
 
-ARTA_TEXT = {
-    "SQD0": "I am satisfied with the service that I availed.",
-    "SQD1": "I spent a reasonable amount of time for my transaction.",
-    "SQD2": "The office followed the transaction's requirements and steps based on the information provided.",
-    "SQD3": "The steps (including payment) I needed to do for my transaction were easy and simple.",
-    "SQD4": "I easily found information about my transaction from the office or its website.",
-    "SQD5": "I paid a reasonable amount of fees for my transaction.",
-    # SQD6-SQD8 are the official ARTA CSM sentences word for word (MC 2022-05 as amended by 2023-05).
-    "SQD6": "I feel the office was fair to everyone, or \u201cwalang palakasan\u201d, during my transaction.",
-    "SQD7": "I was treated courteously by the staff, and (if asked for help) the staff was helpful.",
-    "SQD8": "I got what I needed from the government office, or (if denied) denial of request was sufficiently explained to me.",
-}
+ARTA_TEXT = survey_reports.ARTA_TEXT
 
 # CO-CSM dropdown options (mirror the official vlookup sheet)
 CSM_REGIONS = [
@@ -11396,20 +11387,7 @@ def _next_csm_response_no(conn, date_str):
 
 
 def _csm_response_filter(date_from=None, date_to=None):
-    """One active-row boundary for ARTA screen, extracts and comment drill-down."""
-    where = f"WHERE fi.survey_type = 1 AND {st.WALKIN_FORM_ACTIVE_SQL} AND r.archived_at IS NULL"
-    args = []
-    if date_from:
-        where += " AND r.submitted_at >= ?"
-        args.append(date_from)
-    if date_to:
-        last = date.fromisoformat(date_to)
-        # An exclusive next-date bound accepts both stored timestamp separators
-        # and every fractional second while retaining the timestamp index.
-        upper = (last + timedelta(days=1)).isoformat() if last < date.max else date_to + "\uffff"
-        where += " AND r.submitted_at < ?"
-        args.append(upper)
-    return where, args
+    return survey_reports.csm_response_filter(date_from, date_to)
 
 
 def _csm_blhsd_rows(conn, date_from=None, date_to=None):
@@ -13154,40 +13132,7 @@ def _arta_age_tally(rows):
 
 
 def _arta_sqd_official(rows):
-    """Per-item SQD0-8 distribution + top-box score + band; plus the pooled
-    overall top-box over SQD1-8 (matches eng.arta_topbox)."""
-    out = []
-    pooled_top = pooled_n = 0
-    for it in ["SQD0"] + list(eng.ARTA_HEADLINE_ITEMS):
-        dist = {5: 0, 4: 0, 3: 0, 2: 0, 1: 0}
-        na = 0
-        for r in rows:
-            raw = r.get(it, "")
-            if raw in ("", None):
-                continue
-            try:
-                v = int(round(float(raw)))
-            except (ValueError, TypeError):
-                continue
-            if v == 0:          # N/A is stored as 0 in the row
-                na += 1
-            elif 1 <= v <= 5:
-                dist[v] += 1
-        n = dist[5] + dist[4] + dist[3] + dist[2] + dist[1]
-        top, mid, bot = dist[5] + dist[4], dist[3], dist[2] + dist[1]
-        score = (top / n * 100) if n else None
-        out.append({
-            "item": it, "text": ARTA_TEXT.get(it, it), "n": n, "na": na,
-            "dist": {"SA": dist[5], "A": dist[4], "Neither": dist[3], "D": dist[2], "SD": dist[1]},
-            "top": top, "mid": mid, "bot": bot,
-            "score": round(score, 1) if score is not None else None,
-            "band": eng.band(score, eng.ARTA_BANDS) if score is not None else None,
-        })
-        if it in eng.ARTA_HEADLINE_ITEMS and n:
-            pooled_top += top
-            pooled_n += n
-    overall = (pooled_top / pooled_n * 100) if pooled_n else None
-    return out, overall, pooled_n
+    return survey_reports.arta_sqd_official(rows)
 
 
 # Cap on how many *unique* comments each bucket lists in a report. High enough
@@ -17715,7 +17660,8 @@ if _MCP_ENABLED:
         if not pending:
             return _mcp_consent_error('This request expired. Start again in ChatGPT.', 410)
         client_id, params = pending
-        labels = {'notifications:read': 'Your own unread shared-work notice metadata (no message text)',
+        labels = {'surveys:csm:read': 'Bureau-wide monthly CSM survey aggregates (no individual responses)',
+                  'notifications:read': 'Your own unread shared-work notice metadata (no message text)',
                   'activities:read': 'Your permitted activity schedules and summary counts',
                   'calendar:read': 'Your visible calendar events, activities and room bookings',
                   'work:read': 'Your visible work items and task status',

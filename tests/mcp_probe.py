@@ -107,7 +107,7 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
         assert metadata.status_code == 200
         assert metadata.json()['resource'] == 'https://office.example/mcp'
         scopes = {'activities:read', 'calendar:read', 'documents:read',
-                  'supplies:read', 'travel:read', 'work:read', 'notifications:read'}
+                  'supplies:read', 'travel:read', 'work:read', 'notifications:read', 'surveys:csm:read'}
         assert set(metadata.json()['scopes_supported']) == scopes
         denied = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 1, 'method': 'initialize',
                                           'params': {'protocolVersion': '2025-06-18',
@@ -188,7 +188,7 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
         assert names == {'my_work', 'find_documents', 'get_document',
                          'list_work_items', 'get_work_item', 'list_work_tasks', 'list_calendar_events',
                          'list_supply_queue', 'list_my_travel_filings', 'list_activity_progress',
-                         'my_office_overview', 'list_my_notifications', 'get_room_availability'}
+                         'my_office_overview', 'list_my_notifications', 'get_room_availability', 'get_csm_summary'}
         api_token = client.get('/api/v1/work-items', headers={'Authorization': 'Bearer ' + access})
         assert api_token.status_code == 401
         called = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 3, 'method': 'tools/call',
@@ -293,7 +293,10 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
         denied_notices = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 112, 'method': 'tools/call',
             'params': {'name': 'list_my_notifications', 'arguments': {}}}, headers=limited)
         assert denied_notices.status_code == 200 and denied_notices.json()['result'].get('isError')
-        for tool, arguments in (('list_my_notifications', {}), ('get_room_availability', {'day': '2026-10-27'})):
+        denied_csm = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 114, 'method': 'tools/call',
+            'params': {'name': 'get_csm_summary', 'arguments': {'year': 2026, 'month': 10}}}, headers=limited)
+        assert denied_csm.status_code == 200 and denied_csm.json()['result'].get('isError')
+        for tool, arguments in (('list_my_notifications', {}), ('get_room_availability', {'day': '2026-10-27'}), ('get_csm_summary', {'year': 2026, 'month': 10})):
             disabled = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 113, 'method': 'tools/call',
                 'params': {'name': tool, 'arguments': arguments}}, headers=headers)
             assert disabled.status_code == 200 and not disabled.json()['result'].get('isError'), disabled.text
