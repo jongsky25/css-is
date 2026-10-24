@@ -1,3 +1,9 @@
+## 8.52 — October 25, 2026
+
+- Add compare_csm_months for a selected bureau-wide Type 1 submission month versus the immediately preceding month, under separate surveys:csm_trends:read consent and default-off CSS_MCP_CSM_TRENDS_ENABLED.
+- Preserve the official pooled SQD1–SQD8 overall, individual SQD percentages, source links and existing small-sample rules. Publish changes in percentage points from displayed report percentages, not percent growth.
+- Refuse more than 5,000 responses or 100,000 SQD-answer rows per month; withhold both scorecards and all changes if either month is empty, unrated, small or over capacity. No individual responses, comments, service/demographic filters or causal claims.
+
 ## 8.51 — October 24, 2026
 
 - Add an explicit administrator control for Collaborative work on Documents setup, requiring Documents first, current all-unit permissions authority for enabling, confirmation/reason, shared settings revision and atomic audit. System administrators retain emergency pause; deployment does not enable modules or change document sending.

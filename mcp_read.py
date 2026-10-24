@@ -286,6 +286,18 @@ def build_server(get_conn, origin):
             return {'data': [_web(origin, api.task_read(row)) for row in rows], 'next_before': cursor}
         return await perform('work:read', 'work', run)
 
+    @server.tool(title='Compare monthly bureau CSM satisfaction', annotations=READ_ONLY)
+    async def compare_csm_months(year: int, month: int) -> dict:
+        """Compare bureau Type 1 ARTA CSM for a submission month and its preceding month.
+
+        Returns both source reports, SQD percentages and percentage-point changes.
+        Overall pools SQD1–SQD8, excluding SQD0. If either month is small, empty,
+        unrated or over capacity, withhold both scorecards and all changes.
+        No service/demographic filters, individuals, comments or causal claims.
+        """
+        return await perform('surveys:csm_trends:read', 'csm_trends',
+                             lambda conn, user: survey_reports.compare_csm_months(conn, user, origin, year, month))
+
     @server.tool(title='Find survey reporting units', annotations=READ_ONLY)
     async def find_survey_units(query: str = '', limit: int = 10, offset: int = 0) -> dict:
         """Find current report unit IDs by name/path; metadata only, up to 25 results.
