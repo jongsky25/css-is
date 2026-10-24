@@ -18,7 +18,8 @@ import auth
 import storage as st
 
 
-SCOPES = frozenset({'calendar:read', 'documents:read', 'work:read'})
+SCOPES = frozenset({'activities:read', 'calendar:read', 'documents:read',
+                    'supplies:read', 'travel:read', 'work:read'})
 ACCESS_SECONDS = 3600
 REFRESH_SECONDS = 30 * 86400
 CODE_SECONDS = 120

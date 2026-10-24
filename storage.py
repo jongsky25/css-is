@@ -3289,7 +3289,8 @@ def event_scope_paths(conn, event_id):
             "rp_paths": [p for p in (row[1] or "").split(",") if p]}
 
 
-def list_events(conn, created_by=None, lifecycles=None, team_scope=None):
+def list_events(conn, created_by=None, lifecycles=None, team_scope=None,
+                start_date=None, end_date=None):
     """Events newest-first for the monitor index, each enriched with its form count,
     registration funnel (registered / completed / in progress / not started) and its
     `lifecycle` (upcoming / ongoing / concluded — see lifecycle_of).
@@ -3303,9 +3304,17 @@ def list_events(conn, created_by=None, lifecycles=None, team_scope=None):
     expensive work stays proportional to what is actually shown. Per-event
     rollups reuse event_registration_summary — fine at the bureau's event volume
     and keeps the 'completed' rule in one place."""
-    where, args = "", ()
+    where, args = [], []
     if created_by:
-        where, args = "WHERE e.created_by = ?", (created_by,)
+        where.append('e.created_by = ?')
+        args.append(created_by)
+    if start_date:
+        where.append('date(e.event_date) >= ?')
+        args.append(start_date)
+    if end_date:
+        where.append('date(e.event_date) <= ?')
+        args.append(end_date)
+    clause = 'WHERE ' + ' AND '.join(where) if where else ''
     today = today_local(conn)
     now = tz.now_iso()   # Manila clock (see tzutil), not SQLite 'localtime' (UTC container)
     rows = conn.execute(
@@ -3325,7 +3334,7 @@ def list_events(conn, created_by=None, lifecycles=None, team_scope=None):
                      WHERE ef2.event_id = e.id AND COALESCE(rp.is_internal, 0) = 1)
             FROM event e
             LEFT JOIN org_unit olead ON olead.id = e.lead_org_id
-            {where}
+            {clause}
             ORDER BY date(e.event_date) DESC, e.id DESC""",
         args).fetchall()
     out = []

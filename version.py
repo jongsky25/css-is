@@ -25,11 +25,11 @@ CHANGELOG = [
     {
         "version": "8.34",
         "date": "October 24, 2026",
-        "summary": "ChatGPT can now check visible calendar events and room bookings.",
+        "summary": "ChatGPT can now check more of your permitted Office Connect work.",
         "changes": [
-            "A new calendar read permission lets ChatGPT show upcoming events and room bookings with dates, places and links.",
-            "The connection follows your current calendar access and leaves out attendee lists and meeting links.",
-            "Reconnect Office Connect in ChatGPT to approve the new calendar permission."
+            "With your approval, ChatGPT can check calendar events, room bookings, supply requests, travel filings and activity progress.",
+            "A new overview brings together records from only the areas you permit ChatGPT to read.",
+            "Reconnect Office Connect in ChatGPT to approve these new read permissions."
         ]
     },
     {

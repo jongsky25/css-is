@@ -29,6 +29,43 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
     other = st.create_admin_user(conn, 'other@example.invalid', hashed, salt, 'viewer',
                                  created_by='test', active=True)
     st.mark_onboarded(conn, other)
+    manager = st.create_admin_user(conn, 'manager@example.invalid', hashed, salt, 'section_manager',
+                                   created_by='test', active=True)
+    st.mark_onboarded(conn, manager)
+    unit = conn.execute("INSERT INTO org_unit(name,short_name,level,path) VALUES ('MCP Unit','MCP','section','MCP')").lastrowid
+    owner_rp = conn.execute('INSERT INTO resource_person(name,is_internal,org_unit_id) VALUES (?,1,?)',
+                            ('Synthetic owner', unit)).lastrowid
+    other_rp = conn.execute('INSERT INTO resource_person(name,is_internal,org_unit_id) VALUES (?,1,?)',
+                            ('Synthetic other', unit)).lastrowid
+    own_supply = conn.execute('''INSERT INTO supply_request(requester_id,requester_rp_id,requester_snapshot,
+        unit_id,unit_snapshot,purpose,date_needed,created_at,updated_at)
+        VALUES (?,?,?,?,?,?,?,?,?)''', (owner, owner_rp, 'Synthetic owner', unit, 'MCP Unit',
+                                         'Private supply purpose', '2026-10-28', '2026-10-20', '2026-10-20')).lastrowid
+    conn.execute('''INSERT INTO supply_request(requester_id,requester_rp_id,requester_snapshot,
+        unit_id,unit_snapshot,purpose,date_needed,created_at,updated_at)
+        VALUES (?,?,?,?,?,?,?,?,?)''', (other, other_rp, 'Synthetic other', unit, 'MCP Unit',
+                                         'Other private supply purpose', '2026-10-28', '2026-10-20', '2026-10-20'))
+    conn.execute('''INSERT INTO travel_filing(user_id,kind,source_kind,act_title,act_start,act_end,
+        deadline_date,status) VALUES (?,?,?,?,?,?,?,?)''',
+        (owner, 'ca', 'blank', 'My synthetic travel', '2026-10-27', '2026-10-28', '2026-10-30', 'open'))
+    conn.execute('''INSERT INTO travel_filing(user_id,kind,source_kind,act_title,act_start,act_end,
+        deadline_date,status) VALUES (?,?,?,?,?,?,?,?)''',
+        (other, 'ca', 'blank', 'Other private travel', '2026-10-27', '2026-10-28', '2026-10-30', 'open'))
+    st.create_event(conn, 'Managed synthetic activity', '2026-10-27', created_by='manager@example.invalid')
+    st.create_event(conn, 'Other hidden activity', '2026-10-27', created_by='other@example.invalid')
+    conn.execute("INSERT INTO supply_role_grant(user_id,role,granted_by,created_at) VALUES (?,'custodian',?,?)",
+                 (manager, owner, '2026-10-20'))
+    item = conn.execute('''INSERT INTO supply_item(code,description,unit,critical_level,created_by,created_at,updated_at)
+        VALUES (?,?,?,?,?,?,?)''', ('MCP-LOW', 'Synthetic low stock', 'pieces', 5, manager,
+                                   '2026-10-20', '2026-10-20')).lastrowid
+    key = 'synthetic-opening-operation'
+    conn.execute('''INSERT INTO supply_operation(operation_key,actor_id,action,payload_sha256,result_json,created_at)
+        VALUES (?,?,?,?,?,?)''', (key, manager, 'opening', '0' * 64, '{}', '2026-10-20'))
+    conn.execute('''INSERT INTO supply_stock_movement(item_id,kind,quantity_delta,effective_date,posted_at,
+        posted_by,actor_snapshot,source_type,source_id,code_snapshot,description_snapshot,unit_snapshot,operation_key)
+        VALUES (?,'opening',1,?,?,?,?,?,?,?,?,?,?)''',
+        (item, '2026-10-20', '2026-10-20', manager, 'Synthetic manager', 'item', item,
+         'MCP-LOW', 'Synthetic low stock', 'pieces', key))
     owned_doc = conn.execute('''INSERT INTO document
         (number,direction,subject,type,creator_id,status,visibility,verification,created_at,updated_at)
         VALUES (?,?,?,?,?,?,?,?,?,?)''',
@@ -69,7 +106,9 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
         metadata = client.get('/.well-known/oauth-protected-resource/mcp')
         assert metadata.status_code == 200
         assert metadata.json()['resource'] == 'https://office.example/mcp'
-        assert set(metadata.json()['scopes_supported']) == {'calendar:read', 'work:read', 'documents:read'}
+        scopes = {'activities:read', 'calendar:read', 'documents:read',
+                  'supplies:read', 'travel:read', 'work:read'}
+        assert set(metadata.json()['scopes_supported']) == scopes
         denied = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 1, 'method': 'initialize',
                                           'params': {'protocolVersion': '2025-06-18',
                                                      'capabilities': {}, 'clientInfo': {'name': 'probe', 'version': '1'}}},
@@ -87,7 +126,7 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
             'grant_types': ['authorization_code', 'refresh_token'],
             'response_types': ['code']})
         assert registered.status_code == 201, registered.text
-        assert set(registered.json()['scope'].split()) == {'calendar:read', 'work:read', 'documents:read'}
+        assert set(registered.json()['scope'].split()) == scopes
         client_id = registered.json()['client_id']
         auth_url = client.get('/authorize', params={
             'response_type': 'code', 'client_id': client_id, 'redirect_uri': callback,
@@ -104,6 +143,9 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
         assert 'Your visible work items' in page.text
         assert 'Your visible document metadata' in page.text
         assert 'Your visible calendar events, activities and room bookings' in page.text
+        assert 'Your supply requests and permitted stock warnings' in page.text
+        assert 'Your travel filing status and deadlines' in page.text
+        assert 'Your permitted activity schedules and summary counts' in page.text
         assert page.headers['referrer-policy'] == 'same-origin'
         ticket = re.search(r'name="ticket" value="([^"]+)"', page.text).group(1)
         csrf = re.search(r'name="csrf" value="([^"]+)"', page.text).group(1)
@@ -144,13 +186,67 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
         names = {tool['name'] for tool in listed.json()['result']['tools']}
         assert {'my_work', 'find_documents', 'get_document'} <= names
         assert names == {'my_work', 'find_documents', 'get_document',
-                         'list_work_items', 'get_work_item', 'list_work_tasks', 'list_calendar_events'}
+                         'list_work_items', 'get_work_item', 'list_work_tasks', 'list_calendar_events',
+                         'list_supply_queue', 'list_my_travel_filings', 'list_activity_progress',
+                         'my_office_overview'}
         api_token = client.get('/api/v1/work-items', headers={'Authorization': 'Bearer ' + access})
         assert api_token.status_code == 401
         called = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 3, 'method': 'tools/call',
             'params': {'name': 'my_work', 'arguments': {}}}, headers=headers)
         assert called.status_code == 200, called.text
         assert not called.json()['result'].get('isError'), called.text
+        supplies = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 15, 'method': 'tools/call',
+            'params': {'name': 'list_supply_queue', 'arguments': {'queue': 'requests'}}}, headers=headers)
+        assert supplies.status_code == 200 and not supplies.json()['result'].get('isError'), supplies.text
+        assert str(own_supply) in supplies.text
+        assert 'Other private supply purpose' not in supplies.text
+        assert 'Private supply purpose' not in supplies.text
+        warnings = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 16, 'method': 'tools/call',
+            'params': {'name': 'list_supply_queue', 'arguments': {'queue': 'warnings'}}}, headers=headers)
+        assert warnings.status_code == 200 and warnings.json()['result'].get('isError')
+        travel_result = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 17, 'method': 'tools/call',
+            'params': {'name': 'list_my_travel_filings', 'arguments': {}}}, headers=headers)
+        assert travel_result.status_code == 200 and not travel_result.json()['result'].get('isError'), travel_result.text
+        assert 'My synthetic travel' in travel_result.text
+        assert 'Other private travel' not in travel_result.text
+        activities_unavailable = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 18, 'method': 'tools/call',
+            'params': {'name': 'list_activity_progress', 'arguments': {
+                'start_date': '2026-10-24', 'end_date': '2026-10-31'}}}, headers=headers)
+        assert activities_unavailable.status_code == 200 and not activities_unavailable.json()['result'].get('isError')
+        assert 'not available to this account' in activities_unavailable.text
+        conn = st.connect(os.environ['CSS_DB'])
+        import mcp_auth
+        manager_grant = mcp_auth.Provider._tokens(conn, client_id, manager,
+                                                  ['activities:read', 'supplies:read'],
+                                                  'https://office.example/mcp')
+        conn.commit(); conn.close()
+        manager_headers = dict(headers, Authorization='Bearer ' + manager_grant.access_token)
+        activities = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 19, 'method': 'tools/call',
+            'params': {'name': 'list_activity_progress', 'arguments': {
+                'start_date': '2026-10-24', 'end_date': '2026-10-31'}}}, headers=manager_headers)
+        assert activities.status_code == 200 and not activities.json()['result'].get('isError'), activities.text
+        assert 'Managed synthetic activity' in activities.text
+        assert 'Other hidden activity' not in activities.text
+        manager_warnings = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 22, 'method': 'tools/call',
+            'params': {'name': 'list_supply_queue', 'arguments': {'queue': 'warnings'}}},
+            headers=manager_headers)
+        assert manager_warnings.status_code == 200 and not manager_warnings.json()['result'].get('isError')
+        assert 'MCP-LOW' in manager_warnings.text
+        conn = st.connect(os.environ['CSS_DB'])
+        conn.execute("UPDATE supply_role_grant SET revoked_at='2026-10-24',revoked_by=? "
+                     "WHERE user_id=? AND role='custodian'", (owner, manager))
+        conn.commit(); conn.close()
+        revoked_warnings = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 23, 'method': 'tools/call',
+            'params': {'name': 'list_supply_queue', 'arguments': {'queue': 'warnings'}}},
+            headers=manager_headers)
+        assert revoked_warnings.status_code == 200 and revoked_warnings.json()['result'].get('isError')
+        assert 'MCP-LOW' not in revoked_warnings.text
+        overview = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 20, 'method': 'tools/call',
+            'params': {'name': 'my_office_overview', 'arguments': {}}}, headers=headers)
+        assert overview.status_code == 200 and not overview.json()['result'].get('isError'), overview.text
+        assert 'My synthetic travel' in overview.text
+        assert 'Other private travel' not in overview.text
+        assert 'Other hidden activity' not in overview.text
         calendar = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 10, 'method': 'tools/call',
             'params': {'name': 'list_calendar_events', 'arguments': {
                 'start_date': '2026-10-24', 'end_date': '2026-10-24', 'scope': 'bureau'}}}, headers=headers)
@@ -194,9 +290,16 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
                 'start_date': '2026-10-24', 'end_date': '2026-10-24'}}}, headers=limited)
         assert no_scope.status_code == 200 and no_scope.json()['result'].get('isError')
         assert 'Visible synthetic meeting' not in no_scope.text
+        limited_overview = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 21, 'method': 'tools/call',
+            'params': {'name': 'my_office_overview', 'arguments': {}}}, headers=limited)
+        assert limited_overview.status_code == 200 and not limited_overview.json()['result'].get('isError')
+        assert 'not_granted' in limited_overview.text
+        assert 'My synthetic travel' not in limited_overview.text
         conn = st.connect(os.environ['CSS_DB'])
         conn.execute('UPDATE mcp_oauth_grant SET revoked_at=1 WHERE access_hash=?',
                      (hashlib.sha256(work_only.access_token.encode()).hexdigest(),))
+        conn.execute('UPDATE mcp_oauth_grant SET revoked_at=1 WHERE access_hash=?',
+                     (hashlib.sha256(manager_grant.access_token.encode()).hexdigest(),))
         conn.commit(); conn.close()
         visible = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 5, 'method': 'tools/call',
             'params': {'name': 'get_document', 'arguments': {'document_id': owned_doc}}}, headers=headers)

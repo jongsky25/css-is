@@ -3,6 +3,8 @@
 - Let ChatGPT list visible calendar events, activities and room bookings, with dates, status, venue and links back to Office Connect.
 - Require a separate calendar read permission and check current calendar visibility on every request; approved room bookings are visible to all signed-in users, while pending requests remain restricted to the requester and room approvers.
 - Limit each calendar request to 31 days and 25 returned items; exclude attendee names, meeting links, leave and birthdays. Existing ChatGPT connections must reconnect to approve the new permission.
+- Add separately authorized supply request and stock-warning, personal travel filing, and manager-scoped activity progress reads; exclude purposes, claim amounts, files and individual responses.
+- Add a combined overview that reads only granted modules and marks ungranted modules clearly rather than reporting empty results.
 
 ## 8.33 — October 24, 2026
 
