@@ -54,6 +54,7 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
         metadata = client.get('/.well-known/oauth-protected-resource/mcp')
         assert metadata.status_code == 200
         assert metadata.json()['resource'] == 'https://office.example/mcp'
+        assert set(metadata.json()['scopes_supported']) == {'work:read', 'documents:read'}
         denied = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 1, 'method': 'initialize',
                                           'params': {'protocolVersion': '2025-06-18',
                                                      'capabilities': {}, 'clientInfo': {'name': 'probe', 'version': '1'}}},
@@ -69,13 +70,14 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
             'redirect_uris': [callback], 'client_name': 'ChatGPT',
             'token_endpoint_auth_method': 'none',
             'grant_types': ['authorization_code', 'refresh_token'],
-            'response_types': ['code'], 'scope': 'work:read documents:read'})
+            'response_types': ['code']})
         assert registered.status_code == 201, registered.text
+        assert set(registered.json()['scope'].split()) == {'work:read', 'documents:read'}
         client_id = registered.json()['client_id']
         auth_url = client.get('/authorize', params={
             'response_type': 'code', 'client_id': client_id, 'redirect_uri': callback,
             'code_challenge': challenge, 'code_challenge_method': 'S256',
-            'scope': 'work:read documents:read', 'state': 'probe-state',
+            'state': 'probe-state',
             'resource': 'https://office.example/mcp'}, follow_redirects=False)
         assert auth_url.status_code in (302, 303), auth_url.text
         consent_url = auth_url.headers['location']
@@ -86,15 +88,23 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
         assert page.status_code == 200, page.text
         assert 'Your visible work items' in page.text
         assert 'Your visible document metadata' in page.text
+        assert page.headers['referrer-policy'] == 'same-origin'
         ticket = re.search(r'name="ticket" value="([^"]+)"', page.text).group(1)
         csrf = re.search(r'name="csrf" value="([^"]+)"', page.text).group(1)
         bad_origin = browser.post('/mcp-consent', data={'ticket': ticket, 'csrf': csrf,
             'decision': 'approve', 'password': 'Synthetic123!'},
             headers={'Origin': 'https://evil.example'}, follow_redirects=False)
         assert bad_origin.status_code == 403
+        assert bad_origin.headers['content-type'].startswith('text/html')
+        wrong_password = browser.post('/mcp-consent', data={'ticket': ticket, 'csrf': csrf,
+            'decision': 'approve', 'password': 'wrong'},
+            headers={'Referer': consent_url}, follow_redirects=False)
+        assert wrong_password.status_code == 403
+        assert wrong_password.headers['content-type'].startswith('text/html')
+        assert 'password could not be verified' in wrong_password.text
         approved = browser.post('/mcp-consent', data={'ticket': ticket, 'csrf': csrf,
             'decision': 'approve', 'password': 'Synthetic123!'},
-                                headers={'Origin': 'https://office.example'}, follow_redirects=False)
+                                headers={'Referer': consent_url}, follow_redirects=False)
         assert approved.status_code == 303, approved.text
         code = parse_qs(urlsplit(approved.headers['location']).query)['code'][0]
         assert parse_qs(urlsplit(approved.headers['location']).query)['state'] == ['probe-state']

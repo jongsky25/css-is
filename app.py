@@ -17674,12 +17674,37 @@ app.mount("/api/v1", integration_api.make_app(get_conn))
 if _MCP_ENABLED:
     if not _MCP_ORIGIN.startswith('https://') or urlparse(_MCP_ORIGIN).path not in ('', '/'):
         raise RuntimeError('CSS_MCP_ENABLED requires a canonical HTTPS CSS_BASE_URL or SPACE_HOST.')
+    import mcp_auth
     import mcp_read
     _mcp_server, _mcp_provider = mcp_read.build_server(get_conn, _MCP_ORIGIN)
+
+    @app.get('/.well-known/oauth-protected-resource/mcp')
+    def mcp_resource_metadata():
+        # The SDK's metadata uses required_scopes, which is intentionally empty:
+        # individual tools enforce their own scopes. Advertise both supported
+        # scopes without requiring both for every protocol request.
+        return JSONResponse({'resource': _MCP_ORIGIN + '/mcp',
+                             'authorization_servers': [_MCP_ORIGIN + '/'],
+                             'scopes_supported': sorted(mcp_auth.SCOPES),
+                             'bearer_methods_supported': ['header']})
 
     def _mcp_consent_token(request, ticket):
         cookie = request.cookies.get(auth.COOKIE_NAME, '')
         return hmac.new(auth._secret(), ('mcp-consent:' + cookie + ':' + ticket).encode(), hashlib.sha256).hexdigest()
+
+    def _mcp_consent_error(message, status, ticket=''):
+        retry = ('<p><a href="/mcp-consent?ticket=' + quote(ticket, safe='')
+                 + '">Try again</a></p>') if ticket and len(ticket) <= 100 else ''
+        body = ('<!doctype html><html lang="en"><meta charset="utf-8">'
+                '<meta name="viewport" content="width=device-width,initial-scale=1">'
+                '<title>Office Connect connection not completed</title>'
+                '<style>body{font:1rem/1.5 system-ui,sans-serif;max-width:42rem;'
+                'margin:2rem auto;padding:0 1rem}h1{font-size:1.6rem}</style>'
+                '<main><h1>Connection not completed</h1><p>' + html.escape(message)
+                + '</p>' + retry + '</main></html>')
+        return HTMLResponse(body, status_code=status,
+                            headers={'Cache-Control': 'private, no-store',
+                                     'Referrer-Policy': 'same-origin'})
 
     @app.get('/mcp-consent', response_class=HTMLResponse)
     def mcp_consent(request: Request, ticket: str = ''):
@@ -17688,7 +17713,7 @@ if _MCP_ENABLED:
             return RedirectResponse('/login?next=' + quote('/mcp-consent?ticket=' + ticket, safe=''), status_code=303)
         pending = _mcp_provider.pending(ticket)
         if not pending:
-            return HTMLResponse('This connection request has expired. Start again in ChatGPT.', status_code=410)
+            return _mcp_consent_error('This request expired. Start again in ChatGPT.', 410)
         _, params = pending
         labels = {'work:read': 'Your visible work items and task status',
                   'documents:read': 'Your visible document metadata'}
@@ -17696,11 +17721,16 @@ if _MCP_ENABLED:
         page = ('<!doctype html><html lang="en"><meta charset="utf-8">'
                 '<meta name="viewport" content="width=device-width,initial-scale=1">'
                 '<title>Connect Office Connect to ChatGPT</title>'
+                '<style>body{font:1rem/1.5 system-ui,sans-serif;max-width:42rem;'
+                'margin:2rem auto;padding:0 1rem}h1{font-size:1.6rem}'
+                'button,input{font:inherit}button{margin:.5rem .5rem .5rem 0;padding:.5rem .8rem}'
+                'input{max-width:100%;box-sizing:border-box;padding:.4rem}</style>'
                 '<main><h1>Connect Office Connect to ChatGPT?</h1>'
                 '<p>This lets ChatGPT read the following information as '
                 + html.escape(user['username']) + ':</p><ul>' + scopes + '</ul>'
                 '<p>No files, private task submissions or changes to records are included. '
                 'You can disconnect this access later.</p>'
+                '<p>After you allow access, return to ChatGPT and finish adding the connection.</p>'
                 '<form method="post" action="/mcp-consent">'
                 '<input type="hidden" name="ticket" value="' + html.escape(ticket, quote=True) + '">'
                 '<input type="hidden" name="csrf" value="' + _mcp_consent_token(request, ticket) + '">'
@@ -17709,19 +17739,20 @@ if _MCP_ENABLED:
                 '<button name="decision" value="approve" type="submit">Allow read access</button> '
                 '<button name="decision" value="deny" type="submit">Decline</button>'
                 '</form></main></html>')
-        return HTMLResponse(page, headers={'Cache-Control': 'private, no-store', 'Referrer-Policy': 'no-referrer'})
+        return HTMLResponse(page, headers={'Cache-Control': 'private, no-store',
+                                           'Referrer-Policy': 'same-origin'})
 
     @app.post('/mcp-consent')
     async def mcp_consent_submit(request: Request):
         user = _user_from_request(request)
         if not user:
-            return Response('Sign in again before linking.', status_code=401)
+            return _mcp_consent_error('Sign in again before linking.', 401)
         canonical = _MCP_ORIGIN
         if not same_origin_write(request, canonical):
-            return Response('Request verification failed.', status_code=403)
+            return _mcp_consent_error('Request verification failed. Return to ChatGPT and try again.', 403)
         raw = await request.body()
         if len(raw) > 4096:
-            return Response('Request is too large.', status_code=413)
+            return _mcp_consent_error('The request is too large. Start again in ChatGPT.', 413)
         try:
             pairs = parse_qsl(raw.decode('utf-8'), keep_blank_values=True)
             form = dict(pairs)
@@ -17730,7 +17761,7 @@ if _MCP_ENABLED:
                     supplied, _mcp_consent_token(request, ticket)):
                 raise ValueError
             if not rl.allow('integration_issue', str(user['id'])):
-                return Response('Too many attempts. Try again later.', status_code=429)
+                return _mcp_consent_error('Too many attempts. Try again later.', 429, ticket)
             conn = get_conn()
             try:
                 account = st.get_admin_user_by_id(conn, user['id'])
@@ -17741,10 +17772,10 @@ if _MCP_ENABLED:
             finally:
                 conn.close()
             if not verified:
-                return Response('The password could not be verified.', status_code=403)
+                return _mcp_consent_error('The password could not be verified.', 403, ticket)
             params, code = await asyncio.to_thread(_mcp_provider.complete, ticket, user['id'], decision == 'approve')
         except (ValueError, UnicodeError, KeyError):
-            return Response('Connection request expired or invalid.', status_code=400)
+            return _mcp_consent_error('The connection request expired or was invalid. Start again in ChatGPT.', 400)
         from urllib.parse import urlsplit, urlunsplit, parse_qsl as _parse_qsl
         parts = urlsplit(params['redirect_uri'])
         query = list(_parse_qsl(parts.query, keep_blank_values=True))

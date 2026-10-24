@@ -126,7 +126,7 @@ class Provider(OAuthAuthorizationServerProvider[AuthorizationCode, RefreshToken,
         await asyncio.to_thread(self._run, save)
 
     async def authorize(self, client, params: AuthorizationParams):
-        scopes = list(params.scopes or ['work:read'])
+        scopes = list(params.scopes or sorted(SCOPES))
         if (params.resource != self.resource or not scopes or set(scopes) - SCOPES
                 or (client.scope and set(scopes) - set(client.scope.split()))):
             raise AuthorizeError('invalid_scope', 'Choose permitted read scopes for this MCP server.')
