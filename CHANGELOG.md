@@ -1,8 +1,14 @@
-## 8.40 — October 24, 2026
+## 8.41 — October 24, 2026
 
 - Export the Documents workload dashboard to PowerPoint with editable workflow, deadline and assigned-lead charts plus complete aggregate count tables, applied queue/search and date boundaries.
 - Recheck current record access in one fresh snapshot per export, retaining working-day/invalid-date rules and authorized lead labels; chart the largest 20 lead groups with explicit scope and full tables.
 - Refuse more than 1,000 lead groups instead of truncating; retain dashboard tables on asset/request failure and reuse the existing PptxGenJS/JSZip distributions and gates without new dependencies, schema changes or document writes.
+
+## 8.40 — October 24, 2026
+
+- Correct the work-only client registration ceiling that prevented v8.38 from displaying optional scopes for newly recreated ChatGPT apps.
+- Advertise the six supported read scopes for new and legacy registrations while preserving explicit authorize requests, unchecked optional consent and existing grant/refresh scope limits.
+- Remove the ineffective recreate-app loop; reject unsupported/write scopes and cover legacy calendar opt-in through OAuth.
 
 ## 8.39 — October 24, 2026
 
