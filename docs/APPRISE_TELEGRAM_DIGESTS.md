@@ -4,6 +4,14 @@ This first Apprise pilot adds an optional private Telegram reminder for unread s
 
 A reminder contains only “You have unread discussion updates in Office Connect” and a sign-in link to `/work/updates`. It contains no account names, counts, work titles, message contents, document identifiers, attachments or approval links. Sending does not mark discussions read. Only private, positive numeric Telegram chat IDs are accepted; group/channel destinations and arbitrary Apprise URLs are not supported in this pilot.
 
+## Enable the application modules first
+
+Discussion digests require **Documents** and **Collaborative work** to be enabled inside Office Connect, independently of the hosting secrets. Open `/admin/documents/setup` as a current system administrator with an explicit all-unit Documents permissions-administrator appointment. Enable Documents in **Documents feature**, leaving document sending disabled, then enable **Collaborative work**. Each form requires a reason and confirmation and affects the whole instance under existing staff permissions. No account roles are granted by enabling a module. If the enable form is unavailable, ask an already appointed permissions administrator to review the account's authority; initial role setup is not reopened.
+
+The Collaborative work control also permits a current system administrator to pause shared-work changes and discussion delivery. Existing permitted work stays readable; pausing does not disconnect Telegram or change cadence, claims, document sending or unrelated modules. Documents and Collaborative work forms share one revision so stale forms are rejected. All changes record actor and reason transactionally. Deployment and viewing these pages do not enable anything automatically.
+
+Notification preferences now list every locally detected blocker separately: disabled Documents, disabled Collaborative work, host master switch, invalid/missing HTTPS public address, missing or malformed target JSON, setup-code mismatch and invalid token/private-chat-ID format. The check never displays bot credentials, other users' setup codes or destination values, and makes no network request. Administrators receive a setup link; other staff are directed to their administrator. Configured still means local syntax/readiness, not real Telegram connectivity.
+
 ## Hosting setup
 
 Code deployment alone does not activate Telegram delivery. The host master switch defaults to off, each user defaults to Off, and no credentials are bundled into the application or test data.

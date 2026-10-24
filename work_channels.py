@@ -7,6 +7,7 @@ import documents as docs
 import documents_permissions as permissions
 from documents_storage import rows,transaction
 import email_params
+import storage as st
 import tzutil as tz
 import work
 import work_updates
@@ -42,8 +43,18 @@ def available(conn,pref,base):
 
 
 def status(conn,user,base):
+    user=permissions.actor(conn,user)
     pref=preferences(conn,user)
-    return {'ready':available(conn,pref,base),'binding':pref['binding'],'cadence':pref['cadence'],'revision':pref['revision']}
+    blockers=[]
+    if not docs.enabled(conn):blockers.append('Documents is disabled. An authorized administrator must enable it in Documents setup.')
+    if st.get_setting(conn,'work.enabled','0')!='1':
+        blockers.append('Collaborative work is disabled. An authorized administrator must enable it in Documents setup after enabling Documents.')
+    if not transport.enabled():blockers.append('Telegram delivery is paused on the host. Set CSS_APPRISE_TELEGRAM_ENABLED to 1 and restart the Space.')
+    if not transport.link(base):blockers.append('The hosting setting CSS_BASE_URL is missing or invalid. Set it to the HTTPS Office Connect address and restart the Space.')
+    _,issue=transport.target_check(pref['binding'])
+    if issue:blockers.append(issue)
+    return {'ready':not blockers,'blockers':blockers,'binding':pref['binding'],'cadence':pref['cadence'],
+            'revision':pref['revision'],'can_open_setup':user['role']=='admin'}
 
 
 def history(conn,user):

@@ -58,6 +58,8 @@ Documents operations have been deployed or live-tested.
    `documents.sending_enabled=0` until deliberately testing delivery with authorized recipients.
    Both settings default to `0`, including on repeat migration. Never enable the production
    module solely because the local tests passed.
+   **Collaborative work:** after Documents is enabled, the same `/admin/documents/setup#collaborative-work` page provides an explicit **Enable Collaborative work** form. Enabling requires a current system administrator with all-unit Documents `grant_admin` authority, a reason and confirmation. A current system administrator can disable it for emergency pause. Controls share `documents.settings_revision`, reject stale submissions and audit actor/before/after/reason atomically. They do not enable document sending, grant roles or change personal notification preferences. Both module switches default off; deployment does not change them. Shared-work discussion digests require both switches on.
+
 5. Run the application with `CSS_DB` pointing at the copy. Office → Documents shows the registry.
    All authenticated write forms carry a session-bound CSRF token. Service actions reload active
    accounts and resolve current grants/directory/OIC authority, rather than trusting posted roles.

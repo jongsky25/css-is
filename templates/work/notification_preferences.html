@@ -18,7 +18,11 @@
 {% for delivery in deliveries %}<p>{{ delivery.created_at }} · {{ {'sent':'Sent','unknown':'Delivery uncertain','sending':'Attempt started; delivery not confirmed','cancelled':'Cancelled before sending'}[delivery.state] }}</p>{% else %}<p>No digest attempts yet.</p>{% endfor %}</section>
 <section class="work-card"><h2>Telegram discussion digest</h2>
 <p>Receive a private reminder through Telegram for unread mentions, replies and followed discussions. The reminder contains only a sign-in link; discussion details stay in Office Connect. Sending does not mark messages read.</p>
-{% if channel.ready %}<p class="work-note">Telegram is configured for your account.</p>{% else %}<p class="work-note">Telegram delivery is not available for your account yet. Save a preference to obtain your setup code, then ask the hosting administrator to connect your private Telegram chat.</p>{% endif %}
+{% if channel.ready %}<p class="work-note">Telegram is configured for your account.</p>{% else %}
+<div class="work-note" role="status"><p><strong>Telegram setup needs attention</strong></p>
+<ul>{% for blocker in channel.blockers %}<li>{{ blocker }}</li>{% endfor %}</ul>
+{% if channel.can_open_setup %}<p><a href="/admin/documents/setup#collaborative-work">Open Documents and Collaborative work setup</a></p>{% else %}<p>Ask your Office Connect administrator to resolve these setup items.</p>{% endif %}
+<p>Hosting configuration changes require a Space restart. No Telegram connection has been tested by this status check.</p></div>{% endif %}
 <form class="work-form" method="post" action="/work/notification-preferences/telegram">
 <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="channel_revision" value="{{ channel.revision }}">
 <label for="telegram-cadence">Telegram digest frequency</label><select id="telegram-cadence" name="cadence">

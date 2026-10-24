@@ -82,4 +82,4 @@ html:has(.doc-intake-review){scroll-padding-top:calc(var(--topnav-h,53px) + 70px
 .doc-next { border-inline-start: .3rem solid var(--primary, #2563eb); }
 .doc-next-action { display: inline-block; padding: .6rem .75rem; font-weight: 600; }
 .doc-next p, .doc-next li { overflow-wrap: anywhere; }
-[id^="document-action-"], [id^="document-contribution-"], #document-operations, #document-recipient-outcomes { scroll-margin-top: 6rem; }
+[id^="document-action-"], [id^="document-contribution-"], #document-operations, #document-recipient-outcomes, #collaborative-work, #documents-feature { scroll-margin-top: 6rem; }

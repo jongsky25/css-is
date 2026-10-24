@@ -6,12 +6,21 @@ from pathlib import Path
 import re
 import sys
 import tempfile
+from datetime import datetime
 from urllib.parse import parse_qs, urlsplit
 
 from fastapi.testclient import TestClient
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
+
+# This fresh process does not inherit pytest's patched business clock. Keep the
+# fixed October fixtures in the future even after Philippine midnight; pending
+# room requests otherwise expire on startup. OAuth expiry still uses real time.
+import tzutil as tz
+PROBE_NOW = datetime(2026, 10, 20, 6)
+tz.now_local = lambda: PROBE_NOW
+tz.today_local = lambda: PROBE_NOW.date()
 
 with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
     os.environ['CSS_DB'] = str(Path(directory) / 'synthetic.db')

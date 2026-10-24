@@ -633,15 +633,18 @@ def make_router(templates,get_conn):
                               JOIN admin_user u ON u.id=g.user_id
                               WHERE g.role IN ('grant_admin','workflow_admin') AND g.unit_id IS NULL
                               ORDER BY u.username,g.role''')
-        return templates.TemplateResponse(request, 'documents/setup.html', {
+        response = templates.TemplateResponse(request, 'documents/setup.html', {
             'nav_active': 'documents_setup', 'csrf': csrf(request), 'error': '',
             'blocker': d.setup_blocker(conn), 'grants': grants,
             'module_enabled': d.enabled(conn),
+            'work_switch_enabled': st.get_setting(conn, 'work.enabled', '0') == '1',
             'sending_enabled': st.get_setting(conn, 'documents.sending_enabled', '0') == '1',
             'can_enable': p.has_role(conn, operator, 'grant_admin'),
             'settings_revision': st.get_setting(conn, 'documents.settings_revision', '0'),
             'usernames': '', 'authorization': '', 'preview': None, **values,
         }, status_code=status_code)
+        response.headers.update({'Cache-Control':'no-store','Pragma':'no-cache'})
+        return response
 
     @router.get('/admin/documents/readiness', response_class=HTMLResponse)
     def admin_readiness(request: Request):
@@ -673,6 +676,12 @@ def make_router(templates,get_conn):
         try:
             d.setup_operator(conn, request.state.user)
             data = await posted(request)
+            if data.get('action') in ('enable_work', 'disable_work'):
+                if data.get('confirmed') != 'yes':
+                    raise ValueError('Confirm the Collaborative work setting change before saving.')
+                work.set_module_enabled(conn, request.state.user, data['action'] == 'enable_work',
+                                        data.get('settings_revision', ''), data.get('authorization', ''))
+                return RedirectResponse('/admin/documents/setup#collaborative-work', status_code=303)
             if data.get('action') in ('enable_module', 'disable_module'):
                 if data.get('confirmed') != 'yes':
                     raise ValueError('Confirm the Documents setting change before saving.')

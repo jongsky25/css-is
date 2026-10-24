@@ -18,6 +18,27 @@ def enabled(conn):
     return docs.enabled(conn) and st.get_setting(conn, 'work.enabled', '0') == '1'
 
 
+def set_module_enabled(conn, user, turn_on, expected_revision, authorization):
+    """Audited instance-wide control sharing the Documents settings revision."""
+    with transaction(conn):
+        user = docs.setup_operator(conn, user)
+        if turn_on:
+            docs.require(permissions.has_role(conn, user, 'grant_admin'),
+                         'Enabling Collaborative work requires an explicit permissions-administrator grant across all units.')
+            if not docs.enabled(conn):
+                raise ValueError('Enable Documents before enabling Collaborative work.')
+        authorization = docs.reason(authorization)
+        revision = st.get_setting(conn, 'documents.settings_revision', '0')
+        if str(expected_revision) != revision:
+            raise docs.Conflict('Work management settings changed. Reload this page before confirming again.')
+        before = st.get_setting(conn, 'work.enabled', '0')
+        after = '1' if turn_on else '0'
+        for key, value in {'work.enabled': after, 'documents.settings_revision': str(int(revision) + 1)}.items():
+            conn.execute('INSERT INTO app_setting(key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value', (key, value))
+        docs.event(conn, None, user, 'work_module_enabled' if turn_on else 'work_module_disabled',
+                   {'before': {'work.enabled': before}, 'after': {'work.enabled': after}, 'authorization': authorization})
+
+
 def writable(conn):
     if not enabled(conn):
         raise ValueError('Shared work is not enabled. Existing permitted work remains readable.')
