@@ -1,0 +1,23 @@
+#inventory-interactive[hidden],#inventory-standard[hidden],#inventory-view-controls[hidden]{display:none}
+.inventory-toolbar{display:flex;align-items:end;gap:.75rem;flex-wrap:wrap}
+.inventory-toolbar label{flex:1 1 11rem;max-width:22rem}
+.inventory-toolbar select{max-width:100%;min-height:44px;background:var(--surface,#fff);color:var(--ink,#172b40)}
+#inventory-columns{margin:.75rem 0}
+.inventory-column-choices{display:flex;gap:1rem;flex-wrap:wrap}
+.supply-wrap .inventory-column-choices label{display:flex;gap:.4rem;align-items:center}
+.supply-wrap .inventory-column-choices input{width:auto;min-width:20px;min-height:20px}
+#inventory-grid{font:inherit;border-color:var(--border,#aaa);background:var(--surface,#fff);color:var(--ink,#172b40);max-width:100%}
+#inventory-grid .tabulator-header,#inventory-grid .tabulator-col,#inventory-grid .tabulator-footer{background:var(--surface-2,#eef3f7);color:var(--ink,#172b40);border-color:var(--border,#aaa)}
+#inventory-grid .tabulator-row{background:var(--surface,#fff);color:var(--ink,#172b40);border-color:var(--border,#aaa)}
+#inventory-grid .tabulator-row.tabulator-row-even{background:var(--surface-2,#f4f7fa)}
+#inventory-grid .tabulator-cell{white-space:normal;overflow-wrap:anywhere;padding:.7rem;border-color:var(--border,#aaa)}
+#inventory-grid .tabulator-cell p{margin:.4rem 0 0}
+#inventory-grid .tabulator-footer .tabulator-page{background:var(--surface,#fff);color:var(--ink,#172b40);min-height:44px}
+#inventory-grid .tabulator-page.active{outline:2px solid var(--accent,#17794b)}
+#inventory-grid[aria-busy=true] .tabulator-tableholder{visibility:hidden}
+#inventory-grid .tabulator-cell:focus-visible,#inventory-grid .tabulator-col:focus-visible{outline:3px solid var(--accent,#17794b);outline-offset:-3px}
+#inventory-grid .tabulator-tableholder{overflow-x:auto}
+@media(max-width:600px){.inventory-toolbar{display:block}.inventory-toolbar label{max-width:none}#inventory-grid .tabulator-footer .tabulator-pages{display:none}}
+
+
+.inventory-toolbar input[type=search]{min-height:44px;max-width:100%}

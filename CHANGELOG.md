@@ -1,8 +1,15 @@
-## 8.30 — October 24, 2026
+## 8.31 — October 24, 2026
 
 - Add an optional ChatGPT connection for a user's visible shared work and document status, with direct links back to Office Connect.
 - Require personal sign-in, password confirmation and limited read permission; allow the user to disconnect from Connected tools.
 - Exclude changes to records, attached files, document bodies and private task submissions. The connection is off until enabled for a hosted release.
+
+## 8.30 — October 24, 2026
+
+- Add an optional, read-only Tabulator inventory to Supply catalog with server-side search, unit/physical-stock/availability/active filters, sorting and 30-item pagination.
+- Reuse the established stock classifier and reservation totals; preserve unknown quantities, threshold equality and exact 64-bit totals. Inactive items remain restricted to current custodians/auditors.
+- Add private account-owned inventory views with CSRF and revision checks, plus formula-safe current-view CSV exports of all matching pages/visible columns, limited to 10,000 items without truncation.
+- Keep the standard catalog and item workflows available, including failure fallback. Add only an inventory-preference table, with no stock mutation, category field or new dependency.
 
 ## 8.29 — October 24, 2026
 

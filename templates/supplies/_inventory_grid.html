@@ -1,0 +1,26 @@
+<div id="inventory-view-controls" hidden><button type="button" id="inventory-toggle" aria-expanded="false" aria-controls="inventory-interactive">Interactive inventory</button>
+<p id="inventory-table-status" role="status" aria-live="polite"></p></div>
+<section id="inventory-interactive" data-url="/supplies/inventory-data" data-query="{{ query }}" data-inactive="{{ '1' if include_inactive else '0' }}" data-csrf="{{ csrf }}" aria-label="Interactive supply inventory" hidden>
+<p>Search, filter and sort all matching items. This table is read-only; item links open the existing item screen. Physical stock and availability after reservations use the existing stock-warning rules. Stock not recorded is different from a confirmed zero.</p>
+<details class="supply-panel" id="inventory-views"><summary>My inventory views</summary>
+<p>Save up to 10 personal views with applied filters, sorting, column choices and widths. Opening starts at page one and checks current access.</p>
+<div class="inventory-toolbar"><label><span id="inventory-view-label">Saved inventory view</span><select id="inventory-saved-view" aria-labelledby="inventory-view-label"><option value="">Choose a saved view</option></select></label><button type="button" id="inventory-open-view" disabled>Open view</button></div>
+<form id="inventory-save-view" class="inventory-toolbar"><label>View name <input id="inventory-view-name" maxlength="60" required></label><button id="inventory-create-view" disabled>Save new view</button><button type="button" id="inventory-update-view" disabled>Update selected view</button><button type="button" id="inventory-delete-view" disabled>Delete selected view</button></form>
+<p id="inventory-view-status" role="status" aria-live="polite"></p></details>
+<form id="inventory-filters" class="inventory-toolbar">
+<label>Inventory search<input type="search" name="q" maxlength="200" value="{{ query }}"></label>
+<label><span id="inventory-unit-label">Unit filter</span><select name="unit" aria-labelledby="inventory-unit-label"><option value="">All units</option>{% for unit in inventory_units %}<option value="{{ unit }}">{{ unit }}</option>{% endfor %}</select></label>
+<label><span id="inventory-physical-label">Physical stock filter</span><select name="physical" aria-labelledby="inventory-physical-label"><option value="">All physical states</option>{% for state in physical_states %}<option value="{{ state }}">{{ stock_labels[state] }}</option>{% endfor %}</select></label>
+<label><span id="inventory-available-label">Availability filter</span><select name="availability" aria-labelledby="inventory-available-label"><option value="">All availability states</option>{% for state in availability_states %}<option value="{{ state }}">{{ stock_labels[state] }}</option>{% endfor %}</select></label>
+<label><span id="inventory-active-label">Catalog status filter</span><select name="active" aria-labelledby="inventory-active-label"><option value="active">Active items</option>{% if can_maintain or can_audit %}<option value="all" {% if include_inactive %}selected{% endif %}>Include inactive items</option><option value="inactive">Inactive items only</option>{% endif %}</select></label>
+<label><span id="inventory-sort-label">Inventory sort</span><select id="inventory-sort" aria-labelledby="inventory-sort-label">{% for field,label in inventory_columns.items() %}<option value="{{ field }}:asc">{{ label }} ascending</option><option value="{{ field }}:desc">{{ label }} descending</option>{% endfor %}</select></label>
+<button type="submit">Apply filters</button><button type="button" id="inventory-reset">Reset table</button>
+</form>
+<p>Critical means physical stock below the critical level. Low available means available stock below that level; fully reserved means physical stock is positive but availability is zero. Threshold equality is not low. Missing quantities sort last. Units filter the existing catalog; item categories are not yet recorded.</p>
+<div class="inventory-toolbar"><button type="button" id="inventory-export" disabled>Export current inventory (CSV)</button></div>
+<p>Export includes all matching pages in the applied order and only visible columns. Narrow requests over 10,000 items. Unapplied choices do not affect export. Reset restores this page's initial catalog search and active-item scope.</p>
+<p id="inventory-export-status" role="status" aria-live="polite"></p>
+<details id="inventory-columns"><summary>Choose inventory columns</summary><div class="inventory-column-choices"></div></details>
+<p>Resize columns by dragging their edges. Use Inventory sort to sort with the keyboard. Quantities retain exact whole-number values.</p>
+<div id="inventory-grid" aria-label="Supply inventory records"></div>
+</section>
