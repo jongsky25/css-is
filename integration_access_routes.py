@@ -11,6 +11,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 
 import auth
 import integration_access as access
+import mcp_auth
 import ratelimit as rl
 import storage as st
 import tzutil as tz
@@ -38,9 +39,15 @@ def make_router(templates, get_conn):
                 row['status'] = 'Revoked' if row['revoked_at'] is not None else 'Expired' if row['expires_at']<=now else 'Active'
                 for field in ('issued_at','expires_at','last_used_at'):
                     row[field+'_label'] = datetime.fromtimestamp(row[field],timezone.utc).astimezone(tz.LOCAL_TZ).isoformat(timespec='minutes') if row[field] else 'Not used yet'
+            mcp_entries = [] if admin else mcp_auth.owner_grants(conn, request.state.user['id'])
+            for row in mcp_entries:
+                row['status'] = 'Revoked' if row['revoked_at'] is not None else 'Expired' if row['expires_at']<=now else 'Active'
+                for field in ('created_at','expires_at'):
+                    row[field+'_label'] = datetime.fromtimestamp(row[field],timezone.utc).astimezone(tz.LOCAL_TZ).isoformat(timespec='minutes')
             return templates.TemplateResponse(request,'integration_access.html',
                 {'show_scope':False,'entries':entries,'admin':admin,'error':error,'secret':secret,
-                 'csrf':csrf(request),'scopes':access.SCOPES,'next_cursor':next_cursor}, status_code=status,headers=private)
+                 'csrf':csrf(request),'scopes':access.SCOPES,'next_cursor':next_cursor,
+                 'mcp_entries':mcp_entries}, status_code=status,headers=private)
         except access.InvalidCredential:
             return HTMLResponse('Sign in with the required access to manage connected tools.',status_code=403,headers=private)
         finally:
@@ -122,5 +129,19 @@ def make_router(templates, get_conn):
     @router.post('/admin/integrations/{key}/revoke')
     async def admin_revoke(request: Request,key: str):
         return await remove(request,key,True)
+
+    @router.post('/account/mcp/{key}/revoke')
+    async def own_mcp_revoke(request: Request,key: str):
+        try:
+            await posted(request)
+            conn = get_conn()
+            try:
+                mcp_auth.revoke_owner_grant(conn, request.state.user['id'], key)
+            finally:
+                conn.close()
+        except ValueError:
+            return await asyncio.to_thread(screen, request,
+                error='Connection not found or form expired. Reload and try again.', status=400)
+        return RedirectResponse('/account/integrations',status_code=303,headers=private)
 
     return router
