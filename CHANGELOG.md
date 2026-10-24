@@ -1,3 +1,9 @@
+## 8.48 — October 24, 2026
+
+- Add bounded title/quarter discovery and individual merged-activity Type 2 scorecards under new surveys:activity_details:read consent and default-off CSS_MCP_ACTIVITY_DETAILS_ENABLED.
+- Share the source report's date/venue/organizer grouping; resolve representative or active member IDs without fallback to bureau totals. Exclude archived/pooled forms, speaker scores, comments, rosters and individual responses.
+- Preserve the full five-dimension detail scorecard, small-sample suppression and capacity refusals. Discovery returns metadata only, paginated at 25 records, and distinguishes empty/disabled states.
+
 ## 8.47 — October 24, 2026
 
 - Add an opt-in Apprise 2.0.1 private Telegram discussion-digest pilot with host-secret credentials, per-account opaque setup codes, independent cadence/history and disconnect controls.

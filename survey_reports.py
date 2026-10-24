@@ -1,6 +1,7 @@
 """Shared survey scoring rules and permission-checked aggregate projections."""
 from datetime import date, timedelta
 import calendar
+import dashboard_insights as di
 import os
 import pandas as pd
 from urllib.parse import urlencode
@@ -289,3 +290,107 @@ def resource_person_summary(conn, user, origin, resource_person_id, year):
                 osq_mean=osq.value, osq_scale='1–4', osq_answers=osq.n,
                 dimensions=[{'dimension': dim, 'mean': m.value, 'scale': '1–7', 'valid_item_answers': m.n}
                             for dim, m in dimensions])
+
+
+MAX_ACTIVITY_INSTANCES = 2000
+
+
+def _activity_catalog(conn, user):
+    user = permissions.actor(conn, user)
+    if not auth.can(user['role'], 'view'):
+        raise permissions.Denied('Report unavailable.')
+    if os.environ.get('CSS_MCP_ACTIVITY_DETAILS_ENABLED') != '1':
+        return user, None, 'disabled'
+    selected = conn.execute("SELECT id FROM form_instance WHERE survey_type IN (2,3) "
+                            "AND COALESCE(archived,0)=0 AND COALESCE(pooled,0)=0 LIMIT ?",
+                            (MAX_ACTIVITY_INSTANCES + 1,)).fetchall()
+    if len(selected) > MAX_ACTIVITY_INSTANCES:
+        return user, None, 'capacity_limit'
+    answered = {r[0] for r in conn.execute('''SELECT fi.id FROM form_instance fi
+        WHERE fi.survey_type=2 AND COALESCE(fi.archived,0)=0 AND COALESCE(fi.pooled,0)=0
+        AND EXISTS (SELECT 1 FROM response r JOIN answer a ON a.response_id=r.id
+                    WHERE r.form_instance_id=fi.id AND r.archived_at IS NULL)''')}
+    groups = [g for g in di.group_activity_instances(st.list_activity_instances(conn)).values()
+              if any(f['id'] in answered for f in g)]
+    return user, groups, None
+
+
+def _activity_identity(group, origin):
+    f2 = [f for f in group if f['survey_type'] == 2]
+    title = f2[0]['topic'] or 'Activity on ' + str(f2[0]['event_date'])
+    representative = min(f['id'] for f in group)
+    return {'activity_id': str(representative), 'title': title[:250],
+            'title_truncated': len(title) > 250, 'start_date': f2[0]['event_date'],
+            'end_date': max((f['end_date'] for f in group if f.get('end_date')), default=None),
+            'web_url': origin + f'/reports/activities/{representative}'}
+
+
+def find_survey_activities(conn, user, origin, year, quarter, query='', limit=10, offset=0):
+    if (type(year) is not int or not 1900 <= year <= 9998 or type(quarter) is not int or not 1 <= quarter <= 4
+            or type(limit) is not int or not 1 <= limit <= 25 or type(offset) is not int or not 0 <= offset <= MAX_ACTIVITY_INSTANCES
+            or not isinstance(query, str) or len(query) > 120):
+        raise ValueError('Use a valid year/quarter, up to 120 search characters and a page size of 1–25.')
+    first, last = quarter * 3 - 2, quarter * 3
+    start = date(year, first, 1).isoformat()
+    end = date(year, last, calendar.monthrange(year, last)[1]).isoformat()
+    _, groups, reason = _activity_catalog(conn, user)
+    result = {'as_of': tz.now_iso(), 'date_basis': 'activity_start_date', 'start_date': start, 'end_date': end}
+    if reason:
+        return dict(result, availability='not_available', reason=reason)
+    needle = query.strip().casefold()
+    items = [_activity_identity(g, origin) for g in groups
+             if start <= (g[0]['event_date'] or '') <= end
+             and needle in str(next(f for f in g if f['survey_type'] == 2)['topic']
+                               or 'Activity on ' + str(g[0]['event_date'])).casefold()]
+    items.sort(key=lambda i: (i['start_date'], int(i['activity_id'])), reverse=True)
+    return dict(result, availability='available', data=items[offset:offset + limit],
+                next_offset=offset + limit if len(items) > offset + limit else None,
+                note='Metadata discovery includes activities without a usable score; their detail report may be unavailable. Pagination is a fresh snapshot per call.')
+
+
+def activity_detail(conn, user, origin, activity_id):
+    if type(activity_id) is not int or not 1 <= activity_id <= 9223372036854775807:
+        raise ValueError('Choose a positive activity or member form ID.')
+    _, groups, reason = _activity_catalog(conn, user)
+    result = {'as_of': tz.now_iso(), 'survey_type': 2, 'scope': 'one_merged_activity',
+              'date_basis': 'activity_start_date', 'minimum_sample': MIN_SAMPLE}
+    if reason:
+        return dict(result, availability='not_available', reason=reason)
+    group = next((g for g in groups if any(f['id'] == activity_id for f in g)), None)
+    if group is None:
+        raise permissions.Denied('Activity not found or unavailable to you.')
+    result.update(_activity_identity(group, origin), availability='available')
+    f2_ids = [f['id'] for f in group if f['survey_type'] == 2]
+    if len(f2_ids) > 500:
+        return dict(result, availability='not_available', reason='capacity_limit')
+    placeholders = ','.join('?' for _ in f2_ids)
+    selected = conn.execute('SELECT r.id,r.form_instance_id FROM response r WHERE r.archived_at IS NULL '
+                            'AND r.form_instance_id IN (' + placeholders + ') ORDER BY r.id LIMIT ?',
+                            (*f2_ids, MAX_RESPONSES + 1)).fetchall()
+    if len(selected) > MAX_RESPONSES:
+        return dict(result, availability='not_available', reason='capacity_limit')
+    ids = [r[0] for r in selected]
+    frame = _survey_frame(conn, ids, 2)
+    if frame is None:
+        return dict(result, availability='not_available', reason='capacity_limit')
+    mapping = dict(selected)
+    frame['form_instance_id'] = frame['response_id'].map(mapping)
+    block = servqual_block(frame, eng.DIM_MAP_FORM2)
+    result.update(submissions=len(ids), report_submissions=block['respondents'], rated_respondents=block['overall']['n'])
+    if not ids:
+        return dict(result, state='no_matching_responses')
+    report = di.activity_servqual(frame, f2_ids)
+    if report is None:
+        return dict(result, state='no_valid_ratings')
+    if eng.overall_perception(frame, di.EVENT_DIMS_FORM2).value is None:
+        return dict(result, availability='not_available', reason='source_report_unavailable',
+                    note='The existing activity detail page needs valid event-dimension ratings.')
+    valid = eng.valid_answers(frame)
+    valid = valid[valid['item_id'].isin(['A', *eng.SERVQUAL_ITEMS, 'C'])]
+    counts = valid.groupby('item_id', observed=True)['response_id'].nunique()
+    if block['overall']['n'] < MIN_SAMPLE or any(0 < n < MIN_SAMPLE for n in counts):
+        return dict(result, state='insufficient_sample')
+    return dict(result, state='rated', overall_mean=report['average'], expectation_mean=report['expectation'],
+                osq_mean=report['osq'], gap=report['servqual'],
+                scoring='Full five-dimension SERVQUAL scorecard from the activity detail page, not its event-only card headline. A/B: 1–7; C: 1–4. Missing/N/A/invalid answers excluded.',
+                dimensions=[{'dimension': d['key'], 'mean': d['value'], 'valid_item_answers': d['n']} for d in report['dims']])
