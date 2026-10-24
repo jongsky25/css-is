@@ -286,6 +286,18 @@ def build_server(get_conn, origin):
             return {'data': [_web(origin, api.task_read(row)) for row in rows], 'next_before': cursor}
         return await perform('work:read', 'work', run)
 
+    @server.tool(title='Annual resource-person survey summary', annotations=READ_ONLY)
+    async def get_resource_person_survey_summary(resource_person_id: int, year: int) -> dict:
+        """Read one currently visible person's annual Type 3 survey aggregates.
+
+        Uses activity start year and the person-dashboard quality index. Current
+        hidden-person/Director restrictions apply. No rankings, peer comparisons,
+        comments, individual answers or contact details; small samples are withheld.
+        """
+        return await perform('surveys:resource_persons:read', 'surveys_resource_persons',
+                             lambda conn, user: survey_reports.resource_person_summary(
+                                 conn, user, origin, resource_person_id, year))
+
     @server.tool(title='Quarterly activity satisfaction summary', annotations=READ_ONLY)
     async def get_activity_survey_summary(year: int, quarter: int) -> dict:
         """Bureau-wide Type 2 survey aggregates by activity start quarter (1–4).

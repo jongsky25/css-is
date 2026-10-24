@@ -1,3 +1,9 @@
+## 8.46 — October 24, 2026
+
+- Add one-person annual Type 3 resource-person survey summaries under separate surveys:resource_persons:read consent and default-off CSS_MCP_RESOURCE_PERSON_SURVEYS_ENABLED.
+- Share the current person-profile hidden/Director visibility predicate with the named report routes; check it before returning any identity metadata.
+- Reuse the person dashboard's normalized quality index and Type 3 dimension map; exclude respondents, comments, contacts, rankings and other survey types. Preserve small-sample and capacity refusal rules without partial scores.
+
 ## 8.45 — October 24, 2026
 
 - Add bureau-wide quarterly Type 2 satisfaction summaries under separate surveys:activities:read consent and a default-off CSS_MCP_ACTIVITY_SURVEYS_ENABLED switch.
