@@ -10,7 +10,7 @@ The user wants a broad set of worthwhile candidates, explained and evaluated one
 
 ## Resume here
 
-**Current topic: CI time budget and current-view CSV export are complete, merged in PR #432 and verified live in Office Connect v8.22. Select the next enhancement only when requested.**
+**Current topic: lead and deadline date-range filters are implemented in PR #436, pending required CI, merge and deployment verification. The user authorized this next enhancement with “do the next”.**
 
 **Latest delivery — CI time first, then current-view export:** [PR #432](https://github.com/jongsky25/css-is/pull/432) merged as 1a3b81701bbb5b37a62eb6a9d0db5afb9729e6fb (v8.22). Commit d7cf42f raised test jobs from 30 to 45 minutes before the export implementation, preserving normal/shuffled suites, dependency audits, zero-skip report checks and AI evidence gates. The extra budget accommodates slow OCR/browser setup without cancelling the final checks.
 
@@ -42,7 +42,7 @@ A 45-minute CI budget proposal was prepared in [PR #429](https://github.com/jong
 
 **Obsolete deploy safely cancelled:** v8.20 workflow 39986164250 attempts 1 and 2 hit the 30-minute normal-job limit after slow setup; attempt 1 printed all 6,190 tests passed before cancellation interrupted report gates, and attempt 2 reached 94% without a reported failure. Attempt 3 was queued behind newer v8.21. The GitHub connector lacked a cancel tool and local gh API access was blocked by the environment network policy. An isolated operational branch `ops/clear-obsolete-deploy-20261023`, commit 0f1c179, added a no-permission, no-deploy queue job using the existing `hf-deploy` concurrency group with `cancel-in-progress: false`. [Queue workflow 39996976941](https://github.com/jongsky25/css-is/actions/runs/39996976941) replaced the obsolete pending v8.20 retry through native queue behavior, while preserving the active v8.21 release. Run 39986164250 is confirmed cancelled. **No manual cancellation is required. Do not merge this operational workflow into main.**
 
-**Next action:** choose the next feature when the user requests it. CI's 45-minute budget and matching-view export are delivered in v8.22. Remaining options include lead/date filters, grouped workflow/lead views, reuse in Supplies or Apache ECharts dashboards. Improving dependency setup and preventing obsolete deployment reruns remain operational recommendations, not selected work. Preserve intervening main releases, and check whether a newer release has taken over before retrying a deployment.
+**Next action:** complete [PR #436](https://github.com/jongsky25/css-is/pull/436). Lead/Unresolved and inclusive optional Due from / Due through filters share the authorized grid/export query, persist in personal views and default to unrestricted settings for old views. Lead choices come from permitted queue/search matches, including inactive assignees; stale saved lead IDs remain selected without broadening. Date controls synchronize restored/reset values with the shared date display. Local domain, route, browser and release checks passed. Both full CI orders and a live-version deployment check are required before calling this delivered. Preserve intervening releases: PR #435 is also proposing v8.25, so recheck current main and reconcile the version if it merges first. Other enhancements and the obsolete-rerun guard remain recommendations.
 
 The next session should:
 1. Read this file and the three linked catalogs.
@@ -206,5 +206,6 @@ These are findings from the research date; verify selected versions before adopt
 | 2026-10-23 | User authorized saved views and deadline highlighting after deployment verification; PR #427 merged, both CI orders and post-merge gates passed, and live v8.18 was verified in workflow 39962997557. |
 | 2026-10-23 | User authorized CI time first, then current-view export; implemented in [PR #432](https://github.com/jongsky25/css-is/pull/432), merged and verified live as v8.22 on October 24. |
 | 2026-10-24 | Verified v8.22 in workflow 40042094743 after both 6,244-test orders and all release gates passed. CI allows 45 minutes, current-view CSV is live, and the audit-blocking pypdf advisories are patched in 6.21.2. No further implementation is selected. |
+| 2026-10-24 | User authorized the next feature, lead and deadline date-range filters. Implemented in [PR #436](https://github.com/jongsky25/css-is/pull/436), pending full CI, merge and live deployment verification. |
 
 When work resumes, record accepted/rejected candidates, rationale, implementation/PR links, verification results and the next topic here. Preserve the distinction between a researched recommendation, an approved implementation and a deployed feature.
