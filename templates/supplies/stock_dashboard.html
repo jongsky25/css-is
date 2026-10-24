@@ -1,0 +1,34 @@
+{% extends 'supplies/base.html' %}
+{% block head %}{{ super() }}
+<link rel="stylesheet" href="/static/css/document-dashboard.css?v=8.34">
+<script src="/static/vendor/echarts/echarts.min.js?v=6.1.0" defer></script>
+<script src="/static/js/supplies-stock-dashboard.js?v=8.34" defer></script>
+{% endblock %}
+{% block supplies_content %}
+<section id="stock-dashboard" aria-label="Supplies stock dashboard">
+<h1>Supplies stock dashboard</h1>
+<form method="get" class="dashboard-filters">
+<label>Search items<input type="search" name="q" maxlength="200" value="{{ dashboard.scope.q }}"></label>
+<label><span id="stock-unit-label">Dashboard unit</span><select name="unit" aria-labelledby="stock-unit-label"><option value="">All units</option>{% if dashboard.scope.unit and dashboard.scope.unit not in inventory_units %}<option value="{{ dashboard.scope.unit }}" selected>Selected unit (no matching items)</option>{% endif %}{% for unit in inventory_units %}<option value="{{ unit }}" {% if dashboard.scope.unit==unit %}selected{% endif %}>{{ unit }}</option>{% endfor %}</select></label>
+<label><span id="stock-active-label">Dashboard catalog status</span><select name="active" aria-labelledby="stock-active-label"><option value="active">Active items</option>{% if can_maintain or can_audit %}<option value="all" {% if dashboard.scope.active=='all' %}selected{% endif %}>Include inactive items</option><option value="inactive" {% if dashboard.scope.active=='inactive' %}selected{% endif %}>Inactive items only</option>{% endif %}</select></label>
+<button>Refresh dashboard</button>
+</form>
+<p><strong>{{ dashboard.total }} matching catalog items you can access</strong> · Snapshot {{ dashboard.as_of }}. Counts cover all matching pages and count items, not quantities across different units. Chart links add the matching physical-stock or availability filter to the inventory table.</p>
+<p><a href="{{ dashboard.inventory_url }}">Open matching interactive inventory</a></p>
+<p id="stock-chart-status" role="status" aria-live="polite">Linked count tables are available below. Charts enhance those same counts when they load.</p>
+{% for key,title in [('physical','Physical stock'),('availability','Availability after reservations')] %}
+<section class="supply-panel dashboard-panel" aria-labelledby="stock-{{ key }}-title"><h2 id="stock-{{ key }}-title">{{ title }}</h2>
+<div id="stock-{{ key }}-chart" class="dashboard-chart" aria-hidden="true" hidden></div>
+<div class="dashboard-counts" role="region" aria-label="{{ title }} counts" tabindex="0"><table><caption>{{ title }} across all matching pages</caption><thead><tr><th scope="col">State</th><th scope="col">Items</th></tr></thead><tbody>
+{% for row in dashboard[key] %}<tr><th scope="row">{% if row.count %}<a href="{{ row.href }}">{{ row.label }}</a>{% else %}{{ row.label }}{% endif %}</th><td>{{ row.count }}</td></tr>{% endfor %}</tbody></table></div></section>
+{% endfor %}
+<p>Unrecorded stock is different from a confirmed zero. Critical means positive physical stock below the critical level. Low available means positive availability below that level; fully reserved means physical stock is positive but availability is zero. Equality with the critical level is not low. Inactive items are counted separately.</p>
+<section class="supply-panel dashboard-counts" aria-label="Items below critical level">
+<h2>Recorded active items below critical level</h2>
+<p>{{ dashboard.low_count }} matching items · page {{ dashboard.page }} of {{ dashboard.last_page }}. This list compares on-hand stock with the critical level; a confirmed zero at a zero critical level is not below threshold. Unknown and inactive stock are excluded. Targets are existing catalog settings, not purchase recommendations.</p>
+<table><caption>Below-critical stock and current catalog targets</caption><thead><tr>{% for label in ['Item','Unit','On hand','Reserved','Available','Critical level','Target level'] %}<th scope="col">{{ label }}</th>{% endfor %}</tr></thead><tbody>
+{% for item in dashboard.low_items %}<tr><th scope="row"><a href="{{ item.href }}">{{ item.code }} — {{ item.description }}</a></th><td>{{ item.unit }}</td><td>{{ item.on_hand }}</td><td>{{ item.reserved }}</td><td>{{ item.available }}</td><td>{{ item.critical_level }}</td><td>{{ item.target_level if item.target_level is not none else 'Not set' }}</td></tr>{% else %}<tr><td colspan="7">No recorded active items below their critical level match this scope.</td></tr>{% endfor %}</tbody></table>
+<nav class="supply-actions" aria-label="Below-critical pages">{% if dashboard.page>1 %}<a href="{{ dashboard.previous }}">Previous below-critical page</a>{% endif %}{% if dashboard.page<dashboard.last_page %}<a href="{{ dashboard.next }}">Next below-critical page</a>{% endif %}</nav></section>
+</section>
+<script id="stock-dashboard-data" type="application/json">{{ {'physical':dashboard.physical,'availability':dashboard.availability}|tojson }}</script>
+{% endblock %}

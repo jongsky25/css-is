@@ -100,6 +100,8 @@
       table = new Tabulator(element, {
         layout: 'fitColumns', maxHeight: '65vh', renderVertical: 'basic', placeholder: 'No matching items.',
         pagination: true, paginationMode: 'remote', paginationSize: 30, paginationButtonCount: 3,
+        paginationInitialPage: saved ? 1 : (new URL(window.location.href).searchParams.get('interactive') === '1'
+          ? Number(new URL(window.location.href).searchParams.get('page')) || 1 : 1),
         paginationOutOfRange: 'last', sortMode: 'remote', columnHeaderSortMulti: false,
         initialSort: [{column: saved?.sort || 'code', dir: saved?.dir || 'asc'}], ajaxURL: panel.dataset.url,
         ajaxRequestFunc: request, dataLoaderError: 'Unable to load items.',
@@ -137,9 +139,20 @@
     filters.reset(); applied = defaultFilters();
     for (const [field, value] of Object.entries(applied)) filters.elements[field].value = value;
   }
+  function restoreIncoming() {
+    const incoming = new URL(window.location.href).searchParams;
+    if (incoming.get('interactive') !== '1') return false;
+    applied = Object.fromEntries(filterFields.map(field => [field, incoming.get(field) || (field === 'active' ? 'active' : '')]));
+    const unit = filters.elements.unit;
+    if (applied.unit && !Array.from(unit.options).some(option => option.value === applied.unit)) {
+      unit.add(new Option('Selected unit (no matching items)', applied.unit));
+    }
+    for (const [field, value] of Object.entries(applied)) filters.elements[field].value = value;
+    return true;
+  }
   toggle.addEventListener('click', () => {
     if (table) showStandard();
-    else { resetSelection(); resetFilters(); start(); loadViews().catch(viewError); }
+    else { if (!restoreIncoming()) { resetSelection(); resetFilters(); } start(); loadViews().catch(viewError); }
   });
   filters.addEventListener('submit', event => {
     event.preventDefault();
@@ -169,6 +182,9 @@
     viewSelect.value = ''; viewName.value = ''; viewStatus.textContent = '';
     const url = new URL(window.location.href);
     url.searchParams.delete('saved_view');
+    for (const field of ['interactive', 'unit', 'physical', 'availability', 'active', 'page']) url.searchParams.delete(field);
+    url.searchParams.set('q', panel.dataset.query);
+    url.searchParams.set('inactive', panel.dataset.inactive);
     history.replaceState(null, '', url);
     updateViewButtons();
   }
@@ -281,4 +297,5 @@
     sort.value = view.state.sort + ':' + view.state.dir;
     start(view.state);
   }).catch(error => { status.textContent = error.message; });
+  else if (restoreIncoming()) { start(); loadViews().catch(viewError); }
 })();

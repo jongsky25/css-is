@@ -18,10 +18,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "8.33"
+APP_VERSION = "8.34"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "8.34",
+        "date": "October 24, 2026",
+        "summary": "See Supplies stock charts and the items below critical level.",
+        "changes": [
+            "View physical-stock and availability counts for your matching catalog items.",
+            "Open matching inventory tables and exports from charts or linked counts.",
+            "Review recorded active items below critical level with their current quantities and targets."
+        ],
+    },
     {
         "version": "8.33",
         "date": "October 24, 2026",
