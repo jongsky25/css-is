@@ -1,3 +1,9 @@
+## 8.27 — October 24, 2026
+
+- Add a seven-day provider summary to the admin AI page using existing interaction metadata across the full window, separate from the 200-row log browser.
+- Show served, rejected and other fallback counts, voluntary feedback counts, recorded mean latency and reported input/output tokens with sample counts.
+- Exclude prompts, replies and user details from the summary, and label partial latency/token coverage and feedback bias. No schema migration, provider change or new dependency.
+
 ## 8.26 — October 24, 2026
 
 - Show a collapsible source list beneath verified survey answers, including stable source IDs, as-of dates and valid-rating counts when relevant.
