@@ -1,3 +1,9 @@
+## 8.51 — October 24, 2026
+
+- Add compare_csm_months for a selected bureau-wide Type 1 submission month versus the immediately preceding month, under separate surveys:csm_trends:read consent and default-off CSS_MCP_CSM_TRENDS_ENABLED.
+- Preserve the official pooled SQD1–SQD8 overall, individual SQD percentages, source links and existing small-sample rules. Publish changes in percentage points from displayed report percentages, not percent growth.
+- Refuse more than 5,000 responses or 100,000 SQD-answer rows per month; withhold both scorecards and all changes if either month is empty, unrated, small or over capacity. No individual responses, comments, service/demographic filters or causal claims.
+
 ## 8.50 — October 24, 2026
 
 - Add compare_unit_activity_surveys for a selected unit's quarter versus its immediately preceding quarter, under new surveys:unit_trends:read consent and default-off CSS_MCP_UNIT_TRENDS_ENABLED.

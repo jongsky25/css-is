@@ -122,3 +122,7 @@ Add current reporting-unit discovery and quarterly summaries for one lead unit a
 ### Consecutive-quarter unit comparison implementation — v8.50
 
 Add one selected unit's Type 2 quarter versus its immediately preceding quarter. Use the existing unit attribution and source scorecards within one authorization snapshot; publish original-scale-point changes only when both periods pass all scoring/suppression/capacity rules. New `surveys:unit_trends:read` and independent default-off `CSS_MCP_UNIT_TRENDS_ENABLED` preserve older grants. No arbitrary periods, peers, rankings or causal claims. See the [comparison pilot contract](MCP_READ_ADAPTER.md#consecutive-quarter-unit-comparisons--v850). Local implementation does not establish hosted acceptance. Broader trends and writes remain later increments.
+
+### Consecutive-month Type 1 CSM comparisons — v8.51
+
+Add a fixed bureau-wide submission month versus its immediately preceding month. Reuse official ARTA CSM predicates, pooled SQD1–SQD8 overall and per-item denominators; return percentage-point changes from the published one-decimal report values only when both periods pass small-sample/capacity checks. New `surveys:csm_trends:read` consent and independent default-off `CSS_MCP_CSM_TRENDS_ENABLED` preserve older grants. No service/demographic filters, comments, identities or causal claims. See the [monthly comparison pilot](MCP_READ_ADAPTER.md#consecutive-month-csm-comparisons--v851). Hosted acceptance, including previous pilots, remains pending; broader breakdowns and writes remain subsequent increments.
