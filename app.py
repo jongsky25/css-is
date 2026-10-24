@@ -1170,6 +1170,26 @@ def _ai_action_current(request, conn, user, action_key, archive_candidates):
                  or ai_archive_candidates(conn, current) == archive_candidates))
 
 
+def _ai_route_current(request, conn, user, catalog, *, help_sections=None):
+    """Recheck the registered actor and offered links after provider I/O."""
+    payload = auth.parse_token(request.cookies.get(auth.COOKIE_NAME))
+    current = st.session_actor(conn, payload) if payload else None
+    if (current is None or any(current[k] != user[k] for k in ("id", "username", "role"))
+            or not ai.mode_at_least(conn, "router") or not ai.feature_enabled(conn, "nl_router")):
+        return False
+    chief = st.user_is_approving_chief(conn, current)
+    current["bureau_access"] = st.bureau_access_of(conn, current)
+    current["room_approver"] = rooms.is_room_admin(conn, current)
+    if (chief != request.state.is_chief
+            or current["bureau_access"] != user.get("bureau_access")
+            or current["room_approver"] != user.get("room_approver")
+            or ai_route_catalog(current, chief) != catalog):
+        return False
+    return (help_sections is None or
+            (ai.mode_at_least(conn, "answers") and ai.feature_enabled(conn, "nl_help")
+             and help_catalog_for(current, chief) == help_sections))
+
+
 def _ai_validate_action_args(action_key, args_in, archive_candidates):
     """Server-side allow-list check on the model's proposed `args` for one
     action — mirrors the real endpoint's own validation, never trusts the
@@ -6381,12 +6401,22 @@ async def api_ai_route(request: Request):
             })
 
         if kind == "help" and include_help:
-            section = help_by_key.get(parsed.get("help_key"))
+            help_key = parsed.get("help_key")
+            section = help_by_key.get(help_key) if isinstance(help_key, str) else None
             if not section or confidence < AI_ROUTER_CONFIDENCE_FLOOR:
                 st.update_ai_interaction_outcome(conn, interaction_id, "rejected_validation")
                 return JSONResponse({"kind": "fallback"})
-            st.update_ai_interaction_outcome(conn, interaction_id, "ok",
-                                             confidence=confidence, feature="nl_help")
+            st.update_ai_interaction_outcome(conn, interaction_id, "rejected_validation")
+            conn.execute("BEGIN IMMEDIATE")
+            try:
+                if not _ai_route_current(request, conn, user, catalog, help_sections=help_sections):
+                    return JSONResponse({"kind": "fallback"})
+                st.update_ai_interaction_outcome(conn, interaction_id, "ok",
+                                                 confidence=confidence, feature="nl_help", commit=False)
+                conn.commit()
+            finally:
+                if conn.in_transaction:
+                    conn.rollback()
             return JSONResponse({
                 "kind": "help", "label": section["label"],
                 "text": " ".join(s["body"] for s in section["steps"][:2]),
@@ -6394,17 +6424,29 @@ async def api_ai_route(request: Request):
                 "interaction_id": interaction_id,
             })
 
-        dest = by_key.get(parsed.get("destination"))
+        destination = parsed.get("destination")
+        dest = by_key.get(destination) if kind == "navigate" and isinstance(destination, str) else None
         if not dest or confidence < AI_ROUTER_CONFIDENCE_FLOOR:
             st.update_ai_interaction_outcome(conn, interaction_id, "rejected_validation")
             return JSONResponse({"kind": "fallback"})
 
-        st.update_ai_interaction_outcome(conn, interaction_id, "ok",
-                                         destination=dest["key"], confidence=confidence)
+        st.update_ai_interaction_outcome(conn, interaction_id, "rejected_validation")
+        conn.execute("BEGIN IMMEDIATE")
+        try:
+            if not _ai_route_current(request, conn, user, catalog):
+                return JSONResponse({"kind": "fallback"})
+            st.update_ai_interaction_outcome(conn, interaction_id, "ok",
+                                             destination=dest["key"], confidence=confidence, commit=False)
+            conn.commit()
+        finally:
+            if conn.in_transaction:
+                conn.rollback()
+        reason = parsed.get("reason")
         return JSONResponse({
             "kind": "navigate", "destination": dest["key"], "label": dest["label"],
             "hint": dest["hint"], "url": dest["url"], "confidence": confidence,
-            "reason": (parsed.get("reason") or "")[:200],
+            "reason": reason[:200] if isinstance(reason, str) and "<" not in reason and ">" not in reason
+                      and not any(ord(c) < 32 for c in reason) else "",
             "interaction_id": interaction_id,
         })
     finally:

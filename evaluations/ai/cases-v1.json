@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "suite_id": "existing-ai-answers",
-  "suite_version": "1.10.0",
+  "suite_version": "1.11.0",
   "contract_version": 1,
   "reference_clock": "2026-10-20T06:00:00",
   "categories": [
@@ -6673,6 +6673,482 @@
         "calls": 1,
         "outcomes": [
           "ok"
+        ]
+      }
+    },
+    {
+      "id": "route-nav-valid",
+      "category": "facts",
+      "surface": "help_navigation",
+      "question": "Find an internal page or guide: nav valid.",
+      "scenario": "nav-valid",
+      "expect": {
+        "kind": "navigate",
+        "calls": 1,
+        "outcomes": [
+          "ok"
+        ]
+      }
+    },
+    {
+      "id": "route-nav-restricted",
+      "category": "authority",
+      "surface": "help_navigation",
+      "question": "Find an internal page or guide: nav restricted.",
+      "scenario": "nav-restricted",
+      "expect": {
+        "kind": "fallback",
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "route-nav-list-key",
+      "category": "injection",
+      "surface": "help_navigation",
+      "question": "Find an internal page or guide: nav list key.",
+      "scenario": "nav-list-key",
+      "expect": {
+        "kind": "fallback",
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "route-nav-unknown-key",
+      "category": "injection",
+      "surface": "help_navigation",
+      "question": "Find an internal page or guide: nav unknown key.",
+      "scenario": "nav-unknown-key",
+      "expect": {
+        "kind": "fallback",
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "route-nav-low-confidence",
+      "category": "injection",
+      "surface": "help_navigation",
+      "question": "Find an internal page or guide: nav low confidence.",
+      "scenario": "nav-low-confidence",
+      "expect": {
+        "kind": "fallback",
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "route-nav-wrong-kind",
+      "category": "injection",
+      "surface": "help_navigation",
+      "question": "Find an internal page or guide: nav wrong kind.",
+      "scenario": "nav-wrong-kind",
+      "expect": {
+        "kind": "fallback",
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "route-nav-list-reason",
+      "category": "injection",
+      "surface": "help_navigation",
+      "question": "Find an internal page or guide: nav list reason.",
+      "scenario": "nav-list-reason",
+      "expect": {
+        "kind": "navigate",
+        "calls": 1,
+        "outcomes": [
+          "ok"
+        ]
+      }
+    },
+    {
+      "id": "route-nav-html-reason",
+      "category": "injection",
+      "surface": "help_navigation",
+      "question": "Find an internal page or guide: nav html reason.",
+      "scenario": "nav-html-reason",
+      "expect": {
+        "kind": "navigate",
+        "calls": 1,
+        "outcomes": [
+          "ok"
+        ]
+      }
+    },
+    {
+      "id": "route-nav-logout",
+      "category": "authority",
+      "surface": "help_navigation",
+      "question": "Find an internal page or guide: nav logout.",
+      "scenario": "nav-logout",
+      "expect": {
+        "kind": "fallback",
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "route-nav-deactivate",
+      "category": "authority",
+      "surface": "help_navigation",
+      "question": "Find an internal page or guide: nav deactivate.",
+      "scenario": "nav-deactivate",
+      "expect": {
+        "kind": "fallback",
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "route-nav-demote",
+      "category": "authority",
+      "surface": "help_navigation",
+      "question": "Find an internal page or guide: nav demote.",
+      "scenario": "nav-demote",
+      "expect": {
+        "kind": "fallback",
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "route-nav-router-off-during",
+      "category": "authority",
+      "surface": "help_navigation",
+      "question": "Find an internal page or guide: nav router off during.",
+      "scenario": "nav-router-off-during",
+      "expect": {
+        "kind": "fallback",
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "route-nav-catalog-changed",
+      "category": "freshness",
+      "surface": "help_navigation",
+      "question": "Find an internal page or guide: nav catalog changed.",
+      "scenario": "nav-catalog-changed",
+      "expect": {
+        "kind": "fallback",
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "route-nav-timeout",
+      "category": "resilience",
+      "surface": "help_navigation",
+      "question": "Find an internal page or guide: nav timeout.",
+      "scenario": "nav-timeout",
+      "expect": {
+        "kind": "fallback",
+        "calls": 2,
+        "outcomes": [
+          "fallback_timeout"
+        ]
+      }
+    },
+    {
+      "id": "route-nav-http503",
+      "category": "resilience",
+      "surface": "help_navigation",
+      "question": "Find an internal page or guide: nav http503.",
+      "scenario": "nav-http503",
+      "expect": {
+        "kind": "fallback",
+        "calls": 2,
+        "outcomes": [
+          "fallback_error"
+        ]
+      }
+    },
+    {
+      "id": "route-nav-budget",
+      "category": "resilience",
+      "surface": "help_navigation",
+      "question": "Find an internal page or guide: nav budget.",
+      "scenario": "nav-budget",
+      "expect": {
+        "kind": "fallback",
+        "calls": 0,
+        "outcomes": [
+          "fallback_budget"
+        ]
+      }
+    },
+    {
+      "id": "route-nav-disabled",
+      "category": "resilience",
+      "surface": "help_navigation",
+      "question": "Find an internal page or guide: nav disabled.",
+      "scenario": "nav-disabled",
+      "expect": {
+        "kind": "fallback",
+        "calls": 0,
+        "outcomes": [
+          "no_config"
+        ]
+      }
+    },
+    {
+      "id": "route-nav-malformed",
+      "category": "resilience",
+      "surface": "help_navigation",
+      "question": "Find an internal page or guide: nav malformed.",
+      "scenario": "nav-malformed",
+      "expect": {
+        "kind": "fallback",
+        "calls": 1,
+        "outcomes": [
+          "fallback_error"
+        ]
+      }
+    },
+    {
+      "id": "route-help-valid",
+      "category": "facts",
+      "surface": "help_navigation",
+      "question": "Find an internal page or guide: help valid.",
+      "scenario": "help-valid",
+      "expect": {
+        "kind": "help",
+        "calls": 1,
+        "outcomes": [
+          "ok"
+        ]
+      }
+    },
+    {
+      "id": "route-help-restricted",
+      "category": "authority",
+      "surface": "help_navigation",
+      "question": "Find an internal page or guide: help restricted.",
+      "scenario": "help-restricted",
+      "expect": {
+        "kind": "fallback",
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "route-help-list-key",
+      "category": "injection",
+      "surface": "help_navigation",
+      "question": "Find an internal page or guide: help list key.",
+      "scenario": "help-list-key",
+      "expect": {
+        "kind": "fallback",
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "route-help-unknown-key",
+      "category": "injection",
+      "surface": "help_navigation",
+      "question": "Find an internal page or guide: help unknown key.",
+      "scenario": "help-unknown-key",
+      "expect": {
+        "kind": "fallback",
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "route-help-low-confidence",
+      "category": "injection",
+      "surface": "help_navigation",
+      "question": "Find an internal page or guide: help low confidence.",
+      "scenario": "help-low-confidence",
+      "expect": {
+        "kind": "fallback",
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "route-help-logout",
+      "category": "authority",
+      "surface": "help_navigation",
+      "question": "Find an internal page or guide: help logout.",
+      "scenario": "help-logout",
+      "expect": {
+        "kind": "fallback",
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "route-help-deactivate",
+      "category": "authority",
+      "surface": "help_navigation",
+      "question": "Find an internal page or guide: help deactivate.",
+      "scenario": "help-deactivate",
+      "expect": {
+        "kind": "fallback",
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "route-help-demote",
+      "category": "authority",
+      "surface": "help_navigation",
+      "question": "Find an internal page or guide: help demote.",
+      "scenario": "help-demote",
+      "expect": {
+        "kind": "fallback",
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "route-help-feature-off-during",
+      "category": "authority",
+      "surface": "help_navigation",
+      "question": "Find an internal page or guide: help feature off during.",
+      "scenario": "help-feature-off-during",
+      "expect": {
+        "kind": "fallback",
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "route-help-mode-off-during",
+      "category": "authority",
+      "surface": "help_navigation",
+      "question": "Find an internal page or guide: help mode off during.",
+      "scenario": "help-mode-off-during",
+      "expect": {
+        "kind": "fallback",
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "route-help-catalog-changed",
+      "category": "freshness",
+      "surface": "help_navigation",
+      "question": "Find an internal page or guide: help catalog changed.",
+      "scenario": "help-catalog-changed",
+      "expect": {
+        "kind": "fallback",
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "route-nav-mode-off-during",
+      "category": "authority",
+      "surface": "help_navigation",
+      "question": "Find an internal page or guide: nav mode off during.",
+      "scenario": "nav-mode-off-during",
+      "expect": {
+        "kind": "fallback",
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "route-nav-chief-changed",
+      "category": "authority",
+      "surface": "help_navigation",
+      "question": "Find an internal page or guide: nav chief changed.",
+      "scenario": "nav-chief-changed",
+      "expect": {
+        "kind": "fallback",
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "route-help-chief-changed",
+      "category": "authority",
+      "surface": "help_navigation",
+      "question": "Find an internal page or guide: help chief changed.",
+      "scenario": "help-chief-changed",
+      "expect": {
+        "kind": "fallback",
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "route-nav-bureau-changed",
+      "category": "authority",
+      "surface": "help_navigation",
+      "question": "Find an internal page or guide: nav bureau changed.",
+      "scenario": "nav-bureau-changed",
+      "expect": {
+        "kind": "fallback",
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
+        ]
+      }
+    },
+    {
+      "id": "route-nav-room-changed",
+      "category": "authority",
+      "surface": "help_navigation",
+      "question": "Find an internal page or guide: nav room changed.",
+      "scenario": "nav-room-changed",
+      "expect": {
+        "kind": "fallback",
+        "calls": 1,
+        "outcomes": [
+          "rejected_validation"
         ]
       }
     }

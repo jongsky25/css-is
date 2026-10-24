@@ -1,3 +1,10 @@
+## 8.23 — October 23, 2026
+
+- Continue A22 with 34 offline landing-assistant help and navigation cases, bringing the evaluation suite to 423 named scenarios.
+- Recheck the registered session, access flags, AI switches and offered page/guide catalogs after provider work, before returning a suggestion.
+- Reject malformed or unavailable keys and unsafe reason text; keep the normal search as the fallback when AI cannot supply a current suggestion.
+- No schema migration or new provider configuration.
+
 ## 8.22 — October 23, 2026
 
 - Increase release test jobs from 30 to 45 minutes so OCR/browser setup, both full suite orders and report gates can finish.

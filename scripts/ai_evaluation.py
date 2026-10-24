@@ -29,6 +29,7 @@ PROVENANCE = ('app.py', 'ai_core.py', 'ai_facts.py', 'auth.py', 'storage.py',
               'tests/test_ai_checklist_upload_evaluation.py', 'tests/test_ai_checklist_upload_browser.py',
               'calendar_routes.py', 'activity_docs.py', 'activity_invitation.py',
               'tests/test_activity_docs.py', 'tests/test_ai_invitation_evaluation.py',
+              'tests/test_ai_help_navigation_evaluation.py',
               'static/js/activity_invitation.js', 'templates/calendar_entry.html',
               'static/js/travel_upload.js',
               'templates/travel_filing.html',
@@ -270,6 +271,7 @@ def main():
                        'tests/test_ai_travel_scan_evaluation.py',
                        'tests/test_ai_checklist_upload_evaluation.py',
                        'tests/test_ai_invitation_evaluation.py',
+                       'tests/test_ai_help_navigation_evaluation.py',
                        '--ai-evaluation-report=' + str(output)]
             if args.shuffle_seed is not None:
                 command.append('--shuffle-seed=' + str(args.shuffle_seed))
