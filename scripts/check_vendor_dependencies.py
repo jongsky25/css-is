@@ -22,13 +22,13 @@ def check_vendor(root=ROOT, *, name='pdfjs', package='pdfjs-dist'):
             or not isinstance(version, str) or not re.fullmatch(r'\d+\.\d+\.\d+', version)
             for name, version in dependencies.items()):
         raise ValueError(f'Invalid {name} bundled dependency identities')
-    if package == 'echarts':
+    if package in ('echarts', 'pptxgenjs'):
         provenance = manifest.get('dependency_provenance', {})
-        if (set(dependencies) != {'zrender', 'tslib'} or not isinstance(provenance, dict)
+        if (set(dependencies) != ({'zrender', 'tslib'} if package=='echarts' else {'jszip','lie','immediate','pako','setimmediate'}) or not isinstance(provenance, dict)
                 or set(provenance) != set(dependencies)
                 or any(not isinstance(provenance[key], dict) or provenance[key].get('version') != version
                        for key, version in dependencies.items())):
-            raise ValueError('Invalid echarts bundled dependency provenance')
+            raise ValueError(f'Invalid {package} bundled dependency provenance')
     vendor = root / 'static/vendor' / name
     observed = {path.relative_to(vendor).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
                 for path in vendor.rglob('*') if path.is_file() and path.name != 'README.txt'}
@@ -62,12 +62,16 @@ if __name__ == '__main__':
     manifest = check_vendor()
     tabulator = check_vendor(name='tabulator', package='tabulator-tables')
     echarts = check_vendor(name='echarts', package='echarts')
+    pptxgenjs = check_vendor(name='pptxgenjs', package='pptxgenjs')
     if args.audit_output:
         audit_vendor(manifest, args.audit_output)
         report = Path(args.audit_output)
         audit_vendor(tabulator, report.with_name(report.stem + '-tabulator' + report.suffix))
         audit_vendor(echarts, report.with_name(report.stem + '-echarts' + report.suffix))
+        audit_vendor(pptxgenjs, report.with_name(report.stem + '-pptxgenjs' + report.suffix))
     print(f"Vendor gate OK: PDF.js {manifest['version']}, {len(manifest['files'])} verified files")
     print(f"Vendor gate OK: Tabulator {tabulator['version']}, {len(tabulator['files'])} verified files")
 
     print(f"Vendor gate OK: ECharts {echarts['version']}, {len(echarts['files'])} verified files with bundled dependencies")
+
+    print(f"Vendor gate OK: PptxGenJS {pptxgenjs['version']}, {len(pptxgenjs['files'])} verified files with JSZip browser dependencies")

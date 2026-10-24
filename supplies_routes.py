@@ -486,6 +486,17 @@ def make_router(templates, get_conn):
         finally:
             conn.close()
 
+    @router.get('/supplies/stock-dashboard/presentation-data')
+    def supply_stock_presentation(request: Request):
+        conn=get_conn()
+        try:
+            return JSONResponse(stock_dashboard.report(conn,request.state.user,request.query_params,
+                                                       presentation=True),headers=inventory_headers)
+        except (Denied,Invalid,Conflict) as exc:
+            return inventory_error(exc)
+        finally:
+            conn.close()
+
     @router.get('/supplies/inventory-data')
     def inventory_data(request: Request):
         conn = get_conn()

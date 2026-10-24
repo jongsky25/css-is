@@ -94,3 +94,22 @@ def test_echarts_gate_rejects_incomplete_or_inconsistent_bundle_provenance(tmp_p
     (target/'echarts-manifest.json').write_text(json.dumps(manifest))
     with pytest.raises(ValueError,match='provenance'):
         check_vendor(tmp_path,name='echarts',package='echarts')
+
+
+def test_presentation_libraries_and_full_browser_graph_are_verified():
+    manifest=check_vendor(name='pptxgenjs',package='pptxgenjs')
+    assert manifest['bundled_dependencies']=={'jszip':'3.10.1','lie':'3.3.0','immediate':'3.0.6',
+                                             'pako':'1.0.5','setimmediate':'1.0.5'}
+    assert {'pptxgen.min.js','jszip.min.js','LICENSE','licenses/pako/LICENSE'}<=set(manifest['files'])
+
+
+@pytest.mark.parametrize('fault',['missing_dependency','wrong_version'])
+def test_presentation_gate_rejects_incomplete_browser_graph(tmp_path,fault):
+    from pathlib import Path
+    manifest=json.loads((Path(__file__).resolve().parents[1]/'docs/dependencies/pptxgenjs-manifest.json').read_text())
+    if fault=='missing_dependency':del manifest['bundled_dependencies']['pako']
+    else:manifest['bundled_dependencies']['pako']='0.0.0'
+    target=tmp_path/'docs/dependencies';target.mkdir(parents=True)
+    (target/'pptxgenjs-manifest.json').write_text(json.dumps(manifest))
+    with pytest.raises(ValueError,match='provenance'):
+        check_vendor(tmp_path,name='pptxgenjs',package='pptxgenjs')

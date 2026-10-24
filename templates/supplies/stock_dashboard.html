@@ -3,6 +3,9 @@
 <link rel="stylesheet" href="/static/css/document-dashboard.css?v=8.34">
 <script src="/static/vendor/echarts/echarts.min.js?v=6.1.0" defer></script>
 <script src="/static/js/supplies-stock-dashboard.js?v=8.34" defer></script>
+<script src="/static/vendor/pptxgenjs/jszip.min.js?v=3.10.1" defer></script>
+<script src="/static/vendor/pptxgenjs/pptxgen.min.js?v=4.0.1" defer></script>
+<script src="/static/js/supplies-stock-presentation.js?v=8.39" defer></script>
 {% endblock %}
 {% block supplies_content %}
 <section id="stock-dashboard" aria-label="Supplies stock dashboard">
@@ -15,6 +18,8 @@
 </form>
 <p><strong>{{ dashboard.total }} matching catalog items you can access</strong> · Snapshot {{ dashboard.as_of }}. Counts cover all matching pages and count items, not quantities across different units. Chart links add the matching physical-stock or availability filter to the inventory table.</p>
 <p><a href="{{ dashboard.inventory_url }}">Open matching interactive inventory</a></p>
+<p><button type="button" id="stock-presentation-export" disabled>Export PowerPoint report</button></p>
+<p id="stock-presentation-status" role="status" aria-live="polite">PowerPoint export requires JavaScript. Reports include all matching below-critical items, up to 1,000; narrow the filters for larger lists.</p>
 <p id="stock-chart-status" role="status" aria-live="polite">Linked count tables are available below. Charts enhance those same counts when they load.</p>
 {% for key,title in [('physical','Physical stock'),('availability','Availability after reservations')] %}
 <section class="supply-panel dashboard-panel" aria-labelledby="stock-{{ key }}-title"><h2 id="stock-{{ key }}-title">{{ title }}</h2>

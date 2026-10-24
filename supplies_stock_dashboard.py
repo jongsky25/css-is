@@ -9,7 +9,10 @@ from supplies_storage import rows
 import tzutil as tz
 
 
-def report(conn, user, params):
+MAX_PRESENTATION_ITEMS = 1_000
+
+
+def report(conn, user, params, *, presentation=False):
     scope={key:params.get(key,'active' if key=='active' else '') for key in ('q','unit','active')}
     page=supplies.integer(params.get('page','1'),'Page',1)
     if page>1_000_000:
@@ -25,10 +28,13 @@ def report(conn, user, params):
         # A confirmed zero at a zero critical level is out of stock but not below threshold.
         low_source=source+' AND active=1 AND on_hand<critical_level'
         low_count=conn.execute(low_source.format(columns='COUNT(*)'),values).fetchone()[0]
+        if presentation and low_count>MAX_PRESENTATION_ITEMS:
+            raise supplies.Invalid('Narrow the dashboard filters to at most 1,000 below-critical items before exporting PowerPoint.')
         last=max(1,math.ceil(low_count/grid.PAGE_SIZE));page=min(page,last)
         items=rows(conn,low_source.format(columns='id,code,description,unit,on_hand,reserved,available,critical_level,target_level')+
                    ' ORDER BY code COLLATE NOCASE,id LIMIT :limit OFFSET :offset',
-                   {**values,'limit':grid.PAGE_SIZE,'offset':(page-1)*grid.PAGE_SIZE})
+                   {**values,'limit':MAX_PRESENTATION_ITEMS if presentation else grid.PAGE_SIZE,
+                    'offset':0 if presentation else (page-1)*grid.PAGE_SIZE})
         for item in items:
             item['href']='/supplies/items/'+str(item['id'])
             for field in grid.QUANTITIES:
