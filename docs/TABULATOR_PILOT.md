@@ -47,6 +47,10 @@ The server rechecks current authorization in a fresh snapshot and shares the gri
 - The read-only `/documents/grid-data` route returns a display-field projection with `Cache-Control: no-store`. Existing registry logic supplies authorized FTS snippets, including indexed-file access checks.
 - Plain-text/DOM formatters keep subjects, names and excerpts from becoming executable markup.
 
+## Supplies reuse
+
+The Supply catalog now offers a separate read-only interactive inventory using the same vendored Tabulator build. It has its own stock semantics, access checks, private views and all-page CSV export. See [Interactive Supplies inventory](SUPPLIES_INTERACTIVE_INVENTORY.md) for behavior and verification.
+
 ## Files and dependency
 
 - `documents_grid.py`: validated options and bounded reads over `documents_registry.Selection`.
