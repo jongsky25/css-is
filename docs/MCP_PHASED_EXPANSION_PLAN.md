@@ -104,3 +104,8 @@ Begin satisfaction survey coverage with `get_csm_summary(year, month)`, a bureau
 ### M1.2 second implementation — v8.45
 
 Add a separate-consent, default-off bureau-wide quarterly Type 2 activity-satisfaction summary. Share existing SERVQUAL report calculations; preserve activity-start dates, item scales and sparse-answer denominators. Exclude personal responses and speaker ratings, withhold all small-sample scores and refuse partial capacity results. Individual activity/unit breakdowns and Type 3 resource-person summaries remain subsequent increments. See [Type 2 pilot](MCP_READ_ADAPTER.md#m12-second-delivery-quarterly-type-2-activity-satisfaction); hosted acceptance remains pending.
+
+
+### M1.2 third implementation — v8.46
+
+Add a separately consented annual Type 3 summary for one currently visible resource person. Reuse the person dashboard's quality index and Type 3 dimensions, share current hidden/Director checks with the profile routes, exclude respondents/comments/rankings, and withhold small-sample scores. The independent pilot flag defaults off. See [Type 3 pilot contract](MCP_READ_ADAPTER.md#m12-third-delivery-annual-type-3-resource-person-summaries). Per-activity/unit comparisons, broader breakdowns and writes remain later work; hosted acceptance is pending.
