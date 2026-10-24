@@ -98,7 +98,7 @@ def mark_read(conn, user, case_id, task_id, observed):
                          (cid, user['id'], revision))
 
 
-def inbox(conn, user, before=None, limit=25, category="all"):
+def inbox(conn, user, before=None, limit=25, category="all", *, metadata_only=False):
     if category not in ("all", "direct", "following"):
         raise ValueError("Choose a valid update category.")
     user = permissions.actor(conn, user)
@@ -115,8 +115,10 @@ def inbox(conn, user, before=None, limit=25, category="all"):
         if not permitted(conn, user['id'], n['case_id']):
             continue
         case = work.get(conn, user, n['case_id'])
-        message = discussion.message(conn,n['case_id'],n['task_id'],n['comment_id'])
-        n.update(title=case['title'],author=message['author'],body=message['body'],url=f"/work/{n['case_id']}/discussion?focus={n['comment_id']}" + (f"&task_id={n['task_id']}" if n['task_id'] else '') + f"#message-{n['comment_id']}")
+        if not metadata_only:
+            message = discussion.message(conn,n['case_id'],n['task_id'],n['comment_id'])
+            n.update(title=case['title'], author=message['author'], body=message['body'])
+        n.update(url=f"/work/{n['case_id']}/discussion?focus={n['comment_id']}" + (f"&task_id={n['task_id']}" if n['task_id'] else '') + f"#message-{n['comment_id']}")
         result.append(n)
         if len(result) == limit:
             return result, cursor

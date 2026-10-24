@@ -107,7 +107,7 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
         assert metadata.status_code == 200
         assert metadata.json()['resource'] == 'https://office.example/mcp'
         scopes = {'activities:read', 'calendar:read', 'documents:read',
-                  'supplies:read', 'travel:read', 'work:read'}
+                  'supplies:read', 'travel:read', 'work:read', 'notifications:read'}
         assert set(metadata.json()['scopes_supported']) == scopes
         denied = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 1, 'method': 'initialize',
                                           'params': {'protocolVersion': '2025-06-18',
@@ -188,7 +188,7 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
         assert names == {'my_work', 'find_documents', 'get_document',
                          'list_work_items', 'get_work_item', 'list_work_tasks', 'list_calendar_events',
                          'list_supply_queue', 'list_my_travel_filings', 'list_activity_progress',
-                         'my_office_overview'}
+                         'my_office_overview', 'list_my_notifications', 'get_room_availability'}
         api_token = client.get('/api/v1/work-items', headers={'Authorization': 'Bearer ' + access})
         assert api_token.status_code == 401
         called = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 3, 'method': 'tools/call',
@@ -290,6 +290,14 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
                 'start_date': '2026-10-24', 'end_date': '2026-10-24'}}}, headers=limited)
         assert no_scope.status_code == 200 and no_scope.json()['result'].get('isError')
         assert 'Visible synthetic meeting' not in no_scope.text
+        denied_notices = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 112, 'method': 'tools/call',
+            'params': {'name': 'list_my_notifications', 'arguments': {}}}, headers=limited)
+        assert denied_notices.status_code == 200 and denied_notices.json()['result'].get('isError')
+        for tool, arguments in (('list_my_notifications', {}), ('get_room_availability', {'day': '2026-10-27'})):
+            disabled = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 113, 'method': 'tools/call',
+                'params': {'name': tool, 'arguments': arguments}}, headers=headers)
+            assert disabled.status_code == 200 and not disabled.json()['result'].get('isError'), disabled.text
+            assert 'not_available' in disabled.text
         limited_overview = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 21, 'method': 'tools/call',
             'params': {'name': 'my_office_overview', 'arguments': {}}}, headers=limited)
         assert limited_overview.status_code == 200 and not limited_overview.json()['result'].get('isError')

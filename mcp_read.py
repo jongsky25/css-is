@@ -4,6 +4,7 @@ from __future__ import annotations
 import asyncio
 from datetime import date, timedelta
 import re
+import os
 
 from mcp.server.auth.middleware.auth_context import get_access_token
 from mcp.server.auth.settings import AuthSettings, ClientRegistrationOptions, RevocationOptions
@@ -19,6 +20,7 @@ import integration_api as api
 import mcp_auth
 import office_calendar
 import ratelimit
+import rooms
 import storage as st
 import supplies_dashboard
 import supplies_permissions
@@ -27,6 +29,7 @@ import travel
 import work
 import work_inbox
 import work_reads
+import work_updates
 
 
 READ_ONLY = ToolAnnotations(readOnlyHint=True, destructiveHint=False, idempotentHint=True,
@@ -48,6 +51,48 @@ def _web(origin, item):
     data = item.model_dump(mode='json')
     data['links']['web'] = origin + data['links']['web']
     return data
+
+
+def _notice_page(conn, user, origin, limit=10, before=0):
+    _page(limit, before)
+    base = {'as_of': tz.now_iso(), 'coverage': 'unread_shared_work_notices',
+            'web_url': origin + '/work/updates'}
+    if os.environ.get('CSS_MCP_NOTIFICATIONS_ENABLED') != '1' or not work.enabled(conn):
+        return dict(base, availability='not_available')
+    notices, cursor = work_updates.inbox(conn, user, before=before or None, limit=limit, metadata_only=True)
+    return dict(base, availability='available', data=[{
+        'id': str(n['id']), 'category': n['reason'], 'created_at': n['created_at'],
+        'unread': True, 'web_url': origin + n['url'],
+    } for n in notices], next_before=cursor)
+
+
+def _room_availability(conn, user, origin, day, limit=25, offset=0):
+    if type(limit) is not int or not 1 <= limit <= 25 or type(offset) is not int or not 0 <= offset <= 5000:
+        raise ValueError('Choose a page size from 1 to 25 and an offset from 0 to 5000.')
+    if not isinstance(day, str) or not re.fullmatch(r'\d{4}-\d{2}-\d{2}', day):
+        raise ValueError('Use a YYYY-MM-DD date.')
+    try:
+        date.fromisoformat(day)
+    except ValueError:
+        raise ValueError('Use a YYYY-MM-DD date.') from None
+    base = {'as_of': tz.now_iso(), 'day': day, 'timezone': 'Asia/Manila',
+            'coverage': 'conference_room_request_slots', 'web_url': origin + '/rooms',
+            'reservation_made': False}
+    # day_view/list_slots can lazily initialize slots. An MCP read must never
+    # seed domain data or commit inside the authorization snapshot.
+    if (os.environ.get('CSS_MCP_AVAILABILITY_ENABLED') != '1'
+            or st.get_setting(conn, rooms._SEED_KEY) != '1'):
+        return dict(base, availability='not_available')
+    permissions.actor(conn, user)
+    view = rooms.day_view(conn, day)
+    times = {s['id']: s for s in view['slots']}
+    selected = view['hours'][offset:offset + limit]
+    return dict(base, availability='available', data=[{
+        'slot_id': str(s['id']), 'start_time': times[s['id']]['start'],
+        'end_time': times[s['id']]['end'], 'state': s['state'],
+        'available_for_request': s['state'] in ('free', 'requested'),
+    } for s in selected], next_offset=offset + limit if len(view['hours']) > offset + limit else None,
+        note='Requested slots are not reserved. Availability is a snapshot; approval and conflicts are rechecked when requesting.')
 
 
 def build_server(get_conn, origin):
@@ -240,6 +285,30 @@ def build_server(get_conn, origin):
             return {'data': [_web(origin, api.task_read(row)) for row in rows], 'next_before': cursor}
         return await perform('work:read', 'work', run)
 
+    @server.tool(title='My unread work notifications', annotations=READ_ONLY)
+    async def list_my_notifications(limit: int = 10, before: int = 0) -> dict:
+        """Read your own unread shared-work notices, at most 25 per page.
+
+        Metadata only: no message text, author, private submission, wellness,
+        approval queue or other people's notices. This is a limited notification
+        feed, not the complete Office Connect bell. Reading does not mark seen.
+        Follow next_before even when a permission-filtered page is empty.
+        """
+        _page(limit, before)
+        return await perform('notifications:read', 'notifications',
+                             lambda conn, user: _notice_page(conn, user, origin, limit, before))
+
+    @server.tool(title='Conference room availability', annotations=READ_ONLY)
+    async def get_room_availability(day: str, limit: int = 25, offset: int = 0) -> dict:
+        """Read a single local date's room request slots using the signed-in picker rules.
+
+        This is conference-room availability, not a person's free/busy calendar.
+        No booking titles, requesters, attendees or block reasons are returned.
+        Pending requests do not reserve slots. This tool never makes a booking.
+        """
+        return await perform('calendar:read', 'calendar',
+                             lambda conn, user: _room_availability(conn, user, origin, day, limit, offset))
+
     @server.tool(title='List calendar events', annotations=READ_ONLY)
     async def list_calendar_events(start_date: str = '', end_date: str = '',
                                    scope: str = 'blend', limit: int = 10, offset: int = 0) -> dict:
@@ -335,6 +404,7 @@ def build_server(get_conn, origin):
         today = tz.today_local()
         result = {}
         operations = {
+            'notifications:read': ('notifications', lambda conn, user: _notice_page(conn, user, origin, 5)),
             'work:read': ('work', lambda conn, user: {
                 'current': [{'title': i['title'], 'due_date': i['due_date'],
                              'web_url': origin + i['url']} for i in work_inbox.page(conn, user, limit=5)[0]],

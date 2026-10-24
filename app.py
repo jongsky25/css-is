@@ -17715,7 +17715,8 @@ if _MCP_ENABLED:
         if not pending:
             return _mcp_consent_error('This request expired. Start again in ChatGPT.', 410)
         client_id, params = pending
-        labels = {'activities:read': 'Your permitted activity schedules and summary counts',
+        labels = {'notifications:read': 'Your own unread shared-work notice metadata (no message text)',
+                  'activities:read': 'Your permitted activity schedules and summary counts',
                   'calendar:read': 'Your visible calendar events, activities and room bookings',
                   'work:read': 'Your visible work items and task status',
                   'documents:read': 'Your visible document metadata',
