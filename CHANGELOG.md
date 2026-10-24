@@ -1,9 +1,15 @@
-## 8.50 — October 24, 2026
+## 8.51 — October 24, 2026
 
 - Add an explicit administrator control for Collaborative work on Documents setup, requiring Documents first, current all-unit permissions authority for enabling, confirmation/reason, shared settings revision and atomic audit. System administrators retain emergency pause; deployment does not enable modules or change document sending.
 - Replace generic Telegram unavailability with credential-free diagnostics for each disabled module, host switch, public URL and account target configuration, including setup-code mismatch and malformed token/chat ID. Link administrators to module setup; retain provider validation and delivery semantics.
 - Verify permission/revocation/rollback/stale-form gates and the complete phone-sized, script-disabled Documents → Collaborative work → Telegram-ready journey without external sends. Document prerequisites before hosting setup.
 - Pin the independent MCP probe's business date to its synthetic fixtures so real Philippine midnight cannot expire its pending room requests; preserve real OAuth expiry timing and the original assertions.
+
+## 8.50 — October 24, 2026
+
+- Add compare_unit_activity_surveys for a selected unit's quarter versus its immediately preceding quarter, under new surveys:unit_trends:read consent and default-off CSS_MCP_UNIT_TRENDS_ENABLED.
+- Reuse current report unit attribution, five-dimension calculations, per-period capacity limits and small-cell suppression. Withhold both scorecards and all changes when either period is unavailable, empty, unrated or too small.
+- Return original-scale-point deltas and report links, without rankings or claims of causation/statistical significance. Unit discovery keeps its separate existing scope; no existing grant expands.
 
 ## 8.49 — October 24, 2026
 

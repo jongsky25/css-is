@@ -118,3 +118,7 @@ Add metadata-only quarter/title discovery and a full Type 2 scorecard for one se
 ### Unit Type 2 summary implementation — v8.49
 
 Add current reporting-unit discovery and quarterly summaries for one lead unit and its descendants. Match existing report-view authority and exact slash-delimited unit selection; reuse consolidated Type 2 arithmetic, suppression and capacity refusals. New `surveys:units:read` consent and independent default-off `CSS_MCP_UNIT_SURVEYS_ENABLED` preserve older grants. No comments, individuals, speaker ratings or rankings. See [unit pilot contract](MCP_READ_ADAPTER.md#unit-discovery-and-quarterly-type-2-summaries--v849). Live acceptance remains pending, including earlier survey pilots. Period comparisons and writes remain subsequent increments.
+
+### Consecutive-quarter unit comparison implementation — v8.50
+
+Add one selected unit's Type 2 quarter versus its immediately preceding quarter. Use the existing unit attribution and source scorecards within one authorization snapshot; publish original-scale-point changes only when both periods pass all scoring/suppression/capacity rules. New `surveys:unit_trends:read` and independent default-off `CSS_MCP_UNIT_TRENDS_ENABLED` preserve older grants. No arbitrary periods, peers, rankings or causal claims. See the [comparison pilot contract](MCP_READ_ADAPTER.md#consecutive-quarter-unit-comparisons--v850). Local implementation does not establish hosted acceptance. Broader trends and writes remain later increments.

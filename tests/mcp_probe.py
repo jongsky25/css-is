@@ -120,7 +120,7 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
         metadata = client.get('/.well-known/oauth-protected-resource/mcp')
         assert metadata.status_code == 200
         assert metadata.json()['resource'] == 'https://office.example/mcp'
-        scopes = {'surveys:units:read', 'activities:read', 'calendar:read', 'documents:read',
+        scopes = {'surveys:unit_trends:read', 'surveys:units:read', 'activities:read', 'calendar:read', 'documents:read',
                   'supplies:read', 'travel:read', 'work:read', 'notifications:read', 'surveys:csm:read', 'surveys:activities:read', 'surveys:resource_persons:read', 'surveys:activity_details:read'}
         assert set(metadata.json()['scopes_supported']) == scopes
         denied = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 1, 'method': 'initialize',
@@ -154,6 +154,7 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
             {'id': owner, 'username': 'mcp@example.invalid', 'role': 'viewer'}))
         page = browser.get(consent_url)
         assert page.status_code == 200, page.text
+        assert 'Unit activity satisfaction comparisons between consecutive quarters' in page.text
         assert 'Unit discovery and quarterly activity satisfaction aggregates' in page.text
         assert 'Your visible work items' in page.text
         assert 'Your visible document metadata' in page.text
@@ -200,7 +201,7 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
         assert listed.status_code == 200, listed.text
         names = {tool['name'] for tool in listed.json()['result']['tools']}
         assert {'my_work', 'find_documents', 'get_document'} <= names
-        assert names == {'find_survey_units', 'get_unit_activity_survey_summary', 'my_work', 'find_documents', 'get_document',
+        assert names == {'compare_unit_activity_surveys', 'find_survey_units', 'get_unit_activity_survey_summary', 'my_work', 'find_documents', 'get_document',
                          'list_work_items', 'get_work_item', 'list_work_tasks', 'list_calendar_events',
                          'list_supply_queue', 'list_my_travel_filings', 'list_activity_progress',
                          'my_office_overview', 'list_my_notifications', 'get_room_availability', 'get_csm_summary', 'get_activity_survey_summary', 'get_resource_person_survey_summary', 'find_survey_activities', 'get_activity_survey_detail'}
@@ -335,6 +336,23 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
             disabled_unit = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 121, 'method': 'tools/call',
                 'params': {'name': tool, 'arguments': arguments}}, headers=headers)
             assert disabled_unit.status_code == 200 and 'not_available' in disabled_unit.text
+        # A unit-summary grant cannot silently gain trend access.
+        conn = st.connect(os.environ['CSS_DB'])
+        unit_only = mcp_auth.Provider._tokens(conn, client_id, owner, ['surveys:units:read'], 'https://office.example/mcp')
+        conn.commit(); conn.close()
+        trend_args = {'unit_id': unit, 'year': 2026, 'quarter': 4}
+        denied_trend = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 123, 'method': 'tools/call',
+            'params': {'name': 'compare_unit_activity_surveys', 'arguments': trend_args}},
+            headers=dict(headers, Authorization='Bearer ' + unit_only.access_token))
+        assert denied_trend.json()['result'].get('isError')
+        disabled_trend = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 124, 'method': 'tools/call',
+            'params': {'name': 'compare_unit_activity_surveys', 'arguments': trend_args}}, headers=headers)
+        assert not disabled_trend.json()['result'].get('isError') and 'not_available' in disabled_trend.text
+        os.environ['CSS_MCP_UNIT_TRENDS_ENABLED'] = '1'
+        allowed_trend = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 125, 'method': 'tools/call',
+            'params': {'name': 'compare_unit_activity_surveys', 'arguments': trend_args}}, headers=headers)
+        assert not allowed_trend.json()['result'].get('isError') and 'not_comparable' in allowed_trend.text
+        del os.environ['CSS_MCP_UNIT_TRENDS_ENABLED']
         os.environ['CSS_MCP_UNIT_SURVEYS_ENABLED'] = '1'
         for tool, arguments in (('find_survey_units', {'query': 'MCP Unit'}), ('get_unit_activity_survey_summary', {'unit_id': unit, 'year': 2026, 'quarter': 4})):
             allowed_unit = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 122, 'method': 'tools/call',
@@ -398,7 +416,13 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
         # must then fail even if ChatGPT still holds the old bearer token.
         connections = browser.get('/account/integrations')
         assert connections.status_code == 200 and 'ChatGPT connections' in connections.text
-        grant = re.search(r'/account/mcp/([0-9a-f]{32})/revoke', connections.text).group(1)
+        # Multiple grants can share a creation second; disconnect the token under
+        # test rather than whichever active connection the UI happens to show first.
+        conn = st.connect(os.environ['CSS_DB'])
+        grant = conn.execute('SELECT id FROM mcp_oauth_grant WHERE access_hash=?',
+                             (mcp_auth._digest(refreshed.json()['access_token']),)).fetchone()[0]
+        conn.close()
+        assert '/account/mcp/' + grant + '/revoke' in connections.text
         management_csrf = re.search(r'name="csrf" value="([^"]+)"', connections.text).group(1)
         disconnected = browser.post('/account/mcp/' + grant + '/revoke',
             data={'csrf': management_csrf},
