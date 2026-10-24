@@ -143,3 +143,20 @@ evidence rather than a current advisory claim.
 ## pypdf patch in v8.22
 
 The release audit reported CVE-2026-115572, CVE-2026-115585 and CVE-2026-115580 in pypdf 6.21.1. The reviewed [6.21.2 release](https://github.com/py-pdf/pypdf/releases/tag/6.21.2) fixes repeated full-file loads and malformed cross-reference table limits. The runtime pin is now 6.21.2; runtime/test lock hashes were regenerated with the locked uv 0.13.4. All other package selections were retained. No advisory is suppressed. PDF reader, intake and OCR checks plus the full release suites verify compatibility.
+
+## Document workload charts — Apache ECharts
+
+The dashboard vendors the unmodified **ECharts 6.1.0** full browser build locally.
+Its declared bundled runtime graph includes **zrender 6.1.0** and **tslib 2.3.0**.
+All three npm archives were checked against their published SHA-512 integrity;
+[the manifest](dependencies/echarts-manifest.json) records provenance and each
+shipped file's SHA-256 hash. Apache-2.0, BSD-3-Clause, 0BSD and upstream bundled
+D3 notices are retained beside the asset. No Python requirement changes or CDN
+requests are introduced.
+
+The vendor gate checks the complete ECharts file set and dependency provenance.
+The npm bulk audit submits all three exact packages, fails on any advisory or
+unexpected response, and writes a separate `vendor-audit-echarts.json` receipt.
+The CI dependency artifact includes that receipt and the ECharts manifest.
+Local audits found no reported advisories in the pinned graph; full release CI
+must pass before deployment. See [the dashboard guide](DOCUMENT_WORKLOAD_DASHBOARD.md).

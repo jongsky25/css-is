@@ -26,6 +26,7 @@ import documents_external as external
 import documents_jobs as jobs
 import documents_guidance as guidance
 import documents_grid as grid
+import documents_dashboard as dashboard
 import work
 import work_intake
 import work_readiness
@@ -139,18 +140,51 @@ def make_router(templates,get_conn):
         try:
             queue=request.query_params.get('queue','all')
             query=request.query_params.get('q','') if queue!='instruction' else ''
-            page=d.list_page(conn,request.state.user,query,queue,
-                             before=request.query_params.get('before','0'))
+            linked_view=request.query_params.get('interactive')=='1'
+            linked={}
+            if linked_view:
+                linked={'queue':queue,'q':query, 'interactive':'1',
+                        **{field:request.query_params.get(field,'') for field in
+                           ('status','verification','deadline',*grid.LEAD_DATE_FIELDS,'group_by')}}
+                data=grid.page(conn,request.state.user,{**linked,'page':request.query_params.get('page','1')})
+                page={'documents':data['data'],'total':data['last_row'],'before':False,'more':False,
+                      'linked_page':data['page'],'linked_last_page':data['last_page'],
+                      'linked_previous':'/documents?'+urlencode({**linked,'page':data['page']-1}),
+                      'linked_next':'/documents?'+urlencode({**linked,'page':data['page']+1}),
+                      'linked_export':'/documents/grid-export.csv?'+urlencode(linked)}
+            else:
+                page=d.list_page(conn,request.state.user,query,queue,
+                                 before=request.query_params.get('before','0'))
             filters={'queue':queue,'q':query}
             page['grid_url']='/documents/grid-data?'+urlencode(filters)
-            grid.decorate_deadlines(conn,page['documents'])
+            page['dashboard_url']='/documents/dashboard?'+urlencode(filters)
+            if not linked_view:
+                grid.decorate_deadlines(conn,page['documents'])
             page['newest_url']='/documents?'+urlencode(filters)
             page['older_url']=('/documents?'+urlencode({**filters,'before':page['next_before']})
                                if page['more'] else '')
-            return render(request,conn,'index',queue=queue,grid_statuses=grid.STATUSES,
-                          grid_leads=grid.lead_choices(conn,request.state.user,filters),**page)
+            response=render(request,conn,'index',queue=queue,grid_statuses=grid.STATUSES,
+                            linked_view=linked_view,grid_leads=grid.lead_choices(conn,request.state.user,filters),**page)
+            if linked_view:
+                response.headers.update({'Cache-Control':'no-store','Pragma':'no-cache'})
+            return response
         except (p.Denied,ValueError) as e:
-            return HTMLResponse(str(e),status_code=403 if isinstance(e,p.Denied) else 400)
+            return HTMLResponse(str(e),status_code=403 if isinstance(e,p.Denied) else 400,
+                                headers={'Cache-Control':'no-store'} if request.query_params.get('interactive')=='1' else {})
+        finally:
+            conn.close()
+
+    @router.get('/documents/dashboard',response_class=HTMLResponse)
+    def workload_dashboard(request:Request):
+        conn=get_conn()
+        headers={'Cache-Control':'no-store','Pragma':'no-cache'}
+        try:
+            result=dashboard.report(conn,request.state.user,request.query_params)
+            response=render(request,conn,'dashboard',page_people=True,dashboard=result,queue_labels=dashboard.QUEUE_LABELS)
+            response.headers.update(headers)
+            return response
+        except (p.Denied,ValueError) as exc:
+            return HTMLResponse(str(exc),status_code=403 if isinstance(exc,p.Denied) else 400,headers=headers)
         finally:
             conn.close()
 
