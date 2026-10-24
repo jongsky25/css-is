@@ -71,7 +71,8 @@ def build_server(get_conn, origin):
     def read(scope, family, operation):
         token = get_access_token()
         if not token or scope not in token.scopes or token.resource != provider.resource or not token.subject:
-            raise PermissionError('Connect this tool with the required read permission.')
+            raise PermissionError('Reconnect Office Connect and select ' + scope
+                                  + ' on the consent page. If it is missing, recreate the app in ChatGPT.')
         owner_id = int(token.subject)
         if not ratelimit.allow('integration_read', str(owner_id)):
             raise PermissionError('Too many connected-tool reads. Try again in a minute.')

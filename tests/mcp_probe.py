@@ -336,4 +336,66 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
         assert disconnected.status_code == 303, disconnected.text
         stale = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 4, 'method': 'tools/list'}, headers=headers)
         assert stale.status_code == 401
+        # Reproduce a client requesting only work, despite registering all reads.
+        # Optional consent must be explicit, and token/refresh must reflect it.
+        for choose_calendar in (False, True):
+            narrow = client.get('/authorize', params={
+                'response_type': 'code', 'client_id': client_id, 'redirect_uri': callback,
+                'code_challenge': challenge, 'code_challenge_method': 'S256',
+                'resource': 'https://office.example/mcp', 'scope': 'work:read'}, follow_redirects=False)
+            narrow_page = browser.get(narrow.headers['location'])
+            assert narrow_page.status_code == 200
+            assert '<li>Your visible work items and task status</li>' in narrow_page.text
+            assert '<input type="checkbox" name="scope_calendar:read" value="1">' in narrow_page.text
+            assert 'checked' not in narrow_page.text.replace('Unchecked', '')
+            values = {key: re.search(r'name="' + key + r'" value="([^"]+)"', narrow_page.text).group(1)
+                      for key in ('ticket', 'csrf')}
+            values.update(decision='approve', password='Synthetic123!')
+            if choose_calendar:
+                values['scope_calendar:read'] = '1'
+            consent = browser.post('/mcp-consent', data=values,
+                headers={'Origin': 'https://office.example'}, follow_redirects=False)
+            assert consent.status_code == 303, consent.text
+            narrow_code = parse_qs(urlsplit(consent.headers['location']).query)['code'][0]
+            token = client.post('/token', data={'grant_type': 'authorization_code', 'client_id': client_id,
+                'code': narrow_code, 'code_verifier': verifier, 'redirect_uri': callback,
+                'resource': 'https://office.example/mcp'})
+            assert token.status_code == 200, token.text
+            expected = {'work:read', 'calendar:read'} if choose_calendar else {'work:read'}
+            assert set(token.json()['scope'].split()) == expected
+            narrow_headers = dict(headers, Authorization='Bearer ' + token.json()['access_token'])
+            calendar_call = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 100, 'method': 'tools/call',
+                'params': {'name': 'list_calendar_events', 'arguments': {
+                    'start_date': '2026-10-24', 'end_date': '2026-10-24'}}}, headers=narrow_headers)
+            assert calendar_call.status_code == 200
+            assert bool(calendar_call.json()['result'].get('isError')) == (not choose_calendar)
+            rotated = client.post('/token', data={'grant_type': 'refresh_token', 'client_id': client_id,
+                'refresh_token': token.json()['refresh_token'], 'resource': 'https://office.example/mcp'})
+            assert rotated.status_code == 200
+            assert set(rotated.json()['scope'].split()) == expected
+
+        # A legacy registration limited to work cannot be expanded by forged form data.
+        restricted = client.post('/register', json={
+            'redirect_uris': [callback], 'client_name': 'Legacy ChatGPT', 'scope': 'work:read',
+            'token_endpoint_auth_method': 'none', 'grant_types': ['authorization_code', 'refresh_token'],
+            'response_types': ['code']})
+        assert restricted.status_code == 201
+        restricted_id = restricted.json()['client_id']
+        narrow = client.get('/authorize', params={
+            'response_type': 'code', 'client_id': restricted_id, 'redirect_uri': callback,
+            'code_challenge': challenge, 'code_challenge_method': 'S256',
+            'resource': 'https://office.example/mcp', 'scope': 'work:read'}, follow_redirects=False)
+        narrow_page = browser.get(narrow.headers['location'])
+        assert 'name="scope_calendar:read"' not in narrow_page.text
+        assert 'recreate the Office Connect app' in narrow_page.text
+        values = {key: re.search(r'name="' + key + r'" value="([^"]+)"', narrow_page.text).group(1)
+                  for key in ('ticket', 'csrf')}
+        values.update(decision='approve', password='Synthetic123!', **{'scope_calendar:read': '1'})
+        forged = browser.post('/mcp-consent', data=values,
+            headers={'Origin': 'https://office.example'}, follow_redirects=False)
+        assert forged.status_code == 400, forged.text
+        conn = st.connect(os.environ['CSS_DB'])
+        assert conn.execute('SELECT COUNT(*) FROM mcp_oauth_code WHERE client_id=?', (restricted_id,)).fetchone()[0] == 0
+        assert conn.execute('SELECT COUNT(*) FROM mcp_oauth_grant WHERE client_id=?', (restricted_id,)).fetchone()[0] == 0
+        conn.close()
         browser.close()

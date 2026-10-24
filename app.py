@@ -17714,7 +17714,7 @@ if _MCP_ENABLED:
         pending = _mcp_provider.pending(ticket)
         if not pending:
             return _mcp_consent_error('This request expired. Start again in ChatGPT.', 410)
-        _, params = pending
+        client_id, params = pending
         labels = {'activities:read': 'Your permitted activity schedules and summary counts',
                   'calendar:read': 'Your visible calendar events, activities and room bookings',
                   'work:read': 'Your visible work items and task status',
@@ -17722,6 +17722,17 @@ if _MCP_ENABLED:
                   'supplies:read': 'Your supply requests and permitted stock warnings',
                   'travel:read': 'Your travel filing status and deadlines'}
         scopes = ''.join('<li>' + html.escape(labels[s]) + '</li>' for s in params['scopes'])
+        optional = sorted(_mcp_provider.consent_scopes(client_id) - set(params['scopes']))
+        choices = ''.join(
+            '<p><label><input type="checkbox" name="scope_' + html.escape(scope, quote=True)
+            + '" value="1"> ' + html.escape(labels[scope]) + '</label></p>' for scope in optional)
+        extra = ('<fieldset><legend>Optional additional read access</legend>'
+                 '<p>Select any other information you want this connection to read. '
+                 'Unchecked permissions are not added.</p>' + choices + '</fieldset>') if choices else ''
+        limited = (set(params['scopes']) != mcp_auth.SCOPES)
+        guidance = ('<p>If a permission you need is missing here, recreate the Office Connect app '
+                    'in ChatGPT using the same server URL so it can register the current permissions. '
+                    'Refreshing tools alone does not change an existing grant.</p>') if limited else ''
         page = ('<!doctype html><html lang="en"><meta charset="utf-8">'
                 '<meta name="viewport" content="width=device-width,initial-scale=1">'
                 '<title>Connect Office Connect to ChatGPT</title>'
@@ -17735,8 +17746,8 @@ if _MCP_ENABLED:
                 '<p>No files, private task submissions or changes to records are included. '
                 'You can disconnect this access later.</p>'
                 '<p>After you allow access, return to ChatGPT and finish adding the connection.</p>'
-                '<form method="post" action="/mcp-consent">'
-                '<input type="hidden" name="ticket" value="' + html.escape(ticket, quote=True) + '">'
+                + guidance + '<form method="post" action="/mcp-consent">'
+                + extra + '<input type="hidden" name="ticket" value="' + html.escape(ticket, quote=True) + '">'
                 '<input type="hidden" name="csrf" value="' + _mcp_consent_token(request, ticket) + '">'
                 '<label>Confirm your Office Connect password '
                 '<input type="password" name="password" autocomplete="current-password" required></label>'
@@ -17777,7 +17788,10 @@ if _MCP_ENABLED:
                 conn.close()
             if not verified:
                 return _mcp_consent_error('The password could not be verified.', 403, ticket)
-            params, code = await asyncio.to_thread(_mcp_provider.complete, ticket, user['id'], decision == 'approve')
+            additional = [key.removeprefix('scope_') for key, value in pairs
+                          if key.startswith('scope_') and value == '1']
+            params, code = await asyncio.to_thread(_mcp_provider.complete, ticket, user['id'],
+                                                  decision == 'approve', additional)
         except (ValueError, UnicodeError, KeyError):
             return _mcp_consent_error('The connection request expired or was invalid. Start again in ChatGPT.', 400)
         from urllib.parse import urlsplit, urlunsplit, parse_qsl as _parse_qsl

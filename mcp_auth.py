@@ -150,7 +150,18 @@ class Provider(OAuthAuthorizationServerProvider[AuthorizationCode, RefreshToken,
             return (row[0], json.loads(row[1])) if row else None
         return self._run(read)
 
-    def complete(self, ticket, owner_id, approve):
+    def consent_scopes(self, client_id):
+        """The registration bounds optional, explicitly selected read access."""
+        def read(conn):
+            row = conn.execute('SELECT metadata_json FROM mcp_oauth_client WHERE id=?',
+                               (client_id,)).fetchone()
+            if not row:
+                raise ValueError('The connection registration is unavailable.')
+            client = OAuthClientInformationFull.model_validate_json(row[0])
+            return SCOPES & set(client.scope.split()) if client.scope else SCOPES
+        return self._run(read)
+
+    def complete(self, ticket, owner_id, approve, additional_scopes=()):
         def save(conn):
             conn.execute('BEGIN IMMEDIATE')
             try:
@@ -160,6 +171,20 @@ class Provider(OAuthAuthorizationServerProvider[AuthorizationCode, RefreshToken,
                     raise ValueError('The connection request expired or your session changed.')
                 client_id, raw = row
                 params = json.loads(raw)
+                if approve:
+                    # Read the registered ceiling again under the writer lock;
+                    # a forged checkbox must never add an unsupported scope.
+                    row_client = conn.execute('SELECT metadata_json FROM mcp_oauth_client WHERE id=?',
+                                              (client_id,)).fetchone()
+                    if not row_client:
+                        raise ValueError('The connection registration is unavailable.')
+                    client = OAuthClientInformationFull.model_validate_json(row_client[0])
+                    allowed = SCOPES & set(client.scope.split()) if client.scope else SCOPES
+                    selected = set(additional_scopes)
+                    if selected - allowed:
+                        raise ValueError('The requested permission is unavailable to this connection.')
+                    params['scopes'] = sorted(set(params['scopes']) | selected)
+                    raw = json.dumps(params)
                 conn.execute('DELETE FROM mcp_oauth_pending WHERE ticket_hash=?', (_digest(ticket),))
                 code = secrets.token_urlsafe(32) if approve else None
                 if approve:
