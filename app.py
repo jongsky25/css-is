@@ -17715,8 +17715,12 @@ if _MCP_ENABLED:
         if not pending:
             return _mcp_consent_error('This request expired. Start again in ChatGPT.', 410)
         _, params = pending
-        labels = {'work:read': 'Your visible work items and task status',
-                  'documents:read': 'Your visible document metadata'}
+        labels = {'activities:read': 'Your permitted activity schedules and summary counts',
+                  'calendar:read': 'Your visible calendar events, activities and room bookings',
+                  'work:read': 'Your visible work items and task status',
+                  'documents:read': 'Your visible document metadata',
+                  'supplies:read': 'Your supply requests and permitted stock warnings',
+                  'travel:read': 'Your travel filing status and deadlines'}
         scopes = ''.join('<li>' + html.escape(labels[s]) + '</li>' for s in params['scopes'])
         page = ('<!doctype html><html lang="en"><meta charset="utf-8">'
                 '<meta name="viewport" content="width=device-width,initial-scale=1">'

@@ -18,10 +18,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "8.34"
+APP_VERSION = "8.35"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "8.35",
+        "date": "October 24, 2026",
+        "summary": "ChatGPT can now check more of your permitted Office Connect work.",
+        "changes": [
+            "With your approval, ChatGPT can check calendar events, room bookings, supply requests, travel filings and activity progress.",
+            "A new overview brings together records from only the areas you permit ChatGPT to read.",
+            "Reconnect Office Connect in ChatGPT to approve these new read permissions."
+        ]
+    },
     {
         "version": "8.34",
         "date": "October 24, 2026",
