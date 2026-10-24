@@ -1,3 +1,9 @@
+## 8.36 — October 24, 2026
+
+- Add a phased plan for further read-only and carefully confirmed write features in the Office Connect ChatGPT connection.
+- Exclude delete, cancel, withdraw, void, reverse, archive and equivalent record actions from every MCP phase.
+- Keep all proposed tools disabled; this release publishes the plan without granting new access or changing business records.
+
 ## 8.35 — October 24, 2026
 
 - Let ChatGPT list visible calendar events, activities and room bookings, with dates, status, venue and links back to Office Connect.
