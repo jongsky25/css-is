@@ -407,7 +407,13 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
         # must then fail even if ChatGPT still holds the old bearer token.
         connections = browser.get('/account/integrations')
         assert connections.status_code == 200 and 'ChatGPT connections' in connections.text
-        grant = re.search(r'/account/mcp/([0-9a-f]{32})/revoke', connections.text).group(1)
+        # Multiple grants can share a creation second; disconnect the token under
+        # test rather than whichever active connection the UI happens to show first.
+        conn = st.connect(os.environ['CSS_DB'])
+        grant = conn.execute('SELECT id FROM mcp_oauth_grant WHERE access_hash=?',
+                             (mcp_auth._digest(refreshed.json()['access_token']),)).fetchone()[0]
+        conn.close()
+        assert '/account/mcp/' + grant + '/revoke' in connections.text
         management_csrf = re.search(r'name="csrf" value="([^"]+)"', connections.text).group(1)
         disconnected = browser.post('/account/mcp/' + grant + '/revoke',
             data={'csrf': management_csrf},
