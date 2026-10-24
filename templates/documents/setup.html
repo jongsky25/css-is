@@ -73,6 +73,7 @@
       {% if module_enabled or sending_enabled %}
         {% if not module_enabled %}<p class="doc-alert">Documents is disabled, but its separate sending switch is on. Disable Documents and sending below first; then enable Documents with sending disabled.</p>{% endif %}
         <p><a href="/documents">Open Documents</a> to register and review documents. <a href="/documents/rules">Rules and policies</a> controls workflow configuration.</p>
+        {% if module_enabled and not work_switch_enabled %}<p><a href="#collaborative-work">Next: enable Collaborative work</a> for shared-work discussions and their reminders.</p>{% endif %}
         <p>Disabling stops new document writes and sending. Existing permitted records remain readable.</p>
         <form method="post">
           <input type="hidden" name="csrf" value="{{ csrf }}">

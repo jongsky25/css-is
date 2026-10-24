@@ -40,6 +40,7 @@ def test_admin_resolves_disabled_modules_then_can_pause_work_without_sending(gri
             form.locator('textarea[name="authorization"]').fill('Enable authorized discussion pilot')
             form.locator('input[name="confirmed"]').check();form.get_by_role('button',name='Enable Documents',exact=True).click()
             page.wait_for_url(base+'/admin/documents/setup*')
+            page.get_by_role('link',name='Next: enable Collaborative work',exact=True).click()
             form=page.locator('form').filter(has=page.locator('input[name="action"][value="enable_work"]'))
             form.locator('textarea[name="authorization"]').fill('Enable shared-work discussion pilot')
             form.locator('input[name="confirmed"]').check();form.get_by_role('button',name='Enable Collaborative work',exact=True).click()
