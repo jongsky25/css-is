@@ -95,9 +95,9 @@ def test_changed_cases_require_contract_version_increase(tmp_path, monkeypatch):
     monkeypatch.setattr(evaluation, 'ROOT', tmp_path)
     monkeypatch.setattr(evaluation, 'MANIFEST', manifest)
     monkeypatch.setattr(evaluation, 'REFERENCE', data)
-    assert evaluation.check_contract(base) == '1.11.0'
+    assert evaluation.check_contract(base) == '1.12.0'
     data.write_bytes(reference + b'\n')
     with pytest.raises(ValueError, match='version increase'): evaluation.check_contract(base)
-    current = json.loads(cases); current['suite_version'] = '1.11.1'
+    current = json.loads(cases); current['suite_version'] = '1.12.1'
     manifest.write_text(json.dumps(current))
-    assert evaluation.check_contract(base) == '1.11.1'
+    assert evaluation.check_contract(base) == '1.12.1'

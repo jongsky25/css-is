@@ -1,6 +1,6 @@
-# AI assistance evaluation — A22 / 8.23
+# AI assistance evaluation — A22 / 8.24
 
-Evaluation suite **1.11.0** contains **423 named scenarios**: 38 answer-route cases from 8.01, 60 MRR/CO-CSM report-draft cases from 8.04, 48 feedback-triage cases from 8.07, 49 verbatim comment cases from 8.10, 32 participant-message cases from 8.12, 30 UX Insights analysis cases from 8.13, 32 directory duplicate-suggestion cases from 8.14, 31 landing-assistant action cases from 8.15, 19 direct travel scan cases from 8.17, 27 travel checklist upload cases from 8.19, 23 calendar invitation upload cases from 8.21, and 34 landing-assistant help/navigation cases from 8.23. It turns selected safeguards into a reproducible, versioned release gate and produces a small report by category and case. The retained suite ID `existing-ai-answers` is a historical identifier; all twelve surfaces must pass.
+Evaluation suite **1.12.0** contains **447 named scenarios**: 38 answer-route cases from 8.01, 60 MRR/CO-CSM report-draft cases from 8.04, 48 feedback-triage cases from 8.07, 49 verbatim comment cases from 8.10, 32 participant-message cases from 8.12, 30 UX Insights analysis cases from 8.13, 32 directory duplicate-suggestion cases from 8.14, 31 landing-assistant action cases from 8.15, 19 direct travel scan cases from 8.17, 27 travel checklist upload cases from 8.19, 23 calendar invitation upload cases from 8.21, 34 landing-assistant help/navigation cases from 8.23, and 24 Groq provider-routing and exclusion cases from 8.24. It turns selected safeguards into a reproducible, versioned release gate and produces a small report by category and case. The retained suite ID `existing-ai-answers` is a historical identifier; all fourteen test surfaces must pass.
 
 ## What it checks
 
@@ -12,7 +12,7 @@ Evaluation suite **1.11.0** contains **423 named scenarios**: 38 answer-route ca
 | Injection | Hostile source names, invented prose/values/actions, forged confidence, repeated IDs and unsupported operations |
 | Resilience | Explicit abstention, low confidence, timeout, 503/retry, 429, malformed provider JSON, daily budget exhaustion and disabled feature |
 
-Each scenario calls the real application route using registered synthetic accounts and a private copy of the test database. The real AI provider adapter builds/parses requests, enforces settings/budgets and handles retries. A fake replaces only provider HTTP responses. Socket/DNS guards reject actual network attempts, even if the route catches the resulting error. Fake credentials are installed only inside the test fixture; the Groq fallback is disabled there.
+The route scenarios call the real application route using registered synthetic accounts and a private copy of the test database. Three Groq exclusion scenarios call the real provider adapter directly to cover harmonize and image inputs. The adapter builds/parses requests, enforces settings/budgets and handles retries. A fake replaces only provider HTTP responses. Socket/DNS guards reject actual network attempts, even if the route catches the resulting error. Fake credentials are installed only inside test fixtures; Groq is enabled only for its new scenarios.
 
 The suite does **not** measure a real model's understanding of a question, source relevance, multilingual quality, refusal tendency or inference accuracy. The provider's chosen selection is a controlled input. A passing report means the named application safeguards passed those inputs. It is not a claim that every AI feature or permission boundary is fully evaluated. Existing A12 and other AI regressions remain required separately in the full suite.
 
@@ -159,6 +159,12 @@ Thirty-four `help_navigation` scenarios call the signed-in assistant route using
 
 These cases verify application routing and current permission checks with simulated model selections. They do not establish that a real model picks the most useful page or guide. The provider receives the typed request and offered catalog, which may contain the user's own text; no live provider is called by the suite.
 
+## Groq routing: opt-in, quotas and exclusions
+
+Twenty-one `groq_routing` scenarios call the signed-in assistant route with fake Gemini and Groq HTTP responses. They verify Gemini preference, administrator opt-in, a configured Groq key, Gemini budget/429 fallback, Groq-only service, disabled mode/feature, burst throttling, provider 503/timeout/malformed/429 handling, separate cooldowns and the logged provider. A Groq selection still passes the current session and catalog checks; an unknown key or revoked session falls back to normal search. Three `groq_exclusion` scenarios call `ai.ask()` with the same real settings, budget and logging path to check that the harmonize feature and image inputs never reach Groq, including when Gemini has no key.
+
+The tests replace only HTTP and use synthetic keys, inputs and accounts. They do not measure real Groq quality, availability, cost or latency, nor do they approve a provider's data handling terms. The administrator's existing `ai_fallback_enabled` switch remains off by default.
+
 ## Gates and evidence lifecycle
 
 [scripts/ai_evaluation.py](../scripts/ai_evaluation.py) is a pytest plugin and command-line gate. Default pytest configuration loads it; recording is enabled only when `--ai-evaluation-report=PATH` is supplied. Release CI supplies that option to the existing full normal/shuffled test jobs, then validates the resulting report before the final required-check gate. Reports are uploaded in the existing test artifact bundles with **14-day retention**.
@@ -176,14 +182,14 @@ Case/reference edits also require an increased `suite_version` in the manifest. 
 
 The existing provider/data contract remains [verified facts v1](VERIFIED_AI_ANSWERS.md). A broader survey selection receives the user question and bounded fact IDs/descriptions/groups, without numeric values. Names and user questions are untrusted text and can still contain personal material; these checks do not establish universal anonymization. Current consent, settings, logging/retention and provider governance remain in force.
 
-The scenarios check the existing bounded provider request settings (at most eight seconds per read timeout, three-second connect timeout and bounded output tokens), one retry where supported, and daily-budget refusal. They introduce no real spend. A timeout can involve two attempts; these are not an eight-second end-to-end service promise. Groq quality/fallback routing, OCR and other AI surfaces need their own future evaluation sets. Report draft, feedback-triage, verbatim, activity-message, UX-analysis and directory-suggestion and assistant-action safeguards are now included; real-model style-choice quality is not measured.
+The scenarios check the existing bounded provider request settings (at most eight seconds per read timeout, three-second connect timeout and bounded output tokens), one retry where supported, and daily-budget refusal. They introduce no real spend. A timeout can involve two attempts; these are not an eight-second end-to-end service promise. Real-model Groq quality, OCR and other AI surfaces need their own future evaluation sets. Report draft, feedback-triage, verbatim, activity-message, UX-analysis, directory-suggestion and assistant-action safeguards are now included; real-model style-choice quality is not measured.
 
 Before broader AI capability or live-model comparisons, the owner must define representative question quality targets, approved provider/data retention terms, expected scope/refusals, spend/token budgets and representative latency measurements. Evaluate live-model quality separately from this deterministic safeguard score; do not infer one from the other. Production workflow observations remain deferred.
 
 ## Rollout and repair
 
-Release **8.23** follows the merged 8.22 main branch. No schema migration, new feature flag or production provider configuration is required. The pinned `pypdf` version is already 6.21.2 on main. The application and service-worker cache versions use exactly two digits after the decimal.
+Release **8.24** follows the merged 8.23 main branch. No schema migration, new feature flag or production provider configuration is required. The application and service-worker cache versions use exactly two digits after the decimal.
 
-Existing AI/human comment tags are not rewritten. UX analysis remains a review aid and displays its evidence window and sample status. Production workflow observations and real-model quality remain deferred. Both normal and shuffled full CI must pass for the final PR head, including all 366 scenarios and the minimized report gate.
+Existing AI/human comment tags are not rewritten. UX analysis remains a review aid and displays its evidence window and sample status. Production workflow observations and real-model quality remain deferred. Both normal and shuffled full CI must pass for the final PR head, including all 447 scenarios and the minimized report gate.
 
 For a failing gate, inspect the case ID and repair the application, fixture or expectation with a reviewed explanation. Increase the suite version for case/reference edits and rerun current evidence; do not reuse an old report or omit failed cases.
