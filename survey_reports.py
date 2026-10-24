@@ -1,4 +1,4 @@
-"""Shared CSM date/scoring rules and permission-checked aggregate projections."""
+"""Shared survey scoring rules and permission-checked aggregate projections."""
 from datetime import date, timedelta
 import calendar
 import os
@@ -190,20 +190,9 @@ def activity_summary(conn, user, origin, year, quarter):
     if len(selected) > MAX_RESPONSES:
         return dict(result, availability='not_available', reason='capacity_limit')
     ids = [r[0] for r in selected]
-    records = []
-    for offset in range(0, len(ids), 500):
-        batch = ids[offset:offset + 500]
-        placeholders = ','.join('?' for _ in batch)
-        # Include unrated/unknown item rows when counting source-report
-        # submissions, but never read respondent text or identity fields.
-        found = conn.execute('SELECT response_id,item_id,value,is_na FROM answer WHERE response_id IN ('
-                             + placeholders + ') ORDER BY id LIMIT ?',
-                             (*batch, MAX_ACTIVITY_ANSWERS + 1 - len(records))).fetchall()
-        records.extend(found)
-        if len(records) > MAX_ACTIVITY_ANSWERS:
-            return dict(result, availability='not_available', reason='capacity_limit')
-    frame = pd.DataFrame(records, columns=['response_id', 'item_id', 'value', 'is_na'])
-    frame['survey_type'] = 2
+    frame = _survey_frame(conn, ids, 2)
+    if frame is None:
+        return dict(result, availability='not_available', reason='capacity_limit')
     block = servqual_block(frame, eng.DIM_MAP_FORM2)
     result.update(availability='available', submissions=len(ids),
                   report_submissions=block['respondents'], rated_respondents=block['overall']['n'])
@@ -223,3 +212,80 @@ def activity_summary(conn, user, origin, year, quarter):
                     if block['expectation']['value'] is not None else None,
                 dimensions=[{'dimension': d['dim'], 'mean': d['value'], 'valid_item_answers': d['n']}
                             for d in block['dimensions']])
+
+
+def _survey_frame(conn, ids, survey_type):
+    """Bounded answer-only frame, shared by Type 2 and Type 3 projections."""
+    records = []
+    for offset in range(0, len(ids), 500):
+        batch = ids[offset:offset + 500]
+        placeholders = ','.join('?' for _ in batch)
+        # Include unrated/unknown item rows when counting source-report
+        # submissions, but never read respondent text or identity fields.
+        found = conn.execute('SELECT response_id,item_id,value,is_na FROM answer WHERE response_id IN ('
+                             + placeholders + ') ORDER BY id LIMIT ?',
+                             (*batch, MAX_ACTIVITY_ANSWERS + 1 - len(records))).fetchall()
+        records.extend(found)
+        if len(records) > MAX_ACTIVITY_ANSWERS:
+            return None
+    frame = pd.DataFrame(records, columns=['response_id', 'item_id', 'value', 'is_na'])
+    frame['survey_type'] = survey_type
+    return frame
+
+
+def can_view_resource_person(user, person):
+    """Same current profile visibility boundary used by the signed-in pages."""
+    return bool(person and auth.can(user.get('role'), 'view') and
+                (auth.can(user.get('role'), 'hide') or
+                 not (person.get('hidden_public') or st.is_bureau_director(person))))
+
+
+def resource_person_summary(conn, user, origin, resource_person_id, year):
+    user = permissions.actor(conn, user)
+    if (type(resource_person_id) is not int or not 1 <= resource_person_id <= 9223372036854775807
+            or type(year) is not int or not 1900 <= year <= 9998):
+        raise ValueError('Choose a valid resource-person ID and year.')
+    # Check eligibility before returning either a name or disabled-state metadata.
+    person = st.get_rp(conn, resource_person_id)
+    if not can_view_resource_person(user, person):
+        raise permissions.Denied('Resource person not found or unavailable to you.')
+    start, end = f'{year}-01-01', f'{year}-12-31'
+    result = {'survey_type': 3, 'resource_person_id': str(resource_person_id),
+              'scope': 'one_resource_person',
+              'date_basis': 'activity_start_date', 'start_date': start, 'end_date': end,
+              'as_of': tz.now_iso(), 'minimum_sample': MIN_SAMPLE,
+              'web_url': origin + f'/dashboard/people/{resource_person_id}?' + urlencode({'period': f'year:{year}'}),
+              'scoring': 'Person-dashboard quality index (0–100): mean per respondent of normalized B items (1–7) and C (1–4), then mean across respondents. A is excluded. Dimension means use the Type 3 map.'}
+    if os.environ.get('CSS_MCP_RESOURCE_PERSON_SURVEYS_ENABLED') != '1':
+        return dict(result, availability='not_available')
+    result['name'] = person['name']
+    selected = conn.execute('''SELECT r.id FROM response r JOIN form_instance fi ON fi.id=r.form_instance_id
+        WHERE fi.survey_type=3 AND fi.rp_id=? AND COALESCE(fi.archived,0)=0 AND r.archived_at IS NULL
+        AND substr(fi.event_date,1,10)>=? AND substr(fi.event_date,1,10)<=?
+        ORDER BY r.id LIMIT ?''', (resource_person_id, start, end, MAX_RESPONSES + 1)).fetchall()
+    if len(selected) > MAX_RESPONSES:
+        return dict(result, availability='not_available', reason='capacity_limit')
+    ids = [r[0] for r in selected]
+    frame = _survey_frame(conn, ids, 3)
+    if frame is None:
+        return dict(result, availability='not_available', reason='capacity_limit')
+    quality, rated = eng.quality_index(frame)
+    valid = eng.valid_answers(frame)
+    perception_n = int(valid.loc[valid['item_id'].isin(eng.SERVQUAL_ITEMS), 'response_id'].nunique())
+    result.update(availability='available', submissions=len(ids),
+                  report_submissions=int(frame['response_id'].nunique()),
+                  rated_respondents=perception_n, quality_respondents=rated)
+    if not ids:
+        return dict(result, state='no_matching_responses')
+    if quality is None or not perception_n:
+        return dict(result, state='no_valid_ratings')
+    valid = valid[valid['item_id'].isin([*eng.SERVQUAL_ITEMS, 'C'])]
+    counts = valid.groupby('item_id', observed=True)['response_id'].nunique()
+    if rated < MIN_SAMPLE or perception_n < MIN_SAMPLE or any(0 < n < MIN_SAMPLE for n in counts):
+        return dict(result, state='insufficient_sample')
+    osq = eng.osq_C(frame)
+    dimensions = [(dim, eng.dimension_mean(frame, items)) for dim, items in eng.DIM_MAP_FORM3.items()]
+    return dict(result, state='rated', quality_index=quality, quality_scale='0–100',
+                osq_mean=osq.value, osq_scale='1–4', osq_answers=osq.n,
+                dimensions=[{'dimension': dim, 'mean': m.value, 'scale': '1–7', 'valid_item_answers': m.n}
+                            for dim, m in dimensions])

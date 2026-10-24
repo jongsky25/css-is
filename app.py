@@ -14263,7 +14263,7 @@ def dashboard_person(request: Request, rp_id: int, grain: str = "monthly", perio
         person = st.get_rp(conn, rp_id)
         if not person:
             return RedirectResponse("/dashboard/people", status_code=303)
-        if (person.get("hidden_public") or st.is_bureau_director(person)) and not admin:
+        if not survey_reports.can_view_resource_person(request.state.user, person):
             return RedirectResponse("/dashboard/people", status_code=303)
         # All-time identity (role, year filter, year-on-year, badges) — memoized per
         # person so every period view of the same person shares it.
@@ -14379,7 +14379,7 @@ def dashboard_person_activity(request: Request, rp_id: int, event_id: int):
         if not person:
             return RedirectResponse("/dashboard/people", status_code=303)
         admin = auth.can(request.state.user["role"], "hide")
-        if (person.get("hidden_public") or st.is_bureau_director(person)) and not admin:
+        if not survey_reports.can_view_resource_person(request.state.user, person):
             return RedirectResponse("/dashboard/people", status_code=303)
         events = view_memo("events", ("", "all"),
                            lambda: di.build_events(atoms, st.list_activity_instances(conn)))
@@ -17646,7 +17646,8 @@ if _MCP_ENABLED:
         if not pending:
             return _mcp_consent_error('This request expired. Start again in ChatGPT.', 410)
         client_id, params = pending
-        labels = {'surveys:activities:read': 'Bureau-wide quarterly activity satisfaction aggregates (no individual responses)',
+        labels = {'surveys:resource_persons:read': 'Permitted resource-person annual survey aggregates (no individual responses)',
+                  'surveys:activities:read': 'Bureau-wide quarterly activity satisfaction aggregates (no individual responses)',
                   'surveys:csm:read': 'Bureau-wide monthly CSM survey aggregates (no individual responses)',
                   'notifications:read': 'Your own unread shared-work notice metadata (no message text)',
                   'activities:read': 'Your permitted activity schedules and summary counts',

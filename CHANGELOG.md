@@ -1,9 +1,15 @@
-## 8.46 — October 24, 2026
+## 8.47 — October 24, 2026
 
 - Add an opt-in Apprise 2.0.1 private Telegram discussion-digest pilot with host-secret credentials, per-account opaque setup codes, independent cadence/history and disconnect controls.
 - Keep default delivery off and send only a generic HTTPS sign-in reminder; recheck current account, source access, unread state, preferences and configuration before transport.
 - Commit durable per-notice/per-day/week claims before I/O, bound scheduler ticks, avoid uncertain/crash retries, and revoke bindings on deliberate restore or account deletion. Preserve existing email/bell flows.
 - Pin/audit the new dependency graph and exercise the actual provider with mocked HTTP plus native browser setup/disconnect flows; live activation requires hosting credentials and user opt-in.
+
+## 8.46 — October 24, 2026
+
+- Add one-person annual Type 3 resource-person survey summaries under separate surveys:resource_persons:read consent and default-off CSS_MCP_RESOURCE_PERSON_SURVEYS_ENABLED.
+- Share the current person-profile hidden/Director visibility predicate with the named report routes; check it before returning any identity metadata.
+- Reuse the person dashboard's normalized quality index and Type 3 dimension map; exclude respondents, comments, contacts, rankings and other survey types. Preserve small-sample and capacity refusal rules without partial scores.
 
 ## 8.45 — October 24, 2026
 
