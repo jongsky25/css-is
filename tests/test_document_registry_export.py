@@ -78,7 +78,7 @@ def test_export_formula_text_unicode_quoting_and_unknown_dates(registry):
     {'columns': ''}, {'columns': 'subject'}, {'columns': 'number,number'},
     {'columns': 'number,creator_id'}, {'columns': 'number;DROP TABLE document'},
     {'sort': 'number;DROP TABLE document'}, {'dir': 'sideways'}, {'queue': 'elsewhere'},
-    {'deadline': 'inactive'}, {'status': 'bad'}, {'verification': 'bad'}, {'q': 'x'*121}])
+    {'deadline': 'due_soon_only'}, {'status': 'bad'}, {'verification': 'bad'}, {'q': 'x'*121}])
 def test_rejects_invalid_export_options(registry, options):
     conn, users, _, _ = registry
     with pytest.raises(ValueError):

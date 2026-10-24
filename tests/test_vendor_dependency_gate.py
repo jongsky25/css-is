@@ -63,3 +63,34 @@ def test_tabulator_gate_requires_matching_identity_and_files(vendor):
     path.write_text(json.dumps(manifest))
     with pytest.raises(ValueError, match='identity'):
         check_vendor(vendor, name='tabulator', package='tabulator-tables')
+
+
+def test_echarts_distribution_and_bundled_graph_are_verified():
+    manifest=check_vendor(name='echarts',package='echarts')
+    assert manifest['bundled_dependencies']=={'zrender':'6.1.0','tslib':'2.3.0'}
+    assert {'LICENSE','NOTICE','licenses/zrender/LICENSE','licenses/tslib/LICENSE.txt'}<=set(manifest['files'])
+
+
+def test_vendor_audit_submits_bundled_packages_and_rejects_transitive_advisory(tmp_path,monkeypatch):
+    import io
+    received=[]
+    def request(req,**kwargs):
+        received.append(json.loads(req.data))
+        return io.BytesIO(json.dumps({'zrender':[{'id':'synthetic-transitive-advisory'}]}).encode())
+    monkeypatch.setattr('urllib.request.urlopen',request)
+    manifest=check_vendor(name='echarts',package='echarts')
+    with pytest.raises(ValueError,match='advisory scan'):
+        audit_vendor(manifest,tmp_path/'echarts-audit.json')
+    assert received==[{'echarts':['6.1.0'],'zrender':['6.1.0'],'tslib':['2.3.0']}]
+
+
+@pytest.mark.parametrize('fault',['missing_dependency','wrong_version'])
+def test_echarts_gate_rejects_incomplete_or_inconsistent_bundle_provenance(tmp_path,fault):
+    from pathlib import Path
+    manifest=json.loads((Path(__file__).resolve().parents[1]/'docs/dependencies/echarts-manifest.json').read_text())
+    if fault=='missing_dependency':del manifest['bundled_dependencies']['zrender']
+    else:manifest['bundled_dependencies']['zrender']='0.0.0'
+    target=tmp_path/'docs/dependencies';target.mkdir(parents=True)
+    (target/'echarts-manifest.json').write_text(json.dumps(manifest))
+    with pytest.raises(ValueError,match='provenance'):
+        check_vendor(tmp_path,name='echarts',package='echarts')

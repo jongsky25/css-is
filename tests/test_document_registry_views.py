@@ -181,6 +181,6 @@ def test_old_saved_views_default_to_all_deadlines_and_new_filters_round_trip(reg
     for deadline in grid.DEADLINES:
         view = create(conn, users[0], deadline, deadline=deadline)
         assert view['state']['deadline'] == deadline
-    for invalid in ('inactive', 'scheduled', 'unknown;DROP TABLE document', None, True, []):
+    for invalid in ('later', 'due_soon_only', 'unknown;DROP TABLE document', None, True, []):
         with pytest.raises(ValueError):
             grid.view_state(state(deadline=invalid))

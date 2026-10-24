@@ -116,7 +116,7 @@ def test_deadline_filters_calendar_unknowns_and_inactive_records(registry, monke
         conn.execute('UPDATE document SET due_date=?,status=? WHERE id=?',
                      (due, 'closed' if index == 9 else 'cancelled' if index == 10 else 'in_action', identifier))
     conn.commit()
-    expected = {'overdue': ids[:1], 'due_today': ids[1:2], 'due_soon': ids[1:4], 'unknown': ids[5:9]}
+    expected = {'overdue': ids[:1], 'due_today': ids[1:2], 'due_soon': ids[1:4], 'unknown': ids[5:9], 'scheduled':ids[4:5], 'inactive':ids[9:11]}
     for deadline, matches in expected.items():
         result = grid.page(conn, users[4], {'deadline': deadline})
         assert result['last_row'] == len(matches)
@@ -124,7 +124,7 @@ def test_deadline_filters_calendar_unknowns_and_inactive_records(registry, monke
         assert all(row['deadline_state'] in ({'due_today', 'due_soon'} if deadline == 'due_soon' else {deadline})
                    for row in result['data'])
     assert grid.page(conn, users[4], {'deadline': ''})['last_row'] == 11
-    for invalid in ('inactive', 'scheduled', 'overdue;DROP TABLE document', None, []):
+    for invalid in ('later', 'due_soon_only', 'overdue;DROP TABLE document', None, []):
         with pytest.raises(ValueError):
             grid.page(conn, users[4], {'deadline': invalid})
 

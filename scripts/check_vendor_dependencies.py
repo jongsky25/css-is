@@ -16,6 +16,19 @@ def check_vendor(root=ROOT, *, name='pdfjs', package='pdfjs-dist'):
     manifest = json.loads((root / f'docs/dependencies/{name}-manifest.json').read_text())
     if manifest.get('package') != package or not re.fullmatch(r'\d+\.\d+\.\d+', manifest.get('version', '')):
         raise ValueError(f'Invalid {name} manifest identity')
+    dependencies = manifest.get('bundled_dependencies', {})
+    if not isinstance(dependencies, dict) or any(
+            not isinstance(name, str) or not re.fullmatch(r'(?:@[a-z0-9._-]+/)?[a-z0-9._-]+', name)
+            or not isinstance(version, str) or not re.fullmatch(r'\d+\.\d+\.\d+', version)
+            for name, version in dependencies.items()):
+        raise ValueError(f'Invalid {name} bundled dependency identities')
+    if package == 'echarts':
+        provenance = manifest.get('dependency_provenance', {})
+        if (set(dependencies) != {'zrender', 'tslib'} or not isinstance(provenance, dict)
+                or set(provenance) != set(dependencies)
+                or any(not isinstance(provenance[key], dict) or provenance[key].get('version') != version
+                       for key, version in dependencies.items())):
+            raise ValueError('Invalid echarts bundled dependency provenance')
     vendor = root / 'static/vendor' / name
     observed = {path.relative_to(vendor).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
                 for path in vendor.rglob('*') if path.is_file() and path.name != 'README.txt'}
@@ -26,11 +39,13 @@ def check_vendor(root=ROOT, *, name='pdfjs', package='pdfjs-dist'):
 
 def audit_vendor(manifest, output):
     request = urllib.request.Request(SERVICE, method='POST',
-        data=json.dumps({manifest['package']: [manifest['version']]}).encode(),
+        data=json.dumps({manifest['package']: [manifest['version']],
+                         **{name:[version] for name,version in manifest.get('bundled_dependencies', {}).items()}}).encode(),
         headers={'Content-Type': 'application/json'})
     with urllib.request.urlopen(request, timeout=30) as response:
         advisories = json.loads(response.read(1024 * 1024))
     report = {key: manifest[key] for key in ('package', 'version', 'source', 'integrity')}
+    report['bundled_dependencies'] = manifest.get('bundled_dependencies', {})
     report.update(service=SERVICE, checked_at=datetime.now(timezone.utc).isoformat(),
                   verified_files=len(manifest['files']), advisories=advisories)
     Path(output).write_text(json.dumps(report, indent=2) + '\n')
@@ -46,9 +61,13 @@ if __name__ == '__main__':
     args = parser.parse_args()
     manifest = check_vendor()
     tabulator = check_vendor(name='tabulator', package='tabulator-tables')
+    echarts = check_vendor(name='echarts', package='echarts')
     if args.audit_output:
         audit_vendor(manifest, args.audit_output)
         report = Path(args.audit_output)
         audit_vendor(tabulator, report.with_name(report.stem + '-tabulator' + report.suffix))
+        audit_vendor(echarts, report.with_name(report.stem + '-echarts' + report.suffix))
     print(f"Vendor gate OK: PDF.js {manifest['version']}, {len(manifest['files'])} verified files")
     print(f"Vendor gate OK: Tabulator {tabulator['version']}, {len(tabulator['files'])} verified files")
+
+    print(f"Vendor gate OK: ECharts {echarts['version']}, {len(echarts['files'])} verified files with bundled dependencies")
