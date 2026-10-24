@@ -1,3 +1,9 @@
+## 8.40 — October 24, 2026
+
+- Export the Documents workload dashboard to PowerPoint with editable workflow, deadline and assigned-lead charts plus complete aggregate count tables, applied queue/search and date boundaries.
+- Recheck current record access in one fresh snapshot per export, retaining working-day/invalid-date rules and authorized lead labels; chart the largest 20 lead groups with explicit scope and full tables.
+- Refuse more than 1,000 lead groups instead of truncating; retain dashboard tables on asset/request failure and reuse the existing PptxGenJS/JSZip distributions and gates without new dependencies, schema changes or document writes.
+
 ## 8.39 — October 24, 2026
 
 - Add a Supplies stock dashboard PowerPoint export using locally vendored PptxGenJS 4.0.1 and JSZip 3.10.1 with hashes, licenses and npm advisory checks for embedded browser dependencies.

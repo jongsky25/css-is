@@ -30,3 +30,20 @@ node --check static/js/document-registry.js
 ```
 
 Authority tests compare every queue/user against the independent registry reference and check each nonzero drill-down against grid/CSV counts. Coverage includes working-day boundaries, malformed/unknown dates, inactive records/leads, private leads, more than 20 lead groups, access revocation, no writes, vendor graph/hash checks and transitive advisories. Browser checks use the actual ECharts SVG/Tabulator builds and authenticated routes for bar clicks, linked tables/CSV, failed-refresh retry/reset, history navigation, mobile layout, text-only labels, failed assets, no-script pagination, response cache policy and fresh access after a change.
+
+## PowerPoint report
+
+Select **Export PowerPoint report** to download `office-connect-document-workload-report.pptx`. The presentation includes editable native workflow, deadline and assigned-lead charts, embedded XLSX chart data, and complete editable aggregate count tables with repeated headers and continuation slides. It includes the applied queue/search, fresh snapshot date, and the actual local date/working-day boundaries. Counts describe documents, not individual contributions or performance. No document subjects, bodies, snippets, attachments or record lists are included.
+
+Every click reads one fresh authorized snapshot through `/documents/dashboard/presentation-data`, reusing `documents_dashboard.report` and the registry's current access selection. The **applied** dashboard scope is captured when the page loads; draft queue/search edits require **Refresh dashboard** before export. Director-only instruction scope ignores search as in the dashboard and is rechecked on each request. Success and error responses use `no-store`. The export remains a read when Documents changes are disabled.
+
+The lead chart shows the **largest 20 groups**, explicitly labeled with the number shown and the full group count. Complete tables retain every matching group and full labels, including inactive historical leads and Unresolved. Long chart labels may be shortened; full labels remain in tables. More than **1,000 lead groups** returns an explicit instruction to narrow the queue/search instead of silently truncating. Empty scopes still generate an explanatory presentation. Zero-count workflow/deadline states remain visible in count tables. Deadline groups retain existing working-day, invalid-date and closed/cancelled semantics.
+
+The export reuses the already vendored PptxGenJS 4.0.1 / JSZip 3.10.1 browser distributions and their hash, license, provenance and advisory gates. No new dependency, schema change, document mutation or external conversion service is introduced. Failed export assets/requests show a retry message and retain the dashboard tables. All presentation generation runs in the browser.
+
+```sh
+CSS_TEST_CHROMIUM=/usr/bin/chromium CSS_TEST_NOW=2026-10-20T06:00:00 python -m pytest tests/test_documents_presentation.py tests/test_documents_presentation_browser.py tests/test_documents_dashboard.py tests/test_documents_dashboard_browser.py
+node --check static/js/document-workload-presentation.js
+```
+
+Coverage includes all queue/user authority combinations, exact aggregate totals, working-day and invalid-date boundaries, complete/refused lead-group limits, revoked record/account access, no writes, real PPTX OOXML/chart/workbook inspection, applied versus draft filters, more than 20 lead groups with complete tables, empty scopes, mobile layout, safe labels, failed assets/requests and forbidden/invalid export scopes.

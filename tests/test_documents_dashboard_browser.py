@@ -18,6 +18,7 @@ def test_real_charts_click_open_matching_grid_and_csv_then_reset(grid_page):
     assert {row['key']:row['count'] for row in data['deadlines']}=={
         'overdue':0,'due_soon':0,'scheduled':35,'unknown':1,'inactive':0}
     assert page.locator('.dashboard-chart svg').count()==3
+    page.locator('#dashboard-workflow-chart').scroll_into_view_if_needed()
     # Click inside the actual draft bar using ECharts' coordinate transform.
     point=page.evaluate("echarts.getInstanceByDom(document.getElementById('dashboard-workflow-chart')).convertToPixel({seriesIndex:0},[9,1])")
     box=page.locator('#dashboard-workflow-chart').bounding_box()
