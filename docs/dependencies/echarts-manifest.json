@@ -1,0 +1,33 @@
+{
+  "package": "echarts",
+  "version": "6.1.0",
+  "integrity": "sha512-q0yaFPggC9FUdsWH4blavRWFmxdrIodbkoKNAjJudAI6CA9gNPxHtV2RcZNEepZVlk4yvBYkOkbk6HIVpIyHZA==",
+  "source": "https://registry.npmjs.org/echarts/-/echarts-6.1.0.tgz",
+  "license": "Apache-2.0",
+  "bundled_dependencies": {
+    "zrender": "6.1.0",
+    "tslib": "2.3.0"
+  },
+  "dependency_provenance": {
+    "zrender": {
+      "version": "6.1.0",
+      "source": "https://registry.npmjs.org/zrender/-/zrender-6.1.0.tgz",
+      "integrity": "sha512-oEGMDB6pOP2S6OwRR4PdVv610zrjnA3Bh+JnSG12fYJlBKjtNAoEb5fSUoCOOINlH96I2fU38/A2UpRKs67xYQ==",
+      "license": "BSD-3-Clause"
+    },
+    "tslib": {
+      "version": "2.3.0",
+      "source": "https://registry.npmjs.org/tslib/-/tslib-2.3.0.tgz",
+      "integrity": "sha512-N82ooyxVNm6h1riLCoyS9e3fuJ3AMG2zIZs2Gd1ATcSFjSA23Q0fzjjZeh0jbJvWVDZ0cJT8yaNNaaXHzueNjg==",
+      "license": "0BSD"
+    }
+  },
+  "files": {
+    "LICENSE": "634293835b43a6dd2094fa39182a3d9a6b9ca43b7fdb9ac354e8037af2a3093a",
+    "NOTICE": "d491d358344f842685c1b1585970999db65fe30ecf7ef3867af8814f4016c016",
+    "echarts.min.js": "b66b25aeb4df84e33199dc21694014d336d222cbd9deb0e5a7c14bd6aa0d0fd0",
+    "licenses/LICENSE-d3": "e1211892da0b0e0585b7aebe8f98c1274fba15bafe47fa1f4ee8a7a502c06304",
+    "licenses/tslib/LICENSE.txt": "210b19e543130388c68654b7497e967119ce17145f66ab7d85688fbd70f08751",
+    "licenses/zrender/LICENSE": "a681e9d183c72b4af4856935893805eb48c08f0f5a3f260203db7444c20fb98a"
+  }
+}

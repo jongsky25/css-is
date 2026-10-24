@@ -1,0 +1,31 @@
+{% extends 'documents/base.html' %}
+{% block head %}{{ super() }}
+<link rel="stylesheet" href="/static/css/document-dashboard.css?v=8.32">
+<script src="/static/vendor/echarts/echarts.min.js?v=6.1.0" defer></script>
+<script src="/static/js/document-dashboard.js?v=8.32" defer></script>
+{% endblock %}
+{% block documents_content %}
+<section id="document-dashboard" aria-label="Document workload dashboard">
+<h2>Document workload dashboard</h2>
+<form method="get" class="dashboard-filters">
+<label>Dashboard queue<select name="queue">{% for key,label in queue_labels if key!='instruction' or is_director %}<option value="{{ key }}" {% if dashboard.scope.queue==key %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+<label>Search permitted records<input type="search" name="q" maxlength="120" value="{{ dashboard.scope.q }}"></label>
+<button>Refresh dashboard</button>
+</form>
+<p><strong>{{ dashboard.total }} matching records you can access</strong> · Snapshot {{ dashboard.as_of }}. Counts cover every matching page in the selected queue and search. They count documents, not contributions. The dashboard uses queue and search; chart links add their matching filter in the table.</p>
+<p><a href="{{ dashboard.register_url }}">Open matching document table</a></p>
+<p id="dashboard-chart-status" role="status" aria-live="polite">Linked count tables are available below. Charts enhance those same counts when they load.</p>
+{% for key,title,entries in [('workflow','Workflow stages',dashboard.workflow),('deadlines','Deadlines',dashboard.deadlines),('leads','Workload by assigned lead',dashboard.leads)] %}
+<section class="doc-card dashboard-panel" aria-labelledby="dashboard-{{ key }}-title">
+<h3 id="dashboard-{{ key }}-title">{{ title }}</h3>
+{% if key=='deadlines' %}<p>Overdue means before {{ dashboard.today }}. Due soon includes today through {{ dashboard.soon }} (the next three working days). Later means beyond that window. Unknown or invalid dates are never overdue. Closed/cancelled records are separate and have no urgency alert.</p>{% endif %}
+{% if key=='leads' %}<p>Charts show the 20 largest groups; the table lists every matching lead. Unresolved includes missing assignments. Counts describe records assigned to a lead, not individual contributions or performance.</p>{% endif %}
+<div id="dashboard-{{ key }}-chart" class="dashboard-chart" aria-hidden="true" hidden></div>
+<div class="dashboard-counts" role="region" aria-label="{{ title }} counts" tabindex="0"><table><caption>{{ title }} across all matching pages</caption><thead><tr><th scope="col">{{ 'Lead' if key=='leads' else 'State' }}</th><th scope="col">Records</th></tr></thead><tbody>
+{% for row in entries %}<tr><th scope="row">{% if row.count and row.href %}<a href="{{ row.href }}">{{ row.label }}</a>{% else %}{{ row.label }}{% endif %}</th><td>{{ row.count }}</td></tr>{% else %}<tr><td colspan="2">No matching records.</td></tr>{% endfor %}
+</tbody></table></div>
+</section>
+{% endfor %}
+</section>
+<script id="document-dashboard-data" type="application/json">{{ dashboard|tojson }}</script>
+{% endblock %}

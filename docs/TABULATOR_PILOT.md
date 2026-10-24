@@ -71,3 +71,7 @@ node --check static/js/document-registry.js
 ```
 
 The broader research and catalogs are preserved in [research PR #423](https://github.com/jongsky25/css-is/pull/423). This pilot is the first implementation selected by the user. Its review/deployment status should be checked in its implementation PR before continuing to another module.
+
+## Workload dashboard drill-downs
+
+[The document workload dashboard](DOCUMENT_WORKLOAD_DASHBOARD.md) links its authorized queue/search counts to exact workflow, deadline and lead table filters. Later deadlines and Closed or cancelled are additional deadline choices; older saved views remain valid. A chart link opens the interactive table automatically and also renders the filtered server table with pagination and CSV for missing scripts/assets. Refresh failure preserves that fallback; retry keeps the linked filter. Reset clears chart filters from the URL. Ordinary register pages retain their default standard table and queue/search measures.

@@ -19,7 +19,7 @@ STATUSES = ('registered', 'draft', 'in_action', 'in_review', 'changes_requested'
             'approved', 'ready_to_release', 'released', 'awaiting_acknowledgment',
             'awaiting_external', 'closed', 'cancelled')
 VERIFICATIONS = ('pending', 'verified', 'needs_correction')
-DEADLINES = ('overdue', 'due_today', 'due_soon', 'unknown')
+DEADLINES = ('overdue', 'due_today', 'due_soon', 'unknown', 'scheduled', 'inactive')
 SORTS = {'registered': 'selected.sort_id', 'number': 'd.number COLLATE NOCASE',
          'subject': 'd.subject COLLATE NOCASE', 'verification': 'd.verification',
          'status': 'd.status', 'due_date': 'NULLIF(d.due_date,\'\')',

@@ -1,8 +1,16 @@
-## 8.32 — October 24, 2026
+## 8.33 — October 24, 2026
 
 - Show a readable error and retry path when ChatGPT connection approval fails, instead of letting the browser download the response.
 - Support approval requests from browsers that send a same-site referrer; keep cross-site requests blocked.
 - Advertise both read permissions and request work and document metadata by default for new ChatGPT connections.
+
+## 8.32 — October 24, 2026
+
+- Add a document workload dashboard with locally vendored Apache ECharts 6.1.0 and accessible linked count tables for workflow stages, deadline groups and assigned leads.
+- Aggregate the authorized registry queue/search in one snapshot, using its existing working-day deadline classifier. Show every lead in the table and the largest 20 in the chart; counts describe documents, not contributions or performance.
+- Open matching Tabulator/CSV views from chart bars or table links. Preserve filtered, paginated server tables when scripts or vendors are unavailable; retries retain linked filters and Reset clears them.
+- Add Later deadlines and Closed or cancelled deadline filters for exact drill-downs. Retain schema-1 saved-view compatibility, with no schema migration or record mutation.
+- Verify upstream archive integrity and vendor file hashes, retain upstream/third-party licenses, and audit ECharts plus bundled zrender 6.1.0 and tslib 2.3.0 through the release dependency gate.
 
 ## 8.31 — October 24, 2026
 
