@@ -79,9 +79,55 @@ def arta_sqd_official(rows):
 
 MAX_RESPONSES = 5000
 MIN_SAMPLE = 10
+MAX_CSM_TREND_ANSWERS = 100000
 
 
 def csm_summary(conn, user, origin, year, month):
+    return _csm_summary(conn, user, origin, year, month)
+
+
+def compare_csm_months(conn, user, origin, year, month):
+    """Two fixed submission months; caller owns the authorization snapshot."""
+    user = permissions.actor(conn, user)
+    if not auth.can(user['role'], 'view'):
+        raise permissions.Denied('Report unavailable.')
+    if (type(year) is not int or not 1900 <= year <= 9998
+            or type(month) is not int or not 1 <= month <= 12
+            or (year == 1900 and month == 1)):
+        raise ValueError('Choose a valid month after January 1900, through December 9998.')
+    if os.environ.get('CSS_MCP_CSM_TRENDS_ENABLED') != '1':
+        return {'availability': 'not_available'}
+    previous_year, previous_month = (year, month-1) if month > 1 else (year-1, 12)
+    previous = _csm_summary(conn, user, origin, previous_year, previous_month,
+                            enabled_flag='CSS_MCP_CSM_TRENDS_ENABLED', max_answers=MAX_CSM_TREND_ANSWERS)
+    current = _csm_summary(conn, user, origin, year, month,
+                           enabled_flag='CSS_MCP_CSM_TRENDS_ENABLED', max_answers=MAX_CSM_TREND_ANSWERS)
+    result = {'as_of': tz.now_iso(), 'survey_type': 1,
+              'comparison_basis': 'Selected submission month versus immediately preceding calendar month; bureau-wide ARTA CSM.',
+              'delta_basis': 'Current minus previous published percentages, rounded to one decimal, in percentage points; not percent growth.',
+              'scoring': 'Official pooled positive SQD1–SQD8 valid answers; SQD0 excluded from overall. Each SQD item uses its own valid-answer denominator.',
+              'note': 'Monthly submissions may involve different services and respondents. Counts are not unique people. No causal or statistical-significance claim.'}
+    if any(p.get('state') != 'rated' for p in (previous, current)):
+        allowed = {'availability', 'reason', 'state', 'web_url', 'start_date', 'end_date',
+                   'submissions', 'valid_item_answers', 'minimum_sample', 'scope', 'date_basis'}
+        return dict(result, availability='not_available' if any(
+            p.get('availability') != 'available' for p in (previous, current)) else 'available',
+                    comparison_state='not_comparable',
+                    previous={k:v for k,v in previous.items() if k in allowed},
+                    current={k:v for k,v in current.items() if k in allowed})
+
+    def delta(before, after):
+        return round(after-before, 1) if before is not None and after is not None else None
+
+    prior_items = {i['item']:i['percent'] for i in previous['items']}
+    return dict(result, availability='available', comparison_state='comparable',
+                previous=previous, current=current,
+                changes={'overall_percentage_points': delta(previous['overall_percent'], current['overall_percent']),
+                         'items': [{'item':i['item'], 'percentage_points':delta(prior_items.get(i['item']), i['percent'])}
+                                   for i in current['items']]})
+
+
+def _csm_summary(conn, user, origin, year, month, enabled_flag='CSS_MCP_CSM_ENABLED', max_answers=None):
     user = permissions.actor(conn, user)
     if not auth.can(user['role'], 'view'):
         raise permissions.Denied('Report unavailable.')
@@ -94,7 +140,7 @@ def csm_summary(conn, user, origin, year, month):
               'web_url': origin + '/reports?' + urlencode({'type': 1, 'date_from': start, 'date_to': end}),
               'scoring': 'Percent of valid SQD1–SQD8 answers rated 4 or 5; SQD0 excluded. N/A excluded.',
               'minimum_sample': MIN_SAMPLE}
-    if os.environ.get('CSS_MCP_CSM_ENABLED') != '1':
+    if os.environ.get(enabled_flag) != '1':
         return dict(result, availability='not_available')
     where, args = csm_response_filter(start, end)
     selected = conn.execute('SELECT r.id FROM response r JOIN form_instance fi ON fi.id=r.form_instance_id '
@@ -104,12 +150,21 @@ def csm_summary(conn, user, origin, year, month):
                     note='Monthly report exceeds the connected-tool limit. Open the source report; no partial score is returned.')
     ids = [r[0] for r in selected]
     data = {rid: {} for rid in ids}
+    answer_count = 0
     for offset in range(0, len(ids), 500):
         batch = ids[offset:offset + 500]
         placeholders = ','.join('?' for _ in batch)
-        for rid, item, value, is_na in conn.execute(
-                'SELECT response_id,item_id,value,is_na FROM answer WHERE response_id IN (' + placeholders + ')'
-                + " AND item_id IN ('SQD0','SQD1','SQD2','SQD3','SQD4','SQD5','SQD6','SQD7','SQD8')", batch):
+        query = ('SELECT response_id,item_id,value,is_na FROM answer WHERE response_id IN (' + placeholders + ')'
+                 + " AND item_id IN ('SQD0','SQD1','SQD2','SQD3','SQD4','SQD5','SQD6','SQD7','SQD8')")
+        args = list(batch)
+        if max_answers is not None:
+            query += ' LIMIT ?'
+            args.append(max_answers + 1 - answer_count)
+        rows = conn.execute(query, args).fetchall()
+        answer_count += len(rows)
+        if max_answers is not None and answer_count > max_answers:
+            return dict(result, availability='not_available', reason='capacity_limit')
+        for rid, item, value, is_na in rows:
             data[rid][item] = 0 if is_na else value
     items, overall, pooled_n = arta_sqd_official(list(data.values()))
     result.update(availability='available', submissions=len(ids), valid_item_answers=pooled_n)
