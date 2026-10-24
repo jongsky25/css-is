@@ -1,3 +1,10 @@
+## 8.34 — October 24, 2026
+
+- Add an ECharts Supplies stock dashboard with full-scope physical-stock and availability counts, using existing ledger/reservation rules and current catalog permissions.
+- List recorded active items strictly below their critical level with exact current/target quantities, stable 30-item pagination and item links. Never sum quantities across unlike units.
+- Open exact interactive inventory/CSV filters from bars or accessible count links; preserve server-filtered fallback tables, pagination, retry/reset and recovered page state when scripts/assets fail.
+- Reuse the existing vendored ECharts dependency and gates without a new dependency, schema migration, stock write or notice projection. Preserve MCP consent recovery v8.33.
+
 ## 8.33 — October 24, 2026
 
 - Show a readable error and retry path when ChatGPT connection approval fails, instead of letting the browser download the response.
