@@ -2,6 +2,7 @@
 from datetime import date, timedelta
 import calendar
 import os
+import pandas as pd
 from urllib.parse import urlencode
 
 import auth
@@ -124,3 +125,101 @@ def csm_summary(conn, user, origin, year, month):
                 items=[{'item': i['item'], 'valid_answers': i['n'], 'na_answers': i['na'],
                         'positive_answers': i['top'], 'percent': i['score']} for i in items])
 
+
+
+def metric_view(m, kind="mean", bands=None):
+    """Flatten an engine Metric into template-friendly fields (no logic here —
+    just formatting + the band lookup the engine already defines)."""
+    if m is None:
+        return {"has": False, "shown": "—", "n": 0, "denom": "", "flags": [],
+                "band": None, "value": None}
+    if m.value is None:
+        shown = "—"
+    elif kind == "pct":
+        shown = f"{m.value:.1f}%"
+    else:
+        shown = f'{m.value:.2f}'
+    return {"has": m.value is not None, "shown": shown, "n": m.n, "denom": m.denom,
+            "flags": list(m.flags), "value": m.value,
+            "band": eng.band(m.value, bands) if bands else None}
+
+def servqual_block(df, dim_map):
+    """Type 2 / Type 3 SERVQUAL summary for one atom slice."""
+    overall = eng.overall_perception(df, dim_map)
+    expc = eng.expectation_A(df)
+    osq = eng.osq_C(df)
+    dims = [dict(dim=dim, members=", ".join(items), **metric_view(eng.dimension_mean(df, items)))
+            for dim, items in dim_map.items()]
+    gap = None
+    if overall.value is not None and expc.value is not None:
+        g = overall.value - expc.value
+        gap = {"shown": f'{g:+.2f}', "label": eng.gap_label(g)}
+    return {
+        "answer_quality": eng.answer_quality(df)[2],
+        "overall": metric_view(overall), "expectation": metric_view(expc),
+        "osq": metric_view(osq, bands=eng.OSQ_BANDS), "dimensions": dims, "gap": gap,
+        "respondents": int(df["response_id"].nunique()) if not df.empty else 0,
+        "has_data": overall.value is not None,
+    }
+
+MAX_ACTIVITY_ANSWERS = 100000
+
+
+def activity_summary(conn, user, origin, year, quarter):
+    """Fresh Type 2 consolidated quarter; caller owns the read snapshot."""
+    user = permissions.actor(conn, user)
+    if not auth.can(user['role'], 'view'):
+        raise permissions.Denied('Report unavailable.')
+    if type(year) is not int or not 1900 <= year <= 9998 or type(quarter) is not int or not 1 <= quarter <= 4:
+        raise ValueError('Choose a valid year and quarter (1 to 4).')
+    first = 3 * quarter - 2
+    last = first + 2
+    start = date(year, first, 1).isoformat()
+    end = date(year, last, calendar.monthrange(year, last)[1]).isoformat()
+    result = {'survey_type': 2, 'scope': 'bureau', 'date_basis': 'activity_start_date',
+              'start_date': start, 'end_date': end, 'as_of': tz.now_iso(),
+              'web_url': origin + '/reports?' + urlencode({'type': 2, 'period': f'quarter:{year}-Q{quarter}'}),
+              'minimum_sample': MIN_SAMPLE,
+              'scoring': 'Overall is the mean of available dimension means, not a percentage or a mean of respondent scores. A/B items use 1–7; C uses 1–4. Missing, invalid and N/A answers are excluded.'}
+    if os.environ.get('CSS_MCP_ACTIVITY_SURVEYS_ENABLED') != '1':
+        return dict(result, availability='not_available')
+    selected = conn.execute('''SELECT r.id FROM response r JOIN form_instance fi ON fi.id=r.form_instance_id
+        WHERE fi.survey_type=2 AND COALESCE(fi.archived,0)=0 AND r.archived_at IS NULL
+        AND substr(fi.event_date,1,10)>=? AND substr(fi.event_date,1,10)<=?
+        ORDER BY r.id LIMIT ?''', (start, end, MAX_RESPONSES + 1)).fetchall()
+    if len(selected) > MAX_RESPONSES:
+        return dict(result, availability='not_available', reason='capacity_limit')
+    ids = [r[0] for r in selected]
+    records = []
+    for offset in range(0, len(ids), 500):
+        batch = ids[offset:offset + 500]
+        placeholders = ','.join('?' for _ in batch)
+        # Include unrated/unknown item rows when counting source-report
+        # submissions, but never read respondent text or identity fields.
+        found = conn.execute('SELECT response_id,item_id,value,is_na FROM answer WHERE response_id IN ('
+                             + placeholders + ') ORDER BY id LIMIT ?',
+                             (*batch, MAX_ACTIVITY_ANSWERS + 1 - len(records))).fetchall()
+        records.extend(found)
+        if len(records) > MAX_ACTIVITY_ANSWERS:
+            return dict(result, availability='not_available', reason='capacity_limit')
+    frame = pd.DataFrame(records, columns=['response_id', 'item_id', 'value', 'is_na'])
+    frame['survey_type'] = 2
+    block = servqual_block(frame, eng.DIM_MAP_FORM2)
+    result.update(availability='available', submissions=len(ids),
+                  report_submissions=block['respondents'], rated_respondents=block['overall']['n'])
+    if not ids:
+        return dict(result, state='no_matching_responses')
+    if not block['has_data']:
+        return dict(result, state='no_valid_ratings')
+    valid = eng.valid_answers(frame)
+    valid = valid[valid['item_id'].isin(['A', *eng.SERVQUAL_ITEMS, 'C'])]
+    counts = valid.groupby('item_id', observed=True)['response_id'].nunique()
+    if block['overall']['n'] < MIN_SAMPLE or any(0 < n < MIN_SAMPLE for n in counts):
+        return dict(result, state='insufficient_sample')
+    return dict(result, state='rated', overall_mean=block['overall']['value'],
+                expectation_mean=block['expectation']['value'], osq_mean=block['osq']['value'],
+                expectation_answers=block['expectation']['n'], osq_answers=block['osq']['n'],
+                gap=(block['overall']['value'] - block['expectation']['value'])
+                    if block['expectation']['value'] is not None else None,
+                dimensions=[{'dimension': d['dim'], 'mean': d['value'], 'valid_item_answers': d['n']}
+                            for d in block['dimensions']])

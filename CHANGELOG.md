@@ -1,3 +1,9 @@
+## 8.45 — October 24, 2026
+
+- Add bureau-wide quarterly Type 2 satisfaction summaries under separate surveys:activities:read consent and a default-off CSS_MCP_ACTIVITY_SURVEYS_ENABLED switch.
+- Share the report's SERVQUAL block/metric formatting without loading respondent context; preserve 1–7 A/B scores, 1–4 C scores, sparse dimension arithmetic and activity-start-date selection.
+- Distinguish receipt totals, historical answer-backed report submissions and rated respondents. Withhold all scores for small populated item cells and refuse over-cap results without partial scores.
+
 ## 8.44 — October 24, 2026
 
 - Start M1.2 with fixed-month, bureau-wide Type 1 CSM aggregates under surveys:csm:read and a default-off CSS_MCP_CSM_ENABLED switch.
