@@ -160,3 +160,11 @@ unexpected response, and writes a separate `vendor-audit-echarts.json` receipt.
 The CI dependency artifact includes that receipt and the ECharts manifest.
 Local audits found no reported advisories in the pinned graph; full release CI
 must pass before deployment. See [the dashboard guide](DOCUMENT_WORKLOAD_DASHBOARD.md).
+
+### PptxGenJS / JSZip stock presentation export
+
+The Supplies stock dashboard uses unmodified **PptxGenJS 4.0.1** `dist/pptxgen.min.js` (MIT) with unmodified **JSZip 3.10.1** `dist/jszip.min.js` (MIT option). Both are stored under `static/vendor/pptxgenjs`; their npm archives are SHA-512 verified and runtime/license files are SHA-256 pinned in `docs/dependencies/pptxgenjs-manifest.json`. No CDN or runtime npm installation is used. The separately supplied JSZip distribution is used instead of PptxGenJS's opaque combined bundle.
+
+JSZip's browser distribution embeds **lie 3.3.0**, **immediate 3.0.6**, **pako 1.0.5** and **setimmediate 1.0.5**; those versions, upstream archive integrity and licenses are recorded in the same manifest. All 15 pako source modules in JSZip's unminified distribution matched the pako 1.0.5 archive exactly. JSZip's v3.10.1 upstream lock resolves lie/immediate/setimmediate to these versions; its browser stream module is a shim, excluding Node's readable-stream dependency implementation. Node-only PptxGenJS image-size/https code is not part of the browser distribution. MIT license texts are retained for all packages; pako's upstream MIT license and the zlib source copyright/license notice are both included.
+
+`check_vendor_dependencies.py` verifies the complete runtime file set and dependency provenance, then submits the root package, JSZip and all embedded versions to npm's bulk advisory endpoint. A nonempty or malformed result fails the dependency gate. The reusable release workflow includes this manifest and advisory receipt in dependency artifacts.

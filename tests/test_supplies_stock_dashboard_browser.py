@@ -16,9 +16,11 @@ def test_stock_chart_click_csv_retry_reset_and_low_list(inventory_page):
     assert page.locator('.dashboard-chart svg').count()==2
     assert page.get_by_role('region',name='Items below critical level').locator('tbody tr').count()==5
     assert page.evaluate('window.inventoryInjected') is None
+    page.locator('#stock-physical-chart').scroll_into_view_if_needed()
     # Physical states: unrecorded, inactive, out_of_stock, critical, normal.
     point=page.evaluate("echarts.getInstanceByDom(document.getElementById('stock-physical-chart')).convertToPixel({seriesIndex:0},[2,3])")
     box=page.locator('#stock-physical-chart').bounding_box();page.mouse.click(box['x']+point[0],box['y']+point[1])
+    page.wait_for_url('**/supplies/items?**')
     page.wait_for_function("document.getElementById('inventory-table-status').textContent.includes('4 matching records')")
     assert page.locator('.tabulator-row').count()==4 and len(download(page))==5
     state['fail']=True;page.select_option('#inventory-sort','code:desc')

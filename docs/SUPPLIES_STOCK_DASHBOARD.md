@@ -16,7 +16,7 @@ The list is server-paginated in 30-item pages, with a full matching count and st
 
 All active staff retain their existing active-catalog access. Including inactive items or viewing inactive-only scope requires a current custodian/auditor grant; technical administrators do not receive that access implicitly. Each dashboard, linked inventory page and export rebuilds current authority. Reads remain available when Supplies changes are disabled. Scope is shown with a snapshot timestamp; counts can change before a subsequent link/request.
 
-`supplies_stock_dashboard.report` reuses `supplies_grid.selected_query` in one read snapshot for both chart aggregates and the bounded below-critical list/count. It uses the existing classifier and reservation semantics without stock writes, notice projection, preferences created by the dashboard, schema changes or new dependencies. Only aggregate states/counts/links are embedded in chart JSON. Item details are limited to the current server list page. No stock quantities are summed across unlike units.
+`supplies_stock_dashboard.report` reuses `supplies_grid.selected_query` in one read snapshot for both chart aggregates and the bounded below-critical list/count. It uses the existing classifier and reservation semantics without stock writes, notice projection, preferences created by the dashboard, schema changes. The optional presentation export adds only the locally vendored browser libraries described below. Only aggregate states/counts/links are embedded in chart JSON. Item details are limited to the current server list page. No stock quantities are summed across unlike units.
 
 The dashboard reuses locally vendored ECharts 6.1.0 and its existing hash/provenance/advisory gates. It renders SVG without HTML tooltips or animation. Always-visible linked HTML count tables provide keyboard/print access and survive rendering/asset failure. Labels are text, layouts resize, cached history navigation refreshes the dashboard, and dashboard/linked responses use `no-store`. Existing inventory reports, stock ledger, catalog forms, reservations and replenishment flows keep their established behavior.
 
@@ -30,3 +30,15 @@ python scripts/check_vendor_dependencies.py
 ```
 
 Coverage includes classifier boundaries, unknown/zero stock, strict thresholds, real reservations, search/unit/catalog scopes, every nonzero chart link against grid/CSV counts, below-critical pagination, revoked grants/accounts, no data writes, actual SVG clicks, mobile layout, safe text, failed charts/table refreshes, script-disabled filtered tables and pagination recovery when assets return.
+
+## PowerPoint report
+
+Select **Export PowerPoint report** to download `office-connect-supplies-stock-report.pptx`. The presentation contains a scope/date summary, two editable native PowerPoint charts and editable tables of **all** matching below-critical items, including subsequent dashboard pages. Table headings repeat on continuation slides. Quantities remain exact strings and unset targets appear as **Not set**. No quantities are summed across different units and targets do not become purchase recommendations.
+
+The export uses the **applied** dashboard search, unit and catalog status. Edit filters and select **Refresh dashboard** to apply them before exporting. Every export reads a fresh authorized snapshot, so quantities can differ from an older displayed page. Permission revocation or account deactivation takes effect on the new request. Snapshot responses and errors use `no-store`.
+
+Exports allow at most **1,000 below-critical items**. Larger lists return an explicit instruction to narrow filters; they are never silently truncated. Empty results still produce a report explaining the empty scope. JavaScript and export libraries are required; failed requests/assets show a retry message while dashboard tables remain usable. All generation occurs locally in the browser without uploading records to an external converter.
+
+`/supplies/stock-dashboard/presentation-data` reuses the same `report`/`selected_query` authority and snapshot as the dashboard, with a bounded complete below-critical list instead of page-size rows. PptxGenJS 4.0.1 and JSZip 3.10.1 browser distributions are locally vendored and pinned with SHA-512 archive provenance, SHA-256 file checks, license texts and npm advisory checks for every embedded browser dependency. No schema, stock mutations, new Python dependencies or notification processing are introduced.
+
+Browser verification downloads real PPTX archives, parses every OOXML relationship/XML part, checks both editable chart caches and embedded XLSX workbooks, confirms all-page native tables, fresh stock changes and applied-filter behavior, and exercises empty results, mobile layout, failed assets/requests and revoked grants.
