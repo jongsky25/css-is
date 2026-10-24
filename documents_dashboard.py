@@ -45,11 +45,11 @@ def report(conn, user, params, *, presentation=False):
                      (' LIMIT :presentation_limit' if presentation else ''),
                      {**values,'presentation_limit':MAX_PRESENTATION_LEADS+1})
         if presentation and len(leads)>MAX_PRESENTATION_LEADS:
-            raise ValueError('Narrow the dashboard queue or search to at most 1,000 lead groups before exporting PowerPoint.')
+            raise ValueError('Narrow the dashboard queue or search to at most 1,000 lead groups before exporting this report.')
         leads = [{'key':row['group_key'], 'label':row['group_label'], 'count':row['count'],
                   'href':register_url(lead_id='unresolved' if row['group_key']=='0' else row['group_key'])}
                  for row in leads]
         return {'scope':scope, 'queue_label':dict(QUEUE_LABELS)[scope['queue']], 'total':sum(row['count'] for row in workflow),
                 'workflow':workflow, 'deadlines':deadlines, 'leads':leads,
                 'today':today.isoformat(), 'soon':soon.isoformat(), 'as_of':tz.now_iso(),
-                'register_url':register_url(), 'chart_lead_limit':20}
+                'register_url':register_url(), 'pdf_url':'/documents/dashboard/export.pdf?'+urlencode(scope), 'chart_lead_limit':20}

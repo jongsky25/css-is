@@ -6,13 +6,14 @@ from urllib.parse import urlencode
 from uuid import uuid4
 
 from fastapi import APIRouter, Request
-from fastapi.responses import RedirectResponse, Response, JSONResponse
+from fastapi.responses import RedirectResponse, Response, JSONResponse, HTMLResponse
 
 import auth
 import supplies
 import supplies_stock as stock
 import supplies_grid as inventory_grid
 import supplies_stock_dashboard as stock_dashboard
+import dashboard_pdf
 import supplies_import as imports
 import supplies_import_review as review
 import supplies_requests as requests_service
@@ -483,6 +484,20 @@ def make_router(templates, get_conn):
             return response
         except (Denied,Invalid,Conflict) as exc:
             response=failure(request,exc);response.headers.update(inventory_headers);return response
+        finally:
+            conn.close()
+
+    @router.get('/supplies/stock-dashboard/export.pdf')
+    def supply_stock_pdf(request:Request):
+        conn=get_conn()
+        try:
+            data=stock_dashboard.report(conn,request.state.user,request.query_params,presentation=True)
+            return Response(dashboard_pdf.supplies(data),media_type='application/pdf',headers={**inventory_headers,
+                'Content-Disposition':'attachment; filename="office-connect-supplies-stock-report.pdf"'})
+        except (Denied,Invalid,Conflict) as exc:
+            back='/supplies/stock-dashboard?'+urlencode({key:request.query_params.get(key,'active' if key=='active' else '') for key in ('q','unit','active')})
+            return HTMLResponse(dashboard_pdf.error_html(exc,back),status_code=403 if isinstance(exc,Denied) else 400,
+                                headers=inventory_headers)
         finally:
             conn.close()
 

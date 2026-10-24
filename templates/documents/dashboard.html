@@ -17,6 +17,7 @@
 </form>
 <p><strong>{{ dashboard.total }} matching records you can access</strong> · Snapshot {{ dashboard.as_of }}. Counts cover every matching page in the selected queue and search. They count documents, not contributions. The dashboard uses queue and search; chart links add their matching filter in the table.</p>
 <p><a href="{{ dashboard.register_url }}">Open matching document table</a></p>
+<p><a href="{{ dashboard.pdf_url }}">Export PDF report</a></p>
 <p><button type="button" id="workload-presentation-export" disabled>Export PowerPoint report</button></p>
 <p id="workload-presentation-status" role="status" aria-live="polite">PowerPoint export requires JavaScript. Reports include complete count tables, up to 1,000 lead groups.</p>
 <p id="dashboard-chart-status" role="status" aria-live="polite">Linked count tables are available below. Charts enhance those same counts when they load.</p>

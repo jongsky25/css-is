@@ -27,6 +27,7 @@ import documents_jobs as jobs
 import documents_guidance as guidance
 import documents_grid as grid
 import documents_dashboard as dashboard
+import dashboard_pdf
 import work
 import work_intake
 import work_readiness
@@ -185,6 +186,20 @@ def make_router(templates,get_conn):
             return response
         except (p.Denied,ValueError) as exc:
             return HTMLResponse(str(exc),status_code=403 if isinstance(exc,p.Denied) else 400,headers=headers)
+        finally:
+            conn.close()
+
+    @router.get('/documents/dashboard/export.pdf')
+    def workload_pdf(request:Request):
+        conn=get_conn()
+        headers={'Cache-Control':'no-store','Pragma':'no-cache'}
+        try:
+            data=dashboard.report(conn,request.state.user,request.query_params,presentation=True)
+            return Response(dashboard_pdf.documents(data),media_type='application/pdf',headers={**headers,
+                'Content-Disposition':'attachment; filename="office-connect-document-workload-report.pdf"'})
+        except (p.Denied,ValueError) as exc:
+            back='/documents/dashboard?'+urlencode({key:request.query_params.get(key,'all' if key=='queue' else '') for key in ('queue','q')})
+            return HTMLResponse(dashboard_pdf.error_html(exc,back),status_code=403 if isinstance(exc,p.Denied) else 400,headers=headers)
         finally:
             conn.close()
 

@@ -29,7 +29,7 @@ def report(conn, user, params, *, presentation=False):
         low_source=source+' AND active=1 AND on_hand<critical_level'
         low_count=conn.execute(low_source.format(columns='COUNT(*)'),values).fetchone()[0]
         if presentation and low_count>MAX_PRESENTATION_ITEMS:
-            raise supplies.Invalid('Narrow the dashboard filters to at most 1,000 below-critical items before exporting PowerPoint.')
+            raise supplies.Invalid('Narrow the dashboard filters to at most 1,000 below-critical items before exporting this report.')
         last=max(1,math.ceil(low_count/grid.PAGE_SIZE));page=min(page,last)
         items=rows(conn,low_source.format(columns='id,code,description,unit,on_hand,reserved,available,critical_level,target_level')+
                    ' ORDER BY code COLLATE NOCASE,id LIMIT :limit OFFSET :offset',
@@ -41,6 +41,7 @@ def report(conn, user, params, *, presentation=False):
                 if item.get(field) is not None:item[field]=str(item[field])
         return {'scope':scope,**groups,'total':sum(r['count'] for r in groups['physical']),
                 'as_of':tz.now_iso(),'inventory_url':inventory_url(),
+                'pdf_url':'/supplies/stock-dashboard/export.pdf?'+urlencode(scope),
                 'low_items':items,'low_count':low_count,'page':page,'last_page':last,
                 'previous':'/supplies/stock-dashboard?'+urlencode({**scope,'page':page-1}),
                 'next':'/supplies/stock-dashboard?'+urlencode({**scope,'page':page+1})}
