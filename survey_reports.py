@@ -167,6 +167,41 @@ MAX_ACTIVITY_ANSWERS = 100000
 
 
 def activity_summary(conn, user, origin, year, quarter):
+    return _activity_summary(conn, user, origin, year, quarter)
+
+
+def unit_activity_summary(conn, user, origin, unit_id, year, quarter):
+    user = permissions.actor(conn, user)
+    if not auth.can(user['role'], 'view'):
+        raise permissions.Denied('Report unavailable.')
+    if type(unit_id) is not int or not 1 <= unit_id <= 9223372036854775807:
+        raise ValueError('Choose a positive unit ID from unit discovery.')
+    unit = conn.execute('SELECT id,name,path FROM org_unit WHERE id=?', (unit_id,)).fetchone()
+    if not unit or not unit[2]:
+        raise permissions.Denied('Unit not found or unavailable.')
+    return _activity_summary(conn, user, origin, year, quarter, unit=unit)
+
+
+def find_survey_units(conn, user, query='', limit=10, offset=0):
+    user = permissions.actor(conn, user)
+    if not auth.can(user['role'], 'view'):
+        raise permissions.Denied('Report unavailable.')
+    if (not isinstance(query, str) or len(query) > 120 or type(limit) is not int
+            or not 1 <= limit <= 25 or type(offset) is not int or not 0 <= offset <= 2000):
+        raise ValueError('Use up to 120 search characters and a page size from 1 to 25.')
+    if os.environ.get('CSS_MCP_UNIT_SURVEYS_ENABLED') != '1':
+        return {'availability': 'not_available'}
+    rows = conn.execute("SELECT id,name,path FROM org_unit WHERE path IS NOT NULL AND path<>'' ORDER BY path,id LIMIT 2001").fetchall()
+    if len(rows) > 2000:
+        return {'availability': 'not_available', 'reason': 'capacity_limit'}
+    needle = query.strip().casefold()
+    found = [{'unit_id': str(r[0]), 'name': r[1], 'path': r[2]} for r in rows
+             if needle in (r[1] + ' ' + r[2]).casefold()]
+    return {'availability': 'available', 'as_of': tz.now_iso(), 'data': found[offset:offset+limit],
+            'next_offset': offset+limit if len(found) > offset+limit else None}
+
+
+def _activity_summary(conn, user, origin, year, quarter, unit=None):
     """Fresh Type 2 consolidated quarter; caller owns the read snapshot."""
     user = permissions.actor(conn, user)
     if not auth.can(user['role'], 'view'):
@@ -182,12 +217,24 @@ def activity_summary(conn, user, origin, year, quarter):
               'web_url': origin + '/reports?' + urlencode({'type': 2, 'period': f'quarter:{year}-Q{quarter}'}),
               'minimum_sample': MIN_SAMPLE,
               'scoring': 'Overall is the mean of available dimension means, not a percentage or a mean of respondent scores. A/B items use 1–7; C uses 1–4. Missing, invalid and N/A answers are excluded.'}
-    if os.environ.get('CSS_MCP_ACTIVITY_SURVEYS_ENABLED') != '1':
-        return dict(result, availability='not_available')
+    if unit:
+        result.update(scope='unit_and_descendants', unit_id=str(unit[0]), unit_name=unit[1],
+                      unit_path=unit[2], web_url=origin + '/reports?' + urlencode(
+                          {'type': 2, 'period': f'quarter:{year}-Q{quarter}', 'org': unit[2]}))
+    flag = 'CSS_MCP_UNIT_SURVEYS_ENABLED' if unit else 'CSS_MCP_ACTIVITY_SURVEYS_ENABLED'
+    if os.environ.get(flag) != '1':
+        # Do not disclose unit identity while this pilot is disabled.
+        return {'availability': 'not_available'} if unit else dict(result, availability='not_available')
+    unit_sql = ''
+    args = [start, end]
+    if unit:
+        unit_sql = (' AND fi.lead_org_id IN (SELECT id FROM org_unit WHERE path=? '
+                    'OR substr(path,1,?)=?)')
+        args.extend([unit[2], len(unit[2])+1, unit[2]+'/'])
     selected = conn.execute('''SELECT r.id FROM response r JOIN form_instance fi ON fi.id=r.form_instance_id
         WHERE fi.survey_type=2 AND COALESCE(fi.archived,0)=0 AND r.archived_at IS NULL
         AND substr(fi.event_date,1,10)>=? AND substr(fi.event_date,1,10)<=?
-        ORDER BY r.id LIMIT ?''', (start, end, MAX_RESPONSES + 1)).fetchall()
+        ''' + unit_sql + ' ORDER BY r.id LIMIT ?', (*args, MAX_RESPONSES + 1)).fetchall()
     if len(selected) > MAX_RESPONSES:
         return dict(result, availability='not_available', reason='capacity_limit')
     ids = [r[0] for r in selected]

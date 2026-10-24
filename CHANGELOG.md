@@ -1,3 +1,9 @@
+## 8.49 — October 24, 2026
+
+- Add bounded unit discovery and quarterly Type 2 unit summaries under separate surveys:units:read consent and default-off CSS_MCP_UNIT_SURVEYS_ENABLED.
+- Match report selection by current form lead-unit path, including descendants with exact slash boundaries. Reuse the consolidated five-dimension scoring and existing capacity/small-sample refusals; exclude personal answers, text and speaker scores.
+- Existing bureau/activity grants do not gain unit access. Live acceptance and period comparisons remain pending.
+
 ## 8.48 — October 24, 2026
 
 - Add bounded title/quarter discovery and individual merged-activity Type 2 scorecards under new surveys:activity_details:read consent and default-off CSS_MCP_ACTIVITY_DETAILS_ENABLED.
