@@ -89,7 +89,7 @@ the existing Gemini/Groq provider fallback. Fixed answers consume no second call
 
 Valid broader replies use `served_by=verified_facts` and return `sources` with
 stable IDs, labels, values, valid-rating denominators where applicable and as-of
-dates, plus `contract_version=1`. The answer card displays the same labels and values in its normal text. Since v8.25, a collapsible source list also shows each selected source ID and as-of date, plus valid-rating counts for satisfaction figures. The card explains that AI selected the topics while the application calculated the figures. Other personal answers do not receive survey-source details. Rejected provider plans retain the existing
+dates, plus `contract_version=1`. The answer card displays the same labels and values in its normal text. Since v8.26, a collapsible source list also shows each selected source ID and as-of date, plus valid-rating counts for satisfaction figures. The card explains that AI selected the topics while the application calculated the figures. Other personal answers do not receive survey-source details. Rejected provider plans retain the existing
 `rejected_validation` outcome; provider/budget failures retain their existing
 outcomes. Existing log retention and provider governance settings are unchanged.
 
