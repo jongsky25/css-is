@@ -11,6 +11,8 @@ registration (no Form 2). These tests lock that contract:
     shows the activity name and the total responses across its speakers.
 """
 import re
+from html.parser import HTMLParser
+from urllib.parse import urlsplit, parse_qs
 import storage as st
 
 
@@ -66,8 +68,23 @@ def test_outside_creates_registration_disabled_event(manager, db_path):
 
 def test_outside_combined_qr_is_sequence_not_link_tree(manager, db_path):
     r, _ = _make_outside(manager, db_path, name="Outside Seq Test")
-    assert "/seq?tokens=" in r.text, "combined QR for an outside activity is the /seq sequence"
-    assert "/e/" not in r.text, "outside activities must not get a public link tree"
+    class Links(HTMLParser):
+        def __init__(self):
+            super().__init__()
+            self.hrefs = []
+
+        def handle_starttag(self, tag, attrs):
+            if tag == 'a':
+                self.hrefs.extend(value for key, value in attrs if key == 'href' and value)
+
+    links = Links()
+    # Encoded image payloads can contain /e/ without being public event links.
+    links.feed(r.text + '<img src="data:image/png;base64,AAAA/e/AAAA" alt="Synthetic payload">')
+    destinations = [urlsplit(href) for href in links.hrefs]
+    assert any(url.path == '/seq' and parse_qs(url.query).get('tokens') for url in destinations), \
+        "combined QR for an outside activity is the /seq sequence"
+    assert not any(url.path.startswith('/e/') for url in destinations), \
+        "outside activities must not get a public link tree"
 
 
 def test_link_tree_404s_for_outside_event(client, manager, db_path):
