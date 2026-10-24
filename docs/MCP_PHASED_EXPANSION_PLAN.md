@@ -99,3 +99,8 @@ The first delivery adds own unread **shared-work notice metadata** and **confere
 ### M1.2 first implementation — v8.44
 
 Begin satisfaction survey coverage with `get_csm_summary(year, month)`, a bureau-wide Type 1 monthly aggregate under separate `surveys:csm:read` consent. Shared date/SQD helpers keep existing reports and the new projection aligned. No individual responses, comments, identities or demographic filters. Score suppression and capacity limits are explicit; the independent pilot flag defaults off. See [CSM pilot contract](MCP_READ_ADAPTER.md#m12-first-delivery-monthly-type-1-csm). Service-level breakdowns, comparisons, Type 2 activity surveys and Type 3 resource-person ratings remain subsequent increments, each with its own authority/privacy review. Hosted acceptance is pending.
+
+
+### M1.2 second implementation — v8.45
+
+Add a separate-consent, default-off bureau-wide quarterly Type 2 activity-satisfaction summary. Share existing SERVQUAL report calculations; preserve activity-start dates, item scales and sparse-answer denominators. Exclude personal responses and speaker ratings, withhold all small-sample scores and refuse partial capacity results. Individual activity/unit breakdowns and Type 3 resource-person summaries remain subsequent increments. See [Type 2 pilot](MCP_READ_ADAPTER.md#m12-second-delivery-quarterly-type-2-activity-satisfaction); hosted acceptance remains pending.

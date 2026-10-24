@@ -286,6 +286,17 @@ def build_server(get_conn, origin):
             return {'data': [_web(origin, api.task_read(row)) for row in rows], 'next_before': cursor}
         return await perform('work:read', 'work', run)
 
+    @server.tool(title='Quarterly activity satisfaction summary', annotations=READ_ONLY)
+    async def get_activity_survey_summary(year: int, quarter: int) -> dict:
+        """Bureau-wide Type 2 survey aggregates by activity start quarter (1–4).
+
+        Separate from activity progress. No individual responses, demographics,
+        comments, speaker ratings or activity/person/unit filters. Small-sample
+        scores are withheld; empty/unrated results never mean zero satisfaction.
+        """
+        return await perform('surveys:activities:read', 'surveys_activities',
+                             lambda conn, user: survey_reports.activity_summary(conn, user, origin, year, quarter))
+
     @server.tool(title='Monthly CSM satisfaction summary', annotations=READ_ONLY)
     async def get_csm_summary(year: int, month: int) -> dict:
         """Read a bureau-wide Type 1 ARTA/CSM monthly aggregate by submission date.

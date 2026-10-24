@@ -12712,20 +12712,7 @@ def _subject_label(ctx):
 
 # ARTA distribution buckets, collapsed to top / middle / bottom for the mini-bar.
 def _metric_view(m, kind="mean", bands=None):
-    """Flatten an engine Metric into template-friendly fields (no logic here —
-    just formatting + the band lookup the engine already defines)."""
-    if m is None:
-        return {"has": False, "shown": "—", "n": 0, "denom": "", "flags": [],
-                "band": None, "value": None}
-    if m.value is None:
-        shown = "—"
-    elif kind == "pct":
-        shown = f"{m.value:.1f}%"
-    else:
-        shown = f'{m.value:.2f}'
-    return {"has": m.value is not None, "shown": shown, "n": m.n, "denom": m.denom,
-            "flags": list(m.flags), "value": m.value,
-            "band": eng.band(m.value, bands) if bands else None}
+    return survey_reports.metric_view(m, kind, bands)
 
 
 def _parse_period(period_val):
@@ -12891,23 +12878,7 @@ def _org_options(conn):
 
 
 def _servqual_block(df, dim_map):
-    """Type 2 / Type 3 SERVQUAL summary for one atom slice."""
-    overall = eng.overall_perception(df, dim_map)
-    expc = eng.expectation_A(df)
-    osq = eng.osq_C(df)
-    dims = [dict(dim=dim, members=", ".join(items), **_metric_view(eng.dimension_mean(df, items)))
-            for dim, items in dim_map.items()]
-    gap = None
-    if overall.value is not None and expc.value is not None:
-        g = overall.value - expc.value
-        gap = {"shown": f'{g:+.2f}', "label": eng.gap_label(g)}
-    return {
-        "answer_quality": eng.answer_quality(df)[2],
-        "overall": _metric_view(overall), "expectation": _metric_view(expc),
-        "osq": _metric_view(osq, bands=eng.OSQ_BANDS), "dimensions": dims, "gap": gap,
-        "respondents": int(df["response_id"].nunique()) if not df.empty else 0,
-        "has_data": overall.value is not None,
-    }
+    return survey_reports.servqual_block(df, dim_map)
 
 
 def _servqual_response_rows(df, dim_map):
@@ -17660,7 +17631,8 @@ if _MCP_ENABLED:
         if not pending:
             return _mcp_consent_error('This request expired. Start again in ChatGPT.', 410)
         client_id, params = pending
-        labels = {'surveys:csm:read': 'Bureau-wide monthly CSM survey aggregates (no individual responses)',
+        labels = {'surveys:activities:read': 'Bureau-wide quarterly activity satisfaction aggregates (no individual responses)',
+                  'surveys:csm:read': 'Bureau-wide monthly CSM survey aggregates (no individual responses)',
                   'notifications:read': 'Your own unread shared-work notice metadata (no message text)',
                   'activities:read': 'Your permitted activity schedules and summary counts',
                   'calendar:read': 'Your visible calendar events, activities and room bookings',
