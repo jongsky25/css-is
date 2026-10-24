@@ -33,3 +33,7 @@ python scripts/check_vendor_dependencies.py
 ```
 
 Domain/HTTP checks cover filters before pagination, exact numeric ordering/transport, classifier boundaries, reservations, active accounts and live grants, CSV scope/columns/formulas/limits, private preferences, quotas, stale revisions, repeated schema installation, CSRF/body bounds, no-store responses and unchanged stock records. Chromium checks use the actual vendored build and authenticated routes for saved-view reload, all-page CSV, draft controls, columns, mobile layout, unknown/zero stock, inactive access revocation, failure recovery and missing-vendor fallback.
+
+## Stock dashboard links
+
+The [Supplies stock dashboard](SUPPLIES_STOCK_DASHBOARD.md) adds physical-stock/availability charts and a bounded below-critical list. Its links preserve scope and open the matching interactive inventory automatically; filtered server tables, CSV and pagination remain available without scripts or vendor assets. Retry retains the linked filters, recovered assets restore the requested page, and Reset clears chart filters while keeping the initial catalog search and active/inactive scope.

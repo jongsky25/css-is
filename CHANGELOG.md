@@ -1,10 +1,17 @@
-## 8.34 — October 24, 2026
+## 8.35 — October 24, 2026
 
 - Let ChatGPT list visible calendar events, activities and room bookings, with dates, status, venue and links back to Office Connect.
 - Require a separate calendar read permission and check current calendar visibility on every request; approved room bookings are visible to all signed-in users, while pending requests remain restricted to the requester and room approvers.
 - Limit each calendar request to 31 days and 25 returned items; exclude attendee names, meeting links, leave and birthdays. Existing ChatGPT connections must reconnect to approve the new permission.
 - Add separately authorized supply request and stock-warning, personal travel filing, and manager-scoped activity progress reads; exclude purposes, claim amounts, files and individual responses.
 - Add a combined overview that reads only granted modules and marks ungranted modules clearly rather than reporting empty results.
+
+## 8.34 — October 24, 2026
+
+- Add an ECharts Supplies stock dashboard with full-scope physical-stock and availability counts, using existing ledger/reservation rules and current catalog permissions.
+- List recorded active items strictly below their critical level with exact current/target quantities, stable 30-item pagination and item links. Never sum quantities across unlike units.
+- Open exact interactive inventory/CSV filters from bars or accessible count links; preserve server-filtered fallback tables, pagination, retry/reset and recovered page state when scripts/assets fail.
+- Reuse the existing vendored ECharts dependency and gates without a new dependency, schema migration, stock write or notice projection. Preserve MCP consent recovery v8.33.
 
 ## 8.33 — October 24, 2026
 

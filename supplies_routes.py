@@ -12,6 +12,7 @@ import auth
 import supplies
 import supplies_stock as stock
 import supplies_grid as inventory_grid
+import supplies_stock_dashboard as stock_dashboard
 import supplies_import as imports
 import supplies_import_review as review
 import supplies_requests as requests_service
@@ -106,12 +107,25 @@ def make_router(templates, get_conn):
 
     def catalog_page(request, conn, *, error='', status_code=200, submitted=None):
         params = request.query_params
-        result = supplies.catalog(conn, request.state.user, query=params.get('q', ''),
-                                  include_inactive=params.get('inactive') == '1', page=params.get('page', '1'))
+        linked_view=params.get('interactive')=='1'
+        linked={}
+        if linked_view:
+            linked={field:params.get(field,'active' if field=='active' else '') for field in inventory_grid.FILTERS}
+            data=inventory_grid.page(conn,request.state.user,{**linked,'page':params.get('page','1')})
+            result={'items':data['data'],'count':data['last_row'],'page':data['page'],
+                    'has_next':data['page']<data['last_page'],'last_page':data['last_page'],
+                    'query':linked['q'],'include_inactive':linked['active']!='active'}
+        else:
+            result = supplies.catalog(conn, request.state.user, query=params.get('q', ''),
+                                      include_inactive=params.get('inactive') == '1', page=params.get('page', '1'))
         def page_url(page):
+            if linked_view:return '/supplies/items?'+urlencode({**linked,'interactive':'1','page':page})
             return '/supplies/items?' + urlencode({'q': result['query'],
                       'inactive': '1' if result['include_inactive'] else '0', 'page': page})
         return render(request, conn, 'catalog', status_code=status_code, error=error,
+                      linked_view=linked_view,inventory_display=inventory_grid.display,
+                      linked_export='/supplies/inventory-export.csv?'+urlencode(linked),
+                      stock_dashboard_url='/supplies/stock-dashboard?'+urlencode({'q':result['query'],'active':'all' if result['include_inactive'] else 'active'}),
                       submitted=submitted or {}, page_url=page_url, inventory_units=inventory_grid.units(conn, request.state.user),
                       inventory_columns=inventory_grid.COLUMNS, physical_states=inventory_grid.PHYSICAL,
                       availability_states=inventory_grid.AVAILABLE, stock_labels=notify.LABELS, **result)
@@ -442,9 +456,13 @@ def make_router(templates, get_conn):
     def catalog(request: Request):
         conn = get_conn()
         try:
-            return catalog_page(request, conn)
+            response=catalog_page(request, conn)
+            if request.query_params.get('interactive')=='1':response.headers.update({'Cache-Control':'no-store','Pragma':'no-cache'})
+            return response
         except (Denied, Invalid) as exc:
-            return failure(request, exc)
+            response=failure(request, exc)
+            if request.query_params.get('interactive')=='1':response.headers['Cache-Control']='no-store'
+            return response
         finally:
             conn.close()
 
@@ -453,6 +471,20 @@ def make_router(templates, get_conn):
     def inventory_error(exc):
         code = 403 if isinstance(exc, Denied) else 409 if isinstance(exc, Conflict) else 400
         return JSONResponse({'error':str(exc)}, status_code=code, headers=inventory_headers)
+
+    @router.get('/supplies/stock-dashboard')
+    def supply_stock_dashboard(request: Request):
+        conn=get_conn()
+        try:
+            result=stock_dashboard.report(conn,request.state.user,request.query_params)
+            response=render(request,conn,'stock_dashboard',dashboard=result,stock_labels=notify.LABELS,
+                            inventory_units=inventory_grid.units(conn,request.state.user))
+            response.headers.update(inventory_headers)
+            return response
+        except (Denied,Invalid,Conflict) as exc:
+            response=failure(request,exc);response.headers.update(inventory_headers);return response
+        finally:
+            conn.close()
 
     @router.get('/supplies/inventory-data')
     def inventory_data(request: Request):
