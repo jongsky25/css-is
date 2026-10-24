@@ -18,10 +18,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "8.25"
+APP_VERSION = "8.26"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "8.26",
+        "date": "October 24, 2026",
+        "summary": "Verified survey answers now show the records behind their figures.",
+        "changes": [
+            "Open View survey sources beneath a verified answer to see each source and its as-of date.",
+            "Satisfaction sources also show how many valid ratings support the figure, including when none are available.",
+            "Other personal answers keep their simple card without unrelated survey details."
+        ]
+    },
     {
         "version": "8.25",
         "date": "October 24, 2026",

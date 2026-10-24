@@ -989,6 +989,11 @@ body.sf-picking, body.sf-picking * { cursor:crosshair !important; }
 /* assistant cards — /start and the search box's Ask row (static/js/assistant.js) */
 .start-card { background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:1rem 1.2rem; }
 .start-card-msg { margin:0 0 .8rem; }
+.start-evidence { margin:0 0 .8rem; font-size:.88rem; color:var(--soft); }
+.start-evidence summary { cursor:pointer; color:var(--ink); font-weight:600; }
+.start-evidence p { margin:.5rem 0; }
+.start-evidence ul { margin:.35rem 0 0; padding-left:1.3rem; }
+.start-evidence li + li { margin-top:.35rem; }
 .start-card-actions { display:flex; align-items:center; gap:.6rem; flex-wrap:wrap; }
 .start-fb { margin-left:auto; display:flex; gap:.3rem; }
 .fb-btn { font-size:1.1rem; line-height:1; background:none; border:1px solid var(--line);
