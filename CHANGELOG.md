@@ -1,3 +1,9 @@
+## 8.29 — October 24, 2026
+
+- Add a reproducible synthetic A25 capacity and recovery rehearsal with aggregate evidence and a provisional SQLite decision; no production data or live performance claim.
+- Batch Type-1 walk-in export answer/remark lookups so office-sized extracts no longer exceed SQLite's variable limit; cover the boundary above 1,000 responses.
+- Document large-report time and memory risk, plus the hosted measurement and recovery gate still required.
+
 ## 8.28 — October 24, 2026
 
 - Group the interactive document register by workflow or assigned lead before pagination, with full-result counts and explicit counts for each page fragment.

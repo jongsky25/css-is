@@ -11401,24 +11401,22 @@ def _csm_blhsd_rows(conn, date_from=None, date_to=None):
     if not responses:
         return []
 
-    resp_ids     = [r[0] for r in responses]
-    placeholders = ",".join("?" * len(resp_ids))
-
-    remarks_rows = conn.execute(
-        f"SELECT response_id, item_id, text FROM item_remark WHERE response_id IN ({placeholders})",
-        resp_ids
-    ).fetchall()
+    resp_ids = [r[0] for r in responses]
+    # A full-office extract can include tens of thousands of responses. Bound
+    # every lookup below the oldest supported SQLite variable limit (999).
     meta = {}
-    for resp_id, item_id, text in remarks_rows:
-        meta.setdefault(resp_id, {})[item_id] = text
-
-    answer_rows = conn.execute(
-        f"SELECT response_id, item_id, value, is_na FROM answer WHERE response_id IN ({placeholders})",
-        resp_ids
-    ).fetchall()
     sqd = {}
-    for resp_id, item_id, value, is_na in answer_rows:
-        sqd.setdefault(resp_id, {})[item_id] = (0 if is_na else value)
+    for offset in range(0, len(resp_ids), 500):
+        batch = resp_ids[offset:offset + 500]
+        placeholders = ",".join("?" * len(batch))
+        for resp_id, item_id, text in conn.execute(
+                f"SELECT response_id, item_id, text FROM item_remark WHERE response_id IN ({placeholders})",
+                batch):
+            meta.setdefault(resp_id, {})[item_id] = text
+        for resp_id, item_id, value, is_na in conn.execute(
+                f"SELECT response_id, item_id, value, is_na FROM answer WHERE response_id IN ({placeholders})",
+                batch):
+            sqd.setdefault(resp_id, {})[item_id] = (0 if is_na else value)
 
     out = []
     for resp_id, submitted_at, remarks in responses:

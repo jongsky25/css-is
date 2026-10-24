@@ -157,6 +157,28 @@ def test_walkin_submission_period_archives_and_last_fractional_second(manager, a
     assert 'A18 archived response' not in text and 'A18 outside quarter' not in text
 
 
+def test_walkin_full_export_batches_response_lookups(app_mod, walkin):
+    conn = st.connect(app_mod.DB)
+    fid = conn.execute('SELECT id FROM form_instance WHERE qr_token=?', (walkin,)).fetchone()[0]
+    with conn:
+        for n in range(1100):
+            rid = conn.execute(
+                'INSERT INTO response(form_instance_id,submitted_at,remarks) VALUES (?,?,?)',
+                (fid, '2026-10-20T09:00:00', f'Synthetic note {n}')).lastrowid
+            conn.execute('INSERT INTO answer(response_id,item_id,value,is_na) VALUES (?,?,?,0)',
+                         (rid, 'SQD1', (n % 5) + 1))
+            conn.execute('INSERT INTO item_remark(response_id,item_id,text) VALUES (?,?,?)',
+                         (rid, 'SERVICE', f'Synthetic service {n}'))
+    rows = app_mod._csm_blhsd_rows(conn)
+    assert len(rows) >= 1100
+    by_note = {row['SUGGESTIONS']: row for row in rows}
+    assert by_note['Synthetic note 0']['SERVICE'] == 'Synthetic service 0'
+    assert by_note['Synthetic note 0']['SQD1'] == 1
+    assert by_note['Synthetic note 1099']['SERVICE'] == 'Synthetic service 1099'
+    assert by_note['Synthetic note 1099']['SQD1'] == 5
+    conn.close()
+
+
 def test_unrated_submission_kept_in_excel_and_distinguished_from_empty(manager, app_mod):
     _, fid = _make_bureau(manager, app_mod.DB, 'Unrated scope', '2026-08-09', 'No-score room')
     conn = st.connect(app_mod.DB)

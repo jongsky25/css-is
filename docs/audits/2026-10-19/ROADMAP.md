@@ -105,6 +105,8 @@ Total provisional implementation effort: **51–98 person-days** if all listed p
 
 **A25:** measure the corrected system with representative data and concurrent reads/writes: p50/p95/p99 latency, error rate, SQLite lock wait, CPU/RSS, event-loop delay, queue age, export/refresh duration, restore time and snapshot lag. Test the existing single-writer deployment's restart behavior and limits. Include concurrent first-use database initialization: A16 CI exposed a startup-worker/session bootstrap lock in a fresh Gmail-review test database; the fixture ordering was repaired, while production bootstrap concurrency remains to be reproduced and evaluated.
 
+**Local A25 result, v8.29:** The [reproducible synthetic assessment](../../CAPACITY_ASSESSMENT_A25.md) ran current dashboard, health, writes, export, first-use, lock-wait and isolated restore paths at 35,000 generated responses. It uncovered and fixed a large walk-in export SQL-variable failure. No local workload errors occurred after that repair, but export time and peak RSS warrant hosted measurement. Retain SQLite provisionally; the production capacity and recovery gate above remains open because live testing was deferred by the user.
+
 | Evidence | Likely next decision |
 |---|---|
 | Query and worker fixes meet traffic/recovery objectives | Retain SQLite and simple hosting; document the capacity envelope and monitor it |
