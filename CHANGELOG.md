@@ -1,3 +1,9 @@
+## 8.40 — October 24, 2026
+
+- Correct the work-only client registration ceiling that prevented v8.38 from displaying optional scopes for newly recreated ChatGPT apps.
+- Advertise the six supported read scopes for new and legacy registrations while preserving explicit authorize requests, unchecked optional consent and existing grant/refresh scope limits.
+- Remove the ineffective recreate-app loop; reject unsupported/write scopes and cover legacy calendar opt-in through OAuth.
+
 ## 8.39 — October 24, 2026
 
 - Add a Supplies stock dashboard PowerPoint export using locally vendored PptxGenJS 4.0.1 and JSZip 3.10.1 with hashes, licenses and npm advisory checks for embedded browser dependencies.

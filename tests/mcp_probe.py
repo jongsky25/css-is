@@ -121,7 +121,7 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
             'response_types': ['code'], 'scope': 'work:read'})
         assert hostile.status_code == 400
         registered = client.post('/register', json={
-            'redirect_uris': [callback], 'client_name': 'ChatGPT',
+            'redirect_uris': [callback], 'client_name': 'ChatGPT', 'scope': 'work:read',
             'token_endpoint_auth_method': 'none',
             'grant_types': ['authorization_code', 'refresh_token'],
             'response_types': ['code']})
@@ -374,28 +374,56 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
             assert rotated.status_code == 200
             assert set(rotated.json()['scope'].split()) == expected
 
-        # A legacy registration limited to work cannot be expanded by forged form data.
+        # Legacy stored registrations must also offer choices, without changing grants.
         restricted = client.post('/register', json={
             'redirect_uris': [callback], 'client_name': 'Legacy ChatGPT', 'scope': 'work:read',
             'token_endpoint_auth_method': 'none', 'grant_types': ['authorization_code', 'refresh_token'],
             'response_types': ['code']})
         assert restricted.status_code == 201
+        assert set(restricted.json()['scope'].split()) == scopes
         restricted_id = restricted.json()['client_id']
+        import json
+        conn = st.connect(os.environ['CSS_DB'])
+        raw = conn.execute('SELECT metadata_json FROM mcp_oauth_client WHERE id=?', (restricted_id,)).fetchone()[0]
+        legacy = json.loads(raw)
+        legacy['scope'] = 'work:read'
+        conn.execute('UPDATE mcp_oauth_client SET metadata_json=? WHERE id=?', (json.dumps(legacy), restricted_id))
+        conn.commit(); conn.close()
         narrow = client.get('/authorize', params={
             'response_type': 'code', 'client_id': restricted_id, 'redirect_uri': callback,
             'code_challenge': challenge, 'code_challenge_method': 'S256',
             'resource': 'https://office.example/mcp', 'scope': 'work:read'}, follow_redirects=False)
         narrow_page = browser.get(narrow.headers['location'])
-        assert 'name="scope_calendar:read"' not in narrow_page.text
-        assert 'recreate the Office Connect app' in narrow_page.text
+        assert 'name="scope_calendar:read"' in narrow_page.text
+        assert 'name="scope_activities:read"' in narrow_page.text
+        assert 'recreate the Office Connect app' not in narrow_page.text
         values = {key: re.search(r'name="' + key + r'" value="([^"]+)"', narrow_page.text).group(1)
                   for key in ('ticket', 'csrf')}
-        values.update(decision='approve', password='Synthetic123!', **{'scope_calendar:read': '1'})
+        values.update(decision='approve', password='Synthetic123!', **{'scope_calendar:write': '1'})
         forged = browser.post('/mcp-consent', data=values,
             headers={'Origin': 'https://office.example'}, follow_redirects=False)
         assert forged.status_code == 400, forged.text
         conn = st.connect(os.environ['CSS_DB'])
         assert conn.execute('SELECT COUNT(*) FROM mcp_oauth_code WHERE client_id=?', (restricted_id,)).fetchone()[0] == 0
         assert conn.execute('SELECT COUNT(*) FROM mcp_oauth_grant WHERE client_id=?', (restricted_id,)).fetchone()[0] == 0
-        conn.close()
+        old_grant = mcp_auth.Provider._tokens(conn, restricted_id, owner, ['work:read'], 'https://office.example/mcp')
+        conn.commit(); conn.close()
+        # Separate approval scenario: reset the synthetic attempt limiter only.
+        import ratelimit
+        ratelimit.reset()
+        del values['scope_calendar:write']
+        values['scope_calendar:read'] = '1'
+        consent = browser.post('/mcp-consent', data=values,
+            headers={'Origin': 'https://office.example'}, follow_redirects=False)
+        assert consent.status_code == 303, consent.text
+        code = parse_qs(urlsplit(consent.headers['location']).query)['code'][0]
+        token = client.post('/token', data={'grant_type': 'authorization_code', 'client_id': restricted_id,
+            'code': code, 'code_verifier': verifier, 'redirect_uri': callback,
+            'resource': 'https://office.example/mcp'})
+        assert token.status_code == 200, token.text
+        assert set(token.json()['scope'].split()) == {'work:read', 'calendar:read'}
+        old_refresh = client.post('/token', data={'grant_type': 'refresh_token', 'client_id': restricted_id,
+            'refresh_token': old_grant.refresh_token, 'resource': 'https://office.example/mcp'})
+        assert old_refresh.status_code == 200
+        assert old_refresh.json()['scope'] == 'work:read'
         browser.close()
