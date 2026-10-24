@@ -1,15 +1,17 @@
 """Authenticated Supplies catalog/settings with session-bound form tokens."""
 import hashlib
 import hmac
+import json
 from urllib.parse import urlencode
 from uuid import uuid4
 
 from fastapi import APIRouter, Request
-from fastapi.responses import RedirectResponse, Response
+from fastapi.responses import RedirectResponse, Response, JSONResponse
 
 import auth
 import supplies
 import supplies_stock as stock
+import supplies_grid as inventory_grid
 import supplies_import as imports
 import supplies_import_review as review
 import supplies_requests as requests_service
@@ -110,7 +112,9 @@ def make_router(templates, get_conn):
             return '/supplies/items?' + urlencode({'q': result['query'],
                       'inactive': '1' if result['include_inactive'] else '0', 'page': page})
         return render(request, conn, 'catalog', status_code=status_code, error=error,
-                      submitted=submitted or {}, page_url=page_url, **result)
+                      submitted=submitted or {}, page_url=page_url, inventory_units=inventory_grid.units(conn, request.state.user),
+                      inventory_columns=inventory_grid.COLUMNS, physical_states=inventory_grid.PHYSICAL,
+                      availability_states=inventory_grid.AVAILABLE, stock_labels=notify.LABELS, **result)
 
     def item_page(request, conn, item_id, *, error='', status_code=200, submitted=None):
         item = supplies.get_item(conn, request.state.user, item_id)
@@ -441,6 +445,66 @@ def make_router(templates, get_conn):
             return catalog_page(request, conn)
         except (Denied, Invalid) as exc:
             return failure(request, exc)
+        finally:
+            conn.close()
+
+    inventory_headers = {'Cache-Control':'no-store', 'Pragma':'no-cache'}
+
+    def inventory_error(exc):
+        code = 403 if isinstance(exc, Denied) else 409 if isinstance(exc, Conflict) else 400
+        return JSONResponse({'error':str(exc)}, status_code=code, headers=inventory_headers)
+
+    @router.get('/supplies/inventory-data')
+    def inventory_data(request: Request):
+        conn = get_conn()
+        try:
+            return JSONResponse(inventory_grid.page(conn, request.state.user, request.query_params), headers=inventory_headers)
+        except (Denied, Invalid, Conflict) as exc:
+            return inventory_error(exc)
+        finally:
+            conn.close()
+
+    @router.get('/supplies/inventory-export.csv')
+    def inventory_export(request: Request):
+        conn = get_conn()
+        try:
+            content, count = inventory_grid.export_csv(conn, request.state.user, request.query_params)
+            return Response(content, media_type='text/csv', headers={**inventory_headers,
+                'Content-Disposition':'attachment; filename="supply-inventory.csv"', 'X-Export-Rows':str(count)})
+        except (Denied, Invalid, Conflict) as exc:
+            return inventory_error(exc)
+        finally:
+            conn.close()
+
+    @router.get('/supplies/inventory-views')
+    def inventory_views(request: Request):
+        conn = get_conn()
+        try:
+            return JSONResponse({'views':inventory_grid.views(conn, request.state.user)}, headers=inventory_headers)
+        except (Denied, Invalid, Conflict) as exc:
+            return inventory_error(exc)
+        finally:
+            conn.close()
+
+    @router.post('/supplies/inventory-views')
+    async def inventory_save_view(request: Request):
+        conn = get_conn()
+        try:
+            if (not request.cookies.get(auth.COOKIE_NAME) or not hmac.compare_digest(
+                    request.headers.get('X-CSRF-Token', '').encode('utf-8'), csrf(request).encode('ascii'))):
+                raise Denied('The form expired. Reload the page and try again.')
+            body = bytearray()
+            async for chunk in request.stream():
+                if len(body) + len(chunk) > 32768:
+                    raise Invalid('The inventory view request is too large.')
+                body.extend(chunk)
+            try:
+                data = json.loads(body)
+            except (ValueError, UnicodeError, RecursionError):
+                raise Invalid('Send a valid inventory view request.') from None
+            return JSONResponse(inventory_grid.save_view(conn, request.state.user, data), headers=inventory_headers)
+        except (Denied, Invalid, Conflict) as exc:
+            return inventory_error(exc)
         finally:
             conn.close()
 
