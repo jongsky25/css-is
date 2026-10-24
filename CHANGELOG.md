@@ -1,3 +1,9 @@
+## 8.25 — October 24, 2026
+
+- Filter the interactive document register by assigned lead or Unresolved and inclusive, optional Due from / Due through dates before counting and pagination.
+- Share the same filters with current-view CSV exports and private saved views; older schema-1 views default to unrestricted lead/date settings without a migration.
+- Offer leads from the authorized queue/search, including historical inactive leads. A saved lead with no current matches remains selected without broadening the filter. Invalid/missing due dates are excluded when date bounds are applied.
+
 ## 8.24 — October 24, 2026
 
 - Continue A22 with 24 offline Groq routing and exclusion cases, bringing the evaluation suite to 447 named scenarios.

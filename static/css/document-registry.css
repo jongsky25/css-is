@@ -1,7 +1,7 @@
 #registry-interactive[hidden],#registry-standard[hidden],#registry-view-controls[hidden]{display:none}
 .registry-toolbar{display:flex;align-items:end;gap:.75rem;flex-wrap:wrap}
 .registry-toolbar label{flex:1 1 11rem;max-width:22rem}
-.registry-toolbar select{max-width:100%;min-height:44px;background:var(--surface,#fff);color:var(--ink,#172b40)}
+.registry-toolbar select,.registry-toolbar input[type=date]{max-width:100%;min-height:44px;background:var(--surface,#fff);color:var(--ink,#172b40)}
 #registry-columns{margin:.75rem 0}
 .registry-column-choices{display:flex;gap:1rem;flex-wrap:wrap}
 .documents .registry-column-choices label{display:flex;gap:.4rem;align-items:center}
@@ -24,3 +24,5 @@
 .registry-deadline[data-deadline=due_today],.registry-deadline[data-deadline=due_soon]{color:#704600;background:#fff4ce}
 .registry-deadline[data-deadline=unknown]{color:#374151;background:#f3f4f6}
 #registry-views{margin:.75rem 0}
+
+.registry-toolbar .datefix-disp{min-height:44px}

@@ -147,7 +147,8 @@ def make_router(templates,get_conn):
             page['newest_url']='/documents?'+urlencode(filters)
             page['older_url']=('/documents?'+urlencode({**filters,'before':page['next_before']})
                                if page['more'] else '')
-            return render(request,conn,'index',queue=queue,grid_statuses=grid.STATUSES,**page)
+            return render(request,conn,'index',queue=queue,grid_statuses=grid.STATUSES,
+                          grid_leads=grid.lead_choices(conn,request.state.user,filters),**page)
         except (p.Denied,ValueError) as e:
             return HTMLResponse(str(e),status_code=403 if isinstance(e,p.Denied) else 400)
         finally:

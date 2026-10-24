@@ -177,7 +177,7 @@ def test_old_saved_views_default_to_all_deadlines_and_new_filters_round_trip(reg
                  (users[0]['id'], 'Before deadline filters', json.dumps(old), '2026-10-23', '2026-10-23'))
     conn.commit()
     restored = grid.views(conn, users[0])[0]['state']
-    assert restored == {**old, 'deadline': ''}
+    assert restored == {**old, 'deadline': '', 'lead_id': '', 'due_from': '', 'due_to': ''}
     for deadline in grid.DEADLINES:
         view = create(conn, users[0], deadline, deadline=deadline)
         assert view['state']['deadline'] == deadline

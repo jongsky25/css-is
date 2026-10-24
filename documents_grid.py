@@ -26,12 +26,46 @@ SORTS = {'registered': 'selected.sort_id', 'number': 'd.number COLLATE NOCASE',
          'lead': "COALESCE(u.username,'') COLLATE NOCASE"}
 
 
+LEAD_DATE_FIELDS = ('lead_id', 'due_from', 'due_to')
+
+
+def lead_date_filters(value):
+    options = {field: value.get(field, '') for field in LEAD_DATE_FIELDS}
+    if any(not isinstance(option, str) for option in options.values()):
+        raise ValueError('Invalid lead or due-date filters.')
+    lead = options['lead_id']
+    if lead not in ('', 'unresolved') and (not lead.isascii() or not lead.isdecimal()
+            or lead.startswith('0') or len(lead) > 19 or int(lead) > 9223372036854775807):
+        raise ValueError('Choose a valid lead or Unresolved.')
+    for field in ('due_from', 'due_to'):
+        raw = options[field]
+        parsed = parse_due_date(raw)
+        if raw and (parsed is None or parsed.isoformat() != raw):
+            raise ValueError('Use valid due dates in YYYY-MM-DD format.')
+    if options['due_from'] and options['due_to'] and options['due_from'] > options['due_to']:
+        raise ValueError('Due from must be on or before Due through.')
+    return options
+
+
+def parse_due_date(value):
+    try:
+        return date.fromisoformat(value) if value else None
+    except (TypeError, ValueError):
+        return None
+
+
+def iso_due_date(value):
+    parsed = parse_due_date(value)
+    return parsed.isoformat() if parsed else None
+
+
 @contextmanager
 def selected_query(conn, user, params):
     queue, query = params.get('queue', 'all'), params.get('q', '')
     sort, direction = params.get('sort', 'registered'), params.get('dir', 'desc')
     status, verification = params.get('status', ''), params.get('verification', '')
     deadline = params.get('deadline', '')
+    extra = lead_date_filters(params)
     if (queue not in QUEUES or sort not in SORTS or direction not in ('asc', 'desc')
             or status not in ('', *STATUSES) or verification not in ('', *VERIFICATIONS)
             or deadline not in ('', *DEADLINES) or len(query) > 120):
@@ -50,11 +84,19 @@ def selected_query(conn, user, params):
         deadline_where = ("registry_deadline_state(d.status,d.due_date) IN ('due_today','due_soon')"
                           if deadline == 'due_soon' else
                           'registry_deadline_state(d.status,d.due_date)=:grid_deadline')
+        if extra['due_from'] or extra['due_to']:
+            conn.create_function('registry_due_date', 1, iso_due_date, deterministic=True)
+        lead_where = ('u.id IS NULL' if extra['lead_id'] == 'unresolved' else
+                      'd.lead_id=:grid_lead_id')
         where = ' AND '.join(['1'] + (["d.status=:grid_status"] if status else [])
                              + (["d.verification=:grid_verification"] if verification else [])
-                             + ([deadline_where] if deadline else []))
+                             + ([deadline_where] if deadline else [])
+                             + ([lead_where] if extra['lead_id'] else [])
+                             + (['registry_due_date(d.due_date)>=:grid_due_from'] if extra['due_from'] else [])
+                             + (['registry_due_date(d.due_date)<=:grid_due_to'] if extra['due_to'] else []))
         values = {**selection.params, 'grid_status': status, 'grid_verification': verification,
-                  'grid_deadline': deadline}
+                  'grid_deadline': deadline, 'grid_lead_id': extra['lead_id'],
+                  'grid_due_from': extra['due_from'], 'grid_due_to': extra['due_to']}
         source = (selection.read_ctes() + ' SELECT {columns} FROM registry_selected selected '
                   'JOIN document d ON d.id=selected.id LEFT JOIN admin_user u ON u.id=d.lead_id '
                   f'WHERE {where}')
@@ -64,6 +106,14 @@ def selected_query(conn, user, params):
             order = "(d.due_date IS NULL OR d.due_date='') ASC," + order
         order += ',selected.sort_id DESC'
         yield selection, source, values, order, today, soon
+
+
+def lead_choices(conn, user, params):
+    """Offer leads from the authorized queue/search, including inactive assignees."""
+    scope = {key: params.get(key, default) for key, default in (('queue', 'all'), ('q', ''))}
+    with selected_query(conn, user, scope) as (_, source, values, _order, _today, _soon):
+        return rows(conn, source.format(columns='DISTINCT u.id,u.username AS name') +
+                    ' AND u.id IS NOT NULL ORDER BY u.username COLLATE NOCASE,u.id', values)
 
 
 def page(conn, user, params):
@@ -141,10 +191,7 @@ def deadline_state(status, value, today, soon):
     """One classifier for filtering and labels; inactive records never signal urgency."""
     if status in ('closed', 'cancelled'):
         return 'inactive'
-    try:
-        due = date.fromisoformat(value) if value else None
-    except (TypeError, ValueError):
-        due = None
+    due = parse_due_date(value)
     if due is None:
         return 'unknown'
     if due < today:
@@ -178,9 +225,11 @@ class ViewConflict(ValueError):
 def view_state(value):
     """Persist only versioned display options, never records or access authority."""
     keys = {'schema', 'queue', 'q', 'status', 'verification', 'sort', 'dir', 'columns'}
-    if not isinstance(value, dict) or set(value) not in (keys, keys | {'deadline'}) or type(value['schema']) is not int or value['schema'] != 1:
+    optional = {'deadline', *LEAD_DATE_FIELDS}
+    if (not isinstance(value, dict) or not keys <= set(value) or set(value) - keys - optional
+            or type(value['schema']) is not int or value['schema'] != 1):
         raise ValueError('Unsupported saved view. Reset the table and save a new view.')
-    # Schema 1 views saved before deadline filters default to all deadlines.
+    # Older schema-1 views gain unrestricted defaults without rewriting stored preferences.
     result = {key: value[key] for key in keys - {'columns'}}
     result['deadline'] = value.get('deadline', '')
     if any(not isinstance(result[key], str) for key in (keys | {'deadline'}) - {'columns', 'schema'}):
@@ -191,6 +240,7 @@ def view_state(value):
             or result['deadline'] not in ('', *DEADLINES)
             or result['sort'] not in SORTS or result['dir'] not in ('asc', 'desc')):
         raise ValueError('Invalid saved view options.')
+    result.update(lead_date_filters(value))
     if result['queue'] == 'instruction':
         result['q'] = ''
     columns = value['columns']

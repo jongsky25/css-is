@@ -334,3 +334,77 @@ def test_failed_export_keeps_grid_and_can_retry(grid_page):
     assert page.locator('#registry-standard').is_hidden()
     state['fail_export'] = False
     assert len(download_view(page)) == 37
+
+
+
+def test_lead_date_filters_save_reload_export_boundaries_and_reset(grid_page,app_mod):
+    page,state=grid_page
+    conn=st.connect(app_mod.DB)
+    user=st.get_admin_user(conn,'viewer@test.local')
+    identifiers=[r[0] for r in conn.execute('SELECT id FROM document ORDER BY id LIMIT 31')]
+    for identifier in identifiers:
+        due='2026-11-01' if identifier==identifiers[0] else '2026-11-30' if identifier==identifiers[-1] else '2026-11-15'
+        conn.execute('UPDATE document SET lead_id=?,due_date=? WHERE id=?',(user['id'],due,identifier))
+    conn.commit();conn.close()
+    page.reload();open_grid(page)
+    page.get_by_label('Assigned lead',exact=True).select_option(str(user['id']))
+    page.get_by_label('Due from',exact=True).fill('2026-11-01')
+    page.get_by_label('Due through',exact=True).fill('2026-11-30')
+    page.get_by_role('button',name='Apply filters',exact=True).click()
+    page.wait_for_function("document.getElementById('registry-table-status').textContent.includes('31 matching records')")
+    page.select_option('#registry-sort','due_date:asc')
+    page.wait_for_function("document.querySelector('.tabulator-row [tabulator-field=due_date]').textContent==='2026-11-01'")
+    page.locator('#registry-views summary').click()
+    page.get_by_label('View name',exact=True).fill('November lead')
+    page.get_by_role('button',name='Save new view',exact=True).click()
+    page.wait_for_function("document.getElementById('registry-view-status').textContent==='View saved to your account.'")
+    page.reload()
+    page.wait_for_function("document.getElementById('registry-table-status').textContent.includes('31 matching records')")
+    assert page.get_by_label('Assigned lead',exact=True).input_value()==str(user['id'])
+    assert page.get_by_label('Due from',exact=True).input_value()=='2026-11-01'
+    assert page.get_by_label('Due through',exact=True).input_value()=='2026-11-30'
+    assert page.locator('#registry-filters .datefix-disp').all_text_contents()==['1 Nov 2026','30 Nov 2026']
+    data=download_view(page)
+    assert len(data)==32 and data[1][4]=='2026-11-01' and data[-1][4]=='2026-11-30'
+    assert all(r[5]==user['username'] for r in data[1:])
+    assert 'lead_id='+str(user['id']) in state['export_requests'][-1]
+    assert 'due_from=2026-11-01' in state['export_requests'][-1]
+    page.get_by_role('button',name='Reset table',exact=True).click()
+    page.wait_for_function("document.getElementById('registry-table-status').textContent.includes('36 matching records')")
+    assert page.get_by_label('Assigned lead',exact=True).input_value()==''
+    assert page.get_by_label('Due from',exact=True).input_value()==''
+    assert page.get_by_label('Due through',exact=True).input_value()==''
+    assert page.locator('#registry-filters .datefix-disp').all_text_contents()==['Pick a date','Pick a date']
+    requests=len(state['requests'])
+    page.get_by_label('Due from',exact=True).fill('2026-11-30')
+    page.get_by_label('Due through',exact=True).fill('2026-11-01')
+    page.get_by_role('button',name='Apply filters',exact=True).click()
+    assert page.locator('[name=due_to]').evaluate('(input)=>input.validity.customError')
+    assert len(state['requests'])==requests and page.locator('#registry-standard').is_hidden()
+    page.get_by_label('Due through',exact=True).fill('2026-11-30')
+    page.get_by_role('button',name='Apply filters',exact=True).click()
+    page.wait_for_function("document.getElementById('registry-table-status').textContent.includes('1 matching records')")
+
+
+def test_saved_lead_without_current_matches_never_broadens_to_all_leads(grid_page,app_mod):
+    page,_=grid_page
+    conn=st.connect(app_mod.DB);user=st.get_admin_user(conn,'viewer@test.local')
+    identifier=conn.execute('SELECT MIN(id) FROM document').fetchone()[0]
+    conn.execute('UPDATE document SET lead_id=? WHERE id=?',(user['id'],identifier));conn.commit()
+    page.reload();open_grid(page)
+    page.get_by_label('Assigned lead',exact=True).select_option(str(user['id']))
+    page.get_by_role('button',name='Apply filters',exact=True).click()
+    page.wait_for_function("document.getElementById('registry-table-status').textContent.includes('1 matching records')")
+    page.locator('#registry-views summary').click()
+    page.get_by_label('View name',exact=True).fill('Saved lead')
+    page.get_by_role('button',name='Save new view',exact=True).click()
+    page.wait_for_function("document.getElementById('registry-view-status').textContent==='View saved to your account.'")
+    conn.execute('UPDATE document SET lead_id=NULL WHERE id=?',(identifier,));conn.commit();conn.close()
+    page.reload()
+    page.wait_for_function("document.getElementById('registry-table-status').textContent==='No matching documents.'")
+    assert page.get_by_label('Assigned lead',exact=True).input_value()==str(user['id'])
+    assert page.locator('[name=lead_id] option:checked').inner_text()=='Saved lead (no matching records)'
+    assert len(download_view(page))==1
+    page.get_by_label('Assigned lead',exact=True).select_option('unresolved')
+    page.get_by_role('button',name='Apply filters',exact=True).click()
+    page.wait_for_function("document.getElementById('registry-table-status').textContent.includes('36 matching records')")
