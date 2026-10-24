@@ -129,6 +129,33 @@
       '<div class="start-card-actions">' +
       (data.url ? '<a class="btn ghost" href="' + esc(data.url) + '">Open guide →</a>' : "") +
       FB.replace("Good suggestion", "Good answer") + "</div>";
+    if (data.served_by === "verified_facts" && Array.isArray(data.sources) && data.sources.length) {
+      var details = document.createElement("details");
+      details.className = "start-evidence";
+      var summary = document.createElement("summary");
+      summary.textContent = "View survey sources (" + data.sources.length + ")";
+      details.appendChild(summary);
+      var note = document.createElement("p");
+      note.textContent = "AI selected the topics. The figures come from current survey records.";
+      details.appendChild(note);
+      var list = document.createElement("ul");
+      data.sources.forEach(function (source) {
+        if (!source || typeof source.id !== "string" || typeof source.label !== "string") return;
+        var item = document.createElement("li");
+        var parts = [source.label, "Source " + source.id];
+        if (Number.isInteger(source.valid_ratings) && source.valid_ratings >= 0) {
+          parts.push(source.valid_ratings === 0 ? "No valid ratings" :
+            source.valid_ratings + " valid rating" + (source.valid_ratings === 1 ? "" : "s"));
+        }
+        if (typeof source.as_of === "string") parts.push("As of " + source.as_of);
+        item.textContent = parts.join(" · ");
+        list.appendChild(item);
+      });
+      if (list.children.length) {
+        details.appendChild(list);
+        card.insertBefore(details, card.querySelector(".start-card-actions"));
+      }
+    }
     mount.appendChild(card);
     wireFeedback(card, data.interaction_id);
   }

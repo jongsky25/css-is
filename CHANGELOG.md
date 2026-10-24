@@ -1,3 +1,9 @@
+## 8.26 — October 24, 2026
+
+- Show a collapsible source list beneath verified survey answers, including stable source IDs, as-of dates and valid-rating counts when relevant.
+- Explain that AI selects topics while the system calculates the figures; keep ordinary personal answers free of survey-source details.
+- Escape source labels as text in the browser and cover the display with a Chromium regression. No schema migration, provider change or new dependency.
+
 ## 8.25 — October 24, 2026
 
 - Filter the interactive document register by assigned lead or Unresolved and inclusive, optional Due from / Due through dates before counting and pagination.
