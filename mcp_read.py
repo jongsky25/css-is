@@ -30,6 +30,7 @@ import work
 import work_inbox
 import work_reads
 import work_updates
+import survey_reports
 
 
 READ_ONLY = ToolAnnotations(readOnlyHint=True, destructiveHint=False, idempotentHint=True,
@@ -284,6 +285,17 @@ def build_server(get_conn, origin):
             rows, cursor = work_reads.tasks_page(conn, user, work_item_id, before=before, limit=limit)
             return {'data': [_web(origin, api.task_read(row)) for row in rows], 'next_before': cursor}
         return await perform('work:read', 'work', run)
+
+    @server.tool(title='Monthly CSM satisfaction summary', annotations=READ_ONLY)
+    async def get_csm_summary(year: int, month: int) -> dict:
+        """Read a bureau-wide Type 1 ARTA/CSM monthly aggregate by submission date.
+
+        Fixed calendar months only. No respondent data, comments, demographics or
+        service/person filters. Small samples are withheld; no score means unknown,
+        never zero. Types 2 and 3 are outside this tool.
+        """
+        return await perform('surveys:csm:read', 'surveys_csm',
+                             lambda conn, user: survey_reports.csm_summary(conn, user, origin, year, month))
 
     @server.tool(title='My unread work notifications', annotations=READ_ONLY)
     async def list_my_notifications(limit: int = 10, before: int = 0) -> dict:

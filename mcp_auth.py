@@ -19,7 +19,7 @@ import storage as st
 
 
 SCOPES = frozenset({'activities:read', 'calendar:read', 'documents:read',
-                    'supplies:read', 'travel:read', 'work:read', 'notifications:read'})
+                    'supplies:read', 'travel:read', 'work:read', 'notifications:read', 'surveys:csm:read'})
 ACCESS_SECONDS = 3600
 REFRESH_SECONDS = 30 * 86400
 CODE_SECONDS = 120
