@@ -12,9 +12,12 @@ network — it always monkeypatches ai_core._http_generate.
 """
 import httpx
 import pytest
+from datetime import timedelta
+import json
 
 import ai_core as ai
 import storage as st
+import tzutil as tz
 
 
 @pytest.fixture(autouse=True)
@@ -197,3 +200,48 @@ def test_admin_ai_log_browser_shows_rows(admin, db_path):
         assert "123 ms" in body
     finally:
         conn = st.connect(db_path); _reset(conn); conn.close()
+
+
+def test_admin_ai_operations_summary_uses_full_window_and_metadata_only(admin, db_path):
+    conn = st.connect(db_path); st.init_db(conn); _reset(conn)
+    now = tz.now_local()
+    stamp = now.isoformat(timespec="seconds")
+    try:
+        conn.executemany(
+            "INSERT INTO ai_interaction(created_at,feature,mode,outcome,provider,latency_ms,"
+            "tokens_in,tokens_out,rating,prompt_masked) VALUES (?,?,?,?,?,?,?,?,?,?)",
+            [(stamp, "nl_router", "assistant", "ok", "gemini", 100, 10, 5,
+              1 if i == 0 else None, "PRIVATE-SUMMARY-CONTENT") for i in range(201)])
+        conn.execute(
+            "INSERT INTO ai_interaction(created_at,feature,mode,outcome,provider,latency_ms,"
+            "tokens_in,tokens_out,rating) VALUES (?,?,?,?,?,?,?,?,?)",
+            (stamp, "nl_help", "assistant", "rejected_validation", "groq", 200, 2, 1, -1))
+        conn.execute(
+            "INSERT INTO ai_interaction(created_at,feature,mode,outcome,provider) VALUES (?,?,?,?,?)",
+            (stamp, "nl_help", "assistant", "fallback_budget", "groq"))
+        conn.execute(
+            "INSERT INTO ai_interaction(created_at,feature,mode,outcome,provider,latency_ms) VALUES (?,?,?,?,?,?)",
+            (stamp, "nl_router", "assistant", "ok", "rules", 0))
+        for when in (now - timedelta(days=8), now + timedelta(hours=1)):
+            conn.execute(
+                "INSERT INTO ai_interaction(created_at,feature,mode,outcome,provider) VALUES (?,?,?,?,?)",
+                (when.isoformat(timespec="seconds"), "nl_router", "assistant", "ok", "gemini"))
+        conn.commit()
+        rows = st.ai_operations_summary(
+            conn, (now - timedelta(days=7)).isoformat(timespec="seconds"), stamp)
+        assert [(r['provider'], r['interactions']) for r in rows] == [
+            ('gemini', 201), ('groq', 2), ('rules', 1)]
+        assert rows[0]['served'] == 201 and rows[0]['positive'] == 1
+        assert rows[0]['mean_latency_ms'] == 100 and rows[0]['latency_samples'] == 201
+        assert (rows[0]['tokens_in'], rows[0]['tokens_out'], rows[0]['token_samples']) == (2010, 1005, 201)
+        assert rows[1]['rejected'] == 1 and rows[1]['fallback'] == 1 and rows[1]['negative'] == 1
+        assert rows[1]['latency_samples'] == 1 and rows[1]['token_samples'] == 1
+        assert 'PRIVATE-SUMMARY-CONTENT' not in json.dumps(rows)
+    finally:
+        conn.close()
+    body = admin.get('/admin/ai').text
+    card = body.split('<h2>Last 7 days</h2>', 1)[1].split('<h2>Settings</h2>', 1)[0]
+    assert '201</b> interactions' in card
+    assert '100 ms' in card and '201 measured' in card
+    assert '2010 in / 1005 out' in card
+    assert 'PRIVATE-SUMMARY-CONTENT' not in card

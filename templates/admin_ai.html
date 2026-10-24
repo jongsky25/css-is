@@ -25,6 +25,10 @@
   .usage-bar { height:6px; border-radius:4px; background:var(--line); overflow:hidden; }
   .usage-bar > span { display:block; height:100%; background:var(--accent); }
   .usage-bar.full > span { background:var(--red); }
+  .ops-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:.7rem; }
+  .ops-item { background:var(--surface-2); border:1px solid var(--line); border-radius:10px; padding:.7rem .8rem; font-size:.84rem; }
+  .ops-item h3 { margin:0 0 .4rem; font-size:.9rem; }
+  .ops-item p { margin:.2rem 0; }
   .modeform { display:flex; flex-direction:column; gap:1rem; }
   .mode-choices { display:flex; gap:.6rem; flex-wrap:wrap; }
   .mode-choices label { border:1px solid var(--line); border-radius:10px; padding:.5rem .8rem;
@@ -109,6 +113,27 @@
     <form method="post" action="/admin/ai/test-groq" style="margin-top:1rem; display:inline-block;">
       <button class="btn ghost" type="submit" {{ 'disabled' if not groq_configured }}>Test Groq connection</button>
     </form>
+  </div>
+
+  <div class="acard">
+    <h2>Last 7 days</h2>
+    <p class="hint">All logged interactions in the rolling seven-day window, including those not in the 200-row list below. A refusal can be logged without reaching a provider.</p>
+    {% if operations %}
+    <div class="ops-grid">
+      {% for r in operations %}
+      <div class="ops-item">
+        <h3>{{ r.provider }} <span class="hint">(logged provider)</span></h3>
+        <p><b>{{ r.interactions }}</b> interactions: {{ r.served }} served, {{ r.rejected }} rejected, {{ r.fallback }} other fallbacks</p>
+        <p>Optional feedback: {{ r.positive }} 👍 / {{ r.negative }} 👎</p>
+        <p>Recorded mean latency: {{ ((r.mean_latency_ms | int) ~ ' ms') if r.mean_latency_ms is not none else '—' }} ({{ r.latency_samples }} measured)</p>
+        <p>Reported tokens: {% if r.token_samples %}{{ r.tokens_in }} in / {{ r.tokens_out }} out ({{ r.token_samples }} reported){% else %}—{% endif %}</p>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="empty">No AI interactions in the last 7 days.</p>
+    {% endif %}
+    <p class="hint" style="margin:.7rem 0 0;">Latency and tokens cover only rows that recorded them. Feedback is voluntary and is not a model-quality score. This summary contains no prompts, replies or user details.</p>
   </div>
 
   <div class="acard">

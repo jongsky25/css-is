@@ -3795,6 +3795,33 @@ def list_ai_interactions(conn, feature=None, outcome=None, rating=None, since=No
     return [_ai_interaction_row(r) for r in rows]
 
 
+def ai_operations_summary(conn, since, until):
+    """Seven-day metadata only, across the full window rather than the log's 200 rows.
+
+    Provider is the interaction's logged provider; a budget refusal may not
+    have reached that provider. Latency and tokens exist only on some rows.
+    """
+    rows = conn.execute(
+        "SELECT COALESCE(provider, 'gemini') AS provider, COUNT(*) AS interactions, "
+        "SUM(CASE WHEN outcome='ok' THEN 1 ELSE 0 END) AS served, "
+        "SUM(CASE WHEN outcome='rejected_validation' THEN 1 ELSE 0 END) AS rejected, "
+        "SUM(CASE WHEN outcome NOT IN ('ok','rejected_validation') THEN 1 ELSE 0 END) AS fallback, "
+        "SUM(CASE WHEN rating=1 THEN 1 ELSE 0 END) AS positive, "
+        "SUM(CASE WHEN rating=-1 THEN 1 ELSE 0 END) AS negative, "
+        "COUNT(latency_ms) AS latency_samples, "
+        "ROUND(AVG(latency_ms)) AS mean_latency_ms, "
+        "SUM(COALESCE(tokens_in,0)) AS tokens_in, "
+        "SUM(COALESCE(tokens_out,0)) AS tokens_out, "
+        "SUM(CASE WHEN tokens_in IS NOT NULL OR tokens_out IS NOT NULL THEN 1 ELSE 0 END) AS token_samples "
+        "FROM ai_interaction WHERE created_at>=? AND created_at<=? "
+        "GROUP BY COALESCE(provider, 'gemini') ORDER BY interactions DESC, provider",
+        (since, until)).fetchall()
+    keys = ('provider', 'interactions', 'served', 'rejected', 'fallback', 'positive',
+            'negative', 'latency_samples', 'mean_latency_ms', 'tokens_in', 'tokens_out',
+            'token_samples')
+    return [{key: value for key, value in zip(keys, row)} for row in rows]
+
+
 def purge_stale_ai_interactions(conn, cutoff_iso):
     """RETENTION enforcement for the AI interaction log — same shape as
     purge_stale_ui_events: behavioral/operational data, not audit-of-record."""

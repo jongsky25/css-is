@@ -4413,6 +4413,10 @@ def admin_ai(request: Request, feature: str = "", outcome: str = "", thumbs: str
         day = _today_local().isoformat()
         usage = dict(conn.execute(
             "SELECT feature, calls FROM ai_budget WHERE day=?", (day,)).fetchall())
+        summary_until = _now_local()
+        summary_since = (summary_until - timedelta(days=7)).isoformat(timespec="seconds")
+        operations = st.ai_operations_summary(
+            conn, summary_since, summary_until.isoformat(timespec="seconds"))
         rating = 1 if thumbs == "up" else (-1 if thumbs == "down" else None)
         interactions = st.list_ai_interactions(
             conn, feature=feature or None, outcome=outcome or None, rating=rating, limit=200)
@@ -4430,6 +4434,7 @@ def admin_ai(request: Request, feature: str = "", outcome: str = "", thumbs: str
         "groq_cooldown_remaining": ai.groq_cooldown_remaining(),
         "fallback_enabled": settings.get("ai_fallback_enabled", "0") != "0",
         "outcomes": ai.OUTCOMES, "interactions": interactions,
+        "operations": operations,
         "sel_feature": feature, "sel_outcome": outcome, "sel_thumbs": thumbs,
         "err": err, "msg": msg, "show_scope": False, "nav_active": "",
     })
