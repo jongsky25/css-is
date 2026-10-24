@@ -188,6 +188,19 @@ def make_router(templates,get_conn):
         finally:
             conn.close()
 
+    @router.get('/documents/dashboard/presentation-data')
+    def workload_presentation(request:Request):
+        conn=get_conn()
+        headers={'Cache-Control':'no-store','Pragma':'no-cache'}
+        try:
+            return JSONResponse(dashboard.report(conn,request.state.user,request.query_params,
+                                                  presentation=True),headers=headers)
+        except (p.Denied,ValueError) as exc:
+            return JSONResponse({'error':str(exc)},status_code=403 if isinstance(exc,p.Denied) else 400,
+                                headers=headers)
+        finally:
+            conn.close()
+
     @router.get('/documents/grid-data')
     def registry_grid(request:Request):
         conn=get_conn()

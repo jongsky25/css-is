@@ -13,7 +13,10 @@ DEADLINES = [('overdue','Overdue'),('due_soon','Due soon (including today)'),
              ('scheduled','Later deadlines'),('unknown','Unknown deadline'),('inactive','Closed or cancelled')]
 
 
-def report(conn, user, params):
+MAX_PRESENTATION_LEADS = 1_000
+
+
+def report(conn, user, params, *, presentation=False):
     # The dashboard has an explicit queue/search scope, independent of draft grid controls.
     scope = {'queue':params.get('queue','all'), 'q':params.get('q','')}
     if scope['queue'] == 'instruction':
@@ -38,11 +41,15 @@ def report(conn, user, params):
         deadlines = [{'key':key,'label':label,'count':deadline_counts.get(key,0),'href':register_url(deadline=key)}
                      for key,label in DEADLINES]
         leads = rows(conn, source.format(columns=grid.group_projection('lead') + ',COUNT(*) AS count') +
-                     ' GROUP BY COALESCE(u.id,0) ORDER BY count DESC,' + grid.GROUP_ORDERS['lead'], values)
+                     ' GROUP BY COALESCE(u.id,0) ORDER BY count DESC,' + grid.GROUP_ORDERS['lead'] +
+                     (' LIMIT :presentation_limit' if presentation else ''),
+                     {**values,'presentation_limit':MAX_PRESENTATION_LEADS+1})
+        if presentation and len(leads)>MAX_PRESENTATION_LEADS:
+            raise ValueError('Narrow the dashboard queue or search to at most 1,000 lead groups before exporting PowerPoint.')
         leads = [{'key':row['group_key'], 'label':row['group_label'], 'count':row['count'],
                   'href':register_url(lead_id='unresolved' if row['group_key']=='0' else row['group_key'])}
                  for row in leads]
-        return {'scope':scope, 'total':sum(row['count'] for row in workflow),
+        return {'scope':scope, 'queue_label':dict(QUEUE_LABELS)[scope['queue']], 'total':sum(row['count'] for row in workflow),
                 'workflow':workflow, 'deadlines':deadlines, 'leads':leads,
                 'today':today.isoformat(), 'soon':soon.isoformat(), 'as_of':tz.now_iso(),
                 'register_url':register_url(), 'chart_lead_limit':20}

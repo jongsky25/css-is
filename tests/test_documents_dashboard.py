@@ -32,7 +32,8 @@ def test_dashboard_queue_authority_matches_independent_registry_reference(mixed,
                     assert grid.page(c,user,link_params(row['href']))['last_row']==row['count']
 
 
-def test_dashboard_deadlines_working_days_invalid_dates_leads_and_access_changes(registry,monkeypatch):
+@pytest.mark.parametrize('presentation',[False,True])
+def test_dashboard_deadlines_working_days_invalid_dates_leads_and_access_changes(registry,monkeypatch,presentation):
     c,u,unit,_=registry
     monkeypatch.setattr(grid.tz,'today_local',lambda:date(2026,10,23)) # Friday; next 3 weekdays through Wednesday
     ids=seed_many(c,u[0],unit,65,subject='Dashboardneedle')
@@ -44,7 +45,7 @@ def test_dashboard_deadlines_working_days_invalid_dates_leads_and_access_changes
     c.execute("UPDATE document SET status='cancelled',due_date=NULL,lead_id=NULL WHERE id=?",(ids[8],))
     c.execute('UPDATE admin_user SET active=0 WHERE id=?',(u[1]['id'],));c.commit()
     scope={'queue':'OUT','q':'Dashboardneedle'}
-    result=dashboard.report(c,u[4],scope)
+    result=dashboard.report(c,u[4],scope,presentation=presentation)
     assert result['total']==65 and result['soon']=='2026-10-28'
     counts={r['key']:r['count'] for r in result['deadlines']}
     assert counts=={'overdue':1,'due_soon':59,'scheduled':1,'unknown':2,'inactive':2}
@@ -58,9 +59,9 @@ def test_dashboard_deadlines_working_days_invalid_dates_leads_and_access_changes
                 assert grid.page(c,u[4],params)['last_row']==row['count']
                 assert grid.export_csv(c,u[4],params)[1]==row['count']
     c.execute("UPDATE document SET visibility='restricted' WHERE id=?",(ids[-1],));c.commit()
-    assert dashboard.report(c,u[4],scope)['total']==64
+    assert dashboard.report(c,u[4],scope,presentation=presentation)['total']==64
     c.execute('UPDATE admin_user SET active=0 WHERE id=?',(u[4]['id'],));c.commit()
-    with pytest.raises(permissions.Denied):dashboard.report(c,u[4],scope)
+    with pytest.raises(permissions.Denied):dashboard.report(c,u[4],scope,presentation=presentation)
 
 
 def test_empty_scope_invalid_options_and_no_calendar_data_writes(registry):

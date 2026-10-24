@@ -3,6 +3,9 @@
 <link rel="stylesheet" href="/static/css/document-dashboard.css?v=8.32">
 <script src="/static/vendor/echarts/echarts.min.js?v=6.1.0" defer></script>
 <script src="/static/js/document-dashboard.js?v=8.32" defer></script>
+<script src="/static/vendor/pptxgenjs/jszip.min.js?v=3.10.1" defer></script>
+<script src="/static/vendor/pptxgenjs/pptxgen.min.js?v=4.0.1" defer></script>
+<script src="/static/js/document-workload-presentation.js?v=8.41" defer></script>
 {% endblock %}
 {% block documents_content %}
 <section id="document-dashboard" aria-label="Document workload dashboard">
@@ -14,6 +17,8 @@
 </form>
 <p><strong>{{ dashboard.total }} matching records you can access</strong> · Snapshot {{ dashboard.as_of }}. Counts cover every matching page in the selected queue and search. They count documents, not contributions. The dashboard uses queue and search; chart links add their matching filter in the table.</p>
 <p><a href="{{ dashboard.register_url }}">Open matching document table</a></p>
+<p><button type="button" id="workload-presentation-export" disabled>Export PowerPoint report</button></p>
+<p id="workload-presentation-status" role="status" aria-live="polite">PowerPoint export requires JavaScript. Reports include complete count tables, up to 1,000 lead groups.</p>
 <p id="dashboard-chart-status" role="status" aria-live="polite">Linked count tables are available below. Charts enhance those same counts when they load.</p>
 {% for key,title,entries in [('workflow','Workflow stages',dashboard.workflow),('deadlines','Deadlines',dashboard.deadlines),('leads','Workload by assigned lead',dashboard.leads)] %}
 <section class="doc-card dashboard-panel" aria-labelledby="dashboard-{{ key }}-title">
