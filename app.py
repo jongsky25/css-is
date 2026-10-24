@@ -5026,6 +5026,17 @@ def _rooms_tick():
         conn.close()
 
 
+def _work_channels_tick():
+    import work_channels
+    if not work_channels.transport.enabled():
+        return 0
+    conn=st.connect(DB)
+    try:
+        return work_channels.deliver(conn,send_reminders._base_url(),now=_now_local(),hour=_REMINDER_HOUR)
+    finally:
+        conn.close()
+
+
 async def _scheduler_loop():
     while True:
         try:
@@ -5060,6 +5071,10 @@ async def _scheduler_loop():
         try:
             await asyncio.to_thread(_rooms_tick)
         except Exception:         # noqa: BLE001
+            pass
+        try:
+            await asyncio.to_thread(_work_channels_tick)
+        except Exception:         # noqa: BLE001 — channel failures never stop other jobs
             pass
         await asyncio.sleep(_SCHED_TICK)
 

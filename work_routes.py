@@ -16,6 +16,7 @@ import work_compat
 import work_inbox
 import work_discussion
 import work_updates
+import work_channels
 import work_digests
 import work_blockers
 import work_decisions
@@ -213,16 +214,24 @@ def make_router(templates, get_conn):
         finally:
             conn.close()
 
+    def notification_page(request,conn,*,saved=False,error='',status_code=200):
+        import send_reminders
+        return render(request,conn,'notification_preferences',status_code=status_code,error=error,
+                      pref=work_digests.preferences(conn,request.state.user),
+                      deliveries=work_digests.history(conn,request.state.user),
+                      delivery_available=work_digests.available(conn),saved=saved,
+                      channel=work_channels.status(conn,request.state.user,send_reminders._base_url()),
+                      channel_deliveries=work_channels.history(conn,request.state.user))
+
     @router.get('/work/notification-preferences', response_class=HTMLResponse)
     def notification_preferences(request: Request, saved: bool = False):
         conn = get_conn()
         try:
-            return render(request, conn, 'notification_preferences',
-                          pref=work_digests.preferences(conn, request.state.user),
-                          deliveries=work_digests.history(conn, request.state.user),
-                          delivery_available=work_digests.available(conn), saved=saved)
+            response=notification_page(request,conn,saved=saved)
+            response.headers.update({'Cache-Control':'no-store','Pragma':'no-cache'})
+            return response
         except permissions.Denied:
-            return HTMLResponse('Preferences unavailable.', status_code=403)
+            return HTMLResponse('Preferences unavailable.',status_code=403,headers={'Cache-Control':'no-store'})
         finally:
             conn.close()
 
@@ -231,16 +240,30 @@ def make_router(templates, get_conn):
         conn = get_conn()
         try:
             fields = await posted(request)
-            work_digests.save(conn, request.state.user, fields.get('revision', ''),
-                              fields.get('routine_bell'), fields.get('digest'))
-            return RedirectResponse('/work/notification-preferences?saved=true', status_code=303)
+            work_digests.save(conn,request.state.user,fields.get('revision',''),
+                              fields.get('routine_bell'),fields.get('digest'))
+            return RedirectResponse('/work/notification-preferences?saved=true',status_code=303)
         except permissions.Denied:
-            return HTMLResponse('Preferences unavailable or form expired.', status_code=403)
-        except (ValueError, TypeError) as e:
-            return render(request, conn, 'notification_preferences', status_code=409 if isinstance(e, docs.Conflict) else 400,
-                          error=str(e), pref=work_digests.preferences(conn, request.state.user),
-                          deliveries=work_digests.history(conn, request.state.user),
-                          delivery_available=work_digests.available(conn), saved=False)
+            return HTMLResponse('Preferences unavailable or form expired.',status_code=403)
+        except (ValueError,TypeError) as e:
+            return notification_page(request,conn,error=str(e),status_code=409 if isinstance(e,docs.Conflict) else 400)
+        finally:
+            conn.close()
+
+    @router.post('/work/notification-preferences/telegram')
+    async def save_telegram_preferences(request: Request):
+        conn=get_conn()
+        try:
+            fields=await posted(request)
+            work_channels.save(conn,request.state.user,fields.get('channel_revision',''),
+                               fields.get('cadence'),fields.get('action','save'))
+            return RedirectResponse('/work/notification-preferences?saved=true',status_code=303,
+                                    headers={'Cache-Control':'no-store'})
+        except permissions.Denied:
+            return HTMLResponse('Preferences unavailable or form expired.',status_code=403,headers={'Cache-Control':'no-store'})
+        except (ValueError,TypeError) as e:
+            response=notification_page(request,conn,error=str(e),status_code=409 if isinstance(e,docs.Conflict) else 400)
+            response.headers['Cache-Control']='no-store';return response
         finally:
             conn.close()
 

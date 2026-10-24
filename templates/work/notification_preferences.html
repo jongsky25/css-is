@@ -16,4 +16,18 @@
 </form>
 <section class="work-card"><h2>Recent digest deliveries</h2><p class="work-small">Sent confirms that the mail service accepted the email. It does not mark messages read. An uncertain or interrupted attempt is not sent again automatically; read your updates in the app.</p>
 {% for delivery in deliveries %}<p>{{ delivery.created_at }} · {{ {'sent':'Sent','unknown':'Delivery uncertain','sending':'Attempt started; delivery not confirmed','cancelled':'Cancelled before sending'}[delivery.state] }}</p>{% else %}<p>No digest attempts yet.</p>{% endfor %}</section>
+<section class="work-card"><h2>Telegram discussion digest</h2>
+<p>Receive a private reminder through Telegram for unread mentions, replies and followed discussions. The reminder contains only a sign-in link; discussion details stay in Office Connect. Sending does not mark messages read.</p>
+{% if channel.ready %}<p class="work-note">Telegram is configured for your account.</p>{% else %}<p class="work-note">Telegram delivery is not available for your account yet. Save a preference to obtain your setup code, then ask the hosting administrator to connect your private Telegram chat.</p>{% endif %}
+<form class="work-form" method="post" action="/work/notification-preferences/telegram">
+<input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="channel_revision" value="{{ channel.revision }}">
+<label for="telegram-cadence">Telegram digest frequency</label><select id="telegram-cadence" name="cadence">
+{% for value,label in [('off','Off'),('daily','Daily'),('weekly','Weekly')] %}<option value="{{ value }}" {% if channel.cadence==value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+<p class="work-small">Digests run from the office’s morning reminder time (7am Philippine time). Weekly delivery uses the office’s discussion-digest weekday, Monday by default. Each unread update is included in at most one Telegram attempt.</p>
+<div class="work-actions"><button class="work-btn primary" name="action" value="save">Save Telegram preference</button>{% if channel.binding %}<button class="work-btn" name="action" value="disconnect">Disconnect Telegram</button>{% endif %}</div>
+</form>
+{% if channel.binding %}<details><summary>Connect my private Telegram chat</summary><p>Give this setup code to the hosting administrator: <code>{{ channel.binding }}</code>. Start a private conversation with the office’s Telegram bot. The administrator configures the bot credential and your private chat outside this page. Disconnecting turns delivery off and replaces this code, invalidating the old connection.</p></details>{% endif %}
+<h3>Recent Telegram deliveries</h3><p class="work-small">Sent means Telegram accepted the request. An uncertain or interrupted attempt is not retried automatically. You can always read updates in the app.</p>
+{% for delivery in channel_deliveries %}<p>{{ delivery.created_at }} · {{ {'sent':'Sent','unknown':'Delivery uncertain','sending':'Attempt started; delivery not confirmed','cancelled':'Cancelled before sending'}[delivery.state] }}</p>{% else %}<p>No Telegram attempts yet.</p>{% endfor %}
+</section>
 {% endblock %}

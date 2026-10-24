@@ -289,3 +289,29 @@ def install(conn):
       notice_id INTEGER PRIMARY KEY REFERENCES work_notice(id));
     CREATE INDEX IF NOT EXISTS work_digest_notice_batch ON work_digest_notice(digest_id);
     """)
+
+    conn.executescript("""
+    CREATE TABLE IF NOT EXISTS work_channel_preference (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL REFERENCES admin_user(id) ON DELETE CASCADE,
+      channel TEXT NOT NULL CHECK(length(channel) BETWEEN 1 AND 32),
+      binding TEXT NOT NULL UNIQUE CHECK(length(binding)=32),
+      cadence TEXT NOT NULL CHECK(cadence IN ('off','daily','weekly')),
+      revision INTEGER NOT NULL CHECK(revision>0), updated_at TEXT NOT NULL,
+      UNIQUE(user_id,channel));
+    CREATE TABLE IF NOT EXISTS work_channel_digest (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,channel TEXT NOT NULL,
+      period_key TEXT NOT NULL,delivery_date TEXT NOT NULL,
+      destination_hash TEXT NOT NULL CHECK(length(destination_hash)=64),
+      state TEXT NOT NULL CHECK(state IN ('sending','sent','unknown','cancelled')),
+      created_at TEXT NOT NULL,
+      FOREIGN KEY(user_id,channel) REFERENCES work_channel_preference(user_id,channel) ON DELETE CASCADE,
+      UNIQUE(user_id,channel,period_key),UNIQUE(user_id,channel,delivery_date));
+    CREATE TABLE IF NOT EXISTS work_channel_digest_notice (
+      digest_id INTEGER NOT NULL REFERENCES work_channel_digest(id) ON DELETE CASCADE,
+      notice_id INTEGER NOT NULL REFERENCES work_notice(id) ON DELETE CASCADE,
+      channel TEXT NOT NULL,PRIMARY KEY(notice_id,channel));
+    CREATE INDEX IF NOT EXISTS work_channel_digest_user ON work_channel_digest(user_id,channel,id);
+    CREATE INDEX IF NOT EXISTS work_channel_digest_batch ON work_channel_digest_notice(digest_id);
+    """)
