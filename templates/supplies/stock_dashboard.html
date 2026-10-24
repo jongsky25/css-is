@@ -18,6 +18,7 @@
 </form>
 <p><strong>{{ dashboard.total }} matching catalog items you can access</strong> · Snapshot {{ dashboard.as_of }}. Counts cover all matching pages and count items, not quantities across different units. Chart links add the matching physical-stock or availability filter to the inventory table.</p>
 <p><a href="{{ dashboard.inventory_url }}">Open matching interactive inventory</a></p>
+<p><a href="{{ dashboard.pdf_url }}">Export PDF report</a></p>
 <p><button type="button" id="stock-presentation-export" disabled>Export PowerPoint report</button></p>
 <p id="stock-presentation-status" role="status" aria-live="polite">PowerPoint export requires JavaScript. Reports include all matching below-critical items, up to 1,000; narrow the filters for larger lists.</p>
 <p id="stock-chart-status" role="status" aria-live="polite">Linked count tables are available below. Charts enhance those same counts when they load.</p>

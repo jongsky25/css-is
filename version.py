@@ -18,10 +18,19 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "8.41"
+APP_VERSION = "8.42"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "8.42",
+        "date": "October 24, 2026",
+        "summary": "Download printable PDF snapshots of your stock and document dashboards.",
+        "changes": [
+            "Export charts, complete count tables and applied filters directly to PDF from both dashboards.",
+            "Each report uses fresh access checks and a snapshot date, and PDF downloads also work without JavaScript."
+        ]
+    },
     {
         "version": "8.41",
         "date": "October 24, 2026",

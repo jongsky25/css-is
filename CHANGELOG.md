@@ -1,3 +1,9 @@
+## 8.42 — October 24, 2026
+
+- Fix the flaky outside-activity QR test by inspecting actual anchor destinations instead of searching encoded image data, with a deterministic embedded-image regression case.
+- Add direct PDF exports to the Documents workload and Supplies stock dashboards, using fresh authorized snapshots, vector charts, complete repeated-header tables, applied filters and snapshot dates.
+- Reuse existing ReportLab and DejaVu fonts instead of adding a Gotenberg conversion service; retain existing 1,000-group/item export bounds, exact quantities, deadline rules, access checks and no-store headers, without new dependencies, schema changes or business writes.
+
 ## 8.41 — October 24, 2026
 
 - Export the Documents workload dashboard to PowerPoint with editable workflow, deadline and assigned-lead charts plus complete aggregate count tables, applied queue/search and date boundaries.

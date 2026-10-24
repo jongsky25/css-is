@@ -47,3 +47,7 @@ node --check static/js/document-workload-presentation.js
 ```
 
 Coverage includes all queue/user authority combinations, exact aggregate totals, working-day and invalid-date boundaries, complete/refused lead-group limits, revoked record/account access, no writes, real PPTX OOXML/chart/workbook inspection, applied versus draft filters, more than 20 lead groups with complete tables, empty scopes, mobile layout, safe labels, failed assets/requests and forbidden/invalid export scopes.
+
+## PDF report
+
+Select **Export PDF report** for a printable snapshot with charts, complete tables, applied filters and a fresh date. Downloads also work without JavaScript. The existing PowerPoint export remains available for editable slides. See [Dashboard PDF reports](DASHBOARD_PDF_REPORTS.md) for scope, limits, access rules and the ReportLab/Gotenberg comparison.

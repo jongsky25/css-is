@@ -42,3 +42,7 @@ Exports allow at most **1,000 below-critical items**. Larger lists return an exp
 `/supplies/stock-dashboard/presentation-data` reuses the same `report`/`selected_query` authority and snapshot as the dashboard, with a bounded complete below-critical list instead of page-size rows. PptxGenJS 4.0.1 and JSZip 3.10.1 browser distributions are locally vendored and pinned with SHA-512 archive provenance, SHA-256 file checks, license texts and npm advisory checks for every embedded browser dependency. No schema, stock mutations, new Python dependencies or notification processing are introduced.
 
 Browser verification downloads real PPTX archives, parses every OOXML relationship/XML part, checks both editable chart caches and embedded XLSX workbooks, confirms all-page native tables, fresh stock changes and applied-filter behavior, and exercises empty results, mobile layout, failed assets/requests and revoked grants.
+
+## PDF report
+
+Select **Export PDF report** for a printable snapshot with charts, complete tables, applied filters and a fresh date. Downloads also work without JavaScript. The existing PowerPoint export remains available for editable slides. See [Dashboard PDF reports](DASHBOARD_PDF_REPORTS.md) for scope, limits, access rules and the ReportLab/Gotenberg comparison.
