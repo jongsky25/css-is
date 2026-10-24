@@ -1,3 +1,10 @@
+## 8.46 — October 24, 2026
+
+- Add an opt-in Apprise 2.0.1 private Telegram discussion-digest pilot with host-secret credentials, per-account opaque setup codes, independent cadence/history and disconnect controls.
+- Keep default delivery off and send only a generic HTTPS sign-in reminder; recheck current account, source access, unread state, preferences and configuration before transport.
+- Commit durable per-notice/per-day/week claims before I/O, bound scheduler ticks, avoid uncertain/crash retries, and revoke bindings on deliberate restore or account deletion. Preserve existing email/bell flows.
+- Pin/audit the new dependency graph and exercise the actual provider with mocked HTTP plus native browser setup/disconnect flows; live activation requires hosting credentials and user opt-in.
+
 ## 8.43 — October 24, 2026
 
 - Fix the flaky outside-activity QR test by inspecting actual anchor destinations instead of searching encoded image data, with a deterministic embedded-image regression case.

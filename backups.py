@@ -488,6 +488,11 @@ def clear_restored_sessions(db_path, *, revoke_integrations=False):
                 conn.execute("UPDATE mcp_oauth_grant SET revoked_at=COALESCE(revoked_at,CAST(strftime('%s','now') AS INTEGER))")
                 conn.execute("DELETE FROM mcp_oauth_code")
                 conn.execute("DELETE FROM mcp_oauth_pending")
+            if revoke_integrations and conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' "
+                                                     "AND name='work_channel_preference'").fetchone():
+                conn.execute("UPDATE work_channel_preference SET cadence='off',binding=lower(hex(randomblob(16))),revision=revision+1")
+                if conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='work_channel_digest'").fetchone():
+                    conn.execute("UPDATE work_channel_digest SET state='unknown' WHERE state='sending'")
             if revoke_integrations:
                 from integration_changes import reset_after_restore
                 reset_after_restore(conn)
