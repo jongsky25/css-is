@@ -109,3 +109,8 @@ Add a separate-consent, default-off bureau-wide quarterly Type 2 activity-satisf
 ### M1.2 third implementation — v8.46
 
 Add a separately consented annual Type 3 summary for one currently visible resource person. Reuse the person dashboard's quality index and Type 3 dimensions, share current hidden/Director checks with the profile routes, exclude respondents/comments/rankings, and withhold small-sample scores. The independent pilot flag defaults off. See [Type 3 pilot contract](MCP_READ_ADAPTER.md#m12-third-delivery-annual-type-3-resource-person-summaries). Per-activity/unit comparisons, broader breakdowns and writes remain later work; hosted acceptance is pending.
+
+
+### Individual activity discovery/detail implementation — v8.48
+
+Add metadata-only quarter/title discovery and a full Type 2 scorecard for one selected merged activity. Shared grouping preserves representative/member links and current group changes. New detail-read consent and an independent default-off pilot flag prevent broadening old quarterly/progress grants. Exclude respondents and speaker scores; preserve suppression/capacity gates and distinguish unavailable source scorecards. See [discovery/detail pilot](MCP_READ_ADAPTER.md#individual-activity-discovery-and-satisfaction-details). Earlier live pilot acceptance remains pending; this implementation does not mark it complete. Unit trends, comparisons and writes remain separate work.

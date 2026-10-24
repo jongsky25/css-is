@@ -286,6 +286,27 @@ def build_server(get_conn, origin):
             return {'data': [_web(origin, api.task_read(row)) for row in rows], 'next_before': cursor}
         return await perform('work:read', 'work', run)
 
+    @server.tool(title='Find activities with satisfaction surveys', annotations=READ_ONLY)
+    async def find_survey_activities(year: int, quarter: int, query: str = '', limit: int = 10, offset: int = 0) -> dict:
+        """Find current merged Type 2 activities by start quarter and bounded title search.
+
+        Up to 25 metadata records, no scores, respondents or speaker details.
+        Discovery can include unrated activities. Follow next_offset for more.
+        """
+        return await perform('surveys:activity_details:read', 'survey_activity_details',
+                             lambda conn, user: survey_reports.find_survey_activities(conn, user, origin, year, quarter, query, limit, offset))
+
+    @server.tool(title='Individual activity satisfaction detail', annotations=READ_ONLY)
+    async def get_activity_survey_detail(activity_id: int) -> dict:
+        """Get one merged activity's full Type 2 SERVQUAL scorecard.
+
+        Accept a discovered representative ID or current member form ID. Recheck
+        current grouping; never fall back to bureau totals for a stale ID. No
+        speaker scores, comments, rosters or individual answers. Small scores withheld.
+        """
+        return await perform('surveys:activity_details:read', 'survey_activity_details',
+                             lambda conn, user: survey_reports.activity_detail(conn, user, origin, activity_id))
+
     @server.tool(title='Annual resource-person survey summary', annotations=READ_ONLY)
     async def get_resource_person_survey_summary(resource_person_id: int, year: int) -> dict:
         """Read one currently visible person's annual Type 3 survey aggregates.

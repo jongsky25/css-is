@@ -107,7 +107,7 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
         assert metadata.status_code == 200
         assert metadata.json()['resource'] == 'https://office.example/mcp'
         scopes = {'activities:read', 'calendar:read', 'documents:read',
-                  'supplies:read', 'travel:read', 'work:read', 'notifications:read', 'surveys:csm:read', 'surveys:activities:read', 'surveys:resource_persons:read'}
+                  'supplies:read', 'travel:read', 'work:read', 'notifications:read', 'surveys:csm:read', 'surveys:activities:read', 'surveys:resource_persons:read', 'surveys:activity_details:read'}
         assert set(metadata.json()['scopes_supported']) == scopes
         denied = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 1, 'method': 'initialize',
                                           'params': {'protocolVersion': '2025-06-18',
@@ -188,7 +188,7 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
         assert names == {'my_work', 'find_documents', 'get_document',
                          'list_work_items', 'get_work_item', 'list_work_tasks', 'list_calendar_events',
                          'list_supply_queue', 'list_my_travel_filings', 'list_activity_progress',
-                         'my_office_overview', 'list_my_notifications', 'get_room_availability', 'get_csm_summary', 'get_activity_survey_summary', 'get_resource_person_survey_summary'}
+                         'my_office_overview', 'list_my_notifications', 'get_room_availability', 'get_csm_summary', 'get_activity_survey_summary', 'get_resource_person_survey_summary', 'find_survey_activities', 'get_activity_survey_detail'}
         api_token = client.get('/api/v1/work-items', headers={'Authorization': 'Bearer ' + access})
         assert api_token.status_code == 401
         called = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 3, 'method': 'tools/call',
@@ -303,6 +303,19 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
             'params': {'name': 'get_activity_survey_summary', 'arguments': {'year': 2026, 'quarter': 4}}},
             headers=dict(headers, Authorization='Bearer ' + progress_only.access_token))
         assert denied_survey.status_code == 200 and denied_survey.json()['result'].get('isError')
+        conn = st.connect(os.environ['CSS_DB'])
+        quarter_only = mcp_auth.Provider._tokens(conn, client_id, owner, ['surveys:activities:read'], 'https://office.example/mcp')
+        conn.commit(); conn.close()
+        for tool, arguments in (('find_survey_activities', {'year': 2026, 'quarter': 4}), ('get_activity_survey_detail', {'activity_id': 1})):
+            rejected = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 118, 'method': 'tools/call',
+                'params': {'name': tool, 'arguments': arguments}}, headers=dict(headers, Authorization='Bearer ' + quarter_only.access_token))
+            assert rejected.status_code == 200 and rejected.json()['result'].get('isError')
+            disabled_detail = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 119, 'method': 'tools/call',
+                'params': {'name': tool, 'arguments': arguments}}, headers=headers)
+            assert disabled_detail.status_code == 200 and 'not_available' in disabled_detail.text
+        conn = st.connect(os.environ['CSS_DB'])
+        conn.execute('UPDATE mcp_oauth_grant SET revoked_at=1 WHERE access_hash=?', (mcp_auth._digest(quarter_only.access_token),))
+        conn.commit(); conn.close()
         denied_person = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 116, 'method': 'tools/call',
             'params': {'name': 'get_resource_person_survey_summary', 'arguments': {'resource_person_id': owner_rp, 'year': 2026}}},
             headers=dict(headers, Authorization='Bearer ' + progress_only.access_token))

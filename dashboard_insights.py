@@ -1502,6 +1502,14 @@ def _event_group_key(inst):
     return ("bur", inst["event_date"], venue, inst["lead_org_id"])
 
 
+def group_activity_instances(instances):
+    """Shared current date/venue/organizer grouping for activity reports."""
+    groups = {}
+    for inst in instances:
+        groups.setdefault(_event_group_key(inst), []).append(inst)
+    return groups
+
+
 def build_events(atoms, instances):
     """Group form instances into events and score each from the atoms. Returns a
     list (newest first) of event summaries with an F2 block + per-speaker F3s.
@@ -1512,9 +1520,7 @@ def build_events(atoms, instances):
     keeps the Activities view fast even with thousands of instances. The numbers are
     identical to scoring each slice through the engine (verified by equivalence test).
     """
-    groups = {}
-    for inst in instances:
-        groups.setdefault(_event_group_key(inst), []).append(inst)
+    groups = group_activity_instances(instances)
 
     # ---- one-time aggregation over all atoms ----
     if len(atoms):
