@@ -101,7 +101,14 @@ class Provider(OAuthAuthorizationServerProvider[AuthorizationCode, RefreshToken,
     async def get_client(self, client_id):
         def read(conn):
             row = conn.execute('SELECT metadata_json FROM mcp_oauth_client WHERE id=?', (client_id,)).fetchone()
-            return OAuthClientInformationFull.model_validate_json(row[0]) if row else None
+            if not row:
+                return None
+            client = OAuthClientInformationFull.model_validate_json(row[0])
+            # Registration is eligibility, not user consent. Older ChatGPT
+            # registrations advertised only work; offer current read choices
+            # without modifying any pending request, code, grant or token.
+            client.scope = ' '.join(sorted(SCOPES))
+            return client
         return await asyncio.to_thread(self._run, read)
 
     async def register_client(self, client_info):
@@ -110,6 +117,9 @@ class Provider(OAuthAuthorizationServerProvider[AuthorizationCode, RefreshToken,
                 or client_info.token_endpoint_auth_method not in ('none', 'client_secret_post', 'client_secret_basic')
                 or set((client_info.scope or '').split()) - SCOPES):
             raise RegistrationError('invalid_client_metadata', 'Use a supported ChatGPT callback and read scope.')
+        # Return and persist the server's effective read-only registration.
+        # The authorize request and explicit consent still choose actual grants.
+        client_info.scope = ' '.join(sorted(SCOPES))
         def save(conn):
             with conn:
                 # Expired, unused registrations have no active grant or pending
@@ -151,14 +161,13 @@ class Provider(OAuthAuthorizationServerProvider[AuthorizationCode, RefreshToken,
         return self._run(read)
 
     def consent_scopes(self, client_id):
-        """The registration bounds optional, explicitly selected read access."""
+        """Offer supported reads to registered clients, including legacy ones."""
         def read(conn):
             row = conn.execute('SELECT metadata_json FROM mcp_oauth_client WHERE id=?',
                                (client_id,)).fetchone()
             if not row:
                 raise ValueError('The connection registration is unavailable.')
-            client = OAuthClientInformationFull.model_validate_json(row[0])
-            return SCOPES & set(client.scope.split()) if client.scope else SCOPES
+            return SCOPES
         return self._run(read)
 
     def complete(self, ticket, owner_id, approve, additional_scopes=()):
@@ -172,16 +181,14 @@ class Provider(OAuthAuthorizationServerProvider[AuthorizationCode, RefreshToken,
                 client_id, raw = row
                 params = json.loads(raw)
                 if approve:
-                    # Read the registered ceiling again under the writer lock;
-                    # a forged checkbox must never add an unsupported scope.
+                    # Recheck registration under the writer lock. The server
+                    # offers only its read allowlist, including to legacy clients.
                     row_client = conn.execute('SELECT metadata_json FROM mcp_oauth_client WHERE id=?',
                                               (client_id,)).fetchone()
                     if not row_client:
                         raise ValueError('The connection registration is unavailable.')
-                    client = OAuthClientInformationFull.model_validate_json(row_client[0])
-                    allowed = SCOPES & set(client.scope.split()) if client.scope else SCOPES
                     selected = set(additional_scopes)
-                    if selected - allowed:
+                    if selected - SCOPES:
                         raise ValueError('The requested permission is unavailable to this connection.')
                     params['scopes'] = sorted(set(params['scopes']) | selected)
                     raw = json.dumps(params)
