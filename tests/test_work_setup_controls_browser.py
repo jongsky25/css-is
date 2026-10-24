@@ -44,6 +44,7 @@ def test_admin_resolves_disabled_modules_then_can_pause_work_without_sending(gri
             form.locator('textarea[name="authorization"]').fill('Enable shared-work discussion pilot')
             form.locator('input[name="confirmed"]').check();form.get_by_role('button',name='Enable Collaborative work',exact=True).click()
             page.wait_for_url('**/setup#collaborative-work')
+            assert page.get_by_role('heading',name='Collaborative work',exact=True).bounding_box()['y']>=60
             assert work.enabled(conn) and st.get_setting(conn,'documents.sending_enabled')=='0'
             page.get_by_role('link',name='Return to notification preferences').click()
             assert 'Telegram is configured for your account.' in page.locator('.work-wrap').inner_text()
