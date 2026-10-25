@@ -22,6 +22,26 @@ def test_secure_cookie_configuration(env, expected):
     assert secure_cookies_enabled(env) is expected
 
 
+@pytest.mark.parametrize('https',[False,True])
+def test_isolated_app_configuration_restores_preferences_after_other_import_env(request,monkeypatch,https):
+    import app
+    base='https://testserver' if https else 'http://testserver'
+    monkeypatch.delenv('SPACE_HOST',raising=False)
+    monkeypatch.setenv('CSS_BASE_URL',base)
+    monkeypatch.setenv('CSS_SECURE_COOKIES','0')
+    # Model an app cached under the opposite deployment configuration.
+    monkeypatch.setattr(app,'SECURE_COOKIES',not https)
+    current=request.getfixturevalue('app_mod')
+    assert current.SECURE_COOKIES is https
+    viewer=request.getfixturevalue('viewer')
+    viewer.base_url=base;viewer.headers['Origin']=base
+    response=viewer.post('/calendar/preference',data={'layout':'month','scope':'mine','next':'/calendar'},follow_redirects=False)
+    assert response.status_code==303
+    cookie=SimpleCookie(response.headers['set-cookie'])['cal_pref']
+    assert bool(cookie['secure']) is https
+    assert viewer.get('/calendar').context['layout']=='month'
+
+
 def _assert_headers(response):
     assert response.headers['x-content-type-options'] == 'nosniff'
     assert response.headers['x-frame-options'] == 'SAMEORIGIN'

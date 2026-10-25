@@ -33,3 +33,5 @@ The release gate audits every bundled version against npm advisories and preserv
 Domain/HTTP coverage checks real endpoints, inclusive dates, complete overnight times, unknown durations, timezone overrides, minimal fields, current-unit visibility, filters, preferred views, bounds, invalid dates, JSON escaping and no calendar writes. Chromium covers native links and keyboard focus, day selection, markup-safe labels, no-JavaScript/blocked-library fallback, and responsive geometry across 320–1920px and light/dark/contrast themes. Calendar agenda/month/people-week/timeline/home/filters/preferences/recurrence/room/API/guidance regressions remain required checks.
 
 All fixtures are synthetic. Browser and mocked tests do not establish real production usage or notification delivery.
+
+The shared test app recomputes import-time cookie security from each isolated test's environment. This prevents an earlier HTTPS-configured Telegram test from making a later HTTP preference client silently discard a Secure cookie. HTTP/HTTPS regressions retain the original preference assertions; production security and cookie middleware are unchanged.

@@ -4,6 +4,7 @@
 - Show a full week on wide screens and a selectable day on phones. Keep configured office times consistent across browser timezones; preserve inclusive all-day endpoints, real overnight times and incomplete durations without inventing clock values.
 - Withhold the whole hour grid above 500 filtered items or invalid intervals. Retain the complete native list, print fallback and safe text labels; preserve existing calendar views and item sheets.
 - Vendor MIT FullCalendar Standard 6.1.22, Luxon 3.7.2 and its adapter with all bundled licenses/provenance, exact source/bundle verification and transitive npm audits. No new Python package, service, schema, API or calendar write is added.
+- Isolate import-time cookie security in the test app fixture so HTTPS integration tests cannot break later HTTP calendar-preference checks. Keep production behavior unchanged and cover both schemes.
 
 ## 8.61 — October 25, 2026
 
