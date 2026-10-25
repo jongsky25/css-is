@@ -506,6 +506,8 @@ def deliver(conn, now=None):
 
 def cleanup(conn, now):
     with transaction(conn):
+        import telegram_changes
+        telegram_changes.cleanup_in_transaction(conn,now)
         telegram_actions.cleanup_in_transaction(conn,now)
         conn.execute('DELETE FROM telegram_meeting_origin WHERE id IN (SELECT id FROM telegram_meeting_origin WHERE expires_at<? LIMIT 20)',(stamp(now-timedelta(days=1)),))
         conn.execute('''UPDATE telegram_update SET sender_id=NULL,chat_id=NULL,topic_id=NULL,payload_json=NULL,
@@ -530,6 +532,8 @@ def cleanup(conn, now):
 
 def tick(conn, now=None):
     processed = process_updates(conn, now or now_utc())
+    import telegram_changes
+    telegram_changes.prepare_routes(conn,now or now_utc())
     sent = deliver(conn, now)
     cleanup(conn, now or now_utc())
     return processed, sent

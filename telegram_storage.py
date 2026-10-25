@@ -279,6 +279,9 @@ def install(conn):
         if name not in columns:
             conn.execute('ALTER TABLE telegram_connection ADD COLUMN '+name+' '+kind)
 
+    import telegram_changes
+    telegram_changes.install(conn)
+
 
 def reset_after_restore(conn):
     """Fence *every* snapshot recovery, including routine boot hydration.
@@ -289,6 +292,9 @@ def reset_after_restore(conn):
     Later preview tables must extend this hook when introduced.
     """
     tables = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+    if 'telegram_change_event' in tables:
+        import telegram_changes
+        telegram_changes.reset_after_restore(conn)
     if 'telegram_meeting_origin' in tables:
         conn.execute('DELETE FROM telegram_meeting_origin')
     if 'telegram_preview' in tables:

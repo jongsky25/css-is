@@ -118,3 +118,5 @@ meetings and ordinary room approvals remain managed in Office Connect.
 T4.1 next adds durable calendar/room change events and routing. Automatic change
 notices, reminders, natural-language parsing, recurrence, guests, meals, standby,
 on-behalf-of requests and approval/cancel/withdraw actions are outside T3.4.
+
+T4.1 adds [transactional source-change events and metadata-only routing](TELEGRAM_CHANGE_EVENTS.md). It does not deliver change notifications or replay business actions; T4.2 owns that transport handoff.

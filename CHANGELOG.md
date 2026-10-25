@@ -1,3 +1,9 @@
+## 8.73 — October 25, 2026
+
+- Capture metadata-only calendar/room changes in the business transaction across UI, import, scheduler and trusted action writers, including participant/slot/decision changes; retain source incarnation/revision and stable event identities without copying email queues or business content.
+- Prepare bounded, restart-safe routing descriptors with current creator/participant/requester and exact shared-group authority. Recheck read grants, source versions, ownership, topic generations and group proof; supersede stale routes and fence revocation/restore.
+- Add bounded retention and feature-off local maintenance, source-writer inventory, rollback/privacy/replay tests and Markdown handoff. No notification rendering or provider send; change notices and every other optional pilot remain default-off.
+
 ## 8.72 — October 25, 2026
 
 - Add optional exact room hours to guided meeting preparation, with separate current room consent and an unchecked room request choice. Private confirmation saves one meeting and records a separate pending room request or safe failed child outcome.

@@ -5039,8 +5039,6 @@ def _work_channels_tick():
 
 def _telegram_tick():
     import telegram_bot
-    if not (telegram_bot.storage.enabled('inbound') or telegram_bot.storage.enabled('delivery')):
-        return (0, 0)
     conn = st.connect(DB)
     try:
         return telegram_bot.tick(conn)

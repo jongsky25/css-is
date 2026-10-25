@@ -121,3 +121,5 @@ previews and receipts. There is no exactly-once guarantee across rollback to an
 older database snapshot; all write switches remain off by default pending hosted recovery evidence.
 
 T3.4 records an explicitly previewed room child under the parent confirmation transaction. A child domain refusal rolls back its savepoint and returns a partial parent plus failed child; unexpected exceptions roll back everything. Child attempts have separate operation IDs, keys, hashes and the same bound context. No extra token is minted for the initial child because its exact hours and failure policy were confirmed in the parent preview. A fresh retry uses the ordinary room action contract and existing meeting ID, with an indexed parent reference. Receipt rendering can show current child status while retaining the historical parent outcome. Room-grant revocation also scrubs combined calendar previews; calendar-only previews are unaffected.
+
+T4.1 adds [transactional source-change events and metadata-only routing](TELEGRAM_CHANGE_EVENTS.md). It does not deliver change notifications or replay business actions; T4.2 owns that transport handoff.
