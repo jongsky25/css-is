@@ -1,6 +1,6 @@
 # Avatar visual upgrade — phased execution plan for Sol
 
-Status: Ready for implementation; no implementation phases completed.
+Status: Increment 0 in progress; baseline acceptance remains unmet. No artwork increments started.
 Created: 2026-10-25
 Repository: jongsky25/css-is
 Owner request: Material improvement to companion artwork, optional animal dress-up,
@@ -283,7 +283,7 @@ browser tests ran.
 
 | Increment | Status | Commit | Visual evidence | Performance evidence / notes |
 |---|---|---|---|---|
-| 0 Baseline | Pending | — | — | — |
+| 0 Baseline | In progress — acceptance unmet | `d426cc5` (harness/report); evidence in following commit | [Fixed-noon contact sheets](avatars/smoke/) | [Report](avatars/BASELINE_REPORT.md); five short smoke runs per viewport/cache only; full-duration application scenarios still required. Existing offscreen animation and chase-listener retention observed. |
 | 1 Cat + plant slice | Pending | — | — | — |
 | 2 Plants | Pending | — | — | — |
 | 3A Ground animals + bird | Pending | — | — | — |
@@ -301,3 +301,13 @@ execute the next pending increment completely. Preserve the plan's visual and
 performance gates. Record evidence, tests, commit and remaining work in the ledger.
 Continue through subsequent increments if the session permits. Prepare reviewable
 changes; do not deploy without deployment authorization.
+
+### Increment 0 execution note — 2026-10-25
+
+Development-only macro gallery, measurement/lifecycle scripts, contact sheets and
+call-site inventory added. All 100 selected tests passed. Baseline acceptance is
+not claimed: the short smoke sweep is not the required five-run, 30-second full
+application baseline. See [remaining acceptance work](avatars/BASELINE_REPORT.md).
+Increment 1 remains blocked by increment 0. No production changes or deployment.
+
+Harness/report commit: `d426cc5` (`test: add local avatar gallery and baseline probes`).

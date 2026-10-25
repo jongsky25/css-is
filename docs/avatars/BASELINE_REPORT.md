@@ -49,3 +49,11 @@ measurement plumbing only. Re-run full duration after these gaps are corrected:
 
 The release gate remains unassessed. Known baseline issues are recorded without
 relaxing thresholds. See README.md for commands, inventory and measurement limits.
+
+## Completed smoke result
+
+20 samples (five per viewport/cache combination), zero JavaScript exceptions and
+zero external requests. Chromium `154.0.8037.57`. Gzip estimates: Home 6,790 B;
+picker 13,136 B; full gallery 33,969 B; avatar/audio JS 14,664 B; avatar CSS
+4,034 B. These are baseline estimates, not added bytes or verified transfer sizes.
+Raw observations and median/worst summaries are retained under `smoke/`.

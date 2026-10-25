@@ -1,0 +1,130 @@
+[
+  {
+    "mobile": false,
+    "cache": "cold",
+    "scenario": "idle",
+    "metric": "lcp_ms",
+    "median": 256,
+    "worst": 352
+  },
+  {
+    "mobile": false,
+    "cache": "cold",
+    "scenario": "idle",
+    "metric": "frame_p95_ms",
+    "median": 17,
+    "worst": 19
+  },
+  {
+    "mobile": false,
+    "cache": "cold",
+    "scenario": "interaction",
+    "metric": "lcp_ms",
+    "median": 256,
+    "worst": 352
+  },
+  {
+    "mobile": false,
+    "cache": "cold",
+    "scenario": "interaction",
+    "metric": "frame_p95_ms",
+    "median": 18,
+    "worst": 19
+  },
+  {
+    "mobile": false,
+    "cache": "warm",
+    "scenario": "idle",
+    "metric": "lcp_ms",
+    "median": 476,
+    "worst": 540
+  },
+  {
+    "mobile": false,
+    "cache": "warm",
+    "scenario": "idle",
+    "metric": "frame_p95_ms",
+    "median": 17,
+    "worst": 19
+  },
+  {
+    "mobile": false,
+    "cache": "warm",
+    "scenario": "interaction",
+    "metric": "lcp_ms",
+    "median": 476,
+    "worst": 540
+  },
+  {
+    "mobile": false,
+    "cache": "warm",
+    "scenario": "interaction",
+    "metric": "frame_p95_ms",
+    "median": 17,
+    "worst": 19
+  },
+  {
+    "mobile": true,
+    "cache": "cold",
+    "scenario": "idle",
+    "metric": "lcp_ms",
+    "median": 380,
+    "worst": 640
+  },
+  {
+    "mobile": true,
+    "cache": "cold",
+    "scenario": "idle",
+    "metric": "frame_p95_ms",
+    "median": 17,
+    "worst": 18
+  },
+  {
+    "mobile": true,
+    "cache": "cold",
+    "scenario": "interaction",
+    "metric": "lcp_ms",
+    "median": 380,
+    "worst": 640
+  },
+  {
+    "mobile": true,
+    "cache": "cold",
+    "scenario": "interaction",
+    "metric": "frame_p95_ms",
+    "median": 24,
+    "worst": 38
+  },
+  {
+    "mobile": true,
+    "cache": "warm",
+    "scenario": "idle",
+    "metric": "lcp_ms",
+    "median": 244,
+    "worst": 308
+  },
+  {
+    "mobile": true,
+    "cache": "warm",
+    "scenario": "idle",
+    "metric": "frame_p95_ms",
+    "median": 17,
+    "worst": 20
+  },
+  {
+    "mobile": true,
+    "cache": "warm",
+    "scenario": "interaction",
+    "metric": "lcp_ms",
+    "median": 244,
+    "worst": 308
+  },
+  {
+    "mobile": true,
+    "cache": "warm",
+    "scenario": "interaction",
+    "metric": "frame_p95_ms",
+    "median": 24,
+    "worst": 26
+  }
+]

@@ -1,0 +1,535 @@
+{
+  "platform": "Linux-6.18.55-x86_64-with-glibc2.41",
+  "commit": "4fc2a02063df70f405e24d0a934b6aabffa4cdb5",
+  "seconds_per_scenario": 1,
+  "runs": [
+    {
+      "mobile": false,
+      "cpu_rate": 1,
+      "cache": "cold",
+      "run": 0,
+      "scenarios": {
+        "idle": {
+          "lcp_ms": 256,
+          "frame_p95_ms": 17,
+          "long_tasks_ms": [],
+          "latency_ms": []
+        },
+        "interaction": {
+          "lcp_ms": 256,
+          "frame_p95_ms": 17,
+          "long_tasks_ms": [],
+          "latency_ms": [
+            11
+          ]
+        }
+      },
+      "heap_after_navigation_delta_bytes": 10480276,
+      "nodes": 211,
+      "errors": [],
+      "external_requests": []
+    },
+    {
+      "mobile": false,
+      "cpu_rate": 1,
+      "cache": "cold",
+      "run": 1,
+      "scenarios": {
+        "idle": {
+          "lcp_ms": 228,
+          "frame_p95_ms": 16,
+          "long_tasks_ms": [],
+          "latency_ms": []
+        },
+        "interaction": {
+          "lcp_ms": 228,
+          "frame_p95_ms": 17,
+          "long_tasks_ms": [],
+          "latency_ms": [
+            14
+          ]
+        }
+      },
+      "heap_after_navigation_delta_bytes": 10327464,
+      "nodes": 211,
+      "errors": [],
+      "external_requests": []
+    },
+    {
+      "mobile": false,
+      "cpu_rate": 1,
+      "cache": "cold",
+      "run": 2,
+      "scenarios": {
+        "idle": {
+          "lcp_ms": 352,
+          "frame_p95_ms": 17,
+          "long_tasks_ms": [],
+          "latency_ms": []
+        },
+        "interaction": {
+          "lcp_ms": 352,
+          "frame_p95_ms": 18,
+          "long_tasks_ms": [],
+          "latency_ms": [
+            12
+          ]
+        }
+      },
+      "heap_after_navigation_delta_bytes": 11235644,
+      "nodes": 211,
+      "errors": [],
+      "external_requests": []
+    },
+    {
+      "mobile": false,
+      "cpu_rate": 1,
+      "cache": "cold",
+      "run": 3,
+      "scenarios": {
+        "idle": {
+          "lcp_ms": 212,
+          "frame_p95_ms": 19,
+          "long_tasks_ms": [],
+          "latency_ms": []
+        },
+        "interaction": {
+          "lcp_ms": 212,
+          "frame_p95_ms": 19,
+          "long_tasks_ms": [],
+          "latency_ms": [
+            10
+          ]
+        }
+      },
+      "heap_after_navigation_delta_bytes": 11190928,
+      "nodes": 211,
+      "errors": [],
+      "external_requests": []
+    },
+    {
+      "mobile": false,
+      "cpu_rate": 1,
+      "cache": "cold",
+      "run": 4,
+      "scenarios": {
+        "idle": {
+          "lcp_ms": 296,
+          "frame_p95_ms": 16,
+          "long_tasks_ms": [],
+          "latency_ms": []
+        },
+        "interaction": {
+          "lcp_ms": 296,
+          "frame_p95_ms": 18,
+          "long_tasks_ms": [],
+          "latency_ms": [
+            11
+          ]
+        }
+      },
+      "heap_after_navigation_delta_bytes": 10331864,
+      "nodes": 211,
+      "errors": [],
+      "external_requests": []
+    },
+    {
+      "mobile": false,
+      "cpu_rate": 1,
+      "cache": "warm",
+      "run": 0,
+      "scenarios": {
+        "idle": {
+          "lcp_ms": 540,
+          "frame_p95_ms": 19,
+          "long_tasks_ms": [],
+          "latency_ms": []
+        },
+        "interaction": {
+          "lcp_ms": 540,
+          "frame_p95_ms": 19,
+          "long_tasks_ms": [],
+          "latency_ms": [
+            15
+          ]
+        }
+      },
+      "heap_after_navigation_delta_bytes": 10955740,
+      "nodes": 211,
+      "errors": [],
+      "external_requests": []
+    },
+    {
+      "mobile": false,
+      "cpu_rate": 1,
+      "cache": "warm",
+      "run": 1,
+      "scenarios": {
+        "idle": {
+          "lcp_ms": 476,
+          "frame_p95_ms": 17,
+          "long_tasks_ms": [],
+          "latency_ms": []
+        },
+        "interaction": {
+          "lcp_ms": 476,
+          "frame_p95_ms": 17,
+          "long_tasks_ms": [],
+          "latency_ms": [
+            12
+          ]
+        }
+      },
+      "heap_after_navigation_delta_bytes": 11419652,
+      "nodes": 211,
+      "errors": [],
+      "external_requests": []
+    },
+    {
+      "mobile": false,
+      "cpu_rate": 1,
+      "cache": "warm",
+      "run": 2,
+      "scenarios": {
+        "idle": {
+          "lcp_ms": 248,
+          "frame_p95_ms": 17,
+          "long_tasks_ms": [],
+          "latency_ms": []
+        },
+        "interaction": {
+          "lcp_ms": 248,
+          "frame_p95_ms": 18,
+          "long_tasks_ms": [],
+          "latency_ms": [
+            16
+          ]
+        }
+      },
+      "heap_after_navigation_delta_bytes": 10188904,
+      "nodes": 211,
+      "errors": [],
+      "external_requests": []
+    },
+    {
+      "mobile": false,
+      "cpu_rate": 1,
+      "cache": "warm",
+      "run": 3,
+      "scenarios": {
+        "idle": {
+          "lcp_ms": 432,
+          "frame_p95_ms": 17,
+          "long_tasks_ms": [],
+          "latency_ms": []
+        },
+        "interaction": {
+          "lcp_ms": 432,
+          "frame_p95_ms": 17,
+          "long_tasks_ms": [],
+          "latency_ms": [
+            11
+          ]
+        }
+      },
+      "heap_after_navigation_delta_bytes": 10551700,
+      "nodes": 211,
+      "errors": [],
+      "external_requests": []
+    },
+    {
+      "mobile": false,
+      "cpu_rate": 1,
+      "cache": "warm",
+      "run": 4,
+      "scenarios": {
+        "idle": {
+          "lcp_ms": 512,
+          "frame_p95_ms": 17,
+          "long_tasks_ms": [],
+          "latency_ms": []
+        },
+        "interaction": {
+          "lcp_ms": 512,
+          "frame_p95_ms": 17,
+          "long_tasks_ms": [],
+          "latency_ms": [
+            11
+          ]
+        }
+      },
+      "heap_after_navigation_delta_bytes": 10567528,
+      "nodes": 211,
+      "errors": [],
+      "external_requests": []
+    },
+    {
+      "mobile": true,
+      "cpu_rate": 4,
+      "cache": "cold",
+      "run": 0,
+      "scenarios": {
+        "idle": {
+          "lcp_ms": 640,
+          "frame_p95_ms": 18,
+          "long_tasks_ms": [],
+          "latency_ms": []
+        },
+        "interaction": {
+          "lcp_ms": 640,
+          "frame_p95_ms": 38,
+          "long_tasks_ms": [],
+          "latency_ms": [
+            7
+          ]
+        }
+      },
+      "heap_after_navigation_delta_bytes": 11015236,
+      "nodes": 211,
+      "errors": [],
+      "external_requests": []
+    },
+    {
+      "mobile": true,
+      "cpu_rate": 4,
+      "cache": "cold",
+      "run": 1,
+      "scenarios": {
+        "idle": {
+          "lcp_ms": 424,
+          "frame_p95_ms": 18,
+          "long_tasks_ms": [],
+          "latency_ms": []
+        },
+        "interaction": {
+          "lcp_ms": 424,
+          "frame_p95_ms": 33,
+          "long_tasks_ms": [],
+          "latency_ms": [
+            17
+          ]
+        }
+      },
+      "heap_after_navigation_delta_bytes": 10506984,
+      "nodes": 211,
+      "errors": [],
+      "external_requests": []
+    },
+    {
+      "mobile": true,
+      "cpu_rate": 4,
+      "cache": "cold",
+      "run": 2,
+      "scenarios": {
+        "idle": {
+          "lcp_ms": 364,
+          "frame_p95_ms": 17,
+          "long_tasks_ms": [],
+          "latency_ms": []
+        },
+        "interaction": {
+          "lcp_ms": 364,
+          "frame_p95_ms": 22,
+          "long_tasks_ms": [],
+          "latency_ms": [
+            11
+          ]
+        }
+      },
+      "heap_after_navigation_delta_bytes": 10487524,
+      "nodes": 211,
+      "errors": [],
+      "external_requests": []
+    },
+    {
+      "mobile": true,
+      "cpu_rate": 4,
+      "cache": "cold",
+      "run": 3,
+      "scenarios": {
+        "idle": {
+          "lcp_ms": 344,
+          "frame_p95_ms": 17,
+          "long_tasks_ms": [],
+          "latency_ms": []
+        },
+        "interaction": {
+          "lcp_ms": 344,
+          "frame_p95_ms": 24,
+          "long_tasks_ms": [],
+          "latency_ms": [
+            11
+          ]
+        }
+      },
+      "heap_after_navigation_delta_bytes": 10492772,
+      "nodes": 211,
+      "errors": [],
+      "external_requests": []
+    },
+    {
+      "mobile": true,
+      "cpu_rate": 4,
+      "cache": "cold",
+      "run": 4,
+      "scenarios": {
+        "idle": {
+          "lcp_ms": 380,
+          "frame_p95_ms": 17,
+          "long_tasks_ms": [],
+          "latency_ms": []
+        },
+        "interaction": {
+          "lcp_ms": 380,
+          "frame_p95_ms": 22,
+          "long_tasks_ms": [],
+          "latency_ms": [
+            8
+          ]
+        }
+      },
+      "heap_after_navigation_delta_bytes": 11341048,
+      "nodes": 211,
+      "errors": [],
+      "external_requests": []
+    },
+    {
+      "mobile": true,
+      "cpu_rate": 4,
+      "cache": "warm",
+      "run": 0,
+      "scenarios": {
+        "idle": {
+          "lcp_ms": 244,
+          "frame_p95_ms": 17,
+          "long_tasks_ms": [],
+          "latency_ms": []
+        },
+        "interaction": {
+          "lcp_ms": 244,
+          "frame_p95_ms": 24,
+          "long_tasks_ms": [],
+          "latency_ms": [
+            11
+          ]
+        }
+      },
+      "heap_after_navigation_delta_bytes": 10438156,
+      "nodes": 211,
+      "errors": [],
+      "external_requests": []
+    },
+    {
+      "mobile": true,
+      "cpu_rate": 4,
+      "cache": "warm",
+      "run": 1,
+      "scenarios": {
+        "idle": {
+          "lcp_ms": 212,
+          "frame_p95_ms": 20,
+          "long_tasks_ms": [],
+          "latency_ms": []
+        },
+        "interaction": {
+          "lcp_ms": 212,
+          "frame_p95_ms": 25,
+          "long_tasks_ms": [],
+          "latency_ms": [
+            18
+          ]
+        }
+      },
+      "heap_after_navigation_delta_bytes": 10209316,
+      "nodes": 211,
+      "errors": [],
+      "external_requests": []
+    },
+    {
+      "mobile": true,
+      "cpu_rate": 4,
+      "cache": "warm",
+      "run": 2,
+      "scenarios": {
+        "idle": {
+          "lcp_ms": 276,
+          "frame_p95_ms": 17,
+          "long_tasks_ms": [],
+          "latency_ms": []
+        },
+        "interaction": {
+          "lcp_ms": 276,
+          "frame_p95_ms": 26,
+          "long_tasks_ms": [],
+          "latency_ms": [
+            17
+          ]
+        }
+      },
+      "heap_after_navigation_delta_bytes": 10592588,
+      "nodes": 211,
+      "errors": [],
+      "external_requests": []
+    },
+    {
+      "mobile": true,
+      "cpu_rate": 4,
+      "cache": "warm",
+      "run": 3,
+      "scenarios": {
+        "idle": {
+          "lcp_ms": 308,
+          "frame_p95_ms": 17,
+          "long_tasks_ms": [],
+          "latency_ms": []
+        },
+        "interaction": {
+          "lcp_ms": 308,
+          "frame_p95_ms": 24,
+          "long_tasks_ms": [],
+          "latency_ms": [
+            11
+          ]
+        }
+      },
+      "heap_after_navigation_delta_bytes": 10233344,
+      "nodes": 211,
+      "errors": [],
+      "external_requests": []
+    },
+    {
+      "mobile": true,
+      "cpu_rate": 4,
+      "cache": "warm",
+      "run": 4,
+      "scenarios": {
+        "idle": {
+          "lcp_ms": 220,
+          "frame_p95_ms": 17,
+          "long_tasks_ms": [],
+          "latency_ms": []
+        },
+        "interaction": {
+          "lcp_ms": 220,
+          "frame_p95_ms": 19,
+          "long_tasks_ms": [],
+          "latency_ms": [
+            6
+          ]
+        }
+      },
+      "heap_after_navigation_delta_bytes": 10364588,
+      "nodes": 211,
+      "errors": [],
+      "external_requests": []
+    }
+  ],
+  "sizes_gzip": {
+    "home": 6790,
+    "picker": 13136,
+    "gallery": 33969,
+    "js": 14664,
+    "css": 4034
+  },
+  "chromium": "154.0.8037.57"
+}
