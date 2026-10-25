@@ -33,6 +33,7 @@ import survey_reports
 
 import base64
 import calendar
+from uuid import uuid4
 import csv
 import io
 import logging
@@ -514,6 +515,7 @@ templates.env.globals["t"] = i18n.t
 templates.env.globals["avatar_family"] = st.avatar_family
 templates.env.globals["avatar_care_verb"] = st.avatar_care_verb
 templates.env.globals["avatar_is_swimmer"] = st.avatar_is_swimmer
+templates.env.globals["avatar_uid"] = lambda: "av-" + uuid4().hex
 templates.env.globals["avatar_month"] = appearance.accessory_month
 templates.env.globals["avatar_outfit"] = appearance.avatar_outfit
 

@@ -1,6 +1,7 @@
 """Local-only actual-macro fixtures. No app import, database, or production route."""
 import ast
 from pathlib import Path
+from itertools import count
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -12,6 +13,8 @@ CATALOG = next(ast.literal_eval(n.value) for n in TREE.body if isinstance(n, ast
 def render(scene='gallery', theme='light', outfit='default', month=0):
     env = Environment(loader=FileSystemLoader(ROOT / 'templates'), autoescape=True,
                       undefined=StrictUndefined)
+    ids = count(1)
+    env.globals["avatar_uid"] = lambda: "gallery-av-" + str(next(ids))
     families = {a['key']: a['family'] for a in CATALOG}
     env.globals.update(avatar_family=lambda k: families.get(k, 'plant'),
                        avatar_is_swimmer=lambda k: k in {'fish', 'dolphin'},

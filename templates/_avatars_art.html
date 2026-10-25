@@ -26,15 +26,15 @@
 
 {#-- public dispatcher — the only cross-file import point. m = month 1..12
      picks the seasonal accessory (0/none = bare). --#}
-{% macro species_art(kind, s, m=0, costume="") %}
-{% if kind == "plant" %}{{ _plant(s, m, costume) }}
+{% macro species_art(kind, s, m=0, costume="", scope="") %}
+{% if kind == "plant" %}{{ _plant(s, m, costume, scope) }}
 {% elif kind == "cactus" %}{{ _cactus(s, m, costume) }}
 {% elif kind == "bonsai" %}{{ _bonsai(s, m, costume) }}
 {% elif kind == "sunflower" %}{{ _sunflower(s, m, costume) }}
 {% elif kind == "fern" %}{{ _fern(s, m, costume) }}
 {% elif kind == "mushroom" %}{{ _mushroom(s, m, costume) }}
 {% elif kind == "succulent" %}{{ _succulent(s, m, costume) }}
-{% elif kind == "cat" %}{{ _cat(s, m, costume) }}
+{% elif kind == "cat" %}{{ _cat(s, m, costume, scope) }}
 {% elif kind == "bird" %}{{ _bird(s, m, costume) }}
 {% elif kind == "turtle" %}{{ _turtle(s, m, costume) }}
 {% elif kind == "dog" %}{{ _dog(s, m, costume) }}
@@ -43,7 +43,7 @@
 {% elif kind == "dolphin" %}{{ _dolphin(s, m, costume) }}
 {% elif kind == "owl" %}{{ _owl(s, m, costume) }}
 {% elif kind == "bat" %}{{ _bat(s, m, costume) }}
-{% else %}{{ _plant(s, m, costume) }}{% endif %}
+{% else %}{{ _plant(s, m, costume, scope) }}{% endif %}
 {% endmacro %}
 
 
@@ -290,60 +290,58 @@
 
 {# ============================ plant family ============================ #}
 
-{% macro _plant(s, m=0, costume="") %}
-  {{ _pot() }}
-  {{ _pot_bow(m) }}
-  {{ costume_front("plant", s, costume, scaled=true) }}
-    {{ _pot_regalia(s) }}
+{# V2 anchor contract: pot at (60,116), stem root (60,106), blooms at
+   species/stage coordinates below. Personal prototypes are gallery-only. #}
+{% macro _plant(s, m=0, costume="", scope="") %}
+{% set leaf = 'url(#' ~ scope ~ '-leaf)' if scope else 'url(#avg-leaf)' %}
+<g class="av-v2 av-body" stroke-linejoin="round">
+  <ellipse cx="60" cy="133" rx="25" ry="3" fill="#302f3c" opacity=".12"/>
+  <path d="M37 109 Q60 116 83 109 L78 130 Q60 139 42 130Z" fill="url(#avg-pot)" stroke="#885b48" stroke-width="1.4"/>
+  <path d="M43 116 Q47 119 49 130" stroke="#ffdfb3" stroke-width="3" opacity=".5" fill="none"/>
+  <ellipse cx="60" cy="108" rx="26" ry="8" fill="#e8ad87" stroke="#885b48" stroke-width="1.4"/>
+  <ellipse class="av-soil" cx="60" cy="107" rx="21" ry="5" fill="#67483b"/>
+  <ellipse class="av-soilwet" cx="60" cy="107" rx="21" ry="5" fill="#3c302b"/>
+  <path d="M44 106 Q53 102 69 105" fill="none" stroke="#a77f60" stroke-width="1.8" stroke-linecap="round"/>
   {% if s == 1 %}
-    <ellipse cx="60" cy="103" rx="7" ry="4.6" fill="#e8d3a8"/>
-    <ellipse cx="58" cy="102" rx="2.6" ry="1.6" fill="#f6ecd2"/>
-    <path d="M60 100 q3 -5 0 -8" stroke="url(#avg-stem)" stroke-width="1.8" fill="none" stroke-linecap="round"/>
-  {% endif %}
-  {% if s >= 2 %}
-    <path d="M60 106 C60 96 60 90 60 {{ 84 if s == 2 else (70 if s == 3 else 56) }}"
-          stroke="url(#avg-stem)" stroke-width="4.2" fill="none" stroke-linecap="round"/>
-    <path d="M60 98 C51 96 46 90 45 83 C54 83 59 90 60 96 Z" fill="url(#avg-leaf2)"/>
-    <path d="M60 98 C69 96 74 90 75 83 C66 83 61 90 60 96 Z" fill="url(#avg-leaf)"/>
-    <path d="M59 96 C54 93 50 89 48 85" stroke="#3a6e2e" stroke-width=".8" fill="none" opacity=".55"/>
-    <path d="M61 96 C66 93 70 89 72 85" stroke="#3a6e2e" stroke-width=".8" fill="none" opacity=".55"/>
-  {% endif %}
-  {% if s >= 3 %}
-    <path d="M60 84 C50 82 44 75 43 67 C53 67 59 75 60 82 Z" fill="url(#avg-leaf2)"/>
-    <path d="M60 84 C70 82 76 75 77 67 C67 67 61 75 60 82 Z" fill="url(#avg-leaf)"/>
-    <path d="M59 82 C53 78 48 73 46 69" stroke="#3a6e2e" stroke-width=".8" fill="none" opacity=".55"/>
-    <path d="M61 82 C67 78 72 73 74 69" stroke="#3a6e2e" stroke-width=".8" fill="none" opacity=".55"/>
-    <path d="M40 106 q2 -6 5 -7 M80 106 q-2 -6 -5 -7" stroke="#5d9b4c" stroke-width="1.6" fill="none" stroke-linecap="round"/>
-  {% endif %}
-  {% if s >= 4 %}
-    <path d="M60 70 C51 68 46 62 45 55 C54 55 59 62 60 68 Z" fill="url(#avg-leaf2)"/>
-    <path d="M60 70 C69 68 74 62 75 55 C66 55 61 62 60 68 Z" fill="url(#avg-leaf)"/>
-    {% if s == 4 %}
-    <circle cx="60" cy="52" r="5.4" fill="url(#avg-petal)"/>
-    <circle cx="48" cy="61" r="3.8" fill="url(#avg-petal)"/>
-    <circle cx="72" cy="61" r="3.8" fill="url(#avg-petal)"/>
-    <path d="M60 47 q2 2 0 5 M48 57 q1.6 1.6 0 4 M72 57 q1.6 1.6 0 4" stroke="#c2537e" stroke-width=".9" fill="none" opacity=".6"/>
-    {% endif %}
-  {% endif %}
-  {% if s >= 5 %}
-    {% for cx, cy, r in [(60, 48, 7.4), (46, 60, 5.6), (74, 60, 5.6)] %}
-    <g>
-      {% for a in [0, 60, 120, 180, 240, 300] %}
-      <ellipse cx="{{ cx }}" cy="{{ cy - r }}" rx="{{ '%.1f'|format(r * 0.55) }}" ry="{{ '%.1f'|format(r) }}"
-               fill="{{ 'url(#avg-petal2)' if loop.index is even else 'url(#avg-petal)' }}"
-               transform="rotate({{ a }} {{ cx }} {{ cy }})"/>
-      {% endfor %}
-      <circle cx="{{ cx }}" cy="{{ cy }}" r="{{ '%.1f'|format(r * 0.6) }}" fill="url(#avg-sun)"/>
-      <circle cx="{{ cx - 1 }}" cy="{{ cy - 1 }}" r="{{ '%.1f'|format(r * 0.22) }}" fill="#fff2c9"/>
+  <path d="M53 106 Q49 96 58 92 Q68 92 68 102 Q63 110 53 106" fill="#eac494" stroke="#8c6948" stroke-width="1.3"/>
+  <path d="M58 94 Q61 99 57 105" stroke="#ae855c" fill="none"/>
+  <path d="M61 96 Q69 87 65 80" stroke="#58894d" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <path d="M65 88 Q53 87 53 78 Q64 76 65 88" fill="{{ leaf }}" stroke="var(--av-leaf-outline,#41664c)" stroke-width="1"/>
+  {% else %}
+  {% set top = [0,0,78,62,51,45,37][s] %}
+  <g class="av-stem">
+    <path d="M60 106 Q55 87 60 {{ top }}" stroke="var(--av-leaf-outline,#41664c)" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <path d="M59 104 Q56 85 60 {{ top }}" stroke="#8cba68" stroke-width="2" fill="none"/>
+    {% for x,y,side in [(59,96,-1),(58,88,1),(59,77,-1),(60,69,1),(60,59,-1)] %}
+    {% if loop.index <= s %}
+    <g class="av-leaf" transform="translate({{ x }} {{ y }}) scale({{ side }} 1)">
+      <path d="M0 0 C-12 3-25-7-23-18 C-10-20 1-12 0 0Z" fill="{{ leaf }}" stroke="var(--av-leaf-outline,#41664c)" stroke-width="1.1"/>
+      <path d="M-20-15Q-11-6 0 0" stroke="#d8e6a1" stroke-width="1.2" fill="none"/>
     </g>
-    {% endfor %}
+    {% endif %}{% endfor %}
+    {% if s >= 4 %}
+    <path d="M60 81 Q79 77 82 61 {% if s >= 6 %} M59 70 Q36 66 35 49{% endif %}" fill="none" stroke="#58894d" stroke-width="3" stroke-linecap="round"/>
+    {% endif %}
+    {% if s == 3 %}
+    <g class="av-bloom"><path d="M60 66Q48 55 60 48Q73 55 60 66" fill="#e48b9e" stroke="#a95877" stroke-width="1.3"/><path d="M60 64Q54 57 60 51" fill="none" stroke="#ffd2c8" stroke-width="2"/></g>
+    {% elif s >= 4 %}
+    {% set flowers = [(60,49,12)] if s == 4 else ([(60,43,14),(82,59,9)] if s == 5 else [(60,35,15),(82,59,11),(35,48,10)]) %}
+    {% for x,y,r in flowers %}
+    <g class="av-bloom" transform="translate({{ x }} {{ y }})">
+      {% for angle in [0,72,144,216,288] %}
+      <path d="M0 1 C-{{ r }} -3-{{ r }} -{{ r+9 }} 0 -{{ r+5 }} C{{ r }} -{{ r+9 }} {{ r }} -3 0 1Z" transform="rotate({{ angle }})" fill="{{ '#f6b5b8' if loop.index is even else '#e88c9f' }}" stroke="var(--av-rose-outline,#b46883)" stroke-width=".8"/>
+      {% endfor %}
+      <circle r="{{ r*0.38 }}" fill="#f5cf75" stroke="#c79649" stroke-width="1"/>
+      <circle cx="-1.5" cy="-1.5" r="1.8" fill="#fff3c4"/>
+    </g>
+    {% endfor %}{% endif %}
+  </g>
   {% endif %}
-  {% if s >= 6 %}
-    <path d="M60 56 C46 54 38 46 37 38 C50 38 58 46 60 54 Z" fill="url(#avg-leaf2)"/>
-    <path d="M60 56 C74 54 82 46 83 38 C70 38 62 46 60 54 Z" fill="url(#avg-leaf)"/>
-  {% endif %}
+  <g class="av-anchor-pot" data-anchor="pot" transform="translate(60 119)"></g>
+  {{ _pot_bow(m, 40, 113) }}{{ _pot_regalia(s,60,115) }}
+  {{ costume_front("plant", s, costume, scaled=true) }}
+</g>
 {% endmacro %}
-
 
 {% macro _cactus(s, m=0, costume="") %}
   {% set h = 78 - (s - 1) * 8 %}
@@ -624,64 +622,58 @@
 
 {# ============================ animal family ============================ #}
 
-{% macro _cat(s, m=0, costume="") %}
-  {% set sc = 0.62 + (s - 1) * 0.076 %}
-  {{ _shadow(26) }}
-  <g transform="translate(60 96) scale({{ '%.3f'|format(sc) }}) translate(-60 -96)">
-    {# tail first so the body overlaps its root #}
-    {% if s >= 3 %}
-    <g class="av-tail">
-      <path d="M80 112 Q97 106 93 86" stroke="#e08c34" stroke-width="7" fill="none" stroke-linecap="round"/>
-      <path d="M91 94 l6 1 M92 88 l6 2" stroke="#b96f22" stroke-width="1.6" stroke-linecap="round"/>
-    </g>
+{# V2 cat: kitten head/body proportions mature; paws, muzzle, cheek tufts
+   and tail change structurally. The old growth transform remains the costume rig. #}
+{% macro _cat(s, m=0, costume="", scope="") %}
+{% set sc = 0.62 + (s - 1) * 0.076 %}
+{% set fur = 'url(#' ~ scope ~ '-fur)' if scope else 'url(#avg-catfur)' %}
+{% set cream = 'url(#' ~ scope ~ '-cream)' if scope else 'url(#avg-catfur2)' %}
+{% set head_y = 72 if s <= 2 else (69 if s < 5 else 67) %}
+{% set head_r = 24 if s <= 2 else 22 %}
+{{ _shadow(30) }}
+<g class="av-v2 av-body" transform="translate(60 96) scale({{ sc }}) translate(-60 -96)" stroke-linejoin="round">
+  <g class="av-tail">
+    {% if s < 3 %}
+    <path d="M76 116 Q92 118 89 105" fill="none" stroke="#b97745" stroke-width="10" stroke-linecap="round"/>
+    <path d="M76 114 Q89 117 87 106" fill="none" stroke="#e8a45b" stroke-width="7" stroke-linecap="round"/>
+    {% else %}
+    <path d="M78 115 C108 119 106 78 91 83 C82 87 90 96 97 91" fill="none" stroke="#b97745" stroke-width="10" stroke-linecap="round"/>
+    <path d="M78 113 C105 116 103 80 92 85" fill="none" stroke="#ecad66" stroke-width="6" stroke-linecap="round"/>
+    <path d="M99 98l5 2M98 105l5 2" stroke="#b97745" stroke-width="3"/>
     {% endif %}
-    <path d="M40 118 Q34 92 47 84 L73 84 Q86 92 80 118 Z" fill="url(#avg-catfur)"/>
-    <path d="M52 118 Q52 98 60 96 Q68 98 68 118 Z" fill="url(#avg-catfur2)"/>
-    <ellipse cx="52" cy="117" rx="6" ry="4" fill="url(#avg-catfur2)"/>
-    <ellipse cx="68" cy="117" rx="6" ry="4" fill="url(#avg-catfur2)"/>
-    <path d="M50 116 l0 3 M54 116 l0 3 M66 116 l0 3 M70 116 l0 3" stroke="#c9863a" stroke-width=".9"/>
-    <g class="av-head">
-      <g class="av-ear-l">
-        <path d="M46 64 l-7 -17 13 7 Z" fill="url(#avg-catfur)"/>
-        <path d="M46.5 62 l-4 -10 7.5 4 Z" fill="#f2b7c9"/>
-      </g>
-      <g class="av-ear-r">
-        <path d="M74 64 l7 -17 -13 7 Z" fill="url(#avg-catfur)"/>
-        <path d="M73.5 62 l4 -10 -7.5 4 Z" fill="#f2b7c9"/>
-      </g>
-      <circle cx="60" cy="76" r="18.5" fill="url(#avg-catfur)"/>
-      <path d="M47 66 Q52 61 58 63" stroke="#ffffff36" stroke-width="2.6" fill="none" stroke-linecap="round"/>
-      {% if s >= 4 %}
-      <path d="M53 61 l2.6 -4.6 2.6 4.2 M61 61 l2.6 -4.6 2.6 4.2" stroke="#c9863a" stroke-width="1.4" fill="none" stroke-linecap="round"/>
-      {% endif %}
-      {{ _eye(52.5, 74, 3.6, "#5d9b4f", "#f2a851") }}
-      {{ _eye(67.5, 74, 3.6, "#5d9b4f", "#f2a851") }}
-      <path d="M60 80.5 l-2.4 2.8 h4.8 Z" fill="#e0788e"/>
-      <path d="M60 83.3 q-3.4 3 -7 2.2 M60 83.3 q3.4 3 7 2.2" stroke="#3a2a1a" stroke-width="1" fill="none" stroke-linecap="round"/>
-      {% if s >= 2 %}
-      <line x1="45" y1="78" x2="32" y2="76" stroke="#d9b48a" stroke-width="1"/>
-      <line x1="45" y1="81" x2="33" y2="82" stroke="#d9b48a" stroke-width="1"/>
-      <line x1="75" y1="78" x2="88" y2="76" stroke="#d9b48a" stroke-width="1"/>
-      <line x1="75" y1="81" x2="87" y2="82" stroke="#d9b48a" stroke-width="1"/>
-      {% endif %}
-      <ellipse cx="50" cy="80" rx="2.6" ry="1.4" fill="#f2b8a0" opacity=".55"/>
-      <ellipse cx="70" cy="80" rx="2.6" ry="1.4" fill="#f2b8a0" opacity=".55"/>
-      {{ _accessory(m, 60, 58, 1, costume=costume) }}
-    </g>
-    {{ costume_front("cat", s, costume, scaled=true) }}
-    {{ _regalia(s, 60, 94) }}
-    {% if s >= 6 %}
-    <path d="M88 56 l2 4.4 4.8 .7 -3.5 3.4 .9 4.8 -4.2 -2.3 -4.2 2.3 .9 -4.8 -3.5 -3.4 4.8 -.7 Z" fill="url(#avg-sun)"/>
-    {% endif %}
-    {# hidden treat: a little fish (feeding arc animates the group) #}
-    <g class="av-food">
-      <ellipse cx="94" cy="34" rx="7" ry="4" fill="url(#avg-fish)"/>
-      <path d="M100 34 l6 -4 -1 4 1 4 Z" fill="#e5731f"/>
-      <circle cx="91" cy="33" r=".9" fill="#221a14"/>
-    </g>
   </g>
+  <path d="M{{ 43 if s<3 else 41 }} 118 Q34 {{ 99 if s<3 else 91 }} 48 85 Q60 79 73 86 Q88 96 80 120 Q60 130 43 118Z" fill="{{ fur }}" stroke="var(--av-outline,#815b43)" stroke-width="1.5"/>
+  <path d="M48 99 Q60 88 73 100 L73 119 Q60 126 48 119Z" fill="{{ cream }}"/>
+  {% if s >= 3 %}<path d="M49 101L48 117M71 101L72 117" stroke="#b97745" stroke-width="1.5" stroke-linecap="round"/>{% endif %}
+  {% if s>=4 %}<path d="M42 105Q34 111 40 119M78 105Q86 111 80 119" fill="none" stroke="#b97745" stroke-width="2"/>{% endif %}
+  {% if s>=5 %}<path d="M49 97L52 105 56 102 60 109 64 102 68 105 71 97" fill="{{ cream }}"/>{% endif %}
+  {% if s>=6 %}<path d="M38 44L35 38 43 43M82 44L85 38 77 43" fill="{{ fur }}" stroke="var(--av-outline,#815b43)" stroke-width="1"/>{% endif %}
+  <g class="av-paws" fill="{{ cream }}" stroke="var(--av-outline,#815b43)" stroke-width="1.2">
+    <ellipse cx="48" cy="119" rx="9" ry="6"/><ellipse cx="72" cy="119" rx="9" ry="6"/>
+    <path d="M45 119v3m5-3v3m19-3v3m5-3v3" stroke="#c89c79"/>
+  </g>
+  <g class="av-head">
+    <g class="av-ear-l"><path d="M39 65 Q32 39 42 41 L55 55Z" fill="{{ fur }}" stroke="var(--av-outline,#815b43)" stroke-width="1.5"/><path d="M41 58L39 46 49 55Z" fill="#d98c92"/></g>
+    <g class="av-ear-r"><path d="M81 65 Q88 39 78 41 L65 55Z" fill="{{ fur }}" stroke="var(--av-outline,#815b43)" stroke-width="1.5"/><path d="M79 58L81 46 71 55Z" fill="#d98c92"/></g>
+    <path d="M37 {{ head_y-8 }} Q39 {{ head_y-25 }} 60 {{ head_y-24 }} Q81 {{ head_y-25 }} 83 {{ head_y-8 }} {% if s>=4 %}L88 76 82 78 85 82{% endif %} Q81 96 60 97 Q39 96 35 82 {% if s>=4 %}L38 78 32 76{% endif %}Z" fill="{{ fur }}" stroke="var(--av-outline,#815b43)" stroke-width="1.5"/>
+    <path d="M43 61Q48 54 56 55" stroke="#ffdc9c" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M53 51L56 58M60 49v8M67 51L64 58" stroke="#bb7848" stroke-width="3" stroke-linecap="round"/>
+    <ellipse cx="52" cy="85" rx="10" ry="7" fill="{{ cream }}"/><ellipse cx="68" cy="85" rx="10" ry="7" fill="{{ cream }}"/>
+    {{ _eye(49,73,5 if s<3 else 4.5,"#658b72","#efb26e") }}
+    {{ _eye(71,73,5 if s<3 else 4.5,"#658b72","#efb26e") }}
+    <path d="M56 81 Q60 79 64 81 L60 85Z" fill="#bd7280"/>
+    <path d="M60 85v3q-5 5-9 0m9 0q5 5 9 0" stroke="#614b43" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+    {% if s >= 2 %}<path d="M42 83L28 80M42 87L29 89M78 83L92 80M78 87L91 89" stroke="#7e624b" stroke-width="1.2" stroke-linecap="round"/>{% endif %}
+    {% if s >= 5 %}<path d="M39 73l6 2m30 0 6-2" stroke="#b97745" stroke-width="2"/>{% endif %}
+    <g class="av-anchor-head" data-anchor="head" transform="translate(60 49)"></g>
+    {{ _accessory(m,60,49,1,costume=costume) }}
+  </g>
+  {{ costume_front("cat",s,costume,scaled=true) }}{{ _regalia(s,60,98) }}
+  <g class="av-anchor-neck" data-anchor="neck" transform="translate(60 98)"></g>
+  {% if s>=6 %}<path d="M91 47l2 4 4 1-3 3 1 4-4-2-4 2 1-4-3-3 4-1Z" fill="#e7bf61"/>{% endif %}
+  <g class="av-food"><ellipse cx="94" cy="34" rx="7" ry="4" fill="url(#avg-fish)"/><path d="M100 34l6-4-1 4 1 4Z" fill="#e5731f"/><circle cx="91" cy="33" r=".9" fill="#221a14"/></g>
+</g>
 {% endmacro %}
-
 
 {% macro _bird(s, m=0, costume="") %}
   {% set sc = 0.6 + (s - 1) * 0.08 %}

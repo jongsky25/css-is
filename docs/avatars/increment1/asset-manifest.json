@@ -1,0 +1,22 @@
+{
+  "assets": [
+    {
+      "species": ["cat", "plant"],
+      "source": "Original authored inline SVG in templates/_avatars_art.html",
+      "upstream_url": null,
+      "upstream_revision": null,
+      "license": "Existing repository terms; no third-party assets or license added",
+      "modifications": "Six structural growth stages, outlined shaded anatomy, scoped local gradients and accessory anchors"
+    },
+    {
+      "items": ["bandana prototype", "pot-wrap prototype"],
+      "source": "Original SVG paths in scripts/avatar_baseline/slice.py",
+      "upstream_url": null,
+      "upstream_revision": null,
+      "license": "Existing repository terms; no third-party assets or license added",
+      "modifications": "Development-gallery-only anchor and layering proof; no persistence"
+    }
+  ],
+  "external_asset_requests": 0,
+  "added_runtime_javascript_dependencies": 0
+}

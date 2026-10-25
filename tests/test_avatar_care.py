@@ -455,3 +455,27 @@ def test_the_space_around_the_companion_taps_it(app_mod):
     assert 'closest("[data-pet-area]")' in js
     tel = open(os.path.join(root, "static", "js", "telemetry.js")).read()
     assert "[data-pet-area]" in tel
+
+
+def test_slice_svg_ids_are_local_and_behavior_anchors_survive(app_mod):
+    import re
+    import xml.etree.ElementTree as ET
+    module = app_mod.templates.env.get_template('_avatars.html').module
+    seen = set()
+    for kind in ['cat', 'plant']:
+        for stage in range(1, 7):
+            for copy in range(2):
+                svg = ET.fromstring(str(module.avatar_svg(kind, stage, 0, 'default')))
+                local = {node.attrib['id'] for node in svg.iter() if 'id' in node.attrib}
+                assert local and not (seen & local)
+                seen.update(local)
+                for node in svg.iter():
+                    for value in node.attrib.values():
+                        for ref in re.findall(r'url\(#(av-[^)]+)\)', value):
+                            assert ref in local
+                classes = {c for node in svg.iter() for c in node.attrib.get('class', '').split()}
+                assert {'avmove', 'avstage', 'av-body'} <= classes
+                assert ({'av-head', 'av-tail', 'av-ear-l', 'av-ear-r', 'av-eye', 'av-lid', 'av-food'}
+                        if kind == 'cat' else {'av-soil', 'av-soilwet'}) <= classes
+                anchors = [node for node in svg.iter() if 'data-anchor' in node.attrib]
+                assert anchors and all(len(node) == 0 for node in anchors)

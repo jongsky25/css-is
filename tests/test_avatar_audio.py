@@ -1,6 +1,7 @@
 """Companion audio: real decoding, gesture playback and cancellation in Chromium."""
 import hashlib
 import json
+from uuid import uuid4
 from pathlib import Path
 from urllib.parse import urlsplit
 
@@ -21,7 +22,7 @@ def audio_page(browser):
     env = Environment(loader=FileSystemLoader(ROOT / 'templates'), autoescape=True)
     env.globals.update(avatar_family=st.avatar_family, avatar_care_verb=st.avatar_care_verb,
                        avatar_is_swimmer=st.avatar_is_swimmer, avatar_month=lambda: 0,
-                       avatar_outfit=lambda: 'default')
+                       avatar_outfit=lambda: 'default', avatar_uid=lambda: 'av-' + uuid4().hex)
     context = browser.new_context(viewport={'width': 390, 'height': 850},
                                   reduced_motion='reduce', service_workers='block')
     # Observe actual AudioBufferSourceNodes without replacing the audio engine.
