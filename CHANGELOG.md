@@ -1,9 +1,15 @@
-## 8.58 — October 25, 2026
+## 8.59 — October 25, 2026
 
 - Add local RapidFuzz 3.14.6 typo suggestions for permission-filtered page navigation, help guides and the existing active staff directory. Keep exact record search first and unchanged; label at most five close destinations, retain CSS scope, private basic-status rules and literal numbers/identifiers.
 - Bound approximate queries/candidates/text and refuse oversized approximate staff catalogs rather than rank a partial list. No stored index, external inference, new service, business writes or credential setup is introduced; document/attachment/private-record fuzzy search remains outside this pilot.
 - Keep exact local navigation available during search-service failure, remove stale empty placeholders and reject delayed responses after query clearing/reuse. Preserve native anchors, keyboard navigation, assistant cards, no-JavaScript page-search fallback and sanitized telemetry.
 - Prevent delayed automatic tours from taking focus from active search, preserve explicit replay, and version the changed browser assets. Pin/hash/audit the MIT dependency without upgrading existing packages; exercise native mobile, permissions and delayed-network flows.
+
+## 8.58 — October 25, 2026
+
+- Add default-off exact Telegram group/topic registration from an observed command, signed-in administrator ownership/purpose/audience consent and fresh Bot API administrator verification for the binder and bot. No delegated owner assignment or business group reads.
+- Route only a fixed neutral group-status reply for currently linked staff, with exact registration/topic/generation checks and fresh provider membership checks. Bound provider work, preserve topic IDs and reject private or business projections.
+- Fence queued and in-flight group work on removal, migration, topic changes, disconnect, account changes and restore; require explicit fresh verification before resuming. Record bot provenance on new private connections; older links need fresh consent before group use. Update the Telegram ledger and pilot runbook.
 
 ## 8.57 — October 25, 2026
 

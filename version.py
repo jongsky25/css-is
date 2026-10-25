@@ -18,18 +18,28 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "8.58"
+APP_VERSION = "8.59"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
-        "version": "8.58",
+        "version": "8.59",
         "date": "October 25, 2026",
         "summary": "Find pages, guides and colleagues even with small spelling mistakes.",
         "changes": [
             "Search keeps exact results first and labels spelling suggestions as Close match.",
             "Search suggestions follow your existing page, guide and colleague access rules.",
             "Automatic page tours now wait when you are using search, keeping keyboard focus in your search box."
+        ]
+    },
+    {
+        "version": "8.58",
+        "date": "October 25, 2026",
+        "summary": "Prepare optional registration of Telegram groups and topics.",
+        "changes": [
+            "A linked administrator can register an exact group or topic after confirming its owner, purpose and audience rules.",
+            "The optional pilot supports only a neutral connection-status reply; calendar and room details remain unavailable.",
+            "Removal, migration, topic changes and revoked access pause group replies until they are verified again."
         ]
     },
     {

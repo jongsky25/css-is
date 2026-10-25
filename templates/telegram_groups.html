@@ -1,0 +1,39 @@
+{% extends "dash_layout.html" %}
+{% block title %}Telegram groups — Office Connect{% endblock %}
+{% block content %}
+<div style="max-width:760px;margin:auto;overflow-wrap:anywhere">
+<h1>Telegram groups and topics</h1>
+<p><a href="/account/telegram">Back to private Telegram connection</a></p>
+{% if error %}<p role="alert">{{ error }}</p>{% endif %}
+<p>Only a neutral connection-status reply is available. Calendar and room commands remain unavailable. Joining a group never grants Office Connect access.</p>
+{% if not ready %}<p role="status">Group registration and replies are paused. Existing registrations can still be paused or revoked.</p>{% endif %}
+{% if is_admin and ready %}
+<h2>Register an exact destination</h2>
+<p>First link your own private account. As a Telegram administrator, send <code>/register</code> in the intended group or topic, then reload this page within ten minutes. Make the bot a Telegram administrator too. You will be the consenting Office Connect owner.</p>
+{% for item in requests %}
+<form method="post" action="/account/telegram/groups/register" style="border:1px solid var(--line);padding:1rem;margin:1rem 0">
+<input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="request_id" value="{{ item.id }}">
+<p>Group {{ item.chat_id }} · {{ 'Topic ' ~ item.topic_id if item.topic_id else 'General conversation only' }}</p>
+<label for="purpose-{{ item.id }}">Purpose</label><input id="purpose-{{ item.id }}" name="purpose" maxlength="200" required style="box-sizing:border-box;width:100%;font:inherit;padding:.6rem">
+<p>Future shared calendar fields are limited to approved title, date/time, timezone, venue, status and a signed-in source link. Room availability excludes requester names, titles and decision reasons. Personal results, meeting links and notes stay private. These business replies are not enabled yet.</p>
+<p><label><input type="checkbox" name="consent" value="yes" required> I own this connection and approve these shared-audience rules for all current and future members.</label></p>
+<button type="submit">Verify administrators and register</button>
+</form>
+{% else %}<p>No recent registration requests for your linked account.</p>{% endfor %}
+{% endif %}
+<h2>Existing registrations</h2>
+{% for group in groups %}
+<section style="border:1px solid var(--line);padding:1rem;margin:1rem 0">
+<h3>Group {{ group.chat_id }} · {{ 'Topic ' ~ group.topic_id if group.topic_id else 'General conversation only' }}</h3>
+<p>Status: <strong>{{ group.state }}</strong> · Purpose: {{ group.purpose }}</p>
+{% if group.reason %}<p>Last pause/revocation: {{ group.reason }}</p>{% endif %}
+<form method="post" action="/account/telegram/groups/manage">
+<input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="group_id" value="{{ group.id }}"><input type="hidden" name="generation" value="{{ group.generation }}">
+<button name="action" value="pause" type="submit">Pause registration</button>
+<button name="action" value="revoke" type="submit">Revoke registration</button>
+</form>
+</section>
+{% else %}<p>No registrations available to your account.</p>{% endfor %}
+<p>Pause and revoke remain available when the group pilot is off. Removal, migration, topic changes or failed administrator checks pause routing. Resuming requires a fresh command, verification and consent.</p>
+</div>
+{% endblock %}
