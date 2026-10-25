@@ -14,7 +14,7 @@
 </form>
 
 {% if q %}
-<p class="search-meta">{{ results|length }} result{{ '' if results|length == 1 else 's' }} for “{{ q }}”.</p>
+<p class="search-meta">{% if close_results and not results %}No exact page matches for “{{ q }}”.{% else %}{{ results|length }} result{{ '' if results|length == 1 else 's' }} for “{{ q }}”.{% endif %}</p>
 {% endif %}
 
 <ul class="search-list">
@@ -27,8 +27,15 @@
     </a>
   </li>
   {% else %}
-  <li class="search-none">No matching page. Try another word.</li>
+  <li class="search-none">{% if close_results %}Choose a close match below.{% else %}No matching page. Try another word.{% endif %}</li>
   {% endfor %}
 </ul>
-{{ search_signal(q|trim, results|length) }}
+{% if close_results %}
+<h2>Close matches</h2>
+<p class="search-meta">These suggestions allow small spelling differences. Choose the destination you intended.</p>
+<ul class="search-list">
+{% for it in close_results %}<li class="search-close-match"><a href="{{ it.url }}"><span class="sl-title">{{ it.title }}</span><span class="sl-hint">{{ it.hint }}</span><span class="sl-tag">Close match · {{ it.section }}</span></a></li>{% endfor %}
+</ul>
+{% endif %}
+{{ search_signal(q|trim, (results|length)+(close_results|length)) }}
 {% endblock %}
