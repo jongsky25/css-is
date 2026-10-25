@@ -85,6 +85,8 @@ def authority(conn,context,action):
             raise Unavailable('Group context unavailable.')
     if not links.authorized(conn,found[0]['id'],'calendar.read' if action=='calendar.create' else 'rooms.read'):
         raise Unavailable('Current read consent is required for this action.')
+    if action=='rooms.request' and not links.authorized(conn,found[0]['id'],'calendar.read'):
+        raise Unavailable('Calendar read consent is required for a linked room request.')
     return found[0],adapter,bot
 
 
