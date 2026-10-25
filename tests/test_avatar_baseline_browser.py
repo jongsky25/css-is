@@ -41,6 +41,14 @@ def baseline_server(app_mod):
     conn = st.connect(app_mod.DB)
     user = st.get_admin_user(conn, 'admin@test.local')
     st.set_user_avatar(conn, user['id'], os.getenv('CSS_AVATAR_KIND', 'cat'), 'Baseline Cat')
+    if os.getenv('CSS_AVATAR_MATURE') == '1':
+        from datetime import date, timedelta
+        for week in range(40):
+            day = (date(2026, 7, 13) - timedelta(weeks=week)).isoformat()
+            conn.execute("INSERT INTO wellness_claim(user_id,week_start,break_date,start_time,hours,activity,status) "
+                         "VALUES(?,?,?,'10:00',1,'exercise','completed')", (user['id'], day, day))
+        conn.commit()
+        assert st.wellness_stats(conn, user['id'])['stage'] == 6
     conn.close()
     token = app_mod._issue_session(dict(user))
     sock = socket.socket(); sock.bind(('127.0.0.1', 0))
@@ -341,7 +349,7 @@ def test_slice_long_task_attribution(baseline_server, app_mod, tmp_path):
                        'avatar_source_present':any(c['file'].startswith(('avatars.js','avatar-audio.js')) for c in calls),
                        'paint_events':sorted(set(e['name'] for e in nested if e['name'] in ['Paint','Layout','UpdateLayoutTree','PrePaint','Layerize']))})
                 results.append({'version':version,'cpu_rate':4,'seconds':30,'chromium':browser.version,
-                                'kind':os.getenv('CSS_AVATAR_KIND', 'cat'),'before_commit':os.getenv('CSS_AVATAR_BEFORE', '1c964dc'),
+                                'kind':os.getenv('CSS_AVATAR_KIND', 'cat'),'mature_fixture':os.getenv('CSS_AVATAR_MATURE')=='1','before_commit':os.getenv('CSS_AVATAR_BEFORE', '1c964dc'),
                                 'scenario':observed,'trace_long_tasks':attributed,'trace_event_count':len(events)})
                 context.close();browser.close()
         (output/'long-task-attribution.json').write_text(json.dumps(results,indent=2))
@@ -349,3 +357,37 @@ def test_slice_long_task_attribution(baseline_server, app_mod, tmp_path):
         assert max(after_calls,default=0)<=50, 'Avatar callback exceeded 50 ms in the paired trace'
     finally:
         env.loader=loader;env.cache.clear()
+
+
+def test_plant_care_live_surfaces(baseline_server, app_mod):
+    """Real authenticated routes, care response/persistence and visible wet soil."""
+    import storage as st
+    from playwright.sync_api import sync_playwright
+    origin,cookie,uid=baseline_server
+    out=Path(os.getenv('CSS_AVATAR_OUT','docs/avatars/increment2a/application')).parent
+    rows=[]
+    with sync_playwright() as pw:
+        browser=pw.chromium.launch(executable_path=shutil.which('chromium'),args=['--no-sandbox'])
+        context=browser.new_context(viewport={'width':390,'height':844},has_touch=True)
+        context.add_cookies([cookie]);page=context.new_page();errors=[]
+        page.on('pageerror',lambda e:errors.append(str(e)))
+        for kind in ['cactus','bonsai','sunflower']:
+            conn=st.connect(app_mod.DB);st.set_user_avatar(conn,uid,kind,'Synthetic Plant');conn.close()
+            assert page.goto(origin+'/?view=me').status==200
+            svg=page.locator(f'.avwrap[data-kind="{kind}"] svg[data-avatar-kind]').first
+            assert svg.get_attribute('data-avatar-stage')=='6'
+            assert svg.evaluate('e=>getComputedStyle(e).filter')=='none'
+            assert page.goto(origin+'/wellness').status==200
+            with page.expect_response(lambda r:r.url.endswith('/avatar/care')) as response:
+                page.locator('.av-care-btn').click(force=True)
+            assert response.value.status==200 and response.value.json()['ok']
+            page.wait_for_timeout(1300)
+            soil=page.locator('.avwrap .av-soilwet').first
+            assert soil.evaluate('e=>Number(getComputedStyle(e).opacity)')>.5
+            page.screenshot(path=str(out/f'care-mobile-{kind}.png'),full_page=True)
+            conn=st.connect(app_mod.DB);profile=st.get_user_profile(conn,uid);conn.close()
+            assert profile['avatar_kind']==kind and profile['avatar_last_care_at']
+            rows.append({'kind':kind,'stage':6,'care_response':response.value.json(),'care_persisted':True,'wet_soil_visible':True})
+        assert not errors
+        context.close();browser.close()
+    (out/'live-plant-care.json').write_text(json.dumps({'results':rows,'javascript_errors':errors},indent=2))
