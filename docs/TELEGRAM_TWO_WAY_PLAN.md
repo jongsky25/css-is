@@ -1,6 +1,6 @@
 # Office Connect ↔ Telegram delivery plan
 
-Status: T0–T2.3 merged; T3.1 in progress; two-way defaults remain off; production activation unverified.
+Status: T0–T2.3 merged; T3.1 in review; two-way defaults remain off; production activation unverified.
 Last updated: 2026-10-25.
 Repository: jongsky25/css-is.
 Planning baseline inspected: abf3141 (merge of PR #458).
@@ -126,7 +126,7 @@ Google/Outlook two-way calendar synchronization, external free/busy, automatic v
 
 ## Progress ledger
 
-T0 merged in PR #465 at `4cd01a0bfd17ccf57dba12b05a24c72bfd098f29`. T1.1 merged in PR #466 at `bef000127846aebb9fc1176c190664797d262eb4`. T1.2 merged in PR #467 at `5490f454d6c9e9d43e7e9599be8174ec454cba55`. T1.3 merged in PR #468 at `bb9bc86407f641a0244617113d0f1fa271b12906`. T1.4 merged in PR #469 at `0f10b242032479a588e98209b17333dba28f0015`. T2.1 merged in PR #470 at `e1394120781c7d4838cee8c1fa9aa7d9c497437b`. T2.2 merged at `540705db32dfadadb8be8b38122dccfe71deb79d`. T2.3 merged in PR #472 at `43e6c660cf46242417dbc3ab49bb588ad9d2b262`; T3.1 is in progress and later increments remain planned. All two-way capabilities remain default-off; no live verification is recorded.
+T0 merged in PR #465 at `4cd01a0bfd17ccf57dba12b05a24c72bfd098f29`. T1.1 merged in PR #466 at `bef000127846aebb9fc1176c190664797d262eb4`. T1.2 merged in PR #467 at `5490f454d6c9e9d43e7e9599be8174ec454cba55`. T1.3 merged in PR #468 at `bb9bc86407f641a0244617113d0f1fa271b12906`. T1.4 merged in PR #469 at `0f10b242032479a588e98209b17333dba28f0015`. T2.1 merged in PR #470 at `e1394120781c7d4838cee8c1fa9aa7d9c497437b`. T2.2 merged at `540705db32dfadadb8be8b38122dccfe71deb79d`. T2.3 merged in PR #472 at `43e6c660cf46242417dbc3ab49bb588ad9d2b262`; T3.1 is in review in PR #474 and later increments remain planned. All two-way capabilities remain default-off; no live verification is recorded.
 
 | Increment | Status | Owner / date | PR / commit | Evidence | Activation / next action |
 | --- | --- | --- | --- | --- | --- |
@@ -139,7 +139,7 @@ T0 merged in PR #465 at `4cd01a0bfd17ccf57dba12b05a24c72bfd098f29`. T1.1 merged 
 | T2.1 | Merged | Codex / 2026-10-25 | [PR #470](https://github.com/jongsky25/css-is/pull/470), `feat/telegram-t2-1-calendar` | Current private calendar visibility, bounded windows, signed paging and source links; checks below | Merged at `e1394120781c7d4838cee8c1fa9aa7d9c497437b`; live deployment unverified |
 | T2.2 | Merged | Codex / 2026-10-25 | [PR #471](https://github.com/jongsky25/css-is/pull/471), `feat/telegram-t2-2-rooms` | Private slots and own request status, source rules and revocation checks; evidence below | Merged at `540705db32dfadadb8be8b38122dccfe71deb79d`; read only; default off; next T2.3 |
 | T2.3 | Merged | Codex / 2026-10-25 | [PR #472](https://github.com/jongsky25/css-is/pull/472), `feat/telegram-t2-3-group-reads` | Explicit per-entry version consent, safe slots and mobile sharing checks; evidence below | Merged at `43e6c660cf46242417dbc3ab49bb588ad9d2b262`, release 8.63; default off; next T3.1 |
-| T3.1 | In progress | Codex / 2026-10-25 | `feat/telegram-t3-1-confirmation` | Dormant contract and shared calendar service; checks pending | Writes unavailable; defaults off |
+| T3.1 | In review | Codex / 2026-10-25 | [PR #474](https://github.com/jongsky25/css-is/pull/474), `feat/telegram-t3-1-confirmation` | Dormant confirmation/receipt contract and shared calendar service; 651 final tests passed | Release 8.64 candidate; writes unavailable; next T3.2 |
 | T3.2–T7 | Planned | Unassigned | — | Not implemented | Follow dependencies |
 
 ### T0 handoff — 2026-10-25
@@ -287,7 +287,7 @@ T0 merged in PR #465 at `4cd01a0bfd17ccf57dba12b05a24c72bfd098f29`. T1.1 merged 
 
 ### T3.1 implementation and operator handoff — 2026-10-25
 
-- Owner/branch: Codex, `feat/telegram-t3-1-confirmation`, based on T2.3 merge `43e6c66`. Implementation complete, awaiting PR creation; release 8.64 candidate. Before T2.3 merge, reconciled concurrent readiness release 8.62, advanced group lookup to 8.63 and passed affected group/deployment/release tests; all original PR #472 CI checks had passed.
+- Owner/branch: Codex, `feat/telegram-t3-1-confirmation`, based on T2.3 merge `43e6c66`. [PR #474](https://github.com/jongsky25/css-is/pull/474) opened 2026-10-25, implementation commit `fc5f32a`; release 8.64 candidate, in review, not merged or pilot verified. Before T2.3 merge, reconciled concurrent readiness release 8.62, advanced group lookup to 8.63 and passed affected group/deployment/release tests; all original PR #472 CI checks had passed.
 - Delivered: [action contract](TELEGRAM_ACTION_CONTRACT.md), dormant `telegram_actions.py` engine, additive `telegram_preview` table and nullable operation `context_hash` migration, pending-preview invalidation triggers, bounded cleanup, and shared `calendar_actions.py`. Runtime closure includes both new modules. No bot creation/request adapter, command, callback, action preview screen or write-consent issuance exists; the production adapter registry remains empty even when switches are enabled. Existing linking `/confirm` continues to confirm account linking only.
 - Preview identity: a new actor/client key creates one operation and one five-minute preview atomically. The preview binds action, normalized fields, exact structured summary, expected revisions, actor/connection generation, bot provenance and exact private or registered group/topic context. Tokens carry 256 random bits (43 URL-safe characters) and are stored only as hashes; payload/summary/expected JSON are each bounded to 16 KiB. An identical pending key never generates a second token; a different input/context is rejected. Terminal same-key replay returns the original receipt after current-access checks. Expired/cancelled keys require a new preview/key.
 - Confirmation/receipt: acquire the writer lock, recheck current active account, bot, delegation and underlying read consent/switch, action switch, routing/generations, expiry, input hash and adapter domain revisions. Group membership proof occurs outside that transaction and is followed by local rechecks. A trusted adapter applies a noncommitting/no-network mutation; receipt update and single-use preview consumption share its transaction. Exceptions roll back business records, audit/outbox and receipt together. Replayed consumed tokens and operation-ID recovery return the original outcome after fresh domain access checks. No delivery is queued by this engine in T3.1; outbound/action wiring belongs to later increments.
