@@ -131,12 +131,12 @@ All T1–T7 increments are planned and inactive. No Telegram two-way feature has
 | Increment | Status | Owner / date | PR / commit | Evidence | Activation / next action |
 | --- | --- | --- | --- | --- | --- |
 | Planning document | Published | Codex / 2026-10-25 | See GitHub file history | Source inspection at abf3141; documentation-only change | Plan available for cross-chat handoff |
-| T0 | In review | Codex / 2026-10-25 | `docs/telegram-t0-contract` (PR link added after opening) | [Source-backed design contract](TELEGRAM_T0_CONTRACT.md); main reconciled at f9e868e; checks below | No runtime change or activation; review contract, then T1.1 |
+| T0 | In review | Codex / 2026-10-25 | [PR #465](https://github.com/jongsky25/css-is/pull/465), `docs/telegram-t0-contract` | [Source-backed design contract](TELEGRAM_T0_CONTRACT.md); main reconciled at f9e868e; checks below | No runtime change or activation; review contract, then T1.1 |
 | T1.1–T7 | Planned | Unassigned | — | Not implemented | Follow dependencies; expand each started row separately |
 
 ### T0 handoff — 2026-10-25
 
-- Owner: Codex. Started and completed design on `docs/telegram-t0-contract` from main `f9e868e`; no merged T0 implementation was present at reconciliation.
+- Owner: Codex. Draft [PR #465](https://github.com/jongsky25/css-is/pull/465), initial design commit `9148395`; opened 2026-10-25, not merged. Started and completed design on `docs/telegram-t0-contract` from main `f9e868e`; no merged T0 implementation was present at reconciliation.
 - Delivered: [T0 contract](TELEGRAM_T0_CONTRACT.md), including exact service/field/role matrix, webhook choice, proposed schemas, grants, group disclosure policy, retention, switch names, restore/retry state contract and required service extractions. Documentation only.
 - Checks: `git diff --check`, `python scripts/lock_dependencies.py --check`, `python scripts/check_vendor_dependencies.py`, `python scripts/ai_evaluation.py contract --base origin/main` passed. Relative Markdown links and six required contract sections verified with a local Python check.
 - Release limitation: `python scripts/check_release.py release --base origin/main` fails because application version remains 8.53. CI applies this gate unconditionally, including documentation PRs. This documentation-only increment does not change release metadata; keep PR draft until the release policy is resolved. No runtime tests run because runtime files are unchanged.
