@@ -14,4 +14,16 @@ All browser labels are plain text. Filing destinations are locally constructed a
 
 Tests cover owner/admin separation, switch/session revocation, field minimization, all-page sort/filter/paging, Unicode/literal/markup search, invalid selections, unchanged filing snapshots, and authenticated Chromium journeys in light/dark/contrast at phone/desktop widths. Browser journeys cover actual remote paging, native filter submission, record links, safe long labels, blocked scripts, no-JavaScript fallback, failed requests and retry. All fixtures are synthetic; these checks do not establish real claim approval or provider delivery.
 
-Personal saved views, CSV downloads and additional review-queue tables remain separate possible increments.
+## Current-selection CSV export
+
+Choose **Export current selection (CSV)** in either standard or interactive mode. The native download also works without JavaScript. It contains all matching pages in the currently applied sort order and the same six table columns. Current page and column widths do not restrict the export. Edited controls take effect only after **Apply selection**; browser paging does not change the selection or order.
+
+Each download reads a fresh owner-filtered snapshot under the same current registered-session/account and Travel feature checks. Changes since the page was loaded are reflected in the download. Administrators still receive only their own filings. Search is literal Unicode casefold matching; date/status/type/order validation is shared with the table. Answers, financial amounts, document links, flag details and other owners remain excluded. Dates remain recorded snapshots. There is no deadline refresh, business write, schema/dependency change or notification.
+
+The CSV uses UTF-8 with a BOM for spreadsheet compatibility, conventional quoting for commas/quotes/newlines and English column/status/type labels matching the table. Potential spreadsheet formula prefixes (=, +, -, @ after leading whitespace, or initial tab/CR/LF) receive an apostrophe. Empty results produce a header-only CSV. The fixed filename is `travel-claims.csv`; `X-Export-Rows` reports the record count. Success and local error responses use no-store.
+
+Selections above **10,000 matching filings** return an accessible HTML error with a return-to-selection link and no attachment or partial file. The bound applies after ownership and filters. Narrow the selection and retry. Exports are built from a single bounded SQLite statement, sharing the same predicates and deterministic ID tie-breaker as table pagination. No hidden or arbitrary query-selected columns are exported.
+
+Tests parse real CSV rows, verify complete multi-page order/filters, fresh owner changes, admin isolation, session revocation, switch-off, empty results, literal Unicode search, formula/linebreak/quote handling, no writes and refusal rather than truncation. Actual authenticated Chromium downloads cover phone/desktop light/dark/contrast, native/interactive page-two selections, unapplied controls, no JavaScript and usable refusal recovery.
+
+Personal saved views and additional review-queue tables remain separate possible increments.

@@ -1,3 +1,9 @@
+## 8.70 — October 25, 2026
+
+- Add native current-selection CSV downloads to the personal Travel claims table, retaining applied filters, deterministic all-page order and the six table columns.
+- Recheck current registered-session/account, Travel switch and owner scope on every download; quote Unicode/commas/newlines and neutralize spreadsheet formula prefixes.
+- Refuse exports above 10,000 matching filings before producing an attachment, with an accessible return link. Preserve recorded snapshots, no-store, existing native/interactive tables and all business workflows.
+
 ## 8.69 — October 25, 2026
 
 - Add optional guided room requests linked to an existing permitted meeting, with separate calendar/room read and rooms.request consent, exact private previews, normal pending approval and durable confirmation/recovery.

@@ -1,4 +1,6 @@
 """Paged owner-only claim snapshots; no deadline refresh or business mutations."""
+import csv
+import io
 from datetime import date
 from math import ceil
 from urllib.parse import urlencode, quote
@@ -8,6 +10,7 @@ import travel
 COLUMNS = {'ref_code': 'Reference', 'kind': 'Claim type', 'act_title': 'Activity',
            'act_start': 'Recorded start', 'act_end': 'Recorded end', 'status': 'Filing status'}
 SIZE = 30
+MAX_EXPORT_ROWS = 10000
 
 
 def parse(raw):
@@ -46,7 +49,7 @@ def url(selection, **overrides):
     return '/travel/table?' + urlencode({k: v for k, v in params.items() if v != ''})
 
 
-def snapshot(conn, user_id, selection):
+def _query(conn, user_id, selection):
     where, args = ['user_id=?'], [user_id]
     for key in ('kind', 'status'):
         if selection[key]:
@@ -58,7 +61,22 @@ def snapshot(conn, user_id, selection):
     for key, operator in [('from', '>='), ('to', '<=')]:
         if selection[key]:
             where.append(f'act_end {operator} ?'); args.append(selection[key])
-    predicate = ' AND '.join(where)
+    return ' AND '.join(where), args
+
+
+def _rows(records):
+    data = []
+    for record in records:
+        row = dict(zip(COLUMNS, record))
+        row['kind'] = travel.KIND_LABELS[row['kind']]
+        row['status'] = travel.STATUS_LABELS[row['status']]
+        row['href'] = '/travel/f/' + quote(row['ref_code'], safe='')
+        data.append(row)
+    return data
+
+
+def snapshot(conn, user_id, selection):
+    predicate, args = _query(conn, user_id, selection)
     # One snapshot for count and rows, even if another tab changes a filing meanwhile.
     conn.execute('BEGIN')
     try:
@@ -68,14 +86,30 @@ def snapshot(conn, user_id, selection):
         records = conn.execute(f'SELECT {fields} FROM travel_filing WHERE {predicate} '
             f'ORDER BY {selection["sort"]} COLLATE NOCASE {selection["dir"]}, id {selection["dir"]} '
             'LIMIT ? OFFSET ?', args + [SIZE, (page-1)*SIZE]).fetchall()
-        data = []
-        for record in records:
-            row = dict(zip(COLUMNS, record))
-            row['kind'] = travel.KIND_LABELS[row['kind']]
-            row['status'] = travel.STATUS_LABELS[row['status']]
-            row['href'] = '/travel/f/' + quote(row['ref_code'], safe='')
-            data.append(row)
+        data = _rows(records)
         return {'data': data, 'total': total, 'page': page, 'last_page': last_page,
                 'last_row': total, 'selection': {**selection, 'page': page}}
     finally:
         conn.rollback()
+
+
+def export_csv(conn, user_id, selection):
+    """Fresh owner-selected snapshot, bounded before producing an attachment."""
+    predicate, args = _query(conn, user_id, selection)
+    records = conn.execute(f'SELECT {",".join(COLUMNS)} FROM travel_filing WHERE {predicate} '
+        f'ORDER BY {selection["sort"]} COLLATE NOCASE {selection["dir"]}, id {selection["dir"]} LIMIT ?',
+        args + [MAX_EXPORT_ROWS + 1]).fetchall()
+    if len(records) > MAX_EXPORT_ROWS:
+        raise ValueError('More than 10,000 filings match. Narrow the search or filters before exporting.')
+    stream = io.StringIO(newline='')
+    writer = csv.writer(stream)
+    writer.writerow(COLUMNS.values())
+    for row in _rows(records):
+        values = []
+        for field in COLUMNS:
+            value = str(row[field] or '')
+            if value.lstrip().startswith(('=', '+', '-', '@')) or value.startswith(('\t', '\r', '\n')):
+                value = "'" + value
+            values.append(value)
+        writer.writerow(values)
+    return '\ufeff' + stream.getvalue(), len(records)

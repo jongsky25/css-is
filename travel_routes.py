@@ -16,7 +16,7 @@ from urllib.parse import parse_qs, quote, urlencode, urlparse
 from fastapi import APIRouter, Request
 from starlette.background import BackgroundTask
 from starlette.concurrency import run_in_threadpool
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 
 import gdocs_relay
 import mailer
@@ -175,6 +175,8 @@ def make_router(templates, get_conn, today_local, *, audit, base_url, notify=Non
         conn = get_conn()
         headers = {'Cache-Control': 'no-store'}
         is_json = request.query_params.get('format') == 'json'
+        is_csv = request.query_params.get('format') == 'csv'
+        selection = None
         try:
             token = auth.parse_token(request.cookies.get(auth.COOKIE_NAME))
             user = st.session_actor(conn, token) if token else None
@@ -186,12 +188,18 @@ def make_router(templates, get_conn, today_local, *, audit, base_url, notify=Non
                 return response
             try:
                 selection = travel_grid.parse(dict(request.query_params))
+                if is_csv:
+                    content, count = travel_grid.export_csv(conn, user['id'], selection)
+                    return Response(content, media_type='text/csv', headers={**headers,
+                        'Content-Disposition': 'attachment; filename="travel-claims.csv"',
+                        'X-Export-Rows': str(count)})
                 result = travel_grid.snapshot(conn, user['id'], selection)
             except ValueError as error:
                 if is_json:
                     return JSONResponse({'error': str(error)}, status_code=400, headers=headers)
                 return templates.TemplateResponse(request, 'travel_table.html', {
-                    'nav_active': 'travel_mine', 'tab': 'table', 'error': str(error)}, status_code=400, headers=headers)
+                    'nav_active': 'travel_mine', 'tab': 'table', 'error': str(error),
+                    'back': travel_grid.url(selection) if selection else '/travel/table'}, status_code=400, headers=headers)
             if is_json:
                 return JSONResponse(result, headers=headers)
             current = result['selection']
@@ -200,7 +208,8 @@ def make_router(templates, get_conn, today_local, *, audit, base_url, notify=Non
                 'selection': current, 'columns': travel_grid.COLUMNS,
                 'previous': travel_grid.url(current, page=current['page']-1) if current['page']>1 else None,
                 'following': travel_grid.url(current, page=current['page']+1) if current['page']<result['last_page'] else None,
-                'data_url': travel_grid.url(current, format='json')}, headers=headers)
+                'data_url': travel_grid.url(current, format='json'),
+                'export_url': travel_grid.url(current, format='csv')}, headers=headers)
         finally:
             conn.close()
 
