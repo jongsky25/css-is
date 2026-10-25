@@ -18,10 +18,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "8.67"
+APP_VERSION = "8.68"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "8.68",
+        "date": "October 25, 2026",
+        "summary": "Find and organize your travel filings in a personal claims table.",
+        "changes": [
+            "Search and filter all your recorded filings by claim type, filing status and recorded trip end dates.",
+            "Choose a sort order and use a standard or interactive paged table to open the existing checklist.",
+            "The table shows your own recorded filing snapshots and does not change deadlines, approvals or payments."
+        ]
+    },
     {
         "version": "8.67",
         "date": "October 25, 2026",

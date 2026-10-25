@@ -1,0 +1,17 @@
+# Personal travel claims table
+
+Open **My travel claims → Claims table**. Search reference/activity text, choose a claim type or filing status, filter recorded activity end dates, and choose an order. Every selection applies to all matching records; pages contain at most 30 filings. Links open the existing filing and its checklist. Even administrators see only their own filings in this view. The separate review and verification queues keep their current purpose.
+
+The standard server-rendered table is the default. **Open interactive table** uses the already vendored MIT Tabulator 6.7.1 for resizable columns, horizontal scrolling and remote paging. Filtering and sorting use native GET controls above the table, so keyboard, mobile and no-JavaScript users can perform the same selection. No new dependency or service is installed.
+
+Dates are the **recorded filing snapshot**. The existing filing page may refresh linked activity dates and deadlines under its existing rules; this new view never refreshes or writes them. Open the filing for its current deadline, checklist, flag reviews and next step. No inferred overdue state is shown. **Submitted** means handover recorded, without asserting approval or payment. Financial amounts, answers, document links and flag details are excluded from this list.
+
+The native table and page links remain usable without JavaScript or if the vendor bundle is blocked. On interactive request failure, the original standard page returns with an explicit explanation; **Reload this selection as a standard table** opens the requested page. This avoids presenting an old standard page as the failed requested page. Printing uses the native original selection/page. The table does not claim to print every page.
+
+`GET /travel/table` serves HTML; `format=json` serves the same bounded snapshot. Each request validates the registered session against current active account state and requires Travel filing to be enabled. Owner scope is always server selected. Parameter values cannot select another owner, columns or arbitrary SQL. Search is literal Unicode casefold reference/activity matching, including percent/underscore characters. Date/filter/order/page validation errors return no records. Count and rows share one SQLite read transaction; stable ID ordering breaks ties. Requests above the last current page clamp to it. Responses and local errors use `Cache-Control: no-store`.
+
+All browser labels are plain text. Filing destinations are locally constructed and path encoded. The optional grid makes no outside requests, business writes or notifications. Existing Tabulator integrity/advisory gates cover the reused bundle. `travel_grid.py` is included in the deployment runtime closure. No schema, approval, calculation, existing claims dashboard or review-queue behavior is changed.
+
+Tests cover owner/admin separation, switch/session revocation, field minimization, all-page sort/filter/paging, Unicode/literal/markup search, invalid selections, unchanged filing snapshots, and authenticated Chromium journeys in light/dark/contrast at phone/desktop widths. Browser journeys cover actual remote paging, native filter submission, record links, safe long labels, blocked scripts, no-JavaScript fallback, failed requests and retry. All fixtures are synthetic; these checks do not establish real claim approval or provider delivery.
+
+Personal saved views, CSV downloads and additional review-queue tables remain separate possible increments.
