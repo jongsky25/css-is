@@ -1,6 +1,7 @@
 """Independent HTTP/OAuth/MCP probe in a fresh process with synthetic accounts."""
 import base64
 import hashlib
+import json
 import os
 from pathlib import Path
 import re
@@ -62,6 +63,20 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
         (other, 'ca', 'blank', 'Other private travel', '2026-10-27', '2026-10-28', '2026-10-30', 'open'))
     st.create_event(conn, 'Managed synthetic activity', '2026-10-27', created_by='manager@example.invalid')
     st.create_event(conn, 'Other hidden activity', '2026-10-27', created_by='other@example.invalid')
+    linked_people = []
+    linked_forms = []
+    for label, hidden, position in [('Visible linked speaker',0,None), ('Hidden linked speaker',1,None), ('Director linked speaker',0,'Director')]:
+        pid = conn.execute('INSERT INTO resource_person(name,is_internal,hidden_public,position) VALUES (?,1,?,?)',
+                           (label,hidden,position)).lastrowid
+        linked_people.append(pid)
+        fid = st.create_form_instance(conn,survey_type=3,form='F3',event_date='2026-10-27',rp_id=pid,
+                                      venue='Linked outside room',topic='Private session topic')
+        linked_forms.append(fid)
+    outside = st.create_event(conn,'Managed outside activity','2026-10-27',event_kind='outside',
+                              form_instance_ids=linked_forms,created_by='manager@example.invalid')
+    st.create_event(conn,'Other hidden outside activity','2026-10-27',event_kind='outside',
+                    form_instance_ids=[],created_by='other@example.invalid')
+
     conn.execute("INSERT INTO supply_role_grant(user_id,role,granted_by,created_at) VALUES (?,'custodian',?,?)",
                  (manager, owner, '2026-10-20'))
     item = conn.execute('''INSERT INTO supply_item(code,description,unit,critical_level,created_by,created_at,updated_at)
@@ -245,6 +260,48 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
         assert activities.status_code == 200 and not activities.json()['result'].get('isError'), activities.text
         assert 'Managed synthetic activity' in activities.text
         assert 'Other hidden activity' not in activities.text
+        assert 'Other hidden outside activity' not in activities.text
+        assert 'Visible linked speaker' not in activities.text
+        activity_data = json.loads(activities.json()['result']['content'][0]['text'])['data']
+        outside_data = next(a for a in activity_data if a['title']=='Managed outside activity')
+        assert outside_data['survey_context']['survey_type']==3
+        assert outside_data['survey_context']['resource_persons']['reason']=='permission_required'
+        assert outside_data['survey_context']['activity_report_url']==f'https://office.example/reports?type=3&activity={min(linked_forms)}'
+        conn = st.connect(os.environ['CSS_DB'])
+        person_grant = mcp_auth.Provider._tokens(conn,client_id,manager,
+            ['activities:read','surveys:resource_persons:read'],'https://office.example/mcp')
+        conn.commit();conn.close()
+        person_headers = dict(headers,Authorization='Bearer '+person_grant.access_token)
+        def linked_call():
+            return client.post('/mcp',json={'jsonrpc':'2.0','id':190,'method':'tools/call',
+                'params':{'name':'list_activity_progress','arguments':{'start_date':'2026-10-24','end_date':'2026-10-31'}}},headers=person_headers)
+        os.environ['CSS_MCP_RESOURCE_PERSON_SURVEYS_ENABLED']='0'
+        disabled_links = linked_call()
+        assert not disabled_links.json()['result'].get('isError'),disabled_links.text
+        assert 'Visible linked speaker' not in disabled_links.text
+        assert 'disabled' in disabled_links.text
+        os.environ['CSS_MCP_RESOURCE_PERSON_SURVEYS_ENABLED']='1'
+        enabled_links = linked_call()
+        assert not enabled_links.json()['result'].get('isError'),enabled_links.text
+        assert 'Visible linked speaker' in enabled_links.text
+        assert 'Hidden linked speaker' not in enabled_links.text and 'Director linked speaker' not in enabled_links.text
+        assert 'Private session topic' not in enabled_links.text
+        enabled_data = json.loads(enabled_links.json()['result']['content'][0]['text'])['data']
+        linked_context = next(a for a in enabled_data if a['title']=='Managed outside activity')['survey_context']
+        linked_metadata = linked_context['resource_persons']
+        assert linked_metadata['annual_summary_year']==2026 and not linked_metadata['truncated']
+        assert linked_metadata['data'][0]['resource_person_id']==str(linked_people[0])
+        assert linked_metadata['data'][0]['annual_report_url']==f'https://office.example/dashboard/people/{linked_people[0]}?period=year:2026'
+        annual = client.post('/mcp',json={'jsonrpc':'2.0','id':191,'method':'tools/call',
+            'params':{'name':'get_resource_person_survey_summary','arguments':{'resource_person_id':int(linked_metadata['data'][0]['resource_person_id']),'year':2026}}},headers=person_headers)
+        assert not annual.json()['result'].get('isError'),annual.text
+        assert 'no_matching_responses' in annual.text
+        conn = st.connect(os.environ['CSS_DB'])
+        conn.execute('UPDATE mcp_oauth_grant SET revoked_at=1 WHERE access_hash=?',(mcp_auth._digest(person_grant.access_token),))
+        conn.commit();conn.close()
+        assert linked_call().status_code==401
+        os.environ['CSS_MCP_RESOURCE_PERSON_SURVEYS_ENABLED']='0'
+
         manager_warnings = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 22, 'method': 'tools/call',
             'params': {'name': 'list_supply_queue', 'arguments': {'queue': 'warnings'}}},
             headers=manager_headers)

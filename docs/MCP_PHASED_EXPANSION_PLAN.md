@@ -150,3 +150,13 @@ response/sample guards and bounded query work; large unrelated inventories no
 longer refuse these reads. Synthetic large-inventory and source-parity tests pass;
 repeat the Regional BHW Summit Forum Q3 2026 hosted check after deployment before
 recording live survey acceptance.
+
+### Linked Type 3 resource-person selectors — v8.71
+
+Outside activity progress now supplies the correct Type 3 source report link.
+Under the existing explicit annual resource-person permission/pilot and current
+visibility, it also supplies bounded linked person IDs for the existing annual
+summary tool. This closes the activity-to-person selection gap using existing
+tool registrations; it does not introduce one-activity Type 3 analytics or
+reinterpret annual results as an activity scorecard. Hosted acceptance remains
+pending, including the Regional BHW Summit Forum resource-person handoff.
