@@ -66,6 +66,13 @@ try:
             comparison=read(out/'after/comparison.json');gates.update(comparison['gates'])
             for name in ['before','after']:
                 gates[name+'_complete']=read(out/name/'application/summary.json')['full_duration_complete']
+            # RSS is comparable only with the same renderer-process counts.
+            for mobile in [False,True]:
+                for cache in ['cold','warm']:
+                    pair=[read(out/f'{arm}/application/{mobile}-{cache}.json') for arm in ['before','after']]
+                    for scenario in pair[0][0]['scenarios']:
+                        counts=[{r['scenarios'][scenario]['renderer_process_count'] for r in rows} for rows in pair]
+                        gates[f'{mobile}-{cache}-{scenario}-matched_renderer_counts']=len(counts[0])==1 and counts[0]==counts[1] and min(counts[0])>0
             values=[r['scenarios']['home_interaction']['frame_p95_ms'] for f in ['True-cold','True-warm'] for r in read(out/f'after/application/{f}.json')]
             gates['mobile_interaction_p95_all_runs_le_33ms']=all(frame_pass(v) for v in values)
             gates['mobile_interaction_p95_medians_le_33ms']=all(frame_pass(g['scenarios']['home_interaction']['frame_p95_ms']['after']['median']) for g in comparison['groups'] if g['mobile'])

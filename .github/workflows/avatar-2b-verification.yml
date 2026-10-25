@@ -1,5 +1,6 @@
 name: Avatar 2B verification
 on:
+  workflow_dispatch:
   push:
     branches: [codex/avatar-2b-verification]
 permissions:
