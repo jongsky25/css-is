@@ -118,6 +118,31 @@ def install(conn):
       created_at TEXT NOT NULL, updated_at TEXT NOT NULL, consented_at TEXT NOT NULL,
       UNIQUE(chat_id,topic_id));
     CREATE INDEX IF NOT EXISTS telegram_group_owner ON telegram_group(owner_connection_id,state);
+    CREATE TABLE IF NOT EXISTS telegram_group_share (
+      entry_id INTEGER NOT NULL REFERENCES calendar_entry(id) ON DELETE CASCADE,
+      registration_id INTEGER NOT NULL REFERENCES telegram_group(id),
+      registration_generation TEXT NOT NULL,
+      revision TEXT NOT NULL, consented_by INTEGER NOT NULL REFERENCES admin_user(id),
+      consented_at TEXT NOT NULL, revoked_at TEXT,
+      PRIMARY KEY(entry_id,registration_id));
+    CREATE INDEX IF NOT EXISTS telegram_share_registration ON telegram_group_share(registration_id,revoked_at);
+    CREATE TRIGGER IF NOT EXISTS telegram_share_fence AFTER UPDATE ON telegram_group_share
+    BEGIN
+      UPDATE telegram_delivery SET state=CASE WHEN state='sending' THEN 'uncertain' ELSE 'cancelled' END,
+        claim_token=NULL,lease_until=NULL,error_code='share_changed'
+        WHERE registration_id=NEW.registration_id AND state IN ('queued','claimed','retry_wait','sending');
+    END;
+    CREATE TRIGGER IF NOT EXISTS telegram_share_delete_fence BEFORE DELETE ON telegram_group_share
+    BEGIN
+      UPDATE telegram_delivery SET state=CASE WHEN state='sending' THEN 'uncertain' ELSE 'cancelled' END,
+        claim_token=NULL,lease_until=NULL,error_code='share_changed'
+        WHERE registration_id=OLD.registration_id AND state IN ('queued','claimed','retry_wait','sending');
+    END;
+    CREATE TRIGGER IF NOT EXISTS telegram_calendar_share_changed AFTER UPDATE ON calendar_entry
+    BEGIN
+      UPDATE telegram_group_share SET revoked_at=strftime('%Y-%m-%dT%H:%M:%SZ','now')
+        WHERE entry_id=NEW.id AND revoked_at IS NULL;
+    END;
     CREATE TRIGGER IF NOT EXISTS telegram_group_fence AFTER UPDATE OF state,generation ON telegram_group
     WHEN OLD.state IS NOT NEW.state OR OLD.generation IS NOT NEW.generation
     BEGIN
@@ -178,6 +203,8 @@ def reset_after_restore(conn):
     Later preview tables must extend this hook when introduced.
     """
     tables = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+    if 'telegram_group_share' in tables:
+        conn.execute("UPDATE telegram_group_share SET revoked_at=strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE revoked_at IS NULL")
     if 'telegram_group' in tables:
         conn.execute("UPDATE telegram_group SET state='paused',generation=lower(hex(randomblob(16))),reason='restored' WHERE state<>'revoked'")
     if 'telegram_group_request' in tables:

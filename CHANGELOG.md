@@ -1,3 +1,9 @@
+## 8.62 — October 25, 2026
+
+- Add default-off registered group/topic schedule and room-slot commands with separate current actor read grants, exact routing, and fresh bot/owner/requester membership checks.
+- Require audited owner consent to the previewed exact version of each ordinary bureau calendar entry for each destination. Source edits, sharing revocation and restores fence pending sends; re-registration requires new consent.
+- Render only approved calendar fields and signed-in source links, or anonymous room-slot states. Retain metadata-only queues, bounded output and independent private commands. Update the Telegram progress ledger and operator handoff.
+
 ## 8.61 — October 25, 2026
 
 - Add default-off private /room_slots, /my_rooms and /room_status commands under separate current rooms.read consent. Reuse signed-in day_view, requester-qualified reference lookup and bounded own-request lists.

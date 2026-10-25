@@ -5,7 +5,7 @@
 <h1>Telegram groups and topics</h1>
 <p><a href="/account/telegram">Back to private Telegram connection</a></p>
 {% if error %}<p role="alert">{{ error }}</p>{% endif %}
-<p>Only a neutral connection-status reply is available. Calendar and room commands remain unavailable. Joining a group never grants Office Connect access.</p>
+<p>When enabled with separate read consent, linked members can use <code>/group_calendar [START END]</code> for explicitly shared entries and <code>/group_rooms [DATE]</code> for room-slot states. Dates use YYYY-MM-DD and Asia/Manila. Joining a group never grants Office Connect access.</p>
 {% if not ready %}<p role="status">Group registration and replies are paused. Existing registrations can still be paused or revoked.</p>{% endif %}
 {% if is_admin and ready %}
 <h2>Register an exact destination</h2>
@@ -15,12 +15,18 @@
 <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="request_id" value="{{ item.id }}">
 <p>Group {{ item.chat_id }} · {{ 'Topic ' ~ item.topic_id if item.topic_id else 'General conversation only' }}</p>
 <label for="purpose-{{ item.id }}">Purpose</label><input id="purpose-{{ item.id }}" name="purpose" maxlength="200" required style="box-sizing:border-box;width:100%;font:inherit;padding:.6rem">
-<p>Future shared calendar fields are limited to approved title, date/time, timezone, venue, status and a signed-in source link. Room availability excludes requester names, titles and decision reasons. Personal results, meeting links and notes stay private. These business replies are not enabled yet.</p>
+<p>Shared calendar fields are limited to approved title, date/time, timezone, venue, status and a signed-in source link. Room availability excludes requester names, titles and decision reasons. Personal results, meeting links and notes stay private. Calendar entries require separate exact-version disclosure consent below.</p>
 <p><label><input type="checkbox" name="consent" value="yes" required> I own this connection and approve these shared-audience rules for all current and future members.</label></p>
 <button type="submit">Verify administrators and register</button>
 </form>
 {% else %}<p>No recent registration requests for your linked account.</p>{% endfor %}
 {% endif %}
+<h2>Preview a calendar entry for sharing</h2>
+<p>Only ordinary bureau-audience entries can be shared. Open the entry in Calendar and use the number at the end of its address. Edits invalidate sharing; preview and approve again after changes. Notes, participants and meeting links are excluded.</p>
+<form method="get" action="/account/telegram/groups">
+<label for="share-entry">Calendar entry number</label><input id="share-entry" name="entry_id" type="number" min="1" required>
+<button type="submit">Preview shared fields</button></form>
+{% if preview %}<p style="white-space:pre-wrap">{{ preview.text }}</p><p><a href="/calendar/entries/{{ preview.id }}">Open signed-in source</a></p>{% endif %}
 <h2>Existing registrations</h2>
 {% for group in groups %}
 <section style="border:1px solid var(--line);padding:1rem;margin:1rem 0">
@@ -32,6 +38,18 @@
 <button name="action" value="pause" type="submit">Pause registration</button>
 <button name="action" value="revoke" type="submit">Revoke registration</button>
 </form>
+{% if preview and ready and group.state == 'active' %}
+<form method="post" action="/account/telegram/groups/manage">
+<input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="group_id" value="{{ group.id }}"><input type="hidden" name="generation" value="{{ group.generation }}">
+<input type="hidden" name="entry_id" value="{{ preview.id }}"><input type="hidden" name="revision" value="{{ preview.revision }}">
+<p><label><input type="checkbox" name="consent" value="yes" required> I approve the previewed fields and signed-in source link for all current and future members of this exact destination.</label></p>
+<button type="submit" name="action" value="share">Share this version</button></form>
+{% endif %}
+{% for share in shares if share.registration_id == group.id %}
+<form method="post" action="/account/telegram/groups/manage">
+<input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="group_id" value="{{ group.id }}"><input type="hidden" name="generation" value="{{ group.generation }}"><input type="hidden" name="entry_id" value="{{ share.entry_id }}">
+<p>Entry {{ share.entry_id }} <button type="submit" name="action" value="unshare">Revoke entry sharing</button></p></form>
+{% endfor %}
 </section>
 {% else %}<p>No registrations available to your account.</p>{% endfor %}
 <p>Pause and revoke remain available when the group pilot is off. Removal, migration, topic changes or failed administrator checks pause routing. Resuming requires a fresh command, verification and consent.</p>

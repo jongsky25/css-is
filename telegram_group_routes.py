@@ -10,6 +10,7 @@ from documents_storage import rows
 import ratelimit
 import telegram_bot as bot
 import telegram_groups as groups
+import telegram_group_reads as shared
 import telegram_links as links
 from telegram_link_routes import PRIVATE, csrf
 
@@ -26,9 +27,17 @@ def make_router(templates,get_conn):
         try:
             user=links.current(conn,payload(request))
             own=rows(conn,'SELECT * FROM telegram_group WHERE owner_account_id=? OR ?=\'admin\' ORDER BY id DESC LIMIT 50',(user['id'],user['role']))
+            preview=None
+            raw=request.query_params.get('entry_id','')
+            if raw.isascii() and raw.isdecimal() and len(raw)<=18:
+                entry=shared.shareable(conn,user,int(raw))
+                if entry:
+                    preview={'id':entry['id'],'revision':shared.revision(entry),'text':shared.fields(entry)}
+            shares=rows(conn,'''SELECT s.entry_id,s.registration_id FROM telegram_group_share s JOIN telegram_group g ON g.id=s.registration_id
+                WHERE g.owner_account_id=? AND s.revoked_at IS NULL ORDER BY s.consented_at DESC LIMIT 100''',(user['id'],))
             pending=rows(conn,"SELECT * FROM telegram_group_request WHERE account_id=? AND state='observed' AND expires_at>? ORDER BY created_at DESC LIMIT 20",(user['id'],links.stamp(bot.now_utc()))) if user['role']=='admin' else []
             return templates.TemplateResponse(request,'telegram_groups.html',{'show_scope':False,'groups':own,
-                'requests':pending,'is_admin':user['role']=='admin','ready':bool(bot.storage.enabled('groups') and links.available()),'csrf':csrf(request),'error':error},status_code=status,headers=PRIVATE)
+                'requests':pending,'preview':preview,'shares':shares,'is_admin':user['role']=='admin','ready':bool(bot.storage.enabled('groups') and links.available()),'csrf':csrf(request),'error':error},status_code=status,headers=PRIVATE)
         except ValueError:
             return HTMLResponse('Sign in again to manage Telegram groups.',status_code=403,headers=PRIVATE)
         finally:
@@ -45,8 +54,8 @@ def make_router(templates,get_conn):
             if len(body)>4096:
                 raise ValueError('Form too large.')
         request._body=bytes(body)
-        form=await request.form(max_fields=8,max_files=0)
-        if (set(form)-{'csrf','request_id','purpose','consent','group_id','generation','action'}
+        form=await request.form(max_fields=10,max_files=0)
+        if (set(form)-{'csrf','request_id','purpose','consent','group_id','generation','action','entry_id','revision'}
                 or any(len(form.getlist(k))!=1 for k in form)
                 or not hmac.compare_digest(str(form.get('csrf','')).encode(),csrf(request).encode())):
             raise ValueError('The form expired or is invalid. Reload and try again.')
@@ -61,7 +70,16 @@ def make_router(templates,get_conn):
                 raw=str(form.get('group_id',''))
                 if not raw.isascii() or not raw.isdecimal() or len(raw)>18:
                     raise ValueError('Invalid registration.')
-                groups.manage(conn,payload(request),int(raw),str(form.get('generation','')),str(form.get('action','')))
+                if form.get('action') in ('share','unshare'):
+                    entry_id=str(form.get('entry_id',''))
+                    if not entry_id.isascii() or not entry_id.isdecimal() or len(entry_id)>18:
+                        raise ValueError('Invalid entry.')
+                    if form.get('action')=='share' and form.get('consent')!='yes':
+                        raise ValueError('Confirm the exact shared fields and audience first.')
+                    shared.consent(conn,payload(request),int(raw),str(form.get('generation','')),int(entry_id),
+                                   str(form.get('revision','')),form.get('action')=='share',bot.now_utc())
+                else:
+                    groups.manage(conn,payload(request),int(raw),str(form.get('generation','')),str(form.get('action','')))
         finally:
             conn.close()
 

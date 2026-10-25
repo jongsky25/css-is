@@ -1,4 +1,4 @@
-"""Explicit group/topic registration and neutral routing; no business reads."""
+"""Explicit group/topic registration and allowlisted shared routing."""
 import json
 import secrets
 import time
@@ -9,14 +9,15 @@ import storage as st
 import telegram_links as links
 import telegram_storage as switches
 import telegram_transport as transport
+import telegram_group_reads as shared
 
 POLICY = 'bureau_shared_v1'
-# Future T2.3 projections additionally require explicit source disclosure consent.
+# Shared calendar projections additionally require exact-version disclosure consent.
 SHARED_FIELDS = {
     'calendar': ('title','date','start_time','end_time','timezone','venue','status','source_link'),
     'rooms': ('date','slots','availability'),
 }
-STATUS = 'Office Connect group connection is registered. Calendar and room commands are not available yet. Joining this group grants no Office Connect access.'
+STATUS = 'Office Connect group connection is registered. Shared lookup commands: /group_calendar and /group_rooms when separately enabled and consented. Joining this group grants no Office Connect access.'
 
 
 def integer(value, *, positive=False):
@@ -198,7 +199,7 @@ def route(conn, chat, topic, bot):
 
 
 def authorize_delivery(conn, delivery, bot):
-    """Local checks only. Business projections are deliberately rejected until T2.3."""
+    """Local routing and separate current delegated read consent."""
     group=route(conn,delivery['chat_id'],delivery['topic_id'],bot)
     if not group or delivery['registration_id']!=group['id'] or delivery['registration_generation']!=group['generation']:
         return None
@@ -206,11 +207,15 @@ def authorize_delivery(conn, delivery, bot):
         projection=json.loads(delivery['projection_json'])
     except (ValueError,TypeError):
         return None
-    if projection!={'kind':'group_status','bot':bot[0],'fingerprint':bot[2]}:
+    business=shared.descriptor(projection,bot)
+    if not business and projection!={'kind':'group_status','bot':bot[0],'fingerprint':bot[2]}:
         return None
-    actor=rows(conn,'''SELECT c.* FROM telegram_connection c JOIN admin_user u ON u.id=c.account_id
+    actor=rows(conn,'''SELECT c.*,u.username,u.role FROM telegram_connection c JOIN admin_user u ON u.id=c.account_id
         WHERE c.id=? AND c.generation=? AND c.state='active' AND u.active=1 AND u.must_change=0
         AND u.role IN ('viewer','encoder','section_manager','admin')''',(delivery['connection_id'],delivery['generation']))
+    if business and (not actor or not links.authorized(conn,actor[0]['account_id'],shared.action(projection))
+            or not links.origin() or len(links.origin())>200):
+        return None
     return (group,actor[0]) if actor and actor[0]['bot_identity']==bot[0] and actor[0]['bot_fingerprint']==bot[2] else None
 
 
