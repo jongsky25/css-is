@@ -1,0 +1,8 @@
+.
+=============================== warnings summary ===============================
+tests/test_avatar_baseline_browser.py::test_slice_long_task_attribution
+  /workspace/css-is/tests/conftest.py:88: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+1 passed, 6 deselected, 1 warning in 80.43s (0:01:20)

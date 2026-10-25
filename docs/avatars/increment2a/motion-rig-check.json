@@ -1,0 +1,4398 @@
+{
+  "cases": 324,
+  "method": "Actual macros/CSS; bloom-turn and watering animations paused at 1200ms; SVG bloom centers remain inside viewBox, wet soil visible; no behavior JS in static sheet",
+  "results": [
+    {
+      "theme": "light",
+      "phase": "bloom",
+      "kind": "cactus",
+      "stage": "1",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "light",
+      "phase": "bloom",
+      "kind": "cactus",
+      "stage": "1",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "light",
+      "phase": "bloom",
+      "kind": "cactus",
+      "stage": "1",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "light",
+      "phase": "bloom",
+      "kind": "cactus",
+      "stage": "2",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "light",
+      "phase": "bloom",
+      "kind": "cactus",
+      "stage": "2",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "light",
+      "phase": "bloom",
+      "kind": "cactus",
+      "stage": "2",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "light",
+      "phase": "bloom",
+      "kind": "cactus",
+      "stage": "3",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "light",
+      "phase": "bloom",
+      "kind": "cactus",
+      "stage": "3",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "light",
+      "phase": "bloom",
+      "kind": "cactus",
+      "stage": "3",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "light",
+      "phase": "bloom",
+      "kind": "cactus",
+      "stage": "4",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.514024263269761,
+          "cy": 0.3216041526213515
+        }
+      ]
+    },
+    {
+      "theme": "light",
+      "phase": "bloom",
+      "kind": "cactus",
+      "stage": "4",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.49916884478400736,
+          "cy": 0.32148378633605645
+        }
+      ]
+    },
+    {
+      "theme": "light",
+      "phase": "bloom",
+      "kind": "cactus",
+      "stage": "4",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.48551707548253675,
+          "cy": 0.32161220802268403
+        }
+      ]
+    },
+    {
+      "theme": "light",
+      "phase": "bloom",
+      "kind": "cactus",
+      "stage": "5",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.5094817217658548,
+          "cy": 0.321829394035533
+        }
+      ]
+    },
+    {
+      "theme": "light",
+      "phase": "bloom",
+      "kind": "cactus",
+      "stage": "5",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.4947872386259191,
+          "cy": 0.32179051123294733
+        }
+      ]
+    },
+    {
+      "theme": "light",
+      "phase": "bloom",
+      "kind": "cactus",
+      "stage": "5",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.48128500545726105,
+          "cy": 0.3219911217084391
+        }
+      ]
+    },
+    {
+      "theme": "light",
+      "phase": "bloom",
+      "kind": "cactus",
+      "stage": "6",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.5103424072265625,
+          "cy": 0.27851054390069796
+        },
+        {
+          "cx": 0.7381080178653493,
+          "cy": 0.3734528982094702
+        }
+      ]
+    },
+    {
+      "theme": "light",
+      "phase": "bloom",
+      "kind": "cactus",
+      "stage": "6",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.494677734375,
+          "cy": 0.2789937130690831
+        },
+        {
+          "cx": 0.7247170840992647,
+          "cy": 0.369761820371986
+        }
+      ]
+    },
+    {
+      "theme": "light",
+      "phase": "bloom",
+      "kind": "cactus",
+      "stage": "6",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.48029497931985293,
+          "cy": 0.27968942090339466
+        },
+        {
+          "cx": 0.7123334099264705,
+          "cy": 0.36658582348508884
+        }
+      ]
+    },
+    {
+      "theme": "light",
+      "phase": "bloom",
+      "kind": "bonsai",
+      "stage": "1",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "light",
+      "phase": "bloom",
+      "kind": "bonsai",
+      "stage": "1",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "light",
+      "phase": "bloom",
+      "kind": "bonsai",
+      "stage": "1",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "light",
+      "phase": "bloom",
+      "kind": "bonsai",
+      "stage": "2",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "light",
+      "phase": "bloom",
+      "kind": "bonsai",
+      "stage": "2",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "light",
+      "phase": "bloom",
+      "kind": "bonsai",
+      "stage": "2",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "light",
+      "phase": "bloom",
+      "kind": "bonsai",
+      "stage": "3",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "light",
+      "phase": "bloom",
+      "kind": "bonsai",
+      "stage": "3",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "light",
+      "phase": "bloom",
+      "kind": "bonsai",
+      "stage": "3",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "light",
+      "phase": "bloom",
+      "kind": "bonsai",
+      "stage": "4",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "light",
+      "phase": "bloom",
+      "kind": "bonsai",
+      "stage": "4",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "light",
+      "phase": "bloom",
+      "kind": "bonsai",
+      "stage": "4",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "light",
+      "phase": "bloom",
+      "kind": "bonsai",
+      "stage": "5",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.38912714789895453,
+          "cy": 0.3267493853109137
+        },
+        {
+          "cx": 0.6571158914005055,
+          "cy": 0.5668356648556472
+        },
+        {
+          "cx": 0.29468298519358915,
+          "cy": 0.4823933712722081
+        }
+      ]
+    },
+    {
+      "theme": "light",
+      "phase": "bloom",
+      "kind": "bonsai",
+      "stage": "5",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.3745526482077206,
+          "cy": 0.3288471977117703
+        },
+        {
+          "cx": 0.6483601289636949,
+          "cy": 0.5639942769471764
+        },
+        {
+          "cx": 0.28394057329963235,
+          "cy": 0.4861784804290926
+        }
+      ]
+    },
+    {
+      "theme": "light",
+      "phase": "bloom",
+      "kind": "bonsai",
+      "stage": "5",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.36120677274816176,
+          "cy": 0.3310094533232868
+        },
+        {
+          "cx": 0.6402537626378676,
+          "cy": 0.5615237473231282
+        },
+        {
+          "cx": 0.27415179084329044,
+          "cy": 0.48982943617147845
+        }
+      ]
+    },
+    {
+      "theme": "light",
+      "phase": "bloom",
+      "kind": "bonsai",
+      "stage": "6",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.38894114774816174,
+          "cy": 0.32674783619527287
+        },
+        {
+          "cx": 0.6569300034466912,
+          "cy": 0.5668344255631346
+        },
+        {
+          "cx": 0.29449696260340075,
+          "cy": 0.4823918221565673
+        }
+      ]
+    },
+    {
+      "theme": "light",
+      "phase": "bloom",
+      "kind": "bonsai",
+      "stage": "6",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.37457670323988973,
+          "cy": 0.3288471977117703
+        },
+        {
+          "cx": 0.6483840044806986,
+          "cy": 0.5639942769471764
+        },
+        {
+          "cx": 0.28396462833180147,
+          "cy": 0.4861784804290926
+        }
+      ]
+    },
+    {
+      "theme": "light",
+      "phase": "bloom",
+      "kind": "bonsai",
+      "stage": "6",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.36142362706801473,
+          "cy": 0.3310072845613896
+        },
+        {
+          "cx": 0.6404706169577206,
+          "cy": 0.561521578561231
+        },
+        {
+          "cx": 0.2743688246783088,
+          "cy": 0.4898272674095812
+        }
+      ]
+    },
+    {
+      "theme": "light",
+      "phase": "bloom",
+      "kind": "sunflower",
+      "stage": "1",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "light",
+      "phase": "bloom",
+      "kind": "sunflower",
+      "stage": "1",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "light",
+      "phase": "bloom",
+      "kind": "sunflower",
+      "stage": "1",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "light",
+      "phase": "bloom",
+      "kind": "sunflower",
+      "stage": "2",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "light",
+      "phase": "bloom",
+      "kind": "sunflower",
+      "stage": "2",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "light",
+      "phase": "bloom",
+      "kind": "sunflower",
+      "stage": "2",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "light",
+      "phase": "bloom",
+      "kind": "sunflower",
+      "stage": "3",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "light",
+      "phase": "bloom",
+      "kind": "sunflower",
+      "stage": "3",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "light",
+      "phase": "bloom",
+      "kind": "sunflower",
+      "stage": "3",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "light",
+      "phase": "bloom",
+      "kind": "sunflower",
+      "stage": "4",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.5169399485868567,
+          "cy": 0.3617439076380076
+        }
+      ]
+    },
+    {
+      "theme": "light",
+      "phase": "bloom",
+      "kind": "sunflower",
+      "stage": "4",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.5030582203584559,
+          "cy": 0.36156173163864214
+        }
+      ]
+    },
+    {
+      "theme": "light",
+      "phase": "bloom",
+      "kind": "sunflower",
+      "stage": "4",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.49029935948988973,
+          "cy": 0.3616174998017132
+        }
+      ]
+    },
+    {
+      "theme": "light",
+      "phase": "bloom",
+      "kind": "sunflower",
+      "stage": "5",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.5166943494011375,
+          "cy": 0.3074783867385787
+        }
+      ]
+    },
+    {
+      "theme": "light",
+      "phase": "bloom",
+      "kind": "sunflower",
+      "stage": "5",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.5018751256606158,
+          "cy": 0.30737428616751267
+        }
+      ]
+    },
+    {
+      "theme": "light",
+      "phase": "bloom",
+      "kind": "sunflower",
+      "stage": "5",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.4882568359375,
+          "cy": 0.3075161851602157
+        }
+      ]
+    },
+    {
+      "theme": "light",
+      "phase": "bloom",
+      "kind": "sunflower",
+      "stage": "6",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.5176265940946692,
+          "cy": 0.2715847576935279
+        },
+        {
+          "cx": 0.7166134105009191,
+          "cy": 0.5318380442972716
+        }
+      ]
+    },
+    {
+      "theme": "light",
+      "phase": "bloom",
+      "kind": "sunflower",
+      "stage": "6",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.5020328297334559,
+          "cy": 0.2717012511897208
+        },
+        {
+          "cx": 0.7073475557215073,
+          "cy": 0.5282688818607234
+        }
+      ]
+    },
+    {
+      "theme": "light",
+      "phase": "bloom",
+      "kind": "sunflower",
+      "stage": "6",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.48770751953125,
+          "cy": 0.2720594067258883
+        },
+        {
+          "cx": 0.6987570369944853,
+          "cy": 0.5251378093274112
+        }
+      ]
+    },
+    {
+      "theme": "light",
+      "phase": "water",
+      "kind": "cactus",
+      "stage": "1",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "light",
+      "phase": "water",
+      "kind": "cactus",
+      "stage": "1",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "light",
+      "phase": "water",
+      "kind": "cactus",
+      "stage": "1",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "light",
+      "phase": "water",
+      "kind": "cactus",
+      "stage": "2",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "light",
+      "phase": "water",
+      "kind": "cactus",
+      "stage": "2",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "light",
+      "phase": "water",
+      "kind": "cactus",
+      "stage": "2",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "light",
+      "phase": "water",
+      "kind": "cactus",
+      "stage": "3",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "light",
+      "phase": "water",
+      "kind": "cactus",
+      "stage": "3",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "light",
+      "phase": "water",
+      "kind": "cactus",
+      "stage": "3",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "light",
+      "phase": "water",
+      "kind": "cactus",
+      "stage": "4",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.5,
+          "cy": 0.2933973902978268
+        }
+      ]
+    },
+    {
+      "theme": "light",
+      "phase": "water",
+      "kind": "cactus",
+      "stage": "4",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.5,
+          "cy": 0.2933973902978268
+        }
+      ]
+    },
+    {
+      "theme": "light",
+      "phase": "water",
+      "kind": "cactus",
+      "stage": "4",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.5,
+          "cy": 0.2933973902978268
+        }
+      ]
+    },
+    {
+      "theme": "light",
+      "phase": "water",
+      "kind": "cactus",
+      "stage": "5",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.4943525426528033,
+          "cy": 0.29387916526213514
+        }
+      ]
+    },
+    {
+      "theme": "light",
+      "phase": "water",
+      "kind": "cactus",
+      "stage": "5",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.4943525426528033,
+          "cy": 0.29387916526213514
+        }
+      ]
+    },
+    {
+      "theme": "light",
+      "phase": "water",
+      "kind": "cactus",
+      "stage": "5",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.49435245289522056,
+          "cy": 0.29387916526213514
+        }
+      ]
+    },
+    {
+      "theme": "light",
+      "phase": "water",
+      "kind": "cactus",
+      "stage": "6",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.4939733168658088,
+          "cy": 0.24920158579869925
+        },
+        {
+          "cx": 0.7284522561465993,
+          "cy": 0.3447363219285374
+        }
+      ]
+    },
+    {
+      "theme": "light",
+      "phase": "water",
+      "kind": "cactus",
+      "stage": "6",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.4939733168658088,
+          "cy": 0.24920158579869925
+        },
+        {
+          "cx": 0.7284520766314339,
+          "cy": 0.3447363219285374
+        }
+      ]
+    },
+    {
+      "theme": "light",
+      "phase": "water",
+      "kind": "cactus",
+      "stage": "6",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.4939733168658088,
+          "cy": 0.24920158579869925
+        },
+        {
+          "cx": 0.7284520766314339,
+          "cy": 0.3447363219285374
+        }
+      ]
+    },
+    {
+      "theme": "light",
+      "phase": "water",
+      "kind": "bonsai",
+      "stage": "1",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "light",
+      "phase": "water",
+      "kind": "bonsai",
+      "stage": "1",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "light",
+      "phase": "water",
+      "kind": "bonsai",
+      "stage": "1",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "light",
+      "phase": "water",
+      "kind": "bonsai",
+      "stage": "2",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "light",
+      "phase": "water",
+      "kind": "bonsai",
+      "stage": "2",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "light",
+      "phase": "water",
+      "kind": "bonsai",
+      "stage": "2",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "light",
+      "phase": "water",
+      "kind": "bonsai",
+      "stage": "3",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "light",
+      "phase": "water",
+      "kind": "bonsai",
+      "stage": "3",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "light",
+      "phase": "water",
+      "kind": "bonsai",
+      "stage": "3",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "light",
+      "phase": "water",
+      "kind": "bonsai",
+      "stage": "4",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "light",
+      "phase": "water",
+      "kind": "bonsai",
+      "stage": "4",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "light",
+      "phase": "water",
+      "kind": "bonsai",
+      "stage": "4",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "light",
+      "phase": "water",
+      "kind": "bonsai",
+      "stage": "5",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.3739773245418773,
+          "cy": 0.30112794208042515
+        },
+        {
+          "cx": 0.6513322718003217,
+          "cy": 0.5477251546637056
+        },
+        {
+          "cx": 0.2815256679759306,
+          "cy": 0.4655262903513642
+        }
+      ]
+    },
+    {
+      "theme": "light",
+      "phase": "water",
+      "kind": "bonsai",
+      "stage": "5",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.3739773021024816,
+          "cy": 0.30112794208042515
+        },
+        {
+          "cx": 0.6513322718003217,
+          "cy": 0.5477251546637056
+        },
+        {
+          "cx": 0.2815256455365349,
+          "cy": 0.4655262903513642
+        }
+      ]
+    },
+    {
+      "theme": "light",
+      "phase": "water",
+      "kind": "bonsai",
+      "stage": "5",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.3739773021024816,
+          "cy": 0.30112794208042515
+        },
+        {
+          "cx": 0.6513323615579044,
+          "cy": 0.5477251546637056
+        },
+        {
+          "cx": 0.2815257352941177,
+          "cy": 0.4655262903513642
+        }
+      ]
+    },
+    {
+      "theme": "light",
+      "phase": "water",
+      "kind": "bonsai",
+      "stage": "6",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.3739773021024816,
+          "cy": 0.3015238960382297
+        },
+        {
+          "cx": 0.6513323615579044,
+          "cy": 0.5481207987983819
+        },
+        {
+          "cx": 0.2815257352941177,
+          "cy": 0.46592193448604063
+        }
+      ]
+    },
+    {
+      "theme": "light",
+      "phase": "water",
+      "kind": "bonsai",
+      "stage": "6",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.37397748161764705,
+          "cy": 0.3015238960382297
+        },
+        {
+          "cx": 0.6513323615579044,
+          "cy": 0.5481207987983819
+        },
+        {
+          "cx": 0.2815257352941177,
+          "cy": 0.46592193448604063
+        }
+      ]
+    },
+    {
+      "theme": "light",
+      "phase": "water",
+      "kind": "bonsai",
+      "stage": "6",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.37397748161764705,
+          "cy": 0.3015238960382297
+        },
+        {
+          "cx": 0.6513323615579044,
+          "cy": 0.5481207987983819
+        },
+        {
+          "cx": 0.2815257352941177,
+          "cy": 0.46592193448604063
+        }
+      ]
+    },
+    {
+      "theme": "light",
+      "phase": "water",
+      "kind": "sunflower",
+      "stage": "1",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "light",
+      "phase": "water",
+      "kind": "sunflower",
+      "stage": "1",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "light",
+      "phase": "water",
+      "kind": "sunflower",
+      "stage": "1",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "light",
+      "phase": "water",
+      "kind": "sunflower",
+      "stage": "2",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "light",
+      "phase": "water",
+      "kind": "sunflower",
+      "stage": "2",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "light",
+      "phase": "water",
+      "kind": "sunflower",
+      "stage": "2",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "light",
+      "phase": "water",
+      "kind": "sunflower",
+      "stage": "3",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "light",
+      "phase": "water",
+      "kind": "sunflower",
+      "stage": "3",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "light",
+      "phase": "water",
+      "kind": "sunflower",
+      "stage": "3",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "light",
+      "phase": "water",
+      "kind": "sunflower",
+      "stage": "4",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.5032887178308824,
+          "cy": 0.33526580345812185
+        }
+      ]
+    },
+    {
+      "theme": "light",
+      "phase": "water",
+      "kind": "sunflower",
+      "stage": "4",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.5032890768612133,
+          "cy": 0.33526580345812185
+        }
+      ]
+    },
+    {
+      "theme": "light",
+      "phase": "water",
+      "kind": "sunflower",
+      "stage": "4",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.5032890768612133,
+          "cy": 0.33526580345812185
+        }
+      ]
+    },
+    {
+      "theme": "light",
+      "phase": "water",
+      "kind": "sunflower",
+      "stage": "5",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.5,
+          "cy": 0.27908495598032995
+        }
+      ]
+    },
+    {
+      "theme": "light",
+      "phase": "water",
+      "kind": "sunflower",
+      "stage": "5",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.5,
+          "cy": 0.27908495598032995
+        }
+      ]
+    },
+    {
+      "theme": "light",
+      "phase": "water",
+      "kind": "sunflower",
+      "stage": "5",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.49999982048483455,
+          "cy": 0.27908495598032995
+        }
+      ]
+    },
+    {
+      "theme": "light",
+      "phase": "water",
+      "kind": "sunflower",
+      "stage": "6",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.4996246337890625,
+          "cy": 0.24190680024587563
+        },
+        {
+          "cx": 0.7097419289981618,
+          "cy": 0.5109218849143401
+        }
+      ]
+    },
+    {
+      "theme": "light",
+      "phase": "water",
+      "kind": "sunflower",
+      "stage": "6",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.4996248133042279,
+          "cy": 0.24190680024587563
+        },
+        {
+          "cx": 0.7097419289981618,
+          "cy": 0.5109218849143401
+        }
+      ]
+    },
+    {
+      "theme": "light",
+      "phase": "water",
+      "kind": "sunflower",
+      "stage": "6",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.4996248133042279,
+          "cy": 0.24190680024587563
+        },
+        {
+          "cx": 0.7097419289981618,
+          "cy": 0.5109218849143401
+        }
+      ]
+    },
+    {
+      "theme": "dark",
+      "phase": "bloom",
+      "kind": "cactus",
+      "stage": "1",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "dark",
+      "phase": "bloom",
+      "kind": "cactus",
+      "stage": "1",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "dark",
+      "phase": "bloom",
+      "kind": "cactus",
+      "stage": "1",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "dark",
+      "phase": "bloom",
+      "kind": "cactus",
+      "stage": "2",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "dark",
+      "phase": "bloom",
+      "kind": "cactus",
+      "stage": "2",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "dark",
+      "phase": "bloom",
+      "kind": "cactus",
+      "stage": "2",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "dark",
+      "phase": "bloom",
+      "kind": "cactus",
+      "stage": "3",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "dark",
+      "phase": "bloom",
+      "kind": "cactus",
+      "stage": "3",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "dark",
+      "phase": "bloom",
+      "kind": "cactus",
+      "stage": "3",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "dark",
+      "phase": "bloom",
+      "kind": "cactus",
+      "stage": "4",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.514024263269761,
+          "cy": 0.3216041526213515
+        }
+      ]
+    },
+    {
+      "theme": "dark",
+      "phase": "bloom",
+      "kind": "cactus",
+      "stage": "4",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.49916884478400736,
+          "cy": 0.32148378633605645
+        }
+      ]
+    },
+    {
+      "theme": "dark",
+      "phase": "bloom",
+      "kind": "cactus",
+      "stage": "4",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.48551707548253675,
+          "cy": 0.32161220802268403
+        }
+      ]
+    },
+    {
+      "theme": "dark",
+      "phase": "bloom",
+      "kind": "cactus",
+      "stage": "5",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.5094817217658548,
+          "cy": 0.321829394035533
+        }
+      ]
+    },
+    {
+      "theme": "dark",
+      "phase": "bloom",
+      "kind": "cactus",
+      "stage": "5",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.4947872386259191,
+          "cy": 0.32179051123294733
+        }
+      ]
+    },
+    {
+      "theme": "dark",
+      "phase": "bloom",
+      "kind": "cactus",
+      "stage": "5",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.48128500545726105,
+          "cy": 0.3219911217084391
+        }
+      ]
+    },
+    {
+      "theme": "dark",
+      "phase": "bloom",
+      "kind": "cactus",
+      "stage": "6",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.5103424072265625,
+          "cy": 0.27851054390069796
+        },
+        {
+          "cx": 0.7381080178653493,
+          "cy": 0.3734528982094702
+        }
+      ]
+    },
+    {
+      "theme": "dark",
+      "phase": "bloom",
+      "kind": "cactus",
+      "stage": "6",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.494677734375,
+          "cy": 0.2789937130690831
+        },
+        {
+          "cx": 0.7247170840992647,
+          "cy": 0.369761820371986
+        }
+      ]
+    },
+    {
+      "theme": "dark",
+      "phase": "bloom",
+      "kind": "cactus",
+      "stage": "6",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.48029497931985293,
+          "cy": 0.27968942090339466
+        },
+        {
+          "cx": 0.7123334099264705,
+          "cy": 0.36658582348508884
+        }
+      ]
+    },
+    {
+      "theme": "dark",
+      "phase": "bloom",
+      "kind": "bonsai",
+      "stage": "1",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "dark",
+      "phase": "bloom",
+      "kind": "bonsai",
+      "stage": "1",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "dark",
+      "phase": "bloom",
+      "kind": "bonsai",
+      "stage": "1",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "dark",
+      "phase": "bloom",
+      "kind": "bonsai",
+      "stage": "2",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "dark",
+      "phase": "bloom",
+      "kind": "bonsai",
+      "stage": "2",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "dark",
+      "phase": "bloom",
+      "kind": "bonsai",
+      "stage": "2",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "dark",
+      "phase": "bloom",
+      "kind": "bonsai",
+      "stage": "3",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "dark",
+      "phase": "bloom",
+      "kind": "bonsai",
+      "stage": "3",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "dark",
+      "phase": "bloom",
+      "kind": "bonsai",
+      "stage": "3",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "dark",
+      "phase": "bloom",
+      "kind": "bonsai",
+      "stage": "4",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "dark",
+      "phase": "bloom",
+      "kind": "bonsai",
+      "stage": "4",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "dark",
+      "phase": "bloom",
+      "kind": "bonsai",
+      "stage": "4",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "dark",
+      "phase": "bloom",
+      "kind": "bonsai",
+      "stage": "5",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.38912714789895453,
+          "cy": 0.3267493853109137
+        },
+        {
+          "cx": 0.6571158914005055,
+          "cy": 0.5668356648556472
+        },
+        {
+          "cx": 0.29468298519358915,
+          "cy": 0.4823933712722081
+        }
+      ]
+    },
+    {
+      "theme": "dark",
+      "phase": "bloom",
+      "kind": "bonsai",
+      "stage": "5",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.3745526482077206,
+          "cy": 0.3288471977117703
+        },
+        {
+          "cx": 0.6483601289636949,
+          "cy": 0.5639942769471764
+        },
+        {
+          "cx": 0.28394057329963235,
+          "cy": 0.4861784804290926
+        }
+      ]
+    },
+    {
+      "theme": "dark",
+      "phase": "bloom",
+      "kind": "bonsai",
+      "stage": "5",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.36120677274816176,
+          "cy": 0.3310094533232868
+        },
+        {
+          "cx": 0.6402537626378676,
+          "cy": 0.5615237473231282
+        },
+        {
+          "cx": 0.27415179084329044,
+          "cy": 0.48982943617147845
+        }
+      ]
+    },
+    {
+      "theme": "dark",
+      "phase": "bloom",
+      "kind": "bonsai",
+      "stage": "6",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.38894114774816174,
+          "cy": 0.32674783619527287
+        },
+        {
+          "cx": 0.6569300034466912,
+          "cy": 0.5668344255631346
+        },
+        {
+          "cx": 0.29449696260340075,
+          "cy": 0.4823918221565673
+        }
+      ]
+    },
+    {
+      "theme": "dark",
+      "phase": "bloom",
+      "kind": "bonsai",
+      "stage": "6",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.37457670323988973,
+          "cy": 0.3288471977117703
+        },
+        {
+          "cx": 0.6483840044806986,
+          "cy": 0.5639942769471764
+        },
+        {
+          "cx": 0.28396462833180147,
+          "cy": 0.4861784804290926
+        }
+      ]
+    },
+    {
+      "theme": "dark",
+      "phase": "bloom",
+      "kind": "bonsai",
+      "stage": "6",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.36142362706801473,
+          "cy": 0.3310072845613896
+        },
+        {
+          "cx": 0.6404706169577206,
+          "cy": 0.561521578561231
+        },
+        {
+          "cx": 0.2743688246783088,
+          "cy": 0.4898272674095812
+        }
+      ]
+    },
+    {
+      "theme": "dark",
+      "phase": "bloom",
+      "kind": "sunflower",
+      "stage": "1",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "dark",
+      "phase": "bloom",
+      "kind": "sunflower",
+      "stage": "1",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "dark",
+      "phase": "bloom",
+      "kind": "sunflower",
+      "stage": "1",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "dark",
+      "phase": "bloom",
+      "kind": "sunflower",
+      "stage": "2",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "dark",
+      "phase": "bloom",
+      "kind": "sunflower",
+      "stage": "2",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "dark",
+      "phase": "bloom",
+      "kind": "sunflower",
+      "stage": "2",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "dark",
+      "phase": "bloom",
+      "kind": "sunflower",
+      "stage": "3",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "dark",
+      "phase": "bloom",
+      "kind": "sunflower",
+      "stage": "3",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "dark",
+      "phase": "bloom",
+      "kind": "sunflower",
+      "stage": "3",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "dark",
+      "phase": "bloom",
+      "kind": "sunflower",
+      "stage": "4",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.5169399485868567,
+          "cy": 0.3617439076380076
+        }
+      ]
+    },
+    {
+      "theme": "dark",
+      "phase": "bloom",
+      "kind": "sunflower",
+      "stage": "4",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.5030582203584559,
+          "cy": 0.36156173163864214
+        }
+      ]
+    },
+    {
+      "theme": "dark",
+      "phase": "bloom",
+      "kind": "sunflower",
+      "stage": "4",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.49029935948988973,
+          "cy": 0.3616174998017132
+        }
+      ]
+    },
+    {
+      "theme": "dark",
+      "phase": "bloom",
+      "kind": "sunflower",
+      "stage": "5",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.5166943494011375,
+          "cy": 0.3074783867385787
+        }
+      ]
+    },
+    {
+      "theme": "dark",
+      "phase": "bloom",
+      "kind": "sunflower",
+      "stage": "5",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.5018751256606158,
+          "cy": 0.30737428616751267
+        }
+      ]
+    },
+    {
+      "theme": "dark",
+      "phase": "bloom",
+      "kind": "sunflower",
+      "stage": "5",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.4882568359375,
+          "cy": 0.3075161851602157
+        }
+      ]
+    },
+    {
+      "theme": "dark",
+      "phase": "bloom",
+      "kind": "sunflower",
+      "stage": "6",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.5176265940946692,
+          "cy": 0.2715847576935279
+        },
+        {
+          "cx": 0.7166134105009191,
+          "cy": 0.5318380442972716
+        }
+      ]
+    },
+    {
+      "theme": "dark",
+      "phase": "bloom",
+      "kind": "sunflower",
+      "stage": "6",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.5020328297334559,
+          "cy": 0.2717012511897208
+        },
+        {
+          "cx": 0.7073475557215073,
+          "cy": 0.5282688818607234
+        }
+      ]
+    },
+    {
+      "theme": "dark",
+      "phase": "bloom",
+      "kind": "sunflower",
+      "stage": "6",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.48770751953125,
+          "cy": 0.2720594067258883
+        },
+        {
+          "cx": 0.6987570369944853,
+          "cy": 0.5251378093274112
+        }
+      ]
+    },
+    {
+      "theme": "dark",
+      "phase": "water",
+      "kind": "cactus",
+      "stage": "1",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "dark",
+      "phase": "water",
+      "kind": "cactus",
+      "stage": "1",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "dark",
+      "phase": "water",
+      "kind": "cactus",
+      "stage": "1",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "dark",
+      "phase": "water",
+      "kind": "cactus",
+      "stage": "2",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "dark",
+      "phase": "water",
+      "kind": "cactus",
+      "stage": "2",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "dark",
+      "phase": "water",
+      "kind": "cactus",
+      "stage": "2",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "dark",
+      "phase": "water",
+      "kind": "cactus",
+      "stage": "3",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "dark",
+      "phase": "water",
+      "kind": "cactus",
+      "stage": "3",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "dark",
+      "phase": "water",
+      "kind": "cactus",
+      "stage": "3",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "dark",
+      "phase": "water",
+      "kind": "cactus",
+      "stage": "4",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.5,
+          "cy": 0.2933973902978268
+        }
+      ]
+    },
+    {
+      "theme": "dark",
+      "phase": "water",
+      "kind": "cactus",
+      "stage": "4",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.5,
+          "cy": 0.2933973902978268
+        }
+      ]
+    },
+    {
+      "theme": "dark",
+      "phase": "water",
+      "kind": "cactus",
+      "stage": "4",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.5,
+          "cy": 0.2933973902978268
+        }
+      ]
+    },
+    {
+      "theme": "dark",
+      "phase": "water",
+      "kind": "cactus",
+      "stage": "5",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.4943525426528033,
+          "cy": 0.29387916526213514
+        }
+      ]
+    },
+    {
+      "theme": "dark",
+      "phase": "water",
+      "kind": "cactus",
+      "stage": "5",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.4943525426528033,
+          "cy": 0.29387916526213514
+        }
+      ]
+    },
+    {
+      "theme": "dark",
+      "phase": "water",
+      "kind": "cactus",
+      "stage": "5",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.49435245289522056,
+          "cy": 0.29387916526213514
+        }
+      ]
+    },
+    {
+      "theme": "dark",
+      "phase": "water",
+      "kind": "cactus",
+      "stage": "6",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.4939733168658088,
+          "cy": 0.24920158579869925
+        },
+        {
+          "cx": 0.7284522561465993,
+          "cy": 0.3447363219285374
+        }
+      ]
+    },
+    {
+      "theme": "dark",
+      "phase": "water",
+      "kind": "cactus",
+      "stage": "6",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.4939733168658088,
+          "cy": 0.24920158579869925
+        },
+        {
+          "cx": 0.7284520766314339,
+          "cy": 0.3447363219285374
+        }
+      ]
+    },
+    {
+      "theme": "dark",
+      "phase": "water",
+      "kind": "cactus",
+      "stage": "6",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.4939733168658088,
+          "cy": 0.24920158579869925
+        },
+        {
+          "cx": 0.7284520766314339,
+          "cy": 0.3447363219285374
+        }
+      ]
+    },
+    {
+      "theme": "dark",
+      "phase": "water",
+      "kind": "bonsai",
+      "stage": "1",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "dark",
+      "phase": "water",
+      "kind": "bonsai",
+      "stage": "1",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "dark",
+      "phase": "water",
+      "kind": "bonsai",
+      "stage": "1",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "dark",
+      "phase": "water",
+      "kind": "bonsai",
+      "stage": "2",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "dark",
+      "phase": "water",
+      "kind": "bonsai",
+      "stage": "2",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "dark",
+      "phase": "water",
+      "kind": "bonsai",
+      "stage": "2",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "dark",
+      "phase": "water",
+      "kind": "bonsai",
+      "stage": "3",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "dark",
+      "phase": "water",
+      "kind": "bonsai",
+      "stage": "3",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "dark",
+      "phase": "water",
+      "kind": "bonsai",
+      "stage": "3",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "dark",
+      "phase": "water",
+      "kind": "bonsai",
+      "stage": "4",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "dark",
+      "phase": "water",
+      "kind": "bonsai",
+      "stage": "4",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "dark",
+      "phase": "water",
+      "kind": "bonsai",
+      "stage": "4",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "dark",
+      "phase": "water",
+      "kind": "bonsai",
+      "stage": "5",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.3739773245418773,
+          "cy": 0.30112794208042515
+        },
+        {
+          "cx": 0.6513322718003217,
+          "cy": 0.5477251546637056
+        },
+        {
+          "cx": 0.2815256679759306,
+          "cy": 0.4655262903513642
+        }
+      ]
+    },
+    {
+      "theme": "dark",
+      "phase": "water",
+      "kind": "bonsai",
+      "stage": "5",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.3739773021024816,
+          "cy": 0.30112794208042515
+        },
+        {
+          "cx": 0.6513322718003217,
+          "cy": 0.5477251546637056
+        },
+        {
+          "cx": 0.2815256455365349,
+          "cy": 0.4655262903513642
+        }
+      ]
+    },
+    {
+      "theme": "dark",
+      "phase": "water",
+      "kind": "bonsai",
+      "stage": "5",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.3739773021024816,
+          "cy": 0.30112794208042515
+        },
+        {
+          "cx": 0.6513323615579044,
+          "cy": 0.5477251546637056
+        },
+        {
+          "cx": 0.2815257352941177,
+          "cy": 0.4655262903513642
+        }
+      ]
+    },
+    {
+      "theme": "dark",
+      "phase": "water",
+      "kind": "bonsai",
+      "stage": "6",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.3739773021024816,
+          "cy": 0.3015238960382297
+        },
+        {
+          "cx": 0.6513323615579044,
+          "cy": 0.5481207987983819
+        },
+        {
+          "cx": 0.2815257352941177,
+          "cy": 0.46592193448604063
+        }
+      ]
+    },
+    {
+      "theme": "dark",
+      "phase": "water",
+      "kind": "bonsai",
+      "stage": "6",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.37397748161764705,
+          "cy": 0.3015238960382297
+        },
+        {
+          "cx": 0.6513323615579044,
+          "cy": 0.5481207987983819
+        },
+        {
+          "cx": 0.2815257352941177,
+          "cy": 0.46592193448604063
+        }
+      ]
+    },
+    {
+      "theme": "dark",
+      "phase": "water",
+      "kind": "bonsai",
+      "stage": "6",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.37397748161764705,
+          "cy": 0.3015238960382297
+        },
+        {
+          "cx": 0.6513323615579044,
+          "cy": 0.5481207987983819
+        },
+        {
+          "cx": 0.2815257352941177,
+          "cy": 0.46592193448604063
+        }
+      ]
+    },
+    {
+      "theme": "dark",
+      "phase": "water",
+      "kind": "sunflower",
+      "stage": "1",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "dark",
+      "phase": "water",
+      "kind": "sunflower",
+      "stage": "1",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "dark",
+      "phase": "water",
+      "kind": "sunflower",
+      "stage": "1",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "dark",
+      "phase": "water",
+      "kind": "sunflower",
+      "stage": "2",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "dark",
+      "phase": "water",
+      "kind": "sunflower",
+      "stage": "2",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "dark",
+      "phase": "water",
+      "kind": "sunflower",
+      "stage": "2",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "dark",
+      "phase": "water",
+      "kind": "sunflower",
+      "stage": "3",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "dark",
+      "phase": "water",
+      "kind": "sunflower",
+      "stage": "3",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "dark",
+      "phase": "water",
+      "kind": "sunflower",
+      "stage": "3",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "dark",
+      "phase": "water",
+      "kind": "sunflower",
+      "stage": "4",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.5032887178308824,
+          "cy": 0.33526580345812185
+        }
+      ]
+    },
+    {
+      "theme": "dark",
+      "phase": "water",
+      "kind": "sunflower",
+      "stage": "4",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.5032890768612133,
+          "cy": 0.33526580345812185
+        }
+      ]
+    },
+    {
+      "theme": "dark",
+      "phase": "water",
+      "kind": "sunflower",
+      "stage": "4",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.5032890768612133,
+          "cy": 0.33526580345812185
+        }
+      ]
+    },
+    {
+      "theme": "dark",
+      "phase": "water",
+      "kind": "sunflower",
+      "stage": "5",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.5,
+          "cy": 0.27908495598032995
+        }
+      ]
+    },
+    {
+      "theme": "dark",
+      "phase": "water",
+      "kind": "sunflower",
+      "stage": "5",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.5,
+          "cy": 0.27908495598032995
+        }
+      ]
+    },
+    {
+      "theme": "dark",
+      "phase": "water",
+      "kind": "sunflower",
+      "stage": "5",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.49999982048483455,
+          "cy": 0.27908495598032995
+        }
+      ]
+    },
+    {
+      "theme": "dark",
+      "phase": "water",
+      "kind": "sunflower",
+      "stage": "6",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.4996246337890625,
+          "cy": 0.24190680024587563
+        },
+        {
+          "cx": 0.7097419289981618,
+          "cy": 0.5109218849143401
+        }
+      ]
+    },
+    {
+      "theme": "dark",
+      "phase": "water",
+      "kind": "sunflower",
+      "stage": "6",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.4996248133042279,
+          "cy": 0.24190680024587563
+        },
+        {
+          "cx": 0.7097419289981618,
+          "cy": 0.5109218849143401
+        }
+      ]
+    },
+    {
+      "theme": "dark",
+      "phase": "water",
+      "kind": "sunflower",
+      "stage": "6",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.4996248133042279,
+          "cy": 0.24190680024587563
+        },
+        {
+          "cx": 0.7097419289981618,
+          "cy": 0.5109218849143401
+        }
+      ]
+    },
+    {
+      "theme": "contrast",
+      "phase": "bloom",
+      "kind": "cactus",
+      "stage": "1",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "contrast",
+      "phase": "bloom",
+      "kind": "cactus",
+      "stage": "1",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "contrast",
+      "phase": "bloom",
+      "kind": "cactus",
+      "stage": "1",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "contrast",
+      "phase": "bloom",
+      "kind": "cactus",
+      "stage": "2",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "contrast",
+      "phase": "bloom",
+      "kind": "cactus",
+      "stage": "2",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "contrast",
+      "phase": "bloom",
+      "kind": "cactus",
+      "stage": "2",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "contrast",
+      "phase": "bloom",
+      "kind": "cactus",
+      "stage": "3",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "contrast",
+      "phase": "bloom",
+      "kind": "cactus",
+      "stage": "3",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "contrast",
+      "phase": "bloom",
+      "kind": "cactus",
+      "stage": "3",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "contrast",
+      "phase": "bloom",
+      "kind": "cactus",
+      "stage": "4",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.514024263269761,
+          "cy": 0.3216041526213515
+        }
+      ]
+    },
+    {
+      "theme": "contrast",
+      "phase": "bloom",
+      "kind": "cactus",
+      "stage": "4",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.49916884478400736,
+          "cy": 0.32148378633605645
+        }
+      ]
+    },
+    {
+      "theme": "contrast",
+      "phase": "bloom",
+      "kind": "cactus",
+      "stage": "4",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.48551707548253675,
+          "cy": 0.32161220802268403
+        }
+      ]
+    },
+    {
+      "theme": "contrast",
+      "phase": "bloom",
+      "kind": "cactus",
+      "stage": "5",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.5094817217658548,
+          "cy": 0.321829394035533
+        }
+      ]
+    },
+    {
+      "theme": "contrast",
+      "phase": "bloom",
+      "kind": "cactus",
+      "stage": "5",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.4947872386259191,
+          "cy": 0.32179051123294733
+        }
+      ]
+    },
+    {
+      "theme": "contrast",
+      "phase": "bloom",
+      "kind": "cactus",
+      "stage": "5",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.48128500545726105,
+          "cy": 0.3219911217084391
+        }
+      ]
+    },
+    {
+      "theme": "contrast",
+      "phase": "bloom",
+      "kind": "cactus",
+      "stage": "6",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.5103424072265625,
+          "cy": 0.27851054390069796
+        },
+        {
+          "cx": 0.7381080178653493,
+          "cy": 0.3734528982094702
+        }
+      ]
+    },
+    {
+      "theme": "contrast",
+      "phase": "bloom",
+      "kind": "cactus",
+      "stage": "6",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.494677734375,
+          "cy": 0.2789937130690831
+        },
+        {
+          "cx": 0.7247170840992647,
+          "cy": 0.369761820371986
+        }
+      ]
+    },
+    {
+      "theme": "contrast",
+      "phase": "bloom",
+      "kind": "cactus",
+      "stage": "6",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.48029497931985293,
+          "cy": 0.27968942090339466
+        },
+        {
+          "cx": 0.7123334099264705,
+          "cy": 0.36658582348508884
+        }
+      ]
+    },
+    {
+      "theme": "contrast",
+      "phase": "bloom",
+      "kind": "bonsai",
+      "stage": "1",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "contrast",
+      "phase": "bloom",
+      "kind": "bonsai",
+      "stage": "1",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "contrast",
+      "phase": "bloom",
+      "kind": "bonsai",
+      "stage": "1",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "contrast",
+      "phase": "bloom",
+      "kind": "bonsai",
+      "stage": "2",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "contrast",
+      "phase": "bloom",
+      "kind": "bonsai",
+      "stage": "2",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "contrast",
+      "phase": "bloom",
+      "kind": "bonsai",
+      "stage": "2",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "contrast",
+      "phase": "bloom",
+      "kind": "bonsai",
+      "stage": "3",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "contrast",
+      "phase": "bloom",
+      "kind": "bonsai",
+      "stage": "3",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "contrast",
+      "phase": "bloom",
+      "kind": "bonsai",
+      "stage": "3",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "contrast",
+      "phase": "bloom",
+      "kind": "bonsai",
+      "stage": "4",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "contrast",
+      "phase": "bloom",
+      "kind": "bonsai",
+      "stage": "4",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "contrast",
+      "phase": "bloom",
+      "kind": "bonsai",
+      "stage": "4",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "contrast",
+      "phase": "bloom",
+      "kind": "bonsai",
+      "stage": "5",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.38912714789895453,
+          "cy": 0.3267493853109137
+        },
+        {
+          "cx": 0.6571158914005055,
+          "cy": 0.5668356648556472
+        },
+        {
+          "cx": 0.29468298519358915,
+          "cy": 0.4823933712722081
+        }
+      ]
+    },
+    {
+      "theme": "contrast",
+      "phase": "bloom",
+      "kind": "bonsai",
+      "stage": "5",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.3745526482077206,
+          "cy": 0.3288471977117703
+        },
+        {
+          "cx": 0.6483601289636949,
+          "cy": 0.5639942769471764
+        },
+        {
+          "cx": 0.28394057329963235,
+          "cy": 0.4861784804290926
+        }
+      ]
+    },
+    {
+      "theme": "contrast",
+      "phase": "bloom",
+      "kind": "bonsai",
+      "stage": "5",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.36120677274816176,
+          "cy": 0.3310094533232868
+        },
+        {
+          "cx": 0.6402537626378676,
+          "cy": 0.5615237473231282
+        },
+        {
+          "cx": 0.27415179084329044,
+          "cy": 0.48982943617147845
+        }
+      ]
+    },
+    {
+      "theme": "contrast",
+      "phase": "bloom",
+      "kind": "bonsai",
+      "stage": "6",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.38894114774816174,
+          "cy": 0.32674783619527287
+        },
+        {
+          "cx": 0.6569300034466912,
+          "cy": 0.5668344255631346
+        },
+        {
+          "cx": 0.29449696260340075,
+          "cy": 0.4823918221565673
+        }
+      ]
+    },
+    {
+      "theme": "contrast",
+      "phase": "bloom",
+      "kind": "bonsai",
+      "stage": "6",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.37457670323988973,
+          "cy": 0.3288471977117703
+        },
+        {
+          "cx": 0.6483840044806986,
+          "cy": 0.5639942769471764
+        },
+        {
+          "cx": 0.28396462833180147,
+          "cy": 0.4861784804290926
+        }
+      ]
+    },
+    {
+      "theme": "contrast",
+      "phase": "bloom",
+      "kind": "bonsai",
+      "stage": "6",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.36142362706801473,
+          "cy": 0.3310072845613896
+        },
+        {
+          "cx": 0.6404706169577206,
+          "cy": 0.561521578561231
+        },
+        {
+          "cx": 0.2743688246783088,
+          "cy": 0.4898272674095812
+        }
+      ]
+    },
+    {
+      "theme": "contrast",
+      "phase": "bloom",
+      "kind": "sunflower",
+      "stage": "1",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "contrast",
+      "phase": "bloom",
+      "kind": "sunflower",
+      "stage": "1",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "contrast",
+      "phase": "bloom",
+      "kind": "sunflower",
+      "stage": "1",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "contrast",
+      "phase": "bloom",
+      "kind": "sunflower",
+      "stage": "2",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "contrast",
+      "phase": "bloom",
+      "kind": "sunflower",
+      "stage": "2",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "contrast",
+      "phase": "bloom",
+      "kind": "sunflower",
+      "stage": "2",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "contrast",
+      "phase": "bloom",
+      "kind": "sunflower",
+      "stage": "3",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "contrast",
+      "phase": "bloom",
+      "kind": "sunflower",
+      "stage": "3",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "contrast",
+      "phase": "bloom",
+      "kind": "sunflower",
+      "stage": "3",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": []
+    },
+    {
+      "theme": "contrast",
+      "phase": "bloom",
+      "kind": "sunflower",
+      "stage": "4",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.5169399485868567,
+          "cy": 0.3617439076380076
+        }
+      ]
+    },
+    {
+      "theme": "contrast",
+      "phase": "bloom",
+      "kind": "sunflower",
+      "stage": "4",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.5030582203584559,
+          "cy": 0.36156173163864214
+        }
+      ]
+    },
+    {
+      "theme": "contrast",
+      "phase": "bloom",
+      "kind": "sunflower",
+      "stage": "4",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.49029935948988973,
+          "cy": 0.3616174998017132
+        }
+      ]
+    },
+    {
+      "theme": "contrast",
+      "phase": "bloom",
+      "kind": "sunflower",
+      "stage": "5",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.5166943494011375,
+          "cy": 0.3074783867385787
+        }
+      ]
+    },
+    {
+      "theme": "contrast",
+      "phase": "bloom",
+      "kind": "sunflower",
+      "stage": "5",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.5018751256606158,
+          "cy": 0.30737428616751267
+        }
+      ]
+    },
+    {
+      "theme": "contrast",
+      "phase": "bloom",
+      "kind": "sunflower",
+      "stage": "5",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.4882568359375,
+          "cy": 0.3075161851602157
+        }
+      ]
+    },
+    {
+      "theme": "contrast",
+      "phase": "bloom",
+      "kind": "sunflower",
+      "stage": "6",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.5176265940946692,
+          "cy": 0.2715847576935279
+        },
+        {
+          "cx": 0.7166134105009191,
+          "cy": 0.5318380442972716
+        }
+      ]
+    },
+    {
+      "theme": "contrast",
+      "phase": "bloom",
+      "kind": "sunflower",
+      "stage": "6",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.5020328297334559,
+          "cy": 0.2717012511897208
+        },
+        {
+          "cx": 0.7073475557215073,
+          "cy": 0.5282688818607234
+        }
+      ]
+    },
+    {
+      "theme": "contrast",
+      "phase": "bloom",
+      "kind": "sunflower",
+      "stage": "6",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0,
+      "blooms": [
+        {
+          "cx": 0.48770751953125,
+          "cy": 0.2720594067258883
+        },
+        {
+          "cx": 0.6987570369944853,
+          "cy": 0.5251378093274112
+        }
+      ]
+    },
+    {
+      "theme": "contrast",
+      "phase": "water",
+      "kind": "cactus",
+      "stage": "1",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "contrast",
+      "phase": "water",
+      "kind": "cactus",
+      "stage": "1",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "contrast",
+      "phase": "water",
+      "kind": "cactus",
+      "stage": "1",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "contrast",
+      "phase": "water",
+      "kind": "cactus",
+      "stage": "2",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "contrast",
+      "phase": "water",
+      "kind": "cactus",
+      "stage": "2",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "contrast",
+      "phase": "water",
+      "kind": "cactus",
+      "stage": "2",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "contrast",
+      "phase": "water",
+      "kind": "cactus",
+      "stage": "3",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "contrast",
+      "phase": "water",
+      "kind": "cactus",
+      "stage": "3",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "contrast",
+      "phase": "water",
+      "kind": "cactus",
+      "stage": "3",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "contrast",
+      "phase": "water",
+      "kind": "cactus",
+      "stage": "4",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.5,
+          "cy": 0.2933973902978268
+        }
+      ]
+    },
+    {
+      "theme": "contrast",
+      "phase": "water",
+      "kind": "cactus",
+      "stage": "4",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.5,
+          "cy": 0.2933973902978268
+        }
+      ]
+    },
+    {
+      "theme": "contrast",
+      "phase": "water",
+      "kind": "cactus",
+      "stage": "4",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.5,
+          "cy": 0.2933973902978268
+        }
+      ]
+    },
+    {
+      "theme": "contrast",
+      "phase": "water",
+      "kind": "cactus",
+      "stage": "5",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.4943525426528033,
+          "cy": 0.29387916526213514
+        }
+      ]
+    },
+    {
+      "theme": "contrast",
+      "phase": "water",
+      "kind": "cactus",
+      "stage": "5",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.4943525426528033,
+          "cy": 0.29387916526213514
+        }
+      ]
+    },
+    {
+      "theme": "contrast",
+      "phase": "water",
+      "kind": "cactus",
+      "stage": "5",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.49435245289522056,
+          "cy": 0.29387916526213514
+        }
+      ]
+    },
+    {
+      "theme": "contrast",
+      "phase": "water",
+      "kind": "cactus",
+      "stage": "6",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.4939733168658088,
+          "cy": 0.24920158579869925
+        },
+        {
+          "cx": 0.7284522561465993,
+          "cy": 0.3447363219285374
+        }
+      ]
+    },
+    {
+      "theme": "contrast",
+      "phase": "water",
+      "kind": "cactus",
+      "stage": "6",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.4939733168658088,
+          "cy": 0.24920158579869925
+        },
+        {
+          "cx": 0.7284520766314339,
+          "cy": 0.3447363219285374
+        }
+      ]
+    },
+    {
+      "theme": "contrast",
+      "phase": "water",
+      "kind": "cactus",
+      "stage": "6",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.4939733168658088,
+          "cy": 0.24920158579869925
+        },
+        {
+          "cx": 0.7284520766314339,
+          "cy": 0.3447363219285374
+        }
+      ]
+    },
+    {
+      "theme": "contrast",
+      "phase": "water",
+      "kind": "bonsai",
+      "stage": "1",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "contrast",
+      "phase": "water",
+      "kind": "bonsai",
+      "stage": "1",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "contrast",
+      "phase": "water",
+      "kind": "bonsai",
+      "stage": "1",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "contrast",
+      "phase": "water",
+      "kind": "bonsai",
+      "stage": "2",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "contrast",
+      "phase": "water",
+      "kind": "bonsai",
+      "stage": "2",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "contrast",
+      "phase": "water",
+      "kind": "bonsai",
+      "stage": "2",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "contrast",
+      "phase": "water",
+      "kind": "bonsai",
+      "stage": "3",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "contrast",
+      "phase": "water",
+      "kind": "bonsai",
+      "stage": "3",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "contrast",
+      "phase": "water",
+      "kind": "bonsai",
+      "stage": "3",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "contrast",
+      "phase": "water",
+      "kind": "bonsai",
+      "stage": "4",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "contrast",
+      "phase": "water",
+      "kind": "bonsai",
+      "stage": "4",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "contrast",
+      "phase": "water",
+      "kind": "bonsai",
+      "stage": "4",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "contrast",
+      "phase": "water",
+      "kind": "bonsai",
+      "stage": "5",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.3739773245418773,
+          "cy": 0.30112794208042515
+        },
+        {
+          "cx": 0.6513322718003217,
+          "cy": 0.5477251546637056
+        },
+        {
+          "cx": 0.2815256679759306,
+          "cy": 0.4655262903513642
+        }
+      ]
+    },
+    {
+      "theme": "contrast",
+      "phase": "water",
+      "kind": "bonsai",
+      "stage": "5",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.3739773021024816,
+          "cy": 0.30112794208042515
+        },
+        {
+          "cx": 0.6513322718003217,
+          "cy": 0.5477251546637056
+        },
+        {
+          "cx": 0.2815256455365349,
+          "cy": 0.4655262903513642
+        }
+      ]
+    },
+    {
+      "theme": "contrast",
+      "phase": "water",
+      "kind": "bonsai",
+      "stage": "5",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.3739773021024816,
+          "cy": 0.30112794208042515
+        },
+        {
+          "cx": 0.6513323615579044,
+          "cy": 0.5477251546637056
+        },
+        {
+          "cx": 0.2815257352941177,
+          "cy": 0.4655262903513642
+        }
+      ]
+    },
+    {
+      "theme": "contrast",
+      "phase": "water",
+      "kind": "bonsai",
+      "stage": "6",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.3739773021024816,
+          "cy": 0.3015238960382297
+        },
+        {
+          "cx": 0.6513323615579044,
+          "cy": 0.5481207987983819
+        },
+        {
+          "cx": 0.2815257352941177,
+          "cy": 0.46592193448604063
+        }
+      ]
+    },
+    {
+      "theme": "contrast",
+      "phase": "water",
+      "kind": "bonsai",
+      "stage": "6",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.37397748161764705,
+          "cy": 0.3015238960382297
+        },
+        {
+          "cx": 0.6513323615579044,
+          "cy": 0.5481207987983819
+        },
+        {
+          "cx": 0.2815257352941177,
+          "cy": 0.46592193448604063
+        }
+      ]
+    },
+    {
+      "theme": "contrast",
+      "phase": "water",
+      "kind": "bonsai",
+      "stage": "6",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.37397748161764705,
+          "cy": 0.3015238960382297
+        },
+        {
+          "cx": 0.6513323615579044,
+          "cy": 0.5481207987983819
+        },
+        {
+          "cx": 0.2815257352941177,
+          "cy": 0.46592193448604063
+        }
+      ]
+    },
+    {
+      "theme": "contrast",
+      "phase": "water",
+      "kind": "sunflower",
+      "stage": "1",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "contrast",
+      "phase": "water",
+      "kind": "sunflower",
+      "stage": "1",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "contrast",
+      "phase": "water",
+      "kind": "sunflower",
+      "stage": "1",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "contrast",
+      "phase": "water",
+      "kind": "sunflower",
+      "stage": "2",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "contrast",
+      "phase": "water",
+      "kind": "sunflower",
+      "stage": "2",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "contrast",
+      "phase": "water",
+      "kind": "sunflower",
+      "stage": "2",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "contrast",
+      "phase": "water",
+      "kind": "sunflower",
+      "stage": "3",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "contrast",
+      "phase": "water",
+      "kind": "sunflower",
+      "stage": "3",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "contrast",
+      "phase": "water",
+      "kind": "sunflower",
+      "stage": "3",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": []
+    },
+    {
+      "theme": "contrast",
+      "phase": "water",
+      "kind": "sunflower",
+      "stage": "4",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.5032887178308824,
+          "cy": 0.33526580345812185
+        }
+      ]
+    },
+    {
+      "theme": "contrast",
+      "phase": "water",
+      "kind": "sunflower",
+      "stage": "4",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.5032890768612133,
+          "cy": 0.33526580345812185
+        }
+      ]
+    },
+    {
+      "theme": "contrast",
+      "phase": "water",
+      "kind": "sunflower",
+      "stage": "4",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.5032890768612133,
+          "cy": 0.33526580345812185
+        }
+      ]
+    },
+    {
+      "theme": "contrast",
+      "phase": "water",
+      "kind": "sunflower",
+      "stage": "5",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.5,
+          "cy": 0.27908495598032995
+        }
+      ]
+    },
+    {
+      "theme": "contrast",
+      "phase": "water",
+      "kind": "sunflower",
+      "stage": "5",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.5,
+          "cy": 0.27908495598032995
+        }
+      ]
+    },
+    {
+      "theme": "contrast",
+      "phase": "water",
+      "kind": "sunflower",
+      "stage": "5",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.49999982048483455,
+          "cy": 0.27908495598032995
+        }
+      ]
+    },
+    {
+      "theme": "contrast",
+      "phase": "water",
+      "kind": "sunflower",
+      "stage": "6",
+      "mood": "happy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.4996246337890625,
+          "cy": 0.24190680024587563
+        },
+        {
+          "cx": 0.7097419289981618,
+          "cy": 0.5109218849143401
+        }
+      ]
+    },
+    {
+      "theme": "contrast",
+      "phase": "water",
+      "kind": "sunflower",
+      "stage": "6",
+      "mood": "okay",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.4996248133042279,
+          "cy": 0.24190680024587563
+        },
+        {
+          "cx": 0.7097419289981618,
+          "cy": 0.5109218849143401
+        }
+      ]
+    },
+    {
+      "theme": "contrast",
+      "phase": "water",
+      "kind": "sunflower",
+      "stage": "6",
+      "mood": "droopy",
+      "filter": "none",
+      "soil_opacity": 0.8,
+      "blooms": [
+        {
+          "cx": 0.4996248133042279,
+          "cy": 0.24190680024587563
+        },
+        {
+          "cx": 0.7097419289981618,
+          "cy": 0.5109218849143401
+        }
+      ]
+    }
+  ]
+}

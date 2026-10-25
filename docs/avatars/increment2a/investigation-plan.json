@@ -1,0 +1,11 @@
+{
+  "declared_at_utc": "2026-10-25T06:06:08.928784+00:00",
+  "trigger": "Initial five desktop-cold LCPs [656,472,308,536,312] ms: median472, historical baseline324, +148ms exceeds100ms gate. Home cat runtime art is unchanged from increment1; investigate current fixture variability.",
+  "followup": "After initial20 complete, retain initial20 raw results and comparison intact; run counterbalanced 15-load diagnostic; collect exactly five additional full-duration desktop-cold samples, retain every sample and combine all10 desktop-cold samples with other configurations5 each. No selection of favorable runs; report initial and expanded results separately.",
+  "expanded_sample_count": 25,
+  "desktop_cold_runs": 10,
+  "other_configurations_runs": 5,
+  "stop_rule": "No additional acceptance sampling after this predefined five-run followup. If combined gates fail, leave batch blocked and explain unresolved gate.",
+  "superseded_before_followup_collection": true,
+  "superseded_reason": "A new warm-mobile p95 frame miss (33.4ms versus baseline warm16.8ms) requires fixing the known audio-sync MutationObserver feedback and collecting a fresh complete20 on final source. No five-run followup was collected. Preserve all original20 under pre-sync-fix."
+}

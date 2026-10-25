@@ -1,6 +1,6 @@
 # Avatar visual upgrade — phased execution plan for Sol
 
-Status: Increments 0 and 1 complete. Increment 2 is next. Existing baseline release blockers remain recorded.
+Status: Increments 0, 1 and 2A complete. Increment 2B is next. Existing baseline release blockers remain recorded.
 Created: 2026-10-25
 Repository: jongsky25/css-is
 Owner request: Material improvement to companion artwork, optional animal dress-up,
@@ -285,7 +285,7 @@ browser tests ran.
 |---|---|---|---|---|
 | 0 Baseline | Complete — baseline established; release gates remain unmet | `94269dd` + evidence/ledger revision | [51 sheets](avatars/sheets/index.json), [monthly overview](avatars/sheets/monthly-stage6-overview.png), [hero/moods](avatars/smoke/) | [Report](avatars/BASELINE_REPORT.md), [20 full samples + summary](avatars/application/summary.json), native hidden/touch check; existing frame, picker, timer and remount failures retained. |
 | 1 Cat + plant slice | Complete — measured relative gates passed | `58cf98f`, `0be7fc3`, `ad4e7ad`, `d464461` + evidence revision | [Bare comparison](avatars/increment1/before-after-bare-light.png), [motion](avatars/increment1/before-after-motion.webm), [51 seasonal sheets](avatars/increment1/sheets/index.json) | [Report](avatars/increment1/REPORT.md), [20-sample comparison](avatars/increment1/comparison.json); 102 tests, native touch/keyboard/filter checks, sampled callback trace passed; baseline lifecycle/picker blockers retained. |
-| 2A Cactus/bonsai/sunflower | In validation | Implementation revision | [Six-stage comparison](avatars/increment2a/before-after-bare-light.png) | Performance gates pending; 2B fern/mushroom/succulent remains pending. |
+| 2A Cactus/bonsai/sunflower | Complete — measured relative gates passed | `6064a82`, `1b453e0`, `28fbb7b` + evidence revision | [Six-stage comparison](avatars/increment2a/before-after-bare-light.png), [51 sheets](avatars/increment2a/sheets/index.json), [motion](avatars/increment2a/before-after-motion.webm) | [Report](avatars/increment2a/REPORT.md), [fresh 20 comparison](avatars/increment2a/comparison.json); 105 tests, 324 visual reaction cases, mature care/traces and native checks passed. Pre-fix failures retained; audio-sync feedback fixed. Remaining lifecycle/picker blockers persist. |
 | 2B Fern/mushroom/succulent | Pending | — | — | — |
 | 3A Ground animals + bird | Pending | — | — | — |
 | 3B Swimmers + owl + bat | Pending | — | — | — |
@@ -372,3 +372,47 @@ checks passed. No physical-device claim. Existing offscreen motion, hidden
 timers/initialization feedback, animated plant thumbnails and remount-listener
 retention remain release blockers for motion/integration work. Increment 2 is
 next; no deployment performed. See [the full report](avatars/increment1/REPORT.md).
+
+
+### Increment 2A completion — 2026-10-25
+
+Completed the first bounded plant batch permitted by increment 2: cactus, bonsai
+and sunflower at six stages each. Original outlined vectors use scoped leaf
+gradients and drawn shadows. Cactus gains arms, ribbing, buds/flowers and a basal
+pup; bonsai gains a curved connected branching structure, canopies and blossoms;
+sunflower gains cotyledons, heart-shaped foliage, a closed stage-4 bud and a
+secondary flowering branch. Seedling/Budding/In bloom labels and thresholds are
+preserved. Wet-soil care layers, seasonal pot decorations, bloom animation and
+empty pot accessory anchors remain compatible. Bloom positioning and animation
+use separate groups; sunflower headwear uses local coordinates.
+
+Accepted visual evidence includes 64px/170px comparisons, 51 light/dark/contrast
+monthly/seasonal sheets, a motion recording, and 324 stage/mood/reaction checks.
+The thirteen unchanged species are pixel-identical across 3,978 sheet cells.
+105 render/care/audio/onboarding/appearance tests passed. Mature synthetic plants
+passed real authenticated Home/Wellness care persistence and wet-soil checks;
+touch/keyboard/native hidden checks and three matched mature-plant traces passed.
+
+The initial 20 were **not accepted**: cold-desktop LCP median472 ms exceeded the
+baseline by 148 ms and one warm-mobile frame p95 reached33.4 ms. All raw results and
+traces are retained under `avatars/increment2a/pre-sync-fix/`. The proposed
+five-run extension was superseded before collection by a source fix and a fresh
+full 20. `AvatarAudio.sync()` now leaves unchanged icon text intact, preventing the
+child-list observer/init feedback; its cache key is v8.12. A regression test
+verifies idempotent sync in both sound states. Native hidden measurements show
+observer-scheduled init callbacks falling from 30 to 0 over 30 seconds; chase/idle/
+roam timers remain. No threshold was changed and no outlier was dropped.
+
+The fresh 20 on `28fbb7b` passed all measured relative byte, LCP, interaction,
+renderer-memory and frame gates against increment 0; each final mobile interaction
+sample met 33 ms. Raw medians/worst runs, source hashes, the art-only counterbalanced
+load diagnostic, attribution limits and remaining release blockers are in the
+[report](avatars/increment2a/REPORT.md). The primary timing fixture still uses
+cat; new mature plants have separate matched mobile traces, not five-run
+per-species Home benchmarks. No physical-phone or 60 fps claim, new dependency,
+external asset request, account/scoring change, wardrobe persistence or deployment.
+
+Next pending increment is **2B: fern, mushroom and succulent**, preserving their
+frond/cap/spore/plumping hooks. Remaining offscreen motion, chase/idle/roam timers,
+seven animated picker thumbnails and same-document listener retention still block
+release and must be resolved in motion/integration work.
