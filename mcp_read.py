@@ -213,6 +213,7 @@ def build_server(get_conn, origin):
                 report_url = st.event_rp_results_url(conn, item['id'])
                 data[-1]['survey_context'] = {
                     'survey_type': 3,
+                    'activity_id': report_url.rsplit('=',1)[-1] if report_url else None,
                     'activity_report_url': origin+report_url if report_url else None,
                     'response_count_basis': 'Management total across linked non-archived forms, not a verified Type 2 activity scorecard or unique-person count.',
                     'resource_persons': survey_reports.activity_resource_person_links(
@@ -390,6 +391,21 @@ def build_server(get_conn, origin):
         """
         return await perform('surveys:resource_person_trends:read', 'person_survey_trends',
                              lambda conn, user: survey_reports.compare_resource_person_surveys(conn, user, origin, resource_person_id, year))
+
+    @server.tool(title='Resource-person satisfaction at one activity', annotations=READ_ONLY)
+    async def get_resource_person_activity_survey(activity_id: int, resource_person_id: int) -> dict:
+        """Read one permitted person's Type 3 scorecard at one activity.
+
+        Use survey_context.activity_id and a linked resource_person_id from
+        list_activity_progress, or IDs from the signed-in source reports. Accept
+        current group representative/member IDs; never fall back to annual scores.
+        Match the per-person activity page: quality index 0–100, OSQ 1–4 and five
+        dimensions 1–7. Current hidden/Director, sample and capacity rules apply.
+        No respondent data, comments, other-person scores, rankings or writes.
+        """
+        return await perform('surveys:person_activities:read','person_activity_surveys',
+                             lambda conn,user:survey_reports.resource_person_activity_survey(
+                                 conn,user,origin,activity_id,resource_person_id))
 
     @server.tool(title='Annual resource-person survey summary', annotations=READ_ONLY)
     async def get_resource_person_survey_summary(resource_person_id: int, year: int) -> dict:

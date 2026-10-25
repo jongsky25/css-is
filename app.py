@@ -17702,7 +17702,8 @@ if _MCP_ENABLED:
         if not pending:
             return _mcp_consent_error('This request expired. Start again in ChatGPT.', 410)
         client_id, params = pending
-        labels = {'surveys:resource_person_trends:read': 'Permitted resource-person discovery and year-to-year satisfaction comparisons (no individual responses or peer rankings)',
+        labels = {'surveys:person_activities:read': 'Permitted resource-person satisfaction for one activity (no individual responses)',
+                  'surveys:resource_person_trends:read': 'Permitted resource-person discovery and year-to-year satisfaction comparisons (no individual responses or peer rankings)',
                   'surveys:csm_trends:read': 'Bureau-wide CSM satisfaction comparisons between consecutive months (no individual responses)',
                   'surveys:unit_trends:read': 'Unit activity satisfaction comparisons between consecutive quarters (no individual responses)',
                   'surveys:units:read': 'Unit discovery and quarterly activity satisfaction aggregates (no individual responses)',

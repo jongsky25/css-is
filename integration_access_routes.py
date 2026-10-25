@@ -31,6 +31,7 @@ MCP_PILOTS = (
     ('Individual activity scorecards', 'ACTIVITY_DETAILS', 'surveys:activity_details:read', ('find_survey_activities', 'get_activity_survey_detail')),
     ('Unit activity summaries', 'UNIT_SURVEYS', 'surveys:units:read', ('find_survey_units', 'get_unit_activity_survey_summary')),
     ('Unit quarterly comparisons', 'UNIT_TRENDS', 'surveys:unit_trends:read', ('compare_unit_activity_surveys',)),
+    ('Resource-person scores at one activity', 'PERSON_ACTIVITY_SURVEYS', 'surveys:person_activities:read', ('get_resource_person_activity_survey',)),
     ('Annual resource-person summaries', 'RESOURCE_PERSON_SURVEYS', 'surveys:resource_persons:read', ('get_resource_person_survey_summary',)),
     ('Resource-person discovery and comparisons', 'RESOURCE_PERSON_TRENDS', 'surveys:resource_person_trends:read', ('find_survey_resource_persons', 'compare_resource_person_surveys')),
     ('Unread work notices', 'NOTIFICATIONS', 'notifications:read', ('list_my_notifications',)),

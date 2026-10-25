@@ -18,18 +18,28 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "8.74"
+APP_VERSION = "8.75"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
-        "version": "8.74",
+        "version": "8.75",
         "date": "October 25, 2026",
         "summary": "Prepare optional Telegram updates for meeting and room changes.",
         "changes": [
             "The optional pilot can send current calendar changes and your room request decisions with signed-in source links.",
             "Shared conversations receive only approved calendar fields or anonymous room availability, with permissions checked again before sending.",
             "Blocked destinations pause notices, uncertain sends do not repeat automatically, and all pilots remain off by default."
+        ]
+    },
+    {
+        "version": "8.74",
+        "date": "October 25, 2026",
+        "summary": "Prepare resource-person scorecards for a single activity in ChatGPT.",
+        "changes": [
+            "Read one permitted resource person's five satisfaction dimensions and quality rating for one activity.",
+            "Each result links to that person's activity report and keeps annual results separate.",
+            "This optional pilot needs its own permission and activation; small samples stay protected."
         ]
     },
     {

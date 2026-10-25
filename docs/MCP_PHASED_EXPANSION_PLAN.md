@@ -160,3 +160,14 @@ summary tool. This closes the activity-to-person selection gap using existing
 tool registrations; it does not introduce one-activity Type 3 analytics or
 reinterpret annual results as an activity scorecard. Hosted acceptance remains
 pending, including the Regional BHW Summit Forum resource-person handoff.
+
+### Activity-specific Type 3 named-person scorecards — v8.74
+
+Implemented a separately consented/default-off one-person, one-current-activity
+read using the per-person activity page's quality index, OSQ and five dimensions.
+Current hidden/Director visibility, source engagement cutoff, full merged-group
+resolution and established small-sample/capacity guards apply. Existing outside
+activity metadata now carries an explicit activity/member ID for the new tool.
+Annual and activity-specific contracts remain distinct; no existing grant is
+widened. Live activation and per-person Summit/source-page acceptance remain
+pending consent, host switch and a supported ChatGPT catalog refresh.
