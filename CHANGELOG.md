@@ -1,3 +1,8 @@
+## 8.78 — October 25, 2026
+
+- Reconcile the confirmed T4.3.2 merge and prepare the T4.4 hosted pilot runbook, acceptance/evidence ledger and rollback procedure. Record 218 passing local mocked rehearsal checks separately from hosted proof.
+- Mark T4.4 blocked on supported hosted access, configured pilot credentials and an approved synthetic staff/group audience. No live activation, configuration change, webhook registration, provider message or business write is claimed; downstream work remains dependent on actual T4.4 verification.
+
 ## 8.77 — October 25, 2026
 
 - Add separate default-off private Telegram reminder lead times for confirmed timed calendar occurrences and own approved room bookings, using current channel choices, read consent and Manila quiet hours. Preserve existing email reminders, interactive replies, group update controls and independent digests.
