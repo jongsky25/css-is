@@ -57,9 +57,9 @@
 <label for="unit-test">Unit summary and comparison</label>
 <textarea id="unit-test" rows="4" readonly>Use Office Connect find_survey_units to find my chosen reporting unit. Use its returned unit_id with get_unit_activity_survey_summary and compare_unit_activity_surveys for Q3 2026. Show both source links and explain any withheld scores.</textarea>
 <p>Use the returned unit-filtered links to compare Q3 against Q2 2026. The bureau report does not verify a unit scorecard.</p>
-<label for="person-test">Resource-person annual summary and comparison</label>
-<textarea id="person-test" rows="5" readonly>Ask me which resource person to find, then use Office Connect find_survey_resource_persons. Use the exact returned resource_person_id with get_resource_person_survey_summary and compare_resource_person_surveys for 2026. Show the source links and explain any withheld scores.</textarea>
-<p>Use the returned person's dashboard links for 2026 and 2025. Check the quality index against that dashboard; it uses a different scale from activity scores.</p>
+<label for="person-test">Resource-person annual summary</label>
+<textarea id="person-test" rows="5" readonly>Use Office Connect list_activity_progress for July 23, 2026. Find Regional BHW Summit Forum and show its Type 3 activity report link and permitted linked resource persons. Ask me which person to check, then use their returned resource_person_id and annual_summary_year with get_resource_person_survey_summary. Label these as annual results that may include other activities. Explain any unavailable metadata or withheld scores.</textarea>
+<p>Use the activity report link for the Summit's own Type 3 results and the person's annual dashboard link to verify the annual quality index. Annual comparisons have a separate permission and pilot switch.</p>
 </section>
 </div>
 {% endblock %}

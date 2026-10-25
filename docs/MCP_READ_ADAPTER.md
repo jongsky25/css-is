@@ -202,3 +202,33 @@ A disabled server and an unavailable catalog are shown explicitly, rather than
 reported as a successful empty catalog. The page cannot inspect or refresh
 ChatGPT's saved tool snapshot; that remains a separate ChatGPT app-management
 step on a supported desktop browser.
+
+### Linked Type 3 person selection through activity progress (v8.71)
+
+`list_activity_progress` keeps its existing arguments and `activities:read`
+authority. An outside activity now includes `survey_context.survey_type=3`, the
+existing `event_rp_results_url` activity-filtered source link, and an explanation
+that its management response count spans linked non-archived forms rather than a
+verified Type 2 scorecard or unique-person total. The source link remains subject
+to browser sign-in/report permissions.
+
+`survey_context.resource_persons` is supplemental metadata. Require the same
+current OAuth grant's `surveys:resource_persons:read` permission and existing
+`CSS_MCP_RESOURCE_PERSON_SURVEYS_ENABLED=1` switch. Recheck current account/view
+and shared hidden-person/Director visibility; select only active linked Type 3
+forms from an activity already selected through the actor's permitted event
+feed. Deduplicate people, apply visibility before sorting/limiting to 25, and
+return `truncated` when further permitted people exist. Per-activity distinct
+person inventories above 2,000 refuse metadata without partial output. Archived
+directory people remain eligible for historical annual reports and are labelled.
+No form subjects, respondent identities/answers, contacts, counts per person,
+rankings or score fields are returned here.
+
+Use each returned `resource_person_id` and `annual_summary_year` with the existing
+`get_resource_person_survey_summary`. Annual scores can include other activities;
+they must not be labelled as the selected activity's scores. Use
+`activity_report_url` for that activity's own Type 3 source report. Missing person
+consent or a disabled pilot is explicit and does not block ordinary activity
+progress. No new tool, argument, scope, flag or stored grant widening is added;
+existing tool registrations can consume the extra response metadata after deploy.
+Hosted Summit person/annual verification remains pending.

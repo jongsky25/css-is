@@ -1,3 +1,10 @@
+## 8.71 — October 25, 2026
+
+- Extend existing MCP activity progress output for authorized outside activities with Type 3 classification, the source activity-filtered resource-person report link and explicit management-count semantics.
+- Return bounded linked resource-person ID/name metadata only after rechecking the same live grant's surveys:resource_persons:read scope, existing annual-survey pilot flag and current hidden/Director visibility. Filter before a 25-person output limit, deduplicate people, label archived directory entries and refuse oversized per-activity inventories without partial data.
+- Preserve activity feed authority, tool names/arguments, scopes and annual scoring. Publish no activity-specific scores, respondent details or contacts; annual-summary links and guidance distinguish annual results from one activity. Update the phone readiness example to use existing tools.
+- Verify actual OAuth/MCP calls with activities-only, disabled, dual-scope and revoked grants; cover hidden/Director filtering, owner feed isolation, ID-to-annual-summary handoff, truncation and read-only metadata projections.
+
 ## 8.70 — October 25, 2026
 
 - Add native current-selection CSV downloads to the personal Travel claims table, retaining applied filters, deterministic all-page order and the six table columns.

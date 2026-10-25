@@ -191,6 +191,12 @@ def build_server(get_conn, origin):
         owner, team_scope, _ = st.event_feed_scope(conn, user)
         events = st.list_events(conn, created_by=owner, team_scope=team_scope,
                                 start_date=start.isoformat(), end_date=end.isoformat())
+        # Supplemental metadata requires the SAME live grant, in the same read
+        # snapshot. An activities-only connection never acquires person access.
+        token = get_access_token()
+        person_scope = 'surveys:resource_persons:read'
+        person_access = bool(token and person_scope in token.scopes and
+                             mcp_auth.current_grant(conn, token.token, provider.resource, person_scope))
         data = []
         for item in events[offset:offset + limit]:
             data.append({'title': item['title'], 'date': item['event_date'],
@@ -203,6 +209,16 @@ def build_server(get_conn, origin):
                          'web_url': origin + ('/activities/' + item['event_token'] + '/manage'
                                               if item['event_kind'] == 'outside'
                                               else '/monitor/' + item['event_token'])})
+            if item['event_kind'] == 'outside':
+                report_url = st.event_rp_results_url(conn, item['id'])
+                data[-1]['survey_context'] = {
+                    'survey_type': 3,
+                    'activity_report_url': origin+report_url if report_url else None,
+                    'response_count_basis': 'Management total across linked non-archived forms, not a verified Type 2 activity scorecard or unique-person count.',
+                    'resource_persons': survey_reports.activity_resource_person_links(
+                        conn, user, origin, item['id'], item['event_date']) if person_access else
+                        {'availability': 'not_available', 'reason': 'permission_required',
+                         'required_scope': person_scope}}
         return {'available': True, 'data': data,
                 'next_offset': offset + limit if len(events) > offset + limit else None,
                 'start_date': start.isoformat(), 'end_date': end.isoformat()}
@@ -500,7 +516,14 @@ def build_server(get_conn, origin):
     @server.tool(title='List activity progress', annotations=READ_ONLY)
     async def list_activity_progress(start_date: str = '', end_date: str = '',
                                      limit: int = 10, offset: int = 0) -> dict:
-        """List permitted managed activities with schedule and aggregate registration progress; no answers or names."""
+        """List permitted managed activities, schedules and aggregate progress.
+
+        No respondent names or answers. Outside activities include a Type 3 report
+        link. Visible linked resource-person IDs/names require separate current
+        surveys:resource_persons:read consent and its annual-survey hosting switch.
+        Use those IDs with get_resource_person_survey_summary for annual results;
+        those annual scores must not be presented as this activity's scores.
+        """
         if type(limit) is not int or not 1 <= limit <= 25 or type(offset) is not int or not 0 <= offset <= 500:
             raise ValueError('Choose a page size from 1 to 25 and an offset from 0 to 500.')
         if ((start_date and (not isinstance(start_date, str) or not re.fullmatch(r'\d{4}-\d{2}-\d{2}', start_date)))
