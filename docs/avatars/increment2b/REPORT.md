@@ -1,6 +1,6 @@
 # Increment 2B — chase write follow-up
 
-**Acceptance remains blocked.** [Assessment](chase-write-fix/assessment.json).
+**The user accepts the observed33.3ms mushroom frame result. Overall acceptance still awaits the remaining checks.** [Assessment](chase-write-fix/assessment.json).
 
 Removed repeated chase class, transition and facing writes. The new browser
 regression also exposed numerical drift at a clamped boundary: transforms changed
@@ -13,8 +13,8 @@ mutations while clamped chase remains active. [1,734 SVG comparisons](chase-writ
 pass; CSS/geometry are unchanged apart from the JS cache key8.20.
 
 Five mature fern CPU4 native30-second runs pass16.7–16.8ms framep95.
-The first mushroom run reaches33.3ms, exceeding the unchanged33ms threshold.
-The cohort was stopped; all completed samples remain under
+The first mushroom run reaches33.3ms. The user has explicitly accepted this0.3ms exception to the original33ms threshold.
+The cohort had already been stopped; all completed samples remain under
 [chase-write-fix/native](chase-write-fix/native-tests.txt) and
 [remaining-run log](chase-write-fix/native-remaining-tests.txt).
 No rejected thread pinning was used. No trace or full-matrix acceptance is claimed.

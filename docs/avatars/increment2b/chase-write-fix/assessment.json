@@ -21,6 +21,11 @@
     ]
   },
   "gate_ms": 33,
-  "reason": "Mushroom first sample33.3ms exceeds33ms. Stop cohort; no subsequent trace/fullmatrix. Fern5pass is not overall acceptance. All completed samples retained.",
-  "next_step": "Resolve remaining mushroom frame failure and pass all original focused, trace and full-matrix gates before3A."
+  "reason": "Recorded mushroom33.3ms frame overrun accepted by user. Overall acceptance remains pending: remaining species samples, callback attribution and final-source full performance matrix have not completed.",
+  "next_step": "Complete remaining focused samples, callback attribution and final-source full matrix; retain original budgets except the explicitly accepted33.3ms result.",
+  "frame_exception": {
+    "authorized_by": "User: is .3ms significant? can we let it go and finally unblock 2b?",
+    "scope": "Accept the recorded mushroom33.3ms frame-p95 result as a0.3ms exception to the original33ms threshold. No exemption for larger failures,50ms attributable callbacks, or uncompleted acceptance checks.",
+    "reason": "0.3ms is approximately0.9% of a33ms frame interval;33.3ms is approximately30fps. This narrow observed overrun is not a meaningful practical regression."
+  }
 }

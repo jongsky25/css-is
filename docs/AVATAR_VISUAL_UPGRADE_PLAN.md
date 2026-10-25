@@ -1,6 +1,6 @@
 # Avatar visual upgrade — phased execution plan for Sol
 
-Status: Increments0,1,2A complete. 2B chase writes and numerical drift are fixed; seven browser checks and1,734 SVG checks pass. Fern five-run frame gate passes, but mushroom33.3ms exceeds33ms. Acceptance remains blocked;3A pending.
+Status: Increments0,1,2A complete. The user accepts the observed2B mushroom33.3ms frame-p95 result (0.3ms over the original budget). That result no longer blocks acceptance. Remaining focused samples, callback attribution and final-source full performance matrix must still complete before2B/3A advancement.
 Created: 2026-10-25
 Repository: jongsky25/css-is
 Owner request: Material improvement to companion artwork, optional animal dress-up,
@@ -617,3 +617,13 @@ matrices. No rejected pinning, relaxed budget or sample replacement.
 [Current report](avatars/increment2b/REPORT.md) and
 [assessment](avatars/increment2b/chase-write-fix/assessment.json) retain all results
 and measured working-tree source hashes on base df0cfb6. **2B still blocked;3A pending.**
+
+### User-approved frame exception
+
+The user explicitly accepts the recorded mushroom33.3ms frame-p95 result despite
+the original33ms threshold. The0.3ms overrun is approximately0.9%;33.3ms is
+approximately a30fps frame interval. This result no longer blocks2B. Preserve the
+raw measurement and original budget; record this as an explicit acceptance
+exception, not a changed historical result. Larger frame failures, the50ms
+avatar-attributable callback limit, and all uncompleted performance checks remain
+outstanding.2B cannot yet be marked complete solely from this exception.
