@@ -212,19 +212,35 @@ def get_reservation(conn, rid):
     return _row(conn, r) if r else None
 
 
-def get_by_ref(conn, ref_code):
-    r = conn.execute(f"SELECT {_COLS} FROM room_reservation WHERE ref_code=?",
-                     ((ref_code or "").strip().upper(),)).fetchone()
+def get_by_ref(conn, ref_code, *, requester_user_id=None):
+    sql = f"SELECT {_COLS} FROM room_reservation WHERE ref_code=?"
+    args = [(ref_code or "").strip().upper()]
+    if requester_user_id is not None:
+        sql += " AND requester_user_id=?"
+        args.append(requester_user_id)
+    r = conn.execute(sql, args).fetchone()
     return _row(conn, r) if r else None
 
 
-def list_for_user(conn, user_id, upcoming_only=False, today=None):
+def list_for_user(conn, user_id, upcoming_only=False, today=None, *, start=None, end=None, limit=None):
     sql = f"SELECT {_COLS} FROM room_reservation WHERE requester_user_id=?"
     args = [user_id]
     if upcoming_only:
         sql += " AND day >= ? AND status IN ('requested','approved')"
         args.append((today or tz.today_local()).isoformat())
-    return [_row(conn, r) for r in conn.execute(sql + " ORDER BY day DESC, id DESC", args)]
+    if start is not None:
+        sql += " AND day>=?"
+        args.append(_d(start).isoformat())
+    if end is not None:
+        sql += " AND day<=?"
+        args.append(_d(end).isoformat())
+    sql += " ORDER BY day DESC, id DESC"
+    if limit is not None:
+        if type(limit) is not int or not 1 <= limit <= 101:
+            raise ValueError("Invalid room list limit.")
+        sql += " LIMIT ?"
+        args.append(limit)
+    return [_row(conn, r) for r in conn.execute(sql, args)]
 
 
 def list_pending(conn):

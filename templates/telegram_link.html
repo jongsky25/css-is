@@ -13,7 +13,9 @@
 {% if calendar_ready %}
 <p>In your private chat, send <code>/calendar</code> for this week or <code>/calendar YYYY-MM-DD YYYY-MM-DD</code> for up to 31 days. Replies use Asia/Manila time. Use the next-page command in the reply to continue.</p>
 {% else %}<p>Private calendar lookup requires its optional pilot and your calendar read consent. Check with the hosting administrator if the pilot is paused.</p>{% endif %}
-<p>Room commands and calendar actions remain unavailable. Linking never grants access beyond your current Office Connect permissions.</p>
+{% if rooms_ready %}<p>Private room lookup: <code>/room_slots YYYY-MM-DD</code>, <code>/my_rooms</code>, or <code>/room_status CR-YYYY-NNNN</code>. Slot availability and your request status are read only; pending requests do not hold a booking.</p>
+{% else %}<p>Private room lookup requires its optional pilot and your room read consent.</p>{% endif %}
+<p>Create meetings and submit or change room requests in Office Connect. Linking never grants access beyond your current Office Connect permissions.</p>
 <form method="post" action="/account/telegram/disconnect">
 <input type="hidden" name="csrf" value="{{ csrf }}">
 <button type="submit">Disconnect Telegram and cancel pending links</button>
