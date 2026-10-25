@@ -428,7 +428,7 @@ def test_public_display_settings_are_keyboard_operable(shell_page):
 def test_search_dynamic_options_and_scoped_exit_keep_single_interactive_control(shell_page):
     import json
     page, state, *_ = shell_page
-    state['get_responses']['/api/search?q=zzrecord'] = json.dumps([
+    state['get_responses']['/api/search?q=zzrecord&suggest=1'] = json.dumps([
         {'title': 'ZZ record', 'url': '/help', 'hint': 'Synthetic record', 'section': 'People'}])
     goto(page)
     page.keyboard.press('Control+k')

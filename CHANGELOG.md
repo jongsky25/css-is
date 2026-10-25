@@ -1,8 +1,15 @@
-## 8.60 — October 25, 2026
+## 8.61 — October 25, 2026
 
 - Add default-off private /room_slots, /my_rooms and /room_status commands under separate current rooms.read consent. Reuse signed-in day_view, requester-qualified reference lookup and bounded own-request lists.
 - Match existing working-day, holiday, closure, pending/approved and booking-horizon rules; distinguish pending/standby from actual bookings. Omit titles, decision notes, contact details and other users' request identifiers from room replies.
 - Store query metadata only, render current source data at send time, preserve revocation/generation fences, and update private-account instructions plus the Telegram progress/runbook Markdown. No booking actions or group business reads.
+
+## 8.60 — October 25, 2026
+
+- Add local RapidFuzz 3.14.6 typo suggestions for permission-filtered page navigation, help guides and the existing active staff directory. Keep exact record search first and unchanged; label at most five close destinations, retain CSS scope, private basic-status rules and literal numbers/identifiers.
+- Bound approximate queries/candidates/text and refuse oversized approximate staff catalogs rather than rank a partial list. No stored index, external inference, new service, business writes or credential setup is introduced; document/attachment/private-record fuzzy search remains outside this pilot.
+- Keep exact local navigation available during search-service failure, remove stale empty placeholders and reject delayed responses after query clearing/reuse. Preserve native anchors, keyboard navigation, assistant cards, no-JavaScript page-search fallback and sanitized telemetry.
+- Prevent delayed automatic tours from taking focus from active search, preserve explicit replay, and version the changed browser assets. Pin/hash/audit the MIT dependency without upgrading existing packages; exercise native mobile, permissions and delayed-network flows.
 
 ## 8.59 — October 25, 2026
 

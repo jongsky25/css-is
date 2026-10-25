@@ -164,5 +164,10 @@
   if (lsGet(SEEN_KEY)) return;
   if (modalOpen()) return;          // defer to a later visit; don't stack on a modal
   // small delay so the page (and any deferred enhancements) settle first
-  setTimeout(start, 600);
+  setTimeout(function () {
+    // Recheck after the delay: a search may have opened since initialization.
+    var focused = document.activeElement;
+    if (modalOpen() || (focused && focused.closest('form[data-search]'))) return;
+    start();
+  }, 600);
 })();
