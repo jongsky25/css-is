@@ -18,7 +18,7 @@ import auth
 import storage as st
 
 
-SCOPES = frozenset({'surveys:csm_trends:read', 'surveys:unit_trends:read', 'surveys:units:read', 'activities:read', 'calendar:read', 'documents:read',
+SCOPES = frozenset({'surveys:resource_person_trends:read', 'surveys:csm_trends:read', 'surveys:unit_trends:read', 'surveys:units:read', 'activities:read', 'calendar:read', 'documents:read',
                     'supplies:read', 'travel:read', 'work:read', 'notifications:read', 'surveys:csm:read', 'surveys:activities:read', 'surveys:resource_persons:read', 'surveys:activity_details:read'})
 ACCESS_SECONDS = 3600
 REFRESH_SECONDS = 30 * 86400

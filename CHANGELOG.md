@@ -5,6 +5,12 @@
 - Keep exact local navigation available during search-service failure, remove stale empty placeholders and reject delayed responses after query clearing/reuse. Preserve native anchors, keyboard navigation, assistant cards, no-JavaScript page-search fallback and sanitized telemetry.
 - Prevent delayed automatic tours from taking focus from active search, preserve explicit replay, and version the changed browser assets. Pin/hash/audit the MIT dependency without upgrading existing packages; exercise native mobile, permissions and delayed-network flows.
 
+## 8.53 — October 25, 2026
+
+- Add permitted resource-person name/ID discovery and one-person consecutive-year Type 3 comparisons under separate surveys:resource_person_trends:read consent and default-off CSS_MCP_RESOURCE_PERSON_TRENDS_ENABLED.
+- Reuse current hidden/Director visibility and person-dashboard quality-index, OSQ and dimension calculations. Resolve one person's minimal metadata directly instead of loading the full directory for annual summaries.
+- Filter visibility before discovery pagination, bound the inventory and name output, and withhold both scorecards and changes if either year fails existing sample/capacity checks. Exclude contacts, respondent answers, comments, peer rankings and causal claims.
+
 ## 8.52 — October 25, 2026
 
 - Add compare_csm_months for a selected bureau-wide Type 1 submission month versus the immediately preceding month, under separate surveys:csm_trends:read consent and default-off CSS_MCP_CSM_TRENDS_ENABLED.
