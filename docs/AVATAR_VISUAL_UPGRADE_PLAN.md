@@ -1,6 +1,6 @@
 # Avatar visual upgrade — phased execution plan for Sol
 
-Status: Increments0,1,2A complete. Current2B verification still fails the50ms callback gate:141.084ms in a fern pointer-move listener. Current fern trace framep95 is16.8ms in four runs and33.3ms in one; the user-approved33.3ms mushroom exception remains accepted. Remaining checks and3A are pending.
+Status: Increments0,1,2A complete. 2B preference-cache fix c2f404f passes8 browser checks and1,734 SVG comparisons. Current chase callback still reaches210.804ms; old-art controls also stall. Performance acceptance remains unresolved; the user-approved33.3ms frame exception is retained.3A pending.
 Created: 2026-10-25
 Repository: jongsky25/css-is
 Owner request: Material improvement to companion artwork, optional animal dress-up,
@@ -642,3 +642,21 @@ failure. User acceptance of the recorded33.3ms frame result remains in force.
 [Verification assessment](avatars/increment2b/verification-current/assessment.json)
 and [all raw traces](avatars/increment2b/verification-current/traces/fern/summary.json)
 retain every sample; no CPU/GC subtraction or cause claim.
+
+### Increment2B preference-cache follow-up
+
+`c2f404f` removes repeated MediaQueryList.matches reads from input/timer handlers
+using a boolean updated by the live preference-change event. Legacy addListener
+is supported and queued curiosity frames recheck reduced motion. Eight browser
+checks pass, including zero input-time preference reads and live motion toggling;
+1,734 SVG equivalence checks pass.
+
+Five counterbalanced fern trace pairs still fail the50ms callback limit: current
+chase reaches210.804ms. Old-art controls also stall (framep95 up to99.9ms), so
+these results do not establish another application hot spot or a scheduling cause.
+Every sample remains in the [current report](avatars/increment2b/REPORT.md) and
+[assessment](avatars/increment2b/preference-cache-fix/assessment.json). Remaining
+trace/native/full-matrix checks were not started after failure. The user's33.3ms
+frame exception remains accepted; no callback/large-frame waiver. Establish a
+stable control fixture and attributable cause before further product changes.
+**2B acceptance unresolved;3A pending.**

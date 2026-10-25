@@ -1,0 +1,44 @@
+{
+  "status": "blocked",
+  "source_commit": "c2f404fa5aa58abebbe0127bbb537b5592993ce5",
+  "runtime_sha256": "c69e444b8d72fe84d0521d6ccabce07e9463209f5e451d96169b19aaca4191fb",
+  "functional_browser_tests": 8,
+  "svg_equivalence_checks": 1734,
+  "before": {
+    "callback_maxima_ms": [
+      81.97,
+      6.265,
+      6.399,
+      163.949,
+      158.973
+    ],
+    "frame_p95_ms": [
+      16.799999999999272,
+      16.700000000000728,
+      16.799999999999272,
+      99.90000000000146,
+      66.70000000000073
+    ]
+  },
+  "after": {
+    "callback_maxima_ms": [
+      20.765,
+      49.782,
+      210.804,
+      13.408,
+      13.204
+    ],
+    "frame_p95_ms": [
+      16.799999999999272,
+      33.400000000001455,
+      16.80000000000109,
+      16.799999999999272,
+      16.799999999999272
+    ]
+  },
+  "callback_limit_ms": 50,
+  "frame_exception": "User-approved recorded33.3ms overrun remains accepted; no waiver of callback limit or large frame failures.",
+  "result": "New preference cache removes input-time MediaQueryList.matches reads and preserves live reduced-motion behavior, but current chase callback still exceeds50ms. Old-art controls also show large stalls; underlying cause remains unproven.",
+  "not_run": "Remaining species traces, native cohorts and final full matrix stopped at failed prerequisite.",
+  "next_step": "Establish a stable control fixture and attribute residual chase-timer stalls before further product changes; retain all original acceptance requirements and user frame exception."
+}
