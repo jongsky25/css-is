@@ -5545,6 +5545,8 @@ def choose(request: Request, msg: str = "", view: str = "team"):
         "ladder": st.avatar_growth_ladder(avatar_kind, wstats),
         "growth_how": st.avatar_growth_actions(avatar_kind),
     })
+    if cal_page and cal_page['layout'] == 'schedule':
+        resp.headers.update({'Cache-Control': 'no-store', 'Pragma': 'no-cache'})
     return resp
 
 

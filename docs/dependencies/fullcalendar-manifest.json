@@ -1,0 +1,96 @@
+{
+  "package": "fullcalendar",
+  "version": "6.1.22",
+  "source": "https://registry.npmjs.org/fullcalendar/-/fullcalendar-6.1.22.tgz",
+  "integrity": "sha512-Nd5NGL2ELAQkRWMORFJIrrHJjdwlgfyw9ZXUB6O1j9biXhtDtdWZTqYS/7mk9mys10ehhNbSiwZetFZGiOC5rw==",
+  "license": "MIT",
+  "bundled_dependencies": {
+    "@fullcalendar/luxon3": "6.1.22",
+    "luxon": "3.7.2",
+    "@fullcalendar/core": "6.1.22",
+    "@fullcalendar/list": "6.1.22",
+    "@fullcalendar/daygrid": "6.1.22",
+    "@fullcalendar/timegrid": "6.1.22",
+    "@fullcalendar/multimonth": "6.1.22",
+    "@fullcalendar/interaction": "6.1.22",
+    "preact": "10.12.1"
+  },
+  "dependency_provenance": {
+    "@fullcalendar/luxon3": {
+      "version": "6.1.22",
+      "source": "https://registry.npmjs.org/@fullcalendar/luxon3/-/luxon3-6.1.22.tgz",
+      "integrity": "sha512-or43T5SQAzb3d8U6Th6Q3vclas8rGEYSsJsUohC+jySJyJuqCLcqgW+NnbrSYIYXx3MUUk32h8au+BEjfjuo1A==",
+      "license": "MIT"
+    },
+    "luxon": {
+      "version": "3.7.2",
+      "source": "https://registry.npmjs.org/luxon/-/luxon-3.7.2.tgz",
+      "integrity": "sha512-vtEhXh/gNjI9Yg1u4jX/0YVPMvxzHuGgCm6tC5kZyb08yjGWGnqAjGJvcXbqQR2P3MyMEFnRbpcdFS6PBcLqew==",
+      "license": "MIT"
+    },
+    "@fullcalendar/core": {
+      "version": "6.1.22",
+      "source": "https://registry.npmjs.org/@fullcalendar/core/-/core-6.1.22.tgz",
+      "integrity": "sha512-ju5PJUE++zr8XXCGtlXlrodF6doUy9BDfzx+VmE0B+XDBM2A5cUi/aU3M1ANfw/StmKhwqew7Ps7bXMiv/JREg==",
+      "license": "MIT"
+    },
+    "@fullcalendar/list": {
+      "version": "6.1.22",
+      "source": "https://registry.npmjs.org/@fullcalendar/list/-/list-6.1.22.tgz",
+      "integrity": "sha512-7e5kZbeT3fhtXsts6VMQxbGtpoCFOZCxrIckHfn5VTrRh8Up0TKoYj/AOaIj94uz0qebWgaLXwd9Ijiu3uTwjg==",
+      "license": "MIT"
+    },
+    "@fullcalendar/daygrid": {
+      "version": "6.1.22",
+      "source": "https://registry.npmjs.org/@fullcalendar/daygrid/-/daygrid-6.1.22.tgz",
+      "integrity": "sha512-cpom5+bAvsGG5nX+snsCtpMIyyhAr+QlseD9mhz5Vq7rMBTzx43mSkz6IBvQ3vz5h2idbDmT1cggEn/dzZwt9Q==",
+      "license": "MIT"
+    },
+    "@fullcalendar/timegrid": {
+      "version": "6.1.22",
+      "source": "https://registry.npmjs.org/@fullcalendar/timegrid/-/timegrid-6.1.22.tgz",
+      "integrity": "sha512-gNMtkXrkfN3iszXty+pYbJwGxcozL0xBVKYmEd1lm0DMEbrffpVJyV+vifmtl/eIbWCNRWrMWUtGLbYy/ukykA==",
+      "license": "MIT"
+    },
+    "@fullcalendar/multimonth": {
+      "version": "6.1.22",
+      "source": "https://registry.npmjs.org/@fullcalendar/multimonth/-/multimonth-6.1.22.tgz",
+      "integrity": "sha512-txEXhT3d6b9GFiiX9rhY4Z77KmT87WQfmTqzoi7ZyDn/q+ey5dlHPK2C9fY8dlB2cJWHdvDNYHFHsj1F3to6sQ==",
+      "license": "MIT"
+    },
+    "@fullcalendar/interaction": {
+      "version": "6.1.22",
+      "source": "https://registry.npmjs.org/@fullcalendar/interaction/-/interaction-6.1.22.tgz",
+      "integrity": "sha512-r8Njw8aPNFGRwDjVAh9NTh3ZJib5tcUoLi/BM4uYJt5Cs9tDiirmImaqxhx56hclVFX7ktd5CdaMX0+ArSbm5A==",
+      "license": "MIT"
+    },
+    "preact": {
+      "version": "10.12.1",
+      "source": "https://registry.npmjs.org/preact/-/preact-10.12.1.tgz",
+      "integrity": "sha512-l8386ixSsBdbreOAkqtrwqHwdvR35ID8c3rKPa8lCWuO86dBi32QWHV4vfsZK1utLLFMvw+Z5Ad4XLkZzchscg==",
+      "license": "MIT"
+    }
+  },
+  "upstream_lock": "https://github.com/fullcalendar/fullcalendar/blob/v6.1.22/pnpm-lock.yaml",
+  "files": {
+    "fullcalendar.min.js": "65f927f1802cb35428b9c5e2a8d2276633880a89ee5ea5f9a7727f79892786ea",
+    "licenses/fullcalendar-core.txt": "4c0b0dae26c99e3b11be70b990a703be4deb75e21884104582e0e217786d3209",
+    "licenses/fullcalendar-daygrid.txt": "4c0b0dae26c99e3b11be70b990a703be4deb75e21884104582e0e217786d3209",
+    "licenses/fullcalendar-interaction.txt": "4c0b0dae26c99e3b11be70b990a703be4deb75e21884104582e0e217786d3209",
+    "licenses/fullcalendar-list.txt": "4c0b0dae26c99e3b11be70b990a703be4deb75e21884104582e0e217786d3209",
+    "licenses/fullcalendar-luxon3.txt": "4c0b0dae26c99e3b11be70b990a703be4deb75e21884104582e0e217786d3209",
+    "licenses/fullcalendar-multimonth.txt": "4c0b0dae26c99e3b11be70b990a703be4deb75e21884104582e0e217786d3209",
+    "licenses/fullcalendar-timegrid.txt": "4c0b0dae26c99e3b11be70b990a703be4deb75e21884104582e0e217786d3209",
+    "licenses/fullcalendar.txt": "4c0b0dae26c99e3b11be70b990a703be4deb75e21884104582e0e217786d3209",
+    "licenses/luxon.txt": "6cb2f2bf697ee9c6fa9eb8f227c63ee6e7a3cba42d4717f14c745ef9b6cbc006",
+    "licenses/preact.txt": "1fe6958409c8c257a70c587a18b6f7f412b179b456630790d30b2ec9a8e4b7d4",
+    "luxon.min.js": "516c5fea5c82bdf1fb5c472b9aafdca9cda6dc806b2c12ce9d62c2e0fc348104",
+    "luxon3-plugin.min.js": "8f64e248758ddc51efb09b2819e63d0fc5ef5ade58bdcda4cbfd5ae85ae391ce",
+    "fullcalendar-with-timezone.js": "d76df081b29c33489c94a7bbe43934788ff11222a8a66301be8648b63cff4f8f"
+  },
+  "bundle_sources": [
+    "luxon.min.js",
+    "fullcalendar.min.js",
+    "luxon3-plugin.min.js"
+  ]
+}

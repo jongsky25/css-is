@@ -152,6 +152,7 @@
   document.addEventListener("keydown", function (ev) {
     if (ev.defaultPrevented || ev.ctrlKey || ev.metaKey || ev.altKey) return;
     var t = ev.target;
+    if (t && t.closest && t.closest('[data-calendar-schedule]')) return;
     if (t && (/^(INPUT|SELECT|TEXTAREA)$/.test(t.tagName) || t.isContentEditable)) return;
     if (document.querySelector("dialog[open]")) return;
     var nav = document.querySelectorAll(".cal-nav a");

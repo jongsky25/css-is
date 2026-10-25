@@ -113,3 +113,24 @@ def test_presentation_gate_rejects_incomplete_browser_graph(tmp_path,fault):
     (target/'pptxgenjs-manifest.json').write_text(json.dumps(manifest))
     with pytest.raises(ValueError,match='provenance'):
         check_vendor(tmp_path,name='pptxgenjs',package='pptxgenjs')
+
+
+@pytest.mark.parametrize('fault',['missing_dependency','changed_bundle'])
+def test_calendar_gate_rejects_missing_transitive_package_or_unreviewed_bundle(tmp_path,fault):
+    from pathlib import Path
+    import shutil
+    root=Path(__file__).resolve().parents[1]
+    manifest=check_vendor(name='fullcalendar',package='fullcalendar')
+    target=tmp_path/'docs/dependencies';target.mkdir(parents=True)
+    if fault=='missing_dependency':
+        del manifest['bundled_dependencies']['preact']
+    else:
+        vendor=tmp_path/'static/vendor/fullcalendar'
+        shutil.copytree(root/'static/vendor/fullcalendar',vendor)
+        extra=(vendor/'fullcalendar-with-timezone.js').read_bytes()+b'\n/* unreviewed derivative */'
+        (vendor/'fullcalendar-with-timezone.js').write_bytes(extra)
+        # Even updating the file receipt cannot bypass derivation from upstream.
+        manifest['files']['fullcalendar-with-timezone.js']=hashlib.sha256(extra).hexdigest()
+    (target/'fullcalendar-manifest.json').write_text(json.dumps(manifest))
+    with pytest.raises(ValueError,match='provenance|reviewed sources'):
+        check_vendor(tmp_path,name='fullcalendar',package='fullcalendar')

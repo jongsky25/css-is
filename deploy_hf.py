@@ -76,6 +76,7 @@ RUNTIME_PY = [
     "tours.py", "ui_telemetry.py", "ux_handoff.py", "ai_core.py", "ai_facts.py", "ai_report_drafts.py", "qa_rules.py",
     "wellness_register.py", "work_arrangement_annex.py",
     "work_arrangement_backfill.py", "office_connect.py",
+    "calendar_schedule.py",
     "telegram_storage.py", "telegram_bot.py", "telegram_transport.py", "telegram_links.py", "telegram_link_routes.py", "telegram_groups.py", "telegram_group_routes.py", "telegram_calendar.py",
     "integration_api.py", "integration_operations.py", "integration_access.py", "integration_access_routes.py", "integration_changes.py", "work_reads.py", "search_typo.py",
     "mcp_auth.py", "mcp_read.py", "survey_reports.py",
