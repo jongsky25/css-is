@@ -1,9 +1,14 @@
-## 8.55 — October 25, 2026
+## 8.57 — October 25, 2026
 
 - Add local RapidFuzz 3.14.6 typo suggestions for permission-filtered page navigation, help guides and the existing active staff directory. Keep exact record search first and unchanged; label at most five close destinations, retain CSS scope, private basic-status rules and literal numbers/identifiers.
 - Bound approximate queries/candidates/text and refuse oversized approximate staff catalogs rather than rank a partial list. No stored index, external inference, new service, business writes or credential setup is introduced; document/attachment/private-record fuzzy search remains outside this pilot.
 - Keep exact local navigation available during search-service failure, remove stale empty placeholders and reject delayed responses after query clearing/reuse. Preserve native anchors, keyboard navigation, assistant cards, no-JavaScript page-search fallback and sanitized telemetry.
 - Prevent delayed automatic tours from taking focus from active search, preserve explicit replay, and version the changed browser assets. Pin/hash/audit the MIT dependency without upgrading existing packages; exercise native mobile, permissions and delayed-network flows.
+
+## 8.55 — October 25, 2026
+
+- Add inert two-way Telegram connection, update, operation and delivery tables with uniqueness, foreign keys and bounded states. Add independent default-off capability switches without a receiver, sender or business action.
+- Fence every snapshot recovery with fresh connection generations; cancel pending actions/updates/sends, clear input payloads and claims, preserve committed receipts, and mark interrupted sending uncertain. Preserve existing Apprise digest configuration.
 
 ## 8.54 — October 25, 2026
 
