@@ -390,15 +390,93 @@ def can_view_resource_person(user, person):
                  not (person.get('hidden_public') or st.is_bureau_director(person))))
 
 
-def resource_person_summary(conn, user, origin, resource_person_id, year):
+def _survey_person(conn, user, resource_person_id):
     user = permissions.actor(conn, user)
-    if (type(resource_person_id) is not int or not 1 <= resource_person_id <= 9223372036854775807
-            or type(year) is not int or not 1900 <= year <= 9998):
-        raise ValueError('Choose a valid resource-person ID and year.')
-    # Check eligibility before returning either a name or disabled-state metadata.
-    person = st.get_rp(conn, resource_person_id)
+    if type(resource_person_id) is not int or not 1 <= resource_person_id <= 9223372036854775807:
+        raise ValueError('Choose a valid resource-person ID.')
+    fields = ('id', 'name', 'hidden_public', 'position', 'designation', 'archived_at')
+    row = conn.execute('SELECT id,name,hidden_public,position,designation,archived_at '
+                       'FROM resource_person WHERE id=?', (resource_person_id,)).fetchone()
+    person = dict(zip(fields, row)) if row else None
     if not can_view_resource_person(user, person):
         raise permissions.Denied('Resource person not found or unavailable to you.')
+    return person
+
+
+def find_survey_resource_persons(conn, user, origin, query='', limit=10, offset=0):
+    user = permissions.actor(conn, user)
+    if not auth.can(user['role'], 'view'):
+        raise permissions.Denied('Report unavailable.')
+    if (not isinstance(query, str) or len(query) > 120 or type(limit) is not int
+            or not 1 <= limit <= 25 or type(offset) is not int or not 0 <= offset <= 2000):
+        raise ValueError('Use up to 120 search characters and a page size from 1 to 25.')
+    if os.environ.get('CSS_MCP_RESOURCE_PERSON_TRENDS_ENABLED') != '1':
+        return {'availability': 'not_available'}
+    fields = ('id', 'name', 'hidden_public', 'position', 'designation', 'archived_at')
+    rows = conn.execute('SELECT id,name,hidden_public,position,designation,archived_at '
+                        'FROM resource_person ORDER BY id LIMIT 2001').fetchall()
+    if len(rows) > 2000:
+        return {'availability': 'not_available', 'reason': 'capacity_limit'}
+    needle = query.strip().casefold()
+    people = [dict(zip(fields, row)) for row in rows]
+    people = [p for p in people if can_view_resource_person(user, p)
+              and needle in p['name'].casefold()]
+    people.sort(key=lambda p:(p['name'].casefold(), p['id']))
+    return {'availability': 'available', 'as_of': tz.now_iso(),
+            'data': [{'resource_person_id':str(p['id']), 'name':p['name'][:250],
+                      'name_truncated':len(p['name']) > 250, 'archived':bool(p['archived_at']),
+                      'web_url':origin + f"/dashboard/people/{p['id']}"}
+                     for p in people[offset:offset+limit]],
+            'next_offset':offset+limit if len(people) > offset+limit else None,
+            'note':'Permitted directory metadata only, including historical people; does not imply survey responses or publish scores/ranks. Each page is a fresh snapshot.'}
+
+
+def compare_resource_person_surveys(conn, user, origin, resource_person_id, year):
+    _survey_person(conn, user, resource_person_id)
+    if type(year) is not int or not 1901 <= year <= 9998:
+        raise ValueError('Choose a year from 1901 through 9998 to compare with its previous year.')
+    if os.environ.get('CSS_MCP_RESOURCE_PERSON_TRENDS_ENABLED') != '1':
+        return {'availability': 'not_available'}
+    previous = _resource_person_summary(conn, user, origin, resource_person_id, year-1,
+                                        enabled_flag='CSS_MCP_RESOURCE_PERSON_TRENDS_ENABLED')
+    current = _resource_person_summary(conn, user, origin, resource_person_id, year,
+                                       enabled_flag='CSS_MCP_RESOURCE_PERSON_TRENDS_ENABLED')
+    result = {'as_of':tz.now_iso(), 'survey_type':3,
+              'comparison_basis':'One currently permitted resource person, selected activity-start year versus immediately preceding year.',
+              'delta_basis':'Current minus previous. Quality-index points on 0–100; OSQ mean points on 1–4; dimension mean points on 1–7. Not percent growth.',
+              'note':'Years may include different activities and response mixes. Counts are not unique people. No peer ranking, causal or statistical-significance claim.'}
+    if any(p.get('state') != 'rated' for p in (previous,current)):
+        allowed = {'availability', 'reason', 'state', 'web_url', 'start_date', 'end_date',
+                   'submissions', 'report_submissions', 'rated_respondents', 'quality_respondents',
+                   'minimum_sample', 'scope', 'date_basis', 'resource_person_id', 'name'}
+        return dict(result, availability='not_available' if any(
+            p.get('availability') != 'available' for p in (previous,current)) else 'available',
+                    comparison_state='not_comparable',
+                    previous={k:v for k,v in previous.items() if k in allowed},
+                    current={k:v for k,v in current.items() if k in allowed})
+
+    def delta(before, after):
+        return after-before if before is not None and after is not None else None
+
+    prior_dims = {d['dimension']:d['mean'] for d in previous['dimensions']}
+    return dict(result, availability='available', comparison_state='comparable', previous=previous, current=current,
+                changes={'quality_index_points':delta(previous['quality_index'], current['quality_index']),
+                         'osq_mean':delta(previous['osq_mean'], current['osq_mean']),
+                         'dimensions':[{'dimension':d['dimension'],
+                                        'mean_change':delta(prior_dims.get(d['dimension']), d['mean'])}
+                                       for d in current['dimensions']]})
+
+
+def resource_person_summary(conn, user, origin, resource_person_id, year):
+    return _resource_person_summary(conn, user, origin, resource_person_id, year)
+
+
+def _resource_person_summary(conn, user, origin, resource_person_id, year,
+                             enabled_flag='CSS_MCP_RESOURCE_PERSON_SURVEYS_ENABLED'):
+    user = permissions.actor(conn, user)
+    if type(year) is not int or not 1900 <= year <= 9998:
+        raise ValueError('Choose a valid resource-person year.')
+    person = _survey_person(conn, user, resource_person_id)
     start, end = f'{year}-01-01', f'{year}-12-31'
     result = {'survey_type': 3, 'resource_person_id': str(resource_person_id),
               'scope': 'one_resource_person',
@@ -406,7 +484,7 @@ def resource_person_summary(conn, user, origin, resource_person_id, year):
               'as_of': tz.now_iso(), 'minimum_sample': MIN_SAMPLE,
               'web_url': origin + f'/dashboard/people/{resource_person_id}?' + urlencode({'period': f'year:{year}'}),
               'scoring': 'Person-dashboard quality index (0–100): mean per respondent of normalized B items (1–7) and C (1–4), then mean across respondents. A is excluded. Dimension means use the Type 3 map.'}
-    if os.environ.get('CSS_MCP_RESOURCE_PERSON_SURVEYS_ENABLED') != '1':
+    if os.environ.get(enabled_flag) != '1':
         return dict(result, availability='not_available')
     result['name'] = person['name']
     selected = conn.execute('''SELECT r.id FROM response r JOIN form_instance fi ON fi.id=r.form_instance_id

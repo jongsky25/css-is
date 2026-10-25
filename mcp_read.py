@@ -352,6 +352,29 @@ def build_server(get_conn, origin):
         return await perform('surveys:activity_details:read', 'survey_activity_details',
                              lambda conn, user: survey_reports.activity_detail(conn, user, origin, activity_id))
 
+    @server.tool(title='Find permitted survey resource persons', annotations=READ_ONLY)
+    async def find_survey_resource_persons(query: str = '', limit: int = 10, offset: int = 0) -> dict:
+        """Find permitted person IDs by name, including historical directory people.
+
+        Metadata only, up to 25 results. Current hidden/Director rules apply before
+        search/pagination. No contacts, scores or ranks. Use returned ID for annual
+        summaries or compare_resource_person_surveys; the annual read has separate consent.
+        """
+        return await perform('surveys:resource_person_trends:read', 'person_survey_trends',
+                             lambda conn, user: survey_reports.find_survey_resource_persons(conn, user, origin, query, limit, offset))
+
+    @server.tool(title='Compare annual resource-person satisfaction', annotations=READ_ONLY)
+    async def compare_resource_person_surveys(resource_person_id: int, year: int) -> dict:
+        """Compare one permitted person's selected Type 3 year with its previous year.
+
+        Discover the ID with find_survey_resource_persons. Match the person dashboard
+        quality index, OSQ and dimensions by activity-start year. Current hidden/Director
+        rules apply. Withhold both scorecards/changes if either period is unusable.
+        No peer rankings, respondents, comments or causal/significance claims.
+        """
+        return await perform('surveys:resource_person_trends:read', 'person_survey_trends',
+                             lambda conn, user: survey_reports.compare_resource_person_surveys(conn, user, origin, resource_person_id, year))
+
     @server.tool(title='Annual resource-person survey summary', annotations=READ_ONLY)
     async def get_resource_person_survey_summary(resource_person_id: int, year: int) -> dict:
         """Read one currently visible person's annual Type 3 survey aggregates.
