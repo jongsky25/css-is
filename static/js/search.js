@@ -123,6 +123,7 @@
 
     // ---- DB async state --------------------------------------------------
     var _dbTimer = null, _dbCtrl = null, _dbQuery = "";
+    var _dbSequence = 0;
     var _reportedEmpty = {};    // per-page dedup for the csi:search-empty signal
     var _reportedSearch = {};   // ...and for csi:search (every settled search)
 
@@ -177,32 +178,50 @@
 
     function _appendDBRows(data, raw) {
       _removeLoadingRow();
+      // Local page hits are exact. Keep them, then exact records, then the
+      // server's explicitly marked close matches; never repeat a destination.
+      var seen = {};
+      current.forEach(function (it) { if (!it.ask && !it.exit) seen[it.url] = true; });
+      data = data.filter(function (it) {
+        if (seen[it.url]) return false;
+        seen[it.url] = true;
+        return true;
+      });
       if (!data.length) { _addExitRow(raw); return; }
       _removeExitRow();
+      var empty = listEl.querySelector(".palette-empty");
+      if (empty) empty.parentNode.removeChild(empty);
       var startIdx = current.length;
       var lastSection = null;
       var html = "";
       for (var i = 0; i < data.length; i++) {
         var it = data[i];
-        if (it.section !== lastSection) {
+        var group = (it.match === "close" ? "Close matches · " : "") + it.section;
+        if (group !== lastSection) {
           html += '<li class="palette-group palette-divider" role="presentation">' +
-                  esc(it.section) + "</li>";
-          lastSection = it.section;
+                  esc(group) + "</li>";
+          lastSection = group;
         }
         var idx = startIdx + i;
         html += '<li role="presentation" class="palette-item">' +
                 '<a id="' + idPrefix + idx + '" role="option" aria-selected="false" href="' + esc(it.url) + '" tabindex="-1">' +
                 '<span class="pi-title">' + mark(it.title, raw) + "</span>" +
                 '<span class="pi-hint">' + mark(it.hint, raw) + "</span>" +
-                '<span class="pi-tag">' + esc(it.section) + "</span>" +
+                '<span class="pi-tag">' + esc((it.match === "close" ? "Close match · " : "") + it.section) + "</span>" +
                 "</a></li>";
       }
       listEl.insertAdjacentHTML("beforeend", html);
       for (var j = 0; j < data.length; j++) current.push(data[j]);
+      if (active < 0) {
+        for (var k = 0; k < current.length; k++) if (!current[k].dead) { active = k; break; }
+        syncActive();
+      }
       _addExitRow(raw);
     }
 
     function _cancelDB() {
+      _dbSequence += 1;
+      _dbQuery = "";
       if (_dbTimer) { clearTimeout(_dbTimer); _dbTimer = null; }
       if (_dbCtrl) { try { _dbCtrl.abort(); } catch (e) {} _dbCtrl = null; }
       _removeLoadingRow();
@@ -212,12 +231,14 @@
       _cancelDB();
       if (!raw || raw.length < 2) return;
       _dbQuery = raw;
+      var sequence = _dbSequence;
       _dbTimer = setTimeout(function () {
+        if (sequence !== _dbSequence) return;
         _dbTimer = null;
         _showLoadingRow();
         var ctrl = typeof AbortController !== "undefined" ? new AbortController() : null;
         _dbCtrl = ctrl;
-        fetch("/api/search?q=" + encodeURIComponent(raw) +
+        fetch("/api/search?q=" + encodeURIComponent(raw) + "&suggest_pages=1" +
               (scope === "all" ? "" : "&scope=" + encodeURIComponent(scope)),
               ctrl ? { signal: ctrl.signal } : {})
           .then(function (res) {
@@ -226,7 +247,7 @@
             return [];
           })
           .then(function (data) {
-            if (_dbQuery !== raw) return;
+            if (sequence !== _dbSequence || _dbQuery !== raw || input.value.trim() !== raw) return;
             _dbCtrl = null;
             _appendDBRows(Array.isArray(data) ? data : [], raw);
             // The debounced DB fetch settling empty on top of zero page hits
@@ -249,7 +270,7 @@
               } catch (e) { /* telemetry is best-effort */ }
             }
           })
-          .catch(function () { _removeLoadingRow(); });
+          .catch(function () { if (sequence === _dbSequence) _removeLoadingRow(); });
       }, 200);
     }
 

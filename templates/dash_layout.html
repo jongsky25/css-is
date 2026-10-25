@@ -255,7 +255,7 @@
   </div>
 </div>
 <script>window.SEARCH_INDEX = {{ search_index_for(u, request.state.is_chief)|tojson }};</script>
-<script src="/static/js/search.js?v=7.83" defer></script>
+<script src="/static/js/search.js?v={{ APP_VERSION }}" defer></script>
 <script src="/static/js/assistant.js?v=20261009a" defer></script>
 {% endif %}
 {% if u and request.state.spot_feedback_enabled %}
@@ -265,7 +265,7 @@
 {% if u %}
 {# Per-page guided tour — only this page's steps are shipped; tours.py is the source. #}
 <script>window.PAGE_KEY="{{ cur }}";window.PAGE_TOUR={{ ([] if seasonal and seasonal.preview else (tour_for(cur) or []))|tojson }};</script>
-<script src="/static/js/tour.js?v=7.83" defer></script>
+<script src="/static/js/tour.js?v={{ APP_VERSION }}" defer></script>
 {# Passive UX-behavior telemetry (docs/UX_TELEMETRY_HANDOFF_PLAN.md) — signed-in shell only. #}
 <script src="/static/js/telemetry.js?v=20260925a" defer></script>
 {% endif %}

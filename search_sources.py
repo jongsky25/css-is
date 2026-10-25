@@ -26,6 +26,7 @@ import office_calendar as oc
 import office_connect as oconn
 import rooms
 import storage as st
+import search_typo
 
 log = logging.getLogger("search_sources")
 
@@ -268,6 +269,59 @@ SOURCES = [
 
 def normalize_scope(scope):
     return scope if scope in SCOPES else "all"
+
+
+def close_matches(conn, user, query, ctx, scope='all', pages=(), excluded=()):
+    try:
+        return _close_matches(conn,user,query,ctx,scope,pages,excluded)
+    except Exception:
+        # Keep exact search usable without logging search terms or candidates.
+        log.warning('Spelling suggestions unavailable')
+        return []
+
+
+def _close_matches(conn, user, query, ctx, scope='all', pages=(), excluded=()):
+    """Only permission-filtered navigation/help and the existing staff directory.
+
+    No document bodies, survey people, private requests or calendar records enter
+    the approximate matcher. Exact record sources keep their existing selection.
+    """
+    if not search_typo.eligible(query):
+        return []
+    scope = normalize_scope(scope)
+    candidates = []
+    denied = set(excluded)
+    colleague_ids = {}
+    for page in pages:
+        if scope != 'all' and page.get('mod') != scope:
+            continue
+        text = ' '.join(page.get(k, '') for k in ('title','hint','kw','section'))
+        if search_typo.exact(query, text):
+            denied.add(page['url'])
+        candidates.append((page, text))
+    if scope == 'all':
+        for guide in ctx['help_catalog']():
+            text = guide['label']+' '+' '.join((s.get('title','')+' '+s.get('body','')) for s in guide['steps'])
+            candidates.append(({'title':'How to use '+guide['label'], 'hint':'Page guide',
+                                'url':guide['replay_url'], 'section':'Help', 'kw':''}, text))
+        people = st.colleague_directory(conn)
+        # Refuse approximate directory matching rather than ranking a partial list.
+        if len(people) <= 2000:
+            for person in sorted(people, key=lambda p:(p['name'].casefold(),p['user_id'])):
+                bits = [b for b in (person['position'],person['unit']) if b]
+                row = {'title':person['name'],'hint':' · '.join(bits), 'url':f"/people/{person['user_id']}",
+                       'section':'Colleagues','kw':''}
+                colleague_ids[row['url']] = person['user_id']
+                text = ' '.join(person[k] for k in ('name','nickname','position','unit'))
+                candidates.append((row,text))
+    ranked = search_typo.rank(query, candidates, denied)
+    if any(r['section']=='Colleagues' for r in ranked):
+        statuses = st.colleague_status_for(conn, user, ctx['today'])
+        for row in ranked:
+            if row['section']=='Colleagues':
+                label = _today_label(statuses.get(colleague_ids[row['url']]))
+                row['hint'] = ' · '.join(filter(None,(row['hint'],label)))
+    return ranked
 
 
 def run_sources(conn, user, terms, ctx, scope="all", sources=None):

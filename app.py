@@ -6034,9 +6034,21 @@ def search_page(request: Request, q: str = ""):
                    if ql in (it["title"] + " " + it["hint"] + " " + it["kw"]).lower()]
     else:
         results = idx
-    return templates.TemplateResponse(request, "search.html", {
-        "q": q, "results": results, "nav_active": "", "show_scope": False,
+    close_results = []
+    if ql and request.state.user and rl.allow("search", f"u{request.state.user['id']}"):
+        conn = get_conn()
+        conn.row_factory = sqlite3.Row
+        try:
+            ctx = {"today": _today_local(), "help_catalog": lambda: help_catalog_for(request.state.user, request.state.is_chief)}
+            close_results = search_sources.close_matches(conn,request.state.user,q.strip(),ctx,
+                pages=idx,excluded=[r['url'] for r in results])
+        finally:
+            conn.close()
+    response = templates.TemplateResponse(request, "search.html", {
+        "q": q, "results": results, "close_results":close_results, "nav_active": "", "show_scope": False,
     })
+    response.headers.update({'Cache-Control':'no-store','Pragma':'no-cache'})
+    return response
 
 
 @app.get("/help", response_class=HTMLResponse)
@@ -6053,19 +6065,19 @@ def help_page(request: Request):
 
 
 @app.get("/api/search")
-def api_search(request: Request, q: str = "", scope: str = "all"):
+def api_search(request: Request, q: str = "", scope: str = "all", suggest_pages: bool = False):
     """Record search: runs every search_sources source for `scope` ("all" or "css";
     anything else counts as "all"). Returns the same {title, hint, url, section, kw}
     shape as window.SEARCH_INDEX so search.js can append results without any schema
     changes on the client side."""
     user = request.state.user
     if not user:
-        return JSONResponse([])
+        return JSONResponse([],headers={'Cache-Control':'no-store'})
     q = q.strip()
     if len(q) < 2:
-        return JSONResponse([])
+        return JSONResponse([],headers={'Cache-Control':'no-store'})
     if not rl.allow("search", f"u{user['id']}"):
-        return JSONResponse([])
+        return JSONResponse([],headers={'Cache-Control':'no-store'})
 
     is_chief = getattr(request.state, "is_chief", False)
     ctx = {"get_atoms": get_atoms, "view_memo": view_memo, "humandate": _humandate,
@@ -6075,9 +6087,13 @@ def api_search(request: Request, q: str = "", scope: str = "all"):
     conn.row_factory = sqlite3.Row
     try:
         results = search_sources.run_sources(conn, user, q.lower().split(), ctx, scope)
+        close = search_sources.close_matches(conn,user,q,ctx,scope,
+            pages=search_index_for(user,is_chief) if suggest_pages else (),
+            excluded=[r['url'] for r in results])
+        results += close[:max(0,search_sources.TOTAL_CAP-len(results))]
     finally:
         conn.close()
-    return JSONResponse(results)
+    return JSONResponse(results,headers={'Cache-Control':'no-store','Pragma':'no-cache'})
 
 
 # ---------------------------------------------------------------------
