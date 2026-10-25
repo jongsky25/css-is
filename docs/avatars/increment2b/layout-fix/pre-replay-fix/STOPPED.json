@@ -1,0 +1,6 @@
+{
+  "source": "788dcbe",
+  "reason": "Original15 native runs still failed (33.3ms frame,449.8ms callback); matched/kernel controls retain all outcomes. Sparse25ms sampler reproduced click180.4ms including162.6ms forced layout; active happy replay still uses offsetWidth. Replace that forced reflow with existing CSS Animation object restart.",
+  "scheduler_conclusion": "Kernel CPU upper bounds are substantial; they do not establish stalls as descheduling. Matched5ms controls did not reproduce failures. No failing data waived.",
+  "all_data_retained": true
+}

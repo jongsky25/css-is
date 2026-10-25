@@ -173,6 +173,18 @@
   // replaying an animation whose class is still present.
   function replayClass(w, cls, clear) {
     var replaying = w.classList.contains(cls);
+    if (replaying && cls === "happy" && w.getAnimations) {
+      // Restart the live CSS animations without removing/re-adding their class.
+      // offsetWidth here used to force layout of the whole mature SVG on taps.
+      var animations = w.getAnimations({ subtree: true });
+      for (var i = 0; i < animations.length; i++) {
+        if (animations[i].animationName === "av-bounce" || animations[i].animationName === "av-spark") {
+          animations[i].currentTime = 0;
+          animations[i].play();
+        }
+      }
+      return;
+    }
     w.classList.remove.apply(w.classList, clear || [cls]);
     if (replaying) void w.offsetWidth;
     w.classList.add(cls);

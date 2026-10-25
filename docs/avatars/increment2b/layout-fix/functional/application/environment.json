@@ -1,5 +1,5 @@
 {
-  "source_commit": "765bd42367e607ab82cabfd67898eebc18101ed4",
+  "source_commit": "788dcbeb1c2e5b880ec25372f6f4dc9f645835cc",
   "platform": "Linux-6.18.55-x86_64-with-glibc2.41",
   "python": "3.12.14",
   "chromium": "154.0.8037.57",
@@ -8,9 +8,9 @@
   "browser_date": "2026-07-15T12:00:00Z + performance.now()",
   "random_seed": 12345,
   "source_sha256": {
-    "templates/_avatars.html": "74409bd48fdaa3cdf9f841c19744a18d17d50aad36a3c0e19bf6f99d8121ebc8",
+    "templates/_avatars.html": "a0711e821c314383a16b11fc65261e280bc274f17c19e6ecd96fd9871fc9a2ce",
     "templates/_avatars_art.html": "25ebadba51e81177d2fe9526dd5eba5485fce77e617e13e48d0a7ca9c710412f",
-    "static/js/avatars.js": "6fed50c75f66b6edd457dd33d818cb2bd82540621dcc3993455bbfd3a273fc2c",
+    "static/js/avatars.js": "48acd68c32f8301049fa2a8e4d11c9dc140b680c31ace3bb4e6cf2aa0bee6947",
     "static/js/avatar-audio.js": "0434c719d23e149eb4e5b8471c06fdf439d8c1b3f1983192e5ce9e3ffa9fbf32",
     "static/js/search.js": "5027eebe29b7170610d114834f85128da4afaef9393313b36f80946765cea3e7",
     "templates/office_connect.html": "8bdb01bfa549a869d72829ffbcebbf3490f39e7cca74e501b3b3ee09f26b8290",

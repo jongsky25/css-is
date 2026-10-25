@@ -57,6 +57,11 @@ instead of rescanning all companions after every decorative heart insertion/remo
 across repeated script evaluation. No new infrastructure accumulates on that path.
 The final correction captures ResizeObserver geometry in its completed-layout
 phase, instead of deferring the read until the next pre-render animation frame.
+A later sparse kernel diagnostic exposed another180.4ms click containing162.6ms
+forced layout in active happy replay. The final source restarts the existing
+bounce/spark CSS Animation objects via currentTime/play, without removing the class
+or reading offsetWidth. A real browser verifies restart, completion and0offsetWidth
+reads during tap handlers.
 
 Selected animation, head-angle limits, dog excitement/cooldowns, tap/hold/drag,
 keyboard movement, care, audio, scoring, account identity and seasonal geometry
@@ -137,7 +142,14 @@ script-loading lifecycle; its samples remain under
 [pre-lifecycle-fix](layout-fix/pre-lifecycle-fix/STOPPED.json), outside final acceptance. The subsequent `765bd42` fern cohort exposed an84.6ms
 cache-refresh callback with84.5ms forced layout. Its complete samples remain in
 [pre-observer-phase-fix](layout-fix/pre-observer-phase-fix/STOPPED.json); that real
-failure motivated the completed-layout observer correction.
+failure motivated the completed-layout observer correction. The subsequent
+`788dcbe` native cohort still failed (maximum449.8ms owned callback and33.3ms
+framep95), preserved under [pre-replay-fix](layout-fix/pre-replay-fix/STOPPED.json).
+Its external5ms matched and after-only controls did not reproduce stalls; a25ms
+sampler did reproduce them with substantial CPU upper bounds, including the162.6ms
+forced-layout click. This did not establish descheduling as the cause. All raw
+native records and losslessly gzipped kernel samples remain there. That confirmed
+active-replay reflow motivated the final source change.
 
 No sample was replaced and no threshold relaxed. These are local throttled-browser
 results, not physical-phone60fps claims. Native LoAF reports scripts in long frames;

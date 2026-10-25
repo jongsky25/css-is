@@ -1,0 +1,76 @@
+{
+  "diagnostic_only": true,
+  "method": "Five counterbalanced old/new-art pairs, same frozen runtime. External5ms Linux schedstat sampling of all renderer main threads. Clock brackets map native script wall intervals to a conservative CPU upper bound over a larger sampled interval. No JS API wrappers, tracing or per-callback instrumentation.",
+  "samples": [
+    {
+      "version": "before",
+      "run": 0,
+      "frame_p95_ms": 16.799999999999272,
+      "over50_wall_scripts": [],
+      "all_bounded_cpu_le50": true
+    },
+    {
+      "version": "after",
+      "run": 0,
+      "frame_p95_ms": 16.799999999999272,
+      "over50_wall_scripts": [],
+      "all_bounded_cpu_le50": true
+    },
+    {
+      "version": "after",
+      "run": 1,
+      "frame_p95_ms": 16.799999999999272,
+      "over50_wall_scripts": [],
+      "all_bounded_cpu_le50": true
+    },
+    {
+      "version": "before",
+      "run": 1,
+      "frame_p95_ms": 16.799999999999272,
+      "over50_wall_scripts": [],
+      "all_bounded_cpu_le50": true
+    },
+    {
+      "version": "before",
+      "run": 2,
+      "frame_p95_ms": 16.799999999999272,
+      "over50_wall_scripts": [],
+      "all_bounded_cpu_le50": true
+    },
+    {
+      "version": "after",
+      "run": 2,
+      "frame_p95_ms": 16.799999999999272,
+      "over50_wall_scripts": [],
+      "all_bounded_cpu_le50": true
+    },
+    {
+      "version": "after",
+      "run": 3,
+      "frame_p95_ms": 16.799999999999272,
+      "over50_wall_scripts": [],
+      "all_bounded_cpu_le50": true
+    },
+    {
+      "version": "before",
+      "run": 3,
+      "frame_p95_ms": 16.799999999999272,
+      "over50_wall_scripts": [],
+      "all_bounded_cpu_le50": true
+    },
+    {
+      "version": "before",
+      "run": 4,
+      "frame_p95_ms": 16.799999999999272,
+      "over50_wall_scripts": [],
+      "all_bounded_cpu_le50": true
+    },
+    {
+      "version": "after",
+      "run": 4,
+      "frame_p95_ms": 16.799999999999272,
+      "over50_wall_scripts": [],
+      "all_bounded_cpu_le50": true
+    }
+  ]
+}

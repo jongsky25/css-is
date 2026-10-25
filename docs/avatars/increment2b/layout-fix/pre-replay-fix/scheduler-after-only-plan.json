@@ -1,0 +1,6 @@
+{
+  "diagnostic_only": true,
+  "purpose": "The paired10 native runs did not reproduce stalls. Repeat the failing after-only condition with identical external kernel CPU sampler, five runs. Preserve all outcomes; no performance acceptance or sample substitution.",
+  "same_source": "788dcbe",
+  "budgets_unchanged": true
+}

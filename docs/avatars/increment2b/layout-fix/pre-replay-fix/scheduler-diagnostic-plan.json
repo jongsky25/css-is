@@ -1,0 +1,8 @@
+{
+  "diagnostic_only": true,
+  "reason": "788dcbe removed the confirmed forced-layout cache-refresh path, but native script wall-duration failures remain with zero reported forced layout, plus one succulent33.3ms frame. Determine whether wall duration corresponds to actual renderer main-thread work.",
+  "protocol": "Five counterbalanced old/new-art fern pairs on the same frozen788dcbe runtime, mature6, warm CPU4 mobile, original30s input. Collect original native LoAF/LongTask/frame records unchanged. Separately sample all renderer main threads' Linux schedstat counters every5ms from Python. Clock roundtrip brackets conservatively map each over50ms native script wall interval to a larger sampled interval, yielding a renderer-main-thread CPU upper bound.",
+  "limits": ["CPU upper bounds include other work and all renderer main threads; they are not exact callback CPU", "Missing bracketing samples or changed PID sets remain unclassified", "A wall-duration failure is not silently reclassified or removed", "No API wrapping, tracing, or callback clock instrumentation in the browser", "This diagnostic does not waive50ms callback or33ms frame gates or substitute for the original20 acceptance matrix"],
+  "current_failed_cohort_retained": "native-control/",
+  "budgets_unchanged": true
+}

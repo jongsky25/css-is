@@ -49,7 +49,7 @@ def test_cached_geometry_preserves_drag_chase_resize_scroll(baseline_server):
         expression="({scroll:(getEventListeners(document).scroll||[]).length,resize:(getEventListeners(window).resize||[]).length})"
         listeners_before=cdp.send('Runtime.evaluate',{'expression':expression,'includeCommandLineAPI':True,'returnByValue':True})['result']['value']
         state=page.evaluate_handle('window.__cssAvatarGeometry')
-        for _ in range(20):page.add_script_tag(url=origin+'/static/js/avatars.js?v=8.15')
+        for _ in range(20):page.add_script_tag(url=origin+'/static/js/avatars.js?v=8.16')
         listeners_after=cdp.send('Runtime.evaluate',{'expression':expression,'includeCommandLineAPI':True,'returnByValue':True})['result']['value']
         assert listeners_before==listeners_after
         assert page.evaluate('(state)=>state===window.__cssAvatarGeometry',state)

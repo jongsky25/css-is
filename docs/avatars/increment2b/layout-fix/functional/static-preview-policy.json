@@ -8,7 +8,9 @@
     "previews": 16,
     "running": 0
   },
-  "first_bounce_time_ms": 133.27699999799947,
-  "replayed_bounce_time_ms": 33.417000002681775,
+  "first_bounce_time_ms": 133.27899999641812,
+  "replayed_bounce_time_ms": 49.999999999999936,
+  "active_replay_offset_width_reads": 0,
+  "completed_replay_clears_happy": true,
   "errors": []
 }

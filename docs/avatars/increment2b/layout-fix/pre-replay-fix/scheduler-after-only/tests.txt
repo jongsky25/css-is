@@ -1,0 +1,50 @@
+fern after 0 frame 16.799999999999272 max_callback 0
+fern after 1 frame 16.799999999999272 max_callback 11.399999998509884
+fern after 2 frame 16.799999999999272 max_callback 8
+fern after 3 frame 16.799999999999272 max_callback 16.200000002980232
+fern after 4 frame 16.80000000000109 max_callback 8.600000001490116
+[
+  {
+    "version": "after",
+    "run": 0,
+    "frame_p95_ms": 16.799999999999272,
+    "over50_wall_scripts": [],
+    "all_bounded_cpu_le50": true
+  },
+  {
+    "version": "after",
+    "run": 1,
+    "frame_p95_ms": 16.799999999999272,
+    "over50_wall_scripts": [],
+    "all_bounded_cpu_le50": true
+  },
+  {
+    "version": "after",
+    "run": 2,
+    "frame_p95_ms": 16.799999999999272,
+    "over50_wall_scripts": [],
+    "all_bounded_cpu_le50": true
+  },
+  {
+    "version": "after",
+    "run": 3,
+    "frame_p95_ms": 16.799999999999272,
+    "over50_wall_scripts": [],
+    "all_bounded_cpu_le50": true
+  },
+  {
+    "version": "after",
+    "run": 4,
+    "frame_p95_ms": 16.80000000000109,
+    "over50_wall_scripts": [],
+    "all_bounded_cpu_le50": true
+  }
+]
+.
+=============================== warnings summary ===============================
+tests/test_avatar_scheduler_diagnostic.py::test_matched_scheduler_attribution
+  /workspace/css-is/tests/conftest.py:88: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+1 passed, 1 warning in 173.92s (0:02:53)

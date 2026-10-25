@@ -1,0 +1,42 @@
+{
+  "diagnostic_only": true,
+  "after_only": true,
+  "method": "Five final-art runs, same frozen runtime. External5ms Linux schedstat sampling of all renderer main threads. Clock brackets map native script wall intervals to a conservative CPU upper bound over a larger sampled interval. No JS API wrappers, tracing or per-callback instrumentation.",
+  "samples": [
+    {
+      "version": "after",
+      "run": 0,
+      "frame_p95_ms": 16.799999999999272,
+      "over50_wall_scripts": [],
+      "all_bounded_cpu_le50": true
+    },
+    {
+      "version": "after",
+      "run": 1,
+      "frame_p95_ms": 16.799999999999272,
+      "over50_wall_scripts": [],
+      "all_bounded_cpu_le50": true
+    },
+    {
+      "version": "after",
+      "run": 2,
+      "frame_p95_ms": 16.799999999999272,
+      "over50_wall_scripts": [],
+      "all_bounded_cpu_le50": true
+    },
+    {
+      "version": "after",
+      "run": 3,
+      "frame_p95_ms": 16.799999999999272,
+      "over50_wall_scripts": [],
+      "all_bounded_cpu_le50": true
+    },
+    {
+      "version": "after",
+      "run": 4,
+      "frame_p95_ms": 16.80000000000109,
+      "over50_wall_scripts": [],
+      "all_bounded_cpu_le50": true
+    }
+  ]
+}

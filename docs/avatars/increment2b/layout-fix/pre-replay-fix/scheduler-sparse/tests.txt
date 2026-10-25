@@ -1,0 +1,260 @@
+fern after 0 frame 83.29999999999927 max_callback 382.3999999985099
+fern after 1 frame 16.80000000000291 max_callback 112.10000000149012
+fern after 2 frame 16.700000000000728 max_callback 0
+fern after 3 frame 16.700000000000728 max_callback 0
+fern after 4 frame 16.700000000000728 max_callback 0
+[
+  {
+    "version": "after",
+    "run": 0,
+    "frame_p95_ms": 83.29999999999927,
+    "over50_wall_scripts": [
+      {
+        "script": {
+          "duration": 382.3999999985099,
+          "executionStart": 5937.69999999553,
+          "forcedStyleAndLayoutDuration": 0,
+          "sourceURL": "/static/js/avatars.js?v=8.15",
+          "sourceFunctionName": "",
+          "sourceCharPosition": 36852,
+          "invoker": "TimerHandler:setInterval",
+          "invokerType": "user-callback",
+          "pauseDuration": 0
+        },
+        "renderer_main_thread_cpu_upper_bound_ms": 365.830586,
+        "renderer_main_thread_runqueue_wait_ms": 74.1841,
+        "cpu_bound_le50": false
+      },
+      {
+        "script": {
+          "duration": 249.89999999850988,
+          "executionStart": 9490.79999999702,
+          "forcedStyleAndLayoutDuration": 0,
+          "sourceURL": "/static/js/avatars.js?v=8.15",
+          "sourceFunctionName": "done",
+          "sourceCharPosition": 35706,
+          "invoker": "SPAN.onpointerup",
+          "invokerType": "event-listener",
+          "pauseDuration": 0
+        },
+        "renderer_main_thread_cpu_upper_bound_ms": 279.97242,
+        "renderer_main_thread_runqueue_wait_ms": 0.0,
+        "cpu_bound_le50": false
+      },
+      {
+        "script": {
+          "duration": 81.29999999701977,
+          "executionStart": 10871.79999999702,
+          "forcedStyleAndLayoutDuration": 0,
+          "sourceURL": "/static/js/avatars.js?v=8.15",
+          "sourceFunctionName": "",
+          "sourceCharPosition": 32039,
+          "invoker": "TimerHandler:setTimeout",
+          "invokerType": "user-callback",
+          "pauseDuration": 0
+        },
+        "renderer_main_thread_cpu_upper_bound_ms": 127.596972,
+        "renderer_main_thread_runqueue_wait_ms": 0.0,
+        "cpu_bound_le50": false
+      },
+      {
+        "script": {
+          "duration": 56,
+          "executionStart": 12174.19999999553,
+          "forcedStyleAndLayoutDuration": 0,
+          "sourceURL": "/static/js/avatars.js?v=8.15",
+          "sourceFunctionName": "startPet",
+          "sourceCharPosition": 34487,
+          "invoker": "TimerHandler:setTimeout",
+          "invokerType": "user-callback",
+          "pauseDuration": 0
+        },
+        "renderer_main_thread_cpu_upper_bound_ms": 101.094705,
+        "renderer_main_thread_runqueue_wait_ms": 1.641239,
+        "cpu_bound_le50": false
+      },
+      {
+        "script": {
+          "duration": 180.39999999850988,
+          "executionStart": 14162,
+          "forcedStyleAndLayoutDuration": 162.6,
+          "sourceURL": "/static/js/avatars.js?v=8.15",
+          "sourceFunctionName": "",
+          "sourceCharPosition": 27661,
+          "invoker": "#document.onclick",
+          "invokerType": "event-listener",
+          "pauseDuration": 0
+        },
+        "renderer_main_thread_cpu_upper_bound_ms": 211.956618,
+        "renderer_main_thread_runqueue_wait_ms": 0.049789,
+        "cpu_bound_le50": false
+      },
+      {
+        "script": {
+          "duration": 112.30000000447035,
+          "executionStart": 17151.69999999553,
+          "forcedStyleAndLayoutDuration": 0,
+          "sourceURL": "/static/js/avatars.js?v=8.15",
+          "sourceFunctionName": "",
+          "sourceCharPosition": 32039,
+          "invoker": "TimerHandler:setTimeout",
+          "invokerType": "user-callback",
+          "pauseDuration": 0
+        },
+        "renderer_main_thread_cpu_upper_bound_ms": 155.906886,
+        "renderer_main_thread_runqueue_wait_ms": 0.090642,
+        "cpu_bound_le50": false
+      },
+      {
+        "script": {
+          "duration": 177,
+          "executionStart": 17435.39999999851,
+          "forcedStyleAndLayoutDuration": 0,
+          "sourceURL": "/static/js/avatars.js?v=8.15",
+          "sourceFunctionName": "",
+          "sourceCharPosition": 32039,
+          "invoker": "TimerHandler:setTimeout",
+          "invokerType": "user-callback",
+          "pauseDuration": 0
+        },
+        "renderer_main_thread_cpu_upper_bound_ms": 311.026577,
+        "renderer_main_thread_runqueue_wait_ms": 0.560758,
+        "cpu_bound_le50": false
+      },
+      {
+        "script": {
+          "duration": 146.79999999701977,
+          "executionStart": 20949.89999999851,
+          "forcedStyleAndLayoutDuration": 0.8,
+          "sourceURL": "/static/js/avatars.js?v=8.15",
+          "sourceFunctionName": "",
+          "sourceCharPosition": 27661,
+          "invoker": "#document.onclick",
+          "invokerType": "event-listener",
+          "pauseDuration": 0
+        },
+        "renderer_main_thread_cpu_upper_bound_ms": 197.604136,
+        "renderer_main_thread_runqueue_wait_ms": 0.061329,
+        "cpu_bound_le50": false
+      },
+      {
+        "script": {
+          "duration": 50.30000000447035,
+          "executionStart": 21405.59999999404,
+          "forcedStyleAndLayoutDuration": 0,
+          "sourceURL": "/static/js/avatars.js?v=8.15",
+          "sourceFunctionName": "",
+          "sourceCharPosition": 36852,
+          "invoker": "TimerHandler:setInterval",
+          "invokerType": "user-callback",
+          "pauseDuration": 0
+        },
+        "renderer_main_thread_cpu_upper_bound_ms": 140.002712,
+        "renderer_main_thread_runqueue_wait_ms": 0.0,
+        "cpu_bound_le50": false
+      },
+      {
+        "script": {
+          "duration": 135.39999999850988,
+          "executionStart": 22961.19999999553,
+          "forcedStyleAndLayoutDuration": 0,
+          "sourceURL": "/static/js/avatars.js?v=8.15",
+          "sourceFunctionName": "",
+          "sourceCharPosition": 20854,
+          "invoker": "FrameRequestCallback",
+          "invokerType": "user-callback",
+          "pauseDuration": 0
+        },
+        "renderer_main_thread_cpu_upper_bound_ms": 173.31659,
+        "renderer_main_thread_runqueue_wait_ms": 19.773729,
+        "cpu_bound_le50": false
+      },
+      {
+        "script": {
+          "duration": 65.79999999701977,
+          "executionStart": 30257.39999999851,
+          "forcedStyleAndLayoutDuration": 0,
+          "sourceURL": "/static/js/avatars.js?v=8.15",
+          "sourceFunctionName": "",
+          "sourceCharPosition": 36852,
+          "invoker": "TimerHandler:setInterval",
+          "invokerType": "user-callback",
+          "pauseDuration": 0
+        },
+        "renderer_main_thread_cpu_upper_bound_ms": 356.876653,
+        "renderer_main_thread_runqueue_wait_ms": 635.470444,
+        "cpu_bound_le50": false
+      },
+      {
+        "script": {
+          "duration": 172,
+          "executionStart": 31772.29999999702,
+          "forcedStyleAndLayoutDuration": 0,
+          "sourceURL": "/static/js/avatars.js?v=8.15",
+          "sourceFunctionName": "",
+          "sourceCharPosition": 20484,
+          "invoker": "#document.onpointermove",
+          "invokerType": "event-listener",
+          "pauseDuration": 0
+        },
+        "renderer_main_thread_cpu_upper_bound_ms": 273.537804,
+        "renderer_main_thread_runqueue_wait_ms": 0.0,
+        "cpu_bound_le50": false
+      }
+    ],
+    "all_bounded_cpu_le50": false
+  },
+  {
+    "version": "after",
+    "run": 1,
+    "frame_p95_ms": 16.80000000000291,
+    "over50_wall_scripts": [
+      {
+        "script": {
+          "duration": 112.10000000149012,
+          "executionStart": 4453.29999999702,
+          "forcedStyleAndLayoutDuration": 0,
+          "sourceURL": "/static/js/avatars.js?v=8.15",
+          "sourceFunctionName": "",
+          "sourceCharPosition": 36852,
+          "invoker": "TimerHandler:setInterval",
+          "invokerType": "user-callback",
+          "pauseDuration": 0
+        },
+        "renderer_main_thread_cpu_upper_bound_ms": 131.953915,
+        "renderer_main_thread_runqueue_wait_ms": 0.0,
+        "cpu_bound_le50": false
+      }
+    ],
+    "all_bounded_cpu_le50": false
+  },
+  {
+    "version": "after",
+    "run": 2,
+    "frame_p95_ms": 16.700000000000728,
+    "over50_wall_scripts": [],
+    "all_bounded_cpu_le50": true
+  },
+  {
+    "version": "after",
+    "run": 3,
+    "frame_p95_ms": 16.700000000000728,
+    "over50_wall_scripts": [],
+    "all_bounded_cpu_le50": true
+  },
+  {
+    "version": "after",
+    "run": 4,
+    "frame_p95_ms": 16.700000000000728,
+    "over50_wall_scripts": [],
+    "all_bounded_cpu_le50": true
+  }
+]
+.
+=============================== warnings summary ===============================
+tests/test_avatar_scheduler_diagnostic.py::test_matched_scheduler_attribution
+  /workspace/css-is/tests/conftest.py:88: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+1 passed, 1 warning in 176.51s (0:02:56)

@@ -1,0 +1,214 @@
+fern after 0 frame 16.799999999999272 max_callback 0
+fern after 1 frame 16.799999999999955 max_callback 449.79999999701977
+fern after 2 frame 16.799999999999272 max_callback 0
+fern after 3 frame 16.799999999999955 max_callback 36.19999999552965
+fern after 4 frame 16.799999999999272 max_callback 0
+Fmushroom after 0 frame 16.799999999999272 max_callback 24.19999999552965
+mushroom after 1 frame 16.799999999999272 max_callback 0
+mushroom after 2 frame 16.799999999999272 max_callback 14.5
+mushroom after 3 frame 16.799999999999272 max_callback 5.5
+mushroom after 4 frame 16.799999999999727 max_callback 154.60000000149012
+Fsucculent after 0 frame 16.799999999999272 max_callback 109.20000000298023
+succulent after 1 frame 33.30000000000018 max_callback 444.6000000014901
+succulent after 2 frame 16.799999999999272 max_callback 113.5
+succulent after 3 frame 16.799999999999272 max_callback 23.299999997019768
+succulent after 4 frame 16.799999999999272 max_callback 6.700000002980232
+F
+=================================== FAILURES ===================================
+________________________ test_native_art_control[fern] _________________________
+
+baseline_server = ('http://127.0.0.1:33461', {'name': 'css_session', 'value': 'eyJ1aWQiOjQsInUiOiJhZG1pbkB0ZXN0LmxvY2FsIiwiciI6ImFkbWluI...OGI3OTJkOGQxIn0.fbf517fb376c312521774404f9eb83ae15a12aaec68ee5f005b35ffa61ff7dea', 'url': 'http://127.0.0.1:33461'}, 4)
+app_mod = <module 'app' from '/workspace/css-is/app.py'>
+tmp_path = PosixPath('/tmp/pytest-of-agent/pytest-102/test_native_art_control_fern_0')
+kind = 'fern'
+
+    @pytest.mark.parametrize('kind',['fern','mushroom','succulent'])
+    def test_native_art_control(baseline_server,app_mod,tmp_path,kind):
+        import storage as st
+        from jinja2 import ChoiceLoader,FileSystemLoader
+        from playwright.sync_api import sync_playwright
+        origin,cookie,uid=baseline_server
+        conn=st.connect(app_mod.DB);st.set_user_avatar(conn,uid,kind,'Native Control');conn.close()
+        env=app_mod.templates.env;loader=env.loader
+        folder=tmp_path/'old';folder.mkdir()
+        for name in ['_avatars.html','_avatars_art.html']:(folder/name).write_bytes(subprocess.check_output(['git','show','5b580d9:templates/'+name]))
+        loaders={'before':ChoiceLoader([FileSystemLoader(folder),loader]),'after':loader}
+        after_only=os.getenv('CSS_AVATAR_NATIVE_AFTER_ONLY')=='1'
+        source_commit=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()
+        out=Path(os.environ['CSS_AVATAR_OUT']).parent/kind;out.mkdir(parents=True,exist_ok=True);rows=[]
+        try:
+            with sync_playwright() as pw:
+                for run in range(5):
+                    for version in (['after'] if after_only else (['before','after'] if run%2==0 else ['after','before'])):
+                        env.loader=loaders[version]
+                        browser=pw.chromium.launch(executable_path=shutil.which('chromium'),args=['--no-sandbox'])
+                        assert browser.version=='154.0.8037.57'
+                        context=browser.new_context(viewport={'width':390,'height':844},has_touch=True,timezone_id='UTC',service_workers='block')
+                        context.add_cookies([cookie]);context.add_init_script(PURE)
+                        page=context.new_page();errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
+                        cdp=context.new_cdp_session(page);cdp.send('Emulation.setCPUThrottlingRate',{'rate':4})
+                        page.goto(origin+'/?view=me');page.goto(origin+'/?view=me');page.wait_for_timeout(500)
+                        assert page.locator(f'.avwrap[data-interactive] svg[data-avatar-kind="{kind}"][data-avatar-stage="6"]').count()==1
+                        assert page.evaluate('avatarLoafSupported')
+                        reset(page);start=page.evaluate('''()=>{avatarLoafs=[];avatarLoafObserver.takeRecords();return performance.now()}''')
+                        deadline=time.monotonic()+30;action=0
+                        while time.monotonic()<deadline:
+                            box=page.locator('.av-play-btn').bounding_box();x=box['x']+box['width']/2;y=box['y']+box['height']/2
+                            page.mouse.move(x,y);page.mouse.down();page.wait_for_timeout(500 if action%3==0 else 50)
+                            if action%3==0:page.mouse.move(x+15,y+10,steps=3)
+                            page.mouse.up();page.wait_for_timeout(350);action+=1
+                        end=page.evaluate('performance.now()')
+                        loafs=page.evaluate('''()=>{avatarLoafObserver.takeRecords().forEach(avatarLoafCapture);return avatarLoafs}''')
+                        loafs=[l for l in loafs if l['start']<end and l['start']+l['duration']>=start]
+                        scripts=[dict(s,sourceURL=s['sourceURL'].replace(origin,'')) for l in loafs for s in l['scripts'] if '/static/js/avatars.js' in s['sourceURL'] or '/static/js/avatar-audio.js' in s['sourceURL']]
+                        observed=snapshot(page,cdp)
+                        rows.append({'run':run,'version':version,'kind':kind,'mature':True,'cpu':4,'seconds':30,'actions':action,'start_ms':start,'end_ms':end,
+                                     'scenario':observed,'native_long_animation_frames':loafs,'avatar_native_scripts':scripts,
+                                     'max_avatar_callback_ms':max((s['duration'] for s in scripts),default=0),'errors':errors})
+                        (out/'native-control.json').write_text(json.dumps({'source_commit':source_commit,'before_art':None if after_only else '5b580d9','after_only':after_only,'same_current_runtime_both_arms':not after_only,'kind':kind,'method':('Five final-source warm CPU4 mobile runs; mature6; original30s input; native LoAF/LongTask/EventTiming/rAF only; no API wrappers, tracing, callback clocks or stacks.' if after_only else 'Five counterbalanced warm CPU4 mobile pairs; mature6; original30s input; native LoAF/LongTask/EventTiming/rAF only. No timer/event/rAF wrappers, tracing recorder, callback clocks or stacks. Same current Home/search/runtime with old/new art/frame macros.'),'samples':rows},indent=2))
+                        print(kind,version,run,'frame',observed['frame_p95_ms'],'max_callback',max((s['duration'] for s in scripts),default=0),flush=True)
+                        context.close();browser.close()
+        finally:env.loader=loader;env.cache.clear()
+        assert len(rows)==(5 if after_only else 10) and all(not r['errors'] for r in rows)
+        if after_only:
+>           assert all(r['scenario']['frame_p95_ms']<=33 and r['max_avatar_callback_ms']<=50 for r in rows), 'Final native budget failed; all samples retained'
+E           AssertionError: Final native budget failed; all samples retained
+E           assert False
+E            +  where False = all(<generator object test_native_art_control.<locals>.<genexpr> at 0x7f3bde898d40>)
+
+tests/test_avatar_native_control.py:78: AssertionError
+______________________ test_native_art_control[mushroom] _______________________
+
+baseline_server = ('http://127.0.0.1:49961', {'name': 'css_session', 'value': 'eyJ1aWQiOjQsInUiOiJhZG1pbkB0ZXN0LmxvY2FsIiwiciI6ImFkbWluI...OTk2Y2Y3ODU4In0.d118f76675be7e5c65e5da12b4478322f2efdecea296f374c8ccd190bb72dac8', 'url': 'http://127.0.0.1:49961'}, 4)
+app_mod = <module 'app' from '/workspace/css-is/app.py'>
+tmp_path = PosixPath('/tmp/pytest-of-agent/pytest-102/test_native_art_control_mushro0')
+kind = 'mushroom'
+
+    @pytest.mark.parametrize('kind',['fern','mushroom','succulent'])
+    def test_native_art_control(baseline_server,app_mod,tmp_path,kind):
+        import storage as st
+        from jinja2 import ChoiceLoader,FileSystemLoader
+        from playwright.sync_api import sync_playwright
+        origin,cookie,uid=baseline_server
+        conn=st.connect(app_mod.DB);st.set_user_avatar(conn,uid,kind,'Native Control');conn.close()
+        env=app_mod.templates.env;loader=env.loader
+        folder=tmp_path/'old';folder.mkdir()
+        for name in ['_avatars.html','_avatars_art.html']:(folder/name).write_bytes(subprocess.check_output(['git','show','5b580d9:templates/'+name]))
+        loaders={'before':ChoiceLoader([FileSystemLoader(folder),loader]),'after':loader}
+        after_only=os.getenv('CSS_AVATAR_NATIVE_AFTER_ONLY')=='1'
+        source_commit=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()
+        out=Path(os.environ['CSS_AVATAR_OUT']).parent/kind;out.mkdir(parents=True,exist_ok=True);rows=[]
+        try:
+            with sync_playwright() as pw:
+                for run in range(5):
+                    for version in (['after'] if after_only else (['before','after'] if run%2==0 else ['after','before'])):
+                        env.loader=loaders[version]
+                        browser=pw.chromium.launch(executable_path=shutil.which('chromium'),args=['--no-sandbox'])
+                        assert browser.version=='154.0.8037.57'
+                        context=browser.new_context(viewport={'width':390,'height':844},has_touch=True,timezone_id='UTC',service_workers='block')
+                        context.add_cookies([cookie]);context.add_init_script(PURE)
+                        page=context.new_page();errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
+                        cdp=context.new_cdp_session(page);cdp.send('Emulation.setCPUThrottlingRate',{'rate':4})
+                        page.goto(origin+'/?view=me');page.goto(origin+'/?view=me');page.wait_for_timeout(500)
+                        assert page.locator(f'.avwrap[data-interactive] svg[data-avatar-kind="{kind}"][data-avatar-stage="6"]').count()==1
+                        assert page.evaluate('avatarLoafSupported')
+                        reset(page);start=page.evaluate('''()=>{avatarLoafs=[];avatarLoafObserver.takeRecords();return performance.now()}''')
+                        deadline=time.monotonic()+30;action=0
+                        while time.monotonic()<deadline:
+                            box=page.locator('.av-play-btn').bounding_box();x=box['x']+box['width']/2;y=box['y']+box['height']/2
+                            page.mouse.move(x,y);page.mouse.down();page.wait_for_timeout(500 if action%3==0 else 50)
+                            if action%3==0:page.mouse.move(x+15,y+10,steps=3)
+                            page.mouse.up();page.wait_for_timeout(350);action+=1
+                        end=page.evaluate('performance.now()')
+                        loafs=page.evaluate('''()=>{avatarLoafObserver.takeRecords().forEach(avatarLoafCapture);return avatarLoafs}''')
+                        loafs=[l for l in loafs if l['start']<end and l['start']+l['duration']>=start]
+                        scripts=[dict(s,sourceURL=s['sourceURL'].replace(origin,'')) for l in loafs for s in l['scripts'] if '/static/js/avatars.js' in s['sourceURL'] or '/static/js/avatar-audio.js' in s['sourceURL']]
+                        observed=snapshot(page,cdp)
+                        rows.append({'run':run,'version':version,'kind':kind,'mature':True,'cpu':4,'seconds':30,'actions':action,'start_ms':start,'end_ms':end,
+                                     'scenario':observed,'native_long_animation_frames':loafs,'avatar_native_scripts':scripts,
+                                     'max_avatar_callback_ms':max((s['duration'] for s in scripts),default=0),'errors':errors})
+                        (out/'native-control.json').write_text(json.dumps({'source_commit':source_commit,'before_art':None if after_only else '5b580d9','after_only':after_only,'same_current_runtime_both_arms':not after_only,'kind':kind,'method':('Five final-source warm CPU4 mobile runs; mature6; original30s input; native LoAF/LongTask/EventTiming/rAF only; no API wrappers, tracing, callback clocks or stacks.' if after_only else 'Five counterbalanced warm CPU4 mobile pairs; mature6; original30s input; native LoAF/LongTask/EventTiming/rAF only. No timer/event/rAF wrappers, tracing recorder, callback clocks or stacks. Same current Home/search/runtime with old/new art/frame macros.'),'samples':rows},indent=2))
+                        print(kind,version,run,'frame',observed['frame_p95_ms'],'max_callback',max((s['duration'] for s in scripts),default=0),flush=True)
+                        context.close();browser.close()
+        finally:env.loader=loader;env.cache.clear()
+        assert len(rows)==(5 if after_only else 10) and all(not r['errors'] for r in rows)
+        if after_only:
+>           assert all(r['scenario']['frame_p95_ms']<=33 and r['max_avatar_callback_ms']<=50 for r in rows), 'Final native budget failed; all samples retained'
+E           AssertionError: Final native budget failed; all samples retained
+E           assert False
+E            +  where False = all(<generator object test_native_art_control.<locals>.<genexpr> at 0x7f3bde828450>)
+
+tests/test_avatar_native_control.py:78: AssertionError
+______________________ test_native_art_control[succulent] ______________________
+
+baseline_server = ('http://127.0.0.1:43111', {'name': 'css_session', 'value': 'eyJ1aWQiOjQsInUiOiJhZG1pbkB0ZXN0LmxvY2FsIiwiciI6ImFkbWluI...NTc3ZWJjYmM4In0.2226ec533492d2d3d80d4eae6b0fd396d0a67be13683c3dc887054fa29b694cc', 'url': 'http://127.0.0.1:43111'}, 4)
+app_mod = <module 'app' from '/workspace/css-is/app.py'>
+tmp_path = PosixPath('/tmp/pytest-of-agent/pytest-102/test_native_art_control_succul0')
+kind = 'succulent'
+
+    @pytest.mark.parametrize('kind',['fern','mushroom','succulent'])
+    def test_native_art_control(baseline_server,app_mod,tmp_path,kind):
+        import storage as st
+        from jinja2 import ChoiceLoader,FileSystemLoader
+        from playwright.sync_api import sync_playwright
+        origin,cookie,uid=baseline_server
+        conn=st.connect(app_mod.DB);st.set_user_avatar(conn,uid,kind,'Native Control');conn.close()
+        env=app_mod.templates.env;loader=env.loader
+        folder=tmp_path/'old';folder.mkdir()
+        for name in ['_avatars.html','_avatars_art.html']:(folder/name).write_bytes(subprocess.check_output(['git','show','5b580d9:templates/'+name]))
+        loaders={'before':ChoiceLoader([FileSystemLoader(folder),loader]),'after':loader}
+        after_only=os.getenv('CSS_AVATAR_NATIVE_AFTER_ONLY')=='1'
+        source_commit=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()
+        out=Path(os.environ['CSS_AVATAR_OUT']).parent/kind;out.mkdir(parents=True,exist_ok=True);rows=[]
+        try:
+            with sync_playwright() as pw:
+                for run in range(5):
+                    for version in (['after'] if after_only else (['before','after'] if run%2==0 else ['after','before'])):
+                        env.loader=loaders[version]
+                        browser=pw.chromium.launch(executable_path=shutil.which('chromium'),args=['--no-sandbox'])
+                        assert browser.version=='154.0.8037.57'
+                        context=browser.new_context(viewport={'width':390,'height':844},has_touch=True,timezone_id='UTC',service_workers='block')
+                        context.add_cookies([cookie]);context.add_init_script(PURE)
+                        page=context.new_page();errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
+                        cdp=context.new_cdp_session(page);cdp.send('Emulation.setCPUThrottlingRate',{'rate':4})
+                        page.goto(origin+'/?view=me');page.goto(origin+'/?view=me');page.wait_for_timeout(500)
+                        assert page.locator(f'.avwrap[data-interactive] svg[data-avatar-kind="{kind}"][data-avatar-stage="6"]').count()==1
+                        assert page.evaluate('avatarLoafSupported')
+                        reset(page);start=page.evaluate('''()=>{avatarLoafs=[];avatarLoafObserver.takeRecords();return performance.now()}''')
+                        deadline=time.monotonic()+30;action=0
+                        while time.monotonic()<deadline:
+                            box=page.locator('.av-play-btn').bounding_box();x=box['x']+box['width']/2;y=box['y']+box['height']/2
+                            page.mouse.move(x,y);page.mouse.down();page.wait_for_timeout(500 if action%3==0 else 50)
+                            if action%3==0:page.mouse.move(x+15,y+10,steps=3)
+                            page.mouse.up();page.wait_for_timeout(350);action+=1
+                        end=page.evaluate('performance.now()')
+                        loafs=page.evaluate('''()=>{avatarLoafObserver.takeRecords().forEach(avatarLoafCapture);return avatarLoafs}''')
+                        loafs=[l for l in loafs if l['start']<end and l['start']+l['duration']>=start]
+                        scripts=[dict(s,sourceURL=s['sourceURL'].replace(origin,'')) for l in loafs for s in l['scripts'] if '/static/js/avatars.js' in s['sourceURL'] or '/static/js/avatar-audio.js' in s['sourceURL']]
+                        observed=snapshot(page,cdp)
+                        rows.append({'run':run,'version':version,'kind':kind,'mature':True,'cpu':4,'seconds':30,'actions':action,'start_ms':start,'end_ms':end,
+                                     'scenario':observed,'native_long_animation_frames':loafs,'avatar_native_scripts':scripts,
+                                     'max_avatar_callback_ms':max((s['duration'] for s in scripts),default=0),'errors':errors})
+                        (out/'native-control.json').write_text(json.dumps({'source_commit':source_commit,'before_art':None if after_only else '5b580d9','after_only':after_only,'same_current_runtime_both_arms':not after_only,'kind':kind,'method':('Five final-source warm CPU4 mobile runs; mature6; original30s input; native LoAF/LongTask/EventTiming/rAF only; no API wrappers, tracing, callback clocks or stacks.' if after_only else 'Five counterbalanced warm CPU4 mobile pairs; mature6; original30s input; native LoAF/LongTask/EventTiming/rAF only. No timer/event/rAF wrappers, tracing recorder, callback clocks or stacks. Same current Home/search/runtime with old/new art/frame macros.'),'samples':rows},indent=2))
+                        print(kind,version,run,'frame',observed['frame_p95_ms'],'max_callback',max((s['duration'] for s in scripts),default=0),flush=True)
+                        context.close();browser.close()
+        finally:env.loader=loader;env.cache.clear()
+        assert len(rows)==(5 if after_only else 10) and all(not r['errors'] for r in rows)
+        if after_only:
+>           assert all(r['scenario']['frame_p95_ms']<=33 and r['max_avatar_callback_ms']<=50 for r in rows), 'Final native budget failed; all samples retained'
+E           AssertionError: Final native budget failed; all samples retained
+E           assert False
+E            +  where False = all(<generator object test_native_art_control.<locals>.<genexpr> at 0x7f3bdfebadc0>)
+
+tests/test_avatar_native_control.py:78: AssertionError
+=============================== warnings summary ===============================
+tests/test_avatar_native_control.py::test_native_art_control[fern]
+  /workspace/css-is/tests/conftest.py:88: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_avatar_native_control.py::test_native_art_control[fern] - A...
+FAILED tests/test_avatar_native_control.py::test_native_art_control[mushroom]
+FAILED tests/test_avatar_native_control.py::test_native_art_control[succulent]
+3 failed, 1 warning in 526.85s (0:08:46)

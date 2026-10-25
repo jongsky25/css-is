@@ -1,0 +1,90 @@
+fern before 0 frame 16.799999999999272 max_callback 0
+fern after 0 frame 16.799999999999272 max_callback 0
+fern after 1 frame 16.799999999999272 max_callback 18.399999998509884
+fern before 1 frame 16.799999999999272 max_callback 15.899999998509884
+fern before 2 frame 16.799999999999272 max_callback 0
+fern after 2 frame 16.799999999999272 max_callback 0
+fern after 3 frame 16.799999999999272 max_callback 0
+fern before 3 frame 16.799999999999272 max_callback 0
+fern before 4 frame 16.799999999999272 max_callback 0
+fern after 4 frame 16.799999999999272 max_callback 0
+[
+  {
+    "version": "before",
+    "run": 0,
+    "frame_p95_ms": 16.799999999999272,
+    "over50_wall_scripts": [],
+    "all_bounded_cpu_le50": true
+  },
+  {
+    "version": "after",
+    "run": 0,
+    "frame_p95_ms": 16.799999999999272,
+    "over50_wall_scripts": [],
+    "all_bounded_cpu_le50": true
+  },
+  {
+    "version": "after",
+    "run": 1,
+    "frame_p95_ms": 16.799999999999272,
+    "over50_wall_scripts": [],
+    "all_bounded_cpu_le50": true
+  },
+  {
+    "version": "before",
+    "run": 1,
+    "frame_p95_ms": 16.799999999999272,
+    "over50_wall_scripts": [],
+    "all_bounded_cpu_le50": true
+  },
+  {
+    "version": "before",
+    "run": 2,
+    "frame_p95_ms": 16.799999999999272,
+    "over50_wall_scripts": [],
+    "all_bounded_cpu_le50": true
+  },
+  {
+    "version": "after",
+    "run": 2,
+    "frame_p95_ms": 16.799999999999272,
+    "over50_wall_scripts": [],
+    "all_bounded_cpu_le50": true
+  },
+  {
+    "version": "after",
+    "run": 3,
+    "frame_p95_ms": 16.799999999999272,
+    "over50_wall_scripts": [],
+    "all_bounded_cpu_le50": true
+  },
+  {
+    "version": "before",
+    "run": 3,
+    "frame_p95_ms": 16.799999999999272,
+    "over50_wall_scripts": [],
+    "all_bounded_cpu_le50": true
+  },
+  {
+    "version": "before",
+    "run": 4,
+    "frame_p95_ms": 16.799999999999272,
+    "over50_wall_scripts": [],
+    "all_bounded_cpu_le50": true
+  },
+  {
+    "version": "after",
+    "run": 4,
+    "frame_p95_ms": 16.799999999999272,
+    "over50_wall_scripts": [],
+    "all_bounded_cpu_le50": true
+  }
+]
+.
+=============================== warnings summary ===============================
+tests/test_avatar_scheduler_diagnostic.py::test_matched_scheduler_attribution
+  /workspace/css-is/tests/conftest.py:88: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+1 passed, 1 warning in 342.60s (0:05:42)
