@@ -18,6 +18,21 @@
 <label>Sort direction<select name="dir"><option value="asc" {% if selection.dir=='asc' %}selected{% endif %}>Ascending</option><option value="desc" {% if selection.dir=='desc' %}selected{% endif %}>Descending</option></select></label>
 <button class="btn">Apply selection</button> <a href="/travel/table">Reset table</a>
 </form></section>
+<details class="tv-card" id="claims-saved-views" {% if view_message %}open{% endif %}><summary>My saved claims views</summary>
+{% if view_message %}<p role="status">{{ view_message }}</p>{% endif %}
+<p>Save up to 10 private filter and sort selections for your account. Opening starts at page one and checks your current access. Apply changed filters before saving. Column widths are not saved.</p>
+<form method="post" action="/travel/table/views" class="claims-filters">
+<input type="hidden" name="action" value="create"><input type="hidden" name="state" value="{{ saved_state|tojson|forceescape }}">
+<label>New saved view name<input name="name" maxlength="60" required></label><button class="btn">Save current selection</button>
+</form>
+{% for view in saved_views %}<article class="claims-saved-item"><h3>{{ view.name }}</h3>
+<p><a href="/travel/table?view={{ view.id }}">Open saved view: {{ view.name }}</a></p>
+<form method="post" action="/travel/table/views" class="claims-filters">
+<input type="hidden" name="action" value="update"><input type="hidden" name="id" value="{{ view.id }}"><input type="hidden" name="revision" value="{{ view.revision }}"><input type="hidden" name="state" value="{{ saved_state|tojson|forceescape }}">
+<label>Name for {{ view.name }}<input name="name" maxlength="60" required value="{{ view.name }}"></label><button class="btn">Replace saved selection: {{ view.name }}</button></form>
+<form method="post" action="/travel/table/views"><input type="hidden" name="action" value="delete"><input type="hidden" name="id" value="{{ view.id }}"><input type="hidden" name="revision" value="{{ view.revision }}"><button class="btn ghost">Delete saved view: {{ view.name }}</button></form>
+</article>{% else %}<p>No saved claims views yet.</p>{% endfor %}
+</details>
 <section class="tv-card" aria-labelledby="claims-heading"><h2 id="claims-heading">Matching filings</h2>
 <p>{{ result.total }} matching filings. Filters and sorting cover all matching pages. At most 30 records load at a time.</p>
 <p><a class="btn" id="claims-export" href="{{ export_url }}">Export current selection (CSV)</a></p>

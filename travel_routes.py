@@ -187,7 +187,12 @@ def make_router(templates, get_conn, today_local, *, audit, base_url, notify=Non
                 response.headers.update(headers)
                 return response
             try:
-                selection = travel_grid.parse(dict(request.query_params))
+                raw = dict(request.query_params)
+                if raw.get('view'):
+                    # Opening a view selects only stored filters/order and starts at page one.
+                    # Extra query fields cannot change that selection or its owner scope.
+                    raw = travel_grid.open_view(conn, user['id'], raw['view'])
+                selection = travel_grid.parse(raw)
                 if is_csv:
                     content, count = travel_grid.export_csv(conn, user['id'], selection)
                     return Response(content, media_type='text/csv', headers={**headers,
@@ -209,7 +214,43 @@ def make_router(templates, get_conn, today_local, *, audit, base_url, notify=Non
                 'previous': travel_grid.url(current, page=current['page']-1) if current['page']>1 else None,
                 'following': travel_grid.url(current, page=current['page']+1) if current['page']<result['last_page'] else None,
                 'data_url': travel_grid.url(current, format='json'),
-                'export_url': travel_grid.url(current, format='csv')}, headers=headers)
+                'export_url': travel_grid.url(current, format='csv'),
+                'saved_views': travel_grid.views(conn, user['id']),
+                'saved_state': {'schema': 1, **{key: current[key] for key in travel_grid.VIEW_FIELDS}},
+                'view_message': 'Saved views updated.' if request.query_params.get('views_updated')=='1' else ''}, headers=headers)
+        finally:
+            conn.close()
+
+    @router.post('/travel/table/views')
+    async def travel_claim_view_save(request: Request):
+        headers = {'Cache-Control': 'no-store'}
+        def failure(message, status=400):
+            return templates.TemplateResponse(request, 'travel_table.html', {
+                'nav_active': 'travel_mine', 'tab': 'table', 'error': message,
+                'back': '/travel/table'}, status_code=status, headers=headers)
+        if not _same_origin(request):
+            return failure('This request could not be verified. Reload the table and try again.', 403)
+        if request.headers.get('content-type', '').split(';')[0] != 'application/x-www-form-urlencoded':
+            return failure('Submit the saved view form from the claims table.')
+        raw = bytearray()
+        async for chunk in request.stream():
+            raw.extend(chunk)
+            if len(raw) > 8192:
+                return failure('Saved view request is too large.', 413)
+        conn = get_conn()
+        try:
+            try:
+                fields = parse_qs(raw.decode('utf-8'), keep_blank_values=True)
+                if any(len(values) != 1 for values in fields.values()):
+                    raise ValueError('Submit one saved view action at a time.')
+                data = {key: values[0] for key, values in fields.items()}
+                token = auth.parse_token(request.cookies.get(auth.COOKIE_NAME))
+                state = travel_grid.save_view(conn, token, data)
+            except (ValueError, PermissionError) as error:
+                return failure(str(error), 403 if isinstance(error, PermissionError) else
+                               409 if isinstance(error, travel_grid.ViewConflict) else 400)
+            target = travel_grid.url({key: state[key] for key in travel_grid.VIEW_FIELDS}, views_updated='1') if state else '/travel/table?views_updated=1'
+            return RedirectResponse(target + '#claims-saved-views', status_code=303, headers=headers)
         finally:
             conn.close()
 
