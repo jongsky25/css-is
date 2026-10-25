@@ -48,30 +48,32 @@ def test_navigation_and_guides_are_filtered_before_matching(app_mod,viewer,admin
         observed.extend(row['url'] for row,text in candidates)
         return original(query,candidates,excluded)
     monkeypatch.setattr(sources.search_typo,'rank',capture)
-    rows=viewer.get('/api/search?q=auidt&suggest_pages=1').json()
+    rows=viewer.get('/api/search?q=auidt&suggest=1').json()
     assert '/admin/audit' not in observed and not any(r['url'].startswith('/admin/audit') for r in rows)
     observed.clear()
-    rows=admin.get('/api/search?q=auidt&suggest_pages=1').json()
+    rows=admin.get('/api/search?q=auidt&suggest=1').json()
     assert '/admin/audit' in observed
     assert any(r['url']=='/admin/audit' and r.get('match')=='close' for r in rows)
     # Current role/capabilities are reloaded, rather than trusting the old cookie.
     conn=st.connect(app_mod.DB);user=st.get_admin_user(conn,'admin@test.local')
     conn.execute("UPDATE admin_user SET role='viewer' WHERE id=?",(user['id'],));conn.commit();conn.close()
     observed.clear()
-    assert admin.get('/api/search?q=auidt&suggest_pages=1',follow_redirects=False).status_code==303
+    assert admin.get('/api/search?q=auidt&suggest=1',follow_redirects=False).status_code==303
     assert not observed
     admin.cookies.set(auth.COOKIE_NAME,session_token({**user,'role':'viewer'}))
-    rows=admin.get('/api/search?q=auidt&suggest_pages=1').json()
+    rows=admin.get('/api/search?q=auidt&suggest=1').json()
     assert '/admin/audit' not in observed and not any(r['url'].startswith('/admin/audit') for r in rows)
 
 
 def test_exact_records_precede_labeled_close_matches_and_scope_is_retained(admin,monkeypatch):
     monkeypatch.setattr(sources,'run_sources',lambda *args:[{'title':'Exact calender task','url':'/exact','section':'My to-do','hint':''}])
-    response=admin.get('/api/search?q=calender&suggest_pages=1')
+    response=admin.get('/api/search?q=calender&suggest=1')
     rows=response.json()
     assert response.headers['cache-control']=='no-store'
     assert rows[0]['url']=='/exact' and rows[-1].get('match')=='close'
-    scoped=admin.get('/api/search?q=reimbursment&suggest_pages=1&scope=css').json()
+    legacy=admin.get('/api/search?q=calender').json()
+    assert len(legacy)==1 and legacy[0]['url']=='/exact' and 'match' not in legacy[0]
+    scoped=admin.get('/api/search?q=reimbursment&suggest=1&scope=css').json()
     assert not any(r.get('match')=='close' and r['section'] in ('Office','Help','Colleagues') for r in scoped)
 
 
@@ -79,7 +81,7 @@ def test_approximate_failure_keeps_existing_exact_results_and_does_not_log_terms
     monkeypatch.setattr(sources,'run_sources',lambda *args:[{'title':'Exact result','url':'/exact','section':'Activities','hint':''}])
     def fail(*args,**kwargs):raise RuntimeError('synthetic failure')
     monkeypatch.setattr(sources.search_typo,'rank',fail)
-    response=admin.get('/api/search?q=private-search-term&suggest_pages=1')
+    response=admin.get('/api/search?q=private-search-term&suggest=1')
     assert response.status_code==200 and response.json()[0]['url']=='/exact'
     assert 'private-search-term' not in caplog.text
 
@@ -89,13 +91,13 @@ def test_colleague_suggestions_keep_status_scope_and_exclude_inactive_staff(app_
     _report(conn,org['bob'],today,'field',SECRET)
     st.set_colleague_status_scope(conn,'team')
     client=_client(app_mod,conn,org['unlinked'])
-    rows=client.get('/api/search?q=ztea bob').json()
+    rows=client.get('/api/search?q=ztea bob&suggest=1').json()
     bob=next(r for r in rows if r['url']==f"/people/{org['bob']}")
     assert bob['match']=='close' and SECRET not in str(rows)
     assert 'In the field today' not in bob['hint']
-    assert not any(r['section']=='Colleagues' for r in client.get('/api/search?q=ztea bob&scope=css').json())
+    assert not any(r['section']=='Colleagues' for r in client.get('/api/search?q=ztea bob&suggest=1&scope=css').json())
     conn.execute('UPDATE admin_user SET active=0 WHERE id=?',(org['bob'],));conn.commit()
-    assert not any(r['url']==f"/people/{org['bob']}" for r in client.get('/api/search?q=ztea bob').json())
+    assert not any(r['url']==f"/people/{org['bob']}" for r in client.get('/api/search?q=ztea bob&suggest=1').json())
 
 
 def test_personal_record_text_is_never_a_fuzzy_candidate(app_mod,viewer,monkeypatch):
@@ -107,7 +109,7 @@ def test_personal_record_text_is_never_a_fuzzy_candidate(app_mod,viewer,monkeypa
         observed.extend(text for row,text in candidates)
         return original(query,candidates,excluded)
     monkeypatch.setattr(sources.search_typo,'rank',capture)
-    viewer.get('/api/search?q=reimbursment&suggest_pages=1')
+    viewer.get('/api/search?q=reimbursment&suggest=1')
     assert not any('Secret reimbursement planning' in text for text in observed)
 
 
@@ -132,4 +134,4 @@ def test_oversized_directory_refuses_fuzzy_staff_without_truncating_other_source
 def test_archived_staff_are_not_close_candidates(app_mod,org):
     conn=org['conn'];client=_client(app_mod,conn,org['unlinked'])
     conn.execute('UPDATE resource_person SET archived_at=? WHERE id=(SELECT rp_id FROM admin_user WHERE id=?)',('2026-10-20',org['bob']));conn.commit()
-    assert not any(r['url']==f"/people/{org['bob']}" for r in client.get('/api/search?q=ztea bob').json())
+    assert not any(r['url']==f"/people/{org['bob']}" for r in client.get('/api/search?q=ztea bob&suggest=1').json())

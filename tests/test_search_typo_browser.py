@@ -26,7 +26,7 @@ def context_for(browser,conn,base,**options):
 def test_live_mobile_exact_before_close_keyboard_scope_and_native_fallback(grid_browser,app_mod,monkeypatch,tmp_path):
     conn=st.connect(app_mod.DB)
     exact=seed(conn,'Zircon Jhon Example','search-exact@example.test')
-    close=seed(conn,'Zircon John Example','search-close@example.test')
+    close=seed(conn,'Zircon John Long-Family-Name Example','search-close@example.test')
     with live_app(app_mod.app) as base:
         monkeypatch.setenv('CSS_BASE_URL',base)
         context=context_for(grid_browser,conn,base)
@@ -36,6 +36,8 @@ def test_live_mobile_exact_before_close_keyboard_scope_and_native_fallback(grid_
             page.locator('#navSearchBtn').click();page.locator('#cmdkInput').fill('zircon jhon')
             near=page.locator(f'#cmdkResults a[href="/people/{close}"]');near.wait_for()
             assert 'Close match' in near.inner_text()
+            assert near.locator('.pi-tag').evaluate('(node)=>node.getBoundingClientRect().right<=node.closest(".palette").getBoundingClientRect().right-4')
+            page.screenshot(path=str(tmp_path/'search-colleague-mobile.png'),full_page=True)
             anchors=page.locator('#cmdkResults a[role="option"]').evaluate_all('(nodes)=>nodes.map(n=>n.getAttribute("href"))')
             assert anchors.index('/people/'+str(exact))<anchors.index('/people/'+str(close))
             assert 'No matching page' not in page.locator('#cmdkResults').inner_text()

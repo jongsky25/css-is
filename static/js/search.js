@@ -14,9 +14,9 @@
  * (assistant.js) and shows the answer card inside the dropdown, above the
  * normal results, which stay clickable underneath.
  *
- * DB-record results (activities and people) are fetched from /api/search
- * after a 200 ms debounce and appended below the page results with no change to
- * the core engine or the result-row rendering contract.
+ * Exact record results and opt-in spelling suggestions are fetched from
+ * /api/search after a 200 ms debounce. Exact pages/records stay first; server
+ * close matches are labeled, deduplicated and dropped when their query is stale.
  */
 (function () {
   "use strict";
@@ -203,7 +203,7 @@
           lastSection = group;
         }
         var idx = startIdx + i;
-        html += '<li role="presentation" class="palette-item">' +
+        html += '<li role="presentation" class="palette-item' + (it.match === "close" ? ' palette-close-match' : '') + '">' +
                 '<a id="' + idPrefix + idx + '" role="option" aria-selected="false" href="' + esc(it.url) + '" tabindex="-1">' +
                 '<span class="pi-title">' + mark(it.title, raw) + "</span>" +
                 '<span class="pi-hint">' + mark(it.hint, raw) + "</span>" +
@@ -238,7 +238,7 @@
         _showLoadingRow();
         var ctrl = typeof AbortController !== "undefined" ? new AbortController() : null;
         _dbCtrl = ctrl;
-        fetch("/api/search?q=" + encodeURIComponent(raw) + "&suggest_pages=1" +
+        fetch("/api/search?q=" + encodeURIComponent(raw) + "&suggest=1" +
               (scope === "all" ? "" : "&scope=" + encodeURIComponent(scope)),
               ctrl ? { signal: ctrl.signal } : {})
           .then(function (res) {

@@ -1043,6 +1043,10 @@ body:has(.gsearch.js .gsearch-results:not(:empty)) .sf-float { visibility:hidden
 .sl-tag { font-size:.66rem; font-weight:700; color:var(--grey); background:var(--surface-2);
   border:1px solid var(--line); border-radius:var(--rpill); padding:.05rem .45rem; white-space:nowrap; }
 .search-none { color:var(--grey); padding:.8rem .4rem; }
+.palette-close-match > a, .search-close-match > a { flex-wrap:wrap; }
+.palette-close-match .pi-title, .search-close-match .sl-title { flex:1 1 10rem; min-width:0; overflow-wrap:anywhere; }
+.palette-close-match .pi-hint, .search-close-match .sl-hint { flex:1 1 100%; order:3; white-space:normal; overflow-wrap:anywhere; }
+.palette-close-match .pi-tag, .search-close-match .sl-tag { max-width:100%; white-space:normal; }
 
 /* ---------- Badge palette — dark-mode overrides ----------
    Light-mode definitions live per-template (.pbadge.bg-* / .ublegend .bg-*).

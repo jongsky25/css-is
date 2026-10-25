@@ -6065,11 +6065,12 @@ def help_page(request: Request):
 
 
 @app.get("/api/search")
-def api_search(request: Request, q: str = "", scope: str = "all", suggest_pages: bool = False):
+def api_search(request: Request, q: str = "", scope: str = "all", suggest: bool = False):
     """Record search: runs every search_sources source for `scope` ("all" or "css";
     anything else counts as "all"). Returns the same {title, hint, url, section, kw}
     shape as window.SEARCH_INDEX so search.js can append results without any schema
-    changes on the client side."""
+    changes on the client side. Updated clients opt into labeled, bounded spelling
+    suggestions with suggest=1; legacy callers remain exact-only."""
     user = request.state.user
     if not user:
         return JSONResponse([],headers={'Cache-Control':'no-store'})
@@ -6087,10 +6088,10 @@ def api_search(request: Request, q: str = "", scope: str = "all", suggest_pages:
     conn.row_factory = sqlite3.Row
     try:
         results = search_sources.run_sources(conn, user, q.lower().split(), ctx, scope)
-        close = search_sources.close_matches(conn,user,q,ctx,scope,
-            pages=search_index_for(user,is_chief) if suggest_pages else (),
-            excluded=[r['url'] for r in results])
-        results += close[:max(0,search_sources.TOTAL_CAP-len(results))]
+        if suggest:
+            close = search_sources.close_matches(conn,user,q,ctx,scope,
+                pages=search_index_for(user,is_chief),excluded=[r['url'] for r in results])
+            results += close[:max(0,search_sources.TOTAL_CAP-len(results))]
     finally:
         conn.close()
     return JSONResponse(results,headers={'Cache-Control':'no-store','Pragma':'no-cache'})
