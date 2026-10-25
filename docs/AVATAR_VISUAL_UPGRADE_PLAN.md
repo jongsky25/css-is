@@ -1,6 +1,6 @@
 # Avatar visual upgrade — phased execution plan for Sol
 
-Status: Increments0,1,2A complete. The user accepts the observed2B mushroom33.3ms frame-p95 result (0.3ms over the original budget). That result no longer blocks acceptance. Remaining focused samples, callback attribution and final-source full performance matrix must still complete before2B/3A advancement.
+Status: Increments0,1,2A complete. Current2B verification still fails the50ms callback gate:141.084ms in a fern pointer-move listener. Current fern trace framep95 is16.8ms in four runs and33.3ms in one; the user-approved33.3ms mushroom exception remains accepted. Remaining checks and3A are pending.
 Created: 2026-10-25
 Repository: jongsky25/css-is
 Owner request: Material improvement to companion artwork, optional animal dress-up,
@@ -627,3 +627,18 @@ raw measurement and original budget; record this as an explicit acceptance
 exception, not a changed historical result. Larger frame failures, the50ms
 avatar-attributable callback limit, and all uncompleted performance checks remain
 outstanding.2B cannot yet be marked complete solely from this exception.
+
+### Current-source verification after the frame exception
+
+**2B remains blocked by callback timing, not the accepted0.3ms frame overrun.**
+Five counterbalanced old/new-art fern pairs completed on the current runtime.
+Current callback maxima: [6.235, 141.084, 9.715, 5.255, 15.526]ms;
+old-art controls: [5.147, 7.467, 12.332, 9.858, 5.448]ms.
+Current framep95 values are16.8ms in four runs and33.3ms in one, matching the small overrun the user accepted. One current pointer-move listener
+callback reaches141.084ms against50ms. No JavaScript errors or trace loss.
+The same-source seven browser tests and1,734 SVG checks remain valid.
+The remaining species/full-matrix checks were not started after this prerequisite
+failure. User acceptance of the recorded33.3ms frame result remains in force.
+[Verification assessment](avatars/increment2b/verification-current/assessment.json)
+and [all raw traces](avatars/increment2b/verification-current/traces/fern/summary.json)
+retain every sample; no CPU/GC subtraction or cause claim.

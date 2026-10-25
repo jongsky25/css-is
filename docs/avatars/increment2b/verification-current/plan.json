@@ -1,0 +1,15 @@
+{
+  "source_unchanged_from": "chase-write-fix",
+  "source_sha256": {
+    "static/js/avatars.js": "7f876def90e0d01cc741260c2a2978acc384b1288bdba402a619a028c95a2c19",
+    "templates/_avatars.html": "c121545e8937dd39576df815283020b2b895dc7ccb64d39adb1ab81ab0843cba"
+  },
+  "verification": "Run callback attribution first because prior265ms failure is independent of accepted0.3ms frame overrun. Five counterbalanced old/new-art pairs per species, mature6/CPU4/30s, fixedChromium154. Stop at first failed species; no primary matrix if attributable callback exceeds50ms. If passes, complete remaining native samples and full20 matrix.",
+  "frame_exception": {
+    "authorized_by": "User: is .3ms significant? can we let it go and finally unblock 2b?",
+    "scope": "Accept the recorded mushroom33.3ms frame-p95 result as a0.3ms exception to the original33ms threshold. No exemption for larger failures,50ms attributable callbacks, or uncompleted acceptance checks.",
+    "reason": "0.3ms is approximately0.9% of a33ms frame interval;33.3ms is approximately30fps. This narrow observed overrun is not a meaningful practical regression."
+  },
+  "reused_valid_checks": "Same production hashes: seven functional browser tests and1734 SVG comparisons. No changes require repeating them.",
+  "no_rejected_affinity": true
+}

@@ -1,31 +1,46 @@
 {
   "status": "blocked",
-  "measured_base_commit": "df0cfb6",
-  "source_sha256": {
-    "static/js/avatars.js": "7f876def90e0d01cc741260c2a2978acc384b1288bdba402a619a028c95a2c19",
-    "templates/_avatars.html": "c121545e8937dd39576df815283020b2b895dc7ccb64d39adb1ab81ab0843cba"
-  },
-  "functional_browser_tests": 7,
-  "svg_equivalence_checks": 1734,
-  "native_frame_p95_ms": {
-    "fern": [
-      16.700000000000728,
-      16.799999999999272,
-      16.799999999999272,
-      16.799999999999272,
-      16.799999999999272
-    ],
-    "mushroom": [
-      33.29999999999927,
-      16.799999999999272
-    ]
-  },
-  "gate_ms": 33,
-  "reason": "Recorded mushroom33.3ms frame overrun accepted by user. Overall acceptance remains pending: remaining species samples, callback attribution and final-source full performance matrix have not completed.",
-  "next_step": "Complete remaining focused samples, callback attribution and final-source full matrix; retain original budgets except the explicitly accepted33.3ms result.",
+  "source_commit": "fbd73655a0108485acf99ccd4dc9bbcf23c5b101",
+  "runtime_sha256": "7f876def90e0d01cc741260c2a2978acc384b1288bdba402a619a028c95a2c19",
   "frame_exception": {
     "authorized_by": "User: is .3ms significant? can we let it go and finally unblock 2b?",
     "scope": "Accept the recorded mushroom33.3ms frame-p95 result as a0.3ms exception to the original33ms threshold. No exemption for larger failures,50ms attributable callbacks, or uncompleted acceptance checks.",
     "reason": "0.3ms is approximately0.9% of a33ms frame interval;33.3ms is approximately30fps. This narrow observed overrun is not a meaningful practical regression."
-  }
+  },
+  "reused_same_source_checks": {
+    "browser_tests": 7,
+    "svg_comparisons": 1734
+  },
+  "fern": {
+    "before_callback_maxima_ms": [
+      5.147,
+      7.467,
+      12.332,
+      9.858,
+      5.448
+    ],
+    "after_callback_maxima_ms": [
+      6.235,
+      141.084,
+      9.715,
+      5.255,
+      15.526
+    ],
+    "after_frame_p95_ms": [
+      16.799999999999272,
+      16.799999999999272,
+      16.799999999999272,
+      16.799999999999272,
+      33.29999999999927
+    ],
+    "callback_limit_ms": 50,
+    "callback_pass": false,
+    "frame_pass": false,
+    "errors": [],
+    "trace_data_loss": false,
+    "frame_pass_with_user_accepted_0_3ms_overrun": true,
+    "frame_note": "Four16.8ms samples and one33.3ms sample; same0.3ms overrun the user accepted. Callback failure is independent."
+  },
+  "remaining_checks": "Mushroom/succulent callback cohorts, remaining native samples and full20 matrix not started because fern callback gate failed. No full2B acceptance claim.",
+  "limits": "Direct FunctionCall wall spans include synthetic throttle time; these traces do not prove the underlying cause of the stall. No CPU/GC time subtracted and no failed sample discarded."
 }

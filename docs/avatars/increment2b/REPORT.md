@@ -1,6 +1,6 @@
 # Increment 2B — chase write follow-up
 
-**The user accepts the observed33.3ms mushroom frame result. Overall acceptance still awaits the remaining checks.** [Assessment](chase-write-fix/assessment.json).
+**Current verification fails the50ms callback gate (141.084ms). The user-approved33.3ms mushroom frame exception remains accepted.** [Assessment](chase-write-fix/assessment.json).
 
 Removed repeated chase class, transition and facing writes. The new browser
 regression also exposed numerical drift at a clamped boundary: transforms changed
@@ -23,3 +23,18 @@ No rejected thread pinning was used. No trace or full-matrix acceptance is claim
 patch measured on base df0cfb6; this patch and its evidence are committed together.
 The [earlier report](REPORT-layout-fix.md) preserves prior failures and diagnostics.
 3A remains pending. No deployment.
+
+## Current verification
+
+**2B remains blocked by callback timing, not the accepted0.3ms frame overrun.**
+Five counterbalanced old/new-art fern pairs completed on the current runtime.
+Current callback maxima: [6.235, 141.084, 9.715, 5.255, 15.526]ms;
+old-art controls: [5.147, 7.467, 12.332, 9.858, 5.448]ms.
+Current framep95 values are16.8ms in four runs and33.3ms in one, matching the small overrun the user accepted. One current pointer-move listener
+callback reaches141.084ms against50ms. No JavaScript errors or trace loss.
+The same-source seven browser tests and1,734 SVG checks remain valid.
+The remaining species/full-matrix checks were not started after this prerequisite
+failure. User acceptance of the recorded33.3ms frame result remains in force.
+[Verification assessment](verification-current/assessment.json)
+and [all raw traces](verification-current/traces/fern/summary.json)
+retain every sample; no CPU/GC subtraction or cause claim.
