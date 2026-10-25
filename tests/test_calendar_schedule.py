@@ -109,9 +109,16 @@ def test_current_unit_visibility_applies_before_snapshot(app_mod,viewer,conn):
 
 
 def test_preferred_schedule_and_empty_invalid_or_oversized_fallback(viewer,conn,monkeypatch):
+    # Match deployment TLS: a prior HTTPS-configured app import can correctly
+    # make preference cookies Secure. Never weaken that production behavior.
+    viewer.base_url='https://testserver'
+    viewer.headers['Origin']='https://testserver'
     response=viewer.post('/calendar/preference',data={'layout':'schedule','scope':'bureau','next':'/calendar'},follow_redirects=False)
     assert response.status_code==303 and viewer.cookies.get('cal_pref')=='schedule:bureau'
-    assert viewer.get('/calendar').context['layout']=='schedule'
+    saved=viewer.get('/calendar')
+    assert saved.context['layout']=='schedule', {'url':str(saved.request.url),
+        'preference':saved.context['request'].cookies.get('cal_pref'),
+        'query':dict(saved.context['request'].query_params)}
     empty=viewer.get('/calendar?view=schedule&day=2031-01-06&q=CALSP')
     assert empty.context['schedule']['events']==[] and 'Nothing else planned for this week' in empty.text
     assert viewer.get('/calendar?view=schedule&day=bad',follow_redirects=False).status_code==303

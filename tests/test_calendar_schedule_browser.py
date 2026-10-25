@@ -56,7 +56,9 @@ def test_hour_grid_timezone_mobile_day_links_and_accessible_list(schedule_page,w
     assert grid.locator('img').count()==0
     assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
     page.screenshot(path=str(tmp_path/f'schedule-{width}-{theme}.png'),full_page=True)
-    link.focus();link.press('Enter')
+    link.focus();before=page.url;link.press('ArrowRight')
+    assert page.url==before  # Widget keys must not invoke the page's week shortcuts.
+    link.press('Enter')
     expect(page.get_by_role('dialog',name='CALSP Nine',exact=True)).to_be_visible()
     page.keyboard.press('Escape');expect(link).to_be_focused()
     if width<760:
@@ -68,6 +70,25 @@ def test_hour_grid_timezone_mobile_day_links_and_accessible_list(schedule_page,w
     expect(page.get_by_role('heading',name='Full week as a list')).to_be_focused()
     expect(page.locator('#cal-schedule-list')).to_be_visible()
     assert not errors and not writes
+
+
+def test_resizing_keeps_selected_day_and_focus_without_changing_week(schedule_page):
+    page,conn,base,errors,writes=schedule_page;seed(conn)
+    page.set_viewport_size({'width':1440,'height':900})
+    page.goto(base+'/calendar?view=schedule&day=2026-10-20&q=CALSP')
+    expect(page.locator('[data-schedule-status]')).to_contain_text('Hour grid ready')
+    grid=page.locator('#cal-schedule-grid');grid.focus();before=page.url
+    page.set_viewport_size({'width':390,'height':900})
+    expect(page.get_by_role('columnheader')).to_have_count(1)
+    expect(grid).to_be_focused()
+    page.get_by_label('Show day in the hour grid').select_option('2026-10-21')
+    page.set_viewport_size({'width':1440,'height':900})
+    expect(page.get_by_role('columnheader')).to_have_count(7)
+    expect(grid).to_contain_text('CALSP Nine')
+    page.set_viewport_size({'width':390,'height':900})
+    expect(page.get_by_role('columnheader')).to_have_count(1)
+    expect(grid).not_to_contain_text('CALSP Nine')
+    assert page.url==before and not errors and not writes
 
 
 @pytest.mark.parametrize('scripts',[False,True])
