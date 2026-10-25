@@ -24,6 +24,7 @@ import telegram_group_reads as shared_reads
 import telegram_actions
 import telegram_meetings as meetings
 import telegram_notices as notices
+import telegram_reminders as reminders
 import telegram_room_requests
 
 PATH = '/integrations/telegram/webhook'
@@ -375,6 +376,8 @@ def eligible(conn, delivery, bot, now=None):
         projection = json.loads(delivery['projection_json'])
     except ValueError:
         return False
+    if isinstance(projection,dict) and projection.get('kind')==reminders.KIND:
+        return reminders.allowed(conn,delivery,projection,bot,now or now_utc()) is not None
     if isinstance(projection,dict) and projection.get('kind')==notices.KIND:
         return notices.allowed(conn,delivery,projection,bot,now or now_utc()) is not None
     if delivery['chat_id'] < 0:
@@ -427,7 +430,7 @@ def deliver(conn, now=None):
             if not found:
                 break
             delivery = found[0]
-            if delivery['expires_at']>stamp(now) and notices.defer(conn,delivery,bot,now):continue
+            if delivery['expires_at']>stamp(now) and (notices.defer(conn,delivery,bot,now) or reminders.defer(conn,delivery,bot,now)):continue
             if delivery['expires_at'] <= stamp(now) or not eligible(conn, delivery, bot, now):
                 conn.execute("UPDATE telegram_delivery SET state='cancelled',error_code='ineligible',updated_at=? WHERE id=?",
                              (stamp(now), delivery['id']))
@@ -461,7 +464,9 @@ def deliver(conn, now=None):
             outcome, message_id, retry = 'cancelled', None, None
         else:
             projection = json.loads(delivery['projection_json'])
-            if projection['kind']==notices.KIND:
+            if projection['kind']==reminders.KIND:
+                message=reminders.render(conn,delivery,projection,bot,clock())
+            elif projection['kind']==notices.KIND:
                 message=notices.render(conn,delivery,projection,bot,clock())
             elif projection['kind'] in meetings.KINDS:
                 try:
@@ -519,6 +524,7 @@ def cleanup(conn, now):
         import telegram_changes
         telegram_changes.cleanup_in_transaction(conn,now)
         notices.cleanup_in_transaction(conn,now)
+        reminders.cleanup_in_transaction(conn,now)
         telegram_actions.cleanup_in_transaction(conn,now)
         conn.execute('DELETE FROM telegram_meeting_origin WHERE id IN (SELECT id FROM telegram_meeting_origin WHERE expires_at<? LIMIT 20)',(stamp(now-timedelta(days=1)),))
         conn.execute('''UPDATE telegram_update SET sender_id=NULL,chat_id=NULL,topic_id=NULL,payload_json=NULL,
@@ -546,6 +552,7 @@ def tick(conn, now=None):
     import telegram_changes
     telegram_changes.prepare_routes(conn,now or now_utc())
     notices.enqueue(conn,now or now_utc())
+    reminders.enqueue(conn,now or now_utc())
     sent = deliver(conn, now)
     cleanup(conn, now or now_utc())
     return processed, sent

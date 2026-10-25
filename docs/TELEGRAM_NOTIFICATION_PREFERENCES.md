@@ -6,9 +6,7 @@ Implementation: [preferences](../telegram_preferences.py),
 [delivery plan](TELEGRAM_TWO_WAY_PLAN.md).
 
 T4.3 is split into two dependent children under the plan's small-increment rule:
-this PR supplies channel/quiet-hour controls; T4.3.2 adds the durable reminder
-scheduler. T4.4 waits for both. This increment introduces no reminder generator
-or live activation. Every Telegram pilot remains off by default.
+T4.3.1 supplies channel/quiet-hour controls; [T4.3.2](TELEGRAM_REMINDERS.md) adds the durable private reminder scheduler. T4.4 waits for both. T4.3.1 introduced no reminder generator or live activation. Every Telegram pilot remains off by default.
 
 ## Staff controls
 
@@ -32,8 +30,7 @@ Quiet hours apply to these automatic calendar changes, own room status messages
 and owned-group updates. Interactive lookups, previews, confirmation receipts and
 status replies remain immediate. Existing reminders, approval/admin alerts,
 account/security mail, birthday mail and the independent Apprise discussion
-digest keep their existing controls. The reminder child will explicitly reuse
-these policies; it is not delivered by T4.3.1.
+digest keep their existing controls. The T4.3.2 private Telegram reminders reuse these channel and quiet-hour policies with separate opt-in lead times; existing email reminders retain their controls.
 
 Channels still need their normal global configuration and current permission.
 Choosing Telegram does not enable the pilot or grant read/write access. The page
@@ -107,5 +104,4 @@ No deployed SHA, real provider send or hosted verification is claimed here.
 
 Pause channels through this page or the existing global read/delivery/change
 switches. Preserve preference values, handoff identities and restore fences on
-rollback; never bulk replay old actions or uncertain sends. T4.3.2 next adds opt-in
-reminders with occurrence deduplication and reschedule/cancel/restart checks.
+rollback; never bulk replay old actions or uncertain sends. [T4.3.2 reminders](TELEGRAM_REMINDERS.md) add opt-in lead times with occurrence deduplication and reschedule/cancel/restart checks.

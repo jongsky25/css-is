@@ -1,3 +1,9 @@
+## 8.77 — October 25, 2026
+
+- Add separate default-off private Telegram reminder lead times for confirmed timed calendar occurrences and own approved room bookings, using current channel choices, read consent and Manila quiet hours. Preserve existing email reminders, interactive replies, group update controls and independent digests.
+- Atomically record occurrence hashes and durable sender handoffs; recheck current source/schedule/account/grant/bot before rendering and provider I/O. Suppress cancelled/rescheduled/skipped/past-start work, preserve provider retry deadlines, fence source and preference races, and retain minimal deduplication hashes after ordinary delivery retention.
+- Add no-script mobile controls, bounded restart-safe scheduler scans, migration/restore coverage and the T4.3.2 Markdown runbook/progress handoff. All pilots remain off; the complete hosted workflow pilot is still T4.4.
+
 ## 8.76 — October 25, 2026
 
 - Add current-account calendar/room channel preferences and Asia/Manila quiet hours, including automatic owned-group controls, guarded by session/Origin/CSRF and revision checks. Reuse the existing calendar email choice and add own room-status email control.

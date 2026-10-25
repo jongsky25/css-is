@@ -18,7 +18,7 @@ def test_mobile_channel_and_quiet_preferences_no_scripts_and_stale_form_denial(g
         try:
             response=page.goto(base+'/account/telegram/notifications')
             assert response.status==200 and 'no-store' in response.headers['cache-control']
-            old={k:page.locator('input[name='+k+']').input_value() for k in ('csrf','revision','calendar_email_expected')}
+            old={k:page.locator('form[action="/account/telegram/notifications"] input[name='+k+']').input_value() for k in ('csrf','revision','calendar_email_expected')}
             page.get_by_label('Calendar changes to me',exact=True).select_option('telegram')
             page.get_by_label('My room status updates',exact=True).select_option('email')
             page.get_by_label('Quiet hours start (Asia/Manila)',exact=True).fill('22:00')
