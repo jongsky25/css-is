@@ -84,7 +84,7 @@ for(const name of ['setTimeout','setInterval']){
 }
 for(const name of ['clearTimeout','clearInterval']){const native=window[name];window[name]=id=>{delete probe.timers[id];native(id)}}
 new PerformanceObserver(list=>list.getEntries().forEach(e=>probe.long.push({start:e.startTime,duration:e.duration,name:e.name}))).observe({type:'longtask',buffered:true});
-new PerformanceObserver(list=>list.getEntries().forEach(e=>probe.lcp=e.startTime)).observe({type:'largest-contentful-paint',buffered:true});
+new PerformanceObserver(list=>list.getEntries().forEach(e=>{probe.lcp=e.startTime;probe.lcp_detail={tag:e.element?.tagName,id:e.element?.id,text:e.element?.textContent?.slice(0,120),size:e.size,url:e.url}})).observe({type:'largest-contentful-paint',buffered:true});
 new PerformanceObserver(list=>list.getEntries().forEach(e=>probe.events.push({name:e.name,duration:e.duration,processing:e.processingStart-e.startTime,interaction:e.interactionId}))).observe({type:'event',buffered:true,durationThreshold:16});
 let last;function frame(t){if(last)probe.frames.push(t-last);last=t;requestAnimationFrame(frame)}requestAnimationFrame(frame);
 })();'''
@@ -97,7 +97,7 @@ animations:document.getAnimations().filter(a=>a.playState==='running').length,
 avatar_animations:document.getAnimations().filter(a=>a.playState==='running' && a.effect.target.closest('.avwrap')).length,
 timers:Object.values(avatarProbe.timers).filter(t=>/avatars\.js|avatar-audio\.js/.test(t.source)),
 ticks:avatarProbe.ticks,nodes:document.querySelectorAll('*').length,
-resources:performance.getEntriesByType('resource').map(r=>({name:r.name.split(location.origin).pop(),transfer:r.transferSize,encoded:r.encodedBodySize,decoded:r.decodedBodySize}))})''')
+resources:performance.getEntriesByType('resource').map(r=>({name:r.name.split(location.origin).pop(),transfer:r.transferSize,encoded:r.encodedBodySize,decoded:r.decodedBodySize,start:r.startTime,duration:r.duration,responseStart:r.responseStart,responseEnd:r.responseEnd,initiator:r.initiatorType}))})''')
     browser_session = page.context.browser.new_browser_cdp_session()
     processes = browser_session.send('SystemInfo.getProcessInfo')['processInfo']
     browser_session.detach()
@@ -161,7 +161,7 @@ def test_real_application_baseline(baseline_server, app_mod, mobile, cache):
                  'seconds':seconds,'scenarios':{}}
             reset(page); page.wait_for_timeout(seconds*1000)
             row['scenarios']['home_idle']=snapshot(page,cdp)
-            row['home_document']=page.evaluate('''()=>{let n=performance.getEntriesByType('navigation')[0];return {encoded:n.encodedBodySize,decoded:n.decodedBodySize,transfer:n.transferSize}}''')
+            row['home_document']=page.evaluate('''()=>{let n=performance.getEntriesByType('navigation')[0];return {encoded:n.encodedBodySize,decoded:n.decodedBodySize,transfer:n.transferSize,navigation:n.toJSON(),lcp_detail:avatarProbe.lcp_detail}}''')
             reset(page)
             # Trusted pointer input at fixed intervals, no CSS stability auto-waits.
             deadline=time.monotonic()+seconds; action=0
@@ -194,7 +194,7 @@ def test_real_application_baseline(baseline_server, app_mod, mobile, cache):
             page.locator('#companion-growth-title').scroll_into_view_if_needed()
             page.wait_for_timeout(500)
             row['picker_selected']=selected; row['scenarios']['picker_growth']=snapshot(page,cdp)
-            row['picker_document']=page.evaluate('''()=>{let n=performance.getEntriesByType('navigation')[0];return {encoded:n.encodedBodySize,decoded:n.decodedBodySize,transfer:n.transferSize}}''')
+            row['picker_document']=page.evaluate('''()=>{let n=performance.getEntriesByType('navigation')[0];return {encoded:n.encodedBodySize,decoded:n.decodedBodySize,transfer:n.transferSize,navigation:n.toJSON(),lcp_detail:avatarProbe.lcp_detail}}''')
             if run==0:page.screenshot(path=str(out/f'profile-{mobile}-{cache}.png'),full_page=True)
             page.goto(origin+'/admin/appearance');reset(page)
             for outfit in ['halloween','halloween_vampire','halloween_pumpkin','christmas']:
