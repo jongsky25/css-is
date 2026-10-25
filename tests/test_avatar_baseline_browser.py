@@ -241,6 +241,8 @@ def test_native_visibility_and_touch(baseline_server, tmp_path):
             context=browser.contexts[0];context.add_cookies([cookie]);context.add_init_script(PROBE)
             page=context.pages[0];page.set_viewport_size({'width':390,'height':844});page.goto(origin+'/?view=me')
             cdp=context.new_cdp_session(page);page.wait_for_timeout(500)
+            illustrated_filters=page.locator('.avwrap svg[data-avatar-art="v2"]').evaluate_all('(els)=>els.map(el=>getComputedStyle(el).filter)')
+            if illustrated_filters: assert all(value=='none' for value in illustrated_filters)
             visible=snapshot(page,cdp)
             page.screenshot(path=str(out/'home-native.png'))
             page.evaluate("document.querySelector('.avwrap').closest('.av-play').style.marginTop='2000px'")
@@ -273,9 +275,76 @@ def test_native_visibility_and_touch(baseline_server, tmp_path):
             for theme in ['light','dark','contrast']:
                 page.evaluate('(theme)=>document.documentElement.dataset.theme=theme',theme)
                 page.screenshot(path=str(out/f'profile-native-{theme}.png'),full_page=True)
-            (out/'native-visibility-touch.json').write_text(json.dumps({'picker_animations':picker_animations,'visible':visible,'offscreen':offscreen,'hidden_start':before,'hidden_end':hidden,
+            (out/'native-visibility-touch.json').write_text(json.dumps({'illustrated_svg_filters':illustrated_filters,'picker_animations':picker_animations,'visible':visible,'offscreen':offscreen,'hidden_start':before,'hidden_end':hidden,
                  'touch_drag_changed_style':before_drag!=after_drag,'keyboard_nudge_style':keyboard_style,
                  'method':'Native Chromium tabs; connect_over_cdp(no_defaults=True), no visibility getter override'},indent=2))
             browser.close()
     finally:
         process.terminate();process.wait(timeout=10)
+
+
+def test_slice_long_task_attribution(baseline_server, app_mod, tmp_path):
+    """Matched warm-mobile traces of old/new art; no production instrumentation."""
+    from jinja2 import ChoiceLoader, FileSystemLoader
+    import subprocess
+    from playwright.sync_api import sync_playwright
+    origin,cookie,_=baseline_server
+    output=Path(os.getenv('CSS_AVATAR_OUT','docs/avatars/increment1/application')).parent
+    old=tmp_path/'old-art';old.mkdir()
+    for name in ['_avatars.html','_avatars_art.html']:
+        (old/name).write_bytes(subprocess.check_output(['git','show','1c964dc:templates/'+name]))
+    env=app_mod.templates.env;loader=env.loader;results=[]
+    try:
+        with sync_playwright() as pw:
+            for version in ['before','after']:
+                env.loader=ChoiceLoader([FileSystemLoader(old),loader]) if version=='before' else loader
+                env.cache.clear()
+                browser=pw.chromium.launch(executable_path=shutil.which('chromium'),args=['--no-sandbox'])
+                context=browser.new_context(viewport={'width':390,'height':844},has_touch=True,timezone_id='UTC',service_workers='block')
+                context.add_cookies([cookie]);context.add_init_script(PROBE)
+                page=context.new_page();cdp=context.new_cdp_session(page)
+                cdp.send('Emulation.setCPUThrottlingRate',{'rate':4})
+                page.goto(origin+'/?view=me');page.goto(origin+'/?view=me');page.wait_for_timeout(500)
+                done=[];cdp.on('Tracing.tracingComplete',lambda event:done.append(event))
+                cdp.send('Tracing.start',{'categories':'toplevel,devtools.timeline,disabled-by-default-devtools.timeline.stack,v8.execute,blink.user_timing','transferMode':'ReturnAsStream'})
+                reset(page);deadline=time.monotonic()+30;action=0
+                while time.monotonic()<deadline:
+                    box=page.locator('.av-play-btn').bounding_box();x=box['x']+box['width']/2;y=box['y']+box['height']/2
+                    page.mouse.move(x,y);page.mouse.down();page.wait_for_timeout(500 if action%3==0 else 50)
+                    if action%3==0:page.mouse.move(x+15,y+10,steps=3)
+                    page.mouse.up();page.wait_for_timeout(350);action+=1
+                observed=snapshot(page,cdp)
+                cdp.send('Tracing.end')
+                for attempt in range(100):
+                    if done:break
+                    page.wait_for_timeout(100)
+                assert done,'Trace did not finish'
+                stream=done[0]['stream'];chunks=[]
+                while True:
+                    piece=cdp.send('IO.read',{'handle':stream});chunks.append(piece['data'])
+                    if piece.get('eof'):break
+                cdp.send('IO.close',{'handle':stream})
+                events=json.loads(''.join(chunks))['traceEvents']
+                tasks=[e for e in events if e.get('ph')=='X' and e.get('dur',0)>50000 and e.get('name') in ['RunTask','ThreadControllerImpl::RunTask']]
+                attributed=[]
+                for task in tasks:
+                    nested=[e for e in events if e.get('pid')==task['pid'] and e.get('tid')==task['tid'] and task['ts']<=e.get('ts',-1)<task['ts']+task['dur']]
+                    calls=[]
+                    for event in nested:
+                        data=event.get('args',{}).get('data',{})
+                        url=data.get('url','')
+                        if '/static/js/' in url:
+                            calls.append({'file':url.split('/static/js/')[-1],'function':data.get('functionName'),
+                                          'event':event['name'],'duration_ms':event.get('dur',0)/1000})
+                    # Keep source attribution and task/paint records; omit raw network headers.
+                    attributed.append({'duration_ms':task['dur']/1000,'calls':calls,
+                       'avatar_source_present':any(c['file'].startswith(('avatars.js','avatar-audio.js')) for c in calls),
+                       'paint_events':sorted(set(e['name'] for e in nested if e['name'] in ['Paint','Layout','UpdateLayoutTree','PrePaint','Layerize']))})
+                results.append({'version':version,'cpu_rate':4,'seconds':30,'chromium':browser.version,
+                                'scenario':observed,'trace_long_tasks':attributed,'trace_event_count':len(events)})
+                context.close();browser.close()
+        (output/'long-task-attribution.json').write_text(json.dumps(results,indent=2))
+        after_calls=[call['duration_ms'] for item in results if item['version']=='after' for task in item['trace_long_tasks'] for call in task['calls'] if call['file'].startswith(('avatars.js','avatar-audio.js'))]
+        assert max(after_calls,default=0)<=50, 'Avatar callback exceeded 50 ms in the paired trace'
+    finally:
+        env.loader=loader;env.cache.clear()

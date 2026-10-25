@@ -43,6 +43,7 @@ with tempfile.TemporaryDirectory() as tmp, sync_playwright() as pw:
   page=context.new_page();page.set_content(html)
   ids=page.locator('[id]').evaluate_all('(els)=>els.map(e=>e.id)');assert len(ids)==len(set(ids))
   # Gallery-only prototypes attach to the actual per-stage owning groups.
+  page.screenshot(path=str(out/f'before-after-bare-{theme}.png'),full_page=True)
   prototypes(page)
   page.screenshot(path=str(out/f'before-after-{theme}.png'),full_page=True)
   (out/f'gallery-{theme}.html').write_text(page.content());context.close()
@@ -63,5 +64,8 @@ with tempfile.TemporaryDirectory() as tmp, sync_playwright() as pw:
  for selector in ['.av-play-btn','.av-care-btn']:
   for button in page.locator(selector).all():button.click(force=True)
   page.wait_for_timeout(2000)
- context.close();browser.close()
+ video=page.video
+ context.close()
+ Path(video.path()).replace(out/'before-after-motion.webm')
+ browser.close()
 print('Three before/after sheets, gallery accessory prototypes and motion recording written')

@@ -22,6 +22,10 @@ The outer `.avmove` and inner `.avstage` layers remain unchanged. `.av-head`,
 `.av-soilwet`, `.av-bloom`, `.av-acc`, and the two costume groups retain their
 behavioral roles. No JavaScript behavior or care/growth/persistence logic changes.
 
+The upgraded SVGs use only drawn ground shadows, with the inherited SVG filter
+disabled. Droopy mood retains its pose/eyelid cues and uses 0.86 opacity instead
+of a color-matrix filter. Other species keep their existing rendering policy.
+
 | Species | Anchor | Owner | Local coordinates | Draw order |
 |---|---|---|---|---|
 | Cat | `head` | `.av-head` | (60,49), before headwear | Face → anchor → seasonal hat |
@@ -40,8 +44,8 @@ Normal application renders have empty prototype anchors and no equipment UI.
 
 Growth: cat stages add whiskers, a fully curled tail / mature body proportions,
 haunches and cheek tufts, chest ruff, then ear tufts. Plant stages progress from a
-split germinating seed, two leaves, a bud and new leaf, first bloom, a flowering
-side branch, to three blooms with a second branch and fuller leaf structure.
+split germinating seed, two leaves, a leafy seedling, closed buds on a side branch, open blooms,
+then three blooms with a second branch and fuller leaf structure.
 
 Reproduce before/after 64px and 170px sheets and motion recording:
 
@@ -49,6 +53,8 @@ Reproduce before/after 64px and 170px sheets and motion recording:
 .venv/bin/python scripts/avatar_baseline/slice.py
 ```
 
-The script reads pre-upgrade macros from commit `1c964dc`, never from production.
+Bare contact sheets use the `before-after-bare-*` filenames; the original
+`before-after-*` sheets add the gallery prototypes. Motion is recorded in
+`before-after-motion.webm`. The script reads pre-upgrade macros from commit `1c964dc`, never from production.
 Playwright video capture requires its ffmpeg helper; this environment uses the
 installed `/usr/bin/ffmpeg` through the helper's expected local cache path.
