@@ -30,6 +30,7 @@ import ai_core
 import auth
 import calendar_ics as cics
 import calendar_guidance
+import calendar_actions
 import gdocs_relay
 import ratelimit
 import mailer
@@ -509,44 +510,6 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
         one["extra_org_ids"] = [x for x in raw.get("extra_org_ids", []) if x.isdigit()]
         return one
 
-    def _parse(f, existing=None, allowed_people=()):
-        """(storage fields, people [(uid, role)], tags, error) from a posted form."""
-        if f["kind"] not in FORM_KIND_LABELS:
-            return None, None, None, "Pick a type from the list."
-        if f["status"] not in STATUS_LABELS or f["status"] == "cancelled":
-            return None, None, None, "Pick a status from the list."
-        if any(int(u) not in allowed_people for u in f["people"]):
-            return None, None, None, "One of the people you chose isn't an active account."
-        if f["audience"] == "people" and not f["people"]:
-            return None, None, None, "Choose who this is for, or pick a wider audience."
-        if f["audience"] == "unit" and not f["owner_org_id"]:
-            return None, None, None, ("Choose the unit this belongs to, or nobody outside "
-                                      "the people you add will see it.")
-        fields = {k: f.get(k, "") or None for k in (
-            "end_date", "start_time", "end_time", "time_note", "venue", "modality",
-            "meeting_url", "note")}
-        fields.update(title=f["title"], start_date=f["start_date"], kind=f["kind"],
-                      status=f["status"], audience=f["audience"],
-                      owner_org_id=int(f["owner_org_id"]) if f["owner_org_id"].isdigit() else None,
-                      extra_org_ids=[int(x) for x in f.get("extra_org_ids", [])])
-        repeat = f.get("repeat") or "none"
-        if (existing or {}).get("event_id"):
-            repeat = "none"                                      # an activity's item never repeats
-        try:
-            start = date.fromisoformat(f["start_date"])
-            until = date.fromisoformat(f["until"]) if f.get("until") else None
-            fields["rrule"] = recurrence.build(repeat, start, until)
-        except ValueError as ex:
-            return None, None, None, (str(ex) if repeat != "none" else "Pick a real start date.")
-        if repeat != "none" and f["kind"] == "travel":
-            return None, None, None, "A trip can't repeat. Add each trip on its own."
-        had = {p["user_id"]: p["role"] for p in (existing or {}).get("people", [])}
-        default = "travel" if f["kind"] == "travel" else "attending"
-        people = [(int(u), "lead" if had.get(int(u)) == "lead" else default)
-                  for u in f["people"]]
-        tags = [t for t in f.get("tags", "").split(",")]
-        return fields, people, tags, ""
-
     def _safe_back(raw):
         """Where the quick-add sheet may send you back to: a calendar page of this site, never
         anywhere else (no scheme, no host, no protocol-relative or backslash tricks)."""
@@ -820,7 +783,7 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
             f.setdefault(k, v)
         conn = get_conn()
         try:
-            fields, people, tags, error = _parse(
+            fields, people, tags, error = calendar_actions.parse(
                 f, allowed_people={p["user_id"] for p in oc.people_choices(conn)})
             series = None
             if not error and f.get("detach_from"):              # "just this one": the series must still repeat then
@@ -834,9 +797,7 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
             if not error:
                 try:
                     title = fields["title"]
-                    eid = st.cal_create(conn, fields.pop("title"), fields.pop("start_date"),
-                                        people=people, tags=tags,
-                                        by=request.state.user["username"], **fields)
+                    eid = calendar_actions.create(conn, request.state.user, fields, people, tags)
                 except ValueError as e:
                     error = str(e)
             if error:
@@ -1042,7 +1003,7 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
                     f[k] = shown[k]
                 f["title"] = activity["title"]
                 f["venue"] = shown["venue"]
-            fields, people, tags, error = _parse(
+            fields, people, tags, error = calendar_actions.parse(
                 f, e, {p["user_id"] for p in oc.people_choices(conn)})
             if activity or any(r["status"] in ("requested", "approved") for r in rooms.reservations_for_entry(conn, entry_id)):
                 f["reserve_room"] = ""                       # it already has a room (or its activity does): never a second one

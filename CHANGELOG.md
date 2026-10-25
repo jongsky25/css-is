@@ -1,3 +1,9 @@
+## 8.64 — October 25, 2026
+
+- Add a dormant actor/action/destination-bound preview and atomic receipt contract with five-minute confirmations, revision rechecks, replay recovery and bounded expiry/tombstone cleanup. No bot action adapter, command, callback or write-consent issuance is installed.
+- Extract shared calendar form parsing and actor-aware transactional creation; preserve UI recurrence, room-request and post-save Meet behavior while saving calendar/audit/email-outbox records together.
+- Add preview revocation/restore fences, migration and concurrency/rollback tests, and update the Telegram progress ledger. All two-way defaults remain off.
+
 ## 8.63 — October 25, 2026
 
 - Add default-off registered group/topic schedule and room-slot commands with separate current actor read grants, exact routing, and fresh bot/owner/requester membership checks.
