@@ -542,13 +542,17 @@ def _resource_person_summary(conn, user, origin, resource_person_id, year,
     frame = _survey_frame(conn, ids, 3)
     if frame is None:
         return dict(result, availability='not_available', reason='capacity_limit')
+    return _person_scorecard(frame, result, len(ids))
+
+
+def _person_scorecard(frame, result, submissions):
     quality, rated = eng.quality_index(frame)
     valid = eng.valid_answers(frame)
     perception_n = int(valid.loc[valid['item_id'].isin(eng.SERVQUAL_ITEMS), 'response_id'].nunique())
-    result.update(availability='available', submissions=len(ids),
+    result.update(availability='available', submissions=submissions,
                   report_submissions=int(frame['response_id'].nunique()),
                   rated_respondents=perception_n, quality_respondents=rated)
-    if not ids:
+    if not submissions:
         return dict(result, state='no_matching_responses')
     if quality is None or not perception_n:
         return dict(result, state='no_valid_ratings')
@@ -663,6 +667,27 @@ def find_survey_activities(conn, user, origin, year, quarter, query='', limit=10
                 note='Metadata discovery includes activities without a usable score; their detail report may be unavailable. Pagination is a fresh snapshot per call.')
 
 
+def _activity_group_metadata(conn, activity_id):
+    try:
+        with _activity_query(conn):
+            target = conn.execute(f"SELECT event_date,{_ACTIVITY_KEY} FROM form_instance "
+                                  f"WHERE id=? AND {_ACTIVITY_ACTIVE}", (activity_id,)).fetchone()
+            if target is None:
+                raise permissions.Denied('Activity not found or unavailable to you.')
+            fields = ('id','survey_type','event_date','venue','topic','end_date','lead_org_id','organizer_external_id','rp_id')
+            rows = conn.execute(f"SELECT {','.join(fields)}, {_ACTIVITY_ANSWERED} "
+                                f"FROM form_instance fi WHERE {_ACTIVITY_ACTIVE} AND event_date IS ? "
+                                f"AND {_ACTIVITY_KEY}=? ORDER BY created_at,id LIMIT ?",
+                                (*target, MAX_ACTIVITY_GROUP_FORMS+1)).fetchall()
+    except sqlite3.OperationalError as exc:
+        if getattr(exc, 'sqlite_errorcode', None) != sqlite3.SQLITE_INTERRUPT:
+            raise
+        return None, 'capacity_limit'
+    if len(rows)>MAX_ACTIVITY_GROUP_FORMS:
+        return None, 'capacity_limit'
+    return [dict(zip(fields,row[:-1]), has_answers=bool(row[-1])) for row in rows], None
+
+
 def activity_detail(conn, user, origin, activity_id):
     if type(activity_id) is not int or not 1 <= activity_id <= 9223372036854775807:
         raise ValueError('Choose a positive activity or member form ID.')
@@ -671,26 +696,11 @@ def activity_detail(conn, user, origin, activity_id):
               'date_basis': 'activity_start_date', 'minimum_sample': MIN_SAMPLE}
     if reason:
         return dict(result, availability='not_available', reason=reason)
-    try:
-        with _activity_query(conn):
-            target = conn.execute(f"SELECT event_date,{_ACTIVITY_KEY} FROM form_instance "
-                                  f"WHERE id=? AND {_ACTIVITY_ACTIVE}", (activity_id,)).fetchone()
-            if target is None:
-                raise permissions.Denied('Activity not found or unavailable to you.')
-            fields = ('id','survey_type','event_date','venue','topic','end_date','lead_org_id','organizer_external_id')
-            rows = conn.execute(f"SELECT {','.join(fields)}, {_ACTIVITY_ANSWERED} "
-                                f"FROM form_instance fi WHERE {_ACTIVITY_ACTIVE} AND event_date IS ? "
-                                f"AND {_ACTIVITY_KEY}=? ORDER BY created_at,id LIMIT ?",
-                                (*target, MAX_ACTIVITY_GROUP_FORMS+1)).fetchall()
-    except sqlite3.OperationalError as exc:
-        if getattr(exc, 'sqlite_errorcode', None) != sqlite3.SQLITE_INTERRUPT:
-            raise
-        return dict(result, availability='not_available', reason='capacity_limit')
-    if len(rows)>MAX_ACTIVITY_GROUP_FORMS:
-        return dict(result, availability='not_available', reason='capacity_limit')
-    if not any(row[1]==2 and row[-1] for row in rows):
+    group, reason = _activity_group_metadata(conn, activity_id)
+    if reason:
+        return dict(result, availability='not_available', reason=reason)
+    if not any(f['survey_type']==2 and f['has_answers'] for f in group):
         raise permissions.Denied('Activity not found or unavailable to you.')
-    group = [dict(zip(fields,row[:-1])) for row in rows]
     result.update(_activity_identity(group, origin), availability='available')
     f2_ids = [f['id'] for f in group if f['survey_type'] == 2]
     if len(f2_ids) > 500:
@@ -726,3 +736,48 @@ def activity_detail(conn, user, origin, activity_id):
                 osq_mean=report['osq'], gap=report['servqual'],
                 scoring='Full five-dimension SERVQUAL scorecard from the activity detail page, not its event-only card headline. A/B: 1–7; C: 1–4. Missing/N/A/invalid answers excluded.',
                 dimensions=[{'dimension': d['key'], 'mean': d['value'], 'valid_item_answers': d['n']} for d in report['dims']])
+
+
+def resource_person_activity_survey(conn, user, origin, activity_id, resource_person_id):
+    """One currently visible person's Type 3 scores at one current source group."""
+    user = permissions.actor(conn, user)
+    if not auth.can(user['role'], 'view'):
+        raise permissions.Denied('Report unavailable.')
+    if any(type(v) is not int or not 1 <= v <= 9223372036854775807
+           for v in (activity_id, resource_person_id)):
+        raise ValueError('Choose positive activity/member and resource-person IDs.')
+    result = {'as_of':tz.now_iso(), 'survey_type':3, 'scope':'one_resource_person_one_activity',
+              'minimum_sample':MIN_SAMPLE, 'date_basis':'current_activity_group'}
+    if os.environ.get('CSS_MCP_PERSON_ACTIVITY_SURVEYS_ENABLED') != '1':
+        return dict(result, availability='not_available', reason='disabled')
+    person = _survey_person(conn, user, resource_person_id)
+    group, reason = _activity_group_metadata(conn, activity_id)
+    if reason:
+        return dict(result, availability='not_available', reason=reason)
+    day = group[0]['event_date'] or ''
+    own = [f for f in group if f['survey_type']==3 and f['rp_id']==resource_person_id]
+    # The existing person's activity page has this cutoff and requires an
+    # answer-backed speaker engagement. Never widen stale IDs to annual results.
+    if day < di.RP_ENGAGEMENT_SINCE or not any(f['has_answers'] for f in own):
+        raise permissions.Denied('Activity not found or unavailable to you.')
+    representative = min(f['id'] for f in group)
+    result.update(activity_id=str(representative), resource_person_id=str(resource_person_id),
+                  name=person['name'], start_date=day,
+                  end_date=max((f['end_date'] for f in group if f.get('end_date')),default=None),
+                  web_url=origin+f'/dashboard/people/{resource_person_id}/activity/{representative}',
+                  activity_report_url=origin+f'/reports?type=3&activity={representative}',
+                  scoring='Person activity-page quality index (0–100), OSQ (1–4), and Type 3 dimension means (1–7), restricted to this person and current merged activity. A is excluded from the quality index.',
+                  note='This scorecard is activity-specific, not an annual summary or a whole-activity pooled score. Counts are submissions, not unique people across forms. No comments, respondent data, peer rankings or causal claims.')
+    if len(own)>500:
+        return dict(result, availability='not_available', reason='capacity_limit')
+    ids = [f['id'] for f in own]
+    selected = conn.execute('SELECT id FROM response WHERE archived_at IS NULL AND form_instance_id IN ('
+                            + ','.join('?' for _ in ids) + ') ORDER BY id LIMIT ?',
+                            (*ids, MAX_RESPONSES+1)).fetchall()
+    if len(selected)>MAX_RESPONSES:
+        return dict(result, availability='not_available', reason='capacity_limit')
+    response_ids = [r[0] for r in selected]
+    frame = _survey_frame(conn,response_ids,3)
+    if frame is None:
+        return dict(result, availability='not_available', reason='capacity_limit')
+    return _person_scorecard(frame,result,len(response_ids))

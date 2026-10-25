@@ -1,3 +1,10 @@
+## 8.74 — October 25, 2026
+
+- Add get_resource_person_activity_survey(activity_id, resource_person_id) with separate surveys:person_activities:read consent and default-off CSS_MCP_PERSON_ACTIVITY_SURVEYS_ENABLED.
+- Match the named person's activity page: quality index 0–100, OSQ 1–4 and five Type 3 dimension means 1–7. Restrict active responses to that person within the current complete date/normalized-venue/organizer group; accept current representative/member form IDs, preserve the source engagement cutoff and never fall back to annual/bureau totals.
+- Reuse the current hidden/Director visibility, annual Type 3 score/sample logic and bounded group resolver without changing existing annual or Type 2 contracts. Keep per-group metadata, per-person form, response/answer and query-work limits; withhold every score for insufficient or unusable samples.
+- Add explicit activity IDs to existing outside-activity metadata, consent/readiness entries and a source-based verification prompt. No individual responses, comments, contacts, peer rankings, new writes or existing-grant widening.
+
 ## 8.73 — October 25, 2026
 
 - Capture metadata-only calendar/room changes in the business transaction across UI, import, scheduler and trusted action writers, including participant/slot/decision changes; retain source incarnation/revision and stable event identities without copying email queues or business content.

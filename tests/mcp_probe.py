@@ -76,6 +76,15 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
                               form_instance_ids=linked_forms,created_by='manager@example.invalid')
     st.create_event(conn,'Other hidden outside activity','2026-10-27',event_kind='outside',
                     form_instance_ids=[],created_by='other@example.invalid')
+    earlier_person_form=st.create_form_instance(conn,survey_type=3,form='F3',event_date='2026-09-01',
+        venue='A different activity',rp_id=linked_people[0])
+    for selected_form,value in ((linked_forms[0],6),(earlier_person_form,2)):
+        for _ in range(10):
+            response=conn.execute('INSERT INTO response(form_instance_id,submitted_at) VALUES (?,?)',
+                                   (selected_form,'2026-10-20')).lastrowid
+            conn.executemany('INSERT INTO answer(response_id,item_id,value,is_na) VALUES (?,?,?,0)',
+                             [(response,k,v) for k,v in [('A',7),*[(f'B{i}',value) for i in range(1,10)],('C',3)]])
+
 
     conn.execute("INSERT INTO supply_role_grant(user_id,role,granted_by,created_at) VALUES (?,'custodian',?,?)",
                  (manager, owner, '2026-10-20'))
@@ -135,7 +144,7 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
         metadata = client.get('/.well-known/oauth-protected-resource/mcp')
         assert metadata.status_code == 200
         assert metadata.json()['resource'] == 'https://office.example/mcp'
-        scopes = {'surveys:resource_person_trends:read', 'surveys:csm_trends:read', 'surveys:unit_trends:read', 'surveys:units:read', 'activities:read', 'calendar:read', 'documents:read',
+        scopes = {'surveys:person_activities:read', 'surveys:resource_person_trends:read', 'surveys:csm_trends:read', 'surveys:unit_trends:read', 'surveys:units:read', 'activities:read', 'calendar:read', 'documents:read',
                   'supplies:read', 'travel:read', 'work:read', 'notifications:read', 'surveys:csm:read', 'surveys:activities:read', 'surveys:resource_persons:read', 'surveys:activity_details:read'}
         assert set(metadata.json()['scopes_supported']) == scopes
         denied = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 1, 'method': 'initialize',
@@ -218,7 +227,7 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
         assert listed.status_code == 200, listed.text
         names = {tool['name'] for tool in listed.json()['result']['tools']}
         assert {'my_work', 'find_documents', 'get_document'} <= names
-        assert names == {'find_survey_resource_persons', 'compare_resource_person_surveys', 'compare_csm_months', 'compare_unit_activity_surveys', 'find_survey_units', 'get_unit_activity_survey_summary', 'my_work', 'find_documents', 'get_document',
+        assert names == {'get_resource_person_activity_survey', 'find_survey_resource_persons', 'compare_resource_person_surveys', 'compare_csm_months', 'compare_unit_activity_surveys', 'find_survey_units', 'get_unit_activity_survey_summary', 'my_work', 'find_documents', 'get_document',
                          'list_work_items', 'get_work_item', 'list_work_tasks', 'list_calendar_events',
                          'list_supply_queue', 'list_my_travel_filings', 'list_activity_progress',
                          'my_office_overview', 'list_my_notifications', 'get_room_availability', 'get_csm_summary', 'get_activity_survey_summary', 'get_resource_person_survey_summary', 'find_survey_activities', 'get_activity_survey_detail'}
@@ -295,12 +304,51 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
         annual = client.post('/mcp',json={'jsonrpc':'2.0','id':191,'method':'tools/call',
             'params':{'name':'get_resource_person_survey_summary','arguments':{'resource_person_id':int(linked_metadata['data'][0]['resource_person_id']),'year':2026}}},headers=person_headers)
         assert not annual.json()['result'].get('isError'),annual.text
-        assert 'no_matching_responses' in annual.text
+        assert json.loads(annual.json()['result']['content'][0]['text'])['submissions']==20
         conn = st.connect(os.environ['CSS_DB'])
         conn.execute('UPDATE mcp_oauth_grant SET revoked_at=1 WHERE access_hash=?',(mcp_auth._digest(person_grant.access_token),))
         conn.commit();conn.close()
         assert linked_call().status_code==401
         os.environ['CSS_MCP_RESOURCE_PERSON_SURVEYS_ENABLED']='0'
+        conn=st.connect(os.environ['CSS_DB'])
+        old_annual_grant=mcp_auth.Provider._tokens(conn,client_id,manager,
+            ['surveys:resource_persons:read'],'https://office.example/mcp')
+        scoped_person_grant=mcp_auth.Provider._tokens(conn,client_id,manager,
+            ['surveys:person_activities:read'],'https://office.example/mcp')
+        conn.commit();conn.close()
+        scoped_headers=dict(headers,Authorization='Bearer '+scoped_person_grant.access_token)
+        def activity_person_call(selected_headers,person_id=linked_people[0]):
+            return client.post('/mcp',json={'jsonrpc':'2.0','id':192,'method':'tools/call',
+                'params':{'name':'get_resource_person_activity_survey','arguments':{
+                    'activity_id':int(linked_context['activity_id']),'resource_person_id':person_id}}},headers=selected_headers)
+        # An old activities/annual grant must not gain the new activity-scoped read.
+        assert activity_person_call(manager_headers).json()['result'].get('isError')
+        old_annual_headers=dict(headers,Authorization='Bearer '+old_annual_grant.access_token)
+        denied_old_annual=activity_person_call(old_annual_headers)
+        assert denied_old_annual.json()['result'].get('isError') and 'surveys:person_activities:read' in denied_old_annual.text
+        os.environ['CSS_MCP_PERSON_ACTIVITY_SURVEYS_ENABLED']='0'
+        disabled=activity_person_call(scoped_headers)
+        assert not disabled.json()['result'].get('isError')
+        assert 'disabled' in disabled.text and 'Visible linked speaker' not in disabled.text
+        os.environ['CSS_MCP_RESOURCE_PERSON_SURVEYS_ENABLED']='0'
+        os.environ['CSS_MCP_PERSON_ACTIVITY_SURVEYS_ENABLED']='1'
+        selected=activity_person_call(scoped_headers)
+        assert not selected.json()['result'].get('isError'),selected.text
+        score=json.loads(selected.json()['result']['content'][0]['text'])
+        assert score['state']=='rated' and score['submissions']==10 and len(score['dimensions'])==5
+        assert score['scope']=='one_resource_person_one_activity'
+        assert score['web_url']==f'https://office.example/dashboard/people/{linked_people[0]}/activity/{min(linked_forms)}'
+        assert activity_person_call(scoped_headers,linked_people[1]).json()['result'].get('isError')
+        assert 'Hidden linked speaker' not in activity_person_call(scoped_headers,linked_people[1]).text
+        annual_denied=client.post('/mcp',json={'jsonrpc':'2.0','id':193,'method':'tools/call',
+            'params':{'name':'get_resource_person_survey_summary','arguments':{'resource_person_id':linked_people[0],'year':2026}}},headers=scoped_headers)
+        assert annual_denied.json()['result'].get('isError')
+        conn=st.connect(os.environ['CSS_DB'])
+        conn.execute('UPDATE mcp_oauth_grant SET revoked_at=1 WHERE access_hash=?',(mcp_auth._digest(scoped_person_grant.access_token),))
+        conn.commit();conn.close()
+        assert activity_person_call(scoped_headers).status_code==401
+        os.environ['CSS_MCP_PERSON_ACTIVITY_SURVEYS_ENABLED']='0'
+
 
         manager_warnings = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 22, 'method': 'tools/call',
             'params': {'name': 'list_supply_queue', 'arguments': {'queue': 'warnings'}}},
