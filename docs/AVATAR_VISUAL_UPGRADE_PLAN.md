@@ -1,6 +1,6 @@
 # Avatar visual upgrade — phased execution plan for Sol
 
-Status: Increments 0, 1 and 2A complete. Increment 2B artwork is implemented but blocked by the cold-desktop LCP gate; do not advance to 3A. Existing baseline release blockers remain recorded.
+Status: Increments 0, 1 and 2A complete. Increment 2B artwork is implemented; the LCP follow-up passed on `00d76bc`, but final-source focused native motion gates fail on `b7daa79`. Do not advance to 3A. Static picker thumbnails are resolved; other baseline release blockers remain recorded.
 Created: 2026-10-25
 Repository: jongsky25/css-is
 Owner request: Material improvement to companion artwork, optional animal dress-up,
@@ -30,8 +30,8 @@ or if it exceeds a performance gate. Fix or reduce complexity before expanding i
 - Sixteen species, each with six growth stages: 96 base combinations.
 - Plants: blossom plant, cactus, bonsai, sunflower, fern, mushroom, succulent.
 - Animals: cat, bird, turtle, dog, rabbit, fish, dolphin, owl, bat.
-- Artwork: templates/_avatars_art.html; frame, gradients and CSS:
-  templates/_avatars.html.
+- Artwork: templates/_avatar_species/*.html; shared helpers: templates/_avatars_shared.html;
+  allowlisted dispatcher: templates/_avatars_art.html; frame, gradients and CSS: templates/_avatars.html.
 - Behavior: static/js/avatars.js; audio: static/js/avatar-audio.js.
 - Catalog, growth and care: storage.py; profile and care routes: app.py.
 - Appearance policy: appearance.py, appearance_routes.py, appearance_storage.py.
@@ -286,7 +286,7 @@ browser tests ran.
 | 0 Baseline | Complete — baseline established; release gates remain unmet | `94269dd` + evidence/ledger revision | [51 sheets](avatars/sheets/index.json), [monthly overview](avatars/sheets/monthly-stage6-overview.png), [hero/moods](avatars/smoke/) | [Report](avatars/BASELINE_REPORT.md), [20 full samples + summary](avatars/application/summary.json), native hidden/touch check; existing frame, picker, timer and remount failures retained. |
 | 1 Cat + plant slice | Complete — measured relative gates passed | `58cf98f`, `0be7fc3`, `ad4e7ad`, `d464461` + evidence revision | [Bare comparison](avatars/increment1/before-after-bare-light.png), [motion](avatars/increment1/before-after-motion.webm), [51 seasonal sheets](avatars/increment1/sheets/index.json) | [Report](avatars/increment1/REPORT.md), [20-sample comparison](avatars/increment1/comparison.json); 102 tests, native touch/keyboard/filter checks, sampled callback trace passed; baseline lifecycle/picker blockers retained. |
 | 2A Cactus/bonsai/sunflower | Complete — measured relative gates passed | `6064a82`, `1b453e0`, `28fbb7b` + evidence revision | [Six-stage comparison](avatars/increment2a/before-after-bare-light.png), [51 sheets](avatars/increment2a/sheets/index.json), [motion](avatars/increment2a/before-after-motion.webm) | [Report](avatars/increment2a/REPORT.md), [fresh 20 comparison](avatars/increment2a/comparison.json); 105 tests, 324 visual reaction cases, mature care/traces and native checks passed. Pre-fix failures retained; audio-sync feedback fixed. Remaining lifecycle/picker blockers persist. |
-| 2B Fern/mushroom/succulent | Blocked — cold-desktop LCP gate failed | `6ddce82`, `a607092` + evidence revision | [Six-stage comparison](avatars/increment2b/before-after-bare-light.png), [51 sheets](avatars/increment2b/sheets/index.json), [motion](avatars/increment2b/before-after-motion.webm) | [Report](avatars/increment2b/REPORT.md), [assessment](avatars/increment2b/assessment.json). 107 tests, 486 reaction cases, 21 reduced-motion transitions passed. Current LCP median 664 ms vs same-filesystem original-source control 372 ms: +292 ms exceeds 100 ms. All current/control samples retained; 3A not started. |
+| 2B Fern/mushroom/succulent | Blocked — final-source focused native motion gates failed | Artwork `6ddce82`; follow-ups `853c93d`, `41c8e01`, `00d76bc`, `b7daa79` | [Six-stage comparison](avatars/increment2b/before-after-bare-light.png), [fresh 51 sheets](avatars/increment2b/lcp-unblock/static-previews/sheets/index.json), [reaction checks](avatars/increment2b/lcp-unblock/static-previews/motion-rig-check.json) | [Report](avatars/increment2b/REPORT.md), [assessment](avatars/increment2b/assessment.json). 260 tests and 3 functional browser checks pass; 486 reaction cases, 21 reduced-motion transitions and 4,896 pixel-identical cells. Earlier-source full20 LCP gates pass (cold desktop328ms), but final-source native callbacks/frame gates fail. All samples retained; final-source full20 not started; 3A pending. |
 | 3A Ground animals + bird | Pending | — | — | — |
 | 3B Swimmers + owl + bat | Pending | — | — | — |
 | 4A Wardrobe model/rendering | Pending | — | — | — |
@@ -464,7 +464,7 @@ also showed 100–240 ms delivery. A short counterbalanced art-only diagnostic h
 similar current/original medians 328/340 ms and did not reproduce the complete-
 fixture gap. Its test-only compositing experiment saved 12 ms and was not applied
 to production. These diagnostics do not override the failure or isolate a causal
-avatar hot path. See the [blocked report](avatars/increment2b/REPORT.md) for limits
+avatar hot path. See the [original blocked report](avatars/increment2b/REPORT-blocked.md) for limits
 and exact reproduction commands.
 
 **Next pending work remains 2B:** attribute and resolve cold-load response/resource
@@ -472,3 +472,53 @@ and complete-fixture startup delay, then demonstrate the gate with fresh control
 validation. Do not start 3A while the gate fails. Existing offscreen motion,
 chase/idle/roam timers, seven animated picker thumbnails and same-document listener
 retention remain separate release blockers. No wardrobe persistence or deployment.
+
+
+### Increment 2B acceptance follow-up — 2026-10-25 — motion remains blocked
+
+Implemented four bounded fixes: lazy species compilation (`853c93d`), pointer
+read/write batching (`41c8e01`), deferred responsive Home search lookup (`00d76bc`),
+and chase/drag read batching plus conditional reaction replay/static previews
+(`b7daa79`). No art geometry, scoring, account, care policy, sound or dependency
+change. The selected companion remains animated; all16 picker cards have0running
+animations. Keyboard reaction replay, pointer/head limits and actual responsive
+search-result navigation pass three browser checks.
+
+Validation:260 tests,1,734 exact SVG comparisons,486 reaction cases and21
+reduced-motion transitions pass. All51 fresh sheets/4,896cells are pixel-identical
+to original2B. Static picker thumbnails are now resolved; selected offscreen
+motion, chase/idle/roam timers and same-document listener retention remain separate
+release blockers.
+
+The complete20-run `00d76bc` cohort passed all primary gates: cold-desktop LCP
+median328ms/worst652ms (+4ms vs historical324ms;−44ms vs overlay control372ms).
+Desktop warm148ms, mobile cold564ms, mobile warm308ms; mobile interaction
+framep95 values16.7–16.8ms. All20 samples and the1412ms cold-mobile worst run
+remain under [pre-motion-fix](avatars/increment2b/lcp-unblock/pre-motion-fix/application/summary.json).
+Those measurements do not validate the subsequent product revision.
+
+Fresh focused instrumented traces failed after that matrix. An exploratory
+recorder introduced excessive stack-capture overhead; its raw data were retained.
+Thirty counterbalanced old/new-art runs without API wrappers or tracing identified
+a genuine new mushroom chase callback60.4ms, including41.6ms forced layout.
+This motivated `b7daa79`; that source's fresh fifteen native focused checks still
+fail. Fern includes33.4ms framep95 and295.8ms reported avatar callback; mushroom
+includes160.7ms. Several callbacks report0forced layout; scheduling/GC or another
+cause remains unproven. These are retained failures, not waived outliers.
+
+The [current assessment](avatars/increment2b/assessment.json) and
+[report](avatars/increment2b/REPORT.md) record every final native result and exact
+budgets (33ms framep95,50ms owned callback). The final-source original20 matrix
+was intentionally not started because its focused prerequisite failed. Earlier
+failed20, stopped attempts and all diagnostics remain separate. No budget changed,
+sample replaced, deployment performed, or3A implementation started.
+
+**Next pending work remains2B:** isolate the remaining native callback/layout
+stalls before another bounded fix. Once focused gates pass, rerun the original20
+matrix and native hidden/touch/keyboard/real-care checks on that same source.
+
+Final-source behavior checks also pass: [native hidden/touch/keyboard](avatars/increment2b/lcp-unblock/native-functional/application/native-visibility-touch.json)
+confirms actual document.hidden with zero hidden rAF frames, working movement and
+zero animated picker cards. [Real care](avatars/increment2b/lcp-unblock/care/live-plant-care.json)
+confirms all three mature plants' authenticated care POST, SQLite timestamp and
+wet-soil UI. These passing checks do not override the failed motion prerequisite.

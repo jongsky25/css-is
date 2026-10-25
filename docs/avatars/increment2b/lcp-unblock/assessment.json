@@ -1,0 +1,265 @@
+{
+  "status": "blocked",
+  "source_commit": "b7daa792d4ef74e1f7537869604c07cce9d30528",
+  "primary_samples": 0,
+  "native_hidden_touch_keyboard": "lcp-unblock/native-functional/application/native-visibility-touch.json",
+  "care_verification": "lcp-unblock/care/live-plant-care.json",
+  "static_picker_verified": true,
+  "reason": "Final-source focused native frame/callback prerequisite failed. Full20 matrix intentionally not started.",
+  "avatar_callback_checks": {
+    "fern": {
+      "source_commit": "b7daa792d4ef74e1f7537869604c07cce9d30528",
+      "samples": [
+        {
+          "run": 0,
+          "frame_p95_ms": 16.799999999999272,
+          "max_reported_owned_script_ms": 25.100000001490116,
+          "over_budget_scripts": [],
+          "passed": true
+        },
+        {
+          "run": 1,
+          "frame_p95_ms": 16.799999999999272,
+          "max_reported_owned_script_ms": 190.5,
+          "over_budget_scripts": [
+            {
+              "duration": 190.5,
+              "executionStart": 26639.09999999404,
+              "forcedStyleAndLayoutDuration": 0,
+              "sourceURL": "http://127.0.0.1:39869/static/js/avatars.js?v=8.14",
+              "sourceFunctionName": "",
+              "sourceCharPosition": 33795,
+              "invoker": "TimerHandler:setInterval",
+              "invokerType": "user-callback",
+              "pauseDuration": 0
+            }
+          ],
+          "passed": false
+        },
+        {
+          "run": 2,
+          "frame_p95_ms": 16.799999999999272,
+          "max_reported_owned_script_ms": 14.799999997019768,
+          "over_budget_scripts": [],
+          "passed": true
+        },
+        {
+          "run": 3,
+          "frame_p95_ms": 33.39999999999782,
+          "max_reported_owned_script_ms": 295.80000000447035,
+          "over_budget_scripts": [
+            {
+              "duration": 61.69999999552965,
+              "executionStart": 8609,
+              "forcedStyleAndLayoutDuration": 54.9,
+              "sourceURL": "http://127.0.0.1:39869/static/js/avatars.js?v=8.14",
+              "sourceFunctionName": "",
+              "sourceCharPosition": 17660,
+              "invoker": "FrameRequestCallback",
+              "invokerType": "user-callback",
+              "pauseDuration": 0
+            },
+            {
+              "duration": 186.30000000447035,
+              "executionStart": 9405.19999999553,
+              "forcedStyleAndLayoutDuration": 0,
+              "sourceURL": "http://127.0.0.1:39869/static/js/avatars.js?v=8.14",
+              "sourceFunctionName": "done",
+              "sourceCharPosition": 32649,
+              "invoker": "SPAN.onpointerup",
+              "invokerType": "event-listener",
+              "pauseDuration": 0
+            },
+            {
+              "duration": 295.80000000447035,
+              "executionStart": 9951.19999999553,
+              "forcedStyleAndLayoutDuration": 0,
+              "sourceURL": "http://127.0.0.1:39869/static/js/avatars.js?v=8.14",
+              "sourceFunctionName": "",
+              "sourceCharPosition": 24157,
+              "invoker": "TimerHandler:setTimeout",
+              "invokerType": "user-callback",
+              "pauseDuration": 0
+            },
+            {
+              "duration": 105.10000000149012,
+              "executionStart": 15472.59999999404,
+              "forcedStyleAndLayoutDuration": 0,
+              "sourceURL": "http://127.0.0.1:39869/static/js/avatars.js?v=8.14",
+              "sourceFunctionName": "initAll",
+              "sourceCharPosition": 37514,
+              "invoker": "TimerHandler:setTimeout",
+              "invokerType": "user-callback",
+              "pauseDuration": 0
+            },
+            {
+              "duration": 222.89999999850988,
+              "executionStart": 15777.19999999553,
+              "forcedStyleAndLayoutDuration": 0,
+              "sourceURL": "http://127.0.0.1:39869/static/js/avatars.js?v=8.14",
+              "sourceFunctionName": "",
+              "sourceCharPosition": 33795,
+              "invoker": "TimerHandler:setInterval",
+              "invokerType": "user-callback",
+              "pauseDuration": 0
+            }
+          ],
+          "passed": false
+        },
+        {
+          "run": 4,
+          "frame_p95_ms": 16.799999999999272,
+          "max_reported_owned_script_ms": 32.899999998509884,
+          "over_budget_scripts": [],
+          "passed": true
+        }
+      ],
+      "passed": false
+    },
+    "mushroom": {
+      "source_commit": "b7daa792d4ef74e1f7537869604c07cce9d30528",
+      "samples": [
+        {
+          "run": 0,
+          "frame_p95_ms": 16.799999999999272,
+          "max_reported_owned_script_ms": 26.100000001490116,
+          "over_budget_scripts": [],
+          "passed": true
+        },
+        {
+          "run": 1,
+          "frame_p95_ms": 16.799999999999272,
+          "max_reported_owned_script_ms": 17.600000001490116,
+          "over_budget_scripts": [],
+          "passed": true
+        },
+        {
+          "run": 2,
+          "frame_p95_ms": 16.700000000000728,
+          "max_reported_owned_script_ms": 0,
+          "over_budget_scripts": [],
+          "passed": true
+        },
+        {
+          "run": 3,
+          "frame_p95_ms": 16.700000000000728,
+          "max_reported_owned_script_ms": 0,
+          "over_budget_scripts": [],
+          "passed": true
+        },
+        {
+          "run": 4,
+          "frame_p95_ms": 16.799999999999272,
+          "max_reported_owned_script_ms": 160.70000000298023,
+          "over_budget_scripts": [
+            {
+              "duration": 160.70000000298023,
+              "executionStart": 9296,
+              "forcedStyleAndLayoutDuration": 0,
+              "sourceURL": "http://127.0.0.1:34249/static/js/avatars.js?v=8.14",
+              "sourceFunctionName": "",
+              "sourceCharPosition": 33795,
+              "invoker": "TimerHandler:setInterval",
+              "invokerType": "user-callback",
+              "pauseDuration": 0
+            }
+          ],
+          "passed": false
+        }
+      ],
+      "passed": false
+    },
+    "succulent": {
+      "source_commit": "b7daa792d4ef74e1f7537869604c07cce9d30528",
+      "samples": [
+        {
+          "run": 0,
+          "frame_p95_ms": 16.799999999999272,
+          "max_reported_owned_script_ms": 0,
+          "over_budget_scripts": [],
+          "passed": true
+        },
+        {
+          "run": 1,
+          "frame_p95_ms": 16.80000000000109,
+          "max_reported_owned_script_ms": 258.3999999985099,
+          "over_budget_scripts": [
+            {
+              "duration": 258.3999999985099,
+              "executionStart": 13695.39999999851,
+              "forcedStyleAndLayoutDuration": 6.1,
+              "sourceURL": "http://127.0.0.1:34745/static/js/avatars.js?v=8.14",
+              "sourceFunctionName": "",
+              "sourceCharPosition": 17660,
+              "invoker": "FrameRequestCallback",
+              "invokerType": "user-callback",
+              "pauseDuration": 0
+            },
+            {
+              "duration": 116.39999999850988,
+              "executionStart": 18098.79999999702,
+              "forcedStyleAndLayoutDuration": 0,
+              "sourceURL": "http://127.0.0.1:34745/static/js/avatars.js?v=8.14",
+              "sourceFunctionName": "initAll",
+              "sourceCharPosition": 37514,
+              "invoker": "TimerHandler:setTimeout",
+              "invokerType": "user-callback",
+              "pauseDuration": 0
+            }
+          ],
+          "passed": false
+        },
+        {
+          "run": 2,
+          "frame_p95_ms": 16.800000000000182,
+          "max_reported_owned_script_ms": 289.29999999701977,
+          "over_budget_scripts": [
+            {
+              "duration": 289.29999999701977,
+              "executionStart": 15506.90000000596,
+              "forcedStyleAndLayoutDuration": 0,
+              "sourceURL": "http://127.0.0.1:34745/static/js/avatars.js?v=8.14",
+              "sourceFunctionName": "",
+              "sourceCharPosition": 33795,
+              "invoker": "TimerHandler:setInterval",
+              "invokerType": "user-callback",
+              "pauseDuration": 0
+            }
+          ],
+          "passed": false
+        },
+        {
+          "run": 3,
+          "frame_p95_ms": 16.799999999999272,
+          "max_reported_owned_script_ms": 0,
+          "over_budget_scripts": [],
+          "passed": true
+        },
+        {
+          "run": 4,
+          "frame_p95_ms": 16.799999999999272,
+          "max_reported_owned_script_ms": 7.600000001490116,
+          "over_budget_scripts": [],
+          "passed": true
+        }
+      ],
+      "passed": false
+    }
+  },
+  "budgets": {
+    "frame_p95_ms": 33,
+    "owned_callback_ms": 50
+  },
+  "previous_primary_matrix": "lcp-unblock/pre-motion-fix/application/summary.json",
+  "previous_primary_source": "00d76bc",
+  "previous_primary_applies_to_final_source": false,
+  "visual_equivalence": "lcp-unblock/artwork-equivalence.json",
+  "tests": "lcp-unblock/validation-tests.txt",
+  "functional": "lcp-unblock/static-functional/tests.txt",
+  "limits": [
+    "Native LoAF attributes wall duration to scripts in long frames; zero means no owned script reported, not zero CPU.",
+    "Several over-budget scripts report zero forced layout. This does not establish scheduling or GC as the cause; the failures remain unresolved.",
+    "All cohorts retained; no thresholds relaxed or favorable samples substituted."
+  ],
+  "next_step": "Resolve or isolate the focused native callback/frame failures before rerunning the original20 matrix; do not start3A."
+}

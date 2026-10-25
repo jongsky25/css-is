@@ -1,103 +1,111 @@
-# Increment 2B — fern, mushroom and succulent
+# Increment 2B — acceptance follow-up
 
-Status: **Artwork implemented; increment 2B is blocked by the cold-desktop LCP gate. Increment 3A has not started.**
+**Blocked. Do not start increment 3A.** Final product source: `b7daa792d4ef74e1f7537869604c07cce9d30528`.
 
-Eighteen original authored SVG stages finish the seven-plant artwork collection; performance acceptance remains incomplete. Fern develops from a coiled fiddlehead through unfurling shoots into a six-frond crown with sori. Mushroom develops a domed coral cap, expressive cream stalk, gills, a veil ring and a small fruiting cluster. Succulent develops layered fleshy rosettes, blushed tips, a closed bud, open flowers and a connected basal offset in a shallow glazed bowl. Growth thresholds/names, account identity, scoring, sounds and care cooldowns are unchanged.
+The LCP blocker was improved, but final-source motion acceptance still fails.
+The [assessment](lcp-unblock/assessment.json) retains all 15 focused native runs.
+No threshold was relaxed, failed sample replaced, or earlier-source matrix reused.
+The planned full 20 final-source matrix was not started because its focused
+prerequisite failed.
 
-## Visual and functional evidence
+## Changes and validation
 
-- All six stages at 64 px and 170 px, before/after: [light](before-after-bare-light.png), [dark](before-after-bare-dark.png), [contrast](before-after-bare-contrast.png). Before art is `5b580d9`.
-- [51 monthly/seasonal sheets](sheets/index.json), 4,896 full-catalog combinations across three surfaces, including witch/vampire/pumpkin/Christmas. Reviewed changed silhouettes, distinct growth, cap headwear and pot-costume clearance. [Thirteen untouched species are pixel-identical across 3,978 cells](unchanged-species.json).
-- [Motion recording](before-after-motion.webm) uses real scripts with play/watering and default-off sound. Only its care response is mocked. [Real authenticated mature-plant care](live-plant-care.json) independently confirms Home/Wellness rendering, persisted timestamps, cooldown and wet-soil visibility for each species.
-- [486 phase/stage/mood/theme cases](motion-rig-check.json) exercise relevant ripple, wobble, spore, blink, plump, blossom and watering states. Part centers stay inside the SVG and expected animation names are checked. Twenty-one reduced-motion transitions leave zero animated SVG styles. Example sheets: [ripple](ripple-moods-light.png), [cap wobble](wobble-moods-dark.png), [spores](spore-moods-light.png), [plump](plump-moods-light.png), [watering](water-moods-dark.png).
-- **107 relevant tests passed**: render/care, local IDs, rig invariants, stage semantics, seasonal replacement-slot order, audio, onboarding storage, appearance policy and browser integration. [Test log](validation-tests.txt). Real care, native hidden/touch/keyboard checks and three paired plant traces also passed.
-- [Art/anchor contract](ART_CONTRACT.md), [original asset manifest](asset-manifest.json). Scope-local leaf/cap gradients and drawn shadows; no imported graphics, new runtime dependencies, filters, external assets or JavaScript changes. Seasonal slots retain back/accessory/front order at every stage/outfit, and mushroom headwear stays cap-owned.
+- `853c93d`: split the artwork into lazily loaded species modules; Home compiles
+  only its requested companion. Shared helpers and fixed allowlist retain fallback.
+- `41c8e01`: batch pointer geometry reads before transform writes.
+- `00d76bc`: move Home's viewport-dependent search placeholder query from a
+  mid-body inline script into the existing deferred initializer.
+- `b7daa79`: read chase/drag bounds before style writes, skip forced reflow when
+  starting an absent animation class, and keep decorative wrappers/picker cards
+  static. Existing selected-companion reactions and keyboard replay remain active.
 
-## Bounded motion/accessibility corrections
+[260 tests pass](lcp-unblock/validation-tests.txt). [Three real browser tests](lcp-unblock/static-functional/tests.txt)
+verify static picker cards, live selected animation, repeated keyboard reactions,
+pointer/head limits and responsive search with actual Wellness navigation.
+[Picker measurements](lcp-unblock/static-functional/static-preview-policy.json)
+show 16 cards and 0 running animations, while Home has 1 live animation.
 
-The existing static-idle succulent rule outranked its intended occasional `av-do-plump`. A species-scoped selector restores that reaction while preserving reduced-motion suppression. It adds no scheduling code. A reduced-motion transition during watering also exposed animated drop paths without classes escaping the class-based media rule; the same media rule now explicitly suppresses those paths. The browser matrix validates both fixes before acceptance measurements. Frond/cap/spore/blossom positioning belongs to plain outer groups, with animated inner groups, so CSS never replaces SVG placement.
+[1,734 SVG comparisons](lcp-unblock/artwork-equivalence.json) preserve paths,
+attributes, text, deterministic IDs and unknown fallback across 16 species × 6 stages × 17 outfits.
+Only interelement whitespace is normalized. CSS/defs differ only in the documented
+static-preview policy and runtime cache key. [51 fresh visual sheets](lcp-unblock/static-previews/sheets/index.json)
+contain 4,896 cells, all [pixel-identical to original 2B](lcp-unblock/static-previews/unchanged-species.json).
+[486 reaction cases and 21 reduced-motion transitions](lcp-unblock/static-previews/motion-rig-check.json)
+pass. No artwork geometry, scoring, account, care policy, sound or runtime dependency changed.
+No containment/compositing hint or external asset was shipped.
 
-## Controlled performance gates
+[Native hidden/touch/keyboard verification](lcp-unblock/native-functional/application/native-visibility-touch.json)
+passes on the final product revision: actual document.hidden, zero hidden rAF frames,
+working touch/keyboard movement and zero animated picker thumbnails.
+[Real care verification](lcp-unblock/care/live-plant-care.json) passes for mature
+fern, mushroom and succulent: Home→Wellness→care POST→SQLite timestamp→wet-soil UI.
+[Native runner](lcp-unblock/native-functional-tests.txt), [care runner](lcp-unblock/care-tests.txt).
 
-[20 raw samples and summary](application/summary.json), [comparison to increment 0](comparison.json). Five runs per desktop/mobile × cold/warm configuration. Each includes 30 seconds idle and at least 30 seconds trusted interaction, full picker selection/scrolling, growth and seasonal previews, real care, offscreen/reduced-motion probes and 20 navigations. Chromium 154.0.8037.57, CPU 1× desktop / 4× mobile proxy, same synthetic fixtures, dates and seeded randomness as the original baseline. Source revision: `6ddce82`; runtime source hashes are retained in environment metadata.
+## Failed final-source focused gate
 
-Values are median / worst run in milliseconds. Event Timing uses its ≥16 ms reporting floor; interaction values are per-run medians then median/worst across five runs.
+Five mature-stage 6 warm mobile CPU 4 runs per species use the original 30 s interaction
+sequence. Native LongAnimationFrame, LongTask, EventTiming and a lightweight frame
+counter record results without timer/event/rAF wrappers, tracing, callback clocks
+or stack capture. Every run must meet frame p95≤33ms and reported avatar-owned
+script duration≤50ms. Zero duration means no owned script was reported in a long
+frame, not zero CPU. [Runner log](lcp-unblock/native-control/tests.txt).
 
-| Configuration | Baseline LCP | Final LCP | Median delta | Interaction frame p95 | Interaction duration |
-|---|---:|---:|---:|---:|---:|
-| Desktop 1× cold | 324.0 / 660.0 | 664.0 / 812.0 | +340.0 | 16.8 / 16.8 | 32.0 / 32.0 |
-| Desktop 1× warm | 120.0 / 232.0 | 156.0 / 180.0 | +36.0 | 16.7 / 16.8 | 32.0 / 32.0 |
-| Mobile 4× cold | 576.0 / 720.0 | 576.0 / 792.0 | +0.0 | 16.8 / 16.8 | 32.0 / 32.0 |
-| Mobile 4× warm | 260.0 / 288.0 | 236.0 / 272.0 | -24.0 | 16.8 / 16.8 | 32.0 / 32.0 |
+| Species | Five frame p95 values ms | Five maximum reported owned scripts ms | Gate |
+|---|---|---|---|
+| fern | [16.8, 16.8, 16.8, 33.4, 16.8] | [25.1, 190.5, 14.8, 295.8, 32.9] | FAIL |
+| mushroom | [16.8, 16.8, 16.7, 16.7, 16.8] | [26.1, 17.6, 0, 0, 160.7] | FAIL |
+| succulent | [16.8, 16.8, 16.8, 16.8, 16.8] | [0, 258.4, 289.3, 0, 7.6] | FAIL |
 
-- Added compressed avatar CSS+JS: **188 B** over increment 0 (15 KiB budget). Both runtime JS files are byte-identical to increment 2A.
-- Largest median compressed Home document increase: **1259 B** (30 KiB budget).
-- Largest median compressed profile/picker increase: **2648 B** (120 KiB budget). Complete HTTP documents include transferred inline SVG.
-- **Cold-desktop LCP failed:** median 664 ms versus historical 324 ms, +340 ms (100 ms budget). The other three Home LCP configurations passed. All Home interaction deltas are ≤20 ms, and every mobile interaction sample has frame p95 ≤33 ms. Zero runtime JavaScript exceptions and external request attempts.
-- Largest matched interaction renderer-RSS median change: **-1.71 MiB**, within 10 MiB. Raw JS heap, renderer counts, DOM/listener and 20-navigation trends remain available.
+Raw records: [fern](lcp-unblock/native-control/fern/native-control.json),
+[mushroom](lcp-unblock/native-control/mushroom/native-control.json),
+[succulent](lcp-unblock/native-control/succulent/native-control.json).
 
-## LCP investigation and blocked acceptance
+Fern records a 190.5 ms chase callback with 0 forced layout; another run records
+61.7ms curiosity work including 54.9 ms forced layout, 186.3 ms pointer-up,
+295.8 ms timeout, 105.1 ms initAll and 222.9 ms chase. These native durations do not
+isolate scheduling, GC or another cause. Several small callbacks exceed the
+budget without attributed forced layout; that observation cannot dismiss them.
+The 33.4 ms fern frame miss is retained as a strict failure, without rounding down.
 
-The [assessment](assessment.json) retains the failed historical comparison and a corrected same-filesystem original-source control. No current sample was replaced and no budget was changed.
+## Earlier cohorts and remaining work
 
-| Desktop cold source | LCP samples (ms) | Median | Worst |
-|---|---|---:|---:|
-| Current `6ddce82` | 812, 336, 664, 728, 308 | 664 | 812 |
-| Original `1c964dc`, overlayfs control | 724, 320, 372, 320, 376 | 372 | 724 |
+The complete 20-run `00d76bc` cohort passed its primary gates: cold desktop
+LCP median 328 ms/worst 652 ms, +4ms versus historical 324 ms and −44 ms versus the
+matched overlay control 372 ms. Desktop warm median 148 ms, mobile cold 564 ms,
+mobile warm 308 ms; all mobile interaction frame p95 values 16.7–16.8 ms.
+[Its complete comparison](lcp-unblock/pre-motion-fix/comparison.json) and
+[raw summary](lcp-unblock/pre-motion-fix/application/summary.json) remain intact.
+The 1412 ms cold-mobile worst run and its timing investigation are retained there.
+These measurements do **not** validate the final product revision.
 
-The corrected control still gives **+292 ms** current-build regression, exceeding the same 100 ms budget. **This batch is not accepted.** The measured gate is page-level LCP, so unchanged Home cat artwork does not excuse the failure.
+Fresh focused instrumented traces subsequently failed. An exploratory recorder
+added excessive stack-capture overhead; all data remain under `pre-motion-fix/`.
+Thirty counterbalanced old/new-art runs without API wrappers/tracing then found
+a genuine new mushroom chase callback 60.4 ms with 41.6 ms forced layout. That result
+motivated `b7daa79`; the final 15 runs above still fail acceptance.
 
-[Protocol proof](control-protocol-proof.json) verifies that the original primary benchmark, reset, snapshot and browser probe match the initially measured current protocol; fixture setup, dependency file, storage and auth source are also identical. The [predeclared investigation](investigation-plan.json) reproduces exactly five original-source full-duration cold-desktop runs. The first [tmpfs control](reproduced-control/README.md) used a different source filesystem and is retained as exploratory evidence. The corrected [overlayfs control](reproduced-overlay-control/application/summary.json) asserts matching filesystem types and uses the immutable original source, same browser/Python/Playwright, fixture date/seed, viewport, CPU1, compression and full scenario sequence. All five results are retained, regardless of outcome.
+Original failed 20 runs (cold-desktop median 664 ms, +292 ms over matched control)
+remain in `application/`: [original blocked report](REPORT-blocked.md),
+[original assessment](assessment-blocked.json). Earlier 183.3 ms frame and 504 ms
+cold-LCP attempts remain in `lcp-unblock/pre-frame-fix/` and `pre-startup-fix/`.
+All failed and exploratory cohorts remain separate; no favorable subset is used.
 
-[Three instrumented full-scenario runs](navigation-diagnostic/application/False-cold.json), not acceptance resamples, recorded LCPs 720/572/412 ms, HTML TTFB 441.0/133.5/54.4 ms and DOM-interactive times 631.1/424.9/302.7 ms. The LCP candidate is the account-link notice. Several unrelated first-party scripts also took 100–240 ms in the second run. This locates response/static-resource and page-startup delays but does not establish a causal avatar hot path. Navigation/resource instrumentation was added in `a607092` for further investigation; production artwork/CSS remains `6ddce82`.
+Next: isolate the remaining callback/layout stalls with an uninstrumented matched
+control and browser-native CPU attribution before making another bounded fix.
+After the focused gate passes, run a fresh original 20 matrix plus real care and
+native hidden/touch/keyboard checks. Keep 3A pending. Static picker thumbnails
+are resolved; selected offscreen motion, chase/idle/roam timers and same-document
+listener retention remain separate release blockers. No production deployment.
 
-The [2-second counterbalanced art-only diagnostic](lcp-investigation/cold-lcp-diagnostic.json) had medians current 328/original 340/previous-art 364 ms. Home cat SVG is identical to the earlier foundation after normalizing UUIDs. A test-only compositing variant had median 316 ms, a 12 ms difference; it was not applied to production code. These short observations neither reproduce nor override the complete-fixture failure. They share current runtime JavaScript for art isolation and are not a full original-build control.
+These are local throttled-browser results, not physical-phone 60 fps claims.
+EventTiming has a 16 ms reporting floor; native LoAF reports scripts in long frames,
+not complete script CPU. RendererRSS includes shared pages. The full matrix uses
+forced-active automation; actual hidden behavior requires the separate native check.
 
-Picker/growth, seasonal-preview and care LCP/interaction/memory deltas pass their recorded budgets; [secondary scenario checks](assessment.json) retain all values. The unresolved gate is cold-desktop Home LCP. Next required work is attribution of response/static-resource and full-scenario startup delay, followed by a demonstrated fix and fresh gate validation. **Do not advance to 3A while this gate is failed.**
-
-## Mature plant traces
-
-[Matched old/new 30-second Home input traces](targeted/), one pair per mature plant at 4× mobile CPU. Forty fixture-only completed claims produce stage 6 through the real growth calculation. Before art is `5b580d9`; after art is the implemented batch. Both sides use the unchanged runtime JavaScript; template CSS follows each art revision. The primary 20-run Home timing fixture remains cat for historical comparability; the full picker includes the changed plants. These focused traces are additional diagnostics, not five-run per-species Home benchmarks.
-
-| Species | Version | Page-wide tasks >50 ms | Longest identified avatar callback inside those tasks (ms) |
-|---|---|---:|---:|
-| fern | before | 2 | No identified call |
-| fern | after | 2 | 1.144 |
-| mushroom | before | 1 | No identified call |
-| mushroom | after | 7 | 0.313 |
-| succulent | before | 3 | No identified call |
-| succulent | after | 6 | 24.336 |
-
-No identified avatar callback exceeds 50 ms in the final sampled traces. A short callback nested in a long rendering task does not establish that it caused the task. Trace overhead and page-wide paint costs cannot be fully attributed; raw long-task/paint records and all identified calls are retained. Primary latency/frame comparisons use the original untraced 20 current samples, including the failed LCP result.
-
-## Limits and remaining release work
-
-Native hidden-state verification stops frame callbacks, and touch/keyboard movement still works. Existing offscreen motion, chase/idle/roam timers, seven animated plant picker thumbnails and same-document remount listener retention remain release blockers. The prior audio/init feedback fix remains in place. This batch does **not** claim the static-picker or full lifecycle release gates pass; resolve them during motion/integration work before release.
-
-No physical phone was tested. Timer/event probes add overhead and match the baseline. rAF intervals alone do not prove 60 fps. Event Timing omits events below 16 ms; absent entries are not zero latency. Renderer RSS sums shared resident pages, is not private/PSS memory, and requires matching renderer counts. The primary Home fixture measures unchanged cat artwork; new mature plants have one old/new diagnostic trace each. All worst runs remain reported. No production deployment or wardrobe persistence.
-
-Next pending work: **complete increment 2B’s cold-load investigation and satisfy its gate**. Increment 3A (dog, rabbit, bird and turtle) remains pending.
-
-## Reproduction
-
-Run browser workloads sequentially:
+## Reproduce
 
 ```sh
-.venv/bin/python scripts/avatar_baseline/slice.py --out docs/avatars/increment2b --before 5b580d9 --kinds fern,mushroom,succulent --no-prototypes
-.venv/bin/python scripts/avatar_baseline/plant_motion.py --out docs/avatars/increment2b --kinds fern,mushroom,succulent --phases ripple,wobble,spore,blink,plump,bloom,water
-.venv/bin/python scripts/avatar_baseline/sheets.py --out docs/avatars/increment2b/sheets
-.venv/bin/python scripts/avatar_baseline/check_unchanged_species.py --before docs/avatars/increment2a/sheets --after docs/avatars/increment2b/sheets --changed fern,mushroom,succulent
-CSS_TEST_NOW=2026-07-15T12:00:00 CSS_AVATAR_BASELINE=1 CSS_AVATAR_MATURE=1 CSS_AVATAR_PLANTS=fern,mushroom,succulent CSS_AVATAR_OUT=docs/avatars/increment2b/application .venv/bin/python -m pytest tests/test_avatar_baseline_browser.py -k plant_care_live_surfaces -s
-# Repeat for fern, mushroom and succulent:
-CSS_TEST_NOW=2026-07-15T12:00:00 CSS_AVATAR_BASELINE=1 CSS_AVATAR_KIND=fern CSS_AVATAR_MATURE=1 CSS_AVATAR_BEFORE=5b580d9 CSS_AVATAR_OUT=docs/avatars/increment2b/targeted/fern/application .venv/bin/python -m pytest tests/test_avatar_baseline_browser.py -k slice_long_task_attribution -s
-CSS_TEST_NOW=2026-07-15T12:00:00 CSS_AVATAR_BASELINE=1 CSS_AVATAR_OUT=docs/avatars/increment2b/application .venv/bin/python -m pytest tests/test_avatar_baseline_browser.py -k 'real_application_baseline or native_visibility_and_touch' -s
-.venv/bin/python scripts/avatar_baseline/summarize.py docs/avatars/increment2b/application
-.venv/bin/python scripts/avatar_baseline/compare.py --after docs/avatars/increment2b/application
-# Preserve current results; reproduce the original control in a fresh output directory:
-bash scripts/avatar_baseline/reproduce_cold_control.sh docs/avatars/increment2b/control-replay
-# Recreate assessment from retained historical/current/corrected control data:
-.venv/bin/python scripts/avatar_baseline/assess_remaining_plants.py
-.venv/bin/python scripts/avatar_baseline/report_remaining_plants.py
+CSS_TEST_NOW=2026-07-15T12:00:00 CSS_AVATAR_BASELINE=1 CSS_AVATAR_MATURE=1 CSS_AVATAR_NATIVE_AFTER_ONLY=1 CSS_AVATAR_OUT=<fresh>/native-control/application .venv/bin/python -m pytest tests/test_avatar_native_control.py -s
+.venv/bin/python scripts/avatar_baseline/assess_lazy_artwork.py
+.venv/bin/python scripts/avatar_baseline/report_lazy_artwork.py
 ```
-
-Final evidence and the execution ledger are in the revision containing this report.
