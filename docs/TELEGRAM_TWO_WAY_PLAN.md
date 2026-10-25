@@ -1,6 +1,6 @@
 # Office Connect ↔ Telegram delivery plan
 
-Status: T0–T2.2 merged; T2.3 in progress; two-way defaults remain off; production activation unverified.
+Status: T0–T2.2 merged; T2.3 in review; two-way defaults remain off; production activation unverified.
 Last updated: 2026-10-25.
 Repository: jongsky25/css-is.
 Planning baseline inspected: abf3141 (merge of PR #458).
@@ -126,7 +126,7 @@ Google/Outlook two-way calendar synchronization, external free/busy, automatic v
 
 ## Progress ledger
 
-T0 merged in PR #465 at `4cd01a0bfd17ccf57dba12b05a24c72bfd098f29`. T1.1 merged in PR #466 at `bef000127846aebb9fc1176c190664797d262eb4`. T1.2 merged in PR #467 at `5490f454d6c9e9d43e7e9599be8174ec454cba55`. T1.3 merged in PR #468 at `bb9bc86407f641a0244617113d0f1fa271b12906`. T1.4 merged in PR #469 at `0f10b242032479a588e98209b17333dba28f0015`. T2.1 merged in PR #470 at `e1394120781c7d4838cee8c1fa9aa7d9c497437b`. T2.2 merged at `540705db32dfadadb8be8b38122dccfe71deb79d`. T2.3 is in progress; T3.1–T7 remain planned. All two-way capabilities remain default-off; no live verification is recorded.
+T0 merged in PR #465 at `4cd01a0bfd17ccf57dba12b05a24c72bfd098f29`. T1.1 merged in PR #466 at `bef000127846aebb9fc1176c190664797d262eb4`. T1.2 merged in PR #467 at `5490f454d6c9e9d43e7e9599be8174ec454cba55`. T1.3 merged in PR #468 at `bb9bc86407f641a0244617113d0f1fa271b12906`. T1.4 merged in PR #469 at `0f10b242032479a588e98209b17333dba28f0015`. T2.1 merged in PR #470 at `e1394120781c7d4838cee8c1fa9aa7d9c497437b`. T2.2 merged at `540705db32dfadadb8be8b38122dccfe71deb79d`. T2.3 is in review in PR #472; T3.1–T7 remain planned. All two-way capabilities remain default-off; no live verification is recorded.
 
 | Increment | Status | Owner / date | PR / commit | Evidence | Activation / next action |
 | --- | --- | --- | --- | --- | --- |
@@ -138,7 +138,7 @@ T0 merged in PR #465 at `4cd01a0bfd17ccf57dba12b05a24c72bfd098f29`. T1.1 merged 
 | T1.4 | Merged | Codex / 2026-10-25 | [PR #469](https://github.com/jongsky25/css-is/pull/469), `feat/telegram-t1-4-groups` | Exact destination, administrator/owner consent, provider verification, fixed group status and lifecycle fencing; checks below | Merged at `0f10b242032479a588e98209b17333dba28f0015`; live deployment unverified |
 | T2.1 | Merged | Codex / 2026-10-25 | [PR #470](https://github.com/jongsky25/css-is/pull/470), `feat/telegram-t2-1-calendar` | Current private calendar visibility, bounded windows, signed paging and source links; checks below | Merged at `e1394120781c7d4838cee8c1fa9aa7d9c497437b`; live deployment unverified |
 | T2.2 | Merged | Codex / 2026-10-25 | [PR #471](https://github.com/jongsky25/css-is/pull/471), `feat/telegram-t2-2-rooms` | Private slots and own request status, source rules and revocation checks; evidence below | Merged at `540705db32dfadadb8be8b38122dccfe71deb79d`; read only; default off; next T2.3 |
-| T2.3 | In progress | Codex / 2026-10-25 | `feat/telegram-t2-3-group-reads` | Explicit per-entry version consent and group-safe slots | Default off; checks pending |
+| T2.3 | In review | Codex / 2026-10-25 | [PR #472](https://github.com/jongsky25/css-is/pull/472), `feat/telegram-t2-3-group-reads` | Explicit per-entry version consent, safe slots and mobile sharing checks; evidence below | Release 8.62 candidate; default off; next T3.1 |
 | T3.1–T7 | Planned | Unassigned | — | Not implemented | Follow dependencies |
 
 ### T0 handoff — 2026-10-25
@@ -268,7 +268,7 @@ T0 merged in PR #465 at `4cd01a0bfd17ccf57dba12b05a24c72bfd098f29`. T1.1 merged 
 
 ### T2.3 implementation and operator handoff — 2026-10-25
 
-- Owner/branch: Codex, `feat/telegram-t2-3-group-reads`, based on T2.2 merge `540705d`. Implementation complete, awaiting PR creation; release 8.62. T2.2 was merged only after preserving both search and room runtime modules, advancing its release to 8.61, and passing affected room/deployment/release checks.
+- Owner/branch: Codex, `feat/telegram-t2-3-group-reads`, based on T2.2 merge `540705d`. [PR #472](https://github.com/jongsky25/css-is/pull/472) opened 2026-10-25, implementation commit `f32b941`; release 8.62 candidate, in review, not merged or pilot verified. T2.2 was merged only after preserving both search and room runtime modules, advancing its release to 8.61, and passing affected room/deployment/release checks.
 - Delivered: `telegram_group_reads.py`, explicit group commands, additive `telegram_group_share` table/index/triggers, sharing preview/consent/revocation forms on the existing signed-in group screen, and runtime closure. No meeting creation, booking, approvals, arbitrary conversation monitoring or external calendar integration.
 - Commands: `/group_calendar [DATE [END]]` defaults to the current Asia/Manila day and allows at most 31 inclusive days; `/group_rooms [DATE]` defaults to that same local day. These commands work only in the exact registered group/topic, with current linked actor, separate `calendar.read` or `rooms.read` consent/flag and the existing group/link/inbound/delivery setup. Private calendar/status commands remain private, and group commands are ignored in private chats. Fresh provider checks verify owner and bot administrators plus a different requester's current membership before rendering.
 - Calendar disclosure: the registered owner (currently a linked Office Connect administrator) opens `/account/telegram/groups`, enters the numeric ID from the signed-in calendar entry address, previews the exact clipped shared title/date/time/timezone/venue/status and source link, checks explicit current/future-member consent for an exact destination, and approves that source version. Ordinary bureau entries only; people/unit entries, linked activity overlays and recurring sources are excluded. A requester's private access or bureau visibility alone never creates sharing consent. The audit records destination, generation and source-version digest, without copying source content into the queue or consent table.
