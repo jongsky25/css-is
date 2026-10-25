@@ -6,4 +6,4 @@ tests/test_avatar_care.py::test_mood_thresholds
     from starlette.testclient import TestClient
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-108 passed, 1 warning in 30.98s
+108 passed, 1 warning in 39.99s

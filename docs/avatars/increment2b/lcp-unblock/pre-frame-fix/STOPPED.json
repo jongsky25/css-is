@@ -1,0 +1,15 @@
+{
+  "status": "stopped after a hard frame-gate failure; not an acceptance cohort",
+  "reason": "First mobile-cold interaction framep95183.3ms exceeds33ms. Preserved all completed samples. Stopped withSIGINT and normalpytestfixtureteardown before warmconfigurations toprofilefailure.",
+  "cold_desktop_values_ms": [
+    580,
+    328,
+    528,
+    408,
+    336
+  ],
+  "cold_desktop_median_ms": 408,
+  "cold_desktop_historical_delta_ms": 84,
+  "cold_desktop_matched_delta_ms": 36,
+  "next": "Attribute mobileinteractioncost, applyevidencedfix, thenfreshfull20withoutreplacingthesevalues."
+}

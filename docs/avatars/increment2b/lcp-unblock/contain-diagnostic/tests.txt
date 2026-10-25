@@ -1,0 +1,14 @@
+current 0 16.799999999999272
+contain 0 16.799999999999272
+contain 1 16.799999999999272
+current 1 116.69999999999891
+current 2 16.700000000004366
+contain 2 16.700000000004366
+.
+=============================== warnings summary ===============================
+tests/test_avatar_interaction_diagnostic.py::test_interaction_trace
+  /workspace/css-is/tests/conftest.py:88: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+1 passed, 1 warning in 258.66s (0:04:18)

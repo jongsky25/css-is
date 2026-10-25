@@ -364,42 +364,49 @@
     watchRaf = requestAnimationFrame(function () {
       watchRaf = null;
       var wraps = document.querySelectorAll(".avwrap[data-kind]");
+      var measured = [];
+      // Read every box before changing transforms. Reading a head immediately
+      // after tilting its stage forces a second style/layout flush on each move.
       for (var i = 0; i < wraps.length; i++) {
         var wr = wraps[i];
         if (asleep(wr) || wr._avAway) continue;
+        var stage = wr.hasAttribute("data-interactive") ? wr.querySelector(".av-tiltstage") : null;
+        var spec = WATCH[wr.dataset.kind];
+        var h = spec ? wr.querySelector(".av-head") : null;
+        var sr = stage ? wr.getBoundingClientRect() : null;
+        var r = h ? h.getBoundingClientRect() : null;
+        var excite = wr.dataset.kind === "dog" && vel > 1.5 &&
+          (!wr._avNextExcite || now > wr._avNextExcite);
+        measured.push({ wrap: wr, stage: stage, stageBox: sr, spec: spec,
+          head: h, headBox: r, exciteBox: excite ? (sr || wr.getBoundingClientRect()) : null });
+      }
+      for (var j = 0; j < measured.length; j++) {
+        var item = measured[j];
+        var wr = item.wrap, stage = item.stage, sr = item.stageBox;
+        var spec = item.spec, h = item.head, r = item.headBox;
 
         // ---- 3D lean: any interactive companion leans toward the cursor
         // while it's over the companion's own box (Spot Feedback #82, "make
         // the pet 3d") — a tilt-card effect, not species curiosity, so it
         // runs for every kind, not just the WATCH list below.
-        if (wr.hasAttribute("data-interactive")) {
-          var stage = wr.querySelector(".av-tiltstage");
-          if (stage) {
-            var sr = wr.getBoundingClientRect();
-            var within = sr.width > 0 &&
-              e.clientX >= sr.left && e.clientX <= sr.right &&
-              e.clientY >= sr.top && e.clientY <= sr.bottom;
-            if (within) {
-              var lx = (e.clientX - (sr.left + sr.width / 2)) / (sr.width / 2);
-              var ly = (e.clientY - (sr.top + sr.height / 2)) / (sr.height / 2);
-              stage.style.transition = "";
-              stage.style.transform = "rotateY(" + (lx * 10).toFixed(1) + "deg) " +
-                                       "rotateX(" + (ly * -8).toFixed(1) + "deg)";
-              stage._avTilted = true;
-            } else if (stage._avTilted) {
-              stage.style.transition = "transform .35s cubic-bezier(.22,1,.36,1)";
-              stage.style.transform = "";
-              stage._avTilted = false;
-            }
+        if (stage) {
+          var within = sr.width > 0 &&
+            e.clientX >= sr.left && e.clientX <= sr.right &&
+            e.clientY >= sr.top && e.clientY <= sr.bottom;
+          if (within) {
+            var lx = (e.clientX - (sr.left + sr.width / 2)) / (sr.width / 2);
+            var ly = (e.clientY - (sr.top + sr.height / 2)) / (sr.height / 2);
+            stage.style.transition = "";
+            stage.style.transform = "rotateY(" + (lx * 10).toFixed(1) + "deg) " +
+                                     "rotateX(" + (ly * -8).toFixed(1) + "deg)";
+            stage._avTilted = true;
+          } else if (stage._avTilted) {
+            stage.style.transition = "transform .35s cubic-bezier(.22,1,.36,1)";
+            stage.style.transform = "";
+            stage._avTilted = false;
           }
         }
-
-        var spec = WATCH[wr.dataset.kind];
-        if (!spec) continue;
-        var h = wr.querySelector(".av-head");
-        if (!h) continue;
-        var r = h.getBoundingClientRect();
-        if (!r.width) continue;
+        if (!h || !r.width) continue;
         var tilt = Math.max(-spec.max, Math.min(spec.max,
                    (e.clientX - (r.left + r.width / 2)) / spec.div));
         h.style.transform = "rotate(" + tilt.toFixed(1) + "deg)";
@@ -408,9 +415,8 @@
         h._avBackT = setTimeout((function (hh) {
           return function () { hh.style.transform = ""; };
         })(h), 2000);
-        if (wr.dataset.kind === "dog" && vel > 1.5 &&
-            (!wr._avNextExcite || now > wr._avNextExcite)) {
-          var wb = wr.getBoundingClientRect();
+        if (item.exciteBox) {
+          var wb = item.exciteBox;
           var ex = e.clientX - (wb.left + wb.width / 2);
           var ey = e.clientY - (wb.top + wb.height / 2);
           if (ex * ex + ey * ey < 220 * 220) {

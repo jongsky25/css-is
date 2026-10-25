@@ -39,3 +39,16 @@ classes escaping the existing class-based suppression. The same media rule now
 explicitly includes `.avwrap .av-drops path`. The browser matrix checks every
 SVG descendant after reduced motion is enabled during each reaction, in all
 three themes; no animated style may remain. No JavaScript timing logic changes.
+
+The LCP follow-up in `853c93d` moves each species into
+`templates/_avatar_species/<kind>.html` and shared helpers into
+`templates/_avatars_shared.html`. The `_avatars_art.html` dispatcher and public
+macro API remain. A fixed allowlist selects lazy imports; unknown kinds retain
+the plant fallback. No geometry, seasonal layer, rig hook, CSS or JS changes.
+See [1,734 SVG-equivalence checks](lcp-unblock/artwork-equivalence.json).
+
+A subsequent bounded runtime change batches pointer geometry reads before
+transform writes, avoiding the old tilt-write/head-read style flush. The same
+3D lean, head-angle limits, reset behavior and dog excitement/cooldown remain.
+Cat/dog/bird/owl pointer behavior is checked on authenticated Home pages.
+No experimental compositing or containment CSS was shipped.

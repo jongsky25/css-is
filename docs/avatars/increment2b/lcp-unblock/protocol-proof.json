@@ -1,0 +1,19 @@
+{
+  "reference_instrumentation_commit": "a607092",
+  "current_product_commit": "853c93d",
+  "scenario_function_ast_identical": {
+    "test_real_application_baseline": true,
+    "snapshot": true,
+    "reset": true,
+    "test_native_visibility_and_touch": true,
+    "test_plant_care_live_surfaces": true
+  },
+  "probe_identical": true,
+  "fixture_change": "Source-provenance list extended with17newshared/speciesfiles. No otherfixturechangefroma607092.",
+  "diff": "diff --git a/tests/test_avatar_baseline_browser.py b/tests/test_avatar_baseline_browser.py\nindex 26f23f8..fc2ccc8 100644\n--- a/tests/test_avatar_baseline_browser.py\n+++ b/tests/test_avatar_baseline_browser.py\n@@ -26,6 +26,9 @@ def baseline_server(app_mod):\n     output.mkdir(parents=True, exist_ok=True)\n     sources = ['templates/_avatars.html', 'templates/_avatars_art.html',\n                'static/js/avatars.js', 'static/js/avatar-audio.js', __file__]\n+    sources += [str(p) for p in sorted(Path('templates').glob('_avatar_species/*.html'))]\n+    if Path('templates/_avatars_shared.html').exists():\n+        sources.append('templates/_avatars_shared.html')\n     (output / 'environment.json').write_text(json.dumps({\n         'source_commit': subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(),\n         'platform': platform.platform(), 'python': platform.python_version(),\n",
+  "unchanged_browser_runtime": {
+    "avatars.js": true,
+    "avatar-audio.js": true
+  },
+  "browser_geometry_and_css_proof": "artwork-equivalence.json"
+}

@@ -1,0 +1,5 @@
+{
+  "diagnostic_only": true,
+  "excluded_from_acceptance": true,
+  "reason": "Stopped when productpointerbatchingeditwasmade. Firstthreecompletecurrenttracesusedoldscript; lateinflightpageloads maymixsourceversions. Useonlyasexploratorythread-timingdata, notacceptanceorbeforeafterproof."
+}

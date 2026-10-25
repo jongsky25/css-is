@@ -1,0 +1,8 @@
+.
+=============================== warnings summary ===============================
+tests/test_avatar_pointer_browser.py::test_curiosity_and_lean_survive_batched_geometry
+  /workspace/css-is/tests/conftest.py:88: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+1 passed, 1 warning in 6.45s

@@ -1,0 +1,41 @@
+{
+  "results": [
+    {
+      "kind": "cat",
+      "pointer_inside": {
+        "tilt": "rotateY(5deg) rotateX(5.1deg)",
+        "head": "rotate(1.3deg)"
+      },
+      "head_angle_within_limit": true,
+      "tilt_resets_outside": true
+    },
+    {
+      "kind": "dog",
+      "pointer_inside": {
+        "tilt": "rotateY(5deg) rotateX(5.1deg)",
+        "head": "rotate(1.3deg)"
+      },
+      "head_angle_within_limit": true,
+      "tilt_resets_outside": true
+    },
+    {
+      "kind": "bird",
+      "pointer_inside": {
+        "tilt": "rotateY(5deg) rotateX(5.1deg)",
+        "head": "rotate(1.3deg)"
+      },
+      "head_angle_within_limit": true,
+      "tilt_resets_outside": true
+    },
+    {
+      "kind": "owl",
+      "pointer_inside": {
+        "tilt": "rotateY(5deg) rotateX(5.1deg)",
+        "head": "rotate(2.3deg)"
+      },
+      "head_angle_within_limit": true,
+      "tilt_resets_outside": true
+    }
+  ],
+  "errors": []
+}

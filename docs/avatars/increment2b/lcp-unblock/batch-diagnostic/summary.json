@@ -1,0 +1,44 @@
+{
+  "diagnostic_only": true,
+  "groups": {
+    "current": {
+      "runs": 3,
+      "frame_p95_values_ms": [
+        16.799999999999272,
+        16.700000000004366,
+        16.799999999999272
+      ],
+      "event_duration_medians_ms": {
+        "FunctionCall": 1514.12,
+        "UpdateLayoutTree": 1455.79,
+        "Paint": 2963.957,
+        "Layout": 514.393,
+        "PrePaint": 1414.172,
+        "Layerize": 773.1850000000001
+      },
+      "runtime_sha256": "69c5841d65c4e1a47093c93a2ded9498b176b3b6cfb9ea34d2d7d633e07d6bb1"
+    },
+    "batched": {
+      "runs": 3,
+      "frame_p95_values_ms": [
+        16.799999999999272,
+        16.799999999999272,
+        16.799999999999272
+      ],
+      "event_duration_medians_ms": {
+        "FunctionCall": 1324.808,
+        "UpdateLayoutTree": 1426.92,
+        "Paint": 2710.987,
+        "Layout": 424.832,
+        "PrePaint": 1272.455,
+        "Layerize": 809.844
+      },
+      "runtime_sha256": "d6c0008564a95daafee6dd9c2409d5391d1c1001ded254afd049c8e43a96b657"
+    }
+  },
+  "limits": [
+    "Three pairs,5s idle/30s input, instrumentation androuting overhead; notacceptance.",
+    "Old/new runtimeinterceptedconsistently with currentart/CSS; no containment or compositing hint.",
+    "Batched geometry removes read-after-write layout work; doesnotproveallpriorstalls hadthesamecause."
+  ]
+}
