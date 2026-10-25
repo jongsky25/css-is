@@ -1,0 +1,34 @@
+"""Render 96-cell, 64px sheets for every month/costume and surface.
+
+Run after timing measurements, not concurrently. Uses only the real Jinja macros.
+"""
+import argparse
+import json
+from pathlib import Path
+import shutil
+from playwright.sync_api import sync_playwright
+from gallery import render
+
+p=argparse.ArgumentParser();p.add_argument('--out',default='docs/avatars/sheets');a=p.parse_args()
+out=Path(a.out);out.mkdir(parents=True,exist_ok=True)
+index=[]
+with sync_playwright() as pw:
+ b=pw.chromium.launch(executable_path=shutil.which('chromium'),args=['--no-sandbox'])
+ for theme in ['light','dark','contrast']:
+  for outfit, month in [('default',m) for m in range(13)]+[(o,m) for o,m in [('halloween',10),('halloween_vampire',10),('halloween_pumpkin',10),('christmas',12)]]:
+   c=b.new_context(viewport={'width':960,'height':900},reduced_motion='reduce',timezone_id='UTC')
+   page=c.new_page();page.clock.set_fixed_time('2026-07-15T12:00:00Z')
+   # Static visual fixture: suppress the script tags, retain actual macro CSS/SVG.
+   import re
+   html=re.sub(r'<script\b[^>]*>.*?</script>','',render('sheet',theme,outfit,month),flags=re.S)
+   page.set_content(html)
+   assert page.locator('svg[data-avatar-kind]').count()==96
+   ids=page.locator('[id]').evaluate_all('(es)=>es.map(e=>e.id)')
+   assert len(ids)==len(set(ids)), 'Duplicate SVG IDs'
+   file=f'{theme}-{outfit}-{month:02}.png'
+   page.screenshot(path=str(out/file),full_page=True)
+   index.append({'file':file,'theme':theme,'outfit':outfit,'month':month,'cells':96,'art_size_px':64})
+   c.close()
+ b.close()
+(out/'index.json').write_text(json.dumps(index,indent=2))
+print(f'{len(index)} sheets, {len(index)*96} base/stage/outfit/surface combinations')

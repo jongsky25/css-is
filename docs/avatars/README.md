@@ -11,7 +11,7 @@ uv venv .venv
 uv pip install --python .venv/bin/python -r requirements-test.in
 .venv/bin/python scripts/avatar_baseline/gallery.py
 # Separate terminal, repository root:
-.venv/bin/python scripts/avatar_baseline/measure.py --runs 5 --seconds 30
+# Optional exploratory macro audit (not the authoritative application baseline):
 .venv/bin/python scripts/avatar_baseline/audit.py
 .venv/bin/python -m pytest tests/test_avatar_care.py tests/test_avatar_audio.py tests/test_onboarding_storage.py tests/test_appearance.py tests/test_appearance_browser.py -q
 ```
@@ -27,31 +27,65 @@ worst runs, and lifecycle observations. All artifact names encode their surface
 and costume. The gallery deliberately renders more than a normal user surface.
 No assets were imported, so no upstream artwork license is introduced.
 
-## Measurement interpretation
+## Actual application baseline
 
-Chromium uses the system executable; its exact version is recorded in raw.json.
-Compare only identical versions, viewport, throttle, platform and harness revision.
-Desktop: 1440 × 1000, CPU 1×. Mobile proxy: 390 × 844, CPU 4×.
-No claim of physical-device results. Each sample uses a fresh browser context;
-warm performs a priming navigation. The clock is fixed to noon July 15, 2026;
-seasonal rendering is explicit. Audio remains off. Behavior randomness is currently
-unseeded; timing samples therefore contain natural idle variation.
+The authoritative runner is `tests/test_avatar_baseline_browser.py`. It starts
+Uvicorn over loopback with a copied synthetic test database, issues an ordinary
+registered administrator session, and serves the unmodified application routes.
+A test-local GZip ASGI wrapper models a controlled compression proxy. It does
+not change production middleware or add a deployed route. App startup tasks are
+disabled (`lifespan=off`), as in existing TestClient integration tests.
 
-Home is a standalone macro fixture, **not full-application Home LCP**. Interaction
-latency measures a requestAnimationFrame after scripted actions, not Event Timing
-or input-to-paint latency. Long tasks include fixture/browser work and require
-attribution before calling them avatar regressions. Heap deltas cover JS heap,
-not total renderer memory, and navigation discards old documents; audit.py also
-checks same-document remounts. No CSS/JS/art changes are made in this increment,
-so no before/after regression or release performance pass can be inferred.
+```sh
+CSS_TEST_NOW=2026-07-15T12:00:00 CSS_AVATAR_BASELINE=1 \
+  .venv/bin/python -m pytest tests/test_avatar_baseline_browser.py -s
+.venv/bin/python scripts/avatar_baseline/summarize.py
+# Run visual capture separately, with no timing sweep running:
+.venv/bin/python scripts/avatar_baseline/sheets.py
+```
 
-The harness currently does not provide an authenticated care backend (the local
-POST returns 501), real picker selection controls, wardrobe (not implemented),
-seasonal live-update controls, actual hidden-tab measurement, full renderer memory,
-or transferred compressed HTTP sizes (gzip values are deterministic estimates of
-uncompressed fixture bodies). These limits must be resolved before increment 0
-is accepted and before increment 1 starts. The `--seconds` switch supports smoke
-runs; anything below 30 seconds is **not** the required release baseline.
+The runner requires system Chromium `154.0.8037.57`; another session must install
+that version or explicitly set `CSS_AVATAR_CHROMIUM` and establish a new baseline.
+Playwright is pinned by requirements-test.in. Python, platform, source hashes,
+clock and seed are recorded in `application/environment.json`.
+Desktop: 1440 × 1000, CPU 1×. Mobile proxy: 390 × 844, CPU 4×, touch-capable
+context. These are virtual fixtures, not physical-device results.
+
+Each viewport/cache configuration has five independent browser contexts. Home idle
+and trusted mouse input each run for at least 30 seconds. Cold clears HTTP cache;
+warm primes Home in the same context. HTTP caching stays enabled: there is no
+Playwright request routing, and service workers are blocked. Resource timings and
+response encodings distinguish actual cache reuse from a priming navigation.
+Browser Date is controlled without mocking Performance APIs. Math.random uses
+seed 12345, and the server date is fixed via the repository's test clock.
+
+The remaining checks select all 16 profile radios, scroll to growth, perform and
+verify a persisted care write, cycle seasonal previews through the real admin
+iframe, inspect offscreen/reduced-motion state and observe 20 real navigations.
+Normal Home has no care button, so care is exercised on Wellness. There is no
+wardrobe in the baseline application; that scenario starts when increment 4 adds it.
+
+Raw samples retain long tasks and slow frames. Summary statistics report medians
+and worst runs. Event Timing has a 16 ms reporting floor; a missing entry does
+not mean zero latency. Long tasks are page-wide: attribution requires a separate
+trace before assigning a regression to avatar code. JS heap and DOM/listener
+counts are supplemented by summed OS renderer RSS. Shared resident pages may be
+counted more than once; this is not private/PSS memory. Compare identical renderer
+counts and scenarios rather than treating RSS as precise avatar-only memory.
+
+Playwright's regular page initialization forces focused/active emulation, so the
+main sweep records `hidden_verified=false` when another page fails to hide it.
+A separate native-Chromium tab check connects with `no_defaults=True`, retaining
+native page visibility. It records actual hidden state, frame callbacks and timer
+activity, then exercises touch dragging and a keyboard nudge on Home. Do not
+interpret the main sweep's failed background attempt as successful hidden testing.
+
+`application/` is authoritative performance evidence. `sheets/` contains 64 px
+six-stage sheets for all monthly and explicit seasonal outfits in light, dark
+and white high-contrast backgrounds. The earlier `smoke/` hero sheets include
+all three moods. `measure.py` and `audit.py` are retained as exploratory standalone
+macro probes, not application performance acceptance tools. Their short samples
+and gzip estimates must not replace the actual HTTP results.
 
 ## Inventory and update paths
 

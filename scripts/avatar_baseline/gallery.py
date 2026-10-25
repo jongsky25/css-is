@@ -20,18 +20,19 @@ def render(scene='gallery', theme='light', outfit='default', month=0):
     macro = env.get_template('_avatars.html').module
     cards = []
     for item in CATALOG if scene != 'home' else [CATALOG[7]]:
-        for stage in range(1, 7) if scene == 'gallery' else [4]:
+        for stage in range(1, 7) if scene in {'gallery', 'sheet'} else [4]:
             for mood in ['happy', 'okay', 'droopy'] if scene == 'gallery' else ['okay']:
-                art = macro.avatar(item['key'], stage, name='Synthetic companion', size=170,
+                art = macro.avatar(item['key'], stage, name='Synthetic companion' if scene != 'sheet' else '', size=64 if scene == 'sheet' else 170,
                                    interactive=scene == 'home', mood=mood, care=scene == 'home',
                                    drag=scene == 'home', drag_key='baseline', chase=True)
                 cards.append(f'<article><p>{item["label"]} · {stage} · {mood}</p>{art}</article>')
     return ('<!doctype html><html lang="en"><meta charset="utf-8"><title>Avatar baseline</title>'
             '<style>body{font:16px system-ui;margin:24px;--accent:#547bb5;background:'
-            + ('#162032;color:#f2f4fa' if theme == 'dark' else '#f4f6fa;color:#182236')
+            + ('#162032;color:#f2f4fa' if theme == 'dark' else ('#fff;color:#000' if theme == 'contrast' else '#f4f6fa;color:#182236'))
             + '}main{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:24px}'
             'article{padding:20px;border:1px solid #8886;border-radius:16px} .av-play{min-height:450px}'
-            '</style>' + str(macro.avatar_defs()) + '<h1>Local synthetic avatar fixture</h1>'
+            + ('main{grid-template-columns:repeat(6,1fr)}article{padding:6px}article p{font-size:12px;margin:4px}' if scene == 'sheet' else '')
+            + '</style>' + str(macro.avatar_defs()) + '<h1>Local synthetic avatar fixture</h1>'
             '<main class="av-play">' + ''.join(cards) + '</main></html>')
 
 if __name__ == '__main__':
