@@ -232,3 +232,56 @@ consent or a disabled pilot is explicit and does not block ordinary activity
 progress. No new tool, argument, scope, flag or stored grant widening is added;
 existing tool registrations can consume the extra response metadata after deploy.
 Hosted Summit person/annual verification remains pending.
+
+### Type 3 scorecard for one resource person at one activity (v8.74)
+
+Tool: `get_resource_person_activity_survey(activity_id, resource_person_id)`.
+Scope: `surveys:person_activities:read`. Pilot switch:
+`CSS_MCP_PERSON_ACTIVITY_SURVEYS_ENABLED=1` (off unless explicitly configured).
+This is separate from annual `surveys:resource_persons:read`: existing grants and
+refresh tokens cannot acquire it automatically, and neither annual nor Type 2
+pilot activation substitutes for the new switch. The optional consent checkbox
+and phone readiness page show this separate permission/activation.
+
+Find a managed outside activity with existing `list_activity_progress`; its
+`survey_context.activity_id` is the current linked form ID and its permitted
+person selectors supply `resource_person_id`. Those selectors retain their own
+activities/annual permission checks. IDs may also come from signed-in source
+reports; the new read itself needs only the new scope and current report/person
+authority. A newly registered tool needs the saved ChatGPT catalog refreshed on a
+supported desktop browser before use; phone-only users can defer activation.
+
+Resolve the activity's current full non-archived, non-pooled Type 2/3 group with
+the shared source grouping key. Accept representative or member IDs, but return
+the canonical minimum form ID. Require a currently visible named person's
+answer-backed Type 3 engagement on/after the source cutoff (June 15, 2026).
+Current hidden-person/Director visibility applies even if the original grant
+was issued when a person was visible. Unknown, stale, archived and unrelated
+IDs produce a generic unavailable-record error; no annual or bureau fallback.
+
+Read only this person's active Type 3 receipts/answer values within that group.
+The headline matches `/dashboard/people/{person_id}/activity/{representative}`:
+normalized B/C quality index 0–100 (A excluded), OSQ C on 1–4 and five Type 3
+dimension means on 1–7. Return that person/activity source URL and a separately
+labelled activity-filtered Type 3 aggregate report URL. The aggregate report's
+pooled SERVQUAL headline is a different measure; it does not verify a person's
+quality index. Do not present annual, other-person or whole-activity scores as
+this scorecard. Counts are receipts/contributors rather than unique people.
+
+Reuse annual Type 3 suppression: at least ten quality contributors and valid
+perception respondents, plus ten distinct valid respondents for every populated
+B/C item; any insufficient cell withholds all score fields. Empty/unrated
+results stay explicit. Bound metadata to 2,000 forms for the selected group,
+20 million SQLite VM steps or five seconds; bound this person's forms to 500,
+responses to 5,000 and answer rows to 100,000. Refuse over-cap reads without
+partial scores; clear metadata query handlers even on errors. No respondent
+identities, comments, demographics, peer comparisons/ranks, causal claims or
+business writes. One current actor/grant snapshot, fixed-family minimized audit.
+
+Acceptance remains pending hosted activation: discover the Summit's two IDs,
+retrieve each activity-specific scorecard, compare with that person's exact
+activity page, and distinguish it from the 2026 annual summary. Synthetic checks
+cover source scoring, combined sessions, Type 2/other-person/other-activity and
+archived/pooled exclusions, rare-cell suppression, current visibility, source
+cutoff, capacity, representative/member resolution, scope/flag independence and
+revocation. Existing annual and Type 2 reads retain their own behavior.

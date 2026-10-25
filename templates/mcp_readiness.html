@@ -60,6 +60,9 @@
 <label for="person-test">Resource-person annual summary</label>
 <textarea id="person-test" rows="5" readonly>Use Office Connect list_activity_progress for July 23, 2026. Find Regional BHW Summit Forum and show its Type 3 activity report link and permitted linked resource persons. Ask me which person to check, then use their returned resource_person_id and annual_summary_year with get_resource_person_survey_summary. Label these as annual results that may include other activities. Explain any unavailable metadata or withheld scores.</textarea>
 <p>Use the activity report link for the Summit's own Type 3 results and the person's annual dashboard link to verify the annual quality index. Annual comparisons have a separate permission and pilot switch.</p>
+<label for="person-activity-test">Resource person at one activity</label>
+<textarea id="person-activity-test" rows="5" readonly>Use Office Connect list_activity_progress for July 23, 2026. For Regional BHW Summit Forum, take survey_context.activity_id and each permitted linked resource_person_id. Call get_resource_person_activity_survey with those exact IDs. Show each person's activity-specific quality index, overall service quality, five dimensions and source link, or explain withheld scores. Keep annual results separate.</textarea>
+<p>This separate pilot needs permission for resource-person satisfaction at one activity. Use each returned person/activity source link to verify its scores.</p>
 </section>
 </div>
 {% endblock %}
