@@ -18,10 +18,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "8.76"
+APP_VERSION = "8.77"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "8.77",
+        "date": "October 25, 2026",
+        "summary": "Choose optional private Telegram reminders for calendar entries and approved room bookings.",
+        "changes": [
+            "Choose a reminder time for your timed calendar entries and approved room bookings on the notification settings page.",
+            "Reminders follow your Telegram channel choices and Manila quiet hours, and expire when the event starts.",
+            "Cancelled bookings and lost permissions suppress reminders; optional Telegram pilots and reminder choices remain off by default."
+        ]
+    },
     {
         "version": "8.76",
         "date": "October 25, 2026",

@@ -114,5 +114,7 @@ def save(conn,payload,revision,expected_email,values,now):
         # erase Telegram's minimum retry delay after a definite 429.
         if (current['quiet_start'],current['quiet_end'])!=(args['quiet_start'],args['quiet_end']):
             conn.execute("UPDATE telegram_delivery SET not_before=NULL WHERE state IN ('queued','claimed','retry_wait') AND dedupe_key IN (SELECT delivery_key FROM telegram_change_route WHERE "+_scope_sql()+')',args)
+        import telegram_reminders
+        telegram_reminders.preference_changed(conn,user['id'],current,values)
         st.audit(conn,user['username'],'telegram_notification_preferences',target_type='admin_user',target_id=user['id'],
                  summary='Updated calendar and room notification preferences.',after='revision='+str(args['revision']),commit=False)

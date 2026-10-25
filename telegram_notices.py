@@ -168,11 +168,12 @@ def render(conn,delivery,projection,bot,now):
 
 
 def record_rejection(conn,delivery,now):
-    """Called only after a matched notice failure finalizer, in its transaction."""
+    """Called only after a matched automatic-notification failure finalizer, in its transaction."""
     try:p=json.loads(delivery['projection_json'])
     except (ValueError,TypeError):return
     bot=transport.config()
-    if not bot or not descriptor(p,bot):return
+    import telegram_reminders
+    if not bot or not (descriptor(p,bot) or telegram_reminders.descriptor(p,bot)):return
     conn.execute('''INSERT INTO telegram_notice_pause(bot_fingerprint,chat_id,topic_id,connection_id,generation,
         registration_id,registration_generation,rejected_at) VALUES (?,?,?,?,?,?,?,?)
         ON CONFLICT(bot_fingerprint,chat_id,topic_id) DO UPDATE SET connection_id=excluded.connection_id,

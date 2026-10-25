@@ -26,8 +26,20 @@
 <p><label for="quiet-end">Quiet hours end (Asia/Manila)</label><br><input id="quiet-end" name="quiet_end" type="time" step="60" value="{{ prefs.quiet_end or '' }}"></p>
 <p>Leave both blank for no quiet hours. A window may cross midnight, such as 22:00–07:00. Automatic changes/status messages and updates to groups you own wait until the window ends; stale or revoked messages can expire instead.</p>
 </fieldset>
-<p>Interactive replies and confirmations stay immediate. Existing reminders, approval alerts, account mail and discussion digests keep their existing controls. Messages already in flight cannot be recalled.</p>
+<p>Interactive replies and confirmations stay immediate. Existing email reminders, approval alerts, account mail and discussion digests keep their existing controls. Messages already in flight cannot be recalled.</p>
 <button type="submit">Save notification settings</button>
+</form>
+<h2>Private Telegram reminders</h2>
+<p>Optional pilot: {{ 'available' if reminders_ready else 'paused' }}. These reminders also require your current read permissions and Telegram enabled in the channel choices above. They do not add email reminders or messages to groups.</p>
+<form method="post" action="/account/telegram/notifications/reminders">
+<input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="revision" value="{{ reminders.revision }}">
+{% for field,label in [('calendar_minutes','Remind me before my timed calendar entries'),('room_minutes','Remind me before my approved room bookings')] %}
+<p><label for="{{ field }}">{{ label }}</label><br><select id="{{ field }}" name="{{ field }}">
+{% for minutes in leads %}<option value="{{ minutes }}" {% if reminders[field] == minutes %}selected{% endif %}>{{ 'Off' if minutes == 0 else ('1 day before' if minutes == 1440 else (minutes|string+' minutes before')) }}</option>{% endfor %}
+</select></p>{% endfor %}
+<p>Only confirmed, timed calendar entries you created or participate in, and your own approved room bookings are eligible. Each timed calendar occurrence can receive one reminder; all-day entries and entries linked to CSS activities are excluded. Calendar and room reminders are separate choices and may both arrive for a linked booking.</p>
+<p>Your quiet hours apply. A reminder expires when the occurrence starts, including when quiet hours extend past that start. Reminders may arrive later than the selected lead time, but expire when the occurrence starts. Turning reminders off does not recall a message already in flight.</p>
+<button type="submit">Save reminder settings</button>
 </form>
 </div>
 {% endblock %}
