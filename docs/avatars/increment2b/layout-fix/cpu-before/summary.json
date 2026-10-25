@@ -1,0 +1,64 @@
+{
+  "diagnostic_only": true,
+  "samples": [
+    {
+      "kind": "fern",
+      "samples": [
+        {
+          "version": "before",
+          "actions": 46,
+          "total_avatar_wall_ms": 510.372,
+          "total_avatar_thread_ms": 509.091,
+          "over50_avatar_calls": 0
+        },
+        {
+          "version": "after",
+          "actions": 43,
+          "total_avatar_wall_ms": 763.148,
+          "total_avatar_thread_ms": 760.664,
+          "over50_avatar_calls": 0
+        }
+      ]
+    },
+    {
+      "kind": "succulent",
+      "samples": [
+        {
+          "version": "before",
+          "actions": 44,
+          "total_avatar_wall_ms": 633.815,
+          "total_avatar_thread_ms": 628.362,
+          "over50_avatar_calls": 0
+        },
+        {
+          "version": "after",
+          "actions": 44,
+          "total_avatar_wall_ms": 653.291,
+          "total_avatar_thread_ms": 648.189,
+          "over50_avatar_calls": 0
+        }
+      ]
+    },
+    {
+      "kind": "mushroom",
+      "samples": [
+        {
+          "version": "before",
+          "actions": 45,
+          "total_avatar_wall_ms": 656.825,
+          "total_avatar_thread_ms": 648.56,
+          "over50_avatar_calls": 0
+        },
+        {
+          "version": "after",
+          "actions": 42,
+          "total_avatar_wall_ms": 738.926,
+          "total_avatar_thread_ms": 736.445,
+          "over50_avatar_calls": 0
+        }
+      ]
+    }
+  ],
+  "raw_traces": "Per species before/after-trace.json.gz, lossless gzip; CPU/thread spans retained.",
+  "runtime_sha256": "7cbcaeefe6adafd6080fac22b23487bc439d12aeb0dbb2fc2d8c22ad67b093fb"
+}

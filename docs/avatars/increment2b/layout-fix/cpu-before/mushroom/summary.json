@@ -1,0 +1,22 @@
+{
+  "diagnostic_only": true,
+  "same_runtime_both_arms": true,
+  "old_art": "5b580d9",
+  "source_commit": "fd0464a12606c4f6270f78bfe476cd4562b93da1",
+  "samples": [
+    {
+      "version": "before",
+      "actions": 45,
+      "calls": [],
+      "total_avatar_wall_ms": 656.825,
+      "total_avatar_thread_ms": 648.56
+    },
+    {
+      "version": "after",
+      "actions": 42,
+      "calls": [],
+      "total_avatar_wall_ms": 738.926,
+      "total_avatar_thread_ms": 736.445
+    }
+  ]
+}

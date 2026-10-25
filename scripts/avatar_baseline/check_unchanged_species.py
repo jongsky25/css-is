@@ -9,7 +9,7 @@ from playwright.sync_api import sync_playwright
 from gallery import CATALOG,render
 
 p=argparse.ArgumentParser();p.add_argument('--before',default='docs/avatars/sheets');p.add_argument('--after',default='docs/avatars/increment1/sheets');p.add_argument('--changed',default='cat,plant');a=p.parse_args()
-base=Path(a.before);current=Path(a.after);changed=set(a.changed.split(','));species=len(CATALOG)-len(changed)
+base=Path(a.before);current=Path(a.after);changed={kind for kind in a.changed.split(',') if kind};species=len(CATALOG)-len(changed)
 index=json.loads((base/'index.json').read_text())
 with sync_playwright() as pw:
     browser=pw.chromium.launch(executable_path=shutil.which('chromium'),args=['--no-sandbox'])

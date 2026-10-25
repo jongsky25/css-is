@@ -25,6 +25,68 @@
   var mq = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
   function still() { return !!(mq && mq.matches); }
 
+  /* Interaction geometry changes with layout, not with every input event.
+   * Cache untransformed positions and translate them by the movement we own.
+   * Resize/scroll/SVG replacement invalidate the cache; all queued measurements
+   * finish before curiosity writes any transforms. */
+  var geometryRaf = null, bodyGeometryObserver = null;
+  function measureGeometry(w) {
+    var play = w.closest(".av-play"), head = w.querySelector(".av-head");
+    var box = w.getBoundingClientRect();
+    var geometry = { box: box, head: head ? head.getBoundingClientRect() : null,
+      x: w._avPosX || 0, y: w._avPosY || 0,
+      play: play ? play.getBoundingClientRect() : null, bounds: null };
+    if (play) {
+      var left = w.offsetLeft, top = w.offsetTop;
+      geometry.bounds = { minX: -left, maxX: play.clientWidth - left - w.offsetWidth,
+                          minY: -top, maxY: play.clientHeight - top - w.offsetHeight };
+    }
+    w._avGeometry = geometry;
+    return geometry;
+  }
+  function geometryFor(w) { return w._avGeometry || measureGeometry(w); }
+  function positionedBox(w, geometry, box) {
+    if (!box) return null;
+    var dx = (w._avPosX || 0) - geometry.x, dy = (w._avPosY || 0) - geometry.y;
+    return { left: box.left + dx, right: box.right + dx,
+             top: box.top + dy, bottom: box.bottom + dy,
+             width: box.width, height: box.height };
+  }
+  function queueGeometry() {
+    if (geometryRaf !== null) return;
+    geometryRaf = requestAnimationFrame(function () {
+      geometryRaf = null;
+      var wraps = document.querySelectorAll(".avwrap[data-interactive]");
+      for (var i = 0; i < wraps.length; i++) {
+        if (!wraps[i]._avGeometry) measureGeometry(wraps[i]);
+      }
+    });
+  }
+  function invalidateGeometry() {
+    var wraps = document.querySelectorAll(".avwrap[data-interactive]");
+    for (var i = 0; i < wraps.length; i++) wraps[i]._avGeometry = null;
+    queueGeometry();
+  }
+  function trackGeometry(w) {
+    if (window.ResizeObserver) {
+      var observer = new ResizeObserver(function () {
+        if (!w.isConnected) { observer.disconnect(); return; }
+        w._avGeometry = null;
+        queueGeometry();
+      });
+      observer.observe(w);
+      var play = w.closest(".av-play");
+      if (play) observer.observe(play);
+      if (!bodyGeometryObserver && document.body) {
+        bodyGeometryObserver = new ResizeObserver(invalidateGeometry);
+        bodyGeometryObserver.observe(document.body);
+      }
+    }
+    queueGeometry();
+  }
+  window.addEventListener("resize", invalidateGeometry, { passive: true });
+  document.addEventListener("scroll", invalidateGeometry, { passive: true, capture: true });
+
   /* ---- night-time sleep: 9pm-6am on the viewer's clock ------------------ */
   function isNight() {
     var h = new Date().getHours();
@@ -380,12 +442,13 @@
         var stage = wr.hasAttribute("data-interactive") ? wr.querySelector(".av-tiltstage") : null;
         var spec = WATCH[wr.dataset.kind];
         var h = spec ? wr.querySelector(".av-head") : null;
-        var sr = stage ? wr.getBoundingClientRect() : null;
-        var r = h ? h.getBoundingClientRect() : null;
+        var geometry = geometryFor(wr);
+        var sr = stage ? positionedBox(wr, geometry, geometry.box) : null;
+        var r = h ? positionedBox(wr, geometry, geometry.head) : null;
         var excite = wr.dataset.kind === "dog" && vel > 1.5 &&
           (!wr._avNextExcite || now > wr._avNextExcite);
         measured.push({ wrap: wr, stage: stage, stageBox: sr, spec: spec,
-          head: h, headBox: r, exciteBox: excite ? (sr || wr.getBoundingClientRect()) : null });
+          head: h, headBox: r, exciteBox: excite ? (sr || positionedBox(wr, geometry, geometry.box)) : null });
       }
       for (var j = 0; j < measured.length; j++) {
         var item = measured[j];
@@ -609,14 +672,11 @@
     w._avDrag = true;
     var pos = { x: 0, y: 0 };
     var posKey = w.getAttribute("data-drag-key") || POS_KEY;
-    function apply() { w.style.transform = "translate(" + pos.x + "px," + pos.y + "px)"; }
-    function playBounds(playArea) {
-      playArea = playArea || w.closest(".av-play");
-      if (!playArea) return null;
-      var left = w.offsetLeft, top = w.offsetTop;
-      return { minX: -left, maxX: playArea.clientWidth - left - w.offsetWidth,
-               minY: -top, maxY: playArea.clientHeight - top - w.offsetHeight };
+    function apply() {
+      w._avPosX = pos.x; w._avPosY = pos.y;
+      w.style.transform = "translate(" + pos.x + "px," + pos.y + "px)";
     }
+    function playBounds() { return geometryFor(w).bounds; }
     function clampToPlay(bounds) {
       bounds = bounds || playBounds();
       if (!bounds) return;
@@ -714,10 +774,10 @@
         var play = w.closest(".av-play");
         if (!ptr || !play || still() || document.hidden || asleep(w) || w._avAway || w._avPetting ||
             w._avDragMoved || start || Date.now() - lastMove > 5000) { stopChase(); return; }
-        var pr = play.getBoundingClientRect();
+        var geometry = geometryFor(w), pr = geometry.play;
         if (ptr.x < pr.left - 140 || ptr.x > pr.right + 140 ||
             ptr.y < pr.top - 100 || ptr.y > pr.bottom + 100) { stopChase(); return; }
-        var wr = w.getBoundingClientRect();
+        var wr = positionedBox(w, geometry, geometry.box);
         var dx = ptr.x - (wr.left + wr.width / 2), dy = ptr.y - (wr.top + wr.height * 0.6);
         var dist = Math.sqrt(dx * dx + dy * dy);
         if (dist < 55) {                              // got it! pounce, then wait
@@ -801,6 +861,7 @@
       startIdle(w);
       startRoam(w);
       initDrag(w);
+      trackGeometry(w);
       initExplore(w);
       checkLevelUp(w);
     }
@@ -835,9 +896,22 @@
   }
   // pickers/pages that swap avatars in later still get the idle engine
   if (window.MutationObserver) {
-    new MutationObserver(function () {
-      clearTimeout(initAll._t);
-      initAll._t = setTimeout(initAll, 200);
+    new MutationObserver(function (records) {
+      var addedAvatar = false, changedArt = false;
+      for (var i = 0; i < records.length; i++) {
+        var nodes = records[i].addedNodes;
+        for (var j = 0; j < nodes.length; j++) {
+          var node = nodes[j];
+          if (node.nodeType !== 1) continue;
+          if (node.matches(".avwrap[data-kind]") || node.querySelector(".avwrap[data-kind]")) addedAvatar = true;
+          if (node.matches("svg[data-avatar-kind]") || node.querySelector("svg[data-avatar-kind]")) changedArt = true;
+        }
+      }
+      if (changedArt) invalidateGeometry();
+      if (addedAvatar) {
+        clearTimeout(initAll._t);
+        initAll._t = setTimeout(initAll, 200);
+      }
     }).observe(document.documentElement, { childList: true, subtree: true });
   }
 })();
