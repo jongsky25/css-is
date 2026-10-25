@@ -1,3 +1,9 @@
+## 8.62 — October 25, 2026
+
+- Add a signed-in, phone-friendly ChatGPT readiness page linked from Connected tools, with the running build, actual registered MCP catalog, allowlisted pilot switches and only the current owner's grant metadata.
+- Separate registration, host activation and consent; show disabled/unavailable catalog states without inferring successful calls or ChatGPT's saved catalog. No tokens, environment dumps, business tool calls, grants or settings writes.
+- Provide selectable survey verification prompts and matching source-report guidance; hosted survey acceptance remains pending.
+
 ## 8.61 — October 25, 2026
 
 - Add default-off private /room_slots, /my_rooms and /room_status commands under separate current rooms.read consent. Reuse signed-in day_view, requester-qualified reference lookup and bounded own-request lists.
