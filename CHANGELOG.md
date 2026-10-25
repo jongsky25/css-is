@@ -1,3 +1,7 @@
+## 8.54 — October 25, 2026
+
+- Define the Telegram T0 authority, storage and recovery contract. Two-way integration remains unimplemented and inactive.
+
 ## 8.53 — October 25, 2026
 
 - Add permitted resource-person name/ID discovery and one-person consecutive-year Type 3 comparisons under separate surveys:resource_person_trends:read consent and default-off CSS_MCP_RESOURCE_PERSON_TRENDS_ENABLED.
