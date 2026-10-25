@@ -37,3 +37,9 @@ def pin_renderer_threads(browser):
         system.detach()
     assert any(row['name'] == 'renderer-main' for row in pins)
     return pins
+
+
+def accepted_frame(value):
+    """User-approved 33.3ms ceiling; the callback ceiling remains 50ms."""
+    import math
+    return isinstance(value, (int, float)) and math.isfinite(value) and value <= 33.3 + 1e-8

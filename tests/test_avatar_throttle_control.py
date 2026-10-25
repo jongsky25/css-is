@@ -19,6 +19,7 @@ def test_empty_callback_cpu_control(baseline_server):
         for run in range(3):
             for cpu in ([1,4] if run%2==0 else [4,1]):
                 browser=pw.chromium.launch(executable_path=shutil.which('chromium'),args=['--no-sandbox'])
+                assert browser.version==os.getenv('CSS_AVATAR_CHROMIUM','154.0.8037.57')
                 context=browser.new_context(viewport={'width':390,'height':844},has_touch=True,timezone_id='UTC')
                 def route(request):
                     if request.request.url.endswith('/empty.js'):

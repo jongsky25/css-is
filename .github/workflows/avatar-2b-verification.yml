@@ -10,13 +10,9 @@ concurrency:
   cancel-in-progress: false
 jobs:
   verify:
-    strategy:
-      fail-fast: false
-      matrix:
-        phase: [functional, focused, matrix]
     runs-on: ubuntu-24.04
     container: python:3.12-trixie
-    timeout-minutes: 150
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@v4
         with:
@@ -24,18 +20,26 @@ jobs:
       - name: Install exact browser and locked test dependencies
         run: |
           apt-get update
-          apt-get install -y --no-install-recommends chromium=154.0.8037.57-1~deb13u1 git procps
+          apt-get install -y --no-install-recommends chromium=156.0.8078.47-1~deb13u1 chromium-common=156.0.8078.47-1~deb13u1 git procps
           python -m venv .venv
           .venv/bin/python -m pip install --require-hashes --only-binary=:all: -r requirements-test.txt
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
-      - name: Run complete verification phase
+      - name: Verify evidence accounting
+        run: .venv/bin/python -m pytest tests/test_avatar_verification_result.py -q
+      - name: Run every verification phase sequentially
+        if: success()
         env:
-          PHASE: ${{ matrix.phase }}
-        run: .venv/bin/python scripts/avatar_baseline/ci_verify.py "$PHASE"
+          CSS_AVATAR_CHROMIUM: 156.0.8078.47
+        run: |
+          failed=0
+          for phase in functional focused runtime matrix; do
+            .venv/bin/python scripts/avatar_baseline/ci_verify.py "$phase" || failed=1
+          done
+          exit "$failed"
       - name: Retain every measurement and failure
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: avatar-2b-${{ matrix.phase }}
+          name: avatar-2b-complete
           path: avatar-verification/
           retention-days: 7
