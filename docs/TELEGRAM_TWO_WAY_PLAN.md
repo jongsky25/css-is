@@ -1,6 +1,6 @@
 # Office Connect ↔ Telegram delivery plan
 
-Status: T0–T3.4 merged; T4.1 in progress; two-way defaults remain off; production activation unverified.
+Status: T0–T3.4 merged; T4.1 in review; two-way defaults remain off; production activation unverified.
 Last updated: 2026-10-25.
 Repository: jongsky25/css-is.
 Planning baseline inspected: abf3141 (merge of PR #458).
@@ -143,7 +143,7 @@ T0 merged in PR #465 at `4cd01a0bfd17ccf57dba12b05a24c72bfd098f29`. T1.1 merged 
 | T3.2 | Merged | Codex / 2026-10-25 | [PR #476](https://github.com/jongsky25/css-is/pull/476), `feat/telegram-t3-2-meetings` | Guided form/private confirmation, atomic receipt and mobile checks; evidence below | Merged at `59cb776b2a80c440201ae3eec78af939ca6c0cce`, release 8.67; all required CI passed; next T3.3 |
 | T3.3 | Merged | Codex / 2026-10-25 | [PR #478](https://github.com/jongsky25/css-is/pull/478), `feat/telegram-t3-3-room-requests` | Linked pending request, atomic notices/receipt and mobile checks; 764 tests passed | Merged at `2684e78`, release 8.69; all required CI passed; next T3.4 |
 | T3.4 | Merged | Codex / 2026-10-25 | [PR #482](https://github.com/jongsky25/css-is/pull/482), `feat/telegram-t3-4-meeting-room` | Combined guided meeting and separate room child; 849 tests passed | Merged at `6c2c778`, release 8.72; all required CI passed; next T4.1 |
-| T4.1 | In progress | Codex / 2026-10-25 | `feat/telegram-t4-1-change-events` | Durable source changes and metadata-only routing; 926 tests passed | Defaults off; next T4.2 after merge |
+| T4.1 | In review | Codex / 2026-10-25 | [PR #484](https://github.com/jongsky25/css-is/pull/484), `feat/telegram-t4-1-change-events` | Durable source changes and metadata-only routing; 926 tests passed | Release 8.73 candidate; CI/merge pending; defaults off; next T4.2 |
 | T4.2–T7 | Planned | Unassigned | — | Not implemented | Follow dependencies |
 
 ### T0 handoff — 2026-10-25
@@ -365,7 +365,7 @@ T0 merged in PR #465 at `4cd01a0bfd17ccf57dba12b05a24c72bfd098f29`. T1.1 merged 
 
 ### T4.1 implementation and operator handoff — 2026-10-25
 
-- Owner/branch: Codex, `feat/telegram-t4-1-change-events`, created after T3.4 merge confirmation at `6c2c7788d28f64c430e6e395606a188a677330ae`. PR #482 preserved activity survey release 8.71, advanced T3.4 to 8.72, passed 165 affected tests plus two survey-link tests and fresh full CI (run 40184611552). Normal/shuffled suites, dependency audit, release metadata and Required checks all passed; expected head `66361d8` was clean and no local/active/queued merge was found before merge.
+- Owner/branch: Codex, `feat/telegram-t4-1-change-events`; [PR #484](https://github.com/jongsky25/css-is/pull/484) opened 2026-10-25, implementation commit `ef98ec4`, release 8.73 candidate, in review. New PR CI and merge pending; no live verification. Branch created after T3.4 merge confirmation at `6c2c7788d28f64c430e6e395606a188a677330ae`. PR #482 preserved activity survey release 8.71, advanced T3.4 to 8.72, passed 165 affected tests plus two survey-link tests and fresh full CI (run 40184611552). Normal/shuffled suites, dependency audit, release metadata and Required checks all passed; expected head `66361d8` was clean and no local/active/queued merge was found before merge.
 - Scope: same-transaction metadata-only events for stored calendar/room business changes, stable source incarnations/revisions, bounded restart-safe permission-checked route preparation, revocation/restore/retention fences. No notification renderer or provider send; T4.2 owns delivery. Existing business permissions and mutations are reused unchanged.
 - Delivered: [writer inventory, routing and operator runbook](TELEGRAM_CHANGE_EVENTS.md), `telegram_changes.py`, install/restore integration and bounded scheduler maintenance. Three additive tables contain source incarnation/revision/deletion identity, immutable event metadata with continuation cursors, and unique prepared destination descriptors. Existing records are not backfilled. No business body, participant list, title, name, token or decision reason is copied into events/routes.
 - Capture: SQLite triggers share the actual business transaction across calendar UI/import/actions, participant/tag/unit/detail writers, linked activity parent edits, room request/slot/approval/link/move/bump/series/guest/meal state and scheduler expiry. Same-value/read-seen/courtesy timestamp changes are excluded. Calendar sequence is not a full change revision, so an independent monotonic per-incarnation counter tracks title-only and child-row edits too. Row-ID reuse gets a fresh incarnation. Source changes supersede old events and cancel prepared routes atomically; rollback/savepoint rollback undoes both source and capture. Slot/block configuration changes are metadata-only availability events with no invented subscriber policy.
@@ -431,3 +431,5 @@ T2.2 merge reconciliation: preserved concurrent search release 8.60 and its runt
 - 2026-10-25: User requested merge with no ongoing merge, then the next increment. PR #478 was reconciled, waited for updated full CI, checked for merge activity and merged at `2684e78`. T3.4 then completed separately in PR #482, with 849 passing regressions and Markdown evidence in the same PR. Await new PR CI/review/merge; do not start T4.1 or activate pilots from code completion alone.
 
 - T3.4 merge reconciliation: preserve activity survey-person links release 8.71; guided meeting/room flow advances to 8.72. Previous head passed all CI but current main conflicted in release metadata. Reconciled checks and fresh full CI subsequently passed; merge confirmed at `6c2c778` before T4.1 began.
+
+- 2026-10-25: User requested merge if ready, then the next increment. Reconciled PR #482, passed updated CI and merge-activity checks, merged at `6c2c778`, then completed T4.1 separately in PR #484 with 926 passing regressions and the Markdown inventory/runbook in the same PR. Await that PR’s CI/review/merge; T4.2 and production activation have not started.
