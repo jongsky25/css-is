@@ -1,5 +1,9 @@
 """Shared survey scoring rules and permission-checked aggregate projections."""
+from contextlib import contextmanager
 from datetime import date, timedelta
+import json
+import sqlite3
+import time
 import calendar
 import dashboard_insights as di
 import os
@@ -519,27 +523,48 @@ def _resource_person_summary(conn, user, origin, resource_person_id, year,
                             for dim, m in dimensions])
 
 
-MAX_ACTIVITY_INSTANCES = 2000
+# Bounds apply to one requested group/query, never the size of the archive.
+MAX_ACTIVITY_GROUP_FORMS = 2000
+MAX_ACTIVITY_OFFSET = 1000000
+MAX_ACTIVITY_QUERY_STEPS = 20000000
+ACTIVITY_QUERY_SECONDS = 5
 
 
-def _activity_catalog(conn, user):
+def _activity_access(conn, user):
     user = permissions.actor(conn, user)
     if not auth.can(user['role'], 'view'):
         raise permissions.Denied('Report unavailable.')
-    if os.environ.get('CSS_MCP_ACTIVITY_DETAILS_ENABLED') != '1':
-        return user, None, 'disabled'
-    selected = conn.execute("SELECT id FROM form_instance WHERE survey_type IN (2,3) "
-                            "AND COALESCE(archived,0)=0 AND COALESCE(pooled,0)=0 LIMIT ?",
-                            (MAX_ACTIVITY_INSTANCES + 1,)).fetchall()
-    if len(selected) > MAX_ACTIVITY_INSTANCES:
-        return user, None, 'capacity_limit'
-    answered = {r[0] for r in conn.execute('''SELECT fi.id FROM form_instance fi
-        WHERE fi.survey_type=2 AND COALESCE(fi.archived,0)=0 AND COALESCE(fi.pooled,0)=0
-        AND EXISTS (SELECT 1 FROM response r JOIN answer a ON a.response_id=r.id
-                    WHERE r.form_instance_id=fi.id AND r.archived_at IS NULL)''')}
-    groups = [g for g in di.group_activity_instances(st.list_activity_instances(conn)).values()
-              if any(f['id'] in answered for f in g)]
-    return user, groups, None
+    return None if os.environ.get('CSS_MCP_ACTIVITY_DETAILS_ENABLED') == '1' else 'disabled'
+
+
+@contextmanager
+def _activity_query(conn):
+    # Reuse the source report's exact Python grouping (including Unicode venue
+    # normalization), with minimal form metadata and no directory/contact joins.
+    def group_key(day, venue, external, lead):
+        return json.dumps(di._event_group_key({'event_date': day, 'venue': venue,
+                          'organizer_external_id': external, 'lead_org_id': lead}))
+    conn.create_function('mcp_activity_key', 4, group_key, deterministic=True)
+    conn.create_function('mcp_activity_casefold', 1, str.casefold, deterministic=True)
+    deadline = time.monotonic() + ACTIVITY_QUERY_SECONDS
+    steps = 0
+
+    def exhausted():
+        nonlocal steps
+        steps += 1000
+        return steps > MAX_ACTIVITY_QUERY_STEPS or time.monotonic() > deadline
+
+    conn.set_progress_handler(exhausted, 1000)
+    try:
+        yield
+    finally:
+        conn.set_progress_handler(None, 0)
+
+
+_ACTIVITY_ACTIVE = "survey_type IN (2,3) AND COALESCE(archived,0)=0 AND COALESCE(pooled,0)=0"
+_ACTIVITY_KEY = 'mcp_activity_key(event_date,venue,organizer_external_id,lead_org_id)'
+_ACTIVITY_ANSWERED = """EXISTS (SELECT 1 FROM response r WHERE r.form_instance_id=fi.id
+    AND r.archived_at IS NULL AND EXISTS (SELECT 1 FROM answer a WHERE a.response_id=r.id))"""
 
 
 def _activity_identity(group, origin):
@@ -554,38 +579,77 @@ def _activity_identity(group, origin):
 
 def find_survey_activities(conn, user, origin, year, quarter, query='', limit=10, offset=0):
     if (type(year) is not int or not 1900 <= year <= 9998 or type(quarter) is not int or not 1 <= quarter <= 4
-            or type(limit) is not int or not 1 <= limit <= 25 or type(offset) is not int or not 0 <= offset <= MAX_ACTIVITY_INSTANCES
+            or type(limit) is not int or not 1 <= limit <= 25 or type(offset) is not int or not 0 <= offset <= MAX_ACTIVITY_OFFSET
             or not isinstance(query, str) or len(query) > 120):
         raise ValueError('Use a valid year/quarter, up to 120 search characters and a page size of 1–25.')
     first, last = quarter * 3 - 2, quarter * 3
     start = date(year, first, 1).isoformat()
     end = date(year, last, calendar.monthrange(year, last)[1]).isoformat()
-    _, groups, reason = _activity_catalog(conn, user)
+    reason = _activity_access(conn, user)
     result = {'as_of': tz.now_iso(), 'date_basis': 'activity_start_date', 'start_date': start, 'end_date': end}
     if reason:
         return dict(result, availability='not_available', reason=reason)
-    needle = query.strip().casefold()
-    items = [_activity_identity(g, origin) for g in groups
-             if start <= (g[0]['event_date'] or '') <= end
-             and needle in str(next(f for f in g if f['survey_type'] == 2)['topic']
-                               or 'Activity on ' + str(g[0]['event_date'])).casefold()]
-    items.sort(key=lambda i: (i['start_date'], int(i['activity_id'])), reverse=True)
-    return dict(result, availability='available', data=items[offset:offset + limit],
-                next_offset=offset + limit if len(items) > offset + limit else None,
+    # Group complete quarter metadata before title filtering. A matching member
+    # title must not rename a group or drop its earlier representative/F3 forms.
+    try:
+        with _activity_query(conn):
+            rows = conn.execute(f"""WITH eligible AS (
+                SELECT id,survey_type,event_date,topic,end_date,created_at,
+                       {_ACTIVITY_KEY} AS group_key,
+                       CASE WHEN survey_type=2 THEN {_ACTIVITY_ANSWERED} ELSE 0 END AS answered
+                FROM form_instance fi WHERE {_ACTIVITY_ACTIVE} AND event_date>=? AND event_date<=?
+            ), grouped AS (
+                SELECT *, MIN(id) OVER (PARTITION BY group_key) AS representative,
+                    MAX(NULLIF(end_date,'')) OVER (PARTITION BY group_key) AS group_end,
+                    MAX(answered) OVER (PARTITION BY group_key) AS has_answers,
+                    ROW_NUMBER() OVER (PARTITION BY group_key
+                        ORDER BY CASE WHEN survey_type=2 THEN 0 ELSE 1 END,created_at,id) AS title_order
+                FROM eligible
+            ) SELECT representative,COALESCE(NULLIF(topic,''),'Activity on ' || event_date),event_date,group_end
+              FROM grouped WHERE title_order=1 AND survey_type=2 AND has_answers=1
+                AND instr(mcp_activity_casefold(COALESCE(NULLIF(topic,''),'Activity on ' || event_date)),?)>0
+              ORDER BY event_date DESC,representative DESC LIMIT ? OFFSET ?""",
+                (start,end,query.strip().casefold(),limit+1,offset)).fetchall()
+    except sqlite3.OperationalError as exc:
+        if getattr(exc, 'sqlite_errorcode', None) != sqlite3.SQLITE_INTERRUPT:
+            raise
+        return dict(result, availability='not_available', reason='capacity_limit')
+    items = [{'activity_id': str(id_), 'title': title[:250], 'title_truncated': len(title)>250,
+              'start_date': day, 'end_date': end_day, 'web_url': origin + f'/reports/activities/{id_}'}
+             for id_,title,day,end_day in rows[:limit]]
+    return dict(result, availability='available', data=items,
+                next_offset=offset+limit if len(rows)>limit else None,
                 note='Metadata discovery includes activities without a usable score; their detail report may be unavailable. Pagination is a fresh snapshot per call.')
 
 
 def activity_detail(conn, user, origin, activity_id):
     if type(activity_id) is not int or not 1 <= activity_id <= 9223372036854775807:
         raise ValueError('Choose a positive activity or member form ID.')
-    _, groups, reason = _activity_catalog(conn, user)
+    reason = _activity_access(conn, user)
     result = {'as_of': tz.now_iso(), 'survey_type': 2, 'scope': 'one_merged_activity',
               'date_basis': 'activity_start_date', 'minimum_sample': MIN_SAMPLE}
     if reason:
         return dict(result, availability='not_available', reason=reason)
-    group = next((g for g in groups if any(f['id'] == activity_id for f in g)), None)
-    if group is None:
+    try:
+        with _activity_query(conn):
+            target = conn.execute(f"SELECT event_date,{_ACTIVITY_KEY} FROM form_instance "
+                                  f"WHERE id=? AND {_ACTIVITY_ACTIVE}", (activity_id,)).fetchone()
+            if target is None:
+                raise permissions.Denied('Activity not found or unavailable to you.')
+            fields = ('id','survey_type','event_date','venue','topic','end_date','lead_org_id','organizer_external_id')
+            rows = conn.execute(f"SELECT {','.join(fields)}, {_ACTIVITY_ANSWERED} "
+                                f"FROM form_instance fi WHERE {_ACTIVITY_ACTIVE} AND event_date IS ? "
+                                f"AND {_ACTIVITY_KEY}=? ORDER BY created_at,id LIMIT ?",
+                                (*target, MAX_ACTIVITY_GROUP_FORMS+1)).fetchall()
+    except sqlite3.OperationalError as exc:
+        if getattr(exc, 'sqlite_errorcode', None) != sqlite3.SQLITE_INTERRUPT:
+            raise
+        return dict(result, availability='not_available', reason='capacity_limit')
+    if len(rows)>MAX_ACTIVITY_GROUP_FORMS:
+        return dict(result, availability='not_available', reason='capacity_limit')
+    if not any(row[1]==2 and row[-1] for row in rows):
         raise permissions.Denied('Activity not found or unavailable to you.')
+    group = [dict(zip(fields,row[:-1])) for row in rows]
     result.update(_activity_identity(group, origin), availability='available')
     f2_ids = [f['id'] for f in group if f['survey_type'] == 2]
     if len(f2_ids) > 500:
