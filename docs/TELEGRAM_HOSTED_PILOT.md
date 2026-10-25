@@ -2,6 +2,7 @@
 
 Status: **Blocked — live verification has not run.**
 Prepared: October 25, 2026. Owner: Codex.
+Documentation review: [PR #488](https://github.com/jongsky25/css-is/pull/488); merging it does not establish live verification.
 
 Detailed guides: [combined meeting/room flow](TELEGRAM_MEETING_ROOMS.md),
 [change notices](TELEGRAM_CHANGE_NOTICES.md),
