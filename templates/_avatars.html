@@ -120,7 +120,8 @@
   .av-do-wobble .av-cap      { animation:av-wobble .9s ease; }
   @keyframes av-wobble { 0%,100%{ transform:rotate(0);} 25%{ transform:rotate(-7deg);} 55%{ transform:rotate(5deg);} 80%{ transform:rotate(-2deg);} }
   .av-do-spore .av-spore     { animation:av-rise 1.4s ease-out; }
-  .av-do-plump .avstage      { animation:av-plump 1s ease; }
+  .av-do-plump .avstage,
+  .avwrap[data-kind="succulent"].av-do-plump .avstage { animation:av-plump 1s ease; }
   @keyframes av-plump  { 0%,100%{ transform:scale(1);} 45%{ transform:scale(1.07);} }
   .av-do-bloom .av-bloom     { animation:av-bloomturn 3s ease-in-out; }
   @keyframes av-bloomturn { 0%,100%{ transform:rotate(0);} 35%{ transform:rotate(9deg);} 75%{ transform:rotate(-6deg);} }
@@ -224,7 +225,8 @@
 
   @media (prefers-reduced-motion: reduce) {
     .avwrap .avstage, .avwrap.happy .avstage, .av-sway-c,
-    .avwrap [class*="av-"], .avwrap[class*="av-do-"] * { animation:none !important; }
+    .avwrap [class*="av-"], .avwrap .av-drops path,
+    .avwrap[class*="av-do-"] * { animation:none !important; }
     .avwrap.happy .av-spark { animation:none; opacity:0; }
     .avwrap[data-drag]:not(.av-dragging) { transition:none; }
   }
@@ -328,7 +330,7 @@
 {#-- one species at a stage; returns just the <svg> so pickers/heroes can size it --#}
 {% macro avatar_svg(kind, stage, outfit_month=none, outfit=none) %}
 {% set s = [[stage|int, 6]|min, 1]|max %}
-{% set scope = avatar_uid() if kind in ["cat","plant","cactus","bonsai","sunflower"] else "" %}
+{% set scope = avatar_uid() if kind in ["cat","plant","cactus","bonsai","sunflower","fern","mushroom","succulent"] else "" %}
 {% set accessory = avatar_month() if outfit_month is none else outfit_month %}
 {% set costume = outfit if outfit is not none else (avatar_outfit() if outfit_month is none else ('halloween' if accessory == 10 else ('christmas' if accessory == 12 else 'default'))) %}
 <svg{% if scope %} data-avatar-art="v2"{% endif %} viewBox="0 0 120 140" role="img" width="100%" height="100%" aria-hidden="true" focusable="false" data-avatar-kind="{{ kind }}" data-avatar-stage="{{ s }}" data-avatar-month="{{ accessory }}" data-avatar-outfit="{{ costume }}">
@@ -336,6 +338,7 @@
   <defs>
     {% if kind == "cat" %}<linearGradient id="{{ scope }}-fur" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#ffd699"/><stop offset=".55" stop-color="#efb26e"/><stop offset="1" stop-color="#d68a50"/></linearGradient>
     <linearGradient id="{{ scope }}-cream" x1="0" y1="0" x2=".7" y2="1"><stop stop-color="#fff7e7"/><stop offset="1" stop-color="#edcfaa"/></linearGradient>
+    {% elif kind == "mushroom" %}<linearGradient id="{{ scope }}-cap" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#f6c09e"/><stop offset=".5" stop-color="#e7937f"/><stop offset="1" stop-color="#bc6267"/></linearGradient>
     {% else %}<linearGradient id="{{ scope }}-leaf" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#b4cf7b"/><stop offset=".5" stop-color="#72a66b"/><stop offset="1" stop-color="#437b62"/></linearGradient>
     {% endif %}
   </defs>

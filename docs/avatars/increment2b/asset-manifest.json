@@ -1,0 +1,12 @@
+{
+  "assets": [{
+    "species": ["fern", "mushroom", "succulent"],
+    "source": "Original authored inline SVG in templates/_avatars_art.html",
+    "upstream_url": null,
+    "upstream_revision": null,
+    "license": "Existing repository terms; no third-party assets or license added",
+    "modifications": "Eighteen structural growth stages, scoped leaf/cap gradients, layered fronds and rosettes, gills/veil/cluster, soil and pot details, separated placement/motion rigs and preserved seasonal slots"
+  }],
+  "external_asset_requests": 0,
+  "added_runtime_javascript_dependencies": 0
+}

@@ -462,7 +462,7 @@ def test_slice_svg_ids_are_local_and_behavior_anchors_survive(app_mod):
     import xml.etree.ElementTree as ET
     module = app_mod.templates.env.get_template('_avatars.html').module
     seen = set()
-    for kind in ['cat', 'plant', 'cactus', 'bonsai', 'sunflower']:
+    for kind in ['cat', 'plant', 'cactus', 'bonsai', 'sunflower', 'fern', 'mushroom', 'succulent']:
         for stage in range(1, 7):
             for copy in range(2):
                 svg = ET.fromstring(str(module.avatar_svg(kind, stage, 0, 'default')))
@@ -516,3 +516,38 @@ def test_sunflower_seedling_bud_and_open_flower_match_stage_names(app_mod):
             assert blooms and all(b.attrib.get('data-bloom-state') == 'bud' for b in blooms)
         else:
             assert blooms and all('data-bloom-state' not in b.attrib for b in blooms)
+
+
+def test_remaining_plant_rigs_keep_motion_separate_from_placement(app_mod):
+    import xml.etree.ElementTree as ET
+    module = app_mod.templates.env.get_template('_avatars.html').module
+    for kind in ['fern', 'mushroom', 'succulent']:
+        for stage in range(1, 7):
+            svg = ET.fromstring(str(module.avatar_svg(kind, stage, 0, 'default')))
+            groups = list(svg.iter('g'))
+            for group in groups:
+                classes = group.attrib.get('class', '').split()
+                if any(c.startswith('av-frond-') or c in ['av-cap', 'av-spore', 'av-bloom', 'av-head'] for c in classes):
+                    assert 'transform' not in group.attrib, (kind, stage, classes)
+            if kind == 'fern':
+                assert sum('av-frond-top' in g.attrib.get('class', '').split() for g in groups) == 1
+                assert sum(f'av-frond-{stage}' in g.attrib.get('class', '').split() for g in groups) == 1
+            if kind == 'mushroom':
+                assert svg.findall('.//g[@class="av-cap"]') and svg.findall('.//g[@class="av-spore"]')
+                if stage >= 2:
+                    assert len(svg.findall('.//g[@class="av-eye"]')) == 2
+            if kind == 'succulent' and stage in [3, 4, 5]:
+                buds = [n for n in svg.iter() if n.attrib.get('data-bloom-state') == 'bud']
+                blooms = svg.findall('.//g[@class="av-bloom"]')
+                assert (not blooms if stage == 3 else bool(buds) if stage == 4 else bool(blooms) and not buds)
+
+
+def test_remaining_plant_seasonal_slots_keep_live_update_order(app_mod):
+    import xml.etree.ElementTree as ET
+    module = app_mod.templates.env.get_template('_avatars.html').module
+    for kind in ['fern', 'mushroom', 'succulent']:
+        for stage in range(1, 7):
+            for month, outfit in [(m, 'default') for m in range(13)] + [(10, 'halloween'), (10, 'halloween_vampire'), (10, 'halloween_pumpkin'), (12, 'christmas')]:
+                svg = ET.fromstring(str(module.avatar_svg(kind, stage, month, outfit)))
+                slots = [g.attrib['class'] for g in svg.iter('g') if g.attrib.get('class') in ['av-acc', 'av-costume-back', 'av-costume-front']]
+                assert slots == ['av-costume-back', 'av-acc', 'av-costume-front'], (kind, stage, month, outfit)

@@ -32,9 +32,9 @@
 {% elif kind == "cactus" %}{{ _cactus(s, m, costume, scope) }}
 {% elif kind == "bonsai" %}{{ _bonsai(s, m, costume, scope) }}
 {% elif kind == "sunflower" %}{{ _sunflower(s, m, costume, scope) }}
-{% elif kind == "fern" %}{{ _fern(s, m, costume) }}
-{% elif kind == "mushroom" %}{{ _mushroom(s, m, costume) }}
-{% elif kind == "succulent" %}{{ _succulent(s, m, costume) }}
+{% elif kind == "fern" %}{{ _fern(s, m, costume, scope) }}
+{% elif kind == "mushroom" %}{{ _mushroom(s, m, costume, scope) }}
+{% elif kind == "succulent" %}{{ _succulent(s, m, costume, scope) }}
 {% elif kind == "cat" %}{{ _cat(s, m, costume, scope) }}
 {% elif kind == "bird" %}{{ _bird(s, m, costume) }}
 {% elif kind == "turtle" %}{{ _turtle(s, m, costume) }}
@@ -368,7 +368,7 @@
 
 {% macro _plant_finish(kind,s,m,costume) %}
 <g class="av-anchor-pot" data-anchor="pot" transform="translate(60 121)"></g>
-{{ _pot_bow(m,39,115) }}{{ _pot_regalia(s,60,116) }}{{ costume_front(kind,s,costume,scaled=true) }}
+{% if kind != "mushroom" %}{{ _pot_bow(m,39,115) }}{% endif %}{{ _pot_regalia(s,60,116) }}{{ costume_front(kind,s,costume,scaled=true) }}
 {% endmacro %}
 
 {% macro _cactus(s,m=0,costume="",scope="") %}
@@ -435,137 +435,122 @@
 {% endmacro %}
 
 
-{% macro _fern(s, m=0, costume="") %}
-  {{ _pot("url(#avg-pot)", "#d8916a") }}
-  {{ _pot_bow(m) }}
-  {{ costume_front("fern", s, costume, scaled=true) }}
-    {{ _pot_regalia(s) }}
-  {# each frond = rib + paired herringbone leaflets tapering to the tip;
-     grouped so the ripple can cascade 1..6. The newest frond also carries
-     av-frond-top (unfurl flourish on watering). Leaflet rows: (x, y, rib
-     angle from vertical) — the pair fans out at ±58° from the rib. #}
-  {% set fronds = [
-      (1, "M60 104 C54 94 49 84 46 70",  [(56, 95, -25), (52, 87, -28), (49, 79, -30), (47, 72, -32)]),
-      (2, "M60 104 C66 94 71 84 74 70",  [(64, 95, 25), (68, 87, 28), (71, 79, 30), (73, 72, 32)]),
-      (3, "M60 104 C58 90 58 76 57 62",  [(59, 92, -8), (58, 82, -8), (58, 72, -8), (57, 64, -8)]),
-      (4, "M60 104 C50 98 40 92 33 82",  [(52, 98, -52), (46, 94, -56), (40, 89, -60), (36, 85, -62)]),
-      (5, "M60 104 C70 98 80 92 87 82",  [(68, 98, 52), (74, 94, 56), (80, 89, 60), (84, 85, 62)]),
-      (6, "M60 104 C61 88 63 72 65 54",  [(61, 92, 8), (62, 80, 8), (63, 68, 8), (64, 58, 8)]),
-  ] %}
-  {% for n, rib, rows in fronds if n <= s %}
-  <g class="av-frond-{{ n }}{{ ' av-frond-top' if n == s and s > 1 }}">
-    <path d="{{ rib }}" stroke="url(#avg-stem)" stroke-width="2" fill="none" stroke-linecap="round"/>
-    {% for lx, ly, la in rows %}
-    {% set ry = 6.4 - loop.index0 * 0.7 %}
-    <ellipse cx="{{ lx }}" cy="{{ '%.1f'|format(ly - ry * 0.85) }}" rx="2" ry="{{ ry }}"
-             fill="url(#avg-leaf)" transform="rotate({{ la - 58 }} {{ lx }} {{ ly }})"/>
-    <ellipse cx="{{ lx }}" cy="{{ '%.1f'|format(ly - ry * 0.85) }}" rx="2" ry="{{ ry }}"
-             fill="url(#avg-leaf2)" transform="rotate({{ la + 58 }} {{ lx }} {{ ly }})"/>
-    {% endfor %}
-    {# pointed tip leaflet continuing the rib #}
-    {% set tipx, tipy, tipa = rows[-1][0], rows[-1][1], rows[-1][2] %}
-    <ellipse cx="{{ tipx }}" cy="{{ tipy - 8 }}" rx="1.8" ry="4.6" fill="url(#avg-leaf)"
-             transform="rotate({{ tipa }} {{ tipx }} {{ tipy - 3 }})"/>
+{# Fern placement belongs to plain outer groups. Ripple/unfurl owns inner
+   groups only, so CSS transforms cannot replace a frond's fan angle. #}
+{% macro _fern(s, m=0, costume="", scope="") %}
+{% set leaf='url(#' ~ scope ~ '-leaf)' if scope else 'url(#avg-leaf)' %}
+{% set lengths=[[24],[36,28],[42,38,50],[46,43,57,30],[50,47,64,43,46],[55,52,72,47,51,64]][s-1] %}
+<g class="av-v2 av-body" stroke-linecap="round" stroke-linejoin="round">
+  {{ _illustrated_pot() }}
+  <path d="M44 108Q59 103 76 108" fill="none" stroke="#78935f" stroke-width="4"/>
+  {% for n in range(1,s+1) %}
+  {% set angle=[-32,30,-8,-60,58,12][n-1] %}{% set length=lengths[n-1] %}
+  <g transform="translate(60 107) rotate({{ angle }})">
+    <g class="av-frond-{{ n }}{{ ' av-frond-top' if n==s }}">
+    {% if s==1 or (s in [2,4] and n==s) %}
+      <path d="M0 0Q-4-10 0-{{ length-8 }}C8-{{ length+8 }} 23-{{ length-2 }} 13-{{ length-1 }}C7-{{ length-1 }} 7-{{ length-10 }} 12-{{ length-10 }}" fill="none" stroke="#41664c" stroke-width="5"/>
+      <path d="M0-1Q-3-10 1-{{ length-8 }}C9-{{ length+6 }} 21-{{ length-3 }} 13-{{ length-2 }}" fill="none" stroke="#a8c87b" stroke-width="2.5"/>
+      <path d="M0-8Q-12-10-9-19Q1-18 0-8Z" fill="{{ leaf }}" stroke="#41664c" stroke-width="1"/>
+    {% else %}
+      <path d="M0 0C-3-{{ length*0.35 }} 3-{{ length*0.7 }} 0-{{ length }}" fill="none" stroke="#41664c" stroke-width="2.6"/>
+      {% for fraction,width in [(0.24,9),(0.44,11),(0.64,9),(0.83,6)] %}
+      {% set y=-length*fraction %}
+      <path d="M0 {{ y }}Q-{{ width+3 }} {{ y+2 }}-{{ width+4 }} {{ y-8 }}Q-4 {{ y-10 }} 0 {{ y }}Q4 {{ y-10 }} {{ width+4 }} {{ y-8 }}Q{{ width+3 }} {{ y+2 }} 0 {{ y }}Z" fill="{{ leaf }}" stroke="#41664c" stroke-width=".9"/>
+      <path d="M-{{ width+1 }} {{ y-6 }}L0 {{ y }}L{{ width+1 }} {{ y-6 }}" fill="none" stroke="#d4e1aa" stroke-width=".8"/>
+      {% if s>=5 and n<=2 and loop.index==2 %}<circle cx="-5" cy="{{ y-3 }}" r="1.1" fill="#d0a564"/><circle cx="5" cy="{{ y-3 }}" r="1.1" fill="#d0a564"/>{% endif %}
+      {% endfor %}
+      <path d="M0-{{ length-5 }}Q-7-{{ length+1 }} 0-{{ length+7 }}Q7-{{ length+1 }} 0-{{ length-5 }}Z" fill="{{ leaf }}" stroke="#41664c" stroke-width=".9"/>
+    {% endif %}
+    </g>
   </g>
   {% endfor %}
-  {% if s == 1 %}
-    <path d="M60 104 q-1 -8 2 -12 q3 5 0 8" stroke="url(#avg-stem)" stroke-width="2.4" fill="none" stroke-linecap="round"/>
-  {% endif %}
-  {% if s >= 6 %}
-    <circle cx="50" cy="62" r="1.6" fill="#cfeadf"/><circle cx="74" cy="66" r="1.4" fill="#cfeadf"/>
-  {% endif %}
+  <path d="M43 110l3-1m28 1 3-1" stroke="#d0b58b" stroke-width="2"/>
+  {{ _plant_finish('fern',s,m,costume) }}
+</g>
 {% endmacro %}
 
-
-{% macro _mushroom(s, m=0, costume="") %}
-  {{ _pot("url(#avg-pot)", "#d8916a") }}
-  {{ costume_front("mushroom", s, costume, scaled=true) }}
-    {{ _pot_regalia(s) }}
-  {% set capw = 12 + s * 4 %}      {# cap half-width grows with stage #}
-  {% set capt = 92 - s * 4 %}      {# cap top rises with stage #}
-  {# stout stem with a friendly face — the mushroom is the one plant that blinks #}
-  <path d="M53 106 C52 96 52 90 54 {{ capt + 12 }} L66 {{ capt + 12 }} C68 90 68 96 67 106 Z" fill="url(#avg-mush-stem)"/>
-  <path d="M55 104 C54 98 54 94 55 {{ capt + 14 }}" stroke="#ffffff3a" stroke-width="2" fill="none" stroke-linecap="round"/>
-  {% if s >= 2 %}
+{% macro _mushroom(s, m=0, costume="", scope="") %}
+{% set cap='url(#' ~ scope ~ '-cap)' if scope else 'url(#avg-mush)' %}
+{% set y=[0,94,85,74,64,54,47][s] %}{% set r=[0,8,12,17,22,28,32][s] %}
+{% set stem=[0,5,7,9,11,12,13][s] %}
+<g class="av-v2 av-body" stroke-linejoin="round" stroke-linecap="round">
+  {{ _illustrated_pot() }}
+  <path d="M43 108l8-2m18 3 7-3" stroke="#a88862" stroke-width="2"/>
+  <path d="M{{ 60-stem }} 106Q{{ 62-stem }} 88 {{ 62-stem }} {{ y+5 }}H{{ 58+stem }}Q{{ 58+stem }} 88 {{ 60+stem }} 106Q60 112 {{ 60-stem }} 106Z" fill="url(#avg-mush-stem)" stroke="#a28265" stroke-width="1.3"/>
+  <path d="M{{ 64-stem }} 102Q{{ 65-stem }} 87 {{ 65-stem }} {{ y+10 }}" fill="none" stroke="#fff3d8" stroke-width="2.4"/>
+  {% if s>=2 %}
   <g class="av-head">
-    {{ _eye(56, capt + 18, 2.4, "#4a3226", "#f0e2c8") }}
-    {{ _eye(64, capt + 18, 2.4, "#4a3226", "#f0e2c8") }}
-    <path d="M57 {{ capt + 23 }} q3 2.6 6 0" stroke="#8a6a4a" stroke-width="1.2" fill="none" stroke-linecap="round"/>
-    <ellipse cx="53" cy="{{ capt + 21 }}" rx="1.8" ry="1" fill="#f2b8a0" opacity=".7"/>
-    <ellipse cx="67" cy="{{ capt + 21 }}" rx="1.8" ry="1" fill="#f2b8a0" opacity=".7"/>
+    {{ _eye(56, y+16, 1.8 if s==2 else 2.6, '#4a3226', '#efdfc1') }}
+    {{ _eye(64, y+16, 1.8 if s==2 else 2.6, '#4a3226', '#efdfc1') }}
+    <path d="M57 {{ y+21 }}Q60 {{ y+24 }} 63 {{ y+21 }}" fill="none" stroke="#8f6753" stroke-width="1.2"/>
+    <ellipse cx="52" cy="{{ y+19 }}" rx="2" ry="1.2" fill="#e7a59b"/>
+    <ellipse cx="68" cy="{{ y+19 }}" rx="2" ry="1.2" fill="#e7a59b"/>
   </g>
   {% endif %}
-  {# the cap (wobbles when tapped) #}
-  <g class="av-cap">
-    <path d="M{{ 60 - capw }} {{ capt + 12 }} C{{ 60 - capw }} {{ capt - 4 }} {{ 60 + capw }} {{ capt - 4 }} {{ 60 + capw }} {{ capt + 12 }}
-             C{{ 60 + capw * 0.7 }} {{ capt + 16 }} {{ 60 - capw * 0.7 }} {{ capt + 16 }} {{ 60 - capw }} {{ capt + 12 }} Z" fill="url(#avg-mush)"/>
-    <path d="M{{ 60 - capw + 3 }} {{ capt + 9 }} C{{ 60 - capw + 4 }} {{ capt + 1 }} {{ 60 - 4 }} {{ capt - 2 }} 58 {{ capt - 1 }}"
-          stroke="#ffffff42" stroke-width="2.4" fill="none" stroke-linecap="round"/>
-    <circle cx="52" cy="{{ capt + 4 }}" r="{{ 1.6 + s * 0.3 }}" fill="#fff3ea"/>
-    <circle cx="66" cy="{{ capt + 7 }}" r="{{ 1.3 + s * 0.3 }}" fill="#fff3ea"/>
-    {% if s >= 3 %}<circle cx="60" cy="{{ capt + 1 }}" r="1.6" fill="#fff3ea"/>{% endif %}
-    {% if s >= 4 %}<circle cx="{{ 60 - capw + 5 }}" cy="{{ capt + 10 }}" r="1.3" fill="#fff3ea"/>
-    <circle cx="{{ 60 + capw - 6 }}" cy="{{ capt + 10 }}" r="1.3" fill="#fff3ea"/>{% endif %}
-    {{ _accessory(m, 60, capt, 0.9, costume=costume) }}
+  {% if s>=4 %}<path d="M{{ 59-stem }} {{ y+27 }}Q60 {{ y+34 }} {{ 61+stem }} {{ y+27 }}L{{ 58+stem }} {{ y+32 }}Q60 {{ y+37 }} {{ 62-stem }} {{ y+32 }}Z" fill="#f3e1c4" stroke="#bc9779" stroke-width="1"/>{% endif %}
+  <g transform="translate(60 {{ y }})">
+    <g class="av-cap">
+      <ellipse cy="6" rx="{{ r }}" ry="4.8" fill="#dfb99e" stroke="#a56c61" stroke-width="1.1"/>
+      {% if s>=3 %}<path d="M-{{ r*0.75 }} 6L0 4L{{ r*0.75 }} 6M-{{ r*0.45 }} 9L0 4L{{ r*0.45 }} 9" fill="none" stroke="#b28577" stroke-width=".9"/>{% endif %}
+      <path d="M-{{ r }} 3C-{{ r }}-{{ r*0.35 }}-{{ r*0.45 }}-{{ r*0.9 }} 0-{{ r*0.9 }}C{{ r*0.45 }}-{{ r*0.9 }} {{ r }}-{{ r*0.35 }} {{ r }} 3Q0 9-{{ r }} 3Z" fill="{{ cap }}" stroke="#a45d60" stroke-width="1.5"/>
+      <path d="M-{{ r*0.75 }} 0Q-{{ r*0.6 }}-{{ r*0.6 }}-{{ r*0.13 }}-{{ r*0.7 }}" fill="none" stroke="#ffe0bc" stroke-width="2" opacity=".65"/>
+      {% for x,yy,k in [(0,-0.59,1),(-0.46,-0.25,0.8),(0.45,-0.19,0.9),(-0.73,0.02,0.55),(0.12,-0.03,0.5)] %}{% if loop.index<=s %}
+      <ellipse cx="{{ r*x }}" cy="{{ r*yy }}" rx="{{ (1.6+s*0.23)*k }}" ry="{{ (1.3+s*0.15)*k }}" fill="#fff0d4"/>
+      {% endif %}{% endfor %}
+      {{ _accessory(m,0,-r*0.7,0.4+s*0.05,costume=costume) }}
+    </g>
+    <g class="av-spore" fill="#e6c5ac">
+      <circle cx="-17" cy="{{ -r*0.9-6 }}" r="1.6"/><circle cy="{{ -r*0.9-10 }}" r="1.4"/><circle cx="17" cy="{{ -r*0.9-6 }}" r="1.6"/>
+    </g>
   </g>
-  {# spores puff out on its quirky idle #}
-  <g class="av-spore" fill="#e8d8f0">
-    <circle cx="46" cy="{{ capt - 8 }}" r="1.6"/>
-    <circle cx="60" cy="{{ capt - 12 }}" r="1.3"/>
-    <circle cx="74" cy="{{ capt - 8 }}" r="1.5"/>
-  </g>
-  {% if s >= 5 %}
-    {# baby mushrooms move in #}
-    <path d="M41 106 C41 101 40 99 41 97 L47 97 C48 99 47 101 47 106 Z" fill="url(#avg-mush-stem)"/>
-    <path d="M37 98 C37 91 51 91 51 98 C47 100 41 100 37 98 Z" fill="url(#avg-mush)"/>
-    <circle cx="43" cy="95" r=".9" fill="#fff3ea"/>
-    <path d="M75 106 C75 102 74 100 75 99 L80 99 C81 100 80 102 80 106 Z" fill="url(#avg-mush-stem)"/>
-    <path d="M72 100 C72 94 83 94 83 100 C80 101.6 75 101.6 72 100 Z" fill="url(#avg-mush)"/>
-  {% endif %}
-  {% if s >= 6 %}
-    <circle cx="42" cy="{{ capt - 6 }}" r="1.6" fill="url(#avg-sun)"/>
-    <circle cx="78" cy="{{ capt - 4 }}" r="1.6" fill="url(#avg-sun)"/>
-  {% endif %}
+  {% for x,yy,rr,minimum in [(40,97,9,5),(80,96,7,6)] %}{% if s>=minimum %}
+  <g transform="translate({{ x }} {{ yy }})">
+    <path d="M-3 10L-3 0H3V10" fill="#f1dfbd" stroke="#a28265"/>
+    <g class="av-cap"><path d="M-{{ rr }} 1Q-{{ rr }}-10 0-9Q{{ rr }}-10 {{ rr }} 1Q0 6-{{ rr }} 1Z" fill="{{ cap }}" stroke="#a45d60" stroke-width="1.1"/><circle cy="-4" r="1.5" fill="#fff0d4"/></g>
+  </g>{% endif %}{% endfor %}
+  {{ _plant_finish('mushroom',s,0,costume) }}
+</g>
 {% endmacro %}
 
+{% macro _fleshy_leaf(length, leaf, tip=false) %}
+<path d="M0 0C-9-{{ length*0.3 }}-11-{{ length*0.72 }} 0-{{ length }}C11-{{ length*0.72 }} 9-{{ length*0.3 }} 0 0Z" fill="{{ leaf }}" stroke="#41664c" stroke-width="1.1"/>
+<path d="M-2-4Q-7-{{ length*0.56 }} 0-{{ length*0.88 }}" fill="none" stroke="#deebbc" stroke-width="1.6" opacity=".65"/>
+{% if tip %}<path d="M-2-{{ length-3 }}L0-{{ length }}L2-{{ length-3 }}" stroke="#c6909f" stroke-width="2" fill="none" stroke-linecap="round"/>{% endif %}
+{% endmacro %}
 
-{% macro _succulent(s, m=0, costume="") %}
-  {{ _pot("url(#avg-pot2)", "#93809f") }}
-  {{ _pot_bow(m) }}
-  {{ costume_front("succulent", s, costume, scaled=true) }}
-    {{ _pot_regalia(s) }}
-  {# plump rosette — outer ring first so inner leaves overlap it #}
-  {% set petal = "M0 0 C-7 -7 -8 -18 0 -24 C8 -18 7 -7 0 0 Z" %}
-  {% if s >= 2 %}
-  {% for a in ([-58, -29, 0, 29, 58] if s >= 4 else [-45, 0, 45]) %}
-  <g transform="translate(60 102) rotate({{ a }}) scale({{ '%.2f'|format(0.7 + s * 0.1) }})">
-    <path d="{{ petal }}" fill="url(#avg-succ2)"/>
-    <path d="M0 -4 C-3 -8 -3 -15 0 -19" stroke="#ffffff30" stroke-width="1.6" fill="none" stroke-linecap="round"/>
-    {% if s >= 4 %}<circle cy="-23" r="1.2" fill="#e39aae"/>{% endif %}
-  </g>
-  {% endfor %}
-  {% endif %}
-  {% for a in ([-32, 0, 32] if s >= 3 else [-20, 20]) %}
-  <g transform="translate(60 102) rotate({{ a }}) scale({{ '%.2f'|format(0.55 + s * 0.08) }})">
-    <path d="{{ petal }}" fill="url(#avg-succ)"/>
-    <path d="M0 -4 C-3 -8 -3 -15 0 -19" stroke="#ffffff3a" stroke-width="1.6" fill="none" stroke-linecap="round"/>
-  </g>
-  {% endfor %}
-  <g transform="translate(60 102) scale({{ '%.2f'|format(0.36 + s * 0.05) }})">
-    <path d="{{ petal }}" fill="url(#avg-succ3)"/>
-  </g>
-  {% if s >= 5 %}
-    <path d="M60 78 C60 72 60 68 60 64" stroke="#c98a9a" stroke-width="1.8" fill="none" stroke-linecap="round"/>
-    {% for a in [0, 72, 144, 216, 288] %}
-    <ellipse cx="60" cy="60.5" rx="1.9" ry="3.6" fill="url(#avg-petal)" transform="rotate({{ a }} 60 64)"/>
+{% macro _succulent(s, m=0, costume="", scope="") %}
+{% set leaf='url(#' ~ scope ~ '-leaf)' if scope else 'url(#avg-succ)' %}
+{% set cy=[0,107,99,95,91,88,85][s] %}{% set length=[0,17,24,30,35,39,42][s] %}
+<g class="av-v2 av-body" stroke-linejoin="round" stroke-linecap="round">
+  {{ _illustrated_pot(true) }}
+  <path d="M42 110l5-2m28 3 4-3" stroke="#d5c4a7" stroke-width="3"/>
+  {% if s==1 %}
+    {% for angle in [-30,30] %}<g transform="translate(60 {{ cy }}) rotate({{ angle }})">{{ _fleshy_leaf(17,leaf) }}</g>{% endfor %}
+    <path d="M59 106L61 101" stroke="#41664c" stroke-width="2"/>
+  {% else %}
+  <g transform="translate(60 {{ cy }}) scale(1 .55)">
+    {% for angle in range(0,360,60 if s==2 else (45 if s==3 else 36)) %}
+    <g transform="rotate({{ angle }})">{{ _fleshy_leaf(length,leaf,s>=4) }}</g>
     {% endfor %}
-    <circle cx="60" cy="64" r="2" fill="url(#avg-sun)"/>
+    {% if s>=3 %}{% for angle in range(22,382,60) %}<g transform="rotate({{ angle }})">{{ _fleshy_leaf(length*0.66,leaf,s>=4) }}</g>{% endfor %}{% endif %}
+    {% for angle in [-35,85,205] %}<g transform="rotate({{ angle }})">{{ _fleshy_leaf(length*0.38,leaf) }}</g>{% endfor %}
+  </g>
   {% endif %}
-  {% if s >= 6 %}
-    <circle cx="48" cy="84" r="1.5" fill="#d8f0ff" opacity=".9"/>
-    <circle cx="72" cy="88" r="1.3" fill="#d8f0ff" opacity=".9"/>
-    <circle cx="63" cy="79" r="1.1" fill="#d8f0ff" opacity=".9"/>
+  {% if s>=4 %}
+  <path d="M60 {{ cy-9 }}Q73 73 {{ 71 if s==4 else 77 }} {{ 64 if s==4 else (52 if s==5 else 44) }}" fill="none" stroke="#809464" stroke-width="2.8"/>
+  <g transform="translate({{ 71 if s==4 else 77 }} {{ 63 if s==4 else (50 if s==5 else 42) }})"><g class="av-bloom">
+  {% if s==4 %}<path data-bloom-state="bud" d="M0 5Q-9-2-2-9Q7-9 5-2Z" fill="#dda0a7" stroke="#a76881" stroke-width="1.1"/>
+  {% else %}{% for angle in [0,72,144,216,288] %}<path d="M0 1Q-10-4-5-10Q1-15 0 1Z" transform="rotate({{ angle }})" fill="#eab0b4" stroke="#ac7486" stroke-width=".8"/>{% endfor %}<circle r="3" fill="#efd18b"/>{% endif %}
+  </g></g>
   {% endif %}
+  {% if s==6 %}
+  <path d="M71 69Q89 70 90 60" fill="none" stroke="#809464" stroke-width="2"/>
+  <g transform="translate(90 58)"><g class="av-bloom">{% for angle in [0,72,144,216,288] %}<ellipse cy="-4" rx="2.7" ry="4.5" transform="rotate({{ angle }})" fill="#eab0b4" stroke="#ac7486" stroke-width=".7"/>{% endfor %}<circle r="2" fill="#efd18b"/></g></g>
+  <path d="M49 105Q43 108 38 107" fill="none" stroke="#60865d" stroke-width="2"/>
+  <g transform="translate(38 107) scale(.5 .3)">{% for angle in range(0,360,60) %}<g transform="rotate({{ angle }})">{{ _fleshy_leaf(23,leaf,true) }}</g>{% endfor %}</g>
+  {% endif %}
+  {{ _plant_finish('succulent',s,m,costume) }}
+</g>
 {% endmacro %}
 
 

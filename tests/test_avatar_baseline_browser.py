@@ -371,7 +371,7 @@ def test_plant_care_live_surfaces(baseline_server, app_mod):
         context=browser.new_context(viewport={'width':390,'height':844},has_touch=True)
         context.add_cookies([cookie]);page=context.new_page();errors=[]
         page.on('pageerror',lambda e:errors.append(str(e)))
-        for kind in ['cactus','bonsai','sunflower']:
+        for kind in os.getenv('CSS_AVATAR_PLANTS', 'cactus,bonsai,sunflower').split(','):
             conn=st.connect(app_mod.DB);st.set_user_avatar(conn,uid,kind,'Synthetic Plant');conn.close()
             assert page.goto(origin+'/?view=me').status==200
             svg=page.locator(f'.avwrap[data-kind="{kind}"] svg[data-avatar-kind]').first
