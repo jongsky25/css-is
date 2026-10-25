@@ -123,8 +123,8 @@ def confirm(conn, sender, argument_hash, bot, now):
                     (user['id'], sender)).fetchone():
         return None
     cid, generation = conn.execute('''INSERT INTO telegram_connection
-        (account_id,telegram_user_id,private_chat_id,state,created_at,updated_at)
-        VALUES (?,?,?,'active',?,?) RETURNING id,generation''', (user['id'], sender, sender, stamp(now), stamp(now))).fetchone()
+        (account_id,telegram_user_id,private_chat_id,bot_identity,bot_fingerprint,state,created_at,updated_at)
+        VALUES (?,?,?,?,?,'active',?,?) RETURNING id,generation''', (user['id'], sender, sender, bot[0], bot[2], stamp(now), stamp(now))).fetchone()
     for scope in json.loads(ch['scopes_json']):
         conn.execute('''INSERT INTO telegram_grant(connection_id,account_id,action,generation,bot_identity,bot_fingerprint,consented_at)
             VALUES (?,?,?,?,?,?,?)''', (cid, user['id'], scope, generation, bot[0], bot[2], stamp(now)))

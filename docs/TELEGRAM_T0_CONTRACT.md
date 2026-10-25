@@ -91,6 +91,8 @@ stored connection still says active. Already accepted messages cannot be recalle
 Group registration in T1.4 requires an active Office Connect administrator and
 an explicitly consenting linked staff owner, verified Telegram administrator
 status for the binder, exact numeric group/topic IDs and audited purpose.
+T1.4 initially uses the registering linked administrator as the consenting owner;
+assigning a separate owner requires a later explicit workflow.
 Use a **bureau-shared projection**, independent of observed Telegram membership:
 only explicitly designated bureau-audience calendar entries with an audited
 `telegram_group_share` opt-in may expose title, date/time/timezone, venue and
@@ -100,8 +102,9 @@ entries, leave, birthdays or personal request status. Room availability in group
 contains only date, slots and free/requested/booked/closed, without requester,
 title, reference or decision reasons. Source links always require Office Connect
 sign-in. The owner accepts that new Telegram members can see shared content;
-membership grants no Office Connect authority. Disable groups until this policy
-and explicit share opt-in exist and pass T2.3 checks.
+membership grants no Office Connect authority. T1.4 may register destinations
+and return a fixed neutral connection status; keep all group business reads
+disabled until this policy and explicit share opt-in exist and pass T2.3 checks.
 
 Commands still require a linked, currently permitted actor. Recheck registration,
 owner activity, source share consent and generation before sending. Topic closure,
