@@ -1,10 +1,16 @@
-## 8.62 — October 25, 2026
+## 8.63 — October 25, 2026
 
 - Add a read-only FullCalendar Schedule view over existing authorized calendar layers, with the current scope and filters, native record links, preferred-view cookie and no-JavaScript weekly list.
 - Show a full week on wide screens and a selectable day on phones. Keep configured office times consistent across browser timezones; preserve inclusive all-day endpoints, real overnight times and incomplete durations without inventing clock values.
 - Withhold the whole hour grid above 500 filtered items or invalid intervals. Bound busy all-day rows with explicit more counts and popovers; retain the complete native list, print fallback and safe labels. Preserve existing calendar views and item sheets.
 - Vendor MIT FullCalendar Standard 6.1.22, Luxon 3.7.2 and its adapter with all bundled licenses/provenance, exact source/bundle verification and transitive npm audits. No new Python package, service, schema, API or calendar write is added.
 - Isolate import-time cookie security in the test app fixture so HTTPS integration tests cannot break later HTTP calendar-preference checks. Keep production behavior unchanged and cover both schemes.
+
+## 8.62 — October 25, 2026
+
+- Add a signed-in, phone-friendly ChatGPT readiness page linked from Connected tools, with the running build, actual registered MCP catalog, allowlisted pilot switches and only the current owner's grant metadata.
+- Separate registration, host activation and consent; show disabled/unavailable catalog states without inferring successful calls or ChatGPT's saved catalog. No tokens, environment dumps, business tool calls, grants or settings writes.
+- Provide selectable survey verification prompts and matching source-report guidance; hosted survey acceptance remains pending.
 
 ## 8.61 — October 25, 2026
 

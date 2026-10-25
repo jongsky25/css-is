@@ -1,0 +1,65 @@
+{% extends "dash_layout.html" %}
+{% block title %}ChatGPT readiness — Office Connect{% endblock %}
+{% block content %}
+<style>
+.mcp-readiness {max-width:880px;margin:auto;overflow-wrap:anywhere}
+.mcp-readiness section,.mcp-readiness article {border:1px solid var(--line);border-radius:12px;padding:1rem;margin:1rem 0;background:var(--surface)}
+.mcp-readiness textarea {box-sizing:border-box;width:100%;font:inherit;padding:.7rem;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px}
+.mcp-readiness a,.mcp-readiness summary {min-height:32px;display:inline-block;padding:.3rem 0}
+</style>
+<div class="mcp-readiness">
+<h1>ChatGPT readiness</h1>
+<p><a href="/account/integrations">Back to Connected tools</a> · <a href="/account/integrations/mcp">Reload status</a></p>
+<p>Check Office Connect from your phone. This page reads status only; it does not change switches, permissions or records.</p>
+<section aria-labelledby="running-title">
+<h2 id="running-title">Running Office Connect</h2>
+<p>Version: <strong>{{ state.build.version or 'Unknown' }}</strong><br>Build commit: {{ state.build.commit or 'Not recorded' }}<br>Deployed: {{ state.build.deployed_at or 'Not recorded' }}</p>
+<p>MCP server: <strong>{{ 'Enabled' if state.enabled else 'Disabled' }}</strong></p>
+{% if state.catalog_ok %}
+<p><strong>{{ state.tools|length }} registered tools</strong> in the running server. Registered tools can still require a pilot switch, your consent and current record access.</p>
+<details><summary>Show running tool names</summary><ul>{% for name in state.tools %}<li><code>{{ name }}</code></li>{% endfor %}</ul></details>
+{% elif state.enabled %}<p role="alert">The running tool catalog could not be inspected. Reload status; if this continues, ask the system administrator to check the server logs.</p>
+{% else %}<p>The server is disabled, so no live catalog is available. An administrator must enable MCP in the hosting configuration.</p>{% endif %}
+<p><strong>ChatGPT's saved tool list is not visible here.</strong> If a tool is registered here but absent in ChatGPT, refresh the app's tools in ChatGPT on a supported desktop browser, then start a new chat with Office Connect selected. This page cannot refresh that saved list.</p>
+</section>
+<section aria-labelledby="pilots-title"><h2 id="pilots-title">Pilot switches</h2>
+<p>These are the current hosting switches, independent of your connection permissions. A switch being enabled does not prove a tool call will succeed. Current roles, module settings, record access and survey sample limits still apply.</p>
+{% for pilot in pilots %}<article>
+<h3>{{ pilot.label }}</h3>
+<p>Hosting switch: <strong>{{ 'Enabled' if pilot.enabled else 'Disabled' }}</strong><br>Server tools: <strong>{{ ('Registered' if pilot.registered else 'Missing') if state.catalog_ok else 'Not checked' }}</strong></p>
+<details><summary>Permission and administrator setting</summary>
+<p>Required permission: <code>{{ pilot.scope }}</code><br>Switch: <code>{{ pilot.flag }}</code></p>
+<p>Tools: {% for name in pilot.names %}<code>{{ name }}</code>{% if not loop.last %}, {% endif %}{% endfor %}</p>
+<p>An administrator can set this hosting variable to <code>1</code> and restart the service to enable the pilot. This page cannot enable it.</p>
+</details></article>{% endfor %}
+</section>
+<section aria-labelledby="connections-title"><h2 id="connections-title">Your ChatGPT connections</h2>
+<p>Only your own latest 50 grants appear, newest first. Grant active means unrevoked with time remaining to refresh; it does not verify ChatGPT's stored token or identify which connection a chat uses.</p>
+{% for entry in entries %}<article>
+<h3>{{ entry.name }}</h3><p><strong>{{ entry.status }}</strong><br>Refresh expires: {{ entry.expires_label }}</p>
+<details><summary>Check this connection's survey permissions</summary>
+<ul>{% for pilot in pilots %}<li>{{ pilot.label }}: <strong>{{ 'Granted' if pilot.scope in entry.scopes else 'Missing' }}</strong>{% if entry.status != 'Grant active' %} (connection inactive){% endif %}</li>{% endfor %}</ul>
+<p>All granted permissions: {% for scope in entry.scopes %}<code>{{ scope }}</code>{% if not loop.last %}, {% endif %}{% endfor %}</p></details>
+</article>{% else %}<p>No ChatGPT connections found for your account.</p>{% endfor %}
+<p>If the connection used by ChatGPT lacks a permission, reconnect and select the required access. Refreshing tools alone does not add permissions. Manage disconnection on <a href="/account/integrations">Connected tools</a>.</p>
+</section>
+<section aria-labelledby="test-title"><h2 id="test-title">Verify survey results</h2>
+<p>Copy a prompt into a new ChatGPT conversation with Office Connect selected. These fixed examples use 2026; change the period as needed. A successful result must match the source report. Small samples may correctly withhold scores. These checks remain pending until you perform them.</p>
+<label for="activity-test">Individual activity scorecard</label>
+<textarea id="activity-test" rows="4" readonly>Use Office Connect find_survey_activities for Q3 2026. Pass an activity_id returned by that tool to get_activity_survey_detail. Show the source link and five-dimension scorecard, or explain why scores are withheld.</textarea>
+<p>Open the individual activity source link returned by the tool. The quarterly report is a different aggregation.</p>
+<label for="quarter-test">Quarterly activity summary</label>
+<textarea id="quarter-test" rows="3" readonly>Use Office Connect get_activity_survey_summary for Q3 2026. Show the scorecard and source report link.</textarea>
+<p><a href="/reports?type=2&amp;period=quarter:2026-Q3">Open Q3 2026 activity source report</a></p>
+<label for="csm-test">Monthly CSM summary and comparison</label>
+<textarea id="csm-test" rows="4" readonly>Use Office Connect get_csm_summary for September 2026, then compare_csm_months for September 2026. Show the official overall rating, both source links and changes in percentage points, or explain withheld scores.</textarea>
+<p><a href="/reports?type=1&amp;date_from=2026-09-01&amp;date_to=2026-09-30">Open September 2026 CSM source report</a> · <a href="/reports?type=1&amp;date_from=2026-08-01&amp;date_to=2026-08-31">Open August 2026 CSM source report</a></p>
+<label for="unit-test">Unit summary and comparison</label>
+<textarea id="unit-test" rows="4" readonly>Use Office Connect find_survey_units to find my chosen reporting unit. Use its returned unit_id with get_unit_activity_survey_summary and compare_unit_activity_surveys for Q3 2026. Show both source links and explain any withheld scores.</textarea>
+<p>Use the returned unit-filtered links to compare Q3 against Q2 2026. The bureau report does not verify a unit scorecard.</p>
+<label for="person-test">Resource-person annual summary and comparison</label>
+<textarea id="person-test" rows="5" readonly>Ask me which resource person to find, then use Office Connect find_survey_resource_persons. Use the exact returned resource_person_id with get_resource_person_survey_summary and compare_resource_person_surveys for 2026. Show the source links and explain any withheld scores.</textarea>
+<p>Use the returned person's dashboard links for 2026 and 2025. Check the quality index against that dashboard; it uses a different scale from activity scores.</p>
+</section>
+</div>
+{% endblock %}
