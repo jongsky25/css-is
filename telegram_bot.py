@@ -20,6 +20,7 @@ import telegram_groups as groups
 import telegram_calendar as calendar_reads
 import telegram_rooms as room_reads
 import telegram_group_reads as shared_reads
+import telegram_actions
 
 PATH = '/integrations/telegram/webhook'
 MAX_BODY = 65536
@@ -464,6 +465,7 @@ def deliver(conn, now=None):
 
 def cleanup(conn, now):
     with transaction(conn):
+        telegram_actions.cleanup_in_transaction(conn,now)
         conn.execute('''UPDATE telegram_update SET sender_id=NULL,chat_id=NULL,topic_id=NULL,payload_json=NULL,
             state=CASE WHEN state IN ('queued','processing') THEN 'cancelled' ELSE state END,
             claim_token=NULL,lease_until=NULL WHERE id IN
