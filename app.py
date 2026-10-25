@@ -17609,6 +17609,8 @@ app.include_router(documents_routes.make_router(templates, get_conn))
 app.include_router(documents_email.make_router(get_conn))
 import telegram_bot
 app.include_router(telegram_bot.make_router(get_conn))
+import telegram_link_routes
+app.include_router(telegram_link_routes.make_router(templates, get_conn))
 app.include_router(work_routes.make_router(templates, get_conn))
 app.include_router(integration_access_routes.make_router(templates, get_conn))
 app.include_router(appearance_routes.make_router(templates, get_conn))
