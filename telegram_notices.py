@@ -8,6 +8,7 @@ import re
 
 from documents_storage import rows,transaction
 import telegram_changes as changes
+import telegram_preferences as preferences
 import telegram_links as links
 import telegram_transport as transport
 
@@ -75,28 +76,32 @@ def enqueue(conn,now):
         count=0
         for route in candidates:
             allowed=changes.authorize_route(conn,route['id'],now)
-            if not allowed or paused(conn,route):
+            if not allowed or paused(conn,route) or not preferences.telegram_enabled(conn,route):
                 conn.execute("UPDATE telegram_change_route SET state='cancelled',reason=? WHERE id=?",('provider_paused' if allowed else 'ineligible',route['id']))
                 continue
             route,event=allowed
             key='change:'+event['event_key']+':'+str(route['chat_id'])+':'+str(route['topic_id'])
             projection={'kind':KIND,'route':route['id'],'event':event['event_key'],'bot':bot[0],'fingerprint':bot[2]}
             expiry=links.stamp(datetime.fromisoformat(event['recorded_at'])+changes.TTL)
+            due=preferences.delay_until(conn,route,now)
+            if due and links.stamp(due)>=expiry:
+                conn.execute("UPDATE telegram_change_route SET state='cancelled',reason='quiet_expiry' WHERE id=?",(route['id'],));continue
             conn.execute('''INSERT INTO telegram_delivery(dedupe_key,event_key,connection_id,generation,chat_id,topic_id,
-                registration_id,registration_generation,projection_json,expires_at,created_at,updated_at)
-                VALUES (?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(dedupe_key) DO NOTHING''',
+                registration_id,registration_generation,projection_json,expires_at,created_at,updated_at,not_before)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(dedupe_key) DO NOTHING''',
                 (key,event['event_key'],route['connection_id'],route['generation'],route['chat_id'],route['topic_id'] or None,
-                 route['registration_id'],route['registration_generation'],json.dumps(projection,sort_keys=True),expiry,links.stamp(now),links.stamp(now)))
+                 route['registration_id'],route['registration_generation'],json.dumps(projection,sort_keys=True),expiry,links.stamp(now),links.stamp(now),links.stamp(due) if due else None))
             conn.execute('UPDATE telegram_change_route SET delivery_key=? WHERE id=? AND delivery_key IS NULL',(key,route['id']))
             count+=1
         return count
 
 
-def allowed(conn,delivery,projection,bot,now):
+def allowed(conn,delivery,projection,bot,now,*,respect_quiet=True):
     if not descriptor(projection,bot):return None
     found=changes.authorize_route(conn,projection['route'],now)
     if not found:return None
     route,event=found
+    if not preferences.telegram_enabled(conn,route) or (respect_quiet and preferences.delay_until(conn,route,now)):return None
     if (event['event_key']!=projection['event'] or delivery['event_key']!=event['event_key']
             or route['delivery_key']!=delivery['dedupe_key'] or paused(conn,route)
             or any(delivery[k]!=route[k] for k in ('connection_id','generation','chat_id','registration_id','registration_generation'))
@@ -106,6 +111,20 @@ def allowed(conn,delivery,projection,bot,now):
         AND state='failed' AND error_code='provider_rejected' AND updated_at>=? LIMIT 1''',
         (delivery['chat_id'],route['topic_id'],delivery['created_at'])).fetchone():return None
     return route,event
+
+
+def defer(conn,delivery,bot,now):
+    try:p=json.loads(delivery['projection_json'])
+    except (TypeError,ValueError):return False
+    allowed_now=allowed(conn,delivery,p,bot,now,respect_quiet=False)
+    if not allowed_now:return False
+    route,event=allowed_now;due=preferences.delay_until(conn,route,now)
+    if not due:return False
+    if links.stamp(due)>=delivery['expires_at']:
+        conn.execute("UPDATE telegram_change_route SET state='cancelled',reason='quiet_expiry' WHERE id=?",(route['id'],))
+    else:
+        conn.execute("UPDATE telegram_delivery SET not_before=?,state=CASE WHEN state='claimed' THEN 'queued' ELSE state END,claim_token=NULL,lease_until=NULL WHERE id=?",(links.stamp(due),delivery['id']))
+    return True
 
 
 def verify_delivery(conn,delivery,bot,now):

@@ -348,7 +348,10 @@ def flush(conn, base_url, now=None, send=None):
         send = mailer.send
     if st.email_paused(conn):                              # an admin paused all email: hold the queue, send it after resume
         return {}
+    fixed_now=now
     now = now or tz.now_local()
+    clock=lambda:fixed_now if fixed_now is not None else tz.now_local()
+    import telegram_preferences as notification_prefs
     cutoff = (now - RETRY_AFTER).isoformat(timespec="seconds")
     stale = (now - STALE_AFTER).isoformat(timespec="seconds")
     rows = conn.execute(
@@ -375,6 +378,11 @@ def flush(conn, base_url, now=None, send=None):
             name = st._account_display_name(conn, user_id) if u else None
         if not to or feature is None or (created or "") < stale:    # no address, or too old to still be news
             done("skipped_none"); continue
+        own_status=user_id is not None and feature=='room_decided'
+        if own_status:
+            pref=notification_prefs.get(conn,user_id)
+            if not pref['room_email']:done('skipped_off',detail='User notification preference.',to=to);continue
+            if notification_prefs.quiet_until(pref,clock()):continue
         if not st.email_feature_enabled(conn, feature):
             done("skipped_off", to=to); continue
         if not base_url:                                   # links need a public origin: wait for it
@@ -383,6 +391,10 @@ def flush(conn, base_url, now=None, send=None):
         if built is None:
             done("skipped_none"); continue
         _feat, subject, body, html, att = built
+        if own_status:
+            pref=notification_prefs.get(conn,user_id)
+            if not pref['room_email']:done('skipped_off',detail='User notification preference.',to=to);continue
+            if notification_prefs.quiet_until(pref,clock()):continue
         try:
             result = send(to, subject, body, html=html, attachments=att) if att else send(to, subject, body, html=html)
         except Exception as e:                             # noqa: BLE001 - a bad send must not stop the queue

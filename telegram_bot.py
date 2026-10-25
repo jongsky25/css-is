@@ -419,13 +419,15 @@ def deliver(conn, now=None):
             found = rows(conn, '''SELECT d.* FROM telegram_delivery d
                 WHERE (d.chat_id>0 OR ?<2) AND (d.state='queued' OR (d.state='retry_wait' AND d.retry_at<=?)
                     OR (d.state='claimed' AND d.lease_until<=?))
+                AND (d.not_before IS NULL OR d.not_before<=?)
                 AND NOT EXISTS (SELECT 1 FROM telegram_delivery busy WHERE busy.chat_id=d.chat_id
                     AND ((busy.state IN ('sending','claimed') AND busy.lease_until>?)
                     OR (busy.state='accepted' AND busy.updated_at>?)))
-                ORDER BY d.id LIMIT 1''', (group_checks, stamp(now), stamp(now), stamp(now), stamp(now-timedelta(seconds=1))))
+                ORDER BY d.id LIMIT 1''', (group_checks, stamp(now), stamp(now), stamp(now), stamp(now), stamp(now-timedelta(seconds=1))))
             if not found:
                 break
             delivery = found[0]
+            if delivery['expires_at']>stamp(now) and notices.defer(conn,delivery,bot,now):continue
             if delivery['expires_at'] <= stamp(now) or not eligible(conn, delivery, bot, now):
                 conn.execute("UPDATE telegram_delivery SET state='cancelled',error_code='ineligible',updated_at=? WHERE id=?",
                              (stamp(now), delivery['id']))

@@ -283,6 +283,8 @@ def install(conn):
     telegram_changes.install(conn)
     import telegram_notices
     telegram_notices.install(conn)
+    import telegram_preferences
+    telegram_preferences.install(conn)
 
 
 def reset_after_restore(conn):

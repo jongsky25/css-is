@@ -118,3 +118,5 @@ Preserve metadata/restore fences on rollback. Never bulk replay confirmations or
 uncertain sends. Current notices and creation receipts/email can coexist; user
 channel preferences, quiet hours, reminders and cross-channel noise controls are
 T4.3. The live complete-workflow pilot remains T4.4.
+
+[T4.3.1 preferences and quiet hours](TELEGRAM_NOTIFICATION_PREFERENCES.md) now extends this delivery path. Current-user and owned-group choices gate automatic notices; a separate not-before field defers quiet work without changing provider backoff. The default-off pilots and source/permission/uncertainty fences above still apply. Durable reminders remain T4.3.2.
