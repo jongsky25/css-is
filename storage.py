@@ -743,8 +743,15 @@ def init_db(conn):
     );
 
     -- Travel filing (docs/TRAVEL_FILING_PLAN.md). Only the checklist drivers, links and
-    -- status are stored; the contents of generated forms are never saved. All writes go
-    -- through travel.py.
+    -- status are stored; the contents of generated forms are never saved. Claim writes
+    -- go through travel.py; private list preferences use travel_grid.py.
+    CREATE TABLE IF NOT EXISTS travel_claim_view (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL REFERENCES admin_user(id) ON DELETE CASCADE,
+        name TEXT NOT NULL, name_key TEXT NOT NULL, state_json TEXT NOT NULL,
+        revision INTEGER NOT NULL DEFAULT 1,
+        UNIQUE(user_id,name_key)
+    );
     CREATE TABLE IF NOT EXISTS travel_filing (
         id INTEGER PRIMARY KEY, ref_code TEXT UNIQUE,
         user_id INTEGER NOT NULL REFERENCES admin_user(id),
@@ -4197,6 +4204,7 @@ _AUDIT_ACTIONS = {
     "travel_ceiling_save": ("Saved travel ceilings or routes", "Travel filing"),
     "travel_library_save": ("Saved the MC 114 justification library", "Travel filing"),
     "travel_settings_save": ("Saved travel filing settings", "Travel filing"),
+    "travel_view_save": ("Changed a private travel table view", "Travel filing"),
     "travel_purge":        ("Removed old travel filing details", "Travel filing"),
     "travel_item_everyone": ("Applied a travel checklist answer to everyone on the DPO", "Travel filing"),
     "room_meal_tag":       ("Tagged a room meal order", "Conference room"),

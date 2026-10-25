@@ -26,4 +26,18 @@ Selections above **10,000 matching filings** return an accessible HTML error wit
 
 Tests parse real CSV rows, verify complete multi-page order/filters, fresh owner changes, admin isolation, session revocation, switch-off, empty results, literal Unicode search, formula/linebreak/quote handling, no writes and refusal rather than truncation. Actual authenticated Chromium downloads cover phone/desktop light/dark/contrast, native/interactive page-two selections, unapplied controls, no JavaScript and usable refusal recovery.
 
-Personal saved views and additional review-queue tables remain separate possible increments.
+## Private saved selections
+
+Expand **My saved claims views**. Give the applied selection a name and choose **Save current selection**. Each account can keep up to ten views. The saved state contains search, claim type, filing status, recorded end-date bounds, sort field and direction. Edited filter controls require **Apply selection** first. Column widths, page number, record contents, other-owner scopes and credentials are not stored.
+
+Choose **Open saved view** to start at page one with that selection. The existing table, native page links, optional interactive table and CSV export reuse current authorization and selection rules. Additional filter/page query parameters on a saved-view link cannot alter the stored selection. After opening, ordinary native pagination and export use the expanded filters and order. The table and export always show the current matching owner records, rather than a frozen saved result.
+
+**Replace saved selection** stores the currently applied table filters/order and the displayed name; edit the name there to rename and replace together. **Delete saved view** removes only that preference. Both operations carry the revision rendered on the page; if another tab changed or deleted the view, the request is refused without overwriting current state. Reload the table and review the current view before retrying. Duplicate names use Unicode casefold within the account; another account can use the same name. Replacements remain available at the ten-view limit.
+
+All controls are native forms/links and work without JavaScript across signed-in devices. Native same-origin POSTs use the application's shared exact-origin protection, with a standalone route check, an 8KiB body bound and strict form/state validation. Session/account and Travel switch are rechecked inside the serialized preference transaction. View IDs/revisions never select another owner. Errors and successful redirects are no-store. Preference and audit metadata commit together. The audit records only the preference ID and create/update/delete action, excluding view names, search text and saved filters. Failed preference/audit writes roll back together; concurrent updates cannot silently win, and concurrent creates cannot bypass the limit.
+
+The additive `travel_claim_view` table contains only owner ID, name/casefold key, validated schema-1 selection and revision, with an account foreign key and cascade delete. Listing preferences does not parse their saved JSON: an invalid stored selection can still be replaced or deleted from the ordinary table page, while opening it returns a safe error. Claims, checklists, deadlines, notification records, approval and payment state are unchanged. No external provider or dependency is added.
+
+Domain/HTTP tests cover private ownership, forged IDs/extra state, stale update/delete, duplicate/cap rules, session revocation, disabled Travel, exact-origin/body limits, schema idempotency, recovery and transactional rollback. Concurrent real SQLite writers exercise revisions and the create limit. Actual authenticated Chromium journeys cover native create/open/replace/delete, interactive results and CSV, phone/desktop themes, no-JavaScript markup-safe names and stale second tabs.
+
+Additional review-queue tables remain a possible separate increment.
