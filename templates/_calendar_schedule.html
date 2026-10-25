@@ -1,0 +1,23 @@
+<section class="cal-schedule" data-calendar-schedule aria-labelledby="cal-schedule-title">
+  <h2 id="cal-schedule-title">Weekly schedule</h2>
+  <p id="cal-schedule-time">{{ schedule.label }}. All-day items and incomplete times stay above the hour grid.</p>
+  <div class="cal-schedule-tools" data-schedule-tools hidden>
+    <label class="cal-schedule-day">Show day
+      <select id="cal-schedule-day" aria-label="Show day in the hour grid">
+        {% for d in schedule.days %}<option value="{{ d.date }}" {% if d.date == schedule.selected %}selected{% endif %}>{{ d.label }}</option>{% endfor %}
+      </select>
+    </label>
+    <button type="button" class="cal-btn" data-schedule-toggle aria-controls="cal-schedule-list" aria-expanded="false">Show weekly list</button>
+  </div>
+  <p class="cal-range" role="status" data-schedule-status>{{ schedule.reason or 'Read the full week below. On phones, the hour grid shows one selectable day.' }}</p>
+  <div id="cal-schedule-grid" class="cal-schedule-grid" role="region" aria-label="Schedule hour grid" aria-describedby="cal-schedule-time" tabindex="0" hidden></div>
+  <div id="cal-schedule-list">
+    <h3 tabindex="-1">Full week as a list</h3>
+    {% include "_calendar_agenda.html" %}
+  </div>
+</section>
+{% if schedule.available %}
+<script id="cal-schedule-data" type="application/json">{{ schedule|tojson }}</script>
+<script src="/static/vendor/fullcalendar/fullcalendar-with-timezone.js?v=6.1.22-3.7.2" defer></script>
+<script src="/static/js/calendar-schedule.js?v={{ APP_VERSION }}" defer></script>
+{% endif %}

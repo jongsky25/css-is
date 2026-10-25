@@ -18,18 +18,38 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "8.65"
+APP_VERSION = "8.67"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
-        "version": "8.65",
+        "version": "8.67",
         "date": "October 25, 2026",
         "summary": "Prepare optional guided meeting creation from Telegram.",
         "changes": [
             "With separate calendar read and meeting-create consent, start a meeting privately or from an approved group and complete its exact fields on your signed-in page.",
             "Check participants, audience and Manila times in a private bot preview, then confirm once to save a calendar meeting and receive its source link.",
             "This action never requests a room or shares meeting details with a group, and the optional pilot remains off by default."
+        ]
+    },
+    {
+        "version": "8.66",
+        "date": "October 25, 2026",
+        "summary": "See calendar events by the hour in a new Schedule view.",
+        "changes": [
+            "Choose Schedule for a weekly hour grid, or select one day on your phone.",
+            "Keep your calendar filters and preferred view, and open items through their usual links.",
+            "Items with incomplete times stay above the grid, and the complete weekly list remains available."
+        ]
+    },
+    {
+        "version": "8.65",
+        "date": "October 25, 2026",
+        "summary": "Find activity survey reports even as the archive grows.",
+        "changes": [
+            "ChatGPT can search an activity quarter without being blocked by the total number of survey forms.",
+            "Individual scorecards load only the selected activity while keeping complete scoring and response protections.",
+            "Existing survey connections use the same tools and permissions."
         ]
     },
     {

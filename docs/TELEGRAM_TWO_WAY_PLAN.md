@@ -140,7 +140,7 @@ T0 merged in PR #465 at `4cd01a0bfd17ccf57dba12b05a24c72bfd098f29`. T1.1 merged 
 | T2.2 | Merged | Codex / 2026-10-25 | [PR #471](https://github.com/jongsky25/css-is/pull/471), `feat/telegram-t2-2-rooms` | Private slots and own request status, source rules and revocation checks; evidence below | Merged at `540705db32dfadadb8be8b38122dccfe71deb79d`; read only; default off; next T2.3 |
 | T2.3 | Merged | Codex / 2026-10-25 | [PR #472](https://github.com/jongsky25/css-is/pull/472), `feat/telegram-t2-3-group-reads` | Explicit per-entry version consent, safe slots and mobile sharing checks; evidence below | Merged at `43e6c660cf46242417dbc3ab49bb588ad9d2b262`, release 8.63; default off; next T3.1 |
 | T3.1 | Merged | Codex / 2026-10-25 | [PR #474](https://github.com/jongsky25/css-is/pull/474), `feat/telegram-t3-1-confirmation` | Dormant confirmation/receipt contract and shared calendar service; 651 final tests passed | Merged at `62b216531c580cd3258c84fb4c21fb1c6235bfe4`, release 8.64; next T3.2 |
-| T3.2 | In review | Codex / 2026-10-25 | [PR #476](https://github.com/jongsky25/css-is/pull/476), `feat/telegram-t3-2-meetings` | Guided form/private confirmation, atomic receipt and mobile checks; evidence below | Release 8.65 candidate; defaults off; next T3.3 |
+| T3.2 | In review | Codex / 2026-10-25 | [PR #476](https://github.com/jongsky25/css-is/pull/476), `feat/telegram-t3-2-meetings` | Guided form/private confirmation, atomic receipt and mobile checks; evidence below | Release 8.67 candidate after reconciliation; defaults off; next T3.3 |
 | T3.3–T7 | Planned | Unassigned | — | Not implemented | Follow dependencies |
 
 ### T0 handoff — 2026-10-25
@@ -366,3 +366,7 @@ T2.2 merge reconciliation: preserved concurrent search release 8.60 and its runt
 - 2026-10-25: User authorized T2.3 merge and next increment. PR #472 merged at 43e6c66 after preserving concurrent readiness release 8.62; group lookup is release 8.63. T3.1 adds a dormant confirmation/receipt engine and shared UI calendar service only. Real bot action/grant wiring is deferred to T3.2.
 
 - 2026-10-25: User authorized T3.1 merge and next increment. PR #474 merged at 62b2165. T3.2 uses a signed-in deterministic form launched from private/registered Telegram context and private bot confirmation; raw tokens remain transient via nonce/HMAC derivation, and group source sharing remains a separate consent. All activation defaults remain off.
+
+- T3.2 merge reconciliation: preserve survey discovery release 8.65 and Schedule release 8.66 (including calendar_schedule runtime closure); guided meeting release advances to 8.67. No next-increment implementation started before merge.
+
+- T3.2 reconciliation checks: 129 meeting/contract/calendar Schedule/deployment/release tests passed (`/tmp/telegram-t3-2-merge.xml`); release 8.67, lock/vendor/AI contract/whitespace gates passed. Await updated PR CI before merging and starting T3.3.

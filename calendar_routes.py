@@ -30,6 +30,7 @@ import ai_core
 import auth
 import calendar_ics as cics
 import calendar_guidance
+import calendar_schedule
 import calendar_actions
 import gdocs_relay
 import ratelimit
@@ -88,13 +89,13 @@ def _filters(kind, status, tag, unit, text=""):
 # Explicit links still mean exactly what they say, and browsing does not replace the preference.
 PREF_COOKIE = "cal_pref"
 _PREF_PARAMS = ("scope", "day", "month", "kind", "status", "tag", "unit", "q")
-PREF_LAYOUTS = ("agenda", "week", "timeline", "month")
+PREF_LAYOUTS = ("agenda", "week", "timeline", "month", "schedule")
 DEFAULT_PAGE_SCOPE = "bureau"            # Everything I can see, subject to each item's visibility rules
 
 
 def read_pref(request):
     """(layout, scope) from the cookie, or ("", "") when absent or not something we wrote."""
-    m = re.fullmatch(r"(agenda|week|timeline|month):([a-z_]{1,20})", request.cookies.get(PREF_COOKIE, ""))
+    m = re.fullmatch(r"(agenda|week|timeline|month|schedule):([a-z_]{1,20})", request.cookies.get(PREF_COOKIE, ""))
     return (m.group(1), m.group(2)) if m else ("", "")
 
 
@@ -126,7 +127,7 @@ def entry_calendar_back(request, start_date):
     if layout == "month":
         params.update(view="month", month=start_date[:7])
     else:
-        if layout in ("week", "timeline"):
+        if layout in ("week", "timeline", "schedule"):
             params["view"] = layout
         params["day"] = start_date
     return "/calendar?" + urlencode(params)
@@ -142,21 +143,23 @@ def build_calendar_page(conn, user, today, q, *, base="/calendar", layout_key="v
     link the body builds goes back to `base` carrying `fixed`, so a tab never turns into
     the other page. Visibility is office_calendar's job; nothing here widens it."""
     fixed = dict(fixed or {})
-    layout = q.get(layout_key) if q.get(layout_key) in ("month", "week", "timeline") else "agenda"
+    layout = q.get(layout_key) if q.get(layout_key) in ("month", "week", "timeline", "schedule") else "agenda"
     try:
         if layout == "month":
             m = date.fromisoformat((q.get("month") or today.strftime("%Y-%m")) + "-01")
             start, end = oc.month_span(m.year, m.month)
-        elif layout == "week":
+        elif layout in ("week", "schedule"):
             start = oc.monday_of(date.fromisoformat(q["day"]) if q.get("day") else today)
-            end = start + timedelta(days=4)                # Monday-Friday: the working week
+            end = start + timedelta(days=4 if layout == "week" else 6)
+            if layout == 'schedule':
+                previous, following = start-timedelta(days=7), start+timedelta(days=7)
         elif layout == "timeline":
             start = oc.monday_of(date.fromisoformat(q["day"]) if q.get("day") else today)
             end = start + timedelta(days=7 * oc.TIMELINE_WEEKS - 1)
         else:
             start = date.fromisoformat(q["day"]) if q.get("day") else today
             end = start + timedelta(days=AGENDA_DAYS - 1)
-    except ValueError:
+    except (ValueError, OverflowError):
         return None                             # a hand-typed or stale date: caller falls back to today
     filters, clean = _filters(q.get("kind", ""), q.get("status", ""), q.get("tag", ""), q.get("unit", ""),
                               q.get("q", ""))
@@ -229,6 +232,15 @@ def build_calendar_page(conn, user, today, q, *, base="/calendar", layout_key="v
         page.update(tl=tl, is_today_window=start == oc.monday_of(today), add_day=max(start, today).isoformat()
                     if start <= today <= end else start.isoformat(),
                     range_label=f"{tl['label']} · {n} {noun}")
+    elif layout == "schedule":
+        selected = date.fromisoformat(q['day']) if q.get('day') else today
+        hidden += [(layout_key, 'schedule'), ('day', selected.isoformat())]
+        page.update(schedule=calendar_schedule.snapshot(items, start, end, today, selected),
+                    days=oc.agenda_days(items, start, end, today),
+                    prev_day=previous.isoformat(), next_day=following.isoformat(),
+                    is_today_window=start <= today <= end, add_day=selected.isoformat(),
+                    range_label=f"{start.strftime('%b %d')} – {end.strftime('%b %d, %Y')} · {n} {noun}")
+        page['quick']['next'] = qs(day=selected.isoformat())
     elif layout == "month":
         grid = oc.month_grid(items, m.year, m.month, today)
         hidden += [(layout_key, "month"), ("month", m.strftime("%Y-%m"))]
@@ -333,6 +345,8 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
         resp = templates.TemplateResponse(request, "calendar.html",
                                           {"nav_active": "calendar", "show_scope": False,
                                            **page, "preferred": preferred_matches(request, page)})
+        if page['layout'] == 'schedule':
+            resp.headers.update({'Cache-Control': 'no-store', 'Pragma': 'no-cache'})
         return resp
 
     @router.post("/calendar/preference")
