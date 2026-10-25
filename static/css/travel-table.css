@@ -13,3 +13,7 @@
 #claims-native nav{display:flex;gap:1rem;flex-wrap:wrap}
 @media(max-width:600px){.claims-filters{display:block}.claims-filters label{margin-bottom:.75rem}#claims-grid .tabulator-footer .tabulator-pages{display:none}}
 @media print{#claims-interactive,#claims-toggle,#claims-status{display:none!important}#claims-native{display:block!important}}
+
+.claims-saved-item{border-top:1px solid var(--line,#aaa);padding:1rem 0}.claims-saved-item h3{overflow-wrap:anywhere}.claims-saved-item form{margin-bottom:.75rem}#claims-saved-views summary{cursor:pointer;font-weight:700}#claims-saved-views button{white-space:normal;overflow-wrap:anywhere;max-width:100%}
+@media print{#claims-saved-views{display:none!important}}
+#claims-saved-views{scroll-margin-top:8rem}

@@ -1,3 +1,9 @@
+## 8.71 — October 25, 2026
+
+- Add up to ten account-private Travel claims saved views for applied filters and sorting, with native create/open/replace/rename/delete forms and no-JavaScript support.
+- Recheck current registered sessions and Travel availability; serialize preference writes, protect owner scope, casefold duplicate names and reject stale revisions. Opening starts at page one and reuses existing table/CSV selection validation.
+- Add an isolated preference table; preserve claim records, deadlines, approvals and payments. No provider request or new dependency is introduced.
+
 ## 8.70 — October 25, 2026
 
 - Add native current-selection CSV downloads to the personal Travel claims table, retaining applied filters, deterministic all-page order and the six table columns.
