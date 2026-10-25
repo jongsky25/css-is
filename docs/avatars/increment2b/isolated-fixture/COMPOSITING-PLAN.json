@@ -1,0 +1,7 @@
+{
+  "diagnostic_only": true,
+  "reason": "Mushroom old-art controls have median frame16.8ms, new-art controls median33.3ms; inspect rendering separately from native invoker duration. Remove independently proven unused SVG head reads before this trial.",
+  "protocol": "Five counterbalanced current/promoted mushroom pairs, same current art/runtime, CPU4, three-core affinity, mature6, original30s input, PURE native observers; no tracing/API wrappers. Candidate applies will-change transform to selected SVG root and avstage.",
+  "ship_condition": "Every promoted sample must meet unchanged33ms frame and50ms owned-script gates and show a measured frame improvement; then extend to other plants and run fresh real-source gates.",
+  "no_threshold_changes": true
+}

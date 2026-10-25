@@ -101,7 +101,7 @@ primary matrix and functional verification. No benchmark scenario or budget chan
 
 - [260 tests](layout-fix/validation-tests.txt) pass, covering care, audio,
   rendering, appearance, onboarding, search and bounded lazy compilation.
-- [Five browser tests](layout-fix/functional/tests.txt) pass. Repeated input makes
+- [Six browser tests](layout-fix/functional/tests.txt) pass. Repeated input makes
   [zero live bounds reads](layout-fix/functional/geometry-behavior.json); drag clamps
   remain correct after resize/scroll, and the new listeners/cache stay stable after
   twenty script evaluations. [Transition-position regression](layout-fix/functional/transition-geometry.json)
@@ -109,7 +109,9 @@ primary matrix and functional verification. No benchmark scenario or budget chan
   follows the browser's actual transition endpoints, start time and easing using
   the document timeline, rather than jumping to the destination. Repeated arrow presses at a clamped
   destination retain the current timeline; they do not create a pending transition
-  when the CSS value is unchanged. [Head tracking](layout-fix/functional/pointer-behavior.json),
+  when the CSS value is unchanged. [Unused-head regression](layout-fix/functional/unused-head-geometry.json)
+  verifies mushroom's SVG head bounds are never queried: only actual tracking
+  species in WATCH need head geometry (six unnecessary reads before, zero after). [Head tracking](layout-fix/functional/pointer-behavior.json),
   [static picker/keyboard replay](layout-fix/functional/static-preview-policy.json)
   and [responsive Home search navigation](layout-fix/functional/home-search-boot.json) pass.
 - [1,734 SVG equivalence checks](layout-fix/artwork-equivalence.json) preserve exact

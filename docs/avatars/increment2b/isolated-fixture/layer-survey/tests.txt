@@ -1,0 +1,50 @@
+[
+  {
+    "variant": "baseline",
+    "targets": {
+      "stage": 79,
+      "root": 76,
+      "tilt": 75
+    },
+    "layers": [],
+    "total_layers": 0
+  },
+  {
+    "variant": "stage",
+    "targets": {
+      "stage": 79,
+      "root": 76,
+      "tilt": 75
+    },
+    "layers": [],
+    "total_layers": 0
+  },
+  {
+    "variant": "root",
+    "targets": {
+      "stage": 79,
+      "root": 76,
+      "tilt": 75
+    },
+    "layers": [],
+    "total_layers": 0
+  },
+  {
+    "variant": "both",
+    "targets": {
+      "stage": 79,
+      "root": 76,
+      "tilt": 75
+    },
+    "layers": [],
+    "total_layers": 0
+  }
+]
+.
+=============================== warnings summary ===============================
+tests/test_avatar_layer_diagnostic.py::test_svg_layer_capabilities
+  /workspace/css-is/tests/conftest.py:88: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+1 passed, 1 warning in 8.37s

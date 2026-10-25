@@ -1,0 +1,41 @@
+F
+=================================== FAILURES ===================================
+______________ test_plant_geometry_does_not_read_unused_svg_head _______________
+
+baseline_server = ('http://127.0.0.1:45087', {'name': 'css_session', 'value': 'eyJ1aWQiOjQsInUiOiJhZG1pbkB0ZXN0LmxvY2FsIiwiciI6ImFkbWluI...MjdmYmQyOTdiIn0.cd0b8ece9a42e023e4f98653c82f4d226ac98762d9cf78dc3adac44e3e31e942', 'url': 'http://127.0.0.1:45087'}, 4)
+app_mod = <module 'app' from '/workspace/css-is/app.py'>
+
+    def test_plant_geometry_does_not_read_unused_svg_head(baseline_server,app_mod):
+        import storage as st
+        from datetime import date,timedelta
+        from playwright.sync_api import sync_playwright
+        origin,cookie,uid=baseline_server
+        conn=st.connect(app_mod.DB);st.set_user_avatar(conn,uid,'mushroom','Native Control')
+        for week in range(40):
+            day=(date(2026,7,13)-timedelta(weeks=week)).isoformat()
+            conn.execute("INSERT INTO wellness_claim(user_id,week_start,break_date,start_time,hours,activity,status) VALUES(?,?,?,'10:00',1,'exercise','completed')",(uid,day,day))
+        conn.commit();assert st.wellness_stats(conn,uid)['stage']==6;conn.close()
+        with sync_playwright() as pw:
+            browser=pw.chromium.launch(executable_path=shutil.which('chromium'),args=['--no-sandbox'])
+            context=browser.new_context(viewport={'width':390,'height':844},timezone_id='UTC')
+            context.add_cookies([cookie]);context.add_init_script(PROBE)
+            context.add_init_script('''(()=>{window.unusedPlantHeadReads=0;const original=Element.prototype.getBoundingClientRect;
+              Element.prototype.getBoundingClientRect=function(){if(this.matches('.avwrap[data-interactive][data-kind="mushroom"] .av-head'))unusedPlantHeadReads++;return original.call(this)}})()''')
+            page=context.new_page();page.goto(origin+'/?view=me');page.wait_for_timeout(300)
+            assert page.locator('.avwrap[data-kind="mushroom"] svg[data-avatar-stage="6"] .av-head').count()==1
+            page.set_viewport_size({'width':480,'height':844});page.wait_for_timeout(150)
+            reads=page.evaluate('unusedPlantHeadReads')
+>           assert reads==0,f'Non-tracking mushroom still reads SVG head bounds: {reads}'
+E           AssertionError: Non-tracking mushroom still reads SVG head bounds: 6
+E           assert 6 == 0
+
+tests/test_avatar_geometry_browser.py:117: AssertionError
+=============================== warnings summary ===============================
+tests/test_avatar_geometry_browser.py::test_plant_geometry_does_not_read_unused_svg_head
+  /workspace/css-is/tests/conftest.py:88: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_avatar_geometry_browser.py::test_plant_geometry_does_not_read_unused_svg_head
+1 failed, 2 deselected, 1 warning in 5.03s

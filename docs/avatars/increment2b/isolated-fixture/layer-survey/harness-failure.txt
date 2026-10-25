@@ -1,0 +1,71 @@
+F
+=================================== FAILURES ===================================
+_________________________ test_svg_layer_capabilities __________________________
+
+baseline_server = ('http://127.0.0.1:42525', {'name': 'css_session', 'value': 'eyJ1aWQiOjQsInUiOiJhZG1pbkB0ZXN0LmxvY2FsIiwiciI6ImFkbWluI...MzJhN2E5NDg1In0.d33686ef4e589d8854787c9875430563acbb7da0115c5d3343ec1623e7fdeb6a', 'url': 'http://127.0.0.1:42525'}, 4)
+app_mod = <module 'app' from '/workspace/css-is/app.py'>
+
+    def test_svg_layer_capabilities(baseline_server,app_mod):
+        import storage as st
+        from playwright.sync_api import sync_playwright
+        origin,cookie,uid=baseline_server
+        conn=st.connect(app_mod.DB);st.set_user_avatar(conn,uid,'mushroom','Layer control');conn.close()
+        rows=[]
+        with sync_playwright() as pw:
+            browser=pw.chromium.launch(executable_path=shutil.which('chromium'),args=['--no-sandbox'])
+            context=browser.new_context(viewport={'width':390,'height':844},timezone_id='UTC')
+            context.add_cookies([cookie]);context.add_init_script(PURE)
+            page=context.new_page();cdp=context.new_cdp_session(page)
+            cdp.send('Emulation.setCPUThrottlingRate',{'rate':4})
+            current=[];cdp.on('LayerTree.layerTreeDidChange',lambda e:current.__setitem__(slice(None),e.get('layers',[])))
+            cdp.send('LayerTree.enable');page.goto(origin+'/?view=me');page.wait_for_timeout(500)
+            for name,css in [('baseline',''),('stage','.avwrap[data-interactive] .avstage{will-change:transform}'),('root','.avwrap[data-interactive] svg[data-avatar-kind]{will-change:transform}'),('both','.avwrap[data-interactive] .avstage,.avwrap[data-interactive] svg[data-avatar-kind]{will-change:transform}')]:
+>               style=page.add_style_tag(content=css);page.wait_for_timeout(250)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_avatar_layer_diagnostic.py:27: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.12/site-packages/playwright/sync_api/_generated.py:9606: in add_style_tag
+    self._sync(
+.venv/lib/python3.12/site-packages/playwright/_impl/_page.py:510: in add_style_tag
+    return await self._main_frame.add_style_tag(**locals_to_params(locals()))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/playwright/_impl/_frame.py:558: in add_style_tag
+    return from_channel(await self._channel.send("addStyleTag", None, params))
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/playwright/_impl/_connection.py:76: in send
+    return await self._connection.wrap_api_call(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <playwright._impl._connection.Connection object at 0x7f1337c9d9a0>
+cb = <function Channel.send.<locals>.<lambda> at 0x7f1336236840>
+is_internal = False, title = None
+
+    async def wrap_api_call(
+        self, cb: Callable[[], Any], is_internal: bool = False, title: str = None
+    ) -> Any:
+        if self._api_zone.get():
+            return await cb()
+        task = asyncio.current_task(self._loop)
+        parsed_st = _attach_api_call_information(
+            getattr(task, "__pw_stack__", None) or _capture_stack_trace(),
+            is_internal,
+            title,
+        )
+        self._api_zone.set(parsed_st)
+        try:
+            return await cb()
+        except Exception as error:
+>           raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E           playwright._impl._errors.Error: Page.add_style_tag: Provide an object with a `url`, `path` or `content` property
+
+.venv/lib/python3.12/site-packages/playwright/_impl/_connection.py:632: Error
+=============================== warnings summary ===============================
+tests/test_avatar_layer_diagnostic.py::test_svg_layer_capabilities
+  /workspace/css-is/tests/conftest.py:88: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_avatar_layer_diagnostic.py::test_svg_layer_capabilities - p...
+1 failed, 1 warning in 6.95s

@@ -78,7 +78,7 @@
     w._avMotion = null;
   }
   function measureGeometry(w) {
-    var play = w.closest(".av-play"), head = w.querySelector(".av-head");
+    var play = w.closest(".av-play"), head = WATCH[w.dataset.kind] ? w.querySelector(".av-head") : null;
     if (w._avMotion && w._avMotion.start === null) syncGeometryTransition(w);
     var position = geometryPosition(w), box = w.getBoundingClientRect();
     var geometry = { box: box, head: head ? head.getBoundingClientRect() : null,

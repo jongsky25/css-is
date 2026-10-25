@@ -1,0 +1,14 @@
+0 1 frame 16.799999999999272 empty 0
+0 4 frame 16.799999999999272 empty 0
+1 4 frame 16.799999999999272 empty 6.399999998509884
+1 1 frame 16.700000000000728 empty 0
+2 1 frame 16.700000000000728 empty 0
+2 4 frame 16.799999999999272 empty 0
+.
+=============================== warnings summary ===============================
+tests/test_avatar_throttle_control.py::test_empty_callback_cpu_control
+  /workspace/css-is/tests/conftest.py:88: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+1 passed, 1 warning in 195.60s (0:03:15)

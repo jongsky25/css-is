@@ -1,0 +1,7 @@
+{
+  "source": "c1164ac",
+  "reason": "Mature mushroom has an SVG head group but is not in the WATCH table. The cache nevertheless measures its head rectangle six times during startup/resize. Restrict SVG head measurement to actual tracking species; no artwork or behavior change.",
+  "unpinned_focused_failures_retained": true,
+  "isolated_focused_30_retained": "../../isolated-fixture/focused/",
+  "no_threshold_changes": true
+}

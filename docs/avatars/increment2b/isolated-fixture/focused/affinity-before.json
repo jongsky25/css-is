@@ -1,0 +1,9 @@
+{
+  "cpu_ids": [
+    0,
+    1,
+    2
+  ],
+  "cpu_max": "400000 100000",
+  "cpu_stat": "usage_usec 28853153875\nuser_usec 25238444763\nsystem_usec 3614709111\nnice_usec 0\nnr_periods 313374\nnr_throttled 2933\nthrottled_usec 228027362\nnr_bursts 0\nburst_usec 0\n"
+}

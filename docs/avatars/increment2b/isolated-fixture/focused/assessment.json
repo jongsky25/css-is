@@ -1,0 +1,58 @@
+{
+  "status": "failed",
+  "groups": {
+    "fern": {
+      "frame_values_ms": [
+        16.799999999999272,
+        16.799999999999272,
+        33.30000000000109,
+        16.799999999999272,
+        33.20000000000073
+      ],
+      "owned_values_ms": [
+        0,
+        0,
+        130.39999999850988,
+        15.600000001490116,
+        113.39999999850988
+      ],
+      "passed": false
+    },
+    "mushroom": {
+      "frame_values_ms": [
+        33.29999999999927,
+        33.29999999999927,
+        16.799999999999272,
+        16.80000000000291,
+        33.399999999999636
+      ],
+      "owned_values_ms": [
+        15.899999998509884,
+        15.5,
+        25.299999997019768,
+        136.5,
+        15.799999997019768
+      ],
+      "passed": false
+    },
+    "succulent": {
+      "frame_values_ms": [
+        16.800000000000182,
+        16.799999999999272,
+        33.29999999999927,
+        16.800000000000182,
+        16.799999999999272
+      ],
+      "owned_values_ms": [
+        0,
+        0,
+        155.89999999850988,
+        87.39999999850988,
+        10.300000004470348
+      ],
+      "passed": false
+    }
+  },
+  "primary_matrices_started": false,
+  "reason": "CPU affinity did not clear the focused gates. Both old/new art still report stalls. No quota-cause claim or budget waiver."
+}

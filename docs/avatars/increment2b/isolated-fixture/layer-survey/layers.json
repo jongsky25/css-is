@@ -1,0 +1,42 @@
+[
+  {
+    "variant": "baseline",
+    "targets": {
+      "stage": 79,
+      "root": 76,
+      "tilt": 75
+    },
+    "layers": [],
+    "total_layers": 0
+  },
+  {
+    "variant": "stage",
+    "targets": {
+      "stage": 79,
+      "root": 76,
+      "tilt": 75
+    },
+    "layers": [],
+    "total_layers": 0
+  },
+  {
+    "variant": "root",
+    "targets": {
+      "stage": 79,
+      "root": 76,
+      "tilt": 75
+    },
+    "layers": [],
+    "total_layers": 0
+  },
+  {
+    "variant": "both",
+    "targets": {
+      "stage": 79,
+      "root": 76,
+      "tilt": 75
+    },
+    "layers": [],
+    "total_layers": 0
+  }
+]

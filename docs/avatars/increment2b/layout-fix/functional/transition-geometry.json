@@ -1,14 +1,20 @@
 [
   {
     "key": "ArrowRight",
-    "rotate_y_deg": -0.2
+    "rotate_y_deg": -0.2,
+    "expected_rotate_y_deg": -0.24561360677083335,
+    "absolute_error_deg": 0.04561360677083334
   },
   {
     "key": "ArrowLeft",
-    "rotate_y_deg": 0.1
+    "rotate_y_deg": 0.1,
+    "expected_rotate_y_deg": 0.1305948361837418,
+    "absolute_error_deg": 0.030594836183741786
   },
   {
     "key": "ArrowRight repeated at clamp",
-    "rotate_y_deg": 0.0
+    "rotate_y_deg": 0.0,
+    "expected_rotate_y_deg": 0,
+    "absolute_error_deg": 0.0
   }
 ]

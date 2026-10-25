@@ -1,0 +1,11 @@
+{
+  "product_source": "c1164ac",
+  "purpose": "Test whether preventing CPU-quota contention repairs the unstable timing fixture without changing application code or browser CPU throttle.",
+  "observed_environment": {"allowed_cpu_ids":[0,1,2,3,4],"cpu_max":"400000 100000","empty_callback_wall_ms":143,"empty_callback_cpu_throttle":1},
+  "change": "Run the complete pytest process tree with taskset -c0-2, leaving one core-equivalent of quota headroom. No browser flag, CPU1/4 emulation rate, viewport, synthetic date/seed, interaction sequence or threshold changes.",
+  "preregistered_order": ["Repeat six blank-page empty timer controls with three-core affinity; preserve all samples and CPU quota counters", "If controls meet50ms/33ms, collect five counterbalanced old/new-art mature CPU4 pairs per plant on the same pinned current runtime; every after sample must meet unchanged50ms/33ms", "If focused gates pass, collect fresh full20 before5b580d9 and afterc1164ac application matrices with identical three-core affinity and original30s idle/interaction", "Require unchanged historical increment0 gates AND fresh matched-control gates; report all medians/worst runs", "Refresh native hidden/touch/keyboard and real persisted mature-plant care on final source", "Update report and ledger truthfully; keep3A pending if any gate fails"],
+  "no_sample_substitution": true,
+  "preserved_unpinned_failures": "../layout-fix/",
+  "no_budget_changes": true,
+  "no_production_deployment": true
+}

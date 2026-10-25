@@ -1,0 +1,14 @@
+[
+  {
+    "key": "ArrowRight",
+    "rotate_y_deg": -0.2
+  },
+  {
+    "key": "ArrowLeft",
+    "rotate_y_deg": 0.1
+  },
+  {
+    "key": "ArrowRight repeated at clamp",
+    "rotate_y_deg": 0.0
+  }
+]

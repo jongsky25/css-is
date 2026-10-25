@@ -49,7 +49,7 @@ def test_cached_geometry_preserves_drag_chase_resize_scroll(baseline_server):
         expression="({scroll:(getEventListeners(document).scroll||[]).length,resize:(getEventListeners(window).resize||[]).length})"
         listeners_before=cdp.send('Runtime.evaluate',{'expression':expression,'includeCommandLineAPI':True,'returnByValue':True})['result']['value']
         state=page.evaluate_handle('window.__cssAvatarGeometry')
-        for _ in range(20):page.add_script_tag(url=origin+'/static/js/avatars.js?v=8.18')
+        for _ in range(20):page.add_script_tag(url=origin+'/static/js/avatars.js?v=8.19')
         listeners_after=cdp.send('Runtime.evaluate',{'expression':expression,'includeCommandLineAPI':True,'returnByValue':True})['result']['value']
         assert listeners_before==listeners_after
         assert page.evaluate('(state)=>state===window.__cssAvatarGeometry',state)
@@ -67,28 +67,68 @@ def test_cached_lean_tracks_actual_transition_position(baseline_server):
         browser=pw.chromium.launch(executable_path=shutil.which('chromium'),args=['--no-sandbox'])
         context=browser.new_context(viewport={'width':1440,'height':1000},timezone_id='UTC')
         context.add_cookies([cookie]);context.add_init_script(PROBE)
+        context.add_init_script(r'''(()=>{
+          window.avatarLeanChecks=[];let point=null;
+          document.addEventListener('pointermove',e=>point={x:e.clientX,y:e.clientY});
+          const raf=window.requestAnimationFrame;
+          window.requestAnimationFrame=callback=>raf.call(window,time=>{
+            const w=document.querySelector('.avwrap[data-interactive]'),stage=w?.querySelector('.av-tiltstage');
+            const before=stage?.style.transform,box=w?.getBoundingClientRect();
+            const inside=point&&box&&point.x>=box.left&&point.x<=box.right&&point.y>=box.top&&point.y<=box.bottom;
+            const expected=inside?(point.x-(box.left+box.width/2))/(box.width/2)*10:null;
+            callback.call(window,time);
+            if(stage&&stage.style.transform!==before)avatarLeanChecks.push({inside,expected,observed:stage.style.transform});
+          });
+        })()''')
         page=context.new_page();page.goto(origin+'/?view=me');page.wait_for_timeout(600)
         wrap=page.locator('.avwrap[data-interactive]');button=wrap.locator('.av-play-btn')
+        def capture(key):
+            import re
+            checks=page.evaluate('avatarLeanChecks.filter(c=>c.inside && c.observed)')
+            assert checks, 'Cursor at actual wrap center was not recognized inside cached bounds'
+            sample=checks[-1];angle=float(re.search(r'rotateY\(([-\d.]+)deg\)',sample['observed'])[1])
+            error=abs(angle-sample['expected'])
+            results.append({'key':key,'rotate_y_deg':angle,'expected_rotate_y_deg':sample['expected'],'absolute_error_deg':error})
+            assert error<=.15,(key,sample,'Cached lean must match current geometry at the callback, including motion since pointer input')
         for key in ['ArrowRight','ArrowLeft']:
             button.focus();page.keyboard.press(key);page.wait_for_timeout(60)
+            page.evaluate('avatarLeanChecks=[]')
             box=wrap.bounding_box();page.mouse.move(box['x']+box['width']/2,box['y']+box['height']/2)
             page.wait_for_timeout(25)
-            transform=wrap.locator('.av-tiltstage').evaluate('e=>e.style.transform')
-            import re
-            angle=float(re.search(r'rotateY\(([-\d.]+)deg\)',transform)[1])
-            results.append({'key':key,'rotate_y_deg':angle})
-            assert abs(angle)<=.25, (key,transform,'Cursor at actual wrap center should not lean sideways')
+            capture(key)
             page.mouse.move(10,10);page.wait_for_timeout(350)
         page.mouse.move(10,10);button.focus()
         for _ in range(100):page.keyboard.press('ArrowRight')
         page.wait_for_timeout(450)
+        page.evaluate('avatarLeanChecks=[]')
         box=wrap.bounding_box();page.mouse.move(box['x']+box['width']/2,box['y']+box['height']/2);page.wait_for_timeout(25)
-        transform=wrap.locator('.av-tiltstage').evaluate('e=>e.style.transform')
-        match=re.search(r'rotateY\(([-\d.]+)deg\)',transform)
-        assert match, (transform,'Actual wrap center must remain inside cached bounds at clamp')
-        angle=float(match[1])
-        results.append({'key':'ArrowRight repeated at clamp','rotate_y_deg':angle})
-        assert abs(angle)<=.25, (transform,'Unchanged clamped targets must not leave stale transition geometry')
+        capture('ArrowRight repeated at clamp')
         context.close();browser.close()
     out=Path(os.environ['CSS_AVATAR_OUT']).parent
     (out/'transition-geometry.json').write_text(json.dumps(results,indent=2))
+
+
+def test_plant_geometry_does_not_read_unused_svg_head(baseline_server,app_mod):
+    import storage as st
+    from datetime import date,timedelta
+    from playwright.sync_api import sync_playwright
+    origin,cookie,uid=baseline_server
+    conn=st.connect(app_mod.DB);st.set_user_avatar(conn,uid,'mushroom','Native Control')
+    for week in range(40):
+        day=(date(2026,7,13)-timedelta(weeks=week)).isoformat()
+        conn.execute("INSERT OR IGNORE INTO wellness_claim(user_id,week_start,break_date,start_time,hours,activity,status) VALUES(?,?,?,'10:00',1,'exercise','completed')",(uid,day,day))
+    conn.commit();assert st.wellness_stats(conn,uid)['stage']==6;conn.close()
+    with sync_playwright() as pw:
+        browser=pw.chromium.launch(executable_path=shutil.which('chromium'),args=['--no-sandbox'])
+        context=browser.new_context(viewport={'width':390,'height':844},timezone_id='UTC')
+        context.add_cookies([cookie]);context.add_init_script(PROBE)
+        context.add_init_script('''(()=>{window.unusedPlantHeadReads=0;const original=Element.prototype.getBoundingClientRect;
+          Element.prototype.getBoundingClientRect=function(){if(this.matches('.avwrap[data-interactive][data-kind="mushroom"] .av-head'))unusedPlantHeadReads++;return original.call(this)}})()''')
+        page=context.new_page();page.goto(origin+'/?view=me');page.wait_for_timeout(300)
+        assert page.locator('.avwrap[data-kind="mushroom"] svg[data-avatar-stage="6"] .av-head').count()==1
+        page.set_viewport_size({'width':480,'height':844});page.wait_for_timeout(150)
+        reads=page.evaluate('unusedPlantHeadReads')
+        assert reads==0,f'Non-tracking mushroom still reads SVG head bounds: {reads}'
+        context.close();browser.close()
+    out=Path(os.environ['CSS_AVATAR_OUT']).parent
+    (out/'unused-head-geometry.json').write_text(json.dumps({'kind':'mushroom','stage':6,'svg_head_bounds_reads':reads},indent=2))

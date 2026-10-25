@@ -1,0 +1,49 @@
+{
+  "cpu_ids": [
+    0,
+    1,
+    2
+  ],
+  "cpu_max": "400000 100000",
+  "nr_throttled_delta": 1,
+  "throttled_ms_delta": 38.837,
+  "samples": [
+    {
+      "cpu": 1,
+      "run": 0,
+      "frame_p95_ms": 16.799999999999272,
+      "empty_callback_ms": 0
+    },
+    {
+      "cpu": 4,
+      "run": 0,
+      "frame_p95_ms": 16.799999999999272,
+      "empty_callback_ms": 0
+    },
+    {
+      "cpu": 4,
+      "run": 1,
+      "frame_p95_ms": 16.799999999999272,
+      "empty_callback_ms": 6.399999998509884
+    },
+    {
+      "cpu": 1,
+      "run": 1,
+      "frame_p95_ms": 16.700000000000728,
+      "empty_callback_ms": 0
+    },
+    {
+      "cpu": 1,
+      "run": 2,
+      "frame_p95_ms": 16.700000000000728,
+      "empty_callback_ms": 0
+    },
+    {
+      "cpu": 4,
+      "run": 2,
+      "frame_p95_ms": 16.799999999999272,
+      "empty_callback_ms": 0
+    }
+  ],
+  "passed": true
+}

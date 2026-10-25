@@ -12,15 +12,16 @@ for name,digest in env['source_sha256'].items():
     assert hashlib.sha256(Path(name).read_bytes()).hexdigest()==digest,name
 assert subprocess.check_output(['stat','-f','-c','%T','.'],text=True).strip()=='overlayfs'
 assert '260 passed' in (out/'validation-tests.txt').read_text()
-assert '5 passed' in (out/'functional/tests.txt').read_text()
+assert '6 passed' in (out/'functional/tests.txt').read_text()
 assert read(out/'artwork-equivalence.json')['svg_equivalence_checks']==1734
 pixels=read(out/'visual/unchanged-species.json')
 assert pixels['cells']==4896 and pixels['species']==16 and pixels['pixel_identical']
 geometry=read(out/'functional/geometry-behavior.json')
 assert geometry['steady_input_live_geometry_reads']==0
 assert geometry['geometry_listeners_before']==geometry['geometry_listeners_after_20_evaluations']
-assert all(abs(r['rotate_y_deg'])<=.25 for r in read(out/'functional/transition-geometry.json'))
+assert all(r['absolute_error_deg']<=.15 for r in read(out/'functional/transition-geometry.json'))
 assert read(out/'functional/static-preview-policy.json')['active_replay_offset_width_reads']==0
+assert read(out/'functional/unused-head-geometry.json')['svg_head_bounds_reads']==0
 rig=read(out/'visual/motion-rig-check.json')
 assert rig['cases']==486 and len(rig['reduced_motion_checks'])==21
 assert read(out/'functional/application/environment.json')['source_sha256']==env['source_sha256']

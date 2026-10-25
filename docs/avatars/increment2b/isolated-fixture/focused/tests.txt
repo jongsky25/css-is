@@ -1,0 +1,38 @@
+fern before 0 frame 16.799999999999272 max_callback 406.19999999552965
+fern after 0 frame 16.799999999999272 max_callback 0
+fern after 1 frame 16.799999999999272 max_callback 0
+fern before 1 frame 16.800000000000182 max_callback 0
+fern before 2 frame 16.799999999999272 max_callback 0
+fern after 2 frame 33.30000000000109 max_callback 130.39999999850988
+fern after 3 frame 16.799999999999272 max_callback 15.600000001490116
+fern before 3 frame 16.799999999999272 max_callback 5.100000001490116
+fern before 4 frame 16.80000000000109 max_callback 298.79999999701977
+fern after 4 frame 33.20000000000073 max_callback 113.39999999850988
+.mushroom before 0 frame 16.80000000000291 max_callback 17.30000000447035
+mushroom after 0 frame 33.29999999999927 max_callback 15.899999998509884
+mushroom after 1 frame 33.29999999999927 max_callback 15.5
+mushroom before 1 frame 16.799999999999955 max_callback 19.799999997019768
+mushroom before 2 frame 16.799999999999272 max_callback 19.30000000447035
+mushroom after 2 frame 16.799999999999272 max_callback 25.299999997019768
+mushroom after 3 frame 16.80000000000291 max_callback 136.5
+mushroom before 3 frame 33.30000000000109 max_callback 14.600000001490116
+mushroom before 4 frame 66.69999999999709 max_callback 461.5
+mushroom after 4 frame 33.399999999999636 max_callback 15.799999997019768
+.succulent before 0 frame 16.799999999999272 max_callback 102.69999999552965
+succulent after 0 frame 16.800000000000182 max_callback 0
+succulent after 1 frame 16.799999999999272 max_callback 0
+succulent before 1 frame 16.799999999999272 max_callback 33.79999999701977
+succulent before 2 frame 16.799999999999272 max_callback 58.100000001490116
+succulent after 2 frame 33.29999999999927 max_callback 155.89999999850988
+succulent after 3 frame 16.800000000000182 max_callback 87.39999999850988
+succulent before 3 frame 16.799999999999272 max_callback 6.199999995529652
+succulent before 4 frame 16.799999999999272 max_callback 5.100000001490116
+succulent after 4 frame 16.799999999999272 max_callback 10.300000004470348
+.
+=============================== warnings summary ===============================
+tests/test_avatar_native_control.py::test_native_art_control[fern]
+  /workspace/css-is/tests/conftest.py:88: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+3 passed, 1 warning in 1046.43s (0:17:26)
