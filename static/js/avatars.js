@@ -23,7 +23,10 @@
   "use strict";
 
   var mq = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
-  function still() { return !!(mq && mq.matches); }
+  // Read browser preference once; input and timer callbacks use event-updated
+  // state rather than querying MediaQueryList on every movement.
+  var reducedMotion = !!(mq && mq.matches);
+  function still() { return reducedMotion; }
 
   /* Interaction geometry changes with layout, not with every input event.
    * Cache untransformed positions and translate them by the movement we own.
@@ -500,6 +503,7 @@
     if (watchRaf) return;
     watchRaf = requestAnimationFrame(function () {
       watchRaf = null;
+      if (still()) return; // preference can change after the input was queued
       var wraps = document.querySelectorAll(".avwrap[data-kind]");
       var measured = [];
       // Read every box before changing transforms. Reading a head immediately
@@ -955,8 +959,9 @@
     var wraps = document.querySelectorAll(".avwrap[data-kind]");
     for (var i = 0; i < wraps.length; i++) refreshSleep(wraps[i]);
   }, 300000);
-  if (mq && mq.addEventListener) {
-    mq.addEventListener("change", function () {
+  if (mq) {
+    var motionPreferenceChanged = function (event) {
+      reducedMotion = !!event.matches;
       if (!still()) return;
       // motion turned off mid-session: freeze the movers where they are
       var moves = document.querySelectorAll(".avwrap[data-kind] .avmove");
@@ -970,7 +975,9 @@
         wraps[j]._avGX = 0;
         if (wraps[j]._avAway) returnHome(wraps[j]);   // explorer comes straight home
       }
-    });
+    };
+    if (mq.addEventListener) mq.addEventListener("change", motionPreferenceChanged);
+    else if (mq.addListener) mq.addListener(motionPreferenceChanged);
   }
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", initAll);
