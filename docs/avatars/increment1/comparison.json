@@ -1,0 +1,1436 @@
+{
+  "complete": true,
+  "groups": [
+    {
+      "mobile": false,
+      "cache": "cold",
+      "runs": 5,
+      "scenarios": {
+        "home_idle": {
+          "lcp_ms": {
+            "before": {
+              "median": 324,
+              "worst": 660,
+              "n": 5
+            },
+            "after": {
+              "median": 332,
+              "worst": 628,
+              "n": 5
+            },
+            "median_delta": 8
+          },
+          "frame_p95_ms": {
+            "before": {
+              "median": 16.799999999999272,
+              "worst": 16.799999999999272,
+              "n": 5
+            },
+            "after": {
+              "median": 16.700000000000728,
+              "worst": 16.799999999999272,
+              "n": 5
+            },
+            "median_delta": -0.09999999999854481
+          },
+          "js_heap_bytes": {
+            "before": {
+              "median": 2691916,
+              "worst": 2855904,
+              "n": 5
+            },
+            "after": {
+              "median": 2638452,
+              "worst": 2843464,
+              "n": 5
+            },
+            "median_delta": -53464
+          },
+          "renderer_rss_sum_bytes": {
+            "before": {
+              "median": 239316992,
+              "worst": 271708160,
+              "n": 5
+            },
+            "after": {
+              "median": 238555136,
+              "worst": 263884800,
+              "n": 5
+            },
+            "median_delta": -761856
+          },
+          "long_task_counts": {
+            "before": 5,
+            "after": 4
+          }
+        },
+        "home_interaction": {
+          "lcp_ms": {
+            "before": {
+              "median": 324,
+              "worst": 660,
+              "n": 5
+            },
+            "after": {
+              "median": 332,
+              "worst": 628,
+              "n": 5
+            },
+            "median_delta": 8
+          },
+          "frame_p95_ms": {
+            "before": {
+              "median": 16.799999999995634,
+              "worst": 16.799999999995634,
+              "n": 5
+            },
+            "after": {
+              "median": 16.700000000004366,
+              "worst": 16.799999999995634,
+              "n": 5
+            },
+            "median_delta": -0.09999999999126885
+          },
+          "interaction_duration_per_run_median_ms": {
+            "before": {
+              "median": 32,
+              "worst": 32,
+              "n": 5
+            },
+            "after": {
+              "median": 16,
+              "worst": 32.0,
+              "n": 5
+            },
+            "median_delta": -16
+          },
+          "js_heap_bytes": {
+            "before": {
+              "median": 3446056,
+              "worst": 3994552,
+              "n": 5
+            },
+            "after": {
+              "median": 3668456,
+              "worst": 4425196,
+              "n": 5
+            },
+            "median_delta": 222400
+          },
+          "renderer_rss_sum_bytes": {
+            "before": {
+              "median": 252030976,
+              "worst": 308822016,
+              "n": 5
+            },
+            "after": {
+              "median": 247746560,
+              "worst": 304529408,
+              "n": 5
+            },
+            "median_delta": -4284416
+          },
+          "long_task_counts": {
+            "before": 2,
+            "after": 15
+          }
+        },
+        "picker_growth": {
+          "lcp_ms": {
+            "before": {
+              "median": 152,
+              "worst": 180,
+              "n": 5
+            },
+            "after": {
+              "median": 176,
+              "worst": 244,
+              "n": 5
+            },
+            "median_delta": 24
+          },
+          "frame_p95_ms": {
+            "before": {
+              "median": 16.700000000000273,
+              "worst": 16.799999999999727,
+              "n": 5
+            },
+            "after": {
+              "median": 16.799999999999955,
+              "worst": 16.799999999999955,
+              "n": 5
+            },
+            "median_delta": 0.09999999999968168
+          },
+          "interaction_duration_per_run_median_ms": {
+            "before": {
+              "median": 24.0,
+              "worst": 24.0,
+              "n": 5
+            },
+            "after": {
+              "median": 24.0,
+              "worst": 24.0,
+              "n": 5
+            },
+            "median_delta": 0.0
+          },
+          "js_heap_bytes": {
+            "before": {
+              "median": 5681380,
+              "worst": 5903952,
+              "n": 5
+            },
+            "after": {
+              "median": 5697816,
+              "worst": 5942996,
+              "n": 5
+            },
+            "median_delta": 16436
+          },
+          "renderer_rss_sum_bytes": {
+            "before": {
+              "median": 281333760,
+              "worst": 335593472,
+              "n": 5
+            },
+            "after": {
+              "median": 277917696,
+              "worst": 331169792,
+              "n": 5
+            },
+            "median_delta": -3416064
+          },
+          "long_task_counts": {
+            "before": 0,
+            "after": 1
+          }
+        },
+        "seasonal_preview": {
+          "lcp_ms": {
+            "before": {
+              "median": 168,
+              "worst": 208,
+              "n": 5
+            },
+            "after": {
+              "median": 156,
+              "worst": 180,
+              "n": 5
+            },
+            "median_delta": -12
+          },
+          "frame_p95_ms": {
+            "before": {
+              "median": 16.700000000000045,
+              "worst": 16.799999999999955,
+              "n": 5
+            },
+            "after": {
+              "median": 16.700000000000045,
+              "worst": 16.80000000000001,
+              "n": 5
+            },
+            "median_delta": 0.0
+          },
+          "interaction_duration_per_run_median_ms": {
+            "before": {
+              "median": 28.0,
+              "worst": 40,
+              "n": 5
+            },
+            "after": {
+              "median": 20.0,
+              "worst": 48,
+              "n": 5
+            },
+            "median_delta": -8.0
+          },
+          "js_heap_bytes": {
+            "before": {
+              "median": 10965096,
+              "worst": 12729956,
+              "n": 5
+            },
+            "after": {
+              "median": 10983656,
+              "worst": 13649348,
+              "n": 5
+            },
+            "median_delta": 18560
+          },
+          "renderer_rss_sum_bytes": {
+            "before": {
+              "median": 317214720,
+              "worst": 352616448,
+              "n": 5
+            },
+            "after": {
+              "median": 317820928,
+              "worst": 369983488,
+              "n": 5
+            },
+            "median_delta": 606208
+          },
+          "long_task_counts": {
+            "before": 0,
+            "after": 0
+          }
+        },
+        "wellness_care": {
+          "lcp_ms": {
+            "before": {
+              "median": 112,
+              "worst": 192,
+              "n": 5
+            },
+            "after": {
+              "median": 140,
+              "worst": 148,
+              "n": 5
+            },
+            "median_delta": 28
+          },
+          "frame_p95_ms": {
+            "before": {
+              "median": 16.799999999999727,
+              "worst": 16.799999999999727,
+              "n": 5
+            },
+            "after": {
+              "median": 16.700000000000273,
+              "worst": 16.800000000000182,
+              "n": 5
+            },
+            "median_delta": -0.0999999999994543
+          },
+          "interaction_duration_per_run_median_ms": {
+            "before": {
+              "median": 24,
+              "worst": 32,
+              "n": 5
+            },
+            "after": {
+              "median": 32,
+              "worst": 48,
+              "n": 5
+            },
+            "median_delta": 8
+          },
+          "js_heap_bytes": {
+            "before": {
+              "median": 3228836,
+              "worst": 4471552,
+              "n": 5
+            },
+            "after": {
+              "median": 3215988,
+              "worst": 3238308,
+              "n": 5
+            },
+            "median_delta": -12848
+          },
+          "renderer_rss_sum_bytes": {
+            "before": {
+              "median": 258244608,
+              "worst": 315314176,
+              "n": 5
+            },
+            "after": {
+              "median": 254439424,
+              "worst": 310886400,
+              "n": 5
+            },
+            "median_delta": -3805184
+          },
+          "long_task_counts": {
+            "before": 2,
+            "after": 2
+          }
+        }
+      },
+      "home_encoded_delta": 1244,
+      "picker_encoded_delta": 2007
+    },
+    {
+      "mobile": false,
+      "cache": "warm",
+      "runs": 5,
+      "scenarios": {
+        "home_idle": {
+          "lcp_ms": {
+            "before": {
+              "median": 120,
+              "worst": 232,
+              "n": 5
+            },
+            "after": {
+              "median": 124,
+              "worst": 156,
+              "n": 5
+            },
+            "median_delta": 4
+          },
+          "frame_p95_ms": {
+            "before": {
+              "median": 16.700000000000728,
+              "worst": 16.799999999999272,
+              "n": 5
+            },
+            "after": {
+              "median": 16.799999999999272,
+              "worst": 16.799999999999272,
+              "n": 5
+            },
+            "median_delta": 0.09999999999854481
+          },
+          "js_heap_bytes": {
+            "before": {
+              "median": 2642412,
+              "worst": 2701508,
+              "n": 5
+            },
+            "after": {
+              "median": 2628296,
+              "worst": 2652608,
+              "n": 5
+            },
+            "median_delta": -14116
+          },
+          "renderer_rss_sum_bytes": {
+            "before": {
+              "median": 249430016,
+              "worst": 255504384,
+              "n": 5
+            },
+            "after": {
+              "median": 246591488,
+              "worst": 247685120,
+              "n": 5
+            },
+            "median_delta": -2838528
+          },
+          "long_task_counts": {
+            "before": 0,
+            "after": 18
+          }
+        },
+        "home_interaction": {
+          "lcp_ms": {
+            "before": {
+              "median": 120,
+              "worst": 232,
+              "n": 5
+            },
+            "after": {
+              "median": 124,
+              "worst": 156,
+              "n": 5
+            },
+            "median_delta": 4
+          },
+          "frame_p95_ms": {
+            "before": {
+              "median": 16.700000000004366,
+              "worst": 16.799999999995634,
+              "n": 5
+            },
+            "after": {
+              "median": 16.700000000004366,
+              "worst": 16.80000000000291,
+              "n": 5
+            },
+            "median_delta": 0.0
+          },
+          "interaction_duration_per_run_median_ms": {
+            "before": {
+              "median": 32.0,
+              "worst": 32.0,
+              "n": 5
+            },
+            "after": {
+              "median": 24,
+              "worst": 32.0,
+              "n": 5
+            },
+            "median_delta": -8.0
+          },
+          "js_heap_bytes": {
+            "before": {
+              "median": 2810848,
+              "worst": 4754664,
+              "n": 5
+            },
+            "after": {
+              "median": 4384680,
+              "worst": 4680688,
+              "n": 5
+            },
+            "median_delta": 1573832
+          },
+          "renderer_rss_sum_bytes": {
+            "before": {
+              "median": 254828544,
+              "worst": 258453504,
+              "n": 5
+            },
+            "after": {
+              "median": 248999936,
+              "worst": 252198912,
+              "n": 5
+            },
+            "median_delta": -5828608
+          },
+          "long_task_counts": {
+            "before": 2,
+            "after": 31
+          }
+        },
+        "picker_growth": {
+          "lcp_ms": {
+            "before": {
+              "median": 152,
+              "worst": 160,
+              "n": 5
+            },
+            "after": {
+              "median": 160,
+              "worst": 176,
+              "n": 5
+            },
+            "median_delta": 8
+          },
+          "frame_p95_ms": {
+            "before": {
+              "median": 16.799999999999955,
+              "worst": 16.800000000000068,
+              "n": 5
+            },
+            "after": {
+              "median": 16.700000000000273,
+              "worst": 16.799999999999727,
+              "n": 5
+            },
+            "median_delta": -0.09999999999968168
+          },
+          "interaction_duration_per_run_median_ms": {
+            "before": {
+              "median": 24.0,
+              "worst": 24.0,
+              "n": 5
+            },
+            "after": {
+              "median": 16.0,
+              "worst": 32.0,
+              "n": 5
+            },
+            "median_delta": -8.0
+          },
+          "js_heap_bytes": {
+            "before": {
+              "median": 5448956,
+              "worst": 5975644,
+              "n": 5
+            },
+            "after": {
+              "median": 5196064,
+              "worst": 5928996,
+              "n": 5
+            },
+            "median_delta": -252892
+          },
+          "renderer_rss_sum_bytes": {
+            "before": {
+              "median": 283635712,
+              "worst": 287199232,
+              "n": 5
+            },
+            "after": {
+              "median": 277999616,
+              "worst": 281137152,
+              "n": 5
+            },
+            "median_delta": -5636096
+          },
+          "long_task_counts": {
+            "before": 1,
+            "after": 0
+          }
+        },
+        "seasonal_preview": {
+          "lcp_ms": {
+            "before": {
+              "median": 172,
+              "worst": 188,
+              "n": 5
+            },
+            "after": {
+              "median": 168,
+              "worst": 208,
+              "n": 5
+            },
+            "median_delta": -4
+          },
+          "frame_p95_ms": {
+            "before": {
+              "median": 16.80000000000001,
+              "worst": 33.299999999999955,
+              "n": 5
+            },
+            "after": {
+              "median": 16.700000000000045,
+              "worst": 16.80000000000001,
+              "n": 5
+            },
+            "median_delta": -0.0999999999999659
+          },
+          "interaction_duration_per_run_median_ms": {
+            "before": {
+              "median": 24,
+              "worst": 32,
+              "n": 5
+            },
+            "after": {
+              "median": 20.0,
+              "worst": 40,
+              "n": 5
+            },
+            "median_delta": -4.0
+          },
+          "js_heap_bytes": {
+            "before": {
+              "median": 10933672,
+              "worst": 11020356,
+              "n": 5
+            },
+            "after": {
+              "median": 13504932,
+              "worst": 13689840,
+              "n": 5
+            },
+            "median_delta": 2571260
+          },
+          "renderer_rss_sum_bytes": {
+            "before": {
+              "median": 311218176,
+              "worst": 319901696,
+              "n": 5
+            },
+            "after": {
+              "median": 313892864,
+              "worst": 324931584,
+              "n": 5
+            },
+            "median_delta": 2674688
+          },
+          "long_task_counts": {
+            "before": 0,
+            "after": 0
+          }
+        },
+        "wellness_care": {
+          "lcp_ms": {
+            "before": {
+              "median": 132,
+              "worst": 136,
+              "n": 5
+            },
+            "after": {
+              "median": 124,
+              "worst": 144,
+              "n": 5
+            },
+            "median_delta": -8
+          },
+          "frame_p95_ms": {
+            "before": {
+              "median": 16.700000000000273,
+              "worst": 16.799999999999955,
+              "n": 5
+            },
+            "after": {
+              "median": 16.700000000000728,
+              "worst": 33.299999999999955,
+              "n": 5
+            },
+            "median_delta": 4.547473508864641e-13
+          },
+          "interaction_duration_per_run_median_ms": {
+            "before": {
+              "median": 28.0,
+              "worst": 48,
+              "n": 4
+            },
+            "after": {
+              "median": 24,
+              "worst": 40,
+              "n": 5
+            },
+            "median_delta": -4.0
+          },
+          "js_heap_bytes": {
+            "before": {
+              "median": 4373548,
+              "worst": 4494284,
+              "n": 5
+            },
+            "after": {
+              "median": 3205704,
+              "worst": 3211200,
+              "n": 5
+            },
+            "median_delta": -1167844
+          },
+          "renderer_rss_sum_bytes": {
+            "before": {
+              "median": 259584000,
+              "worst": 265031680,
+              "n": 5
+            },
+            "after": {
+              "median": 255004672,
+              "worst": 258297856,
+              "n": 5
+            },
+            "median_delta": -4579328
+          },
+          "long_task_counts": {
+            "before": 0,
+            "after": 3
+          }
+        }
+      },
+      "home_encoded_delta": 1243,
+      "picker_encoded_delta": 2008
+    },
+    {
+      "mobile": true,
+      "cache": "cold",
+      "runs": 5,
+      "scenarios": {
+        "home_idle": {
+          "lcp_ms": {
+            "before": {
+              "median": 576,
+              "worst": 720,
+              "n": 5
+            },
+            "after": {
+              "median": 516,
+              "worst": 584,
+              "n": 5
+            },
+            "median_delta": -60
+          },
+          "frame_p95_ms": {
+            "before": {
+              "median": 16.700000000000728,
+              "worst": 16.799999999999272,
+              "n": 5
+            },
+            "after": {
+              "median": 16.799999999999272,
+              "worst": 16.799999999999272,
+              "n": 5
+            },
+            "median_delta": 0.09999999999854481
+          },
+          "js_heap_bytes": {
+            "before": {
+              "median": 2859208,
+              "worst": 2895904,
+              "n": 5
+            },
+            "after": {
+              "median": 2858720,
+              "worst": 2872336,
+              "n": 5
+            },
+            "median_delta": -488
+          },
+          "renderer_rss_sum_bytes": {
+            "before": {
+              "median": 257597440,
+              "worst": 259883008,
+              "n": 5
+            },
+            "after": {
+              "median": 252563456,
+              "worst": 254869504,
+              "n": 5
+            },
+            "median_delta": -5033984
+          },
+          "long_task_counts": {
+            "before": 8,
+            "after": 20
+          }
+        },
+        "home_interaction": {
+          "lcp_ms": {
+            "before": {
+              "median": 576,
+              "worst": 720,
+              "n": 5
+            },
+            "after": {
+              "median": 516,
+              "worst": 584,
+              "n": 5
+            },
+            "median_delta": -60
+          },
+          "frame_p95_ms": {
+            "before": {
+              "median": 16.799999999995634,
+              "worst": 50,
+              "n": 5
+            },
+            "after": {
+              "median": 16.799999999995634,
+              "worst": 16.80000000000291,
+              "n": 5
+            },
+            "median_delta": 0.0
+          },
+          "interaction_duration_per_run_median_ms": {
+            "before": {
+              "median": 32.0,
+              "worst": 40.0,
+              "n": 5
+            },
+            "after": {
+              "median": 24,
+              "worst": 32,
+              "n": 5
+            },
+            "median_delta": -8.0
+          },
+          "js_heap_bytes": {
+            "before": {
+              "median": 2814908,
+              "worst": 4667696,
+              "n": 5
+            },
+            "after": {
+              "median": 4594108,
+              "worst": 4821216,
+              "n": 5
+            },
+            "median_delta": 1779200
+          },
+          "renderer_rss_sum_bytes": {
+            "before": {
+              "median": 294703104,
+              "worst": 295620608,
+              "n": 5
+            },
+            "after": {
+              "median": 289284096,
+              "worst": 294584320,
+              "n": 5
+            },
+            "median_delta": -5419008
+          },
+          "long_task_counts": {
+            "before": 54,
+            "after": 42
+          }
+        },
+        "picker_growth": {
+          "lcp_ms": {
+            "before": {
+              "median": 284,
+              "worst": 344,
+              "n": 5
+            },
+            "after": {
+              "median": 276,
+              "worst": 360,
+              "n": 5
+            },
+            "median_delta": -8
+          },
+          "frame_p95_ms": {
+            "before": {
+              "median": 16.799999999999955,
+              "worst": 50,
+              "n": 5
+            },
+            "after": {
+              "median": 16.799999999999727,
+              "worst": 83.30000000000018,
+              "n": 5
+            },
+            "median_delta": -2.2737367544323206e-13
+          },
+          "interaction_duration_per_run_median_ms": {
+            "before": {
+              "median": 40.0,
+              "worst": 44.0,
+              "n": 5
+            },
+            "after": {
+              "median": 40.0,
+              "worst": 64.0,
+              "n": 5
+            },
+            "median_delta": 0.0
+          },
+          "js_heap_bytes": {
+            "before": {
+              "median": 5110408,
+              "worst": 8641168,
+              "n": 5
+            },
+            "after": {
+              "median": 5030860,
+              "worst": 6424796,
+              "n": 5
+            },
+            "median_delta": -79548
+          },
+          "renderer_rss_sum_bytes": {
+            "before": {
+              "median": 323596288,
+              "worst": 324173824,
+              "n": 5
+            },
+            "after": {
+              "median": 319758336,
+              "worst": 323543040,
+              "n": 5
+            },
+            "median_delta": -3837952
+          },
+          "long_task_counts": {
+            "before": 10,
+            "after": 18
+          }
+        },
+        "seasonal_preview": {
+          "lcp_ms": {
+            "before": {
+              "median": 388,
+              "worst": 516,
+              "n": 5
+            },
+            "after": {
+              "median": 388,
+              "worst": 856,
+              "n": 5
+            },
+            "median_delta": 0
+          },
+          "frame_p95_ms": {
+            "before": {
+              "median": 83.29999999999995,
+              "worst": 83.30000000000018,
+              "n": 5
+            },
+            "after": {
+              "median": 83.29999999999973,
+              "worst": 100.10000000000036,
+              "n": 5
+            },
+            "median_delta": -2.2737367544323206e-13
+          },
+          "interaction_duration_per_run_median_ms": {
+            "before": {
+              "median": 24.0,
+              "worst": 28.0,
+              "n": 5
+            },
+            "after": {
+              "median": 24,
+              "worst": 44.0,
+              "n": 5
+            },
+            "median_delta": 0.0
+          },
+          "js_heap_bytes": {
+            "before": {
+              "median": 10714856,
+              "worst": 13994200,
+              "n": 5
+            },
+            "after": {
+              "median": 12444416,
+              "worst": 13211496,
+              "n": 5
+            },
+            "median_delta": 1729560
+          },
+          "renderer_rss_sum_bytes": {
+            "before": {
+              "median": 331235328,
+              "worst": 334450688,
+              "n": 5
+            },
+            "after": {
+              "median": 327483392,
+              "worst": 330559488,
+              "n": 5
+            },
+            "median_delta": -3751936
+          },
+          "long_task_counts": {
+            "before": 11,
+            "after": 12
+          }
+        },
+        "wellness_care": {
+          "lcp_ms": {
+            "before": {
+              "median": 260,
+              "worst": 380,
+              "n": 5
+            },
+            "after": {
+              "median": 272,
+              "worst": 396,
+              "n": 5
+            },
+            "median_delta": 12
+          },
+          "frame_p95_ms": {
+            "before": {
+              "median": 16.799999999999955,
+              "worst": 16.799999999999955,
+              "n": 5
+            },
+            "after": {
+              "median": 16.799999999999727,
+              "worst": 50,
+              "n": 5
+            },
+            "median_delta": -2.2737367544323206e-13
+          },
+          "interaction_duration_per_run_median_ms": {
+            "before": {
+              "median": 40,
+              "worst": 56,
+              "n": 5
+            },
+            "after": {
+              "median": 40,
+              "worst": 64,
+              "n": 5
+            },
+            "median_delta": 0
+          },
+          "js_heap_bytes": {
+            "before": {
+              "median": 4517660,
+              "worst": 5451176,
+              "n": 5
+            },
+            "after": {
+              "median": 3257464,
+              "worst": 3295328,
+              "n": 5
+            },
+            "median_delta": -1260196
+          },
+          "renderer_rss_sum_bytes": {
+            "before": {
+              "median": 304377856,
+              "worst": 304955392,
+              "n": 5
+            },
+            "after": {
+              "median": 299712512,
+              "worst": 303808512,
+              "n": 5
+            },
+            "median_delta": -4665344
+          },
+          "long_task_counts": {
+            "before": 2,
+            "after": 7
+          }
+        }
+      },
+      "home_encoded_delta": 1243,
+      "picker_encoded_delta": 2008
+    },
+    {
+      "mobile": true,
+      "cache": "warm",
+      "runs": 5,
+      "scenarios": {
+        "home_idle": {
+          "lcp_ms": {
+            "before": {
+              "median": 260,
+              "worst": 288,
+              "n": 5
+            },
+            "after": {
+              "median": 248,
+              "worst": 280,
+              "n": 5
+            },
+            "median_delta": -12
+          },
+          "frame_p95_ms": {
+            "before": {
+              "median": 16.700000000000728,
+              "worst": 16.799999999999272,
+              "n": 5
+            },
+            "after": {
+              "median": 16.700000000000728,
+              "worst": 16.799999999999272,
+              "n": 5
+            },
+            "median_delta": 0.0
+          },
+          "js_heap_bytes": {
+            "before": {
+              "median": 2637516,
+              "worst": 2676564,
+              "n": 5
+            },
+            "after": {
+              "median": 2687092,
+              "worst": 2709880,
+              "n": 5
+            },
+            "median_delta": 49576
+          },
+          "renderer_rss_sum_bytes": {
+            "before": {
+              "median": 238596096,
+              "worst": 241991680,
+              "n": 5
+            },
+            "after": {
+              "median": 235225088,
+              "worst": 242114560,
+              "n": 5
+            },
+            "median_delta": -3371008
+          },
+          "long_task_counts": {
+            "before": 3,
+            "after": 1
+          }
+        },
+        "home_interaction": {
+          "lcp_ms": {
+            "before": {
+              "median": 260,
+              "worst": 288,
+              "n": 5
+            },
+            "after": {
+              "median": 248,
+              "worst": 280,
+              "n": 5
+            },
+            "median_delta": -12
+          },
+          "frame_p95_ms": {
+            "before": {
+              "median": 16.799999999995634,
+              "worst": 16.80000000000291,
+              "n": 5
+            },
+            "after": {
+              "median": 16.700000000004366,
+              "worst": 16.799999999995634,
+              "n": 5
+            },
+            "median_delta": -0.09999999999126885
+          },
+          "interaction_duration_per_run_median_ms": {
+            "before": {
+              "median": 32,
+              "worst": 32,
+              "n": 5
+            },
+            "after": {
+              "median": 24,
+              "worst": 32,
+              "n": 5
+            },
+            "median_delta": -8
+          },
+          "js_heap_bytes": {
+            "before": {
+              "median": 4437200,
+              "worst": 4723908,
+              "n": 5
+            },
+            "after": {
+              "median": 3197240,
+              "worst": 4628828,
+              "n": 5
+            },
+            "median_delta": -1239960
+          },
+          "renderer_rss_sum_bytes": {
+            "before": {
+              "median": 241958912,
+              "worst": 249462784,
+              "n": 5
+            },
+            "after": {
+              "median": 240427008,
+              "worst": 243855360,
+              "n": 5
+            },
+            "median_delta": -1531904
+          },
+          "long_task_counts": {
+            "before": 10,
+            "after": 3
+          }
+        },
+        "picker_growth": {
+          "lcp_ms": {
+            "before": {
+              "median": 252,
+              "worst": 308,
+              "n": 5
+            },
+            "after": {
+              "median": 260,
+              "worst": 308,
+              "n": 5
+            },
+            "median_delta": 8
+          },
+          "frame_p95_ms": {
+            "before": {
+              "median": 16.799999999999955,
+              "worst": 33.400000000000546,
+              "n": 5
+            },
+            "after": {
+              "median": 16.799999999999272,
+              "worst": 16.799999999999955,
+              "n": 5
+            },
+            "median_delta": -6.821210263296962e-13
+          },
+          "interaction_duration_per_run_median_ms": {
+            "before": {
+              "median": 40.0,
+              "worst": 88.0,
+              "n": 5
+            },
+            "after": {
+              "median": 40.0,
+              "worst": 40.0,
+              "n": 5
+            },
+            "median_delta": 0.0
+          },
+          "js_heap_bytes": {
+            "before": {
+              "median": 4663908,
+              "worst": 5325500,
+              "n": 5
+            },
+            "after": {
+              "median": 5460252,
+              "worst": 6039868,
+              "n": 5
+            },
+            "median_delta": 796344
+          },
+          "renderer_rss_sum_bytes": {
+            "before": {
+              "median": 272273408,
+              "worst": 279109632,
+              "n": 5
+            },
+            "after": {
+              "median": 271187968,
+              "worst": 280186880,
+              "n": 5
+            },
+            "median_delta": -1085440
+          },
+          "long_task_counts": {
+            "before": 3,
+            "after": 1
+          }
+        },
+        "seasonal_preview": {
+          "lcp_ms": {
+            "before": {
+              "median": 320,
+              "worst": 768,
+              "n": 5
+            },
+            "after": {
+              "median": 296,
+              "worst": 316,
+              "n": 5
+            },
+            "median_delta": -24
+          },
+          "frame_p95_ms": {
+            "before": {
+              "median": 66.70000000000005,
+              "worst": 133.29999999999927,
+              "n": 5
+            },
+            "after": {
+              "median": 66.70000000000005,
+              "worst": 66.70000000000027,
+              "n": 5
+            },
+            "median_delta": 0.0
+          },
+          "interaction_duration_per_run_median_ms": {
+            "before": {
+              "median": 16.0,
+              "worst": 32.0,
+              "n": 5
+            },
+            "after": {
+              "median": 16.0,
+              "worst": 24,
+              "n": 5
+            },
+            "median_delta": 0.0
+          },
+          "js_heap_bytes": {
+            "before": {
+              "median": 10525448,
+              "worst": 14383912,
+              "n": 5
+            },
+            "after": {
+              "median": 13209052,
+              "worst": 16117004,
+              "n": 5
+            },
+            "median_delta": 2683604
+          },
+          "renderer_rss_sum_bytes": {
+            "before": {
+              "median": 291876864,
+              "worst": 294273024,
+              "n": 5
+            },
+            "after": {
+              "median": 287703040,
+              "worst": 321724416,
+              "n": 5
+            },
+            "median_delta": -4173824
+          },
+          "long_task_counts": {
+            "before": 11,
+            "after": 12
+          }
+        },
+        "wellness_care": {
+          "lcp_ms": {
+            "before": {
+              "median": 236,
+              "worst": 332,
+              "n": 5
+            },
+            "after": {
+              "median": 220,
+              "worst": 264,
+              "n": 5
+            },
+            "median_delta": -16
+          },
+          "frame_p95_ms": {
+            "before": {
+              "median": 16.799999999999955,
+              "worst": 16.800000000000182,
+              "n": 5
+            },
+            "after": {
+              "median": 16.799999999999955,
+              "worst": 16.80000000000001,
+              "n": 5
+            },
+            "median_delta": 0.0
+          },
+          "interaction_duration_per_run_median_ms": {
+            "before": {
+              "median": 48,
+              "worst": 48,
+              "n": 5
+            },
+            "after": {
+              "median": 32,
+              "worst": 40,
+              "n": 5
+            },
+            "median_delta": -16
+          },
+          "js_heap_bytes": {
+            "before": {
+              "median": 3227332,
+              "worst": 4528248,
+              "n": 5
+            },
+            "after": {
+              "median": 3260868,
+              "worst": 4504272,
+              "n": 5
+            },
+            "median_delta": 33536
+          },
+          "renderer_rss_sum_bytes": {
+            "before": {
+              "median": 250806272,
+              "worst": 258666496,
+              "n": 5
+            },
+            "after": {
+              "median": 249171968,
+              "worst": 251998208,
+              "n": 5
+            },
+            "median_delta": -1634304
+          },
+          "long_task_counts": {
+            "before": 1,
+            "after": 0
+          }
+        }
+      },
+      "home_encoded_delta": 1245,
+      "picker_encoded_delta": 2007
+    }
+  ],
+  "limits": [
+    "Event Timing reports events >=16 ms only; absent entries do not prove zero input latency.",
+    "Long tasks are page-wide and not attributed to avatar script without a trace.",
+    "Renderer RSS sums OS renderer-process resident pages; shared pages may be counted more than once. It is not private memory/PSS.",
+    "Hidden verification is reported per sample; false means browser did not hide the document.",
+    "Warm means prior navigation in the same context; resource timings distinguish actual cache hits.",
+    "Compression is a local controlled GZip proxy around the unmodified ASGI application."
+  ],
+  "gates": {
+    "css_js_added_le_15kib": true,
+    "home_added_le_30kib": true,
+    "picker_added_le_120kib": true,
+    "home_lcp_median_regression_le_100ms": true,
+    "home_interaction_median_regression_le_20ms": true,
+    "mobile_interaction_p95_medians_le_33ms": true,
+    "mobile_interaction_p95_all_runs_le_33ms": true,
+    "home_renderer_rss_median_growth_le_10mib": true,
+    "no_javascript_errors": true,
+    "no_external_requests": true
+  },
+  "css_js_gzip_delta_bytes": 124,
+  "requires_investigation": [
+    "Page-wide long tasks need attribution before declaring the avatar-specific long-task gate passed.",
+    "Renderer RSS must be compared at identical renderer-process counts; shared pages are not private memory.",
+    "The mobile hard frame gate applies to each sample; median-only reporting cannot hide slower samples.",
+    "Existing hidden/offscreen/picker/remount issues are retained; this tool does not approve release."
+  ]
+}

@@ -1,6 +1,6 @@
 # Avatar visual upgrade — phased execution plan for Sol
 
-Status: Increment 0 complete; reproducible baseline recorded with existing gate misses. Increment 1 is next. No artwork increments started.
+Status: Increments 0 and 1 complete. Increment 2 is next. Existing baseline release blockers remain recorded.
 Created: 2026-10-25
 Repository: jongsky25/css-is
 Owner request: Material improvement to companion artwork, optional animal dress-up,
@@ -284,7 +284,7 @@ browser tests ran.
 | Increment | Status | Commit | Visual evidence | Performance evidence / notes |
 |---|---|---|---|---|
 | 0 Baseline | Complete — baseline established; release gates remain unmet | `94269dd` + evidence/ledger revision | [51 sheets](avatars/sheets/index.json), [monthly overview](avatars/sheets/monthly-stage6-overview.png), [hero/moods](avatars/smoke/) | [Report](avatars/BASELINE_REPORT.md), [20 full samples + summary](avatars/application/summary.json), native hidden/touch check; existing frame, picker, timer and remount failures retained. |
-| 1 Cat + plant slice | Pending | — | — | — |
+| 1 Cat + plant slice | Complete — measured relative gates passed | `58cf98f`, `0be7fc3`, `ad4e7ad`, `d464461` + evidence revision | [Bare comparison](avatars/increment1/before-after-bare-light.png), [motion](avatars/increment1/before-after-motion.webm), [51 seasonal sheets](avatars/increment1/sheets/index.json) | [Report](avatars/increment1/REPORT.md), [20-sample comparison](avatars/increment1/comparison.json); 102 tests, native touch/keyboard/filter checks, sampled callback trace passed; baseline lifecycle/picker blockers retained. |
 | 2 Plants | Pending | — | — | — |
 | 3A Ground animals + bird | Pending | — | — | — |
 | 3B Swimmers + owl + bat | Pending | — | — | — |
@@ -337,3 +337,37 @@ Do not discard the slow sample, relax thresholds, or treat baseline completion a
 release approval. Artwork and behavior remain unchanged. Increment 1 can now use
 this baseline for its before/after gates; existing lifecycle issues remain release
 blockers to resolve during motion/integration work. No deployment performed.
+
+### Increment 1 completion — 2026-10-25
+
+Redesigned the cat and blossom plant across six anatomical/structural growth
+stages, with consistent palette/outline tokens, local UUID-scoped gradients and
+a documented head/neck/pot anchor contract. Gallery-only bandana and pot-wrap
+prototypes prove layering without persistence. No runtime JavaScript, scoring,
+care cooldown, account identity or seasonal policy changes. Other fourteen
+species are pixel-identical in 4,284 captured cells.
+
+Bare/prototype contact sheets cover 64px and hero size on three surfaces; the
+before/after motion recording and 51 monthly/seasonal sheets are retained.
+Corrected mature ear tuft ownership and kept stage 3 Seedling / stage 4 Budding
+semantics. Source and render-equivalence evidence identify these corrections.
+
+A first comparison passed aggregate budgets but targeted traces exposed long
+avatar callbacks in one replay. The final art uses drawn shadows instead of
+inherited SVG drop-shadow/color filters, keeping droopy pose/eyelid cues and
+opacity feedback. Historical diagnostics are retained separately. The final
+paired trace observed no avatar callback >50ms (maximum about 8.7ms); page-wide
+paint-task attribution remains limited as documented.
+
+Final comparison: twenty full-duration samples, five per viewport/cache case.
+LCP median deltas: desktop cold +8ms, desktop warm +4ms, mobile cold -60ms, mobile
+warm -12ms. All measured relative comparison gates passed; every final mobile
+interaction p95 was under 33ms, with no JavaScript errors or external requests.
+Added compressed CSS/JS 124B; largest median document increases Home 1,245B and
+picker/profile 2,008B. Renderer-RSS medians decreased in all cases.
+
+102 relevant tests passed; native hidden/touch/keyboard and computed-filter
+checks passed. No physical-device claim. Existing offscreen motion, hidden
+timers/initialization feedback, animated plant thumbnails and remount-listener
+retention remain release blockers for motion/integration work. Increment 2 is
+next; no deployment performed. See [the full report](avatars/increment1/REPORT.md).

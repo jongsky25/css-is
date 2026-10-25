@@ -1,0 +1,26 @@
+{
+  "reason": "Restore Seedling at stage 3 and Budding at stage 4; open flowers start at stage 5",
+  "measured_source_commit": "0be7fc3",
+  "before_art_sha256": "97e604d925fbb984899ef84506effe300884305151086224deaa37ffd749ceab",
+  "after_art_sha256": "6598f763f502881d6ae028a3f739a9af44f499a582dd64d80585ee3c8ec0cd3f",
+  "byte_identical_primary_fixture_checks": 391,
+  "byte_identical_unaffected_stage_checks": 1598,
+  "surfaces": [
+    "Home cat stage 1",
+    "16-species picker stage 2",
+    "cat growth stages 1..6"
+  ],
+  "variants": "bare, 12 months, witch/vampire/pumpkin/Christmas",
+  "shared_css_defs_identical": true,
+  "only_changed_species_stages": [
+    [
+      "plant",
+      3
+    ],
+    [
+      "plant",
+      4
+    ]
+  ],
+  "limitation": "Isolated art check applies the current frame/CSS to both versions. Final performance measurements independently cover the complete final code."
+}

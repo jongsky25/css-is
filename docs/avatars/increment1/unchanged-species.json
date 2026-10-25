@@ -1,0 +1,7 @@
+{
+  "species": 14,
+  "variants": 51,
+  "cells": 4284,
+  "pixel_identical": true,
+  "method": "Compare same 64px article crops in baseline/final PNGs; only cat and blossom plant excluded."
+}

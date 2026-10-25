@@ -1,0 +1,1 @@
+Historical measurements before removing the inherited SVG drop-shadow from the illustrated species. Aggregate gates passed, but targeted traces found avatar-related long tasks. Do not treat these results as final acceptance.

@@ -1,0 +1,382 @@
+{
+  "complete": false,
+  "groups": [
+    {
+      "mobile": false,
+      "cache": "cold",
+      "runs": 1,
+      "scenarios": {
+        "home_idle": {
+          "lcp_ms": {
+            "before": {
+              "median": 324,
+              "worst": 660,
+              "n": 5
+            },
+            "after": {
+              "median": 748,
+              "worst": 748,
+              "n": 1
+            },
+            "median_delta": 424
+          },
+          "frame_p95_ms": {
+            "before": {
+              "median": 16.799999999999272,
+              "worst": 16.799999999999272,
+              "n": 5
+            },
+            "after": {
+              "median": 16.799999999999272,
+              "worst": 16.799999999999272,
+              "n": 1
+            },
+            "median_delta": 0.0
+          },
+          "js_heap_bytes": {
+            "before": {
+              "median": 2691916,
+              "worst": 2855904,
+              "n": 5
+            },
+            "after": {
+              "median": 2654480,
+              "worst": 2654480,
+              "n": 1
+            },
+            "median_delta": -37436
+          },
+          "renderer_rss_sum_bytes": {
+            "before": {
+              "median": 239316992,
+              "worst": 271708160,
+              "n": 5
+            },
+            "after": {
+              "median": 228077568,
+              "worst": 228077568,
+              "n": 1
+            },
+            "median_delta": -11239424
+          },
+          "long_task_counts": {
+            "before": 5,
+            "after": 15
+          }
+        },
+        "home_interaction": {
+          "lcp_ms": {
+            "before": {
+              "median": 324,
+              "worst": 660,
+              "n": 5
+            },
+            "after": {
+              "median": 748,
+              "worst": 748,
+              "n": 1
+            },
+            "median_delta": 424
+          },
+          "frame_p95_ms": {
+            "before": {
+              "median": 16.799999999995634,
+              "worst": 16.799999999995634,
+              "n": 5
+            },
+            "after": {
+              "median": 33.30000000000291,
+              "worst": 33.30000000000291,
+              "n": 1
+            },
+            "median_delta": 16.500000000007276
+          },
+          "interaction_duration_per_run_median_ms": {
+            "before": {
+              "median": 32,
+              "worst": 32,
+              "n": 5
+            },
+            "after": {
+              "median": 32,
+              "worst": 32,
+              "n": 1
+            },
+            "median_delta": 0
+          },
+          "js_heap_bytes": {
+            "before": {
+              "median": 3446056,
+              "worst": 3994552,
+              "n": 5
+            },
+            "after": {
+              "median": 3240320,
+              "worst": 3240320,
+              "n": 1
+            },
+            "median_delta": -205736
+          },
+          "renderer_rss_sum_bytes": {
+            "before": {
+              "median": 252030976,
+              "worst": 308822016,
+              "n": 5
+            },
+            "after": {
+              "median": 245886976,
+              "worst": 245886976,
+              "n": 1
+            },
+            "median_delta": -6144000
+          },
+          "long_task_counts": {
+            "before": 2,
+            "after": 33
+          }
+        },
+        "picker_growth": {
+          "lcp_ms": {
+            "before": {
+              "median": 152,
+              "worst": 180,
+              "n": 5
+            },
+            "after": {
+              "median": 684,
+              "worst": 684,
+              "n": 1
+            },
+            "median_delta": 532
+          },
+          "frame_p95_ms": {
+            "before": {
+              "median": 16.700000000000273,
+              "worst": 16.799999999999727,
+              "n": 5
+            },
+            "after": {
+              "median": 83.40000000000009,
+              "worst": 83.40000000000009,
+              "n": 1
+            },
+            "median_delta": 66.69999999999982
+          },
+          "interaction_duration_per_run_median_ms": {
+            "before": {
+              "median": 24.0,
+              "worst": 24.0,
+              "n": 5
+            },
+            "after": {
+              "median": 36.0,
+              "worst": 36.0,
+              "n": 1
+            },
+            "median_delta": 12.0
+          },
+          "js_heap_bytes": {
+            "before": {
+              "median": 5681380,
+              "worst": 5903952,
+              "n": 5
+            },
+            "after": {
+              "median": 5035472,
+              "worst": 5035472,
+              "n": 1
+            },
+            "median_delta": -645908
+          },
+          "renderer_rss_sum_bytes": {
+            "before": {
+              "median": 281333760,
+              "worst": 335593472,
+              "n": 5
+            },
+            "after": {
+              "median": 273829888,
+              "worst": 273829888,
+              "n": 1
+            },
+            "median_delta": -7503872
+          },
+          "long_task_counts": {
+            "before": 0,
+            "after": 5
+          }
+        },
+        "seasonal_preview": {
+          "lcp_ms": {
+            "before": {
+              "median": 168,
+              "worst": 208,
+              "n": 5
+            },
+            "after": {
+              "median": 740,
+              "worst": 740,
+              "n": 1
+            },
+            "median_delta": 572
+          },
+          "frame_p95_ms": {
+            "before": {
+              "median": 16.700000000000045,
+              "worst": 16.799999999999955,
+              "n": 5
+            },
+            "after": {
+              "median": 216.5999999999999,
+              "worst": 216.5999999999999,
+              "n": 1
+            },
+            "median_delta": 199.89999999999986
+          },
+          "interaction_duration_per_run_median_ms": {
+            "before": {
+              "median": 28.0,
+              "worst": 40,
+              "n": 5
+            },
+            "after": {
+              "median": 16.0,
+              "worst": 16.0,
+              "n": 1
+            },
+            "median_delta": -12.0
+          },
+          "js_heap_bytes": {
+            "before": {
+              "median": 10965096,
+              "worst": 12729956,
+              "n": 5
+            },
+            "after": {
+              "median": 10852304,
+              "worst": 10852304,
+              "n": 1
+            },
+            "median_delta": -112792
+          },
+          "renderer_rss_sum_bytes": {
+            "before": {
+              "median": 317214720,
+              "worst": 352616448,
+              "n": 5
+            },
+            "after": {
+              "median": 305987584,
+              "worst": 305987584,
+              "n": 1
+            },
+            "median_delta": -11227136
+          },
+          "long_task_counts": {
+            "before": 0,
+            "after": 4
+          }
+        },
+        "wellness_care": {
+          "lcp_ms": {
+            "before": {
+              "median": 112,
+              "worst": 192,
+              "n": 5
+            },
+            "after": {
+              "median": 604,
+              "worst": 604,
+              "n": 1
+            },
+            "median_delta": 492
+          },
+          "frame_p95_ms": {
+            "before": {
+              "median": 16.799999999999727,
+              "worst": 16.799999999999727,
+              "n": 5
+            },
+            "after": {
+              "median": 50,
+              "worst": 50,
+              "n": 1
+            },
+            "median_delta": 33.20000000000027
+          },
+          "interaction_duration_per_run_median_ms": {
+            "before": {
+              "median": 24,
+              "worst": 32,
+              "n": 5
+            },
+            "after": {
+              "median": 24,
+              "worst": 24,
+              "n": 1
+            },
+            "median_delta": 0
+          },
+          "js_heap_bytes": {
+            "before": {
+              "median": 3228836,
+              "worst": 4471552,
+              "n": 5
+            },
+            "after": {
+              "median": 3229432,
+              "worst": 3229432,
+              "n": 1
+            },
+            "median_delta": 596
+          },
+          "renderer_rss_sum_bytes": {
+            "before": {
+              "median": 258244608,
+              "worst": 315314176,
+              "n": 5
+            },
+            "after": {
+              "median": 254464000,
+              "worst": 254464000,
+              "n": 1
+            },
+            "median_delta": -3780608
+          },
+          "long_task_counts": {
+            "before": 2,
+            "after": 4
+          }
+        }
+      },
+      "home_encoded_delta": 1165,
+      "picker_encoded_delta": 1918
+    }
+  ],
+  "limits": [
+    "Event Timing reports events >=16 ms only; absent entries do not prove zero input latency.",
+    "Long tasks are page-wide and not attributed to avatar script without a trace.",
+    "Renderer RSS sums OS renderer-process resident pages; shared pages may be counted more than once. It is not private memory/PSS.",
+    "Hidden verification is reported per sample; false means browser did not hide the document.",
+    "Warm means prior navigation in the same context; resource timings distinguish actual cache hits.",
+    "Compression is a local controlled GZip proxy around the unmodified ASGI application."
+  ],
+  "gates": {
+    "css_js_added_le_15kib": true,
+    "home_added_le_30kib": true,
+    "picker_added_le_120kib": true,
+    "home_lcp_median_regression_le_100ms": false,
+    "home_interaction_median_regression_le_20ms": true,
+    "mobile_interaction_p95_medians_le_33ms": true,
+    "home_renderer_rss_median_growth_le_10mib": true,
+    "no_javascript_errors": true,
+    "no_external_requests": true
+  },
+  "css_js_gzip_delta_bytes": 39,
+  "requires_investigation": [
+    "Page-wide long tasks need attribution before declaring the avatar-specific long-task gate passed.",
+    "Renderer RSS must be compared at identical renderer-process counts; shared pages are not private memory.",
+    "The mobile hard frame gate applies to each sample; median-only reporting cannot hide slower samples.",
+    "Existing hidden/offscreen/picker/remount issues are retained; this tool does not approve release."
+  ]
+}

@@ -16,8 +16,9 @@
     .av-cap/.av-spore    mushroom cap + spores  .av-bubbles     fish bubbles
     .av-food             the species' hidden treat (feeding arc)
     .av-soil/.av-soilwet pot soil + its darker watered overlay
-  Gradients live in ONE shared defs block emitted by avatar_defs() in
-  _avatars.html (ids avg-*) — never per-svg, or 16 pickers-cards would collide.
+  Legacy gradients live in the once-per-page avatar_defs() block (avg-*).
+  Illustrated cat/plant gradients are local to each avatar_svg(), with a unique
+  UUID prefix passed as scope. Repeated SVG copies never reuse those local IDs.
 
   Growth stays the original idea: features accrete across {% if s >= N %} gates
   so the companion visibly grows up with the wellness level.
