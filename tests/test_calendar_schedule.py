@@ -121,7 +121,8 @@ def test_preferred_schedule_and_empty_invalid_or_oversized_fallback(viewer,conn,
         'query':dict(saved.context['request'].query_params)}
     empty=viewer.get('/calendar?view=schedule&day=2031-01-06&q=CALSP')
     assert empty.context['schedule']['events']==[] and 'Nothing else planned for this week' in empty.text
-    assert viewer.get('/calendar?view=schedule&day=bad',follow_redirects=False).status_code==303
+    for invalid in ['bad','0001-01-01','9999-12-31']:
+        assert viewer.get('/calendar?view=schedule&day='+invalid,follow_redirects=False).status_code==303
     seed(conn,'CALSP One');seed(conn,'CALSP Two');monkeypatch.setattr(sc,'MAX_ITEMS',1)
     response=viewer.get('/calendar?view=schedule&day='+DAY+'&q=CALSP')
     assert 'CALSP One' in response.text and 'CALSP Two' in response.text

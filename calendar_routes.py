@@ -150,13 +150,15 @@ def build_calendar_page(conn, user, today, q, *, base="/calendar", layout_key="v
         elif layout in ("week", "schedule"):
             start = oc.monday_of(date.fromisoformat(q["day"]) if q.get("day") else today)
             end = start + timedelta(days=4 if layout == "week" else 6)
+            if layout == 'schedule':
+                previous, following = start-timedelta(days=7), start+timedelta(days=7)
         elif layout == "timeline":
             start = oc.monday_of(date.fromisoformat(q["day"]) if q.get("day") else today)
             end = start + timedelta(days=7 * oc.TIMELINE_WEEKS - 1)
         else:
             start = date.fromisoformat(q["day"]) if q.get("day") else today
             end = start + timedelta(days=AGENDA_DAYS - 1)
-    except ValueError:
+    except (ValueError, OverflowError):
         return None                             # a hand-typed or stale date: caller falls back to today
     filters, clean = _filters(q.get("kind", ""), q.get("status", ""), q.get("tag", ""), q.get("unit", ""),
                               q.get("q", ""))
@@ -234,8 +236,7 @@ def build_calendar_page(conn, user, today, q, *, base="/calendar", layout_key="v
         hidden += [(layout_key, 'schedule'), ('day', selected.isoformat())]
         page.update(schedule=calendar_schedule.snapshot(items, start, end, today, selected),
                     days=oc.agenda_days(items, start, end, today),
-                    prev_day=(start-timedelta(days=7)).isoformat(),
-                    next_day=(start+timedelta(days=7)).isoformat(),
+                    prev_day=previous.isoformat(), next_day=following.isoformat(),
                     is_today_window=start <= today <= end, add_day=selected.isoformat(),
                     range_label=f"{start.strftime('%b %d')} – {end.strftime('%b %d, %Y')} · {n} {noun}")
         page['quick']['next'] = qs(day=selected.isoformat())
