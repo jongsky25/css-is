@@ -21,7 +21,7 @@
       initialDate: snapshot.selected, now: snapshot.today, firstDay: 1,
       timeZone: snapshot.zone, validRange: { start: snapshot.start, end: snapshot.end },
       headerToolbar: false, height: 620, scrollTime: '07:00:00',
-      slotDuration: '00:30:00', allDayText: 'All-day / time not set',
+      slotDuration: '00:30:00', allDayText: 'All-day / time not set', dayMaxEventRows: 4,
       eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
       slotLabelFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
       editable: false, selectable: false, droppable: false, eventInteractive: false,

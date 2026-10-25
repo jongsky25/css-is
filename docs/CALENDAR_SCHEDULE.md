@@ -16,6 +16,8 @@ The timezone and caption come from `tzutil.LOCAL_TZ`, including `CSS_TZ_OFFSET` 
 
 **Show weekly list** opens the complete native list and moves focus to its heading. That list works without JavaScript and remains available when the widget is unavailable. Printing uses the list. If more than **500** filtered items occur in the week, or an interval is invalid, the entire grid is withheld while the complete list remains readable. The grid never silently truncates a week. Long labels are compacted inside timed blocks; the full accessible label, tooltip and native list retain them.
 
+Busy all-day rows use four visible levels with explicit **more** counts and a keyboard-openable popover. This keeps a day with many untimed imports from consuming the hourly viewport. The complete weekly list still includes every item.
+
 All labels are text nodes, never staff-supplied HTML. Source destinations must be local paths. Static assets are locally vendored; the widget makes no external data, font or analytics requests. Existing destination routes recheck current access. This pilot sends no notifications.
 
 ## Dependency choice and provenance

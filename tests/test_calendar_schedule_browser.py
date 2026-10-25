@@ -91,6 +91,24 @@ def test_resizing_keeps_selected_day_and_focus_without_changing_week(schedule_pa
     assert page.url==before and not errors and not writes
 
 
+def test_busy_untimed_day_keeps_hours_usable_and_every_item_available(schedule_page):
+    page,conn,base,errors,writes=schedule_page;seed(conn)
+    for n in range(25):
+        st.cal_create(conn,f'CALSP Untimed {n}','2026-10-20',audience='bureau')
+    page.goto(base+'/calendar?view=schedule&day=2026-10-20&q=CALSP')
+    expect(page.locator('[data-schedule-status]')).to_contain_text('Hour grid ready')
+    page.wait_for_function("document.querySelector('#cal-schedule-grid .fc-timegrid-body').parentElement.clientHeight>150",timeout=5000)
+    more=page.locator('#cal-schedule-grid .fc-more-link').first
+    expect(more).to_contain_text('more')
+    more.focus();more.press('Enter')
+    expect(page.locator('#cal-schedule-grid .fc-popover')).to_be_visible()
+    assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
+    page.get_by_role('button',name='Show weekly list').click()
+    for n in range(25):
+        expect(page.locator('#cal-schedule-list').get_by_text(f'CALSP Untimed {n}',exact=True)).to_be_visible()
+    assert not errors and not writes
+
+
 @pytest.mark.parametrize('scripts',[False,True])
 def test_native_or_blocked_bundle_retains_complete_readable_week(schedule_page,scripts):
     page,conn,base,errors,writes=schedule_page;seed(conn)
