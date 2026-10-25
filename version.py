@@ -18,18 +18,27 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "8.57"
+APP_VERSION = "8.58"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
-        "version": "8.57",
+        "version": "8.58",
         "date": "October 25, 2026",
         "summary": "Find pages, guides and colleagues even with small spelling mistakes.",
         "changes": [
             "Search keeps exact results first and labels spelling suggestions as Close match.",
             "Search suggestions follow your existing page, guide and colleague access rules.",
             "Automatic page tours now wait when you are using search, keeping keyboard focus in your search box."
+        ]
+    },
+    {
+        "version": "8.56",
+        "date": "October 25, 2026",
+        "summary": "Prepare an optional private Telegram help pilot.",
+        "changes": [
+            "An optional Telegram pilot can answer private /start and /help commands when enabled by the hosting administrator.",
+            "Account linking and office actions remain unavailable, and the pilot stays off by default."
         ]
     },
     {

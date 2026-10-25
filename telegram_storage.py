@@ -1,4 +1,4 @@
-"""Inert two-way Telegram storage. No receiver, sender or business actions."""
+"""Durable two-way Telegram storage. Business actions remain separately gated."""
 import os
 
 
@@ -30,6 +30,7 @@ def install(conn):
       CHECK((state='revoked') = (revoked_at IS NOT NULL)));
     CREATE UNIQUE INDEX IF NOT EXISTS telegram_account_live
       ON telegram_connection(account_id) WHERE revoked_at IS NULL;
+    CREATE INDEX IF NOT EXISTS telegram_sender_history ON telegram_connection(telegram_user_id,id);
     CREATE UNIQUE INDEX IF NOT EXISTS telegram_sender_live
       ON telegram_connection(telegram_user_id) WHERE revoked_at IS NULL;
 
@@ -47,6 +48,8 @@ def install(conn):
       claim_token TEXT, lease_until TEXT, error_code TEXT,
       UNIQUE(bot_identity,update_id));
     CREATE INDEX IF NOT EXISTS telegram_update_queue ON telegram_update(state,lease_until,id);
+    CREATE INDEX IF NOT EXISTS telegram_update_rate ON telegram_update(received_at);
+    CREATE INDEX IF NOT EXISTS telegram_update_sender_rate ON telegram_update(sender_id,received_at);
 
     CREATE TABLE IF NOT EXISTS telegram_operation (
       operation_id TEXT PRIMARY KEY NOT NULL,
@@ -75,6 +78,8 @@ def install(conn):
       provider_message_id INTEGER, error_code TEXT,
       created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
     CREATE INDEX IF NOT EXISTS telegram_delivery_queue ON telegram_delivery(state,retry_at,id);
+    CREATE INDEX IF NOT EXISTS telegram_delivery_destination ON telegram_delivery(chat_id,state,updated_at);
+    CREATE INDEX IF NOT EXISTS telegram_delivery_retention ON telegram_delivery(state,updated_at);
     ''')
 
 

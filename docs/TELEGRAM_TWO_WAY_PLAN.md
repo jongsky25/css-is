@@ -1,6 +1,6 @@
 # Office Connect ↔ Telegram delivery plan
 
-Status: T0 merged; T1.1 in review; two-way capabilities remain inactive.
+Status: T0 and T1.1 merged; T1.2 in review; two-way capabilities remain inactive.
 Last updated: 2026-10-25.
 Repository: jongsky25/css-is.
 Planning baseline inspected: abf3141 (merge of PR #458).
@@ -126,14 +126,15 @@ Google/Outlook two-way calendar synchronization, external free/busy, automatic v
 
 ## Progress ledger
 
-T0 merged in PR #465 at `4cd01a0bfd17ccf57dba12b05a24c72bfd098f29`. T1.1 is underway; T1.2–T7 remain planned. All two-way capabilities remain inactive.
+T0 merged in PR #465 at `4cd01a0bfd17ccf57dba12b05a24c72bfd098f29`. T1.1 merged in PR #466 at `bef000127846aebb9fc1176c190664797d262eb4`. T1.2 is in review; T1.3–T7 remain planned. All two-way capabilities remain inactive.
 
 | Increment | Status | Owner / date | PR / commit | Evidence | Activation / next action |
 | --- | --- | --- | --- | --- | --- |
 | Planning document | Published | Codex / 2026-10-25 | See GitHub file history | Source inspection at abf3141; documentation-only change | Plan available for cross-chat handoff |
 | T0 | Merged | Codex / 2026-10-25 | [PR #465](https://github.com/jongsky25/css-is/pull/465), `docs/telegram-t0-contract` | [Source-backed design contract](TELEGRAM_T0_CONTRACT.md); main reconciled at f9e868e; checks below | Merged at `4cd01a0bfd17ccf57dba12b05a24c72bfd098f29`; live deployment unverified |
-| T1.1 | In review | Codex / 2026-10-25 | [PR #466](https://github.com/jongsky25/css-is/pull/466), `feat/telegram-t1-1-storage` | Four inert tables, independent default-off switches, migration/restart/restore and digest checks passed | Release 8.55 candidate; no activation or live verification; next T1.2 after merge |
-| T1.2–T7 | Planned | Unassigned | — | Not implemented | Follow dependencies |
+| T1.1 | Merged | Codex / 2026-10-25 | [PR #466](https://github.com/jongsky25/css-is/pull/466), `feat/telegram-t1-1-storage` | Four inert tables, independent default-off switches, migration/restart/restore and digest checks passed | Merged at `bef000127846aebb9fc1176c190664797d262eb4`; live deployment unverified |
+| T1.2 | In review | Codex / 2026-10-25 | [PR #467](https://github.com/jongsky25/css-is/pull/467), `feat/telegram-t1-2-webhook` | Authenticated intake, durable deduplication, private help, bounded delivery; checks below | Release 8.56 candidate; switches off, no linking/business actions or live verification |
+| T1.3–T7 | Planned | Unassigned | — | Not implemented | Follow dependencies |
 
 ### T0 handoff — 2026-10-25
 
@@ -147,7 +148,7 @@ T0 merged in PR #465 at `4cd01a0bfd17ccf57dba12b05a24c72bfd098f29`. T1.1 is unde
 
 ### T1.1 operator and implementation handoff — 2026-10-25
 
-- Owner/branch: Codex, `feat/telegram-t1-1-storage`, based on T0 merge `4cd01a0`. [PR #466](https://github.com/jongsky25/css-is/pull/466) opened 2026-10-25; implementation commit `0b32c19`; in review, not merged.
+- Owner/branch: Codex, `feat/telegram-t1-1-storage`, based on T0 merge `4cd01a0`. [PR #466](https://github.com/jongsky25/css-is/pull/466) opened 2026-10-25; implementation commit `0b32c19`; merged at `bef000127846aebb9fc1176c190664797d262eb4`.
 - Scope: additive `telegram_storage.install` via `storage.init_db`; four empty tables and independent exact-`1` environment switches from the T0 contract. No receiver, transport, scheduler, account linking, grants or business actions. The host upload closure includes the new module.
 - Migration: normal application initialization installs tables/indexes idempotently. Existing business rows and Apprise digest preferences are preserved. No database topology change. A normal process restart preserves rows, claims and generations; this increment does not execute or recover queued work.
 - Restore: all current `app.py` snapshot/seed hydration paths call `backups.clear_restored_sessions`; deliberate `backups.restore_backup` does too. That hook now pauses two-way connections even for routine snapshot recovery, rotates random generations, clears received payloads and stale claims, cancels pending operations/updates/deliveries and marks interrupted sends uncertain. Committed/partial/failed receipts and provider acceptance metadata remain. Legacy snapshots without these tables are supported. Future grant/group/preview increments must extend the hook when their tables exist.
@@ -159,8 +160,24 @@ T0 merged in PR #465 at `4cd01a0bfd17ccf57dba12b05a24c72bfd098f29`. T1.1 is unde
   - After adding actual `make_backup`/`restore_backup` coverage and invalid-state checks: `python -m pytest tests/test_telegram_storage.py --tb=short`: all 18 passed.
   - `python -m pytest tests/test_work.py -k 'digest or notification_preferences or routine_bell or quiet_preferences' --tb=short -q`: passed (exit 0).
   - `git diff --check`, release metadata (`--base origin/main`), dependency lock, vendor integrity, AI evaluation contract, compile checks and `pip check`: passed. Existing Starlette/httpx deprecation warning only. Full repository/browser suites were not run; no UI changed.
-- Release metadata: 8.55 in version/changelog/service-worker cache, satisfying the unconditional release gate. Implementation awaits PR review/merge; no deployed SHA or live evidence available.
+- Release metadata: 8.55 in version/changelog/service-worker cache, satisfying the unconditional release gate. T1.1 merged as PR #466; no deployed SHA or live evidence available.
 - Next: T1.2 authenticated update ingestion, durable deduplication, private `/start` and `/help`, bounded handling. Do not bundle linking or calendar actions.
+
+### T1.2 implementation and operator handoff — 2026-10-25
+
+- Owner/branch: Codex, `feat/telegram-t1-2-webhook`, based on T1.1 merge `bef0001`. [PR #467](https://github.com/jongsky25/css-is/pull/467) opened 2026-10-25; implementation commit `a86b6f8`. Release 8.56 candidate; in review, not merged or pilot verified.
+- Delivered: `telegram_bot.py` authenticated webhook, durable receipt and rate limits, neutral private `/start` and `/help`, database-backed help queue and bounded processing/delivery; `telegram_transport.py` one fixed-provider Bot API attempt with bounded response, TLS, no redirects/retries or provider-body logging. Added scheduler call, exact public/Origin exception and runtime upload closure. Storage adds five indexes for rate checks, destination/connection history and retention only; no new tables or business workflows.
+- Scope clarification: `/start` does **not** create a link challenge yet; T1.3 owns account linking. Group messages, callbacks, edited messages and unsupported commands are durably ignored. No arbitrary text, names, usernames, link arguments or provider response bodies are saved. Only neutral private help can be rendered/sent. Existing digest behavior stays separate.
+- Processing/recovery: commit receipt before HTTP 200. Duplicate provider update IDs return the existing acknowledgement, even at the rate limit. Up to 20 updates/tick; help enqueue and processed marker share one transaction. Up to 20 delivery candidates/tick, one per destination per second after acceptance, with committed sending markers and conditional finalizers. Expired internal processing/claimed leases can recover; interrupted sending becomes uncertain and never auto-resends. Restore cancels pending work and fences in-flight finalizers. Current account/connection generation, configuration fingerprint, switch and private destination are rechecked before sending.
+- Failure handling: only definite Telegram 429 rejection enters retry_wait (honor retry_after up to the 24-hour expiry, max five attempts). Permanent 4xx rejection fails that attempt and suppresses older queued replies for the destination; a **new authenticated private command**, after the rejection, is required to attempt another neutral reply. This refines the T0 destination-pause rule for an unlinked help-only bot without adding a destination management workflow. Network timeout, ambiguous 5xx, malformed/mismatched response and interrupted sends stay uncertain. Accepted means provider acceptance, not reading.
+- Retention: input content is never persisted; minimal help descriptors are cleared on processing. Each tick scrubs routing/payload fields from at most 20 update receipts older than seven days while keeping ID/hash tombstones for deduplication, and deletes at most 20 terminal delivery rows older than 180 days. Pending help expires 24 hours after receipt. No task/calendar operation cleanup exists yet because this increment creates no business operations.
+- Activation: leave all switches unset/0 for this PR. A later help-only operator pilot requires validated `CSS_TELEGRAM_BOT_TOKEN`, a random 32–256 character `[A-Za-z0-9_-]` `CSS_TELEGRAM_WEBHOOK_SECRET`, `CSS_TELEGRAM_INBOUND_ENABLED=1` and `CSS_TELEGRAM_DELIVERY_ENABLED=1`. All link/group/read/write/reminder switches remain 0. Register exactly `POST /integrations/telegram/webhook` on the canonical verified HTTPS origin through Telegram setWebhook with the matching secret_token; no polling/getUpdates or automatic registration is performed by the app. Do not put tokens into shell history, URLs in logs or the Markdown.
+- Before enabling: verify actual deployed SHA, durable local DB/snapshot paths and restore behavior, public HTTPS routing, bot ownership, provider egress, and one webhook owner. Use a synthetic private account to check `/start`, `/help`, duplicate update handling and restart before introducing real staff. No such hosted pilot was performed in this increment.
+- Pause/rollback: disable inbound (503/no new receipts) and delivery independently. Queued help may wait until expiry; processing requires inbound on. Uncertain attempts never resume automatically. Disable both before rollback or webhook removal. Preserve receipts/tombstones; never reset IDs or bulk replay pending updates. A fresh user command may request another help response; it does not authorize replay of an uncertain send or any business action. Existing Apprise digests are controlled independently.
+- Tests: with hash-locked `/tmp/telegram-test-venv` and `CSS_TEST_NOW=2026-10-20T06:00:00`, `python -m pytest tests/test_telegram_bot.py tests/test_telegram_transport.py tests/test_telegram_storage.py tests/test_work_channels.py tests/test_deploy_hf.py tests/test_release_checks.py --tb=short --junitxml=/tmp/telegram-t1-2.xml` passed **126 tests**. `python -m pytest tests/test_request_origin.py tests/test_backups.py tests/test_phase0_persistence.py tests/test_persist_health.py tests/test_work.py -k 'not browser' --tb=short --junitxml=/tmp/telegram-t1-2-regressions.xml` passed **252 tests**. Coverage includes real application middleware, two concurrent receipt writers and send workers, enqueue rollback, restart, restore during send, credential-safe logs, bounds, rate limits, expiry, retries, retention and fixed-provider payload. No real network sends, credentials or staff data used. Full repository/browser suites were not run; no UI changed.
+- Additional gates passed: diff whitespace, Python compilation, dependency lock, vendor integrity, AI evaluation contract, pip compatibility, release metadata 8.56 and both JUnit reports (no failures/skips). Existing Starlette/httpx deprecation warning only.
+- Remaining gaps: no account linking/status/disconnect UI, group registration, calendar/room reads or writes. Production configuration and live behavior remain unverified; all two-way switches stay off by default. No external provider registration or activation performed.
+- Next ready after T1.2 review/merge: T1.3 account link/status/disconnect and revocation, with expiring single-use challenge, cross-account and replay checks, action-specific consent and restore invalidation for its new tables.
 
 ### Per-increment handoff template
 
@@ -183,3 +200,5 @@ T0 merged in PR #465 at `4cd01a0bfd17ccf57dba12b05a24c72bfd098f29`. T1.1 is unde
 - 2026-10-25: T0 selected as first ready increment; documented the implementation contract against f9e868e. No runtime behavior or production activation changed.
 
 - 2026-10-25: User authorized T0 merge and next increment. T0 merged as PR #465; T1.1 started separately with inert storage and restore fencing.
+
+- 2026-10-25: User authorized T1.1 merge and next increment. PR #466 merged at bef0001; T1.2 implemented separately. Neutral help uses fresh private commands to recover from permanent rejection; business actions remain out of scope.
