@@ -1,0 +1,6 @@
+{
+  "source": "765bd42",
+  "reason": "Focused fern run1 reports cache-refresh RAF84.6ms including84.5ms forced layout. ResizeObserver currently invalidates and defers measurement to next pre-render RAF, allowing intervening writes. Capture geometry during ResizeObserver completed-layout delivery instead.",
+  "retained_all_completed_samples": true,
+  "budgets_unchanged": true
+}

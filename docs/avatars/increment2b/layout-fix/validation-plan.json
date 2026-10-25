@@ -18,5 +18,6 @@
   "no_threshold_changes": true,
   "no_sample_replacement": true,
   "no_production_deployment": true,
-  "final_source_followup": "Share geometry scheduler/body observer and global listeners across repeated script evaluation; test20 evaluations with unchanged listener counts. Partial b2c9b82 cohort retained under pre-lifecycle-fix; not used for acceptance."
+  "final_source_followup": "Share geometry scheduler/body observer and global listeners across repeated script evaluation; test20 evaluations with unchanged listener counts. Partial b2c9b82 cohort retained under pre-lifecycle-fix; not used for acceptance.",
+  "observer_phase_fix": "765bd42 stopped after real fern forced-layout failure (cache-refresh RAF84.6ms,84.5ms layout); retain all complete samples under pre-observer-phase-fix. ResizeObserver now captures geometry in post-layout delivery instead of invalidating and scheduling a pre-render read in the next frame."
 }

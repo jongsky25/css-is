@@ -72,14 +72,18 @@
     if (window.ResizeObserver) {
       var observer = new ResizeObserver(function () {
         if (!w.isConnected) { observer.disconnect(); return; }
-        w._avGeometry = null;
-        queueGeometry();
+        // ResizeObserver runs after layout. Snapshot now: deferring the read
+        // to next frame lets intervening animation writes dirty layout again.
+        measureGeometry(w);
       });
       observer.observe(w);
       var play = w.closest(".av-play");
       if (play) observer.observe(play);
       if (!geometryState.bodyObserver && document.body) {
-        geometryState.bodyObserver = new ResizeObserver(invalidateGeometry);
+        geometryState.bodyObserver = new ResizeObserver(function () {
+          var wraps = document.querySelectorAll(".avwrap[data-interactive]");
+          for (var i = 0; i < wraps.length; i++) measureGeometry(wraps[i]);
+        });
         geometryState.bodyObserver.observe(document.body);
       }
     }

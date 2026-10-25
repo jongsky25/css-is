@@ -5,4 +5,4 @@ tests/test_avatar_geometry_browser.py::test_cached_geometry_preserves_drag_chase
     from starlette.testclient import TestClient
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-4 passed, 1 warning in 17.41s
+4 passed, 1 warning in 15.50s

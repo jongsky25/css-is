@@ -8,4 +8,4 @@ tests/test_home_request_reads.py:10
     from starlette.testclient import TestClient
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-260 passed, 1 warning in 52.66s
+260 passed, 1 warning in 56.91s
