@@ -165,7 +165,7 @@ different hash returns conflict. Receipt recovery cannot disclose revoked data.
 | Expired/foreign/stale preview | Deny with neutral reason; create a new preview, no partial mutation. |
 | Meeting succeeds, room fails | Persist meeting receipt and room failure separately; report partial result with source link. Retry room child operation after a new preview, reusing meeting ID. |
 | Account/grant/module/group revoked after enqueue | Suppress at next commit/send; fence stale finalizers. A network send already in flight cannot be unsent; record that limitation. |
-| Provider 429 or definite rejection before acceptance | Record safe error, honor retry_after for 429; bounded exponential retries (max 5 attempts, 24 hours). Permanent 400/403 fails and pauses invalid destination. |
+| Provider 429 or definite rejection before acceptance | Record safe error, honor retry_after for 429; bounded exponential retries (max 5 attempts, 24 hours). Permanent 400/403 fails and pauses invalid destination. For T1.2 neutral help only, a fresh authenticated private command may request a new reply; older queued replies stay suppressed. |
 | Timeout, connection loss after request, crash while sending, ambiguous 5xx | Mark uncertain, no automatic resend. Operator may inspect provider evidence or explicitly enqueue a replacement with duplicate warning. |
 | Process restart | Reclaim expired internal-processing leases; expired sending leases become uncertain. Never retry a business action without its operation identity. |
 | Backup restore / stale snapshot | Pause all two-way execution and sends; reconcile possible lost receipts and Telegram pending updates before reactivation. No exactly-once guarantee across snapshot rollback. |

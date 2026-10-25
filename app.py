@@ -1938,7 +1938,7 @@ _PUBLIC_PREFIXES = ("/r/", "/photo/", "/e/", "/static/", "/lang/", "/wellness/de
 _PUBLIC_EXACT = {"/room", "/room/", "/room/day", "/seq", "/login", "/logout", "/favicon.ico",
                  "/set-password", "/forgot", "/reset-password", "/health",
                  "/sw.js", "/manifest.webmanifest",
-                 "/offsite-backup/ping", "/integrations/gmail/documents"}   # machine callbacks enforce their own authentication
+                 "/offsite-backup/ping", "/integrations/gmail/documents", "/integrations/telegram/webhook"}   # machine callbacks enforce their own authentication
 
 # These responses have no account-dependent content. Keep this narrower than
 # _PUBLIC_*: public surveys, directory photos and machine callbacks still use
@@ -5037,6 +5037,17 @@ def _work_channels_tick():
         conn.close()
 
 
+def _telegram_tick():
+    import telegram_bot
+    if not (telegram_bot.storage.enabled('inbound') or telegram_bot.storage.enabled('delivery')):
+        return (0, 0)
+    conn = st.connect(DB)
+    try:
+        return telegram_bot.tick(conn)
+    finally:
+        conn.close()
+
+
 async def _scheduler_loop():
     while True:
         try:
@@ -5075,6 +5086,10 @@ async def _scheduler_loop():
         try:
             await asyncio.to_thread(_work_channels_tick)
         except Exception:         # noqa: BLE001 — channel failures never stop other jobs
+            pass
+        try:
+            await asyncio.to_thread(_telegram_tick)
+        except Exception:         # Telegram failure cannot stop other scheduled jobs
             pass
         await asyncio.sleep(_SCHED_TICK)
 
@@ -17592,6 +17607,8 @@ import documents_intake_routes
 app.include_router(documents_intake_routes.make_router(templates, get_conn))
 app.include_router(documents_routes.make_router(templates, get_conn))
 app.include_router(documents_email.make_router(get_conn))
+import telegram_bot
+app.include_router(telegram_bot.make_router(get_conn))
 app.include_router(work_routes.make_router(templates, get_conn))
 app.include_router(integration_access_routes.make_router(templates, get_conn))
 app.include_router(appearance_routes.make_router(templates, get_conn))

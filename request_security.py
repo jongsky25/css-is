@@ -10,6 +10,7 @@ SAFE_METHODS = frozenset({'GET', 'HEAD', 'OPTIONS'})
 # an exemption. Each handler must retain its own token/validation controls.
 CSRF_EXCEPTIONS = {
     '/offsite-backup/ping': 'Shared X-Backup-Token secret; no session authority',
+    '/integrations/telegram/webhook': 'Telegram secret header; neutral private help only, no session authority',
     '/integrations/gmail/documents': 'Timestamped body HMAC; no session authority',
     '/r/{qr_token}': 'Public survey token, response window and submission deduplication',
     '/seq': 'Public survey tokens, response windows and submission deduplication',

@@ -1,3 +1,9 @@
+## 8.56 — October 25, 2026
+
+- Add default-off authenticated Telegram webhook intake with bounded input, durable update deduplication and rolling global/per-sender rate limits. Accept neutral private /start and /help only; acknowledge unsupported updates as ignored without retaining content.
+- Add bounded SQLite-backed processing and private Bot API delivery to the existing scheduler, with committed sending markers, claim fencing, five-attempt limits for definite throttling, destination pacing, expiry, conservative uncertainty and bounded retention. No linking, groups or business actions.
+- Add exact callback authentication/Origin exceptions and runtime upload closure; retain independent Apprise digest settings. Update the Telegram progress ledger and activation/recovery runbook.
+
 ## 8.55 — October 25, 2026
 
 - Add inert two-way Telegram connection, update, operation and delivery tables with uniqueness, foreign keys and bounded states. Add independent default-off capability switches without a receiver, sender or business action.
