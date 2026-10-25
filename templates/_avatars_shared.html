@@ -1,0 +1,228 @@
+{# Shared SVG helpers. Species modules load only when their artwork is requested. #}
+
+{% macro costume_back(kind, s, costume) %}
+{% set plant = kind in ['plant','cactus','bonsai','sunflower','fern','mushroom','succulent'] %}
+{% set scale = 1 if plant else (0.62 + (s - 1) * 0.076) %}
+<g class="av-costume-back" transform="translate(60 96) scale({{ scale }}) translate(-60 -96)">
+{% if costume in ['halloween', 'halloween_vampire'] %}
+  {% set top = 106 if plant else 84 %}
+  <path d="M42 {{ top }} Q23 {{ top + 5 }} 23 130 L43 121 60 130 77 121 97 130 Q97 {{ top + 5 }} 78 {{ top }} Z" fill="{{ '#32203f' if costume == 'halloween' else '#261b33' }}" stroke="{{ '#9363ae' if costume == 'halloween' else '#a44258' }}" stroke-width="1.4"/>
+  <path d="M42 {{ top }} 31 123 46 116 60 125 74 116 89 123 78 {{ top }}" fill="{{ '#7d4191' if costume == 'halloween' else '#b43851' }}"/>
+  {% if costume == 'halloween_vampire' %}<path d="M42 {{ top + 8 }} 27 {{ top - 17 }} 49 {{ top }} M78 {{ top + 8 }} 93 {{ top - 17 }} 71 {{ top }}" fill="#b43851" stroke="#281a35" stroke-width="2"/>{% endif %}
+{% elif costume == 'halloween_pumpkin' %}
+  <ellipse cx="60" cy="{{ 120 if plant else 104 }}" rx="31" ry="{{ 15 if plant else 21 }}" fill="#ef8d32" stroke="#b85822" stroke-width="2"/>
+  <path d="M42 {{ 109 if plant else 88 }} Q32 113 44 130 M78 {{ 109 if plant else 88 }} Q88 113 76 130" stroke="#c86b27" stroke-width="2" fill="none"/>
+{% endif %}
+</g>
+{% endmacro %}
+
+{% macro costume_front(kind, s, costume, scaled=false) %}
+{% set plant = kind in ['plant','cactus','bonsai','sunflower','fern','mushroom','succulent'] %}
+{% set scale = 1 if plant or scaled else (0.62 + (s - 1) * 0.076) %}
+<g class="av-costume-front" transform="translate(60 96) scale({{ scale }}) translate(-60 -96)">
+{% if costume == 'halloween_pumpkin' %}
+  {% set y = 123 if plant else 107 %}
+  <ellipse cx="60" cy="{{ y }}" rx="22" ry="11" fill="#f59a36"/>
+  <path d="M45 {{ y - 1 }} 50 {{ y - 7 }} 54 {{ y - 1 }} M66 {{ y - 1 }} 70 {{ y - 7 }} 75 {{ y - 1 }} M47 {{ y + 3 }} 55 {{ y + 5 }} 60 {{ y + 2 }} 65 {{ y + 5 }} 73 {{ y + 3 }} Q60 {{ y + 17 }} 47 {{ y + 3 }}" fill="#41243d"/>
+{% elif plant and costume in ['halloween', 'halloween_vampire'] %}
+  <path d="M44 119h32l-3 15H47Z" fill="{{ '#593361' if costume == 'halloween' else '#4a223c' }}"/>
+  <path d="m60 120 2 4 5 1-4 3 1 5-4-3-4 3 1-5-4-3 5-1Z" fill="#ffbb57"/>
+{% endif %}
+</g>
+{% endmacro %}
+
+{% macro eye(cx, cy, r, iris, lid) %}
+<g class="av-eye" transform="translate({{ cx }} {{ cy }})">
+  <circle r="{{ '%.1f'|format(r) }}" fill="#fffdf6"/>
+  <circle cy="{{ '%.1f'|format(r * 0.12) }}" r="{{ '%.1f'|format(r * 0.62) }}" fill="{{ iris }}"/>
+  <circle cy="{{ '%.1f'|format(r * 0.12) }}" r="{{ '%.1f'|format(r * 0.32) }}" fill="#221a14"/>
+  <circle cx="{{ '%.1f'|format(0 - r * 0.28) }}" cy="{{ '%.1f'|format(0 - r * 0.3) }}"
+          r="{{ '%.1f'|format(r * 0.18) }}" fill="#fff"/>
+  <ellipse class="av-lid" rx="{{ '%.1f'|format(r + 0.8) }}" ry="{{ '%.1f'|format(r + 0.8) }}" fill="{{ lid }}"/>
+</g>
+{% endmacro %}
+
+{% macro pot(body="url(#avg-pot)", rim="#d8916a") %}
+  <path d="M38 112 L82 112 L77 134 L43 134 Z" fill="{{ body }}"/>
+  <path d="M43 112 L52 112 L49 134 L45 134 Z" fill="#ffffff22"/>
+  <rect x="34" y="106" width="52" height="9" rx="4" fill="{{ rim }}"/>
+  <rect x="34" y="106" width="52" height="4" rx="2" fill="#ffffff2e"/>
+  <ellipse class="av-soil" cx="60" cy="106" rx="22" ry="4.5" fill="#6b4127"/>
+  <ellipse class="av-soilwet" cx="60" cy="106" rx="22" ry="4.5" fill="#3c2210"/>
+{% endmacro %}
+
+{% macro shadow(rx=26) %}
+  <ellipse cx="60" cy="121" rx="{{ rx }}" ry="7" fill="#00000012"/>
+{% endmacro %}
+
+{% macro accessory(m, x, y, k=1, costume="") %}
+<g class="av-acc" transform="translate({{ x }} {{ y }}) scale({{ k }})">
+  {% if costume == 'halloween' %}
+    <path d="M-13 0 -3-28 8-22 5-18 12 0Z" fill="#482357" stroke="#281332" stroke-width="1.5"/>
+    <path d="m-9-8 18-1 2 6-22 1Z" fill="#ee893c"/>
+    <rect x="-3" y="-9" width="7" height="7" rx="1" fill="#ffc45e"/><rect x="-1" y="-7" width="3" height="3" fill="#54233e"/>
+    <ellipse cy="1" rx="20" ry="4" fill="#35203f" stroke="#8c5b9e" stroke-width="1"/>
+    <path d="m1-20 1 3 3 1-3 1-1 3-1-3-3-1 3-1Z" fill="#ffd88d"/>
+  {% elif costume == 'halloween_vampire' %}
+    <path d="M-15-1Q0-12 15-1L9 2 0-3-9 2Z" fill="#2b1739"/><path d="m-5-4 5-7 5 7" fill="#9b2945"/>
+    <path d="m-14-2-5-7 2 10m31-3 5-7-2 10" stroke="#6e345a" stroke-width="2"/>
+  {% elif costume == 'halloween_pumpkin' %}
+    <ellipse cy="-3" rx="13" ry="7" fill="#f38c29" stroke="#bf5c24"/>
+    <path d="M0-9Q-5-18 4-20" stroke="#527c3e" stroke-width="4" stroke-linecap="round"/><path d="M2-12Q14-23 16-12 9-9 2-12" fill="#7d9c4c"/>
+  {% elif m == 1 %}{# January — party hat #}
+    <path d="M-7 0 L0 -17 L7 0 Z" fill="url(#avg-petal2)"/>
+    <path d="M-4.5 -6 L4.5 -6 L5.7 -3 L-5.7 -3 Z" fill="url(#avg-sun)"/>
+    <circle cy="-17.5" r="2.2" fill="url(#avg-sun)"/>
+  {% elif m == 2 %}{# February — heart headband #}
+    <path d="M-9 0 Q0 -4 9 0" stroke="#c05a72" stroke-width="2" fill="none"/>
+    <path d="M0 -6 C-1.5 -9.5 -6 -9.5 -6 -6 C-6 -3.4 -2 -1.4 0 .4 C2 -1.4 6 -3.4 6 -6 C6 -9.5 1.5 -9.5 0 -6 Z"
+          fill="#e0607e" transform="translate(0 -3)"/>
+  {% elif m == 3 %}{# March — daisy tucked on #}
+    {% for a in [0, 72, 144, 216, 288] %}
+    <ellipse cy="-9.6" rx="2.2" ry="4.4" fill="#fff" transform="rotate({{ a }} 0 -5)"/>
+    {% endfor %}
+    <circle cy="-5" r="2.6" fill="url(#avg-sun)"/>
+  {% elif m == 4 %}{# April — butterfly bow #}
+    <path d="M-1 -4 Q-9 -10 -8 -2 Q-7 2 -1 -1 Z" fill="url(#avg-petal)"/>
+    <path d="M1 -4 Q9 -10 8 -2 Q7 2 1 -1 Z" fill="url(#avg-petal)"/>
+    <circle cy="-2.5" r="1.8" fill="#c05a72"/>
+  {% elif m == 5 %}{# May — straw sun hat #}
+    <ellipse cy="-1" rx="12" ry="3.4" fill="#e2c98a"/>
+    <path d="M-7 -2 Q-7 -10 0 -10 Q7 -10 7 -2 Z" fill="#edd9a4"/>
+    <path d="M-7 -3.4 L7 -3.4" stroke="#c9a96a" stroke-width="1.6"/>
+  {% elif m == 6 %}{# June — little rain hat #}
+    <path d="M-10 -1 Q0 -5 10 -1 Q6 -3.4 7 -2 Q0 -12 -7 -2 Q-6 -3.4 -10 -1 Z" fill="#5fa8d8"/>
+    <path d="M-8 -1 Q0 -4.4 8 -1" stroke="#457fa8" stroke-width="1.2" fill="none"/>
+    <path d="M12 -8 c1.8 2.8 1.8 4.7 0 5.4 c-1.8 -.7 -1.8 -2.6 0 -5.4 Z" fill="#8cc4e8"/>
+  {% elif m == 7 %}{# July — star band #}
+    <path d="M-9 0 Q0 -3.4 9 0" stroke="#d3a83a" stroke-width="2" fill="none"/>
+    <path d="M0 -10 l1.5 3.6 3.9 .5 -2.8 2.7 .7 3.9 -3.3 -1.9 -3.3 1.9 .7 -3.9 -2.8 -2.7 3.9 -.5 Z" fill="url(#avg-sun)"/>
+  {% elif m == 8 %}{# August — pinwheel #}
+    <line y1="0" y2="-6" stroke="#8a7666" stroke-width="1.4"/>
+    {% for a in [0, 90, 180, 270] %}
+    <path d="M0 -6 L6 -10 L0 -11 Z" fill="{{ '#e07a9f' if a % 180 else '#5fa8d8' }}" transform="rotate({{ a }} 0 -6)"/>
+    {% endfor %}
+    <circle cy="-6" r="1.3" fill="#f6c445"/>
+  {% elif m == 9 %}{# September — acorn cap #}
+    <path d="M-8 -1.4 Q-8 -8.6 0 -9 Q8 -8.6 8 -1.4 Q0 -4.6 -8 -1.4 Z" fill="url(#avg-trunk)"/>
+    <path d="M-5 -4 q5 -2.6 10 0 M-6.4 -6 q6.4 -2.4 12.8 0" stroke="#5a3a20" stroke-width=".9" fill="none" opacity=".7"/>
+    <path d="M0 -8.6 q0 -3 2.4 -3.6" stroke="#6b4426" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+  {% elif m == 10 %}{# October — pumpkin beanie #}
+    <ellipse cy="-4" rx="8" ry="5.4" fill="url(#avg-fish)"/>
+    <path d="M-4 -8.4 Q-4 -1 -4 .6 M0 -9.4 L0 1 M4 -8.4 Q4 -1 4 .6" stroke="#c65f14" stroke-width="1" fill="none" opacity=".6"/>
+    <path d="M0 -9.4 q-1 -3 2.6 -4" stroke="#4c8c3f" stroke-width="2" fill="none" stroke-linecap="round"/>
+  {% elif m == 11 %}{# November — cozy beanie #}
+    <path d="M-8 -2 Q-8 -11 0 -11 Q8 -11 8 -2 Z" fill="#c47a8a"/>
+    <path d="M-8.6 -2 L8.6 -2 L8.6 1 L-8.6 1 Z" fill="#a85a6c"/>
+    <path d="M-6 -2 l0 3 M-2 -2 l0 3 M2 -2 l0 3 M6 -2 l0 3" stroke="#c47a8a" stroke-width="1"/>
+    <circle cy="-11.6" r="2" fill="#f4ecda"/>
+  {% elif m == 12 %}{# December — santa hat #}
+    <path d="M-8 -1 Q-4 -12 2 -13 Q10 -13 9 -8 Q6 -10 3 -8 Q1 -4 8 -1 Z" fill="#c04a4a"/>
+    <path d="M-9 -2 L9 -2 L9 1.4 L-9 1.4 Z" fill="#f7f2e8"/>
+    <circle cx="9.6" cy="-8" r="2.4" fill="#f7f2e8"/>
+  {% endif %}
+</g>
+{% endmacro %}
+
+{% macro pot_bow(m, x=41, y=110) %}
+<g class="av-acc" transform="translate({{ x }} {{ y }})">
+{% if m %}
+{% set tint = ["#e07a9f", "#e0607e", "#f2a9c4", "#8cc898", "#e2c98a", "#5fa8d8",
+               "#f6c445", "#5fb3af", "#b0824a", "#f08c3a", "#c47a8a", "#c04a4a"][m - 1] %}
+  <path d="M-1 0 Q-8 -6 -7 -1 Q-6.4 2 -1 1 Z" fill="{{ tint }}"/>
+  <path d="M1 0 Q8 -6 7 -1 Q6.4 2 1 1 Z" fill="{{ tint }}"/>
+  <path d="M-1 1 l-1.6 4.6 M1 1 l1.6 4.6" stroke="{{ tint }}" stroke-width="1.8" stroke-linecap="round"/>
+  <circle cy=".4" r="1.7" fill="#fff" opacity=".85"/>
+  <circle cy=".4" r="1.7" fill="{{ tint }}" opacity=".6"/>
+{% endif %}
+</g>
+{% endmacro %}
+
+{% macro regalia(s, x, y, k=1) %}
+{% if s >= 2 %}
+<g class="av-regalia" transform="translate({{ x }} {{ y }}) scale({{ k }})">
+  {% if s == 2 %}
+  {# bronze cord collar #}
+  <path d="M-9 -1 Q0 4 9 -1" stroke="#b5722f" stroke-width="3.2" fill="none" stroke-linecap="round"/>
+  <circle cy="2.2" r="1.7" fill="#d68a42"/>
+  <circle cy="2.2" r=".8" fill="#f0b46a"/>
+  {% elif s == 3 %}
+  {# silver bandana, knotted at the neck #}
+  <path d="M-9 -1 Q0 6 9 -1 L9 -3.4 Q0 3 -9 -3.4 Z" fill="#9aa7b8"/>
+  <path d="M-2 6 l-2 6.4 M2 6 l2 6.4" stroke="#7c8898" stroke-width="1.6" stroke-linecap="round"/>
+  <circle cy="0" r="1.3" fill="#c9d3de"/>
+  {% elif s == 4 %}
+  {# gold ribbon + hanging medal #}
+  <path d="M-9 -1 Q0 4 9 -1" stroke="#d3a83a" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+  <path d="M-1.6 1.4 L1.6 1.4 L2.6 7 L0 5.2 L-2.6 7 Z" fill="#b5842a"/>
+  <circle cy="10" r="3.1" fill="url(#avg-sun)"/>
+  <circle cy="10" r="1.3" fill="#fff2c9"/>
+  {% else %}
+  {# stage 5+ — a royal cape flares from the shoulders #}
+  <path d="M-9 -1 Q-18 12 -12 22 Q-5 16 -8 4 Z" fill="#4a3a8a"/>
+  <path d="M9 -1 Q18 12 12 22 Q5 16 8 4 Z" fill="#4a3a8a"/>
+  <path d="M-9 -1 Q0 4 9 -1" stroke="#6a56b8" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+  {% if s >= 6 %}
+  {# stage 6 — a jeweled star medal + flanking sparkles finish the look #}
+  <path d="M0 6.6 l1.4 3.3 3.5 .4 -2.6 2.4 .7 3.5 -3 -1.7 -3 1.7 .7 -3.5 -2.6 -2.4 3.5 -.4 Z" fill="url(#avg-sun)"/>
+  <circle cy="9.4" r="1.1" fill="#fff2c9"/>
+  <path d="M-13 6 l1 2.4 2.4 1 -2.4 1 -1 2.4 -1 -2.4 -2.4 -1 2.4 -1 Z" fill="#f6c445" opacity=".85"/>
+  <path d="M13 6 l1 2.4 2.4 1 -2.4 1 -1 2.4 -1 -2.4 -2.4 -1 2.4 -1 Z" fill="#f6c445" opacity=".85"/>
+  {% endif %}
+  {% endif %}
+</g>
+{% endif %}
+{% endmacro %}
+
+{% macro pot_regalia(s, x=60, y=112) %}
+{% if s >= 2 %}
+<g class="av-regalia" transform="translate({{ x }} {{ y }})">
+  {% if s == 2 %}
+  {# bronze cord around the rim #}
+  <path d="M-16 0 Q0 4.4 16 0" stroke="#b5722f" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+  <circle cy="2.6" r="1.6" fill="#d68a42"/>
+  {% elif s == 3 %}
+  {# silver sash around the rim #}
+  <path d="M-16 0 Q0 5.4 16 0 L16 -2.6 Q0 2.4 -16 -2.6 Z" fill="#9aa7b8"/>
+  <circle cy="1" r="1.3" fill="#c9d3de"/>
+  {% elif s == 4 %}
+  {# gold sash + a medal pinned at center #}
+  <path d="M-16 0 Q0 4.4 16 0" stroke="#d3a83a" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+  <path d="M-1.6 1.6 L1.6 1.6 L2.6 6.6 L0 4.9 L-2.6 6.6 Z" fill="#b5842a"/>
+  <circle cy="9.4" r="2.8" fill="url(#avg-sun)"/>
+  <circle cy="9.4" r="1.2" fill="#fff2c9"/>
+  {% else %}
+  {# stage 5+ — royal cape panels drape off either side of the pot #}
+  <path d="M-16 0 q-6 5 -4 11" stroke="#4a3a8a" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+  <path d="M16 0 q6 5 4 11" stroke="#4a3a8a" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+  <path d="M-16 0 Q0 4.4 16 0" stroke="#6a56b8" stroke-width="1.6" fill="none" stroke-linecap="round" opacity=".85"/>
+  {% if s >= 6 %}
+  {# stage 6 — a jeweled star medal finishes the look #}
+  <path d="M0 6.8 l1.3 3.1 3.3 .4 -2.4 2.3 .6 3.3 -2.8 -1.6 -2.8 1.6 .6 -3.3 -2.4 -2.3 3.3 -.4 Z" fill="url(#avg-sun)"/>
+  <circle cy="9.4" r="1" fill="#fff2c9"/>
+  {% endif %}
+  {% endif %}
+</g>
+{% endif %}
+{% endmacro %}
+
+{% macro illustrated_pot(shallow=false) %}
+<ellipse cx="60" cy="135" rx="29" ry="3" fill="#302f3c" opacity=".12"/>
+{% if shallow %}
+<path d="M29 112L91 112L83 130Q60 137 37 130Z" fill="url(#avg-pot2)" stroke="#66556e" stroke-width="1.5"/>
+<path d="M38 118L43 128M77 131L80 123" stroke="#cab8c9" stroke-width="3" stroke-linecap="round"/>
+<ellipse cx="60" cy="111" rx="33" ry="7" fill="#b7a3b5" stroke="#66556e" stroke-width="1.4"/>
+{% else %}
+<path d="M36 109Q60 116 84 109L78 131Q60 139 42 131Z" fill="url(#avg-pot)" stroke="#885b48" stroke-width="1.4"/>
+<path d="M43 117L47 130" stroke="#ffdfb3" stroke-width="3" opacity=".5" stroke-linecap="round"/>
+<ellipse cx="60" cy="108" rx="27" ry="8" fill="#e8ad87" stroke="#885b48" stroke-width="1.4"/>
+{% endif %}
+<ellipse class="av-soil" cx="60" cy="{{ 110 if shallow else 107 }}" rx="23" ry="5" fill="#67483b"/>
+<ellipse class="av-soilwet" cx="60" cy="{{ 110 if shallow else 107 }}" rx="23" ry="5" fill="#3c302b"/>
+
+{% endmacro %}
+
+{% macro plant_finish(kind,s,m,costume) %}
+<g class="av-anchor-pot" data-anchor="pot" transform="translate(60 121)"></g>
+{% if kind != "mushroom" %}{{ pot_bow(m,39,115) }}{% endif %}{{ pot_regalia(s,60,116) }}{{ costume_front(kind,s,costume,scaled=true) }}
+{% endmacro %}

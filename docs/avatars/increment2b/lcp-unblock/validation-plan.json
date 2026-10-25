@@ -1,0 +1,15 @@
+{
+  "status": "declared before acceptance collection",
+  "change": "Load only requested species Jinja artwork; no browser runtime/CSS or art changes.",
+  "hypothesis": "Remove measured all-species template compilation from single-companion startup. Existing profiled current cold render629ms; lazy cold320ms. This does not alone establish cause of all prior five-run median variance.",
+  "protocol": "One fresh complete20: five desktop/mobile cold/warm configurations,30second idle and30second interactions, fixedChromium154.0.8037.57, CPU1/4, original syntheticdate/seed, sameoverlay source. No competing benchmarks.",
+  "comparison": "All original increment0 historical gates; additionally cold-desktop against retained same-filesystem original-source five-control median372ms. Do not replace original failed20.",
+  "if_failure": "Keep2B blocked; diagnose the failed cohort without excluding outliers or accepting favorable reruns.",
+  "artwork_proof": "artwork-equivalence.json;1734SVG checks; only interelement whitespace normalized; sharedCSS/defs identical.",
+  "remaining_validation": [
+    "108 render/care/audio/onboarding/appearance tests",
+    "real authenticated fern/mushroom/succulent care persistence",
+    "native hidden/touch/keyboard",
+    "mature new-plant matched traces retained: browserJS/CSS and SVG geometry unchanged"
+  ]
+}

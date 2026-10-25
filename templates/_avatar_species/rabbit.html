@@ -1,0 +1,56 @@
+{# rabbit artwork. Keep placement groups separate from animated groups. #}
+{% from "_avatars_shared.html" import costume_front, eye as _eye, shadow as _shadow, accessory as _accessory, regalia as _regalia %}
+
+{% macro art(s, m=0, costume="") %}
+  {% set sc = 0.62 + (s - 1) * 0.076 %}
+  {{ _shadow(24) }}
+  <g transform="translate(60 96) scale({{ '%.3f'|format(sc) }}) translate(-60 -96)">
+    <circle cx="79" cy="108" r="5.5" fill="#fff"/>
+    <path d="M44 118 Q40 92 60 88 Q80 92 76 118 Z" fill="url(#avg-rabbit)"/>
+    <path d="M52 118 Q53 102 60 100 Q67 102 68 118 Z" fill="url(#avg-rabbit2)"/>
+    <ellipse cx="51" cy="118" rx="7.5" ry="3.6" fill="url(#avg-rabbit2)"/>
+    <ellipse cx="69" cy="118" rx="7.5" ry="3.6" fill="url(#avg-rabbit2)"/>
+    {{ costume_front("rabbit", s, costume, scaled=true) }}
+    {{ _regalia(s, 60, 88, 0.8) }}
+    <g class="av-head">
+      <g class="av-ear-l">
+        <ellipse cx="53" cy="44" rx="5.6" ry="{{ 13 + s }}" fill="url(#avg-rabbit)" transform="rotate(-9 53 58)"/>
+        <ellipse cx="53" cy="46" rx="2.8" ry="{{ 9 + s }}" fill="#f2c4cf" transform="rotate(-9 53 58)"/>
+      </g>
+      <g class="av-ear-r">
+        <ellipse cx="67" cy="44" rx="5.6" ry="{{ 13 + s }}" fill="url(#avg-rabbit)" transform="rotate(9 67 58)"/>
+        <ellipse cx="67" cy="46" rx="2.8" ry="{{ 9 + s }}" fill="#f2c4cf" transform="rotate(9 67 58)"/>
+      </g>
+      <circle cx="60" cy="70" r="15.5" fill="url(#avg-rabbit)"/>
+      <path d="M49 62 Q54 57 59 59" stroke="#ffffff48" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+      <ellipse cx="49" cy="75" rx="5" ry="4.2" fill="url(#avg-rabbit2)"/>
+      <ellipse cx="71" cy="75" rx="5" ry="4.2" fill="url(#avg-rabbit2)"/>
+      {{ _eye(53.5, 68, 3.2, "#54423a", "#e4dcd0") }}
+      {{ _eye(66.5, 68, 3.2, "#54423a", "#e4dcd0") }}
+      <path d="M60 73.5 l-2 2.4 h4 Z" fill="#e89aac"/>
+      <path d="M60 75.9 l0 2.2 M60 78.1 q-2.6 2 -5 1.4 M60 78.1 q2.6 2 5 1.4" stroke="#6a564a" stroke-width="1" fill="none" stroke-linecap="round"/>
+      {% if s >= 3 %}
+      <rect x="57.7" y="79.4" width="2.1" height="3.2" rx=".8" fill="#fff"/>
+      <rect x="60.2" y="79.4" width="2.1" height="3.2" rx=".8" fill="#fff"/>
+      {% endif %}
+      <circle cx="47" cy="73" r=".55" fill="#8a7666"/><circle cx="45" cy="76" r=".55" fill="#8a7666"/>
+      <circle cx="73" cy="73" r=".55" fill="#8a7666"/><circle cx="75" cy="76" r=".55" fill="#8a7666"/>
+      {% if s >= 5 %}
+      {% for a in [0, 72, 144, 216, 288] %}
+      <ellipse cx="46" cy="51.4" rx="1.5" ry="2.8" fill="url(#avg-petal)" transform="rotate({{ a }} 46 54)"/>
+      {% endfor %}
+      <circle cx="46" cy="54" r="1.5" fill="url(#avg-sun)"/>
+      {% endif %}
+      {{ _accessory(m, 60, 55, 0.85, costume=costume) }}
+    </g>
+    {% if s >= 6 %}
+    <path d="M88 54 l2 4.4 4.8 .7 -3.5 3.4 .9 4.8 -4.2 -2.3 -4.2 2.3 .9 -4.8 -3.5 -3.4 4.8 -.7 Z" fill="url(#avg-sun)"/>
+    {% endif %}
+    {# hidden treat: a carrot #}
+    <g class="av-food">
+      <path d="M92 30 l4 14 4 -14 Z" fill="#f0862e" transform="rotate(18 96 37)"/>
+      <path d="M92 30 q0 -6 -3 -8 M96 30 q0 -7 0 -9 M100 30 q0 -6 3 -8"
+            stroke="#5d9b4c" stroke-width="1.8" fill="none" stroke-linecap="round" transform="rotate(18 96 37)"/>
+    </g>
+  </g>
+{% endmacro %}

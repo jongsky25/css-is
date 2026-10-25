@@ -551,3 +551,20 @@ def test_remaining_plant_seasonal_slots_keep_live_update_order(app_mod):
                 svg = ET.fromstring(str(module.avatar_svg(kind, stage, month, outfit)))
                 slots = [g.attrib['class'] for g in svg.iter('g') if g.attrib.get('class') in ['av-acc', 'av-costume-back', 'av-costume-front']]
                 assert slots == ['av-costume-back', 'av-acc', 'av-costume-front'], (kind, stage, month, outfit)
+
+
+def test_single_companion_compiles_only_its_species(app_mod):
+    """Artwork growth in other species must not add to one companion's startup."""
+    from jinja2 import Environment
+    env = Environment(loader=app_mod.templates.env.loader, autoescape=True)
+    env.globals.update(app_mod.templates.env.globals)
+    svg = str(env.get_template('_avatars.html').module.avatar_svg('cat', 1, 0, 'default'))
+    assert 'data-avatar-kind="cat"' in svg
+    species = sorted(t.name for t in env.cache.values() if t.name.startswith('_avatar_species/'))
+    assert species == ['_avatar_species/cat.html']
+    # The original dispatcher's unknown-kind fallback is retained without using
+    # a caller-controlled string as a filesystem path.
+    svg = str(env.get_template('_avatars.html').module.avatar_svg('../../unknown', 1, 0, 'default'))
+    assert 'av-soil' in svg
+    species = sorted(t.name for t in env.cache.values() if t.name.startswith('_avatar_species/'))
+    assert species == ['_avatar_species/cat.html', '_avatar_species/plant.html']

@@ -26,6 +26,9 @@ def baseline_server(app_mod):
     output.mkdir(parents=True, exist_ok=True)
     sources = ['templates/_avatars.html', 'templates/_avatars_art.html',
                'static/js/avatars.js', 'static/js/avatar-audio.js', __file__]
+    sources += [str(p) for p in sorted(Path('templates').glob('_avatar_species/*.html'))]
+    if Path('templates/_avatars_shared.html').exists():
+        sources.append('templates/_avatars_shared.html')
     (output / 'environment.json').write_text(json.dumps({
         'source_commit': subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(),
         'platform': platform.platform(), 'python': platform.python_version(),

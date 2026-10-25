@@ -1,0 +1,674 @@
+current office_connect.html 320.1ms
+         773390 function calls (709263 primitive calls) in 0.318 seconds
+
+   Ordered by: cumulative time
+   List reduced from 516 to 35 due to restriction <35>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000    0.320    0.320 environment.py:1275(render)
+   1235/1    0.001    0.000    0.320    0.320 {method 'join' of 'str' objects}
+     1041    0.000    0.000    0.320    0.000 office_connect.html:4(root)
+       20    0.000    0.000    0.311    0.016 environment.py:981(get_template)
+       20    0.000    0.000    0.311    0.016 environment.py:956(_load_template)
+       10    0.000    0.000    0.311    0.031 loaders.py:107(load)
+       10    0.000    0.000    0.309    0.031 environment.py:731(compile)
+       10    0.000    0.000    0.180    0.018 environment.py:682(_generate)
+       10    0.000    0.000    0.180    0.018 compiler.py:101(generate)
+ 21382/10    0.016    0.000    0.180    0.018 visitor.py:35(visit)
+       10    0.000    0.000    0.180    0.018 compiler.py:829(visit_Template)
+   221/15    0.000    0.000    0.120    0.008 compiler.py:442(blockvisit)
+       10    0.000    0.000    0.112    0.011 environment.py:618(_parse)
+       10    0.000    0.000    0.110    0.011 parser.py:1045(parse)
+   221/10    0.003    0.000    0.100    0.010 parser.py:996(subparse)
+   204/68    0.000    0.000    0.095    0.001 parser.py:167(parse_statement)
+   211/54    0.000    0.000    0.078    0.001 parser.py:196(parse_statements)
+       37    0.000    0.000    0.076    0.002 compiler.py:1341(visit_Macro)
+       37    0.001    0.000    0.076    0.002 compiler.py:614(macro_body)
+    18/13    0.000    0.000    0.074    0.006 environment.py:1425(_get_default_module)
+       37    0.000    0.000    0.073    0.002 parser.py:443(parse_macro)
+      8/6    0.000    0.000    0.073    0.012 environment.py:1392(make_module)
+      8/6    0.000    0.000    0.073    0.012 environment.py:1523(__init__)
+        3    0.000    0.000    0.072    0.024 _avatars.html:4(root)
+        5    0.000    0.000    0.063    0.013 _avatars_art.html:4(root)
+11681/5551    0.003    0.000    0.062    0.000 {built-in method builtins.next}
+    54872    0.031    0.000    0.062    0.000 nodes.py:169(iter_child_nodes)
+     5420    0.002    0.000    0.060    0.000 lexer.py:380(__next__)
+     5351    0.007    0.000    0.056    0.000 lexer.py:615(wrap)
+11454/1486    0.010    0.000    0.053    0.000 visitor.py:44(generic_visit)
+  555/303    0.001    0.000    0.053    0.000 compiler.py:46(new_func)
+  559/538    0.001    0.000    0.047    0.000 parser.py:685(parse_tuple)
+  789/555    0.000    0.000    0.047    0.000 parser.py:512(parse_expression)
+  513/485    0.000    0.000    0.045    0.000 parser.py:720(parse)
+  956/654    0.001    0.000    0.044    0.000 parser.py:536(parse_or)
+
+
+
+current office_connect.html 7.2ms
+         17427 function calls (17018 primitive calls) in 0.007 seconds
+
+   Ordered by: cumulative time
+   List reduced from 190 to 35 due to restriction <35>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000    0.007    0.007 environment.py:1275(render)
+    121/1    0.000    0.000    0.007    0.007 {method 'join' of 'str' objects}
+     1041    0.000    0.000    0.007    0.000 office_connect.html:4(root)
+     1041    0.000    0.000    0.006    0.000 dash_layout.html:4(root)
+      180    0.000    0.000    0.004    0.000 office_connect.html:86(block_content)
+   141/20    0.000    0.000    0.004    0.000 runtime.py:262(call)
+    96/12    0.000    0.000    0.004    0.000 runtime.py:694(__call__)
+    96/12    0.000    0.000    0.004    0.000 runtime.py:780(_invoke)
+        7    0.000    0.000    0.003    0.000 _avatars.html:62(macro)
+        1    0.000    0.000    0.003    0.003 _growth.html:41(macro)
+        7    0.000    0.000    0.002    0.000 _avatars_art.html:39(macro)
+      893    0.001    0.000    0.001    0.000 __init__.py:24(escape)
+        7    0.000    0.000    0.001    0.000 cat.html:32(macro)
+      992    0.000    0.000    0.001    0.000 __init__.py:122(__new__)
+       13    0.000    0.000    0.001    0.000 environment.py:1425(_get_default_module)
+       13    0.000    0.000    0.001    0.000 <frozen _collections_abc>:648(__rsub__)
+       13    0.000    0.000    0.001    0.000 <frozen _collections_abc>:861(_from_iterable)
+       13    0.000    0.000    0.001    0.000 <frozen _collections_abc>:653(<genexpr>)
+      455    0.000    0.000    0.001    0.000 <frozen _collections_abc>:865(__contains__)
+      455    0.000    0.000    0.001    0.000 __init__.py:1029(__contains__)
+       14    0.000    0.000    0.001    0.000 _avatars_shared.html:187(macro)
+       30    0.000    0.000    0.000    0.000 async_utils.py:37(wrapper)
+        1    0.000    0.000    0.000    0.000 _avatars.html:167(macro)
+       15    0.000    0.000    0.000    0.000 filters.py:1361(sync_do_list)
+      579    0.000    0.000    0.000    0.000 environment.py:485(getattr)
+       14    0.000    0.000    0.000    0.000 filters.py:1786(select_or_reject)
+      600    0.000    0.000    0.000    0.000 {built-in method builtins.getattr}
+      993    0.000    0.000    0.000    0.000 {built-in method __new__ of type object at 0x144d380}
+       80    0.000    0.000    0.000    0.000 filters.py:1783(<lambda>)
+     1869    0.000    0.000    0.000    0.000 {built-in method builtins.hasattr}
+        2    0.000    0.000    0.000    0.000 environment.py:1375(new_context)
+        2    0.000    0.000    0.000    0.000 runtime.py:93(new_context)
+      456    0.000    0.000    0.000    0.000 {built-in method builtins.any}
+        2    0.000    0.000    0.000    0.000 filters.py:1695(do_tojson)
+        2    0.000    0.000    0.000    0.000 utils.py:637(htmlsafe_json_dumps)
+
+
+
+current office_connect.html 8.2ms
+         17427 function calls (17018 primitive calls) in 0.008 seconds
+
+   Ordered by: cumulative time
+   List reduced from 190 to 35 due to restriction <35>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000    0.008    0.008 environment.py:1275(render)
+    121/1    0.000    0.000    0.008    0.008 {method 'join' of 'str' objects}
+     1041    0.000    0.000    0.008    0.000 office_connect.html:4(root)
+     1041    0.000    0.000    0.007    0.000 dash_layout.html:4(root)
+   141/20    0.000    0.000    0.005    0.000 runtime.py:262(call)
+      180    0.000    0.000    0.004    0.000 office_connect.html:86(block_content)
+    96/12    0.000    0.000    0.004    0.000 runtime.py:694(__call__)
+    96/12    0.000    0.000    0.004    0.000 runtime.py:780(_invoke)
+        7    0.000    0.000    0.003    0.000 _avatars.html:62(macro)
+        1    0.000    0.000    0.003    0.003 _growth.html:41(macro)
+        7    0.000    0.000    0.003    0.000 _avatars_art.html:39(macro)
+        7    0.000    0.000    0.002    0.000 cat.html:32(macro)
+      893    0.001    0.000    0.002    0.000 __init__.py:24(escape)
+      992    0.001    0.000    0.001    0.000 __init__.py:122(__new__)
+       13    0.000    0.000    0.001    0.000 environment.py:1425(_get_default_module)
+       13    0.000    0.000    0.001    0.000 <frozen _collections_abc>:648(__rsub__)
+       13    0.000    0.000    0.001    0.000 <frozen _collections_abc>:861(_from_iterable)
+       13    0.000    0.000    0.001    0.000 <frozen _collections_abc>:653(<genexpr>)
+      455    0.000    0.000    0.001    0.000 <frozen _collections_abc>:865(__contains__)
+       14    0.000    0.000    0.001    0.000 _avatars_shared.html:187(macro)
+      455    0.000    0.000    0.001    0.000 __init__.py:1029(__contains__)
+        1    0.000    0.000    0.001    0.001 app.py:916(search_index_for)
+        1    0.000    0.000    0.001    0.001 _avatars.html:167(macro)
+       30    0.000    0.000    0.000    0.000 async_utils.py:37(wrapper)
+       15    0.000    0.000    0.000    0.000 filters.py:1361(sync_do_list)
+      579    0.000    0.000    0.000    0.000 environment.py:485(getattr)
+       14    0.000    0.000    0.000    0.000 filters.py:1786(select_or_reject)
+      590    0.000    0.000    0.000    0.000 {method 'append' of 'list' objects}
+      600    0.000    0.000    0.000    0.000 {built-in method builtins.getattr}
+      456    0.000    0.000    0.000    0.000 {built-in method builtins.any}
+       80    0.000    0.000    0.000    0.000 filters.py:1783(<lambda>)
+        2    0.000    0.000    0.000    0.000 environment.py:1375(new_context)
+        2    0.000    0.000    0.000    0.000 runtime.py:93(new_context)
+        2    0.000    0.000    0.000    0.000 filters.py:1695(do_tojson)
+     1869    0.000    0.000    0.000    0.000 {built-in method builtins.hasattr}
+
+
+
+current office_connect.html 9.0ms
+         17427 function calls (17018 primitive calls) in 0.009 seconds
+
+   Ordered by: cumulative time
+   List reduced from 190 to 35 due to restriction <35>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000    0.009    0.009 environment.py:1275(render)
+    121/1    0.000    0.000    0.009    0.009 {method 'join' of 'str' objects}
+     1041    0.000    0.000    0.008    0.000 office_connect.html:4(root)
+     1041    0.001    0.000    0.008    0.000 dash_layout.html:4(root)
+      180    0.000    0.000    0.005    0.000 office_connect.html:86(block_content)
+   141/20    0.000    0.000    0.005    0.000 runtime.py:262(call)
+    96/12    0.000    0.000    0.004    0.000 runtime.py:694(__call__)
+    96/12    0.000    0.000    0.004    0.000 runtime.py:780(_invoke)
+        7    0.000    0.000    0.004    0.001 _avatars.html:62(macro)
+        1    0.000    0.000    0.003    0.003 _growth.html:41(macro)
+        7    0.000    0.000    0.003    0.000 _avatars_art.html:39(macro)
+      893    0.001    0.000    0.002    0.000 __init__.py:24(escape)
+        7    0.000    0.000    0.002    0.000 cat.html:32(macro)
+       13    0.000    0.000    0.001    0.000 environment.py:1425(_get_default_module)
+       13    0.000    0.000    0.001    0.000 <frozen _collections_abc>:648(__rsub__)
+       13    0.000    0.000    0.001    0.000 <frozen _collections_abc>:861(_from_iterable)
+       13    0.000    0.000    0.001    0.000 <frozen _collections_abc>:653(<genexpr>)
+      992    0.001    0.000    0.001    0.000 __init__.py:122(__new__)
+      455    0.000    0.000    0.001    0.000 <frozen _collections_abc>:865(__contains__)
+      455    0.000    0.000    0.001    0.000 __init__.py:1029(__contains__)
+        1    0.000    0.000    0.001    0.001 _avatars.html:167(macro)
+       30    0.000    0.000    0.001    0.000 async_utils.py:37(wrapper)
+      456    0.001    0.000    0.001    0.000 {built-in method builtins.any}
+       15    0.000    0.000    0.001    0.000 filters.py:1361(sync_do_list)
+       14    0.000    0.000    0.001    0.000 filters.py:1786(select_or_reject)
+      579    0.000    0.000    0.001    0.000 environment.py:485(getattr)
+       14    0.000    0.000    0.001    0.000 _avatars_shared.html:187(macro)
+       80    0.000    0.000    0.000    0.000 filters.py:1783(<lambda>)
+      600    0.000    0.000    0.000    0.000 {built-in method builtins.getattr}
+     1869    0.000    0.000    0.000    0.000 {built-in method builtins.hasattr}
+        2    0.000    0.000    0.000    0.000 _components.html:568(macro)
+       15    0.000    0.000    0.000    0.000 environment.py:981(get_template)
+      993    0.000    0.000    0.000    0.000 {built-in method __new__ of type object at 0x144d380}
+       15    0.000    0.000    0.000    0.000 environment.py:956(_load_template)
+        2    0.000    0.000    0.000    0.000 _components.html:586(macro)
+
+
+
+current office_connect.html 6.9ms
+         17427 function calls (17018 primitive calls) in 0.007 seconds
+
+   Ordered by: cumulative time
+   List reduced from 190 to 35 due to restriction <35>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000    0.007    0.007 environment.py:1275(render)
+    121/1    0.000    0.000    0.007    0.007 {method 'join' of 'str' objects}
+     1041    0.000    0.000    0.006    0.000 office_connect.html:4(root)
+     1041    0.000    0.000    0.006    0.000 dash_layout.html:4(root)
+      180    0.000    0.000    0.004    0.000 office_connect.html:86(block_content)
+   141/20    0.000    0.000    0.004    0.000 runtime.py:262(call)
+    96/12    0.000    0.000    0.003    0.000 runtime.py:694(__call__)
+    96/12    0.000    0.000    0.003    0.000 runtime.py:780(_invoke)
+        7    0.000    0.000    0.003    0.000 _avatars.html:62(macro)
+        1    0.000    0.000    0.003    0.003 _growth.html:41(macro)
+        7    0.000    0.000    0.002    0.000 _avatars_art.html:39(macro)
+      893    0.001    0.000    0.001    0.000 __init__.py:24(escape)
+        7    0.000    0.000    0.001    0.000 cat.html:32(macro)
+      992    0.000    0.000    0.001    0.000 __init__.py:122(__new__)
+       13    0.000    0.000    0.001    0.000 environment.py:1425(_get_default_module)
+       13    0.000    0.000    0.001    0.000 <frozen _collections_abc>:648(__rsub__)
+       13    0.000    0.000    0.001    0.000 <frozen _collections_abc>:861(_from_iterable)
+       13    0.000    0.000    0.001    0.000 <frozen _collections_abc>:653(<genexpr>)
+      455    0.000    0.000    0.001    0.000 <frozen _collections_abc>:865(__contains__)
+       30    0.000    0.000    0.001    0.000 async_utils.py:37(wrapper)
+       15    0.000    0.000    0.001    0.000 filters.py:1361(sync_do_list)
+       14    0.000    0.000    0.001    0.000 filters.py:1786(select_or_reject)
+      455    0.000    0.000    0.000    0.000 __init__.py:1029(__contains__)
+        1    0.000    0.000    0.000    0.000 _avatars.html:167(macro)
+       14    0.000    0.000    0.000    0.000 _avatars_shared.html:187(macro)
+      579    0.000    0.000    0.000    0.000 environment.py:485(getattr)
+       80    0.000    0.000    0.000    0.000 filters.py:1783(<lambda>)
+      600    0.000    0.000    0.000    0.000 {built-in method builtins.getattr}
+      993    0.000    0.000    0.000    0.000 {built-in method __new__ of type object at 0x144d380}
+       80    0.000    0.000    0.000    0.000 filters.py:1777(func)
+        2    0.000    0.000    0.000    0.000 environment.py:1375(new_context)
+        2    0.000    0.000    0.000    0.000 runtime.py:93(new_context)
+     1869    0.000    0.000    0.000    0.000 {built-in method builtins.hasattr}
+      456    0.000    0.000    0.000    0.000 {built-in method builtins.any}
+       31    0.000    0.000    0.000    0.000 filters.py:58(make_attrgetter)
+
+
+
+increment0 office_connect.html 542.6ms
+         1333961 function calls (1217162 primitive calls) in 0.539 seconds
+
+   Ordered by: cumulative time
+   List reduced from 510 to 35 due to restriction <35>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000    0.542    0.542 environment.py:1275(render)
+   1774/1    0.001    0.000    0.542    0.542 {method 'join' of 'str' objects}
+     1041    0.000    0.000    0.542    0.001 office_connect.html:4(root)
+       11    0.000    0.000    0.535    0.049 environment.py:981(get_template)
+       11    0.000    0.000    0.535    0.049 environment.py:956(_load_template)
+        8    0.000    0.000    0.534    0.067 loaders.py:595(load)
+       14    0.000    0.000    0.534    0.038 loaders.py:107(load)
+        8    0.000    0.000    0.533    0.067 environment.py:731(compile)
+      9/6    0.000    0.000    0.325    0.054 environment.py:1425(_get_default_module)
+      6/5    0.000    0.000    0.324    0.065 environment.py:1392(make_module)
+      6/5    0.000    0.000    0.324    0.065 environment.py:1523(__init__)
+        3    0.000    0.000    0.323    0.108 _avatars.html:4(root)
+        8    0.000    0.000    0.305    0.038 environment.py:682(_generate)
+        8    0.000    0.000    0.305    0.038 compiler.py:101(generate)
+  38410/8    0.027    0.000    0.305    0.038 visitor.py:35(visit)
+        8    0.000    0.000    0.305    0.038 compiler.py:829(visit_Template)
+        8    0.000    0.000    0.202    0.025 environment.py:618(_parse)
+        8    0.000    0.000    0.200    0.025 parser.py:1045(parse)
+   329/13    0.000    0.000    0.200    0.015 compiler.py:442(blockvisit)
+    329/8    0.006    0.000    0.184    0.023 parser.py:996(subparse)
+   310/77    0.001    0.000    0.178    0.002 parser.py:167(parse_statement)
+   321/66    0.001    0.000    0.159    0.002 parser.py:196(parse_statements)
+       49    0.000    0.000    0.158    0.003 parser.py:443(parse_macro)
+       49    0.000    0.000    0.154    0.003 compiler.py:1341(visit_Macro)
+       49    0.001    0.000    0.153    0.003 compiler.py:614(macro_body)
+20675/9889    0.007    0.000    0.112    0.000 {built-in method builtins.next}
+   101985    0.053    0.000    0.108    0.000 nodes.py:169(iter_child_nodes)
+     9696    0.003    0.000    0.105    0.000 lexer.py:380(__next__)
+22219/2373    0.018    0.000    0.100    0.000 visitor.py:44(generic_visit)
+     9488    0.012    0.000    0.099    0.000 lexer.py:615(wrap)
+ 1024/934    0.002    0.000    0.097    0.000 parser.py:685(parse_tuple)
+ 1730/945    0.001    0.000    0.096    0.000 parser.py:512(parse_expression)
+ 1032/850    0.000    0.000    0.093    0.000 parser.py:720(parse)
+1896/1037    0.001    0.000    0.093    0.000 parser.py:536(parse_or)
+1911/1049    0.001    0.000    0.091    0.000 parser.py:545(parse_and)
+
+
+
+increment0 office_connect.html 5.8ms
+         14439 function calls (14086 primitive calls) in 0.006 seconds
+
+   Ordered by: cumulative time
+   List reduced from 181 to 35 due to restriction <35>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000    0.006    0.006 environment.py:1275(render)
+     93/1    0.000    0.000    0.005    0.005 {method 'join' of 'str' objects}
+     1041    0.000    0.000    0.005    0.000 office_connect.html:4(root)
+     1041    0.000    0.000    0.005    0.000 dash_layout.html:4(root)
+      180    0.000    0.000    0.002    0.000 office_connect.html:86(block_content)
+   127/20    0.000    0.000    0.002    0.000 runtime.py:262(call)
+    89/12    0.000    0.000    0.002    0.000 runtime.py:694(__call__)
+    89/12    0.000    0.000    0.002    0.000 runtime.py:780(_invoke)
+        1    0.000    0.000    0.002    0.002 _growth.html:41(macro)
+        7    0.000    0.000    0.001    0.000 _avatars.html:62(macro)
+      763    0.000    0.000    0.001    0.000 __init__.py:24(escape)
+        7    0.000    0.000    0.001    0.000 _avatars_art.html:24(macro)
+        7    0.000    0.000    0.001    0.000 _avatars_art.html:1676(macro)
+      855    0.000    0.000    0.001    0.000 __init__.py:122(__new__)
+       30    0.000    0.000    0.001    0.000 async_utils.py:37(wrapper)
+       15    0.000    0.000    0.000    0.000 filters.py:1361(sync_do_list)
+       14    0.000    0.000    0.000    0.000 filters.py:1786(select_or_reject)
+       14    0.000    0.000    0.000    0.000 _avatars_art.html:314(macro)
+      579    0.000    0.000    0.000    0.000 environment.py:485(getattr)
+        6    0.000    0.000    0.000    0.000 environment.py:1425(_get_default_module)
+        1    0.000    0.000    0.000    0.000 _avatars.html:123(macro)
+        6    0.000    0.000    0.000    0.000 <frozen _collections_abc>:648(__rsub__)
+        6    0.000    0.000    0.000    0.000 <frozen _collections_abc>:861(_from_iterable)
+        6    0.000    0.000    0.000    0.000 <frozen _collections_abc>:653(<genexpr>)
+      593    0.000    0.000    0.000    0.000 {built-in method builtins.getattr}
+      210    0.000    0.000    0.000    0.000 <frozen _collections_abc>:865(__contains__)
+       80    0.000    0.000    0.000    0.000 filters.py:1783(<lambda>)
+        2    0.000    0.000    0.000    0.000 environment.py:1375(new_context)
+        2    0.000    0.000    0.000    0.000 runtime.py:93(new_context)
+      210    0.000    0.000    0.000    0.000 __init__.py:1029(__contains__)
+       31    0.000    0.000    0.000    0.000 filters.py:58(make_attrgetter)
+       14    0.000    0.000    0.000    0.000 filters.py:1752(prepare_select_or_reject)
+     1564    0.000    0.000    0.000    0.000 {built-in method builtins.hasattr}
+      856    0.000    0.000    0.000    0.000 {built-in method __new__ of type object at 0x144d380}
+       80    0.000    0.000    0.000    0.000 filters.py:1777(func)
+
+
+
+increment0 office_connect.html 6.5ms
+         14439 function calls (14086 primitive calls) in 0.006 seconds
+
+   Ordered by: cumulative time
+   List reduced from 181 to 35 due to restriction <35>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000    0.006    0.006 environment.py:1275(render)
+     93/1    0.000    0.000    0.006    0.006 {method 'join' of 'str' objects}
+     1041    0.000    0.000    0.006    0.000 office_connect.html:4(root)
+     1041    0.000    0.000    0.005    0.000 dash_layout.html:4(root)
+      180    0.000    0.000    0.003    0.000 office_connect.html:86(block_content)
+   127/20    0.000    0.000    0.003    0.000 runtime.py:262(call)
+    89/12    0.000    0.000    0.002    0.000 runtime.py:694(__call__)
+    89/12    0.000    0.000    0.002    0.000 runtime.py:780(_invoke)
+        7    0.000    0.000    0.002    0.000 _avatars.html:62(macro)
+        1    0.000    0.000    0.002    0.002 _growth.html:41(macro)
+      763    0.001    0.000    0.001    0.000 __init__.py:24(escape)
+        7    0.000    0.000    0.001    0.000 _avatars_art.html:24(macro)
+        7    0.000    0.000    0.001    0.000 _avatars_art.html:1676(macro)
+      855    0.000    0.000    0.001    0.000 __init__.py:122(__new__)
+       30    0.000    0.000    0.001    0.000 async_utils.py:37(wrapper)
+       15    0.000    0.000    0.001    0.000 filters.py:1361(sync_do_list)
+       14    0.000    0.000    0.001    0.000 _avatars_art.html:314(macro)
+        1    0.000    0.000    0.001    0.001 _avatars.html:123(macro)
+       14    0.000    0.000    0.001    0.000 filters.py:1786(select_or_reject)
+      579    0.000    0.000    0.000    0.000 environment.py:485(getattr)
+        2    0.000    0.000    0.000    0.000 environment.py:1375(new_context)
+        2    0.000    0.000    0.000    0.000 runtime.py:93(new_context)
+        6    0.000    0.000    0.000    0.000 environment.py:1425(_get_default_module)
+        6    0.000    0.000    0.000    0.000 <frozen _collections_abc>:648(__rsub__)
+        6    0.000    0.000    0.000    0.000 <frozen _collections_abc>:861(_from_iterable)
+        6    0.000    0.000    0.000    0.000 <frozen _collections_abc>:653(<genexpr>)
+      210    0.000    0.000    0.000    0.000 <frozen _collections_abc>:865(__contains__)
+      593    0.000    0.000    0.000    0.000 {built-in method builtins.getattr}
+       80    0.000    0.000    0.000    0.000 filters.py:1783(<lambda>)
+       31    0.000    0.000    0.000    0.000 filters.py:58(make_attrgetter)
+       14    0.000    0.000    0.000    0.000 filters.py:1752(prepare_select_or_reject)
+      856    0.000    0.000    0.000    0.000 {built-in method __new__ of type object at 0x144d380}
+      210    0.000    0.000    0.000    0.000 __init__.py:1029(__contains__)
+     1564    0.000    0.000    0.000    0.000 {built-in method builtins.hasattr}
+       80    0.000    0.000    0.000    0.000 filters.py:1777(func)
+
+
+
+increment0 office_connect.html 7.1ms
+         14439 function calls (14086 primitive calls) in 0.007 seconds
+
+   Ordered by: cumulative time
+   List reduced from 181 to 35 due to restriction <35>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000    0.007    0.007 environment.py:1275(render)
+     93/1    0.000    0.000    0.007    0.007 {method 'join' of 'str' objects}
+     1041    0.000    0.000    0.006    0.000 office_connect.html:4(root)
+     1041    0.000    0.000    0.006    0.000 dash_layout.html:4(root)
+   127/20    0.000    0.000    0.003    0.000 runtime.py:262(call)
+      180    0.000    0.000    0.003    0.000 office_connect.html:86(block_content)
+    89/12    0.000    0.000    0.003    0.000 runtime.py:694(__call__)
+    89/12    0.000    0.000    0.003    0.000 runtime.py:780(_invoke)
+        1    0.000    0.000    0.002    0.002 _growth.html:41(macro)
+        7    0.000    0.000    0.002    0.000 _avatars.html:62(macro)
+      763    0.001    0.000    0.001    0.000 __init__.py:24(escape)
+        7    0.000    0.000    0.001    0.000 _avatars_art.html:24(macro)
+        7    0.000    0.000    0.001    0.000 _avatars_art.html:1676(macro)
+       30    0.000    0.000    0.001    0.000 async_utils.py:37(wrapper)
+       15    0.000    0.000    0.001    0.000 filters.py:1361(sync_do_list)
+       14    0.000    0.000    0.001    0.000 filters.py:1786(select_or_reject)
+      855    0.000    0.000    0.001    0.000 __init__.py:122(__new__)
+      579    0.000    0.000    0.001    0.000 environment.py:485(getattr)
+       14    0.000    0.000    0.001    0.000 _avatars_art.html:314(macro)
+       31    0.000    0.000    0.000    0.000 filters.py:58(make_attrgetter)
+       14    0.000    0.000    0.000    0.000 filters.py:1752(prepare_select_or_reject)
+      593    0.000    0.000    0.000    0.000 {built-in method builtins.getattr}
+       80    0.000    0.000    0.000    0.000 filters.py:1783(<lambda>)
+        6    0.000    0.000    0.000    0.000 environment.py:1425(_get_default_module)
+        1    0.000    0.000    0.000    0.000 _avatars.html:123(macro)
+        6    0.000    0.000    0.000    0.000 <frozen _collections_abc>:648(__rsub__)
+        1    0.000    0.000    0.000    0.000 app.py:882(nav_groups_for)
+        6    0.000    0.000    0.000    0.000 <frozen _collections_abc>:861(_from_iterable)
+        6    0.000    0.000    0.000    0.000 <frozen _collections_abc>:653(<genexpr>)
+      210    0.000    0.000    0.000    0.000 <frozen _collections_abc>:865(__contains__)
+       80    0.000    0.000    0.000    0.000 filters.py:1777(func)
+       80    0.000    0.000    0.000    0.000 environment.py:573(call_test)
+      675    0.000    0.000    0.000    0.000 {built-in method markupsafe._speedups._escape_inner}
+      210    0.000    0.000    0.000    0.000 __init__.py:1029(__contains__)
+      108    0.000    0.000    0.000    0.000 app.py:854(_cap_ok)
+
+
+
+increment0 office_connect.html 6.7ms
+         14439 function calls (14086 primitive calls) in 0.007 seconds
+
+   Ordered by: cumulative time
+   List reduced from 181 to 35 due to restriction <35>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000    0.006    0.006 environment.py:1275(render)
+     93/1    0.000    0.000    0.006    0.006 {method 'join' of 'str' objects}
+     1041    0.000    0.000    0.006    0.000 office_connect.html:4(root)
+     1041    0.001    0.000    0.005    0.000 dash_layout.html:4(root)
+      180    0.000    0.000    0.003    0.000 office_connect.html:86(block_content)
+   127/20    0.000    0.000    0.003    0.000 runtime.py:262(call)
+    89/12    0.000    0.000    0.003    0.000 runtime.py:694(__call__)
+    89/12    0.000    0.000    0.003    0.000 runtime.py:780(_invoke)
+        1    0.000    0.000    0.002    0.002 _growth.html:41(macro)
+        7    0.000    0.000    0.002    0.000 _avatars.html:62(macro)
+      763    0.000    0.000    0.001    0.000 __init__.py:24(escape)
+        7    0.000    0.000    0.001    0.000 _avatars_art.html:24(macro)
+        7    0.000    0.000    0.001    0.000 _avatars_art.html:1676(macro)
+      855    0.001    0.000    0.001    0.000 __init__.py:122(__new__)
+       14    0.000    0.000    0.001    0.000 _avatars_art.html:314(macro)
+       30    0.000    0.000    0.001    0.000 async_utils.py:37(wrapper)
+       15    0.000    0.000    0.000    0.000 filters.py:1361(sync_do_list)
+      579    0.000    0.000    0.000    0.000 environment.py:485(getattr)
+       14    0.000    0.000    0.000    0.000 filters.py:1786(select_or_reject)
+        2    0.000    0.000    0.000    0.000 environment.py:1375(new_context)
+        2    0.000    0.000    0.000    0.000 runtime.py:93(new_context)
+        6    0.000    0.000    0.000    0.000 environment.py:1425(_get_default_module)
+        1    0.000    0.000    0.000    0.000 _avatars.html:123(macro)
+        6    0.000    0.000    0.000    0.000 <frozen _collections_abc>:648(__rsub__)
+        6    0.000    0.000    0.000    0.000 <frozen _collections_abc>:861(_from_iterable)
+        6    0.000    0.000    0.000    0.000 <frozen _collections_abc>:653(<genexpr>)
+      210    0.000    0.000    0.000    0.000 <frozen _collections_abc>:865(__contains__)
+      593    0.000    0.000    0.000    0.000 {built-in method builtins.getattr}
+       80    0.000    0.000    0.000    0.000 filters.py:1783(<lambda>)
+     1564    0.000    0.000    0.000    0.000 {built-in method builtins.hasattr}
+      210    0.000    0.000    0.000    0.000 __init__.py:1029(__contains__)
+      856    0.000    0.000    0.000    0.000 {built-in method __new__ of type object at 0x144d380}
+        2    0.000    0.000    0.000    0.000 _components.html:568(macro)
+       31    0.000    0.000    0.000    0.000 filters.py:58(make_attrgetter)
+       14    0.000    0.000    0.000    0.000 filters.py:1752(prepare_select_or_reject)
+
+
+
+increment2a office_connect.html 586.5ms
+         1389936 function calls (1267427 primitive calls) in 0.583 seconds
+
+   Ordered by: cumulative time
+   List reduced from 521 to 35 due to restriction <35>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000    0.586    0.586 environment.py:1275(render)
+   1874/1    0.001    0.000    0.586    0.586 {method 'join' of 'str' objects}
+     1041    0.000    0.000    0.586    0.001 office_connect.html:4(root)
+       11    0.000    0.000    0.577    0.052 environment.py:981(get_template)
+       11    0.000    0.000    0.577    0.052 environment.py:956(_load_template)
+        8    0.000    0.000    0.577    0.072 loaders.py:595(load)
+       14    0.000    0.000    0.577    0.041 loaders.py:107(load)
+        8    0.000    0.000    0.575    0.072 environment.py:731(compile)
+      9/6    0.000    0.000    0.349    0.058 environment.py:1425(_get_default_module)
+      6/5    0.000    0.000    0.349    0.070 environment.py:1392(make_module)
+      6/5    0.000    0.000    0.348    0.070 environment.py:1523(__init__)
+        3    0.000    0.000    0.348    0.116 _avatars.html:4(root)
+        8    0.000    0.000    0.320    0.040 environment.py:682(_generate)
+        8    0.000    0.000    0.320    0.040 compiler.py:101(generate)
+  40060/8    0.029    0.000    0.320    0.040 visitor.py:35(visit)
+        8    0.000    0.000    0.320    0.040 compiler.py:829(visit_Template)
+        8    0.000    0.000    0.226    0.028 environment.py:618(_parse)
+        8    0.000    0.000    0.224    0.028 parser.py:1045(parse)
+   344/13    0.000    0.000    0.213    0.016 compiler.py:442(blockvisit)
+    344/8    0.005    0.000    0.204    0.025 parser.py:996(subparse)
+   325/79    0.001    0.000    0.198    0.003 parser.py:167(parse_statement)
+   336/68    0.001    0.000    0.177    0.003 parser.py:196(parse_statements)
+       51    0.000    0.000    0.177    0.003 parser.py:443(parse_macro)
+       51    0.000    0.000    0.164    0.003 compiler.py:1341(visit_Macro)
+       51    0.001    0.000    0.162    0.003 compiler.py:614(macro_body)
+21689/10369    0.007    0.000    0.124    0.000 {built-in method builtins.next}
+    10184    0.003    0.000    0.117    0.000 lexer.py:380(__next__)
+   106634    0.055    0.000    0.112    0.000 nodes.py:169(iter_child_nodes)
+     9974    0.014    0.000    0.110    0.000 lexer.py:615(wrap)
+ 1083/981    0.002    0.000    0.110    0.000 parser.py:685(parse_tuple)
+ 1854/990    0.001    0.000    0.108    0.000 parser.py:512(parse_expression)
+ 1121/888    0.001    0.000    0.105    0.000 parser.py:720(parse)
+23209/2468    0.020    0.000    0.104    0.000 visitor.py:44(generic_visit)
+2052/1110    0.001    0.000    0.104    0.000 parser.py:536(parse_or)
+2067/1122    0.001    0.000    0.102    0.000 parser.py:545(parse_and)
+
+
+
+increment2a office_connect.html 8.1ms
+         15542 function calls (15168 primitive calls) in 0.008 seconds
+
+   Ordered by: cumulative time
+   List reduced from 189 to 35 due to restriction <35>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000    0.008    0.008 environment.py:1275(render)
+    107/1    0.000    0.000    0.008    0.008 {method 'join' of 'str' objects}
+     1041    0.000    0.000    0.007    0.000 office_connect.html:4(root)
+     1041    0.000    0.000    0.007    0.000 dash_layout.html:4(root)
+   134/20    0.000    0.000    0.004    0.000 runtime.py:262(call)
+      180    0.000    0.000    0.004    0.000 office_connect.html:86(block_content)
+    89/12    0.000    0.000    0.004    0.000 runtime.py:694(__call__)
+    89/12    0.000    0.000    0.004    0.000 runtime.py:780(_invoke)
+        7    0.000    0.000    0.003    0.000 _avatars.html:62(macro)
+        1    0.000    0.000    0.003    0.003 _growth.html:41(macro)
+        7    0.000    0.000    0.002    0.000 _avatars_art.html:24(macro)
+        7    0.000    0.000    0.002    0.000 _avatars_art.html:1706(macro)
+      886    0.001    0.000    0.002    0.000 __init__.py:24(escape)
+      978    0.000    0.000    0.001    0.000 __init__.py:122(__new__)
+        1    0.000    0.000    0.001    0.001 _avatars.html:160(macro)
+       30    0.000    0.000    0.001    0.000 async_utils.py:37(wrapper)
+       14    0.000    0.000    0.001    0.000 _avatars_art.html:316(macro)
+       15    0.000    0.000    0.001    0.000 filters.py:1361(sync_do_list)
+       14    0.000    0.000    0.001    0.000 filters.py:1786(select_or_reject)
+      579    0.000    0.000    0.001    0.000 environment.py:485(getattr)
+      979    0.000    0.000    0.000    0.000 {built-in method __new__ of type object at 0x144d380}
+        6    0.000    0.000    0.000    0.000 environment.py:1425(_get_default_module)
+        6    0.000    0.000    0.000    0.000 <frozen _collections_abc>:648(__rsub__)
+      593    0.000    0.000    0.000    0.000 {built-in method builtins.getattr}
+        6    0.000    0.000    0.000    0.000 <frozen _collections_abc>:861(_from_iterable)
+        6    0.000    0.000    0.000    0.000 <frozen _collections_abc>:653(<genexpr>)
+        2    0.000    0.000    0.000    0.000 environment.py:1375(new_context)
+        2    0.000    0.000    0.000    0.000 runtime.py:93(new_context)
+      210    0.000    0.000    0.000    0.000 <frozen _collections_abc>:865(__contains__)
+       14    0.000    0.000    0.000    0.000 filters.py:1752(prepare_select_or_reject)
+       80    0.000    0.000    0.000    0.000 filters.py:1783(<lambda>)
+      210    0.000    0.000    0.000    0.000 __init__.py:1029(__contains__)
+        1    0.000    0.000    0.000    0.000 _components.html:322(macro)
+     1806    0.000    0.000    0.000    0.000 {built-in method builtins.hasattr}
+        2    0.000    0.000    0.000    0.000 _components.html:568(macro)
+
+
+
+increment2a office_connect.html 7.1ms
+         15542 function calls (15168 primitive calls) in 0.007 seconds
+
+   Ordered by: cumulative time
+   List reduced from 189 to 35 due to restriction <35>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000    0.007    0.007 environment.py:1275(render)
+    107/1    0.000    0.000    0.007    0.007 {method 'join' of 'str' objects}
+     1041    0.000    0.000    0.006    0.000 office_connect.html:4(root)
+     1041    0.000    0.000    0.006    0.000 dash_layout.html:4(root)
+      180    0.000    0.000    0.004    0.000 office_connect.html:86(block_content)
+   134/20    0.000    0.000    0.003    0.000 runtime.py:262(call)
+    89/12    0.000    0.000    0.003    0.000 runtime.py:694(__call__)
+    89/12    0.000    0.000    0.003    0.000 runtime.py:780(_invoke)
+        1    0.000    0.000    0.002    0.002 _growth.html:41(macro)
+        7    0.000    0.000    0.002    0.000 _avatars.html:62(macro)
+      886    0.001    0.000    0.002    0.000 __init__.py:24(escape)
+        7    0.000    0.000    0.002    0.000 _avatars_art.html:24(macro)
+        7    0.000    0.000    0.001    0.000 _avatars_art.html:1706(macro)
+      978    0.000    0.000    0.001    0.000 __init__.py:122(__new__)
+       30    0.000    0.000    0.001    0.000 async_utils.py:37(wrapper)
+       15    0.000    0.000    0.001    0.000 filters.py:1361(sync_do_list)
+       14    0.000    0.000    0.001    0.000 filters.py:1786(select_or_reject)
+       14    0.000    0.000    0.000    0.000 _avatars_art.html:316(macro)
+      579    0.000    0.000    0.000    0.000 environment.py:485(getattr)
+        1    0.000    0.000    0.000    0.000 _avatars.html:160(macro)
+        6    0.000    0.000    0.000    0.000 environment.py:1425(_get_default_module)
+        6    0.000    0.000    0.000    0.000 <frozen _collections_abc>:648(__rsub__)
+       31    0.000    0.000    0.000    0.000 filters.py:58(make_attrgetter)
+       14    0.000    0.000    0.000    0.000 filters.py:1752(prepare_select_or_reject)
+        6    0.000    0.000    0.000    0.000 <frozen _collections_abc>:861(_from_iterable)
+      979    0.000    0.000    0.000    0.000 {built-in method __new__ of type object at 0x144d380}
+        6    0.000    0.000    0.000    0.000 <frozen _collections_abc>:653(<genexpr>)
+      210    0.000    0.000    0.000    0.000 <frozen _collections_abc>:865(__contains__)
+      593    0.000    0.000    0.000    0.000 {built-in method builtins.getattr}
+        2    0.000    0.000    0.000    0.000 environment.py:1375(new_context)
+       80    0.000    0.000    0.000    0.000 filters.py:1783(<lambda>)
+        2    0.000    0.000    0.000    0.000 runtime.py:93(new_context)
+      210    0.000    0.000    0.000    0.000 __init__.py:1029(__contains__)
+        1    0.000    0.000    0.000    0.000 app.py:882(nav_groups_for)
+     1806    0.000    0.000    0.000    0.000 {built-in method builtins.hasattr}
+
+
+
+increment2a office_connect.html 6.9ms
+         15542 function calls (15168 primitive calls) in 0.007 seconds
+
+   Ordered by: cumulative time
+   List reduced from 189 to 35 due to restriction <35>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000    0.007    0.007 environment.py:1275(render)
+    107/1    0.000    0.000    0.007    0.007 {method 'join' of 'str' objects}
+     1041    0.000    0.000    0.006    0.000 office_connect.html:4(root)
+     1041    0.000    0.000    0.006    0.000 dash_layout.html:4(root)
+   134/20    0.000    0.000    0.003    0.000 runtime.py:262(call)
+      180    0.000    0.000    0.003    0.000 office_connect.html:86(block_content)
+    89/12    0.000    0.000    0.003    0.000 runtime.py:694(__call__)
+    89/12    0.000    0.000    0.003    0.000 runtime.py:780(_invoke)
+        1    0.000    0.000    0.002    0.002 _growth.html:41(macro)
+        7    0.000    0.000    0.002    0.000 _avatars.html:62(macro)
+        7    0.000    0.000    0.002    0.000 _avatars_art.html:24(macro)
+      886    0.001    0.000    0.002    0.000 __init__.py:24(escape)
+        7    0.000    0.000    0.001    0.000 _avatars_art.html:1706(macro)
+      978    0.000    0.000    0.001    0.000 __init__.py:122(__new__)
+       30    0.000    0.000    0.001    0.000 async_utils.py:37(wrapper)
+       15    0.000    0.000    0.001    0.000 filters.py:1361(sync_do_list)
+       14    0.000    0.000    0.001    0.000 filters.py:1786(select_or_reject)
+      579    0.000    0.000    0.000    0.000 environment.py:485(getattr)
+       14    0.000    0.000    0.000    0.000 _avatars_art.html:316(macro)
+       80    0.000    0.000    0.000    0.000 filters.py:1783(<lambda>)
+        1    0.000    0.000    0.000    0.000 _avatars.html:160(macro)
+        6    0.000    0.000    0.000    0.000 environment.py:1425(_get_default_module)
+        6    0.000    0.000    0.000    0.000 <frozen _collections_abc>:648(__rsub__)
+       80    0.000    0.000    0.000    0.000 filters.py:1777(func)
+        6    0.000    0.000    0.000    0.000 <frozen _collections_abc>:861(_from_iterable)
+        6    0.000    0.000    0.000    0.000 <frozen _collections_abc>:653(<genexpr>)
+       80    0.000    0.000    0.000    0.000 environment.py:573(call_test)
+      593    0.000    0.000    0.000    0.000 {built-in method builtins.getattr}
+       80    0.000    0.000    0.000    0.000 environment.py:498(_filter_test_common)
+      210    0.000    0.000    0.000    0.000 <frozen _collections_abc>:865(__contains__)
+       31    0.000    0.000    0.000    0.000 filters.py:58(make_attrgetter)
+       14    0.000    0.000    0.000    0.000 filters.py:1752(prepare_select_or_reject)
+      210    0.000    0.000    0.000    0.000 __init__.py:1029(__contains__)
+      979    0.000    0.000    0.000    0.000 {built-in method __new__ of type object at 0x144d380}
+        2    0.000    0.000    0.000    0.000 environment.py:1375(new_context)
+
+
+
+increment2a office_connect.html 8.4ms
+         15542 function calls (15168 primitive calls) in 0.008 seconds
+
+   Ordered by: cumulative time
+   List reduced from 189 to 35 due to restriction <35>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000    0.008    0.008 environment.py:1275(render)
+    107/1    0.000    0.000    0.008    0.008 {method 'join' of 'str' objects}
+     1041    0.000    0.000    0.008    0.000 office_connect.html:4(root)
+     1041    0.000    0.000    0.007    0.000 dash_layout.html:4(root)
+      180    0.000    0.000    0.005    0.000 office_connect.html:86(block_content)
+   134/20    0.000    0.000    0.005    0.000 runtime.py:262(call)
+    89/12    0.000    0.000    0.005    0.000 runtime.py:694(__call__)
+    89/12    0.000    0.000    0.005    0.000 runtime.py:780(_invoke)
+        1    0.000    0.000    0.004    0.004 _growth.html:41(macro)
+        7    0.000    0.000    0.004    0.001 _avatars.html:62(macro)
+        7    0.000    0.000    0.003    0.000 _avatars_art.html:24(macro)
+        7    0.001    0.000    0.002    0.000 _avatars_art.html:1706(macro)
+      886    0.001    0.000    0.002    0.000 __init__.py:24(escape)
+      978    0.001    0.000    0.001    0.000 __init__.py:122(__new__)
+       14    0.000    0.000    0.001    0.000 _avatars_art.html:316(macro)
+        1    0.000    0.000    0.001    0.001 _avatars.html:160(macro)
+       30    0.000    0.000    0.000    0.000 async_utils.py:37(wrapper)
+       15    0.000    0.000    0.000    0.000 filters.py:1361(sync_do_list)
+      579    0.000    0.000    0.000    0.000 environment.py:485(getattr)
+       14    0.000    0.000    0.000    0.000 filters.py:1786(select_or_reject)
+        6    0.000    0.000    0.000    0.000 environment.py:1425(_get_default_module)
+        6    0.000    0.000    0.000    0.000 <frozen _collections_abc>:648(__rsub__)
+        6    0.000    0.000    0.000    0.000 <frozen _collections_abc>:861(_from_iterable)
+        6    0.000    0.000    0.000    0.000 <frozen _collections_abc>:653(<genexpr>)
+      210    0.000    0.000    0.000    0.000 <frozen _collections_abc>:865(__contains__)
+      979    0.000    0.000    0.000    0.000 {built-in method __new__ of type object at 0x144d380}
+      140    0.000    0.000    0.000    0.000 filters.py:1018(do_format)
+      593    0.000    0.000    0.000    0.000 {built-in method builtins.getattr}
+     1806    0.000    0.000    0.000    0.000 {built-in method builtins.hasattr}
+      210    0.000    0.000    0.000    0.000 __init__.py:1029(__contains__)
+       80    0.000    0.000    0.000    0.000 filters.py:1783(<lambda>)
+        2    0.000    0.000    0.000    0.000 environment.py:1375(new_context)
+        2    0.000    0.000    0.000    0.000 runtime.py:93(new_context)
+        2    0.000    0.000    0.000    0.000 filters.py:1695(do_tojson)
+        2    0.000    0.000    0.000    0.000 _components.html:568(macro)
+
+

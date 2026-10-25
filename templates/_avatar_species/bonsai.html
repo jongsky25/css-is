@@ -1,0 +1,23 @@
+{# bonsai artwork. Keep placement groups separate from animated groups. #}
+{% from "_avatars_shared.html" import illustrated_pot as _illustrated_pot, plant_finish as _plant_finish %}
+
+{% macro art(s,m=0,costume="",scope="") %}
+{% set leaf='url(#' ~ scope ~ '-leaf)' if scope else 'url(#avg-leaf)' %}
+{% set top=[0,85,74,63,51,42,32][s] %}
+<g class="av-v2 av-body" stroke-linejoin="round" stroke-linecap="round">
+{{ _illustrated_pot(true) }}
+<path d="M45 108Q58 105 76 108" stroke="#719665" stroke-width="5" fill="none"/>
+<g class="av-stem">
+<path d="M53 109Q68 98 59 88Q51 78 64 {{ top+5 }}" fill="none" stroke="#745140" stroke-width="{{ 5+s }}"/>
+<path d="M56 106Q64 97 57 88Q53 79 63 {{ top+7 }}" fill="none" stroke="#c7a078" stroke-width="2.4"/>
+{% if s>=2 %}<path d="M61 94Q77 92 82 83" fill="none" stroke="#805b43" stroke-width="4"/>{% endif %}
+{% if s>=3 %}<path d="M59 83Q41 81 37 72" fill="none" stroke="#805b43" stroke-width="4"/>{% endif %}
+{% if s>=4 %}<path d="M59 66Q80 67 85 58" fill="none" stroke="#805b43" stroke-width="4"/>{% endif %}
+{% if s>=5 %}<path d="M61 55Q48 56 43 46" fill="none" stroke="#805b43" stroke-width="4"/>{% endif %}
+{% for x,y,r,minimum in [(64,top,13,1),(82,81,14,2),(36,71,15,3),(84,56,13,4),(43,46,12,5),(61,27,13,6)] %}{% if s>=minimum %}
+<g class="av-leaf" transform="translate({{ x }} {{ y }})"><path d="M-{{ r }} 4Q-{{ r+6 }}-4-{{ r-4 }}-8Q-7-17 0-12Q9-16 13-7Q{{ r+7 }}-2 {{ r }} 5Q0 13-{{ r }} 4Z" fill="{{ leaf }}" stroke="#41664c" stroke-width="1.2"/><path d="M-9-4Q-2-10 4-6" fill="none" stroke="#cfdea1" stroke-width="2"/></g>
+{% endif %}{% endfor %}
+{% if s>=5 %}{% for x,y in [(45,46),(78,79),(34,68)] %}<g class="av-bloom"><circle cx="{{ x }}" cy="{{ y }}" r="3" fill="#efb1b6" stroke="#b46883" stroke-width=".7"/><circle cx="{{ x }}" cy="{{ y }}" r="1" fill="#fff0c4"/></g>{% endfor %}{% endif %}
+</g><path d="M52 109l-7 1m14-3 9 3" stroke="#805b43" stroke-width="2"/>
+{{ _plant_finish('bonsai',s,m,costume) }}</g>
+{% endmacro %}

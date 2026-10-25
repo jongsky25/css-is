@@ -1,0 +1,42 @@
+{# turtle artwork. Keep placement groups separate from animated groups. #}
+{% from "_avatars_shared.html" import costume_front, eye as _eye, shadow as _shadow, accessory as _accessory, regalia as _regalia %}
+
+{% macro art(s, m=0, costume="") %}
+  {% set sc = 0.62 + (s - 1) * 0.074 %}
+  {{ _shadow(30) }}
+  <g transform="translate(60 100) scale({{ '%.3f'|format(sc) }}) translate(-60 -100)">
+    <ellipse cx="38" cy="112" rx="7" ry="5" fill="url(#avg-turtleskin)"/>
+    <ellipse cx="82" cy="112" rx="7" ry="5" fill="url(#avg-turtleskin)"/>
+    {% if s >= 4 %}
+    <path d="M35 114 l0 2.6 M38 115 l0 2.4 M41 114 l0 2.6 M79 114 l0 2.6 M82 115 l0 2.4 M85 114 l0 2.6" stroke="#5a8a58" stroke-width=".9" stroke-linecap="round"/>
+    {% endif %}
+    <g class="av-head">
+      <ellipse cx="90" cy="96" rx="9.5" ry="7.5" fill="url(#avg-turtleskin)"/>
+      <path d="M84 91 Q88 88 92 89" stroke="#ffffff38" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+      {{ _eye(92, 93.5, 2.2, "#375237", "#9ccb97") }}
+      <path d="M95 98 q2.6 .4 3.6 -1" stroke="#4a7a48" stroke-width="1" fill="none" stroke-linecap="round"/>
+      <ellipse cx="88" cy="98" rx="1.8" ry="1" fill="#f2b8a0" opacity=".5"/>
+      {{ _accessory(m, 90, 88, 0.55, costume=costume) }}
+    </g>
+    {# domed shell: dark rim, lit dome, scute pattern #}
+    <path d="M30 104 Q32 {{ '%.0f'|format(90 - s * 2.2) }} 60 {{ '%.0f'|format(86 - s * 2.6) }} Q88 {{ '%.0f'|format(90 - s * 2.2) }} 90 104 Z" fill="url(#avg-shell2)"/>
+    <path d="M34 104 Q37 {{ '%.0f'|format(93 - s * 2.2) }} 60 {{ '%.0f'|format(90 - s * 2.6) }} Q83 {{ '%.0f'|format(93 - s * 2.2) }} 86 104 Z" fill="url(#avg-shell)"/>
+    <path d="M40 {{ '%.0f'|format(99 - s * 1.6) }} Q48 {{ '%.0f'|format(93 - s * 2.2) }} 58 {{ '%.0f'|format(92 - s * 2.5) }}" stroke="#ffffff30" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+    {% if s >= 3 %}
+      <path d="M60 {{ '%.0f'|format(90 - s * 2.6) }} L60 104 M44 100 L60 {{ '%.0f'|format(93 - s * 1.6) }} L76 100" stroke="#2f6a44" stroke-width="1.4" fill="none" opacity=".8"/>
+    {% endif %}
+    {% if s >= 4 %}
+      {% for cx, cy in [(50, 98), (70, 98), (60, 96)] %}<path d="M{{ cx }} {{ cy }} l3 0 -1.5 -3 Z" fill="#2f6a44" opacity=".8"/>{% endfor %}
+    {% endif %}
+    {{ costume_front("turtle", s, costume, scaled=true) }}
+    {{ _regalia(s, 60, 94, 0.7) }}
+    {% if s >= 6 %}
+      <path d="M60 {{ '%.0f'|format(88 - s * 2.6) }} l1.6 4 4 .6 -3 3 .8 4.2 -3.4 -2 -3.4 2 .8 -4.2 -3 -3 4 -.6 Z" fill="url(#avg-sun)"/>
+    {% endif %}
+    {# hidden treat: a lettuce leaf #}
+    <g class="av-food">
+      <path d="M92 30 q8 -6 14 0 q-2 8 -8 8 q-6 -2 -6 -8 Z" fill="url(#avg-leaf)"/>
+      <path d="M94 34 q5 -3 10 -2" stroke="#3a6e2e" stroke-width=".9" fill="none" opacity=".6"/>
+    </g>
+  </g>
+{% endmacro %}

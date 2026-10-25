@@ -1,0 +1,59 @@
+{# owl artwork. Keep placement groups separate from animated groups. #}
+{% from "_avatars_shared.html" import costume_front, eye as _eye, shadow as _shadow, accessory as _accessory, regalia as _regalia %}
+
+{% macro art(s, m=0, costume="") %}
+  {% set sc = 0.62 + (s - 1) * 0.074 %}
+  {{ _shadow(26) }}
+  {# perch branch #}
+  <path d="M30 119 Q60 114 90 119" stroke="url(#avg-trunk)" stroke-width="5" fill="none" stroke-linecap="round"/>
+  <path d="M78 117 q4 -5 9 -6" stroke="url(#avg-trunk)" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+  <ellipse cx="88" cy="110" rx="3.4" ry="2.2" fill="url(#avg-leaf)" transform="rotate(-28 88 110)"/>
+  <g transform="translate(60 96) scale({{ '%.3f'|format(sc) }}) translate(-60 -96)">
+    <ellipse cx="60" cy="92" rx="21" ry="25" fill="url(#avg-owl)"/>
+    <g class="av-wing-l">
+      <path d="M41 76 Q33 96 43 112 Q48 96 45 78 Z" fill="url(#avg-owl3)"/>
+    </g>
+    <g class="av-wing-r">
+      <path d="M79 76 Q87 96 77 112 Q72 96 75 78 Z" fill="url(#avg-owl3)"/>
+    </g>
+    {# belly + feather chevrons #}
+    <ellipse cx="60" cy="98" rx="13" ry="15" fill="url(#avg-owl2)"/>
+    {% if s >= 3 %}
+    <path d="M54 92 l3 3 3 -3 M60 92 l3 3 3 -3 M56 99 l3 3 3 -3 M52 106 l3 3 3 -3 M60 106 l3 3 3 -3"
+          stroke="#c9a06a" stroke-width="1.1" fill="none" stroke-linecap="round"/>
+    {% endif %}
+    {# feet on the branch #}
+    <path d="M52 114 l-2 4 M52 114 l0 4.6 M52 114 l2 4 M68 114 l-2 4 M68 114 l0 4.6 M68 114 l2 4"
+          stroke="#d98a2a" stroke-width="1.6" stroke-linecap="round"/>
+    {{ costume_front("owl", s, costume, scaled=true) }}
+    {{ _regalia(s, 60, 81, 0.7) }}
+    {# the swivelling facial disc (pointer-follow rotates this) #}
+    <g class="av-head">
+      {% if s >= 4 %}
+      <path d="M44 56 l-4 -10 9 6 Z" fill="url(#avg-owl)"/>
+      <path d="M76 56 l4 -10 -9 6 Z" fill="url(#avg-owl)"/>
+      {% endif %}
+      <path d="M42 66 Q42 47 60 47 Q78 47 78 66 Q78 80 60 81 Q42 80 42 66 Z" fill="url(#avg-owl)"/>
+      <path d="M46 64 Q46 53 60 52 Q74 53 74 64 Q74 75 60 75.6 Q46 75 46 64 Z" fill="url(#avg-owl2)"/>
+      {{ _eye(52, 64, 5.6, "#e8a41f", "#f0e2c8") }}
+      {{ _eye(68, 64, 5.6, "#e8a41f", "#f0e2c8") }}
+      <path d="M60 68 l-2.6 4.4 h5.2 Z" fill="#d98a2a"/>
+      {% if s >= 2 %}
+      <path d="M47 55 q5 -3 10 -1 M63 54 q5 -2 10 1" stroke="#8a6432" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+      {% endif %}
+      {{ _accessory(m, 60, 47, 0.9, costume=costume) }}
+    </g>
+    {% if s >= 5 %}
+    <path d="M60 34 q-2 -5 2 -8 q1 4 4 5 q-3 2 -2 6 Z" fill="url(#avg-sun)" opacity=".9"/>
+    {% endif %}
+    {% if s >= 6 %}
+    <circle cx="34" cy="52" r="2" fill="url(#avg-sun)"/><circle cx="88" cy="48" r="2" fill="url(#avg-sun)"/>
+    {% endif %}
+    {# hidden treat: a berry sprig #}
+    <g class="av-food">
+      <circle cx="92" cy="34" r="3.4" fill="#c04a5a"/>
+      <circle cx="97" cy="38" r="2.8" fill="#d3606e"/>
+      <path d="M92 30 q2 -4 6 -4" stroke="#5d9b4c" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+    </g>
+  </g>
+{% endmacro %}

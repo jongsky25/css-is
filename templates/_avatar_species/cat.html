@@ -1,0 +1,51 @@
+{# cat artwork. Keep placement groups separate from animated groups. #}
+{% from "_avatars_shared.html" import costume_front, eye as _eye, shadow as _shadow, accessory as _accessory, regalia as _regalia %}
+
+{% macro art(s, m=0, costume="", scope="") %}
+{% set sc = 0.62 + (s - 1) * 0.076 %}
+{% set fur = 'url(#' ~ scope ~ '-fur)' if scope else 'url(#avg-catfur)' %}
+{% set cream = 'url(#' ~ scope ~ '-cream)' if scope else 'url(#avg-catfur2)' %}
+{% set head_y = 72 if s <= 2 else (69 if s < 5 else 67) %}
+{{ _shadow(30) }}
+<g class="av-v2 av-body" transform="translate(60 96) scale({{ sc }}) translate(-60 -96)" stroke-linejoin="round">
+  <g class="av-tail">
+    {% if s < 3 %}
+    <path d="M76 116 Q92 118 89 105" fill="none" stroke="#b97745" stroke-width="10" stroke-linecap="round"/>
+    <path d="M76 114 Q89 117 87 106" fill="none" stroke="#e8a45b" stroke-width="7" stroke-linecap="round"/>
+    {% else %}
+    <path d="M78 115 C108 119 106 78 91 83 C82 87 90 96 97 91" fill="none" stroke="#b97745" stroke-width="10" stroke-linecap="round"/>
+    <path d="M78 113 C105 116 103 80 92 85" fill="none" stroke="#ecad66" stroke-width="6" stroke-linecap="round"/>
+    <path d="M99 98l5 2M98 105l5 2" stroke="#b97745" stroke-width="3"/>
+    {% endif %}
+  </g>
+  <path d="M{{ 43 if s<3 else 41 }} 118 Q34 {{ 99 if s<3 else 91 }} 48 85 Q60 79 73 86 Q88 96 80 120 Q60 130 43 118Z" fill="{{ fur }}" stroke="var(--av-outline,#815b43)" stroke-width="1.5"/>
+  <path d="M48 99 Q60 88 73 100 L73 119 Q60 126 48 119Z" fill="{{ cream }}"/>
+  {% if s >= 3 %}<path d="M49 101L48 117M71 101L72 117" stroke="#b97745" stroke-width="1.5" stroke-linecap="round"/>{% endif %}
+  {% if s>=4 %}<path d="M42 105Q34 111 40 119M78 105Q86 111 80 119" fill="none" stroke="#b97745" stroke-width="2"/>{% endif %}
+  {% if s>=5 %}<path d="M49 97L52 105 56 102 60 109 64 102 68 105 71 97" fill="{{ cream }}"/>{% endif %}
+  <g class="av-paws" fill="{{ cream }}" stroke="var(--av-outline,#815b43)" stroke-width="1.2">
+    <ellipse cx="48" cy="119" rx="9" ry="6"/><ellipse cx="72" cy="119" rx="9" ry="6"/>
+    <path d="M45 119v3m5-3v3m19-3v3m5-3v3" stroke="#c89c79"/>
+  </g>
+  <g class="av-head">
+    <g class="av-ear-l">{% if s>=6 %}<path d="M38 44L35 38 43 43" fill="{{ fur }}" stroke="var(--av-outline,#815b43)"/>{% endif %}<path d="M39 65 Q32 39 42 41 L55 55Z" fill="{{ fur }}" stroke="var(--av-outline,#815b43)" stroke-width="1.5"/><path d="M41 58L39 46 49 55Z" fill="#d98c92"/></g>
+    <g class="av-ear-r">{% if s>=6 %}<path d="M82 44L85 38 77 43" fill="{{ fur }}" stroke="var(--av-outline,#815b43)"/>{% endif %}<path d="M81 65 Q88 39 78 41 L65 55Z" fill="{{ fur }}" stroke="var(--av-outline,#815b43)" stroke-width="1.5"/><path d="M79 58L81 46 71 55Z" fill="#d98c92"/></g>
+    <path d="M37 {{ head_y-8 }} Q39 {{ head_y-25 }} 60 {{ head_y-24 }} Q81 {{ head_y-25 }} 83 {{ head_y-8 }} {% if s>=4 %}L88 76 82 78 85 82{% endif %} Q81 96 60 97 Q39 96 35 82 {% if s>=4 %}L38 78 32 76{% endif %}Z" fill="{{ fur }}" stroke="var(--av-outline,#815b43)" stroke-width="1.5"/>
+    <path d="M43 61Q48 54 56 55" stroke="#ffdc9c" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M53 51L56 58M60 49v8M67 51L64 58" stroke="#bb7848" stroke-width="3" stroke-linecap="round"/>
+    <ellipse cx="52" cy="85" rx="10" ry="7" fill="{{ cream }}"/><ellipse cx="68" cy="85" rx="10" ry="7" fill="{{ cream }}"/>
+    {{ _eye(49,73,5 if s<3 else 4.5,"#658b72","#efb26e") }}
+    {{ _eye(71,73,5 if s<3 else 4.5,"#658b72","#efb26e") }}
+    <path d="M56 81 Q60 79 64 81 L60 85Z" fill="#bd7280"/>
+    <path d="M60 85v3q-5 5-9 0m9 0q5 5 9 0" stroke="#614b43" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+    {% if s >= 2 %}<path d="M42 83L28 80M42 87L29 89M78 83L92 80M78 87L91 89" stroke="#7e624b" stroke-width="1.2" stroke-linecap="round"/>{% endif %}
+    {% if s >= 5 %}<path d="M39 73l6 2m30 0 6-2" stroke="#b97745" stroke-width="2"/>{% endif %}
+    <g class="av-anchor-head" data-anchor="head" transform="translate(60 49)"></g>
+    {{ _accessory(m,60,49,1,costume=costume) }}
+  </g>
+  {{ costume_front("cat",s,costume,scaled=true) }}{{ _regalia(s,60,98) }}
+  <g class="av-anchor-neck" data-anchor="neck" transform="translate(60 98)"></g>
+  {% if s>=6 %}<path d="M91 47l2 4 4 1-3 3 1 4-4-2-4 2 1-4-3-3 4-1Z" fill="#e7bf61"/>{% endif %}
+  <g class="av-food"><ellipse cx="94" cy="34" rx="7" ry="4" fill="url(#avg-fish)"/><path d="M100 34l6-4-1 4 1 4Z" fill="#e5731f"/><circle cx="91" cy="33" r=".9" fill="#221a14"/></g>
+</g>
+{% endmacro %}

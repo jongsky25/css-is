@@ -1,0 +1,107 @@
+[
+  {
+    "version": "current",
+    "template": "office_connect.html",
+    "render_ms_profiled": 629.175228998065,
+    "run": 0,
+    "http_ms": 814.8980789992493
+  },
+  {
+    "version": "current",
+    "template": "office_connect.html",
+    "render_ms_profiled": 6.9128400027693715,
+    "run": 1,
+    "http_ms": 34.42714700213401
+  },
+  {
+    "version": "current",
+    "template": "office_connect.html",
+    "render_ms_profiled": 7.191709002654534,
+    "run": 2,
+    "http_ms": 34.2176730009669
+  },
+  {
+    "version": "current",
+    "template": "office_connect.html",
+    "render_ms_profiled": 7.461287998012267,
+    "run": 3,
+    "http_ms": 35.412457000347786
+  },
+  {
+    "version": "current",
+    "template": "office_connect.html",
+    "render_ms_profiled": 6.559738001669757,
+    "run": 4,
+    "http_ms": 33.790973997383844
+  },
+  {
+    "version": "increment0",
+    "template": "office_connect.html",
+    "render_ms_profiled": 680.6440239997755,
+    "run": 0,
+    "http_ms": 807.7921500007506
+  },
+  {
+    "version": "increment0",
+    "template": "office_connect.html",
+    "render_ms_profiled": 6.959480000659823,
+    "run": 1,
+    "http_ms": 46.729429999686545
+  },
+  {
+    "version": "increment0",
+    "template": "office_connect.html",
+    "render_ms_profiled": 6.427210999390809,
+    "run": 2,
+    "http_ms": 34.49364499829244
+  },
+  {
+    "version": "increment0",
+    "template": "office_connect.html",
+    "render_ms_profiled": 6.582378002349287,
+    "run": 3,
+    "http_ms": 33.798685002693674
+  },
+  {
+    "version": "increment0",
+    "template": "office_connect.html",
+    "render_ms_profiled": 7.088783997460268,
+    "run": 4,
+    "http_ms": 35.331994000443956
+  },
+  {
+    "version": "increment2a",
+    "template": "office_connect.html",
+    "render_ms_profiled": 606.8407009988732,
+    "run": 0,
+    "http_ms": 739.396384000429
+  },
+  {
+    "version": "increment2a",
+    "template": "office_connect.html",
+    "render_ms_profiled": 12.55648000005749,
+    "run": 1,
+    "http_ms": 46.55397200258449
+  },
+  {
+    "version": "increment2a",
+    "template": "office_connect.html",
+    "render_ms_profiled": 7.88776699846494,
+    "run": 2,
+    "http_ms": 44.21004400137463
+  },
+  {
+    "version": "increment2a",
+    "template": "office_connect.html",
+    "render_ms_profiled": 7.300649998796871,
+    "run": 3,
+    "http_ms": 40.641482002683915
+  },
+  {
+    "version": "increment2a",
+    "template": "office_connect.html",
+    "render_ms_profiled": 7.033058001979953,
+    "run": 4,
+    "http_ms": 33.9140750002116
+  }
+]

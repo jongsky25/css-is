@@ -1,0 +1,59 @@
+{# bat artwork. Keep placement groups separate from animated groups. #}
+{% from "_avatars_shared.html" import costume_front, eye as _eye, accessory as _accessory, regalia as _regalia %}
+
+{% macro art(s, m=0, costume="") %}
+  {% set sc = 0.62 + (s - 1) * 0.074 %}
+  <ellipse cx="60" cy="124" rx="18" ry="4" fill="#00000010"/>
+  <g transform="translate(60 88) scale({{ '%.3f'|format(sc) }}) translate(-60 -88)">
+    {# membrane wings behind the body; span grows with stage #}
+    {% set span = 26 + s * 3 %}
+    <g class="av-wing-l">
+      <path d="M48 84 Q{{ 60 - span }} 74 {{ 54 - span }} 58 Q{{ 58 - span }} 66 {{ 62 - span }} 60
+               Q{{ 66 - span }} 70 {{ 70 - span }} 64 Q{{ 72 - span }} 76 48 92 Z" fill="url(#avg-batwing)"/>
+      <path d="M48 86 Q{{ 62 - span }} 72 {{ 56 - span }} 60" stroke="#403a5e" stroke-width="1.2" fill="none" opacity=".7"/>
+    </g>
+    <g class="av-wing-r">
+      <path d="M72 84 Q{{ 60 + span }} 74 {{ 66 + span }} 58 Q{{ 62 + span }} 66 {{ 58 + span }} 60
+               Q{{ 54 + span }} 70 {{ 50 + span }} 64 Q{{ 48 + span }} 76 72 92 Z" fill="url(#avg-batwing)"/>
+      <path d="M72 86 Q{{ 58 + span }} 72 {{ 64 + span }} 60" stroke="#403a5e" stroke-width="1.2" fill="none" opacity=".7"/>
+    </g>
+    <ellipse cx="60" cy="90" rx="13" ry="15.5" fill="url(#avg-bat)"/>
+    <path d="M54 82 Q58 78 63 79" stroke="#ffffff30" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+    <ellipse cx="60" cy="96" rx="7.5" ry="8" fill="url(#avg-bat2)"/>
+    {# dangly feet #}
+    <path d="M55 104 q-1 5 -3 6 M65 104 q1 5 3 6" stroke="#57517d" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+    {{ costume_front("bat", s, costume, scaled=true) }}
+    {{ _regalia(s, 60, 83, 0.65) }}
+    <g class="av-head">
+      <g class="av-ear-l">
+        <path d="M50 64 L44 44 L59 59 Z" fill="url(#avg-bat)"/>
+        <path d="M51 61 L47.5 49 L56 58 Z" fill="#c9a0c0"/>
+      </g>
+      <g class="av-ear-r">
+        <path d="M70 64 L76 44 L61 59 Z" fill="url(#avg-bat)"/>
+        <path d="M69 61 L72.5 49 L64 58 Z" fill="#c9a0c0"/>
+      </g>
+      <circle cx="60" cy="70" r="13.5" fill="url(#avg-bat)"/>
+      {{ _eye(54.5, 68.5, 3.3, "#c98a2a", "#7d76ab") }}
+      {{ _eye(65.5, 68.5, 3.3, "#c98a2a", "#7d76ab") }}
+      <path d="M60 74 q-2.6 2.2 -5.4 1.6 M60 74 q2.6 2.2 5.4 1.6" stroke="#403a5e" stroke-width="1" fill="none" stroke-linecap="round"/>
+      {% if s >= 2 %}
+      <path d="M56.5 75.8 l1 2.6 1 -2.6 Z" fill="#fff"/>
+      <path d="M61.5 75.8 l1 2.6 1 -2.6 Z" fill="#fff"/>
+      {% endif %}
+      <path d="M60 71.5 l-1.6 1.8 h3.2 Z" fill="#b06a8a"/>
+      {{ _accessory(m, 60, 56, 0.75, costume=costume) }}
+    </g>
+    {% if s >= 5 %}
+    <path d="M32 46 q-6 4 -4 11 q4 -2 5 -6 q3 3 7 2 q-2 -6 -8 -7 Z" fill="url(#avg-sun)" opacity=".85"/>
+    {% endif %}
+    {% if s >= 6 %}
+    <circle cx="90" cy="46" r="2" fill="url(#avg-sun)"/><circle cx="84" cy="38" r="1.4" fill="url(#avg-sun)"/>
+    {% endif %}
+    {# hidden treat: a slice of mango (fruit bat!) #}
+    <g class="av-food">
+      <path d="M88 32 Q96 26 102 32 Q98 40 90 38 Q87 36 88 32 Z" fill="#f6c445"/>
+      <path d="M89 33 Q95 29 100 33" stroke="#e8a41f" stroke-width="1.2" fill="none"/>
+    </g>
+  </g>
+{% endmacro %}
