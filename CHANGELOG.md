@@ -1,10 +1,29 @@
-## 8.63 — October 25, 2026
+## 8.66 — October 25, 2026
 
 - Add a read-only FullCalendar Schedule view over existing authorized calendar layers, with the current scope and filters, native record links, preferred-view cookie and no-JavaScript weekly list.
 - Show a full week on wide screens and a selectable day on phones. Keep configured office times consistent across browser timezones; preserve inclusive all-day endpoints, real overnight times and incomplete durations without inventing clock values.
 - Withhold the whole hour grid above 500 filtered items or invalid intervals. Bound busy all-day rows with explicit more counts and popovers; retain the complete native list, print fallback and safe labels. Preserve existing calendar views and item sheets.
 - Vendor MIT FullCalendar Standard 6.1.22, Luxon 3.7.2 and its adapter with all bundled licenses/provenance, exact source/bundle verification and transitive npm audits. No new Python package, service, schema, API or calendar write is added.
 - Isolate import-time cookie security in the test app fixture so HTTPS integration tests cannot break later HTTP calendar-preference checks. Keep production behavior unchanged and cover both schemes.
+
+## 8.65 — October 25, 2026
+
+- Replace MCP activity discovery's global 2,000-form refusal with quarter-scoped SQLite grouping, literal Unicode casefold title filtering, and database pagination that fetches at most 26 result rows.
+- Resolve individual activity/member IDs directly and load only the complete current date/normalized-venue/organizer group. Reuse source grouping and preserve first-Type-2 title, representative IDs, archive/pooled exclusions and answer-backed eligibility.
+- Bound metadata queries to 20 million SQLite VM steps or five seconds; retain a 2,000-form per-group cap, 500-Type-2 member cap, response/answer ceilings and existing score suppression. Abort without partial results and remove the progress handler after each query.
+- Keep existing tool names, scopes, hosting switch and scoring unchanged. Cover large same-quarter/historical inventories, pagination beyond 2,000 groups, Unicode/literal search, source grouping, member scorecards, work limits and read-only behavior.
+
+## 8.64 — October 25, 2026
+
+- Add a dormant actor/action/destination-bound preview and atomic receipt contract with five-minute confirmations, revision rechecks, replay recovery and bounded expiry/tombstone cleanup. No bot action adapter, command, callback or write-consent issuance is installed.
+- Extract shared calendar form parsing and actor-aware transactional creation; preserve UI recurrence, room-request and post-save Meet behavior while saving calendar/audit/email-outbox records together.
+- Add preview revocation/restore fences, migration and concurrency/rollback tests, and update the Telegram progress ledger. All two-way defaults remain off.
+
+## 8.63 — October 25, 2026
+
+- Add default-off registered group/topic schedule and room-slot commands with separate current actor read grants, exact routing, and fresh bot/owner/requester membership checks.
+- Require audited owner consent to the previewed exact version of each ordinary bureau calendar entry for each destination. Source edits, sharing revocation and restores fence pending sends; re-registration requires new consent.
+- Render only approved calendar fields and signed-in source links, or anonymous room-slot states. Retain metadata-only queues, bounded output and independent private commands. Update the Telegram progress ledger and operator handoff.
 
 ## 8.62 — October 25, 2026
 

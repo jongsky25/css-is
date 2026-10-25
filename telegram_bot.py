@@ -19,6 +19,8 @@ import telegram_links as links
 import telegram_groups as groups
 import telegram_calendar as calendar_reads
 import telegram_rooms as room_reads
+import telegram_group_reads as shared_reads
+import telegram_actions
 
 PATH = '/integrations/telegram/webhook'
 MAX_BODY = 65536
@@ -109,6 +111,15 @@ def normalize(value):
             and (clean['topic_id'] is None or (message['chat']['type']=='supergroup' and message.get('is_topic_message') is True))
             and text in ('/register','/group_status')):
         clean['command'] = text
+    if (message['chat'].get('type') in ('group','supergroup') and clean['chat_id']<0
+            and message['from'].get('is_bot') is False
+            and (clean['topic_id'] is None or (message['chat']['type']=='supergroup' and message.get('is_topic_message') is True))
+            and text.split() and text.split()[0] in ('/group_calendar','/group_rooms')):
+        clean['command']=text.split()[0]
+        try:
+            clean['shared_query']=shared_reads.parse(text,now_utc())
+        except ValueError:
+            clean['shared_query']={'error':'usage','mode':'rooms'} if clean['command']=='/group_rooms' else {'error':'usage'}
     return clean
 
 
@@ -140,12 +151,12 @@ def receive(conn, clean, raw, bot, now):
         group_route = None
         if clean['command'] == '/register':
             groups.observe(conn, clean, bot, now)
-        elif clean['command'] == '/group_status' and cid is not None and permitted:
+        elif clean['command'] in ('/group_status','/group_calendar','/group_rooms') and cid is not None and permitted:
             group_route = groups.route(conn, clean['chat_id'], clean['topic_id'], bot)
         command = clean['command']
         special = command == '/disconnect' or (storage.enabled('link') and command in ('/start','/confirm'))
         supported = command is not None and (permitted or special)
-        if command in ('/register','/group_status'):
+        if command in ('/register','/group_status','/group_calendar','/group_rooms'):
             supported = group_route is not None
         projection = {'kind': 'help', 'bot': bot[0], 'fingerprint': bot[2]}
         if supported and (special or command == '/status'):
@@ -171,6 +182,12 @@ def receive(conn, clean, raw, bot, now):
             if linked:
                 import storage as app_storage
                 app_storage.audit(conn, linked[0]['username'], 'telegram_disconnect', summary='Disconnected private Telegram access from the bot.', commit=False)
+        if group_route and command in ('/group_calendar','/group_rooms'):
+            projection={'kind':'group_read','bot':bot[0],'fingerprint':bot[2],'query':clean['shared_query']}
+            context={'chat_id':clean['chat_id'],'topic_id':clean['topic_id'],'connection_id':cid,'generation':generation,
+                     'registration_id':group_route['id'],'registration_generation':group_route['generation'],
+                     'projection_json':json.dumps(projection)}
+            supported=groups.authorize_delivery(conn,context,bot) is not None
         if group_route:
             projection['registration_id'] = group_route['id']
             projection['registration_generation'] = group_route['generation']
@@ -283,6 +300,15 @@ def process_updates(conn, now):
                          and update['received_at'] > stamp(now-timedelta(hours=24)) and group_route is not None and projection == expected)
                 if valid:
                     projection = {'kind': 'group_status', 'bot': bot[0], 'fingerprint': bot[2]}
+            if isinstance(projection,dict) and projection.get('kind')=='group_read':
+                projection=dict(projection)
+                reg_id=projection.pop('registration_id',None);reg_gen=projection.pop('registration_generation',None)
+                context={**update,'registration_id':reg_id,'registration_generation':reg_gen,
+                         'projection_json':json.dumps(projection)}
+                authorized=groups.authorize_delivery(conn,context,bot)
+                group_route=authorized[0] if authorized else None
+                valid=(group_route is not None and cid==update['connection_id'] and generation==update['generation']
+                       and update['received_at']>stamp(now-timedelta(hours=24)))
             if calendar_reads.descriptor(projection, bot):
                 context = {'connection_id': cid, 'generation': generation, 'chat_id': update['chat_id'],
                            'topic_id': update['topic_id'], 'registration_id': None}
@@ -371,7 +397,7 @@ def deliver(conn, now=None):
             conn.execute('''UPDATE telegram_delivery SET state=?,claim_token=?,lease_until=?,
                 attempts=attempts+1,updated_at=? WHERE id=?''',
                 ('claimed' if delivery['chat_id'] < 0 else 'sending', token, stamp(now+timedelta(minutes=2)), stamp(now), delivery['id']))
-        # Provider checks occur outside the writer lock; group reads remain unimplemented.
+        # Provider checks occur outside the writer lock.
         group_verified = True
         if delivery['chat_id'] < 0:
             group_checks += 1
@@ -398,6 +424,8 @@ def deliver(conn, now=None):
                 message = calendar_reads.render(conn, delivery, projection, bot, clock())
             elif projection['kind'] == 'rooms':
                 message = room_reads.render(conn, delivery, projection, bot, clock())
+            elif projection['kind'] == 'group_read':
+                message = shared_reads.render(conn, delivery, projection, bot, clock())
             elif projection['kind'] == 'group_status':
                 message = groups.STATUS
             elif projection['kind'] == 'help':
@@ -437,6 +465,7 @@ def deliver(conn, now=None):
 
 def cleanup(conn, now):
     with transaction(conn):
+        telegram_actions.cleanup_in_transaction(conn,now)
         conn.execute('''UPDATE telegram_update SET sender_id=NULL,chat_id=NULL,topic_id=NULL,payload_json=NULL,
             state=CASE WHEN state IN ('queued','processing') THEN 'cancelled' ELSE state END,
             claim_token=NULL,lease_until=NULL WHERE id IN

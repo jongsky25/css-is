@@ -139,3 +139,14 @@ own-connection scope checks and source-based survey verification prompts. It
 adds no MCP tools or write capability and cannot refresh ChatGPT's saved catalog.
 Live survey acceptance remains pending; use the page to distinguish host setup,
 connection consent and ChatGPT registration before the deferred desktop check.
+
+### Activity discovery archive-size fix — v8.65
+
+Remove the global 2,000-form discovery gate that refused narrow searches on the
+hosted archive. Discovery groups only the requested quarter in SQLite, filters
+the authoritative group title and pages bounded metadata results. Detail resolves
+one current group directly. Keep existing tool contracts/consent, source scoring,
+response/sample guards and bounded query work; large unrelated inventories no
+longer refuse these reads. Synthetic large-inventory and source-parity tests pass;
+repeat the Regional BHW Summit Forum Q3 2026 hosted check after deployment before
+recording live survey acceptance.

@@ -57,7 +57,7 @@ def install(conn):
       actor_id INTEGER NOT NULL REFERENCES admin_user(id),
       connection_id INTEGER NOT NULL REFERENCES telegram_connection(id),
       generation TEXT NOT NULL, action TEXT NOT NULL, client_key TEXT NOT NULL,
-      input_hash TEXT NOT NULL, target_id INTEGER, expected_revision TEXT,
+      input_hash TEXT NOT NULL, context_hash TEXT, target_id INTEGER, expected_revision TEXT,
       state TEXT NOT NULL DEFAULT 'pending'
         CHECK(state IN ('pending','committed','partial','failed','cancelled')),
       result_entry_id INTEGER REFERENCES calendar_entry(id),
@@ -118,6 +118,31 @@ def install(conn):
       created_at TEXT NOT NULL, updated_at TEXT NOT NULL, consented_at TEXT NOT NULL,
       UNIQUE(chat_id,topic_id));
     CREATE INDEX IF NOT EXISTS telegram_group_owner ON telegram_group(owner_connection_id,state);
+    CREATE TABLE IF NOT EXISTS telegram_group_share (
+      entry_id INTEGER NOT NULL REFERENCES calendar_entry(id) ON DELETE CASCADE,
+      registration_id INTEGER NOT NULL REFERENCES telegram_group(id),
+      registration_generation TEXT NOT NULL,
+      revision TEXT NOT NULL, consented_by INTEGER NOT NULL REFERENCES admin_user(id),
+      consented_at TEXT NOT NULL, revoked_at TEXT,
+      PRIMARY KEY(entry_id,registration_id));
+    CREATE INDEX IF NOT EXISTS telegram_share_registration ON telegram_group_share(registration_id,revoked_at);
+    CREATE TRIGGER IF NOT EXISTS telegram_share_fence AFTER UPDATE ON telegram_group_share
+    BEGIN
+      UPDATE telegram_delivery SET state=CASE WHEN state='sending' THEN 'uncertain' ELSE 'cancelled' END,
+        claim_token=NULL,lease_until=NULL,error_code='share_changed'
+        WHERE registration_id=NEW.registration_id AND state IN ('queued','claimed','retry_wait','sending');
+    END;
+    CREATE TRIGGER IF NOT EXISTS telegram_share_delete_fence BEFORE DELETE ON telegram_group_share
+    BEGIN
+      UPDATE telegram_delivery SET state=CASE WHEN state='sending' THEN 'uncertain' ELSE 'cancelled' END,
+        claim_token=NULL,lease_until=NULL,error_code='share_changed'
+        WHERE registration_id=OLD.registration_id AND state IN ('queued','claimed','retry_wait','sending');
+    END;
+    CREATE TRIGGER IF NOT EXISTS telegram_calendar_share_changed AFTER UPDATE ON calendar_entry
+    BEGIN
+      UPDATE telegram_group_share SET revoked_at=strftime('%Y-%m-%dT%H:%M:%SZ','now')
+        WHERE entry_id=NEW.id AND revoked_at IS NULL;
+    END;
     CREATE TRIGGER IF NOT EXISTS telegram_group_fence AFTER UPDATE OF state,generation ON telegram_group
     WHEN OLD.state IS NOT NEW.state OR OLD.generation IS NOT NEW.generation
     BEGIN
@@ -136,6 +161,45 @@ def install(conn):
         claim_token=NULL,lease_until=NULL,projection_json='{}',error_code='connection_changed',
         updated_at=strftime('%Y-%m-%dT%H:%M:%SZ','now')
         WHERE connection_id=NEW.id AND chat_id<0 AND state IN ('queued','claimed','retry_wait','sending');
+    END;
+    CREATE TABLE IF NOT EXISTS telegram_preview (
+      token_hash TEXT PRIMARY KEY NOT NULL,
+      operation_id TEXT NOT NULL UNIQUE REFERENCES telegram_operation(operation_id),
+      actor_id INTEGER NOT NULL REFERENCES admin_user(id),
+      connection_id INTEGER NOT NULL REFERENCES telegram_connection(id), generation TEXT NOT NULL,
+      bot_identity INTEGER NOT NULL, bot_fingerprint TEXT NOT NULL,
+      chat_id INTEGER NOT NULL, topic_id INTEGER,
+      registration_id INTEGER REFERENCES telegram_group(id), registration_generation TEXT,
+      action TEXT NOT NULL, input_hash TEXT NOT NULL,
+      fields_json TEXT, summary_json TEXT, expected_json TEXT,
+      state TEXT NOT NULL CHECK(state IN ('pending','consumed','cancelled')),
+      created_at TEXT NOT NULL, expires_at TEXT NOT NULL, consumed_at TEXT);
+    CREATE INDEX IF NOT EXISTS telegram_preview_expiry ON telegram_preview(state,expires_at);
+    CREATE TRIGGER IF NOT EXISTS telegram_preview_cancel AFTER UPDATE OF state ON telegram_preview
+    WHEN NEW.state='cancelled'
+    BEGIN
+      UPDATE telegram_operation SET state='cancelled',result_code='preview_cancelled',
+        updated_at=strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE operation_id=NEW.operation_id AND state='pending';
+    END;
+    CREATE TRIGGER IF NOT EXISTS telegram_preview_connection AFTER UPDATE OF state,generation ON telegram_connection
+    WHEN OLD.state IS NOT NEW.state OR OLD.generation IS NOT NEW.generation
+    BEGIN
+      UPDATE telegram_preview SET state='cancelled',fields_json=NULL,summary_json=NULL,expected_json=NULL
+        WHERE connection_id=NEW.id AND state='pending';
+    END;
+    CREATE TRIGGER IF NOT EXISTS telegram_preview_group AFTER UPDATE OF state,generation ON telegram_group
+    WHEN OLD.state IS NOT NEW.state OR OLD.generation IS NOT NEW.generation
+    BEGIN
+      UPDATE telegram_preview SET state='cancelled',fields_json=NULL,summary_json=NULL,expected_json=NULL
+        WHERE registration_id=NEW.id AND state='pending';
+    END;
+    CREATE TRIGGER IF NOT EXISTS telegram_preview_grant AFTER UPDATE OF revoked_at ON telegram_grant
+    WHEN NEW.revoked_at IS NOT NULL
+    BEGIN
+      UPDATE telegram_preview SET state='cancelled',fields_json=NULL,summary_json=NULL,expected_json=NULL
+        WHERE connection_id=NEW.connection_id AND generation=NEW.generation AND state='pending'
+        AND (action=NEW.action OR (NEW.action='calendar.read' AND action='calendar.create')
+          OR (NEW.action='rooms.read' AND action='rooms.request'));
     END;
     CREATE TRIGGER IF NOT EXISTS telegram_account_revoked
     AFTER UPDATE OF active,must_change,role,username,pw_hash,salt ON admin_user
@@ -163,6 +227,8 @@ def install(conn):
         WHERE actor_id=NEW.id AND state='pending';
     END;
     ''')
+    if 'context_hash' not in {r[1] for r in conn.execute('PRAGMA table_info(telegram_operation)')}:
+        conn.execute('ALTER TABLE telegram_operation ADD COLUMN context_hash TEXT')
     columns={r[1] for r in conn.execute('PRAGMA table_info(telegram_connection)')}
     for name,kind in (('bot_identity','INTEGER'),('bot_fingerprint','TEXT')):
         if name not in columns:
@@ -178,6 +244,10 @@ def reset_after_restore(conn):
     Later preview tables must extend this hook when introduced.
     """
     tables = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+    if 'telegram_preview' in tables:
+        conn.execute("UPDATE telegram_preview SET state='cancelled',fields_json=NULL,summary_json=NULL,expected_json=NULL WHERE state='pending'")
+    if 'telegram_group_share' in tables:
+        conn.execute("UPDATE telegram_group_share SET revoked_at=strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE revoked_at IS NULL")
     if 'telegram_group' in tables:
         conn.execute("UPDATE telegram_group SET state='paused',generation=lower(hex(randomblob(16))),reason='restored' WHERE state<>'revoked'")
     if 'telegram_group_request' in tables:
