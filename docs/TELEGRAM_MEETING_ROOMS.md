@@ -120,3 +120,5 @@ notices, reminders, natural-language parsing, recurrence, guests, meals, standby
 on-behalf-of requests and approval/cancel/withdraw actions are outside T3.4.
 
 T4.1 adds [transactional source-change events and metadata-only routing](TELEGRAM_CHANGE_EVENTS.md). It does not deliver change notifications or replay business actions; T4.2 owns that transport handoff.
+
+T4.2 adds [current permission-checked calendar and room change notices](TELEGRAM_CHANGE_NOTICES.md), with a separate default-off read/delivery pilot. Business confirmation/recovery semantics are unchanged; a notice never repeats an action.

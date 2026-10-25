@@ -5,8 +5,10 @@ Implementation: [telegram_changes.py](../telegram_changes.py),
 [bounded scheduler](../telegram_bot.py),
 [progress ledger](TELEGRAM_TWO_WAY_PLAN.md).
 
-This increment records committed changes and prepares permission-checked routing
-metadata. It renders no notification, adds no Telegram delivery row, and calls
+T4.1 records committed changes and prepares permission-checked routing
+metadata. [T4.2 change notices](TELEGRAM_CHANGE_NOTICES.md) now adds the separate
+atomic handoff, safe renderer and final transport checks. The T4.1 boundary below
+describes capture/routing alone. It renders no notification, adds no Telegram delivery row, and calls
 no message provider. T4.2 must connect eligible routes to the existing durable
 transport with final authority checks. All switches remain off by default;
 production activation and recovery remain unverified.
@@ -140,3 +142,5 @@ does not stop normal Office Connect writes or their metadata capture. Preserve
 source tombstones, event/route metadata and restore hooks during code rollback;
 never replay old actions or blindly resend uncertain deliveries. Notifications,
 reminders/quiet hours and the complete live workflow remain T4.2–T4.4.
+
+T4.2 extends routes with a durable handoff key, fences their outbox rows on cancellation, and retains provider outcome metadata under the existing sender rules. See the [notice runbook](TELEGRAM_CHANGE_NOTICES.md) for rejection recovery and migration/retention details.
