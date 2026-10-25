@@ -1,6 +1,6 @@
 # Office Connect ↔ Telegram delivery plan
 
-Status: T0–T4.2 merged; T4.3.1 in progress; two-way defaults remain off; production activation unverified.
+Status: T0–T4.2 merged; T4.3.1 in review; two-way defaults remain off; production activation unverified.
 Last updated: 2026-10-25.
 Repository: jongsky25/css-is.
 Planning baseline inspected: abf3141 (merge of PR #458).
@@ -146,7 +146,7 @@ T0 merged in PR #465 at `4cd01a0bfd17ccf57dba12b05a24c72bfd098f29`. T1.1 merged 
 | T3.4 | Merged | Codex / 2026-10-25 | [PR #482](https://github.com/jongsky25/css-is/pull/482), `feat/telegram-t3-4-meeting-room` | Combined guided meeting and separate room child; 849 tests passed | Merged at `6c2c778`, release 8.72; all required CI passed; next T4.1 |
 | T4.1 | Merged | Codex / 2026-10-25 | [PR #484](https://github.com/jongsky25/css-is/pull/484), `feat/telegram-t4-1-change-events` | Durable source changes and metadata-only routing; 926 tests passed | Merged at `ab544d1`, release 8.73; all required CI passed; next T4.2 |
 | T4.2 | Merged | Codex / 2026-10-25 | [PR #485](https://github.com/jongsky25/css-is/pull/485), `feat/telegram-t4-2-change-notices` | Safe notices through the existing durable sender; 927 regressions + 29 release tests passed | Merged at `e78dfcb`, release 8.75; all fresh CI passed; next T4.3.1 |
-| T4.3.1 | In progress | Codex / 2026-10-25 | `feat/telegram-t4-3-1-preferences` | Channel controls and quiet hours; 1,013 regressions + 29 release tests passed | Defaults off; next T4.3.2 after merge |
+| T4.3.1 | In review | Codex / 2026-10-25 | [PR #486](https://github.com/jongsky25/css-is/pull/486), `feat/telegram-t4-3-1-preferences` | Channel controls and quiet hours; 1,013 regressions + 29 release tests passed | Defaults off; next T4.3.2 after merge |
 | T4.3.2–T7 | Planned | Unassigned | — | Not implemented | Follow dependencies |
 
 ### T0 handoff — 2026-10-25
@@ -399,6 +399,7 @@ T0 merged in PR #465 at `4cd01a0bfd17ccf57dba12b05a24c72bfd098f29`. T1.1 merged 
 ### T4.3.1 implementation and operator handoff — 2026-10-25
 
 - Owner/branch: Codex, `feat/telegram-t4-3-1-preferences`, created only after PR #485 merge confirmation at `e78dfcba20dd39c6cd056a7c3f5ecd612f7028ec`. Original head passed CI but concurrent survey PR #483 merged during the final merge check. Preserved survey release 8.74, advanced T4.2 to 8.75, passed 134 affected and 10 survey/readiness tests, then all fresh complete CI (run 40192775995). Expected head `be2cfa1` was clean; no local, active/queued merge-group or queued auto-merge was found immediately before merge.
+- Review: [PR #486](https://github.com/jongsky25/css-is/pull/486), implementation `aea749a1d6191d8eaf261a4279c188894ce2c4be`; code complete, awaiting required full CI/review/merge. This documentation handoff is in the same PR.
 - Scope split: the plan requires numbered children for independent workflows. T4.3 combines preference/quiet-hour delivery controls with a new durable reminder scheduler. This PR implements T4.3.1 only; T4.3.2 is the next dependency-ready child afterward. T4.4 depends on both children. Parent T4.3 is not complete until both merge.
 - Scope: current-user channel controls, shared existing calendar email setting, own-room status email preference, owned-group automatic-update switches and one explicit Asia/Manila quiet window; defer automatic updates without consuming attempts or shortening provider retry delays. No reminder generator, live activation or change to interactive replies/legacy digests/approval alerts.
 - Implementation: [notification preferences runbook](TELEGRAM_NOTIFICATION_PREFERENCES.md), `telegram_preferences.py`, `telegram_preference_routes.py` and the native no-script settings template. Current-user saves use existing Origin/session/CSRF protection, an allowlisted bounded form, revision/shared-calendar-email conflict checks and one audit/cancellation transaction. The calendar email choice shares the existing profile field; no duplicate truth or automatic fallback is introduced.
@@ -472,4 +473,4 @@ T2.2 merge reconciliation: preserved concurrent search release 8.60 and its runt
 
 - 2026-10-25: Split T4.3 under the existing independent-workflow rule before implementation: T4.3.1 channel choices/quiet hours, then T4.3.2 durable reminders. Both are prerequisites for T4.4; delivering preferences alone does not complete T4.3.
 
-- 2026-10-25: Confirmed PR #485 merged at `e78dfcb` after fresh CI and no ongoing merge. Completed the separate T4.3.1 preference/quiet-hour child with 1,013 passing regressions and 29 release checks; Markdown runbook and progress evidence are included in the same PR. Await its CI/review/merge before T4.3.2; no reminder scheduler or hosted activation is claimed.
+- 2026-10-25: Confirmed PR #485 merged at `e78dfcb` after fresh CI and no ongoing merge. Completed the separate T4.3.1 preference/quiet-hour child in [PR #486](https://github.com/jongsky25/css-is/pull/486) with 1,013 passing regressions and 29 release checks; Markdown runbook and progress evidence are included in the same PR. Await its CI/review/merge before T4.3.2; no reminder scheduler or hosted activation is claimed.
