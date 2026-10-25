@@ -25,7 +25,7 @@ def make_router(templates,get_conn):
         conn=get_conn()
         try:
             user=links.current(conn,payload(request));identifier=(values or {}).get('origin') or request.query_params.get('origin','')
-            origins=rows(conn,'SELECT * FROM telegram_meeting_origin WHERE account_id=? AND expires_at>? ORDER BY created_at DESC LIMIT 20',
+            origins=rows(conn,"SELECT * FROM telegram_meeting_origin WHERE account_id=? AND action='calendar.create' AND expires_at>? ORDER BY created_at DESC LIMIT 20",
                          (user['id'],links.stamp(bot.now_utc())))
             selected=None
             if identifier:

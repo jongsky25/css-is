@@ -1,3 +1,9 @@
+## 8.68 — October 25, 2026
+
+- Add optional guided room requests linked to an existing permitted meeting, with separate calendar/room read and rooms.request consent, exact private previews, normal pending approval and durable confirmation/recovery.
+- Make plain internal room requests, linking, lazy slot initialization and approver notice inserts usable inside the action transaction while preserving existing UI defaults and courtesy behavior. No automatic approval, meeting creation, guests, meals, standby or series.
+- Recheck source authority/revision, dates, slots, conflicts and existing live links; keep group-origin details private, fence grant/source deletion and update the Telegram plan/runbook. All defaults remain off.
+
 ## 8.67 — October 25, 2026
 
 - Add optional guided single-meeting creation: /meeting in a private or registered conversation, signed-in deterministic fields, an exact private preview, and /meeting_confirm with actor/context-bound expiry and durable replay recovery.

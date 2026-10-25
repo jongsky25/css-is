@@ -27,11 +27,13 @@ def make_router(templates, get_conn):
         conn = get_conn()
         try:
             user, connection, grants, pending = links.status(conn, payload(request), bot.now_utc())
+            execution_ready=bool(links.available() and bot.storage.enabled('inbound') and bot.storage.enabled('delivery'))
             return templates.TemplateResponse(request, 'telegram_link.html',
                 {'show_scope': False, 'account': user, 'connection': connection, 'grants': grants,
                  'pending': pending, 'ready': bool(links.available()), 'csrf': csrf(request),
-                 'scopes': {k:v for k,v in links.SCOPES.items() if k!='calendar.create' or bot.storage.enabled('calendar_create')}, 'error': error,
-                 'meeting_ready': bool(links.authorized(conn,user['id'],'calendar.create') and links.authorized(conn,user['id'],'calendar.read')),
+                 'scopes': {k:v for k,v in links.SCOPES.items() if (k!='calendar.create' or bot.storage.enabled('calendar_create')) and (k!='rooms.request' or bot.storage.enabled('rooms_request'))}, 'error': error,
+                 'room_request_ready': bool(execution_ready and links.authorized(conn,user['id'],'rooms.request') and links.authorized(conn,user['id'],'rooms.read') and links.authorized(conn,user['id'],'calendar.read')),
+                 'meeting_ready': bool(execution_ready and links.authorized(conn,user['id'],'calendar.create') and links.authorized(conn,user['id'],'calendar.read')),
                  'rooms_ready': bool(links.authorized(conn,user['id'],'rooms.read') and links.origin() and len(links.origin())<=200 and bot.storage.enabled('inbound') and bot.storage.enabled('delivery')),
                  'calendar_ready': bool(links.authorized(conn,user['id'],'calendar.read') and links.origin() and len(links.origin())<=200 and bot.storage.enabled('inbound') and bot.storage.enabled('delivery'))}, status_code=status, headers=PRIVATE)
         except ValueError:

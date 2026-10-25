@@ -1,0 +1,25 @@
+{% extends "dash_layout.html" %}
+{% block title %}Prepare a linked room request — Office Connect{% endblock %}
+{% block content %}
+<div style="max-width:720px;margin:auto;overflow-wrap:anywhere">
+<h1>Request the conference room for an existing meeting</h1>
+<p><a href="/account/telegram">Telegram connection and permissions</a> · <a href="/calendar">Open calendar</a></p>
+<p>Start with <code>/room_request</code> in your private chat or an approved group/topic. Select a meeting you created or participate in and one consecutive block of room hours. Dates and times use <strong>Asia/Manila</strong>.</p>
+<p>This creates no meeting and grants no approval. A submitted request stays pending; nothing is held until the Administrative Section approves. Meals, standby, guests, on-behalf-of requests and repeats stay in Office Connect.</p>
+{% if error %}<p role="alert">{{ error }}</p>{% endif %}
+{% if queued %}<p role="status">Your room preview is prepared. Check your private Telegram chat, verify the meeting and requested hours, then send its confirmation command before the exact deadline.</p>{% endif %}
+{% if already %}<p role="status">This operation already has a receipt. Use the recovery command from your private preview. No second request was created.</p>{% endif %}
+{% if origins %}
+<form method="post" action="/account/telegram/room">
+<input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="key" value="{{ key }}">
+<p><label for="room-origin">Starting conversation</label><br><select id="room-origin" name="origin" required>{% for item in origins %}<option value="{{ item.id }}" {% if item.id == selected %}selected{% endif %}>{{ item.label }}</option>{% endfor %}</select></p>
+<p><label for="room-entry">Meeting entry number</label><br><input id="room-entry" name="entry_id" type="number" min="1" value="{{ values.get('entry_id','') }}" required></p>
+<p>Open the meeting's signed-in calendar page and use the number at the end of its address. The request uses the meeting's date, which is shown in your private preview.</p>
+<p><label for="room-from">Room from</label><br><select id="room-from" name="from_time" required><option value="">Choose a start hour</option>{% for slot in slots %}<option value="{{ slot.start_time }}" {% if values.get('from_time') == slot.start_time %}selected{% endif %}>{{ slot.start_time }}</option>{% endfor %}</select></p>
+<p><label for="room-to">Room until</label><br><select id="room-to" name="to_time" required><option value="">Choose an end hour</option>{% for slot in slots %}<option value="{{ slot.end_time }}" {% if values.get('to_time') == slot.end_time %}selected{% endif %}>{{ slot.end_time }}</option>{% endfor %}</select></p>
+<p>Hours are checked when preparing and confirming. Pending requests can compete for the same hours; a preview does not reserve them. Details and receipts stay in your private chat even when you start in a group.</p>
+<button type="submit">Send room preview to my private chat</button>
+</form>
+{% else %}<p>No current request. Enable the optional pilot, link with calendar read, room read and room-request consent, then send <code>/room_request</code> again.</p>{% endif %}
+</div>
+{% endblock %}

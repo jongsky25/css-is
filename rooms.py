@@ -88,13 +88,15 @@ def ensure_slots(conn):
     later edits or deactivates a slot never has it put back."""
     if st.get_setting(conn, _SEED_KEY) == "1":
         return
+    caller_transaction=conn.in_transaction
     for i, h in enumerate(range(OPEN_HOUR, CLOSE_HOUR)):
         conn.execute(
             "INSERT OR IGNORE INTO room_slot(code, label, start_time, end_time, sort, active) "
             "VALUES (?,?,?,?,?,1)",
             (f"H{h:02d}", f"{h:02d}:00-{h + 1:02d}:00", f"{h:02d}:00", f"{h + 1:02d}:00", i))
-    st.set_setting(conn, _SEED_KEY, "1")
-    conn.commit()
+    conn.execute("INSERT INTO app_setting(key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value",(_SEED_KEY,"1"))
+    if not caller_transaction:
+        conn.commit()
 
 
 def list_slots(conn, active_only=True):
@@ -283,7 +285,7 @@ def _validate_slots(conn, slot_ids):
 def request(conn, *, title, day, slot_ids, requester_user_id=None, ext=None, purpose=None,
             attendees=None, modality="f2f", meals_requested=False, actor=None, today=None,
             max_ahead=MAX_DAYS_AHEAD, consent_at=None, event_id=None, source=None, moves_reservation_id=None,
-            series_id=None, quiet=False, standby=False, calendar_entry_id=None):
+            series_id=None, quiet=False, standby=False, calendar_entry_id=None, commit=True):
     """File a request. Internal (requester_user_id) or external (ext = dict of
     name/org/email/phone). Status starts `requested`; nothing is held. `event_id` links it to a
     CSS activity (or `calendar_entry_id` to a calendar item); `source`/`moves_reservation_id` mark a move request.
@@ -292,6 +294,11 @@ def request(conn, *, title, day, slot_ids, requester_user_id=None, ext=None, pur
     PROVISIONAL use that holds nothing, and the Administrative Section can confirm it if the booking
     is released or in an emergency (`confirm_standby`). It is stored as standby only when something
     really is in the way; for free hours it is an ordinary request."""
+    if not commit:
+        if not conn.in_transaction:
+            raise RuntimeError("Room request requires a caller-owned writer transaction.")
+        if requester_user_id is None or ext or meals_requested or standby or series_id or moves_reservation_id or event_id or source:
+            raise RoomError("Transactional requests support an internal plain request only.")
     title = (title or "").strip()
     if not title:
         raise RoomError("Please give the meeting a title.")
@@ -335,17 +342,23 @@ def request(conn, *, title, day, slot_ids, requester_user_id=None, ext=None, pur
         conn.executemany(
             "INSERT INTO room_reservation_slot(reservation_id, day, slot_id, is_approved) VALUES (?,?,?,0)",
             [(rid, day_iso, sid) for sid in order])
-        conn.commit()
+        if commit:
+            conn.commit()
     except Exception:
-        conn.rollback()
+        if commit:
+            conn.rollback()
         raise
     st.audit(conn, actor or "system", "room_request", target_type="room_reservation", target_id=rid,
-             summary=f"{title} on {day_iso}" + (" (standby: hours already taken)" if is_standby else ""))
+             summary=f"{title} on {day_iso}" + (" (standby: hours already taken)" if is_standby else ""),commit=commit)
     out = get_reservation(conn, rid)
     if meals_requested:
         _meal_form(conn, rid, actor, today)
     if not quiet:                                          # a series tells the section once, not once per date
-        _emit("requested", conn, out)
+        if commit:
+            _emit("requested", conn, out)
+        else:
+            import rooms_notify
+            rooms_notify.on_requested(conn,out,commit=False)
         if requester_user_id is None:
             _emit("received", conn, out)
     return out
@@ -1248,8 +1261,10 @@ def reservations_for_entry(conn, entry_id):
         f"SELECT {_COLS} FROM room_reservation WHERE calendar_entry_id=? ORDER BY id DESC", (entry_id,))]
 
 
-def link_entry(conn, rid, entry_id, user):
+def link_entry(conn, rid, entry_id, user, *, commit=True):
     """Tie an existing, still-live reservation to a calendar item. Only its owner or a room approver."""
+    if not commit and not conn.in_transaction:
+        raise RuntimeError("Room linking requires a caller-owned writer transaction.")
     res = get_reservation(conn, rid)
     if res is None or res["status"] not in ("requested", "approved"):
         raise RoomError("That reservation can't be linked any more.")
@@ -1258,7 +1273,8 @@ def link_entry(conn, rid, entry_id, user):
     if (res["event_id"] or res["calendar_entry_id"]) and res["calendar_entry_id"] != entry_id:
         raise RoomError("That reservation is already linked to another activity or calendar item.")
     conn.execute("UPDATE room_reservation SET calendar_entry_id=?, updated_at=? WHERE id=?", (entry_id, _stamp(), rid))
-    conn.commit()
+    if commit:
+        conn.commit()
     return get_reservation(conn, rid)
 
 

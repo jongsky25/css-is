@@ -15,7 +15,7 @@
 {% else %}<p>Private calendar lookup requires its optional pilot and your calendar read consent. Check with the hosting administrator if the pilot is paused.</p>{% endif %}
 {% if rooms_ready %}<p>Private room lookup: <code>/room_slots YYYY-MM-DD</code>, <code>/my_rooms</code>, or <code>/room_status CR-YYYY-NNNN</code>. Slot availability and your request status are read only; pending requests do not hold a booking.</p>
 {% else %}<p>Private room lookup requires its optional pilot and your room read consent.</p>{% endif %}
-<p>{% if meeting_ready %}Send <code>/meeting</code> privately or in a registered topic, fill the signed-in guided form and confirm the exact preview in your private bot chat.{% else %}Meeting creation requires its optional pilot and fresh explicit calendar read and meeting-create consent. Disconnect and link again to change permissions.{% endif %} Submit or change room requests in Office Connect. Linking never grants access beyond your current Office Connect permissions.</p>
+<p>{% if meeting_ready %}Send <code>/meeting</code> privately or in a registered topic, fill the signed-in guided form and confirm the exact preview in your private bot chat.{% else %}Meeting creation requires its optional pilot and fresh explicit calendar read and meeting-create consent. Disconnect and link again to change permissions.{% endif %} {% if room_request_ready %}Send <code>/room_request</code> for one pending room request linked to an existing meeting you created or participate in. Confirm the exact hours privately; normal approval still applies.{% else %}Room requests require the optional pilot and fresh explicit calendar read, room read and room-request consent.{% endif %} Change or approve requests in Office Connect. Linking never grants access beyond your current Office Connect permissions.</p>
 <form method="post" action="/account/telegram/disconnect">
 <input type="hidden" name="csrf" value="{{ csrf }}">
 <button type="submit">Disconnect Telegram and cancel pending links</button>
@@ -33,7 +33,7 @@
 <fieldset><legend>Optional permissions</legend>
 {% for key,label in scopes.items() %}<p><label><input type="checkbox" name="scopes" value="{{ key }}"> {{ label }}</label></p>{% endfor %}
 </fieldset>
-<p>Meeting creation additionally requires the calendar read checkbox. It does not approve group disclosure or request a room.</p>
+<p>Meeting creation additionally requires the calendar read checkbox. A separate room-request checkbox requires both calendar and room read consent. Neither grants approval authority or group disclosure.</p>
 <p><label><input type="checkbox" name="consent" value="yes" required> Link this Office Connect account to my own private Telegram account.</label></p>
 <button type="submit">Request confirmation in Telegram</button>
 </form>

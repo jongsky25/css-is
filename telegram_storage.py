@@ -176,7 +176,7 @@ def install(conn):
       created_at TEXT NOT NULL, expires_at TEXT NOT NULL, consumed_at TEXT);
     CREATE INDEX IF NOT EXISTS telegram_preview_expiry ON telegram_preview(state,expires_at);
     CREATE TABLE IF NOT EXISTS telegram_meeting_origin (
-      id TEXT PRIMARY KEY NOT NULL, account_id INTEGER NOT NULL REFERENCES admin_user(id),
+      id TEXT PRIMARY KEY NOT NULL, action TEXT NOT NULL DEFAULT 'calendar.create', account_id INTEGER NOT NULL REFERENCES admin_user(id),
       connection_id INTEGER NOT NULL REFERENCES telegram_connection(id), generation TEXT NOT NULL,
       context_json TEXT NOT NULL, bot_identity INTEGER NOT NULL, bot_fingerprint TEXT NOT NULL,
       created_at TEXT NOT NULL, expires_at TEXT NOT NULL);
@@ -189,6 +189,20 @@ def install(conn):
           AND state IN ('queued','claimed','sending','retry_wait');
       UPDATE telegram_operation SET result_entry_id=NULL,result_code='calendar_deleted'
         WHERE result_entry_id=OLD.id;
+    END;
+    CREATE TRIGGER IF NOT EXISTS telegram_room_receipt_delete BEFORE DELETE ON room_reservation
+    BEGIN
+      UPDATE telegram_delivery SET state=CASE WHEN state='sending' THEN 'uncertain' ELSE 'cancelled' END,
+        claim_token=NULL,lease_until=NULL,error_code='room_deleted'
+        WHERE operation_id IN (SELECT operation_id FROM telegram_operation WHERE result_room_id=OLD.id)
+          AND state IN ('queued','claimed','sending','retry_wait');
+      UPDATE telegram_operation SET result_room_id=NULL,result_code='room_deleted' WHERE result_room_id=OLD.id;
+    END;
+    CREATE TRIGGER IF NOT EXISTS telegram_room_calendar_grant AFTER UPDATE OF revoked_at ON telegram_grant
+    WHEN NEW.action='calendar.read' AND NEW.revoked_at IS NOT NULL
+    BEGIN
+      UPDATE telegram_preview SET state='cancelled',fields_json=NULL,summary_json=NULL,expected_json=NULL
+        WHERE connection_id=NEW.connection_id AND generation=NEW.generation AND action='rooms.request' AND state='pending';
     END;
     CREATE TRIGGER IF NOT EXISTS telegram_preview_cancel AFTER UPDATE OF state ON telegram_preview
     WHEN NEW.state='cancelled'
@@ -242,6 +256,8 @@ def install(conn):
         WHERE actor_id=NEW.id AND state='pending';
     END;
     ''')
+    if 'action' not in {r[1] for r in conn.execute('PRAGMA table_info(telegram_meeting_origin)')}:
+        conn.execute("ALTER TABLE telegram_meeting_origin ADD COLUMN action TEXT NOT NULL DEFAULT 'calendar.create'")
     if 'token_nonce' not in {r[1] for r in conn.execute('PRAGMA table_info(telegram_preview)')}:
         conn.execute('ALTER TABLE telegram_preview ADD COLUMN token_nonce TEXT')
     if 'context_json' not in {r[1] for r in conn.execute('PRAGMA table_info(telegram_operation)')}:

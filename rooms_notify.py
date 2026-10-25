@@ -57,7 +57,7 @@ def admin_heads(conn):
 # --------------------------------------------------------- inserting ---
 
 def _add(conn, *, kind, reservation_id=0, version=1, user_id=None, email=None, text="", url="",
-         bell=False, email_wanted=True):
+         bell=False, email_wanted=True, commit=True):
     """One notice, once. Returns True when it was new."""
     if user_id is None and not (email or "").strip():
         return False
@@ -67,7 +67,8 @@ def _add(conn, *, kind, reservation_id=0, version=1, user_id=None, email=None, t
         "bell, created_at, email_status) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
         (recipient, user_id, None if user_id is not None else email.strip(), kind, reservation_id, version,
          text, url, 1 if bell else 0, tz.now_iso(), None if email_wanted else "skipped_none"))
-    conn.commit()
+    if commit:
+        conn.commit()
     return cur.rowcount > 0
 
 
@@ -97,7 +98,7 @@ def _to_requester(conn, res, kind, text, by=None, bell=True):
 
 # ----------------------------------------------------------- hooks ---
 
-def on_requested(conn, res):
+def on_requested(conn, res, *, commit=True):
     """A new request: tell the Administrative Section (email; the bell already counts it)."""
     import rooms
     who, unit, _ext = rooms.requester_label(conn, res)
@@ -105,7 +106,7 @@ def on_requested(conn, res):
     for a in approver_accounts(conn):
         if res.get("requester_user_id") == a["id"]:
             continue
-        _add(conn, kind="new_request", reservation_id=res["id"], user_id=a["id"], url="/approvals#rooms",
+        _add(conn, kind="new_request", reservation_id=res["id"], user_id=a["id"], url="/approvals#rooms",commit=commit,
              text=f"{who}{f' ({unit})' if unit else ''}: {res['title']}, {_when(conn, res)}{more}"
                   + (" · STANDBY: those hours are already taken" if res.get("standby") else ""))
 
