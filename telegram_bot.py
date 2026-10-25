@@ -23,6 +23,7 @@ import telegram_rooms as room_reads
 import telegram_group_reads as shared_reads
 import telegram_actions
 import telegram_meetings as meetings
+import telegram_notices as notices
 import telegram_room_requests
 
 PATH = '/integrations/telegram/webhook'
@@ -374,6 +375,8 @@ def eligible(conn, delivery, bot, now=None):
         projection = json.loads(delivery['projection_json'])
     except ValueError:
         return False
+    if isinstance(projection,dict) and projection.get('kind')==notices.KIND:
+        return notices.allowed(conn,delivery,projection,bot,now or now_utc()) is not None
     if delivery['chat_id'] < 0:
         return groups.authorize_delivery(conn, delivery, bot) is not None
     cid, generation, permitted = identity(conn, delivery['chat_id'])
@@ -435,7 +438,9 @@ def deliver(conn, now=None):
         group_verified = True
         if delivery['chat_id'] < 0:
             group_checks += 1
-            group_verified = groups.verify_delivery(conn, delivery, bot)
+            projection=json.loads(delivery['projection_json'])
+            group_verified = (notices.verify_delivery(conn,delivery,bot,clock()) if projection.get('kind')==notices.KIND
+                              else groups.verify_delivery(conn, delivery, bot))
             with transaction(conn):
                 if (group_verified and storage.enabled('delivery') and transport.config() == bot
                         and eligible(conn, delivery, bot, clock()) and delivery['expires_at'] > stamp(clock())):
@@ -454,7 +459,9 @@ def deliver(conn, now=None):
             outcome, message_id, retry = 'cancelled', None, None
         else:
             projection = json.loads(delivery['projection_json'])
-            if projection['kind'] in meetings.KINDS:
+            if projection['kind']==notices.KIND:
+                message=notices.render(conn,delivery,projection,bot,clock())
+            elif projection['kind'] in meetings.KINDS:
                 try:
                     message = meetings.render(conn,delivery,projection,clock())
                 except ValueError:
@@ -496,11 +503,12 @@ def deliver(conn, now=None):
             outcome, retry, error_code = 'failed', None, 'retry_exhausted'
         now = clock()
         with transaction(conn):
-            conn.execute('''UPDATE telegram_delivery SET state=?,provider_message_id=?,retry_at=?,
+            finalized=conn.execute('''UPDATE telegram_delivery SET state=?,provider_message_id=?,retry_at=?,
                 claim_token=NULL,lease_until=NULL,error_code=?,updated_at=?
                 WHERE id=? AND state='sending' AND claim_token=?''',
                 (outcome, message_id, stamp(now+timedelta(seconds=retry)) if retry else None,
-                 None if outcome == 'accepted' else error_code, stamp(now), delivery['id'], token))
+                 None if outcome == 'accepted' else error_code, stamp(now), delivery['id'], token)).rowcount
+            if finalized and error_code=='provider_rejected':notices.record_rejection(conn,delivery,now)
     return count
 
 
@@ -508,6 +516,7 @@ def cleanup(conn, now):
     with transaction(conn):
         import telegram_changes
         telegram_changes.cleanup_in_transaction(conn,now)
+        notices.cleanup_in_transaction(conn,now)
         telegram_actions.cleanup_in_transaction(conn,now)
         conn.execute('DELETE FROM telegram_meeting_origin WHERE id IN (SELECT id FROM telegram_meeting_origin WHERE expires_at<? LIMIT 20)',(stamp(now-timedelta(days=1)),))
         conn.execute('''UPDATE telegram_update SET sender_id=NULL,chat_id=NULL,topic_id=NULL,payload_json=NULL,
@@ -534,6 +543,7 @@ def tick(conn, now=None):
     processed = process_updates(conn, now or now_utc())
     import telegram_changes
     telegram_changes.prepare_routes(conn,now or now_utc())
+    notices.enqueue(conn,now or now_utc())
     sent = deliver(conn, now)
     cleanup(conn, now or now_utc())
     return processed, sent

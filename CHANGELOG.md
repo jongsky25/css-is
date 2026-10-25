@@ -1,3 +1,9 @@
+## 8.74 — October 25, 2026
+
+- Hand current permitted calendar/room change routes to the existing durable Telegram sender, atomically and with stable deduplication. Render private source/own-request updates, explicitly shared calendar fields or anonymous exact-topic room availability only.
+- Recheck route/source/read consent, ownership, registration and membership at handoff, proof, rendering and final send. Fence queued/in-flight notices after source/revocation/restore changes; preserve bounded 429 retries and uncertain outcomes without business replay.
+- Pause notices after definite provider rejection until a fresh recognized command in the exact conversation or new verified binding; retain normal room approval and existing digest behavior. Add workflow/privacy/failure tests and the Markdown runbook. All pilots remain default-off; quiet hours/reminders/preferences remain T4.3.
+
 ## 8.73 — October 25, 2026
 
 - Capture metadata-only calendar/room changes in the business transaction across UI, import, scheduler and trusted action writers, including participant/slot/decision changes; retain source incarnation/revision and stable event identities without copying email queues or business content.
