@@ -1,6 +1,6 @@
 # Office Connect ↔ Telegram delivery plan
 
-Status: planned; implementation has not started.
+Status: T0 design complete, awaiting review; runtime increments remain planned and inactive.
 Last updated: 2026-10-25.
 Repository: jongsky25/css-is.
 Planning baseline inspected: abf3141 (merge of PR #458).
@@ -131,8 +131,18 @@ All T1–T7 increments are planned and inactive. No Telegram two-way feature has
 | Increment | Status | Owner / date | PR / commit | Evidence | Activation / next action |
 | --- | --- | --- | --- | --- | --- |
 | Planning document | Published | Codex / 2026-10-25 | See GitHub file history | Source inspection at abf3141; documentation-only change | Plan available for cross-chat handoff |
-| T0 | Planned | Unassigned | — | Existing sources and integration documents identified above | First implementation session: reconcile current main, then complete contracts |
+| T0 | In review | Codex / 2026-10-25 | `docs/telegram-t0-contract` (PR link added after opening) | [Source-backed design contract](TELEGRAM_T0_CONTRACT.md); main reconciled at f9e868e; checks below | No runtime change or activation; review contract, then T1.1 |
 | T1.1–T7 | Planned | Unassigned | — | Not implemented | Follow dependencies; expand each started row separately |
+
+### T0 handoff — 2026-10-25
+
+- Owner: Codex. Started and completed design on `docs/telegram-t0-contract` from main `f9e868e`; no merged T0 implementation was present at reconciliation.
+- Delivered: [T0 contract](TELEGRAM_T0_CONTRACT.md), including exact service/field/role matrix, webhook choice, proposed schemas, grants, group disclosure policy, retention, switch names, restore/retry state contract and required service extractions. Documentation only.
+- Checks: `git diff --check`, `python scripts/lock_dependencies.py --check`, `python scripts/check_vendor_dependencies.py`, `python scripts/ai_evaluation.py contract --base origin/main` passed. Relative Markdown links and six required contract sections verified with a local Python check.
+- Release limitation: `python scripts/check_release.py release --base origin/main` fails because application version remains 8.53. CI applies this gate unconditionally, including documentation PRs. This documentation-only increment does not change release metadata; keep PR draft until the release policy is resolved. No runtime tests run because runtime files are unchanged.
+- Deployment/switch state: no deployment, credentials, webhook registration or feature activation performed. All two-way capabilities remain unimplemented/inactive. Existing digest behavior unchanged by this documentation change.
+- Known gaps: production storage paths, snapshot durability, webhook ingress and Bot API egress remain unverified. Snapshot rollback may lose local commits; business writes must stay off until reconciliation/recovery is demonstrated. Design review is not live evidence.
+- Next ready increment after T0 review/merge: T1.1, four inert durable tables, independent default-off switches and migration/restart/restore fixtures plus existing digest regressions. Do not include inbound handling or business actions.
 
 ### Per-increment handoff template
 
@@ -151,3 +161,5 @@ All T1–T7 increments are planned and inactive. No Telegram two-way feature has
 - 2026-10-25: First release targets internal calendar plus existing conference-room requests and return notifications.
 - 2026-10-25: Guided commands precede natural-language extraction; one bounded increment per implementation PR.
 - 2026-10-25: Every future implementation PR must maintain this plan; production activation and verification are tracked separately.
+
+- 2026-10-25: T0 selected as first ready increment; documented the implementation contract against f9e868e. No runtime behavior or production activation changed.
