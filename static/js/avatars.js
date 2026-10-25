@@ -744,6 +744,12 @@
       if (e.target === w && e.propertyName === "transform") syncGeometryTransition(w);
     });
     function apply(animated) {
+      if (w._avPosX === pos.x && w._avPosY === pos.y) {
+        // No CSS transition starts for an unchanged destination. Keep the
+        // current timeline instead of replacing it with a pending record.
+        if (!animated || still()) w._avMotion = null;
+        return;
+      }
       var from = geometryPosition(w);
       w._avMotion = animated && !still() ? { fromX: from.x, fromY: from.y, start: null } : null;
       w._avPosX = pos.x; w._avPosY = pos.y;

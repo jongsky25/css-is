@@ -1,0 +1,45 @@
+F
+=================================== FAILURES ===================================
+______________ test_cached_lean_tracks_actual_transition_position ______________
+
+baseline_server = ('http://127.0.0.1:36001', {'name': 'css_session', 'value': 'eyJ1aWQiOjQsInUiOiJhZG1pbkB0ZXN0LmxvY2FsIiwiciI6ImFkbWluI...MzJkZjRhYmYyIn0.a7c7b509aa99db2616e6ed8414c8d8893b081fcf5c1e8cf285fd65814ef4ff3b', 'url': 'http://127.0.0.1:36001'}, 4)
+
+    def test_cached_lean_tracks_actual_transition_position(baseline_server):
+        from playwright.sync_api import sync_playwright
+        origin,cookie,_=baseline_server
+        results=[]
+        with sync_playwright() as pw:
+            browser=pw.chromium.launch(executable_path=shutil.which('chromium'),args=['--no-sandbox'])
+            context=browser.new_context(viewport={'width':1440,'height':1000},timezone_id='UTC')
+            context.add_cookies([cookie]);context.add_init_script(PROBE)
+            page=context.new_page();page.goto(origin+'/?view=me');page.wait_for_timeout(600)
+            wrap=page.locator('.avwrap[data-interactive]');button=wrap.locator('.av-play-btn')
+            for key in ['ArrowRight','ArrowLeft']:
+                button.focus();page.keyboard.press(key);page.wait_for_timeout(60)
+                box=wrap.bounding_box();page.mouse.move(box['x']+box['width']/2,box['y']+box['height']/2)
+                page.wait_for_timeout(25)
+                transform=wrap.locator('.av-tiltstage').evaluate('e=>e.style.transform')
+                import re
+                angle=float(re.search(r'rotateY\(([-\d.]+)deg\)',transform)[1])
+                results.append({'key':key,'rotate_y_deg':angle})
+                assert abs(angle)<=.25, (key,transform,'Cursor at actual wrap center should not lean sideways')
+                page.mouse.move(10,10);page.wait_for_timeout(350)
+            page.mouse.move(10,10);button.focus()
+            for _ in range(100):page.keyboard.press('ArrowRight')
+            page.wait_for_timeout(450)
+            box=wrap.bounding_box();page.mouse.move(box['x']+box['width']/2,box['y']+box['height']/2);page.wait_for_timeout(25)
+            transform=wrap.locator('.av-tiltstage').evaluate('e=>e.style.transform')
+>           angle=float(re.search(r'rotateY\(([-\d.]+)deg\)',transform)[1])
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           TypeError: 'NoneType' object is not subscriptable
+
+tests/test_avatar_geometry_browser.py:87: TypeError
+=============================== warnings summary ===============================
+tests/test_avatar_geometry_browser.py::test_cached_lean_tracks_actual_transition_position
+  /workspace/css-is/tests/conftest.py:88: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_avatar_geometry_browser.py::test_cached_lean_tracks_actual_transition_position
+1 failed, 1 deselected, 1 warning in 9.15s

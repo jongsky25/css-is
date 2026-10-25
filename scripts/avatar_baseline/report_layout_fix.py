@@ -107,7 +107,9 @@ primary matrix and functional verification. No benchmark scenario or budget chan
   twenty script evaluations. [Transition-position regression](layout-fix/functional/transition-geometry.json)
   verifies the cursor stays centered during keyboard movement. Cached geometry
   follows the browser's actual transition endpoints, start time and easing using
-  the document timeline, rather than jumping to the destination. [Head tracking](layout-fix/functional/pointer-behavior.json),
+  the document timeline, rather than jumping to the destination. Repeated arrow presses at a clamped
+  destination retain the current timeline; they do not create a pending transition
+  when the CSS value is unchanged. [Head tracking](layout-fix/functional/pointer-behavior.json),
   [static picker/keyboard replay](layout-fix/functional/static-preview-policy.json)
   and [responsive Home search navigation](layout-fix/functional/home-search-boot.json) pass.
 - [1,734 SVG equivalence checks](layout-fix/artwork-equivalence.json) preserve exact

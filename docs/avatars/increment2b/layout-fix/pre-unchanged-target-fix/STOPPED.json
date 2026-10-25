@@ -1,0 +1,5 @@
+{
+  "source": "90d0ee6",
+  "reason": "Repeated arrow presses at the clamp create a pending transition record even though the CSS destination is unchanged and no transitionrun event follows. Actual wrap center then lies outside stale cached coordinates. Skip unchanged targets while preserving an existing transition. Current15 native failures retained; budgets unchanged.",
+  "regression_note": "Before-fix test received empty lean transform and parser raisedTypeError; assertion now explicitly requires recognized cursor-inside state."
+}
