@@ -12,7 +12,7 @@
     "_avatars_art.html",
     "_avatars_shared.html"
   ],
-  "css_defs_identical_except_runtime_cache_key": true,
+  "css_defs_identical_except_runtime_cache_key_and_static_preview_policy": true,
   "source_sha256": {
     "templates/_avatar_species/bat.html": "b8e6db951e4bce007308d6745467e42da864daf34a137a0ebd17c6c0a64d3978",
     "templates/_avatar_species/bird.html": "9a2fdee73a9308602005d0bf629cbcab768f3e70f8208747e9e8c8d11e2eca04",

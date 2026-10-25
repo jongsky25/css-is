@@ -1,0 +1,5 @@
+fern 1
+mushroom 0
+succulent 0
+native 0
+care 0

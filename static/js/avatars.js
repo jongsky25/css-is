@@ -99,6 +99,15 @@
     return base;
   }
 
+  // An absent class starts an animation naturally. Only flush styles when
+  // replaying an animation whose class is still present.
+  function replayClass(w, cls, clear) {
+    var replaying = w.classList.contains(cls);
+    w.classList.remove.apply(w.classList, clear || [cls]);
+    if (replaying) void w.offsetWidth;
+    w.classList.add(cls);
+  }
+
   function startIdle(w) {
     var reps = BEHAVIORS[w.dataset.kind];
     if (!reps || !reps.length) return;
@@ -108,9 +117,7 @@
         if (still() || document.hidden || asleep(w)) { tick(); return; }
         if (w._avBusy && Date.now() < w._avBusy) { tick(); return; }  // mid-walk: gait owns .avstage
         var pick = reps[Math.floor(Math.random() * reps.length)];
-        w.classList.remove.apply(w.classList, ALL_DO); // clear any leftover
-        void w.offsetWidth;                            // restart CSS animations
-        w.classList.add(pick[0]);
+        replayClass(w, pick[0], ALL_DO);
         clearTimeout(w._avDoT);
         w._avDoT = setTimeout(function () { w.classList.remove(pick[0]); }, pick[1] + 80);
         maybeVoice(w);                                 // occasionally vocalize, too
@@ -369,7 +376,7 @@
       // after tilting its stage forces a second style/layout flush on each move.
       for (var i = 0; i < wraps.length; i++) {
         var wr = wraps[i];
-        if (asleep(wr) || wr._avAway) continue;
+        if (!wr.hasAttribute("data-interactive") || asleep(wr) || wr._avAway) continue;
         var stage = wr.hasAttribute("data-interactive") ? wr.querySelector(".av-tiltstage") : null;
         var spec = WATCH[wr.dataset.kind];
         var h = spec ? wr.querySelector(".av-head") : null;
@@ -511,9 +518,7 @@
     if (!w || w._avDragMoved || w._avPetted || w._avAway) return;   // drags/pets aren't taps; nobody's home while exploring
     wake(w);                                           // a tap stirs a sleeper
     play("tap", w.dataset.kind);
-    w.classList.remove("happy");
-    void w.offsetWidth;                                // force reflow => restart
-    w.classList.add("happy");
+    replayClass(w, "happy");
     bubbleFlash(w, phraseFor(w));
   });
   document.addEventListener("animationend", function (e) {
@@ -537,9 +542,7 @@
     var cls = action === "water" ? "av-caring-water" : "av-caring-feed";
     wake(w);                                           // being cared for stirs a sleeper
     play(action, w.dataset.kind);
-    w.classList.remove("av-caring-water", "av-caring-feed");
-    void w.offsetWidth;
-    w.classList.add(cls);
+    replayClass(w, cls, ["av-caring-water", "av-caring-feed"]);
     clearTimeout(w._avCareT);
     w._avCareT = setTimeout(function () { w.classList.remove(cls); }, 3600);
     try {
@@ -607,11 +610,18 @@
     var pos = { x: 0, y: 0 };
     var posKey = w.getAttribute("data-drag-key") || POS_KEY;
     function apply() { w.style.transform = "translate(" + pos.x + "px," + pos.y + "px)"; }
-    function clampToPlay() {
-      var play = w.closest(".av-play");
-      if (!play) return;
-      pos.x = Math.max(-w.offsetLeft, Math.min(play.clientWidth - w.offsetLeft - w.offsetWidth, pos.x));
-      pos.y = Math.max(-w.offsetTop, Math.min(play.clientHeight - w.offsetTop - w.offsetHeight, pos.y));
+    function playBounds(playArea) {
+      playArea = playArea || w.closest(".av-play");
+      if (!playArea) return null;
+      var left = w.offsetLeft, top = w.offsetTop;
+      return { minX: -left, maxX: playArea.clientWidth - left - w.offsetWidth,
+               minY: -top, maxY: playArea.clientHeight - top - w.offsetHeight };
+    }
+    function clampToPlay(bounds) {
+      bounds = bounds || playBounds();
+      if (!bounds) return;
+      pos.x = Math.max(bounds.minX, Math.min(bounds.maxX, pos.x));
+      pos.y = Math.max(bounds.minY, Math.min(bounds.maxY, pos.y));
     }
     function save() {
       try { localStorage.setItem(posKey, JSON.stringify(pos)); } catch (e) {}
@@ -661,15 +671,16 @@
     w.addEventListener("pointermove", function (e) {
       if (!start) return;
       var dx = e.clientX - start.px, dy = e.clientY - start.py;
-      if (!w._avDragMoved && Math.abs(dx) + Math.abs(dy) > 4) {
+      if (!w._avDragMoved && Math.abs(dx) + Math.abs(dy) <= 4) return;
+      var bounds = playBounds();              // read before gesture/class writes
+      if (!w._avDragMoved) {
         stopPet();                                         // movement means drag, not pet
         clearTimeout(w._avPetT);
         w._avDragMoved = true;
         w.classList.add("av-dragging");
       }
-      if (!w._avDragMoved) return;
       pos.x = start.x + dx; pos.y = start.y + dy;
-      clampToPlay(); apply();
+      clampToPlay(bounds); apply();
     });
     function done() {
       stopPet();
@@ -713,11 +724,12 @@
           stopChase();
           if (Date.now() - caught > 2500) {
             caught = Date.now();
-            w.classList.remove("av-pounce"); void w.offsetWidth; w.classList.add("av-pounce");
+            replayClass(w, "av-pounce");
             setTimeout(function () { w.classList.remove("av-pounce"); }, 850);
           }
           return;
         }
+        var bounds = playBounds(play);        // all layout reads precede gait writes
         var k = Math.min(1, 32 / dist);              // up to 32px per 80ms tick (~400px/s)
         if (!w._avChasing) {
           w._avChasing = true;
@@ -732,7 +744,7 @@
         w._avBusy = Date.now() + 300;
         w.style.transition = "transform .08s linear";
         pos.x += dx * k; pos.y += dy * k;
-        clampToPlay(); apply();
+        clampToPlay(bounds); apply();
       }, 80);
     }
     w.addEventListener("keydown", function (e) {
@@ -784,6 +796,8 @@
       if (w._av) continue;
       w._av = true;
       refreshSleep(w);
+      // Picker/growth/teaser copies are illustrations, not additional pets.
+      if (!w.hasAttribute("data-interactive")) continue;
       startIdle(w);
       startRoam(w);
       initDrag(w);

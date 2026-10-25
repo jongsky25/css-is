@@ -1,0 +1,2658 @@
+{
+  "samples": 20,
+  "groups": [
+    {
+      "mobile": false,
+      "cache": "cold",
+      "runs": 5,
+      "scenarios": {
+        "home_idle": {
+          "lcp_ms": {
+            "median": 328,
+            "worst": 652,
+            "n": 5
+          },
+          "frame_p95_ms": {
+            "median": 16.700000000000728,
+            "worst": 16.800000000000068,
+            "n": 5
+          },
+          "js_heap_bytes": {
+            "median": 2623728,
+            "worst": 2651676,
+            "n": 5
+          },
+          "nodes": {
+            "median": 1129,
+            "worst": 1129,
+            "n": 5
+          },
+          "avatar_animations": {
+            "median": 2,
+            "worst": 2,
+            "n": 5
+          },
+          "renderer_rss_sum_bytes": {
+            "median": 230543360,
+            "worst": 231251968,
+            "n": 5
+          },
+          "renderer_process_count": {
+            "median": 3,
+            "worst": 3,
+            "n": 5
+          },
+          "long_tasks_over_50_ms": [
+            {
+              "start": 3996.10000000149,
+              "duration": 54,
+              "name": "self"
+            },
+            {
+              "start": 28247,
+              "duration": 141,
+              "name": "self"
+            },
+            {
+              "start": 9856,
+              "duration": 66,
+              "name": "self"
+            },
+            {
+              "start": 20933.69999999553,
+              "duration": 127,
+              "name": "self"
+            },
+            {
+              "start": 21249.19999999553,
+              "duration": 221,
+              "name": "self"
+            },
+            {
+              "start": 21855.29999999702,
+              "duration": 388,
+              "name": "self"
+            },
+            {
+              "start": 22650.79999999702,
+              "duration": 185,
+              "name": "self"
+            },
+            {
+              "start": 22990.69999999553,
+              "duration": 83,
+              "name": "self"
+            },
+            {
+              "start": 25654.89999999851,
+              "duration": 449,
+              "name": "self"
+            },
+            {
+              "start": 26304.09999999404,
+              "duration": 182,
+              "name": "self"
+            },
+            {
+              "start": 26486.29999999702,
+              "duration": 346,
+              "name": "self"
+            },
+            {
+              "start": 26836.19999999553,
+              "duration": 210,
+              "name": "self"
+            },
+            {
+              "start": 27140,
+              "duration": 420,
+              "name": "self"
+            },
+            {
+              "start": 27671.19999999553,
+              "duration": 101,
+              "name": "self"
+            },
+            {
+              "start": 27772.69999999553,
+              "duration": 187,
+              "name": "self"
+            },
+            {
+              "start": 28355.19999999553,
+              "duration": 68,
+              "name": "self"
+            },
+            {
+              "start": 28427.89999999851,
+              "duration": 54,
+              "name": "self"
+            },
+            {
+              "start": 28485.69999999553,
+              "duration": 81,
+              "name": "self"
+            },
+            {
+              "start": 28619.69999999553,
+              "duration": 63,
+              "name": "self"
+            },
+            {
+              "start": 29029.29999999702,
+              "duration": 115,
+              "name": "self"
+            },
+            {
+              "start": 29235.39999999851,
+              "duration": 74,
+              "name": "self"
+            },
+            {
+              "start": 29310.09999999404,
+              "duration": 76,
+              "name": "self"
+            },
+            {
+              "start": 29538.69999999553,
+              "duration": 109,
+              "name": "self"
+            },
+            {
+              "start": 30288.69999999553,
+              "duration": 486,
+              "name": "self"
+            }
+          ],
+          "interaction_duration_per_run_median_ms": null,
+          "interaction_duration_ms": null,
+          "interaction_input_delay_ms": null
+        },
+        "home_interaction": {
+          "lcp_ms": {
+            "median": 328,
+            "worst": 652,
+            "n": 5
+          },
+          "frame_p95_ms": {
+            "median": 16.799999999995634,
+            "worst": 16.799999999995634,
+            "n": 5
+          },
+          "js_heap_bytes": {
+            "median": 2738072,
+            "worst": 3749440,
+            "n": 5
+          },
+          "nodes": {
+            "median": 1131,
+            "worst": 1132,
+            "n": 5
+          },
+          "avatar_animations": {
+            "median": 5,
+            "worst": 5,
+            "n": 5
+          },
+          "renderer_rss_sum_bytes": {
+            "median": 246759424,
+            "worst": 248340480,
+            "n": 5
+          },
+          "renderer_process_count": {
+            "median": 3,
+            "worst": 3,
+            "n": 5
+          },
+          "long_tasks_over_50_ms": [
+            {
+              "start": 49937.5,
+              "duration": 104,
+              "name": "self"
+            },
+            {
+              "start": 48583.39999999851,
+              "duration": 110,
+              "name": "self"
+            },
+            {
+              "start": 58436.19999999553,
+              "duration": 63,
+              "name": "self"
+            },
+            {
+              "start": 31786.59999999404,
+              "duration": 139,
+              "name": "self"
+            },
+            {
+              "start": 32190.89999999851,
+              "duration": 73,
+              "name": "self"
+            },
+            {
+              "start": 32438.39999999851,
+              "duration": 100,
+              "name": "self"
+            },
+            {
+              "start": 32790.59999999404,
+              "duration": 75,
+              "name": "self"
+            },
+            {
+              "start": 33336.89999999851,
+              "duration": 69,
+              "name": "self"
+            },
+            {
+              "start": 35981.89999999851,
+              "duration": 132,
+              "name": "self"
+            }
+          ],
+          "interaction_duration_per_run_median_ms": {
+            "median": 16.0,
+            "worst": 32,
+            "n": 5
+          },
+          "interaction_duration_ms": {
+            "median": 16,
+            "worst": 208,
+            "n": 723
+          },
+          "interaction_input_delay_ms": {
+            "median": 0.5,
+            "worst": 35.399999998509884,
+            "n": 723
+          }
+        },
+        "wellness_care": {
+          "lcp_ms": {
+            "median": 128,
+            "worst": 136,
+            "n": 5
+          },
+          "frame_p95_ms": {
+            "median": 16.700000000000273,
+            "worst": 16.799999999999955,
+            "n": 5
+          },
+          "js_heap_bytes": {
+            "median": 4412124,
+            "worst": 4584508,
+            "n": 5
+          },
+          "nodes": {
+            "median": 570,
+            "worst": 570,
+            "n": 5
+          },
+          "avatar_animations": {
+            "median": 1,
+            "worst": 1,
+            "n": 5
+          },
+          "renderer_rss_sum_bytes": {
+            "median": 253792256,
+            "worst": 254177280,
+            "n": 5
+          },
+          "renderer_process_count": {
+            "median": 3,
+            "worst": 3,
+            "n": 5
+          },
+          "long_tasks_over_50_ms": [],
+          "interaction_duration_per_run_median_ms": {
+            "median": 24,
+            "worst": 40,
+            "n": 5
+          },
+          "interaction_duration_ms": {
+            "median": 24,
+            "worst": 40,
+            "n": 15
+          },
+          "interaction_input_delay_ms": {
+            "median": 2.100000001490116,
+            "worst": 2.7000000029802322,
+            "n": 15
+          }
+        },
+        "picker_growth": {
+          "lcp_ms": {
+            "median": 160,
+            "worst": 280,
+            "n": 5
+          },
+          "frame_p95_ms": {
+            "median": 16.799999999999727,
+            "worst": 16.799999999999955,
+            "n": 5
+          },
+          "js_heap_bytes": {
+            "median": 5444344,
+            "worst": 5713032,
+            "n": 5
+          },
+          "nodes": {
+            "median": 2053,
+            "worst": 2053,
+            "n": 5
+          },
+          "avatar_animations": {
+            "median": 0,
+            "worst": 0,
+            "n": 5
+          },
+          "renderer_rss_sum_bytes": {
+            "median": 277921792,
+            "worst": 280121344,
+            "n": 5
+          },
+          "renderer_process_count": {
+            "median": 3,
+            "worst": 3,
+            "n": 5
+          },
+          "long_tasks_over_50_ms": [],
+          "interaction_duration_per_run_median_ms": {
+            "median": 16,
+            "worst": 28.0,
+            "n": 5
+          },
+          "interaction_duration_ms": {
+            "median": 24.0,
+            "worst": 56,
+            "n": 156
+          },
+          "interaction_input_delay_ms": {
+            "median": 2.0,
+            "worst": 12.100000001490116,
+            "n": 156
+          }
+        },
+        "seasonal_preview": {
+          "lcp_ms": {
+            "median": 176,
+            "worst": 200,
+            "n": 5
+          },
+          "frame_p95_ms": {
+            "median": 16.700000000000045,
+            "worst": 16.800000000000068,
+            "n": 5
+          },
+          "js_heap_bytes": {
+            "median": 10934468,
+            "worst": 13705704,
+            "n": 5
+          },
+          "nodes": {
+            "median": 1274,
+            "worst": 1274,
+            "n": 5
+          },
+          "avatar_animations": {
+            "median": 0,
+            "worst": 0,
+            "n": 5
+          },
+          "renderer_rss_sum_bytes": {
+            "median": 321863680,
+            "worst": 323432448,
+            "n": 5
+          },
+          "renderer_process_count": {
+            "median": 3,
+            "worst": 3,
+            "n": 5
+          },
+          "long_tasks_over_50_ms": [
+            {
+              "start": 404.3999999985099,
+              "duration": 103,
+              "name": "self"
+            }
+          ],
+          "interaction_duration_per_run_median_ms": {
+            "median": 20.0,
+            "worst": 32.0,
+            "n": 5
+          },
+          "interaction_duration_ms": {
+            "median": 16,
+            "worst": 48,
+            "n": 33
+          },
+          "interaction_input_delay_ms": {
+            "median": 0.9000000059604645,
+            "worst": 3.2999999970197678,
+            "n": 33
+          }
+        },
+        "offscreen": {
+          "lcp_ms": {
+            "median": 148,
+            "worst": 188,
+            "n": 5
+          },
+          "frame_p95_ms": {
+            "median": 16.700000000000045,
+            "worst": 16.799999999999955,
+            "n": 5
+          },
+          "js_heap_bytes": {
+            "median": 10655124,
+            "worst": 14520280,
+            "n": 5
+          },
+          "nodes": {
+            "median": 1129,
+            "worst": 1129,
+            "n": 5
+          },
+          "avatar_animations": {
+            "median": 1,
+            "worst": 1,
+            "n": 5
+          },
+          "renderer_rss_sum_bytes": {
+            "median": 292233216,
+            "worst": 293961728,
+            "n": 5
+          },
+          "renderer_process_count": {
+            "median": 3,
+            "worst": 3,
+            "n": 5
+          },
+          "long_tasks_over_50_ms": [],
+          "interaction_duration_per_run_median_ms": null,
+          "interaction_duration_ms": null,
+          "interaction_input_delay_ms": null
+        },
+        "reduced_motion": {
+          "lcp_ms": {
+            "median": 148,
+            "worst": 188,
+            "n": 5
+          },
+          "frame_p95_ms": {
+            "median": 16.700000000000273,
+            "worst": 16.799999999999955,
+            "n": 5
+          },
+          "js_heap_bytes": {
+            "median": 10812304,
+            "worst": 14677580,
+            "n": 5
+          },
+          "nodes": {
+            "median": 1129,
+            "worst": 1129,
+            "n": 5
+          },
+          "avatar_animations": {
+            "median": 0,
+            "worst": 0,
+            "n": 5
+          },
+          "renderer_rss_sum_bytes": {
+            "median": 293310464,
+            "worst": 295129088,
+            "n": 5
+          },
+          "renderer_process_count": {
+            "median": 3,
+            "worst": 3,
+            "n": 5
+          },
+          "long_tasks_over_50_ms": [],
+          "interaction_duration_per_run_median_ms": null,
+          "interaction_duration_ms": null,
+          "interaction_input_delay_ms": null
+        },
+        "background": {
+          "lcp_ms": {
+            "median": 148,
+            "worst": 188,
+            "n": 5
+          },
+          "frame_p95_ms": {
+            "median": 16.700000000000273,
+            "worst": 16.799999999999727,
+            "n": 5
+          },
+          "js_heap_bytes": {
+            "median": 10963428,
+            "worst": 14828608,
+            "n": 5
+          },
+          "nodes": {
+            "median": 1129,
+            "worst": 1129,
+            "n": 5
+          },
+          "avatar_animations": {
+            "median": 1,
+            "worst": 1,
+            "n": 5
+          },
+          "renderer_rss_sum_bytes": {
+            "median": 349503488,
+            "worst": 351604736,
+            "n": 5
+          },
+          "renderer_process_count": {
+            "median": 4,
+            "worst": 4,
+            "n": 5
+          },
+          "long_tasks_over_50_ms": [],
+          "interaction_duration_per_run_median_ms": null,
+          "interaction_duration_ms": null,
+          "interaction_input_delay_ms": null
+        }
+      },
+      "home_encoded_bytes": {
+        "median": 25971,
+        "worst": 25971,
+        "n": 5
+      },
+      "picker_encoded_bytes": {
+        "median": 31786,
+        "worst": 31788,
+        "n": 5
+      },
+      "heap_navigation_change_bytes": {
+        "median": -4405300,
+        "worst": -1185200,
+        "n": 5
+      }
+    },
+    {
+      "mobile": false,
+      "cache": "warm",
+      "runs": 5,
+      "scenarios": {
+        "home_idle": {
+          "lcp_ms": {
+            "median": 148,
+            "worst": 256,
+            "n": 5
+          },
+          "frame_p95_ms": {
+            "median": 16.700000000000728,
+            "worst": 16.799999999999272,
+            "n": 5
+          },
+          "js_heap_bytes": {
+            "median": 2643412,
+            "worst": 2676788,
+            "n": 5
+          },
+          "nodes": {
+            "median": 1129,
+            "worst": 1129,
+            "n": 5
+          },
+          "avatar_animations": {
+            "median": 2,
+            "worst": 2,
+            "n": 5
+          },
+          "renderer_rss_sum_bytes": {
+            "median": 238686208,
+            "worst": 253419520,
+            "n": 5
+          },
+          "renderer_process_count": {
+            "median": 3,
+            "worst": 3,
+            "n": 5
+          },
+          "long_tasks_over_50_ms": [
+            {
+              "start": 20897.10000000149,
+              "duration": 67,
+              "name": "self"
+            },
+            {
+              "start": 27204.69999999553,
+              "duration": 56,
+              "name": "self"
+            },
+            {
+              "start": 24513.60000000149,
+              "duration": 52,
+              "name": "self"
+            },
+            {
+              "start": 5522.19999999553,
+              "duration": 126,
+              "name": "self"
+            },
+            {
+              "start": 6235.60000000149,
+              "duration": 135,
+              "name": "self"
+            }
+          ],
+          "interaction_duration_per_run_median_ms": null,
+          "interaction_duration_ms": null,
+          "interaction_input_delay_ms": null
+        },
+        "home_interaction": {
+          "lcp_ms": {
+            "median": 148,
+            "worst": 256,
+            "n": 5
+          },
+          "frame_p95_ms": {
+            "median": 16.799999999995634,
+            "worst": 16.799999999995634,
+            "n": 5
+          },
+          "js_heap_bytes": {
+            "median": 3175548,
+            "worst": 4188784,
+            "n": 5
+          },
+          "nodes": {
+            "median": 1132,
+            "worst": 1132,
+            "n": 5
+          },
+          "avatar_animations": {
+            "median": 5,
+            "worst": 6,
+            "n": 5
+          },
+          "renderer_rss_sum_bytes": {
+            "median": 248741888,
+            "worst": 252420096,
+            "n": 5
+          },
+          "renderer_process_count": {
+            "median": 3,
+            "worst": 3,
+            "n": 5
+          },
+          "long_tasks_over_50_ms": [
+            {
+              "start": 31878.29999999702,
+              "duration": 129,
+              "name": "self"
+            },
+            {
+              "start": 47084.5,
+              "duration": 54,
+              "name": "self"
+            },
+            {
+              "start": 48287.5,
+              "duration": 140,
+              "name": "self"
+            },
+            {
+              "start": 48584.89999999851,
+              "duration": 114,
+              "name": "self"
+            },
+            {
+              "start": 48866.59999999404,
+              "duration": 76,
+              "name": "self"
+            },
+            {
+              "start": 49726.89999999851,
+              "duration": 104,
+              "name": "self"
+            },
+            {
+              "start": 49831.29999999702,
+              "duration": 162,
+              "name": "self"
+            }
+          ],
+          "interaction_duration_per_run_median_ms": {
+            "median": 32.0,
+            "worst": 32.0,
+            "n": 5
+          },
+          "interaction_duration_ms": {
+            "median": 24,
+            "worst": 64,
+            "n": 729
+          },
+          "interaction_input_delay_ms": {
+            "median": 0.5,
+            "worst": 20.5,
+            "n": 729
+          }
+        },
+        "wellness_care": {
+          "lcp_ms": {
+            "median": 132,
+            "worst": 188,
+            "n": 5
+          },
+          "frame_p95_ms": {
+            "median": 16.799999999999727,
+            "worst": 16.80000000000001,
+            "n": 5
+          },
+          "js_heap_bytes": {
+            "median": 3217908,
+            "worst": 4412924,
+            "n": 5
+          },
+          "nodes": {
+            "median": 570,
+            "worst": 570,
+            "n": 5
+          },
+          "avatar_animations": {
+            "median": 1,
+            "worst": 1,
+            "n": 5
+          },
+          "renderer_rss_sum_bytes": {
+            "median": 254779392,
+            "worst": 256651264,
+            "n": 5
+          },
+          "renderer_process_count": {
+            "median": 3,
+            "worst": 3,
+            "n": 5
+          },
+          "long_tasks_over_50_ms": [],
+          "interaction_duration_per_run_median_ms": {
+            "median": 24,
+            "worst": 24,
+            "n": 5
+          },
+          "interaction_duration_ms": {
+            "median": 24,
+            "worst": 24,
+            "n": 15
+          },
+          "interaction_input_delay_ms": {
+            "median": 2,
+            "worst": 2.7999999970197678,
+            "n": 15
+          }
+        },
+        "picker_growth": {
+          "lcp_ms": {
+            "median": 172,
+            "worst": 228,
+            "n": 5
+          },
+          "frame_p95_ms": {
+            "median": 16.700000000000273,
+            "worst": 16.799999999999727,
+            "n": 5
+          },
+          "js_heap_bytes": {
+            "median": 5333392,
+            "worst": 5971936,
+            "n": 5
+          },
+          "nodes": {
+            "median": 2053,
+            "worst": 2053,
+            "n": 5
+          },
+          "avatar_animations": {
+            "median": 0,
+            "worst": 0,
+            "n": 5
+          },
+          "renderer_rss_sum_bytes": {
+            "median": 278745088,
+            "worst": 283365376,
+            "n": 5
+          },
+          "renderer_process_count": {
+            "median": 3,
+            "worst": 3,
+            "n": 5
+          },
+          "long_tasks_over_50_ms": [],
+          "interaction_duration_per_run_median_ms": {
+            "median": 16.0,
+            "worst": 24.0,
+            "n": 5
+          },
+          "interaction_duration_ms": {
+            "median": 24,
+            "worst": 48,
+            "n": 147
+          },
+          "interaction_input_delay_ms": {
+            "median": 2.2000000029802322,
+            "worst": 12.5,
+            "n": 147
+          }
+        },
+        "seasonal_preview": {
+          "lcp_ms": {
+            "median": 188,
+            "worst": 224,
+            "n": 5
+          },
+          "frame_p95_ms": {
+            "median": 16.800000000000068,
+            "worst": 33.299999999999955,
+            "n": 5
+          },
+          "js_heap_bytes": {
+            "median": 11958576,
+            "worst": 13644304,
+            "n": 5
+          },
+          "nodes": {
+            "median": 1274,
+            "worst": 1274,
+            "n": 5
+          },
+          "avatar_animations": {
+            "median": 0,
+            "worst": 0,
+            "n": 5
+          },
+          "renderer_rss_sum_bytes": {
+            "median": 312713216,
+            "worst": 323055616,
+            "n": 5
+          },
+          "renderer_process_count": {
+            "median": 3,
+            "worst": 3,
+            "n": 5
+          },
+          "long_tasks_over_50_ms": [],
+          "interaction_duration_per_run_median_ms": {
+            "median": 16,
+            "worst": 28.0,
+            "n": 5
+          },
+          "interaction_duration_ms": {
+            "median": 16,
+            "worst": 40,
+            "n": 37
+          },
+          "interaction_input_delay_ms": {
+            "median": 1.7000000029802322,
+            "worst": 3.2999999970197678,
+            "n": 37
+          }
+        },
+        "offscreen": {
+          "lcp_ms": {
+            "median": 200,
+            "worst": 220,
+            "n": 5
+          },
+          "frame_p95_ms": {
+            "median": 16.799999999999955,
+            "worst": 16.799999999999955,
+            "n": 5
+          },
+          "js_heap_bytes": {
+            "median": 12776672,
+            "worst": 14457448,
+            "n": 5
+          },
+          "nodes": {
+            "median": 1129,
+            "worst": 1129,
+            "n": 5
+          },
+          "avatar_animations": {
+            "median": 1,
+            "worst": 1,
+            "n": 5
+          },
+          "renderer_rss_sum_bytes": {
+            "median": 289632256,
+            "worst": 296587264,
+            "n": 5
+          },
+          "renderer_process_count": {
+            "median": 3,
+            "worst": 3,
+            "n": 5
+          },
+          "long_tasks_over_50_ms": [
+            {
+              "start": 1141.5,
+              "duration": 78,
+              "name": "self"
+            }
+          ],
+          "interaction_duration_per_run_median_ms": null,
+          "interaction_duration_ms": null,
+          "interaction_input_delay_ms": null
+        },
+        "reduced_motion": {
+          "lcp_ms": {
+            "median": 200,
+            "worst": 220,
+            "n": 5
+          },
+          "frame_p95_ms": {
+            "median": 16.799999999999955,
+            "worst": 16.799999999999955,
+            "n": 5
+          },
+          "js_heap_bytes": {
+            "median": 12937116,
+            "worst": 14613964,
+            "n": 5
+          },
+          "nodes": {
+            "median": 1129,
+            "worst": 1129,
+            "n": 5
+          },
+          "avatar_animations": {
+            "median": 0,
+            "worst": 0,
+            "n": 5
+          },
+          "renderer_rss_sum_bytes": {
+            "median": 292237312,
+            "worst": 299163648,
+            "n": 5
+          },
+          "renderer_process_count": {
+            "median": 3,
+            "worst": 3,
+            "n": 5
+          },
+          "long_tasks_over_50_ms": [
+            {
+              "start": 1141.5,
+              "duration": 78,
+              "name": "self"
+            }
+          ],
+          "interaction_duration_per_run_median_ms": null,
+          "interaction_duration_ms": null,
+          "interaction_input_delay_ms": null
+        },
+        "background": {
+          "lcp_ms": {
+            "median": 200,
+            "worst": 220,
+            "n": 5
+          },
+          "frame_p95_ms": {
+            "median": 16.799999999999727,
+            "worst": 16.799999999999955,
+            "n": 5
+          },
+          "js_heap_bytes": {
+            "median": 13089544,
+            "worst": 14763040,
+            "n": 5
+          },
+          "nodes": {
+            "median": 1129,
+            "worst": 1129,
+            "n": 5
+          },
+          "avatar_animations": {
+            "median": 1,
+            "worst": 1,
+            "n": 5
+          },
+          "renderer_rss_sum_bytes": {
+            "median": 348319744,
+            "worst": 355569664,
+            "n": 5
+          },
+          "renderer_process_count": {
+            "median": 4,
+            "worst": 4,
+            "n": 5
+          },
+          "long_tasks_over_50_ms": [
+            {
+              "start": 1141.5,
+              "duration": 78,
+              "name": "self"
+            }
+          ],
+          "interaction_duration_per_run_median_ms": null,
+          "interaction_duration_ms": null,
+          "interaction_input_delay_ms": null
+        }
+      },
+      "home_encoded_bytes": {
+        "median": 25969,
+        "worst": 25975,
+        "n": 5
+      },
+      "picker_encoded_bytes": {
+        "median": 31787,
+        "worst": 31792,
+        "n": 5
+      },
+      "heap_navigation_change_bytes": {
+        "median": -4997576,
+        "worst": -3605068,
+        "n": 5
+      }
+    },
+    {
+      "mobile": true,
+      "cache": "cold",
+      "runs": 5,
+      "scenarios": {
+        "home_idle": {
+          "lcp_ms": {
+            "median": 564,
+            "worst": 1412,
+            "n": 5
+          },
+          "frame_p95_ms": {
+            "median": 16.799999999999272,
+            "worst": 16.799999999999272,
+            "n": 5
+          },
+          "js_heap_bytes": {
+            "median": 2940124,
+            "worst": 2984192,
+            "n": 5
+          },
+          "nodes": {
+            "median": 1129,
+            "worst": 1129,
+            "n": 5
+          },
+          "avatar_animations": {
+            "median": 2,
+            "worst": 2,
+            "n": 5
+          },
+          "renderer_rss_sum_bytes": {
+            "median": 249667584,
+            "worst": 250691584,
+            "n": 5
+          },
+          "renderer_process_count": {
+            "median": 3,
+            "worst": 3,
+            "n": 5
+          },
+          "long_tasks_over_50_ms": [
+            {
+              "start": 13245.10000000149,
+              "duration": 62,
+              "name": "self"
+            },
+            {
+              "start": 23597.80000000447,
+              "duration": 151,
+              "name": "self"
+            },
+            {
+              "start": 23817.30000000447,
+              "duration": 159,
+              "name": "self"
+            },
+            {
+              "start": 24530.5,
+              "duration": 65,
+              "name": "self"
+            },
+            {
+              "start": 29079.10000000149,
+              "duration": 52,
+              "name": "self"
+            },
+            {
+              "start": 25999.5,
+              "duration": 186,
+              "name": "self"
+            },
+            {
+              "start": 26259.39999999851,
+              "duration": 148,
+              "name": "self"
+            },
+            {
+              "start": 26819.39999999851,
+              "duration": 68,
+              "name": "self"
+            },
+            {
+              "start": 26966.59999999404,
+              "duration": 52,
+              "name": "self"
+            }
+          ],
+          "interaction_duration_per_run_median_ms": null,
+          "interaction_duration_ms": null,
+          "interaction_input_delay_ms": null
+        },
+        "home_interaction": {
+          "lcp_ms": {
+            "median": 564,
+            "worst": 1412,
+            "n": 5
+          },
+          "frame_p95_ms": {
+            "median": 16.799999999995634,
+            "worst": 16.80000000000291,
+            "n": 5
+          },
+          "js_heap_bytes": {
+            "median": 3369844,
+            "worst": 4333180,
+            "n": 5
+          },
+          "nodes": {
+            "median": 1132,
+            "worst": 1132,
+            "n": 5
+          },
+          "avatar_animations": {
+            "median": 5,
+            "worst": 7,
+            "n": 5
+          },
+          "renderer_rss_sum_bytes": {
+            "median": 293928960,
+            "worst": 295477248,
+            "n": 5
+          },
+          "renderer_process_count": {
+            "median": 3,
+            "worst": 3,
+            "n": 5
+          },
+          "long_tasks_over_50_ms": [
+            {
+              "start": 45682.30000000447,
+              "duration": 52,
+              "name": "self"
+            },
+            {
+              "start": 50222.60000000149,
+              "duration": 55,
+              "name": "self"
+            },
+            {
+              "start": 50453.5,
+              "duration": 58,
+              "name": "self"
+            },
+            {
+              "start": 50556.39999999851,
+              "duration": 73,
+              "name": "self"
+            },
+            {
+              "start": 50640.10000000149,
+              "duration": 102,
+              "name": "self"
+            },
+            {
+              "start": 59590.29999999702,
+              "duration": 51,
+              "name": "self"
+            },
+            {
+              "start": 31065.79999999702,
+              "duration": 64,
+              "name": "self"
+            },
+            {
+              "start": 33752.59999999404,
+              "duration": 207,
+              "name": "self"
+            }
+          ],
+          "interaction_duration_per_run_median_ms": {
+            "median": 32.0,
+            "worst": 32,
+            "n": 5
+          },
+          "interaction_duration_ms": {
+            "median": 32.0,
+            "worst": 88,
+            "n": 676
+          },
+          "interaction_input_delay_ms": {
+            "median": 3.5,
+            "worst": 58.399999998509884,
+            "n": 676
+          }
+        },
+        "wellness_care": {
+          "lcp_ms": {
+            "median": 268,
+            "worst": 320,
+            "n": 5
+          },
+          "frame_p95_ms": {
+            "median": 16.799999999999955,
+            "worst": 16.800000000000068,
+            "n": 5
+          },
+          "js_heap_bytes": {
+            "median": 3247560,
+            "worst": 4486668,
+            "n": 5
+          },
+          "nodes": {
+            "median": 570,
+            "worst": 570,
+            "n": 5
+          },
+          "avatar_animations": {
+            "median": 1,
+            "worst": 1,
+            "n": 5
+          },
+          "renderer_rss_sum_bytes": {
+            "median": 303566848,
+            "worst": 304939008,
+            "n": 5
+          },
+          "renderer_process_count": {
+            "median": 3,
+            "worst": 3,
+            "n": 5
+          },
+          "long_tasks_over_50_ms": [
+            {
+              "start": 138.10000000149012,
+              "duration": 63,
+              "name": "self"
+            }
+          ],
+          "interaction_duration_per_run_median_ms": {
+            "median": 48,
+            "worst": 56,
+            "n": 5
+          },
+          "interaction_duration_ms": {
+            "median": 48,
+            "worst": 56,
+            "n": 15
+          },
+          "interaction_input_delay_ms": {
+            "median": 10.100000001490116,
+            "worst": 21.799999997019768,
+            "n": 15
+          }
+        },
+        "picker_growth": {
+          "lcp_ms": {
+            "median": 268,
+            "worst": 304,
+            "n": 5
+          },
+          "frame_p95_ms": {
+            "median": 16.800000000000182,
+            "worst": 33.399999999999636,
+            "n": 5
+          },
+          "js_heap_bytes": {
+            "median": 4423972,
+            "worst": 5858368,
+            "n": 5
+          },
+          "nodes": {
+            "median": 2053,
+            "worst": 2053,
+            "n": 5
+          },
+          "avatar_animations": {
+            "median": 0,
+            "worst": 0,
+            "n": 5
+          },
+          "renderer_rss_sum_bytes": {
+            "median": 323776512,
+            "worst": 325500928,
+            "n": 5
+          },
+          "renderer_process_count": {
+            "median": 3,
+            "worst": 3,
+            "n": 5
+          },
+          "long_tasks_over_50_ms": [
+            {
+              "start": 1433.1000000014901,
+              "duration": 52,
+              "name": "self"
+            },
+            {
+              "start": 4477.60000000149,
+              "duration": 63,
+              "name": "self"
+            },
+            {
+              "start": 3434,
+              "duration": 65,
+              "name": "self"
+            },
+            {
+              "start": 3499.2999999970198,
+              "duration": 60,
+              "name": "self"
+            },
+            {
+              "start": 2495.10000000149,
+              "duration": 99,
+              "name": "self"
+            },
+            {
+              "start": 2775.6999999955297,
+              "duration": 178,
+              "name": "self"
+            },
+            {
+              "start": 3089.7999999970198,
+              "duration": 51,
+              "name": "self"
+            },
+            {
+              "start": 3452.1999999955297,
+              "duration": 85,
+              "name": "self"
+            },
+            {
+              "start": 3716.89999999851,
+              "duration": 56,
+              "name": "self"
+            },
+            {
+              "start": 3792.6999999955297,
+              "duration": 61,
+              "name": "self"
+            }
+          ],
+          "interaction_duration_per_run_median_ms": {
+            "median": 40.0,
+            "worst": 40.0,
+            "n": 5
+          },
+          "interaction_duration_ms": {
+            "median": 40.0,
+            "worst": 192,
+            "n": 240
+          },
+          "interaction_input_delay_ms": {
+            "median": 9.850000001490116,
+            "worst": 74.69999999552965,
+            "n": 240
+          }
+        },
+        "seasonal_preview": {
+          "lcp_ms": {
+            "median": 320,
+            "worst": 344,
+            "n": 5
+          },
+          "frame_p95_ms": {
+            "median": 83.29999999999995,
+            "worst": 83.40000000000009,
+            "n": 5
+          },
+          "js_heap_bytes": {
+            "median": 9962652,
+            "worst": 13910528,
+            "n": 5
+          },
+          "nodes": {
+            "median": 1274,
+            "worst": 1274,
+            "n": 5
+          },
+          "avatar_animations": {
+            "median": 0,
+            "worst": 0,
+            "n": 5
+          },
+          "renderer_rss_sum_bytes": {
+            "median": 329703424,
+            "worst": 332554240,
+            "n": 5
+          },
+          "renderer_process_count": {
+            "median": 3,
+            "worst": 3,
+            "n": 5
+          },
+          "long_tasks_over_50_ms": [
+            {
+              "start": 1914.7000000029802,
+              "duration": 70,
+              "name": "unknown"
+            },
+            {
+              "start": 3285.5,
+              "duration": 72,
+              "name": "unknown"
+            },
+            {
+              "start": 1308.6000000014901,
+              "duration": 55,
+              "name": "unknown"
+            },
+            {
+              "start": 2660.60000000149,
+              "duration": 72,
+              "name": "unknown"
+            },
+            {
+              "start": 3287.89999999851,
+              "duration": 86,
+              "name": "unknown"
+            },
+            {
+              "start": 3892.2000000029802,
+              "duration": 78,
+              "name": "same-origin-descendant"
+            },
+            {
+              "start": 1095,
+              "duration": 69,
+              "name": "unknown"
+            },
+            {
+              "start": 1726.1000000014901,
+              "duration": 54,
+              "name": "unknown"
+            },
+            {
+              "start": 2295.7000000029802,
+              "duration": 54,
+              "name": "unknown"
+            },
+            {
+              "start": 1543.1000000014901,
+              "duration": 55,
+              "name": "unknown"
+            },
+            {
+              "start": 2856.6999999955297,
+              "duration": 57,
+              "name": "unknown"
+            },
+            {
+              "start": 3213,
+              "duration": 51,
+              "name": "same-origin-descendant"
+            },
+            {
+              "start": 3597.39999999851,
+              "duration": 58,
+              "name": "unknown"
+            }
+          ],
+          "interaction_duration_per_run_median_ms": {
+            "median": 20.0,
+            "worst": 24.0,
+            "n": 5
+          },
+          "interaction_duration_ms": {
+            "median": 16.0,
+            "worst": 32,
+            "n": 60
+          },
+          "interaction_input_delay_ms": {
+            "median": 3.5999999940395355,
+            "worst": 19.5,
+            "n": 60
+          }
+        },
+        "offscreen": {
+          "lcp_ms": {
+            "median": 384,
+            "worst": 536,
+            "n": 5
+          },
+          "frame_p95_ms": {
+            "median": 16.799999999999955,
+            "worst": 33.40000000000009,
+            "n": 5
+          },
+          "js_heap_bytes": {
+            "median": 10027924,
+            "worst": 14758036,
+            "n": 5
+          },
+          "nodes": {
+            "median": 1129,
+            "worst": 1129,
+            "n": 5
+          },
+          "avatar_animations": {
+            "median": 1,
+            "worst": 1,
+            "n": 5
+          },
+          "renderer_rss_sum_bytes": {
+            "median": 324083712,
+            "worst": 328138752,
+            "n": 5
+          },
+          "renderer_process_count": {
+            "median": 3,
+            "worst": 3,
+            "n": 5
+          },
+          "long_tasks_over_50_ms": [
+            {
+              "start": 1234.1000000014901,
+              "duration": 62,
+              "name": "self"
+            },
+            {
+              "start": 1306.7000000029802,
+              "duration": 144,
+              "name": "self"
+            }
+          ],
+          "interaction_duration_per_run_median_ms": null,
+          "interaction_duration_ms": null,
+          "interaction_input_delay_ms": null
+        },
+        "reduced_motion": {
+          "lcp_ms": {
+            "median": 384,
+            "worst": 536,
+            "n": 5
+          },
+          "frame_p95_ms": {
+            "median": 16.799999999999955,
+            "worst": 49.90000000000009,
+            "n": 5
+          },
+          "js_heap_bytes": {
+            "median": 10186920,
+            "worst": 12335500,
+            "n": 5
+          },
+          "nodes": {
+            "median": 1129,
+            "worst": 1129,
+            "n": 5
+          },
+          "avatar_animations": {
+            "median": 0,
+            "worst": 0,
+            "n": 5
+          },
+          "renderer_rss_sum_bytes": {
+            "median": 324919296,
+            "worst": 329097216,
+            "n": 5
+          },
+          "renderer_process_count": {
+            "median": 3,
+            "worst": 3,
+            "n": 5
+          },
+          "long_tasks_over_50_ms": [
+            {
+              "start": 2182.39999999851,
+              "duration": 55,
+              "name": "self"
+            },
+            {
+              "start": 2370.1999999955297,
+              "duration": 70,
+              "name": "self"
+            },
+            {
+              "start": 2920.7000000029802,
+              "duration": 106,
+              "name": "self"
+            },
+            {
+              "start": 3104,
+              "duration": 318,
+              "name": "self"
+            },
+            {
+              "start": 2328.5,
+              "duration": 59,
+              "name": "self"
+            },
+            {
+              "start": 1234.1000000014901,
+              "duration": 62,
+              "name": "self"
+            },
+            {
+              "start": 1306.7000000029802,
+              "duration": 144,
+              "name": "self"
+            },
+            {
+              "start": 2366.10000000149,
+              "duration": 66,
+              "name": "self"
+            }
+          ],
+          "interaction_duration_per_run_median_ms": null,
+          "interaction_duration_ms": null,
+          "interaction_input_delay_ms": null
+        },
+        "background": {
+          "lcp_ms": {
+            "median": 384,
+            "worst": 536,
+            "n": 5
+          },
+          "frame_p95_ms": {
+            "median": 16.799999999999955,
+            "worst": 33.40000000000009,
+            "n": 5
+          },
+          "js_heap_bytes": {
+            "median": 10339248,
+            "worst": 12496656,
+            "n": 5
+          },
+          "nodes": {
+            "median": 1129,
+            "worst": 1129,
+            "n": 5
+          },
+          "avatar_animations": {
+            "median": 1,
+            "worst": 1,
+            "n": 5
+          },
+          "renderer_rss_sum_bytes": {
+            "median": 379191296,
+            "worst": 382717952,
+            "n": 5
+          },
+          "renderer_process_count": {
+            "median": 4,
+            "worst": 4,
+            "n": 5
+          },
+          "long_tasks_over_50_ms": [
+            {
+              "start": 2182.39999999851,
+              "duration": 55,
+              "name": "self"
+            },
+            {
+              "start": 2370.1999999955297,
+              "duration": 70,
+              "name": "self"
+            },
+            {
+              "start": 2920.7999999970198,
+              "duration": 76,
+              "name": "self"
+            },
+            {
+              "start": 2920.7000000029802,
+              "duration": 106,
+              "name": "self"
+            },
+            {
+              "start": 3104,
+              "duration": 318,
+              "name": "self"
+            },
+            {
+              "start": 3663.89999999851,
+              "duration": 66,
+              "name": "self"
+            },
+            {
+              "start": 3780.5,
+              "duration": 366,
+              "name": "self"
+            },
+            {
+              "start": 2328.5,
+              "duration": 59,
+              "name": "self"
+            },
+            {
+              "start": 2845.2999999970198,
+              "duration": 78,
+              "name": "self"
+            },
+            {
+              "start": 1234.1000000014901,
+              "duration": 62,
+              "name": "self"
+            },
+            {
+              "start": 1306.7000000029802,
+              "duration": 144,
+              "name": "self"
+            },
+            {
+              "start": 2366.10000000149,
+              "duration": 66,
+              "name": "self"
+            },
+            {
+              "start": 2913.7000000029802,
+              "duration": 75,
+              "name": "self"
+            }
+          ],
+          "interaction_duration_per_run_median_ms": null,
+          "interaction_duration_ms": null,
+          "interaction_input_delay_ms": null
+        }
+      },
+      "home_encoded_bytes": {
+        "median": 25972,
+        "worst": 25977,
+        "n": 5
+      },
+      "picker_encoded_bytes": {
+        "median": 31788,
+        "worst": 31789,
+        "n": 5
+      },
+      "heap_navigation_change_bytes": {
+        "median": -560728,
+        "worst": 1484,
+        "n": 5
+      }
+    },
+    {
+      "mobile": true,
+      "cache": "warm",
+      "runs": 5,
+      "scenarios": {
+        "home_idle": {
+          "lcp_ms": {
+            "median": 308,
+            "worst": 344,
+            "n": 5
+          },
+          "frame_p95_ms": {
+            "median": 16.799999999999272,
+            "worst": 16.799999999999272,
+            "n": 5
+          },
+          "js_heap_bytes": {
+            "median": 2656936,
+            "worst": 2695908,
+            "n": 5
+          },
+          "nodes": {
+            "median": 1129,
+            "worst": 1129,
+            "n": 5
+          },
+          "avatar_animations": {
+            "median": 2,
+            "worst": 2,
+            "n": 5
+          },
+          "renderer_rss_sum_bytes": {
+            "median": 240906240,
+            "worst": 242892800,
+            "n": 5
+          },
+          "renderer_process_count": {
+            "median": 3,
+            "worst": 3,
+            "n": 5
+          },
+          "long_tasks_over_50_ms": [
+            {
+              "start": 3093.5999999940395,
+              "duration": 376,
+              "name": "self"
+            },
+            {
+              "start": 28882.09999999404,
+              "duration": 166,
+              "name": "self"
+            },
+            {
+              "start": 1332.3999999985099,
+              "duration": 70,
+              "name": "self"
+            },
+            {
+              "start": 10633.20000000298,
+              "duration": 81,
+              "name": "self"
+            },
+            {
+              "start": 10765.80000000447,
+              "duration": 51,
+              "name": "self"
+            },
+            {
+              "start": 11126.10000000149,
+              "duration": 53,
+              "name": "self"
+            },
+            {
+              "start": 11931.70000000298,
+              "duration": 59,
+              "name": "self"
+            },
+            {
+              "start": 12123.5,
+              "duration": 102,
+              "name": "self"
+            },
+            {
+              "start": 12569.10000000149,
+              "duration": 225,
+              "name": "self"
+            },
+            {
+              "start": 13421.30000000447,
+              "duration": 55,
+              "name": "self"
+            },
+            {
+              "start": 13493.70000000298,
+              "duration": 154,
+              "name": "self"
+            },
+            {
+              "start": 13653.60000000149,
+              "duration": 70,
+              "name": "self"
+            },
+            {
+              "start": 14361.80000000447,
+              "duration": 73,
+              "name": "self"
+            },
+            {
+              "start": 14632.10000000149,
+              "duration": 81,
+              "name": "self"
+            },
+            {
+              "start": 27239.80000000447,
+              "duration": 51,
+              "name": "self"
+            }
+          ],
+          "interaction_duration_per_run_median_ms": null,
+          "interaction_duration_ms": null,
+          "interaction_input_delay_ms": null
+        },
+        "home_interaction": {
+          "lcp_ms": {
+            "median": 308,
+            "worst": 344,
+            "n": 5
+          },
+          "frame_p95_ms": {
+            "median": 16.799999999995634,
+            "worst": 16.80000000000291,
+            "n": 5
+          },
+          "js_heap_bytes": {
+            "median": 3807080,
+            "worst": 4702660,
+            "n": 5
+          },
+          "nodes": {
+            "median": 1131,
+            "worst": 1132,
+            "n": 5
+          },
+          "avatar_animations": {
+            "median": 4,
+            "worst": 6,
+            "n": 5
+          },
+          "renderer_rss_sum_bytes": {
+            "median": 242782208,
+            "worst": 244891648,
+            "n": 5
+          },
+          "renderer_process_count": {
+            "median": 3,
+            "worst": 3,
+            "n": 5
+          },
+          "long_tasks_over_50_ms": [
+            {
+              "start": 31533.80000000447,
+              "duration": 114,
+              "name": "self"
+            },
+            {
+              "start": 31849.10000000149,
+              "duration": 127,
+              "name": "self"
+            },
+            {
+              "start": 34335.80000000447,
+              "duration": 104,
+              "name": "self"
+            },
+            {
+              "start": 32672.39999999851,
+              "duration": 67,
+              "name": "self"
+            },
+            {
+              "start": 33072.30000000447,
+              "duration": 131,
+              "name": "self"
+            },
+            {
+              "start": 45067.30000000447,
+              "duration": 73,
+              "name": "self"
+            },
+            {
+              "start": 45368.20000000298,
+              "duration": 247,
+              "name": "self"
+            },
+            {
+              "start": 51605.10000000149,
+              "duration": 64,
+              "name": "self"
+            },
+            {
+              "start": 51711.39999999851,
+              "duration": 60,
+              "name": "self"
+            },
+            {
+              "start": 56788.70000000298,
+              "duration": 153,
+              "name": "self"
+            },
+            {
+              "start": 57137.20000000298,
+              "duration": 89,
+              "name": "self"
+            },
+            {
+              "start": 60405.10000000149,
+              "duration": 127,
+              "name": "self"
+            },
+            {
+              "start": 60671.30000000447,
+              "duration": 80,
+              "name": "self"
+            },
+            {
+              "start": 37175.39999999851,
+              "duration": 54,
+              "name": "self"
+            },
+            {
+              "start": 43893.5,
+              "duration": 191,
+              "name": "self"
+            },
+            {
+              "start": 45342.29999999702,
+              "duration": 87,
+              "name": "self"
+            },
+            {
+              "start": 45534.5,
+              "duration": 147,
+              "name": "self"
+            },
+            {
+              "start": 45698.59999999404,
+              "duration": 58,
+              "name": "self"
+            },
+            {
+              "start": 46105.19999999553,
+              "duration": 143,
+              "name": "self"
+            },
+            {
+              "start": 46248.19999999553,
+              "duration": 66,
+              "name": "self"
+            },
+            {
+              "start": 47739.09999999404,
+              "duration": 61,
+              "name": "self"
+            },
+            {
+              "start": 46219.19999999553,
+              "duration": 57,
+              "name": "self"
+            },
+            {
+              "start": 42014.30000000447,
+              "duration": 80,
+              "name": "self"
+            },
+            {
+              "start": 43631,
+              "duration": 135,
+              "name": "self"
+            },
+            {
+              "start": 44148.10000000149,
+              "duration": 63,
+              "name": "self"
+            },
+            {
+              "start": 51509,
+              "duration": 63,
+              "name": "self"
+            },
+            {
+              "start": 58130.80000000447,
+              "duration": 160,
+              "name": "self"
+            }
+          ],
+          "interaction_duration_per_run_median_ms": {
+            "median": 32,
+            "worst": 32,
+            "n": 5
+          },
+          "interaction_duration_ms": {
+            "median": 32,
+            "worst": 216,
+            "n": 645
+          },
+          "interaction_input_delay_ms": {
+            "median": 4.100000001490116,
+            "worst": 48.80000000447035,
+            "n": 645
+          }
+        },
+        "wellness_care": {
+          "lcp_ms": {
+            "median": 284,
+            "worst": 348,
+            "n": 5
+          },
+          "frame_p95_ms": {
+            "median": 16.799999999999727,
+            "worst": 16.800000000000182,
+            "n": 5
+          },
+          "js_heap_bytes": {
+            "median": 3247948,
+            "worst": 4486576,
+            "n": 5
+          },
+          "nodes": {
+            "median": 570,
+            "worst": 570,
+            "n": 5
+          },
+          "avatar_animations": {
+            "median": 1,
+            "worst": 1,
+            "n": 5
+          },
+          "renderer_rss_sum_bytes": {
+            "median": 252534784,
+            "worst": 252936192,
+            "n": 5
+          },
+          "renderer_process_count": {
+            "median": 3,
+            "worst": 3,
+            "n": 5
+          },
+          "long_tasks_over_50_ms": [
+            {
+              "start": 288.1000000014901,
+              "duration": 61,
+              "name": "self"
+            },
+            {
+              "start": 806.8999999985099,
+              "duration": 61,
+              "name": "self"
+            },
+            {
+              "start": 868.1000000014901,
+              "duration": 110,
+              "name": "self"
+            }
+          ],
+          "interaction_duration_per_run_median_ms": {
+            "median": 48,
+            "worst": 192,
+            "n": 5
+          },
+          "interaction_duration_ms": {
+            "median": 48,
+            "worst": 192,
+            "n": 15
+          },
+          "interaction_input_delay_ms": {
+            "median": 12.599999994039536,
+            "worst": 89.59999999403954,
+            "n": 15
+          }
+        },
+        "picker_growth": {
+          "lcp_ms": {
+            "median": 280,
+            "worst": 324,
+            "n": 5
+          },
+          "frame_p95_ms": {
+            "median": 16.799999999999955,
+            "worst": 33.299999999999955,
+            "n": 5
+          },
+          "js_heap_bytes": {
+            "median": 5845200,
+            "worst": 5997884,
+            "n": 5
+          },
+          "nodes": {
+            "median": 2053,
+            "worst": 2053,
+            "n": 5
+          },
+          "avatar_animations": {
+            "median": 0,
+            "worst": 0,
+            "n": 5
+          },
+          "renderer_rss_sum_bytes": {
+            "median": 273084416,
+            "worst": 277049344,
+            "n": 5
+          },
+          "renderer_process_count": {
+            "median": 3,
+            "worst": 3,
+            "n": 5
+          },
+          "long_tasks_over_50_ms": [
+            {
+              "start": 1414.2999999970198,
+              "duration": 59,
+              "name": "self"
+            },
+            {
+              "start": 2297.1999999955297,
+              "duration": 93,
+              "name": "self"
+            },
+            {
+              "start": 3114.5999999940395,
+              "duration": 140,
+              "name": "self"
+            },
+            {
+              "start": 3310.6999999955297,
+              "duration": 119,
+              "name": "self"
+            },
+            {
+              "start": 5115.69999999553,
+              "duration": 71,
+              "name": "self"
+            }
+          ],
+          "interaction_duration_per_run_median_ms": {
+            "median": 40.0,
+            "worst": 48.0,
+            "n": 5
+          },
+          "interaction_duration_ms": {
+            "median": 40.0,
+            "worst": 152,
+            "n": 240
+          },
+          "interaction_input_delay_ms": {
+            "median": 9.950000002980232,
+            "worst": 112.19999999552965,
+            "n": 240
+          }
+        },
+        "seasonal_preview": {
+          "lcp_ms": {
+            "median": 388,
+            "worst": 668,
+            "n": 5
+          },
+          "frame_p95_ms": {
+            "median": 100.09999999999991,
+            "worst": 116.69999999999982,
+            "n": 5
+          },
+          "js_heap_bytes": {
+            "median": 12000264,
+            "worst": 13077204,
+            "n": 5
+          },
+          "nodes": {
+            "median": 1274,
+            "worst": 1274,
+            "n": 5
+          },
+          "avatar_animations": {
+            "median": 0,
+            "worst": 0,
+            "n": 5
+          },
+          "renderer_rss_sum_bytes": {
+            "median": 287076352,
+            "worst": 295239680,
+            "n": 5
+          },
+          "renderer_process_count": {
+            "median": 3,
+            "worst": 3,
+            "n": 5
+          },
+          "long_tasks_over_50_ms": [
+            {
+              "start": 1896.5,
+              "duration": 62,
+              "name": "unknown"
+            },
+            {
+              "start": 2798.60000000149,
+              "duration": 89,
+              "name": "unknown"
+            },
+            {
+              "start": 3560,
+              "duration": 57,
+              "name": "unknown"
+            },
+            {
+              "start": 4257.29999999702,
+              "duration": 64,
+              "name": "unknown"
+            },
+            {
+              "start": 1398.1000000014901,
+              "duration": 77,
+              "name": "unknown"
+            },
+            {
+              "start": 1828.5,
+              "duration": 104,
+              "name": "same-origin-descendant"
+            },
+            {
+              "start": 2420.60000000149,
+              "duration": 186,
+              "name": "unknown"
+            },
+            {
+              "start": 3178.10000000149,
+              "duration": 178,
+              "name": "unknown"
+            },
+            {
+              "start": 4204,
+              "duration": 82,
+              "name": "unknown"
+            },
+            {
+              "start": 2034,
+              "duration": 56,
+              "name": "same-origin-descendant"
+            },
+            {
+              "start": 3061.60000000149,
+              "duration": 531,
+              "name": "unknown"
+            },
+            {
+              "start": 4751.89999999851,
+              "duration": 197,
+              "name": "unknown"
+            },
+            {
+              "start": 6105.70000000298,
+              "duration": 96,
+              "name": "unknown"
+            },
+            {
+              "start": 2301.3000000044703,
+              "duration": 63,
+              "name": "same-origin-descendant"
+            },
+            {
+              "start": 2844.4000000059605,
+              "duration": 81,
+              "name": "unknown"
+            },
+            {
+              "start": 3567.3000000044703,
+              "duration": 93,
+              "name": "unknown"
+            }
+          ],
+          "interaction_duration_per_run_median_ms": {
+            "median": 24.0,
+            "worst": 40.0,
+            "n": 5
+          },
+          "interaction_duration_ms": {
+            "median": 32,
+            "worst": 112,
+            "n": 57
+          },
+          "interaction_input_delay_ms": {
+            "median": 9.5,
+            "worst": 54.30000000447035,
+            "n": 57
+          }
+        },
+        "offscreen": {
+          "lcp_ms": {
+            "median": 548,
+            "worst": 768,
+            "n": 5
+          },
+          "frame_p95_ms": {
+            "median": 16.799999999999955,
+            "worst": 16.800000000000182,
+            "n": 5
+          },
+          "js_heap_bytes": {
+            "median": 12858756,
+            "worst": 13933948,
+            "n": 5
+          },
+          "nodes": {
+            "median": 1129,
+            "worst": 1129,
+            "n": 5
+          },
+          "avatar_animations": {
+            "median": 1,
+            "worst": 1,
+            "n": 5
+          },
+          "renderer_rss_sum_bytes": {
+            "median": 282447872,
+            "worst": 291389440,
+            "n": 5
+          },
+          "renderer_process_count": {
+            "median": 3,
+            "worst": 3,
+            "n": 5
+          },
+          "long_tasks_over_50_ms": [],
+          "interaction_duration_per_run_median_ms": null,
+          "interaction_duration_ms": null,
+          "interaction_input_delay_ms": null
+        },
+        "reduced_motion": {
+          "lcp_ms": {
+            "median": 548,
+            "worst": 768,
+            "n": 5
+          },
+          "frame_p95_ms": {
+            "median": 16.799999999999955,
+            "worst": 16.800000000000182,
+            "n": 5
+          },
+          "js_heap_bytes": {
+            "median": 13020400,
+            "worst": 14095968,
+            "n": 5
+          },
+          "nodes": {
+            "median": 1129,
+            "worst": 1129,
+            "n": 5
+          },
+          "avatar_animations": {
+            "median": 0,
+            "worst": 0,
+            "n": 5
+          },
+          "renderer_rss_sum_bytes": {
+            "median": 283754496,
+            "worst": 292601856,
+            "n": 5
+          },
+          "renderer_process_count": {
+            "median": 3,
+            "worst": 3,
+            "n": 5
+          },
+          "long_tasks_over_50_ms": [
+            {
+              "start": 2130.10000000149,
+              "duration": 59,
+              "name": "self"
+            },
+            {
+              "start": 2367.60000000149,
+              "duration": 62,
+              "name": "self"
+            },
+            {
+              "start": 2829.39999999851,
+              "duration": 116,
+              "name": "self"
+            },
+            {
+              "start": 2712.2000000029802,
+              "duration": 80,
+              "name": "self"
+            },
+            {
+              "start": 2623.10000000149,
+              "duration": 85,
+              "name": "self"
+            }
+          ],
+          "interaction_duration_per_run_median_ms": null,
+          "interaction_duration_ms": null,
+          "interaction_input_delay_ms": null
+        },
+        "background": {
+          "lcp_ms": {
+            "median": 548,
+            "worst": 768,
+            "n": 5
+          },
+          "frame_p95_ms": {
+            "median": 16.799999999999955,
+            "worst": 66.69999999999982,
+            "n": 5
+          },
+          "js_heap_bytes": {
+            "median": 13172612,
+            "worst": 14257324,
+            "n": 5
+          },
+          "nodes": {
+            "median": 1129,
+            "worst": 1129,
+            "n": 5
+          },
+          "avatar_animations": {
+            "median": 1,
+            "worst": 2,
+            "n": 5
+          },
+          "renderer_rss_sum_bytes": {
+            "median": 338685952,
+            "worst": 346853376,
+            "n": 5
+          },
+          "renderer_process_count": {
+            "median": 4,
+            "worst": 4,
+            "n": 5
+          },
+          "long_tasks_over_50_ms": [
+            {
+              "start": 2130.10000000149,
+              "duration": 59,
+              "name": "self"
+            },
+            {
+              "start": 2367.60000000149,
+              "duration": 62,
+              "name": "self"
+            },
+            {
+              "start": 2500.39999999851,
+              "duration": 847,
+              "name": "self"
+            },
+            {
+              "start": 3504.10000000149,
+              "duration": 1012,
+              "name": "self"
+            },
+            {
+              "start": 4962.60000000149,
+              "duration": 183,
+              "name": "self"
+            },
+            {
+              "start": 5155.20000000298,
+              "duration": 55,
+              "name": "self"
+            },
+            {
+              "start": 5238.70000000298,
+              "duration": 68,
+              "name": "self"
+            },
+            {
+              "start": 5361.29999999702,
+              "duration": 78,
+              "name": "self"
+            },
+            {
+              "start": 5560.10000000149,
+              "duration": 53,
+              "name": "self"
+            },
+            {
+              "start": 5954,
+              "duration": 76,
+              "name": "self"
+            },
+            {
+              "start": 6071.60000000149,
+              "duration": 338,
+              "name": "self"
+            },
+            {
+              "start": 6671.20000000298,
+              "duration": 71,
+              "name": "self"
+            },
+            {
+              "start": 2829.39999999851,
+              "duration": 116,
+              "name": "self"
+            },
+            {
+              "start": 3376.2000000029802,
+              "duration": 107,
+              "name": "self"
+            },
+            {
+              "start": 3693.7000000029802,
+              "duration": 83,
+              "name": "self"
+            },
+            {
+              "start": 4060.5,
+              "duration": 106,
+              "name": "self"
+            },
+            {
+              "start": 2712.2000000029802,
+              "duration": 80,
+              "name": "self"
+            },
+            {
+              "start": 3229.60000000149,
+              "duration": 94,
+              "name": "self"
+            },
+            {
+              "start": 2623.10000000149,
+              "duration": 85,
+              "name": "self"
+            },
+            {
+              "start": 3180.60000000149,
+              "duration": 90,
+              "name": "self"
+            }
+          ],
+          "interaction_duration_per_run_median_ms": null,
+          "interaction_duration_ms": null,
+          "interaction_input_delay_ms": null
+        }
+      },
+      "home_encoded_bytes": {
+        "median": 25970,
+        "worst": 25970,
+        "n": 5
+      },
+      "picker_encoded_bytes": {
+        "median": 31788,
+        "worst": 31789,
+        "n": 5
+      },
+      "heap_navigation_change_bytes": {
+        "median": -8392128,
+        "worst": -2252876,
+        "n": 5
+      }
+    }
+  ],
+  "failures": {
+    "javascript_errors": [],
+    "external_attempts": [],
+    "hidden_not_verified": 20,
+    "offscreen_animating": 20,
+    "reduced_motion_animating": 0,
+    "mobile_interaction_frame_gate_misses": 0
+  },
+  "limits": [
+    "Event Timing reports events >=16 ms only; absent entries do not prove zero input latency.",
+    "Long tasks are page-wide and not attributed to avatar script without a trace.",
+    "Renderer RSS sums OS renderer-process resident pages; shared pages may be counted more than once. It is not private memory/PSS.",
+    "Hidden verification is reported per sample; false means browser did not hide the document.",
+    "Warm means prior navigation in the same context; resource timings distinguish actual cache hits.",
+    "Compression is a local controlled GZip proxy around the unmodified ASGI application."
+  ],
+  "full_duration_complete": true,
+  "native_visibility_verified": true
+}

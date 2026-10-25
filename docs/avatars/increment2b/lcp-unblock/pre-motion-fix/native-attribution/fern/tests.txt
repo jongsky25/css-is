@@ -1,0 +1,65 @@
+fern 0 frame 16.799999999999272 max_callback 6.699999995529652
+fern 1 frame 16.799999999999272 max_callback 19.899999998509884
+fern 2 frame 16.799999999999272 max_callback 67.30000000447035
+fern 3 frame 16.799999999999272 max_callback 55.30000000447035
+fern 4 frame 16.80000000000109 max_callback 197.30000000447035
+F
+=================================== FAILURES ===================================
+_______________________ test_native_mature_plant_budget ________________________
+
+baseline_server = ('http://127.0.0.1:45227', {'name': 'css_session', 'value': 'eyJ1aWQiOjQsInUiOiJhZG1pbkB0ZXN0LmxvY2FsIiwiciI6ImFkbWluI...MTE0MDU4MjMxIn0.ee48c4e8f4d15d58ef044eec1978de207d5145a2f359b5c0dd71d48640c3721c', 'url': 'http://127.0.0.1:45227'}, 4)
+
+    def test_native_mature_plant_budget(baseline_server):
+        from playwright.sync_api import sync_playwright
+        origin,cookie,_=baseline_server
+        kind=os.environ['CSS_AVATAR_KIND'];out=Path(os.environ['CSS_AVATAR_OUT']).parent;rows=[]
+        with sync_playwright() as pw:
+            for run in range(5):
+                browser=pw.chromium.launch(executable_path=shutil.which('chromium'),args=['--no-sandbox'])
+                assert browser.version=='154.0.8037.57'
+                context=browser.new_context(viewport={'width':390,'height':844},has_touch=True,timezone_id='UTC',service_workers='block')
+                context.add_cookies([cookie]);context.add_init_script(NATIVE_PROBE)
+                page=context.new_page();errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
+                cdp=context.new_cdp_session(page);cdp.send('Emulation.setCPUThrottlingRate',{'rate':4})
+                assert page.goto(origin+'/?view=me').status==200
+                assert page.goto(origin+'/?view=me').status==200
+                page.wait_for_timeout(500)
+                assert page.locator(f'.avwrap[data-interactive] svg[data-avatar-kind="{kind}"][data-avatar-stage="6"]').count()==1
+                assert page.evaluate('avatarLoafSupported')
+                reset(page)
+                start=page.evaluate('''()=>{avatarTimerDurations=[];avatarLoafs=[];avatarLoafObserver.takeRecords();return performance.now()}''')
+                deadline=time.monotonic()+30;action=0
+                while time.monotonic()<deadline:
+                    box=page.locator('.av-play-btn').bounding_box();x=box['x']+box['width']/2;y=box['y']+box['height']/2
+                    page.mouse.move(x,y);page.mouse.down();page.wait_for_timeout(500 if action%3==0 else 50)
+                    if action%3==0:page.mouse.move(x+15,y+10,steps=3)
+                    page.mouse.up();page.wait_for_timeout(350);action+=1
+                end=page.evaluate('performance.now()')
+                native=page.evaluate('''()=>{avatarLoafObserver.takeRecords().forEach(avatarLoafCapture);return {timers:avatarTimerDurations,loafs:avatarLoafs}}''')
+                observed=snapshot(page,cdp)
+                timers=[t for t in native['timers'] if start<=t['start']<end]
+                loafs=[l for l in native['loafs'] if l['start']<end and l['start']+l['duration']>=start]
+                scripts=[dict(s,sourceURL=s['sourceURL'].replace(origin,'')) for l in loafs for s in l['scripts'] if '/static/js/avatars.js' in s['sourceURL'] or '/static/js/avatar-audio.js' in s['sourceURL']]
+                assert timers, 'Existing timer-source attribution produced no records'
+                maximum=max([t['duration'] for t in timers]+[s['duration'] for s in scripts],default=0)
+                rows.append({'run':run,'kind':kind,'mature':True,'cpu':4,'seconds':30,'actions':action,'scenario':observed,
+                             'timer_callbacks':timers,'native_long_animation_frames':loafs,'avatar_native_scripts':scripts,
+                             'max_avatar_callback_ms':maximum,'callback_gate_passed':maximum<=50,'frame_gate_passed':observed['frame_p95_ms']<=33,'errors':errors})
+                (out/'native-attribution.json').write_text(json.dumps({'source_commit':'00d76bc','kind':kind,'browser':browser.version,'method':'Five fresh warm CPU4 mobile runs, mature6, original30s input. OriginalPROBE plus two clock reads in existing avatar timer wrappers and native long-animation-frame attribution. No tracing recorder, per-rAF stack capture or event/RAF wrappers.','samples':rows},indent=2))
+                print(kind,run,'frame',observed['frame_p95_ms'],'max_callback',maximum,flush=True)
+                context.close();browser.close()
+>       assert all(not r['errors'] and r['callback_gate_passed'] and r['frame_gate_passed'] for r in rows),'Native mature-plant budget failed; every sample preserved'
+E       AssertionError: Native mature-plant budget failed; every sample preserved
+E       assert False
+E        +  where False = all(<generator object test_native_mature_plant_budget.<locals>.<genexpr> at 0x7f9264447ac0>)
+
+tests/test_avatar_native_attribution.py:69: AssertionError
+=============================== warnings summary ===============================
+tests/test_avatar_native_attribution.py::test_native_mature_plant_budget
+  /workspace/css-is/tests/conftest.py:88: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_avatar_native_attribution.py::test_native_mature_plant_budget
+1 failed, 1 warning in 177.36s (0:02:57)

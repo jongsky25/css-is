@@ -1,0 +1,224 @@
+{
+  "source_commit": "00d76bc",
+  "config": "mobile-cold",
+  "run": 3,
+  "lcp_ms": 1412,
+  "candidate": {
+    "tag": "SPAN",
+    "id": "",
+    "text": "2 hours of wellness break left this week",
+    "size": 10416,
+    "url": ""
+  },
+  "html_ttfb_ms": 75.39999999850988,
+  "html_response_end_ms": 79.29999999701977,
+  "dom_interactive_ms": 1448.6999999955297,
+  "load_end_ms": 1538.5,
+  "first_resource": {
+    "name": "/static/css/app.css?v=7.96",
+    "transfer": 19372,
+    "encoded": 19072,
+    "decoded": 78192,
+    "start": 461.8999999985099,
+    "duration": 17,
+    "responseStart": 475.69999999552965,
+    "responseEnd": 478.8999999985099,
+    "initiator": "link"
+  },
+  "early_resources": [
+    {
+      "name": "/static/css/app.css?v=7.96",
+      "transfer": 19372,
+      "encoded": 19072,
+      "decoded": 78192,
+      "start": 461.8999999985099,
+      "duration": 17,
+      "responseStart": 475.69999999552965,
+      "responseEnd": 478.8999999985099,
+      "initiator": "link"
+    },
+    {
+      "name": "/static/css/appearance.css?v=2",
+      "transfer": 3138,
+      "encoded": 2838,
+      "decoded": 9024,
+      "start": 468.79999999701977,
+      "duration": 16.399999998509884,
+      "responseStart": 484.8999999985099,
+      "responseEnd": 485.19999999552965,
+      "initiator": "link"
+    },
+    {
+      "name": "/static/js/appearance.js?v=2",
+      "transfer": 1862,
+      "encoded": 1562,
+      "decoded": 4158,
+      "start": 477.79999999701977,
+      "duration": 84.89999999850988,
+      "responseStart": 562.1999999955297,
+      "responseEnd": 562.6999999955297,
+      "initiator": "script"
+    },
+    {
+      "name": "/static/js/accessibility.js?v=7.83",
+      "transfer": 1766,
+      "encoded": 1466,
+      "decoded": 4392,
+      "start": 480.8999999985099,
+      "duration": 90.29999999701977,
+      "responseStart": 570.8999999985099,
+      "responseEnd": 571.1999999955297,
+      "initiator": "script"
+    },
+    {
+      "name": "/static/css/calendar.css?v=7.87",
+      "transfer": 11523,
+      "encoded": 11223,
+      "decoded": 54244,
+      "start": 481,
+      "duration": 9.699999995529652,
+      "responseStart": 489.6000000014901,
+      "responseEnd": 490.69999999552965,
+      "initiator": "link"
+    },
+    {
+      "name": "/static/js/avatar-audio.js?v=8.12",
+      "transfer": 3023,
+      "encoded": 2723,
+      "decoded": 7909,
+      "start": 488.1000000014901,
+      "duration": 259.09999999403954,
+      "responseStart": 746,
+      "responseEnd": 747.1999999955297,
+      "initiator": "script"
+    },
+    {
+      "name": "/static/js/avatars.js?v=8.13",
+      "transfer": 12510,
+      "encoded": 12210,
+      "decoded": 38884,
+      "start": 489.69999999552965,
+      "duration": 261.70000000298023,
+      "responseStart": 746.2999999970198,
+      "responseEnd": 751.3999999985099,
+      "initiator": "script"
+    },
+    {
+      "name": "/static/js/deck.js?v=7.83",
+      "transfer": 2223,
+      "encoded": 1923,
+      "decoded": 5259,
+      "start": 489.79999999701977,
+      "duration": 271.3999999985099,
+      "responseStart": 760.3999999985099,
+      "responseEnd": 761.1999999955297,
+      "initiator": "script"
+    },
+    {
+      "name": "/static/js/search.js?v=7.84",
+      "transfer": 7169,
+      "encoded": 6869,
+      "decoded": 21891,
+      "start": 491.3999999985099,
+      "duration": 270,
+      "responseStart": 757.2999999970198,
+      "responseEnd": 761.3999999985099,
+      "initiator": "script"
+    },
+    {
+      "name": "/static/js/assistant.js?v=20261009a",
+      "transfer": 4019,
+      "encoded": 3719,
+      "decoded": 10837,
+      "start": 491.6000000014901,
+      "duration": 262.19999999552965,
+      "responseStart": 746.6999999955297,
+      "responseEnd": 753.7999999970198,
+      "initiator": "script"
+    },
+    {
+      "name": "/static/js/feedback.js?v=7.83",
+      "transfer": 3189,
+      "encoded": 2889,
+      "decoded": 8272,
+      "start": 494,
+      "duration": 266.8999999985099,
+      "responseStart": 758.6999999955297,
+      "responseEnd": 760.8999999985099,
+      "initiator": "script"
+    },
+    {
+      "name": "/static/js/tour.js?v=7.83",
+      "transfer": 3052,
+      "encoded": 2752,
+      "decoded": 7547,
+      "start": 494.1000000014901,
+      "duration": 272.19999999552965,
+      "responseStart": 765.6000000014901,
+      "responseEnd": 766.2999999970198,
+      "initiator": "script"
+    },
+    {
+      "name": "/static/js/telemetry.js?v=20260925a",
+      "transfer": 7777,
+      "encoded": 7477,
+      "decoded": 20548,
+      "start": 494.19999999552965,
+      "duration": 282.80000000447035,
+      "responseStart": 774.6999999955297,
+      "responseEnd": 777,
+      "initiator": "script"
+    },
+    {
+      "name": "/static/js/short_links.js?v=20261016c",
+      "transfer": 1642,
+      "encoded": 1342,
+      "decoded": 3856,
+      "start": 494.19999999552965,
+      "duration": 283.40000000596046,
+      "responseStart": 775.7999999970198,
+      "responseEnd": 777.6000000014901,
+      "initiator": "script"
+    },
+    {
+      "name": "/static/js/app.js?v=7.96",
+      "transfer": 18670,
+      "encoded": 18370,
+      "decoded": 61894,
+      "start": 494.19999999552965,
+      "duration": 279.20000000298023,
+      "responseStart": 772.7999999970198,
+      "responseEnd": 773.3999999985099,
+      "initiator": "script"
+    },
+    {
+      "name": "/static/img/equity-mark.png",
+      "transfer": 92810,
+      "encoded": 92510,
+      "decoded": 92510,
+      "start": 935.6999999955297,
+      "duration": 5.800000004470348,
+      "responseStart": 940,
+      "responseEnd": 941.5,
+      "initiator": "css"
+    },
+    {
+      "name": "/appearance/current",
+      "transfer": 528,
+      "encoded": 228,
+      "decoded": 317,
+      "start": 1453.6000000014901,
+      "duration": 97.09999999403954,
+      "responseStart": 1546.6999999955297,
+      "responseEnd": 1550.6999999955297,
+      "initiator": "fetch"
+    }
+  ],
+  "input_frame_p95_ms": 16.80000000000291,
+  "javascript_errors": [],
+  "notes": [
+    "Sample retained in full cohort and reported worst; no replacement or exclusion.",
+    "LCP is wellness text; HTML response precedes delayed resource discovery/delivery and parsing. Timings locate delay but do not isolate its cause.",
+    "The unchanged budget applies to five-run median; worst runs remain explicit."
+  ]
+}

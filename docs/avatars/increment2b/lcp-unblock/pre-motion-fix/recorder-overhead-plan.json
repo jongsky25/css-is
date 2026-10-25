@@ -1,0 +1,8 @@
+{
+  "declared_before_collection": true,
+  "source": "00d76bc unchanged",
+  "trigger": "Freshferntraceafterframep9550.1ms andrecordedavatarcallback121.668ms. Rawfailurepreserved; primary20allgatespassed.",
+  "study": "Exactlyfivecounterbalancedpairs,maturefern6,CPU4,30sinputandtwo warm navigations, tracingenabledvsdisabled, directsourcecallbacktimingsinboth. Capturecallsite lines andframep95.",
+  "gate": "Do not relax50ms or33ms. Assessactualuntracedcallbacksandframes; retainalltracedfailures. Ifuntracedfails, fixconfirmedcallsitebeforeacceptance.",
+  "limits": "Directcallbackinstrumentation addsmeasurementoverhead; comparisonsuseidenticalinstrumentation. Tracecontrolmaynotisolateallrarevariance. Noartreductionorproductchangebeforestudy."
+}

@@ -1,22 +1,18 @@
 {
-  "declared_before_collection": true,
-  "candidate": "Lazy species templates853c93d; batched pointer geometry41c8e01; Homeviewportcheck moved fromparserblocking inlineJS intoexistingdeferredsearchinitializer. Finalcommit captured inapplication/environment.json.",
-  "previous_failed_attempts": [
-    "pre-frame-fix/STOPPED.json: coldLCP408ms passed butmobileframe183.3msfailed",
-    "pre-startup-fix/STOPPED.json: coldLCP504ms failed; everycompletedrawsamplepreserved"
+  "source": "Next commit: chase/drag bounds read before style writes, avoid absent-class animation restart reflow; static decorative wrappers and picker cards.",
+  "reason": "00d76bc passed all20 primary runs but native art controls exposed mushroom chase callback60.4ms with41.6ms forcedlayout. Native controls retain all30 before/after samples.",
+  "retained_previous": "pre-motion-fix/",
+  "order": [
+    "Five mature6 CPU4 mobile native after-only runs per fern/mushroom/succulent,30s interactions; no API wrappers/tracing/stacks",
+    "If focused passes, fresh original20 matrix: five desktop/mobile cold/warm,30s idle/interaction",
+    "Refresh native hidden/touch/keyboard and real care",
+    "Assess every original gate and native callback/frame gate; update ledger truthfully"
   ],
-  "diagnostic_basis": [
-    "servervs lazy-server profiles",
-    "batch-diagnostic/summary.json",
-    "startup-diagnostic/startup-trace.json",
-    "placeholder-diagnostic/summary.json"
-  ],
-  "acceptance": "Collectonefreshcomplete20 withoutstoppingearly: fiveeachdesktop/mobilecold/warm; original30sidle/30sinput,Chromium154.0.8037.57 CPU1/4,date/seed/localgzip/overlay. Requireoriginalrelativegates andeverymobileframe<=33ms. Cold-desktopalsocompareexisting372msmatchedcontrol. CountmodifiedsearchJSinthecompressedJSbudget.",
-  "additional_checks": [
-    "260tests anddesktop/mobile searchnavigationpassed",
-    "cat/dog/bird/owl pointerbehaviorpassed",
-    "1734SVGgeometryequivalence remainsvalid; CSSsameexceptcacheURLs",
-    "refreshmatureplanttraces, realcare, nativehidden/touch/keyboard"
-  ],
-  "if_failure": "Retaincompletecohort andkeep2B blocked; do not advance3A or substitute favourable reruns."
+  "budgets": {
+    "native_frame_p95_ms": 33,
+    "native_avatar_callback_ms": 50,
+    "lcp_median_increase_ms": 100
+  },
+  "no_sample_replacement": true,
+  "no_threshold_changes": true
 }

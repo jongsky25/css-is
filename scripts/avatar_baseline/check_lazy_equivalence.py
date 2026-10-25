@@ -49,13 +49,14 @@ with tempfile.TemporaryDirectory() as before:
             for stage in range(1, 7):
                 assert normalized(str(old.avatar_svg(kind, stage, month, costume))) == normalized(str(new.avatar_svg(kind, stage, month, costume))), (kind, stage, month, costume)
                 checks += 1
-    assert re.sub(r"avatars\.js\?v=[0-9.]+", "avatars.js?v=CACHE", str(old.avatar_defs())) == re.sub(r"avatars\.js\?v=[0-9.]+", "avatars.js?v=CACHE", str(new.avatar_defs()))
+    current_defs = re.sub(r"  /\* Static preview policy:.*?  /\* End static preview policy\. \*/\n", "", str(new.avatar_defs()), flags=re.S)
+    assert re.sub(r"avatars\.js\?v=[0-9.]+", "avatars.js?v=CACHE", str(old.avatar_defs())) == re.sub(r"avatars\.js\?v=[0-9.]+", "avatars.js?v=CACHE", current_defs)
     out = ROOT / args.out
     out.mkdir(parents=True, exist_ok=True)
     result = {'before_commit': args.before, 'svg_equivalence_checks': checks, 'species': 16,
               'stages': 6, 'outfit_variants': 17, 'unknown_fallback_checked': True,
               'normalization': 'Whitespace between XML elements only; paths, attributes, text and deterministic IDs compared exactly.',
-              'single_cat_compiled_templates': compiled, 'css_defs_identical_except_runtime_cache_key': True,
+              'single_cat_compiled_templates': compiled, 'css_defs_identical_except_runtime_cache_key_and_static_preview_policy': True,
               'source_sha256': {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted([ROOT / 'templates/_avatars_art.html', ROOT / 'templates/_avatars_shared.html', * (ROOT / 'templates/_avatar_species').glob('*.html')]) if p.is_file()}}
     (out / 'artwork-equivalence.json').write_text(json.dumps(result, indent=2))
     print(json.dumps(result, indent=2))

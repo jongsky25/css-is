@@ -1,0 +1,14 @@
+{
+  "home": {
+    "decorative": 0,
+    "decorative_running": 0,
+    "live_running": 1
+  },
+  "profile": {
+    "previews": 16,
+    "running": 0
+  },
+  "first_bounce_time_ms": 133.24199999938725,
+  "replayed_bounce_time_ms": 33.38200000406943,
+  "errors": []
+}

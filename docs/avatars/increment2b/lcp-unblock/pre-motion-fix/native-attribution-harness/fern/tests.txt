@@ -1,0 +1,38 @@
+F
+=================================== FAILURES ===================================
+_______________________ test_native_mature_plant_budget ________________________
+
+baseline_server = ('http://127.0.0.1:55787', {'name': 'css_session', 'value': 'eyJ1aWQiOjQsInUiOiJhZG1pbkB0ZXN0LmxvY2FsIiwiciI6ImFkbWluI...NGY4NGExNmNjIn0.d716e80508ae2c995e4d8027047ca0936425051872dc761682b217d1086b15b5', 'url': 'http://127.0.0.1:55787'}, 4)
+
+    def test_native_mature_plant_budget(baseline_server):
+        from playwright.sync_api import sync_playwright
+        origin,cookie,_=baseline_server
+        kind=os.environ['CSS_AVATAR_KIND'];out=Path(os.environ['CSS_AVATAR_OUT']).parent;rows=[]
+        with sync_playwright() as pw:
+            for run in range(5):
+                browser=pw.chromium.launch(executable_path=shutil.which('chromium'),args=['--no-sandbox'])
+                assert browser.version=='154.0.8037.57'
+                context=browser.new_context(viewport={'width':390,'height':844},has_touch=True,timezone_id='UTC',service_workers='block')
+                context.add_cookies([cookie]);context.add_init_script(NATIVE_PROBE)
+                page=context.new_page();errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
+                cdp=context.new_cdp_session(page);cdp.send('Emulation.setCPUThrottlingRate',{'rate':4})
+                assert page.goto(origin+'/?view=me').status==200
+                assert page.goto(origin+'/?view=me').status==200
+                page.wait_for_timeout(500)
+>               assert page.locator(f'svg[data-avatar-kind="{kind}"][data-avatar-stage="6"]').count()==1
+E               assert 2 == 1
+E                +  where 2 = count()
+E                +    where count = <Locator frame=<Frame name= url='http://127.0.0.1:55787/?view=me'> selector='svg[data-avatar-kind="fern"][data-avatar-stage="6"]'>.count
+E                +      where <Locator frame=<Frame name= url='http://127.0.0.1:55787/?view=me'> selector='svg[data-avatar-kind="fern"][data-avatar-stage="6"]'> = locator('svg[data-avatar-kind="fern"][data-avatar-stage="6"]')
+E                +        where locator = <Page url='http://127.0.0.1:55787/?view=me'>.locator
+
+tests/test_avatar_native_attribution.py:45: AssertionError
+=============================== warnings summary ===============================
+tests/test_avatar_native_attribution.py::test_native_mature_plant_budget
+  /workspace/css-is/tests/conftest.py:88: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_avatar_native_attribution.py::test_native_mature_plant_budget
+1 failed, 1 warning in 6.54s

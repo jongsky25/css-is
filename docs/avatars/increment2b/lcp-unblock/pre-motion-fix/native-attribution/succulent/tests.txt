@@ -1,0 +1,13 @@
+succulent 0 frame 16.700000000000728 max_callback 20.5
+succulent 1 frame 16.700000000000728 max_callback 7.9000000059604645
+succulent 2 frame 16.799999999999272 max_callback 3.899999998509884
+succulent 3 frame 16.799999999999272 max_callback 9.799999997019768
+succulent 4 frame 16.799999999999272 max_callback 13.600000001490116
+.
+=============================== warnings summary ===============================
+tests/test_avatar_native_attribution.py::test_native_mature_plant_budget
+  /workspace/css-is/tests/conftest.py:88: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+1 passed, 1 warning in 171.13s (0:02:51)

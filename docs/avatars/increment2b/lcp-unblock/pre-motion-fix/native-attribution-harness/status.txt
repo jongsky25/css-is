@@ -1,0 +1,3 @@
+fern 1
+mushroom 1
+succulent 1

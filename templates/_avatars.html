@@ -230,6 +230,13 @@
     .avwrap.happy .av-spark { animation:none; opacity:0; }
     .avwrap[data-drag]:not(.av-dragging) { transition:none; }
   }
+  /* Static preview policy: only a live companion runs reactions. */
+  .avwrap[data-kind]:not([data-interactive]) *,
+  .avwrap[data-kind]:not([data-interactive]) [class],
+  .avcard > span, .avcard svg *, .avcard svg [class] {
+    animation:none !important; transition:none !important;
+  }
+  /* End static preview policy. */
 </style>
 {#-- shared gradient defs, ONCE per page. Zero-size (not display:none — that
      breaks gradient references) with ids prefixed avg- so 16 picker cards
@@ -323,7 +330,7 @@
   </defs>
 </svg>
 <script src="/static/js/avatar-audio.js?v=8.12" defer></script>
-<script src="/static/js/avatars.js?v=8.13" defer></script>
+<script src="/static/js/avatars.js?v=8.14" defer></script>
 {% endmacro %}
 
 

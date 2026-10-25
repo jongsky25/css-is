@@ -1,0 +1,47 @@
+{
+  "results": [
+    {
+      "kind": "fern",
+      "stage": 6,
+      "care_response": {
+        "ok": true,
+        "counted": true,
+        "mood": "happy",
+        "last_care_at": "2026-07-15T12:00:00",
+        "streak": 1,
+        "badge": null
+      },
+      "care_persisted": true,
+      "wet_soil_visible": true
+    },
+    {
+      "kind": "mushroom",
+      "stage": 6,
+      "care_response": {
+        "ok": true,
+        "counted": false,
+        "mood": "happy",
+        "last_care_at": "2026-07-15T12:00:00",
+        "streak": 1,
+        "badge": null
+      },
+      "care_persisted": true,
+      "wet_soil_visible": true
+    },
+    {
+      "kind": "succulent",
+      "stage": 6,
+      "care_response": {
+        "ok": true,
+        "counted": false,
+        "mood": "happy",
+        "last_care_at": "2026-07-15T12:00:00",
+        "streak": 1,
+        "badge": null
+      },
+      "care_persisted": true,
+      "wet_soil_visible": true
+    }
+  ],
+  "javascript_errors": []
+}

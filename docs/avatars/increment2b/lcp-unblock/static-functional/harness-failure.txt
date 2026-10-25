@@ -1,0 +1,31 @@
+F..
+=================================== FAILURES ===================================
+_________________ test_previews_static_live_companion_replays __________________
+
+baseline_server = ('http://127.0.0.1:50241', {'name': 'css_session', 'value': 'eyJ1aWQiOjQsInUiOiJhZG1pbkB0ZXN0LmxvY2FsIiwiciI6ImFkbWluI...YmZkY2E4MDM5In0.ba589ec19feda062c25cbf4ee58fd26e429a005962ca164dd2f37eb24cc03db7', 'url': 'http://127.0.0.1:50241'}, 4)
+
+    def test_previews_static_live_companion_replays(baseline_server):
+        from playwright.sync_api import sync_playwright
+        origin,cookie,_=baseline_server
+        with sync_playwright() as pw:
+            browser=pw.chromium.launch(executable_path=shutil.which('chromium'),args=['--no-sandbox'])
+            context=browser.new_context(viewport={'width':1440,'height':1000},timezone_id='UTC')
+            context.add_cookies([cookie]);context.add_init_script(PROBE)
+            page=context.new_page();errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
+            page.goto(origin+'/?view=me');page.wait_for_timeout(200)
+            home=page.evaluate('''()=>({decorative:document.querySelectorAll('.avwrap:not([data-interactive])').length,
+              decorative_running:document.getAnimations().filter(a=>a.playState==='running'&&a.effect.target.closest('.avwrap:not([data-interactive])')).length,
+              live_running:document.getAnimations().filter(a=>a.playState==='running'&&a.effect.target.closest('.avwrap[data-interactive]')).length})''')
+>           assert home['decorative']>0 and home['decorative_running']==0 and home['live_running']>0
+E           assert (0 > 0)
+
+tests/test_avatar_static_preview_browser.py:25: AssertionError
+=============================== warnings summary ===============================
+tests/test_avatar_static_preview_browser.py::test_previews_static_live_companion_replays
+  /workspace/css-is/tests/conftest.py:88: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_avatar_static_preview_browser.py::test_previews_static_live_companion_replays
+1 failed, 2 passed, 1 warning in 10.07s

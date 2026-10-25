@@ -1,0 +1,10 @@
+{
+  "species": 15,
+  "variants": 51,
+  "cells": 4896,
+  "pixel_identical": true,
+  "method": "Compare same 64px article crops in before/after PNGs",
+  "excluded_species": [
+    ""
+  ]
+}

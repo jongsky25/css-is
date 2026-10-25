@@ -1,0 +1,86 @@
+F
+=================================== FAILURES ===================================
+_______________________ test_slice_long_task_attribution _______________________
+
+baseline_server = ('http://127.0.0.1:55503', {'name': 'css_session', 'value': 'eyJ1aWQiOjQsInUiOiJhZG1pbkB0ZXN0LmxvY2FsIiwiciI6ImFkbWluI...YjA2ZDk3NDQ3In0.8f9c37628b2d7840880c5515b3137f2c5a3c33dcf4f3c3839facc59ff080bdaa', 'url': 'http://127.0.0.1:55503'}, 4)
+app_mod = <module 'app' from '/workspace/css-is/app.py'>
+tmp_path = PosixPath('/tmp/pytest-of-agent/pytest-72/test_slice_long_task_attributi0')
+
+    def test_slice_long_task_attribution(baseline_server, app_mod, tmp_path):
+        """Matched warm-mobile traces of old/new art; no production instrumentation."""
+        from jinja2 import ChoiceLoader, FileSystemLoader
+        import subprocess
+        from playwright.sync_api import sync_playwright
+        origin,cookie,_=baseline_server
+        output=Path(os.getenv('CSS_AVATAR_OUT','docs/avatars/increment1/application')).parent
+        old=tmp_path/'old-art';old.mkdir()
+        for name in ['_avatars.html','_avatars_art.html']:
+            (old/name).write_bytes(subprocess.check_output(['git','show',os.getenv('CSS_AVATAR_BEFORE', '1c964dc')+':templates/'+name]))
+        env=app_mod.templates.env;loader=env.loader;results=[]
+        try:
+            with sync_playwright() as pw:
+                for version in ['before','after']:
+                    env.loader=ChoiceLoader([FileSystemLoader(old),loader]) if version=='before' else loader
+                    env.cache.clear()
+                    browser=pw.chromium.launch(executable_path=shutil.which('chromium'),args=['--no-sandbox'])
+                    context=browser.new_context(viewport={'width':390,'height':844},has_touch=True,timezone_id='UTC',service_workers='block')
+                    context.add_cookies([cookie]);context.add_init_script(PROBE)
+                    page=context.new_page();cdp=context.new_cdp_session(page)
+                    cdp.send('Emulation.setCPUThrottlingRate',{'rate':4})
+                    page.goto(origin+'/?view=me');page.goto(origin+'/?view=me');page.wait_for_timeout(500)
+                    done=[];cdp.on('Tracing.tracingComplete',lambda event:done.append(event))
+                    cdp.send('Tracing.start',{'categories':'toplevel,devtools.timeline,disabled-by-default-devtools.timeline.stack,v8.execute,blink.user_timing','transferMode':'ReturnAsStream'})
+                    reset(page);deadline=time.monotonic()+30;action=0
+                    while time.monotonic()<deadline:
+                        box=page.locator('.av-play-btn').bounding_box();x=box['x']+box['width']/2;y=box['y']+box['height']/2
+                        page.mouse.move(x,y);page.mouse.down();page.wait_for_timeout(500 if action%3==0 else 50)
+                        if action%3==0:page.mouse.move(x+15,y+10,steps=3)
+                        page.mouse.up();page.wait_for_timeout(350);action+=1
+                    observed=snapshot(page,cdp)
+                    cdp.send('Tracing.end')
+                    for attempt in range(100):
+                        if done:break
+                        page.wait_for_timeout(100)
+                    assert done,'Trace did not finish'
+                    stream=done[0]['stream'];chunks=[]
+                    while True:
+                        piece=cdp.send('IO.read',{'handle':stream});chunks.append(piece['data'])
+                        if piece.get('eof'):break
+                    cdp.send('IO.close',{'handle':stream})
+                    events=json.loads(''.join(chunks))['traceEvents']
+                    tasks=[e for e in events if e.get('ph')=='X' and e.get('dur',0)>50000 and e.get('name') in ['RunTask','ThreadControllerImpl::RunTask']]
+                    attributed=[]
+                    for task in tasks:
+                        nested=[e for e in events if e.get('pid')==task['pid'] and e.get('tid')==task['tid'] and task['ts']<=e.get('ts',-1)<task['ts']+task['dur']]
+                        calls=[]
+                        for event in nested:
+                            data=event.get('args',{}).get('data',{})
+                            url=data.get('url','')
+                            if '/static/js/' in url:
+                                calls.append({'file':url.split('/static/js/')[-1],'function':data.get('functionName'),
+                                              'event':event['name'],'duration_ms':event.get('dur',0)/1000})
+                        # Keep source attribution and task/paint records; omit raw network headers.
+                        attributed.append({'duration_ms':task['dur']/1000,'calls':calls,
+                           'avatar_source_present':any(c['file'].startswith(('avatars.js','avatar-audio.js')) for c in calls),
+                           'paint_events':sorted(set(e['name'] for e in nested if e['name'] in ['Paint','Layout','UpdateLayoutTree','PrePaint','Layerize']))})
+                    results.append({'version':version,'cpu_rate':4,'seconds':30,'chromium':browser.version,
+                                    'kind':os.getenv('CSS_AVATAR_KIND', 'cat'),'mature_fixture':os.getenv('CSS_AVATAR_MATURE')=='1','before_commit':os.getenv('CSS_AVATAR_BEFORE', '1c964dc'),
+                                    'scenario':observed,'trace_long_tasks':attributed,'trace_event_count':len(events)})
+                    context.close();browser.close()
+            (output/'long-task-attribution.json').write_text(json.dumps(results,indent=2))
+            after_calls=[call['duration_ms'] for item in results if item['version']=='after' for task in item['trace_long_tasks'] for call in task['calls'] if call['file'].startswith(('avatars.js','avatar-audio.js'))]
+>           assert max(after_calls,default=0)<=50, 'Avatar callback exceeded 50 ms in the paired trace'
+E           AssertionError: Avatar callback exceeded 50 ms in the paired trace
+E           assert 121.668 <= 50
+E            +  where 121.668 = max([2.041, 0.473, 11.87, 0.042, 11.038, 1.03, ...], default=0)
+
+tests/test_avatar_baseline_browser.py:361: AssertionError
+=============================== warnings summary ===============================
+tests/test_avatar_baseline_browser.py::test_slice_long_task_attribution
+  /workspace/css-is/tests/conftest.py:88: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_avatar_baseline_browser.py::test_slice_long_task_attribution
+1 failed, 6 deselected, 1 warning in 85.79s (0:01:25)

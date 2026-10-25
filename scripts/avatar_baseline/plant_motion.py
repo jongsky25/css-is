@@ -15,6 +15,8 @@ with sync_playwright() as pw:
         context=browser.new_context(viewport={'width':1440,'height':1000})
         page=context.new_page();page.set_content(re.sub(r'<script\b[^>]*>.*?</script>','',render('gallery',theme),flags=re.S))
         page.locator('article').evaluate_all("(els,kinds)=>els.forEach(e=>{if(!kinds.includes(e.querySelector('svg').dataset.avatarKind))e.remove()})",kinds)
+        # Reaction sheets represent selected companions; production previews stay static.
+        page.locator('.avwrap').evaluate_all("els=>els.forEach(e=>e.setAttribute('data-interactive',''))")
         for phase in phases:
             page.locator('.avwrap').evaluate_all("(els,phase)=>els.forEach(e=>{e.classList.remove('av-do-bloom','av-caring-water','av-do-ripple','av-do-wobble','av-do-spore','av-do-plump','av-do-blink');e.classList.add(phase==='water'?'av-caring-water':'av-do-'+phase)})",phase)
             page.evaluate("(time)=>document.getAnimations().forEach(a=>{a.pause();a.currentTime=time})",1200 if phase=='water' else 120 if phase=='blink' else 450)

@@ -1,0 +1,9 @@
+{
+  "declared_before_collection": true,
+  "source": "00d76bc, no product change",
+  "measurement_defect": "recorder-overhead/DURATIONS callednewError().stackoneveryrequestAnimationFrame, includingthebaselineframecounter(~1800times/run). ItsuntracedarmthereforewasnotoriginalPROBE-only overhead. Itcannotisolatearecordercost. Tracedandbroadprobe failuresremainpreserved.",
+  "corrected_protocol": "ExactlyfivefreshwarmCPU4mobile30sinputrunsforeachmaturefern/mushroom/succulent. KeeporiginalPROBE andexistingtimer-sourcecapture; addtwoperformanceclockreadspersourceavatartimer andnativeChromeLoAFattributionforevents/RAF/observers. NoTracing/EventTarget/RAFwrapperorper-framestackcapture.",
+  "unchanged_limits": "Everyfocusedrunframep95<=33ms andallobservedavatartimer/native-scriptdurations<=50ms; noJSerrors. Allsamplesretained; failuresblockacceptance.",
+  "before_after": "Primaryoriginal/currentfull20unchanged; existingpairedarttracesretained. Newnativeabsolutechecks supplementtheprimaryfixtures andcorrectdiagnosticobservereffect, notproductcodeorbudgets.",
+  "harness_correction": "Home contains oneinteractivehero andonedecorativeSVGatstage6. Scope the assertion tointeractivehero; earlierharnessattemptscollectednoperformancesamples. Logsretainednative-attribution-harness. IncludeLoAFsoverlappingmeasurementboundary; requiretimertimingsnonempty."
+}

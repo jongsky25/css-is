@@ -44,17 +44,25 @@ matched = {'reference_commit': before_env['source_commit'], 'current_commit': en
            'control_worst_ms': max(old_values), 'current_worst_ms': max(new_values),
            'median_delta_ms': statistics.median(new_values) - statistics.median(old_values), 'budget_ms': 100}
 matched['passed'] = matched['median_delta_ms'] <= matched['budget_ms']
-batch = read(out / 'batch-diagnostic/summary.json')
-assert batch['groups']['batched']['runtime_sha256'] == env['source_sha256']['static/js/avatars.js']
 callback_checks = {}
 for kind in ['fern', 'mushroom', 'succulent']:
-    trace = read(out / f'targeted/{kind}/long-task-attribution.json')
-    after = next(r for r in trace if r['version'] == 'after')
-    assert after['kind'] == kind and after['mature_fixture'] and after['cpu_rate'] == 4 and after['seconds'] == 30
-    calls = [c['duration_ms'] for t in after['trace_long_tasks'] for c in t['calls'] if c['file'].startswith(('avatars.js', 'avatar-audio.js'))]
-    callback_checks[kind] = {'max_recorded_avatar_callback_ms': max(calls, default=0), 'passed': max(calls, default=0) <= 50}
+    data = read(out / f'native-control/{kind}/native-control.json')
+    assert data['source_commit'] == env['source_commit'] and data['after_only'] and data['kind'] == kind
+    samples = data['samples']
+    assert len(samples) == 5
+    checks = []
+    for row in samples:
+        assert row['kind'] == kind and row['mature'] and row['cpu'] == 4 and row['seconds'] == 30 and row['version'] == 'after'
+        calls = [s['duration'] for l in row['native_long_animation_frames'] for s in l['scripts'] if '/static/js/avatars.js' in s['sourceURL'] or '/static/js/avatar-audio.js' in s['sourceURL']]
+        checks.append({'run': row['run'], 'frame_p95_ms': row['scenario']['frame_p95_ms'], 'max_reported_owned_script_ms': max(calls, default=0),
+                       'passed': not row['errors'] and row['scenario']['frame_p95_ms'] <= 33 and max(calls, default=0) <= 50})
+    callback_checks[kind] = {'samples': checks, 'passed': all(r['passed'] for r in checks),
+        'method': 'Native LoAF, no API wrappers, tracing, callback clocks or stacks. Zero means no owned script reported in a long frame, not zero CPU.'}
 native = read(out / 'application/native-visibility-touch.json')
-assert native['hidden_end']['hidden']
+assert native['hidden_end']['hidden'] and native['hidden_end']['frame_count'] == 0
+assert native['touch_drag_changed_style'] and not native['picker_animations']
+care = read(out / 'live-plant-care.json')
+assert len(care['results']) == 3 and all(r['care_persisted'] and r['wet_soil_visible'] for r in care['results'])
 passed = all(comparison['gates'].values()) and matched['passed'] and all(s['passed'] for s in secondary.values()) and all(s['passed'] for s in callback_checks.values())
 result = {'status': 'complete' if passed else 'blocked', 'primary_samples': 20,
           'source_commit': env['source_commit'], 'comparison': 'lcp-unblock/comparison.json',
@@ -66,7 +74,8 @@ result = {'status': 'complete' if passed else 'blocked', 'primary_samples': 20,
           'preserved_stopped_attempt': 'lcp-unblock/pre-frame-fix/STOPPED.json',
           'limits': ['Lazy loading removes measured compilation work; it does not establish that all prior run-to-run variation was caused by template compilation.',
                      'Original 20 failed samples and both original-source controls remain preserved; no sample replacement or threshold adjustment.',
-                     'Existing offscreen motion, chase/idle/roam timers, animated picker thumbnails and remount listeners remain separate release blockers.'],
+                     'Existing selected-companion offscreen motion, chase/idle/roam timers and remount listeners remain separate release blockers; static picker policy is verified.',
+                     'Native controls on 00d76bc exposed a new mushroom chase callback60.4ms (41.6ms forced layout). That genuine failure and all failed instrumented traces remain in pre-motion-fix/.'],
           'next_step': '3A: dog, rabbit, bird and turtle' if passed else 'Continue investigating the failing gate before 3A.'}
 (out / 'assessment.json').write_text(json.dumps(result, indent=2))
 print(json.dumps({'status': result['status'], 'historical_gates': comparison['gates'], 'matched_cold_desktop': matched, 'secondary_passed': result['secondary_gates_passed']}, indent=2))
