@@ -242,6 +242,7 @@ def test_native_visibility_and_touch(baseline_server, tmp_path):
             page=context.pages[0];page.set_viewport_size({'width':390,'height':844});page.goto(origin+'/?view=me')
             cdp=context.new_cdp_session(page);page.wait_for_timeout(500)
             visible=snapshot(page,cdp)
+            page.screenshot(path=str(out/'home-native.png'))
             page.evaluate("document.querySelector('.avwrap').closest('.av-play').style.marginTop='2000px'")
             reset(page);page.wait_for_timeout(int(os.getenv('CSS_AVATAR_SECONDS','30'))*1000)
             offscreen=snapshot(page,cdp)
@@ -265,6 +266,7 @@ def test_native_visibility_and_touch(baseline_server, tmp_path):
             before_nudge=page.locator('.avwrap').get_attribute('style')
             page.locator('.av-play-btn').focus();page.keyboard.press('ArrowLeft')
             assert before_nudge!=page.locator('.avwrap').get_attribute('style'), 'Keyboard nudge did not move companion'
+            keyboard_style=page.locator('.avwrap').get_attribute('style')
             page.goto(origin+'/me');page.wait_for_timeout(300)
             picker_animations=page.evaluate('''()=>document.getAnimations().filter(a=>a.effect.target.closest('.avcard')).map(a=>({name:a.animationName,state:a.playState,kind:a.effect.target.closest('.avcard').querySelector('svg').dataset.avatarKind}))''')
             page.emulate_media(reduced_motion='reduce')
@@ -272,7 +274,7 @@ def test_native_visibility_and_touch(baseline_server, tmp_path):
                 page.evaluate('(theme)=>document.documentElement.dataset.theme=theme',theme)
                 page.screenshot(path=str(out/f'profile-native-{theme}.png'),full_page=True)
             (out/'native-visibility-touch.json').write_text(json.dumps({'picker_animations':picker_animations,'visible':visible,'offscreen':offscreen,'hidden_start':before,'hidden_end':hidden,
-                 'touch_drag_changed_style':before_drag!=after_drag,'keyboard_nudge_style':page.locator('.avwrap').get_attribute('style'),
+                 'touch_drag_changed_style':before_drag!=after_drag,'keyboard_nudge_style':keyboard_style,
                  'method':'Native Chromium tabs; connect_over_cdp(no_defaults=True), no visibility getter override'},indent=2))
             browser.close()
     finally:

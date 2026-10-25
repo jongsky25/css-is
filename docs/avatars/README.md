@@ -56,7 +56,10 @@ and trusted mouse input each run for at least 30 seconds. Cold clears HTTP cache
 warm primes Home in the same context. HTTP caching stays enabled: there is no
 Playwright request routing, and service workers are blocked. Resource timings and
 response encodings distinguish actual cache reuse from a priming navigation.
-Browser Date is controlled without mocking Performance APIs. Math.random uses
+Each case starts with an uncared-for stage-1 cat. Care writes persist across its
+five runs, so later Home samples use the resulting happy mood and care cooldown.
+Reproduce the whole five-run sequence; do not compare an isolated run against
+a different point in that sequence. Browser Date is controlled without mocking Performance APIs. Math.random uses
 seed 12345, and the server date is fixed via the repository's test clock.
 
 The remaining checks select all 16 profile radios, scroll to growth, perform and

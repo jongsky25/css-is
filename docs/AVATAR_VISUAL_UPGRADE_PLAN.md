@@ -1,6 +1,6 @@
 # Avatar visual upgrade — phased execution plan for Sol
 
-Status: Increment 0 in progress; baseline acceptance remains unmet. No artwork increments started.
+Status: Increment 0 complete; reproducible baseline recorded with existing gate misses. Increment 1 is next. No artwork increments started.
 Created: 2026-10-25
 Repository: jongsky25/css-is
 Owner request: Material improvement to companion artwork, optional animal dress-up,
@@ -283,7 +283,7 @@ browser tests ran.
 
 | Increment | Status | Commit | Visual evidence | Performance evidence / notes |
 |---|---|---|---|---|
-| 0 Baseline | In progress — acceptance unmet | `d426cc5` (harness/report); evidence in following commit | [Fixed-noon contact sheets](avatars/smoke/) | [Report](avatars/BASELINE_REPORT.md); five short smoke runs per viewport/cache only; full-duration application scenarios still required. Existing offscreen animation and chase-listener retention observed. |
+| 0 Baseline | Complete — baseline established; release gates remain unmet | `94269dd` + evidence/ledger revision | [51 sheets](avatars/sheets/index.json), [monthly overview](avatars/sheets/monthly-stage6-overview.png), [hero/moods](avatars/smoke/) | [Report](avatars/BASELINE_REPORT.md), [20 full samples + summary](avatars/application/summary.json), native hidden/touch check; existing frame, picker, timer and remount failures retained. |
 | 1 Cat + plant slice | Pending | — | — | — |
 | 2 Plants | Pending | — | — | — |
 | 3A Ground animals + bird | Pending | — | — | — |
@@ -311,3 +311,29 @@ application baseline. See [remaining acceptance work](avatars/BASELINE_REPORT.md
 Increment 1 remains blocked by increment 0. No production changes or deployment.
 
 Harness/report commit: `d426cc5` (`test: add local avatar gallery and baseline probes`).
+
+### Increment 0 completion — 2026-10-25
+
+The earlier partial status is superseded. Four real-HTTP configurations each ran
+five samples with 30 seconds of Home idle and at least 30 seconds of interaction.
+The runner also checked persisted care, every profile species selection, growth,
+seasonal administrator previews, offscreen/reduced motion and 20 navigations.
+A separate native-tab check verified true hidden state for 30 seconds, touch drag
+and keyboard movement. All five opt-in cases passed; final relevant regression
+tests passed 100 cases (five opt-in skips in the ordinary run).
+
+Captured 51 compact sheets (4,896 cells) across months/costumes/surfaces, retained
+hero/mood sheets, and reviewed the catalog plus monthly/seasonal overviews.
+Reproduction commands, environment/source hashes, transfer sizes, event timings,
+frame/long-task samples, JS heap, renderer RSS and DOM/listener trends are recorded
+in [the baseline report](avatars/BASELINE_REPORT.md).
+
+Existing gate misses: one mobile cold sample had frame p95 50 ms and substantial
+page-wide long tasks; seven plant picker thumbnails animate together; offscreen
+motion continues; native hidden rendering stops frame callbacks but chase/init/idle/
+roam timers continue; AvatarAudio.sync and MutationObserver initialization form a
+repeating update loop; same-document remounts retain document pointer listeners.
+Do not discard the slow sample, relax thresholds, or treat baseline completion as
+release approval. Artwork and behavior remain unchanged. Increment 1 can now use
+this baseline for its before/after gates; existing lifecycle issues remain release
+blockers to resolve during motion/integration work. No deployment performed.
