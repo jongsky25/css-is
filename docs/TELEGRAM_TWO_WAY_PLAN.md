@@ -132,7 +132,7 @@ T0 merged in PR #465 at `4cd01a0bfd17ccf57dba12b05a24c72bfd098f29`. T1.1 is unde
 | --- | --- | --- | --- | --- | --- |
 | Planning document | Published | Codex / 2026-10-25 | See GitHub file history | Source inspection at abf3141; documentation-only change | Plan available for cross-chat handoff |
 | T0 | Merged | Codex / 2026-10-25 | [PR #465](https://github.com/jongsky25/css-is/pull/465), `docs/telegram-t0-contract` | [Source-backed design contract](TELEGRAM_T0_CONTRACT.md); main reconciled at f9e868e; checks below | Merged at `4cd01a0bfd17ccf57dba12b05a24c72bfd098f29`; live deployment unverified |
-| T1.1 | In review | Codex / 2026-10-25 | `feat/telegram-t1-1-storage` (PR link recorded after opening) | Four inert tables, independent default-off switches, migration/restart/restore and digest checks passed | Release 8.55 candidate; no activation or live verification; next T1.2 after merge |
+| T1.1 | In review | Codex / 2026-10-25 | [PR #466](https://github.com/jongsky25/css-is/pull/466), `feat/telegram-t1-1-storage` | Four inert tables, independent default-off switches, migration/restart/restore and digest checks passed | Release 8.55 candidate; no activation or live verification; next T1.2 after merge |
 | T1.2–T7 | Planned | Unassigned | — | Not implemented | Follow dependencies |
 
 ### T0 handoff — 2026-10-25
@@ -147,7 +147,7 @@ T0 merged in PR #465 at `4cd01a0bfd17ccf57dba12b05a24c72bfd098f29`. T1.1 is unde
 
 ### T1.1 operator and implementation handoff — 2026-10-25
 
-- Owner/branch: Codex, `feat/telegram-t1-1-storage`, based on T0 merge `4cd01a0`.
+- Owner/branch: Codex, `feat/telegram-t1-1-storage`, based on T0 merge `4cd01a0`. [PR #466](https://github.com/jongsky25/css-is/pull/466) opened 2026-10-25; implementation commit `0b32c19`; in review, not merged.
 - Scope: additive `telegram_storage.install` via `storage.init_db`; four empty tables and independent exact-`1` environment switches from the T0 contract. No receiver, transport, scheduler, account linking, grants or business actions. The host upload closure includes the new module.
 - Migration: normal application initialization installs tables/indexes idempotently. Existing business rows and Apprise digest preferences are preserved. No database topology change. A normal process restart preserves rows, claims and generations; this increment does not execute or recover queued work.
 - Restore: all current `app.py` snapshot/seed hydration paths call `backups.clear_restored_sessions`; deliberate `backups.restore_backup` does too. That hook now pauses two-way connections even for routine snapshot recovery, rotates random generations, clears received payloads and stale claims, cancels pending operations/updates/deliveries and marks interrupted sends uncertain. Committed/partial/failed receipts and provider acceptance metadata remain. Legacy snapshots without these tables are supported. Future grant/group/preview increments must extend the hook when their tables exist.
