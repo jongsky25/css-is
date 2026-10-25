@@ -27,6 +27,7 @@ import rooms
 import storage as st
 import travel
 import travel_guidance
+import travel_grid
 import travel_review as review
 import travel_submissions as submissions
 import travel_checklist as tc
@@ -166,6 +167,40 @@ def make_router(templates, get_conn, today_local, *, audit, base_url, notify=Non
             return templates.TemplateResponse(request, "travel_index.html", {
                 "nav_active": "travel_mine", "tab": "mine", "filings": filings, "todo": todo, "warnings": warnings,
                 "msg": (q.get("ok") or "")[:200] or None, "err": (q.get("err") or "")[:200] or None, "off": False})
+        finally:
+            conn.close()
+
+    @router.get("/travel/table", response_class=HTMLResponse)
+    def travel_claim_table(request: Request):
+        conn = get_conn()
+        headers = {'Cache-Control': 'no-store'}
+        is_json = request.query_params.get('format') == 'json'
+        try:
+            token = auth.parse_token(request.cookies.get(auth.COOKIE_NAME))
+            user = st.session_actor(conn, token) if token else None
+            if user is None or not travel.enabled(conn):
+                if is_json:
+                    return JSONResponse({'error': 'Travel claims are unavailable. Sign in and check that Travel filing is enabled.'}, status_code=403, headers=headers)
+                response = _forbidden(request, 'travel claims') if user is None else _off(request)
+                response.headers.update(headers)
+                return response
+            try:
+                selection = travel_grid.parse(dict(request.query_params))
+                result = travel_grid.snapshot(conn, user['id'], selection)
+            except ValueError as error:
+                if is_json:
+                    return JSONResponse({'error': str(error)}, status_code=400, headers=headers)
+                return templates.TemplateResponse(request, 'travel_table.html', {
+                    'nav_active': 'travel_mine', 'tab': 'table', 'error': str(error)}, status_code=400, headers=headers)
+            if is_json:
+                return JSONResponse(result, headers=headers)
+            current = result['selection']
+            return templates.TemplateResponse(request, 'travel_table.html', {
+                'nav_active': 'travel_mine', 'tab': 'table', 'error': '', 'result': result,
+                'selection': current, 'columns': travel_grid.COLUMNS,
+                'previous': travel_grid.url(current, page=current['page']-1) if current['page']>1 else None,
+                'following': travel_grid.url(current, page=current['page']+1) if current['page']<result['last_page'] else None,
+                'data_url': travel_grid.url(current, format='json')}, headers=headers)
         finally:
             conn.close()
 
