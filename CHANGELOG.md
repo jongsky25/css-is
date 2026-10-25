@@ -1,3 +1,10 @@
+## 8.65 — October 25, 2026
+
+- Replace MCP activity discovery's global 2,000-form refusal with quarter-scoped SQLite grouping, literal Unicode casefold title filtering, and database pagination that fetches at most 26 result rows.
+- Resolve individual activity/member IDs directly and load only the complete current date/normalized-venue/organizer group. Reuse source grouping and preserve first-Type-2 title, representative IDs, archive/pooled exclusions and answer-backed eligibility.
+- Bound metadata queries to 20 million SQLite VM steps or five seconds; retain a 2,000-form per-group cap, 500-Type-2 member cap, response/answer ceilings and existing score suppression. Abort without partial results and remove the progress handler after each query.
+- Keep existing tool names, scopes, hosting switch and scoring unchanged. Cover large same-quarter/historical inventories, pagination beyond 2,000 groups, Unicode/literal search, source grouping, member scorecards, work limits and read-only behavior.
+
 ## 8.64 — October 25, 2026
 
 - Add a dormant actor/action/destination-bound preview and atomic receipt contract with five-minute confirmations, revision rechecks, replay recovery and bounded expiry/tombstone cleanup. No bot action adapter, command, callback or write-consent issuance is installed.
