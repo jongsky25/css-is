@@ -1,0 +1,17 @@
+{
+  "container_pid": 194976,
+  "cpuset": "0,1",
+  "nano_cpus": 3000000000,
+  "chromium_threads": [
+    {
+      "pid": 195330,
+      "thread_affinity_sets": [
+        [
+          0,
+          1
+        ]
+      ]
+    }
+  ],
+  "cgroup": "0::/../docker/7ba80b35eb6182658c894aaa9158c14d00d9ad640ec0a3616a85905f7909dc1b\n"
+}

@@ -1,0 +1,191 @@
+{
+  "method": "CLOCK_MONOTONIC spans around unchanged original SIGUSR2 handler, correlated with devtools.timeline FunctionCall intervals on same renderer PID. Diagnostic wrapper overhead remains a limitation; no budget adjustment or subtraction for acceptance.",
+  "samples": [
+    {
+      "trace": "after-0-trace.json.gz",
+      "owned_calls": 1294,
+      "over50_callbacks": [],
+      "handler_records": 101243,
+      "max_handler_wall_ms": 128.48041899108887,
+      "long_handlers_in_input_window": [
+        {
+          "start_from_window_ms": 23527.889962005615,
+          "wall_ms": 128.48041899108887
+        }
+      ]
+    },
+    {
+      "trace": "after-1-trace.json.gz",
+      "owned_calls": 1297,
+      "over50_callbacks": [],
+      "handler_records": 95245,
+      "max_handler_wall_ms": 13.512473999023438,
+      "long_handlers_in_input_window": []
+    },
+    {
+      "trace": "after-2-trace.json.gz",
+      "owned_calls": 1141,
+      "over50_callbacks": [],
+      "handler_records": 87617,
+      "max_handler_wall_ms": 345.9500769958496,
+      "long_handlers_in_input_window": [
+        {
+          "start_from_window_ms": 25802.52495300293,
+          "wall_ms": 345.9500769958496
+        },
+        {
+          "start_from_window_ms": 26412.440973999022,
+          "wall_ms": 134.2715650024414
+        },
+        {
+          "start_from_window_ms": 26593.239660995485,
+          "wall_ms": 151.5804470062256
+        },
+        {
+          "start_from_window_ms": 26855.917507003785,
+          "wall_ms": 59.270210998535156
+        },
+        {
+          "start_from_window_ms": 27017.10338600159,
+          "wall_ms": 129.41349699401854
+        },
+        {
+          "start_from_window_ms": 27394.117757995606,
+          "wall_ms": 53.88687001037598
+        },
+        {
+          "start_from_window_ms": 28633.830787994386,
+          "wall_ms": 71.00873100280762
+        },
+        {
+          "start_from_window_ms": 28759.241835006713,
+          "wall_ms": 109.86245498657226
+        },
+        {
+          "start_from_window_ms": 28869.289882995607,
+          "wall_ms": 79.26271099853516
+        },
+        {
+          "start_from_window_ms": 29072.97435899353,
+          "wall_ms": 133.61675199890138
+        },
+        {
+          "start_from_window_ms": 29350.60512800598,
+          "wall_ms": 68.5273809967041
+        },
+        {
+          "start_from_window_ms": 29568.98125,
+          "wall_ms": 142.3247920074463
+        },
+        {
+          "start_from_window_ms": 29903.42733999634,
+          "wall_ms": 148.35106300354005
+        },
+        {
+          "start_from_window_ms": 30550.64327799988,
+          "wall_ms": 70.74553399658203
+        }
+      ]
+    },
+    {
+      "trace": "after-3-trace.json.gz",
+      "owned_calls": 1299,
+      "over50_callbacks": [],
+      "handler_records": 94415,
+      "max_handler_wall_ms": 76.84791499328614,
+      "long_handlers_in_input_window": [
+        {
+          "start_from_window_ms": 29631.91270300293,
+          "wall_ms": 76.84791499328614
+        }
+      ]
+    },
+    {
+      "trace": "after-4-trace.json.gz",
+      "owned_calls": 1284,
+      "over50_callbacks": [],
+      "handler_records": 101067,
+      "max_handler_wall_ms": 96.17263499450684,
+      "long_handlers_in_input_window": [
+        {
+          "start_from_window_ms": 27018.21323300171,
+          "wall_ms": 96.17263499450684
+        }
+      ]
+    },
+    {
+      "trace": "before-0-trace.json.gz",
+      "owned_calls": 1220,
+      "over50_callbacks": [],
+      "handler_records": 92522,
+      "max_handler_wall_ms": 122.93631900024414,
+      "long_handlers_in_input_window": [
+        {
+          "start_from_window_ms": 17157.372916000368,
+          "wall_ms": 60.0180659942627
+        },
+        {
+          "start_from_window_ms": 26373.239490005493,
+          "wall_ms": 50.38104899597168
+        },
+        {
+          "start_from_window_ms": 26636.484376998902,
+          "wall_ms": 92.48669300842285
+        },
+        {
+          "start_from_window_ms": 27956.11500300598,
+          "wall_ms": 55.21159298706055
+        },
+        {
+          "start_from_window_ms": 28070.680464996338,
+          "wall_ms": 122.93631900024414
+        },
+        {
+          "start_from_window_ms": 28242.61970300293,
+          "wall_ms": 104.76545500183106
+        },
+        {
+          "start_from_window_ms": 28687.808901000975,
+          "wall_ms": 122.39968600463867
+        }
+      ]
+    },
+    {
+      "trace": "before-1-trace.json.gz",
+      "owned_calls": 1283,
+      "over50_callbacks": [],
+      "handler_records": 97707,
+      "max_handler_wall_ms": 74.37286099243164,
+      "long_handlers_in_input_window": [
+        {
+          "start_from_window_ms": 22330.713886001588,
+          "wall_ms": 74.37286099243164
+        }
+      ]
+    },
+    {
+      "trace": "before-2-trace.json.gz",
+      "owned_calls": 1290,
+      "over50_callbacks": [],
+      "handler_records": 96250,
+      "max_handler_wall_ms": 94.0666010131836,
+      "long_handlers_in_input_window": []
+    },
+    {
+      "trace": "before-3-trace.json.gz",
+      "owned_calls": 1288,
+      "over50_callbacks": [],
+      "handler_records": 97037,
+      "max_handler_wall_ms": 14.876511001586914,
+      "long_handlers_in_input_window": []
+    },
+    {
+      "trace": "before-4-trace.json.gz",
+      "owned_calls": 1307,
+      "over50_callbacks": [],
+      "handler_records": 100262,
+      "max_handler_wall_ms": 11.45710398864746,
+      "long_handlers_in_input_window": []
+    }
+  ]
+}

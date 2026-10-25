@@ -1,0 +1,40 @@
+name: Avatar 2B verification
+on:
+  push:
+    branches: [codex/avatar-2b-verification]
+permissions:
+  contents: read
+concurrency:
+  group: avatar-2b-verification
+  cancel-in-progress: false
+jobs:
+  verify:
+    strategy:
+      fail-fast: false
+      matrix:
+        phase: [functional, focused, matrix]
+    runs-on: ubuntu-24.04
+    container: python:3.12-trixie
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install exact browser and locked test dependencies
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends chromium=154.0.8037.57-1~deb13u1 git procps
+          python -m venv .venv
+          .venv/bin/python -m pip install --require-hashes --only-binary=:all: -r requirements-test.txt
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - name: Run complete verification phase
+        env:
+          PHASE: ${{ matrix.phase }}
+        run: .venv/bin/python scripts/avatar_baseline/ci_verify.py "$PHASE"
+      - name: Retain every measurement and failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: avatar-2b-${{ matrix.phase }}
+          path: avatar-verification/
+          retention-days: 7

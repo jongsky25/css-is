@@ -64,3 +64,6 @@ docs/archive/data-cleanup/
 CSS Reports_reference/
 CSS Spreadsheets.xlsx
 qa_slides/
+
+# Downloaded/generated hosted avatar verification artifacts
+avatar-verification/

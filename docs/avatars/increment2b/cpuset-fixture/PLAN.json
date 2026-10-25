@@ -1,0 +1,8 @@
+{
+  "reason": "Direct native probe observes unchanged Chromium SIGUSR2 throttle handler pauses up to345.950ms during30s input, independently of owned callbacks. This establishes emulator stalls, not the cause of every prior app callback.",
+  "candidate": "Disposable local Docker cgroup with kernel-enforced CPUs0,1 and3CPU quota (2CPU reachable), parent4CPU quota. Exact read-only hostPython/Chromium154/application; same UID1000; workspace/tmp writable; no network; hostPID namespace keeps original memory-probe semantics. No browser/source changes, no timing subtraction.",
+  "diagnostic": "Two counterbalanced old/new-art fern pairs with original CPU4/30s traces, no native signal probe and no JS wrappers. All4 must meet50ms callback and original33ms frame for prequalification. Any subsequent acceptance uses a fresh complete cohort, not these diagnostic samples.",
+  "acceptance": "Fresh native15 +trace30 and full20 matrices both original/current on same fixture, plus historical thresholds. Preserve previous failures; user33.3ms exception remains.",
+  "not_a_claim": "This fixture is not accepted until independent checks pass.",
+  "outcome": "Rejected: the independent unmodified trace diagnostic records148.967ms callback and33.3ms frame on current art despite kernel-enforced cpuset. Not an acceptance fixture."
+}
