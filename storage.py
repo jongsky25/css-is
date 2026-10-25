@@ -4204,6 +4204,7 @@ _AUDIT_ACTIONS = {
     "travel_ceiling_save": ("Saved travel ceilings or routes", "Travel filing"),
     "travel_library_save": ("Saved the MC 114 justification library", "Travel filing"),
     "travel_settings_save": ("Saved travel filing settings", "Travel filing"),
+    "travel_view_save": ("Changed a private travel table view", "Travel filing"),
     "travel_purge":        ("Removed old travel filing details", "Travel filing"),
     "travel_item_everyone": ("Applied a travel checklist answer to everyone on the DPO", "Travel filing"),
     "room_meal_tag":       ("Tagged a room meal order", "Conference room"),

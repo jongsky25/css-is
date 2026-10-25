@@ -127,3 +127,19 @@ def test_schema_idempotency_corrupt_view_recovery_and_atomic_rollback(claims,vie
     assert grid.views(c,owner)[0]['name']=='Pending' and grid.views(c,owner)[0]['revision']==1
     c.execute('DROP TRIGGER fail_view_update');c.commit()
     assert post(viewer,action='delete',id=v['id'],revision=1).status_code==303
+
+
+def test_preference_audit_metadata_is_atomic_and_excludes_private_filters(claims,viewer,monkeypatch):
+    c,owner,other,add=claims
+    assert create(viewer,name='PRIVATE_NAME',q='PRIVATE_SEARCH').status_code==303
+    v=grid.views(c,owner)[0]
+    row=c.execute("SELECT target_id,summary,before_text,after_text FROM audit_log WHERE action='travel_view_save' ORDER BY id DESC LIMIT 1").fetchone()
+    assert row==(str(v['id']),'create private filter/sort preference',None,None)
+    assert 'PRIVATE_NAME' not in str(row) and 'PRIVATE_SEARCH' not in str(row)
+    before=c.execute('SELECT * FROM travel_claim_view').fetchall()
+    def fail(*args,**kwargs):raise RuntimeError('forced audit failure')
+    monkeypatch.setattr(st,'audit',fail)
+    token=auth.parse_token(viewer.cookies.get(auth.COOKIE_NAME))
+    with pytest.raises(RuntimeError,match='forced audit'):
+        grid.save_view(c,token,{'action':'update','id':v['id'],'revision':1,'name':'Different','state':json.dumps(state())})
+    assert c.execute('SELECT * FROM travel_claim_view').fetchall()==before
