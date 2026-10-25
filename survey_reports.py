@@ -407,6 +407,47 @@ def _survey_person(conn, user, resource_person_id):
     return person
 
 
+
+MAX_ACTIVITY_LINKED_PERSONS = 2000
+
+
+def activity_resource_person_links(conn, user, origin, event_id, event_date):
+    """Metadata for an already-authorized managed activity, never survey scores.
+
+    The caller must select the activity through the current actor's event feed
+    and recheck the same OAuth grant's resource-person annual-read scope.
+    """
+    user = permissions.actor(conn, user)
+    if not auth.can(user['role'], 'view'):
+        raise permissions.Denied('Report unavailable.')
+    if os.environ.get('CSS_MCP_RESOURCE_PERSON_SURVEYS_ENABLED') != '1':
+        return {'availability': 'not_available', 'reason': 'disabled'}
+    try:
+        year = date.fromisoformat(event_date).year
+        if not 1900 <= year <= 9998:
+            raise ValueError
+    except (TypeError, ValueError):
+        return {'availability': 'not_available', 'reason': 'invalid_activity_date'}
+    fields = ('id', 'name', 'hidden_public', 'position', 'designation', 'archived_at')
+    rows = conn.execute("""SELECT DISTINCT rp.id,rp.name,rp.hidden_public,rp.position,rp.designation,rp.archived_at
+        FROM event_form ef JOIN form_instance fi ON fi.id=ef.form_instance_id
+        JOIN resource_person rp ON rp.id=fi.rp_id
+        WHERE ef.event_id=? AND fi.survey_type=3 AND COALESCE(fi.archived,0)=0
+        ORDER BY rp.id LIMIT ?""", (event_id,MAX_ACTIVITY_LINKED_PERSONS+1)).fetchall()
+    if len(rows)>MAX_ACTIVITY_LINKED_PERSONS:
+        return {'availability': 'not_available', 'reason': 'capacity_limit'}
+    people = [dict(zip(fields,row)) for row in rows]
+    people = [p for p in people if can_view_resource_person(user,p)]
+    people.sort(key=lambda p:(p['name'].casefold(),p['id']))
+    return {'availability': 'available', 'scope': 'linked_resource_person_metadata',
+            'annual_summary_year': year,
+            'data': [{'resource_person_id':str(p['id']), 'name':p['name'][:250],
+                      'name_truncated':len(p['name'])>250, 'archived':bool(p['archived_at']),
+                      'annual_report_url':origin+f"/dashboard/people/{p['id']}?period=year:{year}"}
+                     for p in people[:25]],
+            'truncated':len(people)>25,
+            'note':'Visible linked resource persons only; links do not imply usable survey responses. Use get_resource_person_survey_summary with the returned ID and annual_summary_year. Annual results can include other activities; verify this activity using activity_report_url.'}
+
 def find_survey_resource_persons(conn, user, origin, query='', limit=10, offset=0):
     user = permissions.actor(conn, user)
     if not auth.can(user['role'], 'view'):
