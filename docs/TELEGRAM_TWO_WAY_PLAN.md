@@ -1,6 +1,6 @@
 # Office Connect ↔ Telegram delivery plan
 
-Status: T0–T4.1 merged; T4.2 in progress; two-way defaults remain off; production activation unverified.
+Status: T0–T4.1 merged; T4.2 in review; two-way defaults remain off; production activation unverified.
 Last updated: 2026-10-25.
 Repository: jongsky25/css-is.
 Planning baseline inspected: abf3141 (merge of PR #458).
@@ -144,7 +144,7 @@ T0 merged in PR #465 at `4cd01a0bfd17ccf57dba12b05a24c72bfd098f29`. T1.1 merged 
 | T3.3 | Merged | Codex / 2026-10-25 | [PR #478](https://github.com/jongsky25/css-is/pull/478), `feat/telegram-t3-3-room-requests` | Linked pending request, atomic notices/receipt and mobile checks; 764 tests passed | Merged at `2684e78`, release 8.69; all required CI passed; next T3.4 |
 | T3.4 | Merged | Codex / 2026-10-25 | [PR #482](https://github.com/jongsky25/css-is/pull/482), `feat/telegram-t3-4-meeting-room` | Combined guided meeting and separate room child; 849 tests passed | Merged at `6c2c778`, release 8.72; all required CI passed; next T4.1 |
 | T4.1 | Merged | Codex / 2026-10-25 | [PR #484](https://github.com/jongsky25/css-is/pull/484), `feat/telegram-t4-1-change-events` | Durable source changes and metadata-only routing; 926 tests passed | Merged at `ab544d1`, release 8.73; all required CI passed; next T4.2 |
-| T4.2 | In progress | Codex / 2026-10-25 | `feat/telegram-t4-2-change-notices` | Safe notices through the existing durable sender; 927 regressions + 29 release tests passed | Defaults off; next T4.3 after merge |
+| T4.2 | In review | Codex / 2026-10-25 | [PR #485](https://github.com/jongsky25/css-is/pull/485), `feat/telegram-t4-2-change-notices` | Safe notices through the existing durable sender; 927 regressions + 29 release tests passed | Release 8.74 candidate; CI/merge pending; defaults off; next T4.3 |
 | T4.3–T7 | Planned | Unassigned | — | Not implemented | Follow dependencies |
 
 ### T0 handoff — 2026-10-25
@@ -379,7 +379,7 @@ T0 merged in PR #465 at `4cd01a0bfd17ccf57dba12b05a24c72bfd098f29`. T1.1 merged 
 
 ### T4.2 implementation and operator handoff — 2026-10-25
 
-- Owner/branch: Codex, `feat/telegram-t4-2-change-notices`, created only after PR #484 merged at `ab544d1a955353c1075639bbaaf2a422cca14e3e`. All required CI passed (normal/shuffled complete suites, release metadata, dependency audit and Required checks; run 40187257707). Expected head `cdb46c8` was clean, with no local merge, active/queued merge-group run or queued auto-merge found before merge.
+- Owner/branch: Codex, `feat/telegram-t4-2-change-notices`; [PR #485](https://github.com/jongsky25/css-is/pull/485) opened 2026-10-25, implementation commit `e713d85`, release 8.74 candidate, in review. New PR CI/review/merge pending; no hosted verification. Branch created only after PR #484 merged at `ab544d1a955353c1075639bbaaf2a422cca14e3e`. All required CI passed (normal/shuffled complete suites, release metadata, dependency audit and Required checks; run 40187257707). Expected head `cdb46c8` was clean, with no local merge, active/queued merge-group run or queued auto-merge found before merge.
 - Scope: bounded atomic handoff of current prepared routes to the existing durable sender, safe private/shared projections, current source/consent checks at proof/render/final send, definite provider rejection pause and existing retry/uncertain semantics. No reminders/quiet hours, new business action or production activation.
 - Delivered: [change-notice behavior and operator runbook](TELEGRAM_CHANGE_NOTICES.md), `telegram_notices.py`, install/runtime closure, bounded handoff in the existing scheduler and notice dispatch through the existing sender. Reuses independent current read/inbound/delivery/link/change-notice gates; no new delegated action, business write or extra provider client. Every default remains off.
 - Handoff/migration: additive nullable `telegram_change_route.delivery_key` and index, indexed `telegram_notice_pause` metadata table, route-cancellation and recognized-command recovery triggers. Existing prepared routes keep NULL; up to 20 current routes hand off per tick. Stable event/destination/topic key, outbox descriptor and permanent handoff marker commit in one writer transaction. Restart, rollback and two workers recover one outbox row; terminal failed/uncertain/accepted outcomes never reset the marker or replay a business mutation. Descriptors contain IDs and bot provenance only.
@@ -451,3 +451,5 @@ T2.2 merge reconciliation: preserved concurrent search release 8.60 and its runt
 - T3.4 merge reconciliation: preserve activity survey-person links release 8.71; guided meeting/room flow advances to 8.72. Previous head passed all CI but current main conflicted in release metadata. Reconciled checks and fresh full CI subsequently passed; merge confirmed at `6c2c778` before T4.1 began.
 
 - 2026-10-25: User requested merge if ready, then the next increment. Reconciled PR #482, passed updated CI and merge-activity checks, merged at `6c2c778`, then completed T4.1 separately in PR #484 with 926 passing regressions and the Markdown inventory/runbook in the same PR. Await that PR’s CI/review/merge; T4.2 and production activation have not started.
+
+- 2026-10-25: User requested merge if ready with nothing ongoing, then the next increment. PR #484 passed all required CI, was clean at `cdb46c8` with no local/active/queued merge found, and merged at `ab544d1`. T4.2 then completed separately in PR #485 with 927 regression tests and 29 release tests passed, plus the Markdown runbook/progress update in the same PR. Await new PR CI/review/merge; T4.3 and live activation have not started.
