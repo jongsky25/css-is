@@ -18,10 +18,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "8.70"
+APP_VERSION = "8.71"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "8.71",
+        "date": "October 25, 2026",
+        "summary": "Prepare a meeting and an optional room request together.",
+        "changes": [
+            "With separate room permission, include exact room hours in your private meeting preview and confirmation.",
+            "If the room request fails, keep the saved meeting and prepare a new room-only attempt from its receipt.",
+            "Requests still wait for normal approval, and these optional Telegram actions remain off by default."
+        ]
+    },
     {
         "version": "8.70",
         "date": "October 25, 2026",

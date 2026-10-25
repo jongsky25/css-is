@@ -265,7 +265,7 @@ def test_pending_payloads_are_scrubbed_on_revoke_and_restore(action_env):
 def test_upgrade_adds_preview_schema_without_altering_old_operations(action_env):
     linking,ctx,_=action_env;c,_,path,_,_=linking
     p=issue(action_env)
-    for name in ('telegram_preview_connection','telegram_preview_group','telegram_preview_grant','telegram_room_calendar_grant'):
+    for name in ('telegram_preview_connection','telegram_preview_group','telegram_preview_grant','telegram_room_calendar_grant','telegram_combined_room_grant'):
         c.execute('DROP TRIGGER '+name)
     c.execute('DROP TABLE telegram_preview')
     c.execute('ALTER TABLE telegram_operation DROP COLUMN context_hash');c.commit()

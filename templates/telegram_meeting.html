@@ -5,7 +5,7 @@
 <h1>Prepare one meeting</h1>
 <p><a href="/account/telegram">Telegram connection and permissions</a></p>
 <p>Start with <code>/meeting</code> in your private bot chat or an approved group/topic. Choose exact fields here, then check and confirm the preview in your own private bot chat within five minutes. This form creates no calendar entry.</p>
-<p>All dates and times use <strong>Asia/Manila</strong>. One date, with end time after start time; recurring meetings and room requests stay in Office Connect. No automatic video link is created.</p>
+<p>All dates and times use <strong>Asia/Manila</strong>. One date, with end time after start time; recurring meetings stay in Office Connect. You can optionally request the conference room with separate permission. No automatic video link is created.</p>
 {% if error %}<p role="alert">{{ error }}</p>{% endif %}
 {% if queued %}<p role="status">Your preview is prepared. Check your private Telegram chat for its exact confirmation command. Nothing is created until you send that command. If delivery is uncertain or paused, check the hosting pilot; start a new preview after expiry.</p>{% endif %}
 {% if already %}<p role="status">This operation already has a receipt. Check your private chat or use the recovery command from the original preview. No second meeting was created.</p>{% endif %}
@@ -21,9 +21,17 @@
 <p><label for="meeting-audience">Calendar audience</label><br><select id="meeting-audience" name="audience" required><option value="people" {% if values.get('audience','people') == 'people' %}selected{% endif %}>Only selected people and creator</option><option value="unit" {% if values.get('audience') == 'unit' %}selected{% endif %}>Owning unit and selected people</option><option value="bureau" {% if values.get('audience') == 'bureau' %}selected{% endif %}>Everyone in the bureau</option></select></p>
 <p><label for="meeting-unit">Owning unit</label><br><select id="meeting-unit" name="owner_org_id"><option value="">None</option>{% for unit in units %}<option value="{{ unit.id }}" {% if values.get('owner_org_id') == unit.id|string %}selected{% endif %}>{{ unit.label }}</option>{% endfor %}</select></p>
 <fieldset><legend>Participants (at most twelve)</legend>{% for person in people %}<p><label><input type="checkbox" name="people" value="{{ person.user_id }}" {% if person.user_id|string in values.get('people',[]) %}checked{% endif %}> {{ person.name }} (account {{ person.user_id }})</label></p>{% endfor %}</fieldset>
+{% if room_ready %}
+<fieldset><legend>Optional conference-room request</legend>
+<p><label><input type="checkbox" name="room_request" value="1" {% if values.get('room_request') == '1' %}checked{% endif %}> Also submit a room request for myself after saving this meeting</label></p>
+<p><label for="meeting-room-from">Room from</label><br><select id="meeting-room-from" name="room_from"><option value="">Choose a start hour</option>{% for slot in slots %}<option value="{{ slot.start_time }}" {% if values.get('room_from') == slot.start_time %}selected{% endif %}>{{ slot.start_time }}</option>{% endfor %}</select></p>
+<p><label for="meeting-room-to">Room until</label><br><select id="meeting-room-to" name="room_to"><option value="">Choose an end hour</option>{% for slot in slots %}<option value="{{ slot.end_time }}" {% if values.get('room_to') == slot.end_time %}selected{% endif %}>{{ slot.end_time }}</option>{% endfor %}</select></p>
+<p>Room hours are separate from the meeting clock, on the same office date. Your private preview will show both. Confirmation saves the meeting and tries the room request. If the room request fails, the meeting stays saved; retry only the room. Requests wait for Administrative Section approval and hold no booking.</p>
+</fieldset>
+{% else %}<p>Optional room submission requires separate room read and room-request consent and pilots. Without them, this creates only a meeting.</p>{% endif %}
 <p>Group membership grants no calendar access. This request does not share the meeting with a Telegram group; group sharing needs a separate exact-version approval. Participants and the full preview are sent only to your private bot chat.</p>
 <button type="submit">Send exact preview to my private chat</button>
 </form>
-{% else %}<p>No current meeting request. Enable the optional pilot, consent to calendar reading and meeting creation when linking, and send <code>/meeting</code> again. Keep room creation off.</p>{% endif %}
+{% else %}<p>No current meeting request. Enable the optional pilot, consent to calendar reading and meeting creation when linking, and send <code>/meeting</code> again.</p>{% endif %}
 </div>
 {% endblock %}

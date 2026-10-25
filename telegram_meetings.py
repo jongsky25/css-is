@@ -50,7 +50,7 @@ def queue(conn,ctx,kind,identifier,now,*,key=None,expiry=None):
 
 class Adapter:
     def prepare(self,conn,user,raw):
-        if set(raw)!={'title','day','start_time','end_time','venue','audience','owner_org_id','people'}:
+        if set(raw)-{'room'}!={'title','day','start_time','end_time','venue','audience','owner_org_id','people'}:
             raise actions.Unavailable('Complete the meeting fields; recurring and other actions are unavailable.')
         title=raw['title'];venue=raw['venue']
         if (not isinstance(title,str) or not 1<=len(title.strip())<=120 or not isinstance(venue,str) or len(venue)>120
@@ -75,11 +75,20 @@ class Adapter:
         if any(i not in directory or len(directory[i])>120 for i in ids):raise actions.Unavailable('One of the chosen participants is unavailable. Reload the form.')
         clean={'title':title.strip(),'day':day,'start_time':start,'end_time':end,'venue':venue.strip(),
                'audience':raw['audience'],'owner_org_id':unit,'people':ids}
+        room_slots=None
+        if 'room' in raw:
+            import telegram_meeting_rooms as combined
+            clean['room'],room_slots=combined.prepare(conn,user,raw['room'])
         fields,participants,tags=calendar.prepare(conn,user,self.form(clean))
         duration=(int(end[:2])*60+int(end[3:]))-(int(start[:2])*60+int(start[3:]))
         expected={'people':{str(i):directory[i] for i in ids},'unit':units.get(unit,'')}
         summary={**clean,'duration_minutes':duration,'timezone':'Asia/Manila','participant_labels':expected['people'],
                  'unit_label':expected['unit'],'room':'No room requested; no booking held.'}
+        if room_slots is not None:
+            expected['room_slots']=room_slots
+            summary['room']=('Also submit one internal room request for yourself: '+clean['room']['from_time']+' – '+clean['room']['to_time']
+                +' · Asia/Manila, on '+day+'. Requested hours: '+', '.join(s['label'] for s in room_slots)
+                +'. Requested duration: '+str(sum(int(s['end_time'][:2])*60+int(s['end_time'][3:])-int(s['start_time'][:2])*60-int(s['start_time'][3:]) for s in room_slots))+' minutes. Pending Administrative Section approval; no booking held. If the room request fails, keep the meeting and retry the room separately.')
         if common.units(self.text(summary))>3400:raise actions.Unavailable('This preview is too long. Use fewer participants or Office Connect.')
         return clean,summary,expected
 
@@ -91,28 +100,43 @@ class Adapter:
 
     def revalidate(self,conn,user,clean,expected):
         current,_,fresh=self.prepare(conn,user,clean)
-        if current!=clean or fresh!=expected:raise actions.Unavailable('Participant or unit choices changed. Start a new preview.')
+        if current!=clean or fresh!=expected:raise actions.Unavailable('Participant, unit or room-hour choices changed. Start a new preview.')
 
     def apply(self,conn,user,clean,operation_id):
         fields,people,tags=calendar.prepare(conn,user,self.form(clean))
         eid=calendar.create_in_transaction(conn,user,fields,people,tags)
+        if 'room' in clean:
+            import telegram_meeting_rooms as combined
+            rid=combined.apply(conn,user,{'entry_id':eid,**clean['room']},operation_id)
+            return {'state':'committed' if rid else 'partial','result_entry_id':eid,'result_room_id':rid,
+                    'result_code':'meeting_room_requested' if rid else 'meeting_room_failed'}
         return {'state':'committed','result_entry_id':eid,'result_code':'calendar_created'}
 
     def queue_receipt(self,conn,user,operation,context,now):
         queue(conn,context,'meeting_receipt',operation['operation_id'],now)
 
     def receipt_text(self,conn,user,operation):
+        if operation['result_code'] in ('meeting_room_requested','meeting_room_failed','room_deleted'):
+            import telegram_meeting_rooms as combined
+            return combined.receipt_text(conn,user,operation)
         if operation['result_code']=='calendar_deleted':return 'The meeting from operation '+operation['operation_id']+' was deleted in Office Connect. It will not be recreated.'
         if operation['result_code']=='retained_key' or operation['state']!='committed' or not operation['result_entry_id']:return None
         return 'Meeting created in Office Connect. This action did not request or book a room.\nOperation: '+operation['operation_id']+'\n'+links.origin()+'/calendar/entries/'+str(operation['result_entry_id'])
 
     def check_receipt(self,conn,user,operation):
+        if operation['result_code'] in ('meeting_room_requested','meeting_room_failed','room_deleted'):
+            import telegram_meeting_rooms as combined
+            combined.check_receipt(conn,user,operation)
         if operation['result_entry_id'] and not oc.viewable_entry(conn,user,operation['result_entry_id']):
             raise actions.Unavailable('Meeting receipt unavailable.')
 
     def queue_preview(self,conn,user,operation_id,context,now):
         conn.execute('UPDATE telegram_operation SET context_json=? WHERE operation_id=?',(actions.packed(context),operation_id))
-        p=rows(conn,'SELECT expires_at FROM telegram_preview WHERE operation_id=?',(operation_id,))[0]
+        p=rows(conn,'SELECT * FROM telegram_preview WHERE operation_id=?',(operation_id,))[0]
+        clean=json.loads(p['fields_json'])
+        if 'room' in clean:
+            import telegram_meeting_rooms as combined
+            combined.precheck(conn,clean,json.loads(p['expected_json']))
         queue(conn,context,'meeting_preview',operation_id,now,expiry=p['expires_at'])
 
     def text(self,summary):
@@ -197,9 +221,10 @@ def render(conn,d,p,now):
             return adapter.text(json.loads(preview['summary_json']))+'\nConfirm exactly this preview before '+deadline+':\n'+meta['confirm']+' '+token+'\nOperation: '+p['id']+'\nRecover status: '+meta['receipt']+' '+p['id']
         operation=rows(conn,'SELECT * FROM telegram_operation WHERE operation_id=?',(p['id'],))[0]
         adapter.check_receipt(conn,user,operation)
-        if operation['state']!='committed':
-            return 'Action '+operation['operation_id']+' status: '+operation['state']+'. Review Office Connect or the original preview before preparing another action.'
-        return adapter.receipt_text(conn,user,operation)
+        if operation['state'] in ('committed','partial','failed'):
+            text=adapter.receipt_text(conn,user,operation)
+            if text:return text
+        return 'Action '+operation['operation_id']+' status: '+operation['state']+'. Review Office Connect or the original preview before preparing another action.'
 
 
 def intake_action(conn,clean,connection,bot,now):

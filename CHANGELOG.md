@@ -1,3 +1,9 @@
+## 8.71 — October 25, 2026
+
+- Add optional exact room hours to guided meeting preparation, with separate current room consent and an unchecked room request choice. Private confirmation saves one meeting and records a separate pending room request or safe failed child outcome.
+- Preserve a saved meeting on a definite room-rule refusal; report source links and who acts next, then prepare a fresh room-only child preview against that original meeting. Replay/recovery never recreates either mutation.
+- Add parent/child operation references and dependent consent scrubbing; retain normal room approval, private group-origin details, transaction rollback, restore and retention fences. Update the plan/runbook; all defaults remain off.
+
 ## 8.70 — October 25, 2026
 
 - Add native current-selection CSV downloads to the personal Travel claims table, retaining applied filters, deterministic all-page order and the six table columns.
