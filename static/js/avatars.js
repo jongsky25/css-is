@@ -872,17 +872,21 @@
         var k = Math.min(1, 32 / dist);              // up to 32px per 80ms tick (~400px/s)
         if (!w._avChasing) {
           w._avChasing = true;
+          w.classList.add("av-chasing");
           if (w._avGX) { w._avGX = 0; }
         }
-        w.classList.add("av-chasing");
         var mv = w.querySelector(".avmove");
         if (mv) {
-          mv.style.transition = "transform .15s";
-          mv.style.transform = "scale(" + (dx < 0 ? -1 : 1) + ",1)";
+          if (mv.style.transition !== "transform 0.15s") mv.style.transition = "transform .15s";
+          var facing = "scale(" + (dx < 0 ? -1 : 1) + ", 1)";
+          if (mv.style.transform !== facing) mv.style.transform = facing;
         }
         w._avBusy = Date.now() + 300;
-        w.style.transition = "transform .08s linear";
-        pos.x += dx * k; pos.y += dy * k;
+        if (w.style.transition !== "transform 0.08s linear") w.style.transition = "transform .08s linear";
+        // Ignore numerical drift below a hundredth of a CSS pixel. At a
+        // clamped edge it otherwise restarts an invisible transition forever.
+        if (Math.abs(dx * k) >= .01) pos.x += dx * k;
+        if (Math.abs(dy * k) >= .01) pos.y += dy * k;
         clampToPlay(bounds); apply(true);
       }, 80);
     }

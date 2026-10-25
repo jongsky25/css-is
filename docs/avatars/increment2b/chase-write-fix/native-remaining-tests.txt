@@ -1,0 +1,18 @@
+mushroom after 0 frame 33.29999999999927 max_callback 54.30000001192093
+mushroom after 1 frame 16.799999999999272 max_callback 21
+
+=============================== warnings summary ===============================
+tests/test_avatar_native_control.py::test_native_art_control[mushroom]
+  /workspace/css-is/tests/conftest.py:88: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! KeyboardInterrupt !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/selectors.py:468: KeyboardInterrupt
+(to show a full traceback on KeyboardInterrupt use --full-trace)
+1 deselected, 1 warning in 79.33s (0:01:19)
+Future exception was never retrieved
+future: <Future finished exception=TargetClosedError('Target page, context or browser has been closed')>
+playwright._impl._errors.TargetClosedError: Target page, context or browser has been closed
+Task was destroyed but it is pending!
+task: <Task cancelling name='Task-1492' coro=<Page.wait_for_timeout() done, defined at /workspace/css-is/.venv/lib/python3.12/site-packages/playwright/_impl/_page.py:1141> wait_for=<Future finished result=None> cb=[SyncBase._sync.<locals>.<lambda>() at /workspace/css-is/.venv/lib/python3.12/site-packages/playwright/_impl/_sync_base.py:111]>

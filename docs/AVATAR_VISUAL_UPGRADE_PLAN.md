@@ -1,6 +1,6 @@
 # Avatar visual upgrade — phased execution plan for Sol
 
-Status: Increments 0, 1 and 2A complete. Increment 2B layout fixes are implemented through `c57d9be`, with passing functional and visual checks. Acceptance remains blocked by unresolved native callback/frame timing failures; the thread-pinning fixture candidate was rejected. Do not advance to 3A. Static picker thumbnails are resolved; other baseline release blockers remain recorded.
+Status: Increments0,1,2A complete. 2B chase writes and numerical drift are fixed; seven browser checks and1,734 SVG checks pass. Fern five-run frame gate passes, but mushroom33.3ms exceeds33ms. Acceptance remains blocked;3A pending.
 Created: 2026-10-25
 Repository: jongsky25/css-is
 Owner request: Material improvement to companion artwork, optional animal dress-up,
@@ -603,3 +603,17 @@ residual stall with a validated runner, isolate attributable work before another
 product edit, then pass all original focused and complete-matrix gates. Historical
 passing cohorts, raw invoker records and diagnostics cannot substitute for those
 checks. No threshold relaxation, sample replacement, deployment or3A work.
+
+### Increment2B chase write follow-up
+
+Removed redundant chase class/transition/facing writes. A browser regression
+exposed subpixel numerical drift at the movement boundary, causing10 transform
+writes/second; ignoring chase-axis steps below0.01 CSSpx eliminates these writes
+while preserving active chase and direction reversal. Direct drag/keyboard input
+precision remains unchanged. Seven browser checks and1,734 exact SVG checks pass.
+Five native mature fernCPU4 runs pass16.7–16.8ms framep95. The first mushroom
+run fails33.3ms against33ms, so the cohort stops before subsequent trace/full
+matrices. No rejected pinning, relaxed budget or sample replacement.
+[Current report](avatars/increment2b/REPORT.md) and
+[assessment](avatars/increment2b/chase-write-fix/assessment.json) retain all results
+and measured working-tree source hashes on base df0cfb6. **2B still blocked;3A pending.**

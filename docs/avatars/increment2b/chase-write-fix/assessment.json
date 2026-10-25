@@ -1,0 +1,26 @@
+{
+  "status": "blocked",
+  "measured_base_commit": "df0cfb6",
+  "source_sha256": {
+    "static/js/avatars.js": "7f876def90e0d01cc741260c2a2978acc384b1288bdba402a619a028c95a2c19",
+    "templates/_avatars.html": "c121545e8937dd39576df815283020b2b895dc7ccb64d39adb1ab81ab0843cba"
+  },
+  "functional_browser_tests": 7,
+  "svg_equivalence_checks": 1734,
+  "native_frame_p95_ms": {
+    "fern": [
+      16.700000000000728,
+      16.799999999999272,
+      16.799999999999272,
+      16.799999999999272,
+      16.799999999999272
+    ],
+    "mushroom": [
+      33.29999999999927,
+      16.799999999999272
+    ]
+  },
+  "gate_ms": 33,
+  "reason": "Mushroom first sample33.3ms exceeds33ms. Stop cohort; no subsequent trace/fullmatrix. Fern5pass is not overall acceptance. All completed samples retained.",
+  "next_step": "Resolve remaining mushroom frame failure and pass all original focused, trace and full-matrix gates before3A."
+}

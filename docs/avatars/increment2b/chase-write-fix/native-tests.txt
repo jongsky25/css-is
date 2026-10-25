@@ -1,0 +1,13 @@
+fern after 0 frame 16.700000000000728 max_callback 5.5
+fern after 1 frame 16.799999999999272 max_callback 16
+fern after 2 frame 16.799999999999272 max_callback 0
+fern after 3 frame 16.799999999999272 max_callback 27.299999997019768
+fern after 4 frame 16.799999999999272 max_callback 0
+.
+=============================== warnings summary ===============================
+tests/test_avatar_native_control.py::test_native_art_control[fern]
+  /workspace/css-is/tests/conftest.py:88: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+1 passed, 2 deselected, 1 warning in 173.03s (0:02:53)

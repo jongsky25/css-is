@@ -142,5 +142,5 @@ else:gates['persisted_care']=False
 result['gates']=gates;result['status']='complete' if all(gates.values()) else 'blocked'
 result['next_step']='3A: dog, rabbit, bird and turtle; baseline release blockers remain separate' if result['status']=='complete' else 'Reproduce residual native callback/frame stalls on a validated runner and isolate attributable work before another product edit. Require original focused and full before/current matrices; keep3A pending.'
 (out/'assessment.json').write_text(json.dumps(result,indent=2))
-(root/'assessment.json').write_text(json.dumps(result,indent=2))
+# Historical assessment stays scoped to layout-fix; latest root belongs to the current increment follow-up.
 print(json.dumps({'status':result['status'],'gates':gates},indent=2))

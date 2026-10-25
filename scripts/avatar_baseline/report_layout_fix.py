@@ -39,7 +39,7 @@ picker: **{max(g['picker_encoded_delta'] for g in comparison['groups']):.0f}B**.
 Worst runs remain included; none was dropped to satisfy a median gate.
 [Runner log](isolated-fixture/after/performance-tests.txt).'''
 gates='\n'.join(f"- `{key}`: **{'PASS' if passed else 'FAIL'}**" for key,passed in a['gates'].items())
-(root/'REPORT.md').write_text(f'''# Increment 2B — fern, mushroom and succulent
+(root/'REPORT-layout-fix.md').write_text(f'''# Increment 2B — fern, mushroom and succulent
 
 **{'Accepted: increment 2B is complete. Increment 3A is next.' if accepted else 'Blocked: do not start increment 3A.'}**
 Measured rejected-fixture source (production changes end at `c57d9be`): `{a['source_commit']}`.

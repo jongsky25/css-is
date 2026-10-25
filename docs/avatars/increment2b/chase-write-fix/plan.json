@@ -1,0 +1,11 @@
+{
+  "base_commit": "df0cfb6",
+  "measured_worktree": "Production hashes in environment.json identify uncommitted patch during measurement; committed together with this evidence.",
+  "fix": "Set chase class only on entry, only write changed transition/facing styles, ignore chase-axis deltas below0.01 CSSpx to stop numerical drift restarting invisible transitions at a clamped boundary. Drag and keyboard precision are unchanged.",
+  "regression": "Before deadband:10 transform mutations/second from4.2e-6px to5.6e-6px. After:zero mutations while chase active; opposite pointer direction still flips art. Seven browser checks pass.",
+  "gate": "Five mature fern CPU4 native30s samples first. No rejected thread pinning. Do not claim acceptance from functional test; all original thresholds retained.",
+  "source_sha256": {
+    "static/js/avatars.js": "7f876def90e0d01cc741260c2a2978acc384b1288bdba402a619a028c95a2c19",
+    "templates/_avatars.html": "c121545e8937dd39576df815283020b2b895dc7ccb64d39adb1ab81ab0843cba"
+  }
+}
