@@ -5,6 +5,12 @@
 - Keep exact local navigation available during search-service failure, remove stale empty placeholders and reject delayed responses after query clearing/reuse. Preserve native anchors, keyboard navigation, assistant cards, no-JavaScript page-search fallback and sanitized telemetry.
 - Prevent delayed automatic tours from taking focus from active search, preserve explicit replay, and version the changed browser assets. Pin/hash/audit the MIT dependency without upgrading existing packages; exercise native mobile, permissions and delayed-network flows.
 
+## 8.57 — October 25, 2026
+
+- Add default-off two-step private Telegram account linking, signed-in connection status and disconnect, plus explicit optional calendar/room read consent. Raw codes never enter URLs, receipts or stored delivery bodies; private confirmation rechecks the browser session and original Telegram sender.
+- Add durable challenge/grant storage, current account/bot/generation grant checks, account-change revocation, pending-work cancellation and restore invalidation. Disconnect remains available when linking or delivery is paused. No business reads/writes or group capabilities are enabled.
+- Verify native, script-disabled mobile linking/confirmation/disconnect and update the Telegram plan and operator handoff.
+
 ## 8.56 — October 25, 2026
 
 - Add default-off authenticated Telegram webhook intake with bounded input, durable update deduplication and rolling global/per-sender rate limits. Accept neutral private /start and /help only; acknowledge unsupported updates as ignored without retaining content.

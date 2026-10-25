@@ -33,6 +33,16 @@ CHANGELOG = [
         ]
     },
     {
+        "version": "8.57",
+        "date": "October 25, 2026",
+        "summary": "Prepare optional private Telegram account linking.",
+        "changes": [
+            "An optional Telegram pilot can link your account through a signed-in page and a second confirmation in your private chat.",
+            "Review or disconnect the connection from Connected tools, even while the pilot is paused.",
+            "Calendar and room commands remain unavailable until later pilots."
+        ]
+    },
+    {
         "version": "8.56",
         "date": "October 25, 2026",
         "summary": "Prepare an optional private Telegram help pilot.",

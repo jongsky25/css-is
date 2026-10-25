@@ -67,8 +67,11 @@ secret header, numeric destinations and callback/link tokens.
 
 ## Connection, consent and group audience
 
-Account link: private `/start` creates an opaque random 256-bit challenge, stores
+Account link: private `/start` creates an opaque 256-bit challenge, stores
 only its hash and numeric sender/private-chat IDs, expires after 10 minutes.
+T1.3 derives phase-separated codes from random 256-bit nonces using the webhook
+secret so durable delivery can render them without storing plaintext codes.
+Codes are pasted on a fixed signed-in page, never included in URLs.
 The signed-in page shows the account and requested capabilities; a protected POST
 consumes the challenge once and requires a matching private-bot confirmation
 before activation. This prevents a forwarded link silently binding another

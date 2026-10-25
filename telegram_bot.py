@@ -15,6 +15,7 @@ import auth
 from documents_storage import transaction, rows
 import telegram_storage as storage
 import telegram_transport as transport
+import telegram_links as links
 
 PATH = '/integrations/telegram/webhook'
 MAX_BODY = 65536
@@ -78,8 +79,12 @@ def normalize(value):
     if (message['chat'].get('type') == 'private' and clean['chat_id'] == clean['sender_id']
             and message['from'].get('is_bot') is False and clean['topic_id'] is None):
         first = text.split(maxsplit=1)[0] if text.strip() else ''
-        if first in ('/start', '/help'):
+        if first in ('/start', '/help', '/status', '/disconnect'):
             clean['command'] = first
+        parts = text.split()
+        if first == '/confirm' and len(parts) == 2 and re.fullmatch(r'[a-f0-9]{64}', parts[1]):
+            clean['command'] = first
+            clean['argument_hash'] = links.digest(parts[1])
     return clean
 
 
@@ -106,14 +111,29 @@ def receive(conn, clean, raw, bot, now):
         if total >= 120 or personal >= 20:
             return 429
         cid, generation, permitted = identity(conn, clean['sender_id'])
-        supported = clean['command'] is not None and permitted
-        payload = json.dumps({'kind': 'help', 'bot': bot[0], 'fingerprint': bot[2]}) if supported else None
+        command = clean['command']
+        special = command == '/disconnect' or (storage.enabled('link') and command in ('/start','/confirm'))
+        supported = command is not None and (permitted or special)
+        projection = {'kind': 'help', 'bot': bot[0], 'fingerprint': bot[2]}
+        if supported and (special or command == '/status'):
+            projection = {'kind': 'command', 'command': command, 'bot': bot[0], 'fingerprint': bot[2]}
+            if command == '/confirm':
+                projection['argument_hash'] = clean['argument_hash']
+        immediate_disconnect = supported and command == '/disconnect'
+        if immediate_disconnect:
+            linked = rows(conn, 'SELECT a.username FROM telegram_connection c JOIN admin_user a ON a.id=c.account_id WHERE c.telegram_user_id=? AND c.revoked_at IS NULL', (clean['sender_id'],))
+            links.disconnect_in_transaction(conn, now=now, sender=clean['sender_id'])
+            if linked:
+                import storage as app_storage
+                app_storage.audit(conn, linked[0]['username'], 'telegram_disconnect', summary='Disconnected private Telegram access from the bot.', commit=False)
+        payload = json.dumps(projection) if supported and not immediate_disconnect else None
+        state = 'processed' if immediate_disconnect else ('queued' if supported else 'ignored')
         conn.execute('''INSERT INTO telegram_update
             (bot_identity,update_id,sender_id,chat_id,topic_id,connection_id,generation,
              payload_json,payload_hash,received_at,state)
             VALUES (?,?,?,?,?,?,?,?,?,?,?)''',
             (bot[0], clean['update_id'], clean['sender_id'], clean['chat_id'], clean['topic_id'], cid,
-             generation, payload, hashlib.sha256(raw).hexdigest(), stamp(now), 'queued' if supported else 'ignored'))
+             generation, payload, hashlib.sha256(raw).hexdigest(), stamp(now), state))
     return 200
 
 
@@ -176,7 +196,36 @@ def process_updates(conn, now):
                 projection = json.loads(update['payload_json'] or '{}')
             except ValueError:
                 projection = {}
-            valid = valid and projection == {'kind': 'help', 'bot': bot[0], 'fingerprint': bot[2]}
+            normal = projection == {'kind': 'help', 'bot': bot[0], 'fingerprint': bot[2]}
+            command = projection.get('command') if isinstance(projection, dict) else None
+            command_shape = {'kind','command','bot','fingerprint'} | ({'argument_hash'} if command == '/confirm' else set())
+            special = (isinstance(projection, dict) and set(projection) == command_shape
+                       and projection.get('kind') == 'command' and projection.get('bot') == bot[0]
+                       and projection.get('fingerprint') == bot[2]
+                       and command in ('/start','/status','/confirm','/disconnect')
+                       and update['chat_id'] == update['sender_id'] and update['chat_id'] > 0
+                       and update['received_at'] > stamp(now-timedelta(minutes=10)))
+            if special and command == '/disconnect':
+                linked = rows(conn, 'SELECT a.username FROM telegram_connection c JOIN admin_user a ON a.id=c.account_id WHERE c.telegram_user_id=? AND c.revoked_at IS NULL', (update['sender_id'],))
+                links.disconnect_in_transaction(conn, now=now, sender=update['sender_id'])
+                if linked:
+                    import storage as st
+                    st.audit(conn, linked[0]['username'], 'telegram_disconnect', summary='Disconnected private Telegram access from the bot.', commit=False)
+                projection, valid = None, False
+            elif special and command == '/start' and storage.enabled('link'):
+                projection = links.start(conn, update['sender_id'], bot, datetime.fromisoformat(update['received_at']))
+                cid, generation, _permitted = identity(conn, update['sender_id'])
+                valid = True
+            elif special and command == '/confirm' and storage.enabled('link'):
+                result = links.confirm(conn, update['sender_id'], projection.get('argument_hash'), bot, now)
+                valid = result is not None
+                if valid:
+                    cid, generation = result
+                    projection = {'kind': 'status', 'bot': bot[0], 'fingerprint': bot[2]}
+            elif special and command == '/status':
+                projection = {'kind': 'status', 'bot': bot[0], 'fingerprint': bot[2]}
+            else:
+                valid = valid and normal
             if valid:
                 conn.execute('''INSERT INTO telegram_delivery
                     (dedupe_key,event_key,connection_id,generation,chat_id,projection_json,expires_at,created_at,updated_at)
@@ -189,18 +238,23 @@ def process_updates(conn, now):
     return MAX_TICK
 
 
-def eligible(conn, delivery, bot):
+def eligible(conn, delivery, bot, now=None):
     try:
         projection = json.loads(delivery['projection_json'])
     except ValueError:
         return False
     cid, generation, permitted = identity(conn, delivery['chat_id'])
+    linking = projection.get('kind') in ('link_code','link_confirm') if isinstance(projection, dict) else False
+    if linking:
+        permitted = links.render(conn, projection, delivery['chat_id'], bot, now or now_utc()) is not None
+        cid, generation = delivery['connection_id'], delivery['generation']
     rejected = conn.execute('''SELECT 1 FROM telegram_delivery WHERE chat_id=?
         AND state='failed' AND error_code='provider_rejected' AND updated_at>=? LIMIT 1''',
         (delivery['chat_id'], delivery['created_at'])).fetchone()
     return (not rejected and delivery['chat_id'] > 0 and delivery['topic_id'] is None and delivery['registration_id'] is None
             and permitted and cid == delivery['connection_id'] and generation == delivery['generation']
-            and projection == {'kind': 'help', 'bot': bot[0], 'fingerprint': bot[2]})
+            and (linking or projection in ({'kind': 'help', 'bot': bot[0], 'fingerprint': bot[2]},
+                                          {'kind': 'status', 'bot': bot[0], 'fingerprint': bot[2]})))
 
 
 def deliver(conn, now=None):
@@ -232,7 +286,7 @@ def deliver(conn, now=None):
             if not found:
                 break
             delivery = found[0]
-            if delivery['expires_at'] <= stamp(now) or not eligible(conn, delivery, bot):
+            if delivery['expires_at'] <= stamp(now) or not eligible(conn, delivery, bot, now):
                 conn.execute("UPDATE telegram_delivery SET state='cancelled',error_code='ineligible',updated_at=? WHERE id=?",
                              (stamp(now), delivery['id']))
                 continue
@@ -242,14 +296,24 @@ def deliver(conn, now=None):
                 (token, stamp(now+timedelta(minutes=2)), stamp(now), delivery['id']))
         # Recheck immediately before sending; an in-flight send cannot be recalled.
         current_bot = transport.config()
-        if (not storage.enabled('delivery') or current_bot != bot or not eligible(conn, delivery, bot)
+        if (not storage.enabled('delivery') or current_bot != bot or not eligible(conn, delivery, bot, clock())
                 or delivery['expires_at'] <= stamp(clock())
                 or not conn.execute("SELECT 1 FROM telegram_delivery WHERE id=? AND claim_token=? AND state='sending'",
                                     (delivery['id'], token)).fetchone()):
             outcome, message_id, retry = 'cancelled', None, None
         else:
-            outcome, message_id, retry = transport.send(bot[1], delivery['chat_id'], HELP)
-            count += 1
+            projection = json.loads(delivery['projection_json'])
+            if projection['kind'] == 'help':
+                message = (HELP if not storage.enabled('link') else
+                    'Office Connect private commands: /start to link, /status to check your connection, '
+                    '/disconnect to revoke it. Never send your Office Connect password here.')
+            else:
+                message = links.render(conn, projection, delivery['chat_id'], bot, clock())
+            if message:
+                outcome, message_id, retry = transport.send(bot[1], delivery['chat_id'], message)
+                count += 1
+            else:
+                outcome, message_id, retry = 'cancelled', None, None
         error_code = 'provider_rejected' if outcome == 'failed' else outcome
         if outcome == 'retry_wait' and delivery['attempts'] + 1 >= 5:
             outcome, retry, error_code = 'failed', None, 'retry_exhausted'
@@ -271,6 +335,12 @@ def cleanup(conn, now):
             (SELECT id FROM telegram_update WHERE received_at<? AND
              (sender_id IS NOT NULL OR chat_id IS NOT NULL OR payload_json IS NOT NULL) LIMIT 20)''',
             (stamp(now-timedelta(days=7)),))
+        conn.execute('''UPDATE telegram_link_challenge SET state='cancelled',session_id=NULL WHERE id IN
+            (SELECT id FROM telegram_link_challenge WHERE expires_at<=? AND state IN ('issued','claimed') LIMIT 20)''',
+            (stamp(now),))
+        conn.execute('''DELETE FROM telegram_link_challenge WHERE id IN
+            (SELECT id FROM telegram_link_challenge WHERE expires_at<? LIMIT 20)''',
+            (stamp(now-timedelta(days=1)),))
         conn.execute('''DELETE FROM telegram_delivery WHERE id IN (SELECT id FROM telegram_delivery
             WHERE state IN ('accepted','failed','uncertain','cancelled') AND updated_at<? LIMIT 20)''',
             (stamp(now-timedelta(days=180)),))
