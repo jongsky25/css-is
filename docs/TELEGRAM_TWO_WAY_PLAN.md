@@ -1,6 +1,6 @@
 # Office Connect ↔ Telegram delivery plan
 
-Status: T0–T3.2 merged; T3.3 in progress; two-way defaults remain off; production activation unverified.
+Status: T0–T3.2 merged; T3.3 in review; two-way defaults remain off; production activation unverified.
 Last updated: 2026-10-25.
 Repository: jongsky25/css-is.
 Planning baseline inspected: abf3141 (merge of PR #458).
@@ -126,7 +126,7 @@ Google/Outlook two-way calendar synchronization, external free/busy, automatic v
 
 ## Progress ledger
 
-T0 merged in PR #465 at `4cd01a0bfd17ccf57dba12b05a24c72bfd098f29`. T1.1 merged in PR #466 at `bef000127846aebb9fc1176c190664797d262eb4`. T1.2 merged in PR #467 at `5490f454d6c9e9d43e7e9599be8174ec454cba55`. T1.3 merged in PR #468 at `bb9bc86407f641a0244617113d0f1fa271b12906`. T1.4 merged in PR #469 at `0f10b242032479a588e98209b17333dba28f0015`. T2.1 merged in PR #470 at `e1394120781c7d4838cee8c1fa9aa7d9c497437b`. T2.2 merged at `540705db32dfadadb8be8b38122dccfe71deb79d`. T2.3 merged in PR #472 at `43e6c660cf46242417dbc3ab49bb588ad9d2b262`; T3.1 merged in PR #474 at `62b216531c580cd3258c84fb4c21fb1c6235bfe4`; T3.2 merged in PR #476 at `59cb776b2a80c440201ae3eec78af939ca6c0cce`; T3.3 is now in progress. All two-way capabilities remain default-off; no live verification is recorded.
+T0 merged in PR #465 at `4cd01a0bfd17ccf57dba12b05a24c72bfd098f29`. T1.1 merged in PR #466 at `bef000127846aebb9fc1176c190664797d262eb4`. T1.2 merged in PR #467 at `5490f454d6c9e9d43e7e9599be8174ec454cba55`. T1.3 merged in PR #468 at `bb9bc86407f641a0244617113d0f1fa271b12906`. T1.4 merged in PR #469 at `0f10b242032479a588e98209b17333dba28f0015`. T2.1 merged in PR #470 at `e1394120781c7d4838cee8c1fa9aa7d9c497437b`. T2.2 merged at `540705db32dfadadb8be8b38122dccfe71deb79d`. T2.3 merged in PR #472 at `43e6c660cf46242417dbc3ab49bb588ad9d2b262`; T3.1 merged in PR #474 at `62b216531c580cd3258c84fb4c21fb1c6235bfe4`; T3.2 merged in PR #476 at `59cb776b2a80c440201ae3eec78af939ca6c0cce`; T3.3 is in review in PR #478. All two-way capabilities remain default-off; no live verification is recorded.
 
 | Increment | Status | Owner / date | PR / commit | Evidence | Activation / next action |
 | --- | --- | --- | --- | --- | --- |
@@ -141,7 +141,7 @@ T0 merged in PR #465 at `4cd01a0bfd17ccf57dba12b05a24c72bfd098f29`. T1.1 merged 
 | T2.3 | Merged | Codex / 2026-10-25 | [PR #472](https://github.com/jongsky25/css-is/pull/472), `feat/telegram-t2-3-group-reads` | Explicit per-entry version consent, safe slots and mobile sharing checks; evidence below | Merged at `43e6c660cf46242417dbc3ab49bb588ad9d2b262`, release 8.63; default off; next T3.1 |
 | T3.1 | Merged | Codex / 2026-10-25 | [PR #474](https://github.com/jongsky25/css-is/pull/474), `feat/telegram-t3-1-confirmation` | Dormant confirmation/receipt contract and shared calendar service; 651 final tests passed | Merged at `62b216531c580cd3258c84fb4c21fb1c6235bfe4`, release 8.64; next T3.2 |
 | T3.2 | Merged | Codex / 2026-10-25 | [PR #476](https://github.com/jongsky25/css-is/pull/476), `feat/telegram-t3-2-meetings` | Guided form/private confirmation, atomic receipt and mobile checks; evidence below | Merged at `59cb776b2a80c440201ae3eec78af939ca6c0cce`, release 8.67; all required CI passed; next T3.3 |
-| T3.3 | In progress | Codex / 2026-10-25 | `feat/telegram-t3-3-room-requests` | Linked request with normal approval; checks pending | Default off; no activation |
+| T3.3 | In review | Codex / 2026-10-25 | [PR #478](https://github.com/jongsky25/css-is/pull/478), `feat/telegram-t3-3-room-requests` | Linked pending request, atomic notices/receipt and mobile checks; 764 tests passed | Release 8.68 candidate; default off; next T3.4 |
 | T3.4–T7 | Planned | Unassigned | — | Not implemented | Follow dependencies |
 
 ### T0 handoff — 2026-10-25
@@ -326,7 +326,7 @@ T0 merged in PR #465 at `4cd01a0bfd17ccf57dba12b05a24c72bfd098f29`. T1.1 merged 
 
 ### T3.3 implementation and operator handoff — 2026-10-25
 
-- Owner/branch: Codex, `feat/telegram-t3-3-room-requests`, based on T3.2 merge `59cb776`. Implementation complete, awaiting PR creation; release 8.68 candidate. No T3.3 implementation started until T3.2 merge was confirmed.
+- Owner/branch: Codex, `feat/telegram-t3-3-room-requests`, based on T3.2 merge `59cb776`. [PR #478](https://github.com/jongsky25/css-is/pull/478) opened 2026-10-25, implementation commit `98f9b77`; release 8.68 candidate, in review, not merged or pilot verified. No T3.3 implementation started until T3.2 merge was confirmed.
 - Merge readiness evidence: PR #476 conflicted with concurrent survey discovery 8.65 and Schedule 8.66. Preserved both and their runtime modules, advanced T3.2 to 8.67, passed 129 affected tests plus 25 Schedule browser checks, then waited for updated GitHub CI. Both complete Python orders, dependency audit, release metadata and Required checks passed (shuffled: 6,866 tests). Immediately before merge, PR was clean/mergeable at head `6ce39ec`; no local merge, active/queued merge-group workflow or queued auto-merge was found. Merge confirmed at `59cb776b2a80c440201ae3eec78af939ca6c0cce` before creating this branch. No hosted verification inferred.
 - Delivered: [linked room-request guide/runbook](TELEGRAM_ROOM_REQUESTS.md), `room_actions.py` domain authorization/orchestration, `telegram_room_requests.py` real request adapter, signed-in `/account/telegram/room` router/template, `/room_request` in private/registered group contexts and private `/room_confirm` / `/room_receipt`. Reused action-origin, preview, worker and private delivery plumbing with explicit action discrimination; meeting/room origins and tokens cannot be swapped. Runtime closure includes the new modules.
 - Consent/authority: new optional `rooms.request` checkbox requires both `calendar.read` and `rooms.read` choices and the independent request pilot. Original-private-chat linking confirmation names the permissions; no automatic grants or upgrades. Existing links require disconnect/relink. Room submission needs current link/account/configuration, inbound, calendar/room read switches/grants and room-request switch/grant; calendar-create consent is unnecessary. Group starts additionally retain exact registration/topic generations and fresh current membership checks at confirmation. Every guide, preview, receipt and error stays private.
