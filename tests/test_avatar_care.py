@@ -502,3 +502,17 @@ def test_illustrated_plant_blooms_separate_position_from_motion(app_mod):
             for bloom in svg.findall('.//g[@class="av-bloom"]'):
                 assert 'transform' not in bloom.attrib, (kind, stage)
             assert svg.find('.//ellipse[@class="av-soilwet"]') is not None
+
+
+def test_sunflower_seedling_bud_and_open_flower_match_stage_names(app_mod):
+    import xml.etree.ElementTree as ET
+    module = app_mod.templates.env.get_template('_avatars.html').module
+    for stage in [3, 4, 5]:
+        svg = ET.fromstring(str(module.avatar_svg('sunflower', stage, 0, 'default')))
+        blooms = svg.findall('.//g[@class="av-bloom"]')
+        if stage == 3:
+            assert not blooms
+        elif stage == 4:
+            assert blooms and all(b.attrib.get('data-bloom-state') == 'bud' for b in blooms)
+        else:
+            assert blooms and all('data-bloom-state' not in b.attrib for b in blooms)

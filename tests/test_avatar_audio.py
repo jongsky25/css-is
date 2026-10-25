@@ -58,7 +58,7 @@ def audio_page(browser):
                             'application/json' if path.suffix == '.json' else 'text/javascript')
             route.fulfill(status=200, content_type=content_type, body=path.read_bytes())
         else:
-            html = env.from_string('''<!doctype html><html lang="en"><head>
+            html = env.from_string('''<!doctype html><html lang="en"><head><meta charset="utf-8">
               <meta name="viewport" content="width=device-width,initial-scale=1">
               <title>Companion audio test</title></head><body><main>
               {% from '_avatars.html' import avatar, avatar_defs %}{{ avatar_defs() }}
@@ -267,3 +267,28 @@ def test_home_wellness_and_public_asset_delivery(app_mod, admin, client):
         assert response.content == (PACK / filename).read_bytes()
         if filename.endswith('.mp3'):
             assert 'audio/mpeg' in response.headers['content-type']
+
+
+def test_unchanged_audio_sync_does_not_retrigger_child_list_observer(audio_page):
+    page, _ = audio_page(care=True)
+    result = page.evaluate("""async () => {
+      const button = document.querySelector('.av-sound-btn');
+      let count = 0;
+      const observer = new MutationObserver(records => count += records.length);
+      observer.observe(button, {childList:true, subtree:true});
+      for(let i=0;i<20;i++)AvatarAudio.sync();
+      await Promise.resolve();
+      const unchangedOff = count;
+      AvatarAudio.setOn(true);
+      await Promise.resolve();
+      const changed = count;
+      count = 0;
+      for(let i=0;i<20;i++)AvatarAudio.sync();
+      await Promise.resolve();
+      const unchangedOn = count;
+      observer.disconnect();
+      return {unchangedOff, changed, unchangedOn, icon:button.textContent, pressed:button.getAttribute('aria-pressed')};
+    }""")
+    assert result['unchangedOff'] == result['unchangedOn'] == 0
+    assert result['changed'] == 1
+    assert result['icon'] == '🔊' and result['pressed'] == 'true'

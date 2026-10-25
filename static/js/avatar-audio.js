@@ -135,7 +135,9 @@
   function sync() {
     document.querySelectorAll(".av-sound-btn").forEach(function (btn) {
       btn.setAttribute("aria-pressed", enabled ? "true" : "false");
-      btn.textContent = enabled ? "🔊" : "🔇";
+      // Unchanged text must not retrigger the avatar child-list observer.
+      var icon = enabled ? "🔊" : "🔇";
+      if (btn.textContent !== icon) btn.textContent = icon;
     });
     document.querySelectorAll(".av-volume").forEach(function (slider) {
       slider.value = Math.round(volume * 100);

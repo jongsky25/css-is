@@ -57,7 +57,7 @@ with tempfile.TemporaryDirectory() as tmp, sync_playwright() as pw:
   elif path=='/avatar/care':route.fulfill(json={'ok':True,'mood':'happy','counted':False})
   else:
    cards=''.join('<article><p>'+label+' '+kind+'</p>'+str(m.avatar(kind,6,size=170,interactive=True,care=True,mood='okay'))+'</article>' for label,m in [('Before',before),('After',after)] for kind in kinds)
-   route.fulfill(body='<html>'+str(after.avatar_defs())+'<style>body{font:16px system-ui;background:#f4f6fa}main{display:flex;gap:40px}</style><main>'+cards+'</main></html>',content_type='text/html')
+   route.fulfill(body='<html><meta charset="utf-8">'+str(after.avatar_defs())+'<style>body{font:16px system-ui;background:#f4f6fa}main{display:flex;gap:40px}</style><main>'+cards+'</main></html>',content_type='text/html')
  page.route('http://avatar.local/**',serve)
  page.add_init_script("const D=Date;window.Date=class extends D{constructor(...a){super(...(a.length?a:['2026-07-15T12:00:00Z']))}static now(){return D.now()}}")
  page.goto('http://avatar.local/');page.wait_for_timeout(2500)

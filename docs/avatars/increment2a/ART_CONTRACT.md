@@ -23,11 +23,12 @@ watering-droplet overlays remain visible; no care logic changes.
 |---|---|---|---|
 | 1 | Rounded cactus seedling | Bent sapling with one canopy | Striped seed |
 | 2 | First arm | Second branch/canopy | Stem and paired cotyledons |
-| 3 | Opposing arm | Left branch, three canopies | Heart-shaped leaves and closed bud |
-| 4 | Taller ribs and closed flower bud | Upper branch, four canopies | First open flower |
+| 3 | Opposing arm | Left branch, three canopies | Heart-shaped leaves and new apical leaf |
+| 4 | Taller ribs and closed flower bud | Upper branch, four canopies | Closed flower bud |
 | 5 | Open pink flower | Fifth canopy and blossoms | Full sun head and upper leaves |
 | 6 | Second flower and basal pup | Mature crown and fuller branching | Larger head and secondary flowering branch |
 
-The sunflower preserves its previous species-specific bud at stage 3 and first
-flower at stage 4. Account growth thresholds and labels are unchanged. The three
+The sunflower now matches the existing Seedling (3), Budding (4), In bloom (5)
+labels; its old stage-3 bud / stage-4 flower were too early. Account growth
+thresholds and labels are unchanged. The three
 other pending plants retain their original art and animation hooks.
