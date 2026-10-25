@@ -17628,6 +17628,8 @@ import telegram_bot
 app.include_router(telegram_bot.make_router(get_conn))
 import telegram_link_routes
 app.include_router(telegram_link_routes.make_router(templates, get_conn))
+import telegram_preference_routes
+app.include_router(telegram_preference_routes.make_router(templates, get_conn))
 import telegram_group_routes
 app.include_router(telegram_group_routes.make_router(templates, get_conn))
 import telegram_meeting_routes

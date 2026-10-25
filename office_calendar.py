@@ -1220,7 +1220,10 @@ def flush_outbox(conn, base_url, *, now=None, send=None):
     """Email the people whose notices are ready. Returns the number of emails sent. Safe to call
     every minute: with nothing queued it is one cheap query. `send` defaults to mailer.send."""
     from datetime import datetime
+    fixed_now=now
     now = now or tz.now_local()
+    clock=lambda:fixed_now if fixed_now is not None else tz.now_local()
+    import telegram_preferences as notification_prefs
     send = send or mailer.send
     stamp = lambda dt: dt.isoformat(timespec="seconds")                               # noqa: E731
     conn.execute("UPDATE calendar_outbox SET sent_at=?, result='expired' WHERE sent_at IS NULL AND queued_at < ?",
@@ -1255,6 +1258,7 @@ def flush_outbox(conn, base_url, *, now=None, send=None):
             close("dropped"); continue
         if not st.calendar_email_pref(conn, uid):
             close("skipped"); continue
+        if notification_prefs.quiet_until(notification_prefs.get(conn,uid),clock()):continue
         by_entry = {}
         for r in rows:
             by_entry.setdefault(r["entry_id"], []).append(r)
@@ -1282,6 +1286,8 @@ def flush_outbox(conn, base_url, *, now=None, send=None):
         name = (st.get_user_profile(conn, uid) or {}).get("person_name") or ""
         subj, body, html = mailer.calendar_changes_message(
             name.split()[0] if name else "", lines, f"{base_url}/calendar?scope=mine")
+        if not st.calendar_email_pref(conn,uid):close('skipped');continue
+        if notification_prefs.quiet_until(notification_prefs.get(conn,uid),clock()):continue
         result = (send(acct["username"], subj, body, html=html, attachments=[cics.attachment(ics, "calendar-update.ics")])
                   if ics else send(acct["username"], subj, body, html=html))
         status = mailer.send_status(result)

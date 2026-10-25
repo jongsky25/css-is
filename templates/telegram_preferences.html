@@ -1,0 +1,33 @@
+{% extends "dash_layout.html" %}
+{% block title %}Calendar and room notifications — Office Connect{% endblock %}
+{% block content %}
+<div style="max-width:720px;margin:auto;overflow-wrap:anywhere">
+<h1>Calendar and room notifications</h1>
+<p><a href="/account/telegram">Telegram connection and permissions</a> · <a href="/me">My profile</a></p>
+<p>Choose where automatic calendar changes and your room status updates arrive. Telegram delivery requires the optional pilot and your current read permissions.</p>
+<p>Telegram calendar updates: {{ 'available' if calendar_ready else 'paused or not connected' }}. Telegram room updates: {{ 'available' if rooms_ready else 'paused or not connected' }}.</p>
+{% if error %}<p role="alert">{{ error }}</p>{% endif %}
+{% if saved %}<p role="status">Notification settings saved. Quiet hours use Asia/Manila.</p>{% endif %}
+<form method="post" action="/account/telegram/notifications">
+<input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="revision" value="{{ prefs.revision }}">
+<input type="hidden" name="calendar_email_expected" value="{{ 1 if prefs.calendar_email else 0 }}">
+{% for field,label in [('calendar_mode','Calendar changes to me'),('room_mode','My room status updates')] %}
+<p><label for="{{ field }}">{{ label }}</label><br><select id="{{ field }}" name="{{ field }}">
+{% for key,label in [('email','Email only'),('telegram','Telegram only'),('both','Email and Telegram'),('off','Neither channel')] %}<option value="{{ key }}" {% if prefs[field] == key %}selected{% endif %}>{{ label }}</option>{% endfor %}
+</select></p>{% endfor %}
+<p>The calendar email choice is shared with My profile. Room email choices apply to your own status updates. Selecting one channel avoids copies in both; selecting both keeps both enabled. Each channel still needs its normal configuration and permissions.</p>
+<fieldset><legend>Automatic updates to groups I own</legend>
+<p><label><input type="checkbox" name="group_calendar" value="1" {% if prefs.group_calendar %}checked{% endif %}> Send approved shared calendar updates to groups I own</label></p>
+<p><label><input type="checkbox" name="group_room" value="1" {% if prefs.group_room %}checked{% endif %}> Send anonymous room availability updates to groups I own</label></p>
+<p>These switches control automatic updates in your owned registrations. Group sharing approval and current membership are still required.</p>
+</fieldset>
+<fieldset><legend>Quiet hours for these automatic updates</legend>
+<p><label for="quiet-start">Quiet hours start (Asia/Manila)</label><br><input id="quiet-start" name="quiet_start" type="time" step="60" value="{{ prefs.quiet_start or '' }}"></p>
+<p><label for="quiet-end">Quiet hours end (Asia/Manila)</label><br><input id="quiet-end" name="quiet_end" type="time" step="60" value="{{ prefs.quiet_end or '' }}"></p>
+<p>Leave both blank for no quiet hours. A window may cross midnight, such as 22:00–07:00. Automatic changes/status messages and updates to groups you own wait until the window ends; stale or revoked messages can expire instead.</p>
+</fieldset>
+<p>Interactive replies and confirmations stay immediate. Existing reminders, approval alerts, account mail and discussion digests keep their existing controls. Messages already in flight cannot be recalled.</p>
+<button type="submit">Save notification settings</button>
+</form>
+</div>
+{% endblock %}

@@ -18,10 +18,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "8.75"
+APP_VERSION = "8.76"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "8.76",
+        "date": "October 25, 2026",
+        "summary": "Choose notification channels and quiet hours for calendar and room updates.",
+        "changes": [
+            "Choose email, Telegram, both or neither for automatic calendar changes and your room status updates on a signed-in settings page.",
+            "Set Manila quiet hours, including overnight windows, and control automatic updates to groups you own.",
+            "Interactive replies stay immediate, the optional Telegram pilots remain off by default, and new reminder scheduling follows separately."
+        ]
+    },
     {
         "version": "8.75",
         "date": "October 25, 2026",

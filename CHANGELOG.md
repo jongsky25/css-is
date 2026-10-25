@@ -1,3 +1,9 @@
+## 8.76 — October 25, 2026
+
+- Add current-account calendar/room channel preferences and Asia/Manila quiet hours, including automatic owned-group controls, guarded by session/Origin/CSRF and revision checks. Reuse the existing calendar email choice and add own room-status email control.
+- Defer quiet automatic notices without provider attempts, using a separate not-before gate that preserves 429 retry deadlines. Recheck choices at rendering/final send, fence opt-outs and retain source/authority/restore/expiry protections; apply quiet/current email choices to existing change/status email senders.
+- Keep interactive replies, confirmation receipts, legacy digests and admin/approval mail under existing controls. Split T4.3 into preference/quiet-hour and durable-reminder children in the Markdown plan; only T4.3.1 is delivered here. Pilots remain default-off; reminder generation and live verification remain later increments.
+
 ## 8.75 — October 25, 2026
 
 - Hand current permitted calendar/room change routes to the existing durable Telegram sender, atomically and with stable deduplication. Render private source/own-request updates, explicitly shared calendar fields or anonymous exact-topic room availability only.
