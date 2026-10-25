@@ -1,0 +1,11 @@
+{
+  "purpose": "Bounded diagnostic for Linux synthetic-throttling signal contention; no application code changes.",
+  "source": "c57d9be product, b98873e measurement revision",
+  "chromium_source": "https://github.com/chromium/chromium/blob/154.0.8037.57/third_party/blink/renderer/platform/scheduler/common/thread_cpu_throttler.cc",
+  "source_observation": "POSIX CPU throttling uses SIGUSR2 and a busy-wait signal handler; it blocks SIGPROF while the handler runs. This explains why profiler gaps cannot establish JavaScript work or exclusive CPU time, but does not prove the cause of every observed stall.",
+  "change": "Entire test tree still uses CPUs0-2. Pin each renderer main thread and its CPUThrottlingThread to CPU1; remaining threads keep existing affinity. CPU emulation remains4, no browser flags, date/seed, scenario or budget changes.",
+  "diagnostic": "Two counterbalanced old/new-art fern pairs,30s, mature6, direct timeline and CPU profile. Four runs must each meet33ms frame and50ms owned FunctionCall wall before considering this fixture for acceptance. Keep every result, including failed original traces. CPU profiler is diagnostic only.",
+  "acceptance_if_successful": "Fresh native15 and direct trace30 without CPU profiler on the corrected fixture, then original/current full20 matrices with identical pinning and all original historical budgets. Never substitute diagnostic samples or waive prior failures.",
+  "no_application_change": true,
+  "no_budget_change": true
+}

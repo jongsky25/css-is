@@ -1,4 +1,5 @@
 """Native invoker diagnostics and strict frame gate; owned work needs a trace."""
+from tests.avatar_browser_fixture import pin_renderer_threads
 import json
 import os
 from pathlib import Path
@@ -51,6 +52,8 @@ def test_native_art_control(baseline_server,app_mod,tmp_path,kind):
                     context.add_cookies([cookie]);context.add_init_script(PURE)
                     page=context.new_page();errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
                     cdp=context.new_cdp_session(page);cdp.send('Emulation.setCPUThrottlingRate',{'rate':4})
+                    pins=pin_renderer_threads(browser)
+                    assert os.getenv('CSS_AVATAR_PIN_RENDERER')!='1' or any(p['name'].startswith('CPUThrottling') for p in pins)
                     page.goto(origin+'/?view=me');page.goto(origin+'/?view=me');page.wait_for_timeout(500)
                     assert page.locator(f'.avwrap[data-interactive] svg[data-avatar-kind="{kind}"][data-avatar-stage="6"]').count()==1
                     assert page.evaluate('avatarLoafSupported')
@@ -66,7 +69,7 @@ def test_native_art_control(baseline_server,app_mod,tmp_path,kind):
                     loafs=[l for l in loafs if l['start']<end and l['start']+l['duration']>=start]
                     scripts=[dict(s,sourceURL=s['sourceURL'].replace(origin,'')) for l in loafs for s in l['scripts'] if '/static/js/avatars.js' in s['sourceURL'] or '/static/js/avatar-audio.js' in s['sourceURL']]
                     observed=snapshot(page,cdp)
-                    rows.append({'run':run,'version':version,'kind':kind,'mature':True,'cpu':4,'seconds':30,'actions':action,'start_ms':start,'end_ms':end,
+                    rows.append({'run':run,'version':version,'kind':kind,'mature':True,'cpu':4,'seconds':30,'thread_pins':pins,'actions':action,'start_ms':start,'end_ms':end,
                                  'scenario':observed,'native_long_animation_frames':loafs,'avatar_native_scripts':scripts,
                                  'max_avatar_callback_ms':max((s['duration'] for s in scripts),default=0),'errors':errors})
                     (out/'native-control.json').write_text(json.dumps({'source_commit':source_commit,'before_art':None if after_only else '5b580d9','after_only':after_only,'same_current_runtime_both_arms':not after_only,'kind':kind,'method':('Five final-source warm CPU4 mobile runs; mature6; original30s input; native LoAF/LongTask/EventTiming/rAF only; no API wrappers, tracing, callback clocks or stacks.' if after_only else 'Five counterbalanced warm CPU4 mobile pairs; mature6; original30s input; native LoAF/LongTask/EventTiming/rAF only. No timer/event/rAF wrappers, tracing recorder, callback clocks or stacks. Same current Home/search/runtime with old/new art/frame macros.'),'samples':rows},indent=2))

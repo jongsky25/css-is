@@ -5,5 +5,6 @@
   "correction": "Use native devtools.timeline FunctionCall wall spans for avatars/audio to enforce unchanged50ms; report threadCPU but do not subtractCPU,GC,pauses or baseline. Collect five counterbalanced old/new-art pairs per mature plant, explicit30s marks, fixed Chromium154/CPU4, no API wrappers/stacks. Keep strict33ms untraced and traced frame checks. Retain all raw native invocation records and every prior failed cohort.",
   "fixture": "Three-core affinity documented in isolated-fixture/PLAN.json; no browser CPU rate, viewport, date/seed or scenario changes. Before/after original0 full20 matrices must share this setting and still meet unchanged historical comparison gates.",
   "compositing_candidate": "Rejected: no frame improvement; native wall budget failures. No CSS hint shipped.",
-  "no_budget_changes": true
+  "no_budget_changes": true,
+  "fixture_followup": "See thread-pin-plan.json and pre-thread-pin-fixture/STOPPED.json. Fresh native15/trace30 must use recorded renderer/throttler CPU1 affinity, original CPU4, no CPU profile; full20 original/current matrices share the same fixture and still meet historical gates."
 }

@@ -11,6 +11,7 @@ env=read(out/'native-control/application/environment.json')
 for name,digest in env['source_sha256'].items():
     assert hashlib.sha256(Path(name).read_bytes()).hexdigest()==digest,name
 assert subprocess.check_output(['stat','-f','-c','%T','.'],text=True).strip()=='overlayfs'
+assert env['process_tree_cpu_affinity']==[0,1,2] and env['requested_renderer_pin_cpu']==1
 assert '260 passed' in (out/'validation-tests.txt').read_text()
 assert '6 passed' in (out/'functional/tests.txt').read_text()
 assert read(out/'artwork-equivalence.json')['svg_equivalence_checks']==1734
@@ -33,13 +34,14 @@ for kind in ['fern','mushroom','succulent']:
     samples=[]
     for r in data['samples']:
         assert r['kind']==kind and r['mature'] and r['cpu']==4 and r['seconds']==30 and r['version']=='after'
+        assert r['thread_pins'] and all(p['cpus']==[1] for p in r['thread_pins']) and any(p['name'].startswith('CPUThrottling') for p in r['thread_pins'])
         scripts=[s for l in r['native_long_animation_frames'] for s in l['scripts'] if '/static/js/avatars.js' in s['sourceURL'] or '/static/js/avatar-audio.js' in s['sourceURL']]
         maximum=max((s['duration'] for s in scripts),default=0)
         frame=r['scenario']['frame_p95_ms']
-        samples.append({'run':r['run'],'frame_p95_ms':frame,'max_reported_owned_script_ms':maximum,'passed':not r['errors'] and frame<=33 and maximum<=50})
+        samples.append({'run':r['run'],'frame_p95_ms':frame,'max_native_invoker_wall_ms_diagnostic':maximum,'passed':not r['errors'] and frame<=33})
     focused[kind]={'samples':samples,'passed':all(s['passed'] for s in samples)}
 result={'status':'blocked','source_commit':env['source_commit'],'focused':focused,'primary_samples':0,
-        'limits':['Zero reported native owned duration means no owned script in a reported long frame, not zero CPU.',
+        'limits':['Zero native invoker duration means no avatar script reported in a long frame, not zero CPU; invoker wall duration alone is not attribution.',
                   'CPU-throttled local Chromium is not a physical-phone or 60fps claim.',
                   'Original failed cohorts and all outliers retained; budgets and acceptance scenarios unchanged.',
                   'Selected offscreen animation, chase/idle/roam timers and same-document listener retention remain pre-existing release blockers. Static picker thumbnails are resolved.']}
@@ -48,16 +50,42 @@ result['empty_callback_control']={'file':'layout-fix/throttle-control/empty-cont
     'source':control['source'],'max_empty_callback_ms':max(r['max_empty_callback_ms'] for r in control['samples']),
     'samples':len(control['samples']),
     'limit':'Blank page without avatars/application code reports143ms for an empty callback atCPU1. Native script invoker duration alone cannot establish avatar work as the cause. This does not waive any gate.'}
-gates={'focused_native':all(c['passed'] for c in focused.values())}
-primary=out/'application/summary.json'
+gates={'focused_native_frames':all(c['passed'] for c in focused.values())}
+traced={}
+for kind in ['fern','mushroom','succulent']:
+    path=out/f'trace-control/{kind}/summary.json'
+    if not path.exists():
+        gates[f'{kind}_owned_callback_trace']=False
+        continue
+    data=read(path)
+    assert data['source_commit']==env['source_commit']
+    assert data['runtime_sha256']==env['source_sha256']['static/js/avatars.js']
+    rows=data['samples']
+    assert all(r['thread_pins'] and all(p['cpus']==[1] for p in r['thread_pins']) and any(p['name'].startswith('CPUThrottling') for p in r['thread_pins']) for r in rows)
+    after=[r for r in rows if r['version']=='after']
+    passed=(len(rows)==10 and len(after)==5 and all(r['owned_call_count']>0 and not r['errors'] and not r['trace_data_loss'] for r in rows) and all(r['max_owned_call_wall_ms']<=50 and r['scenario']['frame_p95_ms']<=33 for r in after))
+    traced[kind]={'samples':[{'run':r['run'],'max_owned_call_wall_ms':r['max_owned_call_wall_ms'],'frame_p95_ms':r['scenario']['frame_p95_ms']} for r in after],'passed':passed}
+    gates[f'{kind}_owned_callback_trace']=passed
+result['traced']=traced
+result['attribution_method']='Native invoker wall durations are diagnostic. Enforce unchanged50ms using directly recorded devtools.timeline FunctionCall wall spans from avatars/audio, with no CPU/GC/baseline subtraction. Both untraced and traced frames must meet33ms.'
+matrix=root/'isolated-fixture/after';primary=matrix/'application/summary.json'
 if primary.exists():
-    summary=read(primary);comparison=read(out/'comparison.json')
+    summary=read(primary);comparison=read(matrix/'comparison.json')
     result['primary_samples']=summary['samples']
     gates['full20_complete']=summary['full_duration_complete'] and comparison['complete']
     gates.update(comparison['gates'])
-    rows=[r for name in ['False-cold','False-warm','True-cold','True-warm'] for r in read(out/f'application/{name}.json')]
+    matched_comparison=read(matrix/'comparison-matched.json')
+    gates['fresh_matched_complete']=matched_comparison['complete']
+    gates.update({'fresh_matched_'+k:v for k,v in matched_comparison['gates'].items()})
+    rows=[r for name in ['False-cold','False-warm','True-cold','True-warm'] for r in read(matrix/f'application/{name}.json')]
     assert len(rows)==20 and all(r['seconds']==30 and r['chromium']=='154.0.8037.57' and r['cpu_rate']==(4 if r['mobile'] else 1) for r in rows)
-    primary_env=read(out/'application/environment.json')
+    primary_env=read(matrix/'application/environment.json')
+    fresh_env=read(root/'isolated-fixture/before/application/environment.json')
+    for key in ['chromium','playwright','python','platform','fixture_date_local','random_seed','process_tree_cpu_affinity','requested_renderer_pin_cpu']:
+        assert primary_env[key]==fresh_env[key],key
+    assert primary_env['source_sha256']['tests/test_avatar_baseline_browser.py']==fresh_env['source_sha256']['tests/test_avatar_baseline_browser.py']
+    assert primary_env['source_sha256']['tests/avatar_browser_fixture.py']==fresh_env['source_sha256']['tests/avatar_browser_fixture.py']
+    assert all(r['thread_pins'] and all(p['cpus']==[1] for p in r['thread_pins']) for r in rows)
     assert primary_env['source_sha256']==env['source_sha256'] and primary_env['source_commit']==env['source_commit']
     secondary={}
     for g in comparison['groups']:
@@ -68,6 +96,17 @@ if primary.exists():
                 delta=metrics[metric]['median_delta']
                 secondary[f"{g['mobile']}-{g['cache']}-{scenario}-{metric}"]={'delta':delta,'budget':budget,'passed':delta<=budget}
     result['secondary']=secondary;gates['all_scenario_latency_memory']=all(s['passed'] for s in secondary.values())
+    matched_secondary={}
+    for g in matched_comparison['groups']:
+        for scenario,metrics in g['scenarios'].items():
+            for metric,budget in [('lcp_ms',100),('interaction_duration_per_run_median_ms',20),('renderer_rss_sum_bytes',10*1048576),('js_heap_bytes',10*1048576)]:
+                if metric not in metrics:continue
+                delta=metrics[metric]['median_delta']
+                matched_secondary[f"{g['mobile']}-{g['cache']}-{scenario}-{metric}"]={'delta':delta,'budget':budget,'passed':delta<=budget}
+    result['fresh_matched_secondary']=matched_secondary
+    gates['fresh_matched_all_scenario_latency_memory']=all(s['passed'] for s in matched_secondary.values())
+    result['matrix']='isolated-fixture/after/application/summary.json'
+    result['fresh_control']='isolated-fixture/before/application/summary.json'
     control=read(root/'reproduced-overlay-control/application/False-cold.json')
     control_env=read(root/'reproduced-overlay-control/application/environment.json')
     for key in ['chromium','playwright','python','platform','fixture_date_local','random_seed']:

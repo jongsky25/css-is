@@ -1,0 +1,155 @@
+[
+  {
+    "sample": "after-0",
+    "call": {
+      "args": {
+        "data": {
+          "columnNumber": 47,
+          "frame": "5BD9CD7BB64B6F7554266239C82FB46D",
+          "functionName": "",
+          "isolate": "12758611760506540357",
+          "lineNumber": 501,
+          "sampleTraceId": 5160756327472798,
+          "scriptId": "11",
+          "url": "http://127.0.0.1:34981/static/js/avatars.js?v=8.19"
+        }
+      },
+      "cat": "devtools.timeline",
+      "dur": 72767,
+      "name": "FunctionCall",
+      "ph": "X",
+      "pid": 181082,
+      "tdur": 74964,
+      "tid": 181082,
+      "ts": 54779473503,
+      "tts": 6749496
+    },
+    "profile_samples": 3,
+    "largest_sampling_gap_ms": 73.223,
+    "sampled_stacks": [
+      {
+        "samples": 2,
+        "stack": [
+          {
+            "functionName": "",
+            "scriptId": "11",
+            "url": "http://127.0.0.1:34981/static/js/avatars.js?v=8.19",
+            "lineNumber": 500,
+            "columnNumber": 46
+          },
+          {
+            "functionName": "(root)",
+            "scriptId": "0",
+            "url": "",
+            "lineNumber": -1,
+            "columnNumber": -1
+          }
+        ]
+      },
+      {
+        "samples": 1,
+        "stack": [
+          {
+            "functionName": "(program)",
+            "scriptId": "0",
+            "url": "",
+            "lineNumber": -1,
+            "columnNumber": -1
+          },
+          {
+            "functionName": "(root)",
+            "scriptId": "0",
+            "url": "",
+            "lineNumber": -1,
+            "columnNumber": -1
+          }
+        ]
+      }
+    ],
+    "nested_trace_counts": {},
+    "large_nested_events": []
+  },
+  {
+    "sample": "before-0",
+    "call": {
+      "args": {
+        "data": {
+          "columnNumber": 48,
+          "frame": "ED747402253B3AF2ABFDE9B042170841",
+          "functionName": "",
+          "isolate": "2281134916073502423",
+          "lineNumber": 810,
+          "sampleTraceId": 7697516352590439,
+          "scriptId": "10",
+          "url": "http://127.0.0.1:34981/static/js/avatars.js?v=8.11"
+        }
+      },
+      "cat": "devtools.timeline",
+      "dur": 65101,
+      "name": "FunctionCall",
+      "ph": "X",
+      "pid": 180926,
+      "tdur": 65093,
+      "tid": 180926,
+      "ts": 54735338463,
+      "tts": 16522310
+    },
+    "profile_samples": 2,
+    "largest_sampling_gap_ms": 0.124,
+    "sampled_stacks": [
+      {
+        "samples": 1,
+        "stack": [
+          {
+            "functionName": "(program)",
+            "scriptId": "0",
+            "url": "",
+            "lineNumber": -1,
+            "columnNumber": -1
+          },
+          {
+            "functionName": "(root)",
+            "scriptId": "0",
+            "url": "",
+            "lineNumber": -1,
+            "columnNumber": -1
+          }
+        ]
+      },
+      {
+        "samples": 1,
+        "stack": [
+          {
+            "functionName": "stopPet",
+            "scriptId": "10",
+            "url": "http://127.0.0.1:34981/static/js/avatars.js?v=8.11",
+            "lineNumber": 800,
+            "columnNumber": 20
+          },
+          {
+            "functionName": "",
+            "scriptId": "10",
+            "url": "http://127.0.0.1:34981/static/js/avatars.js?v=8.11",
+            "lineNumber": 809,
+            "columnNumber": 47
+          },
+          {
+            "functionName": "(root)",
+            "scriptId": "0",
+            "url": "",
+            "lineNumber": -1,
+            "columnNumber": -1
+          }
+        ]
+      }
+    ],
+    "nested_trace_counts": {
+      "TimerRemove": 3,
+      "ScheduleStyleInvalidationTracking": 3,
+      "StyleInvalidatorInvalidationTracking": 3,
+      "StyleRecalcInvalidationTracking": 4,
+      "TimerInstall": 1
+    },
+    "large_nested_events": []
+  }
+]

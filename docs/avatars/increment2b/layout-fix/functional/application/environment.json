@@ -1,5 +1,5 @@
 {
-  "source_commit": "c1164ac2426492518468d8775f9ca429e5508155",
+  "source_commit": "b98873e2332c02f076591cc0372096db807de8ea",
   "platform": "Linux-6.18.55-x86_64-with-glibc2.41",
   "python": "3.12.14",
   "chromium": "154.0.8037.57",
@@ -15,7 +15,7 @@
     "static/js/search.js": "5027eebe29b7170610d114834f85128da4afaef9393313b36f80946765cea3e7",
     "templates/office_connect.html": "8bdb01bfa549a869d72829ffbcebbf3490f39e7cca74e501b3b3ee09f26b8290",
     "templates/dash_layout.html": "f58e2c79bdab9f10ed9e3821114eaa0586488dc275d86530a7dd452587cd5452",
-    "tests/test_avatar_baseline_browser.py": "77b62c71d74cb45ecfea303cb42e3c6c1610f949acb253402a99148fa4d7d5b6",
+    "tests/test_avatar_baseline_browser.py": "f82a428cdee1ea3e92d24c5cb34ad27c87341d03e1dfbfb20a7dd6616e1d252e",
     "templates/_avatar_species/bat.html": "b8e6db951e4bce007308d6745467e42da864daf34a137a0ebd17c6c0a64d3978",
     "templates/_avatar_species/bird.html": "9a2fdee73a9308602005d0bf629cbcab768f3e70f8208747e9e8c8d11e2eca04",
     "templates/_avatar_species/bonsai.html": "5310a2fe1e50e485ca250431598fbae904da414a5767216e42b458b071d949a7",
@@ -32,7 +32,14 @@
     "templates/_avatar_species/succulent.html": "09f2e6fc13bc4c719dbfbe96593079c2671dc190be5fb8ab74bb3d00f081418d",
     "templates/_avatar_species/sunflower.html": "e2e05409cd112527916f84cab5f8f2461b6365a545e8a6fad106ca6879a3c69f",
     "templates/_avatar_species/turtle.html": "a4c4b327de4cedf38dc5c2f6709e7aed9060da4d143f4e36e57729abcd7bb3d2",
+    "tests/avatar_browser_fixture.py": "74f92995fcb0509defb2fe9fdcd8caf4e68f4b9290e648577c93d9182e38256f",
     "templates/_avatars_shared.html": "577b34f5385257b0051d19b699294ebd0521021457b6831e5ff19798fe812759"
   },
+  "process_tree_cpu_affinity": [
+    0,
+    1,
+    2
+  ],
+  "requested_renderer_pin_cpu": 1,
   "proxy_compression": "test-local Starlette GZipMiddleware minimum_size=500"
 }

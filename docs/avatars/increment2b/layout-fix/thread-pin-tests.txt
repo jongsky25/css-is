@@ -1,0 +1,16 @@
+PINS [{'tid': 181545, 'name': 'renderer-main', 'cpus': [1]}, {'tid': 181546, 'name': 'renderer-main', 'cpus': [1]}, {'tid': 181565, 'name': 'CPUThrottlingTh', 'cpus': [1]}, {'tid': 181536, 'name': 'renderer-main', 'cpus': [1]}]
+fern before 0 frame 16.799999999999272 owned_call_wall 19.632
+PINS [{'tid': 181700, 'name': 'renderer-main', 'cpus': [1]}, {'tid': 181701, 'name': 'renderer-main', 'cpus': [1]}, {'tid': 181721, 'name': 'CPUThrottlingTh', 'cpus': [1]}, {'tid': 181691, 'name': 'renderer-main', 'cpus': [1]}]
+fern after 0 frame 16.799999999999272 owned_call_wall 23.374
+PINS [{'tid': 181842, 'name': 'renderer-main', 'cpus': [1]}, {'tid': 181843, 'name': 'renderer-main', 'cpus': [1]}, {'tid': 181863, 'name': 'CPUThrottlingTh', 'cpus': [1]}, {'tid': 181833, 'name': 'renderer-main', 'cpus': [1]}]
+fern after 1 frame 16.799999999999272 owned_call_wall 14.013
+PINS [{'tid': 181980, 'name': 'renderer-main', 'cpus': [1]}, {'tid': 181982, 'name': 'renderer-main', 'cpus': [1]}, {'tid': 182000, 'name': 'CPUThrottlingTh', 'cpus': [1]}, {'tid': 181971, 'name': 'renderer-main', 'cpus': [1]}]
+fern before 1 frame 16.799999999999272 owned_call_wall 7.703
+.
+=============================== warnings summary ===============================
+tests/test_avatar_thread_pin_diagnostic.py::test_cpu_attribution[fern]
+  /workspace/css-is/tests/conftest.py:88: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+1 passed, 2 deselected, 1 warning in 227.32s (0:03:47)

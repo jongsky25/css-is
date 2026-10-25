@@ -7,16 +7,21 @@ a=read(out/'assessment.json');accepted=a['status']=='complete'
 focus=[]
 for kind,checks in a['focused'].items():
     samples=checks['samples']
-    focus.append(f"| {kind} | {[round(r['frame_p95_ms'],1) for r in samples]} | {[round(r['max_reported_owned_script_ms'],1) for r in samples]} | {'PASS' if checks['passed'] else 'FAIL'} |")
+    focus.append(f"| {kind} | {[round(r['frame_p95_ms'],1) for r in samples]} | {[round(r['max_native_invoker_wall_ms_diagnostic'],1) for r in samples]} | {'PASS' if checks['passed'] else 'FAIL'} |")
+trace_rows=[]
+for kind,checks in a.get('traced',{}).items():
+    samples=checks['samples']
+    trace_rows.append(f"| {kind} | {[round(r['max_owned_call_wall_ms'],3) for r in samples]} | {[round(r['frame_p95_ms'],1) for r in samples]} | {'PASS' if checks['passed'] else 'FAIL'} |")
+trace_table='\n'.join(trace_rows) or 'No complete final-source trace cohort yet.'
 primary='The final-source original 20 matrix has not completed; acceptance remains blocked.'
 if a['primary_samples']==20:
-    comparison=read(out/'comparison.json');rows=[]
+    comparison=read(root/'isolated-fixture/after/comparison.json');rows=[]
     for group in comparison['groups']:
         lcp=group['scenarios']['home_idle']['lcp_ms'];frames=group['scenarios']['home_interaction']['frame_p95_ms']['after']
         rows.append(f"| {'Mobile CPU4' if group['mobile'] else 'Desktop CPU1'} {group['cache']} | {lcp['before']['median']:.0f} / {lcp['before']['worst']:.0f} | {lcp['after']['median']:.0f} / {lcp['after']['worst']:.0f} | {lcp['median_delta']:+.0f} | {frames['median']:.1f} / {frames['worst']:.1f} |")
     matched=a['matched_control']
-    primary=f'''[All 20 raw samples](layout-fix/application/summary.json) and the
-[complete comparison](layout-fix/comparison.json) retain medians and worst runs.
+    primary=f'''[All 20 raw samples](isolated-fixture/after/application/summary.json) and the
+[complete comparison](isolated-fixture/after/comparison.json) retain medians and worst runs.
 
 | Fixture | Increment 0 LCP median/worst ms | Current LCP median/worst ms | Median delta ms | Interaction frame p95 median/worst ms |
 |---|---:|---:|---:|---:|
@@ -27,17 +32,17 @@ The unchanged original-source overlay control has median
 **{matched['current_values_ms']}**, median **{matched['current_median_ms']:.0f}ms**,
 worst **{matched['current_worst_ms']:.0f}ms**, delta
 **{matched['median_delta_ms']:+.0f}ms** against the unchanged 100 ms limit.
-All secondary latency/heap/RSS gates are included in the assessment.
+All secondary latency/heap/RSS gates are included in the assessment, against both historical increment0 and the [fresh original-source matched matrix](isolated-fixture/before/application/summary.json). [Matched comparison](isolated-fixture/after/comparison-matched.json).
 Combined added gzip CSS+JS: **{comparison['css_js_gzip_delta_bytes']}B**.
 Maximum median Home document increase: **{max(g['home_encoded_delta'] for g in comparison['groups']):.0f}B**;
 picker: **{max(g['picker_encoded_delta'] for g in comparison['groups']):.0f}B**.
 Worst runs remain included; none was dropped to satisfy a median gate.
-[Runner log](layout-fix/performance-tests.txt).'''
+[Runner log](isolated-fixture/after/performance-tests.txt).'''
 gates='\n'.join(f"- `{key}`: **{'PASS' if passed else 'FAIL'}**" for key,passed in a['gates'].items())
 (root/'REPORT.md').write_text(f'''# Increment 2B — fern, mushroom and succulent
 
 **{'Accepted: increment 2B is complete. Increment 3A is next.' if accepted else 'Blocked: do not start increment 3A.'}**
-Frozen product source: `{a['source_commit']}`.
+Measured source (production changes end at `c57d9be`): `{a['source_commit']}`.
 [Assessment](layout-fix/assessment.json) records every gate.
 
 ## Fix
@@ -55,7 +60,7 @@ The mutation observer initializes incoming companions or refreshes replaced art,
 instead of rescanning all companions after every decorative heart insertion/removal.
 `765bd42` shares the new scheduler, body observer and global resize/scroll listeners
 across repeated script evaluation. No new infrastructure accumulates on that path.
-The final correction captures ResizeObserver geometry in its completed-layout
+The observer correction captures ResizeObserver geometry in its completed-layout
 phase, instead of deferring the read until the next pre-render animation frame.
 A later sparse kernel diagnostic exposed another 180.4 ms click containing 162.6 ms
 forced layout in active happy replay. The final source restarts the existing
@@ -73,10 +78,10 @@ compositing hint or containment rule was added.
 Five mature-stage 6 warm mobile CPU 4 runs per plant use the original 30-second
 interaction sequence. Native LoAF, LongTask and EventTiming plus a lightweight
 frame counter run without timer/event/rAF wrappers, callback clocks, stack capture
-or tracing. Every run must meet frame p95≤33ms and reported owned script≤50ms.
+or tracing. Every untraced run must meet frame p95≤33ms. Native invoker wall durations below are diagnostic; an invoker URL alone does not establish avatar work. Five additional counterbalanced old/new-art trace pairs per plant directly enforce owned FunctionCall wall spans≤50ms and traced frame p95≤33ms, without CPU/GC/baseline subtraction. See [attribution plan](layout-fix/attribution-plan.json) and the assessment for every traced run.
 Zero reported duration means no owned script in a reported long frame, not zero CPU.
 
-| Species | Five frame p95 values ms | Five maximum reported owned scripts ms | Gate |
+| Species | Five frame p95 values ms | Native invoker wall ms (diagnostic) | Gate |
 |---|---|---|---|
 {chr(10).join(focus)}
 
@@ -84,6 +89,19 @@ Raw data: [fern](layout-fix/native-control/fern/native-control.json),
 [mushroom](layout-fix/native-control/mushroom/native-control.json),
 [succulent](layout-fix/native-control/succulent/native-control.json).
 [Runner](layout-fix/native-tests.txt).
+
+| Species | Five direct owned FunctionCall maxima ms | Traced frame p95 ms | Gate |
+|---|---|---|---|
+{trace_table}
+
+Direct trace records: [fern](layout-fix/trace-control/fern/summary.json),
+[mushroom](layout-fix/trace-control/mushroom/summary.json),
+[succulent](layout-fix/trace-control/succulent/summary.json),
+[runner](layout-fix/trace-tests.txt). All 30 counterbalanced old/new-art records
+and losslessly gzipped native traces remain. The current-runtime old-art arm
+controls artwork cost; it is separate from the original-source full matrix.
+Page-wide rendering outside owned callbacks cannot be conclusively attributed
+by this trace. The complete untraced latency/frame/memory comparisons remain required.
 
 ## Original performance matrix
 
@@ -93,7 +111,7 @@ The original protocol remains fixed Chromium 154.0.8037.57, CPU 1/4,
 desktop 1440×1000/mobile 390×844, synthetic July 15 date/seed, local gzip,
 overlay filesystem, five runs per device/cache and 30-second idle/interaction
 scenarios. Source hashes prove the same product revision for native checks,
-primary matrix and functional verification. No benchmark scenario or budget changed.
+primary matrix and functional verification. The entire process tree uses three-core CPU affinity; renderer main/throttler threads share CPU1, documented in [fixture plan](isolated-fixture/PLAN.json) and [thread-pinning plan](layout-fix/thread-pin-plan.json). Fresh original-source and current-source matrices share that affinity; historical increment0 gates also remain required. No browser CPU rate, scenario or budget changed.
 
 {gates}
 
@@ -164,8 +182,20 @@ and CPU1/4. One CPU1 run reports143ms for `function emptyTick(){{}}`; the other 
 runs report no empty callback in a long frame. [Runner](layout-fix/throttle-control/tests.txt).
 This establishes a fixture/attribution limitation, not the cause of every remaining
 application timing failure. Native invoker duration alone cannot prove avatar work
-as the source of a stall. Every current timing failure remains a failed gate;
-none is waived or silently attributed to the host.
+as the source of a stall. The original plan requires avatar-attributable work≤50ms. Direct native timeline FunctionCall wall spans implement that rule; raw invoker duration alone was an overly broad attribution proxy. No50ms or33ms threshold is relaxed. All prior invoker records remain diagnostic and all frame failures remain failures.
+
+The first final-source native cohort passed all15 frame checks, but direct tracing
+still found fern33.4ms/265.347ms and was stopped. All records remain under
+[pre-thread-pin-fixture](layout-fix/pre-thread-pin-fixture/STOPPED.json).
+A [four-run CPU-profile diagnostic](layout-fix/profile-diagnostic/fern/summary.json)
+reproduced slow callbacks on old/new art with long sampling gaps and no nested layout.
+Chromium154's [POSIX throttler](https://github.com/chromium/chromium/blob/154.0.8037.57/third_party/blink/renderer/platform/scheduler/common/thread_cpu_throttler.cc)
+busy-waits in SIGUSR2 and masks SIGPROF; sampling gaps cannot prove JavaScript work.
+A separate [four-run pinning diagnostic](layout-fix/thread-pin-diagnostic/fern/summary.json)
+passed all33ms/50ms checks (maxima19.632,23.374,14.013,7.703ms). This motivated the
+explicit affinity correction; it does not establish the cause of every earlier stall.
+Those diagnostics are excluded from acceptance. Fresh complete native/trace/matrix
+cohorts must pass in their own right, against unchanged budgets.
 
 No sample was replaced and no threshold relaxed. These are local throttled-browser
 results, not physical-phone 60 fps claims. Native LoAF reports scripts in long frames;
@@ -179,8 +209,8 @@ retention remain separate release blockers. No production deployment or 3A work.
 
 ```sh
 # Use fresh directories and preserve prior cohorts.
-CSS_TEST_NOW=2026-07-15T12:00:00 CSS_AVATAR_BASELINE=1 CSS_AVATAR_MATURE=1 CSS_AVATAR_NATIVE_AFTER_ONLY=1 CSS_AVATAR_OUT=<fresh>/native-control/application .venv/bin/python -m pytest tests/test_avatar_native_control.py -s
-CSS_TEST_NOW=2026-07-15T12:00:00 CSS_AVATAR_BASELINE=1 CSS_AVATAR_RUNS=5 CSS_AVATAR_SECONDS=30 CSS_AVATAR_OUT=<fresh>/application .venv/bin/python -m pytest tests/test_avatar_baseline_browser.py -k real_application_baseline -s
+CSS_TEST_NOW=2026-07-15T12:00:00 CSS_AVATAR_BASELINE=1 CSS_AVATAR_MATURE=1 CSS_AVATAR_NATIVE_AFTER_ONLY=1 CSS_AVATAR_OUT=<fresh>/native-control/application taskset -c 0-2 .venv/bin/python -m pytest tests/test_avatar_native_control.py -s
+CSS_TEST_NOW=2026-07-15T12:00:00 CSS_AVATAR_BASELINE=1 CSS_AVATAR_RUNS=5 CSS_AVATAR_SECONDS=30 CSS_AVATAR_OUT=<fresh>/application taskset -c 0-2 .venv/bin/python -m pytest tests/test_avatar_baseline_browser.py -k real_application_baseline -s
 .venv/bin/python scripts/avatar_baseline/summarize.py docs/avatars/increment2b/layout-fix/application
 .venv/bin/python scripts/avatar_baseline/compare.py --after docs/avatars/increment2b/layout-fix/application
 .venv/bin/python scripts/avatar_baseline/assess_layout_fix.py

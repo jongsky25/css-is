@@ -26,5 +26,6 @@
   "preserved_unpinned_failures": "../layout-fix/",
   "no_budget_changes": true,
   "no_production_deployment": true,
-  "control_reference_amendment": "Before any full-matrix collection, choose original increment0 source1c964dc rather than incremental5b580d9 for a stronger complete matched baseline. Mature art-only paired controls still use5b580d9 macros on the same current runtime. Preserve original plan; require historical increment0 AND fresh matched baseline gates with unchanged budgets."
+  "control_reference_amendment": "Before any full-matrix collection, choose original increment0 source1c964dc rather than incremental5b580d9 for a stronger complete matched baseline. Mature art-only paired controls still use5b580d9 macros on the same current runtime. Preserve original plan; require historical increment0 AND fresh matched baseline gates with unchanged budgets.",
+  "thread_pin_followup": "After preserved failed direct trace and independent successful four-run diagnostic, pin renderer main and CPUThrottlingThread toCPU1 within CPUs0-2. See../layout-fix/thread-pin-plan.json. Fresh native15 andtrace30 required before full20 before1c964dc/current. Both matrices share this documented fixture; historical gates remain unchanged."
 }

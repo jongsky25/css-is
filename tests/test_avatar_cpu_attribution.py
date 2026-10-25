@@ -1,4 +1,5 @@
 """Direct owned FunctionCall attribution, without JS API wrappers or stacks."""
+from tests.avatar_browser_fixture import pin_renderer_threads
 import gzip
 import hashlib
 import json
@@ -38,6 +39,8 @@ def test_cpu_attribution(baseline_server,app_mod,tmp_path,kind):
                     context.add_cookies([cookie]);context.add_init_script(PURE)
                     page=context.new_page();errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
                     cdp=context.new_cdp_session(page);cdp.send('Emulation.setCPUThrottlingRate',{'rate':4})
+                    pins=pin_renderer_threads(browser)
+                    assert os.getenv('CSS_AVATAR_PIN_RENDERER')!='1' or any(p['name'].startswith('CPUThrottling') for p in pins)
                     page.goto(origin+'/?view=me');page.goto(origin+'/?view=me');page.wait_for_timeout(500)
                     assert page.locator(f'.avwrap[data-interactive] svg[data-avatar-kind="{kind}"][data-avatar-stage="6"]').count()==1
                     done=[];cdp.on('Tracing.tracingComplete',lambda e:done.append(e))
@@ -67,7 +70,7 @@ def test_cpu_attribution(baseline_server,app_mod,tmp_path,kind):
                     assert calls, 'Trace did not record owned callbacks'
                     details=[{'wall_ms':e['dur']/1000,'thread_cpu_ms':e.get('tdur',0)/1000,'data':dict(e.get('args',{}).get('data',{}),url=e.get('args',{}).get('data',{}).get('url','').replace(origin,''))} for e in calls]
                     maximum=max(c['wall_ms'] for c in details)
-                    rows.append({'kind':kind,'version':version,'run':run,'mature':True,'cpu':4,'seconds':30,'actions':actions,'scenario':observed,'trace_file':raw_file,'trace_data_loss':bool(done[0].get('dataLossOccurred',False)),'start_trace_us':start,'end_trace_us':end,'owned_call_count':len(calls),'max_owned_call_wall_ms':maximum,'over50_owned_calls':[c for c in details if c['wall_ms']>50],'total_owned_wall_ms':sum(c['wall_ms'] for c in details),'total_owned_thread_cpu_ms':sum(c['thread_cpu_ms'] for c in details),'errors':errors})
+                    rows.append({'kind':kind,'version':version,'run':run,'mature':True,'cpu':4,'seconds':30,'thread_pins':pins,'actions':actions,'scenario':observed,'trace_file':raw_file,'trace_data_loss':bool(done[0].get('dataLossOccurred',False)),'start_trace_us':start,'end_trace_us':end,'owned_call_count':len(calls),'max_owned_call_wall_ms':maximum,'over50_owned_calls':[c for c in details if c['wall_ms']>50],'total_owned_wall_ms':sum(c['wall_ms'] for c in details),'total_owned_thread_cpu_ms':sum(c['thread_cpu_ms'] for c in details),'errors':errors})
                     (out/'summary.json').write_text(json.dumps({'source_commit':subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(),'runtime_sha256':hashlib.sha256(Path('static/js/avatars.js').read_bytes()).hexdigest(),'kind':kind,'before_art':'5b580d9','same_runtime_both_arms':True,'method':'Counterbalanced current-runtime old/new-art controls; native timeline FunctionCall wall spans for avatars/audio within explicit performance marks. CPU4, mature6, 30s input; PURE probes, no timer/event/rAF wrappers or stack capture. No CPU or GC subtraction. All native invoker diagnostics retained separately.','samples':rows},indent=2))
                     print(kind,version,run,'frame',observed['frame_p95_ms'],'owned_call_wall',round(maximum,3),flush=True)
                     context.close();browser.close()

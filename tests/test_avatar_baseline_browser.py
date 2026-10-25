@@ -1,4 +1,5 @@
 """Opt-in real HTTP baseline. CSS_AVATAR_BASELINE=1; never uses production data."""
+from tests.avatar_browser_fixture import pin_renderer_threads
 import json
 import os
 from pathlib import Path
@@ -28,6 +29,8 @@ def baseline_server(app_mod):
                'static/js/avatars.js', 'static/js/avatar-audio.js', 'static/js/search.js',
                'templates/office_connect.html', 'templates/dash_layout.html', __file__]
     sources += [str(p) for p in sorted(Path('templates').glob('_avatar_species/*.html'))]
+    if Path('tests/avatar_browser_fixture.py').exists():
+        sources.append('tests/avatar_browser_fixture.py')
     if Path('templates/_avatars_shared.html').exists():
         sources.append('templates/_avatars_shared.html')
     (output / 'environment.json').write_text(json.dumps({
@@ -39,6 +42,8 @@ def baseline_server(app_mod):
         'browser_date': '2026-07-15T12:00:00Z + performance.now()', 'random_seed': 12345,
         'source_sha256': {str(Path(name).relative_to(Path.cwd())) if Path(name).is_absolute() else name:
                           hashlib.sha256(Path(name).read_bytes()).hexdigest() for name in sources},
+        'process_tree_cpu_affinity': sorted(os.sched_getaffinity(0)),
+        'requested_renderer_pin_cpu': 1 if os.getenv('CSS_AVATAR_PIN_RENDERER')=='1' else None,
         'proxy_compression': 'test-local Starlette GZipMiddleware minimum_size=500',
     }, indent=2))
     from starlette.middleware.gzip import GZipMiddleware
@@ -157,12 +162,13 @@ def test_real_application_baseline(baseline_server, app_mod, mobile, cache):
             cdp = context.new_cdp_session(page); cdp.send('Network.enable')
             cdp.send('Network.setBlockedURLs', {'urls':['https://*']})
             cdp.send('Emulation.setCPUThrottlingRate', {'rate':4 if mobile else 1})
+            pins=pin_renderer_threads(browser)
             if cache == 'cold': cdp.send('Network.clearBrowserCache')
             else: page.goto(origin+'/?view=me'); page.wait_for_timeout(300)
             assert page.goto(origin+'/?view=me').status == 200
             page.locator('.avwrap[data-kind="cat"]').wait_for()
             row={'run':run,'mobile':mobile,'cache':cache,'cpu_rate':4 if mobile else 1,'chromium':browser.version,
-                 'seconds':seconds,'scenarios':{}}
+                 'seconds':seconds,'scenarios':{},'thread_pins':pins}
             reset(page); page.wait_for_timeout(seconds*1000)
             row['scenarios']['home_idle']=snapshot(page,cdp)
             row['home_document']=page.evaluate('''()=>{let n=performance.getEntriesByType('navigation')[0];return {encoded:n.encodedBodySize,decoded:n.decodedBodySize,transfer:n.transferSize,navigation:n.toJSON(),lcp_detail:avatarProbe.lcp_detail}}''')
@@ -251,7 +257,7 @@ def test_native_visibility_and_touch(baseline_server, tmp_path):
         with sync_playwright() as pw:
             browser=pw.chromium.connect_over_cdp(f'http://127.0.0.1:{port}',no_defaults=True)
             context=browser.contexts[0];context.add_cookies([cookie]);context.add_init_script(PROBE)
-            page=context.pages[0];page.set_viewport_size({'width':390,'height':844});page.goto(origin+'/?view=me')
+            page=context.pages[0];pin_renderer_threads(browser);page.set_viewport_size({'width':390,'height':844});page.goto(origin+'/?view=me')
             cdp=context.new_cdp_session(page);page.wait_for_timeout(500)
             illustrated_filters=page.locator('.avwrap svg[data-avatar-art="v2"]').evaluate_all('(els)=>els.map(el=>getComputedStyle(el).filter)')
             if illustrated_filters: assert all(value=='none' for value in illustrated_filters)
@@ -375,6 +381,7 @@ def test_plant_care_live_surfaces(baseline_server, app_mod):
         context=browser.new_context(viewport={'width':390,'height':844},has_touch=True)
         context.add_cookies([cookie]);page=context.new_page();errors=[]
         page.on('pageerror',lambda e:errors.append(str(e)))
+        pin_renderer_threads(browser)
         for kind in os.getenv('CSS_AVATAR_PLANTS', 'cactus,bonsai,sunflower').split(','):
             conn=st.connect(app_mod.DB);st.set_user_avatar(conn,uid,kind,'Synthetic Plant');conn.close()
             assert page.goto(origin+'/?view=me').status==200

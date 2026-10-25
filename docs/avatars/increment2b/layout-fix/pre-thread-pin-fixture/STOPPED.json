@@ -1,0 +1,9 @@
+{
+  "source": "b98873e",
+  "production_source": "c57d9be",
+  "native_frame_result": "All15 passed16.7\u201316.8ms; retained as prior-fixture results.",
+  "trace_failure": "Fern after1 directstartPet70.488ms/chase265.347ms, frame33.4ms. Stopped before fullmatrix; no sample substitution.",
+  "fixture_correction": "After independent two-pair CPU profile diagnostic passesall4 (callback19.632,23.374,14.013,7.703ms; frames16.8), pin renderer main/throttler threads toCPU1. CPU4 and all budgets/scenarios unchanged. Fresh acceptance required.",
+  "diagnostic_only": "Profile runs are not acceptance. Source explains blockedSIGPROF during synthetic throttling; it does not prove cause of each prior stall.",
+  "next": "Fresh native15 andtrace30, then same-affinity original/current matrices plus historical budgets."
+}

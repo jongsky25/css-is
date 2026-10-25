@@ -1,0 +1,6 @@
+{
+  "source": "b98873e",
+  "production_source": "c57d9be",
+  "reason": "Stop after directly owned fern startPet70.488ms and chase265.347ms (threadCPU205.621ms), traced frame33.4ms. Preserve all completed samples/raw traces. No nested layout events in either slow callback. Diagnose native execution/GC before speculative product edits; untraced15 remain passing but do not override this failure.",
+  "no_gate_waiver": true
+}

@@ -23,8 +23,8 @@ app_mod = <module 'app' from '/workspace/css-is/app.py'>
 >               style=page.add_style_tag(content=css);page.wait_for_timeout(250)
                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-tests/test_avatar_layer_diagnostic.py:27: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_avatar_layer_diagnostic.py:27:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 .venv/lib/python3.12/site-packages/playwright/sync_api/_generated.py:9606: in add_style_tag
     self._sync(
 .venv/lib/python3.12/site-packages/playwright/_impl/_page.py:510: in add_style_tag
@@ -35,7 +35,7 @@ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 .venv/lib/python3.12/site-packages/playwright/_impl/_connection.py:76: in send
     return await self._connection.wrap_api_call(
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 self = <playwright._impl._connection.Connection object at 0x7f1337c9d9a0>
 cb = <function Channel.send.<locals>.<lambda> at 0x7f1336236840>

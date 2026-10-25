@@ -1,0 +1,17 @@
+{
+  "measured_source": "b98873e2332c02f076591cc0372096db807de8ea",
+  "production_source": "c57d9be",
+  "cpu_affinity": [
+    0,
+    1,
+    2
+  ],
+  "cpu_max": "400000 100000",
+  "filesystem": "overlayfs",
+  "baseline_source": "1c964dc",
+  "baseline_checkout": "/workspace/css-is-control-isolated",
+  "same_test_driver": true,
+  "gates": "Unchanged historical and matched baseline gates; no sample replacement. Native invoker timing diagnostic; directly recorded owned FunctionCall wall50ms plus untraced/traced frame33ms.",
+  "attribution_limit": "Page-wide rendering outside owned FunctionCall spans cannot be conclusively attributed by this trace. Original untraced 20-sample latency/frame/memory comparisons remain required.",
+  "test_driver_sha256": "77b62c71d74cb45ecfea303cb42e3c6c1610f949acb253402a99148fa4d7d5b6"
+}

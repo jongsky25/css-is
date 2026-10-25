@@ -1,6 +1,6 @@
 # Avatar visual upgrade — phased execution plan for Sol
 
-Status: Increments 0, 1 and 2A complete. Increment 2B artwork is implemented; the LCP follow-up passed on `00d76bc`, but final-source focused native motion gates fail on `b7daa79`. Do not advance to 3A. Static picker thumbnails are resolved; other baseline release blockers remain recorded.
+Status: Increments 0, 1 and 2A complete. Increment 2B performance fixes are implemented through `c57d9be`; final-source acceptance validation is in progress. Do not advance to 3A until every required gate passes. Static picker thumbnails are resolved; other baseline release blockers remain recorded.
 Created: 2026-10-25
 Repository: jongsky25/css-is
 Owner request: Material improvement to companion artwork, optional animal dress-up,
@@ -286,7 +286,7 @@ browser tests ran.
 | 0 Baseline | Complete — baseline established; release gates remain unmet | `94269dd` + evidence/ledger revision | [51 sheets](avatars/sheets/index.json), [monthly overview](avatars/sheets/monthly-stage6-overview.png), [hero/moods](avatars/smoke/) | [Report](avatars/BASELINE_REPORT.md), [20 full samples + summary](avatars/application/summary.json), native hidden/touch check; existing frame, picker, timer and remount failures retained. |
 | 1 Cat + plant slice | Complete — measured relative gates passed | `58cf98f`, `0be7fc3`, `ad4e7ad`, `d464461` + evidence revision | [Bare comparison](avatars/increment1/before-after-bare-light.png), [motion](avatars/increment1/before-after-motion.webm), [51 seasonal sheets](avatars/increment1/sheets/index.json) | [Report](avatars/increment1/REPORT.md), [20-sample comparison](avatars/increment1/comparison.json); 102 tests, native touch/keyboard/filter checks, sampled callback trace passed; baseline lifecycle/picker blockers retained. |
 | 2A Cactus/bonsai/sunflower | Complete — measured relative gates passed | `6064a82`, `1b453e0`, `28fbb7b` + evidence revision | [Six-stage comparison](avatars/increment2a/before-after-bare-light.png), [51 sheets](avatars/increment2a/sheets/index.json), [motion](avatars/increment2a/before-after-motion.webm) | [Report](avatars/increment2a/REPORT.md), [fresh 20 comparison](avatars/increment2a/comparison.json); 105 tests, 324 visual reaction cases, mature care/traces and native checks passed. Pre-fix failures retained; audio-sync feedback fixed. Remaining lifecycle/picker blockers persist. |
-| 2B Fern/mushroom/succulent | Blocked — final-source focused native motion gates failed | Artwork `6ddce82`; follow-ups `853c93d`, `41c8e01`, `00d76bc`, `b7daa79` | [Six-stage comparison](avatars/increment2b/before-after-bare-light.png), [fresh 51 sheets](avatars/increment2b/lcp-unblock/static-previews/sheets/index.json), [reaction checks](avatars/increment2b/lcp-unblock/static-previews/motion-rig-check.json) | [Report](avatars/increment2b/REPORT.md), [assessment](avatars/increment2b/assessment.json). 260 tests and 3 functional browser checks pass; 486 reaction cases, 21 reduced-motion transitions and 4,896 pixel-identical cells. Earlier-source full20 LCP gates pass (cold desktop328ms), but final-source native callbacks/frame gates fail. All samples retained; final-source full20 not started; 3A pending. |
+| 2B Fern/mushroom/succulent | Final-source acceptance validation in progress | Artwork `6ddce82`; performance fixes through `c57d9be` | [Six-stage comparison](avatars/increment2b/before-after-bare-light.png), [fresh 51 sheets](avatars/increment2b/lcp-unblock/static-previews/sheets/index.json), [reaction checks](avatars/increment2b/lcp-unblock/static-previews/motion-rig-check.json) | [Report](avatars/increment2b/REPORT.md), [assessment](avatars/increment2b/assessment.json). 260 tests and 3 functional browser checks pass; 486 reaction cases, 21 reduced-motion transitions and 4,896 pixel-identical cells. Earlier-source full20 LCP gates pass (cold desktop328ms), but final-source native callbacks/frame gates fail. All samples retained; final-source full20 not started; 3A pending. |
 | 3A Ground animals + bird | Pending | — | — | — |
 | 3B Swimmers + owl + bat | Pending | — | — | — |
 | 4A Wardrobe model/rendering | Pending | — | — | — |
@@ -522,3 +522,55 @@ confirms actual document.hidden with zero hidden rAF frames, working movement an
 zero animated picker cards. [Real care](avatars/increment2b/lcp-unblock/care/live-plant-care.json)
 confirms all three mature plants' authenticated care POST, SQLite timestamp and
 wet-soil UI. These passing checks do not override the failed motion prerequisite.
+
+
+### Increment 2B geometry/layout follow-up — 2026-10-25 — final validation
+
+Product changes through `c57d9be` remove repeated live geometry reads from
+interaction callbacks, refresh geometry in ResizeObserver’s completed-layout
+phase, and restart existing happy CSS animations without forced offsetWidth
+reflow. Cached movement follows actual CSS transition timing/easing; repeated
+clamped destinations retain the existing timeline. Only head-tracking species
+measure SVG head bounds (mature mushroom: six unnecessary reads before, zero now).
+The new geometry scheduler and global observers/listeners remain stable after
+twenty script evaluations. Artwork, care policy, account identity, scoring and
+sounds remain unchanged. No new dependency, containment or compositing hint.
+
+[260 tests](avatars/increment2b/layout-fix/validation-tests.txt),
+[six browser checks](avatars/increment2b/layout-fix/functional/tests.txt),
+[1,734 exact SVG checks](avatars/increment2b/layout-fix/artwork-equivalence.json),
+[4,896 pixel-identical cells](avatars/increment2b/layout-fix/visual/unchanged-species.json)
+and [486 reactions/21 reduced-motion transitions](avatars/increment2b/layout-fix/visual/motion-rig-check.json) pass.
+Browser checks include actual transition-position agreement, drag bounds after
+resize/scroll, stable geometry infrastructure, active animation replay without
+layout reads, pointer/head limits and responsive search navigation. Every previous
+failed/stopped cohort remains under `layout-fix/pre-*`; no sample is replaced.
+
+The [attribution correction](avatars/increment2b/layout-fix/attribution-plan.json)
+implements the original “avatar-attributable main-thread long tasks over 50 ms”
+rule with direct native timeline FunctionCall wall spans. A blank page with no
+avatar/application code reports a 143 ms native invoker duration for an empty
+callback, so an invoker URL alone cannot establish owned work. Native invoker
+records remain diagnostic. No CPU/GC/baseline subtraction or threshold relaxation
+is permitted; both untraced and traced frame p95 must remain ≤33 ms. This does not
+establish the cause of every earlier stall or attribute all page-wide rendering.
+
+The [controlled fixture](avatars/increment2b/isolated-fixture/final-fixture.json)
+uses three-core affinity with unchanged Chromium154, CPU1/4, viewport, date/seed
+and 30-second scenarios. Fresh original-source `1c964dc` and current-source
+matrices must share this setting and pass both fresh matched and original
+historical budgets. The CSS compositing candidate was rejected: no frame
+improvement. Final callback traces, original20 matrices and current-source native
+hidden/touch/keyboard/persisted care checks are pending below; acceptance remains
+blocked until their recorded gates all pass. No deployment or3A work.
+
+The first final-source untraced15 all pass16.7–16.8ms, but direct tracing still
+finds fern33.4ms/265.347ms. [All records remain](avatars/increment2b/layout-fix/pre-thread-pin-fixture/STOPPED.json).
+A separate profile diagnostic finds gaps and no nested layout, including old-art
+failures. Chromium154’s POSIX throttle busy-waits in SIGUSR2 and blocks SIGPROF;
+this limits attribution but does not waive any result. The predeclared
+[thread-pinning diagnostic](avatars/increment2b/layout-fix/thread-pin-plan.json)
+passes all four old/new-art runs (callbacks19.632/23.374/14.013/7.703ms; frames16.8).
+Fresh native15/trace30 now use renderer main/throttler CPU1 affinity within the
+existing CPUs0–2 fixture. Both full original/current matrices must share it and
+pass historical budgets too; diagnostic results cannot substitute for acceptance.
