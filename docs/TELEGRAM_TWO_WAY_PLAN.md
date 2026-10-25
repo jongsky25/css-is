@@ -1,6 +1,6 @@
 # Office Connect ↔ Telegram delivery plan
 
-Status: T0–T4.3.1 merged; T4.3.2 in progress; two-way defaults remain off; production activation unverified.
+Status: T0–T4.3.1 merged; T4.3.2 in review; two-way defaults remain off; production activation unverified.
 Last updated: 2026-10-25.
 Repository: jongsky25/css-is.
 Planning baseline inspected: abf3141 (merge of PR #458).
@@ -147,7 +147,7 @@ T0 merged in PR #465 at `4cd01a0bfd17ccf57dba12b05a24c72bfd098f29`. T1.1 merged 
 | T4.1 | Merged | Codex / 2026-10-25 | [PR #484](https://github.com/jongsky25/css-is/pull/484), `feat/telegram-t4-1-change-events` | Durable source changes and metadata-only routing; 926 tests passed | Merged at `ab544d1`, release 8.73; all required CI passed; next T4.2 |
 | T4.2 | Merged | Codex / 2026-10-25 | [PR #485](https://github.com/jongsky25/css-is/pull/485), `feat/telegram-t4-2-change-notices` | Safe notices through the existing durable sender; 927 regressions + 29 release tests passed | Merged at `e78dfcb`, release 8.75; all fresh CI passed; next T4.3.1 |
 | T4.3.1 | Merged | Codex / 2026-10-25 | [PR #486](https://github.com/jongsky25/css-is/pull/486), `feat/telegram-t4-3-1-preferences` | Channel controls and quiet hours; 1,013 regressions + 29 release tests passed | Merged at `3e88262`, release 8.76; all required CI passed; next T4.3.2 |
-| T4.3.2 | In progress | Codex / 2026-10-25 | `feat/telegram-t4-3-2-reminders` | Durable private Telegram reminders; 1,130 regressions + 29 release tests passed | Defaults off; T4.4 after review/merge |
+| T4.3.2 | In review | Codex / 2026-10-25 | [PR #487](https://github.com/jongsky25/css-is/pull/487), `feat/telegram-t4-3-2-reminders` | Durable private Telegram reminders; 1,130 regressions + 29 release tests passed | Defaults off; T4.4 after review/merge |
 | T4.4–T7 | Planned | Unassigned | — | Not implemented | Follow dependencies |
 
 ### T0 handoff — 2026-10-25
@@ -413,6 +413,7 @@ T0 merged in PR #465 at `4cd01a0bfd17ccf57dba12b05a24c72bfd098f29`. T1.1 merged 
 ### T4.3.2 implementation and operator handoff — 2026-10-25
 
 - Owner/branch: Codex, `feat/telegram-t4-3-2-reminders`, created after PR #486 merged at `3e88262044f0376b395722fbf26de38dc320f08c`. Tested head `a3cfab7` passed full normal/shuffled suites, dependency audit, release metadata and Required checks (run 40196199760). Immediately before merge the PR was clean, main unchanged, local merge absent and no active/queued merge-group or auto-merge was found.
+- Review: [PR #487](https://github.com/jongsky25/css-is/pull/487), implementation `d99900652f710c74bb1961ded7cad69e5c4579b9`; code complete, awaiting required PR CI/review/merge. This documentation handoff is in the same PR.
 - Scope: separate default-off private Telegram reminder opt-ins and lead times for timed calendar occurrences and own approved room bookings; reuse current channel/quiet-hour settings and the existing durable sender. No new email reminder transport, group reminder disclosure, business mutation or live activation.
 - Acceptance: own-account/session/CSRF/stale-form checks; Manila/UTC/day boundaries; durable per-occurrence deduplication, restart/two-worker/restore behavior; cancelled/rescheduled/skipped sources; current account/link/grant/source checks before I/O; quiet deferral without consuming attempts or shortening 429 delays. Existing reminders, interactive replies, group change notices and independent digests preserve their controls.
 - Implementation/runbook: [private reminder policy and operator guide](TELEGRAM_REMINDERS.md), `telegram_reminders.py`, settings router/template, existing bot tick/sender and source/grant/preference fences. Native current-user form offers Off/15/30/60 minutes/one day per category, with session/Origin/CSRF, bounded allowlist, revision conflicts and atomic audit/cancellation. Calendar visibility plus creator/participant relationship and current own approved room slots remain authoritative. Existing email reminders, group updates and digests preserve their controls.
@@ -489,4 +490,4 @@ T2.2 merge reconciliation: preserved concurrent search release 8.60 and its runt
 
 - 2026-10-25: Confirmed PR #485 merged at `e78dfcb` after fresh CI and no ongoing merge. Completed the separate T4.3.1 preference/quiet-hour child in [PR #486](https://github.com/jongsky25/css-is/pull/486) with 1,013 passing regressions and 29 release checks; Markdown runbook and progress evidence are included in the same PR. Await its CI/review/merge before T4.3.2; no reminder scheduler or hosted activation is claimed.
 
-- 2026-10-25: Confirmed PR #486 merged at `3e88262` after full normal/shuffled CI, required checks and no ongoing/queued merge. Completed T4.3.2 separately with 1,130 passing regressions, 29 release tests and the Markdown runbook/progress handoff. Await new PR CI/review/merge before T4.4; no hosted activation is claimed.
+- 2026-10-25: Confirmed PR #486 merged at `3e88262` after full normal/shuffled CI, required checks and no ongoing/queued merge. Completed T4.3.2 separately in [PR #487](https://github.com/jongsky25/css-is/pull/487) with 1,130 passing regressions, 29 release tests and the Markdown runbook/progress handoff. Await new PR CI/review/merge before T4.4; no hosted activation is claimed.
