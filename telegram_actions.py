@@ -1,15 +1,18 @@
-"""Dormant, actor-bound preview and atomic receipt contract.
+"""Actor-bound preview and atomic receipt contract.
 
-ADAPTERS is intentionally empty. No bot command, callback, scope issuance or real
-business adapter is installed in T3.1. A future trusted adapter must implement
+Trusted adapters implement
 prepare/revalidate/apply/check_receipt, with domain authorization on every call.
 apply runs under BEGIN IMMEDIATE and MUST NOT commit or perform network I/O.
 """
 from datetime import timedelta
+import base64
+import hmac
+import auth
 import hashlib
 import json
 import re
 import secrets
+import time
 from uuid import uuid4
 
 from documents_storage import rows,transaction
@@ -112,17 +115,20 @@ def issue(conn,context,action,client_key,fields,now):
             if old[0]['state']!='pending':
                 result['receipt']=receipt(conn,user,adapter,old[0])
             return result
-        token=secrets.token_urlsafe(32);operation_id=uuid4().hex
+        operation_id=uuid4().hex;nonce=secrets.token_hex(32)
+        token=derive_token(operation_id,nonce)
         conn.execute('''INSERT INTO telegram_operation
             (operation_id,actor_id,connection_id,generation,action,client_key,input_hash,context_hash,state,created_at,updated_at)
             VALUES (?,?,?,?,?,?,?,?,'pending',?,?)''',
             (operation_id,user['id'],context['connection_id'],context['generation'],action,client_key,hash_,digest(packed(context)),links.stamp(now),links.stamp(now)))
         conn.execute('''INSERT INTO telegram_preview
             (token_hash,operation_id,actor_id,connection_id,generation,bot_identity,bot_fingerprint,chat_id,topic_id,
-             registration_id,registration_generation,action,input_hash,fields_json,summary_json,expected_json,state,created_at,expires_at)
-            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'pending',?,?)''',
+             registration_id,registration_generation,action,input_hash,fields_json,summary_json,expected_json,state,created_at,expires_at,token_nonce)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'pending',?,?,?)''',
             (digest(token),operation_id,user['id'],context['connection_id'],context['generation'],bot[0],bot[2],context['chat_id'],context['topic_id'],
-             context['registration_id'],context['registration_generation'],action,hash_,*encoded,links.stamp(now),links.stamp(now+timedelta(seconds=TTL))))
+             context['registration_id'],context['registration_generation'],action,hash_,*encoded,links.stamp(now),links.stamp(now+timedelta(seconds=TTL)),nonce))
+        if hasattr(adapter,'queue_preview'):
+            adapter.queue_preview(conn,user,operation_id,context,now)
         return {'operation_id':operation_id,'token':token,'preview':summary}
 
 
@@ -143,13 +149,26 @@ def recover(conn,context,action,operation_id):
         return receipt(conn,user,adapter,found[0])
 
 
+def derive_token(operation_id,nonce):
+    raw=hmac.new(auth._secret(),('telegram-action:'+operation_id+':'+nonce).encode(),hashlib.sha256).digest()
+    return base64.urlsafe_b64encode(raw).decode().rstrip('=')
+
+
 def confirm(conn,context,token,now):
-    binding(context)
     if not isinstance(token,str) or not re.fullmatch('[A-Za-z0-9_-]{43}',token):
+        raise Unavailable('Confirmation unavailable.')
+    return confirm_digest(conn,context,digest(token),now)
+
+
+def confirm_digest(conn,context,token_hash,now):
+    started=time.monotonic()
+    clock=lambda:now+timedelta(seconds=time.monotonic()-started)
+    binding(context)
+    if not isinstance(token_hash,str) or not re.fullmatch('[a-f0-9]{64}',token_hash):
         raise Unavailable('Confirmation unavailable.')
     # Fresh membership proof outside the writer lock, followed by local generation rechecks.
     if context['chat_id']<0:
-        pre=rows(conn,'SELECT action FROM telegram_preview WHERE token_hash=?',(digest(token),))
+        pre=rows(conn,'SELECT action FROM telegram_preview WHERE token_hash=?',(token_hash,))
         if not pre:
             raise Unavailable('Confirmation unavailable.')
         _,_,bot=authority(conn,context,pre[0]['action'])
@@ -157,7 +176,7 @@ def confirm(conn,context,token,now):
         if not groups.verify_delivery(conn,check,bot):
             raise Unavailable('Group membership could not be verified.')
     with transaction(conn):
-        found=rows(conn,'SELECT * FROM telegram_preview WHERE token_hash=?',(digest(token),))
+        found=rows(conn,'SELECT * FROM telegram_preview WHERE token_hash=?',(token_hash,))
         if not found:
             raise Unavailable('Confirmation unavailable.')
         preview=found[0];user,adapter,bot=authority(conn,context,preview['action'])
@@ -167,7 +186,7 @@ def confirm(conn,context,token,now):
         operation=rows(conn,'SELECT * FROM telegram_operation WHERE operation_id=?',(preview['operation_id'],))[0]
         if preview['state']=='consumed' and operation['state'] in ('committed','partial','failed'):
             return receipt(conn,user,adapter,operation)
-        if preview['state']!='pending' or operation['state']!='pending' or preview['expires_at']<=links.stamp(now):
+        if preview['state']!='pending' or operation['state']!='pending' or preview['expires_at']<=links.stamp(clock()):
             raise Unavailable('Confirmation expired or changed. Start a new preview.')
         try:
             clean=json.loads(preview['fields_json']);expected=json.loads(preview['expected_json']);summary=json.loads(preview['summary_json'])
@@ -185,13 +204,17 @@ def confirm(conn,context,token,now):
                 or any(result.get(k) is not None and (type(result[k]) is not int or result[k]<=0) for k in ('result_entry_id','result_room_id'))):
             raise Unavailable('Action receipt unavailable.')
         authority(conn,context,preview['action'])
-        if not conn.execute("SELECT 1 FROM telegram_preview WHERE token_hash=? AND state='pending'",(digest(token),)).fetchone():
+        if preview['expires_at']<=links.stamp(clock()):
+            raise Unavailable('Confirmation expired during the action.')
+        if not conn.execute("SELECT 1 FROM telegram_preview WHERE token_hash=? AND state='pending'",(token_hash,)).fetchone():
             raise Unavailable('Confirmation was revoked during the action.')
         conn.execute('''UPDATE telegram_operation SET state=?,result_entry_id=?,result_room_id=?,result_code=?,updated_at=?
             WHERE operation_id=? AND state='pending' ''',
             (result['state'],result.get('result_entry_id'),result.get('result_room_id'),result['result_code'],links.stamp(now),operation['operation_id']))
-        conn.execute("UPDATE telegram_preview SET state='consumed',fields_json=NULL,summary_json=NULL,expected_json=NULL,consumed_at=? WHERE token_hash=?",(links.stamp(now),digest(token)))
+        conn.execute("UPDATE telegram_preview SET state='consumed',fields_json=NULL,summary_json=NULL,expected_json=NULL,consumed_at=? WHERE token_hash=?",(links.stamp(now),token_hash))
         current=rows(conn,'SELECT * FROM telegram_operation WHERE operation_id=?',(operation['operation_id'],))[0]
+        if hasattr(adapter,'queue_receipt'):
+            adapter.queue_receipt(conn,user,current,context,clock())
         return receipt(conn,user,adapter,current)
 
 
@@ -199,6 +222,6 @@ def cleanup_in_transaction(conn,now):
     conn.execute('''UPDATE telegram_preview SET state='cancelled',fields_json=NULL,summary_json=NULL,expected_json=NULL
         WHERE token_hash IN (SELECT token_hash FROM telegram_preview WHERE state='pending' AND expires_at<=? LIMIT 20)''',(links.stamp(now),))
     conn.execute("DELETE FROM telegram_preview WHERE token_hash IN (SELECT token_hash FROM telegram_preview WHERE state<>'pending' AND expires_at<? LIMIT 20)",(links.stamp(now-timedelta(days=1)),))
-    conn.execute('''UPDATE telegram_operation SET target_id=NULL,expected_revision=NULL,result_entry_id=NULL,result_room_id=NULL,result_code='retained_key'
+    conn.execute('''UPDATE telegram_operation SET target_id=NULL,expected_revision=NULL,context_json=NULL,result_entry_id=NULL,result_room_id=NULL,result_code='retained_key'
         WHERE operation_id IN (SELECT operation_id FROM telegram_operation WHERE state<>'pending' AND updated_at<?
         AND (result_code IS NULL OR result_code<>'retained_key') LIMIT 20)''',(links.stamp(now-timedelta(days=180)),))

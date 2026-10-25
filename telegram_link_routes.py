@@ -30,7 +30,8 @@ def make_router(templates, get_conn):
             return templates.TemplateResponse(request, 'telegram_link.html',
                 {'show_scope': False, 'account': user, 'connection': connection, 'grants': grants,
                  'pending': pending, 'ready': bool(links.available()), 'csrf': csrf(request),
-                 'scopes': links.SCOPES, 'error': error,
+                 'scopes': {k:v for k,v in links.SCOPES.items() if k!='calendar.create' or bot.storage.enabled('calendar_create')}, 'error': error,
+                 'meeting_ready': bool(links.authorized(conn,user['id'],'calendar.create') and links.authorized(conn,user['id'],'calendar.read')),
                  'rooms_ready': bool(links.authorized(conn,user['id'],'rooms.read') and links.origin() and len(links.origin())<=200 and bot.storage.enabled('inbound') and bot.storage.enabled('delivery')),
                  'calendar_ready': bool(links.authorized(conn,user['id'],'calendar.read') and links.origin() and len(links.origin())<=200 and bot.storage.enabled('inbound') and bot.storage.enabled('delivery'))}, status_code=status, headers=PRIVATE)
         except ValueError:

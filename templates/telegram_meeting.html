@@ -1,0 +1,29 @@
+{% extends "dash_layout.html" %}
+{% block title %}Prepare a Telegram meeting — Office Connect{% endblock %}
+{% block content %}
+<div style="max-width:720px;margin:auto;overflow-wrap:anywhere">
+<h1>Prepare one meeting</h1>
+<p><a href="/account/telegram">Telegram connection and permissions</a></p>
+<p>Start with <code>/meeting</code> in your private bot chat or an approved group/topic. Choose exact fields here, then check and confirm the preview in your own private bot chat within five minutes. This form creates no calendar entry.</p>
+<p>All dates and times use <strong>Asia/Manila</strong>. One date, with end time after start time; recurring meetings and room requests stay in Office Connect. No automatic video link is created.</p>
+{% if error %}<p role="alert">{{ error }}</p>{% endif %}
+{% if queued %}<p role="status">Your preview is prepared. Check your private Telegram chat for its exact confirmation command. Nothing is created until you send that command. If delivery is uncertain or paused, check the hosting pilot; start a new preview after expiry.</p>{% endif %}
+{% if already %}<p role="status">This operation already has a receipt. Check your private chat or use the recovery command from the original preview. No second meeting was created.</p>{% endif %}
+{% if origins %}
+<form method="post" action="/account/telegram/meeting">
+<input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="key" value="{{ key }}">
+<p><label for="meeting-origin">Starting conversation</label><br><select id="meeting-origin" name="origin" required>{% for item in origins %}<option value="{{ item.id }}" {% if item.id == selected %}selected{% endif %}>{{ item.label }}</option>{% endfor %}</select></p>
+<p><label for="meeting-title">Meeting title</label><br><input id="meeting-title" name="title" value="{{ values.get('title','') }}" maxlength="120" required style="width:100%;box-sizing:border-box"></p>
+<p><label for="meeting-day">Office date</label><br><input id="meeting-day" name="day" value="{{ values.get('day','') }}" type="date" required></p>
+<p><label for="meeting-start">Start time</label><br><input id="meeting-start" name="start_time" value="{{ values.get('start_time','') }}" type="time" required></p>
+<p><label for="meeting-end">End time</label><br><input id="meeting-end" name="end_time" value="{{ values.get('end_time','') }}" type="time" required></p>
+<p><label for="meeting-venue">Venue</label><br><input id="meeting-venue" name="venue" value="{{ values.get('venue','') }}" maxlength="120" style="width:100%;box-sizing:border-box"></p>
+<p><label for="meeting-audience">Calendar audience</label><br><select id="meeting-audience" name="audience" required><option value="people" {% if values.get('audience','people') == 'people' %}selected{% endif %}>Only selected people and creator</option><option value="unit" {% if values.get('audience') == 'unit' %}selected{% endif %}>Owning unit and selected people</option><option value="bureau" {% if values.get('audience') == 'bureau' %}selected{% endif %}>Everyone in the bureau</option></select></p>
+<p><label for="meeting-unit">Owning unit</label><br><select id="meeting-unit" name="owner_org_id"><option value="">None</option>{% for unit in units %}<option value="{{ unit.id }}" {% if values.get('owner_org_id') == unit.id|string %}selected{% endif %}>{{ unit.label }}</option>{% endfor %}</select></p>
+<fieldset><legend>Participants (at most twelve)</legend>{% for person in people %}<p><label><input type="checkbox" name="people" value="{{ person.user_id }}" {% if person.user_id|string in values.get('people',[]) %}checked{% endif %}> {{ person.name }} (account {{ person.user_id }})</label></p>{% endfor %}</fieldset>
+<p>Group membership grants no calendar access. This request does not share the meeting with a Telegram group; group sharing needs a separate exact-version approval. Participants and the full preview are sent only to your private bot chat.</p>
+<button type="submit">Send exact preview to my private chat</button>
+</form>
+{% else %}<p>No current meeting request. Enable the optional pilot, consent to calendar reading and meeting creation when linking, and send <code>/meeting</code> again. Keep room creation off.</p>{% endif %}
+</div>
+{% endblock %}

@@ -4,16 +4,17 @@ Implementation: [telegram_actions.py](../telegram_actions.py),
 [calendar_actions.py](../calendar_actions.py),
 [delivery plan](TELEGRAM_TWO_WAY_PLAN.md).
 
-This is a dormant service contract. The production adapter registry is empty.
-There is no action command, callback, action preview screen or write-grant issuance.
-Enabling environment switches cannot create a calendar entry or room request
-through Telegram in T3.1. Tests install a synthetic adapter explicitly.
+T3.1 introduced this contract with an empty adapter registry. T3.2 now installs
+one calendar-create adapter through the [guided meeting flow](TELEGRAM_MEETINGS.md).
+It requires explicit current read/create consent and independent default-off
+switches. Room actions remain uninstalled. No production activation or hosted
+verification is recorded.
 
 ## Calls and bindings
 
 `issue(conn, context, action, client_key, fields, now)` returns an operation ID,
-an opaque 43-character token and a structured preview. Tokens contain 256 bits
-of randomness; only their SHA-256 hashes are stored. The token fits within a
+an opaque 43-character token and a structured preview. Tokens are derived with domain-separated HMAC from a random 256-bit nonce and
+operation ID; SQLite stores the nonce and token hash, never a plaintext code. The token fits within a
 64-byte callback when prefixed with a short action marker in a later increment.
 It expires after five minutes. There is no token regeneration for an existing key.
 
@@ -46,7 +47,8 @@ not invalidate a previously committed outcome.
 destination context and domain access before returning the receipt. This is the
 recovery path when a response is lost after commit, including after the token is
 purged. A receipt does not preserve authorization after access is revoked.
-Neither confirmation nor recovery sends a Telegram message in this increment.
+The installed adapter queues private descriptors transactionally; the separate
+bounded transport renders and sends them after commit.
 
 Receipts contain operation ID, action, state (`committed`, `partial`, `failed`;
 pending/cancelled can be inspected through recovery), safe result code and nullable
@@ -56,7 +58,8 @@ an unexpected failure rolls back and leaves the unexpired preview pending.
 
 ## Trusted adapter responsibilities
 
-Future adapters must implement these methods; none is installed here:
+Trusted adapters implement these methods; calendar creation is installed and
+room requests remain a later increment:
 
 | Method | Required behavior |
 | --- | --- |
@@ -79,14 +82,20 @@ its existing recurrence/detach, room-request and post-commit Meet orchestration.
 The extracted service performs no network I/O. T3.3 owns transaction extraction
 for room requests; this increment does not change room writes.
 
-Before T3.2, implement the real non-recurring meeting adapter, deterministic
-input and action consent, safe preview delivery and explicit confirmation wiring.
-Full participant/audience previews must not be sent into a group merely because
-the requester may see them. Originating in a group does not grant source-share
-consent. Preserve current signed-in hard-delete behavior when deciding how real
-receipt result foreign keys and receipt recovery interact with deleted records.
-External relay recovery or new external calendar integration is not provided by
-this contract.
+The optional `queue_preview` and `queue_receipt` adapter hooks run in their
+respective writer transactions and may enqueue descriptors only, with no commits
+or network I/O. The meeting adapter uses them for private delivery. `confirm_digest`
+lets the authenticated update worker confirm using the stored token hash after
+private-sender validation, without persisting the raw incoming code.
+
+T3.2 implements deterministic fields, action consent and exact private preview
+confirmation for one non-recurring calendar meeting. Group-origin requests bind
+the original registration/topic and require membership proof at confirmation;
+full participant previews and receipts remain private. Source-share consent is
+not inferred. A before-delete trigger detaches calendar receipt foreign keys,
+cancels stale delivery and records a neutral deletion outcome, preserving UI hard
+deletes and preventing recreation on recovery. External relay recovery or new
+external calendar integration is not provided by this contract.
 
 ## Revocation, restore and retention
 
@@ -100,9 +109,8 @@ Cleanup cancels at most 20 expired previews per tick, immediately scrubbing thei
 content; it purges at most 20 non-pending token rows after expiry plus 24 hours.
 Pending token rows are never purged before their operations are cancelled.
 After 180 days it compacts at most 20 terminal operation receipts per tick,
-removing result IDs/revision/code details and retaining key/hash/context identity
+removing result IDs/revision/code details and raw routing context, retaining key/hash/context identity
 tombstones. Detailed recovery then denies with a neutral expiry response, and
 old keys still cannot execute again. Ordinary restart preserves unexpired
 previews and receipts. There is no exactly-once guarantee across rollback to an
-older database snapshot; production bot writes remain unavailable pending later
-implementation and hosted recovery evidence.
+older database snapshot; all write switches remain off by default pending hosted recovery evidence.

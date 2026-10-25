@@ -17630,6 +17630,8 @@ import telegram_link_routes
 app.include_router(telegram_link_routes.make_router(templates, get_conn))
 import telegram_group_routes
 app.include_router(telegram_group_routes.make_router(templates, get_conn))
+import telegram_meeting_routes
+app.include_router(telegram_meeting_routes.make_router(templates, get_conn))
 app.include_router(work_routes.make_router(templates, get_conn))
 async def _mcp_readiness_status():
     # Inspect the running server's registered catalog without calling business tools.
