@@ -130,3 +130,12 @@ Add a fixed bureau-wide submission month versus its immediately preceding month.
 ### Resource-person discovery and consecutive-year comparisons — v8.53
 
 Add permitted name/ID lookup and one selected person's Type 3 annual results versus the previous year. Share the dashboard's current hidden/Director predicate and quality-index/dimension arithmetic, label historical people, filter visibility before discovery paging and use minimal person metadata. New `surveys:resource_person_trends:read` consent and independent default-off `CSS_MCP_RESOURCE_PERSON_TRENDS_ENABLED` preserve older named-summary grants. No peer rankings, contacts, respondents or causal claims; both periods must pass all existing sample/capacity rules before any scores or changes are published. See the [person comparison pilot](MCP_READ_ADAPTER.md#resource-person-discovery-and-consecutive-year-comparisons--v853). All hosted acceptance remains pending. Broader breakdowns and writes remain later work.
+
+### Implemented operator status view — v8.62
+
+`/account/integrations/mcp`, linked from the existing Connected tools screen,
+provides phone-accessible running build/catalog inspection, pilot-switch status,
+own-connection scope checks and source-based survey verification prompts. It
+adds no MCP tools or write capability and cannot refresh ChatGPT's saved catalog.
+Live survey acceptance remains pending; use the page to distinguish host setup,
+connection consent and ChatGPT registration before the deferred desktop check.

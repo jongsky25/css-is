@@ -17631,7 +17631,21 @@ app.include_router(telegram_link_routes.make_router(templates, get_conn))
 import telegram_group_routes
 app.include_router(telegram_group_routes.make_router(templates, get_conn))
 app.include_router(work_routes.make_router(templates, get_conn))
-app.include_router(integration_access_routes.make_router(templates, get_conn))
+async def _mcp_readiness_status():
+    # Inspect the running server's registered catalog without calling business tools.
+    state = {'enabled': _MCP_ENABLED, 'tools': [], 'catalog_ok': False,
+             'build': {key: value for key, value in _load_build_info().items()
+                       if key in ('version', 'commit', 'deployed_at')}}
+    if _MCP_ENABLED:
+        try:
+            state['tools'] = sorted(tool.name for tool in await _mcp_server.list_tools())
+            state['catalog_ok'] = True
+        except Exception:
+            logging.getLogger(__name__).exception('Unable to inspect running MCP catalog')
+    return state
+
+
+app.include_router(integration_access_routes.make_router(templates, get_conn, _mcp_readiness_status))
 app.include_router(appearance_routes.make_router(templates, get_conn))
 app.include_router(supplies_routes.make_router(templates, get_conn))
 

@@ -177,3 +177,26 @@ Reuse the person's source dashboard quality index: normalize valid B (1–7) and
 Each year independently caps at 5,000 active responses and 100,000 answer rows; at most two selections per comparison. Empty, unrated, small or over-capacity periods return `comparison_state=not_comparable` and suppress both scorecards and all changes. Return period metadata/states/aggregate counts only. Capacity failure also makes overall availability `not_available`. Current archive, person assignment and visibility rules apply on the next read. Overlapping source reports and changing snapshots can still permit inference; this is not a formal anonymity guarantee. No comments, raw answers or contact records are loaded into these projections, no new schema/dependency or business writes; audit records omit name searches and person identity.
 
 Acceptance: compare both annual person dashboards and all dimension/quality/OSQ values, include missing metrics, sparse C/B cells, empty/N/A/archived years, Type 2/other-person exclusion, late submissions, exact bounds, inventory refusal and no writes. Verify hidden/Director search exclusion before pagination, administrator visibility and role downgrade, renamed/archived directory people, account/grant revocation, and old annual-scope denial for both tools. Record deployed version/SHA and hosted latency/capacity evidence before broader use. Disable the independent flag for rollback. Earlier live pilots remain pending.
+
+### Phone-accessible readiness (v8.62)
+
+Open **My profile → Connected tools → Check ChatGPT readiness**, or visit
+`/account/integrations/mcp` while signed in. The page is a status view, with no
+settings writes and no business-tool calls. It reads the running server's actual
+registered tool names, deployed build metadata, an explicit allowlist of pilot
+switches, and only the signed-in owner's latest 50 OAuth grants. Registration,
+activation and each connection's consent are separate checks. A grant being
+active means unrevoked with refresh lifetime remaining; the page cannot identify
+which connection ChatGPT uses or verify its saved access token. Existing role,
+module, record, sample and capacity checks still apply to actual reads.
+
+Selectable prompts cover Type 1 monthly summaries/comparisons, Type 2 bureau,
+individual activity and unit reports/comparisons, and Type 3 person summaries and
+comparisons. Fixed 2026 source links are examples; individual activity, unit and
+person verification must use the exact source links returned by those tools.
+No hosted pilot acceptance is marked complete by visiting this page.
+
+A disabled server and an unavailable catalog are shown explicitly, rather than
+reported as a successful empty catalog. The page cannot inspect or refresh
+ChatGPT's saved tool snapshot; that remains a separate ChatGPT app-management
+step on a supported desktop browser.
