@@ -1,0 +1,39 @@
+F
+=================================== FAILURES ===================================
+______________ test_cached_lean_tracks_actual_transition_position ______________
+
+baseline_server = ('http://127.0.0.1:44459', {'name': 'css_session', 'value': 'eyJ1aWQiOjQsInUiOiJhZG1pbkB0ZXN0LmxvY2FsIiwiciI6ImFkbWluI...YmRlZjAyNzUyIn0.e722e2c8a2fd28f1abac5e47b0a00d3ba0dacc05210080db735c47c806aad6f9', 'url': 'http://127.0.0.1:44459'}, 4)
+
+    def test_cached_lean_tracks_actual_transition_position(baseline_server):
+        from playwright.sync_api import sync_playwright
+        origin,cookie,_=baseline_server
+        results=[]
+        with sync_playwright() as pw:
+            browser=pw.chromium.launch(executable_path=shutil.which('chromium'),args=['--no-sandbox'])
+            context=browser.new_context(viewport={'width':1440,'height':1000},timezone_id='UTC')
+            context.add_cookies([cookie]);context.add_init_script(PROBE)
+            page=context.new_page();page.goto(origin+'/?view=me');page.wait_for_timeout(600)
+            wrap=page.locator('.avwrap[data-interactive]');button=wrap.locator('.av-play-btn')
+            for key in ['ArrowRight','ArrowLeft']:
+                button.focus();page.keyboard.press(key);page.wait_for_timeout(60)
+                box=wrap.bounding_box();page.mouse.move(box['x']+box['width']/2,box['y']+box['height']/2)
+                page.wait_for_timeout(25)
+                transform=wrap.locator('.av-tiltstage').evaluate('e=>e.style.transform')
+                import re
+                angle=float(re.search(r'rotateY\(([-\d.]+)deg\)',transform)[1])
+                results.append({'key':key,'rotate_y_deg':angle})
+>               assert abs(angle)<=.25, (key,transform,'Cursor at actual wrap center should not lean sideways')
+E               AssertionError: ('ArrowRight', 'rotateY(-0.7deg) rotateX(0deg)', 'Cursor at actual wrap center should not lean sideways')
+E               assert 0.7 <= 0.25
+E                +  where 0.7 = abs(-0.7)
+
+tests/test_avatar_geometry_browser.py:80: AssertionError
+=============================== warnings summary ===============================
+tests/test_avatar_geometry_browser.py::test_cached_lean_tracks_actual_transition_position
+  /workspace/css-is/tests/conftest.py:88: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_avatar_geometry_browser.py::test_cached_lean_tracks_actual_transition_position
+1 failed, 1 deselected, 1 warning in 6.03s

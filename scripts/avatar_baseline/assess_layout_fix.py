@@ -12,13 +12,15 @@ for name,digest in env['source_sha256'].items():
     assert hashlib.sha256(Path(name).read_bytes()).hexdigest()==digest,name
 assert subprocess.check_output(['stat','-f','-c','%T','.'],text=True).strip()=='overlayfs'
 assert '260 passed' in (out/'validation-tests.txt').read_text()
-assert '4 passed' in (out/'functional/tests.txt').read_text()
+assert '5 passed' in (out/'functional/tests.txt').read_text()
 assert read(out/'artwork-equivalence.json')['svg_equivalence_checks']==1734
 pixels=read(out/'visual/unchanged-species.json')
 assert pixels['cells']==4896 and pixels['species']==16 and pixels['pixel_identical']
 geometry=read(out/'functional/geometry-behavior.json')
 assert geometry['steady_input_live_geometry_reads']==0
 assert geometry['geometry_listeners_before']==geometry['geometry_listeners_after_20_evaluations']
+assert all(abs(r['rotate_y_deg'])<=.25 for r in read(out/'functional/transition-geometry.json'))
+assert read(out/'functional/static-preview-policy.json')['active_replay_offset_width_reads']==0
 rig=read(out/'visual/motion-rig-check.json')
 assert rig['cases']==486 and len(rig['reduced_motion_checks'])==21
 assert read(out/'functional/application/environment.json')['source_sha256']==env['source_sha256']
@@ -40,6 +42,11 @@ result={'status':'blocked','source_commit':env['source_commit'],'focused':focuse
                   'CPU-throttled local Chromium is not a physical-phone or 60fps claim.',
                   'Original failed cohorts and all outliers retained; budgets and acceptance scenarios unchanged.',
                   'Selected offscreen animation, chase/idle/roam timers and same-document listener retention remain pre-existing release blockers. Static picker thumbnails are resolved.']}
+control=read(out/'throttle-control/empty-control.json')
+result['empty_callback_control']={'file':'layout-fix/throttle-control/empty-control.json',
+    'source':control['source'],'max_empty_callback_ms':max(r['max_empty_callback_ms'] for r in control['samples']),
+    'samples':len(control['samples']),
+    'limit':'Blank page without avatars/application code reports143ms for an empty callback atCPU1. Native script invoker duration alone cannot establish avatar work as the cause. This does not waive any gate.'}
 gates={'focused_native':all(c['passed'] for c in focused.values())}
 primary=out/'application/summary.json'
 if primary.exists():

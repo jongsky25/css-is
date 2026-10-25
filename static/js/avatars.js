@@ -31,11 +31,58 @@
    * finish before curiosity writes any transforms. */
   var geometryState = window.__cssAvatarGeometry;
   if (!geometryState) geometryState = window.__cssAvatarGeometry = { raf: null, bodyObserver: null, listening: false };
+  function transitionFraction(t, curve) {
+    if (!curve) return t;
+    var low = 0, high = 1, u = t;
+    for (var i = 0; i < 12; i++) {
+      u = (low + high) / 2;
+      var x = 3 * (1-u) * (1-u) * u * curve[0] + 3 * (1-u) * u * u * curve[2] + u * u * u;
+      if (x < t) low = u; else high = u;
+    }
+    return 3 * (1-u) * (1-u) * u * curve[1] + 3 * (1-u) * u * u * curve[3] + u * u * u;
+  }
+  function geometryPosition(w) {
+    var motion = w._avMotion;
+    if (!motion) return { x: w._avPosX || 0, y: w._avPosY || 0 };
+    if (motion.start === null) return { x: motion.fromX, y: motion.fromY };
+    var clock = document.timeline.currentTime;
+    var t = Math.max(0, Math.min(1, (clock - motion.start) / motion.duration));
+    if (t >= 1) { w._avMotion = null; return { x: w._avPosX, y: w._avPosY }; }
+    var fraction = transitionFraction(t, motion.curve);
+    return { x: motion.fromX + (motion.toX - motion.fromX) * fraction,
+             y: motion.fromY + (motion.toY - motion.fromY) * fraction };
+  }
+  // Capture the browser's actual transition endpoints/start time after styles
+  // resolve. Pointer/chase updates then interpolate using only the timeline.
+  function syncGeometryTransition(w) {
+    if (!w._avMotion) return;
+    var animations = w.getAnimations ? w.getAnimations() : [];
+    for (var i = 0; i < animations.length; i++) {
+      var animation = animations[i];
+      if (animation.transitionProperty !== "transform" || !animation.effect) continue;
+      var frames = animation.effect.getKeyframes(), timing = animation.effect.getTiming();
+      try {
+        var from = new DOMMatrix(frames[0].transform), to = new DOMMatrix(frames[frames.length - 1].transform);
+        var easing = frames[0].easing !== "linear" ? frames[0].easing : timing.easing;
+        var curves = { ease: [.25,.1,.25,1], "ease-in": [.42,0,1,1],
+          "ease-out": [0,0,.58,1], "ease-in-out": [.42,0,.58,1] };
+        var curve = curves[easing] || null;
+        var custom = /^cubic-bezier\(([^)]+)\)$/.exec(easing);
+        if (custom) curve = custom[1].split(",").map(Number);
+        w._avMotion = { fromX: from.e, fromY: from.f, toX: to.e, toY: to.f,
+          start: animation.startTime === null ? document.timeline.currentTime - (animation.currentTime || 0) : animation.startTime,
+          duration: Number(timing.duration), curve: curve };
+      } catch (ignore) { w._avMotion = null; }
+      return;
+    }
+    w._avMotion = null;
+  }
   function measureGeometry(w) {
     var play = w.closest(".av-play"), head = w.querySelector(".av-head");
-    var box = w.getBoundingClientRect();
+    if (w._avMotion && w._avMotion.start === null) syncGeometryTransition(w);
+    var position = geometryPosition(w), box = w.getBoundingClientRect();
     var geometry = { box: box, head: head ? head.getBoundingClientRect() : null,
-      x: w._avPosX || 0, y: w._avPosY || 0,
+      x: position.x, y: position.y,
       play: play ? play.getBoundingClientRect() : null, bounds: null };
     if (play) {
       var left = w.offsetLeft, top = w.offsetTop;
@@ -48,7 +95,8 @@
   function geometryFor(w) { return w._avGeometry || measureGeometry(w); }
   function positionedBox(w, geometry, box) {
     if (!box) return null;
-    var dx = (w._avPosX || 0) - geometry.x, dy = (w._avPosY || 0) - geometry.y;
+    var position = geometryPosition(w);
+    var dx = position.x - geometry.x, dy = position.y - geometry.y;
     return { left: box.left + dx, right: box.right + dx,
              top: box.top + dy, bottom: box.bottom + dy,
              width: box.width, height: box.height };
@@ -692,7 +740,12 @@
     w._avDrag = true;
     var pos = { x: 0, y: 0 };
     var posKey = w.getAttribute("data-drag-key") || POS_KEY;
-    function apply() {
+    w.addEventListener("transitionrun", function (e) {
+      if (e.target === w && e.propertyName === "transform") syncGeometryTransition(w);
+    });
+    function apply(animated) {
+      var from = geometryPosition(w);
+      w._avMotion = animated && !still() ? { fromX: from.x, fromY: from.y, start: null } : null;
       w._avPosX = pos.x; w._avPosY = pos.y;
       w.style.transform = "translate(" + pos.x + "px," + pos.y + "px)";
     }
@@ -709,7 +762,7 @@
     try {
       var saved = JSON.parse(localStorage.getItem(posKey) || "null");
       if (saved && typeof saved.x === "number" && typeof saved.y === "number") {
-        pos = saved; clampToPlay(); apply();
+        pos = saved; clampToPlay(); apply(true);
       }
     } catch (e) {}
 
@@ -824,7 +877,7 @@
         w._avBusy = Date.now() + 300;
         w.style.transition = "transform .08s linear";
         pos.x += dx * k; pos.y += dy * k;
-        clampToPlay(bounds); apply();
+        clampToPlay(bounds); apply(true);
       }, 80);
     }
     w.addEventListener("keydown", function (e) {
@@ -833,7 +886,7 @@
       if (!d) return;
       e.preventDefault();
       pos.x += d[0]; pos.y += d[1];
-      clampToPlay(); apply(); save();
+      clampToPlay(); apply(true); save();
     });
   }
 

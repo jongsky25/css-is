@@ -1,4 +1,4 @@
-"""Write the current 2B report from fresh, complete evidence."""
+"""Write historical lazy-template evidence; use report_layout_fix.py for current2B."""
 import json
 from pathlib import Path
 root=Path('docs/avatars/increment2b');out=root/'lcp-unblock'
@@ -11,7 +11,7 @@ if a['primary_samples'] == 0:
         frames=[round(r['frame_p95_ms'],1) for r in samples]
         callbacks=[round(r['max_reported_owned_script_ms'],1) for r in samples]
         rows.append(f"| {kind} | {frames} | {callbacks} | {'PASS' if check['passed'] else 'FAIL'} |")
-    (root/'REPORT.md').write_text(f'''# Increment 2B — acceptance follow-up
+    (root/'REPORT-motion-blocked.md').write_text(f'''# Increment 2B — acceptance follow-up
 
 **Blocked. Do not start increment 3A.** Final product source: `{a['source_commit']}`.
 
@@ -135,7 +135,7 @@ for kind,check in a['avatar_callback_checks'].items():
     samples=check['samples']
     focused.append(f"| {kind} | {max(s['frame_p95_ms'] for s in samples):.1f} | {max(s['max_reported_owned_script_ms'] for s in samples):.1f} | {'PASS' if check['passed'] else 'FAIL'} |")
 status='Accepted. Increment 2B is complete; 3A is next.' if a['status']=='complete' else 'Blocked. Increment 3A must not start.'
-(root/'REPORT.md').write_text(f'''# Increment 2B — fern, mushroom and succulent
+(root/'REPORT-motion-blocked.md').write_text(f'''# Increment 2B — fern, mushroom and succulent
 
 **{status}** Source: `{a['source_commit']}`.
 
@@ -255,5 +255,5 @@ CSS_TEST_NOW=2026-07-15T12:00:00 CSS_AVATAR_BASELINE=1 CSS_AVATAR_RUNS=5 CSS_AVA
 .venv/bin/python scripts/avatar_baseline/report_lazy_artwork.py
 ```
 ''')
-(root/'assessment.json').write_text(json.dumps(a,indent=2))
+(out/'assessment.json').write_text(json.dumps(a,indent=2))
 print('Latest2B status:',a['status'])

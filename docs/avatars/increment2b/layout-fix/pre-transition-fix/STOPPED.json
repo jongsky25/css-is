@@ -1,0 +1,5 @@
+{
+  "source": "f66481e",
+  "reason": "Forced-layout replay path removed, but focused fern/mushroom native timings still fail. Empty-page control reports143ms for emptyTick() atCPU1. Independent behavior regression shows0.7deg sideways lean with cursor at actual wrapper center during keyboard transition: cache currently uses destination, not current interpolated position. Correct cached transition position before finalizing.",
+  "all_samples_retained": true
+}

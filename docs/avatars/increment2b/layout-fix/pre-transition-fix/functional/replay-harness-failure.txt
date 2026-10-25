@@ -1,0 +1,42 @@
+..F.
+=================================== FAILURES ===================================
+_________________ test_previews_static_live_companion_replays __________________
+
+baseline_server = ('http://127.0.0.1:37961', {'name': 'css_session', 'value': 'eyJ1aWQiOjQsInUiOiJhZG1pbkB0ZXN0LmxvY2FsIiwiciI6ImFkbWluI...MzE3MjlhNmU0In0.62b74c4a4768f8e87a4fd59909ac6fab9eccb4bb0d6f78303d44fd44a9c6d0c8', 'url': 'http://127.0.0.1:37961'}, 4)
+
+    def test_previews_static_live_companion_replays(baseline_server):
+        from playwright.sync_api import sync_playwright
+        origin,cookie,_=baseline_server
+        with sync_playwright() as pw:
+            browser=pw.chromium.launch(executable_path=shutil.which('chromium'),args=['--no-sandbox'])
+            context=browser.new_context(viewport={'width':1440,'height':1000},timezone_id='UTC')
+            context.add_cookies([cookie]);context.add_init_script(PROBE)
+            page=context.new_page();errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
+            page.goto(origin+'/?view=me');page.wait_for_timeout(200)
+            home=page.evaluate('''()=>({decorative:document.querySelectorAll('.avwrap:not([data-interactive])').length,
+              decorative_running:document.getAnimations().filter(a=>a.playState==='running'&&a.effect.target.closest('.avwrap:not([data-interactive])')).length,
+              live_running:document.getAnimations().filter(a=>a.playState==='running'&&a.effect.target.closest('.avwrap[data-interactive]')).length})''')
+            assert home['decorative_running']==0 and home['live_running']>0
+            page.evaluate("""()=>{window.avatarReplayLayoutReads=0;const w=document.querySelector('.avwrap[data-interactive]');
+              const native=Object.getOwnPropertyDescriptor(HTMLElement.prototype,'offsetWidth').get;
+              Object.defineProperty(w,'offsetWidth',{get(){avatarReplayLayoutReads++;return native.call(this)}})}""")
+            page.locator('.av-play-btn').focus();page.keyboard.press('Enter');page.wait_for_timeout(150)
+            first=page.evaluate("()=>document.getAnimations().find(a=>a.animationName==='av-bounce').currentTime")
+            page.keyboard.press('Enter');page.wait_for_timeout(50)
+            second=page.evaluate("()=>document.getAnimations().find(a=>a.animationName==='av-bounce').currentTime")
+            assert second<first, 'A second live tap did not restart the active bounce'
+            replay_layout_reads=page.evaluate('avatarReplayLayoutReads')
+>           assert replay_layout_reads==0, 'Active happy replay still forces offsetWidth layout'
+E           AssertionError: Active happy replay still forces offsetWidth layout
+E           assert 2 == 0
+
+tests/test_avatar_static_preview_browser.py:35: AssertionError
+=============================== warnings summary ===============================
+tests/test_avatar_geometry_browser.py::test_cached_geometry_preserves_drag_chase_resize_scroll
+  /workspace/css-is/tests/conftest.py:88: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_avatar_static_preview_browser.py::test_previews_static_live_companion_replays
+1 failed, 3 passed, 1 warning in 16.08s

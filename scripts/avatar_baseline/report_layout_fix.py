@@ -1,4 +1,4 @@
-"""Generate the latest2B report without overwriting historical failed evidence."""
+"""Generate the latest 2B report without overwriting historical failed evidence."""
 import json
 from pathlib import Path
 root=Path('docs/avatars/increment2b');out=root/'layout-fix'
@@ -8,17 +8,17 @@ focus=[]
 for kind,checks in a['focused'].items():
     samples=checks['samples']
     focus.append(f"| {kind} | {[round(r['frame_p95_ms'],1) for r in samples]} | {[round(r['max_reported_owned_script_ms'],1) for r in samples]} | {'PASS' if checks['passed'] else 'FAIL'} |")
-primary='The final-source original20 matrix has not completed; acceptance remains blocked.'
+primary='The final-source original 20 matrix has not completed; acceptance remains blocked.'
 if a['primary_samples']==20:
     comparison=read(out/'comparison.json');rows=[]
     for group in comparison['groups']:
         lcp=group['scenarios']['home_idle']['lcp_ms'];frames=group['scenarios']['home_interaction']['frame_p95_ms']['after']
         rows.append(f"| {'Mobile CPU4' if group['mobile'] else 'Desktop CPU1'} {group['cache']} | {lcp['before']['median']:.0f} / {lcp['before']['worst']:.0f} | {lcp['after']['median']:.0f} / {lcp['after']['worst']:.0f} | {lcp['median_delta']:+.0f} | {frames['median']:.1f} / {frames['worst']:.1f} |")
     matched=a['matched_control']
-    primary=f'''[All20 raw samples](layout-fix/application/summary.json) and the
+    primary=f'''[All 20 raw samples](layout-fix/application/summary.json) and the
 [complete comparison](layout-fix/comparison.json) retain medians and worst runs.
 
-| Fixture | Increment0 LCP median/worst ms | Current LCP median/worst ms | Median delta ms | Interaction framep95 median/worst ms |
+| Fixture | Increment 0 LCP median/worst ms | Current LCP median/worst ms | Median delta ms | Interaction frame p95 median/worst ms |
 |---|---:|---:|---:|---:|
 {chr(10).join(rows)}
 
@@ -26,7 +26,7 @@ The unchanged original-source overlay control has median
 {matched['control_median_ms']:.0f}ms. Current cold-desktop values
 **{matched['current_values_ms']}**, median **{matched['current_median_ms']:.0f}ms**,
 worst **{matched['current_worst_ms']:.0f}ms**, delta
-**{matched['median_delta_ms']:+.0f}ms** against the unchanged100ms limit.
+**{matched['median_delta_ms']:+.0f}ms** against the unchanged 100 ms limit.
 All secondary latency/heap/RSS gates are included in the assessment.
 Combined added gzip CSS+JS: **{comparison['css_js_gzip_delta_bytes']}B**.
 Maximum median Home document increase: **{max(g['home_encoded_delta'] for g in comparison['groups']):.0f}B**;
@@ -34,9 +34,9 @@ picker: **{max(g['picker_encoded_delta'] for g in comparison['groups']):.0f}B**.
 Worst runs remain included; none was dropped to satisfy a median gate.
 [Runner log](layout-fix/performance-tests.txt).'''
 gates='\n'.join(f"- `{key}`: **{'PASS' if passed else 'FAIL'}**" for key,passed in a['gates'].items())
-(root/'REPORT.md').write_text(f'''# Increment2B — fern, mushroom and succulent
+(root/'REPORT.md').write_text(f'''# Increment 2B — fern, mushroom and succulent
 
-**{'Accepted: increment2B is complete. Increment3A is next.' if accepted else 'Blocked: do not start increment3A.'}**
+**{'Accepted: increment 2B is complete. Increment 3A is next.' if accepted else 'Blocked: do not start increment 3A.'}**
 Frozen product source: `{a['source_commit']}`.
 [Assessment](layout-fix/assessment.json) records every gate.
 
@@ -57,10 +57,10 @@ instead of rescanning all companions after every decorative heart insertion/remo
 across repeated script evaluation. No new infrastructure accumulates on that path.
 The final correction captures ResizeObserver geometry in its completed-layout
 phase, instead of deferring the read until the next pre-render animation frame.
-A later sparse kernel diagnostic exposed another180.4ms click containing162.6ms
+A later sparse kernel diagnostic exposed another 180.4 ms click containing 162.6 ms
 forced layout in active happy replay. The final source restarts the existing
 bounce/spark CSS Animation objects via currentTime/play, without removing the class
-or reading offsetWidth. A real browser verifies restart, completion and0offsetWidth
+or reading offsetWidth. A real browser verifies restart, completion and 0 offsetWidth
 reads during tap handlers.
 
 Selected animation, head-angle limits, dog excitement/cooldowns, tap/hold/drag,
@@ -70,13 +70,13 @@ compositing hint or containment rule was added.
 
 ## Focused motion gate
 
-Five mature-stage6 warm mobileCPU4 runs per plant use the original30-second
+Five mature-stage 6 warm mobile CPU 4 runs per plant use the original 30-second
 interaction sequence. Native LoAF, LongTask and EventTiming plus a lightweight
 frame counter run without timer/event/rAF wrappers, callback clocks, stack capture
-or tracing. Every run must meet framep95≤33ms and reported owned script≤50ms.
-Zero reported duration means no owned script in a reported long frame, not zeroCPU.
+or tracing. Every run must meet frame p95≤33ms and reported owned script≤50ms.
+Zero reported duration means no owned script in a reported long frame, not zero CPU.
 
-| Species | Five framep95 values ms | Five maximum reported owned scripts ms | Gate |
+| Species | Five frame p95 values ms | Five maximum reported owned scripts ms | Gate |
 |---|---|---|---|
 {chr(10).join(focus)}
 
@@ -89,9 +89,9 @@ Raw data: [fern](layout-fix/native-control/fern/native-control.json),
 
 {primary}
 
-The original protocol remains fixed Chromium154.0.8037.57, CPU1/4,
-desktop1440×1000/mobile390×844, synthetic July15 date/seed, local gzip,
-overlay filesystem, five runs per device/cache and30-second idle/interaction
+The original protocol remains fixed Chromium 154.0.8037.57, CPU 1/4,
+desktop 1440×1000/mobile 390×844, synthetic July 15 date/seed, local gzip,
+overlay filesystem, five runs per device/cache and 30-second idle/interaction
 scenarios. Source hashes prove the same product revision for native checks,
 primary matrix and functional verification. No benchmark scenario or budget changed.
 
@@ -101,18 +101,21 @@ primary matrix and functional verification. No benchmark scenario or budget chan
 
 - [260 tests](layout-fix/validation-tests.txt) pass, covering care, audio,
   rendering, appearance, onboarding, search and bounded lazy compilation.
-- [Four browser tests](layout-fix/functional/tests.txt) pass. Repeated input makes
+- [Five browser tests](layout-fix/functional/tests.txt) pass. Repeated input makes
   [zero live bounds reads](layout-fix/functional/geometry-behavior.json); drag clamps
   remain correct after resize/scroll, and the new listeners/cache stay stable after
-  twenty script evaluations. [Head tracking](layout-fix/functional/pointer-behavior.json),
+  twenty script evaluations. [Transition-position regression](layout-fix/functional/transition-geometry.json)
+  verifies the cursor stays centered during keyboard movement. Cached geometry
+  follows the browser's actual transition endpoints, start time and easing using
+  the document timeline, rather than jumping to the destination. [Head tracking](layout-fix/functional/pointer-behavior.json),
   [static picker/keyboard replay](layout-fix/functional/static-preview-policy.json)
   and [responsive Home search navigation](layout-fix/functional/home-search-boot.json) pass.
 - [1,734 SVG equivalence checks](layout-fix/artwork-equivalence.json) preserve exact
   paths, attributes, text, deterministic IDs and unknown fallback; only interelement
   whitespace is normalized. CSS/defs differ only in the earlier static-preview
   policy and runtime cache key.
-- [51 fresh sheets](layout-fix/visual/sheets/index.json), covering all16 species,
-  six stages,17outfits and three surfaces, retain
+- [51 fresh sheets](layout-fix/visual/sheets/index.json), covering all 16 species,
+  six stages, 17 outfits and three surfaces, retain
   [4,896 pixel-identical cells](layout-fix/visual/unchanged-species.json).
 - [486 reaction cases/21 reduced-motion transitions](layout-fix/visual/motion-rig-check.json)
   pass. Original [small/hero artwork comparisons](before-after-bare-light.png) apply.
@@ -120,44 +123,53 @@ primary matrix and functional verification. No benchmark scenario or budget chan
   verifies actual document.hidden, zero hidden rAF frames, touch/keyboard movement
   and zero animated picker thumbnails. [Runner](layout-fix/native-functional-tests.txt).
 - [Real care](layout-fix/care/live-plant-care.json) verifies all three mature plants:
-  Home→Wellness→carePOST→SQLite timestamp→wet-soil UI. [Runner](layout-fix/care-tests.txt).
+  Home→Wellness→care POST→SQLite timestamp→wet-soil UI. [Runner](layout-fix/care-tests.txt).
 
 ## Retained failures and attribution limits
 
-The original failed20 samples remain in `application/`: median664ms,
+The original failed 20 samples remain in `application/`: median 664 ms,
 +292ms versus matched overlay control. [Original blocked report](REPORT-blocked.md).
 The prior motion failure remains in [its report](REPORT-motion-blocked.md) and
-`lcp-unblock/native-control/`: fern framep95 reached33.4ms and reported owned
-callbacks reached295.8ms. Those measurements were not waived or overwritten.
-The `00d76bc` full20 LCP-passing cohort remains under `lcp-unblock/pre-motion-fix/`;
+`lcp-unblock/native-control/`: fern frame p95 reached 33.4 ms and reported owned
+callbacks reached 295.8 ms. Those measurements were not waived or overwritten.
+The `00d76bc` full 20 LCP-passing cohort remains under `lcp-unblock/pre-motion-fix/`;
 it does not substitute for final-source validation. Earlier stopped attempts remain.
 
 [Three matched native CPU trace pairs](layout-fix/cpu-before/summary.json) compare
-old/new artwork on the same prior runtime. None reproduced a callback over50ms;
+old/new artwork on the same prior runtime. None reproduced a callback over 50 ms;
 wall/thread CPU and losslessly compressed raw traces remain per species. This
 locates the investigation without proving the cause of earlier stalls. Prior
 recorder-overhead diagnostics are retained as diagnostics, not acceptance evidence.
 The partial `b2c9b82` cohort was stopped to fix the new infrastructure's repeated
 script-loading lifecycle; its samples remain under
-[pre-lifecycle-fix](layout-fix/pre-lifecycle-fix/STOPPED.json), outside final acceptance. The subsequent `765bd42` fern cohort exposed an84.6ms
-cache-refresh callback with84.5ms forced layout. Its complete samples remain in
+[pre-lifecycle-fix](layout-fix/pre-lifecycle-fix/STOPPED.json), outside final acceptance. The subsequent `765bd42` fern cohort exposed an 84.6 ms
+cache-refresh callback with 84.5 ms forced layout. Its complete samples remain in
 [pre-observer-phase-fix](layout-fix/pre-observer-phase-fix/STOPPED.json); that real
 failure motivated the completed-layout observer correction. The subsequent
-`788dcbe` native cohort still failed (maximum449.8ms owned callback and33.3ms
-framep95), preserved under [pre-replay-fix](layout-fix/pre-replay-fix/STOPPED.json).
-Its external5ms matched and after-only controls did not reproduce stalls; a25ms
-sampler did reproduce them with substantial CPU upper bounds, including the162.6ms
+`788dcbe` native cohort still failed (maximum 449.8 ms owned callback and 33.3 ms
+frame p95), preserved under [pre-replay-fix](layout-fix/pre-replay-fix/STOPPED.json).
+Its external 5 ms matched and after-only controls did not reproduce stalls; a 25 ms
+sampler did reproduce them with substantial CPU upper bounds, including the 162.6 ms
 forced-layout click. This did not establish descheduling as the cause. All raw
 native records and losslessly gzipped kernel samples remain there. That confirmed
 active-replay reflow motivated the final source change.
 
+The [empty-callback control](layout-fix/throttle-control/empty-control.json)
+uses a blank page with no avatar/application JS or CSS, the same input sequence,
+and CPU1/4. One CPU1 run reports143ms for `function emptyTick(){{}}`; the other five
+runs report no empty callback in a long frame. [Runner](layout-fix/throttle-control/tests.txt).
+This establishes a fixture/attribution limitation, not the cause of every remaining
+application timing failure. Native invoker duration alone cannot prove avatar work
+as the source of a stall. Every current timing failure remains a failed gate;
+none is waived or silently attributed to the host.
+
 No sample was replaced and no threshold relaxed. These are local throttled-browser
-results, not physical-phone60fps claims. Native LoAF reports scripts in long frames;
-EventTiming has a16ms floor. RSS includes shared renderer pages and is not PSS.
+results, not physical-phone 60 fps claims. Native LoAF reports scripts in long frames;
+EventTiming has a 16 ms floor. RSS includes shared renderer pages and is not PSS.
 Full-matrix automation forces active pages; the separate native check proves actual
 hidden behavior. Static picker thumbnails are resolved. Existing selected-companion
 offscreen animation, chase/idle/roam timers and per-wrapper same-document listener
-retention remain separate release blockers. No production deployment or3A work.
+retention remain separate release blockers. No production deployment or 3A work.
 
 ## Reproduce
 

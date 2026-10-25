@@ -49,7 +49,7 @@ def test_cached_geometry_preserves_drag_chase_resize_scroll(baseline_server):
         expression="({scroll:(getEventListeners(document).scroll||[]).length,resize:(getEventListeners(window).resize||[]).length})"
         listeners_before=cdp.send('Runtime.evaluate',{'expression':expression,'includeCommandLineAPI':True,'returnByValue':True})['result']['value']
         state=page.evaluate_handle('window.__cssAvatarGeometry')
-        for _ in range(20):page.add_script_tag(url=origin+'/static/js/avatars.js?v=8.16')
+        for _ in range(20):page.add_script_tag(url=origin+'/static/js/avatars.js?v=8.17')
         listeners_after=cdp.send('Runtime.evaluate',{'expression':expression,'includeCommandLineAPI':True,'returnByValue':True})['result']['value']
         assert listeners_before==listeners_after
         assert page.evaluate('(state)=>state===window.__cssAvatarGeometry',state)
@@ -57,3 +57,28 @@ def test_cached_geometry_preserves_drag_chase_resize_scroll(baseline_server):
         context.close();browser.close()
     out=Path(os.environ['CSS_AVATAR_OUT']).parent;out.mkdir(parents=True,exist_ok=True)
     (out/'geometry-behavior.json').write_text(json.dumps({'steady_input_live_geometry_reads':reads,'resize_scroll_clamp':clamp,'geometry_listeners_before':listeners_before,'geometry_listeners_after_20_evaluations':listeners_after,'shared_cache_state_retained':True,'errors':errors},indent=2))
+
+
+def test_cached_lean_tracks_actual_transition_position(baseline_server):
+    from playwright.sync_api import sync_playwright
+    origin,cookie,_=baseline_server
+    results=[]
+    with sync_playwright() as pw:
+        browser=pw.chromium.launch(executable_path=shutil.which('chromium'),args=['--no-sandbox'])
+        context=browser.new_context(viewport={'width':1440,'height':1000},timezone_id='UTC')
+        context.add_cookies([cookie]);context.add_init_script(PROBE)
+        page=context.new_page();page.goto(origin+'/?view=me');page.wait_for_timeout(600)
+        wrap=page.locator('.avwrap[data-interactive]');button=wrap.locator('.av-play-btn')
+        for key in ['ArrowRight','ArrowLeft']:
+            button.focus();page.keyboard.press(key);page.wait_for_timeout(60)
+            box=wrap.bounding_box();page.mouse.move(box['x']+box['width']/2,box['y']+box['height']/2)
+            page.wait_for_timeout(25)
+            transform=wrap.locator('.av-tiltstage').evaluate('e=>e.style.transform')
+            import re
+            angle=float(re.search(r'rotateY\(([-\d.]+)deg\)',transform)[1])
+            results.append({'key':key,'rotate_y_deg':angle})
+            assert abs(angle)<=.25, (key,transform,'Cursor at actual wrap center should not lean sideways')
+            page.mouse.move(10,10);page.wait_for_timeout(350)
+        context.close();browser.close()
+    out=Path(os.environ['CSS_AVATAR_OUT']).parent
+    (out/'transition-geometry.json').write_text(json.dumps(results,indent=2))

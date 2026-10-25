@@ -1,0 +1,10 @@
+[
+  {
+    "key": "ArrowRight",
+    "rotate_y_deg": -0.1
+  },
+  {
+    "key": "ArrowLeft",
+    "rotate_y_deg": 0.0
+  }
+]
