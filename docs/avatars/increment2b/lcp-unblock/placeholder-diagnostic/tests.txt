@@ -1,0 +1,18 @@
+current 0 696
+before-placeholder 0 632
+before-placeholder 1 380
+current 1 340
+current 2 352
+before-placeholder 2 396
+before-placeholder 3 380
+current 3 400
+current 4 364
+before-placeholder 4 392
+.
+=============================== warnings summary ===============================
+tests/test_avatar_startup_diagnostic.py::test_cold_startup_trace
+  /workspace/css-is/tests/conftest.py:88: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+1 passed, 1 warning in 37.74s

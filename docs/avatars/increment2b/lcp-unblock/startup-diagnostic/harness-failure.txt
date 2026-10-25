@@ -1,0 +1,131 @@
+Error occurred in event listener
+Traceback (most recent call last):
+  File "/workspace/css-is/.venv/lib/python3.12/site-packages/playwright/_impl/_browser_context.py", line 261, in _on_route
+    handled = await route_handler.handle(route)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/css-is/.venv/lib/python3.12/site-packages/playwright/_impl/_helper.py", line 455, in handle
+    raise e
+  File "/workspace/css-is/.venv/lib/python3.12/site-packages/playwright/_impl/_helper.py", line 442, in handle
+    return await self._handle_internal(route)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/css-is/.venv/lib/python3.12/site-packages/playwright/_impl/_helper.py", line 478, in _handle_internal
+    await handler_finished_future
+  File "/workspace/css-is/.venv/lib/python3.12/site-packages/playwright/_impl/_helper.py", line 469, in _handler
+    self.handler(route, route.request)  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/css-is/.venv/lib/python3.12/site-packages/playwright/_impl/_impl_to_api_mapping.py", line 139, in wrapper_func
+    return handler(
+           ^^^^^^^^
+  File "/workspace/css-is/tests/test_avatar_startup_diagnostic.py", line 37, in <lambda>
+    context.route('**/static/js/'+file+'*',lambda route,file=file:route.fulfill(body=runtime[version][file],content_type='text/javascript'))
+                                                                                     ~~~~~~~~~~~~~~~~^^^^^^
+KeyError: <Request url='http://127.0.0.1:60635/static/js/avatar-audio.js?v=8.12' method='GET'>
+Error occurred in event listener
+Traceback (most recent call last):
+  File "/workspace/css-is/.venv/lib/python3.12/site-packages/playwright/_impl/_browser_context.py", line 261, in _on_route
+    handled = await route_handler.handle(route)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/css-is/.venv/lib/python3.12/site-packages/playwright/_impl/_helper.py", line 455, in handle
+    raise e
+  File "/workspace/css-is/.venv/lib/python3.12/site-packages/playwright/_impl/_helper.py", line 442, in handle
+    return await self._handle_internal(route)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/css-is/.venv/lib/python3.12/site-packages/playwright/_impl/_helper.py", line 478, in _handle_internal
+    await handler_finished_future
+  File "/workspace/css-is/.venv/lib/python3.12/site-packages/playwright/_impl/_helper.py", line 469, in _handler
+    self.handler(route, route.request)  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/css-is/.venv/lib/python3.12/site-packages/playwright/_impl/_impl_to_api_mapping.py", line 139, in wrapper_func
+    return handler(
+           ^^^^^^^^
+  File "/workspace/css-is/tests/test_avatar_startup_diagnostic.py", line 37, in <lambda>
+    context.route('**/static/js/'+file+'*',lambda route,file=file:route.fulfill(body=runtime[version][file],content_type='text/javascript'))
+                                                                                     ~~~~~~~~~~~~~~~~^^^^^^
+KeyError: <Request url='http://127.0.0.1:60635/static/js/avatars.js?v=8.13' method='GET'>
+F
+=================================== FAILURES ===================================
+___________________________ test_cold_startup_trace ____________________________
+
+baseline_server = ('http://127.0.0.1:60635', {'name': 'css_session', 'value': 'eyJ1aWQiOjQsInUiOiJhZG1pbkB0ZXN0LmxvY2FsIiwiciI6ImFkbWluI...ODM3NTNmNjAyIn0.a59bd720f89e47bee5628c2ead67c5b250b92d146f96ba96e55526219be4b19b', 'url': 'http://127.0.0.1:60635'}, 4)
+app_mod = <module 'app' from '/workspace/css-is/app.py'>
+tmp_path = PosixPath('/tmp/pytest-of-agent/pytest-66/test_cold_startup_trace0')
+
+    def test_cold_startup_trace(baseline_server, app_mod, tmp_path):
+        from jinja2 import ChoiceLoader, FileSystemLoader
+        from playwright.sync_api import sync_playwright
+        import storage as st
+        origin,cookie,uid=baseline_server
+        conn=st.connect(app_mod.DB);st.record_avatar_care(conn,uid);conn.close()
+        env=app_mod.templates.env;loader=env.loader
+        folder=tmp_path/'original';folder.mkdir()
+        for file in ['_avatars.html','_avatars_art.html']:
+            (folder/file).write_bytes(subprocess.check_output(['git','show','1c964dc:templates/'+file]))
+        loaders={'current':loader,'original':ChoiceLoader([FileSystemLoader(folder),loader])}
+        runtime={version:{file:(subprocess.check_output(['git','show','1c964dc:static/js/'+file]) if version=='original' else Path('static/js',file).read_bytes()) for file in ['avatars.js','avatar-audio.js']} for version in loaders}
+        out=Path(os.environ['CSS_AVATAR_OUT']).parent;rows=[]
+        try:
+            with sync_playwright() as pw:
+                browser=pw.chromium.launch(executable_path=shutil.which('chromium'),args=['--no-sandbox'])
+                for run in range(5):
+                    for version in (list(loaders) if run%2==0 else list(reversed(loaders))):
+                        env.loader=loaders[version]
+                        context=browser.new_context(viewport={'width':1440,'height':1000},timezone_id='UTC',service_workers='block')
+                        context.add_cookies([cookie]);context.add_init_script(PROBE)
+                        for file in ['avatars.js','avatar-audio.js']:
+                            context.route('**/static/js/'+file+'*',lambda route,file=file:route.fulfill(body=runtime[version][file],content_type='text/javascript'))
+                        page=context.new_page();cdp=context.new_cdp_session(page)
+                        cdp.send('Network.enable');cdp.send('Network.setBlockedURLs',{'urls':['https://*']});cdp.send('Network.clearBrowserCache')
+                        cdp.send('Emulation.setCPUThrottlingRate',{'rate':1})
+                        done=[];cdp.on('Tracing.tracingComplete',lambda e:done.append(e))
+                        cdp.send('Tracing.start',{'categories':'toplevel,devtools.timeline,v8.execute,v8,blink,loading,disabled-by-default-devtools.timeline.stack','transferMode':'ReturnAsStream'})
+                        cdp.send('Profiler.enable');cdp.send('Profiler.start')
+>                       assert page.goto(origin+'/?view=me').status==200
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_avatar_startup_diagnostic.py:44: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.12/site-packages/playwright/sync_api/_generated.py:9875: in goto
+    self._sync(
+.venv/lib/python3.12/site-packages/playwright/_impl/_page.py:560: in goto
+    return await self._main_frame.goto(**locals_to_params(locals()))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/playwright/_impl/_frame.py:156: in goto
+    await self._channel.send(
+.venv/lib/python3.12/site-packages/playwright/_impl/_connection.py:76: in send
+    return await self._connection.wrap_api_call(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <playwright._impl._connection.Connection object at 0x7f9e09a35e50>
+cb = <function Channel.send.<locals>.<lambda> at 0x7f9e097336a0>
+is_internal = False, title = None
+
+    async def wrap_api_call(
+        self, cb: Callable[[], Any], is_internal: bool = False, title: str = None
+    ) -> Any:
+        if self._api_zone.get():
+            return await cb()
+        task = asyncio.current_task(self._loop)
+        parsed_st = _attach_api_call_information(
+            getattr(task, "__pw_stack__", None) or _capture_stack_trace(),
+            is_internal,
+            title,
+        )
+        self._api_zone.set(parsed_st)
+        try:
+            return await cb()
+        except Exception as error:
+>           raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E           playwright._impl._errors.TimeoutError: Page.goto: Timeout 30000ms exceeded.
+E           Call log:
+E             - navigating to "http://127.0.0.1:60635/?view=me", waiting until "load"
+
+.venv/lib/python3.12/site-packages/playwright/_impl/_connection.py:632: TimeoutError
+=============================== warnings summary ===============================
+tests/test_avatar_startup_diagnostic.py::test_cold_startup_trace
+  /workspace/css-is/tests/conftest.py:88: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_avatar_startup_diagnostic.py::test_cold_startup_trace - pla...
+1 failed, 1 warning in 35.56s

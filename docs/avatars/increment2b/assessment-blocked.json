@@ -1,0 +1,299 @@
+{
+  "status": "blocked",
+  "primary_samples": 20,
+  "historical_comparison": "comparison.json",
+  "historical_gates": {
+    "css_js_added_le_15kib": true,
+    "home_added_le_30kib": true,
+    "picker_added_le_120kib": true,
+    "home_lcp_median_regression_le_100ms": false,
+    "home_interaction_median_regression_le_20ms": true,
+    "mobile_interaction_p95_medians_le_33ms": true,
+    "mobile_interaction_p95_all_runs_le_33ms": true,
+    "home_renderer_rss_median_growth_le_10mib": true,
+    "no_javascript_errors": true,
+    "no_external_requests": true
+  },
+  "same_filesystem_control": {
+    "reference_commit": "1c964dcba2fa19de1eab077b00e0e5748d742554",
+    "current_commit": "6ddce8202fdf463e72ddf819f4fb5c9f57a7bd2e",
+    "runs_each": 5,
+    "control": {
+      "values": [
+        724,
+        320,
+        372,
+        320,
+        376
+      ],
+      "median": 372,
+      "worst": 724
+    },
+    "current": {
+      "values": [
+        812,
+        336,
+        664,
+        728,
+        308
+      ],
+      "median": 664,
+      "worst": 812
+    },
+    "median_delta_ms": 292,
+    "budget_ms": 100,
+    "passed": false,
+    "same_filesystem": true,
+    "protocol_proof": "control-protocol-proof.json"
+  },
+  "secondary_scenario_gates": {
+    "False-cold-picker_growth-lcp_ms": {
+      "delta": -4,
+      "budget": 100,
+      "passed": true
+    },
+    "False-cold-picker_growth-interaction_duration_per_run_median_ms": {
+      "delta": 0.0,
+      "budget": 20,
+      "passed": true
+    },
+    "False-cold-picker_growth-renderer_rss_sum_bytes": {
+      "delta": -1437696,
+      "budget": 10485760,
+      "passed": true
+    },
+    "False-cold-picker_growth-js_heap_bytes": {
+      "delta": -202944,
+      "budget": 10485760,
+      "passed": true
+    },
+    "False-cold-seasonal_preview-lcp_ms": {
+      "delta": 4,
+      "budget": 100,
+      "passed": true
+    },
+    "False-cold-seasonal_preview-interaction_duration_per_run_median_ms": {
+      "delta": 0.0,
+      "budget": 20,
+      "passed": true
+    },
+    "False-cold-seasonal_preview-renderer_rss_sum_bytes": {
+      "delta": 6356992,
+      "budget": 10485760,
+      "passed": true
+    },
+    "False-cold-seasonal_preview-js_heap_bytes": {
+      "delta": 2590684,
+      "budget": 10485760,
+      "passed": true
+    },
+    "False-cold-wellness_care-lcp_ms": {
+      "delta": 16,
+      "budget": 100,
+      "passed": true
+    },
+    "False-cold-wellness_care-interaction_duration_per_run_median_ms": {
+      "delta": -4.0,
+      "budget": 20,
+      "passed": true
+    },
+    "False-cold-wellness_care-renderer_rss_sum_bytes": {
+      "delta": -3813376,
+      "budget": 10485760,
+      "passed": true
+    },
+    "False-cold-wellness_care-js_heap_bytes": {
+      "delta": 1158924,
+      "budget": 10485760,
+      "passed": true
+    },
+    "False-warm-picker_growth-lcp_ms": {
+      "delta": 4,
+      "budget": 100,
+      "passed": true
+    },
+    "False-warm-picker_growth-interaction_duration_per_run_median_ms": {
+      "delta": -8.0,
+      "budget": 20,
+      "passed": true
+    },
+    "False-warm-picker_growth-renderer_rss_sum_bytes": {
+      "delta": -3317760,
+      "budget": 10485760,
+      "passed": true
+    },
+    "False-warm-picker_growth-js_heap_bytes": {
+      "delta": -126064,
+      "budget": 10485760,
+      "passed": true
+    },
+    "False-warm-seasonal_preview-lcp_ms": {
+      "delta": 64,
+      "budget": 100,
+      "passed": true
+    },
+    "False-warm-seasonal_preview-interaction_duration_per_run_median_ms": {
+      "delta": 8,
+      "budget": 20,
+      "passed": true
+    },
+    "False-warm-seasonal_preview-renderer_rss_sum_bytes": {
+      "delta": -155648,
+      "budget": 10485760,
+      "passed": true
+    },
+    "False-warm-seasonal_preview-js_heap_bytes": {
+      "delta": 76248,
+      "budget": 10485760,
+      "passed": true
+    },
+    "False-warm-wellness_care-lcp_ms": {
+      "delta": -8,
+      "budget": 100,
+      "passed": true
+    },
+    "False-warm-wellness_care-interaction_duration_per_run_median_ms": {
+      "delta": -4.0,
+      "budget": 20,
+      "passed": true
+    },
+    "False-warm-wellness_care-renderer_rss_sum_bytes": {
+      "delta": -3772416,
+      "budget": 10485760,
+      "passed": true
+    },
+    "False-warm-wellness_care-js_heap_bytes": {
+      "delta": -25440,
+      "budget": 10485760,
+      "passed": true
+    },
+    "True-cold-picker_growth-lcp_ms": {
+      "delta": -16,
+      "budget": 100,
+      "passed": true
+    },
+    "True-cold-picker_growth-interaction_duration_per_run_median_ms": {
+      "delta": 0.0,
+      "budget": 20,
+      "passed": true
+    },
+    "True-cold-picker_growth-renderer_rss_sum_bytes": {
+      "delta": -2015232,
+      "budget": 10485760,
+      "passed": true
+    },
+    "True-cold-picker_growth-js_heap_bytes": {
+      "delta": -697420,
+      "budget": 10485760,
+      "passed": true
+    },
+    "True-cold-seasonal_preview-lcp_ms": {
+      "delta": -88,
+      "budget": 100,
+      "passed": true
+    },
+    "True-cold-seasonal_preview-interaction_duration_per_run_median_ms": {
+      "delta": -8.0,
+      "budget": 20,
+      "passed": true
+    },
+    "True-cold-seasonal_preview-renderer_rss_sum_bytes": {
+      "delta": -2727936,
+      "budget": 10485760,
+      "passed": true
+    },
+    "True-cold-seasonal_preview-js_heap_bytes": {
+      "delta": 1183392,
+      "budget": 10485760,
+      "passed": true
+    },
+    "True-cold-wellness_care-lcp_ms": {
+      "delta": 8,
+      "budget": 100,
+      "passed": true
+    },
+    "True-cold-wellness_care-interaction_duration_per_run_median_ms": {
+      "delta": 0,
+      "budget": 20,
+      "passed": true
+    },
+    "True-cold-wellness_care-renderer_rss_sum_bytes": {
+      "delta": -3186688,
+      "budget": 10485760,
+      "passed": true
+    },
+    "True-cold-wellness_care-js_heap_bytes": {
+      "delta": -1304212,
+      "budget": 10485760,
+      "passed": true
+    },
+    "True-warm-picker_growth-lcp_ms": {
+      "delta": 56,
+      "budget": 100,
+      "passed": true
+    },
+    "True-warm-picker_growth-interaction_duration_per_run_median_ms": {
+      "delta": 0.0,
+      "budget": 20,
+      "passed": true
+    },
+    "True-warm-picker_growth-renderer_rss_sum_bytes": {
+      "delta": -3002368,
+      "budget": 10485760,
+      "passed": true
+    },
+    "True-warm-picker_growth-js_heap_bytes": {
+      "delta": 325516,
+      "budget": 10485760,
+      "passed": true
+    },
+    "True-warm-seasonal_preview-lcp_ms": {
+      "delta": -20,
+      "budget": 100,
+      "passed": true
+    },
+    "True-warm-seasonal_preview-interaction_duration_per_run_median_ms": {
+      "delta": 0.0,
+      "budget": 20,
+      "passed": true
+    },
+    "True-warm-seasonal_preview-renderer_rss_sum_bytes": {
+      "delta": 1482752,
+      "budget": 10485760,
+      "passed": true
+    },
+    "True-warm-seasonal_preview-js_heap_bytes": {
+      "delta": 165912,
+      "budget": 10485760,
+      "passed": true
+    },
+    "True-warm-wellness_care-lcp_ms": {
+      "delta": 12,
+      "budget": 100,
+      "passed": true
+    },
+    "True-warm-wellness_care-interaction_duration_per_run_median_ms": {
+      "delta": -8,
+      "budget": 20,
+      "passed": true
+    },
+    "True-warm-wellness_care-renderer_rss_sum_bytes": {
+      "delta": -3047424,
+      "budget": 10485760,
+      "passed": true
+    },
+    "True-warm-wellness_care-js_heap_bytes": {
+      "delta": -7444,
+      "budget": 10485760,
+      "passed": true
+    }
+  },
+  "secondary_gates_passed": true,
+  "excluded_from_acceptance": [
+    "Initial five tmpfs control samples: filesystem differs from current overlayfs source.",
+    "Three instrumented full-scenario navigation diagnostic runs: attribution only, no acceptance resampling.",
+    "Twenty 2s counterbalanced art-only loads, including an experimental compositing CSS variant: attribution only, no product change."
+  ],
+  "remaining_gate": "Cold-desktop Home LCP regression exceeds100ms against both historical and same-filesystem original-source reference; cause not isolated.",
+  "next_step": "Investigate response/static-resource delivery and full-scenario sequencing; keep 2B blocked and do not advance to3A."
+}

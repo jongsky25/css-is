@@ -1,0 +1,31 @@
+{
+  "diagnostic_only": true,
+  "groups": {
+    "before-placeholder": {
+      "values_ms": [
+        632,
+        380,
+        396,
+        380,
+        392
+      ],
+      "median_ms": 392,
+      "worst_ms": 632
+    },
+    "current": {
+      "values_ms": [
+        696,
+        340,
+        352,
+        400,
+        364
+      ],
+      "median_ms": 364,
+      "worst_ms": 696
+    }
+  },
+  "limits": [
+    "Five counterbalanced2s coldstartup loads with trace/CPUprofile/routing overhead; notfullacceptance.",
+    "Same illustratedart andbatchedavatar runtime; onlyHomeinlineplaceholdercheckplacement/searchbootstrap differs."
+  ]
+}

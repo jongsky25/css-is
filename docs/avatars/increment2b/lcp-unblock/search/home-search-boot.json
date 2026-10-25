@@ -1,0 +1,18 @@
+{
+  "results": [
+    {
+      "mobile": false,
+      "placeholder": "Search people, pages, your calendar \u2014 or ask a question\u2026",
+      "search_result_href": "/wellness",
+      "navigation_completed": true,
+      "errors": []
+    },
+    {
+      "mobile": true,
+      "placeholder": "Search or ask a question\u2026",
+      "search_result_href": "/wellness",
+      "navigation_completed": true,
+      "errors": []
+    }
+  ]
+}

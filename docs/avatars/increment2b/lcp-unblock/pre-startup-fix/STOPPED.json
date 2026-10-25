@@ -1,0 +1,17 @@
+{
+  "status": "Failedcold-desktopLCP,stoppedbeforecompletingfullmatrix,notaccepted",
+  "source_commit": "41c8e01",
+  "cold_desktop_values_ms": [
+    600,
+    540,
+    344,
+    304,
+    504
+  ],
+  "median_ms": 504,
+  "worst_ms": 600,
+  "historical_delta_ms": 180,
+  "matched_delta_ms": 132,
+  "budget_ms": 100,
+  "reason": "Traceactualstartupbeforefurtherchanges;retainallcompletedrawdata,nofavourablererunsubstitution."
+}

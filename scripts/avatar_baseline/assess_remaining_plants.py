@@ -36,5 +36,5 @@ result={'status':'blocked','primary_samples':20,'historical_comparison':'compari
     'remaining_gate':'Cold-desktop Home LCP regression exceeds100ms against both historical and same-filesystem original-source reference; cause not isolated.','next_step':'Investigate response/static-resource delivery and full-scenario sequencing; keep 2B blocked and do not advance to3A.'}
 if all(primary['gates'].values()) and result['same_filesystem_control']['passed'] and result['secondary_gates_passed']:
     result['status']='complete'
-(out/'assessment.json').write_text(json.dumps(result,indent=2))
+(out/'assessment-blocked.json').write_text(json.dumps(result,indent=2))
 print(json.dumps({'status':result['status'],'matched_lcp_delta_ms':result['same_filesystem_control']['median_delta_ms'],'secondary_gates_passed':result['secondary_gates_passed']},indent=2))

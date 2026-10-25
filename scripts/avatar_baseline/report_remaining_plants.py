@@ -1,5 +1,6 @@
-"""Write the 2B completion report only when retained evidence passes its gates."""
+"""Write the historical blocked 2B report from its frozen failed cohort."""
 import argparse
+import hashlib
 import json
 from pathlib import Path
 import subprocess
@@ -7,7 +8,7 @@ import subprocess
 p=argparse.ArgumentParser();p.add_argument('--out',default='docs/avatars/increment2b');a=p.parse_args();out=Path(a.out)
 read=lambda name:json.loads((out/name).read_text())
 c=read('comparison.json');summary=read('application/summary.json')
-assessment=read('assessment.json')
+assessment=read('assessment-blocked.json')
 assert c['complete'] and assessment['status']=='blocked'
 assert not c['gates']['home_lcp_median_regression_le_100ms'] and not assessment['same_filesystem_control']['passed']
 assert summary['samples']==20 and all(g['runs']==5 for g in summary['groups'])
@@ -20,7 +21,7 @@ assert native['hidden_end']['hidden'] and native['hidden_end']['frame_count']==0
 care=read('live-plant-care.json');kinds=['fern','mushroom','succulent']
 assert [r['kind'] for r in care['results']]==kinds and all(r['wet_soil_visible'] and r['care_persisted'] for r in care['results'])
 for file in ['avatars.js','avatar-audio.js']:
-    assert Path('static/js',file).read_bytes()==subprocess.check_output(['git','show','5b580d9:static/js/'+file])
+    assert read('application/environment.json')['source_sha256']['static/js/'+file]==hashlib.sha256(subprocess.check_output(['git','show','5b580d9:static/js/'+file])).hexdigest()
 rows=[];traces=[]
 for g in c['groups']:
     idle=g['scenarios']['home_idle']['lcp_ms'];interaction=g['scenarios']['home_interaction']
@@ -35,7 +36,7 @@ for kind in kinds:
         traces.append(f"| {kind} | {r['version']} | {len(r['trace_long_tasks'])} | {duration} |")
 source=read('application/environment.json')['source_commit'][:7]
 rss=max(g['scenarios']['home_interaction']['renderer_rss_sum_bytes']['median_delta'] for g in c['groups'])/1048576
-(out/'REPORT.md').write_text(f'''# Increment 2B — fern, mushroom and succulent
+(out/'REPORT-blocked.md').write_text(f'''# Increment 2B — fern, mushroom and succulent
 
 Status: **Artwork implemented; increment 2B is blocked by the cold-desktop LCP gate. Increment 3A has not started.**
 
@@ -72,7 +73,7 @@ Values are median / worst run in milliseconds. Event Timing uses its ≥16 ms re
 
 ## LCP investigation and blocked acceptance
 
-The [assessment](assessment.json) retains the failed historical comparison and a corrected same-filesystem original-source control. No current sample was replaced and no budget was changed.
+The [assessment](assessment-blocked.json) retains the failed historical comparison and a corrected same-filesystem original-source control. No current sample was replaced and no budget was changed.
 
 | Desktop cold source | LCP samples (ms) | Median | Worst |
 |---|---|---:|---:|
@@ -87,7 +88,7 @@ The corrected control still gives **+292 ms** current-build regression, exceedin
 
 The [2-second counterbalanced art-only diagnostic](lcp-investigation/cold-lcp-diagnostic.json) had medians current 328/original 340/previous-art 364 ms. Home cat SVG is identical to the earlier foundation after normalizing UUIDs. A test-only compositing variant had median 316 ms, a 12 ms difference; it was not applied to production code. These short observations neither reproduce nor override the complete-fixture failure. They share current runtime JavaScript for art isolation and are not a full original-build control.
 
-Picker/growth, seasonal-preview and care LCP/interaction/memory deltas pass their recorded budgets; [secondary scenario checks](assessment.json) retain all values. The unresolved gate is cold-desktop Home LCP. Next required work is attribution of response/static-resource and full-scenario startup delay, followed by a demonstrated fix and fresh gate validation. **Do not advance to 3A while this gate is failed.**
+Picker/growth, seasonal-preview and care LCP/interaction/memory deltas pass their recorded budgets; [secondary scenario checks](assessment-blocked.json) retain all values. The unresolved gate is cold-desktop Home LCP. Next required work is attribution of response/static-resource and full-scenario startup delay, followed by a demonstrated fix and fresh gate validation. **Do not advance to 3A while this gate is failed.**
 
 ## Mature plant traces
 
