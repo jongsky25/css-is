@@ -1,8 +1,14 @@
-## 8.67 — October 25, 2026
+## 8.68 — October 25, 2026
 
 - Add an owner-only Travel claims table with literal Unicode reference/activity search, claim-type/status and recorded end-date filters, deterministic all-page sorting and 30-row server pagination.
 - Reuse local MIT Tabulator for optional resizable columns and remote paging; retain native filtering, standard pages, safe text, explicit failed-request fallback, no-store and current session checks.
 - Read recorded snapshots without deadline refresh or business writes; retain existing filing/checklist, review, approval and payment behavior.
+
+## 8.67 — October 25, 2026
+
+- Add optional guided single-meeting creation: /meeting in a private or registered conversation, signed-in deterministic fields, an exact private preview, and /meeting_confirm with actor/context-bound expiry and durable replay recovery.
+- Require new explicit calendar.create consent alongside calendar.read through the existing two-step link flow. Store nonce/hash metadata for durable preview delivery, and commit calendar/audit/email-outbox/private-receipt records atomically. No room submission, group disclosure or automatic video link.
+- Preserve admin hard-delete behavior by detaching deleted result references, cancelling stale sends and reporting deletion on recovery. Add workflow, concurrency, privacy and mobile browser checks plus the Markdown handoff. All defaults stay off; live activation remains unverified.
 
 ## 8.66 — October 25, 2026
 
