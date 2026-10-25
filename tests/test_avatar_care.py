@@ -479,3 +479,15 @@ def test_slice_svg_ids_are_local_and_behavior_anchors_survive(app_mod):
                         if kind == 'cat' else {'av-soil', 'av-soilwet'}) <= classes
                 anchors = [node for node in svg.iter() if 'data-anchor' in node.attrib]
                 assert anchors and all(len(node) == 0 for node in anchors)
+
+
+def test_blossom_art_preserves_seedling_budding_and_bloom_labels(app_mod):
+    import xml.etree.ElementTree as ET
+    module = app_mod.templates.env.get_template('_avatars.html').module
+    seedling = ET.fromstring(str(module.avatar_svg('plant', 3, 0, 'default')))
+    budding = ET.fromstring(str(module.avatar_svg('plant', 4, 0, 'default')))
+    blooming = ET.fromstring(str(module.avatar_svg('plant', 5, 0, 'default')))
+    assert not seedling.findall('.//g[@class="av-bloom"]')
+    assert budding.findall('.//g[@data-bloom-state="bud"]')
+    assert blooming.findall('.//g[@class="av-bloom"]')
+    assert not blooming.findall('.//g[@data-bloom-state="bud"]')
