@@ -1,8 +1,9 @@
 # Guided Telegram meetings (T3.2)
 
+T3.4 update: the optional [combined room flow](TELEGRAM_MEETING_ROOMS.md) extends calendar-only creation below. Its separate room consent, explicit checkbox, partial outcomes and recovery rules apply only when selected.
+
 This optional pilot creates one non-recurring Office Connect calendar meeting.
-It does not request or book a room, generate a video link, or disclose meeting
-content to a Telegram group. See the [plan and progress ledger](TELEGRAM_TWO_WAY_PLAN.md)
+Calendar-only creation requests no room. The optional combined flow attempts a separately consented room request; it never books or approves one automatically, generates a video link, or discloses meeting content to a Telegram group. See the [plan and progress ledger](TELEGRAM_TWO_WAY_PLAN.md)
 and [action contract](TELEGRAM_ACTION_CONTRACT.md). Deployment/activation is
 separate from code completion; no hosted pilot is recorded.
 
@@ -20,8 +21,7 @@ separate from code completion; no hosted pilot is recorded.
    calendar audience, owning unit and up to twelve active participants.
 4. Submit **Send exact preview to my private chat**. This saves no calendar entry.
    Check the private preview's participants (including account numbers to resolve
-   duplicate names), audience, unit, Asia/Manila date/times, duration, no-room
-   statement and exact confirmation deadline.
+   duplicate names), audience, unit, Asia/Manila date/times, duration, the explicit room/no-room choice and exact confirmation deadline.
 5. Send the displayed `/meeting_confirm CODE` in that same private bot chat before
    the deadline. The five-minute lifetime starts when the preview is prepared,
    not when Telegram delivers it. The exact original group/topic remains bound
@@ -50,7 +50,7 @@ Group origins additionally require the existing group switch, active exact-topic
 registration, current owner/bot provenance, and fresh provider owner/bot
 administrator and requester membership proof at confirmation. Joining a group
 never grants a calendar role. No write scope is added by migration or by merely
-enabling a switch. Room submission is a separately consented [linked request flow](TELEGRAM_ROOM_REQUESTS.md); this meeting-creation action never requests a room.
+enabling a switch. Room submission is a separately consented [linked request flow](TELEGRAM_ROOM_REQUESTS.md); the optional [combined flow](TELEGRAM_MEETING_ROOMS.md) can now request one room block after saving the meeting, with both room permissions and explicit preview consent.
 
 The ordinary Origin guard and cookie-bound CSRF protect the signed-in preparation
 POST. It accepts at most 8 KiB and allowlisted fields; browser sessions never go
@@ -66,7 +66,7 @@ through the shared UI calendar service using the current delegated actor, source
 Preparation and its private preview descriptor commit together. Confirmation
 commits calendar mutation, receipt, consumed preview and private receipt descriptor
 together. Neither transaction calls Telegram, Meet or another provider. The
-existing UI Meet behavior remains unchanged. No room record is written.
+existing UI Meet behavior remains unchanged. With the optional room checkbox unchecked, no room record is written. T3.4 adds a separately recorded room child attempt only when explicitly previewed; see the [combined flow](TELEGRAM_MEETING_ROOMS.md) for partial outcomes and room-only recovery.
 
 Preview tokens are domain-separated HMAC values over a random 256-bit nonce and
 operation ID using the existing application signing key. SQLite stores the nonce
@@ -136,5 +136,4 @@ confirmations then deny. Disable delivery/inbound independently as needed, or
 revoke the account link/group registration. Existing meetings remain in Office
 Connect. Preserve operation receipts/tombstones and restore fencing on rollback;
 never replay uncertain deliveries or historical confirmations in bulk. Keep separately scoped room writes off unless verified under their own runbook,
-and keep change notices/reminders off. T3.4 next combines meeting creation with
-the separate room child operation while preserving partial-outcome recovery.
+and keep change notices/reminders off. [T3.4](TELEGRAM_MEETING_ROOMS.md) adds the optional combined flow with separate child receipts and room-only recovery; T4.1 next adds durable change events.

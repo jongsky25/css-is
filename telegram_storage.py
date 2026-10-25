@@ -204,6 +204,13 @@ def install(conn):
       UPDATE telegram_preview SET state='cancelled',fields_json=NULL,summary_json=NULL,expected_json=NULL
         WHERE connection_id=NEW.connection_id AND generation=NEW.generation AND action='rooms.request' AND state='pending';
     END;
+    CREATE TRIGGER IF NOT EXISTS telegram_combined_room_grant AFTER UPDATE OF revoked_at ON telegram_grant
+    WHEN NEW.action IN ('rooms.read','rooms.request') AND NEW.revoked_at IS NOT NULL
+    BEGIN
+      UPDATE telegram_preview SET state='cancelled',fields_json=NULL,summary_json=NULL,expected_json=NULL
+        WHERE connection_id=NEW.connection_id AND generation=NEW.generation AND action='calendar.create'
+          AND state='pending' AND json_type(fields_json,'$.room')='object';
+    END;
     CREATE TRIGGER IF NOT EXISTS telegram_preview_cancel AFTER UPDATE OF state ON telegram_preview
     WHEN NEW.state='cancelled'
     BEGIN
@@ -264,6 +271,9 @@ def install(conn):
         conn.execute('ALTER TABLE telegram_operation ADD COLUMN context_json TEXT')
     if 'context_hash' not in {r[1] for r in conn.execute('PRAGMA table_info(telegram_operation)')}:
         conn.execute('ALTER TABLE telegram_operation ADD COLUMN context_hash TEXT')
+    if 'parent_operation_id' not in {r[1] for r in conn.execute('PRAGMA table_info(telegram_operation)')}:
+        conn.execute('ALTER TABLE telegram_operation ADD COLUMN parent_operation_id TEXT REFERENCES telegram_operation(operation_id)')
+    conn.execute('CREATE INDEX IF NOT EXISTS telegram_operation_parent ON telegram_operation(parent_operation_id)')
     columns={r[1] for r in conn.execute('PRAGMA table_info(telegram_connection)')}
     for name,kind in (('bot_identity','INTEGER'),('bot_fingerprint','TEXT')):
         if name not in columns:

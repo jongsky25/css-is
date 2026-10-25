@@ -7,6 +7,7 @@ Implementation: [telegram_actions.py](../telegram_actions.py),
 T3.1 introduced this contract with an empty adapter registry. T3.2 now installs
 a calendar-create adapter through the [guided meeting flow](TELEGRAM_MEETINGS.md),
 and T3.3 adds the separate [linked room-request adapter](TELEGRAM_ROOM_REQUESTS.md).
+T3.4 adds an optional [combined flow](TELEGRAM_MEETING_ROOMS.md), using a calendar parent and separately recorded room child with room-only recovery.
 It requires explicit current read/create consent and independent default-off
 switches. Room submission requires its own request and read consent, plus calendar read consent for linking. No production activation or hosted
 verification is recorded.
@@ -66,7 +67,7 @@ request are installed behind separate default-off gates:
 | --- | --- |
 | `prepare(conn, user, fields)` | Return normalized field dict, exact structured preview dict and expected-revision dict. Validate current domain authority and all fields. Show participants/audience, office date/start/end/duration and Asia/Manila timezone, with requested room slots separate from actual booking status. |
 | `revalidate(conn, user, fields, expected)` | Recheck domain permissions, participants, source revisions, module state and conflicts inside the confirmation writer transaction. Raise on stale state; do not silently update the preview. |
-| `apply(conn, user, fields, operation_id)` | Apply a caller-owned transaction mutation and return allowlisted receipt fields. Never commit, open another writer, perform network I/O or generate a new operation identity. |
+| `apply(conn, user, fields, operation_id)` | Apply a caller-owned transaction mutation and return allowlisted receipt fields. Never commit, open another writer, perform network I/O or replace the invoking operation identity. An explicitly previewed coordinator may record a uniquely keyed child in the same transaction, as documented for T3.4. |
 | `check_receipt(conn, user, operation)` | Recheck current domain access to all result/target records before receipt disclosure, including replay/recovery. Must also handle pending/cancelled receipts with no result IDs. |
 
 These are trusted application services, not arbitrary plugin callbacks or user
@@ -118,3 +119,5 @@ tombstones. Detailed recovery then denies with a neutral expiry response, and
 old keys still cannot execute again. Ordinary restart preserves unexpired
 previews and receipts. There is no exactly-once guarantee across rollback to an
 older database snapshot; all write switches remain off by default pending hosted recovery evidence.
+
+T3.4 records an explicitly previewed room child under the parent confirmation transaction. A child domain refusal rolls back its savepoint and returns a partial parent plus failed child; unexpected exceptions roll back everything. Child attempts have separate operation IDs, keys, hashes and the same bound context. No extra token is minted for the initial child because its exact hours and failure policy were confirmed in the parent preview. A fresh retry uses the ordinary room action contract and existing meeting ID, with an indexed parent reference. Receipt rendering can show current child status while retaining the historical parent outcome. Room-grant revocation also scrubs combined calendar previews; calendar-only previews are unaffected.

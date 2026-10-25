@@ -119,5 +119,7 @@ Pause `CSS_TELEGRAM_ROOMS_REQUEST_ENABLED` to block new preparation/confirmation
 Disable delivery/inbound independently or disconnect/revoke the group as needed.
 Preserve receipts, tombstones and restore fencing on rollback; never bulk replay
 old confirmations or uncertain sends. Existing requests and approvals remain in
-Office Connect. T3.4 next combines meeting creation with this separate room child
+Office Connect. T3.4 now combines meeting creation with this separate room child
 operation and must report calendar-success/room-failure without recreating meetings.
+
+T3.4 adds [combined meeting/room intent and room-only recovery](TELEGRAM_MEETING_ROOMS.md). A failed parent receipt can prefill its existing meeting in this form after a fresh `/room_request`; the new preview and operation reference the parent. Source authority and revision checks still apply, and this room-only path never creates a meeting.

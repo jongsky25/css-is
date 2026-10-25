@@ -37,6 +37,12 @@ def make_router(templates,get_conn):
                     ctx=meetings.origin(conn,user,item['id'],bot.now_utc(),room_requests.ACTION)
                     ready.append({'id':item['id'],'label':'Private chat' if ctx['chat_id']>0 else 'Group '+str(ctx['chat_id'])+' · topic '+str(ctx['topic_id'] or 0)})
                 except ValueError:pass
+            values=dict(values or {})
+            parent_id=values.get('parent_operation_id') or request.query_params.get('parent_operation_id','')
+            if parent_id:
+                import telegram_meeting_rooms as combined
+                parent=combined.retry_parent(conn,user,parent_id)
+                values.update(parent_operation_id=parent_id,entry_id=str(parent['result_entry_id']))
             return templates.TemplateResponse(request,'telegram_room_request.html',{'show_scope':False,'csrf':csrf(request),
                 'origins':ready,'selected':selected,'values':values or {},'key':secrets.token_hex(16),'slots':rooms.list_slots(conn) if ready else [],'error':error,'queued':bool(request.query_params.get('queued')),'already':bool(request.query_params.get('already'))},status_code=status,headers=PRIVATE)
         except ValueError:
@@ -56,7 +62,7 @@ def make_router(templates,get_conn):
                 if len(body)>8192:raise ValueError('The form is too large.')
             request._body=bytes(body)
             form=await request.form(max_fields=30,max_files=0)
-            if (set(form)-{'csrf','origin','key','entry_id','from_time','to_time'}
+            if (set(form)-{'csrf','origin','key','entry_id','from_time','to_time','parent_operation_id'}
                     or any(len(form.getlist(k))!=1 for k in form )
                     or not hmac.compare_digest(str(form.get('csrf','')).encode(),csrf(request).encode())):
                 raise ValueError('The form expired or is invalid. Reload and try again.')
@@ -67,10 +73,11 @@ def make_router(templates,get_conn):
                 user=links.current(conn,payload(request))
                 ctx=meetings.origin(conn,user,str(form.get('origin','')),bot.now_utc(),room_requests.ACTION)
                 fields={k:str(form.get(k,'')) for k in ('entry_id','from_time','to_time')}
+                if form.get('parent_operation_id'):fields['parent_operation_id']=str(form['parent_operation_id'])
                 result=actions.issue(conn,ctx,room_requests.ACTION,str(form.get('key','')),fields,bot.now_utc())
             finally:conn.close()
         except ValueError as error:
-            values={k:str(form.get(k,'')) for k in ('origin','entry_id','from_time','to_time')} if form else None
+            values={k:str(form.get(k,'')) for k in ('origin','entry_id','from_time','to_time','parent_operation_id')} if form else None
             return screen(request,str(error),400,values)
         return RedirectResponse(room_requests.PATH+('?already=1' if result.get('receipt') else '?queued=1'),status_code=303,headers=PRIVATE)
     return router
