@@ -30,7 +30,8 @@ def make_router(templates, get_conn):
             return templates.TemplateResponse(request, 'telegram_link.html',
                 {'show_scope': False, 'account': user, 'connection': connection, 'grants': grants,
                  'pending': pending, 'ready': bool(links.available()), 'csrf': csrf(request),
-                 'scopes': links.SCOPES, 'error': error}, status_code=status, headers=PRIVATE)
+                 'scopes': links.SCOPES, 'error': error,
+                 'calendar_ready': bool(links.authorized(conn,user['id'],'calendar.read') and links.origin() and len(links.origin())<=200 and bot.storage.enabled('inbound') and bot.storage.enabled('delivery'))}, status_code=status, headers=PRIVATE)
         except ValueError:
             return HTMLResponse('Sign in again to manage your private Telegram connection.', status_code=403, headers=PRIVATE)
         finally:

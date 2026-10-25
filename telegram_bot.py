@@ -1,4 +1,4 @@
-"""Authenticated private help only. No linking, group reads or business mutations."""
+"""Authenticated Telegram commands and current private reads; no business mutations."""
 import hashlib
 import hmac
 import json
@@ -17,6 +17,7 @@ import telegram_storage as storage
 import telegram_transport as transport
 import telegram_links as links
 import telegram_groups as groups
+import telegram_calendar as calendar_reads
 
 PATH = '/integrations/telegram/webhook'
 MAX_BODY = 65536
@@ -87,6 +88,12 @@ def normalize(value):
         if first in ('/start', '/help', '/status', '/disconnect'):
             clean['command'] = first
         parts = text.split()
+        if first in ('/calendar', '/calendar_next'):
+            clean['command'] = first
+            try:
+                clean['calendar_query'] = calendar_reads.parse(text, now_utc())
+            except ValueError:
+                clean['calendar_query'] = {'error': 'usage'}
         if first == '/confirm' and len(parts) == 2 and re.fullmatch(r'[a-f0-9]{64}', parts[1]):
             clean['command'] = first
             clean['argument_hash'] = links.digest(parts[1])
@@ -138,6 +145,11 @@ def receive(conn, clean, raw, bot, now):
             projection = {'kind': 'command', 'command': command, 'bot': bot[0], 'fingerprint': bot[2]}
             if command == '/confirm':
                 projection['argument_hash'] = clean['argument_hash']
+        if command in ('/calendar','/calendar_next'):
+            context = {'connection_id': cid, 'generation': generation, 'chat_id': clean['chat_id'],
+                       'topic_id': clean['topic_id'], 'registration_id': None}
+            supported = cid is not None and permitted and calendar_reads.actor(conn, context, bot) is not None
+            projection = {'kind': 'calendar', 'bot': bot[0], 'fingerprint': bot[2], 'query': clean['calendar_query']}
         if group_route:
             projection = {'kind': 'group_status', 'bot': bot[0], 'fingerprint': bot[2]}
         immediate_disconnect = supported and command == '/disconnect'
@@ -259,6 +271,12 @@ def process_updates(conn, now):
                          and update['received_at'] > stamp(now-timedelta(hours=24)) and group_route is not None and projection == expected)
                 if valid:
                     projection = {'kind': 'group_status', 'bot': bot[0], 'fingerprint': bot[2]}
+            if calendar_reads.descriptor(projection, bot):
+                context = {'connection_id': cid, 'generation': generation, 'chat_id': update['chat_id'],
+                           'topic_id': update['topic_id'], 'registration_id': None}
+                valid = (cid is not None and cid == update['connection_id'] and generation == update['generation']
+                         and update['received_at'] > stamp(now-timedelta(hours=24))
+                         and calendar_reads.actor(conn, context, bot) is not None)
             if valid:
                 conn.execute('''INSERT INTO telegram_delivery
                     (dedupe_key,event_key,connection_id,generation,chat_id,projection_json,expires_at,created_at,updated_at)
@@ -282,6 +300,7 @@ def eligible(conn, delivery, bot, now=None):
     if delivery['chat_id'] < 0:
         return groups.authorize_delivery(conn, delivery, bot) is not None
     cid, generation, permitted = identity(conn, delivery['chat_id'])
+    calendar_lookup = calendar_reads.descriptor(projection, bot) and calendar_reads.actor(conn, delivery, bot) is not None
     linking = projection.get('kind') in ('link_code','link_confirm') if isinstance(projection, dict) else False
     if linking:
         permitted = links.render(conn, projection, delivery['chat_id'], bot, now or now_utc()) is not None
@@ -291,7 +310,7 @@ def eligible(conn, delivery, bot, now=None):
         (delivery['chat_id'], delivery['created_at'])).fetchone()
     return (not rejected and delivery['chat_id'] > 0 and delivery['topic_id'] is None and delivery['registration_id'] is None
             and permitted and cid == delivery['connection_id'] and generation == delivery['generation']
-            and (linking or projection in ({'kind': 'help', 'bot': bot[0], 'fingerprint': bot[2]},
+            and (calendar_lookup or linking or projection in ({'kind': 'help', 'bot': bot[0], 'fingerprint': bot[2]},
                                           {'kind': 'status', 'bot': bot[0], 'fingerprint': bot[2]})))
 
 
@@ -356,14 +375,23 @@ def deliver(conn, now=None):
             outcome, message_id, retry = 'cancelled', None, None
         else:
             projection = json.loads(delivery['projection_json'])
-            if projection['kind'] == 'group_status':
+            if projection['kind'] == 'calendar':
+                message = calendar_reads.render(conn, delivery, projection, bot, clock())
+            elif projection['kind'] == 'group_status':
                 message = groups.STATUS
             elif projection['kind'] == 'help':
                 message = (HELP if not storage.enabled('link') else
                     'Office Connect private commands: /start to link, /status to check your connection, '
-                    '/disconnect to revoke it. Never send your Office Connect password here.')
+                    '/disconnect to revoke it. Never send your Office Connect password here.'
+                    + (' Private calendar lookup: /calendar (Asia/Manila).' if storage.enabled('calendar_read') else ''))
             else:
                 message = links.render(conn, projection, delivery['chat_id'], bot, clock())
+            # Rendering can race with disconnect/config changes; fence again at the I/O boundary.
+            if message and (not storage.enabled('delivery') or transport.config()!=bot
+                    or not eligible(conn, delivery, bot, clock())
+                    or not conn.execute("SELECT 1 FROM telegram_delivery WHERE id=? AND state='sending' AND claim_token=?",
+                                        (delivery['id'], token)).fetchone()):
+                message = None
             if message:
                 if delivery['chat_id'] < 0:
                     outcome, message_id, retry = transport.send(bot[1], delivery['chat_id'], message, delivery['topic_id'])

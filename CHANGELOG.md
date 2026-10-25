@@ -1,3 +1,9 @@
+## 8.59 — October 25, 2026
+
+- Add default-off private Telegram calendar lookup using the same viewer context, visibility predicates, scopes and entries/holidays/room-calendar providers as the signed-in calendar. Require current separate calendar.read consent and capability switch.
+- Bound date windows to 31 days, visible results to 2,000, pages to at most ten items and replies to Telegram UTF-16 limits; use ten-minute actor/connection/bot-bound signed paging tokens with visible-state change detection.
+- Store query metadata only and render current permitted fields at send time, excluding notes, meeting URLs, attendees and other private layers. Recheck revocation at the final provider-call boundary, preserve signed-in source links and update the plan and private-account instructions. No writes, slot lookup or group business reads.
+
 ## 8.58 — October 25, 2026
 
 - Add default-off exact Telegram group/topic registration from an observed command, signed-in administrator ownership/purpose/audience consent and fresh Bot API administrator verification for the binder and bot. No delegated owner assignment or business group reads.
