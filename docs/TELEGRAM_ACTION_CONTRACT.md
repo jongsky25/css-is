@@ -5,9 +5,10 @@ Implementation: [telegram_actions.py](../telegram_actions.py),
 [delivery plan](TELEGRAM_TWO_WAY_PLAN.md).
 
 T3.1 introduced this contract with an empty adapter registry. T3.2 now installs
-one calendar-create adapter through the [guided meeting flow](TELEGRAM_MEETINGS.md).
+a calendar-create adapter through the [guided meeting flow](TELEGRAM_MEETINGS.md),
+and T3.3 adds the separate [linked room-request adapter](TELEGRAM_ROOM_REQUESTS.md).
 It requires explicit current read/create consent and independent default-off
-switches. Room actions remain uninstalled. No production activation or hosted
+switches. Room submission requires its own request and read consent, plus calendar read consent for linking. No production activation or hosted
 verification is recorded.
 
 ## Calls and bindings
@@ -58,8 +59,8 @@ an unexpected failure rolls back and leaves the unexpired preview pending.
 
 ## Trusted adapter responsibilities
 
-Trusted adapters implement these methods; calendar creation is installed and
-room requests remain a later increment:
+Trusted adapters implement these methods; calendar creation and one linked room
+request are installed behind separate default-off gates:
 
 | Method | Required behavior |
 | --- | --- |
@@ -79,20 +80,23 @@ Creation, revisions, audit and existing email outbox rows share the caller's
 transaction. It retains source `app`; it accepts no arbitrary storage source,
 import key or overlay field. The UI uses a transaction-owning wrapper and retains
 its existing recurrence/detach, room-request and post-commit Meet orchestration.
-The extracted service performs no network I/O. T3.3 owns transaction extraction
-for room requests; this increment does not change room writes.
+The extracted services perform no network I/O. T3.3 adds a caller-owned plain
+internal room request/link path, including transaction-safe slot initialization
+and approver notice insertion; existing UI default commits/courtesy behavior
+remain unchanged.
 
 The optional `queue_preview` and `queue_receipt` adapter hooks run in their
 respective writer transactions and may enqueue descriptors only, with no commits
-or network I/O. The meeting adapter uses them for private delivery. `confirm_digest`
+or network I/O. Both adapters use them for private delivery. `confirm_digest`
 lets the authenticated update worker confirm using the stored token hash after
 private-sender validation, without persisting the raw incoming code.
 
 T3.2 implements deterministic fields, action consent and exact private preview
-confirmation for one non-recurring calendar meeting. Group-origin requests bind
+confirmation for one non-recurring calendar meeting; T3.3 reuses the same contract
+for one self-owned pending room request linked to a currently permitted meeting. Group-origin requests bind
 the original registration/topic and require membership proof at confirmation;
 full participant previews and receipts remain private. Source-share consent is
-not inferred. A before-delete trigger detaches calendar receipt foreign keys,
+not inferred. Before-delete triggers detach calendar/room receipt foreign keys,
 cancels stale delivery and records a neutral deletion outcome, preserving UI hard
 deletes and preventing recreation on recovery. External relay recovery or new
 external calendar integration is not provided by this contract.

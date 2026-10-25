@@ -23,6 +23,7 @@ import telegram_rooms as room_reads
 import telegram_group_reads as shared_reads
 import telegram_actions
 import telegram_meetings as meetings
+import telegram_room_requests
 
 PATH = '/integrations/telegram/webhook'
 MAX_BODY = 65536
@@ -92,12 +93,12 @@ def normalize(value):
         first = text.split(maxsplit=1)[0] if text.strip() else ''
         if first in ('/start', '/help', '/status', '/disconnect'):
             clean['command'] = first
-        if text=='/meeting':
-            clean['command']='/meeting'
+        if text in ('/meeting','/room_request'):
+            clean['command']=text
         parts = text.split()
-        if len(parts)==2 and parts[0]=='/meeting_confirm' and re.fullmatch('[A-Za-z0-9_-]{43}',parts[1]):
+        if len(parts)==2 and parts[0] in ('/meeting_confirm','/room_confirm') and re.fullmatch('[A-Za-z0-9_-]{43}',parts[1]):
             clean['command']=parts[0];clean['meeting_argument']=links.digest(parts[1])
-        if len(parts)==2 and parts[0]=='/meeting_receipt' and re.fullmatch('[a-f0-9]{32}',parts[1]):
+        if len(parts)==2 and parts[0] in ('/meeting_receipt','/room_receipt') and re.fullmatch('[a-f0-9]{32}',parts[1]):
             clean['command']=parts[0];clean['meeting_argument']=parts[1]
         if first in ('/calendar', '/calendar_next'):
             clean['command'] = first
@@ -117,7 +118,7 @@ def normalize(value):
     if (message['chat'].get('type') in ('group','supergroup') and clean['chat_id'] < 0
             and message['from'].get('is_bot') is False
             and (clean['topic_id'] is None or (message['chat']['type']=='supergroup' and message.get('is_topic_message') is True))
-            and text in ('/register','/group_status','/meeting')):
+            and text in ('/register','/group_status','/meeting','/room_request')):
         clean['command'] = text
     if (message['chat'].get('type') in ('group','supergroup') and clean['chat_id']<0
             and message['from'].get('is_bot') is False
@@ -156,12 +157,13 @@ def receive(conn, clean, raw, bot, now):
         if clean.get('group_event'):
             groups.handle_event(conn, clean, bot)
         cid, generation, permitted = identity(conn, clean['sender_id'])
-        if clean['command'] in ('/meeting','/meeting_confirm','/meeting_receipt'):
+        if clean['command'] in ('/meeting','/room_request','/meeting_confirm','/meeting_receipt','/room_confirm','/room_receipt'):
             projection=None;state='ignored'
             try:
                 connection=rows(conn,'SELECT * FROM telegram_connection WHERE id=?',(cid,))[0]
-                if clean['command']=='/meeting':
-                    meetings.observe(conn,clean,connection,bot,now);state='processed'
+                if clean['command'] in ('/meeting','/room_request'):
+                    action='calendar.create' if clean['command']=='/meeting' else 'rooms.request'
+                    meetings.observe(conn,clean,connection,bot,now,action);state='processed'
                 else:
                     projection=meetings.intake_action(conn,clean,connection,bot,now);state='queued'
             except (ValueError,IndexError):
@@ -452,7 +454,7 @@ def deliver(conn, now=None):
             outcome, message_id, retry = 'cancelled', None, None
         else:
             projection = json.loads(delivery['projection_json'])
-            if projection['kind'] in ('meeting_guide','meeting_preview','meeting_receipt','meeting_error'):
+            if projection['kind'] in meetings.KINDS:
                 try:
                     message = meetings.render(conn,delivery,projection,clock())
                 except ValueError:
@@ -471,7 +473,8 @@ def deliver(conn, now=None):
                     '/disconnect to revoke it. Never send your Office Connect password here.'
                     + (' Private calendar lookup: /calendar (Asia/Manila).' if storage.enabled('calendar_read') else '')
                     + (' Private room lookup: /room_slots, /my_rooms, /room_status REFERENCE.' if storage.enabled('rooms_read') else '')
-                    + (' Guided meeting pilot: /meeting (separate read/create consent required).' if storage.enabled('calendar_create') else ''))
+                    + (' Guided meeting pilot: /meeting (separate read/create consent required).' if storage.enabled('calendar_create') else '')
+                    + (' Linked room request pilot: /room_request (separate room request/read and calendar read consent).' if storage.enabled('rooms_request') else ''))
             else:
                 message = links.render(conn, projection, delivery['chat_id'], bot, clock())
             # Rendering can race with disconnect/config changes; fence again at the I/O boundary.

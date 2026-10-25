@@ -50,7 +50,7 @@ Group origins additionally require the existing group switch, active exact-topic
 registration, current owner/bot provenance, and fresh provider owner/bot
 administrator and requester membership proof at confirmation. Joining a group
 never grants a calendar role. No write scope is added by migration or by merely
-enabling a switch. Room-request consent/adapter remains unavailable.
+enabling a switch. Room submission is a separately consented [linked request flow](TELEGRAM_ROOM_REQUESTS.md); this meeting-creation action never requests a room.
 
 The ordinary Origin guard and cookie-bound CSRF protect the signed-in preparation
 POST. It accepts at most 8 KiB and allowlisted fields; browser sessions never go
@@ -135,6 +135,6 @@ Pause meeting writes by disabling `CSS_TELEGRAM_CALENDAR_CREATE_ENABLED`; pendin
 confirmations then deny. Disable delivery/inbound independently as needed, or
 revoke the account link/group registration. Existing meetings remain in Office
 Connect. Preserve operation receipts/tombstones and restore fencing on rollback;
-never replay uncertain deliveries or historical confirmations in bulk. Keep room
-writes, change notices and reminders off. The next increment is T3.3: submit one
-room request linked to an existing permitted meeting, preserving normal approval.
+never replay uncertain deliveries or historical confirmations in bulk. Keep separately scoped room writes off unless verified under their own runbook,
+and keep change notices/reminders off. T3.4 next combines meeting creation with
+the separate room child operation while preserving partial-outcome recovery.

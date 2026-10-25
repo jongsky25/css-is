@@ -17,6 +17,13 @@ import telegram_transport as transport
 
 PATH='/account/telegram/meeting'
 ACTION='calendar.create'
+META={
+    'calendar.create':{'prefix':'meeting','start':'/meeting','path':PATH,'confirm':'/meeting_confirm','receipt':'/meeting_receipt'},
+    'rooms.request':{'prefix':'room','start':'/room_request','path':'/account/telegram/room','confirm':'/room_confirm','receipt':'/room_receipt'},
+}
+COMMAND_ACTION={command:action for action,meta in META.items() for command in (meta['confirm'],meta['receipt'])}
+KINDS={meta['prefix']+'_'+suffix:action for action,meta in META.items() for suffix in ('guide','preview','receipt','error')}
+
 
 
 def context_from_preview(p):
@@ -36,7 +43,7 @@ def queue(conn,ctx,kind,identifier,now,*,key=None,expiry=None):
     conn.execute('''INSERT INTO telegram_delivery
         (dedupe_key,operation_id,connection_id,generation,chat_id,projection_json,expires_at,created_at,updated_at)
         VALUES (?,?,?,?,?,?,?,?,?) ON CONFLICT(dedupe_key) DO NOTHING''',
-        (key or kind+':'+identifier,identifier if kind in ('meeting_preview','meeting_receipt') else None,
+        (key or kind+':'+identifier,identifier if kind.endswith(('_preview','_receipt')) else None,
          ctx['connection_id'],ctx['generation'],ctx['sender_id'],actions.packed(projection),
          expiry or links.stamp(now+timedelta(hours=24)),links.stamp(now),links.stamp(now)))
 
@@ -94,6 +101,11 @@ class Adapter:
     def queue_receipt(self,conn,user,operation,context,now):
         queue(conn,context,'meeting_receipt',operation['operation_id'],now)
 
+    def receipt_text(self,conn,user,operation):
+        if operation['result_code']=='calendar_deleted':return 'The meeting from operation '+operation['operation_id']+' was deleted in Office Connect. It will not be recreated.'
+        if operation['result_code']=='retained_key' or operation['state']!='committed' or not operation['result_entry_id']:return None
+        return 'Meeting created in Office Connect. This action did not request or book a room.\nOperation: '+operation['operation_id']+'\n'+links.origin()+'/calendar/entries/'+str(operation['result_entry_id'])
+
     def check_receipt(self,conn,user,operation):
         if operation['result_entry_id'] and not oc.viewable_entry(conn,user,operation['result_entry_id']):
             raise actions.Unavailable('Meeting receipt unavailable.')
@@ -116,50 +128,51 @@ ADAPTER=Adapter()
 actions.ADAPTERS[ACTION]=ADAPTER
 
 
-def observe(conn,clean,connection,bot,now):
+def observe(conn,clean,connection,bot,now,action=ACTION):
     group=groups.route(conn,clean['chat_id'],clean['topic_id'],bot) if clean['chat_id']<0 else None
     ctx={'connection_id':connection['id'],'generation':connection['generation'],'sender_id':clean['sender_id'],
          'chat_id':clean['chat_id'],'topic_id':clean['topic_id'],'registration_id':group['id'] if group else None,
          'registration_generation':group['generation'] if group else None}
-    user,_,_=actions.authority(conn,ctx,ACTION)
+    user,_,_=actions.authority(conn,ctx,action)
     identifier=secrets.token_hex(16)
     expires=links.stamp(now+timedelta(minutes=10))
     conn.execute('''INSERT INTO telegram_meeting_origin
-        (id,account_id,connection_id,generation,context_json,bot_identity,bot_fingerprint,created_at,expires_at)
-        VALUES (?,?,?,?,?,?,?,?,?)''',(identifier,user['id'],ctx['connection_id'],ctx['generation'],actions.packed(ctx),bot[0],bot[2],links.stamp(now),expires))
-    queue(conn,ctx,'meeting_guide',identifier,now,expiry=expires)
+        (id,account_id,connection_id,generation,context_json,bot_identity,bot_fingerprint,created_at,expires_at,action)
+        VALUES (?,?,?,?,?,?,?,?,?,?)''',(identifier,user['id'],ctx['connection_id'],ctx['generation'],actions.packed(ctx),bot[0],bot[2],links.stamp(now),expires,action))
+    queue(conn,ctx,META[action]['prefix']+'_guide',identifier,now,expiry=expires)
 
 
-def origin(conn,user,identifier,now):
-    found=rows(conn,'SELECT * FROM telegram_meeting_origin WHERE id=? AND account_id=?',(identifier,user['id']))
+def origin(conn,user,identifier,now,action=ACTION):
+    found=rows(conn,'SELECT * FROM telegram_meeting_origin WHERE id=? AND account_id=? AND action=?',(identifier,user['id'],action))
     bot=transport.config()
     if not found or not bot or found[0]['expires_at']<=links.stamp(now) or found[0]['bot_identity']!=bot[0] or found[0]['bot_fingerprint']!=bot[2]:
-        raise actions.Unavailable('That meeting request expired. Send /meeting again.')
+        raise actions.Unavailable('That action request expired. Send '+META[action]['start']+' again.')
     ctx=json.loads(found[0]['context_json'])
-    actor,_,_=actions.authority(conn,ctx,ACTION)
-    if actor['id']!=user['id']:raise actions.Unavailable('Meeting request unavailable.')
+    actor,_,_=actions.authority(conn,ctx,action)
+    if actor['id']!=user['id']:raise actions.Unavailable('Action request unavailable.')
     return ctx
 
 
 def delivery_context(conn,d,p,now):
-    if not isinstance(p,dict) or set(p)!={'kind','id','bot','fingerprint'} or p['kind'] not in ('meeting_guide','meeting_preview','meeting_receipt','meeting_error'):
-        return None
+    if not isinstance(p,dict) or set(p)!={'kind','id','bot','fingerprint'} or p['kind'] not in KINDS:return None
+    action=KINDS[p['kind']];suffix=p['kind'].split('_',1)[1]
     bot=transport.config()
     if not bot or p['bot']!=bot[0] or p['fingerprint']!=bot[2] or d['chat_id']<=0 or d['topic_id'] is not None or d['registration_id'] is not None:return None
     try:
-        if p['kind']=='meeting_guide':
+        if suffix=='guide':
             connection=rows(conn,'SELECT account_id AS id FROM telegram_connection WHERE id=?',(d['connection_id'],))[0]
-            ctx=origin(conn,connection,p['id'],now)
+            ctx=origin(conn,connection,p['id'],now,action)
         else:
-            found=rows(conn,'SELECT * FROM telegram_operation WHERE operation_id=?',(p['id'],))
+            found=rows(conn,'SELECT * FROM telegram_operation WHERE operation_id=? AND action=?',(p['id'],action))
             if not found or not found[0]['context_json']:return None
             ctx=json.loads(found[0]['context_json'])
-            if p['kind']=='meeting_receipt':ADAPTER.check_receipt(conn,actions.authority(conn,ctx,ACTION)[0],found[0])
-            if p['kind']=='meeting_preview':
+            user,adapter,_=actions.authority(conn,ctx,action)
+            if suffix=='receipt':adapter.check_receipt(conn,user,found[0])
+            if suffix=='preview':
                 previews=rows(conn,'SELECT * FROM telegram_preview WHERE operation_id=?',(p['id'],))
                 if not previews or previews[0]['state']!='pending' or previews[0]['expires_at']<=links.stamp(now):return None
-                ADAPTER.revalidate(conn,actions.authority(conn,ctx,ACTION)[0],json.loads(previews[0]['fields_json']),json.loads(previews[0]['expected_json']))
-        user,_,_=actions.authority(conn,ctx,ACTION)
+                adapter.revalidate(conn,user,json.loads(previews[0]['fields_json']),json.loads(previews[0]['expected_json']))
+        user,_,_=actions.authority(conn,ctx,action)
         if ctx['connection_id']!=d['connection_id'] or ctx['generation']!=d['generation'] or ctx['sender_id']!=d['chat_id']:return None
         return ctx,user
     except (ValueError,IndexError,KeyError,TypeError):return None
@@ -169,36 +182,36 @@ def render(conn,d,p,now):
     with transaction(conn):
         allowed=delivery_context(conn,d,p,now)
         if not allowed:return None
-        ctx,user=allowed
-        if p['kind']=='meeting_guide':
-            return 'Prepare one meeting on your signed-in page, then confirm the exact preview here within five minutes. Participant details and receipts stay private.\n'+links.origin()+PATH+'?origin='+p['id']
-        if p['kind']=='meeting_error':return 'Meeting confirmation unavailable or changed. Check Office Connect or use /meeting_receipt OPERATION before starting another preview.'
-        if p['kind']=='meeting_preview':
+        ctx,user=allowed;action=KINDS[p['kind']];meta=META[action];adapter=actions.ADAPTERS[action]
+        suffix=p['kind'].split('_',1)[1]
+        if suffix=='guide':
+            return 'Prepare the exact action on your signed-in page, then confirm its preview here before the displayed deadline. Full details and receipts stay private.\n'+links.origin()+meta['path']+'?origin='+p['id']
+        if suffix=='error':return 'Confirmation unavailable or changed. Check Office Connect or use '+meta['receipt']+' OPERATION before preparing another action.'
+        if suffix=='preview':
             preview=rows(conn,'SELECT * FROM telegram_preview WHERE operation_id=?',(p['id'],))[0]
             if not preview['token_nonce']:return None
             token=actions.derive_token(p['id'],preview['token_nonce'])
             if actions.digest(token)!=preview['token_hash']:return None
-            clean=json.loads(preview['fields_json']);expected=json.loads(preview['expected_json'])
-            ADAPTER.revalidate(conn,user,clean,expected)
+            adapter.revalidate(conn,user,json.loads(preview['fields_json']),json.loads(preview['expected_json']))
             deadline=datetime.fromisoformat(preview['expires_at']).astimezone(common.ZONE).strftime('%Y-%m-%d %H:%M:%S Asia/Manila')
-            return ADAPTER.text(json.loads(preview['summary_json']))+'\nConfirm exactly this preview before '+deadline+':\n/meeting_confirm '+token+'\nOperation: '+p['id']+'\nRecover status: /meeting_receipt '+p['id']
+            return adapter.text(json.loads(preview['summary_json']))+'\nConfirm exactly this preview before '+deadline+':\n'+meta['confirm']+' '+token+'\nOperation: '+p['id']+'\nRecover status: '+meta['receipt']+' '+p['id']
         operation=rows(conn,'SELECT * FROM telegram_operation WHERE operation_id=?',(p['id'],))[0]
-        ADAPTER.check_receipt(conn,user,operation)
-        if operation['result_code']=='calendar_deleted':return 'The meeting from operation '+p['id']+' was deleted in Office Connect. It will not be recreated.'
-        if operation['result_code']=='retained_key':return None
-        if operation['state']!='committed' or not operation['result_entry_id']:return None
-        return 'Meeting created in Office Connect. This action did not request or book a room.\nOperation: '+p['id']+'\n'+links.origin()+'/calendar/entries/'+str(operation['result_entry_id'])
+        adapter.check_receipt(conn,user,operation)
+        if operation['state']!='committed':
+            return 'Action '+operation['operation_id']+' status: '+operation['state']+'. Review Office Connect or the original preview before preparing another action.'
+        return adapter.receipt_text(conn,user,operation)
 
 
 def intake_action(conn,clean,connection,bot,now):
-    key='token_hash' if clean['command']=='/meeting_confirm' else 'operation_id'
+    action=COMMAND_ACTION[clean['command']]
+    key='token_hash' if clean['command']==META[action]['confirm'] else 'operation_id'
     value=clean['meeting_argument']
     table='telegram_preview' if key=='token_hash' else 'telegram_operation'
-    found=rows(conn,'SELECT * FROM '+table+' WHERE '+key+'=? AND connection_id=? AND generation=?',
-               (value,connection['id'],connection['generation']))
-    if not found:raise actions.Unavailable('Meeting confirmation unavailable.')
+    found=rows(conn,'SELECT * FROM '+table+' WHERE '+key+'=? AND connection_id=? AND generation=? AND action=?',
+               (value,connection['id'],connection['generation'],action))
+    if not found:raise actions.Unavailable('Confirmation unavailable.')
     ctx=original_context(conn,found[0]) if key=='token_hash' else json.loads(found[0]['context_json'] or '{}')
-    actions.authority(conn,ctx,ACTION)
+    actions.authority(conn,ctx,action)
     return {'kind':'meeting_action','command':clean['command'],'argument':value,'bot':bot[0],'fingerprint':bot[2]}
 
 
@@ -211,9 +224,9 @@ def process_one(conn,now,allow_group=True):
         try:p=json.loads(update['payload_json'] or '{}')
         except ValueError:return False
         if not isinstance(p,dict) or p.get('kind')!='meeting_action':return False
-        confirming=p.get('command')=='/meeting_confirm'
-        preview=rows(conn,'SELECT * FROM '+('telegram_preview' if confirming else 'telegram_operation')+' WHERE '+('token_hash' if confirming else 'operation_id')+'=? AND connection_id=? AND generation=?',
-                     (p.get('argument'),update['connection_id'],update['generation']))
+        action=COMMAND_ACTION.get(p.get('command'));confirming=bool(action and p['command']==META[action]['confirm'])
+        preview=rows(conn,'SELECT * FROM '+('telegram_preview' if confirming else 'telegram_operation')+' WHERE '+('token_hash' if confirming else 'operation_id')+'=? AND connection_id=? AND generation=? AND action=?',
+                     (p.get('argument'),update['connection_id'],update['generation'],action))
         ctx=(original_context(conn,preview[0]) if confirming else json.loads(preview[0]['context_json'] or '{}')) if preview else None
         if ctx and ctx['chat_id']<0 and not allow_group:return 'defer'
         conn.execute("UPDATE telegram_update SET state='processing',claim_token=?,lease_until=? WHERE id=?",(token,links.stamp(now+timedelta(minutes=2)),update['id']))
@@ -223,17 +236,15 @@ def process_one(conn,now,allow_group=True):
         if (not ctx or update['chat_id']!=update['sender_id'] or update['sender_id']!=ctx['sender_id']
                 or set(p)!={'kind','command','argument','bot','fingerprint'} or not bot or p['bot']!=bot[0] or p['fingerprint']!=bot[2]
                 or update['received_at']<=links.stamp(now-timedelta(hours=24))):raise actions.Unavailable('Action unavailable.')
-        if p['command']=='/meeting_confirm':actions.confirm_digest(conn,ctx,p['argument'],now)
-        elif p['command']=='/meeting_receipt':
-            result=actions.recover(conn,ctx,ACTION,p['argument'])
-            with transaction(conn):queue(conn,ctx,'meeting_receipt',result['operation_id'],now,key='meeting-recover:'+str(update['id']))
-        else:raise actions.Unavailable('Action unavailable.')
+        if confirming:actions.confirm_digest(conn,ctx,p['argument'],now)
+        else:
+            result=actions.recover(conn,ctx,action,p['argument'])
+            with transaction(conn):queue(conn,ctx,META[action]['prefix']+'_receipt',result['operation_id'],now,key='action-recover:'+str(update['id']))
         success=True
     except ValueError:
         if ctx and preview:
-            with transaction(conn):
-                queue(conn,ctx,'meeting_error',preview[0]['operation_id'],now,key='meeting-error:'+str(update['id']))
+            with transaction(conn):queue(conn,ctx,META[action]['prefix']+'_error',preview[0]['operation_id'],now,key='action-error:'+str(update['id']))
     with transaction(conn):
         conn.execute("UPDATE telegram_update SET state=?,payload_json=NULL,claim_token=NULL,lease_until=NULL,attempts=attempts+1,error_code=? WHERE id=? AND state='processing' AND claim_token=?",
-                     ('processed' if success else 'cancelled',None if success else 'meeting_unavailable',update['id'],token))
+                     ('processed' if success else 'cancelled',None if success else 'action_unavailable',update['id'],token))
     return 'group' if ctx and ctx['chat_id']<0 else 'private'

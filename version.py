@@ -18,18 +18,28 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "8.69"
+APP_VERSION = "8.70"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
-        "version": "8.69",
+        "version": "8.70",
         "date": "October 25, 2026",
         "summary": "Download the current selection from your Travel claims table.",
         "changes": [
             "Export all matching pages in the applied sort order as a CSV spreadsheet.",
             "Changed filters take effect after Apply selection; the download checks your current account and own filings again.",
             "Exports keep recorded dates and refuse selections over 10,000 filings without changing deadlines, approval or payment."
+        ]
+    },
+    {
+        "version": "8.69",
+        "date": "October 25, 2026",
+        "summary": "Prepare optional room requests for your calendar meetings.",
+        "changes": [
+            "With separate consent, request conference-room hours for a meeting you created or participate in, then confirm the exact private preview.",
+            "Requests wait for normal approval and hold no booking; private receipts show current status and source links.",
+            "This action creates no meeting, adds no meals or repeats, and stays off by default."
         ]
     },
     {
