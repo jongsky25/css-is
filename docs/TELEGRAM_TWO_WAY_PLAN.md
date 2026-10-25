@@ -1,6 +1,6 @@
 # Office Connect ↔ Telegram delivery plan
 
-Status: T0–T3.3 merged; T3.4 in progress; two-way defaults remain off; production activation unverified.
+Status: T0–T3.3 merged; T3.4 in review; two-way defaults remain off; production activation unverified.
 Last updated: 2026-10-25.
 Repository: jongsky25/css-is.
 Planning baseline inspected: abf3141 (merge of PR #458).
@@ -142,7 +142,7 @@ T0 merged in PR #465 at `4cd01a0bfd17ccf57dba12b05a24c72bfd098f29`. T1.1 merged 
 | T3.1 | Merged | Codex / 2026-10-25 | [PR #474](https://github.com/jongsky25/css-is/pull/474), `feat/telegram-t3-1-confirmation` | Dormant confirmation/receipt contract and shared calendar service; 651 final tests passed | Merged at `62b216531c580cd3258c84fb4c21fb1c6235bfe4`, release 8.64; next T3.2 |
 | T3.2 | Merged | Codex / 2026-10-25 | [PR #476](https://github.com/jongsky25/css-is/pull/476), `feat/telegram-t3-2-meetings` | Guided form/private confirmation, atomic receipt and mobile checks; evidence below | Merged at `59cb776b2a80c440201ae3eec78af939ca6c0cce`, release 8.67; all required CI passed; next T3.3 |
 | T3.3 | Merged | Codex / 2026-10-25 | [PR #478](https://github.com/jongsky25/css-is/pull/478), `feat/telegram-t3-3-room-requests` | Linked pending request, atomic notices/receipt and mobile checks; 764 tests passed | Merged at `2684e78`, release 8.69; all required CI passed; next T3.4 |
-| T3.4 | In progress | Codex / 2026-10-25 | `feat/telegram-t3-4-meeting-room` | Combined guided meeting and separate room child; 849 tests passed | Defaults off; next T4.1 after review/merge |
+| T3.4 | In review | Codex / 2026-10-25 | [PR #482](https://github.com/jongsky25/css-is/pull/482), `feat/telegram-t3-4-meeting-room` | Combined guided meeting and separate room child; 849 tests passed | Release 8.71 candidate; CI/merge pending; defaults off; next T4.1 |
 | T4.1–T7 | Planned | Unassigned | — | Not implemented | Follow dependencies |
 
 ### T0 handoff — 2026-10-25
@@ -347,7 +347,7 @@ T0 merged in PR #465 at `4cd01a0bfd17ccf57dba12b05a24c72bfd098f29`. T1.1 merged 
 
 ### T3.4 implementation and operator handoff — 2026-10-25
 
-- Owner/branch: Codex, `feat/telegram-t3-4-meeting-room`, created only after PR #478 merge was confirmed at `2684e78d36f9d736d935463047226d4283ff7ad3`. T3.3 reconciled Travel release 8.68, advanced to 8.69, passed 124 affected tests and all updated GitHub checks (normal/shuffled complete suites, dependency audit, release metadata, Required checks; run 40174796402). Immediately before merge: clean expected head `43a94e5`, no local merge, active/queued merge-group run or queued auto-merge.
+- Owner/branch: Codex, `feat/telegram-t3-4-meeting-room`; [PR #482](https://github.com/jongsky25/css-is/pull/482) opened 2026-10-25, implementation commit `67841c7`, release 8.71 candidate, in review. CI and merge pending; no live verification. Branch created only after PR #478 merge was confirmed at `2684e78d36f9d736d935463047226d4283ff7ad3`. T3.3 reconciled Travel release 8.68, advanced to 8.69, passed 124 affected tests and all updated GitHub checks (normal/shuffled complete suites, dependency audit, release metadata, Required checks; run 40174796402). Immediately before merge: clean expected head `43a94e5`, no local merge, active/queued merge-group run or queued auto-merge.
 - Scope: optional exact room hours in the guided meeting flow, separately consented room child operation, durable calendar-success/room-failure receipt and fresh room-only retry using the original meeting. No automatic approval, group disclosure or T4 change feed.
 - Delivered: [combined flow/runbook](TELEGRAM_MEETING_ROOMS.md), `telegram_meeting_rooms.py` trusted coordinator, optional unchecked room fields on the signed-in meeting form, separate child identity/receipt and parent-bound room-only retry in the existing room form. Existing calendar-only and room-only paths remain available. Both room grants/switches are required in addition to the existing meeting gates; group origins retain exact provenance/membership proof and send every detail privately.
 - Preview/commit: bind exact configured room slots/clocks/labels and duration separately from the meeting clock, and explicitly confirm that the saved meeting survives a definite room refusal. Known conflicts/dates are checked before new preview issuance. Current slots/consent/context revalidate before calendar creation; dynamic domain conflicts are rechecked inside the child savepoint. Success saves a requested, self-owned linked reservation with normal approval. A `rooms.RoomError` rolls back child room/link/slot/audit/notice writes and records failed child plus partial parent. Unexpected child/notice/receipt errors, elapsed expiry or lost authority roll back the entire parent transaction. No provider runs under the writer.
@@ -413,3 +413,5 @@ T2.2 merge reconciliation: preserved concurrent search release 8.60 and its runt
 - 2026-10-25: User requested merge only when ready with no ongoing merge, then the next increment after confirmation. PR #476 was reconciled with current main, waited for all updated CI, and merged at 59cb776 after merge-activity checks. T3.3 then started separately: one self-owned linked pending room request and current private recovery; no combined creation or production activation.
 
 - T3.3 merge reconciliation: preserve Travel claims release 8.68 and its runtime module; linked room requests advance to 8.69. Prior head CI passed, but current-main conflicts required updated CI before merge. Those checks subsequently passed and merge was confirmed at `2684e78`; T3.4 started afterward.
+
+- 2026-10-25: User requested merge with no ongoing merge, then the next increment. PR #478 was reconciled, waited for updated full CI, checked for merge activity and merged at `2684e78`. T3.4 then completed separately in PR #482, with 849 passing regressions and Markdown evidence in the same PR. Await new PR CI/review/merge; do not start T4.1 or activate pilots from code completion alone.
