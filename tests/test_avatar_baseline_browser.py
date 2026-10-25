@@ -40,7 +40,7 @@ def baseline_server(app_mod):
     from starlette.middleware.gzip import GZipMiddleware
     conn = st.connect(app_mod.DB)
     user = st.get_admin_user(conn, 'admin@test.local')
-    st.set_user_avatar(conn, user['id'], 'cat', 'Baseline Cat')
+    st.set_user_avatar(conn, user['id'], os.getenv('CSS_AVATAR_KIND', 'cat'), 'Baseline Cat')
     conn.close()
     token = app_mod._issue_session(dict(user))
     sock = socket.socket(); sock.bind(('127.0.0.1', 0))
@@ -292,7 +292,7 @@ def test_slice_long_task_attribution(baseline_server, app_mod, tmp_path):
     output=Path(os.getenv('CSS_AVATAR_OUT','docs/avatars/increment1/application')).parent
     old=tmp_path/'old-art';old.mkdir()
     for name in ['_avatars.html','_avatars_art.html']:
-        (old/name).write_bytes(subprocess.check_output(['git','show','1c964dc:templates/'+name]))
+        (old/name).write_bytes(subprocess.check_output(['git','show',os.getenv('CSS_AVATAR_BEFORE', '1c964dc')+':templates/'+name]))
     env=app_mod.templates.env;loader=env.loader;results=[]
     try:
         with sync_playwright() as pw:
@@ -341,6 +341,7 @@ def test_slice_long_task_attribution(baseline_server, app_mod, tmp_path):
                        'avatar_source_present':any(c['file'].startswith(('avatars.js','avatar-audio.js')) for c in calls),
                        'paint_events':sorted(set(e['name'] for e in nested if e['name'] in ['Paint','Layout','UpdateLayoutTree','PrePaint','Layerize']))})
                 results.append({'version':version,'cpu_rate':4,'seconds':30,'chromium':browser.version,
+                                'kind':os.getenv('CSS_AVATAR_KIND', 'cat'),'before_commit':os.getenv('CSS_AVATAR_BEFORE', '1c964dc'),
                                 'scenario':observed,'trace_long_tasks':attributed,'trace_event_count':len(events)})
                 context.close();browser.close()
         (output/'long-task-attribution.json').write_text(json.dumps(results,indent=2))

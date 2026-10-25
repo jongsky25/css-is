@@ -1,0 +1,12 @@
+{
+  "assets": [{
+    "species": ["cactus", "bonsai", "sunflower"],
+    "source": "Original authored inline SVG in templates/_avatars_art.html",
+    "upstream_url": null,
+    "upstream_revision": null,
+    "license": "Existing repository terms; no third-party assets or license added",
+    "modifications": "Six structural growth stages, rounded outlined foliage, species-specific pot/soil details, scoped gradients and separated bloom positioning/animation groups"
+  }],
+  "external_asset_requests": 0,
+  "added_runtime_javascript_dependencies": 0
+}

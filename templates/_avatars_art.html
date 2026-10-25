@@ -29,9 +29,9 @@
      picks the seasonal accessory (0/none = bare). --#}
 {% macro species_art(kind, s, m=0, costume="", scope="") %}
 {% if kind == "plant" %}{{ _plant(s, m, costume, scope) }}
-{% elif kind == "cactus" %}{{ _cactus(s, m, costume) }}
-{% elif kind == "bonsai" %}{{ _bonsai(s, m, costume) }}
-{% elif kind == "sunflower" %}{{ _sunflower(s, m, costume) }}
+{% elif kind == "cactus" %}{{ _cactus(s, m, costume, scope) }}
+{% elif kind == "bonsai" %}{{ _bonsai(s, m, costume, scope) }}
+{% elif kind == "sunflower" %}{{ _sunflower(s, m, costume, scope) }}
 {% elif kind == "fern" %}{{ _fern(s, m, costume) }}
 {% elif kind == "mushroom" %}{{ _mushroom(s, m, costume) }}
 {% elif kind == "succulent" %}{{ _succulent(s, m, costume) }}
@@ -348,146 +348,89 @@
 </g>
 {% endmacro %}
 
-{% macro _cactus(s, m=0, costume="") %}
-  {% set h = 78 - (s - 1) * 8 %}
-  {{ _pot("url(#avg-pot)", "#dda069") }}
-  {{ _pot_bow(m) }}
-  {{ costume_front("cactus", s, costume, scaled=true) }}
-    {{ _pot_regalia(s) }}
-  {# main trunk grows taller with stage #}
-  <rect x="51" y="{{ h }}" width="18" height="{{ 106 - h }}" rx="9" fill="url(#avg-cactus)"/>
-  <rect x="53" y="{{ h + 2 }}" width="5" height="{{ 102 - h }}" rx="2.5" fill="#ffffff2a"/>
-  {% for x in [55, 60, 65] %}
-  <line x1="{{ x }}" y1="{{ h + 5 }}" x2="{{ x }}" y2="102" stroke="#2f6a34" stroke-width=".9" opacity=".5"/>
-  {% endfor %}
-  {# spine tufts #}
-  {% for sx, sy in [(52, h + 10), (68, h + 16), (52, h + 26), (68, h + 30)] %}
-  <path d="M{{ sx }} {{ sy }} l-2.4 -1.4 M{{ sx }} {{ sy }} l-2.6 .6 M{{ sx }} {{ sy }} l-1.6 2.2"
-        stroke="#e8e0c0" stroke-width=".9" stroke-linecap="round"
-        {% if sx > 60 %}transform="scale(-1 1) translate(-120 0)"{% endif %}/>
-  {% endfor %}
-  {% if s >= 2 %}
-    <path d="M53 92 q-14 -1 -14 -14 l0 -6" stroke="url(#avg-cactus)" stroke-width="10" fill="none" stroke-linecap="round"/>
-    <path d="M39 88 q0 -6 1 -8" stroke="#ffffff2a" stroke-width="3" fill="none" stroke-linecap="round"/>
-  {% endif %}
-  {% if s >= 3 %}
-    <path d="M67 86 q14 -1 14 -14 l0 -8" stroke="url(#avg-cactus)" stroke-width="10" fill="none" stroke-linecap="round"/>
-    <path d="M81 82 q0 -7 1 -9" stroke="#ffffff2a" stroke-width="3" fill="none" stroke-linecap="round"/>
-  {% endif %}
-  {% if s >= 4 %}
-    {% for x in [54, 60, 66] %}<line x1="{{ x }}" y1="{{ h + 4 }}" x2="{{ x }}" y2="102" stroke="#3c7d40" stroke-width="1" stroke-dasharray="2 5"/>{% endfor %}
-  {% endif %}
-  {% if s >= 5 %}
-    {% for a in [0, 72, 144, 216, 288] %}
-    <ellipse cx="60" cy="{{ h - 4.5 }}" rx="2.4" ry="4.5" fill="url(#avg-petal)" transform="rotate({{ a }} 60 {{ h }})"/>
-    {% endfor %}
-    <circle cx="60" cy="{{ h }}" r="2.6" fill="url(#avg-sun)"/>
-  {% endif %}
-  {% if s >= 6 %}
-    <circle cx="39" cy="70" r="5" fill="url(#avg-petal)"/><circle cx="81" cy="62" r="5" fill="url(#avg-sun)"/>
-    <circle cx="39" cy="70" r="2.1" fill="#fff2c9"/><circle cx="81" cy="62" r="2.1" fill="#fff2c9"/>
-  {% endif %}
+{# Illustrated plant batch: original vectors, shared leaf palette, drawn shadows.
+   Pot overlays remain behind stems; seasonal fronts stay over the pot only. #}
+{% macro _illustrated_pot(shallow=false) %}
+<ellipse cx="60" cy="135" rx="29" ry="3" fill="#302f3c" opacity=".12"/>
+{% if shallow %}
+<path d="M29 112L91 112L83 130Q60 137 37 130Z" fill="url(#avg-pot2)" stroke="#66556e" stroke-width="1.5"/>
+<path d="M38 118L43 128M77 131L80 123" stroke="#cab8c9" stroke-width="3" stroke-linecap="round"/>
+<ellipse cx="60" cy="111" rx="33" ry="7" fill="#b7a3b5" stroke="#66556e" stroke-width="1.4"/>
+{% else %}
+<path d="M36 109Q60 116 84 109L78 131Q60 139 42 131Z" fill="url(#avg-pot)" stroke="#885b48" stroke-width="1.4"/>
+<path d="M43 117L47 130" stroke="#ffdfb3" stroke-width="3" opacity=".5" stroke-linecap="round"/>
+<ellipse cx="60" cy="108" rx="27" ry="8" fill="#e8ad87" stroke="#885b48" stroke-width="1.4"/>
+{% endif %}
+<ellipse class="av-soil" cx="60" cy="{{ 110 if shallow else 107 }}" rx="23" ry="5" fill="#67483b"/>
+<ellipse class="av-soilwet" cx="60" cy="{{ 110 if shallow else 107 }}" rx="23" ry="5" fill="#3c302b"/>
+
 {% endmacro %}
 
-
-{% macro _bonsai(s, m=0, costume="") %}
-  <path d="M34 116 L86 116 L80 130 L40 130 Z" fill="url(#avg-pot2)"/>
-  <path d="M40 116 L48 116 L45 130 L41 130 Z" fill="#ffffff22"/>
-  <rect x="30" y="110" width="60" height="9" rx="4" fill="#93809f"/>
-  <rect x="30" y="110" width="60" height="4" rx="2" fill="#ffffff2e"/>
-  <ellipse class="av-soil" cx="60" cy="110" rx="26" ry="4.5" fill="#4a3a58"/>
-  <ellipse class="av-soilwet" cx="60" cy="110" rx="26" ry="4.5" fill="#241830"/>
-  {{ _pot_bow(m, 37, 114) }}
-  {{ costume_front("bonsai", s, costume, scaled=true) }}
-    {{ _pot_regalia(s, 60, 114) }}
-  {# gnarled trunk + branches grow with stage #}
-  <path d="M60 108 C58 96 66 92 62 {{ 92 - (s * 6) }}" stroke="url(#avg-trunk)" stroke-width="6.5" fill="none" stroke-linecap="round"/>
-  <path d="M59 104 C58 98 62 96 61 {{ 96 - (s * 5) }}" stroke="#ffffff1e" stroke-width="2" fill="none" stroke-linecap="round"/>
-  {% if s >= 2 %}<path d="M61 96 C70 92 74 90 78 88" stroke="url(#avg-trunk)" stroke-width="4.5" fill="none" stroke-linecap="round"/>{% endif %}
-  {% if s >= 3 %}<path d="M60 90 C50 88 44 86 40 84" stroke="url(#avg-trunk)" stroke-width="4" fill="none" stroke-linecap="round"/>{% endif %}
-  {% set top = 92 - (s * 6) %}
-  {# each foliage pad = dark underlayer + lit top + a small highlight #}
-  <ellipse cx="62" cy="{{ top + 2 }}" rx="{{ 9 + s * 2 }}" ry="{{ 6 + s }}" fill="url(#avg-leaf2)"/>
-  <ellipse cx="62" cy="{{ top }}" rx="{{ 8 + s * 2 }}" ry="{{ 6 + s }}" fill="url(#avg-leaf)"/>
-  <ellipse cx="{{ 58 - s }}" cy="{{ top - 2 }}" rx="{{ 3 + s }}" ry="2.4" fill="#ffffff30"/>
-  {% if s >= 2 %}
-    <ellipse cx="80" cy="88" rx="{{ 7 + s }}" ry="6.5" fill="url(#avg-leaf2)"/>
-    <ellipse cx="80" cy="86" rx="{{ 6 + s }}" ry="6" fill="url(#avg-leaf)"/>
-  {% endif %}
-  {% if s >= 3 %}
-    <ellipse cx="40" cy="84" rx="{{ 7 + s }}" ry="6.5" fill="url(#avg-leaf2)"/>
-    <ellipse cx="40" cy="82" rx="{{ 6 + s }}" ry="6" fill="url(#avg-leaf)"/>
-  {% endif %}
-  {% if s >= 4 %}<ellipse cx="62" cy="{{ top - 6 }}" rx="{{ 10 + s }}" ry="7" fill="url(#avg-leaf)"/>
-  <ellipse cx="{{ 57 - s }}" cy="{{ top - 8 }}" rx="{{ 3 + s }}" ry="2.2" fill="#ffffff30"/>{% endif %}
-  {% if s >= 5 %}{% for cx, cy in [(56, top - 4), (70, 84), (46, 80)] %}<circle cx="{{ cx }}" cy="{{ cy }}" r="2.4" fill="url(#avg-petal)"/>{% endfor %}{% endif %}
-  {% if s >= 6 %}
-    <ellipse cx="62" cy="{{ top - 10 }}" rx="16" ry="7" fill="url(#avg-leaf2)"/>
-    <ellipse cx="62" cy="{{ top - 12 }}" rx="16" ry="7" fill="url(#avg-leaf)"/>
-    {% for cx, cy in [(60, top - 13), (72, 82), (48, 82), (80, 86)] %}<circle cx="{{ cx }}" cy="{{ cy }}" r="2.6" fill="url(#avg-petal)"/>{% endfor %}
-  {% endif %}
+{% macro _plant_finish(kind,s,m,costume) %}
+<g class="av-anchor-pot" data-anchor="pot" transform="translate(60 121)"></g>
+{{ _pot_bow(m,39,115) }}{{ _pot_regalia(s,60,116) }}{{ costume_front(kind,s,costume,scaled=true) }}
 {% endmacro %}
 
+{% macro _cactus(s,m=0,costume="",scope="") %}
+{% set leaf='url(#' ~ scope ~ '-leaf)' if scope else 'url(#avg-cactus)' %}
+{% set top=[0,88,76,63,52,44,38][s] %}
+<g class="av-v2 av-body" stroke-linejoin="round" stroke-linecap="round">
+{{ _illustrated_pot() }}
+<g class="av-stem">
+{% if s>=2 %}<path d="M49 95Q34 96 34 82L34 {{ 79 if s==2 else 70 }}" fill="none" stroke="#41664c" stroke-width="13"/><path d="M49 95Q34 96 34 82L34 {{ 79 if s==2 else 70 }}" fill="none" stroke="{{ leaf }}" stroke-width="10"/>{% endif %}
+{% if s>=3 %}<path d="M71 86Q86 88 86 73L86 {{ 67 if s==3 else 58 }}" fill="none" stroke="#41664c" stroke-width="13"/><path d="M71 86Q86 88 86 73L86 {{ 67 if s==3 else 58 }}" fill="none" stroke="{{ leaf }}" stroke-width="10"/>{% endif %}
+<path d="M48 105V{{ top+13 }}Q48 {{ top }} 60 {{ top }}Q73 {{ top }} 73 {{ top+13 }}V105Q60 112 48 105Z" fill="{{ leaf }}" stroke="#41664c" stroke-width="1.5"/>
+<path d="M57 103V{{ top+8 }}" fill="none" stroke="#d1df9a" stroke-width="3"/><path d="M66 102V{{ top+9 }}" fill="none" stroke="#487c55" stroke-width="1.2"/>
+{% for x,y in [(49,top+15),(72,top+24),(49,top+37)] %}{% if y<103 %}<path d="M{{ x-3 }} {{ y-2 }}l3 2-2 3M{{ x }} {{ y }}h3" stroke="#f5e7b6" stroke-width="1.2" fill="none"/>{% endif %}{% endfor %}
+{% if s>=4 %}<g transform="translate(60 {{ top }})"><g class="av-bloom">
+{% if s==4 %}<path d="M0 0Q-10-8 0-14Q10-8 0 0Z" fill="#dc93a4" stroke="#a95877"/>{% else %}
+{% for a in [0,72,144,216,288] %}<path d="M0 0Q-14-7-5-15Q5-18 0 0Z" transform="rotate({{ a }})" fill="#efabb6" stroke="#ad6883" stroke-width=".8"/>{% endfor %}<circle r="4" fill="#f6d489"/>{% endif %}</g></g>{% endif %}
+{% if s==6 %}<g transform="translate(86 56)"><g class="av-bloom"><path d="M0 3Q-13-3-8-9Q-2-14 0-5Q7-16 11-8Q15 0 0 3Z" fill="#efabb6" stroke="#ad6883"/><circle r="2.5" fill="#f6d489"/></g></g><path d="M39 105Q25 102 29 94Q39 90 43 104" fill="{{ leaf }}" stroke="#41664c"/>{% endif %}
+</g><path d="M42 109l4-2m29 3 3-2" stroke="#c8ad7b" stroke-width="3"/>
+{{ _plant_finish('cactus',s,m,costume) }}</g>
+{% endmacro %}
 
-{% macro _sunflower(s, m=0, costume="") %}
-  {{ _pot() }}
-  {% if s < 4 %}{{ _pot_bow(m) }}{% endif %}
-  {{ costume_front("sunflower", s, costume, scaled=true) }}
-    {{ _pot_regalia(s) }}
-  {% if s == 1 %}
-    <ellipse cx="60" cy="103" rx="7" ry="4.6" fill="#e8d3a8"/>
-    <circle cx="60" cy="101" r="3" fill="#8a6a3a"/>
-    <circle cx="59" cy="100" r="1" fill="#c9a86a"/>
-  {% endif %}
-  {% if s >= 2 %}
-    {% set toph = 88 if s == 2 else (74 if s == 3 else (60 if s == 4 else 48)) %}
-    <path d="M60 106 C60 100 60 96 60 {{ toph + 6 }}" stroke="url(#avg-stem)" stroke-width="5" fill="none" stroke-linecap="round"/>
-    <path d="M60 100 C52 98 47 93 46 87 C54 87 59 93 60 98 Z" fill="url(#avg-leaf2)"/>
-    <path d="M60 100 C68 98 73 93 74 87 C66 87 61 93 60 98 Z" fill="url(#avg-leaf)"/>
-  {% endif %}
-  {% if s >= 3 %}
-    <path d="M60 86 C51 84 46 79 45 72 C54 72 59 79 60 84 Z" fill="url(#avg-leaf2)"/>
-    <path d="M60 86 C69 84 74 79 75 72 C66 72 61 79 60 84 Z" fill="url(#avg-leaf)"/>
-  {% endif %}
-  {% if s == 2 %}
-    <circle cx="60" cy="86" r="4" fill="url(#avg-leaf)"/>
-  {% elif s == 3 %}
-    {# closed bud with sepals #}
-    <circle cx="60" cy="72" r="5.4" fill="#8a9a4a"/>
-    <path d="M56 74 q4 -8 8 0 q-4 5 -8 0 Z" fill="url(#avg-leaf)"/>
-  {% elif s >= 4 %}
-    {# the head that slowly follows the light (JS/CSS rotates .av-bloom) #}
-    {% set bc = 58 if s == 4 else 46 %}
-    {% set br = 8 if s == 4 else (15 if s == 5 else 17) %}
-    <g class="av-bloom">
-      {% if s >= 6 %}
-      {% for a in [15, 45, 75, 105, 135, 165, 195, 225, 255, 285, 315, 345] %}
-      <ellipse cx="60" cy="{{ bc - br + 2 }}" rx="3.4" ry="{{ br - 4 }}" fill="url(#avg-sun2)"
-               transform="rotate({{ a }} 60 {{ bc }})"/>
-      {% endfor %}
-      {% endif %}
-      {% for a in [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330] %}
-      <ellipse cx="60" cy="{{ bc - br }}" rx="{{ 3 if s == 4 else 4.2 }}" ry="{{ br * 0.66 }}" fill="url(#avg-sun)"
-               transform="rotate({{ a }} 60 {{ bc }})"/>
-      {% endfor %}
-      <circle cx="60" cy="{{ bc }}" r="{{ br * 0.58 }}" fill="url(#avg-disc)"/>
-      {% for dx, dy in [(-2, -2), (2, -1), (0, 2), (-3, 1), (3, 2)] %}
-      <circle cx="{{ 60 + dx }}" cy="{{ bc + dy }}" r=".9" fill="#5a3a1a"/>
-      {% endfor %}
-      {{ _accessory(m, 60, bc - br, 0.7, costume=costume) }}
-    </g>
-  {% endif %}
-  {% if s >= 5 %}
-    <path d="M60 72 C50 70 44 64 43 57 C53 57 59 64 60 70 Z" fill="url(#avg-leaf2)"/>
-    <path d="M60 72 C70 70 76 64 77 57 C67 57 61 64 60 70 Z" fill="url(#avg-leaf)"/>
-  {% endif %}
-  {% if s >= 6 %}
-    <path d="M60 92 C68 92 74 88 76 82" stroke="url(#avg-stem)" stroke-width="2.6" fill="none" stroke-linecap="round"/>
-    {% for a in [0, 60, 120, 180, 240, 300] %}
-    <ellipse cx="78" cy="76.5" rx="1.8" ry="4" fill="url(#avg-sun)" transform="rotate({{ a }} 78 80)"/>
-    {% endfor %}
-    <circle cx="78" cy="80" r="2.4" fill="url(#avg-disc)"/>
-  {% endif %}
+{% macro _bonsai(s,m=0,costume="",scope="") %}
+{% set leaf='url(#' ~ scope ~ '-leaf)' if scope else 'url(#avg-leaf)' %}
+{% set top=[0,85,74,63,51,42,32][s] %}
+<g class="av-v2 av-body" stroke-linejoin="round" stroke-linecap="round">
+{{ _illustrated_pot(true) }}
+<path d="M45 108Q58 105 76 108" stroke="#719665" stroke-width="5" fill="none"/>
+<g class="av-stem">
+<path d="M53 109Q68 98 59 88Q51 78 64 {{ top+5 }}" fill="none" stroke="#745140" stroke-width="{{ 5+s }}"/>
+<path d="M56 106Q64 97 57 88Q53 79 63 {{ top+7 }}" fill="none" stroke="#c7a078" stroke-width="2.4"/>
+{% if s>=2 %}<path d="M61 94Q77 92 82 83" fill="none" stroke="#805b43" stroke-width="4"/>{% endif %}
+{% if s>=3 %}<path d="M59 83Q41 81 37 72" fill="none" stroke="#805b43" stroke-width="4"/>{% endif %}
+{% if s>=4 %}<path d="M59 66Q80 67 85 58" fill="none" stroke="#805b43" stroke-width="4"/>{% endif %}
+{% if s>=5 %}<path d="M61 55Q48 56 43 46" fill="none" stroke="#805b43" stroke-width="4"/>{% endif %}
+{% for x,y,r,minimum in [(64,top,13,1),(82,81,14,2),(36,71,15,3),(84,56,13,4),(43,46,12,5),(61,27,13,6)] %}{% if s>=minimum %}
+<g class="av-leaf" transform="translate({{ x }} {{ y }})"><path d="M-{{ r }} 4Q-{{ r+6 }}-4-{{ r-4 }}-8Q-7-17 0-12Q9-16 13-7Q{{ r+7 }}-2 {{ r }} 5Q0 13-{{ r }} 4Z" fill="{{ leaf }}" stroke="#41664c" stroke-width="1.2"/><path d="M-9-4Q-2-10 4-6" fill="none" stroke="#cfdea1" stroke-width="2"/></g>
+{% endif %}{% endfor %}
+{% if s>=5 %}{% for x,y in [(45,46),(78,79),(34,68)] %}<g class="av-bloom"><circle cx="{{ x }}" cy="{{ y }}" r="3" fill="#efb1b6" stroke="#b46883" stroke-width=".7"/><circle cx="{{ x }}" cy="{{ y }}" r="1" fill="#fff0c4"/></g>{% endfor %}{% endif %}
+</g><path d="M52 109l-7 1m14-3 9 3" stroke="#805b43" stroke-width="2"/>
+{{ _plant_finish('bonsai',s,m,costume) }}</g>
+{% endmacro %}
+
+{% macro _sunflower(s,m=0,costume="",scope="") %}
+{% set leaf='url(#' ~ scope ~ '-leaf)' if scope else 'url(#avg-leaf)' %}
+{% set top=[0,99,85,69,54,43,38][s] %}
+<g class="av-v2 av-body" stroke-linejoin="round" stroke-linecap="round">
+{{ _illustrated_pot() }}
+{% if s==1 %}<path d="M52 105Q48 94 59 92Q69 92 68 101Q64 109 52 105Z" fill="#575044" stroke="#393d37" stroke-width="1.2"/><path d="M57 95L60 104m3-10 1 7" stroke="#e6d7a5" stroke-width="1.5"/>{% else %}
+<g class="av-stem"><path d="M60 107Q56 83 60 {{ top }}" fill="none" stroke="#41664c" stroke-width="5"/><path d="M59 104Q56 82 60 {{ top }}" fill="none" stroke="#a2bf6e" stroke-width="2"/>
+{% for y,side in [(98,-1),(91,1),(80,-1),(71,1),(61,-1)] %}{% if loop.index<=s %}<g class="av-leaf" transform="translate(59 {{ y }}) scale({{ side }} 1)"><path d="M0 0Q9-19 24-16Q28-2 12 2Z" fill="{{ leaf }}" stroke="#41664c" stroke-width="1.1"/><path d="M1 0L21-13" stroke="#d2dda0" fill="none" stroke-width="1.2"/></g>{% endif %}{% endfor %}
+{% if s==2 %}<path d="M60 85Q47 84 50 76Q59 73 60 85Q62 73 71 77Q74 85 60 85Z" fill="{{ leaf }}" stroke="#41664c"/>
+{% elif s==3 %}<g class="av-bloom" data-bloom-state="bud"><path d="M60 76Q45 65 55 58Q61 54 67 61Q75 69 60 76Z" fill="{{ leaf }}" stroke="#41664c" stroke-width="1.3"/><path d="M60 73L57 61m3 12 5-11" fill="none" stroke="#c2d48f" stroke-width="1.5"/></g>
+{% else %}
+<g transform="translate(60 {{ top }})"><g class="av-bloom">
+{% set r=11 if s==4 else (17 if s==5 else 19) %}
+{% for a in range(0,360,30) %}<path d="M0-4Q-8-{{ r }} 0-{{ r+12 }}Q9-{{ r }} 0-4Z" transform="rotate({{ a }})" fill="{{ '#efb44d' if loop.index is even else '#f7cf6c' }}" stroke="#bc853c" stroke-width=".8"/>{% endfor %}
+<circle r="{{ r*0.63 }}" fill="url(#avg-disc)" stroke="#805b43" stroke-width="1.4"/>
+{% for x,y in [(-4,-3),(2,-5),(5,0),(0,2),(-5,3),(3,6)] %}<path d="M{{ x }} {{ y }}l1 1" stroke="#d4ab6e" stroke-width="1.5"/>{% endfor %}
+{{ _accessory(m,0,-r,0.65,costume=costume) }}</g></g>
+{% if s==6 %}<path d="M60 90Q85 91 85 77" stroke="#58894d" stroke-width="3" fill="none"/><g transform="translate(85 74)"><g class="av-bloom">{% for a in range(0,360,60) %}<ellipse cy="-6" rx="3" ry="6" transform="rotate({{ a }})" fill="#f7cf6c" stroke="#bc853c" stroke-width=".7"/>{% endfor %}<circle r="4" fill="#805b43"/></g></g>{% endif %}
+{% endif %}</g>{% endif %}
+{{ _plant_finish('sunflower',s,m if s<4 else 0,costume) }}</g>
 {% endmacro %}
 
 

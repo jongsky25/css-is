@@ -328,7 +328,7 @@
 {#-- one species at a stage; returns just the <svg> so pickers/heroes can size it --#}
 {% macro avatar_svg(kind, stage, outfit_month=none, outfit=none) %}
 {% set s = [[stage|int, 6]|min, 1]|max %}
-{% set scope = avatar_uid() if kind in ["cat","plant"] else "" %}
+{% set scope = avatar_uid() if kind in ["cat","plant","cactus","bonsai","sunflower"] else "" %}
 {% set accessory = avatar_month() if outfit_month is none else outfit_month %}
 {% set costume = outfit if outfit is not none else (avatar_outfit() if outfit_month is none else ('halloween' if accessory == 10 else ('christmas' if accessory == 12 else 'default'))) %}
 <svg{% if scope %} data-avatar-art="v2"{% endif %} viewBox="0 0 120 140" role="img" width="100%" height="100%" aria-hidden="true" focusable="false" data-avatar-kind="{{ kind }}" data-avatar-stage="{{ s }}" data-avatar-month="{{ accessory }}" data-avatar-outfit="{{ costume }}">

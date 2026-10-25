@@ -462,7 +462,7 @@ def test_slice_svg_ids_are_local_and_behavior_anchors_survive(app_mod):
     import xml.etree.ElementTree as ET
     module = app_mod.templates.env.get_template('_avatars.html').module
     seen = set()
-    for kind in ['cat', 'plant']:
+    for kind in ['cat', 'plant', 'cactus', 'bonsai', 'sunflower']:
         for stage in range(1, 7):
             for copy in range(2):
                 svg = ET.fromstring(str(module.avatar_svg(kind, stage, 0, 'default')))
@@ -491,3 +491,14 @@ def test_blossom_art_preserves_seedling_budding_and_bloom_labels(app_mod):
     assert budding.findall('.//g[@data-bloom-state="bud"]')
     assert blooming.findall('.//g[@class="av-bloom"]')
     assert not blooming.findall('.//g[@data-bloom-state="bud"]')
+
+
+def test_illustrated_plant_blooms_separate_position_from_motion(app_mod):
+    import xml.etree.ElementTree as ET
+    module = app_mod.templates.env.get_template('_avatars.html').module
+    for kind in ['cactus', 'bonsai', 'sunflower']:
+        for stage in range(1, 7):
+            svg = ET.fromstring(str(module.avatar_svg(kind, stage, 0, 'default')))
+            for bloom in svg.findall('.//g[@class="av-bloom"]'):
+                assert 'transform' not in bloom.attrib, (kind, stage)
+            assert svg.find('.//ellipse[@class="av-soilwet"]') is not None

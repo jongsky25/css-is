@@ -10,7 +10,7 @@ from jinja2 import Environment, FileSystemLoader, StrictUndefined
 from playwright.sync_api import sync_playwright
 from gallery import ROOT, CATALOG
 
-p=argparse.ArgumentParser();p.add_argument('--out',default='docs/avatars/increment1');a=p.parse_args()
+p=argparse.ArgumentParser();p.add_argument('--out',default='docs/avatars/increment1');p.add_argument('--before',default='1c964dc');p.add_argument('--kinds',default='cat,plant');p.add_argument('--no-prototypes',action='store_true');a=p.parse_args();kinds=a.kinds.split(',')
 out=Path(a.out);out.mkdir(parents=True,exist_ok=True)
 
 def module(folder,prefix):
@@ -27,28 +27,28 @@ def prototypes(page):
 
 with tempfile.TemporaryDirectory() as tmp, sync_playwright() as pw:
  for name in ['_avatars.html','_avatars_art.html']:
-  Path(tmp,name).write_bytes(subprocess.check_output(['git','show','1c964dc:templates/'+name]))
+  Path(tmp,name).write_bytes(subprocess.check_output(['git','show',a.before+':templates/'+name]))
  before=module(tmp,'before-');after=module(ROOT/'templates','slice-')
  browser=pw.chromium.launch(executable_path=shutil.which('chromium'),args=['--no-sandbox'])
  for theme in ['light','dark','contrast']:
   cards=[]
   for size in [64,170]:
-   for kind in ['cat','plant']:
+   for kind in kinds:
     for label,macros in [('Before',before),('After',after)]:
      for stage in range(1,7):
       cards.append(f'<article><p>{label} {kind} {stage} · {size}px</p>'+str(macros.avatar(kind,stage,size=size,mood='okay'))+'</article>')
-  html='<html><meta charset="utf-8"><title>Cat and blossom slice</title>'+str(after.avatar_defs())+f'<style>body{{margin:24px;font:14px system-ui;background:{"#182234" if theme=="dark" else "#fff"};color:{"#fff" if theme=="dark" else "#27232b"}}}main{{display:grid;grid-template-columns:repeat(6,1fr);gap:16px}}article{{padding:12px;border:1px solid #8886;border-radius:12px}}p{{font-size:12px}}</style><main>'+''.join(cards)+'</main></html>'
+  html='<html><meta charset="utf-8"><title>Companion illustration comparison</title>'+str(after.avatar_defs())+f'<style>body{{margin:24px;font:14px system-ui;background:{"#182234" if theme=="dark" else "#fff"};color:{"#fff" if theme=="dark" else "#27232b"}}}main{{display:grid;grid-template-columns:repeat(6,1fr);gap:16px}}article{{padding:12px;border:1px solid #8886;border-radius:12px}}p{{font-size:12px}}</style><main>'+''.join(cards)+'</main></html>'
   html=re.sub(r'<script\b[^>]*>.*?</script>','',html,flags=re.S)
   context=browser.new_context(viewport={'width':1440,'height':1000},reduced_motion='reduce')
   page=context.new_page();page.set_content(html)
   ids=page.locator('[id]').evaluate_all('(els)=>els.map(e=>e.id)');assert len(ids)==len(set(ids))
   # Gallery-only prototypes attach to the actual per-stage owning groups.
   page.screenshot(path=str(out/f'before-after-bare-{theme}.png'),full_page=True)
-  prototypes(page)
-  page.screenshot(path=str(out/f'before-after-{theme}.png'),full_page=True)
+  if not a.no_prototypes:prototypes(page)
+  if not a.no_prototypes:page.screenshot(path=str(out/f'before-after-{theme}.png'),full_page=True)
   (out/f'gallery-{theme}.html').write_text(page.content());context.close()
  # Recording uses actual scripts through a local HTTP fixture origin.
- context=browser.new_context(viewport={'width':1000,'height':600},record_video_dir=str(out/'motion'))
+ context=browser.new_context(viewport={'width':1440,'height':600},record_video_dir=str(out/'motion'))
  page=context.new_page()
  def serve(route):
   path=route.request.url.split('http://avatar.local')[-1].split('?')[0]
@@ -56,11 +56,12 @@ with tempfile.TemporaryDirectory() as tmp, sync_playwright() as pw:
    route.fulfill(body=(ROOT/path.lstrip('/')).read_bytes(),content_type='text/javascript')
   elif path=='/avatar/care':route.fulfill(json={'ok':True,'mood':'happy','counted':False})
   else:
-   cards=''.join('<article><p>'+label+' '+kind+'</p>'+str(m.avatar(kind,6,size=170,interactive=True,care=True,mood='okay'))+'</article>' for label,m in [('Before',before),('After',after)] for kind in ['cat','plant'])
+   cards=''.join('<article><p>'+label+' '+kind+'</p>'+str(m.avatar(kind,6,size=170,interactive=True,care=True,mood='okay'))+'</article>' for label,m in [('Before',before),('After',after)] for kind in kinds)
    route.fulfill(body='<html>'+str(after.avatar_defs())+'<style>body{font:16px system-ui;background:#f4f6fa}main{display:flex;gap:40px}</style><main>'+cards+'</main></html>',content_type='text/html')
  page.route('http://avatar.local/**',serve)
  page.add_init_script("const D=Date;window.Date=class extends D{constructor(...a){super(...(a.length?a:['2026-07-15T12:00:00Z']))}static now(){return D.now()}}")
- page.goto('http://avatar.local/');prototypes(page);page.wait_for_timeout(2500)
+ page.goto('http://avatar.local/');page.wait_for_timeout(2500)
+ if not a.no_prototypes:prototypes(page)
  for selector in ['.av-play-btn','.av-care-btn']:
   for button in page.locator(selector).all():button.click(force=True)
   page.wait_for_timeout(2000)
