@@ -38,7 +38,31 @@
   },
   "callback_limit_ms": 50,
   "frame_exception": "User-approved recorded33.3ms overrun remains accepted; no waiver of callback limit or large frame failures.",
-  "result": "New preference cache removes input-time MediaQueryList.matches reads and preserves live reduced-motion behavior, but current chase callback still exceeds50ms. Old-art controls also show large stalls; underlying cause remains unproven.",
-  "not_run": "Remaining species traces, native cohorts and final full matrix stopped at failed prerequisite.",
-  "next_step": "Establish a stable control fixture and attribute residual chase-timer stalls before further product changes; retain all original acceptance requirements and user frame exception."
+  "result": "Code fixes retain eight browser passes and 1,734 SVG comparisons. Native diagnostics establish an unstable local throttle mechanism; isolated cpuset also fails. Hosted verification prepared and pushed, but no hosted acceptance evidence yet. 2B remains unresolved.",
+  "not_run": "Complete hosted functional, focused and matched before/current matrices have no reported run or result. Earlier local failed samples remain retained.",
+  "next_step": "Start the dedicated workflow on a GitHub runner, retain all three phase artifacts, and assess callback50ms/frame33.3ms plus original comparative budgets. Resolve any genuine remaining regression before marking2B complete.",
+  "diagnostic_revision": "f421044b53840f12d754cc9c30b3c2f3ff268532",
+  "hosted_harness_revision": "0bd9092",
+  "native_throttle_diagnostic": {
+    "samples": 10,
+    "all_owned_callbacks_under_50ms": true,
+    "maximum_handler_pause_in_input_window_ms": 345.95,
+    "acceptance": false,
+    "reason": "Native probe changes measurement/scheduling. Proves emulator pauses can occur independently of avatar callbacks, not that every previous callback failure was emulator time. No duration subtraction."
+  },
+  "cpuset_candidate": {
+    "status": "rejected",
+    "current_callback_max_ms": 148.967
+  },
+  "hosted_verification": {
+    "branch": "codex/avatar-2b-verification",
+    "url": "https://github.com/jongsky25/css-is/tree/codex/avatar-2b-verification",
+    "status": "pushed; no workflow run reported by GitHub",
+    "phases": [
+      "functional",
+      "focused",
+      "matrix"
+    ],
+    "results_available": false
+  }
 }
