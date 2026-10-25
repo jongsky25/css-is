@@ -1,3 +1,9 @@
+## 8.60 — October 25, 2026
+
+- Add default-off private /room_slots, /my_rooms and /room_status commands under separate current rooms.read consent. Reuse signed-in day_view, requester-qualified reference lookup and bounded own-request lists.
+- Match existing working-day, holiday, closure, pending/approved and booking-horizon rules; distinguish pending/standby from actual bookings. Omit titles, decision notes, contact details and other users' request identifiers from room replies.
+- Store query metadata only, render current source data at send time, preserve revocation/generation fences, and update private-account instructions plus the Telegram progress/runbook Markdown. No booking actions or group business reads.
+
 ## 8.59 — October 25, 2026
 
 - Add default-off private Telegram calendar lookup using the same viewer context, visibility predicates, scopes and entries/holidays/room-calendar providers as the signed-in calendar. Require current separate calendar.read consent and capability switch.

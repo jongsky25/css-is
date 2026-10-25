@@ -18,10 +18,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "8.59"
+APP_VERSION = "8.60"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "8.60",
+        "date": "October 25, 2026",
+        "summary": "Prepare optional private room availability and request lookup.",
+        "changes": [
+            "With separate room read consent and the private pilot enabled, check conference-room slots or your own request status in Telegram.",
+            "Pending requests stay distinct from approved bookings, and availability follows the office's current closure and booking rules.",
+            "Create or change requests in Office Connect; no group room replies or booking actions are enabled."
+        ]
+    },
     {
         "version": "8.59",
         "date": "October 25, 2026",

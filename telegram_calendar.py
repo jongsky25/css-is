@@ -93,13 +93,13 @@ def parse(text,now):
     return {'start':first,'end':last,'scope':scope,'cursor':None}
 
 
-def actor(conn,delivery,bot):
+def actor(conn,delivery,bot,action='calendar.read'):
     found=rows(conn,'''SELECT c.account_id,u.username,u.role FROM telegram_connection c
         JOIN admin_user u ON u.id=c.account_id WHERE c.id=? AND c.generation=? AND c.state='active'
         AND c.telegram_user_id=? AND c.private_chat_id=? AND u.active=1 AND u.must_change=0''',
         (delivery['connection_id'],delivery['generation'],delivery['chat_id'],delivery['chat_id']))
     if (not found or delivery['chat_id']<=0 or delivery['topic_id'] is not None or delivery['registration_id'] is not None
-            or not links.authorized(conn,found[0]['account_id'],'calendar.read')
+            or not links.authorized(conn,found[0]['account_id'],action)
             or not links.origin() or len(links.origin())>200):
         return None
     user=found[0]
