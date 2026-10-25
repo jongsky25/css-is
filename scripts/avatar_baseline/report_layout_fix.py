@@ -12,7 +12,7 @@ trace_rows=[]
 for kind,checks in a.get('traced',{}).items():
     samples=checks['samples']
     trace_rows.append(f"| {kind} | {[round(r['max_owned_call_wall_ms'],3) for r in samples]} | {[round(r['frame_p95_ms'],1) for r in samples]} | {'PASS' if checks['passed'] else 'FAIL'} |")
-trace_table='\n'.join(trace_rows) or 'No complete final-source trace cohort yet.'
+trace_table='\n'.join(trace_rows) or '| Pending | — | — | NOT COLLECTED |'
 primary='The final-source original 20 matrix has not completed; acceptance remains blocked.'
 if a['primary_samples']==20:
     comparison=read(root/'isolated-fixture/after/comparison.json');rows=[]
@@ -42,7 +42,7 @@ gates='\n'.join(f"- `{key}`: **{'PASS' if passed else 'FAIL'}**" for key,passed 
 (root/'REPORT.md').write_text(f'''# Increment 2B — fern, mushroom and succulent
 
 **{'Accepted: increment 2B is complete. Increment 3A is next.' if accepted else 'Blocked: do not start increment 3A.'}**
-Measured source (production changes end at `c57d9be`): `{a['source_commit']}`.
+Measured rejected-fixture source (production changes end at `c57d9be`): `{a['source_commit']}`.
 [Assessment](layout-fix/assessment.json) records every gate.
 
 ## Fix
@@ -75,7 +75,7 @@ compositing hint or containment rule was added.
 
 ## Focused motion gate
 
-Five mature-stage 6 warm mobile CPU 4 runs per plant use the original 30-second
+Acceptance requires five mature-stage 6 warm mobile CPU4 runs per plant with the original30-second
 interaction sequence. Native LoAF, LongTask and EventTiming plus a lightweight
 frame counter run without timer/event/rAF wrappers, callback clocks, stack capture
 or tracing. Every untraced run must meet frame p95≤33ms. Native invoker wall durations below are diagnostic; an invoker URL alone does not establish avatar work. Five additional counterbalanced old/new-art trace pairs per plant directly enforce owned FunctionCall wall spans≤50ms and traced frame p95≤33ms, without CPU/GC/baseline subtraction. See [attribution plan](layout-fix/attribution-plan.json) and the assessment for every traced run.
@@ -85,20 +85,14 @@ Zero reported duration means no owned script in a reported long frame, not zero 
 |---|---|---|---|
 {chr(10).join(focus)}
 
-Raw data: [fern](layout-fix/native-control/fern/native-control.json),
-[mushroom](layout-fix/native-control/mushroom/native-control.json),
-[succulent](layout-fix/native-control/succulent/native-control.json).
+The independent pinning candidate was **rejected** after fern5 and mushroom2; succulent was not started. [Stopped cohort and reason](layout-fix/native-control/STOPPED.json). Raw data: [fern](layout-fix/native-control/fern/native-control.json), [mushroom](layout-fix/native-control/mushroom/native-control.json). An incomplete species cannot pass.
 [Runner](layout-fix/native-tests.txt).
 
 | Species | Five direct owned FunctionCall maxima ms | Traced frame p95 ms | Gate |
 |---|---|---|---|
 {trace_table}
 
-Direct trace records: [fern](layout-fix/trace-control/fern/summary.json),
-[mushroom](layout-fix/trace-control/mushroom/summary.json),
-[succulent](layout-fix/trace-control/succulent/summary.json),
-[runner](layout-fix/trace-tests.txt). All 30 counterbalanced old/new-art records
-and losslessly gzipped native traces remain. The current-runtime old-art arm
+The required final30 trace cohort was not started because the native prerequisite failed. The [prior same-product failed fern trace](layout-fix/pre-thread-pin-fixture/trace-control/fern/summary.json) and losslessly gzipped raw traces remain. It records265.347ms owned callback and33.4ms framep95; those failures are unresolved. The current-runtime old-art arm
 controls artwork cost; it is separate from the original-source full matrix.
 Page-wide rendering outside owned callbacks cannot be conclusively attributed
 by this trace. The complete untraced latency/frame/memory comparisons remain required.
@@ -110,8 +104,7 @@ by this trace. The complete untraced latency/frame/memory comparisons remain req
 The original protocol remains fixed Chromium 154.0.8037.57, CPU 1/4,
 desktop 1440×1000/mobile 390×844, synthetic July 15 date/seed, local gzip,
 overlay filesystem, five runs per device/cache and 30-second idle/interaction
-scenarios. Source hashes prove the same product revision for native checks,
-primary matrix and functional verification. The entire process tree uses three-core CPU affinity; renderer main/throttler threads share CPU1, documented in [fixture plan](isolated-fixture/PLAN.json) and [thread-pinning plan](layout-fix/thread-pin-plan.json). Fresh original-source and current-source matrices share that affinity; historical increment0 gates also remain required. No browser CPU rate, scenario or budget changed.
+scenarios. Recorded source hashes identify each measured product revision; current-source native and functional checks are verified. No final-source primary matrix exists. The rejected fixture candidate used three-core affinity with renderer main/throttler threads onCPU1, documented in [fixture plan](isolated-fixture/PLAN.json) and [thread-pinning plan](layout-fix/thread-pin-plan.json). No fresh full matrices were collected on this rejected fixture. Any subsequent old/current comparison must share a validated fixture and still satisfy historical increment0 gates. No browser CPU rate, scenario or budget changed.
 
 {gates}
 
@@ -192,10 +185,7 @@ reproduced slow callbacks on old/new art with long sampling gaps and no nested l
 Chromium154's [POSIX throttler](https://github.com/chromium/chromium/blob/154.0.8037.57/third_party/blink/renderer/platform/scheduler/common/thread_cpu_throttler.cc)
 busy-waits in SIGUSR2 and masks SIGPROF; sampling gaps cannot prove JavaScript work.
 A separate [four-run pinning diagnostic](layout-fix/thread-pin-diagnostic/fern/summary.json)
-passed all33ms/50ms checks (maxima19.632,23.374,14.013,7.703ms). This motivated the
-explicit affinity correction; it does not establish the cause of every earlier stall.
-Those diagnostics are excluded from acceptance. Fresh complete native/trace/matrix
-cohorts must pass in their own right, against unchanged budgets.
+passed all33ms/50ms checks (maxima19.632,23.374,14.013,7.703ms). This motivated a fresh independent acceptance cohort. That cohort failed fern133.3/33.4ms framep95: **the pinning candidate is rejected**. No current full matrix was started. The diagnostic pass did not generalize and cannot substitute for acceptance. Neither empty controls nor sampling gaps establish the cause of every stall. A validated runner and all unchanged focused/matrix gates are still required before3A.
 
 No sample was replaced and no threshold relaxed. These are local throttled-browser
 results, not physical-phone 60 fps claims. Native LoAF reports scripts in long frames;
@@ -208,9 +198,10 @@ retention remain separate release blockers. No production deployment or 3A work.
 ## Reproduce
 
 ```sh
-# Use fresh directories and preserve prior cohorts.
-CSS_TEST_NOW=2026-07-15T12:00:00 CSS_AVATAR_BASELINE=1 CSS_AVATAR_MATURE=1 CSS_AVATAR_NATIVE_AFTER_ONLY=1 CSS_AVATAR_OUT=<fresh>/native-control/application taskset -c 0-2 .venv/bin/python -m pytest tests/test_avatar_native_control.py -s
-CSS_TEST_NOW=2026-07-15T12:00:00 CSS_AVATAR_BASELINE=1 CSS_AVATAR_RUNS=5 CSS_AVATAR_SECONDS=30 CSS_AVATAR_OUT=<fresh>/application taskset -c 0-2 .venv/bin/python -m pytest tests/test_avatar_baseline_browser.py -k real_application_baseline -s
+# Reproduce the REJECTED fixture in fresh directories; preserve every cohort.
+CSS_TEST_NOW=2026-07-15T12:00:00 CSS_AVATAR_BASELINE=1 CSS_AVATAR_PIN_RENDERER=1 CSS_AVATAR_MATURE=1 CSS_AVATAR_NATIVE_AFTER_ONLY=1 CSS_AVATAR_OUT=<fresh>/native-control/application taskset -c 0-2 .venv/bin/python -m pytest tests/test_avatar_native_control.py -s
+# Only after focused checks pass on a validated fixture, collect fresh old/current matrices:
+CSS_TEST_NOW=2026-07-15T12:00:00 CSS_AVATAR_BASELINE=1 CSS_AVATAR_PIN_RENDERER=1 CSS_AVATAR_RUNS=5 CSS_AVATAR_SECONDS=30 CSS_AVATAR_OUT=<fresh>/application taskset -c 0-2 .venv/bin/python -m pytest tests/test_avatar_baseline_browser.py -k real_application_baseline -s
 .venv/bin/python scripts/avatar_baseline/summarize.py docs/avatars/increment2b/layout-fix/application
 .venv/bin/python scripts/avatar_baseline/compare.py --after docs/avatars/increment2b/layout-fix/application
 .venv/bin/python scripts/avatar_baseline/assess_layout_fix.py

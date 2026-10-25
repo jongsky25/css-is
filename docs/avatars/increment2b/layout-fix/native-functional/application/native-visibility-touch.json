@@ -1,0 +1,1091 @@
+{
+  "illustrated_svg_filters": [
+    "none"
+  ],
+  "picker_animations": [],
+  "visible": {
+    "lcp_ms": 1072,
+    "long_tasks": [
+      {
+        "start": 812,
+        "duration": 212,
+        "name": "self"
+      }
+    ],
+    "events": [],
+    "hidden": false,
+    "animations": 1,
+    "avatar_animations": 1,
+    "timers": [
+      {
+        "source": "    at http://127.0.0.1:60025/static/js/avatars.js?v=8.19:950:3",
+        "repeat": true,
+        "delay": 300000
+      },
+      {
+        "source": "    at tick (http://127.0.0.1:60025/static/js/avatars.js?v=8.19:245:20)",
+        "repeat": false,
+        "delay": 6882.59061742574
+      },
+      {
+        "source": "    at amble (http://127.0.0.1:60025/static/js/avatars.js?v=8.19:314:20)",
+        "repeat": false,
+        "delay": 6132.382785901427
+      },
+      {
+        "source": "    at initDrag (http://127.0.0.1:60025/static/js/avatars.js?v=8.19:851:16)",
+        "repeat": true,
+        "delay": 80
+      }
+    ],
+    "ticks": {
+      "other": 1,
+      "    at initDrag (http://127.0.0.1:60025/static/js/avatars.js?v=8.19:851:16)": 7
+    },
+    "nodes": 1129,
+    "resources": [
+      {
+        "name": "/static/css/app.css?v=7.96",
+        "transfer": 19372,
+        "encoded": 19072,
+        "decoded": 78192,
+        "start": 716.8999999985099,
+        "duration": 77.30000000447035,
+        "responseStart": 782.2000000029802,
+        "responseEnd": 794.2000000029802,
+        "initiator": "link"
+      },
+      {
+        "name": "/static/css/appearance.css?v=2",
+        "transfer": 3138,
+        "encoded": 2838,
+        "decoded": 9024,
+        "start": 717.2000000029802,
+        "duration": 85.29999999701977,
+        "responseStart": 788,
+        "responseEnd": 802.5,
+        "initiator": "link"
+      },
+      {
+        "name": "/static/js/appearance.js?v=2",
+        "transfer": 1862,
+        "encoded": 1562,
+        "decoded": 4158,
+        "start": 717.3000000044703,
+        "duration": 84.39999999850988,
+        "responseStart": 800.5,
+        "responseEnd": 801.7000000029802,
+        "initiator": "script"
+      },
+      {
+        "name": "/static/css/calendar.css?v=7.87",
+        "transfer": 11523,
+        "encoded": 11223,
+        "decoded": 54244,
+        "start": 717.3999999985099,
+        "duration": 56.100000001490116,
+        "responseStart": 767.6000000014901,
+        "responseEnd": 773.5,
+        "initiator": "link"
+      },
+      {
+        "name": "/static/js/accessibility.js?v=7.83",
+        "transfer": 1766,
+        "encoded": 1466,
+        "decoded": 4392,
+        "start": 717.3999999985099,
+        "duration": 83.5,
+        "responseStart": 784.6000000014901,
+        "responseEnd": 800.8999999985099,
+        "initiator": "script"
+      },
+      {
+        "name": "/static/js/avatar-audio.js?v=8.12",
+        "transfer": 3023,
+        "encoded": 2723,
+        "decoded": 7909,
+        "start": 717.5,
+        "duration": 84,
+        "responseStart": 799.7000000029802,
+        "responseEnd": 801.5,
+        "initiator": "script"
+      },
+      {
+        "name": "/static/js/avatars.js?v=8.19",
+        "transfer": 14779,
+        "encoded": 14479,
+        "decoded": 46945,
+        "start": 717.5,
+        "duration": 90.30000000447035,
+        "responseStart": 804.5,
+        "responseEnd": 807.8000000044703,
+        "initiator": "script"
+      },
+      {
+        "name": "/static/js/search.js?v=7.84",
+        "transfer": 7169,
+        "encoded": 6869,
+        "decoded": 21891,
+        "start": 717.5,
+        "duration": 109.10000000149012,
+        "responseStart": 824.8999999985099,
+        "responseEnd": 826.6000000014901,
+        "initiator": "script"
+      },
+      {
+        "name": "/static/js/deck.js?v=7.83",
+        "transfer": 2223,
+        "encoded": 1923,
+        "decoded": 5259,
+        "start": 717.5,
+        "duration": 115.39999999850988,
+        "responseStart": 830.3000000044703,
+        "responseEnd": 832.8999999985099,
+        "initiator": "script"
+      },
+      {
+        "name": "/static/js/assistant.js?v=20261009a",
+        "transfer": 4019,
+        "encoded": 3719,
+        "decoded": 10837,
+        "start": 717.6000000014901,
+        "duration": 109.39999999850988,
+        "responseStart": 824.3000000044703,
+        "responseEnd": 827,
+        "initiator": "script"
+      },
+      {
+        "name": "/static/js/feedback.js?v=7.83",
+        "transfer": 3189,
+        "encoded": 2889,
+        "decoded": 8272,
+        "start": 717.6000000014901,
+        "duration": 121.20000000298023,
+        "responseStart": 835.1000000014901,
+        "responseEnd": 838.8000000044703,
+        "initiator": "script"
+      },
+      {
+        "name": "/static/js/tour.js?v=7.83",
+        "transfer": 3052,
+        "encoded": 2752,
+        "decoded": 7547,
+        "start": 718.2000000029802,
+        "duration": 125.39999999850988,
+        "responseStart": 833.3000000044703,
+        "responseEnd": 843.6000000014901,
+        "initiator": "script"
+      },
+      {
+        "name": "/static/js/telemetry.js?v=20260925a",
+        "transfer": 7777,
+        "encoded": 7477,
+        "decoded": 20548,
+        "start": 718.2000000029802,
+        "duration": 158.89999999850988,
+        "responseStart": 872.8999999985099,
+        "responseEnd": 877.1000000014901,
+        "initiator": "script"
+      },
+      {
+        "name": "/static/js/app.js?v=7.96",
+        "transfer": 18670,
+        "encoded": 18370,
+        "decoded": 61894,
+        "start": 718.3000000044703,
+        "duration": 144.89999999850988,
+        "responseStart": 852.5,
+        "responseEnd": 863.2000000029802,
+        "initiator": "script"
+      },
+      {
+        "name": "/static/js/short_links.js?v=20261016c",
+        "transfer": 1642,
+        "encoded": 1342,
+        "decoded": 3856,
+        "start": 718.3999999985099,
+        "duration": 163.20000000298023,
+        "responseStart": 878,
+        "responseEnd": 881.6000000014901,
+        "initiator": "script"
+      },
+      {
+        "name": "/appearance/current",
+        "transfer": 528,
+        "encoded": 228,
+        "decoded": 317,
+        "start": 810.6000000014901,
+        "duration": 179.70000000298023,
+        "responseStart": 989.5,
+        "responseEnd": 990.3000000044703,
+        "initiator": "fetch"
+      },
+      {
+        "name": "/static/img/equity-mark.png",
+        "transfer": 92810,
+        "encoded": 92510,
+        "decoded": 92510,
+        "start": 819.8000000044703,
+        "duration": 61.5,
+        "responseStart": 867.6000000014901,
+        "responseEnd": 881.3000000044703,
+        "initiator": "css"
+      },
+      {
+        "name": "/favicon.ico",
+        "transfer": 348,
+        "encoded": 48,
+        "decoded": 22,
+        "start": 1095.3000000044703,
+        "duration": 55.899999998509884,
+        "responseStart": 1150.6000000014901,
+        "responseEnd": 1151.2000000029802,
+        "initiator": "other"
+      }
+    ],
+    "renderer_rss_sum_bytes": 225464320,
+    "renderer_process_count": 3,
+    "js_heap_bytes": 2502856,
+    "dom_counters": {
+      "documents": 4,
+      "nodes": 2722,
+      "jsEventListeners": 114
+    },
+    "document_listeners": {
+      "visibilitychange": 3,
+      "keydown": 3,
+      "focusin": 1,
+      "click": 12,
+      "input": 2,
+      "scroll": 1,
+      "pointermove": 2,
+      "animationend": 1,
+      "change": 1,
+      "submit": 5
+    },
+    "frame_count": 35,
+    "frame_p95_ms": 33.40000000000009
+  },
+  "offscreen": {
+    "lcp_ms": 1072,
+    "long_tasks": [],
+    "events": [],
+    "hidden": false,
+    "animations": 1,
+    "avatar_animations": 1,
+    "timers": [
+      {
+        "source": "    at http://127.0.0.1:60025/static/js/avatars.js?v=8.19:950:3",
+        "repeat": true,
+        "delay": 300000
+      },
+      {
+        "source": "    at initDrag (http://127.0.0.1:60025/static/js/avatars.js?v=8.19:851:16)",
+        "repeat": true,
+        "delay": 80
+      },
+      {
+        "source": "    at tick (http://127.0.0.1:60025/static/js/avatars.js?v=8.19:245:20)",
+        "repeat": false,
+        "delay": 12303.13921989873
+      },
+      {
+        "source": "    at amble (http://127.0.0.1:60025/static/js/avatars.js?v=8.19:314:20)",
+        "repeat": false,
+        "delay": 10768.800936639309
+      }
+    ],
+    "ticks": {
+      "other": 4,
+      "    at initDrag (http://127.0.0.1:60025/static/js/avatars.js?v=8.19:851:16)": 386,
+      "    at amble (http://127.0.0.1:60025/static/js/avatars.js?v=8.19:314:20)": 2,
+      "    at tick (http://127.0.0.1:60025/static/js/avatars.js?v=8.19:245:20)": 2,
+      "    at stride (http://127.0.0.1:60025/static/js/avatars.js?v=8.19:307:20)": 2,
+      "    at run (http://127.0.0.1:60025/static/js/avatars.js?v=8.19:325:25)": 2,
+      "    at http://127.0.0.1:60025/static/js/avatars.js?v=8.19:252:20": 1
+    },
+    "nodes": 1129,
+    "resources": [
+      {
+        "name": "/static/css/app.css?v=7.96",
+        "transfer": 19372,
+        "encoded": 19072,
+        "decoded": 78192,
+        "start": 716.8999999985099,
+        "duration": 77.30000000447035,
+        "responseStart": 782.2000000029802,
+        "responseEnd": 794.2000000029802,
+        "initiator": "link"
+      },
+      {
+        "name": "/static/css/appearance.css?v=2",
+        "transfer": 3138,
+        "encoded": 2838,
+        "decoded": 9024,
+        "start": 717.2000000029802,
+        "duration": 85.29999999701977,
+        "responseStart": 788,
+        "responseEnd": 802.5,
+        "initiator": "link"
+      },
+      {
+        "name": "/static/js/appearance.js?v=2",
+        "transfer": 1862,
+        "encoded": 1562,
+        "decoded": 4158,
+        "start": 717.3000000044703,
+        "duration": 84.39999999850988,
+        "responseStart": 800.5,
+        "responseEnd": 801.7000000029802,
+        "initiator": "script"
+      },
+      {
+        "name": "/static/css/calendar.css?v=7.87",
+        "transfer": 11523,
+        "encoded": 11223,
+        "decoded": 54244,
+        "start": 717.3999999985099,
+        "duration": 56.100000001490116,
+        "responseStart": 767.6000000014901,
+        "responseEnd": 773.5,
+        "initiator": "link"
+      },
+      {
+        "name": "/static/js/accessibility.js?v=7.83",
+        "transfer": 1766,
+        "encoded": 1466,
+        "decoded": 4392,
+        "start": 717.3999999985099,
+        "duration": 83.5,
+        "responseStart": 784.6000000014901,
+        "responseEnd": 800.8999999985099,
+        "initiator": "script"
+      },
+      {
+        "name": "/static/js/avatar-audio.js?v=8.12",
+        "transfer": 3023,
+        "encoded": 2723,
+        "decoded": 7909,
+        "start": 717.5,
+        "duration": 84,
+        "responseStart": 799.7000000029802,
+        "responseEnd": 801.5,
+        "initiator": "script"
+      },
+      {
+        "name": "/static/js/avatars.js?v=8.19",
+        "transfer": 14779,
+        "encoded": 14479,
+        "decoded": 46945,
+        "start": 717.5,
+        "duration": 90.30000000447035,
+        "responseStart": 804.5,
+        "responseEnd": 807.8000000044703,
+        "initiator": "script"
+      },
+      {
+        "name": "/static/js/search.js?v=7.84",
+        "transfer": 7169,
+        "encoded": 6869,
+        "decoded": 21891,
+        "start": 717.5,
+        "duration": 109.10000000149012,
+        "responseStart": 824.8999999985099,
+        "responseEnd": 826.6000000014901,
+        "initiator": "script"
+      },
+      {
+        "name": "/static/js/deck.js?v=7.83",
+        "transfer": 2223,
+        "encoded": 1923,
+        "decoded": 5259,
+        "start": 717.5,
+        "duration": 115.39999999850988,
+        "responseStart": 830.3000000044703,
+        "responseEnd": 832.8999999985099,
+        "initiator": "script"
+      },
+      {
+        "name": "/static/js/assistant.js?v=20261009a",
+        "transfer": 4019,
+        "encoded": 3719,
+        "decoded": 10837,
+        "start": 717.6000000014901,
+        "duration": 109.39999999850988,
+        "responseStart": 824.3000000044703,
+        "responseEnd": 827,
+        "initiator": "script"
+      },
+      {
+        "name": "/static/js/feedback.js?v=7.83",
+        "transfer": 3189,
+        "encoded": 2889,
+        "decoded": 8272,
+        "start": 717.6000000014901,
+        "duration": 121.20000000298023,
+        "responseStart": 835.1000000014901,
+        "responseEnd": 838.8000000044703,
+        "initiator": "script"
+      },
+      {
+        "name": "/static/js/tour.js?v=7.83",
+        "transfer": 3052,
+        "encoded": 2752,
+        "decoded": 7547,
+        "start": 718.2000000029802,
+        "duration": 125.39999999850988,
+        "responseStart": 833.3000000044703,
+        "responseEnd": 843.6000000014901,
+        "initiator": "script"
+      },
+      {
+        "name": "/static/js/telemetry.js?v=20260925a",
+        "transfer": 7777,
+        "encoded": 7477,
+        "decoded": 20548,
+        "start": 718.2000000029802,
+        "duration": 158.89999999850988,
+        "responseStart": 872.8999999985099,
+        "responseEnd": 877.1000000014901,
+        "initiator": "script"
+      },
+      {
+        "name": "/static/js/app.js?v=7.96",
+        "transfer": 18670,
+        "encoded": 18370,
+        "decoded": 61894,
+        "start": 718.3000000044703,
+        "duration": 144.89999999850988,
+        "responseStart": 852.5,
+        "responseEnd": 863.2000000029802,
+        "initiator": "script"
+      },
+      {
+        "name": "/static/js/short_links.js?v=20261016c",
+        "transfer": 1642,
+        "encoded": 1342,
+        "decoded": 3856,
+        "start": 718.3999999985099,
+        "duration": 163.20000000298023,
+        "responseStart": 878,
+        "responseEnd": 881.6000000014901,
+        "initiator": "script"
+      },
+      {
+        "name": "/appearance/current",
+        "transfer": 528,
+        "encoded": 228,
+        "decoded": 317,
+        "start": 810.6000000014901,
+        "duration": 179.70000000298023,
+        "responseStart": 989.5,
+        "responseEnd": 990.3000000044703,
+        "initiator": "fetch"
+      },
+      {
+        "name": "/static/img/equity-mark.png",
+        "transfer": 92810,
+        "encoded": 92510,
+        "decoded": 92510,
+        "start": 819.8000000044703,
+        "duration": 61.5,
+        "responseStart": 867.6000000014901,
+        "responseEnd": 881.3000000044703,
+        "initiator": "css"
+      },
+      {
+        "name": "/favicon.ico",
+        "transfer": 348,
+        "encoded": 48,
+        "decoded": 22,
+        "start": 1095.3000000044703,
+        "duration": 55.899999998509884,
+        "responseStart": 1150.6000000014901,
+        "responseEnd": 1151.2000000029802,
+        "initiator": "other"
+      },
+      {
+        "name": "/telemetry",
+        "transfer": 300,
+        "encoded": 0,
+        "decoded": 0,
+        "start": 11060.20000000298,
+        "duration": 44.79999999701977,
+        "responseStart": 11104.60000000149,
+        "responseEnd": 11105,
+        "initiator": "beacon"
+      }
+    ],
+    "renderer_rss_sum_bytes": 251097088,
+    "renderer_process_count": 3,
+    "js_heap_bytes": 2701324,
+    "dom_counters": {
+      "documents": 4,
+      "nodes": 2722,
+      "jsEventListeners": 114
+    },
+    "document_listeners": {
+      "visibilitychange": 3,
+      "keydown": 3,
+      "focusin": 1,
+      "click": 12,
+      "input": 2,
+      "scroll": 1,
+      "pointermove": 2,
+      "animationend": 1,
+      "change": 1,
+      "submit": 5
+    },
+    "frame_count": 1798,
+    "frame_p95_ms": 16.700000000000728
+  },
+  "hidden_start": {
+    "lcp_ms": 1072,
+    "long_tasks": [],
+    "events": [],
+    "hidden": true,
+    "animations": 1,
+    "avatar_animations": 1,
+    "timers": [
+      {
+        "source": "    at http://127.0.0.1:60025/static/js/avatars.js?v=8.19:950:3",
+        "repeat": true,
+        "delay": 300000
+      },
+      {
+        "source": "    at initDrag (http://127.0.0.1:60025/static/js/avatars.js?v=8.19:851:16)",
+        "repeat": true,
+        "delay": 80
+      },
+      {
+        "source": "    at tick (http://127.0.0.1:60025/static/js/avatars.js?v=8.19:245:20)",
+        "repeat": false,
+        "delay": 12303.13921989873
+      },
+      {
+        "source": "    at amble (http://127.0.0.1:60025/static/js/avatars.js?v=8.19:314:20)",
+        "repeat": false,
+        "delay": 10768.800936639309
+      }
+    ],
+    "ticks": {
+      "other": 4,
+      "    at initDrag (http://127.0.0.1:60025/static/js/avatars.js?v=8.19:851:16)": 386,
+      "    at amble (http://127.0.0.1:60025/static/js/avatars.js?v=8.19:314:20)": 2,
+      "    at tick (http://127.0.0.1:60025/static/js/avatars.js?v=8.19:245:20)": 2,
+      "    at stride (http://127.0.0.1:60025/static/js/avatars.js?v=8.19:307:20)": 2,
+      "    at run (http://127.0.0.1:60025/static/js/avatars.js?v=8.19:325:25)": 2,
+      "    at http://127.0.0.1:60025/static/js/avatars.js?v=8.19:252:20": 1
+    },
+    "nodes": 1129,
+    "resources": [
+      {
+        "name": "/static/css/app.css?v=7.96",
+        "transfer": 19372,
+        "encoded": 19072,
+        "decoded": 78192,
+        "start": 716.8999999985099,
+        "duration": 77.30000000447035,
+        "responseStart": 782.2000000029802,
+        "responseEnd": 794.2000000029802,
+        "initiator": "link"
+      },
+      {
+        "name": "/static/css/appearance.css?v=2",
+        "transfer": 3138,
+        "encoded": 2838,
+        "decoded": 9024,
+        "start": 717.2000000029802,
+        "duration": 85.29999999701977,
+        "responseStart": 788,
+        "responseEnd": 802.5,
+        "initiator": "link"
+      },
+      {
+        "name": "/static/js/appearance.js?v=2",
+        "transfer": 1862,
+        "encoded": 1562,
+        "decoded": 4158,
+        "start": 717.3000000044703,
+        "duration": 84.39999999850988,
+        "responseStart": 800.5,
+        "responseEnd": 801.7000000029802,
+        "initiator": "script"
+      },
+      {
+        "name": "/static/css/calendar.css?v=7.87",
+        "transfer": 11523,
+        "encoded": 11223,
+        "decoded": 54244,
+        "start": 717.3999999985099,
+        "duration": 56.100000001490116,
+        "responseStart": 767.6000000014901,
+        "responseEnd": 773.5,
+        "initiator": "link"
+      },
+      {
+        "name": "/static/js/accessibility.js?v=7.83",
+        "transfer": 1766,
+        "encoded": 1466,
+        "decoded": 4392,
+        "start": 717.3999999985099,
+        "duration": 83.5,
+        "responseStart": 784.6000000014901,
+        "responseEnd": 800.8999999985099,
+        "initiator": "script"
+      },
+      {
+        "name": "/static/js/avatar-audio.js?v=8.12",
+        "transfer": 3023,
+        "encoded": 2723,
+        "decoded": 7909,
+        "start": 717.5,
+        "duration": 84,
+        "responseStart": 799.7000000029802,
+        "responseEnd": 801.5,
+        "initiator": "script"
+      },
+      {
+        "name": "/static/js/avatars.js?v=8.19",
+        "transfer": 14779,
+        "encoded": 14479,
+        "decoded": 46945,
+        "start": 717.5,
+        "duration": 90.30000000447035,
+        "responseStart": 804.5,
+        "responseEnd": 807.8000000044703,
+        "initiator": "script"
+      },
+      {
+        "name": "/static/js/search.js?v=7.84",
+        "transfer": 7169,
+        "encoded": 6869,
+        "decoded": 21891,
+        "start": 717.5,
+        "duration": 109.10000000149012,
+        "responseStart": 824.8999999985099,
+        "responseEnd": 826.6000000014901,
+        "initiator": "script"
+      },
+      {
+        "name": "/static/js/deck.js?v=7.83",
+        "transfer": 2223,
+        "encoded": 1923,
+        "decoded": 5259,
+        "start": 717.5,
+        "duration": 115.39999999850988,
+        "responseStart": 830.3000000044703,
+        "responseEnd": 832.8999999985099,
+        "initiator": "script"
+      },
+      {
+        "name": "/static/js/assistant.js?v=20261009a",
+        "transfer": 4019,
+        "encoded": 3719,
+        "decoded": 10837,
+        "start": 717.6000000014901,
+        "duration": 109.39999999850988,
+        "responseStart": 824.3000000044703,
+        "responseEnd": 827,
+        "initiator": "script"
+      },
+      {
+        "name": "/static/js/feedback.js?v=7.83",
+        "transfer": 3189,
+        "encoded": 2889,
+        "decoded": 8272,
+        "start": 717.6000000014901,
+        "duration": 121.20000000298023,
+        "responseStart": 835.1000000014901,
+        "responseEnd": 838.8000000044703,
+        "initiator": "script"
+      },
+      {
+        "name": "/static/js/tour.js?v=7.83",
+        "transfer": 3052,
+        "encoded": 2752,
+        "decoded": 7547,
+        "start": 718.2000000029802,
+        "duration": 125.39999999850988,
+        "responseStart": 833.3000000044703,
+        "responseEnd": 843.6000000014901,
+        "initiator": "script"
+      },
+      {
+        "name": "/static/js/telemetry.js?v=20260925a",
+        "transfer": 7777,
+        "encoded": 7477,
+        "decoded": 20548,
+        "start": 718.2000000029802,
+        "duration": 158.89999999850988,
+        "responseStart": 872.8999999985099,
+        "responseEnd": 877.1000000014901,
+        "initiator": "script"
+      },
+      {
+        "name": "/static/js/app.js?v=7.96",
+        "transfer": 18670,
+        "encoded": 18370,
+        "decoded": 61894,
+        "start": 718.3000000044703,
+        "duration": 144.89999999850988,
+        "responseStart": 852.5,
+        "responseEnd": 863.2000000029802,
+        "initiator": "script"
+      },
+      {
+        "name": "/static/js/short_links.js?v=20261016c",
+        "transfer": 1642,
+        "encoded": 1342,
+        "decoded": 3856,
+        "start": 718.3999999985099,
+        "duration": 163.20000000298023,
+        "responseStart": 878,
+        "responseEnd": 881.6000000014901,
+        "initiator": "script"
+      },
+      {
+        "name": "/appearance/current",
+        "transfer": 528,
+        "encoded": 228,
+        "decoded": 317,
+        "start": 810.6000000014901,
+        "duration": 179.70000000298023,
+        "responseStart": 989.5,
+        "responseEnd": 990.3000000044703,
+        "initiator": "fetch"
+      },
+      {
+        "name": "/static/img/equity-mark.png",
+        "transfer": 92810,
+        "encoded": 92510,
+        "decoded": 92510,
+        "start": 819.8000000044703,
+        "duration": 61.5,
+        "responseStart": 867.6000000014901,
+        "responseEnd": 881.3000000044703,
+        "initiator": "css"
+      },
+      {
+        "name": "/favicon.ico",
+        "transfer": 348,
+        "encoded": 48,
+        "decoded": 22,
+        "start": 1095.3000000044703,
+        "duration": 55.899999998509884,
+        "responseStart": 1150.6000000014901,
+        "responseEnd": 1151.2000000029802,
+        "initiator": "other"
+      },
+      {
+        "name": "/telemetry",
+        "transfer": 300,
+        "encoded": 0,
+        "decoded": 0,
+        "start": 11060.20000000298,
+        "duration": 44.79999999701977,
+        "responseStart": 11104.60000000149,
+        "responseEnd": 11105,
+        "initiator": "beacon"
+      }
+    ],
+    "renderer_rss_sum_bytes": 306339840,
+    "renderer_process_count": 4,
+    "js_heap_bytes": 2865024,
+    "dom_counters": {
+      "documents": 4,
+      "nodes": 2722,
+      "jsEventListeners": 114
+    },
+    "document_listeners": {
+      "visibilitychange": 3,
+      "keydown": 3,
+      "focusin": 1,
+      "click": 12,
+      "input": 2,
+      "scroll": 1,
+      "pointermove": 2,
+      "animationend": 1,
+      "change": 1,
+      "submit": 5
+    },
+    "frame_count": 0,
+    "frame_p95_ms": null
+  },
+  "hidden_end": {
+    "lcp_ms": 1072,
+    "long_tasks": [],
+    "events": [],
+    "hidden": true,
+    "animations": 1,
+    "avatar_animations": 1,
+    "timers": [
+      {
+        "source": "    at http://127.0.0.1:60025/static/js/avatars.js?v=8.19:950:3",
+        "repeat": true,
+        "delay": 300000
+      },
+      {
+        "source": "    at initDrag (http://127.0.0.1:60025/static/js/avatars.js?v=8.19:851:16)",
+        "repeat": true,
+        "delay": 80
+      },
+      {
+        "source": "    at tick (http://127.0.0.1:60025/static/js/avatars.js?v=8.19:245:20)",
+        "repeat": false,
+        "delay": 17660.226790606976
+      },
+      {
+        "source": "    at amble (http://127.0.0.1:60025/static/js/avatars.js?v=8.19:314:20)",
+        "repeat": false,
+        "delay": 6589.340327307582
+      }
+    ],
+    "ticks": {
+      "other": 8,
+      "    at initDrag (http://127.0.0.1:60025/static/js/avatars.js?v=8.19:851:16)": 416,
+      "    at amble (http://127.0.0.1:60025/static/js/avatars.js?v=8.19:314:20)": 5,
+      "    at tick (http://127.0.0.1:60025/static/js/avatars.js?v=8.19:245:20)": 4,
+      "    at stride (http://127.0.0.1:60025/static/js/avatars.js?v=8.19:307:20)": 2,
+      "    at run (http://127.0.0.1:60025/static/js/avatars.js?v=8.19:325:25)": 2,
+      "    at http://127.0.0.1:60025/static/js/avatars.js?v=8.19:252:20": 1
+    },
+    "nodes": 1129,
+    "resources": [
+      {
+        "name": "/static/css/app.css?v=7.96",
+        "transfer": 19372,
+        "encoded": 19072,
+        "decoded": 78192,
+        "start": 716.8999999985099,
+        "duration": 77.30000000447035,
+        "responseStart": 782.2000000029802,
+        "responseEnd": 794.2000000029802,
+        "initiator": "link"
+      },
+      {
+        "name": "/static/css/appearance.css?v=2",
+        "transfer": 3138,
+        "encoded": 2838,
+        "decoded": 9024,
+        "start": 717.2000000029802,
+        "duration": 85.29999999701977,
+        "responseStart": 788,
+        "responseEnd": 802.5,
+        "initiator": "link"
+      },
+      {
+        "name": "/static/js/appearance.js?v=2",
+        "transfer": 1862,
+        "encoded": 1562,
+        "decoded": 4158,
+        "start": 717.3000000044703,
+        "duration": 84.39999999850988,
+        "responseStart": 800.5,
+        "responseEnd": 801.7000000029802,
+        "initiator": "script"
+      },
+      {
+        "name": "/static/css/calendar.css?v=7.87",
+        "transfer": 11523,
+        "encoded": 11223,
+        "decoded": 54244,
+        "start": 717.3999999985099,
+        "duration": 56.100000001490116,
+        "responseStart": 767.6000000014901,
+        "responseEnd": 773.5,
+        "initiator": "link"
+      },
+      {
+        "name": "/static/js/accessibility.js?v=7.83",
+        "transfer": 1766,
+        "encoded": 1466,
+        "decoded": 4392,
+        "start": 717.3999999985099,
+        "duration": 83.5,
+        "responseStart": 784.6000000014901,
+        "responseEnd": 800.8999999985099,
+        "initiator": "script"
+      },
+      {
+        "name": "/static/js/avatar-audio.js?v=8.12",
+        "transfer": 3023,
+        "encoded": 2723,
+        "decoded": 7909,
+        "start": 717.5,
+        "duration": 84,
+        "responseStart": 799.7000000029802,
+        "responseEnd": 801.5,
+        "initiator": "script"
+      },
+      {
+        "name": "/static/js/avatars.js?v=8.19",
+        "transfer": 14779,
+        "encoded": 14479,
+        "decoded": 46945,
+        "start": 717.5,
+        "duration": 90.30000000447035,
+        "responseStart": 804.5,
+        "responseEnd": 807.8000000044703,
+        "initiator": "script"
+      },
+      {
+        "name": "/static/js/search.js?v=7.84",
+        "transfer": 7169,
+        "encoded": 6869,
+        "decoded": 21891,
+        "start": 717.5,
+        "duration": 109.10000000149012,
+        "responseStart": 824.8999999985099,
+        "responseEnd": 826.6000000014901,
+        "initiator": "script"
+      },
+      {
+        "name": "/static/js/deck.js?v=7.83",
+        "transfer": 2223,
+        "encoded": 1923,
+        "decoded": 5259,
+        "start": 717.5,
+        "duration": 115.39999999850988,
+        "responseStart": 830.3000000044703,
+        "responseEnd": 832.8999999985099,
+        "initiator": "script"
+      },
+      {
+        "name": "/static/js/assistant.js?v=20261009a",
+        "transfer": 4019,
+        "encoded": 3719,
+        "decoded": 10837,
+        "start": 717.6000000014901,
+        "duration": 109.39999999850988,
+        "responseStart": 824.3000000044703,
+        "responseEnd": 827,
+        "initiator": "script"
+      },
+      {
+        "name": "/static/js/feedback.js?v=7.83",
+        "transfer": 3189,
+        "encoded": 2889,
+        "decoded": 8272,
+        "start": 717.6000000014901,
+        "duration": 121.20000000298023,
+        "responseStart": 835.1000000014901,
+        "responseEnd": 838.8000000044703,
+        "initiator": "script"
+      },
+      {
+        "name": "/static/js/tour.js?v=7.83",
+        "transfer": 3052,
+        "encoded": 2752,
+        "decoded": 7547,
+        "start": 718.2000000029802,
+        "duration": 125.39999999850988,
+        "responseStart": 833.3000000044703,
+        "responseEnd": 843.6000000014901,
+        "initiator": "script"
+      },
+      {
+        "name": "/static/js/telemetry.js?v=20260925a",
+        "transfer": 7777,
+        "encoded": 7477,
+        "decoded": 20548,
+        "start": 718.2000000029802,
+        "duration": 158.89999999850988,
+        "responseStart": 872.8999999985099,
+        "responseEnd": 877.1000000014901,
+        "initiator": "script"
+      },
+      {
+        "name": "/static/js/app.js?v=7.96",
+        "transfer": 18670,
+        "encoded": 18370,
+        "decoded": 61894,
+        "start": 718.3000000044703,
+        "duration": 144.89999999850988,
+        "responseStart": 852.5,
+        "responseEnd": 863.2000000029802,
+        "initiator": "script"
+      },
+      {
+        "name": "/static/js/short_links.js?v=20261016c",
+        "transfer": 1642,
+        "encoded": 1342,
+        "decoded": 3856,
+        "start": 718.3999999985099,
+        "duration": 163.20000000298023,
+        "responseStart": 878,
+        "responseEnd": 881.6000000014901,
+        "initiator": "script"
+      },
+      {
+        "name": "/appearance/current",
+        "transfer": 528,
+        "encoded": 228,
+        "decoded": 317,
+        "start": 810.6000000014901,
+        "duration": 179.70000000298023,
+        "responseStart": 989.5,
+        "responseEnd": 990.3000000044703,
+        "initiator": "fetch"
+      },
+      {
+        "name": "/static/img/equity-mark.png",
+        "transfer": 92810,
+        "encoded": 92510,
+        "decoded": 92510,
+        "start": 819.8000000044703,
+        "duration": 61.5,
+        "responseStart": 867.6000000014901,
+        "responseEnd": 881.3000000044703,
+        "initiator": "css"
+      },
+      {
+        "name": "/favicon.ico",
+        "transfer": 348,
+        "encoded": 48,
+        "decoded": 22,
+        "start": 1095.3000000044703,
+        "duration": 55.899999998509884,
+        "responseStart": 1150.6000000014901,
+        "responseEnd": 1151.2000000029802,
+        "initiator": "other"
+      },
+      {
+        "name": "/telemetry",
+        "transfer": 300,
+        "encoded": 0,
+        "decoded": 0,
+        "start": 11060.20000000298,
+        "duration": 44.79999999701977,
+        "responseStart": 11104.60000000149,
+        "responseEnd": 11105,
+        "initiator": "beacon"
+      }
+    ],
+    "renderer_rss_sum_bytes": 269291520,
+    "renderer_process_count": 4,
+    "js_heap_bytes": 2042604,
+    "dom_counters": {
+      "documents": 1,
+      "nodes": 2707,
+      "jsEventListeners": 90
+    },
+    "document_listeners": {
+      "visibilitychange": 3,
+      "keydown": 3,
+      "focusin": 1,
+      "click": 12,
+      "input": 2,
+      "scroll": 1,
+      "pointermove": 2,
+      "animationend": 1,
+      "change": 1,
+      "submit": 5
+    },
+    "frame_count": 0,
+    "frame_p95_ms": null
+  },
+  "touch_drag_changed_style": true,
+  "keyboard_nudge_style": "width: 150px; transform: translate(17px, 10px);",
+  "method": "Native Chromium tabs; connect_over_cdp(no_defaults=True), no visibility getter override"
+}

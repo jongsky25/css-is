@@ -1,5 +1,5 @@
 {
-  "measured_source": "b98873e2332c02f076591cc0372096db807de8ea",
+  "measured_source": "c571122c15aa97ab0539337191c91d1259143089",
   "production_source": "c57d9be",
   "cpu_affinity": [
     0,
@@ -13,5 +13,9 @@
   "same_test_driver": true,
   "gates": "Unchanged historical and matched baseline gates; no sample replacement. Native invoker timing diagnostic; directly recorded owned FunctionCall wall50ms plus untraced/traced frame33ms.",
   "attribution_limit": "Page-wide rendering outside owned FunctionCall spans cannot be conclusively attributed by this trace. Original untraced 20-sample latency/frame/memory comparisons remain required.",
-  "test_driver_sha256": "77b62c71d74cb45ecfea303cb42e3c6c1610f949acb253402a99148fa4d7d5b6"
+  "test_driver_sha256": "f82a428cdee1ea3e92d24c5cb34ad27c87341d03e1dfbfb20a7dd6616e1d252e",
+  "renderer_main_and_throttler_cpu": 1,
+  "status": "REJECTED candidate, not an accepted baseline",
+  "reason": "Independent native cohort fails fern133.3/33.4ms framep95; no full matrices collected.",
+  "baseline_checkout_status": "Prepared only; never measured because prerequisite failed. Removed during cleanup."
 }

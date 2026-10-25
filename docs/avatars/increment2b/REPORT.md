@@ -1,111 +1,177 @@
-# Increment 2B — acceptance follow-up
+# Increment 2B — fern, mushroom and succulent
 
-**Blocked. Do not start increment 3A.** Final product source: `b7daa792d4ef74e1f7537869604c07cce9d30528`.
+**Blocked: do not start increment 3A.**
+Measured rejected-fixture source (production changes end at `c57d9be`): `c571122c15aa97ab0539337191c91d1259143089`.
+[Assessment](layout-fix/assessment.json) records every gate.
 
-The LCP blocker was improved, but final-source motion acceptance still fails.
-The [assessment](lcp-unblock/assessment.json) retains all 15 focused native runs.
-No threshold was relaxed, failed sample replaced, or earlier-source matrix reused.
-The planned full 20 final-source matrix was not started because its focused
-prerequisite failed.
+## Fix
 
-## Changes and validation
+The earlier LCP fixes (`853c93d`, `41c8e01`, `00d76bc`) retain lazy artwork
+compilation and deferred Home search initialization. `b7daa79` batches chase/drag
+reads, avoids reflow for absent reaction classes, and makes decorative picker
+cards static. Its focused motion failures remained unresolved.
 
-- `853c93d`: split the artwork into lazily loaded species modules; Home compiles
-  only its requested companion. Shared helpers and fixed allowlist retain fallback.
-- `41c8e01`: batch pointer geometry reads before transform writes.
-- `00d76bc`: move Home's viewport-dependent search placeholder query from a
-  mid-body inline script into the existing deferred initializer.
-- `b7daa79`: read chase/drag bounds before style writes, skip forced reflow when
-  starting an absent animation class, and keep decorative wrappers/picker cards
-  static. Existing selected-companion reactions and keyboard replay remain active.
+`b2c9b82` removes live bounds reads from repeated pointer, drag and chase updates.
+It caches wrapper, head and play-area geometry; resize observers, scrolling and
+artwork replacement invalidate it. Owned movement translates cached bounds.
+Curiosity still reads the complete geometry set before writing transforms.
+The mutation observer initializes incoming companions or refreshes replaced art,
+instead of rescanning all companions after every decorative heart insertion/removal.
+`765bd42` shares the new scheduler, body observer and global resize/scroll listeners
+across repeated script evaluation. No new infrastructure accumulates on that path.
+The observer correction captures ResizeObserver geometry in its completed-layout
+phase, instead of deferring the read until the next pre-render animation frame.
+A later sparse kernel diagnostic exposed another 180.4 ms click containing 162.6 ms
+forced layout in active happy replay. The final source restarts the existing
+bounce/spark CSS Animation objects via currentTime/play, without removing the class
+or reading offsetWidth. A real browser verifies restart, completion and 0 offsetWidth
+reads during tap handlers.
 
-[260 tests pass](lcp-unblock/validation-tests.txt). [Three real browser tests](lcp-unblock/static-functional/tests.txt)
-verify static picker cards, live selected animation, repeated keyboard reactions,
-pointer/head limits and responsive search with actual Wellness navigation.
-[Picker measurements](lcp-unblock/static-functional/static-preview-policy.json)
-show 16 cards and 0 running animations, while Home has 1 live animation.
+Selected animation, head-angle limits, dog excitement/cooldowns, tap/hold/drag,
+keyboard movement, care, audio, scoring, account identity and seasonal geometry
+remain functional. No new dependency, external request, artwork simplification,
+compositing hint or containment rule was added.
 
-[1,734 SVG comparisons](lcp-unblock/artwork-equivalence.json) preserve paths,
-attributes, text, deterministic IDs and unknown fallback across 16 species × 6 stages × 17 outfits.
-Only interelement whitespace is normalized. CSS/defs differ only in the documented
-static-preview policy and runtime cache key. [51 fresh visual sheets](lcp-unblock/static-previews/sheets/index.json)
-contain 4,896 cells, all [pixel-identical to original 2B](lcp-unblock/static-previews/unchanged-species.json).
-[486 reaction cases and 21 reduced-motion transitions](lcp-unblock/static-previews/motion-rig-check.json)
-pass. No artwork geometry, scoring, account, care policy, sound or runtime dependency changed.
-No containment/compositing hint or external asset was shipped.
+## Focused motion gate
 
-[Native hidden/touch/keyboard verification](lcp-unblock/native-functional/application/native-visibility-touch.json)
-passes on the final product revision: actual document.hidden, zero hidden rAF frames,
-working touch/keyboard movement and zero animated picker thumbnails.
-[Real care verification](lcp-unblock/care/live-plant-care.json) passes for mature
-fern, mushroom and succulent: Home→Wellness→care POST→SQLite timestamp→wet-soil UI.
-[Native runner](lcp-unblock/native-functional-tests.txt), [care runner](lcp-unblock/care-tests.txt).
+Acceptance requires five mature-stage 6 warm mobile CPU4 runs per plant with the original30-second
+interaction sequence. Native LoAF, LongTask and EventTiming plus a lightweight
+frame counter run without timer/event/rAF wrappers, callback clocks, stack capture
+or tracing. Every untraced run must meet frame p95≤33ms. Native invoker wall durations below are diagnostic; an invoker URL alone does not establish avatar work. Five additional counterbalanced old/new-art trace pairs per plant directly enforce owned FunctionCall wall spans≤50ms and traced frame p95≤33ms, without CPU/GC/baseline subtraction. See [attribution plan](layout-fix/attribution-plan.json) and the assessment for every traced run.
+Zero reported duration means no owned script in a reported long frame, not zero CPU.
 
-## Failed final-source focused gate
-
-Five mature-stage 6 warm mobile CPU 4 runs per species use the original 30 s interaction
-sequence. Native LongAnimationFrame, LongTask, EventTiming and a lightweight frame
-counter record results without timer/event/rAF wrappers, tracing, callback clocks
-or stack capture. Every run must meet frame p95≤33ms and reported avatar-owned
-script duration≤50ms. Zero duration means no owned script was reported in a long
-frame, not zero CPU. [Runner log](lcp-unblock/native-control/tests.txt).
-
-| Species | Five frame p95 values ms | Five maximum reported owned scripts ms | Gate |
+| Species | Five frame p95 values ms | Native invoker wall ms (diagnostic) | Gate |
 |---|---|---|---|
-| fern | [16.8, 16.8, 16.8, 33.4, 16.8] | [25.1, 190.5, 14.8, 295.8, 32.9] | FAIL |
-| mushroom | [16.8, 16.8, 16.7, 16.7, 16.8] | [26.1, 17.6, 0, 0, 160.7] | FAIL |
-| succulent | [16.8, 16.8, 16.8, 16.8, 16.8] | [0, 258.4, 289.3, 0, 7.6] | FAIL |
+| fern | [16.8, 16.8, 16.8, 133.3, 33.4] | [0, 55.7, 7.1, 559.8, 12.6] | FAIL |
+| mushroom | [16.8, 16.8] | [0, 0] | FAIL |
+| succulent | [] | [] | FAIL |
 
-Raw records: [fern](lcp-unblock/native-control/fern/native-control.json),
-[mushroom](lcp-unblock/native-control/mushroom/native-control.json),
-[succulent](lcp-unblock/native-control/succulent/native-control.json).
+The independent pinning candidate was **rejected** after fern5 and mushroom2; succulent was not started. [Stopped cohort and reason](layout-fix/native-control/STOPPED.json). Raw data: [fern](layout-fix/native-control/fern/native-control.json), [mushroom](layout-fix/native-control/mushroom/native-control.json). An incomplete species cannot pass.
+[Runner](layout-fix/native-tests.txt).
 
-Fern records a 190.5 ms chase callback with 0 forced layout; another run records
-61.7ms curiosity work including 54.9 ms forced layout, 186.3 ms pointer-up,
-295.8 ms timeout, 105.1 ms initAll and 222.9 ms chase. These native durations do not
-isolate scheduling, GC or another cause. Several small callbacks exceed the
-budget without attributed forced layout; that observation cannot dismiss them.
-The 33.4 ms fern frame miss is retained as a strict failure, without rounding down.
+| Species | Five direct owned FunctionCall maxima ms | Traced frame p95 ms | Gate |
+|---|---|---|---|
+| Pending | — | — | NOT COLLECTED |
 
-## Earlier cohorts and remaining work
+The required final30 trace cohort was not started because the native prerequisite failed. The [prior same-product failed fern trace](layout-fix/pre-thread-pin-fixture/trace-control/fern/summary.json) and losslessly gzipped raw traces remain. It records265.347ms owned callback and33.4ms framep95; those failures are unresolved. The current-runtime old-art arm
+controls artwork cost; it is separate from the original-source full matrix.
+Page-wide rendering outside owned callbacks cannot be conclusively attributed
+by this trace. The complete untraced latency/frame/memory comparisons remain required.
 
-The complete 20-run `00d76bc` cohort passed its primary gates: cold desktop
-LCP median 328 ms/worst 652 ms, +4ms versus historical 324 ms and −44 ms versus the
-matched overlay control 372 ms. Desktop warm median 148 ms, mobile cold 564 ms,
-mobile warm 308 ms; all mobile interaction frame p95 values 16.7–16.8 ms.
-[Its complete comparison](lcp-unblock/pre-motion-fix/comparison.json) and
-[raw summary](lcp-unblock/pre-motion-fix/application/summary.json) remain intact.
-The 1412 ms cold-mobile worst run and its timing investigation are retained there.
-These measurements do **not** validate the final product revision.
+## Original performance matrix
 
-Fresh focused instrumented traces subsequently failed. An exploratory recorder
-added excessive stack-capture overhead; all data remain under `pre-motion-fix/`.
-Thirty counterbalanced old/new-art runs without API wrappers/tracing then found
-a genuine new mushroom chase callback 60.4 ms with 41.6 ms forced layout. That result
-motivated `b7daa79`; the final 15 runs above still fail acceptance.
+The final-source original 20 matrix has not completed; acceptance remains blocked.
 
-Original failed 20 runs (cold-desktop median 664 ms, +292 ms over matched control)
-remain in `application/`: [original blocked report](REPORT-blocked.md),
-[original assessment](assessment-blocked.json). Earlier 183.3 ms frame and 504 ms
-cold-LCP attempts remain in `lcp-unblock/pre-frame-fix/` and `pre-startup-fix/`.
-All failed and exploratory cohorts remain separate; no favorable subset is used.
+The original protocol remains fixed Chromium 154.0.8037.57, CPU 1/4,
+desktop 1440×1000/mobile 390×844, synthetic July 15 date/seed, local gzip,
+overlay filesystem, five runs per device/cache and 30-second idle/interaction
+scenarios. Recorded source hashes identify each measured product revision; current-source native and functional checks are verified. No final-source primary matrix exists. The rejected fixture candidate used three-core affinity with renderer main/throttler threads onCPU1, documented in [fixture plan](isolated-fixture/PLAN.json) and [thread-pinning plan](layout-fix/thread-pin-plan.json). No fresh full matrices were collected on this rejected fixture. Any subsequent old/current comparison must share a validated fixture and still satisfy historical increment0 gates. No browser CPU rate, scenario or budget changed.
 
-Next: isolate the remaining callback/layout stalls with an uninstrumented matched
-control and browser-native CPU attribution before making another bounded fix.
-After the focused gate passes, run a fresh original 20 matrix plus real care and
-native hidden/touch/keyboard checks. Keep 3A pending. Static picker thumbnails
-are resolved; selected offscreen motion, chase/idle/roam timers and same-document
-listener retention remain separate release blockers. No production deployment.
+- `focused_native_frames`: **FAIL**
+- `fern_owned_callback_trace`: **FAIL**
+- `mushroom_owned_callback_trace`: **FAIL**
+- `succulent_owned_callback_trace`: **FAIL**
+- `full20_complete`: **FAIL**
+- `native_hidden_touch_keyboard`: **PASS**
+- `static_picker`: **PASS**
+- `persisted_care`: **PASS**
 
-These are local throttled-browser results, not physical-phone 60 fps claims.
-EventTiming has a 16 ms reporting floor; native LoAF reports scripts in long frames,
-not complete script CPU. RendererRSS includes shared pages. The full matrix uses
-forced-active automation; actual hidden behavior requires the separate native check.
+## Visual and functional verification
+
+- [260 tests](layout-fix/validation-tests.txt) pass, covering care, audio,
+  rendering, appearance, onboarding, search and bounded lazy compilation.
+- [Six browser tests](layout-fix/functional/tests.txt) pass. Repeated input makes
+  [zero live bounds reads](layout-fix/functional/geometry-behavior.json); drag clamps
+  remain correct after resize/scroll, and the new listeners/cache stay stable after
+  twenty script evaluations. [Transition-position regression](layout-fix/functional/transition-geometry.json)
+  verifies the cursor stays centered during keyboard movement. Cached geometry
+  follows the browser's actual transition endpoints, start time and easing using
+  the document timeline, rather than jumping to the destination. Repeated arrow presses at a clamped
+  destination retain the current timeline; they do not create a pending transition
+  when the CSS value is unchanged. [Unused-head regression](layout-fix/functional/unused-head-geometry.json)
+  verifies mushroom's SVG head bounds are never queried: only actual tracking
+  species in WATCH need head geometry (six unnecessary reads before, zero after). [Head tracking](layout-fix/functional/pointer-behavior.json),
+  [static picker/keyboard replay](layout-fix/functional/static-preview-policy.json)
+  and [responsive Home search navigation](layout-fix/functional/home-search-boot.json) pass.
+- [1,734 SVG equivalence checks](layout-fix/artwork-equivalence.json) preserve exact
+  paths, attributes, text, deterministic IDs and unknown fallback; only interelement
+  whitespace is normalized. CSS/defs differ only in the earlier static-preview
+  policy and runtime cache key.
+- [51 fresh sheets](layout-fix/visual/sheets/index.json), covering all 16 species,
+  six stages, 17 outfits and three surfaces, retain
+  [4,896 pixel-identical cells](layout-fix/visual/unchanged-species.json).
+- [486 reaction cases/21 reduced-motion transitions](layout-fix/visual/motion-rig-check.json)
+  pass. Original [small/hero artwork comparisons](before-after-bare-light.png) apply.
+- [Native hidden/touch/keyboard](layout-fix/native-functional/application/native-visibility-touch.json)
+  verifies actual document.hidden, zero hidden rAF frames, touch/keyboard movement
+  and zero animated picker thumbnails. [Runner](layout-fix/native-functional-tests.txt).
+- [Real care](layout-fix/care/live-plant-care.json) verifies all three mature plants:
+  Home→Wellness→care POST→SQLite timestamp→wet-soil UI. [Runner](layout-fix/care-tests.txt).
+
+## Retained failures and attribution limits
+
+The original failed 20 samples remain in `application/`: median 664 ms,
++292ms versus matched overlay control. [Original blocked report](REPORT-blocked.md).
+The prior motion failure remains in [its report](REPORT-motion-blocked.md) and
+`lcp-unblock/native-control/`: fern frame p95 reached 33.4 ms and reported owned
+callbacks reached 295.8 ms. Those measurements were not waived or overwritten.
+The `00d76bc` full 20 LCP-passing cohort remains under `lcp-unblock/pre-motion-fix/`;
+it does not substitute for final-source validation. Earlier stopped attempts remain.
+
+[Three matched native CPU trace pairs](layout-fix/cpu-before/summary.json) compare
+old/new artwork on the same prior runtime. None reproduced a callback over 50 ms;
+wall/thread CPU and losslessly compressed raw traces remain per species. This
+locates the investigation without proving the cause of earlier stalls. Prior
+recorder-overhead diagnostics are retained as diagnostics, not acceptance evidence.
+The partial `b2c9b82` cohort was stopped to fix the new infrastructure's repeated
+script-loading lifecycle; its samples remain under
+[pre-lifecycle-fix](layout-fix/pre-lifecycle-fix/STOPPED.json), outside final acceptance. The subsequent `765bd42` fern cohort exposed an 84.6 ms
+cache-refresh callback with 84.5 ms forced layout. Its complete samples remain in
+[pre-observer-phase-fix](layout-fix/pre-observer-phase-fix/STOPPED.json); that real
+failure motivated the completed-layout observer correction. The subsequent
+`788dcbe` native cohort still failed (maximum 449.8 ms owned callback and 33.3 ms
+frame p95), preserved under [pre-replay-fix](layout-fix/pre-replay-fix/STOPPED.json).
+Its external 5 ms matched and after-only controls did not reproduce stalls; a 25 ms
+sampler did reproduce them with substantial CPU upper bounds, including the 162.6 ms
+forced-layout click. This did not establish descheduling as the cause. All raw
+native records and losslessly gzipped kernel samples remain there. That confirmed
+active-replay reflow motivated the final source change.
+
+The [empty-callback control](layout-fix/throttle-control/empty-control.json)
+uses a blank page with no avatar/application JS or CSS, the same input sequence,
+and CPU1/4. One CPU1 run reports143ms for `function emptyTick(){}`; the other five
+runs report no empty callback in a long frame. [Runner](layout-fix/throttle-control/tests.txt).
+This establishes a fixture/attribution limitation, not the cause of every remaining
+application timing failure. Native invoker duration alone cannot prove avatar work
+as the source of a stall. The original plan requires avatar-attributable work≤50ms. Direct native timeline FunctionCall wall spans implement that rule; raw invoker duration alone was an overly broad attribution proxy. No50ms or33ms threshold is relaxed. All prior invoker records remain diagnostic and all frame failures remain failures.
+
+The first final-source native cohort passed all15 frame checks, but direct tracing
+still found fern33.4ms/265.347ms and was stopped. All records remain under
+[pre-thread-pin-fixture](layout-fix/pre-thread-pin-fixture/STOPPED.json).
+A [four-run CPU-profile diagnostic](layout-fix/profile-diagnostic/fern/summary.json)
+reproduced slow callbacks on old/new art with long sampling gaps and no nested layout.
+Chromium154's [POSIX throttler](https://github.com/chromium/chromium/blob/154.0.8037.57/third_party/blink/renderer/platform/scheduler/common/thread_cpu_throttler.cc)
+busy-waits in SIGUSR2 and masks SIGPROF; sampling gaps cannot prove JavaScript work.
+A separate [four-run pinning diagnostic](layout-fix/thread-pin-diagnostic/fern/summary.json)
+passed all33ms/50ms checks (maxima19.632,23.374,14.013,7.703ms). This motivated a fresh independent acceptance cohort. That cohort failed fern133.3/33.4ms framep95: **the pinning candidate is rejected**. No current full matrix was started. The diagnostic pass did not generalize and cannot substitute for acceptance. Neither empty controls nor sampling gaps establish the cause of every stall. A validated runner and all unchanged focused/matrix gates are still required before3A.
+
+No sample was replaced and no threshold relaxed. These are local throttled-browser
+results, not physical-phone 60 fps claims. Native LoAF reports scripts in long frames;
+EventTiming has a 16 ms floor. RSS includes shared renderer pages and is not PSS.
+Full-matrix automation forces active pages; the separate native check proves actual
+hidden behavior. Static picker thumbnails are resolved. Existing selected-companion
+offscreen animation, chase/idle/roam timers and per-wrapper same-document listener
+retention remain separate release blockers. No production deployment or 3A work.
 
 ## Reproduce
 
 ```sh
-CSS_TEST_NOW=2026-07-15T12:00:00 CSS_AVATAR_BASELINE=1 CSS_AVATAR_MATURE=1 CSS_AVATAR_NATIVE_AFTER_ONLY=1 CSS_AVATAR_OUT=<fresh>/native-control/application .venv/bin/python -m pytest tests/test_avatar_native_control.py -s
-.venv/bin/python scripts/avatar_baseline/assess_lazy_artwork.py
-.venv/bin/python scripts/avatar_baseline/report_lazy_artwork.py
+# Reproduce the REJECTED fixture in fresh directories; preserve every cohort.
+CSS_TEST_NOW=2026-07-15T12:00:00 CSS_AVATAR_BASELINE=1 CSS_AVATAR_PIN_RENDERER=1 CSS_AVATAR_MATURE=1 CSS_AVATAR_NATIVE_AFTER_ONLY=1 CSS_AVATAR_OUT=<fresh>/native-control/application taskset -c 0-2 .venv/bin/python -m pytest tests/test_avatar_native_control.py -s
+# Only after focused checks pass on a validated fixture, collect fresh old/current matrices:
+CSS_TEST_NOW=2026-07-15T12:00:00 CSS_AVATAR_BASELINE=1 CSS_AVATAR_PIN_RENDERER=1 CSS_AVATAR_RUNS=5 CSS_AVATAR_SECONDS=30 CSS_AVATAR_OUT=<fresh>/application taskset -c 0-2 .venv/bin/python -m pytest tests/test_avatar_baseline_browser.py -k real_application_baseline -s
+.venv/bin/python scripts/avatar_baseline/summarize.py docs/avatars/increment2b/layout-fix/application
+.venv/bin/python scripts/avatar_baseline/compare.py --after docs/avatars/increment2b/layout-fix/application
+.venv/bin/python scripts/avatar_baseline/assess_layout_fix.py
+.venv/bin/python scripts/avatar_baseline/report_layout_fix.py
 ```

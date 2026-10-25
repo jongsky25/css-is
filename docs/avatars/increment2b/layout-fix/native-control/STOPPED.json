@@ -1,0 +1,10 @@
+{
+  "source": "c571122",
+  "production_source": "c57d9be",
+  "fixture_candidate": "renderer main/throttlerCPU1 insideprocessCPUs0-2, CPU4 unchanged",
+  "result": "REJECTED",
+  "reason": "Fresh independent native cohort fails fern framep95:16.8,16.8,16.8,133.3,33.4ms. Raw invoker559.8ms diagnostic retained. Stop after fern5 and mushroom2; no succulent/currenttrace/fullmatrices started. Four successful diagnostic runs did not generalize. Do not promote the affinity candidate or substitute older successful frames.",
+  "remaining_issue": "Direct owned265.347ms/33.4ms trace fromsameproductioncode remains unresolved in pre-thread-pin-fixture. No proven new avatar code hotspot from subsequent sparse profiles; no gate waiver or further speculative product edit.",
+  "next_requirement": "Use a validated performance runner, repeat same Chromium154/CPU1,4 old/current fixtures with all original thresholds; first establish stable empty/control and focused15/trace30. Only then full20 original/current and historical gates.",
+  "no_acceptance": true
+}

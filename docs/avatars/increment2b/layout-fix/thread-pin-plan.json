@@ -7,5 +7,6 @@
   "diagnostic": "Two counterbalanced old/new-art fern pairs,30s, mature6, direct timeline and CPU profile. Four runs must each meet33ms frame and50ms owned FunctionCall wall before considering this fixture for acceptance. Keep every result, including failed original traces. CPU profiler is diagnostic only.",
   "acceptance_if_successful": "Fresh native15 and direct trace30 without CPU profiler on the corrected fixture, then original/current full20 matrices with identical pinning and all original historical budgets. Never substitute diagnostic samples or waive prior failures.",
   "no_application_change": true,
-  "no_budget_change": true
+  "no_budget_change": true,
+  "outcome": "REJECTED: independent acceptance native fern5 reaches133.3/33.4ms framep95. Diagnostic four-run pass did not generalize. See native-control/STOPPED.json. Do not recommend pinning or use it for primary acceptance."
 }

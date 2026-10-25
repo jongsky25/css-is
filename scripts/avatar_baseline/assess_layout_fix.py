@@ -28,9 +28,13 @@ assert rig['cases']==486 and len(rig['reduced_motion_checks'])==21
 assert read(out/'functional/application/environment.json')['source_sha256']==env['source_sha256']
 focused={}
 for kind in ['fern','mushroom','succulent']:
-    data=read(out/f'native-control/{kind}/native-control.json')
+    path=out/f'native-control/{kind}/native-control.json'
+    if not path.exists():
+        focused[kind]={'samples':[],'complete':False,'passed':False}
+        continue
+    data=read(path)
     assert data['source_commit']==env['source_commit'] and data['after_only'] and data['kind']==kind
-    assert len(data['samples'])==5
+    assert len(data['samples'])<=5
     samples=[]
     for r in data['samples']:
         assert r['kind']==kind and r['mature'] and r['cpu']==4 and r['seconds']==30 and r['version']=='after'
@@ -39,7 +43,7 @@ for kind in ['fern','mushroom','succulent']:
         maximum=max((s['duration'] for s in scripts),default=0)
         frame=r['scenario']['frame_p95_ms']
         samples.append({'run':r['run'],'frame_p95_ms':frame,'max_native_invoker_wall_ms_diagnostic':maximum,'passed':not r['errors'] and frame<=33})
-    focused[kind]={'samples':samples,'passed':all(s['passed'] for s in samples)}
+    focused[kind]={'samples':samples,'complete':len(samples)==5,'passed':len(samples)==5 and all(s['passed'] for s in samples)}
 result={'status':'blocked','source_commit':env['source_commit'],'focused':focused,'primary_samples':0,
         'limits':['Zero native invoker duration means no avatar script reported in a long frame, not zero CPU; invoker wall duration alone is not attribution.',
                   'CPU-throttled local Chromium is not a physical-phone or 60fps claim.',
@@ -50,6 +54,9 @@ result['empty_callback_control']={'file':'layout-fix/throttle-control/empty-cont
     'source':control['source'],'max_empty_callback_ms':max(r['max_empty_callback_ms'] for r in control['samples']),
     'samples':len(control['samples']),
     'limit':'Blank page without avatars/application code reports143ms for an empty callback atCPU1. Native script invoker duration alone cannot establish avatar work as the cause. This does not waive any gate.'}
+result['fixture_candidate']=read(out/'native-control/STOPPED.json')
+result['production_source']='c57d9be'
+result['prior_same_product_trace_failure']={'source':'b98873e','file':'layout-fix/pre-thread-pin-fixture/trace-control/fern/summary.json','max_owned_call_wall_ms':265.347,'frame_p95_ms':33.4,'status':'failed; no subtraction or waiver'}
 gates={'focused_native_frames':all(c['passed'] for c in focused.values())}
 traced={}
 for kind in ['fern','mushroom','succulent']:
@@ -75,7 +82,7 @@ if primary.exists():
     gates['full20_complete']=summary['full_duration_complete'] and comparison['complete']
     gates.update(comparison['gates'])
     matched_comparison=read(matrix/'comparison-matched.json')
-    gates['fresh_matched_complete']=matched_comparison['complete']
+    gates['fresh_matched_complete']=matched_comparison['complete'] and read(root/'isolated-fixture/before/application/summary.json')['full_duration_complete']
     gates.update({'fresh_matched_'+k:v for k,v in matched_comparison['gates'].items()})
     rows=[r for name in ['False-cold','False-warm','True-cold','True-warm'] for r in read(matrix/f'application/{name}.json')]
     assert len(rows)==20 and all(r['seconds']==30 and r['chromium']=='154.0.8037.57' and r['cpu_rate']==(4 if r['mobile'] else 1) for r in rows)
@@ -133,7 +140,7 @@ if care_path.exists():
     gates['persisted_care']=([r['kind'] for r in care['results']]==['fern','mushroom','succulent'] and all(r['care_persisted'] and r['wet_soil_visible'] for r in care['results']))
 else:gates['persisted_care']=False
 result['gates']=gates;result['status']='complete' if all(gates.values()) else 'blocked'
-result['next_step']='3A: dog, rabbit, bird and turtle; baseline release blockers remain separate' if result['status']=='complete' else 'Resolve failed gates before starting3A.'
+result['next_step']='3A: dog, rabbit, bird and turtle; baseline release blockers remain separate' if result['status']=='complete' else 'Reproduce residual native callback/frame stalls on a validated runner and isolate attributable work before another product edit. Require original focused and full before/current matrices; keep3A pending.'
 (out/'assessment.json').write_text(json.dumps(result,indent=2))
 (root/'assessment.json').write_text(json.dumps(result,indent=2))
 print(json.dumps({'status':result['status'],'gates':gates},indent=2))

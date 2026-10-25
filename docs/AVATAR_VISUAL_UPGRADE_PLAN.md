@@ -1,6 +1,6 @@
 # Avatar visual upgrade — phased execution plan for Sol
 
-Status: Increments 0, 1 and 2A complete. Increment 2B performance fixes are implemented through `c57d9be`; final-source acceptance validation is in progress. Do not advance to 3A until every required gate passes. Static picker thumbnails are resolved; other baseline release blockers remain recorded.
+Status: Increments 0, 1 and 2A complete. Increment 2B layout fixes are implemented through `c57d9be`, with passing functional and visual checks. Acceptance remains blocked by unresolved native callback/frame timing failures; the thread-pinning fixture candidate was rejected. Do not advance to 3A. Static picker thumbnails are resolved; other baseline release blockers remain recorded.
 Created: 2026-10-25
 Repository: jongsky25/css-is
 Owner request: Material improvement to companion artwork, optional animal dress-up,
@@ -286,7 +286,7 @@ browser tests ran.
 | 0 Baseline | Complete — baseline established; release gates remain unmet | `94269dd` + evidence/ledger revision | [51 sheets](avatars/sheets/index.json), [monthly overview](avatars/sheets/monthly-stage6-overview.png), [hero/moods](avatars/smoke/) | [Report](avatars/BASELINE_REPORT.md), [20 full samples + summary](avatars/application/summary.json), native hidden/touch check; existing frame, picker, timer and remount failures retained. |
 | 1 Cat + plant slice | Complete — measured relative gates passed | `58cf98f`, `0be7fc3`, `ad4e7ad`, `d464461` + evidence revision | [Bare comparison](avatars/increment1/before-after-bare-light.png), [motion](avatars/increment1/before-after-motion.webm), [51 seasonal sheets](avatars/increment1/sheets/index.json) | [Report](avatars/increment1/REPORT.md), [20-sample comparison](avatars/increment1/comparison.json); 102 tests, native touch/keyboard/filter checks, sampled callback trace passed; baseline lifecycle/picker blockers retained. |
 | 2A Cactus/bonsai/sunflower | Complete — measured relative gates passed | `6064a82`, `1b453e0`, `28fbb7b` + evidence revision | [Six-stage comparison](avatars/increment2a/before-after-bare-light.png), [51 sheets](avatars/increment2a/sheets/index.json), [motion](avatars/increment2a/before-after-motion.webm) | [Report](avatars/increment2a/REPORT.md), [fresh 20 comparison](avatars/increment2a/comparison.json); 105 tests, 324 visual reaction cases, mature care/traces and native checks passed. Pre-fix failures retained; audio-sync feedback fixed. Remaining lifecycle/picker blockers persist. |
-| 2B Fern/mushroom/succulent | Final-source acceptance validation in progress | Artwork `6ddce82`; performance fixes through `c57d9be` | [Six-stage comparison](avatars/increment2b/before-after-bare-light.png), [fresh 51 sheets](avatars/increment2b/lcp-unblock/static-previews/sheets/index.json), [reaction checks](avatars/increment2b/lcp-unblock/static-previews/motion-rig-check.json) | [Report](avatars/increment2b/REPORT.md), [assessment](avatars/increment2b/assessment.json). 260 tests and 3 functional browser checks pass; 486 reaction cases, 21 reduced-motion transitions and 4,896 pixel-identical cells. Earlier-source full20 LCP gates pass (cold desktop328ms), but final-source native callbacks/frame gates fail. All samples retained; final-source full20 not started; 3A pending. |
+| 2B Fern/mushroom/succulent | Blocked — confirmed layout fixes implemented; residual timing unresolved | Artwork `6ddce82`; performance fixes through `c57d9be`; rejected fixture `c571122` | [Six-stage comparison](avatars/increment2b/before-after-bare-light.png), [51 sheets](avatars/increment2b/layout-fix/visual/sheets/index.json), [reaction checks](avatars/increment2b/layout-fix/visual/motion-rig-check.json) | [Report](avatars/increment2b/REPORT.md), [assessment](avatars/increment2b/assessment.json). 260 tests and6 browser checks pass; 1,734 exact SVG checks,486 reactions/21 reduced-motion transitions and4,896 pixel-identical cells. Prior same-product native15 frames pass16.7–16.8ms, but direct trace fails265.347ms/33.4ms. Independent thread-pinning cohort fails fern133.3ms framep95; candidate rejected. All records retained; final full matrices not started;3A pending. |
 | 3A Ground animals + bird | Pending | — | — | — |
 | 3B Swimmers + owl + bat | Pending | — | — | — |
 | 4A Wardrobe model/rendering | Pending | — | — | — |
@@ -574,3 +574,32 @@ passes all four old/new-art runs (callbacks19.632/23.374/14.013/7.703ms; frames1
 Fresh native15/trace30 now use renderer main/throttler CPU1 affinity within the
 existing CPUs0–2 fixture. Both full original/current matrices must share it and
 pass historical budgets too; diagnostic results cannot substitute for acceptance.
+
+
+#### Final outcome of the geometry/layout follow-up
+
+**2B remains blocked.** Product fixes through `c57d9be` preserve every artwork
+cell and pass260 unit/integration tests plus6 functional browser checks.
+The original final-product untraced15 all meet16.7–16.8ms framep95, but the
+same-product direct fern trace still fails: startPet70.488ms, chase265.347ms
+(threadCPU205.621ms), frame33.4ms. No nested layout events appear in those
+callbacks. Subsequent CPU profiles show long sampling gaps and reproduce slow
+callbacks with old and new art; this does not isolate another application hot
+spot or establish host scheduling as the cause. No CPU/GC time is subtracted.
+
+The independent thread-pinning acceptance cohort fails fern framep95
+**[16.8,16.8,16.8,133.3,33.4]ms**, so the candidate is **rejected** despite its
+four successful diagnostic runs. All5 fern and2 completed mushroom samples
+remain in [the stopped cohort](avatars/increment2b/layout-fix/native-control/STOPPED.json).
+No succulent, subsequent trace30 or fresh original/current full matrices were
+started after this prerequisite failure. The optional pin helper remains solely
+for reproducing this rejected experiment; it is disabled by default and never
+loaded by application code. It must not be presented as the performance fix.
+
+Current-source native hidden/touch/keyboard and real persisted plant-care checks
+are recorded in the [report](avatars/increment2b/REPORT.md). Source/layout fixes
+are reviewable independently of acceptance. Remaining work is to reproduce the
+residual stall with a validated runner, isolate attributable work before another
+product edit, then pass all original focused and complete-matrix gates. Historical
+passing cohorts, raw invoker records and diagnostics cannot substitute for those
+checks. No threshold relaxation, sample replacement, deployment or3A work.

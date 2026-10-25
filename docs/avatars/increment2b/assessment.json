@@ -1,265 +1,110 @@
 {
   "status": "blocked",
-  "source_commit": "b7daa792d4ef74e1f7537869604c07cce9d30528",
-  "primary_samples": 0,
-  "native_hidden_touch_keyboard": "lcp-unblock/native-functional/application/native-visibility-touch.json",
-  "care_verification": "lcp-unblock/care/live-plant-care.json",
-  "static_picker_verified": true,
-  "reason": "Final-source focused native frame/callback prerequisite failed. Full20 matrix intentionally not started.",
-  "avatar_callback_checks": {
+  "source_commit": "c571122c15aa97ab0539337191c91d1259143089",
+  "focused": {
     "fern": {
-      "source_commit": "b7daa792d4ef74e1f7537869604c07cce9d30528",
       "samples": [
         {
           "run": 0,
           "frame_p95_ms": 16.799999999999272,
-          "max_reported_owned_script_ms": 25.100000001490116,
-          "over_budget_scripts": [],
+          "max_native_invoker_wall_ms_diagnostic": 0,
           "passed": true
         },
         {
           "run": 1,
-          "frame_p95_ms": 16.799999999999272,
-          "max_reported_owned_script_ms": 190.5,
-          "over_budget_scripts": [
-            {
-              "duration": 190.5,
-              "executionStart": 26639.09999999404,
-              "forcedStyleAndLayoutDuration": 0,
-              "sourceURL": "http://127.0.0.1:39869/static/js/avatars.js?v=8.14",
-              "sourceFunctionName": "",
-              "sourceCharPosition": 33795,
-              "invoker": "TimerHandler:setInterval",
-              "invokerType": "user-callback",
-              "pauseDuration": 0
-            }
-          ],
-          "passed": false
+          "frame_p95_ms": 16.800000000000182,
+          "max_native_invoker_wall_ms_diagnostic": 55.70000000298023,
+          "passed": true
         },
         {
           "run": 2,
           "frame_p95_ms": 16.799999999999272,
-          "max_reported_owned_script_ms": 14.799999997019768,
-          "over_budget_scripts": [],
+          "max_native_invoker_wall_ms_diagnostic": 7.0999999940395355,
           "passed": true
         },
         {
           "run": 3,
-          "frame_p95_ms": 33.39999999999782,
-          "max_reported_owned_script_ms": 295.80000000447035,
-          "over_budget_scripts": [
-            {
-              "duration": 61.69999999552965,
-              "executionStart": 8609,
-              "forcedStyleAndLayoutDuration": 54.9,
-              "sourceURL": "http://127.0.0.1:39869/static/js/avatars.js?v=8.14",
-              "sourceFunctionName": "",
-              "sourceCharPosition": 17660,
-              "invoker": "FrameRequestCallback",
-              "invokerType": "user-callback",
-              "pauseDuration": 0
-            },
-            {
-              "duration": 186.30000000447035,
-              "executionStart": 9405.19999999553,
-              "forcedStyleAndLayoutDuration": 0,
-              "sourceURL": "http://127.0.0.1:39869/static/js/avatars.js?v=8.14",
-              "sourceFunctionName": "done",
-              "sourceCharPosition": 32649,
-              "invoker": "SPAN.onpointerup",
-              "invokerType": "event-listener",
-              "pauseDuration": 0
-            },
-            {
-              "duration": 295.80000000447035,
-              "executionStart": 9951.19999999553,
-              "forcedStyleAndLayoutDuration": 0,
-              "sourceURL": "http://127.0.0.1:39869/static/js/avatars.js?v=8.14",
-              "sourceFunctionName": "",
-              "sourceCharPosition": 24157,
-              "invoker": "TimerHandler:setTimeout",
-              "invokerType": "user-callback",
-              "pauseDuration": 0
-            },
-            {
-              "duration": 105.10000000149012,
-              "executionStart": 15472.59999999404,
-              "forcedStyleAndLayoutDuration": 0,
-              "sourceURL": "http://127.0.0.1:39869/static/js/avatars.js?v=8.14",
-              "sourceFunctionName": "initAll",
-              "sourceCharPosition": 37514,
-              "invoker": "TimerHandler:setTimeout",
-              "invokerType": "user-callback",
-              "pauseDuration": 0
-            },
-            {
-              "duration": 222.89999999850988,
-              "executionStart": 15777.19999999553,
-              "forcedStyleAndLayoutDuration": 0,
-              "sourceURL": "http://127.0.0.1:39869/static/js/avatars.js?v=8.14",
-              "sourceFunctionName": "",
-              "sourceCharPosition": 33795,
-              "invoker": "TimerHandler:setInterval",
-              "invokerType": "user-callback",
-              "pauseDuration": 0
-            }
-          ],
+          "frame_p95_ms": 133.29999999999563,
+          "max_native_invoker_wall_ms_diagnostic": 559.7999999970198,
           "passed": false
         },
         {
           "run": 4,
-          "frame_p95_ms": 16.799999999999272,
-          "max_reported_owned_script_ms": 32.899999998509884,
-          "over_budget_scripts": [],
-          "passed": true
+          "frame_p95_ms": 33.400000000000546,
+          "max_native_invoker_wall_ms_diagnostic": 12.599999994039536,
+          "passed": false
         }
       ],
+      "complete": true,
       "passed": false
     },
     "mushroom": {
-      "source_commit": "b7daa792d4ef74e1f7537869604c07cce9d30528",
       "samples": [
         {
           "run": 0,
           "frame_p95_ms": 16.799999999999272,
-          "max_reported_owned_script_ms": 26.100000001490116,
-          "over_budget_scripts": [],
+          "max_native_invoker_wall_ms_diagnostic": 0,
           "passed": true
         },
         {
           "run": 1,
           "frame_p95_ms": 16.799999999999272,
-          "max_reported_owned_script_ms": 17.600000001490116,
-          "over_budget_scripts": [],
+          "max_native_invoker_wall_ms_diagnostic": 0,
           "passed": true
-        },
-        {
-          "run": 2,
-          "frame_p95_ms": 16.700000000000728,
-          "max_reported_owned_script_ms": 0,
-          "over_budget_scripts": [],
-          "passed": true
-        },
-        {
-          "run": 3,
-          "frame_p95_ms": 16.700000000000728,
-          "max_reported_owned_script_ms": 0,
-          "over_budget_scripts": [],
-          "passed": true
-        },
-        {
-          "run": 4,
-          "frame_p95_ms": 16.799999999999272,
-          "max_reported_owned_script_ms": 160.70000000298023,
-          "over_budget_scripts": [
-            {
-              "duration": 160.70000000298023,
-              "executionStart": 9296,
-              "forcedStyleAndLayoutDuration": 0,
-              "sourceURL": "http://127.0.0.1:34249/static/js/avatars.js?v=8.14",
-              "sourceFunctionName": "",
-              "sourceCharPosition": 33795,
-              "invoker": "TimerHandler:setInterval",
-              "invokerType": "user-callback",
-              "pauseDuration": 0
-            }
-          ],
-          "passed": false
         }
       ],
+      "complete": false,
       "passed": false
     },
     "succulent": {
-      "source_commit": "b7daa792d4ef74e1f7537869604c07cce9d30528",
-      "samples": [
-        {
-          "run": 0,
-          "frame_p95_ms": 16.799999999999272,
-          "max_reported_owned_script_ms": 0,
-          "over_budget_scripts": [],
-          "passed": true
-        },
-        {
-          "run": 1,
-          "frame_p95_ms": 16.80000000000109,
-          "max_reported_owned_script_ms": 258.3999999985099,
-          "over_budget_scripts": [
-            {
-              "duration": 258.3999999985099,
-              "executionStart": 13695.39999999851,
-              "forcedStyleAndLayoutDuration": 6.1,
-              "sourceURL": "http://127.0.0.1:34745/static/js/avatars.js?v=8.14",
-              "sourceFunctionName": "",
-              "sourceCharPosition": 17660,
-              "invoker": "FrameRequestCallback",
-              "invokerType": "user-callback",
-              "pauseDuration": 0
-            },
-            {
-              "duration": 116.39999999850988,
-              "executionStart": 18098.79999999702,
-              "forcedStyleAndLayoutDuration": 0,
-              "sourceURL": "http://127.0.0.1:34745/static/js/avatars.js?v=8.14",
-              "sourceFunctionName": "initAll",
-              "sourceCharPosition": 37514,
-              "invoker": "TimerHandler:setTimeout",
-              "invokerType": "user-callback",
-              "pauseDuration": 0
-            }
-          ],
-          "passed": false
-        },
-        {
-          "run": 2,
-          "frame_p95_ms": 16.800000000000182,
-          "max_reported_owned_script_ms": 289.29999999701977,
-          "over_budget_scripts": [
-            {
-              "duration": 289.29999999701977,
-              "executionStart": 15506.90000000596,
-              "forcedStyleAndLayoutDuration": 0,
-              "sourceURL": "http://127.0.0.1:34745/static/js/avatars.js?v=8.14",
-              "sourceFunctionName": "",
-              "sourceCharPosition": 33795,
-              "invoker": "TimerHandler:setInterval",
-              "invokerType": "user-callback",
-              "pauseDuration": 0
-            }
-          ],
-          "passed": false
-        },
-        {
-          "run": 3,
-          "frame_p95_ms": 16.799999999999272,
-          "max_reported_owned_script_ms": 0,
-          "over_budget_scripts": [],
-          "passed": true
-        },
-        {
-          "run": 4,
-          "frame_p95_ms": 16.799999999999272,
-          "max_reported_owned_script_ms": 7.600000001490116,
-          "over_budget_scripts": [],
-          "passed": true
-        }
-      ],
+      "samples": [],
+      "complete": false,
       "passed": false
     }
   },
-  "budgets": {
-    "frame_p95_ms": 33,
-    "owned_callback_ms": 50
-  },
-  "previous_primary_matrix": "lcp-unblock/pre-motion-fix/application/summary.json",
-  "previous_primary_source": "00d76bc",
-  "previous_primary_applies_to_final_source": false,
-  "visual_equivalence": "lcp-unblock/artwork-equivalence.json",
-  "tests": "lcp-unblock/validation-tests.txt",
-  "functional": "lcp-unblock/static-functional/tests.txt",
+  "primary_samples": 0,
   "limits": [
-    "Native LoAF attributes wall duration to scripts in long frames; zero means no owned script reported, not zero CPU.",
-    "Several over-budget scripts report zero forced layout. This does not establish scheduling or GC as the cause; the failures remain unresolved.",
-    "All cohorts retained; no thresholds relaxed or favorable samples substituted."
+    "Zero native invoker duration means no avatar script reported in a long frame, not zero CPU; invoker wall duration alone is not attribution.",
+    "CPU-throttled local Chromium is not a physical-phone or 60fps claim.",
+    "Original failed cohorts and all outliers retained; budgets and acceptance scenarios unchanged.",
+    "Selected offscreen animation, chase/idle/roam timers and same-document listener retention remain pre-existing release blockers. Static picker thumbnails are resolved."
   ],
-  "next_step": "Resolve or isolate the focused native callback/frame failures before rerunning the original20 matrix; do not start3A."
+  "empty_callback_control": {
+    "file": "layout-fix/throttle-control/empty-control.json",
+    "source": "setInterval(function emptyTick(){},80);",
+    "max_empty_callback_ms": 143,
+    "samples": 6,
+    "limit": "Blank page without avatars/application code reports143ms for an empty callback atCPU1. Native script invoker duration alone cannot establish avatar work as the cause. This does not waive any gate."
+  },
+  "fixture_candidate": {
+    "source": "c571122",
+    "production_source": "c57d9be",
+    "fixture_candidate": "renderer main/throttlerCPU1 insideprocessCPUs0-2, CPU4 unchanged",
+    "result": "REJECTED",
+    "reason": "Fresh independent native cohort fails fern framep95:16.8,16.8,16.8,133.3,33.4ms. Raw invoker559.8ms diagnostic retained. Stop after fern5 and mushroom2; no succulent/currenttrace/fullmatrices started. Four successful diagnostic runs did not generalize. Do not promote the affinity candidate or substitute older successful frames.",
+    "remaining_issue": "Direct owned265.347ms/33.4ms trace fromsameproductioncode remains unresolved in pre-thread-pin-fixture. No proven new avatar code hotspot from subsequent sparse profiles; no gate waiver or further speculative product edit.",
+    "next_requirement": "Use a validated performance runner, repeat same Chromium154/CPU1,4 old/current fixtures with all original thresholds; first establish stable empty/control and focused15/trace30. Only then full20 original/current and historical gates.",
+    "no_acceptance": true
+  },
+  "production_source": "c57d9be",
+  "prior_same_product_trace_failure": {
+    "source": "b98873e",
+    "file": "layout-fix/pre-thread-pin-fixture/trace-control/fern/summary.json",
+    "max_owned_call_wall_ms": 265.347,
+    "frame_p95_ms": 33.4,
+    "status": "failed; no subtraction or waiver"
+  },
+  "traced": {},
+  "attribution_method": "Native invoker wall durations are diagnostic. Enforce unchanged50ms using directly recorded devtools.timeline FunctionCall wall spans from avatars/audio, with no CPU/GC/baseline subtraction. Both untraced and traced frames must meet33ms.",
+  "gates": {
+    "focused_native_frames": false,
+    "fern_owned_callback_trace": false,
+    "mushroom_owned_callback_trace": false,
+    "succulent_owned_callback_trace": false,
+    "full20_complete": false,
+    "native_hidden_touch_keyboard": true,
+    "static_picker": true,
+    "persisted_care": true
+  },
+  "next_step": "Reproduce residual native callback/frame stalls on a validated runner and isolate attributable work before another product edit. Require original focused and full before/current matrices; keep3A pending."
 }
