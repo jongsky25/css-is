@@ -1,8 +1,14 @@
-## 8.62 — October 25, 2026
+## 8.63 — October 25, 2026
 
 - Add default-off registered group/topic schedule and room-slot commands with separate current actor read grants, exact routing, and fresh bot/owner/requester membership checks.
 - Require audited owner consent to the previewed exact version of each ordinary bureau calendar entry for each destination. Source edits, sharing revocation and restores fence pending sends; re-registration requires new consent.
 - Render only approved calendar fields and signed-in source links, or anonymous room-slot states. Retain metadata-only queues, bounded output and independent private commands. Update the Telegram progress ledger and operator handoff.
+
+## 8.62 — October 25, 2026
+
+- Add a signed-in, phone-friendly ChatGPT readiness page linked from Connected tools, with the running build, actual registered MCP catalog, allowlisted pilot switches and only the current owner's grant metadata.
+- Separate registration, host activation and consent; show disabled/unavailable catalog states without inferring successful calls or ChatGPT's saved catalog. No tokens, environment dumps, business tool calls, grants or settings writes.
+- Provide selectable survey verification prompts and matching source-report guidance; hosted survey acceptance remains pending.
 
 ## 8.61 — October 25, 2026
 

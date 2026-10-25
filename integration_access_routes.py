@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 import hashlib
 import hmac
 import json
+import os
 import time
 
 from fastapi import APIRouter, Request
@@ -22,7 +23,22 @@ def csrf(request):
                     hashlib.sha256).hexdigest()
 
 
-def make_router(templates, get_conn):
+# Explicit allowlist: never expose the hosting environment or credential material.
+MCP_PILOTS = (
+    ('Monthly CSM summaries', 'CSM', 'surveys:csm:read', ('get_csm_summary',)),
+    ('Monthly CSM comparisons', 'CSM_TRENDS', 'surveys:csm_trends:read', ('compare_csm_months',)),
+    ('Quarterly activity summaries', 'ACTIVITY_SURVEYS', 'surveys:activities:read', ('get_activity_survey_summary',)),
+    ('Individual activity scorecards', 'ACTIVITY_DETAILS', 'surveys:activity_details:read', ('find_survey_activities', 'get_activity_survey_detail')),
+    ('Unit activity summaries', 'UNIT_SURVEYS', 'surveys:units:read', ('find_survey_units', 'get_unit_activity_survey_summary')),
+    ('Unit quarterly comparisons', 'UNIT_TRENDS', 'surveys:unit_trends:read', ('compare_unit_activity_surveys',)),
+    ('Annual resource-person summaries', 'RESOURCE_PERSON_SURVEYS', 'surveys:resource_persons:read', ('get_resource_person_survey_summary',)),
+    ('Resource-person discovery and comparisons', 'RESOURCE_PERSON_TRENDS', 'surveys:resource_person_trends:read', ('find_survey_resource_persons', 'compare_resource_person_surveys')),
+    ('Unread work notices', 'NOTIFICATIONS', 'notifications:read', ('list_my_notifications',)),
+    ('Room availability', 'AVAILABILITY', 'calendar:read', ('get_room_availability',)),
+)
+
+
+def make_router(templates, get_conn, mcp_readiness=None):
     router = APIRouter()
     private = {'Cache-Control':'private, no-store','Referrer-Policy':'same-origin'}
 
@@ -71,6 +87,35 @@ def make_router(templates, get_conn):
     @router.get('/account/integrations',response_class=HTMLResponse)
     def own(request: Request):
         return screen(request)
+
+    @router.get('/account/integrations/mcp', response_class=HTMLResponse)
+    async def readiness(request: Request):
+        def own_connections():
+            conn = get_conn()
+            try:
+                user = access._session(conn, payload(request))
+                return mcp_auth.owner_grants(conn, user['id'])
+            finally:
+                conn.close()
+
+        try:
+            entries = await asyncio.to_thread(own_connections)
+        except access.InvalidCredential:
+            return HTMLResponse('Sign in again to check your connection.', status_code=403, headers=private)
+        state = await mcp_readiness() if mcp_readiness else {'enabled': False, 'tools': [], 'catalog_ok': False, 'build': {}}
+        now = int(time.time())
+        for row in entries:
+            row['status'] = 'Revoked' if row['revoked_at'] is not None else 'Refresh expired' if row['expires_at'] <= now else 'Grant active'
+            row['expires_label'] = datetime.fromtimestamp(row['expires_at'], timezone.utc).astimezone(tz.LOCAL_TZ).isoformat(timespec='minutes')
+        pilots = []
+        for label, flag, scope, names in MCP_PILOTS:
+            flag = 'CSS_MCP_' + flag + '_ENABLED'
+            pilots.append({'label': label, 'flag': flag, 'scope': scope,
+                           'enabled': os.environ.get(flag) == '1',
+                           'registered': state['catalog_ok'] and set(names).issubset(state['tools']),
+                           'names': names})
+        return templates.TemplateResponse(request, 'mcp_readiness.html',
+            {'show_scope': False, 'state': state, 'pilots': pilots, 'entries': entries}, headers=private)
 
     @router.get('/admin/integrations',response_class=HTMLResponse)
     def admin_list(request: Request):

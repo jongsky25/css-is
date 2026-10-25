@@ -321,3 +321,5 @@ T0 merged in PR #465 at `4cd01a0bfd17ccf57dba12b05a24c72bfd098f29`. T1.1 merged 
 T2.2 merge reconciliation: preserved concurrent search release 8.60 and its runtime module; room lookup advances to 8.61.
 
 - 2026-10-25: User authorized T2.2 merge and next increment. PR #471 merged at 540705d after reconciling concurrent search release 8.60; room lookup is release 8.61. T2.3 implements exact-version, per-registration calendar disclosure and anonymous room-slot states separately, with all defaults off.
+
+- T2.3 merge reconciliation: preserve the concurrent ChatGPT readiness release 8.62; group lookup advances to release 8.63.

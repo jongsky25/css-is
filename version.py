@@ -18,18 +18,28 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "8.62"
+APP_VERSION = "8.63"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
-        "version": "8.62",
+        "version": "8.63",
         "date": "October 25, 2026",
         "summary": "Prepare optional shared Telegram schedule and room lookup.",
         "changes": [
             "Linked group members can look up explicitly shared calendar entries and room availability when the pilot is enabled.",
             "Group owners preview and approve calendar fields for each destination, and changes require fresh sharing consent.",
             "Private requests, notes, participants and meeting links stay on signed-in Office Connect pages."
+        ]
+    },
+    {
+        "version": "8.62",
+        "date": "October 25, 2026",
+        "summary": "Check your ChatGPT connection from your phone.",
+        "changes": [
+            "Open ChatGPT readiness from Connected tools to see running tools, pilot switches and your connection permissions.",
+            "Copy survey test prompts and compare results with the matching source reports.",
+            "The status page explains which checks need Office Connect settings and which need a ChatGPT tool refresh."
         ]
     },
     {

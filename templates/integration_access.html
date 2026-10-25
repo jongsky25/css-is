@@ -52,6 +52,7 @@
 <p><a href="{{ '/admin/integrations' if admin else '/account/integrations' }}">Newest credentials</a>{% if next_cursor %} · <a href="?before={{ next_cursor }}">Older credentials</a>{% endif %}</p>
 </section>
 {% if not admin %}<section aria-labelledby="mcp-connections-title"><h2 id="mcp-connections-title">ChatGPT connections</h2>
+<p><a href="/account/integrations/mcp">Check ChatGPT readiness</a> — running tools, pilot switches and your permissions.</p>
 <p>These read-only connections were approved through your Office Connect sign-in. Disconnect one here to stop its current access and refresh tokens.</p>
 {% for entry in mcp_entries %}<article class="integration-panel">
 <h3>{{ entry.name }}</h3><p><strong>{{ entry.status }}</strong> · {{ entry.scopes|join(', ') }}</p>
