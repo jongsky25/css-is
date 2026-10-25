@@ -1,3 +1,8 @@
+## 8.55 — October 25, 2026
+
+- Add inert two-way Telegram connection, update, operation and delivery tables with uniqueness, foreign keys and bounded states. Add independent default-off capability switches without a receiver, sender or business action.
+- Fence every snapshot recovery with fresh connection generations; cancel pending actions/updates/sends, clear input payloads and claims, preserve committed receipts, and mark interrupted sending uncertain. Preserve existing Apprise digest configuration.
+
 ## 8.54 — October 25, 2026
 
 - Define the Telegram T0 authority, storage and recovery contract. Two-way integration remains unimplemented and inactive.

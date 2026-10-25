@@ -1,6 +1,6 @@
 # Office Connect ↔ Telegram delivery plan
 
-Status: T0 design complete, awaiting review; runtime increments remain planned and inactive.
+Status: T0 merged; T1.1 in review; two-way capabilities remain inactive.
 Last updated: 2026-10-25.
 Repository: jongsky25/css-is.
 Planning baseline inspected: abf3141 (merge of PR #458).
@@ -126,23 +126,41 @@ Google/Outlook two-way calendar synchronization, external free/busy, automatic v
 
 ## Progress ledger
 
-All T1–T7 increments are planned and inactive. No Telegram two-way feature has been implemented by this planning change.
+T0 merged in PR #465 at `4cd01a0bfd17ccf57dba12b05a24c72bfd098f29`. T1.1 is underway; T1.2–T7 remain planned. All two-way capabilities remain inactive.
 
 | Increment | Status | Owner / date | PR / commit | Evidence | Activation / next action |
 | --- | --- | --- | --- | --- | --- |
 | Planning document | Published | Codex / 2026-10-25 | See GitHub file history | Source inspection at abf3141; documentation-only change | Plan available for cross-chat handoff |
-| T0 | In review | Codex / 2026-10-25 | [PR #465](https://github.com/jongsky25/css-is/pull/465), `docs/telegram-t0-contract` | [Source-backed design contract](TELEGRAM_T0_CONTRACT.md); main reconciled at f9e868e; checks below | No runtime change or activation; review contract, then T1.1 |
-| T1.1–T7 | Planned | Unassigned | — | Not implemented | Follow dependencies; expand each started row separately |
+| T0 | Merged | Codex / 2026-10-25 | [PR #465](https://github.com/jongsky25/css-is/pull/465), `docs/telegram-t0-contract` | [Source-backed design contract](TELEGRAM_T0_CONTRACT.md); main reconciled at f9e868e; checks below | Merged at `4cd01a0bfd17ccf57dba12b05a24c72bfd098f29`; live deployment unverified |
+| T1.1 | In review | Codex / 2026-10-25 | `feat/telegram-t1-1-storage` (PR link recorded after opening) | Four inert tables, independent default-off switches, migration/restart/restore and digest checks passed | Release 8.55 candidate; no activation or live verification; next T1.2 after merge |
+| T1.2–T7 | Planned | Unassigned | — | Not implemented | Follow dependencies |
 
 ### T0 handoff — 2026-10-25
 
-- Owner: Codex. Draft [PR #465](https://github.com/jongsky25/css-is/pull/465), initial design commit `9148395`; opened 2026-10-25, not merged. Started and completed design on `docs/telegram-t0-contract` from main `f9e868e`; no merged T0 implementation was present at reconciliation.
+- Owner: Codex. Draft [PR #465](https://github.com/jongsky25/css-is/pull/465), initial design commit `9148395`; opened and merged 2026-10-25 at `4cd01a0bfd17ccf57dba12b05a24c72bfd098f29` (release 8.54). Started and completed design on `docs/telegram-t0-contract` from main `f9e868e`; no merged T0 implementation was present at reconciliation.
 - Delivered: [T0 contract](TELEGRAM_T0_CONTRACT.md), including exact service/field/role matrix, webhook choice, proposed schemas, grants, group disclosure policy, retention, switch names, restore/retry state contract and required service extractions. Documentation only.
 - Checks: `git diff --check`, `python scripts/lock_dependencies.py --check`, `python scripts/check_vendor_dependencies.py`, `python scripts/ai_evaluation.py contract --base origin/main` passed. Relative Markdown links and six required contract sections verified with a local Python check.
-- Initial release limitation: `python scripts/check_release.py release --base origin/main` fails because application version remains 8.53. CI applies this gate unconditionally, including documentation PRs. This documentation-only increment does not change release metadata; resolved on user instruction to merge by adding release 8.54 metadata and matching service-worker cache version. The release metadata gate now passes. No runtime tests run because runtime files are unchanged.
+- Initial release limitation: `python scripts/check_release.py release --base origin/main` fails because application version remains 8.53. CI applies this gate unconditionally, including documentation PRs. The initial documentation-only revision left release metadata unchanged; resolved on user instruction to merge by adding release 8.54 metadata and matching service-worker cache version. The release metadata gate now passes. No runtime tests were run for the original design-only change; release metadata was subsequently added to satisfy CI.
 - Deployment/switch state: no deployment, credentials, webhook registration or feature activation performed. All two-way capabilities remain unimplemented/inactive. Existing digest behavior unchanged by this documentation change.
 - Known gaps: production storage paths, snapshot durability, webhook ingress and Bot API egress remain unverified. Snapshot rollback may lose local commits; business writes must stay off until reconciliation/recovery is demonstrated. Design review is not live evidence.
-- Next ready increment after T0 review/merge: T1.1, four inert durable tables, independent default-off switches and migration/restart/restore fixtures plus existing digest regressions. Do not include inbound handling or business actions.
+- Next increment, now started after T0 merge: T1.1, four inert durable tables, independent default-off switches and migration/restart/restore fixtures plus existing digest regressions. Do not include inbound handling or business actions.
+
+### T1.1 operator and implementation handoff — 2026-10-25
+
+- Owner/branch: Codex, `feat/telegram-t1-1-storage`, based on T0 merge `4cd01a0`.
+- Scope: additive `telegram_storage.install` via `storage.init_db`; four empty tables and independent exact-`1` environment switches from the T0 contract. No receiver, transport, scheduler, account linking, grants or business actions. The host upload closure includes the new module.
+- Migration: normal application initialization installs tables/indexes idempotently. Existing business rows and Apprise digest preferences are preserved. No database topology change. A normal process restart preserves rows, claims and generations; this increment does not execute or recover queued work.
+- Restore: all current `app.py` snapshot/seed hydration paths call `backups.clear_restored_sessions`; deliberate `backups.restore_backup` does too. That hook now pauses two-way connections even for routine snapshot recovery, rotates random generations, clears received payloads and stale claims, cancels pending operations/updates/deliveries and marks interrupted sends uncertain. Committed/partial/failed receipts and provider acceptance metadata remain. Legacy snapshots without these tables are supported. Future grant/group/preview increments must extend the hook when their tables exist.
+- Operator steps: keep every `CSS_TELEGRAM_*_ENABLED` capability unset or `0`; do not register a webhook. Existing `CSS_APPRISE_TELEGRAM_ENABLED` remains separate. Turning a new switch on cannot activate a capability in this storage-only release. No bot secrets are needed for T1.1.
+- Pause/rollback: unset the new switches; leave additive tables in place rather than deleting receipts. A code rollback must retain the restore hook before any future reactivation. After restoring a snapshot, do not manually mark rows active or resend uncertain work; receipt reconciliation and relinking belong to later increments. Existing digests retain their current separate restore semantics.
+- Limitations: no cleanup worker or retry engine is implemented here; T1.2 and subsequent increments own runtime handling. Real production storage durability and transport remain unverified. No live sends or deployment verification claimed.
+- Checks (using isolated `/tmp/telegram-test-venv`, installed from hash-locked `requirements-test.txt`, with `CSS_TEST_NOW=2026-10-20T06:00:00`):
+  - `python -m pytest tests/test_telegram_storage.py tests/test_work_channels.py tests/test_deploy_hf.py tests/test_backups.py tests/test_phase0_persistence.py tests/test_persist_health.py tests/test_release_checks.py --tb=short --junitxml=/tmp/telegram-t1-1.xml`: 125 passed, no failures/skips. JUnit gate passed.
+  - After adding actual `make_backup`/`restore_backup` coverage and invalid-state checks: `python -m pytest tests/test_telegram_storage.py --tb=short`: all 18 passed.
+  - `python -m pytest tests/test_work.py -k 'digest or notification_preferences or routine_bell or quiet_preferences' --tb=short -q`: passed (exit 0).
+  - `git diff --check`, release metadata (`--base origin/main`), dependency lock, vendor integrity, AI evaluation contract, compile checks and `pip check`: passed. Existing Starlette/httpx deprecation warning only. Full repository/browser suites were not run; no UI changed.
+- Release metadata: 8.55 in version/changelog/service-worker cache, satisfying the unconditional release gate. Implementation awaits PR review/merge; no deployed SHA or live evidence available.
+- Next: T1.2 authenticated update ingestion, durable deduplication, private `/start` and `/help`, bounded handling. Do not bundle linking or calendar actions.
 
 ### Per-increment handoff template
 
@@ -163,3 +181,5 @@ All T1–T7 increments are planned and inactive. No Telegram two-way feature has
 - 2026-10-25: Every future implementation PR must maintain this plan; production activation and verification are tracked separately.
 
 - 2026-10-25: T0 selected as first ready increment; documented the implementation contract against f9e868e. No runtime behavior or production activation changed.
+
+- 2026-10-25: User authorized T0 merge and next increment. T0 merged as PR #465; T1.1 started separately with inert storage and restore fencing.

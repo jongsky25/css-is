@@ -473,10 +473,14 @@ def clear_restored_sessions(db_path, *, revoke_integrations=False):
 
     Routine boot recovery from the newest snapshot preserves unexpired tool
     grants. An operator-selected historical restore must not revive old keys.
+    Two-way Telegram work is paused on every recovery, even routine hydration,
+    because snapshots can predate locally committed actions and deliveries.
     """
     conn = sqlite3.connect(db_path)
     try:
         with conn:
+            import telegram_storage
+            telegram_storage.reset_after_restore(conn)
             if conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' "
                             "AND name='login_session'").fetchone():
                 conn.execute("DELETE FROM login_session")
