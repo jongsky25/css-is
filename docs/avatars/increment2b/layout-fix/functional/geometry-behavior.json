@@ -8,5 +8,14 @@
     "width": 258,
     "height": 420
   },
+  "geometry_listeners_before": {
+    "scroll": 1,
+    "resize": 3
+  },
+  "geometry_listeners_after_20_evaluations": {
+    "scroll": 1,
+    "resize": 3
+  },
+  "shared_cache_state_retained": true,
   "errors": []
 }

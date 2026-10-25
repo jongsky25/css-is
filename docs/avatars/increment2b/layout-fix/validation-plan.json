@@ -3,9 +3,20 @@
   "prior_source": "b7daa79",
   "prior_failures_retained": "../lcp-unblock/native-control/",
   "diagnostic": "One old/new-art pair per mature plant, same prior runtime, native trace wall/thread CPU spans. No timer/event/rAF wrappers. Attribution only, not acceptance.",
-  "fix_scope": ["Cache companion/play/head geometry; refresh on observed layout changes rather than every pointer/chase tick", "Use known drag/chase positions to translate cached bounds", "Avoid rescanning all avatars after heart/toast DOM mutations"],
-  "gates": ["Original artwork/SVG and reaction/reduced-motion checks", "Unit/integration suite and real pointer, drag, keyboard, care, resize/scroll behavior", "Five final-source mature CPU4 mobile 30-second runs per plant, every frame p95 <=33 ms and reported owned callback <=50 ms", "If focused gates pass, fresh original20 matrix, five desktop/mobile cold/warm runs, 30-second idle and interaction, unchanged historical budgets", "Native hidden/touch/keyboard and persisted care flow"],
+  "fix_scope": [
+    "Cache companion/play/head geometry; refresh on observed layout changes rather than every pointer/chase tick",
+    "Use known drag/chase positions to translate cached bounds",
+    "Avoid rescanning all avatars after heart/toast DOM mutations"
+  ],
+  "gates": [
+    "Original artwork/SVG and reaction/reduced-motion checks",
+    "Unit/integration suite and real pointer, drag, keyboard, care, resize/scroll behavior",
+    "Five final-source mature CPU4 mobile 30-second runs per plant, every frame p95 <=33 ms and reported owned callback <=50 ms",
+    "If focused gates pass, fresh original20 matrix, five desktop/mobile cold/warm runs, 30-second idle and interaction, unchanged historical budgets",
+    "Native hidden/touch/keyboard and persisted care flow"
+  ],
   "no_threshold_changes": true,
   "no_sample_replacement": true,
-  "no_production_deployment": true
+  "no_production_deployment": true,
+  "final_source_followup": "Share geometry scheduler/body observer and global listeners across repeated script evaluation; test20 evaluations with unchanged listener counts. Partial b2c9b82 cohort retained under pre-lifecycle-fix; not used for acceptance."
 }

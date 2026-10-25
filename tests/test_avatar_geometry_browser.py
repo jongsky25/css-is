@@ -43,7 +43,17 @@ def test_cached_geometry_preserves_drag_chase_resize_scroll(baseline_server):
         assert clamp['left']>=-1 and clamp['top']>=-1 and clamp['right']<=clamp['width']+2 and clamp['bottom']<=clamp['height']+2,clamp
         previous=wrap.get_attribute('style');button.focus();page.keyboard.press('ArrowLeft')
         assert wrap.get_attribute('style')!=previous
+        # Re-evaluation is a legacy supported mount path. New global cache
+        # infrastructure must keep one pair of listeners and one body observer.
+        cdp=context.new_cdp_session(page)
+        expression="({scroll:(getEventListeners(document).scroll||[]).length,resize:(getEventListeners(window).resize||[]).length})"
+        listeners_before=cdp.send('Runtime.evaluate',{'expression':expression,'includeCommandLineAPI':True,'returnByValue':True})['result']['value']
+        state=page.evaluate_handle('window.__cssAvatarGeometry')
+        for _ in range(20):page.add_script_tag(url=origin+'/static/js/avatars.js?v=8.15')
+        listeners_after=cdp.send('Runtime.evaluate',{'expression':expression,'includeCommandLineAPI':True,'returnByValue':True})['result']['value']
+        assert listeners_before==listeners_after
+        assert page.evaluate('(state)=>state===window.__cssAvatarGeometry',state)
         assert not errors
         context.close();browser.close()
     out=Path(os.environ['CSS_AVATAR_OUT']).parent;out.mkdir(parents=True,exist_ok=True)
-    (out/'geometry-behavior.json').write_text(json.dumps({'steady_input_live_geometry_reads':reads,'resize_scroll_clamp':clamp,'errors':errors},indent=2))
+    (out/'geometry-behavior.json').write_text(json.dumps({'steady_input_live_geometry_reads':reads,'resize_scroll_clamp':clamp,'geometry_listeners_before':listeners_before,'geometry_listeners_after_20_evaluations':listeners_after,'shared_cache_state_retained':True,'errors':errors},indent=2))

@@ -1,0 +1,7 @@
+{
+  "source": "b2c9b82",
+  "reason": "Review found new geometry-cache resize/scroll listeners and body ResizeObserver would duplicate on repeated script evaluation. Stop to make new infrastructure singleton before final acceptance.",
+  "partial_samples_retained": true,
+  "not_used_for_acceptance": true,
+  "not_a_threshold_change": true
+}

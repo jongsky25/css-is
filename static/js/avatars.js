@@ -29,7 +29,8 @@
    * Cache untransformed positions and translate them by the movement we own.
    * Resize/scroll/SVG replacement invalidate the cache; all queued measurements
    * finish before curiosity writes any transforms. */
-  var geometryRaf = null, bodyGeometryObserver = null;
+  var geometryState = window.__cssAvatarGeometry;
+  if (!geometryState) geometryState = window.__cssAvatarGeometry = { raf: null, bodyObserver: null, listening: false };
   function measureGeometry(w) {
     var play = w.closest(".av-play"), head = w.querySelector(".av-head");
     var box = w.getBoundingClientRect();
@@ -53,9 +54,9 @@
              width: box.width, height: box.height };
   }
   function queueGeometry() {
-    if (geometryRaf !== null) return;
-    geometryRaf = requestAnimationFrame(function () {
-      geometryRaf = null;
+    if (geometryState.raf !== null) return;
+    geometryState.raf = requestAnimationFrame(function () {
+      geometryState.raf = null;
       var wraps = document.querySelectorAll(".avwrap[data-interactive]");
       for (var i = 0; i < wraps.length; i++) {
         if (!wraps[i]._avGeometry) measureGeometry(wraps[i]);
@@ -77,15 +78,18 @@
       observer.observe(w);
       var play = w.closest(".av-play");
       if (play) observer.observe(play);
-      if (!bodyGeometryObserver && document.body) {
-        bodyGeometryObserver = new ResizeObserver(invalidateGeometry);
-        bodyGeometryObserver.observe(document.body);
+      if (!geometryState.bodyObserver && document.body) {
+        geometryState.bodyObserver = new ResizeObserver(invalidateGeometry);
+        geometryState.bodyObserver.observe(document.body);
       }
     }
     queueGeometry();
   }
-  window.addEventListener("resize", invalidateGeometry, { passive: true });
-  document.addEventListener("scroll", invalidateGeometry, { passive: true, capture: true });
+  if (!geometryState.listening) {
+    geometryState.listening = true;
+    window.addEventListener("resize", invalidateGeometry, { passive: true });
+    document.addEventListener("scroll", invalidateGeometry, { passive: true, capture: true });
+  }
 
   /* ---- night-time sleep: 9pm-6am on the viewer's clock ------------------ */
   function isNight() {
