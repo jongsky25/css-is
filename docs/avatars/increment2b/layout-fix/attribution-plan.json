@@ -1,0 +1,9 @@
+{
+  "source": "c57d9be (production JS/template unchanged by measurement correction)",
+  "plan_rule": "docs/AVATAR_VISUAL_UPGRADE_PLAN.md: No new avatar-attributable main-thread long tasks over50ms.",
+  "measurement_defect": "Auxiliary native invoker duration was treated as attributable avatar work; a blank-page emptyTick() atCPU1 reports143ms. Invoker URL alone cannot establish owned work.",
+  "correction": "Use native devtools.timeline FunctionCall wall spans for avatars/audio to enforce unchanged50ms; report threadCPU but do not subtractCPU,GC,pauses or baseline. Collect five counterbalanced old/new-art pairs per mature plant, explicit30s marks, fixed Chromium154/CPU4, no API wrappers/stacks. Keep strict33ms untraced and traced frame checks. Retain all raw native invocation records and every prior failed cohort.",
+  "fixture": "Three-core affinity documented in isolated-fixture/PLAN.json; no browser CPU rate, viewport, date/seed or scenario changes. Before/after original0 full20 matrices must share this setting and still meet unchanged historical comparison gates.",
+  "compositing_candidate": "Rejected: no frame improvement; native wall budget failures. No CSS hint shipped.",
+  "no_budget_changes": true
+}

@@ -1,0 +1,18 @@
+mushroom current 0 frame 16.799999999999272 owned 0
+mushroom promoted 0 frame 16.799999999999272 owned 133.60000000149012
+mushroom promoted 1 frame 16.700000000000728 owned 0
+mushroom current 1 frame 16.700000000000728 owned 24.100000001490116
+mushroom current 2 frame 16.799999999999272 owned 5.800000004470348
+mushroom promoted 2 frame 16.799999999999272 owned 24.200000002980232
+mushroom promoted 3 frame 16.799999999999272 owned 55.5
+mushroom current 3 frame 16.800000000000182 owned 79.29999999701977
+mushroom current 4 frame 16.80000000000109 owned 126.5
+mushroom promoted 4 frame 16.799999999999272 owned 112.29999999701977
+.
+=============================== warnings summary ===============================
+tests/test_avatar_compositing_control.py::test_compositing_control[mushroom]
+  /workspace/css-is/tests/conftest.py:88: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+1 passed, 1 warning in 340.43s (0:05:40)
