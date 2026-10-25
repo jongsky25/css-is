@@ -1,0 +1,13 @@
+BASELINE mobile=False cache='cold' 1/5
+BASELINE mobile=False cache='cold' 2/5
+BASELINE mobile=False cache='cold' 3/5
+BASELINE mobile=False cache='cold' 4/5
+BASELINE mobile=False cache='cold' 5/5
+.
+=============================== warnings summary ===============================
+tests/test_avatar_baseline_browser.py::test_real_application_baseline[cold-desktop]
+  /workspace/css-is-avatar-control-5MHGSo/tests/conftest.py:88: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+1 passed, 4 deselected, 1 warning in 414.80s (0:06:54)

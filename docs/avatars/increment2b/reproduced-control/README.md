@@ -1,0 +1,1 @@
+Exploratory original-source control: five full desktop-cold runs from 1c964dc. Source worktree was on /tmp (tmpfs); the current application source is on /workspace (overlayfs). This filesystem mismatch prevents using this control alone for matched acceptance. All samples and the exact reproduction script are retained. No current sample was replaced.

@@ -1,0 +1,18 @@
+{
+  "source_commit": "1c964dcba2fa19de1eab077b00e0e5748d742554",
+  "platform": "Linux-6.18.55-x86_64-with-glibc2.41",
+  "python": "3.12.14",
+  "chromium": "154.0.8037.57",
+  "playwright": "1.62.0",
+  "fixture_date_local": "2026-07-15T12:00:00 Asia/Manila",
+  "browser_date": "2026-07-15T12:00:00Z + performance.now()",
+  "random_seed": 12345,
+  "source_sha256": {
+    "templates/_avatars.html": "1b21f18edc3b152d929d529d36bed73d372ddc54851d59f85707dcb262538da0",
+    "templates/_avatars_art.html": "aa542c3e007a4920cde6f32aa797cf79bb9b3ddf07250a459456f072b4c4ef29",
+    "static/js/avatars.js": "69c5841d65c4e1a47093c93a2ded9498b176b3b6cfb9ea34d2d7d633e07d6bb1",
+    "static/js/avatar-audio.js": "51de7cd0c5ab68874dfa5a50fab136ebbc415953fa8b5d0a09cae116d89303b9",
+    "tests/test_avatar_baseline_browser.py": "d70e36c9b4803cda38599242169d377e54103d4effa76249a37595e87f778624"
+  },
+  "proxy_compression": "test-local Starlette GZipMiddleware minimum_size=500"
+}

@@ -1,0 +1,17 @@
+{
+  "declared_at_utc": "2026-10-25T08:15:13.598725+00:00",
+  "trigger": "Initial five current desktop-cold LCPs [812,336,664,728,308] ms have median664 versus historical increment0 median324 (+340ms), failing100ms relative gate. Home cat art and runtime JS are unchanged from2A; current SVG/CSS edits target other species and reaction/reduced-motion selectors.",
+  "protocol": "Complete and preserve all20 current samples without resampling. Then reproduce exactly five full-duration desktop-cold samples from immutable increment0 source1c964dc in an isolated local worktree, with the same installed Python/Chromium154.0.8037.57, fixture date/seed, viewport, CPU1, HTTP compression and scenario durations. Compare this fresh original-source control to the existing five current samples. Preserve the historical comparison and the new control regardless of outcome; do not replace favorable current runs or alter thresholds.",
+  "control_runs": 5,
+  "current_resampling": false,
+  "reference_source": "1c964dc",
+  "current_source": "6ddce82",
+  "stop_rule": "One predefined five-run reference reproduction; report all initial/current/control observations. If the reproduced control also shows a>100ms median current regression, investigate source/trace cost rather than select another run set.",
+  "method_correction": {
+    "declared_at_utc": "2026-10-25T09:04:04.412316+00:00",
+    "observed_mismatch": "Initial original-source control worktree used /tmp tmpfs; current source uses /workspace overlayfs. Preserve that exploratory control but exclude it from matched acceptance.",
+    "corrected_protocol": "Exactly five original-source desktop-cold runs on a sibling /workspace worktree. Assert matching filesystem types before execution. Use this corrected control regardless of result; retain all initial20 current samples and initial5 tmpfs controls. No acceptance resampling of current build.",
+    "corrected_control_runs": 5,
+    "stop_rule": "If this same-filesystem control still shows current regression >100ms, keep the LCP gate failed and use navigation-stage diagnostics to identify a fix."
+  }
+}

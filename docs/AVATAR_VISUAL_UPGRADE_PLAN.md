@@ -1,6 +1,6 @@
 # Avatar visual upgrade — phased execution plan for Sol
 
-Status: Increments 0, 1 and 2A complete. Increment 2B is next. Existing baseline release blockers remain recorded.
+Status: Increments 0, 1 and 2A complete. Increment 2B artwork is implemented but blocked by the cold-desktop LCP gate; do not advance to 3A. Existing baseline release blockers remain recorded.
 Created: 2026-10-25
 Repository: jongsky25/css-is
 Owner request: Material improvement to companion artwork, optional animal dress-up,
@@ -286,7 +286,7 @@ browser tests ran.
 | 0 Baseline | Complete — baseline established; release gates remain unmet | `94269dd` + evidence/ledger revision | [51 sheets](avatars/sheets/index.json), [monthly overview](avatars/sheets/monthly-stage6-overview.png), [hero/moods](avatars/smoke/) | [Report](avatars/BASELINE_REPORT.md), [20 full samples + summary](avatars/application/summary.json), native hidden/touch check; existing frame, picker, timer and remount failures retained. |
 | 1 Cat + plant slice | Complete — measured relative gates passed | `58cf98f`, `0be7fc3`, `ad4e7ad`, `d464461` + evidence revision | [Bare comparison](avatars/increment1/before-after-bare-light.png), [motion](avatars/increment1/before-after-motion.webm), [51 seasonal sheets](avatars/increment1/sheets/index.json) | [Report](avatars/increment1/REPORT.md), [20-sample comparison](avatars/increment1/comparison.json); 102 tests, native touch/keyboard/filter checks, sampled callback trace passed; baseline lifecycle/picker blockers retained. |
 | 2A Cactus/bonsai/sunflower | Complete — measured relative gates passed | `6064a82`, `1b453e0`, `28fbb7b` + evidence revision | [Six-stage comparison](avatars/increment2a/before-after-bare-light.png), [51 sheets](avatars/increment2a/sheets/index.json), [motion](avatars/increment2a/before-after-motion.webm) | [Report](avatars/increment2a/REPORT.md), [fresh 20 comparison](avatars/increment2a/comparison.json); 105 tests, 324 visual reaction cases, mature care/traces and native checks passed. Pre-fix failures retained; audio-sync feedback fixed. Remaining lifecycle/picker blockers persist. |
-| 2B Fern/mushroom/succulent | Pending | — | — | — |
+| 2B Fern/mushroom/succulent | Blocked — cold-desktop LCP gate failed | `6ddce82`, `a607092` + evidence revision | [Six-stage comparison](avatars/increment2b/before-after-bare-light.png), [51 sheets](avatars/increment2b/sheets/index.json), [motion](avatars/increment2b/before-after-motion.webm) | [Report](avatars/increment2b/REPORT.md), [assessment](avatars/increment2b/assessment.json). 107 tests, 486 reaction cases, 21 reduced-motion transitions passed. Current LCP median 664 ms vs same-filesystem original-source control 372 ms: +292 ms exceeds 100 ms. All current/control samples retained; 3A not started. |
 | 3A Ground animals + bird | Pending | — | — | — |
 | 3B Swimmers + owl + bat | Pending | — | — | — |
 | 4A Wardrobe model/rendering | Pending | — | — | — |
@@ -416,3 +416,59 @@ Next pending increment is **2B: fern, mushroom and succulent**, preserving their
 frond/cap/spore/plumping hooks. Remaining offscreen motion, chase/idle/roam timers,
 seven animated picker thumbnails and same-document listener retention still block
 release and must be resolved in motion/integration work.
+
+
+### Increment 2B execution — 2026-10-25 — blocked on LCP
+
+Implemented fern, mushroom and succulent at all six stages in `6ddce82`, finishing
+the plant artwork deliverables but **not** performance acceptance for increment 2.
+Fern gains fiddleheads/unfurling shoots and a frond fan with sori; mushroom gains
+a domed cap, expressive stalk, gills, veil and fruiting cluster; succulent gains
+fleshy rosettes, buds/flowers and a connected basal offset. Scoped leaf/cap
+gradients, drawn shadows and pot/soil details follow the established collection.
+Existing frond/top-frond, cap/spore, blink, bloom and plump hooks remain. Plain
+outer groups own placement; animated inner groups retain it during CSS motion.
+Mushroom seasonal slot count/order is preserved. Both runtime JS files and all
+account/growth/scoring/care policy are unchanged from 2A.
+
+A bounded selector restores the existing succulent idle-plump reaction that the
+static-idle rule had overridden. Mid-care reduced-motion testing exposed unclassed
+water-drop paths escaping the media rule; that rule now includes those paths.
+107 tests, 486 relevant reaction/stage/mood/theme cases and 21 reduced-motion
+transitions passed. All 51 monthly/seasonal sheets and 64px/170px comparisons are
+retained. The thirteen untouched species are pixel-identical across 3,978 cells.
+Real authenticated mature-plant care, native hidden/touch/keyboard checks and three
+matched mobile input traces passed; no identified avatar callback exceeded 50 ms.
+
+**The cold-desktop LCP gate failed.** The complete 20 current samples passed other
+measured byte, interaction, frame and renderer-memory gates with zero JavaScript
+errors/external attempts. Cold-desktop LCPs were 812/336/664/728/308 ms: median 664 ms,
++340 ms versus the historical increment-0 median 324 ms (100 ms budget). All ten
+mobile interaction samples met 33 ms. Picker/growth, seasonal-preview and care
+latency/memory deltas also passed; raw values are in the assessment.
+
+The [predeclared investigation](avatars/increment2b/investigation-plan.json)
+preserved every current sample and reproduced five original-source cold-desktop
+runs from immutable `1c964dc`. Protocol/probe ASTs, fixture setup, dependencies,
+storage and auth inputs match the originally measured current protocol. The first
+control used tmpfs while current source uses overlayfs, so it is retained only as
+exploratory evidence. The corrected control used sibling overlay storage and
+recorded 724/320/372/320/376 ms: median 372 ms. Current 664 ms remains **+292 ms** over
+the corrected control, still failing 100 ms. No threshold or favorable sample was
+substituted. All historical/current/control data are retained separately.
+
+Navigation/resource instrumentation in `a607092` supports further attribution.
+Three diagnostic full-scenario runs recorded LCP 720/572/412 ms, with HTML TTFB
+441/133.5/54.4 ms and DOM-interactive 631.1/424.9/302.7 ms; several unrelated scripts
+also showed 100–240 ms delivery. A short counterbalanced art-only diagnostic had
+similar current/original medians 328/340 ms and did not reproduce the complete-
+fixture gap. Its test-only compositing experiment saved 12 ms and was not applied
+to production. These diagnostics do not override the failure or isolate a causal
+avatar hot path. See the [blocked report](avatars/increment2b/REPORT.md) for limits
+and exact reproduction commands.
+
+**Next pending work remains 2B:** attribute and resolve cold-load response/resource
+and complete-fixture startup delay, then demonstrate the gate with fresh controlled
+validation. Do not start 3A while the gate fails. Existing offscreen motion,
+chase/idle/roam timers, seven animated picker thumbnails and same-document listener
+retention remain separate release blockers. No wardrobe persistence or deployment.

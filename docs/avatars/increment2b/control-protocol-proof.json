@@ -1,0 +1,18 @@
+{
+  "reference_commit": "1c964dc",
+  "current_commit": "6ddce82",
+  "protocol_ast_identical": {
+    "test_real_application_baseline": true,
+    "reset": true,
+    "snapshot": true
+  },
+  "unchanged_inputs": {
+    "tests/conftest.py": true,
+    "requirements-test.in": true,
+    "pytest.ini": true,
+    "storage.py": true,
+    "auth.py": true
+  },
+  "probe_identical": true,
+  "fixture_defaults": "Original fixture hardcodes cat; current optional kind/maturity defaults are cat/non-mature. Primary/control commands set neither optional override; dates, account name and seed remain the same."
+}
