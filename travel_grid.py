@@ -163,7 +163,7 @@ def open_view(conn, owner_id, raw_id):
         raise ValueError('This saved view is unavailable. Return to the table to replace or delete it.') from None
 
 
-def save_view(conn, token, data):
+def save_view(conn, token, data, *, audit=None):
     if set(data) - {'action', 'id', 'revision', 'name', 'state'}:
         raise ValueError('Invalid saved view request.')
     action = data.get('action')
@@ -197,12 +197,17 @@ def save_view(conn, token, data):
                 count = conn.execute('SELECT count(*) FROM travel_claim_view WHERE user_id=?', (owner['id'],)).fetchone()[0]
                 if count >= MAX_VIEWS:
                     raise ValueError('You can save up to 10 views. Delete one before adding another.')
-                conn.execute('INSERT INTO travel_claim_view(user_id,name,name_key,state_json) VALUES (?,?,?,?)',
-                             (owner['id'], name, name.casefold(), json.dumps(state, sort_keys=True)))
+                identifier = conn.execute('INSERT INTO travel_claim_view(user_id,name,name_key,state_json) VALUES (?,?,?,?)',
+                             (owner['id'], name, name.casefold(), json.dumps(state, sort_keys=True))).lastrowid
             else:
                 conn.execute('UPDATE travel_claim_view SET name=?,name_key=?,state_json=?,revision=revision+1 '
                              'WHERE id=? AND user_id=?',
                              (name, name.casefold(), json.dumps(state, sort_keys=True), identifier, owner['id']))
+            if audit is not None:
+                audit(identifier, action)
+            else:
+                st.audit(conn, owner['username'], 'travel_view_save', target_type='travel_claim_view',
+                         target_id=identifier, summary=action + ' private filter/sort preference', commit=False)
     except sqlite3.IntegrityError as error:
         if error.sqlite_errorcode != sqlite3.SQLITE_CONSTRAINT_UNIQUE:
             raise

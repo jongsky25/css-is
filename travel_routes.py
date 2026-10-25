@@ -245,7 +245,10 @@ def make_router(templates, get_conn, today_local, *, audit, base_url, notify=Non
                     raise ValueError('Submit one saved view action at a time.')
                 data = {key: values[0] for key, values in fields.items()}
                 token = auth.parse_token(request.cookies.get(auth.COOKIE_NAME))
-                state = travel_grid.save_view(conn, token, data)
+                def record_preference(identifier, action):
+                    audit(request, conn, 'travel_view_save', target_type='travel_claim_view',
+                          target_id=identifier, summary=action + ' private filter/sort preference', commit=False)
+                state = travel_grid.save_view(conn, token, data, audit=record_preference)
             except (ValueError, PermissionError) as error:
                 return failure(str(error), 403 if isinstance(error, PermissionError) else
                                409 if isinstance(error, travel_grid.ViewConflict) else 400)
