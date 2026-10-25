@@ -22,6 +22,7 @@ def install(conn):
     CREATE TABLE IF NOT EXISTS telegram_connection (
       id INTEGER PRIMARY KEY,
       account_id INTEGER NOT NULL REFERENCES admin_user(id),
+      bot_identity INTEGER, bot_fingerprint TEXT,
       telegram_user_id INTEGER NOT NULL CHECK(telegram_user_id > 0),
       private_chat_id INTEGER NOT NULL CHECK(private_chat_id > 0),
       state TEXT NOT NULL DEFAULT 'pending' CHECK(state IN ('pending','active','paused','revoked')),
@@ -96,6 +97,46 @@ def install(conn):
       generation TEXT NOT NULL, bot_identity INTEGER NOT NULL, bot_fingerprint TEXT NOT NULL,
       consented_at TEXT NOT NULL, revoked_at TEXT,
       UNIQUE(connection_id,action,generation));
+    CREATE TABLE IF NOT EXISTS telegram_group_request (
+      id TEXT PRIMARY KEY NOT NULL, update_id INTEGER NOT NULL,
+      account_id INTEGER NOT NULL REFERENCES admin_user(id),
+      connection_id INTEGER NOT NULL REFERENCES telegram_connection(id), connection_generation TEXT NOT NULL,
+      chat_id INTEGER NOT NULL CHECK(chat_id<0), topic_id INTEGER NOT NULL DEFAULT 0 CHECK(topic_id>=0),
+      bot_identity INTEGER NOT NULL, bot_fingerprint TEXT NOT NULL,
+      state TEXT NOT NULL CHECK(state IN ('observed','consumed','cancelled')),
+      created_at TEXT NOT NULL, expires_at TEXT NOT NULL, UNIQUE(bot_identity,update_id));
+    CREATE INDEX IF NOT EXISTS telegram_group_request_owner ON telegram_group_request(account_id,state,expires_at);
+    CREATE TABLE IF NOT EXISTS telegram_group (
+      id INTEGER PRIMARY KEY, chat_id INTEGER NOT NULL CHECK(chat_id<0),
+      topic_id INTEGER NOT NULL DEFAULT 0 CHECK(topic_id>=0),
+      owner_account_id INTEGER NOT NULL REFERENCES admin_user(id),
+      owner_connection_id INTEGER NOT NULL REFERENCES telegram_connection(id), owner_generation TEXT NOT NULL,
+      bot_identity INTEGER NOT NULL, bot_fingerprint TEXT NOT NULL,
+      purpose TEXT NOT NULL CHECK(length(purpose) BETWEEN 1 AND 200), policy_version TEXT NOT NULL,
+      state TEXT NOT NULL CHECK(state IN ('active','paused','revoked')),
+      generation TEXT NOT NULL DEFAULT (lower(hex(randomblob(16)))), reason TEXT,
+      created_at TEXT NOT NULL, updated_at TEXT NOT NULL, consented_at TEXT NOT NULL,
+      UNIQUE(chat_id,topic_id));
+    CREATE INDEX IF NOT EXISTS telegram_group_owner ON telegram_group(owner_connection_id,state);
+    CREATE TRIGGER IF NOT EXISTS telegram_group_fence AFTER UPDATE OF state,generation ON telegram_group
+    WHEN OLD.state IS NOT NEW.state OR OLD.generation IS NOT NEW.generation
+    BEGIN
+      UPDATE telegram_delivery SET state=CASE WHEN state='sending' THEN 'uncertain' ELSE 'cancelled' END,
+        claim_token=NULL,lease_until=NULL,projection_json='{}',error_code='group_changed',
+        updated_at=strftime('%Y-%m-%dT%H:%M:%SZ','now')
+        WHERE registration_id=NEW.id AND state IN ('queued','claimed','retry_wait','sending');
+    END;
+    CREATE TRIGGER IF NOT EXISTS telegram_connection_groups AFTER UPDATE OF state,generation ON telegram_connection
+    WHEN OLD.state IS NOT NEW.state OR OLD.generation IS NOT NEW.generation
+    BEGIN
+      UPDATE telegram_group SET state='paused',generation=lower(hex(randomblob(16))),reason='connection_changed',
+        updated_at=strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE owner_connection_id=NEW.id AND state<>'revoked';
+      UPDATE telegram_group_request SET state='cancelled' WHERE connection_id=NEW.id AND state='observed';
+      UPDATE telegram_delivery SET state=CASE WHEN state='sending' THEN 'uncertain' ELSE 'cancelled' END,
+        claim_token=NULL,lease_until=NULL,projection_json='{}',error_code='connection_changed',
+        updated_at=strftime('%Y-%m-%dT%H:%M:%SZ','now')
+        WHERE connection_id=NEW.id AND chat_id<0 AND state IN ('queued','claimed','retry_wait','sending');
+    END;
     CREATE TRIGGER IF NOT EXISTS telegram_account_revoked
     AFTER UPDATE OF active,must_change,role,username,pw_hash,salt ON admin_user
     WHEN OLD.active IS NOT NEW.active OR OLD.must_change IS NOT NEW.must_change
@@ -122,6 +163,10 @@ def install(conn):
         WHERE actor_id=NEW.id AND state='pending';
     END;
     ''')
+    columns={r[1] for r in conn.execute('PRAGMA table_info(telegram_connection)')}
+    for name,kind in (('bot_identity','INTEGER'),('bot_fingerprint','TEXT')):
+        if name not in columns:
+            conn.execute('ALTER TABLE telegram_connection ADD COLUMN '+name+' '+kind)
 
 
 def reset_after_restore(conn):
@@ -130,9 +175,13 @@ def reset_after_restore(conn):
     Caller owns the transaction. No schema installation here: a historical
     snapshot can predate any of these tables. Fresh random generations avoid
     collisions when an old snapshot rolls back a numeric revision counter.
-    Later preview/group tables must extend this hook when introduced.
+    Later preview tables must extend this hook when introduced.
     """
     tables = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+    if 'telegram_group' in tables:
+        conn.execute("UPDATE telegram_group SET state='paused',generation=lower(hex(randomblob(16))),reason='restored' WHERE state<>'revoked'")
+    if 'telegram_group_request' in tables:
+        conn.execute("UPDATE telegram_group_request SET state='cancelled' WHERE state='observed'")
     if 'telegram_link_challenge' in tables:
         conn.execute("UPDATE telegram_link_challenge SET state='cancelled',session_id=NULL WHERE state IN ('issued','claimed')")
     if 'telegram_grant' in tables:

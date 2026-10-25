@@ -1,3 +1,9 @@
+## 8.58 — October 25, 2026
+
+- Add default-off exact Telegram group/topic registration from an observed command, signed-in administrator ownership/purpose/audience consent and fresh Bot API administrator verification for the binder and bot. No delegated owner assignment or business group reads.
+- Route only a fixed neutral group-status reply for currently linked staff, with exact registration/topic/generation checks and fresh provider membership checks. Bound provider work, preserve topic IDs and reject private or business projections.
+- Fence queued and in-flight group work on removal, migration, topic changes, disconnect, account changes and restore; require explicit fresh verification before resuming. Record bot provenance on new private connections; older links need fresh consent before group use. Update the Telegram ledger and pilot runbook.
+
 ## 8.57 — October 25, 2026
 
 - Add default-off two-step private Telegram account linking, signed-in connection status and disconnect, plus explicit optional calendar/room read consent. Raw codes never enter URLs, receipts or stored delivery bodies; private confirmation rechecks the browser session and original Telegram sender.
