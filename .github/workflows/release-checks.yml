@@ -63,6 +63,7 @@ jobs:
           cp docs/dependencies/tabulator-manifest.json dependency-results/tabulator-manifest.json
           cp docs/dependencies/echarts-manifest.json dependency-results/echarts-manifest.json
           cp docs/dependencies/pptxgenjs-manifest.json dependency-results/pptxgenjs-manifest.json
+          cp docs/dependencies/fullcalendar-manifest.json dependency-results/fullcalendar-manifest.json
       - name: Audit built runtime and generate SBOM
         run: |
           .venv-audit/bin/pip-audit -r dependency-results/runtime-installed.txt --no-deps --disable-pip --strict --progress-spinner off -f json -o dependency-results/runtime-audit.json

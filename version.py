@@ -18,10 +18,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "8.65"
+APP_VERSION = "8.66"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "8.66",
+        "date": "October 25, 2026",
+        "summary": "See calendar events by the hour in a new Schedule view.",
+        "changes": [
+            "Choose Schedule for a weekly hour grid, or select one day on your phone.",
+            "Keep your calendar filters and preferred view, and open items through their usual links.",
+            "Items with incomplete times stay above the grid, and the complete weekly list remains available."
+        ]
+    },
     {
         "version": "8.65",
         "date": "October 25, 2026",

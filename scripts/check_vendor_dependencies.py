@@ -22,9 +22,15 @@ def check_vendor(root=ROOT, *, name='pdfjs', package='pdfjs-dist'):
             or not isinstance(version, str) or not re.fullmatch(r'\d+\.\d+\.\d+', version)
             for name, version in dependencies.items()):
         raise ValueError(f'Invalid {name} bundled dependency identities')
-    if package in ('echarts', 'pptxgenjs'):
+    expected = {'echarts': {'zrender', 'tslib'},
+                'pptxgenjs': {'jszip','lie','immediate','pako','setimmediate'},
+                'fullcalendar': {'@fullcalendar/core', '@fullcalendar/interaction',
+                                 '@fullcalendar/daygrid', '@fullcalendar/timegrid',
+                                 '@fullcalendar/list', '@fullcalendar/multimonth',
+                                 '@fullcalendar/luxon3', 'luxon', 'preact'}}
+    if package in expected:
         provenance = manifest.get('dependency_provenance', {})
-        if (set(dependencies) != ({'zrender', 'tslib'} if package=='echarts' else {'jszip','lie','immediate','pako','setimmediate'}) or not isinstance(provenance, dict)
+        if (set(dependencies) != expected[package] or not isinstance(provenance, dict)
                 or set(provenance) != set(dependencies)
                 or any(not isinstance(provenance[key], dict) or provenance[key].get('version') != version
                        for key, version in dependencies.items())):
@@ -34,6 +40,12 @@ def check_vendor(root=ROOT, *, name='pdfjs', package='pdfjs-dist'):
                 for path in vendor.rglob('*') if path.is_file() and path.name != 'README.txt'}
     if not observed or observed != manifest.get('files'):
         raise ValueError(f'Vendored {name} files differ from the reviewed upstream manifest')
+    if package == 'fullcalendar':
+        sources = ['luxon.min.js', 'fullcalendar.min.js', 'luxon3-plugin.min.js']
+        if (manifest.get('bundle_sources') != sources or
+                (vendor / 'fullcalendar-with-timezone.js').read_bytes() !=
+                b'\n'.join((vendor / source).read_bytes() for source in sources)):
+            raise ValueError('FullCalendar timezone bundle differs from its reviewed sources')
     return manifest
 
 
@@ -63,15 +75,18 @@ if __name__ == '__main__':
     tabulator = check_vendor(name='tabulator', package='tabulator-tables')
     echarts = check_vendor(name='echarts', package='echarts')
     pptxgenjs = check_vendor(name='pptxgenjs', package='pptxgenjs')
+    fullcalendar = check_vendor(name='fullcalendar', package='fullcalendar')
     if args.audit_output:
         audit_vendor(manifest, args.audit_output)
         report = Path(args.audit_output)
         audit_vendor(tabulator, report.with_name(report.stem + '-tabulator' + report.suffix))
         audit_vendor(echarts, report.with_name(report.stem + '-echarts' + report.suffix))
         audit_vendor(pptxgenjs, report.with_name(report.stem + '-pptxgenjs' + report.suffix))
+        audit_vendor(fullcalendar, report.with_name(report.stem + '-fullcalendar' + report.suffix))
     print(f"Vendor gate OK: PDF.js {manifest['version']}, {len(manifest['files'])} verified files")
     print(f"Vendor gate OK: Tabulator {tabulator['version']}, {len(tabulator['files'])} verified files")
 
     print(f"Vendor gate OK: ECharts {echarts['version']}, {len(echarts['files'])} verified files with bundled dependencies")
 
     print(f"Vendor gate OK: PptxGenJS {pptxgenjs['version']}, {len(pptxgenjs['files'])} verified files with JSZip browser dependencies")
+    print(f"Vendor gate OK: FullCalendar {fullcalendar['version']}, {len(fullcalendar['files'])} verified files with timezone dependencies")

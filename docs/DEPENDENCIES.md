@@ -180,3 +180,11 @@ The pilot uses only Apprise's Telegram provider with structured, host-secret cre
 RapidFuzz **3.14.6** is MIT licensed and requires Python >=3.11, matching the production runtime. Source: https://github.com/rapidfuzz/RapidFuzz ; release metadata: https://pypi.org/project/RapidFuzz/3.14.6/ . The reviewed Linux CPython 3.11 wheel `rapidfuzz-3.14.6-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl` has SHA-256 **3d5d90bae3c6fb7ea34da968c9f23070e8440edb827a28b242580e0108110b14**, verified against PyPI metadata. Universal runtime/test locks retain all supported distribution hashes; no existing pins were upgraded and no other dependency was added. Locked runtime audit found no known vulnerabilities; the ordinary production-image/SBOM/test/tool/deploy gates still apply.
 
 The pilot uses `rapidfuzz.distance.OSA` locally for conservative word edits. It sends no query or candidate data to an external provider and stores no new index. `search_typo.py` is included in the explicit deployment runtime closure. See [usage, boundaries and verification](TYPO_TOLERANT_SEARCH.md).
+
+### FullCalendar Schedule pilot
+
+FullCalendar **6.1.22 Standard**, the **6.1.22 Luxon3 adapter**, and **Luxon 3.7.2** are MIT licensed and locally vendored. The Standard bundle embeds six FullCalendar 6.1.22 modules and **Preact 10.12.1**, resolved by the upstream release lockfile. The complete ten-package inventory, archive SHA-512 integrity, licenses and runtime SHA-256 receipts are in `docs/dependencies/fullcalendar-manifest.json`. No Premium Scheduler code, CDN request, runtime npm installation or Python dependency is introduced.
+
+`fullcalendar-with-timezone.js` is exactly the three unmodified upstream runtime files joined with newlines. The vendor gate verifies the full file set, complete bundled-package provenance and the exact concatenation, then audits all ten pinned package versions through npm. CI retains the FullCalendar manifest and its separate advisory receipt. The initial audit found no reported advisories.
+
+Both v6.1.22 and v7.1.3 were released October 16, 2026. The maintained v6 line passed the browser/timezone prototype; v7's time-grid header rendering was unsuitable in the tested standalone setup. See [the pilot guide](CALENDAR_SCHEDULE.md) for behavior, limits and verification.

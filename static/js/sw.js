@@ -8,7 +8,7 @@
  * whose name differs, so an old app-shell is purged the moment the new SW takes
  * over. Keep this in lockstep with version.py / the ?v= asset tokens.
  */
-const CACHE_VERSION = "v8.65-a";
+const CACHE_VERSION = "v8.66-a";
 const CACHE_NAME = "css-is-" + CACHE_VERSION;
 
 /* ── Edge-retry shield ─────────────────────────────────────────────────────────

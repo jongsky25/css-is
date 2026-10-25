@@ -153,7 +153,7 @@ def reference_database(tmp_path_factory):
 @pytest.fixture
 def app_mod(reference_database, monkeypatch):
     import app as app_mod
-    import storage as st, monitoring
+    import storage as st, monitoring, browser_security
     with tempfile.TemporaryDirectory(prefix="office-test-") as directory:
         test_db = os.path.join(directory, "test.db")
         with sqlite3.connect(reference_database) as src, sqlite3.connect(test_db) as dst:
@@ -164,6 +164,10 @@ def app_mod(reference_database, monkeypatch):
         st.set_setting(_c, "travel.review_required", "0")
         _c.commit(); _c.close()
         monkeypatch.setattr(app_mod, "DB", test_db)
+        # app may first be imported under another test's HTTPS deployment env.
+        # Recompute this import-time setting for the current isolated test;
+        # keep HTTPS hardening and explicit security-test overrides intact.
+        monkeypatch.setattr(app_mod, "SECURE_COOKIES", browser_security.secure_cookies_enabled())
         monkeypatch.setattr(monitoring, "LOG_PATH", os.path.join(directory, "requests.log"))
         # Test-local snapshots prevent direct cache mutation leaking into later cases.
         monkeypatch.setattr(app_mod, "_atoms_state", dict(
