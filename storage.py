@@ -849,6 +849,8 @@ def init_db(conn):
     integration_changes.install(conn)
     import supplies_storage
     supplies_storage.install(conn)
+    import telegram_storage
+    telegram_storage.install(conn)
     conn.commit()
 
 
