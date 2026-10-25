@@ -14,7 +14,7 @@ import storage as st
 import telegram_storage as switches
 import telegram_transport as transport
 
-SCOPES = {'calendar.read': 'Read permitted calendar entries', 'rooms.read': 'Read room availability and own requests'}
+SCOPES = {'calendar.read': 'Read permitted calendar entries', 'rooms.read': 'Read room availability and own requests', 'calendar.create':'Create one meeting after an exact private preview and confirmation'}
 
 
 def stamp(now):
@@ -87,6 +87,8 @@ def start(conn, sender, bot, now):
 def claim(conn, payload, raw_code, scopes, now):
     if not re.fullmatch(r'[a-f0-9]{64}', raw_code) or not set(scopes) <= SCOPES.keys():
         raise ValueError('That code or permission choice is invalid. Start again in your private bot chat.')
+    if 'calendar.create' in scopes and ('calendar.read' not in scopes or not switches.enabled('calendar_create')):
+        raise ValueError('Meeting creation requires its pilot and separate calendar read consent.')
     with transaction(conn):
         user = current(conn, payload)
         found = rows(conn, 'SELECT * FROM telegram_link_challenge WHERE token_hash=?', (digest(raw_code),))
@@ -121,6 +123,8 @@ def confirm(conn, sender, argument_hash, bot, now):
         return None
     if conn.execute('SELECT 1 FROM telegram_connection WHERE revoked_at IS NULL AND (account_id=? OR telegram_user_id=?)',
                     (user['id'], sender)).fetchone():
+        return None
+    if 'calendar.create' in json.loads(ch['scopes_json']) and not switches.enabled('calendar_create'):
         return None
     cid, generation = conn.execute('''INSERT INTO telegram_connection
         (account_id,telegram_user_id,private_chat_id,bot_identity,bot_fingerprint,state,created_at,updated_at)

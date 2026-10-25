@@ -182,14 +182,14 @@ def test_expiry_scrubbing_and_key_tombstone(action_env):
     with pytest.raises(actions.Unavailable):issue(action_env)
 
 
-def test_no_production_adapter_command_callback_or_write_scope_is_installed(linking,monkeypatch):
-    assert not actions.ADAPTERS
+def test_no_room_adapter_or_unconsented_meeting_action_is_enabled(linking,monkeypatch):
+    assert set(actions.ADAPTERS)=={'calendar.create'}
     c,_,_,client,payload=linking
     activate(linking)
     monkeypatch.setenv('CSS_TELEGRAM_CALENDAR_CREATE_ENABLED','1')
-    assert bot.normalize(update(text='/meeting'))['command'] is None
+    assert bot.normalize(update(text='/meeting'))['command']=='/meeting'
     assert bot.normalize(update(text='/confirm_action '+'x'*43))['command'] is None
-    assert 'calendar.create' not in links.SCOPES
+    assert 'rooms.request' not in links.SCOPES
     assert submit(client,update(10,text='/meeting')).status_code==200
     assert not rows(c,'SELECT * FROM telegram_operation')
     assert not rows(c,'SELECT * FROM calendar_entry')

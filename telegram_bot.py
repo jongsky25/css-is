@@ -5,6 +5,7 @@ import json
 import os
 import re
 import sqlite3
+import time
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
@@ -21,6 +22,7 @@ import telegram_calendar as calendar_reads
 import telegram_rooms as room_reads
 import telegram_group_reads as shared_reads
 import telegram_actions
+import telegram_meetings as meetings
 
 PATH = '/integrations/telegram/webhook'
 MAX_BODY = 65536
@@ -90,7 +92,13 @@ def normalize(value):
         first = text.split(maxsplit=1)[0] if text.strip() else ''
         if first in ('/start', '/help', '/status', '/disconnect'):
             clean['command'] = first
+        if text=='/meeting':
+            clean['command']='/meeting'
         parts = text.split()
+        if len(parts)==2 and parts[0]=='/meeting_confirm' and re.fullmatch('[A-Za-z0-9_-]{43}',parts[1]):
+            clean['command']=parts[0];clean['meeting_argument']=links.digest(parts[1])
+        if len(parts)==2 and parts[0]=='/meeting_receipt' and re.fullmatch('[a-f0-9]{32}',parts[1]):
+            clean['command']=parts[0];clean['meeting_argument']=parts[1]
         if first in ('/calendar', '/calendar_next'):
             clean['command'] = first
             try:
@@ -109,7 +117,7 @@ def normalize(value):
     if (message['chat'].get('type') in ('group','supergroup') and clean['chat_id'] < 0
             and message['from'].get('is_bot') is False
             and (clean['topic_id'] is None or (message['chat']['type']=='supergroup' and message.get('is_topic_message') is True))
-            and text in ('/register','/group_status')):
+            and text in ('/register','/group_status','/meeting')):
         clean['command'] = text
     if (message['chat'].get('type') in ('group','supergroup') and clean['chat_id']<0
             and message['from'].get('is_bot') is False
@@ -148,6 +156,21 @@ def receive(conn, clean, raw, bot, now):
         if clean.get('group_event'):
             groups.handle_event(conn, clean, bot)
         cid, generation, permitted = identity(conn, clean['sender_id'])
+        if clean['command'] in ('/meeting','/meeting_confirm','/meeting_receipt'):
+            projection=None;state='ignored'
+            try:
+                connection=rows(conn,'SELECT * FROM telegram_connection WHERE id=?',(cid,))[0]
+                if clean['command']=='/meeting':
+                    meetings.observe(conn,clean,connection,bot,now);state='processed'
+                else:
+                    projection=meetings.intake_action(conn,clean,connection,bot,now);state='queued'
+            except (ValueError,IndexError):
+                pass
+            conn.execute('''INSERT INTO telegram_update
+                (bot_identity,update_id,sender_id,chat_id,topic_id,connection_id,generation,payload_json,payload_hash,received_at,state)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?)''',(bot[0],clean['update_id'],clean['sender_id'],clean['chat_id'],clean['topic_id'],cid,generation,
+                    json.dumps(projection) if projection else None,hashlib.sha256(raw).hexdigest(),stamp(now),state))
+            return 200
         group_route = None
         if clean['command'] == '/register':
             groups.observe(conn, clean, bot, now)
@@ -247,7 +270,13 @@ def process_updates(conn, now):
     bot = transport.config()
     if not bot:
         return 0
+    group_actions=0;started=time.monotonic()
     for _ in range(MAX_TICK):
+        handled=meetings.process_one(conn,now+timedelta(seconds=time.monotonic()-started),allow_group=group_actions<2)
+        if handled=='defer':return _
+        if handled:
+            group_actions+=handled=='group'
+            continue
         with transaction(conn):
             found = rows(conn, '''SELECT * FROM telegram_update WHERE state='queued'
                 OR (state='processing' AND lease_until<=?) ORDER BY id LIMIT 1''', (stamp(now),))
@@ -261,6 +290,8 @@ def process_updates(conn, now):
                 projection = json.loads(update['payload_json'] or '{}')
             except ValueError:
                 projection = {}
+            if isinstance(projection,dict) and projection.get('kind')=='meeting_action':
+                continue  # Arrived after the action-worker check; claim it on the next iteration.
             normal = projection == {'kind': 'help', 'bot': bot[0], 'fingerprint': bot[2]}
             command = projection.get('command') if isinstance(projection, dict) else None
             command_shape = {'kind','command','bot','fingerprint'} | ({'argument_hash'} if command == '/confirm' else set())
@@ -346,6 +377,7 @@ def eligible(conn, delivery, bot, now=None):
     cid, generation, permitted = identity(conn, delivery['chat_id'])
     calendar_lookup = calendar_reads.descriptor(projection, bot) and calendar_reads.actor(conn, delivery, bot) is not None
     room_lookup = room_reads.descriptor(projection, bot) and room_reads.actor(conn, delivery, bot) is not None
+    meeting_lookup = meetings.delivery_context(conn,delivery,projection,now or now_utc()) is not None
     linking = projection.get('kind') in ('link_code','link_confirm') if isinstance(projection, dict) else False
     if linking:
         permitted = links.render(conn, projection, delivery['chat_id'], bot, now or now_utc()) is not None
@@ -355,7 +387,7 @@ def eligible(conn, delivery, bot, now=None):
         (delivery['chat_id'], delivery['created_at'])).fetchone()
     return (not rejected and delivery['chat_id'] > 0 and delivery['topic_id'] is None and delivery['registration_id'] is None
             and permitted and cid == delivery['connection_id'] and generation == delivery['generation']
-            and (room_lookup or calendar_lookup or linking or projection in ({'kind': 'help', 'bot': bot[0], 'fingerprint': bot[2]},
+            and (meeting_lookup or room_lookup or calendar_lookup or linking or projection in ({'kind': 'help', 'bot': bot[0], 'fingerprint': bot[2]},
                                           {'kind': 'status', 'bot': bot[0], 'fingerprint': bot[2]})))
 
 
@@ -420,7 +452,12 @@ def deliver(conn, now=None):
             outcome, message_id, retry = 'cancelled', None, None
         else:
             projection = json.loads(delivery['projection_json'])
-            if projection['kind'] == 'calendar':
+            if projection['kind'] in ('meeting_guide','meeting_preview','meeting_receipt','meeting_error'):
+                try:
+                    message = meetings.render(conn,delivery,projection,clock())
+                except ValueError:
+                    message = None
+            elif projection['kind'] == 'calendar':
                 message = calendar_reads.render(conn, delivery, projection, bot, clock())
             elif projection['kind'] == 'rooms':
                 message = room_reads.render(conn, delivery, projection, bot, clock())
@@ -433,7 +470,8 @@ def deliver(conn, now=None):
                     'Office Connect private commands: /start to link, /status to check your connection, '
                     '/disconnect to revoke it. Never send your Office Connect password here.'
                     + (' Private calendar lookup: /calendar (Asia/Manila).' if storage.enabled('calendar_read') else '')
-                    + (' Private room lookup: /room_slots, /my_rooms, /room_status REFERENCE.' if storage.enabled('rooms_read') else ''))
+                    + (' Private room lookup: /room_slots, /my_rooms, /room_status REFERENCE.' if storage.enabled('rooms_read') else '')
+                    + (' Guided meeting pilot: /meeting (separate read/create consent required).' if storage.enabled('calendar_create') else ''))
             else:
                 message = links.render(conn, projection, delivery['chat_id'], bot, clock())
             # Rendering can race with disconnect/config changes; fence again at the I/O boundary.
@@ -466,6 +504,7 @@ def deliver(conn, now=None):
 def cleanup(conn, now):
     with transaction(conn):
         telegram_actions.cleanup_in_transaction(conn,now)
+        conn.execute('DELETE FROM telegram_meeting_origin WHERE id IN (SELECT id FROM telegram_meeting_origin WHERE expires_at<? LIMIT 20)',(stamp(now-timedelta(days=1)),))
         conn.execute('''UPDATE telegram_update SET sender_id=NULL,chat_id=NULL,topic_id=NULL,payload_json=NULL,
             state=CASE WHEN state IN ('queued','processing') THEN 'cancelled' ELSE state END,
             claim_token=NULL,lease_until=NULL WHERE id IN

@@ -1,3 +1,9 @@
+## 8.67 — October 25, 2026
+
+- Add optional guided single-meeting creation: /meeting in a private or registered conversation, signed-in deterministic fields, an exact private preview, and /meeting_confirm with actor/context-bound expiry and durable replay recovery.
+- Require new explicit calendar.create consent alongside calendar.read through the existing two-step link flow. Store nonce/hash metadata for durable preview delivery, and commit calendar/audit/email-outbox/private-receipt records atomically. No room submission, group disclosure or automatic video link.
+- Preserve admin hard-delete behavior by detaching deleted result references, cancelling stale sends and reporting deletion on recovery. Add workflow, concurrency, privacy and mobile browser checks plus the Markdown handoff. All defaults stay off; live activation remains unverified.
+
 ## 8.66 — October 25, 2026
 
 - Add a read-only FullCalendar Schedule view over existing authorized calendar layers, with the current scope and filters, native record links, preferred-view cookie and no-JavaScript weekly list.
