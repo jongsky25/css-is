@@ -1,0 +1,340 @@
+[
+  {
+    "scene": "home",
+    "state": "visible",
+    "hidden": false,
+    "animations": [
+      {
+        "state": "running",
+        "target": "avstage"
+      },
+      {
+        "state": "running",
+        "target": "av-zzz"
+      }
+    ],
+    "nodes": 211
+  },
+  {
+    "scene": "home",
+    "state": "offscreen",
+    "hidden": false,
+    "animations": [
+      {
+        "state": "running",
+        "target": "avstage"
+      },
+      {
+        "state": "running",
+        "target": "av-zzz"
+      }
+    ],
+    "nodes": 211
+  },
+  {
+    "scene": "home",
+    "state": "reduced-motion",
+    "hidden": false,
+    "animations": [],
+    "nodes": 211
+  },
+  {
+    "scene": "home",
+    "state": "20-mounts",
+    "document_listeners_before": {
+      "click": 4,
+      "input": 1,
+      "visibilitychange": 1,
+      "pointermove": 2,
+      "animationend": 1
+    },
+    "document_listeners_after": {
+      "click": 4,
+      "input": 1,
+      "visibilitychange": 1,
+      "pointermove": 22,
+      "animationend": 1
+    }
+  },
+  {
+    "scene": "picker",
+    "state": "visible",
+    "hidden": false,
+    "animations": [
+      {
+        "state": "running",
+        "target": "avstage"
+      },
+      {
+        "state": "running",
+        "target": "av-zzz"
+      },
+      {
+        "state": "running",
+        "target": "avstage"
+      },
+      {
+        "state": "running",
+        "target": "av-zzz"
+      },
+      {
+        "state": "running",
+        "target": "avstage"
+      },
+      {
+        "state": "running",
+        "target": "av-zzz"
+      },
+      {
+        "state": "running",
+        "target": "avstage"
+      },
+      {
+        "state": "running",
+        "target": "av-zzz"
+      },
+      {
+        "state": "running",
+        "target": "avstage"
+      },
+      {
+        "state": "running",
+        "target": "av-zzz"
+      },
+      {
+        "state": "running",
+        "target": "avstage"
+      },
+      {
+        "state": "running",
+        "target": "av-zzz"
+      },
+      {
+        "state": "running",
+        "target": "av-zzz"
+      },
+      {
+        "state": "running",
+        "target": "avstage"
+      },
+      {
+        "state": "running",
+        "target": "av-zzz"
+      },
+      {
+        "state": "running",
+        "target": "avstage"
+      },
+      {
+        "state": "running",
+        "target": "av-zzz"
+      },
+      {
+        "state": "running",
+        "target": "avstage"
+      },
+      {
+        "state": "running",
+        "target": "av-zzz"
+      },
+      {
+        "state": "running",
+        "target": "avstage"
+      },
+      {
+        "state": "running",
+        "target": "av-zzz"
+      },
+      {
+        "state": "running",
+        "target": "avstage"
+      },
+      {
+        "state": "running",
+        "target": "av-zzz"
+      },
+      {
+        "state": "running",
+        "target": "avstage"
+      },
+      {
+        "state": "running",
+        "target": "av-zzz"
+      },
+      {
+        "state": "running",
+        "target": "avstage"
+      },
+      {
+        "state": "running",
+        "target": "av-zzz"
+      },
+      {
+        "state": "running",
+        "target": "avstage"
+      },
+      {
+        "state": "running",
+        "target": "av-zzz"
+      },
+      {
+        "state": "running",
+        "target": "avstage"
+      }
+    ],
+    "nodes": 1068
+  },
+  {
+    "scene": "picker",
+    "state": "offscreen",
+    "hidden": false,
+    "animations": [
+      {
+        "state": "running",
+        "target": "avstage"
+      },
+      {
+        "state": "running",
+        "target": "av-zzz"
+      },
+      {
+        "state": "running",
+        "target": "avstage"
+      },
+      {
+        "state": "running",
+        "target": "av-zzz"
+      },
+      {
+        "state": "running",
+        "target": "avstage"
+      },
+      {
+        "state": "running",
+        "target": "av-zzz"
+      },
+      {
+        "state": "running",
+        "target": "avstage"
+      },
+      {
+        "state": "running",
+        "target": "av-zzz"
+      },
+      {
+        "state": "running",
+        "target": "avstage"
+      },
+      {
+        "state": "running",
+        "target": "av-zzz"
+      },
+      {
+        "state": "running",
+        "target": "avstage"
+      },
+      {
+        "state": "running",
+        "target": "av-zzz"
+      },
+      {
+        "state": "running",
+        "target": "av-zzz"
+      },
+      {
+        "state": "running",
+        "target": "avstage"
+      },
+      {
+        "state": "running",
+        "target": "av-zzz"
+      },
+      {
+        "state": "running",
+        "target": "avstage"
+      },
+      {
+        "state": "running",
+        "target": "av-zzz"
+      },
+      {
+        "state": "running",
+        "target": "avstage"
+      },
+      {
+        "state": "running",
+        "target": "av-zzz"
+      },
+      {
+        "state": "running",
+        "target": "avstage"
+      },
+      {
+        "state": "running",
+        "target": "av-zzz"
+      },
+      {
+        "state": "running",
+        "target": "avstage"
+      },
+      {
+        "state": "running",
+        "target": "av-zzz"
+      },
+      {
+        "state": "running",
+        "target": "avstage"
+      },
+      {
+        "state": "running",
+        "target": "av-zzz"
+      },
+      {
+        "state": "running",
+        "target": "avstage"
+      },
+      {
+        "state": "running",
+        "target": "av-zzz"
+      },
+      {
+        "state": "running",
+        "target": "avstage"
+      },
+      {
+        "state": "running",
+        "target": "av-zzz"
+      },
+      {
+        "state": "running",
+        "target": "avstage"
+      }
+    ],
+    "nodes": 1068
+  },
+  {
+    "scene": "picker",
+    "state": "reduced-motion",
+    "hidden": false,
+    "animations": [],
+    "nodes": 1068
+  },
+  {
+    "scene": "picker",
+    "state": "20-mounts",
+    "document_listeners_before": {
+      "click": 4,
+      "input": 1,
+      "visibilitychange": 1,
+      "pointermove": 1,
+      "animationend": 1
+    },
+    "document_listeners_after": {
+      "click": 4,
+      "input": 1,
+      "visibilitychange": 1,
+      "pointermove": 1,
+      "animationend": 1
+    }
+  }
+]
