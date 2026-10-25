@@ -1,0 +1,34 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header %}
+{% block title %}My claims table{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/travel.css?v={{ APP_VERSION }}"><link rel="stylesheet" href="/static/vendor/tabulator/tabulator.min.css?v={{ APP_VERSION }}"><link rel="stylesheet" href="/static/css/travel-table.css?v={{ APP_VERSION }}">{% endblock %}
+{% block content %}
+{{ page_header("My claims table", "Search and organize your recorded travel filings.") }}
+{% include "_travel_tabs.html" %}
+{% if error %}<div class="tv-card" role="alert"><h2>Check the table selection</h2><p>{{ error }}</p><a href="/travel/table">Reset claims table</a></div>{% else %}
+<section class="tv-card"><h2>Find a filing</h2>
+<p>Only your own filings appear here, including when you have administrative access. Dates are the recorded filing snapshot. Open a filing for its current activity dates, deadline, checklist and next step. Submitted means handover recorded; it does not mean approved or paid.</p>
+<form method="get" action="/travel/table" class="claims-filters">
+<label>Reference or activity<input name="q" type="search" maxlength="200" value="{{ selection.q }}"></label>
+<label>Claim type<select name="kind"><option value="">All claim types</option>{% for key,label in travel_kind_labels.items() %}<option value="{{ key }}" {% if selection.kind==key %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+<label>Filing status<select name="status"><option value="">All filing statuses</option>{% for key,label in travel_status_labels.items() %}<option value="{{ key }}" {% if selection.status==key %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+<label>Recorded end on or after<input name="from" type="date" value="{{ selection['from'] }}"></label>
+<label>Recorded end on or before<input name="to" type="date" value="{{ selection.to }}"></label>
+<label>Sort by<select name="sort">{% for key,label in columns.items() %}<option value="{{ key }}" {% if selection.sort==key %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+<label>Sort direction<select name="dir"><option value="asc" {% if selection.dir=='asc' %}selected{% endif %}>Ascending</option><option value="desc" {% if selection.dir=='desc' %}selected{% endif %}>Descending</option></select></label>
+<button class="btn">Apply selection</button> <a href="/travel/table">Reset table</a>
+</form></section>
+<section class="tv-card" aria-labelledby="claims-heading"><h2 id="claims-heading">Matching filings</h2>
+<p>{{ result.total }} matching filings. Filters and sorting cover all matching pages. At most 30 records load at a time.</p>
+<button type="button" id="claims-toggle" class="btn" hidden aria-expanded="false" aria-controls="claims-interactive">Open interactive table</button>
+<p id="claims-status" role="status" aria-live="polite"></p>
+<div id="claims-interactive" hidden data-url="{{ data_url }}" data-page="{{ result.page }}"><p>Resize columns by dragging their edges. Use the Sort by and Sort direction controls above to change the order. Reference links open the existing filing.</p><div id="claims-grid" aria-label="Your travel filings"></div></div>
+<div id="claims-native"><p>Standard table — page {{ result.page }} of {{ result.last_page }}.</p>
+<div class="table-wrap"><table class="list resp-table"><caption>Your matching recorded filings</caption><thead><tr>{% for label in columns.values() %}<th scope="col">{{ label }}</th>{% endfor %}</tr></thead><tbody>
+{% for row in result.data %}<tr>{% for key,label in columns.items() %}<td data-label="{{ label }}">{% if key=='ref_code' %}<a href="{{ row.href }}">{{ row[key] }}</a>{% else %}{{ row[key] }}{% endif %}</td>{% endfor %}</tr>{% else %}<tr><td colspan="6">No matching filings. Change the selection or reset the table.</td></tr>{% endfor %}
+</tbody></table></div>
+<nav aria-label="Standard claims table pages">{% if previous %}<a href="{{ previous }}">Previous page</a>{% endif %} {% if following %}<a href="{{ following }}">Next page</a>{% endif %}</nav></div>
+<p><a id="claims-standard-link" href="{{ request.url.path }}?{{ request.url.query }}">Reload this selection as a standard table</a></p>
+</section>
+<script defer src="/static/vendor/tabulator/tabulator.min.js?v={{ APP_VERSION }}"></script><script defer src="/static/js/travel-table.js?v={{ APP_VERSION }}"></script>
+{% endif %}{% endblock %}

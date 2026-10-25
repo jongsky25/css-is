@@ -1,3 +1,9 @@
+## 8.67 — October 25, 2026
+
+- Add an owner-only Travel claims table with literal Unicode reference/activity search, claim-type/status and recorded end-date filters, deterministic all-page sorting and 30-row server pagination.
+- Reuse local MIT Tabulator for optional resizable columns and remote paging; retain native filtering, standard pages, safe text, explicit failed-request fallback, no-store and current session checks.
+- Read recorded snapshots without deadline refresh or business writes; retain existing filing/checklist, review, approval and payment behavior.
+
 ## 8.66 — October 25, 2026
 
 - Add a read-only FullCalendar Schedule view over existing authorized calendar layers, with the current scope and filters, native record links, preferred-view cookie and no-JavaScript weekly list.
