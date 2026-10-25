@@ -5,7 +5,7 @@
 {% block content %}
 {{ page_header("My claims table", "Search and organize your recorded travel filings.") }}
 {% include "_travel_tabs.html" %}
-{% if error %}<div class="tv-card" role="alert"><h2>Check the table selection</h2><p>{{ error }}</p><a href="/travel/table">Reset claims table</a></div>{% else %}
+{% if error %}<div class="tv-card" role="alert"><h2>Check the table selection</h2><p>{{ error }}</p>{% if back %}<a href="{{ back }}">Return to claims table</a> · {% endif %}<a href="/travel/table">Reset claims table</a></div>{% else %}
 <section class="tv-card"><h2>Find a filing</h2>
 <p>Only your own filings appear here, including when you have administrative access. Dates are the recorded filing snapshot. Open a filing for its current activity dates, deadline, checklist and next step. Submitted means handover recorded; it does not mean approved or paid.</p>
 <form method="get" action="/travel/table" class="claims-filters">
@@ -20,6 +20,8 @@
 </form></section>
 <section class="tv-card" aria-labelledby="claims-heading"><h2 id="claims-heading">Matching filings</h2>
 <p>{{ result.total }} matching filings. Filters and sorting cover all matching pages. At most 30 records load at a time.</p>
+<p><a class="btn" id="claims-export" href="{{ export_url }}">Export current selection (CSV)</a></p>
+<p>Export includes all matching pages in the applied order, with the six table columns. Apply changed filters before exporting. Narrow selections over 10,000 filings. Dates remain recorded snapshots; exports do not refresh deadlines or record approval or payment.</p>
 <button type="button" id="claims-toggle" class="btn" hidden aria-expanded="false" aria-controls="claims-interactive">Open interactive table</button>
 <p id="claims-status" role="status" aria-live="polite"></p>
 <div id="claims-interactive" hidden data-url="{{ data_url }}" data-page="{{ result.page }}"><p>Resize columns by dragging their edges. Use the Sort by and Sort direction controls above to change the order. Reference links open the existing filing.</p><div id="claims-grid" aria-label="Your travel filings"></div></div>
