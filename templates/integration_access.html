@@ -1,6 +1,7 @@
 {% extends "dash_layout.html" %}
 {% block title %}Connected tools — Office Connect{% endblock %}
 {% block content %}
+{% if not admin %}<p><a href="/account/telegram">Manage private Telegram connection</a></p>{% endif %}
 <style>
 .integration-wrap {max-width:880px;margin:auto;overflow-wrap:anywhere}
 .integration-panel {border:1px solid var(--line);border-radius:12px;padding:1rem;margin:1rem 0;background:var(--surface)}

@@ -1,0 +1,37 @@
+{% extends "dash_layout.html" %}
+{% block title %}Private Telegram connection — Office Connect{% endblock %}
+{% block content %}
+<div style="max-width:700px;margin:auto;overflow-wrap:anywhere">
+<h1>Private Telegram connection</h1>
+<p>Office Connect account: <strong>{{ account.username }}</strong></p>
+<p><a href="/account/integrations">Back to connected tools</a></p>
+{% if error %}<p role="alert">{{ error }}</p>{% endif %}
+<p>Connection: <strong>{{ connection.state if connection else 'not linked' }}</strong>.</p>
+{% if pending %}<p role="status">Waiting for confirmation in your original private Telegram chat. Check the account shown there before confirming.</p>{% endif %}
+{% if grants %}<p>Permissions you consented to:</p><ul>{% for grant in grants %}<li>{{ scopes.get(grant, grant) }}</li>{% endfor %}</ul>{% endif %}
+<p>Calendar and room commands remain unavailable until their later pilots are enabled. Linking does not grant access beyond your current Office Connect permissions.</p>
+<form method="post" action="/account/telegram/disconnect">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<button type="submit">Disconnect Telegram and cancel pending links</button>
+</form>
+<p>Disconnect stays available when Telegram delivery or linking is paused. Messages already accepted by Telegram cannot be recalled.</p>
+{% if ready and (not connection or connection.state == 'revoked') %}
+<section aria-labelledby="telegram-link-title">
+<h2 id="telegram-link-title">Link your private account</h2>
+<ol><li>Send <code>/start</code> to the approved Office Connect bot in a private chat.</li><li>Paste the ten-minute code here.</li><li>Return to that same chat, check the account and permissions shown, and send the confirmation command.</li></ol>
+<p>Never forward codes or enter an Office Connect password into Telegram.</p>
+<form method="post" action="/account/telegram/link">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<label for="telegram-code">Private linking code</label>
+<input id="telegram-code" name="code" type="text" pattern="[a-f0-9]{64}" minlength="64" maxlength="64" required autocomplete="off" autocapitalize="none" spellcheck="false" style="box-sizing:border-box;width:100%;font:inherit;padding:.6rem">
+<fieldset><legend>Optional read permissions</legend>
+{% for key,label in scopes.items() %}<p><label><input type="checkbox" name="scopes" value="{{ key }}"> {{ label }}</label></p>{% endfor %}
+</fieldset>
+<p><label><input type="checkbox" name="consent" value="yes" required> Link this Office Connect account to my own private Telegram account.</label></p>
+<button type="submit">Request confirmation in Telegram</button>
+</form>
+</section>
+{% elif not ready %}<p>New linking is paused or not configured. You can still review and disconnect this account.</p>
+{% else %}<p>Disconnect this connection before linking another private account.</p>{% endif %}
+</div>
+{% endblock %}
