@@ -1,0 +1,8 @@
+SLOT 0 BLOCK 0 POSITION 0 original exit 0
+SLOT 1 BLOCK 0 POSITION 1 current exit 0
+SLOT 2 BLOCK 0 POSITION 2 current exit 0
+SLOT 3 BLOCK 0 POSITION 3 original exit 0
+SLOT 4 BLOCK 1 POSITION 0 current exit 0
+SLOT 5 BLOCK 1 POSITION 1 original exit 0
+SLOT 6 BLOCK 1 POSITION 2 original exit 0
+SLOT 7 BLOCK 1 POSITION 3 current exit 0

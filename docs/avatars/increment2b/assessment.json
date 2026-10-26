@@ -13,7 +13,7 @@
     "background": 19750912
   },
   "historical_incomplete_acceptance": "assessment-incomplete-audit.json",
-  "next_step": "Investigate natural allocation/collection timing at navigation 10,15,20, where all ten paired source differences have higher current RSS but same-source controls remain unstable. Distinguish transient document accumulation from retained native capacity before a component edit. Preserve budgets, all historical failures and no forced GC/RSS subtraction. 2B and later increments remain blocked.",
+  "next_step": "Identify document/JS allocations or references remaining after observed natural collection in divergent same-source repeats, distinguishing delayed whole-heap reclamation from retention and native capacity. GC-age bins alone are insufficient. Preserve all gates and historical failures; no unchanged favorable rerun, forced GC or RSS subtraction. 2B and later increments remain blocked.",
   "complete_memory_audit": "final-verification/complete-memory-audit.json",
   "corrected_overall_assessment": "final-verification/corrected-overall-assessment.json",
   "memory_comparisons": 104,
@@ -94,5 +94,18 @@
     "report": "paired-variance/REPORT.md",
     "product_promoted": false,
     "active_measurement_run": false
+  },
+  "navigation_timing": {
+    "status": "complete_descriptive_diagnostic_no_fix",
+    "report": "navigation-timing/REPORT.md",
+    "harness_commit": "1d03efd",
+    "slots": 8,
+    "observations": 160,
+    "source_hashes_verified": 164,
+    "files_verified": 60,
+    "phase_matched_source_comparisons": 44,
+    "source_comparisons": 80,
+    "same_source_absolute_budget_exceedances": 10,
+    "acceptance": false
   }
 }

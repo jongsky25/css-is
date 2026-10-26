@@ -1,6 +1,6 @@
 # Avatar upgrade: new-chat handoff
 
-Last updated: **2026-10-26 14:39 UTC**. Repository: `jongsky25/css-is`.
+Last updated: **2026-10-26 22:47 UTC**. Repository: `jongsky25/css-is`.
 
 ## Current blocking correction
 
@@ -27,6 +27,27 @@ The prepared audit branch `codex/avatar-3a-artifact-audit` is explicitly paused 
 trigger it as an acceptance audit of the cancelled cohort. No later increments,
 merge to main or deployment occurred. The historical handoff below is superseded by this
 correction wherever it suggests CI success establishes complete memory acceptance.
+
+## Per-navigation paired timing experiment complete — no source fix
+
+Read [the eight-slot report](avatars/increment2b/navigation-timing/REPORT.md).
+Frozen source `1d03efd` ran all original/current/current/original then reverse
+slots without exclusions. All 160 observations, 164 source/probe hashes and 60
+files verify; archive re-audit matches and 112 analysis/accounting tests pass.
+There are 44/80 phase-matched source comparisons, with inconsistent source deltas.
+All four same-source controls have absolute baseline memory differences above
+10 MiB (nine RSS, one JS heap); maximum RSS variation is 29.441 MiB.
+
+Current repeats 4 and 7 differ by 31 documents and ~6.18 MiB JS heap at seven
+matching-phase observations after recorded V8 collection and C++ sweep activity.
+V8 GC age does not align document state or certify whole Blink sweep completion.
+The post-hoc event extraction retains all eight cohorts separately; no frozen
+criteria changed. No retaining paths are captured, so ownership is unresolved.
+Next identify retained document/JS allocations/references versus delayed whole-heap
+reclamation; do not rerun unchanged timing or acceptance for a favorable result.
+Median probe latency 5.539 ms, maximum 285.790 ms; tracing/file-write overhead is
+unmeasured. Product remains f700187, all gates intact, no active measurement.
+2B and subsequent increments remain blocked. Raw archive and checks are committed.
 
 ## Late-navigation timing analysis complete
 

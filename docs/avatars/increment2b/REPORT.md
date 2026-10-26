@@ -1,5 +1,16 @@
 # Increment 2B — acceptance withdrawn: uncovered memory failures
 
+## Per-navigation paired timing completed
+
+[Eight fixed instrumented slots](navigation-timing/REPORT.md) completed with 160
+observations and verified source identities. Same-phase source results are
+inconsistent; all four same-source controls exceed an absolute 10 MiB memory
+difference somewhere. Two unchanged-current slots differ by 31 documents after
+observed natural GC/sweep activity, narrowing the unresolved question to document/
+JS retention and whole-heap reclamation. GC age alone does not align state.
+112 accounting/analysis tests pass. No product fix or acceptance; f700187 unchanged.
+
+
 ## Latest paired variance diagnosis
 
 [Twenty counterbalanced slots](paired-variance/REPORT.md) completed and independently

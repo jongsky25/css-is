@@ -1,0 +1,2451 @@
+{
+  "acceptance": false,
+  "post_hoc": true,
+  "cohorts": [
+    {
+      "slot": 0,
+      "arm": "original",
+      "trace_sha256": "acd33daa81681bae39577650bce9b4d8ffd85d6b7ec985af92ff50f8cfa91454",
+      "window_trace_us": [
+        818073210,
+        821819385
+      ],
+      "cpp_event_name_counts": {
+        "CppGC.IncrementalMark": 26,
+        "CppGC.MarkIncrementalStart": 1,
+        "CppGC.MarkVisitRoots": 2,
+        "CppGC.MarkVisitPersistents": 2,
+        "CppGC.MarkTransitiveClosureWithDeadline": 28,
+        "CppGC.MarkTransitiveClosure": 28,
+        "CppGC.MarkProcessMarkingWorklist": 10,
+        "CppGC.ConcurrentMark": 6,
+        "CppGC.ConcurrentMarkProcessMarkingWorklist": 6,
+        "CppGC.MarkProcessBailOutObjects": 4,
+        "Marking finished": 6,
+        "CppGC.ConcurrentMarkProcessWriteBarrierWorklist": 1,
+        "CppGC.MarkProcessNotFullyconstructedWorklist": 1,
+        "CppGC.MarkProcessWriteBarrierWorklist": 1,
+        "CppGC.AtomicMark": 5,
+        "CppGC.MarkAtomicPrologue": 1,
+        "CppGC.MarkFlushEphemerons": 3,
+        "CppGC.MarkProcessEphemerons": 3,
+        "CppGC.MarkVisitCrossThreadPersistents": 1,
+        "CppGC.AtomicWeak": 2,
+        "CppGC.MarkAtomicEpilogue": 1,
+        "CppGC.ConcurrentWeakCallback": 1,
+        "CppGC.WeakContainerCallbacksProcessing": 1,
+        "CppGC.CustomCallbacksProcessing": 1,
+        "CppGC.AtomicSweep": 2,
+        "CppGC.SweepInvokePreFinalizers": 1,
+        "CppGC.ConcurrentSweep": 1,
+        "CppGC.IncrementalSweep": 242,
+        "CppGC.SweepOnAllocation": 7,
+        "CppGC.SweepFinalizeEmptyPages": 9,
+        "CppGC.SweepInLowPriorityTask": 235,
+        "Sweeping finished": 13,
+        "CppGC.SweepFinalizeSweptPages": 25,
+        "AcquiredForGC": 6
+      },
+      "selected_gc_events": [
+        {
+          "args": {
+            "epoch": 16,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 36,
+          "name": "CppGC.MarkIncrementalStart",
+          "ph": "X",
+          "pid": 2087,
+          "tdur": 33,
+          "tid": 2087,
+          "ts": 819697492,
+          "tts": 9508118
+        },
+        {
+          "args": {
+            "type": "finalize incremental marking via task",
+            "usedHeapSizeAfter": 5554432,
+            "usedHeapSizeBefore": 10529704
+          },
+          "cat": "devtools.timeline,v8",
+          "dur": 3613,
+          "name": "MajorGC",
+          "ph": "X",
+          "pid": 2087,
+          "tdur": 2182,
+          "tid": 2087,
+          "ts": 819702999,
+          "tts": 9511661
+        },
+        {
+          "args": {
+            "epoch": 16,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 2,
+          "name": "CppGC.MarkAtomicEpilogue",
+          "ph": "X",
+          "pid": 2087,
+          "tdur": 2,
+          "tid": 2087,
+          "ts": 819704291,
+          "tts": 9511928
+        },
+        {
+          "args": {
+            "epoch": 16,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 779,
+          "name": "CppGC.AtomicSweep",
+          "ph": "X",
+          "pid": 2087,
+          "tdur": 778,
+          "tid": 2087,
+          "ts": 819705726,
+          "tts": 9512964
+        },
+        {
+          "args": {
+            "epoch": 16,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 37,
+          "name": "CppGC.AtomicSweep",
+          "ph": "X",
+          "pid": 2087,
+          "tdur": 37,
+          "tid": 2087,
+          "ts": 819706507,
+          "tts": 9513743
+        },
+        {
+          "args": {
+            "epoch": 16,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 13912,
+          "name": "CppGC.ConcurrentSweep",
+          "ph": "X",
+          "pid": 2087,
+          "tdur": 10633,
+          "tid": 2105,
+          "ts": 819706575,
+          "tts": 541797
+        }
+      ],
+      "navigation": [
+        {
+          "mount": 10,
+          "documents": 8,
+          "nodes": 10576,
+          "js_heap_bytes": 7349052,
+          "probe_ms": 5.004796,
+          "trace_interval_ms": 2.953,
+          "phase": 1,
+          "age_ms": [
+            1495.374,
+            1498.327
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 11,
+          "documents": 10,
+          "nodes": 13221,
+          "js_heap_bytes": 8127892,
+          "probe_ms": 6.790241,
+          "trace_interval_ms": 3.604,
+          "phase": 1,
+          "age_ms": [
+            1895.929,
+            1899.533
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 12,
+          "documents": 12,
+          "nodes": 15866,
+          "js_heap_bytes": 8719800,
+          "probe_ms": 3.90787,
+          "trace_interval_ms": 3.011,
+          "phase": 1,
+          "age_ms": [
+            2265.391,
+            2268.402
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 13,
+          "documents": 14,
+          "nodes": 18511,
+          "js_heap_bytes": 9312240,
+          "probe_ms": 4.049928,
+          "trace_interval_ms": 2.868,
+          "phase": 1,
+          "age_ms": [
+            2630.402,
+            2633.27
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 14,
+          "documents": 16,
+          "nodes": 21156,
+          "js_heap_bytes": 9904812,
+          "probe_ms": 5.10644,
+          "trace_interval_ms": 4.059,
+          "phase": 1,
+          "age_ms": [
+            2991.431,
+            2995.49
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 15,
+          "documents": 2,
+          "nodes": 2642,
+          "js_heap_bytes": 5587696,
+          "probe_ms": 3.189617,
+          "trace_interval_ms": 2.08,
+          "phase": 0,
+          "age_ms": [
+            219.621,
+            221.701
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 16,
+          "documents": 4,
+          "nodes": 5287,
+          "js_heap_bytes": 6369980,
+          "probe_ms": 5.725247,
+          "trace_interval_ms": 4.1,
+          "phase": 0,
+          "age_ms": [
+            611.79,
+            615.89
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 17,
+          "documents": 6,
+          "nodes": 7932,
+          "js_heap_bytes": 6962360,
+          "probe_ms": 3.850973,
+          "trace_interval_ms": 2.797,
+          "phase": 0,
+          "age_ms": [
+            970.127,
+            972.924
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 18,
+          "documents": 8,
+          "nodes": 10577,
+          "js_heap_bytes": 7554652,
+          "probe_ms": 5.373555,
+          "trace_interval_ms": 4.272,
+          "phase": 1,
+          "age_ms": [
+            1354.831,
+            1359.103
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 19,
+          "documents": 10,
+          "nodes": 13222,
+          "js_heap_bytes": 8146956,
+          "probe_ms": 5.555236,
+          "trace_interval_ms": 3.321,
+          "phase": 1,
+          "age_ms": [
+            1732.001,
+            1735.322
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 20,
+          "documents": 12,
+          "nodes": 15867,
+          "js_heap_bytes": 8739324,
+          "probe_ms": 5.267282,
+          "trace_interval_ms": 4.315,
+          "phase": 1,
+          "age_ms": [
+            2108.458,
+            2112.773
+          ],
+          "gc_overlap": false
+        }
+      ]
+    },
+    {
+      "slot": 1,
+      "arm": "current",
+      "trace_sha256": "5ed3bdf04d3dd51bbef20bd477f7d4ae67f9d13f405d1263f4f8dfe77801e4e7",
+      "window_trace_us": [
+        919252168,
+        923639392
+      ],
+      "cpp_event_name_counts": {
+        "CppGC.IncrementalMark": 7,
+        "CppGC.MarkIncrementalStart": 1,
+        "CppGC.MarkVisitRoots": 2,
+        "CppGC.MarkVisitPersistents": 2,
+        "CppGC.ConcurrentMark": 8,
+        "CppGC.ConcurrentMarkProcessMarkingWorklist": 8,
+        "CppGC.MarkTransitiveClosureWithDeadline": 9,
+        "CppGC.MarkTransitiveClosure": 9,
+        "CppGC.MarkProcessWriteBarrierWorklist": 2,
+        "CppGC.MarkProcessMarkingWorklist": 1,
+        "Marking finished": 7,
+        "CppGC.MarkProcessBailOutObjects": 3,
+        "CppGC.ConcurrentMarkProcessWriteBarrierWorklist": 1,
+        "CppGC.MarkOnAllocation": 1,
+        "CppGC.AtomicMark": 5,
+        "CppGC.MarkAtomicPrologue": 1,
+        "CppGC.MarkFlushEphemerons": 3,
+        "CppGC.MarkProcessEphemerons": 3,
+        "CppGC.MarkVisitCrossThreadPersistents": 1,
+        "CppGC.AtomicWeak": 2,
+        "CppGC.MarkAtomicEpilogue": 1,
+        "CppGC.WeakContainerCallbacksProcessing": 1,
+        "CppGC.ConcurrentWeakCallback": 1,
+        "CppGC.CustomCallbacksProcessing": 1,
+        "CppGC.AtomicSweep": 2,
+        "CppGC.SweepInvokePreFinalizers": 1,
+        "CppGC.ConcurrentSweep": 1,
+        "CppGC.IncrementalSweep": 14,
+        "CppGC.SweepOnAllocation": 9,
+        "CppGC.SweepFinalizeEmptyPages": 11,
+        "Sweeping finished": 13,
+        "CppGC.SweepInLowPriorityTask": 5,
+        "CppGC.SweepFinalizeSweptPages": 13,
+        "AcquiredForGC": 6
+      },
+      "selected_gc_events": [
+        {
+          "args": {
+            "epoch": 13,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 60,
+          "name": "CppGC.MarkIncrementalStart",
+          "ph": "X",
+          "pid": 2279,
+          "tdur": 57,
+          "tid": 2279,
+          "ts": 921947875,
+          "tts": 11168575
+        },
+        {
+          "args": {
+            "type": "finalize incremental marking via task",
+            "usedHeapSizeAfter": 5610560,
+            "usedHeapSizeBefore": 12364760
+          },
+          "cat": "devtools.timeline,v8",
+          "dur": 6734,
+          "name": "MajorGC",
+          "ph": "X",
+          "pid": 2279,
+          "tdur": 5260,
+          "tid": 2279,
+          "ts": 921953704,
+          "tts": 11172372
+        },
+        {
+          "args": {
+            "epoch": 13,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 2,
+          "name": "CppGC.MarkAtomicEpilogue",
+          "ph": "X",
+          "pid": 2279,
+          "tdur": 2,
+          "tid": 2279,
+          "ts": 921954571,
+          "tts": 11172899
+        },
+        {
+          "args": {
+            "epoch": 13,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 2542,
+          "name": "CppGC.AtomicSweep",
+          "ph": "X",
+          "pid": 2279,
+          "tdur": 2134,
+          "tid": 2279,
+          "ts": 921957774,
+          "tts": 11175380
+        },
+        {
+          "args": {
+            "epoch": 13,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 48,
+          "name": "CppGC.AtomicSweep",
+          "ph": "X",
+          "pid": 2279,
+          "tdur": 48,
+          "tid": 2279,
+          "ts": 921960318,
+          "tts": 11177516
+        },
+        {
+          "args": {
+            "epoch": 13,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 17575,
+          "name": "CppGC.ConcurrentSweep",
+          "ph": "X",
+          "pid": 2279,
+          "tdur": 14624,
+          "tid": 2290,
+          "ts": 921960388,
+          "tts": 1374100
+        }
+      ],
+      "navigation": [
+        {
+          "mount": 10,
+          "documents": 10,
+          "nodes": 12969,
+          "js_heap_bytes": 8247912,
+          "probe_ms": 9.935198,
+          "trace_interval_ms": 7.349,
+          "phase": 1,
+          "age_ms": [
+            2085.444,
+            2092.793
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 11,
+          "documents": 12,
+          "nodes": 15563,
+          "js_heap_bytes": 9053440,
+          "probe_ms": 8.408932,
+          "trace_interval_ms": 7.116,
+          "phase": 1,
+          "age_ms": [
+            2559.923,
+            2567.039
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 12,
+          "documents": 14,
+          "nodes": 18157,
+          "js_heap_bytes": 9680848,
+          "probe_ms": 10.096556,
+          "trace_interval_ms": 7.733,
+          "phase": null,
+          "age_ms": [
+            2993.709,
+            3001.442
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 13,
+          "documents": 16,
+          "nodes": 20751,
+          "js_heap_bytes": 10306736,
+          "probe_ms": 4.854306,
+          "trace_interval_ms": 3.486,
+          "phase": 2,
+          "age_ms": [
+            3541.489,
+            3544.975
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 14,
+          "documents": 18,
+          "nodes": 23345,
+          "js_heap_bytes": 10932820,
+          "probe_ms": 9.634542,
+          "trace_interval_ms": 6.694,
+          "phase": 2,
+          "age_ms": [
+            3959.227,
+            3965.921
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 15,
+          "documents": 20,
+          "nodes": 25939,
+          "js_heap_bytes": 11559712,
+          "probe_ms": 4.063154,
+          "trace_interval_ms": 3.193,
+          "phase": 2,
+          "age_ms": [
+            4351.198,
+            4354.391
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 16,
+          "documents": 22,
+          "nodes": 28533,
+          "js_heap_bytes": 12364760,
+          "probe_ms": 13.265424,
+          "trace_interval_ms": 11.681,
+          "phase": null,
+          "age_ms": [
+            4777.558,
+            4789.239
+          ],
+          "gc_overlap": true
+        },
+        {
+          "mount": 17,
+          "documents": 4,
+          "nodes": 5186,
+          "js_heap_bytes": 6241184,
+          "probe_ms": 8.546095,
+          "trace_interval_ms": 7.151,
+          "phase": 0,
+          "age_ms": [
+            446.737,
+            453.888
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 18,
+          "documents": 6,
+          "nodes": 7780,
+          "js_heap_bytes": 6866972,
+          "probe_ms": 6.922889,
+          "trace_interval_ms": 4.581,
+          "phase": 0,
+          "age_ms": [
+            839.658,
+            844.239
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 19,
+          "documents": 8,
+          "nodes": 10374,
+          "js_heap_bytes": 7494328,
+          "probe_ms": 4.476247,
+          "trace_interval_ms": 3.499,
+          "phase": 1,
+          "age_ms": [
+            1242.308,
+            1245.807
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 20,
+          "documents": 10,
+          "nodes": 12979,
+          "js_heap_bytes": 8120136,
+          "probe_ms": 8.264133,
+          "trace_interval_ms": 6.611,
+          "phase": 1,
+          "age_ms": [
+            1672.343,
+            1678.954
+          ],
+          "gc_overlap": false
+        }
+      ]
+    },
+    {
+      "slot": 2,
+      "arm": "current",
+      "trace_sha256": "c243f42c3d221b7ddbfbcd083ca840accef6e652d5dacf04ea054aa68415c9bf",
+      "window_trace_us": [
+        1014623645,
+        1018322358
+      ],
+      "cpp_event_name_counts": {
+        "CppGC.IncrementalMark": 19,
+        "CppGC.MarkIncrementalStart": 1,
+        "CppGC.MarkVisitRoots": 2,
+        "CppGC.MarkVisitPersistents": 2,
+        "CppGC.ConcurrentMark": 22,
+        "CppGC.ConcurrentMarkProcessMarkingWorklist": 23,
+        "CppGC.MarkTransitiveClosureWithDeadline": 21,
+        "CppGC.MarkTransitiveClosure": 21,
+        "CppGC.MarkProcessBailOutObjects": 11,
+        "CppGC.MarkProcessMarkingWorklist": 8,
+        "CppGC.MarkOnAllocation": 4,
+        "Marking preempted": 1,
+        "CppGC.ConcurrentMarkProcessWriteBarrierWorklist": 17,
+        "Marking finished": 21,
+        "CppGC.MarkProcessWriteBarrierWorklist": 4,
+        "CppGC.MarkProcessNotFullyconstructedWorklist": 2,
+        "CppGC.ConcurrentMarkProcessNotFullyconstructedWorklist": 1,
+        "CppGC.AtomicMark": 5,
+        "CppGC.MarkAtomicPrologue": 1,
+        "CppGC.MarkFlushEphemerons": 4,
+        "CppGC.MarkProcessEphemerons": 4,
+        "CppGC.MarkVisitCrossThreadPersistents": 1,
+        "CppGC.AtomicWeak": 2,
+        "CppGC.MarkAtomicEpilogue": 1,
+        "CppGC.ConcurrentWeakCallback": 1,
+        "CppGC.WeakContainerCallbacksProcessing": 1,
+        "CppGC.CustomCallbacksProcessing": 1,
+        "CppGC.AtomicSweep": 2,
+        "CppGC.SweepInvokePreFinalizers": 1,
+        "CppGC.ConcurrentSweep": 1,
+        "CppGC.IncrementalSweep": 10,
+        "CppGC.SweepOnAllocation": 6,
+        "CppGC.SweepFinalizeEmptyPages": 7,
+        "CppGC.SweepInLowPriorityTask": 4,
+        "Sweeping finished": 13,
+        "CppGC.SweepFinalizeSweptPages": 13,
+        "AcquiredForGC": 6
+      },
+      "selected_gc_events": [
+        {
+          "args": {
+            "epoch": 14,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 441,
+          "name": "CppGC.MarkIncrementalStart",
+          "ph": "X",
+          "pid": 2474,
+          "tdur": 86,
+          "tid": 2474,
+          "ts": 1017701618,
+          "tts": 9068007
+        },
+        {
+          "args": {
+            "type": "finalize incremental marking via task",
+            "usedHeapSizeAfter": 5981428,
+            "usedHeapSizeBefore": 11897936
+          },
+          "cat": "devtools.timeline,v8",
+          "dur": 4038,
+          "name": "MajorGC",
+          "ph": "X",
+          "pid": 2474,
+          "tdur": 3397,
+          "tid": 2474,
+          "ts": 1017748595,
+          "tts": 9101194
+        },
+        {
+          "args": {
+            "epoch": 14,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 2,
+          "name": "CppGC.MarkAtomicEpilogue",
+          "ph": "X",
+          "pid": 2474,
+          "tdur": 1,
+          "tid": 2474,
+          "ts": 1017749496,
+          "tts": 9101732
+        },
+        {
+          "args": {
+            "epoch": 14,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 1531,
+          "name": "CppGC.AtomicSweep",
+          "ph": "X",
+          "pid": 2474,
+          "tdur": 1465,
+          "tid": 2474,
+          "ts": 1017750980,
+          "tts": 9103011
+        },
+        {
+          "args": {
+            "epoch": 14,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 41,
+          "name": "CppGC.AtomicSweep",
+          "ph": "X",
+          "pid": 2474,
+          "tdur": 40,
+          "tid": 2474,
+          "ts": 1017752513,
+          "tts": 9104478
+        },
+        {
+          "args": {
+            "epoch": 14,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 12805,
+          "name": "CppGC.ConcurrentSweep",
+          "ph": "X",
+          "pid": 2474,
+          "tdur": 11426,
+          "tid": 2484,
+          "ts": 1017752563,
+          "tts": 1145057
+        }
+      ],
+      "navigation": [
+        {
+          "mount": 10,
+          "documents": 2,
+          "nodes": 2593,
+          "js_heap_bytes": 5631968,
+          "probe_ms": 3.501424,
+          "trace_interval_ms": 2.628,
+          "phase": 0,
+          "age_ms": [
+            201.313,
+            203.941
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 11,
+          "documents": 4,
+          "nodes": 5187,
+          "js_heap_bytes": 6439688,
+          "probe_ms": 4.185589,
+          "trace_interval_ms": 3.125,
+          "phase": 0,
+          "age_ms": [
+            588.271,
+            591.396
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 12,
+          "documents": 6,
+          "nodes": 7781,
+          "js_heap_bytes": 7066692,
+          "probe_ms": 4.500733,
+          "trace_interval_ms": 3.561,
+          "phase": 0,
+          "age_ms": [
+            930.223,
+            933.784
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 13,
+          "documents": 8,
+          "nodes": 10375,
+          "js_heap_bytes": 7693668,
+          "probe_ms": 4.65087,
+          "trace_interval_ms": 3.627,
+          "phase": 1,
+          "age_ms": [
+            1302.41,
+            1306.037
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 14,
+          "documents": 10,
+          "nodes": 12969,
+          "js_heap_bytes": 8320748,
+          "probe_ms": 4.894624,
+          "trace_interval_ms": 3.768,
+          "phase": 1,
+          "age_ms": [
+            1667.596,
+            1671.364
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 15,
+          "documents": 12,
+          "nodes": 15563,
+          "js_heap_bytes": 8946020,
+          "probe_ms": 3.097127,
+          "trace_interval_ms": 2.192,
+          "phase": 1,
+          "age_ms": [
+            2031.102,
+            2033.294
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 16,
+          "documents": 14,
+          "nodes": 18157,
+          "js_heap_bytes": 9751032,
+          "probe_ms": 5.196182,
+          "trace_interval_ms": 4.228,
+          "phase": 1,
+          "age_ms": [
+            2420.467,
+            2424.695
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 17,
+          "documents": 16,
+          "nodes": 20751,
+          "js_heap_bytes": 10377004,
+          "probe_ms": 3.275547,
+          "trace_interval_ms": 2.473,
+          "phase": 1,
+          "age_ms": [
+            2814.582,
+            2817.055
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 18,
+          "documents": 18,
+          "nodes": 23345,
+          "js_heap_bytes": 11004196,
+          "probe_ms": 4.164442,
+          "trace_interval_ms": 3.201,
+          "phase": 2,
+          "age_ms": [
+            3177.429,
+            3180.63
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 19,
+          "documents": 3,
+          "nodes": 5174,
+          "js_heap_bytes": 5986332,
+          "probe_ms": 4.35028,
+          "trace_interval_ms": 3.367,
+          "phase": 0,
+          "age_ms": [
+            205.295,
+            208.662
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 20,
+          "documents": 5,
+          "nodes": 7768,
+          "js_heap_bytes": 6614376,
+          "probe_ms": 3.109292,
+          "trace_interval_ms": 2.263,
+          "phase": 0,
+          "age_ms": [
+            567.462,
+            569.725
+          ],
+          "gc_overlap": false
+        }
+      ]
+    },
+    {
+      "slot": 3,
+      "arm": "original",
+      "trace_sha256": "b04750608b771ef5e015d7c4790fa8e4e6634f6a6e949278135048f2277fe907",
+      "window_trace_us": [
+        1115220437,
+        1120194469
+      ],
+      "cpp_event_name_counts": {
+        "CppGC.IncrementalMark": 7,
+        "CppGC.MarkIncrementalStart": 1,
+        "CppGC.MarkVisitRoots": 2,
+        "CppGC.MarkVisitPersistents": 2,
+        "CppGC.ConcurrentMark": 6,
+        "CppGC.MarkTransitiveClosureWithDeadline": 12,
+        "CppGC.MarkTransitiveClosure": 12,
+        "CppGC.MarkProcessMarkingWorklist": 6,
+        "CppGC.ConcurrentMarkProcessMarkingWorklist": 4,
+        "CppGC.AtomicMark": 8,
+        "CppGC.MarkAtomicPrologue": 1,
+        "CppGC.MarkFlushEphemerons": 7,
+        "CppGC.MarkProcessWriteBarrierWorklist": 1,
+        "CppGC.MarkProcessEphemerons": 7,
+        "Marking preempted": 1,
+        "Marking finished": 3,
+        "CppGC.MarkProcessBailOutObjects": 1,
+        "CppGC.MarkVisitCrossThreadPersistents": 1,
+        "CppGC.AtomicWeak": 2,
+        "CppGC.MarkAtomicEpilogue": 1,
+        "CppGC.ConcurrentWeakCallback": 1,
+        "CppGC.WeakContainerCallbacksProcessing": 1,
+        "CppGC.CustomCallbacksProcessing": 1,
+        "CppGC.AtomicSweep": 2,
+        "CppGC.SweepInvokePreFinalizers": 1,
+        "CppGC.ConcurrentSweep": 1,
+        "CppGC.IncrementalSweep": 18,
+        "CppGC.SweepOnAllocation": 6,
+        "CppGC.SweepFinalizeEmptyPages": 13,
+        "CppGC.SweepInLowPriorityTask": 12,
+        "Sweeping finished": 13,
+        "CppGC.SweepFinalizeSweptPages": 16,
+        "AcquiredForGC": 6
+      },
+      "selected_gc_events": [
+        {
+          "args": {
+            "epoch": 10,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 58,
+          "name": "CppGC.MarkIncrementalStart",
+          "ph": "X",
+          "pid": 2659,
+          "tdur": 55,
+          "tid": 2659,
+          "ts": 1115594107,
+          "tts": 20444550
+        },
+        {
+          "args": {
+            "type": "finalize incremental marking via task",
+            "usedHeapSizeAfter": 5564920,
+            "usedHeapSizeBefore": 18271012
+          },
+          "cat": "devtools.timeline,v8",
+          "dur": 44136,
+          "name": "MajorGC",
+          "ph": "X",
+          "pid": 2659,
+          "tdur": 15084,
+          "tid": 2659,
+          "ts": 1115600103,
+          "tts": 20450492
+        },
+        {
+          "args": {
+            "epoch": 10,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 3,
+          "name": "CppGC.MarkAtomicEpilogue",
+          "ph": "X",
+          "pid": 2659,
+          "tdur": 2,
+          "tid": 2659,
+          "ts": 1115637110,
+          "tts": 20458550
+        },
+        {
+          "args": {
+            "epoch": 10,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 2035,
+          "name": "CppGC.AtomicSweep",
+          "ph": "X",
+          "pid": 2659,
+          "tdur": 1965,
+          "tid": 2659,
+          "ts": 1115641907,
+          "tts": 20463319
+        },
+        {
+          "args": {
+            "epoch": 10,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 104,
+          "name": "CppGC.AtomicSweep",
+          "ph": "X",
+          "pid": 2659,
+          "tdur": 105,
+          "tid": 2659,
+          "ts": 1115643945,
+          "tts": 20465286
+        },
+        {
+          "args": {
+            "epoch": 10,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 78858,
+          "name": "CppGC.ConcurrentSweep",
+          "ph": "X",
+          "pid": 2659,
+          "tdur": 76708,
+          "tid": 2699,
+          "ts": 1115644248,
+          "tts": 113348
+        }
+      ],
+      "navigation": [
+        {
+          "mount": 10,
+          "documents": 33,
+          "nodes": 50446,
+          "js_heap_bytes": 17494672,
+          "probe_ms": 14.256842,
+          "trace_interval_ms": 12.079,
+          "phase": 2,
+          "age_ms": [
+            14839.34,
+            14851.419
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 11,
+          "documents": 4,
+          "nodes": 6117,
+          "js_heap_bytes": 5567956,
+          "probe_ms": 14.80805,
+          "trace_interval_ms": 11.873,
+          "phase": 0,
+          "age_ms": [
+            88.237,
+            100.11
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 12,
+          "documents": 4,
+          "nodes": 5286,
+          "js_heap_bytes": 6163272,
+          "probe_ms": 35.702793,
+          "trace_interval_ms": 30.43,
+          "phase": 0,
+          "age_ms": [
+            643.504,
+            673.934
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 13,
+          "documents": 6,
+          "nodes": 7931,
+          "js_heap_bytes": 6758928,
+          "probe_ms": 7.36358,
+          "trace_interval_ms": 6.239,
+          "phase": 1,
+          "age_ms": [
+            1275.182,
+            1281.421
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 14,
+          "documents": 8,
+          "nodes": 10576,
+          "js_heap_bytes": 7352288,
+          "probe_ms": 7.453825,
+          "trace_interval_ms": 5.941,
+          "phase": 1,
+          "age_ms": [
+            1693.716,
+            1699.657
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 15,
+          "documents": 10,
+          "nodes": 13221,
+          "js_heap_bytes": 7945132,
+          "probe_ms": 14.285576,
+          "trace_interval_ms": 9.104,
+          "phase": 1,
+          "age_ms": [
+            2157.069,
+            2166.173
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 16,
+          "documents": 12,
+          "nodes": 15866,
+          "js_heap_bytes": 8152540,
+          "probe_ms": 7.802436,
+          "trace_interval_ms": 6.61,
+          "phase": 1,
+          "age_ms": [
+            2671.69,
+            2678.3
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 17,
+          "documents": 14,
+          "nodes": 18511,
+          "js_heap_bytes": 8744860,
+          "probe_ms": 6.049282,
+          "trace_interval_ms": 4.253,
+          "phase": 2,
+          "age_ms": [
+            3087.468,
+            3091.721
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 18,
+          "documents": 16,
+          "nodes": 21155,
+          "js_heap_bytes": 9337172,
+          "probe_ms": 7.087042,
+          "trace_interval_ms": 5.739,
+          "phase": 2,
+          "age_ms": [
+            3462.237,
+            3467.976
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 19,
+          "documents": 18,
+          "nodes": 23801,
+          "js_heap_bytes": 9929504,
+          "probe_ms": 7.022459,
+          "trace_interval_ms": 5.347,
+          "phase": 2,
+          "age_ms": [
+            3865.041,
+            3870.388
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 20,
+          "documents": 20,
+          "nodes": 26445,
+          "js_heap_bytes": 10521536,
+          "probe_ms": 10.932901,
+          "trace_interval_ms": 8.952,
+          "phase": 2,
+          "age_ms": [
+            4541.278,
+            4550.23
+          ],
+          "gc_overlap": false
+        }
+      ]
+    },
+    {
+      "slot": 4,
+      "arm": "current",
+      "trace_sha256": "da4377da32d31aebbfeb76930ea542ee4ed7774f684ae1803647221f936a538d",
+      "window_trace_us": [
+        1212228838,
+        1216459555
+      ],
+      "cpp_event_name_counts": {
+        "CppGC.IncrementalMark": 21,
+        "CppGC.MarkIncrementalStart": 2,
+        "CppGC.MarkVisitRoots": 4,
+        "CppGC.MarkVisitPersistents": 4,
+        "CppGC.MarkTransitiveClosureWithDeadline": 27,
+        "CppGC.MarkTransitiveClosure": 27,
+        "CppGC.MarkProcessMarkingWorklist": 11,
+        "CppGC.ConcurrentMark": 11,
+        "CppGC.ConcurrentMarkProcessMarkingWorklist": 13,
+        "CppGC.ConcurrentMarkProcessWriteBarrierWorklist": 4,
+        "Marking finished": 11,
+        "CppGC.MarkOnAllocation": 1,
+        "CppGC.MarkProcessBailOutObjects": 7,
+        "CppGC.MarkProcessWriteBarrierWorklist": 2,
+        "CppGC.AtomicMark": 12,
+        "CppGC.MarkAtomicPrologue": 2,
+        "CppGC.MarkFlushEphemerons": 8,
+        "CppGC.MarkProcessEphemerons": 8,
+        "CppGC.MarkVisitCrossThreadPersistents": 2,
+        "CppGC.AtomicWeak": 4,
+        "CppGC.MarkAtomicEpilogue": 2,
+        "CppGC.WeakContainerCallbacksProcessing": 2,
+        "CppGC.CustomCallbacksProcessing": 2,
+        "CppGC.ConcurrentWeakCallback": 2,
+        "CppGC.AtomicSweep": 4,
+        "CppGC.SweepInvokePreFinalizers": 2,
+        "CppGC.ConcurrentSweep": 2,
+        "CppGC.IncrementalSweep": 390,
+        "CppGC.SweepOnAllocation": 8,
+        "CppGC.SweepFinalizeEmptyPages": 16,
+        "CppGC.SweepInLowPriorityTask": 382,
+        "Sweeping finished": 26,
+        "CppGC.SweepFinalizeSweptPages": 26,
+        "AcquiredForGC": 12
+      },
+      "selected_gc_events": [
+        {
+          "args": {
+            "epoch": 12,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 3260,
+          "name": "CppGC.MarkIncrementalStart",
+          "ph": "X",
+          "pid": 2846,
+          "tdur": 83,
+          "tid": 2846,
+          "ts": 1212339545,
+          "tts": 11435627
+        },
+        {
+          "args": {
+            "type": "finalize incremental marking via task",
+            "usedHeapSizeAfter": 5508236,
+            "usedHeapSizeBefore": 17120788
+          },
+          "cat": "devtools.timeline,v8",
+          "dur": 5726,
+          "name": "MajorGC",
+          "ph": "X",
+          "pid": 2846,
+          "tdur": 4597,
+          "tid": 2846,
+          "ts": 1212346565,
+          "tts": 11438934
+        },
+        {
+          "args": {
+            "epoch": 12,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 2,
+          "name": "CppGC.MarkAtomicEpilogue",
+          "ph": "X",
+          "pid": 2846,
+          "tdur": 1,
+          "tid": 2846,
+          "ts": 1212347509,
+          "tts": 11439811
+        },
+        {
+          "args": {
+            "epoch": 12,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 2415,
+          "name": "CppGC.AtomicSweep",
+          "ph": "X",
+          "pid": 2846,
+          "tdur": 2260,
+          "tid": 2846,
+          "ts": 1212349642,
+          "tts": 11441041
+        },
+        {
+          "args": {
+            "epoch": 12,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 153,
+          "name": "CppGC.AtomicSweep",
+          "ph": "X",
+          "pid": 2846,
+          "tdur": 153,
+          "tid": 2846,
+          "ts": 1212352059,
+          "tts": 11443303
+        },
+        {
+          "args": {
+            "epoch": 12,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 35921,
+          "name": "CppGC.ConcurrentSweep",
+          "ph": "X",
+          "pid": 2846,
+          "tdur": 27899,
+          "tid": 2857,
+          "ts": 1212352236,
+          "tts": 1196981
+        },
+        {
+          "args": {
+            "epoch": 13,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 76,
+          "name": "CppGC.MarkIncrementalStart",
+          "ph": "X",
+          "pid": 2846,
+          "tdur": 73,
+          "tid": 2846,
+          "ts": 1215303587,
+          "tts": 12283171
+        },
+        {
+          "args": {
+            "type": "finalize incremental marking via task",
+            "usedHeapSizeAfter": 5583604,
+            "usedHeapSizeBefore": 9656496
+          },
+          "cat": "devtools.timeline,v8",
+          "dur": 6809,
+          "name": "MajorGC",
+          "ph": "X",
+          "pid": 2846,
+          "tdur": 4825,
+          "tid": 2846,
+          "ts": 1215306338,
+          "tts": 12285063
+        },
+        {
+          "args": {
+            "epoch": 13,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 2,
+          "name": "CppGC.MarkAtomicEpilogue",
+          "ph": "X",
+          "pid": 2846,
+          "tdur": 2,
+          "tid": 2846,
+          "ts": 1215309153,
+          "tts": 12286913
+        },
+        {
+          "args": {
+            "epoch": 13,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 1602,
+          "name": "CppGC.AtomicSweep",
+          "ph": "X",
+          "pid": 2846,
+          "tdur": 1584,
+          "tid": 2846,
+          "ts": 1215311285,
+          "tts": 12288050
+        },
+        {
+          "args": {
+            "epoch": 13,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 54,
+          "name": "CppGC.AtomicSweep",
+          "ph": "X",
+          "pid": 2846,
+          "tdur": 54,
+          "tid": 2846,
+          "ts": 1215312890,
+          "tts": 12289636
+        },
+        {
+          "args": {
+            "epoch": 13,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 11159,
+          "name": "CppGC.ConcurrentSweep",
+          "ph": "X",
+          "pid": 2846,
+          "tdur": 8854,
+          "tid": 2857,
+          "ts": 1215312971,
+          "tts": 1381380
+        }
+      ],
+      "navigation": [
+        {
+          "mount": 10,
+          "documents": 31,
+          "nodes": 42341,
+          "js_heap_bytes": 16516144,
+          "probe_ms": 5.141849,
+          "trace_interval_ms": 4.232,
+          "phase": 2,
+          "age_ms": [
+            9032.484,
+            9036.716
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 11,
+          "documents": 2,
+          "nodes": 2594,
+          "js_heap_bytes": 5711268,
+          "probe_ms": 3.840852,
+          "trace_interval_ms": 2.961,
+          "phase": 0,
+          "age_ms": [
+            291.758,
+            294.719
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 12,
+          "documents": 4,
+          "nodes": 5188,
+          "js_heap_bytes": 6340140,
+          "probe_ms": 11.069014,
+          "trace_interval_ms": 7.005,
+          "phase": 0,
+          "age_ms": [
+            650.089,
+            657.094
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 13,
+          "documents": 6,
+          "nodes": 7782,
+          "js_heap_bytes": 6968264,
+          "probe_ms": 5.77403,
+          "trace_interval_ms": 4.545,
+          "phase": 1,
+          "age_ms": [
+            1052.717,
+            1057.262
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 14,
+          "documents": 8,
+          "nodes": 10376,
+          "js_heap_bytes": 7595704,
+          "probe_ms": 5.291845,
+          "trace_interval_ms": 3.605,
+          "phase": 1,
+          "age_ms": [
+            1450.805,
+            1454.41
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 15,
+          "documents": 10,
+          "nodes": 12970,
+          "js_heap_bytes": 8222612,
+          "probe_ms": 9.935004,
+          "trace_interval_ms": 3.005,
+          "phase": 1,
+          "age_ms": [
+            1863.534,
+            1866.539
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 16,
+          "documents": 12,
+          "nodes": 15564,
+          "js_heap_bytes": 9028900,
+          "probe_ms": 4.248185,
+          "trace_interval_ms": 3.357,
+          "phase": 1,
+          "age_ms": [
+            2278.501,
+            2281.858
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 17,
+          "documents": 14,
+          "nodes": 18158,
+          "js_heap_bytes": 9656408,
+          "probe_ms": 146.152637,
+          "trace_interval_ms": 144.584,
+          "phase": 1,
+          "age_ms": [
+            2684.208,
+            2828.792
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 18,
+          "documents": 4,
+          "nodes": 5186,
+          "js_heap_bytes": 6213864,
+          "probe_ms": 3.375283,
+          "trace_interval_ms": 2.387,
+          "phase": 0,
+          "age_ms": [
+            341.502,
+            343.889
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 19,
+          "documents": 6,
+          "nodes": 7780,
+          "js_heap_bytes": 6840344,
+          "probe_ms": 4.400185,
+          "trace_interval_ms": 3.276,
+          "phase": 0,
+          "age_ms": [
+            734.168,
+            737.444
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 20,
+          "documents": 8,
+          "nodes": 10374,
+          "js_heap_bytes": 7467288,
+          "probe_ms": 4.786737,
+          "trace_interval_ms": 3.338,
+          "phase": 1,
+          "age_ms": [
+            1143.07,
+            1146.408
+          ],
+          "gc_overlap": false
+        }
+      ]
+    },
+    {
+      "slot": 5,
+      "arm": "original",
+      "trace_sha256": "cf2080d16901b75b56838d163034ed0bc53583eee4107b4fafb5bd0fcfaa01cc",
+      "window_trace_us": [
+        1311981491,
+        1315678003
+      ],
+      "cpp_event_name_counts": {
+        "CppGC.IncrementalMark": 26,
+        "CppGC.MarkIncrementalStart": 1,
+        "CppGC.MarkVisitRoots": 2,
+        "CppGC.MarkVisitPersistents": 2,
+        "CppGC.MarkTransitiveClosureWithDeadline": 30,
+        "CppGC.MarkTransitiveClosure": 30,
+        "CppGC.MarkProcessMarkingWorklist": 10,
+        "CppGC.ConcurrentMark": 2,
+        "CppGC.ConcurrentMarkProcessMarkingWorklist": 2,
+        "CppGC.MarkProcessBailOutObjects": 6,
+        "CppGC.AtomicMark": 7,
+        "CppGC.MarkAtomicPrologue": 1,
+        "CppGC.MarkFlushEphemerons": 5,
+        "Marking finished": 2,
+        "CppGC.MarkProcessEphemerons": 3,
+        "CppGC.MarkVisitCrossThreadPersistents": 1,
+        "CppGC.AtomicWeak": 2,
+        "CppGC.MarkAtomicEpilogue": 1,
+        "CppGC.ConcurrentWeakCallback": 1,
+        "CppGC.WeakContainerCallbacksProcessing": 1,
+        "CppGC.CustomCallbacksProcessing": 1,
+        "CppGC.AtomicSweep": 2,
+        "CppGC.SweepInvokePreFinalizers": 1,
+        "CppGC.IncrementalSweep": 15,
+        "CppGC.SweepOnAllocation": 11,
+        "CppGC.SweepEmptyPages": 2,
+        "CppGC.ConcurrentSweep": 1,
+        "CppGC.SweepFinalizeEmptyPages": 11,
+        "Sweeping finished": 13,
+        "CppGC.SweepInLowPriorityTask": 4,
+        "CppGC.SweepFinalizeSweptPages": 12,
+        "AcquiredForGC": 6
+      },
+      "selected_gc_events": [
+        {
+          "args": {
+            "epoch": 15,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 47,
+          "name": "CppGC.MarkIncrementalStart",
+          "ph": "X",
+          "pid": 3038,
+          "tdur": 45,
+          "tid": 3038,
+          "ts": 1312495399,
+          "tts": 14273283
+        },
+        {
+          "args": {
+            "type": "finalize incremental marking via task",
+            "usedHeapSizeAfter": 5501324,
+            "usedHeapSizeBefore": 12542924
+          },
+          "cat": "devtools.timeline,v8",
+          "dur": 7594,
+          "name": "MajorGC",
+          "ph": "X",
+          "pid": 3038,
+          "tdur": 5691,
+          "tid": 3038,
+          "ts": 1312498847,
+          "tts": 14276515
+        },
+        {
+          "args": {
+            "epoch": 15,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 2,
+          "name": "CppGC.MarkAtomicEpilogue",
+          "ph": "X",
+          "pid": 3038,
+          "tdur": 2,
+          "tid": 3038,
+          "ts": 1312501091,
+          "tts": 14278766
+        },
+        {
+          "args": {
+            "epoch": 15,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 2046,
+          "name": "CppGC.AtomicSweep",
+          "ph": "X",
+          "pid": 3038,
+          "tdur": 2028,
+          "tid": 3038,
+          "ts": 1312504274,
+          "tts": 14280063
+        },
+        {
+          "args": {
+            "epoch": 15,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 38,
+          "name": "CppGC.AtomicSweep",
+          "ph": "X",
+          "pid": 3038,
+          "tdur": 38,
+          "tid": 3038,
+          "ts": 1312506322,
+          "tts": 14282092
+        },
+        {
+          "args": {
+            "epoch": 15,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 21775,
+          "name": "CppGC.ConcurrentSweep",
+          "ph": "X",
+          "pid": 3038,
+          "tdur": 15368,
+          "tid": 3049,
+          "ts": 1312506800,
+          "tts": 734376
+        }
+      ],
+      "navigation": [
+        {
+          "mount": 10,
+          "documents": 20,
+          "nodes": 26446,
+          "js_heap_bytes": 11236772,
+          "probe_ms": 7.9366,
+          "trace_interval_ms": 6.734,
+          "phase": 2,
+          "age_ms": [
+            3556.159,
+            3562.893
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 11,
+          "documents": 22,
+          "nodes": 29091,
+          "js_heap_bytes": 12014240,
+          "probe_ms": 4.676849,
+          "trace_interval_ms": 2.848,
+          "phase": 2,
+          "age_ms": [
+            3937.082,
+            3939.93
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 12,
+          "documents": 2,
+          "nodes": 2642,
+          "js_heap_bytes": 5568204,
+          "probe_ms": 7.808239,
+          "trace_interval_ms": 5.985,
+          "phase": 0,
+          "age_ms": [
+            236.7,
+            242.685
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 13,
+          "documents": 4,
+          "nodes": 5287,
+          "js_heap_bytes": 6161388,
+          "probe_ms": 6.134743,
+          "trace_interval_ms": 5.117,
+          "phase": 0,
+          "age_ms": [
+            609.653,
+            614.77
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 14,
+          "documents": 6,
+          "nodes": 7932,
+          "js_heap_bytes": 6754008,
+          "probe_ms": 3.143997,
+          "trace_interval_ms": 2.307,
+          "phase": 0,
+          "age_ms": [
+            968.92,
+            971.227
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 15,
+          "documents": 8,
+          "nodes": 10577,
+          "js_heap_bytes": 7346272,
+          "probe_ms": 3.159718,
+          "trace_interval_ms": 2.351,
+          "phase": 1,
+          "age_ms": [
+            1334.116,
+            1336.467
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 16,
+          "documents": 10,
+          "nodes": 13222,
+          "js_heap_bytes": 8124500,
+          "probe_ms": 7.052321,
+          "trace_interval_ms": 5.875,
+          "phase": 1,
+          "age_ms": [
+            1724.264,
+            1730.139
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 17,
+          "documents": 12,
+          "nodes": 15867,
+          "js_heap_bytes": 8716816,
+          "probe_ms": 6.439164,
+          "trace_interval_ms": 5.586,
+          "phase": 1,
+          "age_ms": [
+            2092.879,
+            2098.465
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 18,
+          "documents": 14,
+          "nodes": 18512,
+          "js_heap_bytes": 9309048,
+          "probe_ms": 3.159633,
+          "trace_interval_ms": 2.091,
+          "phase": 1,
+          "age_ms": [
+            2454.99,
+            2457.081
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 19,
+          "documents": 16,
+          "nodes": 21157,
+          "js_heap_bytes": 9902080,
+          "probe_ms": 3.393124,
+          "trace_interval_ms": 2.453,
+          "phase": 1,
+          "age_ms": [
+            2817.758,
+            2820.211
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 20,
+          "documents": 18,
+          "nodes": 23802,
+          "js_heap_bytes": 10495328,
+          "probe_ms": 5.09891,
+          "trace_interval_ms": 3.761,
+          "phase": 2,
+          "age_ms": [
+            3167.801,
+            3171.562
+          ],
+          "gc_overlap": false
+        }
+      ]
+    },
+    {
+      "slot": 6,
+      "arm": "original",
+      "trace_sha256": "601a820bb59e9040257b032b94b9b404e8170266b247ba5f26c594e0548613bb",
+      "window_trace_us": [
+        1403374663,
+        1407027591
+      ],
+      "cpp_event_name_counts": {
+        "CppGC.IncrementalMark": 20,
+        "CppGC.MarkIncrementalStart": 1,
+        "CppGC.MarkVisitRoots": 2,
+        "CppGC.MarkVisitPersistents": 2,
+        "CppGC.ConcurrentMark": 10,
+        "CppGC.MarkTransitiveClosureWithDeadline": 22,
+        "CppGC.MarkTransitiveClosure": 22,
+        "CppGC.MarkProcessMarkingWorklist": 11,
+        "CppGC.ConcurrentMarkProcessMarkingWorklist": 8,
+        "CppGC.MarkProcessBailOutObjects": 3,
+        "Marking finished": 8,
+        "CppGC.ConcurrentMarkProcessWriteBarrierWorklist": 2,
+        "CppGC.MarkOnAllocation": 1,
+        "CppGC.MarkProcessWriteBarrierWorklist": 2,
+        "CppGC.MarkProcessNotFullyconstructedWorklist": 1,
+        "CppGC.AtomicMark": 5,
+        "CppGC.MarkAtomicPrologue": 1,
+        "CppGC.MarkFlushEphemerons": 3,
+        "CppGC.MarkProcessEphemerons": 3,
+        "CppGC.MarkVisitCrossThreadPersistents": 1,
+        "CppGC.AtomicWeak": 2,
+        "CppGC.MarkAtomicEpilogue": 1,
+        "CppGC.WeakContainerCallbacksProcessing": 1,
+        "CppGC.ConcurrentWeakCallback": 1,
+        "CppGC.CustomCallbacksProcessing": 1,
+        "CppGC.AtomicSweep": 2,
+        "CppGC.SweepInvokePreFinalizers": 1,
+        "CppGC.ConcurrentSweep": 1,
+        "CppGC.IncrementalSweep": 9,
+        "CppGC.SweepOnAllocation": 6,
+        "CppGC.SweepFinalizeEmptyPages": 7,
+        "Sweeping finished": 13,
+        "CppGC.SweepInLowPriorityTask": 3,
+        "CppGC.SweepFinalizeSweptPages": 12,
+        "AcquiredForGC": 6
+      },
+      "selected_gc_events": [
+        {
+          "args": {
+            "epoch": 16,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 60,
+          "name": "CppGC.MarkIncrementalStart",
+          "ph": "X",
+          "pid": 3304,
+          "tdur": 58,
+          "tid": 3304,
+          "ts": 1403902266,
+          "tts": 8874216
+        },
+        {
+          "args": {
+            "type": "finalize incremental marking via task",
+            "usedHeapSizeAfter": 5545200,
+            "usedHeapSizeBefore": 9008116
+          },
+          "cat": "devtools.timeline,v8",
+          "dur": 4389,
+          "name": "MajorGC",
+          "ph": "X",
+          "pid": 3304,
+          "tdur": 2638,
+          "tid": 3304,
+          "ts": 1403910489,
+          "tts": 8878464
+        },
+        {
+          "args": {
+            "epoch": 16,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 2,
+          "name": "CppGC.MarkAtomicEpilogue",
+          "ph": "X",
+          "pid": 3304,
+          "tdur": 1,
+          "tid": 3304,
+          "ts": 1403911073,
+          "tts": 8878803
+        },
+        {
+          "args": {
+            "epoch": 16,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 1159,
+          "name": "CppGC.AtomicSweep",
+          "ph": "X",
+          "pid": 3304,
+          "tdur": 573,
+          "tid": 3304,
+          "ts": 1403913573,
+          "tts": 8880388
+        },
+        {
+          "args": {
+            "epoch": 16,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 40,
+          "name": "CppGC.AtomicSweep",
+          "ph": "X",
+          "pid": 3304,
+          "tdur": 39,
+          "tid": 3304,
+          "ts": 1403914733,
+          "tts": 8880962
+        },
+        {
+          "args": {
+            "epoch": 16,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 8472,
+          "name": "CppGC.ConcurrentSweep",
+          "ph": "X",
+          "pid": 3304,
+          "tdur": 8385,
+          "tid": 3316,
+          "ts": 1403914807,
+          "tts": 722800
+        }
+      ],
+      "navigation": [
+        {
+          "mount": 10,
+          "documents": 10,
+          "nodes": 13221,
+          "js_heap_bytes": 7914268,
+          "probe_ms": 6.02518,
+          "trace_interval_ms": 4.416,
+          "phase": 1,
+          "age_ms": [
+            1731.837,
+            1736.253
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 11,
+          "documents": 12,
+          "nodes": 15866,
+          "js_heap_bytes": 8120616,
+          "probe_ms": 5.940125,
+          "trace_interval_ms": 5.042,
+          "phase": 1,
+          "age_ms": [
+            2117.673,
+            2122.715
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 12,
+          "documents": 2,
+          "nodes": 2642,
+          "js_heap_bytes": 5550980,
+          "probe_ms": 4.288647,
+          "trace_interval_ms": 3.389,
+          "phase": 0,
+          "age_ms": [
+            207.468,
+            210.857
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 13,
+          "documents": 4,
+          "nodes": 5287,
+          "js_heap_bytes": 6146760,
+          "probe_ms": 10.577531,
+          "trace_interval_ms": 9.529,
+          "phase": 0,
+          "age_ms": [
+            562.263,
+            571.792
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 14,
+          "documents": 6,
+          "nodes": 7932,
+          "js_heap_bytes": 6739184,
+          "probe_ms": 8.462222,
+          "trace_interval_ms": 4.755,
+          "phase": 0,
+          "age_ms": [
+            928.655,
+            933.41
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 15,
+          "documents": 8,
+          "nodes": 10577,
+          "js_heap_bytes": 7331064,
+          "probe_ms": 3.453004,
+          "trace_interval_ms": 2.359,
+          "phase": 1,
+          "age_ms": [
+            1289.857,
+            1292.216
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 16,
+          "documents": 10,
+          "nodes": 13222,
+          "js_heap_bytes": 8109328,
+          "probe_ms": 4.89612,
+          "trace_interval_ms": 3.859,
+          "phase": 1,
+          "age_ms": [
+            1656.477,
+            1660.336
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 17,
+          "documents": 12,
+          "nodes": 15867,
+          "js_heap_bytes": 8701616,
+          "probe_ms": 4.874839,
+          "trace_interval_ms": 3.859,
+          "phase": 1,
+          "age_ms": [
+            2027.398,
+            2031.257
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 18,
+          "documents": 14,
+          "nodes": 18512,
+          "js_heap_bytes": 9293860,
+          "probe_ms": 4.100824,
+          "trace_interval_ms": 3.043,
+          "phase": 1,
+          "age_ms": [
+            2393.299,
+            2396.342
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 19,
+          "documents": 16,
+          "nodes": 21157,
+          "js_heap_bytes": 9886312,
+          "probe_ms": 3.940157,
+          "trace_interval_ms": 2.862,
+          "phase": 1,
+          "age_ms": [
+            2753.995,
+            2756.857
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 20,
+          "documents": 18,
+          "nodes": 23802,
+          "js_heap_bytes": 10478800,
+          "probe_ms": 3.151309,
+          "trace_interval_ms": 2.215,
+          "phase": 2,
+          "age_ms": [
+            3110.498,
+            3112.713
+          ],
+          "gc_overlap": false
+        }
+      ]
+    },
+    {
+      "slot": 7,
+      "arm": "current",
+      "trace_sha256": "700cdb218beb67f7b8b246dd818f9c5af5b7e274787c7a2aa14b193ee990ff36",
+      "window_trace_us": [
+        1495818899,
+        1499644819
+      ],
+      "cpp_event_name_counts": {
+        "CppGC.IncrementalMark": 84,
+        "CppGC.MarkIncrementalStart": 1,
+        "CppGC.MarkVisitRoots": 2,
+        "CppGC.MarkVisitPersistents": 2,
+        "CppGC.ConcurrentMark": 16,
+        "CppGC.ConcurrentMarkProcessMarkingWorklist": 19,
+        "CppGC.MarkTransitiveClosureWithDeadline": 91,
+        "CppGC.MarkTransitiveClosure": 91,
+        "CppGC.MarkProcessMarkingWorklist": 33,
+        "CppGC.MarkProcessBailOutObjects": 20,
+        "CppGC.MarkOnAllocation": 2,
+        "CppGC.ConcurrentMarkProcessWriteBarrierWorklist": 3,
+        "Marking finished": 11,
+        "Marking preempted": 5,
+        "CppGC.MarkFlushEphemerons": 11,
+        "CppGC.ConcurrentMarkProcessEphemeronWorklist": 1,
+        "CppGC.AtomicMark": 10,
+        "CppGC.MarkAtomicPrologue": 1,
+        "CppGC.MarkProcessEphemerons": 10,
+        "CppGC.MarkVisitCrossThreadPersistents": 1,
+        "CppGC.AtomicWeak": 2,
+        "CppGC.MarkAtomicEpilogue": 1,
+        "CppGC.ConcurrentWeakCallback": 1,
+        "CppGC.WeakContainerCallbacksProcessing": 1,
+        "CppGC.CustomCallbacksProcessing": 1,
+        "CppGC.AtomicSweep": 2,
+        "CppGC.SweepInvokePreFinalizers": 1,
+        "CppGC.ConcurrentSweep": 1,
+        "CppGC.IncrementalSweep": 37,
+        "CppGC.SweepInLowPriorityTask": 37,
+        "CppGC.SweepFinalizeEmptyPages": 3,
+        "Sweeping finished": 13,
+        "CppGC.SweepFinalizeSweptPages": 20,
+        "AcquiredForGC": 6
+      },
+      "selected_gc_events": [
+        {
+          "args": {
+            "epoch": 12,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 107,
+          "name": "CppGC.MarkIncrementalStart",
+          "ph": "X",
+          "pid": 3555,
+          "tdur": 87,
+          "tid": 3555,
+          "ts": 1495862658,
+          "tts": 8452959
+        },
+        {
+          "args": {
+            "type": "finalize incremental marking via task",
+            "usedHeapSizeAfter": 11571720,
+            "usedHeapSizeBefore": 14522128
+          },
+          "cat": "devtools.timeline,v8",
+          "dur": 7500,
+          "name": "MajorGC",
+          "ph": "X",
+          "pid": 3555,
+          "tdur": 6541,
+          "tid": 3555,
+          "ts": 1495878227,
+          "tts": 8467327
+        },
+        {
+          "args": {
+            "epoch": 12,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 2,
+          "name": "CppGC.MarkAtomicEpilogue",
+          "ph": "X",
+          "pid": 3555,
+          "tdur": 2,
+          "tid": 3555,
+          "ts": 1495880822,
+          "tts": 8469137
+        },
+        {
+          "args": {
+            "epoch": 12,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 1175,
+          "name": "CppGC.AtomicSweep",
+          "ph": "X",
+          "pid": 3555,
+          "tdur": 1174,
+          "tid": 3555,
+          "ts": 1495884350,
+          "tts": 8472500
+        },
+        {
+          "args": {
+            "epoch": 12,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 121,
+          "name": "CppGC.AtomicSweep",
+          "ph": "X",
+          "pid": 3555,
+          "tdur": 122,
+          "tid": 3555,
+          "ts": 1495885528,
+          "tts": 8473675
+        },
+        {
+          "args": {
+            "epoch": 12,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 27466,
+          "name": "CppGC.ConcurrentSweep",
+          "ph": "X",
+          "pid": 3555,
+          "tdur": 25384,
+          "tid": 3566,
+          "ts": 1495885726,
+          "tts": 958901
+        }
+      ],
+      "navigation": [
+        {
+          "mount": 10,
+          "documents": 31,
+          "nodes": 42352,
+          "js_heap_bytes": 16552152,
+          "probe_ms": 6.862177,
+          "trace_interval_ms": 4.566,
+          "phase": 2,
+          "age_ms": [
+            8689.602,
+            8694.168
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 11,
+          "documents": 33,
+          "nodes": 44804,
+          "js_heap_bytes": 12196696,
+          "probe_ms": 4.089074,
+          "trace_interval_ms": 3.11,
+          "phase": 0,
+          "age_ms": [
+            374.549,
+            377.659
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 12,
+          "documents": 35,
+          "nodes": 47398,
+          "js_heap_bytes": 12823672,
+          "probe_ms": 4.457826,
+          "trace_interval_ms": 3.427,
+          "phase": 0,
+          "age_ms": [
+            747.959,
+            751.386
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 13,
+          "documents": 37,
+          "nodes": 49992,
+          "js_heap_bytes": 13451164,
+          "probe_ms": 5.522151,
+          "trace_interval_ms": 4.185,
+          "phase": 1,
+          "age_ms": [
+            1120.998,
+            1125.183
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 14,
+          "documents": 39,
+          "nodes": 52586,
+          "js_heap_bytes": 14078144,
+          "probe_ms": 4.60208,
+          "trace_interval_ms": 2.952,
+          "phase": 1,
+          "age_ms": [
+            1482.198,
+            1485.15
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 15,
+          "documents": 41,
+          "nodes": 55180,
+          "js_heap_bytes": 14705136,
+          "probe_ms": 4.969715,
+          "trace_interval_ms": 3.82,
+          "phase": 1,
+          "age_ms": [
+            1852.42,
+            1856.24
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 16,
+          "documents": 43,
+          "nodes": 57774,
+          "js_heap_bytes": 15510216,
+          "probe_ms": 3.157234,
+          "trace_interval_ms": 2.264,
+          "phase": 1,
+          "age_ms": [
+            2265.61,
+            2267.874
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 17,
+          "documents": 45,
+          "nodes": 60368,
+          "js_heap_bytes": 16136672,
+          "probe_ms": 5.68255,
+          "trace_interval_ms": 3.711,
+          "phase": 1,
+          "age_ms": [
+            2648.583,
+            2652.294
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 18,
+          "documents": 47,
+          "nodes": 62962,
+          "js_heap_bytes": 16762788,
+          "probe_ms": 4.454633,
+          "trace_interval_ms": 2.944,
+          "phase": 2,
+          "age_ms": [
+            3002.792,
+            3005.736
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 19,
+          "documents": 49,
+          "nodes": 65556,
+          "js_heap_bytes": 17390056,
+          "probe_ms": 4.338531,
+          "trace_interval_ms": 3.233,
+          "phase": 2,
+          "age_ms": [
+            3395.712,
+            3398.945
+          ],
+          "gc_overlap": false
+        },
+        {
+          "mount": 20,
+          "documents": 51,
+          "nodes": 68150,
+          "js_heap_bytes": 18016916,
+          "probe_ms": 3.766325,
+          "trace_interval_ms": 2.703,
+          "phase": 2,
+          "age_ms": [
+            3756.389,
+            3759.092
+          ],
+          "gc_overlap": false
+        }
+      ]
+    }
+  ],
+  "limits": "Event start inside navigation 10\u201320 marker window; not complete GC cycle accounting. A ConcurrentSweep duration end or Sweeping finished space event is not proof of whole-heap sweep completion. No source-effect inference or revision to frozen phase criteria."
+}

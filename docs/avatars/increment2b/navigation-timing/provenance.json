@@ -1,0 +1,15 @@
+{
+  "acceptance": false,
+  "harness_commit": "1d03efda7fb9a62927c9424c8f506f7f189f33d1",
+  "archive_bytes": 18658722,
+  "archive_sha256": "12ddff2426b8aa5b179e50d16dbdca85186b3fd650b3ad4752ea2524709dce44",
+  "archive_crc_verified": true,
+  "measurement_host": "Local managed workspace; no concurrent analysis during capture",
+  "scheduled_slots": 8,
+  "completed_slots": 8,
+  "navigation_observations": 160,
+  "selected_analysis_tests": 112,
+  "archive_reaudit_matches": true,
+  "independently_recomputed_phase_assignments": 160,
+  "independently_recomputed_pair_differences": 480
+}

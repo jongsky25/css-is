@@ -816,3 +816,14 @@ in both sources; five navigation snapshots change document counts across the
 dump window. See [timing report](avatars/increment2b/navigation-collection/REPORT.md).
 No new acceptance samples or product changes; 2B and subsequent increments remain
 blocked. Next diagnostic requires finer lightweight timing with paired controls.
+
+### Per-navigation paired timing completed — 2026-10-26
+
+Eight fixed local diagnostic slots, 160 observations; all 164 source/probe hashes
+and 60 evidence files verify. 112 selected tests pass. Same-source variations
+exceed 10 MiB at ten checkpoint/metric differences; no stable source fix established.
+Current repeats retain a 31-document/~6.18 MiB JS-heap offset at seven matching
+V8 GC-age observations, despite recorded natural collection/sweep activity.
+See [report](avatars/increment2b/navigation-timing/REPORT.md) for all comparisons,
+overhead, raw traces and the separate post-hoc follow-up. Retaining paths remain
+unknown. Product unchanged; 2B/3A/later gates remain blocked, no measurement active.
