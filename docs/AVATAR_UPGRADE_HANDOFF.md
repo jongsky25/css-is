@@ -1,6 +1,6 @@
 # Avatar upgrade: new-chat handoff
 
-Last updated: **2026-10-26 09:38 UTC**. Repository: `jongsky25/css-is`.
+Last updated: **2026-10-26 10:14 UTC**. Repository: `jongsky25/css-is`.
 
 ## Current blocking correction
 
@@ -27,6 +27,20 @@ The prepared audit branch `codex/avatar-3a-artifact-audit` is explicitly paused 
 trigger it as an acceptance audit of the cancelled cohort. No later increments,
 merge to main or deployment occurred. The historical handoff below is superseded by this
 correction wherever it suggests CI success establishes complete memory acceptance.
+
+## Natural-collection attribution follow-up — 2026-10-26
+
+The requested next experiment is complete. Read
+[the collection report](avatars/increment2b/collection-attribution/REPORT.md).
+Eight full instrumented workloads retain both orders, 104 native profiles and
+C++/V8 collection traces. The initial trace lacked `cppgc`; its corrected repeat
+is retained separately. Collection is natural (all explicit forced flags false).
+The delta is mainly in the app renderer. Documents are reclaimed, but RSS can
+remain elevated with fewer documents, so a persistent app reference is not
+established. No new product fix or acceptance claim. Product remains f700187;
+2B/3A status is unchanged. Next attribution question: live native allocations
+versus allocator-resident capacity after natural sweep completion. Preserve all
+measurements and the unchanged 10 MiB total-RSS/heap gates.
 
 ## Latest 2B investigation — candidate rejected, 2026-10-26
 

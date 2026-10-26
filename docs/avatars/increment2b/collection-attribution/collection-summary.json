@@ -1,0 +1,1694 @@
+{
+  "acceptance": false,
+  "cohorts": [
+    {
+      "cohort": "0-original",
+      "app_pid": 17197,
+      "points": [
+        {
+          "checkpoint": "home_idle",
+          "trace_timestamp_us": 13610683066,
+          "rss_bytes": 408588288,
+          "app_renderer_rss_bytes": 191541248,
+          "other_renderer_rss_bytes": 217047040,
+          "js_heap_bytes": 2669720,
+          "documents": 1,
+          "nodes": 2658,
+          "major_gc_since_previous": [
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 2256576,
+                "usedHeapSizeBefore": 3658916
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 2831,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 17197,
+              "tdur": 2644,
+              "tid": 17197,
+              "ts": 13581061440,
+              "tts": 431329
+            },
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 2272864,
+                "usedHeapSizeBefore": 2433964
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 3138,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 17197,
+              "tdur": 2738,
+              "tid": 17197,
+              "ts": 13589983940,
+              "tts": 1294506
+            },
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 2279496,
+                "usedHeapSizeBefore": 2424832
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 9037,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 17197,
+              "tdur": 10163,
+              "tid": 17197,
+              "ts": 13599497408,
+              "tts": 2666859
+            },
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 2288448,
+                "usedHeapSizeBefore": 2438360
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 4091,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 17197,
+              "tdur": 2890,
+              "tid": 17197,
+              "ts": 13608345089,
+              "tts": 3444306
+            }
+          ]
+        },
+        {
+          "checkpoint": "home_interaction",
+          "trace_timestamp_us": 13642126520,
+          "rss_bytes": 421949440,
+          "app_renderer_rss_bytes": 204988416,
+          "other_renderer_rss_bytes": 216961024,
+          "js_heap_bytes": 4686536,
+          "documents": 1,
+          "nodes": 2682,
+          "major_gc_since_previous": [
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 2542208,
+                "usedHeapSizeBefore": 2750420
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 11550,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 17197,
+              "tdur": 4556,
+              "tid": 17197,
+              "ts": 13614144984,
+              "tts": 4337332
+            },
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 2667428,
+                "usedHeapSizeBefore": 3463092
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 4102,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 17197,
+              "tdur": 2265,
+              "tid": 17197,
+              "ts": 13618960997,
+              "tts": 4879918
+            },
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 2690040,
+                "usedHeapSizeBefore": 3371200
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 2471,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 17197,
+              "tdur": 1674,
+              "tid": 17197,
+              "ts": 13623684809,
+              "tts": 5593155
+            },
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 2704212,
+                "usedHeapSizeBefore": 3482896
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 3296,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 17197,
+              "tdur": 2505,
+              "tid": 17197,
+              "ts": 13628710955,
+              "tts": 6238286
+            },
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 2730976,
+                "usedHeapSizeBefore": 3454440
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 10930,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 17197,
+              "tdur": 9946,
+              "tid": 17197,
+              "ts": 13633531270,
+              "tts": 7008634
+            },
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 2742012,
+                "usedHeapSizeBefore": 3448368
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 3858,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 17197,
+              "tdur": 3309,
+              "tid": 17197,
+              "ts": 13638310787,
+              "tts": 7863406
+            }
+          ]
+        },
+        {
+          "checkpoint": "wellness_care",
+          "trace_timestamp_us": 13647162269,
+          "rss_bytes": 428527616,
+          "app_renderer_rss_bytes": 211841024,
+          "other_renderer_rss_bytes": 216686592,
+          "js_heap_bytes": 3359468,
+          "documents": 1,
+          "nodes": 1504,
+          "major_gc_since_previous": [
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 3003712,
+                "usedHeapSizeBefore": 4551148
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 8656,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 17197,
+              "tdur": 3123,
+              "tid": 17197,
+              "ts": 13643087619,
+              "tts": 9082145
+            }
+          ]
+        },
+        {
+          "checkpoint": "picker_growth",
+          "trace_timestamp_us": 13652396387,
+          "rss_bytes": 446935040,
+          "app_renderer_rss_bytes": 231911424,
+          "other_renderer_rss_bytes": 215023616,
+          "js_heap_bytes": 5875548,
+          "documents": 1,
+          "nodes": 4878,
+          "major_gc_since_previous": [
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 2896892,
+                "usedHeapSizeBefore": 4261672
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 5291,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 17197,
+              "tdur": 3327,
+              "tid": 17197,
+              "ts": 13648033918,
+              "tts": 10183536
+            },
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 4246064,
+                "usedHeapSizeBefore": 5596916
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 5933,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 17197,
+              "tdur": 5833,
+              "tid": 17197,
+              "ts": 13649901261,
+              "tts": 10839457
+            }
+          ]
+        },
+        {
+          "checkpoint": "seasonal_preview",
+          "trace_timestamp_us": 13656161901,
+          "rss_bytes": 471470080,
+          "app_renderer_rss_bytes": 256335872,
+          "other_renderer_rss_bytes": 215134208,
+          "js_heap_bytes": 10226680,
+          "documents": 7,
+          "nodes": 13808,
+          "major_gc_since_previous": [
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 4407056,
+                "usedHeapSizeBefore": 6063268
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 4278,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 17197,
+              "tdur": 4109,
+              "tid": 17197,
+              "ts": 13652768486,
+              "tts": 11680052
+            },
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 5806992,
+                "usedHeapSizeBefore": 7425548
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 22909,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 17197,
+              "tdur": 9959,
+              "tid": 17197,
+              "ts": 13654478050,
+              "tts": 12494970
+            },
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 7596408,
+                "usedHeapSizeBefore": 11304808
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 11749,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 17197,
+              "tdur": 11404,
+              "tid": 17197,
+              "ts": 13655649124,
+              "tts": 13373854
+            }
+          ]
+        },
+        {
+          "checkpoint": "offscreen",
+          "trace_timestamp_us": 13658687002,
+          "rss_bytes": 452415488,
+          "app_renderer_rss_bytes": 237137920,
+          "other_renderer_rss_bytes": 215277568,
+          "js_heap_bytes": 11081500,
+          "documents": 9,
+          "nodes": 16463,
+          "major_gc_since_previous": []
+        },
+        {
+          "checkpoint": "reduced_motion",
+          "trace_timestamp_us": 13659372205,
+          "rss_bytes": 452890624,
+          "app_renderer_rss_bytes": 237608960,
+          "other_renderer_rss_bytes": 215281664,
+          "js_heap_bytes": 11250220,
+          "documents": 9,
+          "nodes": 16466,
+          "major_gc_since_previous": []
+        },
+        {
+          "checkpoint": "background",
+          "trace_timestamp_us": 13661105217,
+          "rss_bytes": 565489664,
+          "app_renderer_rss_bytes": 239919104,
+          "other_renderer_rss_bytes": 325570560,
+          "js_heap_bytes": 11422920,
+          "documents": 9,
+          "nodes": 16475,
+          "major_gc_since_previous": []
+        },
+        {
+          "checkpoint": "navigation_1",
+          "trace_timestamp_us": 13661730047,
+          "rss_bytes": 464056320,
+          "app_renderer_rss_bytes": 247754752,
+          "other_renderer_rss_bytes": 216301568,
+          "js_heap_bytes": 12192708,
+          "documents": 11,
+          "nodes": 19121,
+          "major_gc_since_previous": []
+        },
+        {
+          "checkpoint": "navigation_5",
+          "trace_timestamp_us": 13664012870,
+          "rss_bytes": 508358656,
+          "app_renderer_rss_bytes": 291713024,
+          "other_renderer_rss_bytes": 216645632,
+          "js_heap_bytes": 14769260,
+          "documents": 19,
+          "nodes": 29702,
+          "major_gc_since_previous": []
+        },
+        {
+          "checkpoint": "navigation_10",
+          "trace_timestamp_us": 13666702172,
+          "rss_bytes": 534745088,
+          "app_renderer_rss_bytes": 317706240,
+          "other_renderer_rss_bytes": 217038848,
+          "js_heap_bytes": 14473904,
+          "documents": 29,
+          "nodes": 42928,
+          "major_gc_since_previous": []
+        },
+        {
+          "checkpoint": "navigation_15",
+          "trace_timestamp_us": 13668901529,
+          "rss_bytes": 534315008,
+          "app_renderer_rss_bytes": 316678144,
+          "other_renderer_rss_bytes": 217636864,
+          "js_heap_bytes": 8126500,
+          "documents": 10,
+          "nodes": 13222,
+          "major_gc_since_previous": [
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 5570248,
+                "usedHeapSizeBefore": 15363856
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 7931,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 17197,
+              "tdur": 5822,
+              "tid": 17197,
+              "ts": 13667011375,
+              "tts": 17348156
+            }
+          ]
+        },
+        {
+          "checkpoint": "navigation_20",
+          "trace_timestamp_us": 13671432227,
+          "rss_bytes": 535941120,
+          "app_renderer_rss_bytes": 318537728,
+          "other_renderer_rss_bytes": 217403392,
+          "js_heap_bytes": 11278464,
+          "documents": 20,
+          "nodes": 26448,
+          "major_gc_since_previous": []
+        }
+      ],
+      "gc_event_names": {},
+      "trace_sha256": "6bf285ff250367c4e3ad09a1be3482d12f8e3a8f298c3358e8a136a0245ae3fb"
+    },
+    {
+      "cohort": "1-current",
+      "app_pid": 17453,
+      "points": [
+        {
+          "checkpoint": "home_idle",
+          "trace_timestamp_us": 13731159995,
+          "rss_bytes": 408920064,
+          "app_renderer_rss_bytes": 191971328,
+          "other_renderer_rss_bytes": 216948736,
+          "js_heap_bytes": 2630088,
+          "documents": 1,
+          "nodes": 2599,
+          "major_gc_since_previous": [
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 2268816,
+                "usedHeapSizeBefore": 3666824
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 5650,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 17453,
+              "tdur": 2308,
+              "tid": 17453,
+              "ts": 13701589657,
+              "tts": 395903
+            },
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 2289392,
+                "usedHeapSizeBefore": 2339440
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 1602,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 17453,
+              "tdur": 1405,
+              "tid": 17453,
+              "ts": 13714505201,
+              "tts": 1258927
+            },
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 2301640,
+                "usedHeapSizeBefore": 2345448
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 5846,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 17453,
+              "tdur": 5204,
+              "tid": 17453,
+              "ts": 13727656611,
+              "tts": 2120389
+            }
+          ]
+        },
+        {
+          "checkpoint": "home_interaction",
+          "trace_timestamp_us": 13761846274,
+          "rss_bytes": 416329728,
+          "app_renderer_rss_bytes": 199708672,
+          "other_renderer_rss_bytes": 216621056,
+          "js_heap_bytes": 2825484,
+          "documents": 1,
+          "nodes": 2608,
+          "major_gc_since_previous": [
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 2600680,
+                "usedHeapSizeBefore": 2897516
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 2309,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 17453,
+              "tdur": 1780,
+              "tid": 17453,
+              "ts": 13735672132,
+              "tts": 3075516
+            },
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 2713996,
+                "usedHeapSizeBefore": 3602156
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 3169,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 17453,
+              "tdur": 2293,
+              "tid": 17453,
+              "ts": 13742158089,
+              "tts": 3700373
+            },
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 2742348,
+                "usedHeapSizeBefore": 3027364
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 2670,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 17453,
+              "tdur": 1604,
+              "tid": 17453,
+              "ts": 13749052259,
+              "tts": 4405965
+            },
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 2756436,
+                "usedHeapSizeBefore": 3627188
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 2293,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 17453,
+              "tdur": 2063,
+              "tid": 17453,
+              "ts": 13755537336,
+              "tts": 5182155
+            },
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 2816552,
+                "usedHeapSizeBefore": 3491676
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 2577,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 17453,
+              "tdur": 1277,
+              "tid": 17453,
+              "ts": 13761335775,
+              "tts": 5936411
+            }
+          ]
+        },
+        {
+          "checkpoint": "wellness_care",
+          "trace_timestamp_us": 13766606612,
+          "rss_bytes": 422866944,
+          "app_renderer_rss_bytes": 206655488,
+          "other_renderer_rss_bytes": 216211456,
+          "js_heap_bytes": 4546776,
+          "documents": 3,
+          "nodes": 4116,
+          "major_gc_since_previous": []
+        },
+        {
+          "checkpoint": "picker_growth",
+          "trace_timestamp_us": 13772222649,
+          "rss_bytes": 442781696,
+          "app_renderer_rss_bytes": 228556800,
+          "other_renderer_rss_bytes": 214224896,
+          "js_heap_bytes": 5971704,
+          "documents": 1,
+          "nodes": 4561,
+          "major_gc_since_previous": [
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 4729692,
+                "usedHeapSizeBefore": 7194108
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 10443,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 17453,
+              "tdur": 9140,
+              "tid": 17453,
+              "ts": 13767775441,
+              "tts": 7534894
+            },
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 4376704,
+                "usedHeapSizeBefore": 5754460
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 6872,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 17453,
+              "tdur": 5136,
+              "tid": 17453,
+              "ts": 13771248320,
+              "tts": 8439937
+            }
+          ]
+        },
+        {
+          "checkpoint": "seasonal_preview",
+          "trace_timestamp_us": 13775314302,
+          "rss_bytes": 484003840,
+          "app_renderer_rss_bytes": 269656064,
+          "other_renderer_rss_bytes": 214347776,
+          "js_heap_bytes": 10122756,
+          "documents": 12,
+          "nodes": 20936,
+          "major_gc_since_previous": [
+            {
+              "args": {
+                "type": "finalize incremental marking via stack guard",
+                "usedHeapSizeAfter": 6949792,
+                "usedHeapSizeBefore": 8296912
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 25794,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 17453,
+              "tdur": 24515,
+              "tid": 17453,
+              "ts": 13773883130,
+              "tts": 9484087
+            }
+          ]
+        },
+        {
+          "checkpoint": "offscreen",
+          "trace_timestamp_us": 13777899203,
+          "rss_bytes": 467513344,
+          "app_renderer_rss_bytes": 253042688,
+          "other_renderer_rss_bytes": 214470656,
+          "js_heap_bytes": 10966992,
+          "documents": 14,
+          "nodes": 23542,
+          "major_gc_since_previous": []
+        },
+        {
+          "checkpoint": "reduced_motion",
+          "trace_timestamp_us": 13778577141,
+          "rss_bytes": 468828160,
+          "app_renderer_rss_bytes": 254357504,
+          "other_renderer_rss_bytes": 214470656,
+          "js_heap_bytes": 11124284,
+          "documents": 14,
+          "nodes": 23542,
+          "major_gc_since_previous": []
+        },
+        {
+          "checkpoint": "background",
+          "trace_timestamp_us": 13780298963,
+          "rss_bytes": 578486272,
+          "app_renderer_rss_bytes": 254152704,
+          "other_renderer_rss_bytes": 324333568,
+          "js_heap_bytes": 11270844,
+          "documents": 14,
+          "nodes": 23542,
+          "major_gc_since_previous": []
+        },
+        {
+          "checkpoint": "navigation_1",
+          "trace_timestamp_us": 13780976395,
+          "rss_bytes": 478261248,
+          "app_renderer_rss_bytes": 262623232,
+          "other_renderer_rss_bytes": 215638016,
+          "js_heap_bytes": 12063988,
+          "documents": 16,
+          "nodes": 26136,
+          "major_gc_since_previous": []
+        },
+        {
+          "checkpoint": "navigation_5",
+          "trace_timestamp_us": 13783449260,
+          "rss_bytes": 508403712,
+          "app_renderer_rss_bytes": 292438016,
+          "other_renderer_rss_bytes": 215965696,
+          "js_heap_bytes": 5795564,
+          "documents": 2,
+          "nodes": 2592,
+          "major_gc_since_previous": [
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 5634972,
+                "usedHeapSizeBefore": 14918556
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 31482,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 17453,
+              "tdur": 30425,
+              "tid": 17453,
+              "ts": 13783150183,
+              "tts": 12722744
+            }
+          ]
+        },
+        {
+          "checkpoint": "navigation_10",
+          "trace_timestamp_us": 13786372532,
+          "rss_bytes": 513142784,
+          "app_renderer_rss_bytes": 296755200,
+          "other_renderer_rss_bytes": 216387584,
+          "js_heap_bytes": 9112964,
+          "documents": 12,
+          "nodes": 15562,
+          "major_gc_since_previous": []
+        },
+        {
+          "checkpoint": "navigation_15",
+          "trace_timestamp_us": 13789059270,
+          "rss_bytes": 508710912,
+          "app_renderer_rss_bytes": 291999744,
+          "other_renderer_rss_bytes": 216711168,
+          "js_heap_bytes": 8299176,
+          "documents": 10,
+          "nodes": 12968,
+          "major_gc_since_previous": [
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 5625364,
+                "usedHeapSizeBefore": 9759316
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 16225,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 17453,
+              "tdur": 12426,
+              "tid": 17453,
+              "ts": 13786774350,
+              "tts": 14387905
+            }
+          ]
+        },
+        {
+          "checkpoint": "navigation_20",
+          "trace_timestamp_us": 13791776519,
+          "rss_bytes": 501026816,
+          "app_renderer_rss_bytes": 283860992,
+          "other_renderer_rss_bytes": 217165824,
+          "js_heap_bytes": 7042820,
+          "documents": 6,
+          "nodes": 7780,
+          "major_gc_since_previous": [
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 5625368,
+                "usedHeapSizeBefore": 10201688
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 9017,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 17453,
+              "tdur": 7270,
+              "tid": 17453,
+              "ts": 13790457614,
+              "tts": 16015790
+            }
+          ]
+        }
+      ],
+      "gc_event_names": {},
+      "trace_sha256": "323076e511dcc4dfeab894bcca596626787c0ac947ab31c1541539d19129c1c1"
+    },
+    {
+      "cohort": "2-current",
+      "app_pid": 17659,
+      "points": [
+        {
+          "checkpoint": "home_idle",
+          "trace_timestamp_us": 13851433026,
+          "rss_bytes": 408612864,
+          "app_renderer_rss_bytes": 191754240,
+          "other_renderer_rss_bytes": 216858624,
+          "js_heap_bytes": 2628064,
+          "documents": 1,
+          "nodes": 2599,
+          "major_gc_since_previous": [
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 2268908,
+                "usedHeapSizeBefore": 3667268
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 3199,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 17659,
+              "tdur": 2692,
+              "tid": 17659,
+              "ts": 13821884514,
+              "tts": 466762
+            },
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 2288836,
+                "usedHeapSizeBefore": 2338748
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 3231,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 17659,
+              "tdur": 2210,
+              "tid": 17659,
+              "ts": 13834750416,
+              "tts": 1290495
+            },
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 2301092,
+                "usedHeapSizeBefore": 2344748
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 1952,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 17659,
+              "tdur": 1416,
+              "tid": 17659,
+              "ts": 13847733381,
+              "tts": 2213778
+            }
+          ]
+        },
+        {
+          "checkpoint": "home_interaction",
+          "trace_timestamp_us": 13882232053,
+          "rss_bytes": 417697792,
+          "app_renderer_rss_bytes": 201068544,
+          "other_renderer_rss_bytes": 216629248,
+          "js_heap_bytes": 2846916,
+          "documents": 1,
+          "nodes": 2606,
+          "major_gc_since_previous": [
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 2602716,
+                "usedHeapSizeBefore": 2890872
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 2167,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 17659,
+              "tdur": 1905,
+              "tid": 17659,
+              "ts": 13855800675,
+              "tts": 3002421
+            },
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 2719672,
+                "usedHeapSizeBefore": 2873920
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 2229,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 17659,
+              "tdur": 1765,
+              "tid": 17659,
+              "ts": 13862201874,
+              "tts": 3676193
+            },
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 2756668,
+                "usedHeapSizeBefore": 2923972
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 3182,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 17659,
+              "tdur": 2254,
+              "tid": 17659,
+              "ts": 13869100808,
+              "tts": 4407753
+            },
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 2775244,
+                "usedHeapSizeBefore": 2956512
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 2055,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 17659,
+              "tdur": 1928,
+              "tid": 17659,
+              "ts": 13876349164,
+              "tts": 5384946
+            },
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 2837760,
+                "usedHeapSizeBefore": 4996708
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 1790,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 17659,
+              "tdur": 1496,
+              "tid": 17659,
+              "ts": 13881999157,
+              "tts": 6121740
+            }
+          ]
+        },
+        {
+          "checkpoint": "wellness_care",
+          "trace_timestamp_us": 13886711788,
+          "rss_bytes": 424177664,
+          "app_renderer_rss_bytes": 207548416,
+          "other_renderer_rss_bytes": 216629248,
+          "js_heap_bytes": 4559660,
+          "documents": 3,
+          "nodes": 4114,
+          "major_gc_since_previous": []
+        },
+        {
+          "checkpoint": "picker_growth",
+          "trace_timestamp_us": 13891892175,
+          "rss_bytes": 444854272,
+          "app_renderer_rss_bytes": 229941248,
+          "other_renderer_rss_bytes": 214913024,
+          "js_heap_bytes": 5496536,
+          "documents": 1,
+          "nodes": 4561,
+          "major_gc_since_previous": [
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 4099492,
+                "usedHeapSizeBefore": 6754820
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 12048,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 17659,
+              "tdur": 11275,
+              "tid": 17659,
+              "ts": 13887687057,
+              "tts": 7181535
+            }
+          ]
+        },
+        {
+          "checkpoint": "seasonal_preview",
+          "trace_timestamp_us": 13894334198,
+          "rss_bytes": 486457344,
+          "app_renderer_rss_bytes": 271482880,
+          "other_renderer_rss_bytes": 214974464,
+          "js_heap_bytes": 14517620,
+          "documents": 12,
+          "nodes": 20946,
+          "major_gc_since_previous": [
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 4449332,
+                "usedHeapSizeBefore": 6183920
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 2549,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 17659,
+              "tdur": 1958,
+              "tid": 17659,
+              "ts": 13892050022,
+              "tts": 8133087
+            },
+            {
+              "args": {
+                "type": "finalize incremental marking via stack guard",
+                "usedHeapSizeAfter": 7039268,
+                "usedHeapSizeBefore": 8516516
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 5339,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 17659,
+              "tdur": 4706,
+              "tid": 17659,
+              "ts": 13893105661,
+              "tts": 8645397
+            }
+          ]
+        },
+        {
+          "checkpoint": "offscreen",
+          "trace_timestamp_us": 13897142133,
+          "rss_bytes": 471842816,
+          "app_renderer_rss_bytes": 256811008,
+          "other_renderer_rss_bytes": 215031808,
+          "js_heap_bytes": 15361100,
+          "documents": 14,
+          "nodes": 23541,
+          "major_gc_since_previous": []
+        },
+        {
+          "checkpoint": "reduced_motion",
+          "trace_timestamp_us": 13897838334,
+          "rss_bytes": 473616384,
+          "app_renderer_rss_bytes": 258551808,
+          "other_renderer_rss_bytes": 215064576,
+          "js_heap_bytes": 5646476,
+          "documents": 4,
+          "nodes": 6898,
+          "major_gc_since_previous": [
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 5645520,
+                "usedHeapSizeBefore": 10717916
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 5997,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 17659,
+              "tdur": 4539,
+              "tid": 17659,
+              "ts": 13897804673,
+              "tts": 10391775
+            }
+          ]
+        },
+        {
+          "checkpoint": "background",
+          "trace_timestamp_us": 13899512556,
+          "rss_bytes": 578191360,
+          "app_renderer_rss_bytes": 252059648,
+          "other_renderer_rss_bytes": 326131712,
+          "js_heap_bytes": 5811672,
+          "documents": 2,
+          "nodes": 2592,
+          "major_gc_since_previous": []
+        },
+        {
+          "checkpoint": "navigation_1",
+          "trace_timestamp_us": 13900009615,
+          "rss_bytes": 469426176,
+          "app_renderer_rss_bytes": 253272064,
+          "other_renderer_rss_bytes": 216154112,
+          "js_heap_bytes": 6608632,
+          "documents": 4,
+          "nodes": 5186,
+          "major_gc_since_previous": []
+        },
+        {
+          "checkpoint": "navigation_5",
+          "trace_timestamp_us": 13906628672,
+          "rss_bytes": 491565056,
+          "app_renderer_rss_bytes": 275066880,
+          "other_renderer_rss_bytes": 216498176,
+          "js_heap_bytes": 9304356,
+          "documents": 12,
+          "nodes": 15562,
+          "major_gc_since_previous": []
+        },
+        {
+          "checkpoint": "navigation_10",
+          "trace_timestamp_us": 13915580088,
+          "rss_bytes": 478081024,
+          "app_renderer_rss_bytes": 261427200,
+          "other_renderer_rss_bytes": 216653824,
+          "js_heap_bytes": 5894332,
+          "documents": 2,
+          "nodes": 2593,
+          "major_gc_since_previous": [
+            {
+              "args": {
+                "type": "finalize incremental marking via stack guard",
+                "usedHeapSizeAfter": 5644732,
+                "usedHeapSizeBefore": 9632044
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 9439,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 17659,
+              "tdur": 6081,
+              "tid": 17659,
+              "ts": 13906788901,
+              "tts": 13170677
+            },
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 5534324,
+                "usedHeapSizeBefore": 7336644
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 135928,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 17659,
+              "tdur": 87324,
+              "tid": 17659,
+              "ts": 13912591473,
+              "tts": 16789663
+            },
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 5537580,
+                "usedHeapSizeBefore": 7125860
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 6564,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 17659,
+              "tdur": 1986,
+              "tid": 17659,
+              "ts": 13915247040,
+              "tts": 17899695
+            }
+          ]
+        },
+        {
+          "checkpoint": "navigation_15",
+          "trace_timestamp_us": 13917828668,
+          "rss_bytes": 492830720,
+          "app_renderer_rss_bytes": 275673088,
+          "other_renderer_rss_bytes": 217157632,
+          "js_heap_bytes": 5624020,
+          "documents": 7,
+          "nodes": 7690,
+          "major_gc_since_previous": [
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 5624008,
+                "usedHeapSizeBefore": 8228440
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 5245,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 17659,
+              "tdur": 2862,
+              "tid": 17659,
+              "ts": 13917799479,
+              "tts": 18745452
+            }
+          ]
+        },
+        {
+          "checkpoint": "navigation_20",
+          "trace_timestamp_us": 13920268275,
+          "rss_bytes": 487976960,
+          "app_renderer_rss_bytes": 270372864,
+          "other_renderer_rss_bytes": 217604096,
+          "js_heap_bytes": 5827608,
+          "documents": 2,
+          "nodes": 2593,
+          "major_gc_since_previous": [
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 5646476,
+                "usedHeapSizeBefore": 8489440
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 2607,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 17659,
+              "tdur": 2430,
+              "tid": 17659,
+              "ts": 13920020557,
+              "tts": 19428965
+            }
+          ]
+        }
+      ],
+      "gc_event_names": {},
+      "trace_sha256": "58b8132536656f0cc5019982a73f74e9b4e412cd354d25aa2331942eb277ab19"
+    },
+    {
+      "cohort": "3-original",
+      "app_pid": 17843,
+      "points": [
+        {
+          "checkpoint": "home_idle",
+          "trace_timestamp_us": 13980545391,
+          "rss_bytes": 410624000,
+          "app_renderer_rss_bytes": 191942656,
+          "other_renderer_rss_bytes": 218681344,
+          "js_heap_bytes": 2667388,
+          "documents": 1,
+          "nodes": 2658,
+          "major_gc_since_previous": [
+            {
+              "args": {
+                "type": "finalize incremental marking via stack guard",
+                "usedHeapSizeAfter": 1583160,
+                "usedHeapSizeBefore": 3137156
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 16978,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 17843,
+              "tdur": 10255,
+              "tid": 17843,
+              "ts": 13950335563,
+              "tts": 654608
+            },
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 2272968,
+                "usedHeapSizeBefore": 2652296
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 3689,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 17843,
+              "tdur": 2382,
+              "tid": 17843,
+              "ts": 13958314506,
+              "tts": 1478371
+            },
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 2279668,
+                "usedHeapSizeBefore": 2430764
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 10396,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 17843,
+              "tdur": 6336,
+              "tid": 17843,
+              "ts": 13969699630,
+              "tts": 3721401
+            },
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 2287920,
+                "usedHeapSizeBefore": 2500040
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 4037,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 17843,
+              "tdur": 3934,
+              "tid": 17843,
+              "ts": 13978317250,
+              "tts": 4545317
+            }
+          ]
+        },
+        {
+          "checkpoint": "home_interaction",
+          "trace_timestamp_us": 14011431560,
+          "rss_bytes": 420470784,
+          "app_renderer_rss_bytes": 202600448,
+          "other_renderer_rss_bytes": 217870336,
+          "js_heap_bytes": 4950400,
+          "documents": 1,
+          "nodes": 2684,
+          "major_gc_since_previous": [
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 2544596,
+                "usedHeapSizeBefore": 2861052
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 4421,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 17843,
+              "tdur": 3660,
+              "tid": 17843,
+              "ts": 13983927301,
+              "tts": 5345867
+            },
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 2615224,
+                "usedHeapSizeBefore": 3351928
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 5223,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 17843,
+              "tdur": 5071,
+              "tid": 17843,
+              "ts": 13988732781,
+              "tts": 5989796
+            },
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 2638332,
+                "usedHeapSizeBefore": 3314260
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 4655,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 17843,
+              "tdur": 2683,
+              "tid": 17843,
+              "ts": 13993348212,
+              "tts": 6624839
+            },
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 2703400,
+                "usedHeapSizeBefore": 3432932
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 5945,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 17843,
+              "tdur": 7706,
+              "tid": 17843,
+              "ts": 13998498902,
+              "tts": 7466918
+            },
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 2726512,
+                "usedHeapSizeBefore": 3415096
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 2955,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 17843,
+              "tdur": 2854,
+              "tid": 17843,
+              "ts": 14003199109,
+              "tts": 8331375
+            },
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 2739396,
+                "usedHeapSizeBefore": 3449512
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 4779,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 17843,
+              "tdur": 4679,
+              "tid": 17843,
+              "ts": 14008082662,
+              "tts": 9105710
+            }
+          ]
+        },
+        {
+          "checkpoint": "wellness_care",
+          "trace_timestamp_us": 14016014997,
+          "rss_bytes": 427323392,
+          "app_renderer_rss_bytes": 209244160,
+          "other_renderer_rss_bytes": 218079232,
+          "js_heap_bytes": 3367468,
+          "documents": 1,
+          "nodes": 1504,
+          "major_gc_since_previous": [
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 3013400,
+                "usedHeapSizeBefore": 4758564
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 3942,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 17843,
+              "tdur": 2732,
+              "tid": 17843,
+              "ts": 14012004806,
+              "tts": 9964654
+            }
+          ]
+        },
+        {
+          "checkpoint": "picker_growth",
+          "trace_timestamp_us": 14021131974,
+          "rss_bytes": 447557632,
+          "app_renderer_rss_bytes": 230899712,
+          "other_renderer_rss_bytes": 216657920,
+          "js_heap_bytes": 5327148,
+          "documents": 1,
+          "nodes": 4878,
+          "major_gc_since_previous": [
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 2900564,
+                "usedHeapSizeBefore": 4353460
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 10342,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 17843,
+              "tdur": 5233,
+              "tid": 17843,
+              "ts": 14016571160,
+              "tts": 10827590
+            },
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 4271520,
+                "usedHeapSizeBefore": 5023612
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 4381,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 17843,
+              "tdur": 3468,
+              "tid": 17843,
+              "ts": 14018620838,
+              "tts": 11413026
+            }
+          ]
+        },
+        {
+          "checkpoint": "seasonal_preview",
+          "trace_timestamp_us": 14023891339,
+          "rss_bytes": 472625152,
+          "app_renderer_rss_bytes": 255574016,
+          "other_renderer_rss_bytes": 217051136,
+          "js_heap_bytes": 9813044,
+          "documents": 9,
+          "nodes": 13835,
+          "major_gc_since_previous": [
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 4407656,
+                "usedHeapSizeBefore": 5444812
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 9951,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 17843,
+              "tdur": 4846,
+              "tid": 17843,
+              "ts": 14021504423,
+              "tts": 12186924
+            },
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 5776476,
+                "usedHeapSizeBefore": 8498724
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 7117,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 17843,
+              "tdur": 5158,
+              "tid": 17843,
+              "ts": 14022731759,
+              "tts": 12592682
+            }
+          ]
+        },
+        {
+          "checkpoint": "offscreen",
+          "trace_timestamp_us": 14026407273,
+          "rss_bytes": 456220672,
+          "app_renderer_rss_bytes": 239120384,
+          "other_renderer_rss_bytes": 217100288,
+          "js_heap_bytes": 9515812,
+          "documents": 11,
+          "nodes": 16490,
+          "major_gc_since_previous": []
+        },
+        {
+          "checkpoint": "reduced_motion",
+          "trace_timestamp_us": 14027121978,
+          "rss_bytes": 458858496,
+          "app_renderer_rss_bytes": 241758208,
+          "other_renderer_rss_bytes": 217100288,
+          "js_heap_bytes": 9684532,
+          "documents": 11,
+          "nodes": 16493,
+          "major_gc_since_previous": []
+        },
+        {
+          "checkpoint": "background",
+          "trace_timestamp_us": 14028884228,
+          "rss_bytes": 571039744,
+          "app_renderer_rss_bytes": 242970624,
+          "other_renderer_rss_bytes": 328069120,
+          "js_heap_bytes": 9863656,
+          "documents": 11,
+          "nodes": 16502,
+          "major_gc_since_previous": []
+        },
+        {
+          "checkpoint": "navigation_1",
+          "trace_timestamp_us": 14029444626,
+          "rss_bytes": 468062208,
+          "app_renderer_rss_bytes": 249794560,
+          "other_renderer_rss_bytes": 218267648,
+          "js_heap_bytes": 10631016,
+          "documents": 13,
+          "nodes": 19148,
+          "major_gc_since_previous": []
+        },
+        {
+          "checkpoint": "navigation_5",
+          "trace_timestamp_us": 14031703062,
+          "rss_bytes": 501342208,
+          "app_renderer_rss_bytes": 282816512,
+          "other_renderer_rss_bytes": 218525696,
+          "js_heap_bytes": 5730500,
+          "documents": 2,
+          "nodes": 2641,
+          "major_gc_since_previous": [
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 5561880,
+                "usedHeapSizeBefore": 13084088
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 106225,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 17843,
+              "tdur": 102732,
+              "tid": 17843,
+              "ts": 14031432580,
+              "tts": 15100564
+            }
+          ]
+        },
+        {
+          "checkpoint": "navigation_10",
+          "trace_timestamp_us": 14034414670,
+          "rss_bytes": 500363264,
+          "app_renderer_rss_bytes": 281485312,
+          "other_renderer_rss_bytes": 218877952,
+          "js_heap_bytes": 6935076,
+          "documents": 6,
+          "nodes": 7932,
+          "major_gc_since_previous": [
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 5555796,
+                "usedHeapSizeBefore": 7831780
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 7800,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 17843,
+              "tdur": 5328,
+              "tid": 17843,
+              "ts": 14033226137,
+              "tts": 16046039
+            }
+          ]
+        },
+        {
+          "checkpoint": "navigation_15",
+          "trace_timestamp_us": 14036948943,
+          "rss_bytes": 499478528,
+          "app_renderer_rss_bytes": 280162304,
+          "other_renderer_rss_bytes": 219316224,
+          "js_heap_bytes": 6930904,
+          "documents": 6,
+          "nodes": 7931,
+          "major_gc_since_previous": [
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 5576300,
+                "usedHeapSizeBefore": 9023092
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 7342,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 17843,
+              "tdur": 7210,
+              "tid": 17843,
+              "ts": 14035768125,
+              "tts": 17062930
+            }
+          ]
+        },
+        {
+          "checkpoint": "navigation_20",
+          "trace_timestamp_us": 14039790316,
+          "rss_bytes": 492892160,
+          "app_renderer_rss_bytes": 273330176,
+          "other_renderer_rss_bytes": 219561984,
+          "js_heap_bytes": 10086272,
+          "documents": 16,
+          "nodes": 21158,
+          "major_gc_since_previous": []
+        }
+      ],
+      "gc_event_names": {},
+      "trace_sha256": "033792270da926432591b0cc81562ccd2d65188b0cccd934a929fb445b46c147"
+    }
+  ]
+}

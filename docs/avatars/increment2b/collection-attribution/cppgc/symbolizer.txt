@@ -1,0 +1,18 @@
+readelf: Error: Unable to find program interpreter name
+addr2line: DWARF error: mangled line number section (bad file number)
+addr2line: DWARF error: mangled line number section (bad file number)
+addr2line: DWARF error: mangled line number section (bad file number)
+addr2line: DWARF error: mangled line number section (bad file number)
+addr2line: DWARF error: mangled line number section (bad file number)
+addr2line: DWARF error: mangled line number section (bad file number)
+addr2line: DWARF error: mangled line number section (bad file number)
+addr2line: DWARF error: mangled line number section (bad file number)
+addr2line: DWARF error: mangled line number section (bad file number)
+addr2line: DWARF error: mangled line number section (bad file number)
+addr2line: DWARF error: mangled line number section (bad file number)
+addr2line: DWARF error: mangled line number section (bad file number)
+addr2line: DWARF error: mangled line number section (bad file number)
+addr2line: DWARF error: mangled line number section (bad file number)
+addr2line: DWARF error: mangled line number section (bad file number)
+addr2line: DWARF error: mangled line number section (bad file number)
+profiles 52 offsets 3381

@@ -1,0 +1,3545 @@
+{
+  "acceptance": false,
+  "build_id": "1c5dca8527a61d07372e489142bee26af1bcaf71",
+  "debug_sha256": "3cc0a23a46948354fc39d4e3e124e23120916f661ecac533ae9dd45d4d3c6057",
+  "resolved_offsets": 3255,
+  "note": "Sampling estimates cover target renderer only; bucket totals are not RSS and do not identify retention roots.",
+  "records": [
+    {
+      "cohort": "0-original",
+      "checkpoint": "background",
+      "samples": 84,
+      "sample_weight_total": 3309568,
+      "largest_buckets": [
+        [
+          "blink::StringImpl::CreateUninitialized(unsigned long, base::span<char16_t, 18446744073709551615ul, char16_t*>&)",
+          557056
+        ],
+        [
+          "blink::PaintChunker::AddHitTestDataToCurrentChunk(blink::DisplayItem::Id const&, blink::DisplayItemClient const&, gfx::Rect const&, cc::TouchAction, bool, cc::HitTestOpaqueness)",
+          294912
+        ],
+        [
+          "blink::CSSAnimationData::CSSAnimationData()",
+          262144
+        ],
+        [
+          "cc::PaintShader::MakeLinearGradient(SkPoint const*, SkRGBA4f<(SkAlphaType)3> const*, float const*, int, SkTileMode, SkGradient::Interpolation, unsigned int, SkMatrix const*, SkRGBA4f<(SkAlphaType)3>)",
+          163840
+        ],
+        [
+          "SkTextBlobBuilder::allocInternal(SkFont const&, SkTextBlob::GlyphPositioning, int, int, SkPoint, SkRect const*)",
+          131072
+        ],
+        [
+          "cc::PaintOpBuffer::ReleaseAsRecord()",
+          131072
+        ],
+        [
+          "blink::PaintController::PaintController(bool, blink::PaintControllerPersistentData*, blink::PaintBenchmarkMode)",
+          131072
+        ],
+        [
+          "cc::DisplayItemList::Finalize()",
+          98304
+        ],
+        [
+          "blink::PhysicalFragmentRareData::PhysicalFragmentRareData(blink::PhysicalFragmentRareData const&)",
+          65536
+        ],
+        [
+          "blink::CascadeMap::Add(blink::CSSPropertyID, blink::CascadePriority)",
+          65536
+        ],
+        [
+          "blink::css_longhand::AnimationRangeStart::ApplyValue(blink::StyleResolverState&, blink::CSSValue const&, unsigned char) const",
+          65536
+        ],
+        [
+          "cc::PropertyTrees::ResetCachedData()",
+          65536
+        ],
+        [
+          "blink::CreateResourceTimingInfo(base::TimeTicks, blink::KURL const&, blink::ResourceResponse const*)",
+          65536
+        ],
+        [
+          "blink::RenderFrameMetadataObserverImpl::BindToCurrentSequence()",
+          65536
+        ],
+        [
+          "blink::HTMLTokenizer::NextTokenImpl(blink::SegmentedString&)",
+          65536
+        ]
+      ]
+    },
+    {
+      "cohort": "0-original",
+      "checkpoint": "home_idle",
+      "samples": 79,
+      "sample_weight_total": 3080192,
+      "largest_buckets": [
+        [
+          "blink::StringImpl::CreateUninitialized(unsigned long, base::span<char16_t, 18446744073709551615ul, char16_t*>&)",
+          491520
+        ],
+        [
+          "blink::PaintChunker::AddHitTestDataToCurrentChunk(blink::DisplayItem::Id const&, blink::DisplayItemClient const&, gfx::Rect const&, cc::TouchAction, bool, cc::HitTestOpaqueness)",
+          327680
+        ],
+        [
+          "cc::PaintOpBuffer::ReleaseAsRecord()",
+          196608
+        ],
+        [
+          "cc::PropertyTrees::operator=(cc::PropertyTrees const&)",
+          131072
+        ],
+        [
+          "cc::ResourcePool::InUsePoolResource::InstallSoftwareBacking(scoped_refptr<gpu::SharedImageInterface>, std::__1::basic_string_view<char, std::__1::char_traits<char> >) const",
+          131072
+        ],
+        [
+          "blink::CachedMetadata::GetSerializedDataHeader(unsigned int, unsigned int, unsigned long)",
+          131072
+        ],
+        [
+          "cc::PictureLayerImpl::CreateLayerImpl(cc::LayerTreeImpl*) const",
+          98304
+        ],
+        [
+          "blink::ThirdPartyScriptDetector::From(blink::LocalDOMWindow&)",
+          98304
+        ],
+        [
+          "std::__1::deque<base::sequence_manager::Task, std::__1::allocator<base::sequence_manager::Task> >::__add_back_capacity()",
+          65536
+        ],
+        [
+          "cc::RollingTimeDeltaHistory::InsertSample(base::TimeDelta)",
+          65536
+        ],
+        [
+          "cc::TileManager::CreateTile(cc::Tile::CreateInfo const&, int, int, int)",
+          65536
+        ],
+        [
+          "blink::Document::CompleteURLWithOverride(blink::String const&, blink::KURL const&, blink::Document::CompleteURLPreloadStatus) const",
+          65536
+        ],
+        [
+          "blink::StringImpl::Create(base::span<unsigned char const, 18446744073709551615ul, unsigned char const*>)",
+          65536
+        ],
+        [
+          "v8::internal::ExternalReferenceEncoder::ExternalReferenceEncoder(v8::internal::Isolate*)",
+          65536
+        ],
+        [
+          "SkTextBlobBuilder::allocInternal(SkFont const&, SkTextBlob::GlyphPositioning, int, int, SkPoint, SkRect const*)",
+          32768
+        ]
+      ]
+    },
+    {
+      "cohort": "0-original",
+      "checkpoint": "home_interaction",
+      "samples": 118,
+      "sample_weight_total": 4521984,
+      "largest_buckets": [
+        [
+          "blink::PaintChunker::AddHitTestDataToCurrentChunk(blink::DisplayItem::Id const&, blink::DisplayItemClient const&, gfx::Rect const&, cc::TouchAction, bool, cc::HitTestOpaqueness)",
+          655360
+        ],
+        [
+          "blink::StringImpl::CreateUninitialized(unsigned long, base::span<char16_t, 18446744073709551615ul, char16_t*>&)",
+          491520
+        ],
+        [
+          "cc::ResourcePool::InUsePoolResource::InstallSoftwareBacking(scoped_refptr<gpu::SharedImageInterface>, std::__1::basic_string_view<char, std::__1::char_traits<char> >) const",
+          196608
+        ],
+        [
+          "cc::PropertyTrees::operator=(cc::PropertyTrees const&)",
+          163840
+        ],
+        [
+          "blink::RasterInvalidator::Generate(blink::PaintChunkSubset const&, gfx::Vector2dF const&, gfx::Size const&, blink::PropertyTreeState const&)",
+          131072
+        ],
+        [
+          "cc::PictureLayerImpl::CreateLayerImpl(cc::LayerTreeImpl*) const",
+          131072
+        ],
+        [
+          "blink::ReportPerAnimationFrameHistograms(std::__1::basic_string_view<char, std::__1::char_traits<char> >, std::__1::basic_string_view<char, std::__1::char_traits<char> >, base::TimeDelta)",
+          131072
+        ],
+        [
+          "blink::CachedMetadata::GetSerializedDataHeader(unsigned int, unsigned int, unsigned long)",
+          131072
+        ],
+        [
+          "cc::PaintOpBuffer::ShrinkToFit()",
+          98304
+        ],
+        [
+          "blink::InspectorMemoryAgent::GetSamplingProfileById(std::__1::optional<base::SamplingHeapProfiler::Session>)",
+          98304
+        ],
+        [
+          "std::__1::deque<base::sequence_manager::Task, std::__1::allocator<base::sequence_manager::Task> >::__add_back_capacity()",
+          98304
+        ],
+        [
+          "blink::ThirdPartyScriptDetector::From(blink::LocalDOMWindow&)",
+          98304
+        ],
+        [
+          "cc::ScrollTree::operator=(cc::ScrollTree const&)",
+          65536
+        ],
+        [
+          "cc::PaintOpBuffer::ReleaseAsRecord()",
+          65536
+        ],
+        [
+          "cc::RollingTimeDeltaHistory::InsertSample(base::TimeDelta)",
+          65536
+        ]
+      ]
+    },
+    {
+      "cohort": "0-original",
+      "checkpoint": "navigation_1",
+      "samples": 50,
+      "sample_weight_total": 2097152,
+      "largest_buckets": [
+        [
+          "blink::StringImpl::CreateUninitialized(unsigned long, base::span<char16_t, 18446744073709551615ul, char16_t*>&)",
+          491520
+        ],
+        [
+          "cc::PaintOpBuffer::ReleaseAsRecord()",
+          196608
+        ],
+        [
+          "cc::PropertyTrees::ResetCachedData()",
+          98304
+        ],
+        [
+          "cc::DisplayItemList::Finalize()",
+          98304
+        ],
+        [
+          "blink::PaintChunker::AddHitTestDataToCurrentChunk(blink::DisplayItem::Id const&, blink::DisplayItemClient const&, gfx::Rect const&, cc::TouchAction, bool, cc::HitTestOpaqueness)",
+          65536
+        ],
+        [
+          "v8::internal::Deserializer<v8::internal::Isolate>::ReadObject(v8::internal::SnapshotSpace)",
+          65536
+        ],
+        [
+          "URLLoaderThrottleProviderImpl::CreateThrottles(base::optional_ref<base::TokenType<blink::LocalFrameTokenTypeMarker> const, (partition_alloc::internal::RawPtrTraits)0>, network::ResourceRequest const&)",
+          65536
+        ],
+        [
+          "cc::PropertyTrees::operator=(cc::PropertyTrees const&)",
+          32768
+        ],
+        [
+          "cc::ResourcePool::AcquireResource(gfx::Size const&, viz::SharedImageFormat, gfx::ColorSpace const&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&)",
+          32768
+        ],
+        [
+          "v8::internal::KeyAccumulator::AddKey(v8::internal::DirectHandle<v8::internal::Object>, v8::internal::AddKeyConversion)",
+          32768
+        ],
+        [
+          "mojo::internal::InterfacePtrState<blink::mojom::blink::PaidContentMetadataObserver>::ConfigureProxyIfNecessary()",
+          32768
+        ],
+        [
+          "mojo::internal::InterfacePtrState<blink::mojom::blink::AnchorElementMetricsHost>::ConfigureProxyIfNecessary()",
+          32768
+        ],
+        [
+          "base::internal::Invoker<base::internal::FunctorTraits<blink::PaintTiming::MarkPaintTimingInternal()::$_0&&, cppgc::internal::BasicPersistent<blink::PaintTiming, cppgc::internal::WeakPersistentPolicy, cppgc::internal::KeepLocationPolicy, cppgc::internal::DisabledCheckingPolicy>&&, base::OnceCallback<void (base::TimeTicks const&, blink::DOMPaintTimingInfo const&)>&&, blink::PaintTiming::PendingPaintTimingRecord&&>, base::internal::BindState<false, false, false, blink::PaintTiming::MarkPaintTimingInternal()::$_0, cppgc::internal::BasicPersistent<blink::PaintTiming, cppgc::internal::WeakPersistentPolicy, cppgc::internal::KeepLocationPolicy, cppgc::internal::DisabledCheckingPolicy>, base::OnceCallback<void (base::TimeTicks const&, blink::DOMPaintTimingInfo const&)>, blink::PaintTiming::PendingPaintTimingRecord>, void (viz::FrameTimingDetails const&)>::RunOnce(base::internal::BindStateBase*, viz::FrameTimingDetails const&)",
+          32768
+        ],
+        [
+          "mojo::internal::InterfacePtrState<performance_manager::mojom::blink::DocumentCoordinationUnit>::ConfigureProxyIfNecessary()",
+          32768
+        ],
+        [
+          "ChromeRenderFrameObserver::DidMeaningfulLayout(blink::WebMeaningfulLayout)",
+          32768
+        ]
+      ]
+    },
+    {
+      "cohort": "0-original",
+      "checkpoint": "navigation_10",
+      "samples": 51,
+      "sample_weight_total": 2162688,
+      "largest_buckets": [
+        [
+          "blink::StringImpl::CreateUninitialized(unsigned long, base::span<char16_t, 18446744073709551615ul, char16_t*>&)",
+          491520
+        ],
+        [
+          "blink::MatchedPropertiesCache::Add(blink::MatchedPropertiesCache::Key const&, blink::StyleAdjuster::ElementTypeForCache, blink::ComputedStyle const*, blink::ComputedStyle const*, blink::ComputedStyle const*, blink::ComputedStyle const*)",
+          163840
+        ],
+        [
+          "cc::PaintOpBuffer::ReleaseAsRecord()",
+          131072
+        ],
+        [
+          "blink::PaintController::PaintController(bool, blink::PaintControllerPersistentData*, blink::PaintBenchmarkMode)",
+          65536
+        ],
+        [
+          "cc::ResourcePool::PrepareForExport(cc::ResourcePool::InUsePoolResource const&, viz::TransferableResource::ResourceSource)",
+          65536
+        ],
+        [
+          "cc::ResourcePool::InUsePoolResource::InstallSoftwareBacking(scoped_refptr<gpu::SharedImageInterface>, std::__1::basic_string_view<char, std::__1::char_traits<char> >) const",
+          65536
+        ],
+        [
+          "blink::ThirdPartyScriptDetector::Detect(blink::String)",
+          65536
+        ],
+        [
+          "cc::PropertyTrees::ResetCachedData()",
+          65536
+        ],
+        [
+          "blink::HeapMojoRemote<blink::mojom::blink::BlobRegistry, (blink::HeapMojoWrapperMode)0>::Wrapper::ContextDestroyed()",
+          65536
+        ],
+        [
+          "blink::ThirdPartyScriptDetector::From(blink::LocalDOMWindow&)",
+          65536
+        ],
+        [
+          "blink::HTMLTokenizer::NextTokenImpl(blink::SegmentedString&)",
+          65536
+        ],
+        [
+          "cc::PaintShader::MakeLinearGradient(SkPoint const*, SkRGBA4f<(SkAlphaType)3> const*, float const*, int, SkTileMode, SkGradient::Interpolation, unsigned int, SkMatrix const*, SkRGBA4f<(SkAlphaType)3>)",
+          32768
+        ],
+        [
+          "std::__1::__hash_table<std::__1::__hash_value_type<cc::TileIndex, std::__1::unique_ptr<cc::Tile, std::__1::default_delete<cc::Tile> > >, std::__1::__unordered_map_hasher<cc::TileIndex, std::__1::pair<cc::TileIndex const, std::__1::unique_ptr<cc::Tile, std::__1::default_delete<cc::Tile> > >, std::__1::hash<cc::TileIndex>, std::__1::equal_to<cc::TileIndex> >, std::__1::__unordered_map_equal<cc::TileIndex, std::__1::pair<cc::TileIndex const, std::__1::unique_ptr<cc::Tile, std::__1::default_delete<cc::Tile> > >, std::__1::equal_to<cc::TileIndex>, std::__1::hash<cc::TileIndex> >, std::__1::allocator<std::__1::pair<cc::TileIndex const, std::__1::unique_ptr<cc::Tile, std::__1::default_delete<cc::Tile> > > > >::__emplace_unique[abi:sqn220108]<std::__1::piecewise_construct_t const&, std::__1::tuple<cc::TileIndex const&>, std::__1::tuple<> >(std::__1::piecewise_construct_t const&, std::__1::tuple<cc::TileIndex const&>&&, std::__1::tuple<>&&)::{lambda(cc::TileIndex const&, std::__1::piecewise_construct_t const&, std::__1::tuple<cc::TileIndex const&>&&, std::__1::tuple<>&&)#1}::operator()(cc::TileIndex const&, std::__1::piecewise_construct_t const&, std::__1::tuple<cc::TileIndex const&>&&, std::__1::tuple<>&&) const",
+          32768
+        ],
+        [
+          "void std::__1::vector<cc::EffectNode, std::__1::allocator<cc::EffectNode> >::__assign_with_size[abi:sqn220108]<std::__1::_ClassicAlgPolicy, cc::EffectNode*, cc::EffectNode*>(cc::EffectNode*, cc::EffectNode*, long)",
+          32768
+        ],
+        [
+          "blink::PendingLayer::UpdateCompositedLayer(blink::PendingLayer*, blink::PropertyTreeState, viz::Selection<cc::LayerSelectionBound>&, bool, cc::LayerTreeHost*)",
+          32768
+        ]
+      ]
+    },
+    {
+      "cohort": "0-original",
+      "checkpoint": "navigation_15",
+      "samples": 67,
+      "sample_weight_total": 2818048,
+      "largest_buckets": [
+        [
+          "blink::StringImpl::CreateUninitialized(unsigned long, base::span<char16_t, 18446744073709551615ul, char16_t*>&)",
+          589824
+        ],
+        [
+          "cc::PaintOpBuffer::ReleaseAsRecord()",
+          196608
+        ],
+        [
+          "cc::PaintShader::MakeLinearGradient(SkPoint const*, SkRGBA4f<(SkAlphaType)3> const*, float const*, int, SkTileMode, SkGradient::Interpolation, unsigned int, SkMatrix const*, SkRGBA4f<(SkAlphaType)3>)",
+          196608
+        ],
+        [
+          "cc::PropertyTrees::operator=(cc::PropertyTrees const&)",
+          131072
+        ],
+        [
+          "blink::Document::CompleteURLWithOverride(blink::String const&, blink::KURL const&, blink::Document::CompleteURLPreloadStatus) const",
+          131072
+        ],
+        [
+          "blink::PaintController::PaintController(bool, blink::PaintControllerPersistentData*, blink::PaintBenchmarkMode)",
+          98304
+        ],
+        [
+          "cc::PropertyTrees::ResetCachedData()",
+          98304
+        ],
+        [
+          "cc::ResourcePool::InUsePoolResource::InstallSoftwareBacking(scoped_refptr<gpu::SharedImageInterface>, std::__1::basic_string_view<char, std::__1::char_traits<char> >) const",
+          98304
+        ],
+        [
+          "blink::PaintChunker::AddHitTestDataToCurrentChunk(blink::DisplayItem::Id const&, blink::DisplayItemClient const&, gfx::Rect const&, cc::TouchAction, bool, cc::HitTestOpaqueness)",
+          65536
+        ],
+        [
+          "blink::PhysicalFragmentRareData::PhysicalFragmentRareData(blink::PhysicalRect const*, blink::PhysicalBoxStrut const*, blink::PhysicalBoxStrut const*, blink::PhysicalBoxStrut const*, std::__1::optional<blink::PhysicalRect>, blink::BoxFragmentBuilder&, unsigned int)",
+          65536
+        ],
+        [
+          "blink::MatchedPropertiesCache::Add(blink::MatchedPropertiesCache::Key const&, blink::StyleAdjuster::ElementTypeForCache, blink::ComputedStyle const*, blink::ComputedStyle const*, blink::ComputedStyle const*, blink::ComputedStyle const*)",
+          65536
+        ],
+        [
+          "blink::StringImpl::Create8BitIfPossible(base::span<char16_t const, 18446744073709551615ul, char16_t const*>)",
+          65536
+        ],
+        [
+          "blink::StringImpl::Create(base::span<unsigned char const, 18446744073709551615ul, unsigned char const*>)",
+          65536
+        ],
+        [
+          "cc::DisplayItemList::Finalize()",
+          32768
+        ],
+        [
+          "std::__1::deque<base::sequence_manager::Task, std::__1::allocator<base::sequence_manager::Task> >::__add_back_capacity()",
+          32768
+        ]
+      ]
+    },
+    {
+      "cohort": "0-original",
+      "checkpoint": "navigation_20",
+      "samples": 48,
+      "sample_weight_total": 2031616,
+      "largest_buckets": [
+        [
+          "blink::StringImpl::CreateUninitialized(unsigned long, base::span<char16_t, 18446744073709551615ul, char16_t*>&)",
+          491520
+        ],
+        [
+          "cc::PaintOpBuffer::ReleaseAsRecord()",
+          131072
+        ],
+        [
+          "blink::MatchedPropertiesCache::Add(blink::MatchedPropertiesCache::Key const&, blink::StyleAdjuster::ElementTypeForCache, blink::ComputedStyle const*, blink::ComputedStyle const*, blink::ComputedStyle const*, blink::ComputedStyle const*)",
+          131072
+        ],
+        [
+          "cc::PropertyTrees::ResetCachedData()",
+          98304
+        ],
+        [
+          "blink::FrameMetadataObserverRegistry::BindReceiver(blink::LocalFrame*, mojo::PendingReceiver<blink::mojom::blink::FrameMetadataObserverRegistry>)",
+          65536
+        ],
+        [
+          "cc::PaintShader::MakeLinearGradient(SkPoint const*, SkRGBA4f<(SkAlphaType)3> const*, float const*, int, SkTileMode, SkGradient::Interpolation, unsigned int, SkMatrix const*, SkRGBA4f<(SkAlphaType)3>)",
+          65536
+        ],
+        [
+          "cc::PictureLayer::CreateLayerImpl(cc::LayerTreeImpl*) const",
+          65536
+        ],
+        [
+          "blink::Document::CompleteURLWithOverride(blink::String const&, blink::KURL const&, blink::Document::CompleteURLPreloadStatus) const",
+          65536
+        ],
+        [
+          "blink::HTMLTokenizer::NextTokenImpl(blink::SegmentedString&)",
+          65536
+        ],
+        [
+          "cc::LayerTreeHost::WillCommit(std::__1::unique_ptr<cc::CompletionEvent, std::__1::default_delete<cc::CompletionEvent> >, bool)",
+          32768
+        ],
+        [
+          "cc::ResourcePool::PrepareForExport(cc::ResourcePool::InUsePoolResource const&, viz::TransferableResource::ResourceSource)",
+          32768
+        ],
+        [
+          "blink::ContentLayerClientImpl::UpdateCcPictureLayer(blink::PendingLayer const&, blink::PropertyTreeState)",
+          32768
+        ],
+        [
+          "autofill::form_util::ExtractFormData(blink::WebDocument const&, blink::WebFormElement const&, autofill::FieldDataManager const&, autofill::CallTimerState const&, base::flat_map<autofill::FormRendererId, std::__1::vector<std::__1::pair<std::__1::basic_string<char16_t, std::__1::char_traits<char16_t>, std::__1::allocator<char16_t> >, autofill::mojom::ButtonTitleType>, std::__1::allocator<std::__1::pair<std::__1::basic_string<char16_t, std::__1::char_traits<char16_t>, std::__1::allocator<char16_t> >, autofill::mojom::ButtonTitleType> > >, std::__1::less<void>, std::__1::vector<std::__1::pair<autofill::FormRendererId, std::__1::vector<std::__1::pair<std::__1::basic_string<char16_t, std::__1::char_traits<char16_t>, std::__1::allocator<char16_t> >, autofill::mojom::ButtonTitleType>, std::__1::allocator<std::__1::pair<std::__1::basic_string<char16_t, std::__1::char_traits<char16_t>, std::__1::allocator<char16_t> >, autofill::mojom::ButtonTitleType> > > >, std::__1::allocator<std::__1::pair<autofill::FormRendererId, std::__1::vector<std::__1::pair<std::__1::basic_string<char16_t, std::__1::char_traits<char16_t>, std::__1::allocator<char16_t> >, autofill::mojom::ButtonTitleType>, std::__1::allocator<std::__1::pair<std::__1::basic_string<char16_t, std::__1::char_traits<char16_t>, std::__1::allocator<char16_t> >, autofill::mojom::ButtonTitleType> > > > > > >*)",
+          32768
+        ],
+        [
+          "std::__1::deque<base::sequence_manager::Task, std::__1::allocator<base::sequence_manager::Task> >::__add_back_capacity()",
+          32768
+        ],
+        [
+          "cc::PropertyTrees::operator=(cc::PropertyTrees const&)",
+          32768
+        ]
+      ]
+    },
+    {
+      "cohort": "0-original",
+      "checkpoint": "navigation_5",
+      "samples": 62,
+      "sample_weight_total": 2457600,
+      "largest_buckets": [
+        [
+          "blink::StringImpl::CreateUninitialized(unsigned long, base::span<char16_t, 18446744073709551615ul, char16_t*>&)",
+          425984
+        ],
+        [
+          "cc::ResourcePool::InUsePoolResource::InstallSoftwareBacking(scoped_refptr<gpu::SharedImageInterface>, std::__1::basic_string_view<char, std::__1::char_traits<char> >) const",
+          131072
+        ],
+        [
+          "blink::Document::CompleteURLWithOverride(blink::String const&, blink::KURL const&, blink::Document::CompleteURLPreloadStatus) const",
+          131072
+        ],
+        [
+          "cc::PropertyTrees::operator=(cc::PropertyTrees const&)",
+          98304
+        ],
+        [
+          "blink::StringImpl::Create8BitIfPossible(base::span<char16_t const, 18446744073709551615ul, char16_t const*>)",
+          65536
+        ],
+        [
+          "cc::EffectTree::CreateOrReuseRenderSurfaces(std::__1::vector<std::__1::unique_ptr<cc::RenderSurfaceImpl, std::__1::default_delete<cc::RenderSurfaceImpl> >, std::__1::allocator<std::__1::unique_ptr<cc::RenderSurfaceImpl, std::__1::default_delete<cc::RenderSurfaceImpl> > > >*, cc::LayerTreeImpl*)",
+          65536
+        ],
+        [
+          "cc::PropertyTrees::ResetCachedData()",
+          65536
+        ],
+        [
+          "cc::PictureLayerImpl::CreateLayerImpl(cc::LayerTreeImpl*) const",
+          65536
+        ],
+        [
+          "blink::HTMLTokenizer::NextTokenImpl(blink::SegmentedString&)",
+          65536
+        ],
+        [
+          "blink::StringImpl::Create(base::span<unsigned char const, 18446744073709551615ul, unsigned char const*>)",
+          65536
+        ],
+        [
+          "blink::URLLoaderFactoryBundle::Update(std::__1::unique_ptr<blink::PendingURLLoaderFactoryBundle, std::__1::default_delete<blink::PendingURLLoaderFactoryBundle> >)",
+          65536
+        ],
+        [
+          "cc::PaintOpBuffer::ReleaseAsRecord()",
+          65536
+        ],
+        [
+          "cc::PictureLayer::CreateLayerImpl(cc::LayerTreeImpl*) const",
+          65536
+        ],
+        [
+          "void std::__1::vector<cc::EffectNode, std::__1::allocator<cc::EffectNode> >::__assign_with_size[abi:sqn220108]<std::__1::_ClassicAlgPolicy, cc::EffectNode*, cc::EffectNode*>(cc::EffectNode*, cc::EffectNode*, long)",
+          32768
+        ],
+        [
+          "blink::PaintController::PaintController(bool, blink::PaintControllerPersistentData*, blink::PaintBenchmarkMode)",
+          32768
+        ]
+      ]
+    },
+    {
+      "cohort": "0-original",
+      "checkpoint": "offscreen",
+      "samples": 53,
+      "sample_weight_total": 2260992,
+      "largest_buckets": [
+        [
+          "blink::StringImpl::CreateUninitialized(unsigned long, base::span<char16_t, 18446744073709551615ul, char16_t*>&)",
+          557056
+        ],
+        [
+          "cc::PaintOpBuffer::ReleaseAsRecord()",
+          262144
+        ],
+        [
+          "blink::RasterInvalidator::Generate(blink::PaintChunkSubset const&, gfx::Vector2dF const&, gfx::Size const&, blink::PropertyTreeState const&)",
+          98304
+        ],
+        [
+          "blink::PaintChunker::AddHitTestDataToCurrentChunk(blink::DisplayItem::Id const&, blink::DisplayItemClient const&, gfx::Rect const&, cc::TouchAction, bool, cc::HitTestOpaqueness)",
+          98304
+        ],
+        [
+          "blink::CreateResourceTimingInfo(base::TimeTicks, blink::KURL const&, blink::ResourceResponse const*)",
+          65536
+        ],
+        [
+          "blink::RenderFrameMetadataObserverImpl::BindToCurrentSequence()",
+          65536
+        ],
+        [
+          "blink::HTMLTokenizer::NextTokenImpl(blink::SegmentedString&)",
+          65536
+        ],
+        [
+          "mojo::internal::InterfacePtrState<blink::mojom::blink::Blob>::ConfigureProxyIfNecessary()",
+          65536
+        ],
+        [
+          "blink::URLLoaderFactoryBundle::Update(std::__1::unique_ptr<blink::PendingURLLoaderFactoryBundle, std::__1::default_delete<blink::PendingURLLoaderFactoryBundle> >)",
+          65536
+        ],
+        [
+          "cc::LayerTreeHost::WillCommit(std::__1::unique_ptr<cc::CompletionEvent, std::__1::default_delete<cc::CompletionEvent> >, bool)",
+          32768
+        ],
+        [
+          "void std::__1::vector<cc::EffectNode, std::__1::allocator<cc::EffectNode> >::__assign_with_size[abi:sqn220108]<std::__1::_ClassicAlgPolicy, cc::EffectNode*, cc::EffectNode*>(cc::EffectNode*, cc::EffectNode*, long)",
+          32768
+        ],
+        [
+          "cc::FrameSorter::FlushFrames()",
+          32768
+        ],
+        [
+          "cc::DisplayItemList::Finalize()",
+          32768
+        ],
+        [
+          "blink::PhysicalFragmentRareData::PhysicalFragmentRareData(blink::PhysicalFragmentRareData const&)",
+          32768
+        ],
+        [
+          "base::circular_deque<std::__1::unique_ptr<cc::ResourcePool::PoolResource, std::__1::default_delete<cc::ResourcePool::PoolResource> > >::ExpandCapacityIfNecessary(unsigned long)",
+          32768
+        ]
+      ]
+    },
+    {
+      "cohort": "0-original",
+      "checkpoint": "picker_growth",
+      "samples": 148,
+      "sample_weight_total": 6062080,
+      "largest_buckets": [
+        [
+          "blink::PaintChunker::AddHitTestDataToCurrentChunk(blink::DisplayItem::Id const&, blink::DisplayItemClient const&, gfx::Rect const&, cc::TouchAction, bool, cc::HitTestOpaqueness)",
+          753664
+        ],
+        [
+          "blink::StringImpl::CreateUninitialized(unsigned long, base::span<char16_t, 18446744073709551615ul, char16_t*>&)",
+          622592
+        ],
+        [
+          "blink::Canvas2DResourceProvider::CreateSkSurface() const",
+          458752
+        ],
+        [
+          "cc::PaintOpBuffer::ReleaseAsRecord()",
+          425984
+        ],
+        [
+          "SkStrike::digestFor(skglyph::ActionType, SkPackedGlyphID)",
+          294912
+        ],
+        [
+          "SkPathData::MakeTransform(SkPathRaw const&, SkMatrix const&)",
+          262144
+        ],
+        [
+          "cc::PropertyTrees::operator=(cc::PropertyTrees const&)",
+          196608
+        ],
+        [
+          "SkPathData::MakeNoCheck(SkSpan<SkPoint const>, SkSpan<SkPathVerb const>, SkSpan<float const>, std::__1::optional<SkRect>, std::__1::optional<unsigned int>)",
+          196608
+        ],
+        [
+          "SkTypeface_Fontations::onCreateScalerContextAsProxyTypeface(SkScalerContextEffects const&, SkDescriptor const*, SkTypeface*) const",
+          196608
+        ],
+        [
+          "SkTextBlobBuilder::allocInternal(SkFont const&, SkTextBlob::GlyphPositioning, int, int, SkPoint, SkRect const*)",
+          196608
+        ],
+        [
+          "blink::RasterInvalidator::Generate(blink::PaintChunkSubset const&, gfx::Vector2dF const&, gfx::Size const&, blink::PropertyTreeState const&)",
+          131072
+        ],
+        [
+          "cc::PaintOpBuffer::ShrinkToFit()",
+          131072
+        ],
+        [
+          "cc::PaintShader::MakeLinearGradient(SkPoint const*, SkRGBA4f<(SkAlphaType)3> const*, float const*, int, SkTileMode, SkGradient::Interpolation, unsigned int, SkMatrix const*, SkRGBA4f<(SkAlphaType)3>)",
+          131072
+        ],
+        [
+          "void std::__1::vector<cc::EffectNode, std::__1::allocator<cc::EffectNode> >::__assign_with_size[abi:sqn220108]<std::__1::_ClassicAlgPolicy, cc::EffectNode*, cc::EffectNode*>(cc::EffectNode*, cc::EffectNode*, long)",
+          98304
+        ],
+        [
+          "cc::DisplayItemList::Finalize()",
+          98304
+        ]
+      ]
+    },
+    {
+      "cohort": "0-original",
+      "checkpoint": "reduced_motion",
+      "samples": 79,
+      "sample_weight_total": 3145728,
+      "largest_buckets": [
+        [
+          "blink::StringImpl::CreateUninitialized(unsigned long, base::span<char16_t, 18446744073709551615ul, char16_t*>&)",
+          557056
+        ],
+        [
+          "cc::PaintOpBuffer::ReleaseAsRecord()",
+          425984
+        ],
+        [
+          "blink::CSSAnimationData::CSSAnimationData()",
+          229376
+        ],
+        [
+          "cc::PaintShader::MakeLinearGradient(SkPoint const*, SkRGBA4f<(SkAlphaType)3> const*, float const*, int, SkTileMode, SkGradient::Interpolation, unsigned int, SkMatrix const*, SkRGBA4f<(SkAlphaType)3>)",
+          163840
+        ],
+        [
+          "blink::PaintChunker::AddHitTestDataToCurrentChunk(blink::DisplayItem::Id const&, blink::DisplayItemClient const&, gfx::Rect const&, cc::TouchAction, bool, cc::HitTestOpaqueness)",
+          98304
+        ],
+        [
+          "SkTextBlobBuilder::allocInternal(SkFont const&, SkTextBlob::GlyphPositioning, int, int, SkPoint, SkRect const*)",
+          65536
+        ],
+        [
+          "blink::CascadeMap::Add(blink::CSSPropertyID, blink::CascadePriority)",
+          65536
+        ],
+        [
+          "blink::css_longhand::AnimationRangeStart::ApplyValue(blink::StyleResolverState&, blink::CSSValue const&, unsigned char) const",
+          65536
+        ],
+        [
+          "blink::CreateResourceTimingInfo(base::TimeTicks, blink::KURL const&, blink::ResourceResponse const*)",
+          65536
+        ],
+        [
+          "blink::RenderFrameMetadataObserverImpl::BindToCurrentSequence()",
+          65536
+        ],
+        [
+          "blink::HTMLTokenizer::NextTokenImpl(blink::SegmentedString&)",
+          65536
+        ],
+        [
+          "mojo::internal::InterfacePtrState<blink::mojom::blink::Blob>::ConfigureProxyIfNecessary()",
+          65536
+        ],
+        [
+          "blink::RuleInvalidationDataVisitor<(blink::RuleInvalidationDataVisitorType)0>::EnsureMutableInvalidationSet(blink::InvalidationType, blink::RuleInvalidationDataVisitor<(blink::RuleInvalidationDataVisitorType)0>::PositionType, bool, scoped_refptr<blink::InvalidationSet>&)",
+          65536
+        ],
+        [
+          "blink::URLLoaderFactoryBundle::Update(std::__1::unique_ptr<blink::PendingURLLoaderFactoryBundle, std::__1::default_delete<blink::PendingURLLoaderFactoryBundle> >)",
+          65536
+        ],
+        [
+          "cc::CompositorFrameReportingController::WillBeginImplFrame(viz::BeginFrameArgs const&, bool)",
+          32768
+        ]
+      ]
+    },
+    {
+      "cohort": "0-original",
+      "checkpoint": "seasonal_preview",
+      "samples": 198,
+      "sample_weight_total": 9568256,
+      "largest_buckets": [
+        [
+          "blink::StringImpl::CreateUninitialized(unsigned long, base::span<char16_t, 18446744073709551615ul, char16_t*>&)",
+          2818048
+        ],
+        [
+          "blink::LocaleIcu::InitializeDateTimeFormat()",
+          557056
+        ],
+        [
+          "blink::PaintChunker::AddHitTestDataToCurrentChunk(blink::DisplayItem::Id const&, blink::DisplayItemClient const&, gfx::Rect const&, cc::TouchAction, bool, cc::HitTestOpaqueness)",
+          458752
+        ],
+        [
+          "cc::PaintOpBuffer::ReleaseAsRecord()",
+          294912
+        ],
+        [
+          "blink::Document::CompleteURLWithOverride(blink::String const&, blink::KURL const&, blink::Document::CompleteURLPreloadStatus) const",
+          294912
+        ],
+        [
+          "cc::PaintShader::MakeLinearGradient(SkPoint const*, SkRGBA4f<(SkAlphaType)3> const*, float const*, int, SkTileMode, SkGradient::Interpolation, unsigned int, SkMatrix const*, SkRGBA4f<(SkAlphaType)3>)",
+          262144
+        ],
+        [
+          "SkPathData::MakeNoCheck(SkSpan<SkPoint const>, SkSpan<SkPathVerb const>, SkSpan<float const>, std::__1::optional<SkRect>, std::__1::optional<unsigned int>)",
+          229376
+        ],
+        [
+          "cc::ResourcePool::PrepareForExport(cc::ResourcePool::InUsePoolResource const&, viz::TransferableResource::ResourceSource)",
+          196608
+        ],
+        [
+          "cc::PropertyTrees::operator=(cc::PropertyTrees const&)",
+          163840
+        ],
+        [
+          "cc::PictureLayerImpl::CreateLayerImpl(cc::LayerTreeImpl*) const",
+          163840
+        ],
+        [
+          "SkStrike::digestFor(skglyph::ActionType, SkPackedGlyphID)",
+          163840
+        ],
+        [
+          "SkStrike::prepareForImage(SkGlyph*)",
+          163840
+        ],
+        [
+          "blink::StringImpl::Create(base::span<unsigned char const, 18446744073709551615ul, unsigned char const*>)",
+          131072
+        ],
+        [
+          "SkTypeface_Fontations::onCreateScalerContextAsProxyTypeface(SkScalerContextEffects const&, SkDescriptor const*, SkTypeface*) const",
+          131072
+        ],
+        [
+          "cc::ResourcePool::InUsePoolResource::InstallSoftwareBacking(scoped_refptr<gpu::SharedImageInterface>, std::__1::basic_string_view<char, std::__1::char_traits<char> >) const",
+          98304
+        ]
+      ]
+    },
+    {
+      "cohort": "0-original",
+      "checkpoint": "wellness_care",
+      "samples": 73,
+      "sample_weight_total": 2719744,
+      "largest_buckets": [
+        [
+          "blink::PaintChunker::AddHitTestDataToCurrentChunk(blink::DisplayItem::Id const&, blink::DisplayItemClient const&, gfx::Rect const&, cc::TouchAction, bool, cc::HitTestOpaqueness)",
+          655360
+        ],
+        [
+          "blink::StringImpl::CreateUninitialized(unsigned long, base::span<char16_t, 18446744073709551615ul, char16_t*>&)",
+          262144
+        ],
+        [
+          "SkPathData::MakeNoCheck(SkSpan<SkPoint const>, SkSpan<SkPathVerb const>, SkSpan<float const>, std::__1::optional<SkRect>, std::__1::optional<unsigned int>)",
+          196608
+        ],
+        [
+          "cc::ResourcePool::InUsePoolResource::InstallSoftwareBacking(scoped_refptr<gpu::SharedImageInterface>, std::__1::basic_string_view<char, std::__1::char_traits<char> >) const",
+          131072
+        ],
+        [
+          "cc::ResourcePool::PrepareForExport(cc::ResourcePool::InUsePoolResource const&, viz::TransferableResource::ResourceSource)",
+          98304
+        ],
+        [
+          "cc::ResourcePool::AcquireResource(gfx::Size const&, viz::SharedImageFormat, gfx::ColorSpace const&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&)",
+          98304
+        ],
+        [
+          "cc::PropertyTrees::operator=(cc::PropertyTrees const&)",
+          98304
+        ],
+        [
+          "base::tracing::PerfettoPlatform::GetOrCreateThreadLocalObject()",
+          98304
+        ],
+        [
+          "SkStrike::digestFor(skglyph::ActionType, SkPackedGlyphID)",
+          65536
+        ],
+        [
+          "blink::RuleInvalidationDataBuilder::Merge(blink::RuleInvalidationData const&)",
+          65536
+        ],
+        [
+          "blink::LocalFrame::PrescientNetworking()",
+          65536
+        ],
+        [
+          "cc::PictureLayer::PushDirtyPropertiesTo(cc::LayerImpl*, unsigned char, cc::CommitState&)",
+          32768
+        ],
+        [
+          "blink::AtomicString blink::ToBlinkString<blink::AtomicString>(v8::Isolate*, v8::Local<v8::String>, blink::ExternalMode)",
+          32768
+        ],
+        [
+          "blink::PhysicalFragmentRareData::PhysicalFragmentRareData(blink::PhysicalFragmentRareData const&)",
+          32768
+        ],
+        [
+          "blink::TimerBase::Start(base::TimeDelta, std::__1::optional<base::TimeDelta>, base::Location const&, bool)",
+          32768
+        ]
+      ]
+    },
+    {
+      "cohort": "1-current",
+      "checkpoint": "background",
+      "samples": 94,
+      "sample_weight_total": 3768320,
+      "largest_buckets": [
+        [
+          "blink::StringImpl::CreateUninitialized(unsigned long, base::span<char16_t, 18446744073709551615ul, char16_t*>&)",
+          688128
+        ],
+        [
+          "blink::CSSAnimationData::CSSAnimationData()",
+          491520
+        ],
+        [
+          "cc::PaintOpBuffer::ReleaseAsRecord()",
+          262144
+        ],
+        [
+          "blink::PaintChunker::AddHitTestDataToCurrentChunk(blink::DisplayItem::Id const&, blink::DisplayItemClient const&, gfx::Rect const&, cc::TouchAction, bool, cc::HitTestOpaqueness)",
+          262144
+        ],
+        [
+          "blink::RuleInvalidationDataVisitor<(blink::RuleInvalidationDataVisitorType)0>::InvalidationSetForSimpleSelector(blink::CSSSelector const&, blink::InvalidationType, blink::RuleInvalidationDataVisitor<(blink::RuleInvalidationDataVisitorType)0>::PositionType, bool)",
+          131072
+        ],
+        [
+          "blink::RobinHoodMap<blink::AtomicString, blink::RuleMap::Extent>::Grow()",
+          98304
+        ],
+        [
+          "blink::RuleInvalidationDataVisitor<(blink::RuleInvalidationDataVisitorType)0>::EnsureMutableInvalidationSet(blink::InvalidationType, blink::RuleInvalidationDataVisitor<(blink::RuleInvalidationDataVisitorType)0>::PositionType, bool, scoped_refptr<blink::InvalidationSet>&)",
+          98304
+        ],
+        [
+          "cc::PaintShader::MakeLinearGradient(SkPoint const*, SkRGBA4f<(SkAlphaType)3> const*, float const*, int, SkTileMode, SkGradient::Interpolation, unsigned int, SkMatrix const*, SkRGBA4f<(SkAlphaType)3>)",
+          98304
+        ],
+        [
+          "blink::URLLoaderFactoryBundle::Update(std::__1::unique_ptr<blink::PendingURLLoaderFactoryBundle, std::__1::default_delete<blink::PendingURLLoaderFactoryBundle> >)",
+          98304
+        ],
+        [
+          "blink::PhysicalFragmentRareData::PhysicalFragmentRareData(blink::PhysicalFragmentRareData const&)",
+          65536
+        ],
+        [
+          "cc::PropertyTrees::ResetCachedData()",
+          65536
+        ],
+        [
+          "blink::InspectorMemoryAgent::GetSamplingProfileById(std::__1::optional<base::SamplingHeapProfiler::Session>)",
+          65536
+        ],
+        [
+          "cc::PaintOpBuffer::ShrinkToFit()",
+          65536
+        ],
+        [
+          "blink::css_longhand::AnimationRangeEnd::ApplyValue(blink::StyleResolverState&, blink::CSSValue const&, unsigned char) const",
+          65536
+        ],
+        [
+          "blink::InvalidationSet::Backing<(blink::InvalidationSet::BackingType)0>::Add(blink::InvalidationSet::BackingFlags&, blink::AtomicString const&)",
+          65536
+        ]
+      ]
+    },
+    {
+      "cohort": "1-current",
+      "checkpoint": "home_idle",
+      "samples": 77,
+      "sample_weight_total": 3309568,
+      "largest_buckets": [
+        [
+          "blink::StringImpl::CreateUninitialized(unsigned long, base::span<char16_t, 18446744073709551615ul, char16_t*>&)",
+          491520
+        ],
+        [
+          "blink::PaintChunker::AddHitTestDataToCurrentChunk(blink::DisplayItem::Id const&, blink::DisplayItemClient const&, gfx::Rect const&, cc::TouchAction, bool, cc::HitTestOpaqueness)",
+          425984
+        ],
+        [
+          "SkBitmapDevice::createDevice(SkDevice::CreateInfo const&, SkPaint const*)",
+          131072
+        ],
+        [
+          "blink::StringImpl::Create8BitIfPossible(base::span<char16_t const, 18446744073709551615ul, char16_t const*>)",
+          131072
+        ],
+        [
+          "cc::PaintOpBuffer::ReleaseAsRecord()",
+          98304
+        ],
+        [
+          "cc::PropertyTrees::operator=(cc::PropertyTrees const&)",
+          98304
+        ],
+        [
+          "blink::CreateHistogram(char const*, int, int, unsigned long)",
+          98304
+        ],
+        [
+          "blink::CachedMetadata::GetSerializedDataHeader(unsigned int, unsigned int, unsigned long)",
+          98304
+        ],
+        [
+          "v8::internal::ExternalReferenceEncoder::ExternalReferenceEncoder(v8::internal::Isolate*)",
+          98304
+        ],
+        [
+          "cc::ResourcePool::InUsePoolResource::InstallSoftwareBacking(scoped_refptr<gpu::SharedImageInterface>, std::__1::basic_string_view<char, std::__1::char_traits<char> >) const",
+          65536
+        ],
+        [
+          "blink::RasterInvalidator::Generate(blink::PaintChunkSubset const&, gfx::Vector2dF const&, gfx::Size const&, blink::PropertyTreeState const&)",
+          65536
+        ],
+        [
+          "cc::CompositorFrameReporter::ReportCompositorLatencyHistogram(cc::FrameSequenceTrackerType, cc::CompositorFrameReporter::StageType, std::__1::optional<cc::CompositorFrameReporter::VizBreakdown>, std::__1::optional<cc::CompositorFrameReporter::BlinkBreakdown>, std::__1::optional<cc::CompositorFrameReporter::TreesInVizBreakdown>, base::TimeDelta) const",
+          65536
+        ],
+        [
+          "blink::ThirdPartyScriptDetector::Detect(blink::String)",
+          65536
+        ],
+        [
+          "cc::PropertyTrees::ResetCachedData()",
+          65536
+        ],
+        [
+          "blink::Document::CompleteURLWithOverride(blink::String const&, blink::KURL const&, blink::Document::CompleteURLPreloadStatus) const",
+          65536
+        ]
+      ]
+    },
+    {
+      "cohort": "1-current",
+      "checkpoint": "home_interaction",
+      "samples": 86,
+      "sample_weight_total": 3571712,
+      "largest_buckets": [
+        [
+          "blink::StringImpl::CreateUninitialized(unsigned long, base::span<char16_t, 18446744073709551615ul, char16_t*>&)",
+          491520
+        ],
+        [
+          "cc::PaintOpBuffer::ReleaseAsRecord()",
+          229376
+        ],
+        [
+          "blink::PaintChunker::AddHitTestDataToCurrentChunk(blink::DisplayItem::Id const&, blink::DisplayItemClient const&, gfx::Rect const&, cc::TouchAction, bool, cc::HitTestOpaqueness)",
+          229376
+        ],
+        [
+          "cc::DisplayItemList::Finalize()",
+          163840
+        ],
+        [
+          "blink::StringImpl::Create8BitIfPossible(base::span<char16_t const, 18446744073709551615ul, char16_t const*>)",
+          131072
+        ],
+        [
+          "cc::PropertyTrees::ResetCachedData()",
+          98304
+        ],
+        [
+          "SkTextBlobBuilder::allocInternal(SkFont const&, SkTextBlob::GlyphPositioning, int, int, SkPoint, SkRect const*)",
+          98304
+        ],
+        [
+          "cc::ResourcePool::InUsePoolResource::InstallSoftwareBacking(scoped_refptr<gpu::SharedImageInterface>, std::__1::basic_string_view<char, std::__1::char_traits<char> >) const",
+          98304
+        ],
+        [
+          "blink::CreateHistogram(char const*, int, int, unsigned long)",
+          98304
+        ],
+        [
+          "blink::CachedMetadata::GetSerializedDataHeader(unsigned int, unsigned int, unsigned long)",
+          98304
+        ],
+        [
+          "v8::internal::ExternalReferenceEncoder::ExternalReferenceEncoder(v8::internal::Isolate*)",
+          98304
+        ],
+        [
+          "cc::PaintOpBuffer::ShrinkToFit()",
+          65536
+        ],
+        [
+          "v8::internal::(anonymous namespace)::Invoke(v8::internal::Isolate*, v8::internal::(anonymous namespace)::InvokeParams const&) [clone .llvm.8000303834572878609]",
+          65536
+        ],
+        [
+          "cc::CompositorFrameReporter::ReportCompositorLatencyHistogram(cc::FrameSequenceTrackerType, cc::CompositorFrameReporter::StageType, std::__1::optional<cc::CompositorFrameReporter::VizBreakdown>, std::__1::optional<cc::CompositorFrameReporter::BlinkBreakdown>, std::__1::optional<cc::CompositorFrameReporter::TreesInVizBreakdown>, base::TimeDelta) const",
+          65536
+        ],
+        [
+          "blink::ThirdPartyScriptDetector::Detect(blink::String)",
+          65536
+        ]
+      ]
+    },
+    {
+      "cohort": "1-current",
+      "checkpoint": "navigation_1",
+      "samples": 56,
+      "sample_weight_total": 2523136,
+      "largest_buckets": [
+        [
+          "blink::StringImpl::CreateUninitialized(unsigned long, base::span<char16_t, 18446744073709551615ul, char16_t*>&)",
+          589824
+        ],
+        [
+          "cc::PaintShader::MakeLinearGradient(SkPoint const*, SkRGBA4f<(SkAlphaType)3> const*, float const*, int, SkTileMode, SkGradient::Interpolation, unsigned int, SkMatrix const*, SkRGBA4f<(SkAlphaType)3>)",
+          229376
+        ],
+        [
+          "SkBitmapDevice::createDevice(SkDevice::CreateInfo const&, SkPaint const*)",
+          229376
+        ],
+        [
+          "cc::ResourcePool::PrepareForExport(cc::ResourcePool::InUsePoolResource const&, viz::TransferableResource::ResourceSource)",
+          98304
+        ],
+        [
+          "cc::ResourcePool::InUsePoolResource::InstallSoftwareBacking(scoped_refptr<gpu::SharedImageInterface>, std::__1::basic_string_view<char, std::__1::char_traits<char> >) const",
+          98304
+        ],
+        [
+          "cc::DisplayItemList::Finalize()",
+          65536
+        ],
+        [
+          "blink::Document::CompleteURLWithOverride(blink::String const&, blink::KURL const&, blink::Document::CompleteURLPreloadStatus) const",
+          65536
+        ],
+        [
+          "blink::URLLoaderFactoryBundle::Update(std::__1::unique_ptr<blink::PendingURLLoaderFactoryBundle, std::__1::default_delete<blink::PendingURLLoaderFactoryBundle> >)",
+          65536
+        ],
+        [
+          "blink::StringImpl::Create(base::span<unsigned char const, 18446744073709551615ul, unsigned char const*>)",
+          65536
+        ],
+        [
+          "blink::MatchedPropertiesCache::Add(blink::MatchedPropertiesCache::Key const&, blink::StyleAdjuster::ElementTypeForCache, blink::ComputedStyle const*, blink::ComputedStyle const*, blink::ComputedStyle const*, blink::ComputedStyle const*)",
+          65536
+        ],
+        [
+          "blink::RasterInvalidator::Generate(blink::PaintChunkSubset const&, gfx::Vector2dF const&, gfx::Size const&, blink::PropertyTreeState const&)",
+          32768
+        ],
+        [
+          "cc::CompositorFrameReporter::SetPartialUpdateDecider(cc::CompositorFrameReporter*)",
+          32768
+        ],
+        [
+          "blink::PaintChunker::AddHitTestDataToCurrentChunk(blink::DisplayItem::Id const&, blink::DisplayItemClient const&, gfx::Rect const&, cc::TouchAction, bool, cc::HitTestOpaqueness)",
+          32768
+        ],
+        [
+          "cc::PictureLayerTilingSet::Create(cc::WhichTree, cc::PictureLayerTilingClient*, int, float, int, float)",
+          32768
+        ],
+        [
+          "cc::PictureLayerImpl::CreateLayerImpl(cc::LayerTreeImpl*) const",
+          32768
+        ]
+      ]
+    },
+    {
+      "cohort": "1-current",
+      "checkpoint": "navigation_10",
+      "samples": 55,
+      "sample_weight_total": 2424832,
+      "largest_buckets": [
+        [
+          "blink::StringImpl::CreateUninitialized(unsigned long, base::span<char16_t, 18446744073709551615ul, char16_t*>&)",
+          524288
+        ],
+        [
+          "cc::PaintOpBuffer::ReleaseAsRecord()",
+          229376
+        ],
+        [
+          "blink::URLLoaderFactoryBundle::Update(std::__1::unique_ptr<blink::PendingURLLoaderFactoryBundle, std::__1::default_delete<blink::PendingURLLoaderFactoryBundle> >)",
+          163840
+        ],
+        [
+          "SkBitmapDevice::createDevice(SkDevice::CreateInfo const&, SkPaint const*)",
+          131072
+        ],
+        [
+          "blink::MatchedPropertiesCache::Add(blink::MatchedPropertiesCache::Key const&, blink::StyleAdjuster::ElementTypeForCache, blink::ComputedStyle const*, blink::ComputedStyle const*, blink::ComputedStyle const*, blink::ComputedStyle const*)",
+          98304
+        ],
+        [
+          "cc::PaintOpBuffer::ShrinkToFit()",
+          98304
+        ],
+        [
+          "SkTextBlobBuilder::allocInternal(SkFont const&, SkTextBlob::GlyphPositioning, int, int, SkPoint, SkRect const*)",
+          65536
+        ],
+        [
+          "blink::PaintController::PaintController(bool, blink::PaintControllerPersistentData*, blink::PaintBenchmarkMode)",
+          65536
+        ],
+        [
+          "cc::PropertyTrees::operator=(cc::PropertyTrees const&)",
+          65536
+        ],
+        [
+          "cc::ResourcePool::InUsePoolResource::InstallSoftwareBacking(scoped_refptr<gpu::SharedImageInterface>, std::__1::basic_string_view<char, std::__1::char_traits<char> >) const",
+          65536
+        ],
+        [
+          "blink::Document::CompleteURLWithOverride(blink::String const&, blink::KURL const&, blink::Document::CompleteURLPreloadStatus) const",
+          65536
+        ],
+        [
+          "blink::SVGTreeScopeResources::ResourceForId(blink::AtomicString const&)",
+          65536
+        ],
+        [
+          "blink::PaintChunker::AddHitTestDataToCurrentChunk(blink::DisplayItem::Id const&, blink::DisplayItemClient const&, gfx::Rect const&, cc::TouchAction, bool, cc::HitTestOpaqueness)",
+          65536
+        ],
+        [
+          "cc::DisplayItemList::Finalize()",
+          65536
+        ],
+        [
+          "v8::internal::WriteBarrier::GenerationalBarrierSlow(v8::internal::Tagged<v8::internal::HeapObject>, unsigned long, v8::internal::Tagged<v8::internal::HeapObject>)",
+          32768
+        ]
+      ]
+    },
+    {
+      "cohort": "1-current",
+      "checkpoint": "navigation_15",
+      "samples": 47,
+      "sample_weight_total": 2162688,
+      "largest_buckets": [
+        [
+          "blink::StringImpl::CreateUninitialized(unsigned long, base::span<char16_t, 18446744073709551615ul, char16_t*>&)",
+          524288
+        ],
+        [
+          "SkBitmapDevice::createDevice(SkDevice::CreateInfo const&, SkPaint const*)",
+          229376
+        ],
+        [
+          "blink::ChildURLLoaderFactoryBundle::Update(std::__1::unique_ptr<blink::ChildPendingURLLoaderFactoryBundle, std::__1::default_delete<blink::ChildPendingURLLoaderFactoryBundle> >)",
+          131072
+        ],
+        [
+          "blink::MatchedPropertiesCache::Add(blink::MatchedPropertiesCache::Key const&, blink::StyleAdjuster::ElementTypeForCache, blink::ComputedStyle const*, blink::ComputedStyle const*, blink::ComputedStyle const*, blink::ComputedStyle const*)",
+          98304
+        ],
+        [
+          "blink::Document::CompleteURLWithOverride(blink::String const&, blink::KURL const&, blink::Document::CompleteURLPreloadStatus) const",
+          98304
+        ],
+        [
+          "SkTextBlobBuilder::allocInternal(SkFont const&, SkTextBlob::GlyphPositioning, int, int, SkPoint, SkRect const*)",
+          65536
+        ],
+        [
+          "cc::PaintOpBuffer::ReleaseAsRecord()",
+          65536
+        ],
+        [
+          "blink::PaintChunker::AddHitTestDataToCurrentChunk(blink::DisplayItem::Id const&, blink::DisplayItemClient const&, gfx::Rect const&, cc::TouchAction, bool, cc::HitTestOpaqueness)",
+          65536
+        ],
+        [
+          "cc::PaintShader::MakeLinearGradient(SkPoint const*, SkRGBA4f<(SkAlphaType)3> const*, float const*, int, SkTileMode, SkGradient::Interpolation, unsigned int, SkMatrix const*, SkRGBA4f<(SkAlphaType)3>)",
+          65536
+        ],
+        [
+          "blink::FrameMetadataObserverRegistry::BindReceiver(blink::LocalFrame*, mojo::PendingReceiver<blink::mojom::blink::FrameMetadataObserverRegistry>)",
+          65536
+        ],
+        [
+          "cc::PictureLayerImpl::CreateLayerImpl(cc::LayerTreeImpl*) const",
+          65536
+        ],
+        [
+          "blink::RuleInvalidationDataVisitor<(blink::RuleInvalidationDataVisitorType)0>::InvalidationSetForSimpleSelector(blink::CSSSelector const&, blink::InvalidationType, blink::RuleInvalidationDataVisitor<(blink::RuleInvalidationDataVisitorType)0>::PositionType, bool)",
+          65536
+        ],
+        [
+          "cc::DisplayItemList::Finalize()",
+          65536
+        ],
+        [
+          "cc::CompositorFrameReporter::SetPartialUpdateDecider(cc::CompositorFrameReporter*)",
+          32768
+        ],
+        [
+          "blink::PaintController::PaintController(bool, blink::PaintControllerPersistentData*, blink::PaintBenchmarkMode)",
+          32768
+        ]
+      ]
+    },
+    {
+      "cohort": "1-current",
+      "checkpoint": "navigation_20",
+      "samples": 43,
+      "sample_weight_total": 1933312,
+      "largest_buckets": [
+        [
+          "blink::StringImpl::CreateUninitialized(unsigned long, base::span<char16_t, 18446744073709551615ul, char16_t*>&)",
+          557056
+        ],
+        [
+          "cc::PaintOpBuffer::ReleaseAsRecord()",
+          163840
+        ],
+        [
+          "SkBitmapDevice::createDevice(SkDevice::CreateInfo const&, SkPaint const*)",
+          163840
+        ],
+        [
+          "cc::PaintShader::MakeLinearGradient(SkPoint const*, SkRGBA4f<(SkAlphaType)3> const*, float const*, int, SkTileMode, SkGradient::Interpolation, unsigned int, SkMatrix const*, SkRGBA4f<(SkAlphaType)3>)",
+          98304
+        ],
+        [
+          "blink::PaintChunker::AddHitTestDataToCurrentChunk(blink::DisplayItem::Id const&, blink::DisplayItemClient const&, gfx::Rect const&, cc::TouchAction, bool, cc::HitTestOpaqueness)",
+          65536
+        ],
+        [
+          "blink::StringImpl::Create(base::span<unsigned char const, 18446744073709551615ul, unsigned char const*>)",
+          65536
+        ],
+        [
+          "blink::PaintController::PaintController(bool, blink::PaintControllerPersistentData*, blink::PaintBenchmarkMode)",
+          32768
+        ],
+        [
+          "cc::DisplayItemList::Finalize()",
+          32768
+        ],
+        [
+          "cc::RollingTimeDeltaHistory::InsertSample(base::TimeDelta)",
+          32768
+        ],
+        [
+          "blink::AnchorElementMetricsSender::AssociateInterface()",
+          32768
+        ],
+        [
+          "blink::PhysicalFragmentRareData::PhysicalFragmentRareData(blink::PhysicalFragmentRareData const&)",
+          32768
+        ],
+        [
+          "blink::PhysicalFragmentRareData::PhysicalFragmentRareData(blink::PhysicalRect const*, blink::PhysicalBoxStrut const*, blink::PhysicalBoxStrut const*, blink::PhysicalBoxStrut const*, std::__1::optional<blink::PhysicalRect>, blink::BoxFragmentBuilder&, unsigned int)",
+          32768
+        ],
+        [
+          "void perfetto::internal::TrackEvent<&base::perfetto_track_event::internal::kCategoryRegistry>::TraceForCategoryBody<unsigned long, perfetto::StaticString, char const*, blink::LocalFrameView::UpdateLayout()::$_1::operator()(unsigned int) const::{lambda(perfetto::TracedValue)#1}&>(unsigned int, unsigned long const&, perfetto::StaticString const&, perfetto::protos::pbzero::perfetto_pbzero_enum_TrackEvent::Type, char const*&&, blink::LocalFrameView::UpdateLayout()::$_1::operator()(unsigned int) const::{lambda(perfetto::TracedValue)#1}&)",
+          32768
+        ],
+        [
+          "blink::MatchedPropertiesCache::Add(blink::MatchedPropertiesCache::Key const&, blink::StyleAdjuster::ElementTypeForCache, blink::ComputedStyle const*, blink::ComputedStyle const*, blink::ComputedStyle const*, blink::ComputedStyle const*)",
+          32768
+        ],
+        [
+          "cc::ResourcePool::AcquireResource(gfx::Size const&, viz::SharedImageFormat, gfx::ColorSpace const&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&)",
+          32768
+        ]
+      ]
+    },
+    {
+      "cohort": "1-current",
+      "checkpoint": "navigation_5",
+      "samples": 45,
+      "sample_weight_total": 2064384,
+      "largest_buckets": [
+        [
+          "blink::StringImpl::CreateUninitialized(unsigned long, base::span<char16_t, 18446744073709551615ul, char16_t*>&)",
+          458752
+        ],
+        [
+          "cppgc::internal::(anonymous namespace)::ConcurrentSweepTask::SweepStateOrYield(v8::JobDelegate*, cppgc::internal::(anonymous namespace)::SweepingState&)",
+          131072
+        ],
+        [
+          "SkBitmapDevice::createDevice(SkDevice::CreateInfo const&, SkPaint const*)",
+          98304
+        ],
+        [
+          "cc::PropertyTrees::operator=(cc::PropertyTrees const&)",
+          98304
+        ],
+        [
+          "blink::PaintChunker::AddHitTestDataToCurrentChunk(blink::DisplayItem::Id const&, blink::DisplayItemClient const&, gfx::Rect const&, cc::TouchAction, bool, cc::HitTestOpaqueness)",
+          98304
+        ],
+        [
+          "cc::ResourcePool::PrepareForExport(cc::ResourcePool::InUsePoolResource const&, viz::TransferableResource::ResourceSource)",
+          98304
+        ],
+        [
+          "blink::PaintController::PaintController(bool, blink::PaintControllerPersistentData*, blink::PaintBenchmarkMode)",
+          65536
+        ],
+        [
+          "blink::RasterInvalidator::Generate(blink::PaintChunkSubset const&, gfx::Vector2dF const&, gfx::Size const&, blink::PropertyTreeState const&)",
+          65536
+        ],
+        [
+          "cc::PaintOpBuffer::ReleaseAsRecord()",
+          65536
+        ],
+        [
+          "cc::PaintShader::MakeLinearGradient(SkPoint const*, SkRGBA4f<(SkAlphaType)3> const*, float const*, int, SkTileMode, SkGradient::Interpolation, unsigned int, SkMatrix const*, SkRGBA4f<(SkAlphaType)3>)",
+          65536
+        ],
+        [
+          "cc::TileManager::CreateTile(cc::Tile::CreateInfo const&, int, int, int)",
+          32768
+        ],
+        [
+          "cc::PaintOpBuffer::ShrinkToFit()",
+          32768
+        ],
+        [
+          "SkPathData::MakeTransform(SkPathRaw const&, SkMatrix const&)",
+          32768
+        ],
+        [
+          "SkTextBlobBuilder::allocInternal(SkFont const&, SkTextBlob::GlyphPositioning, int, int, SkPoint, SkRect const*)",
+          32768
+        ],
+        [
+          "blink::Canvas2DRecorderContext::~Canvas2DRecorderContext()",
+          32768
+        ]
+      ]
+    },
+    {
+      "cohort": "1-current",
+      "checkpoint": "offscreen",
+      "samples": 54,
+      "sample_weight_total": 2424832,
+      "largest_buckets": [
+        [
+          "blink::StringImpl::CreateUninitialized(unsigned long, base::span<char16_t, 18446744073709551615ul, char16_t*>&)",
+          688128
+        ],
+        [
+          "blink::PaintChunker::AddHitTestDataToCurrentChunk(blink::DisplayItem::Id const&, blink::DisplayItemClient const&, gfx::Rect const&, cc::TouchAction, bool, cc::HitTestOpaqueness)",
+          163840
+        ],
+        [
+          "blink::RuleInvalidationDataVisitor<(blink::RuleInvalidationDataVisitorType)0>::InvalidationSetForSimpleSelector(blink::CSSSelector const&, blink::InvalidationType, blink::RuleInvalidationDataVisitor<(blink::RuleInvalidationDataVisitorType)0>::PositionType, bool)",
+          98304
+        ],
+        [
+          "blink::URLLoaderFactoryBundle::Update(std::__1::unique_ptr<blink::PendingURLLoaderFactoryBundle, std::__1::default_delete<blink::PendingURLLoaderFactoryBundle> >)",
+          98304
+        ],
+        [
+          "cc::DisplayItemList::Finalize()",
+          65536
+        ],
+        [
+          "cc::PaintOpBuffer::ShrinkToFit()",
+          65536
+        ],
+        [
+          "cc::PaintOpBuffer::ReleaseAsRecord()",
+          65536
+        ],
+        [
+          "cc::PaintShader::MakeLinearGradient(SkPoint const*, SkRGBA4f<(SkAlphaType)3> const*, float const*, int, SkTileMode, SkGradient::Interpolation, unsigned int, SkMatrix const*, SkRGBA4f<(SkAlphaType)3>)",
+          65536
+        ],
+        [
+          "blink::MatchedPropertiesCache::Add(blink::MatchedPropertiesCache::Key const&, blink::StyleAdjuster::ElementTypeForCache, blink::ComputedStyle const*, blink::ComputedStyle const*, blink::ComputedStyle const*, blink::ComputedStyle const*)",
+          65536
+        ],
+        [
+          "blink::RuleInvalidationDataVisitor<(blink::RuleInvalidationDataVisitorType)0>::EnsureMutableInvalidationSet(blink::InvalidationType, blink::RuleInvalidationDataVisitor<(blink::RuleInvalidationDataVisitorType)0>::PositionType, bool, scoped_refptr<blink::InvalidationSet>&)",
+          65536
+        ],
+        [
+          "extensions::Dispatcher::DidCreateScriptContext(blink::WebLocalFrame*, v8::Local<v8::Context> const&, int)",
+          65536
+        ],
+        [
+          "cc::ResourcePool::AcquireResource(gfx::Size const&, viz::SharedImageFormat, gfx::ColorSpace const&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&)",
+          65536
+        ],
+        [
+          "blink::HTMLTokenizer::NextTokenImpl(blink::SegmentedString&)",
+          65536
+        ],
+        [
+          "blink::PaintController::PaintController(bool, blink::PaintControllerPersistentData*, blink::PaintBenchmarkMode)",
+          32768
+        ],
+        [
+          "base::internal::WorkerThreadSet::Insert(base::internal::WorkerThread*)",
+          32768
+        ]
+      ]
+    },
+    {
+      "cohort": "1-current",
+      "checkpoint": "picker_growth",
+      "samples": 108,
+      "sample_weight_total": 4620288,
+      "largest_buckets": [
+        [
+          "blink::StringImpl::CreateUninitialized(unsigned long, base::span<char16_t, 18446744073709551615ul, char16_t*>&)",
+          557056
+        ],
+        [
+          "blink::Canvas2DResourceProvider::CreateSkSurface() const",
+          491520
+        ],
+        [
+          "blink::PaintChunker::AddHitTestDataToCurrentChunk(blink::DisplayItem::Id const&, blink::DisplayItemClient const&, gfx::Rect const&, cc::TouchAction, bool, cc::HitTestOpaqueness)",
+          327680
+        ],
+        [
+          "SkPathData::MakeTransform(SkPathRaw const&, SkMatrix const&)",
+          327680
+        ],
+        [
+          "blink::CSSAnimationData::CSSAnimationData()",
+          229376
+        ],
+        [
+          "SkPathData::MakeNoCheck(SkSpan<SkPoint const>, SkSpan<SkPathVerb const>, SkSpan<float const>, std::__1::optional<SkRect>, std::__1::optional<unsigned int>)",
+          196608
+        ],
+        [
+          "cc::PaintOpBuffer::ReleaseAsRecord()",
+          163840
+        ],
+        [
+          "SkStrike::digestFor(skglyph::ActionType, SkPackedGlyphID)",
+          163840
+        ],
+        [
+          "SkTypeface_Fontations::onCreateScalerContextAsProxyTypeface(SkScalerContextEffects const&, SkDescriptor const*, SkTypeface*) const",
+          163840
+        ],
+        [
+          "blink::CascadeMap::Add(blink::CSSPropertyID, blink::CascadePriority)",
+          163840
+        ],
+        [
+          "SkBitmapDevice::createDevice(SkDevice::CreateInfo const&, SkPaint const*)",
+          131072
+        ],
+        [
+          "blink::RasterInvalidator::Generate(blink::PaintChunkSubset const&, gfx::Vector2dF const&, gfx::Size const&, blink::PropertyTreeState const&)",
+          131072
+        ],
+        [
+          "cc::PaintShader::MakeLinearGradient(SkPoint const*, SkRGBA4f<(SkAlphaType)3> const*, float const*, int, SkTileMode, SkGradient::Interpolation, unsigned int, SkMatrix const*, SkRGBA4f<(SkAlphaType)3>)",
+          131072
+        ],
+        [
+          "SkTextBlobBuilder::allocInternal(SkFont const&, SkTextBlob::GlyphPositioning, int, int, SkPoint, SkRect const*)",
+          65536
+        ],
+        [
+          "cc::RollingTimeDeltaHistory::InsertSample(base::TimeDelta)",
+          65536
+        ]
+      ]
+    },
+    {
+      "cohort": "1-current",
+      "checkpoint": "reduced_motion",
+      "samples": 79,
+      "sample_weight_total": 3276800,
+      "largest_buckets": [
+        [
+          "blink::StringImpl::CreateUninitialized(unsigned long, base::span<char16_t, 18446744073709551615ul, char16_t*>&)",
+          688128
+        ],
+        [
+          "blink::CSSAnimationData::CSSAnimationData()",
+          491520
+        ],
+        [
+          "blink::PaintChunker::AddHitTestDataToCurrentChunk(blink::DisplayItem::Id const&, blink::DisplayItemClient const&, gfx::Rect const&, cc::TouchAction, bool, cc::HitTestOpaqueness)",
+          196608
+        ],
+        [
+          "cc::PaintOpBuffer::ReleaseAsRecord()",
+          131072
+        ],
+        [
+          "cc::PaintShader::MakeLinearGradient(SkPoint const*, SkRGBA4f<(SkAlphaType)3> const*, float const*, int, SkTileMode, SkGradient::Interpolation, unsigned int, SkMatrix const*, SkRGBA4f<(SkAlphaType)3>)",
+          131072
+        ],
+        [
+          "blink::RuleInvalidationDataBuilder::Merge(blink::RuleInvalidationData const&)",
+          98304
+        ],
+        [
+          "blink::RuleInvalidationDataVisitor<(blink::RuleInvalidationDataVisitorType)0>::InvalidationSetForSimpleSelector(blink::CSSSelector const&, blink::InvalidationType, blink::RuleInvalidationDataVisitor<(blink::RuleInvalidationDataVisitorType)0>::PositionType, bool)",
+          98304
+        ],
+        [
+          "blink::URLLoaderFactoryBundle::Update(std::__1::unique_ptr<blink::PendingURLLoaderFactoryBundle, std::__1::default_delete<blink::PendingURLLoaderFactoryBundle> >)",
+          98304
+        ],
+        [
+          "cc::PaintOpBuffer::ShrinkToFit()",
+          65536
+        ],
+        [
+          "blink::css_longhand::AnimationRangeEnd::ApplyValue(blink::StyleResolverState&, blink::CSSValue const&, unsigned char) const",
+          65536
+        ],
+        [
+          "blink::StringImpl::Create(base::span<unsigned char const, 18446744073709551615ul, unsigned char const*>)",
+          65536
+        ],
+        [
+          "blink::RuleInvalidationDataVisitor<(blink::RuleInvalidationDataVisitorType)0>::EnsureMutableInvalidationSet(blink::InvalidationType, blink::RuleInvalidationDataVisitor<(blink::RuleInvalidationDataVisitorType)0>::PositionType, bool, scoped_refptr<blink::InvalidationSet>&)",
+          65536
+        ],
+        [
+          "extensions::Dispatcher::DidCreateScriptContext(blink::WebLocalFrame*, v8::Local<v8::Context> const&, int)",
+          65536
+        ],
+        [
+          "blink::RobinHoodMap<blink::AtomicString, blink::RuleMap::Extent>::Grow()",
+          65536
+        ],
+        [
+          "cc::ResourcePool::AcquireResource(gfx::Size const&, viz::SharedImageFormat, gfx::ColorSpace const&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&)",
+          65536
+        ]
+      ]
+    },
+    {
+      "cohort": "1-current",
+      "checkpoint": "seasonal_preview",
+      "samples": 290,
+      "sample_weight_total": 13041664,
+      "largest_buckets": [
+        [
+          "blink::StringImpl::CreateUninitialized(unsigned long, base::span<char16_t, 18446744073709551615ul, char16_t*>&)",
+          3178496
+        ],
+        [
+          "blink::PaintChunker::AddHitTestDataToCurrentChunk(blink::DisplayItem::Id const&, blink::DisplayItemClient const&, gfx::Rect const&, cc::TouchAction, bool, cc::HitTestOpaqueness)",
+          1572864
+        ],
+        [
+          "cc::PaintOpBuffer::ReleaseAsRecord()",
+          655360
+        ],
+        [
+          "blink::LocaleIcu::InitializeDateTimeFormat()",
+          589824
+        ],
+        [
+          "cc::PaintShader::MakeLinearGradient(SkPoint const*, SkRGBA4f<(SkAlphaType)3> const*, float const*, int, SkTileMode, SkGradient::Interpolation, unsigned int, SkMatrix const*, SkRGBA4f<(SkAlphaType)3>)",
+          491520
+        ],
+        [
+          "SkTypeface_Fontations::onCreateScalerContextAsProxyTypeface(SkScalerContextEffects const&, SkDescriptor const*, SkTypeface*) const",
+          327680
+        ],
+        [
+          "SkStrike::digestFor(skglyph::ActionType, SkPackedGlyphID)",
+          294912
+        ],
+        [
+          "blink::Document::CompleteURLWithOverride(blink::String const&, blink::KURL const&, blink::Document::CompleteURLPreloadStatus) const",
+          294912
+        ],
+        [
+          "cc::DisplayItemList::Finalize()",
+          229376
+        ],
+        [
+          "skia_private::THashTable<SkGlyphDigest, SkPackedGlyphID, SkGlyphDigest>::resize(int)",
+          229376
+        ],
+        [
+          "SkPathData::MakeNoCheck(SkSpan<SkPoint const>, SkSpan<SkPathVerb const>, SkSpan<float const>, std::__1::optional<SkRect>, std::__1::optional<unsigned int>)",
+          196608
+        ],
+        [
+          "v8::String::NewFromTwoByte(v8::Isolate*, unsigned short const*, v8::NewStringType, int)",
+          196608
+        ],
+        [
+          "cc::PaintOpBuffer::ShrinkToFit()",
+          163840
+        ],
+        [
+          "blink::StringImpl::Create(base::span<unsigned char const, 18446744073709551615ul, unsigned char const*>)",
+          163840
+        ],
+        [
+          "SkPathData::MakeTransform(SkPathRaw const&, SkMatrix const&)",
+          163840
+        ]
+      ]
+    },
+    {
+      "cohort": "1-current",
+      "checkpoint": "wellness_care",
+      "samples": 65,
+      "sample_weight_total": 2457600,
+      "largest_buckets": [
+        [
+          "blink::PaintChunker::AddHitTestDataToCurrentChunk(blink::DisplayItem::Id const&, blink::DisplayItemClient const&, gfx::Rect const&, cc::TouchAction, bool, cc::HitTestOpaqueness)",
+          458752
+        ],
+        [
+          "blink::StringImpl::CreateUninitialized(unsigned long, base::span<char16_t, 18446744073709551615ul, char16_t*>&)",
+          262144
+        ],
+        [
+          "SkTypeface_Fontations::onCreateScalerContextAsProxyTypeface(SkScalerContextEffects const&, SkDescriptor const*, SkTypeface*) const",
+          229376
+        ],
+        [
+          "SkPathData::MakeTransform(SkPathRaw const&, SkMatrix const&)",
+          163840
+        ],
+        [
+          "SkStrike::prepareForImage(SkGlyph*)",
+          131072
+        ],
+        [
+          "SkStrike::digestFor(skglyph::ActionType, SkPackedGlyphID)",
+          131072
+        ],
+        [
+          "mojo::internal::InterfacePtrState<blink::mojom::blink::IDBFactory>::ConfigureProxyIfNecessary()",
+          65536
+        ],
+        [
+          "blink::PendingLayer::PendingLayer(blink::PaintArtifact const&, blink::PaintChunk const&, int, blink::PendingLayer::CompositingType)",
+          65536
+        ],
+        [
+          "cc::ResourcePool::PrepareForExport(cc::ResourcePool::InUsePoolResource const&, viz::TransferableResource::ResourceSource)",
+          32768
+        ],
+        [
+          "v8::internal::TypedSlots::Insert(v8::internal::SlotType, unsigned int)",
+          32768
+        ],
+        [
+          "cc::RollingTimeDeltaHistory::InsertSample(base::TimeDelta)",
+          32768
+        ],
+        [
+          "base::sequence_manager::internal::AtomicFlagSet::AddFlag(base::RepeatingCallback<void ()>)",
+          32768
+        ],
+        [
+          "cc::KeyframeModel::CreateImplInstance(gfx::KeyframeModel::RunState) const",
+          32768
+        ],
+        [
+          "cc::PropertyTrees::operator=(cc::PropertyTrees const&)",
+          32768
+        ],
+        [
+          "blink::CompositingDecisionDetailsMap::AddUnsupportedProperty(blink::PropertyHandle const&)",
+          32768
+        ]
+      ]
+    },
+    {
+      "cohort": "2-current",
+      "checkpoint": "background",
+      "samples": 57,
+      "sample_weight_total": 2424832,
+      "largest_buckets": [
+        [
+          "blink::StringImpl::CreateUninitialized(unsigned long, base::span<char16_t, 18446744073709551615ul, char16_t*>&)",
+          524288
+        ],
+        [
+          "blink::CSSAnimationData::CSSAnimationData()",
+          229376
+        ],
+        [
+          "cc::PaintShader::MakeLinearGradient(SkPoint const*, SkRGBA4f<(SkAlphaType)3> const*, float const*, int, SkTileMode, SkGradient::Interpolation, unsigned int, SkMatrix const*, SkRGBA4f<(SkAlphaType)3>)",
+          196608
+        ],
+        [
+          "blink::PaintChunker::AddHitTestDataToCurrentChunk(blink::DisplayItem::Id const&, blink::DisplayItemClient const&, gfx::Rect const&, cc::TouchAction, bool, cc::HitTestOpaqueness)",
+          163840
+        ],
+        [
+          "blink::CascadeMap::Add(blink::CSSPropertyID, blink::CascadePriority)",
+          163840
+        ],
+        [
+          "absl::container_internal::(anonymous namespace)::GrowToNextCapacityAndPrepareInsert(absl::container_internal::CommonFields&, absl::container_internal::PolicyFunctions const&, unsigned long)",
+          98304
+        ],
+        [
+          "blink::Animation::Animation(blink::ExecutionContext*, blink::AnimationTimeline*, blink::AnimationEffect*)",
+          65536
+        ],
+        [
+          "std::__1::deque<base::sequence_manager::Task, std::__1::allocator<base::sequence_manager::Task> >::__add_back_capacity()",
+          65536
+        ],
+        [
+          "blink::RuleInvalidationDataVisitor<(blink::RuleInvalidationDataVisitorType)0>::EnsureMutableInvalidationSet(blink::InvalidationType, blink::RuleInvalidationDataVisitor<(blink::RuleInvalidationDataVisitorType)0>::PositionType, bool, scoped_refptr<blink::InvalidationSet>&)",
+          65536
+        ],
+        [
+          "void std::__1::vector<cc::StickyPositionNodeData, std::__1::allocator<cc::StickyPositionNodeData> >::__assign_with_size[abi:sqn220108]<std::__1::_ClassicAlgPolicy, cc::StickyPositionNodeData*, cc::StickyPositionNodeData*>(cc::StickyPositionNodeData*, cc::StickyPositionNodeData*, long)",
+          32768
+        ],
+        [
+          "cc::RollingTimeDeltaHistory::InsertSample(base::TimeDelta)",
+          32768
+        ],
+        [
+          "cc::PaintOpBuffer::ShrinkToFit()",
+          32768
+        ],
+        [
+          "blink::PhysicalFragmentRareData::PhysicalFragmentRareData(blink::PhysicalFragmentRareData const&)",
+          32768
+        ],
+        [
+          "cc::PictureLayer::CreateLayerImpl(cc::LayerTreeImpl*) const",
+          32768
+        ],
+        [
+          "cc::PropertyTrees::operator=(cc::PropertyTrees const&)",
+          32768
+        ]
+      ]
+    },
+    {
+      "cohort": "2-current",
+      "checkpoint": "home_idle",
+      "samples": 87,
+      "sample_weight_total": 3375104,
+      "largest_buckets": [
+        [
+          "blink::PaintChunker::AddHitTestDataToCurrentChunk(blink::DisplayItem::Id const&, blink::DisplayItemClient const&, gfx::Rect const&, cc::TouchAction, bool, cc::HitTestOpaqueness)",
+          819200
+        ],
+        [
+          "blink::StringImpl::CreateUninitialized(unsigned long, base::span<char16_t, 18446744073709551615ul, char16_t*>&)",
+          458752
+        ],
+        [
+          "cc::ResourcePool::InUsePoolResource::InstallSoftwareBacking(scoped_refptr<gpu::SharedImageInterface>, std::__1::basic_string_view<char, std::__1::char_traits<char> >) const",
+          98304
+        ],
+        [
+          "SkTextBlobBuilder::allocInternal(SkFont const&, SkTextBlob::GlyphPositioning, int, int, SkPoint, SkRect const*)",
+          98304
+        ],
+        [
+          "v8::String::NewFromTwoByte(v8::Isolate*, unsigned short const*, v8::NewStringType, int)",
+          98304
+        ],
+        [
+          "v8::internal::TracedHandles::RefillUsableNodeBlocks()",
+          98304
+        ],
+        [
+          "blink::StringImpl::Create(base::span<unsigned char const, 18446744073709551615ul, unsigned char const*>)",
+          98304
+        ],
+        [
+          "cc::DisplayItemList::Finalize()",
+          65536
+        ],
+        [
+          "cc::PaintOpBuffer::ShrinkToFit()",
+          65536
+        ],
+        [
+          "SkBitmapDevice::createDevice(SkDevice::CreateInfo const&, SkPaint const*)",
+          65536
+        ],
+        [
+          "blink::MatchedPropertiesCache::Add(blink::MatchedPropertiesCache::Key const&, blink::StyleAdjuster::ElementTypeForCache, blink::ComputedStyle const*, blink::ComputedStyle const*, blink::ComputedStyle const*, blink::ComputedStyle const*)",
+          65536
+        ],
+        [
+          "cc::ResourcePool::AcquireResource(gfx::Size const&, viz::SharedImageFormat, gfx::ColorSpace const&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&)",
+          65536
+        ],
+        [
+          "v8::internal::ExternalReferenceEncoder::ExternalReferenceEncoder(v8::internal::Isolate*)",
+          65536
+        ],
+        [
+          "cc::PaintShader::MakeLinearGradient(SkPoint const*, SkRGBA4f<(SkAlphaType)3> const*, float const*, int, SkTileMode, SkGradient::Interpolation, unsigned int, SkMatrix const*, SkRGBA4f<(SkAlphaType)3>)",
+          65536
+        ],
+        [
+          "perfetto::internal::TrackEvent<&base::perfetto_track_event::internal::kCategoryRegistry>::CallIfCategoryEnabled<blink::LocalFrameMetricsAggregator::ScopedUkmHierarchicalTimer::ScopedUkmHierarchicalTimer(scoped_refptr<blink::LocalFrameMetricsAggregator>, unsigned long, base::TickClock const*)::$_0>(unsigned long, blink::LocalFrameMetricsAggregator::ScopedUkmHierarchicalTimer::ScopedUkmHierarchicalTimer(scoped_refptr<blink::LocalFrameMetricsAggregator>, unsigned long, base::TickClock const*)::$_0)::{lambda(unsigned int)#1}::operator()(unsigned int) const",
+          32768
+        ]
+      ]
+    },
+    {
+      "cohort": "2-current",
+      "checkpoint": "home_interaction",
+      "samples": 84,
+      "sample_weight_total": 3309568,
+      "largest_buckets": [
+        [
+          "blink::StringImpl::CreateUninitialized(unsigned long, base::span<char16_t, 18446744073709551615ul, char16_t*>&)",
+          458752
+        ],
+        [
+          "cc::PaintOpBuffer::ReleaseAsRecord()",
+          131072
+        ],
+        [
+          "cc::ResourcePool::InUsePoolResource::InstallSoftwareBacking(scoped_refptr<gpu::SharedImageInterface>, std::__1::basic_string_view<char, std::__1::char_traits<char> >) const",
+          131072
+        ],
+        [
+          "cc::PaintOpBuffer::ShrinkToFit()",
+          98304
+        ],
+        [
+          "SkBitmapDevice::createDevice(SkDevice::CreateInfo const&, SkPaint const*)",
+          98304
+        ],
+        [
+          "v8::String::NewFromTwoByte(v8::Isolate*, unsigned short const*, v8::NewStringType, int)",
+          98304
+        ],
+        [
+          "v8::internal::TracedHandles::RefillUsableNodeBlocks()",
+          98304
+        ],
+        [
+          "blink::StringImpl::Create(base::span<unsigned char const, 18446744073709551615ul, unsigned char const*>)",
+          98304
+        ],
+        [
+          "cc::PropertyTrees::operator=(cc::PropertyTrees const&)",
+          65536
+        ],
+        [
+          "v8::internal::(anonymous namespace)::Invoke(v8::internal::Isolate*, v8::internal::(anonymous namespace)::InvokeParams const&) [clone .llvm.8000303834572878609]",
+          65536
+        ],
+        [
+          "cc::ResourcePool::PrepareForExport(cc::ResourcePool::InUsePoolResource const&, viz::TransferableResource::ResourceSource)",
+          65536
+        ],
+        [
+          "cc::PictureLayerImpl::CreateLayerImpl(cc::LayerTreeImpl*) const",
+          65536
+        ],
+        [
+          "std::__1::deque<base::sequence_manager::Task, std::__1::allocator<base::sequence_manager::Task> >::__add_back_capacity()",
+          65536
+        ],
+        [
+          "cc::ResourcePool::AcquireResource(gfx::Size const&, viz::SharedImageFormat, gfx::ColorSpace const&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&)",
+          65536
+        ],
+        [
+          "v8::internal::ExternalReferenceEncoder::ExternalReferenceEncoder(v8::internal::Isolate*)",
+          65536
+        ]
+      ]
+    },
+    {
+      "cohort": "2-current",
+      "checkpoint": "navigation_1",
+      "samples": 45,
+      "sample_weight_total": 1998848,
+      "largest_buckets": [
+        [
+          "blink::StringImpl::CreateUninitialized(unsigned long, base::span<char16_t, 18446744073709551615ul, char16_t*>&)",
+          491520
+        ],
+        [
+          "SkBitmapDevice::createDevice(SkDevice::CreateInfo const&, SkPaint const*)",
+          163840
+        ],
+        [
+          "cc::PaintShader::MakeLinearGradient(SkPoint const*, SkRGBA4f<(SkAlphaType)3> const*, float const*, int, SkTileMode, SkGradient::Interpolation, unsigned int, SkMatrix const*, SkRGBA4f<(SkAlphaType)3>)",
+          131072
+        ],
+        [
+          "blink::PaintChunker::AddHitTestDataToCurrentChunk(blink::DisplayItem::Id const&, blink::DisplayItemClient const&, gfx::Rect const&, cc::TouchAction, bool, cc::HitTestOpaqueness)",
+          65536
+        ],
+        [
+          "blink::MatchedPropertiesCache::Add(blink::MatchedPropertiesCache::Key const&, blink::StyleAdjuster::ElementTypeForCache, blink::ComputedStyle const*, blink::ComputedStyle const*, blink::ComputedStyle const*, blink::ComputedStyle const*)",
+          65536
+        ],
+        [
+          "blink::Document::CompleteURLWithOverride(blink::String const&, blink::KURL const&, blink::Document::CompleteURLPreloadStatus) const",
+          65536
+        ],
+        [
+          "blink::RuleInvalidationDataVisitor<(blink::RuleInvalidationDataVisitorType)0>::InvalidationSetForSimpleSelector(blink::CSSSelector const&, blink::InvalidationType, blink::RuleInvalidationDataVisitor<(blink::RuleInvalidationDataVisitorType)0>::PositionType, bool)",
+          65536
+        ],
+        [
+          "blink::HTMLTokenizer::NextTokenImpl(blink::SegmentedString&)",
+          65536
+        ],
+        [
+          "mojo::core::Channel::OnReadComplete(unsigned long, unsigned long*)",
+          32768
+        ],
+        [
+          "bool& base::flat_map<std::__1::pair<url::Origin, blink::WebContentSettingsClient::StorageType>, bool, std::__1::less<void>, std::__1::vector<std::__1::pair<std::__1::pair<url::Origin, blink::WebContentSettingsClient::StorageType>, bool>, std::__1::allocator<std::__1::pair<std::__1::pair<url::Origin, blink::WebContentSettingsClient::StorageType>, bool> > > >::operator[]<std::__1::pair<url::Origin, blink::WebContentSettingsClient::StorageType> >(std::__1::pair<url::Origin, blink::WebContentSettingsClient::StorageType> const&)",
+          32768
+        ],
+        [
+          "cc::PropertyTrees::operator=(cc::PropertyTrees const&)",
+          32768
+        ],
+        [
+          "cc::TransformCachedNodeData* std::__1::vector<cc::TransformCachedNodeData, std::__1::allocator<cc::TransformCachedNodeData> >::__emplace_back_slow_path<cc::TransformCachedNodeData>(cc::TransformCachedNodeData&&)",
+          32768
+        ],
+        [
+          "cc::PaintOpBuffer::ShrinkToFit()",
+          32768
+        ],
+        [
+          "cc::ResourcePool::PrepareForExport(cc::ResourcePool::InUsePoolResource const&, viz::TransferableResource::ResourceSource)",
+          32768
+        ],
+        [
+          "cc::ResourcePool::AcquireResource(gfx::Size const&, viz::SharedImageFormat, gfx::ColorSpace const&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&)",
+          32768
+        ]
+      ]
+    },
+    {
+      "cohort": "2-current",
+      "checkpoint": "navigation_10",
+      "samples": 38,
+      "sample_weight_total": 1802240,
+      "largest_buckets": [
+        [
+          "blink::StringImpl::CreateUninitialized(unsigned long, base::span<char16_t, 18446744073709551615ul, char16_t*>&)",
+          589824
+        ],
+        [
+          "cc::PaintOpBuffer::ReleaseAsRecord()",
+          262144
+        ],
+        [
+          "SkBitmapDevice::createDevice(SkDevice::CreateInfo const&, SkPaint const*)",
+          131072
+        ],
+        [
+          "cc::ResourcePool::InUsePoolResource::InstallSoftwareBacking(scoped_refptr<gpu::SharedImageInterface>, std::__1::basic_string_view<char, std::__1::char_traits<char> >) const",
+          98304
+        ],
+        [
+          "blink::PaintChunker::AddHitTestDataToCurrentChunk(blink::DisplayItem::Id const&, blink::DisplayItemClient const&, gfx::Rect const&, cc::TouchAction, bool, cc::HitTestOpaqueness)",
+          65536
+        ],
+        [
+          "cc::PaintShader::MakeLinearGradient(SkPoint const*, SkRGBA4f<(SkAlphaType)3> const*, float const*, int, SkTileMode, SkGradient::Interpolation, unsigned int, SkMatrix const*, SkRGBA4f<(SkAlphaType)3>)",
+          65536
+        ],
+        [
+          "cc::CompositorFrameReporter::SetPartialUpdateDecider(cc::CompositorFrameReporter*)",
+          32768
+        ],
+        [
+          "blink::Gradient::CreateLinear(gfx::PointF const&, gfx::PointF const&, blink::Gradient::SpreadMethod, blink::Gradient::PremultipliedAlpha, blink::Gradient::DegenerateHandling)",
+          32768
+        ],
+        [
+          "blink::FrameLoader::FinishedParsing()",
+          32768
+        ],
+        [
+          "cc::PropertyTrees::operator=(cc::PropertyTrees const&)",
+          32768
+        ],
+        [
+          "blink::CreateResourceTimingInfo(base::TimeTicks, blink::KURL const&, blink::ResourceResponse const*)",
+          32768
+        ],
+        [
+          "cppgc::internal::(anonymous namespace)::MutatorThreadSweeper::FinalizeAndSweepWithDeadline(cppgc::internal::StatsCollector::ScopeId, cppgc::internal::(anonymous namespace)::SweepingState&, v8::base::TimeTicks, cppgc::internal::(anonymous namespace)::MutatorThreadSweepingMode)",
+          32768
+        ],
+        [
+          "cc::PropertyTrees::ResetCachedData()",
+          32768
+        ],
+        [
+          "cc::ResourcePool::PrepareForExport(cc::ResourcePool::InUsePoolResource const&, viz::TransferableResource::ResourceSource)",
+          32768
+        ],
+        [
+          "cc::PictureLayer::CreateLayerImpl(cc::LayerTreeImpl*) const",
+          32768
+        ]
+      ]
+    },
+    {
+      "cohort": "2-current",
+      "checkpoint": "navigation_15",
+      "samples": 41,
+      "sample_weight_total": 1966080,
+      "largest_buckets": [
+        [
+          "blink::StringImpl::CreateUninitialized(unsigned long, base::span<char16_t, 18446744073709551615ul, char16_t*>&)",
+          491520
+        ],
+        [
+          "SkBitmapDevice::createDevice(SkDevice::CreateInfo const&, SkPaint const*)",
+          196608
+        ],
+        [
+          "cc::PaintOpBuffer::ReleaseAsRecord()",
+          196608
+        ],
+        [
+          "cc::PropertyTrees::operator=(cc::PropertyTrees const&)",
+          131072
+        ],
+        [
+          "cc::PaintShader::MakeLinearGradient(SkPoint const*, SkRGBA4f<(SkAlphaType)3> const*, float const*, int, SkTileMode, SkGradient::Interpolation, unsigned int, SkMatrix const*, SkRGBA4f<(SkAlphaType)3>)",
+          98304
+        ],
+        [
+          "cc::TransformCachedNodeData* std::__1::vector<cc::TransformCachedNodeData, std::__1::allocator<cc::TransformCachedNodeData> >::__emplace_back_slow_path<cc::TransformCachedNodeData>(cc::TransformCachedNodeData&&)",
+          98304
+        ],
+        [
+          "cc::PropertyTrees::ResetCachedData()",
+          65536
+        ],
+        [
+          "SkTextBlobBuilder::allocInternal(SkFont const&, SkTextBlob::GlyphPositioning, int, int, SkPoint, SkRect const*)",
+          65536
+        ],
+        [
+          "cc::ResourcePool::InUsePoolResource::InstallSoftwareBacking(scoped_refptr<gpu::SharedImageInterface>, std::__1::basic_string_view<char, std::__1::char_traits<char> >) const",
+          65536
+        ],
+        [
+          "blink::RasterInvalidator::Generate(blink::PaintChunkSubset const&, gfx::Vector2dF const&, gfx::Size const&, blink::PropertyTreeState const&)",
+          32768
+        ],
+        [
+          "ChromeRenderFrameObserver::DidMeaningfulLayout(blink::WebMeaningfulLayout)",
+          32768
+        ],
+        [
+          "blink::MatchedPropertiesCache::Add(blink::MatchedPropertiesCache::Key const&, blink::StyleAdjuster::ElementTypeForCache, blink::ComputedStyle const*, blink::ComputedStyle const*, blink::ComputedStyle const*, blink::ComputedStyle const*)",
+          32768
+        ],
+        [
+          "cc::KeyframeModel::CreateImplInstance(gfx::KeyframeModel::RunState) const",
+          32768
+        ],
+        [
+          "blink::Document::CompleteURLWithOverride(blink::String const&, blink::KURL const&, blink::Document::CompleteURLPreloadStatus) const",
+          32768
+        ],
+        [
+          "cc::ClipNode* std::__1::vector<cc::ClipNode, std::__1::allocator<cc::ClipNode> >::__emplace_back_slow_path<cc::ClipNode const&>(cc::ClipNode const&)",
+          32768
+        ]
+      ]
+    },
+    {
+      "cohort": "2-current",
+      "checkpoint": "navigation_20",
+      "samples": 50,
+      "sample_weight_total": 2260992,
+      "largest_buckets": [
+        [
+          "blink::StringImpl::CreateUninitialized(unsigned long, base::span<char16_t, 18446744073709551615ul, char16_t*>&)",
+          491520
+        ],
+        [
+          "cc::PaintOpBuffer::ReleaseAsRecord()",
+          327680
+        ],
+        [
+          "SkBitmapDevice::createDevice(SkDevice::CreateInfo const&, SkPaint const*)",
+          229376
+        ],
+        [
+          "cc::DisplayItemList::Finalize()",
+          196608
+        ],
+        [
+          "SkTextBlobBuilder::allocInternal(SkFont const&, SkTextBlob::GlyphPositioning, int, int, SkPoint, SkRect const*)",
+          65536
+        ],
+        [
+          "blink::HTMLTokenizer::NextTokenImpl(blink::SegmentedString&)",
+          65536
+        ],
+        [
+          "blink::StringImpl::Create(base::span<unsigned char const, 18446744073709551615ul, unsigned char const*>)",
+          65536
+        ],
+        [
+          "blink::RasterInvalidator::Generate(blink::PaintChunkSubset const&, gfx::Vector2dF const&, gfx::Size const&, blink::PropertyTreeState const&)",
+          32768
+        ],
+        [
+          "blink::LCPCriticalPathPredictor::GetHost()",
+          32768
+        ],
+        [
+          "mojo::internal::InterfacePtrState<performance_manager::mojom::blink::DocumentCoordinationUnit>::ConfigureProxyIfNecessary()",
+          32768
+        ],
+        [
+          "cc::OwnedLayerImplList::RebuildLayerMaps() const",
+          32768
+        ],
+        [
+          "cc::TransformCachedNodeData* std::__1::vector<cc::TransformCachedNodeData, std::__1::allocator<cc::TransformCachedNodeData> >::__emplace_back_slow_path<cc::TransformCachedNodeData>(cc::TransformCachedNodeData&&)",
+          32768
+        ],
+        [
+          "blink::Gradient::CreateLinear(gfx::PointF const&, gfx::PointF const&, blink::Gradient::SpreadMethod, blink::Gradient::PremultipliedAlpha, blink::Gradient::DegenerateHandling)",
+          32768
+        ],
+        [
+          "blink::scheduler::MainThreadTaskQueue::MainThreadTaskQueue(base::sequence_manager::SequenceManager&, base::sequence_manager::TaskQueue::Spec const&, blink::scheduler::MainThreadTaskQueue::QueueCreationParams const&, blink::scheduler::MainThreadSchedulerImpl*)",
+          32768
+        ],
+        [
+          "cc::TouchActionRegion::TouchActionRegion(cc::TouchActionRegion const&)",
+          32768
+        ]
+      ]
+    },
+    {
+      "cohort": "2-current",
+      "checkpoint": "navigation_5",
+      "samples": 45,
+      "sample_weight_total": 1966080,
+      "largest_buckets": [
+        [
+          "blink::StringImpl::CreateUninitialized(unsigned long, base::span<char16_t, 18446744073709551615ul, char16_t*>&)",
+          524288
+        ],
+        [
+          "heap::base::Worklist<v8::internal::detail::HeapObjectAndSlotPOD<v8::internal::CompressedHeapObjectSlot>, (unsigned short)64>::Local::NewSegment() const",
+          196608
+        ],
+        [
+          "blink::MatchedPropertiesCache::Add(blink::MatchedPropertiesCache::Key const&, blink::StyleAdjuster::ElementTypeForCache, blink::ComputedStyle const*, blink::ComputedStyle const*, blink::ComputedStyle const*, blink::ComputedStyle const*)",
+          98304
+        ],
+        [
+          "cc::ResourcePool::InUsePoolResource::InstallSoftwareBacking(scoped_refptr<gpu::SharedImageInterface>, std::__1::basic_string_view<char, std::__1::char_traits<char> >) const",
+          98304
+        ],
+        [
+          "cc::PaintOpBuffer::ReleaseAsRecord()",
+          98304
+        ],
+        [
+          "cc::PaintShader::MakeLinearGradient(SkPoint const*, SkRGBA4f<(SkAlphaType)3> const*, float const*, int, SkTileMode, SkGradient::Interpolation, unsigned int, SkMatrix const*, SkRGBA4f<(SkAlphaType)3>)",
+          65536
+        ],
+        [
+          "blink::HTMLTokenizer::NextTokenImpl(blink::SegmentedString&)",
+          65536
+        ],
+        [
+          "cc::PropertyTrees::operator=(cc::PropertyTrees const&)",
+          65536
+        ],
+        [
+          "cc::ResourcePool::PrepareForExport(cc::ResourcePool::InUsePoolResource const&, viz::TransferableResource::ResourceSource)",
+          65536
+        ],
+        [
+          "ChromeRenderFrameObserver::DidMeaningfulLayout(blink::WebMeaningfulLayout)",
+          32768
+        ],
+        [
+          "mojo::internal::InterfacePtrState<blink::mojom::blink::IDBFactory>::ConfigureProxyIfNecessary()",
+          32768
+        ],
+        [
+          "blink::StyleBuilderConverterBase::ConvertFontFamily(blink::CSSValue const&, blink::FontBuilder*, blink::Document const*)",
+          32768
+        ],
+        [
+          "blink::LinearTimingFunction::CloneToCC() const",
+          32768
+        ],
+        [
+          "blink::Document::CheckCompletedInternal()",
+          32768
+        ],
+        [
+          "blink::StringImpl::Create8BitIfPossible(base::span<char16_t const, 18446744073709551615ul, char16_t const*>)",
+          32768
+        ]
+      ]
+    },
+    {
+      "cohort": "2-current",
+      "checkpoint": "offscreen",
+      "samples": 72,
+      "sample_weight_total": 2883584,
+      "largest_buckets": [
+        [
+          "blink::StringImpl::CreateUninitialized(unsigned long, base::span<char16_t, 18446744073709551615ul, char16_t*>&)",
+          524288
+        ],
+        [
+          "cc::PaintOpBuffer::ReleaseAsRecord()",
+          327680
+        ],
+        [
+          "cc::DisplayItemList::Finalize()",
+          196608
+        ],
+        [
+          "blink::PaintChunker::AddHitTestDataToCurrentChunk(blink::DisplayItem::Id const&, blink::DisplayItemClient const&, gfx::Rect const&, cc::TouchAction, bool, cc::HitTestOpaqueness)",
+          196608
+        ],
+        [
+          "cc::PaintShader::MakeLinearGradient(SkPoint const*, SkRGBA4f<(SkAlphaType)3> const*, float const*, int, SkTileMode, SkGradient::Interpolation, unsigned int, SkMatrix const*, SkRGBA4f<(SkAlphaType)3>)",
+          196608
+        ],
+        [
+          "cc::PaintOpBuffer::ShrinkToFit()",
+          131072
+        ],
+        [
+          "blink::RasterInvalidator::Generate(blink::PaintChunkSubset const&, gfx::Vector2dF const&, gfx::Size const&, blink::PropertyTreeState const&)",
+          98304
+        ],
+        [
+          "absl::container_internal::(anonymous namespace)::GrowToNextCapacityAndPrepareInsert(absl::container_internal::CommonFields&, absl::container_internal::PolicyFunctions const&, unsigned long)",
+          98304
+        ],
+        [
+          "std::__1::deque<base::sequence_manager::Task, std::__1::allocator<base::sequence_manager::Task> >::__add_back_capacity()",
+          65536
+        ],
+        [
+          "blink::PaintController::PaintController(bool, blink::PaintControllerPersistentData*, blink::PaintBenchmarkMode)",
+          65536
+        ],
+        [
+          "blink::LayoutSVGResourceGradient::ApplyShader(blink::SVGResourceClient const&, gfx::RectF const&, blink::AffineTransform const*, blink::AutoDarkMode const&, cc::PaintFlags&, unsigned int)",
+          65536
+        ],
+        [
+          "cc::TileManager::CreateTile(cc::Tile::CreateInfo const&, int, int, int)",
+          32768
+        ],
+        [
+          "blink::scheduler::MainThreadTaskQueue::MainThreadTaskQueue(base::sequence_manager::SequenceManager&, base::sequence_manager::TaskQueue::Spec const&, blink::scheduler::MainThreadTaskQueue::QueueCreationParams const&, blink::scheduler::MainThreadSchedulerImpl*)",
+          32768
+        ],
+        [
+          "cc::ResourcePool::InUsePoolResource::InstallSoftwareBacking(scoped_refptr<gpu::SharedImageInterface>, std::__1::basic_string_view<char, std::__1::char_traits<char> >) const",
+          32768
+        ],
+        [
+          "blink::CreateResourceTimingInfo(base::TimeTicks, blink::KURL const&, blink::ResourceResponse const*)",
+          32768
+        ]
+      ]
+    },
+    {
+      "cohort": "2-current",
+      "checkpoint": "picker_growth",
+      "samples": 238,
+      "sample_weight_total": 9437184,
+      "largest_buckets": [
+        [
+          "blink::PaintChunker::AddHitTestDataToCurrentChunk(blink::DisplayItem::Id const&, blink::DisplayItemClient const&, gfx::Rect const&, cc::TouchAction, bool, cc::HitTestOpaqueness)",
+          1114112
+        ],
+        [
+          "cc::PaintOpBuffer::ShrinkToFit()",
+          1015808
+        ],
+        [
+          "blink::RasterInvalidator::Generate(blink::PaintChunkSubset const&, gfx::Vector2dF const&, gfx::Size const&, blink::PropertyTreeState const&)",
+          917504
+        ],
+        [
+          "blink::CSSAnimationData::CSSAnimationData()",
+          884736
+        ],
+        [
+          "cc::DisplayItemList::Finalize()",
+          720896
+        ],
+        [
+          "blink::StringImpl::CreateUninitialized(unsigned long, base::span<char16_t, 18446744073709551615ul, char16_t*>&)",
+          655360
+        ],
+        [
+          "blink::Canvas2DResourceProvider::CreateSkSurface() const",
+          458752
+        ],
+        [
+          "SkPathData::MakeTransform(SkPathRaw const&, SkMatrix const&)",
+          327680
+        ],
+        [
+          "cc::PaintShader::MakeLinearGradient(SkPoint const*, SkRGBA4f<(SkAlphaType)3> const*, float const*, int, SkTileMode, SkGradient::Interpolation, unsigned int, SkMatrix const*, SkRGBA4f<(SkAlphaType)3>)",
+          294912
+        ],
+        [
+          "SkBitmapDevice::createDevice(SkDevice::CreateInfo const&, SkPaint const*)",
+          196608
+        ],
+        [
+          "SkTypeface_Fontations::onCreateScalerContextAsProxyTypeface(SkScalerContextEffects const&, SkDescriptor const*, SkTypeface*) const",
+          196608
+        ],
+        [
+          "cc::PaintOpBuffer::ReleaseAsRecord()",
+          131072
+        ],
+        [
+          "cc::ResourcePool::InUsePoolResource::InstallSoftwareBacking(scoped_refptr<gpu::SharedImageInterface>, std::__1::basic_string_view<char, std::__1::char_traits<char> >) const",
+          131072
+        ],
+        [
+          "SkStrike::digestFor(skglyph::ActionType, SkPackedGlyphID)",
+          131072
+        ],
+        [
+          "SkPathData::MakeNoCheck(SkSpan<SkPoint const>, SkSpan<SkPathVerb const>, SkSpan<float const>, std::__1::optional<SkRect>, std::__1::optional<unsigned int>)",
+          131072
+        ]
+      ]
+    },
+    {
+      "cohort": "2-current",
+      "checkpoint": "reduced_motion",
+      "samples": 42,
+      "sample_weight_total": 1933312,
+      "largest_buckets": [
+        [
+          "blink::StringImpl::CreateUninitialized(unsigned long, base::span<char16_t, 18446744073709551615ul, char16_t*>&)",
+          524288
+        ],
+        [
+          "blink::CSSAnimationData::CSSAnimationData()",
+          229376
+        ],
+        [
+          "blink::CascadeMap::Add(blink::CSSPropertyID, blink::CascadePriority)",
+          163840
+        ],
+        [
+          "absl::container_internal::(anonymous namespace)::GrowToNextCapacityAndPrepareInsert(absl::container_internal::CommonFields&, absl::container_internal::PolicyFunctions const&, unsigned long)",
+          98304
+        ],
+        [
+          "cc::DisplayItemList::Finalize()",
+          65536
+        ],
+        [
+          "std::__1::deque<base::sequence_manager::Task, std::__1::allocator<base::sequence_manager::Task> >::__add_back_capacity()",
+          65536
+        ],
+        [
+          "cc::PaintShader::MakeLinearGradient(SkPoint const*, SkRGBA4f<(SkAlphaType)3> const*, float const*, int, SkTileMode, SkGradient::Interpolation, unsigned int, SkMatrix const*, SkRGBA4f<(SkAlphaType)3>)",
+          65536
+        ],
+        [
+          "blink::RasterInvalidator::Generate(blink::PaintChunkSubset const&, gfx::Vector2dF const&, gfx::Size const&, blink::PropertyTreeState const&)",
+          32768
+        ],
+        [
+          "cc::PaintOpBuffer::ReleaseAsRecord()",
+          32768
+        ],
+        [
+          "blink::Gradient::CreateLinear(gfx::PointF const&, gfx::PointF const&, blink::Gradient::SpreadMethod, blink::Gradient::PremultipliedAlpha, blink::Gradient::DegenerateHandling)",
+          32768
+        ],
+        [
+          "blink::css_longhand::AnimationRangeEnd::ApplyValue(blink::StyleResolverState&, blink::CSSValue const&, unsigned char) const",
+          32768
+        ],
+        [
+          "blink::scheduler::MainThreadTaskQueue::MainThreadTaskQueue(base::sequence_manager::SequenceManager&, base::sequence_manager::TaskQueue::Spec const&, blink::scheduler::MainThreadTaskQueue::QueueCreationParams const&, blink::scheduler::MainThreadSchedulerImpl*)",
+          32768
+        ],
+        [
+          "cc::ResourcePool::InUsePoolResource::InstallSoftwareBacking(scoped_refptr<gpu::SharedImageInterface>, std::__1::basic_string_view<char, std::__1::char_traits<char> >) const",
+          32768
+        ],
+        [
+          "blink::CreateResourceTimingInfo(base::TimeTicks, blink::KURL const&, blink::ResourceResponse const*)",
+          32768
+        ],
+        [
+          "cc::PropertyTrees::operator=(cc::PropertyTrees const&)",
+          32768
+        ]
+      ]
+    },
+    {
+      "cohort": "2-current",
+      "checkpoint": "seasonal_preview",
+      "samples": 281,
+      "sample_weight_total": 12779520,
+      "largest_buckets": [
+        [
+          "blink::StringImpl::CreateUninitialized(unsigned long, base::span<char16_t, 18446744073709551615ul, char16_t*>&)",
+          3080192
+        ],
+        [
+          "blink::PaintChunker::AddHitTestDataToCurrentChunk(blink::DisplayItem::Id const&, blink::DisplayItemClient const&, gfx::Rect const&, cc::TouchAction, bool, cc::HitTestOpaqueness)",
+          1015808
+        ],
+        [
+          "cc::PaintOpBuffer::ReleaseAsRecord()",
+          917504
+        ],
+        [
+          "blink::LocaleIcu::InitializeDateTimeFormat()",
+          524288
+        ],
+        [
+          "cc::PaintShader::MakeLinearGradient(SkPoint const*, SkRGBA4f<(SkAlphaType)3> const*, float const*, int, SkTileMode, SkGradient::Interpolation, unsigned int, SkMatrix const*, SkRGBA4f<(SkAlphaType)3>)",
+          425984
+        ],
+        [
+          "SkStrike::digestFor(skglyph::ActionType, SkPackedGlyphID)",
+          393216
+        ],
+        [
+          "cc::DisplayItemList::Finalize()",
+          294912
+        ],
+        [
+          "SkPathData::MakeNoCheck(SkSpan<SkPoint const>, SkSpan<SkPathVerb const>, SkSpan<float const>, std::__1::optional<SkRect>, std::__1::optional<unsigned int>)",
+          294912
+        ],
+        [
+          "blink::RasterInvalidator::Generate(blink::PaintChunkSubset const&, gfx::Vector2dF const&, gfx::Size const&, blink::PropertyTreeState const&)",
+          229376
+        ],
+        [
+          "blink::Document::CompleteURLWithOverride(blink::String const&, blink::KURL const&, blink::Document::CompleteURLPreloadStatus) const",
+          229376
+        ],
+        [
+          "blink::RuleInvalidationDataVisitor<(blink::RuleInvalidationDataVisitorType)0>::InvalidationSetForSimpleSelector(blink::CSSSelector const&, blink::InvalidationType, blink::RuleInvalidationDataVisitor<(blink::RuleInvalidationDataVisitorType)0>::PositionType, bool)",
+          196608
+        ],
+        [
+          "cc::PaintOpBuffer::ShrinkToFit()",
+          196608
+        ],
+        [
+          "skia_private::THashTable<SkGlyphDigest, SkPackedGlyphID, SkGlyphDigest>::resize(int)",
+          196608
+        ],
+        [
+          "SkTypeface_Fontations::onCreateScalerContextAsProxyTypeface(SkScalerContextEffects const&, SkDescriptor const*, SkTypeface*) const",
+          196608
+        ],
+        [
+          "v8::internal::Deserializer<v8::internal::Isolate>::ReadObject(v8::internal::SnapshotSpace)",
+          163840
+        ]
+      ]
+    },
+    {
+      "cohort": "2-current",
+      "checkpoint": "wellness_care",
+      "samples": 76,
+      "sample_weight_total": 2850816,
+      "largest_buckets": [
+        [
+          "blink::StringImpl::CreateUninitialized(unsigned long, base::span<char16_t, 18446744073709551615ul, char16_t*>&)",
+          393216
+        ],
+        [
+          "blink::PaintChunker::AddHitTestDataToCurrentChunk(blink::DisplayItem::Id const&, blink::DisplayItemClient const&, gfx::Rect const&, cc::TouchAction, bool, cc::HitTestOpaqueness)",
+          262144
+        ],
+        [
+          "SkPathData::MakeTransform(SkPathRaw const&, SkMatrix const&)",
+          196608
+        ],
+        [
+          "SkTypeface_Fontations::onCreateScalerContextAsProxyTypeface(SkScalerContextEffects const&, SkDescriptor const*, SkTypeface*) const",
+          196608
+        ],
+        [
+          "cc::RollingTimeDeltaHistory::InsertSample(base::TimeDelta)",
+          98304
+        ],
+        [
+          "base::HistogramBase::GetPermanentName(std::__1::basic_string_view<char, std::__1::char_traits<char> >)",
+          98304
+        ],
+        [
+          "cc::ResourcePool::InUsePoolResource::InstallSoftwareBacking(scoped_refptr<gpu::SharedImageInterface>, std::__1::basic_string_view<char, std::__1::char_traits<char> >) const",
+          98304
+        ],
+        [
+          "SkStrike::digestFor(skglyph::ActionType, SkPackedGlyphID)",
+          98304
+        ],
+        [
+          "blink::StringImpl::Create(base::span<unsigned char const, 18446744073709551615ul, unsigned char const*>)",
+          98304
+        ],
+        [
+          "blink::PhysicalFragmentRareData::PhysicalFragmentRareData(blink::PhysicalFragmentRareData const&)",
+          65536
+        ],
+        [
+          "cc::mojo_embedder::AsyncLayerTreeFrameSink::BindToClient(cc::LayerTreeFrameSinkClient*)",
+          65536
+        ],
+        [
+          "blink::scheduler::MainThreadTaskQueue::MainThreadTaskQueue(base::sequence_manager::SequenceManager&, base::sequence_manager::TaskQueue::Spec const&, blink::scheduler::MainThreadTaskQueue::QueueCreationParams const&, blink::scheduler::MainThreadSchedulerImpl*)",
+          65536
+        ],
+        [
+          "blink::StringImpl::Create8BitIfPossible(base::span<char16_t const, 18446744073709551615ul, char16_t const*>)",
+          65536
+        ],
+        [
+          "v8::internal::WriteBarrier::GenerationalBarrierSlow(v8::internal::Tagged<v8::internal::HeapObject>, unsigned long, v8::internal::Tagged<v8::internal::HeapObject>)",
+          65536
+        ],
+        [
+          "cc::TileManager::AssignGpuMemoryToTiles()",
+          32768
+        ]
+      ]
+    },
+    {
+      "cohort": "3-original",
+      "checkpoint": "background",
+      "samples": 100,
+      "sample_weight_total": 3833856,
+      "largest_buckets": [
+        [
+          "blink::StringImpl::CreateUninitialized(unsigned long, base::span<char16_t, 18446744073709551615ul, char16_t*>&)",
+          524288
+        ],
+        [
+          "blink::CSSAnimationData::CSSAnimationData()",
+          491520
+        ],
+        [
+          "blink::PaintChunker::AddHitTestDataToCurrentChunk(blink::DisplayItem::Id const&, blink::DisplayItemClient const&, gfx::Rect const&, cc::TouchAction, bool, cc::HitTestOpaqueness)",
+          393216
+        ],
+        [
+          "cc::PictureLayer::CreateLayerImpl(cc::LayerTreeImpl*) const",
+          163840
+        ],
+        [
+          "cc::PaintShader::MakeLinearGradient(SkPoint const*, SkRGBA4f<(SkAlphaType)3> const*, float const*, int, SkTileMode, SkGradient::Interpolation, unsigned int, SkMatrix const*, SkRGBA4f<(SkAlphaType)3>)",
+          131072
+        ],
+        [
+          "blink::CascadeMap::Add(blink::CSSPropertyID, blink::CascadePriority)",
+          131072
+        ],
+        [
+          "blink::InvalidationSet::Backing<(blink::InvalidationSet::BackingType)2>::Add(blink::InvalidationSet::BackingFlags&, blink::AtomicString const&)",
+          98304
+        ],
+        [
+          "cc::EffectTree::CreateOrReuseRenderSurfaces(std::__1::vector<std::__1::unique_ptr<cc::RenderSurfaceImpl, std::__1::default_delete<cc::RenderSurfaceImpl> >, std::__1::allocator<std::__1::unique_ptr<cc::RenderSurfaceImpl, std::__1::default_delete<cc::RenderSurfaceImpl> > > >*, cc::LayerTreeImpl*)",
+          98304
+        ],
+        [
+          "blink::Document::CompleteURLWithOverride(blink::String const&, blink::KURL const&, blink::Document::CompleteURLPreloadStatus) const",
+          98304
+        ],
+        [
+          "cc::TransformNode* std::__1::vector<cc::TransformNode, std::__1::allocator<cc::TransformNode> >::__emplace_back_slow_path<cc::TransformNode const&>(cc::TransformNode const&)",
+          98304
+        ],
+        [
+          "cc::PaintOpBuffer::ReleaseAsRecord()",
+          65536
+        ],
+        [
+          "blink::css_longhand::AnimationDirection::ApplyValue(blink::StyleResolverState&, blink::CSSValue const&, unsigned char) const",
+          65536
+        ],
+        [
+          "cc::PropertyTrees::operator=(cc::PropertyTrees const&)",
+          65536
+        ],
+        [
+          "cc::ResourcePool::InUsePoolResource::InstallSoftwareBacking(scoped_refptr<gpu::SharedImageInterface>, std::__1::basic_string_view<char, std::__1::char_traits<char> >) const",
+          65536
+        ],
+        [
+          "blink::ContentLayerClientImpl::UpdateCcPictureLayer(blink::PendingLayer const&, blink::PropertyTreeState)",
+          65536
+        ]
+      ]
+    },
+    {
+      "cohort": "3-original",
+      "checkpoint": "home_idle",
+      "samples": 74,
+      "sample_weight_total": 2916352,
+      "largest_buckets": [
+        [
+          "blink::StringImpl::CreateUninitialized(unsigned long, base::span<char16_t, 18446744073709551615ul, char16_t*>&)",
+          524288
+        ],
+        [
+          "blink::PaintChunker::AddHitTestDataToCurrentChunk(blink::DisplayItem::Id const&, blink::DisplayItemClient const&, gfx::Rect const&, cc::TouchAction, bool, cc::HitTestOpaqueness)",
+          229376
+        ],
+        [
+          "blink::ThirdPartyScriptDetector::From(blink::LocalDOMWindow&)",
+          163840
+        ],
+        [
+          "cc::PictureLayer::CreateLayerImpl(cc::LayerTreeImpl*) const",
+          98304
+        ],
+        [
+          "cc::PaintShader::MakeLinearGradient(SkPoint const*, SkRGBA4f<(SkAlphaType)3> const*, float const*, int, SkTileMode, SkGradient::Interpolation, unsigned int, SkMatrix const*, SkRGBA4f<(SkAlphaType)3>)",
+          98304
+        ],
+        [
+          "cc::PaintOpBuffer::ReleaseAsRecord()",
+          65536
+        ],
+        [
+          "blink::(anonymous namespace)::ReportHistogramTimesAllGcPhases(std::__1::basic_string_view<char, std::__1::char_traits<char> >, std::__1::basic_string_view<char, std::__1::char_traits<char> >, v8::metrics::GarbageCollectionPhases const&)",
+          65536
+        ],
+        [
+          "blink::ThirdPartyScriptDetector::Detect(blink::String)",
+          65536
+        ],
+        [
+          "blink::(anonymous namespace)::ReportCppHistograms(std::__1::basic_string_view<char, std::__1::char_traits<char> >, v8::metrics::GarbageCollectionFullCycle const&) [clone .llvm.11515726952127435478]",
+          65536
+        ],
+        [
+          "cc::PropertyTrees::operator=(cc::PropertyTrees const&)",
+          65536
+        ],
+        [
+          "cc::TransformNode* std::__1::vector<cc::TransformNode, std::__1::allocator<cc::TransformNode> >::__emplace_back_slow_path<cc::TransformNode const&>(cc::TransformNode const&)",
+          65536
+        ],
+        [
+          "blink::StringCache::V8ExternalString(v8::Isolate*, blink::ParkableString const&)",
+          32768
+        ],
+        [
+          "cc::ResourcePool::InUsePoolResource::InstallSoftwareBacking(scoped_refptr<gpu::SharedImageInterface>, std::__1::basic_string_view<char, std::__1::char_traits<char> >) const",
+          32768
+        ],
+        [
+          "blink::RasterInvalidator::Generate(blink::PaintChunkSubset const&, gfx::Vector2dF const&, gfx::Size const&, blink::PropertyTreeState const&)",
+          32768
+        ],
+        [
+          "perfetto::internal::TrackEvent<&base::perfetto_track_event::internal::kCategoryRegistry>::CallIfCategoryEnabled<blink::WebFrameWidgetImpl::BeginMainFrame(viz::BeginFrameArgs const&)::$_0::operator()() const::{lambda(unsigned int)#2}>(unsigned long, blink::WebFrameWidgetImpl::BeginMainFrame(viz::BeginFrameArgs const&)::$_0::operator()() const::{lambda(unsigned int)#2})::{lambda(unsigned int)#1}::operator()(unsigned int) const",
+          32768
+        ]
+      ]
+    },
+    {
+      "cohort": "3-original",
+      "checkpoint": "home_interaction",
+      "samples": 113,
+      "sample_weight_total": 4259840,
+      "largest_buckets": [
+        [
+          "blink::PaintChunker::AddHitTestDataToCurrentChunk(blink::DisplayItem::Id const&, blink::DisplayItemClient const&, gfx::Rect const&, cc::TouchAction, bool, cc::HitTestOpaqueness)",
+          819200
+        ],
+        [
+          "blink::StringImpl::CreateUninitialized(unsigned long, base::span<char16_t, 18446744073709551615ul, char16_t*>&)",
+          524288
+        ],
+        [
+          "blink::ThirdPartyScriptDetector::From(blink::LocalDOMWindow&)",
+          163840
+        ],
+        [
+          "blink::PendingLayer::UpdateCompositedLayer(blink::PendingLayer*, blink::PropertyTreeState, viz::Selection<cc::LayerSelectionBound>&, bool, cc::LayerTreeHost*)",
+          131072
+        ],
+        [
+          "cc::PictureLayer::CreateLayerImpl(cc::LayerTreeImpl*) const",
+          131072
+        ],
+        [
+          "blink::PaintController::PaintController(bool, blink::PaintControllerPersistentData*, blink::PaintBenchmarkMode)",
+          98304
+        ],
+        [
+          "cc::PaintOpBuffer::ReleaseAsRecord()",
+          98304
+        ],
+        [
+          "cc::PaintShader::MakeLinearGradient(SkPoint const*, SkRGBA4f<(SkAlphaType)3> const*, float const*, int, SkTileMode, SkGradient::Interpolation, unsigned int, SkMatrix const*, SkRGBA4f<(SkAlphaType)3>)",
+          98304
+        ],
+        [
+          "cc::ResourcePool::PrepareForExport(cc::ResourcePool::InUsePoolResource const&, viz::TransferableResource::ResourceSource)",
+          65536
+        ],
+        [
+          "blink::PhysicalFragmentRareData::PhysicalFragmentRareData(blink::PhysicalFragmentRareData const&)",
+          65536
+        ],
+        [
+          "blink::CSSAnimationData::CSSAnimationData()",
+          65536
+        ],
+        [
+          "std::__1::deque<base::sequence_manager::Task, std::__1::allocator<base::sequence_manager::Task> >::__add_back_capacity()",
+          65536
+        ],
+        [
+          "cc::PropertyTrees::operator=(cc::PropertyTrees const&)",
+          65536
+        ],
+        [
+          "cc::CompositorFrameReporter::ReportCompositorLatencyHistogram(cc::FrameSequenceTrackerType, cc::CompositorFrameReporter::StageType, std::__1::optional<cc::CompositorFrameReporter::VizBreakdown>, std::__1::optional<cc::CompositorFrameReporter::BlinkBreakdown>, std::__1::optional<cc::CompositorFrameReporter::TreesInVizBreakdown>, base::TimeDelta) const",
+          65536
+        ],
+        [
+          "blink::(anonymous namespace)::ReportHistogramTimesAllGcPhases(std::__1::basic_string_view<char, std::__1::char_traits<char> >, std::__1::basic_string_view<char, std::__1::char_traits<char> >, v8::metrics::GarbageCollectionPhases const&)",
+          65536
+        ]
+      ]
+    },
+    {
+      "cohort": "3-original",
+      "checkpoint": "navigation_1",
+      "samples": 49,
+      "sample_weight_total": 2097152,
+      "largest_buckets": [
+        [
+          "blink::StringImpl::CreateUninitialized(unsigned long, base::span<char16_t, 18446744073709551615ul, char16_t*>&)",
+          425984
+        ],
+        [
+          "cc::ResourcePool::InUsePoolResource::InstallSoftwareBacking(scoped_refptr<gpu::SharedImageInterface>, std::__1::basic_string_view<char, std::__1::char_traits<char> >) const",
+          163840
+        ],
+        [
+          "cc::PaintOpBuffer::ReleaseAsRecord()",
+          131072
+        ],
+        [
+          "blink::StringImpl::Create(base::span<unsigned char const, 18446744073709551615ul, unsigned char const*>)",
+          131072
+        ],
+        [
+          "blink::RasterInvalidator::Generate(blink::PaintChunkSubset const&, gfx::Vector2dF const&, gfx::Size const&, blink::PropertyTreeState const&)",
+          98304
+        ],
+        [
+          "blink::MatchedPropertiesCache::Add(blink::MatchedPropertiesCache::Key const&, blink::StyleAdjuster::ElementTypeForCache, blink::ComputedStyle const*, blink::ComputedStyle const*, blink::ComputedStyle const*, blink::ComputedStyle const*)",
+          65536
+        ],
+        [
+          "blink::Document::CompleteURLWithOverride(blink::String const&, blink::KURL const&, blink::Document::CompleteURLPreloadStatus) const",
+          65536
+        ],
+        [
+          "blink::PhysicalFragmentRareData::PhysicalFragmentRareData(blink::PhysicalRect const*, blink::PhysicalBoxStrut const*, blink::PhysicalBoxStrut const*, blink::PhysicalBoxStrut const*, std::__1::optional<blink::PhysicalRect>, blink::BoxFragmentBuilder&, unsigned int)",
+          65536
+        ],
+        [
+          "blink::HTMLTokenizer::NextTokenImpl(blink::SegmentedString&)",
+          65536
+        ],
+        [
+          "blink::URLLoaderFactoryBundle::Update(std::__1::unique_ptr<blink::PendingURLLoaderFactoryBundle, std::__1::default_delete<blink::PendingURLLoaderFactoryBundle> >)",
+          65536
+        ],
+        [
+          "cc::PropertyTrees::operator=(cc::PropertyTrees const&)",
+          65536
+        ],
+        [
+          "blink::PaintChunker::AddHitTestDataToCurrentChunk(blink::DisplayItem::Id const&, blink::DisplayItemClient const&, gfx::Rect const&, cc::TouchAction, bool, cc::HitTestOpaqueness)",
+          32768
+        ],
+        [
+          "cc::DiscardableImageMap::GetDiscardableImagesInRect(gfx::Rect const&) const",
+          32768
+        ],
+        [
+          "cc::DisplayItemList::Finalize()",
+          32768
+        ],
+        [
+          "cc::InvalidationRegion::Union(gfx::Rect const&)",
+          32768
+        ]
+      ]
+    },
+    {
+      "cohort": "3-original",
+      "checkpoint": "navigation_10",
+      "samples": 56,
+      "sample_weight_total": 2326528,
+      "largest_buckets": [
+        [
+          "blink::StringImpl::CreateUninitialized(unsigned long, base::span<char16_t, 18446744073709551615ul, char16_t*>&)",
+          491520
+        ],
+        [
+          "cc::PaintOpBuffer::ReleaseAsRecord()",
+          196608
+        ],
+        [
+          "cc::PropertyTrees::operator=(cc::PropertyTrees const&)",
+          131072
+        ],
+        [
+          "std::__1::deque<base::sequence_manager::Task, std::__1::allocator<base::sequence_manager::Task> >::__add_back_capacity()",
+          98304
+        ],
+        [
+          "cc::PaintShader::MakeLinearGradient(SkPoint const*, SkRGBA4f<(SkAlphaType)3> const*, float const*, int, SkTileMode, SkGradient::Interpolation, unsigned int, SkMatrix const*, SkRGBA4f<(SkAlphaType)3>)",
+          98304
+        ],
+        [
+          "blink::RasterInvalidator::Generate(blink::PaintChunkSubset const&, gfx::Vector2dF const&, gfx::Size const&, blink::PropertyTreeState const&)",
+          65536
+        ],
+        [
+          "cc::TransformCachedNodeData* std::__1::vector<cc::TransformCachedNodeData, std::__1::allocator<cc::TransformCachedNodeData> >::__emplace_back_slow_path<cc::TransformCachedNodeData>(cc::TransformCachedNodeData&&)",
+          65536
+        ],
+        [
+          "cc::TransformNode* std::__1::vector<cc::TransformNode, std::__1::allocator<cc::TransformNode> >::__emplace_back_slow_path<cc::TransformNode const&>(cc::TransformNode const&)",
+          65536
+        ],
+        [
+          "blink::RuleInvalidationDataVisitor<(blink::RuleInvalidationDataVisitorType)0>::InvalidationSetForSimpleSelector(blink::CSSSelector const&, blink::InvalidationType, blink::RuleInvalidationDataVisitor<(blink::RuleInvalidationDataVisitorType)0>::PositionType, bool)",
+          65536
+        ],
+        [
+          "extensions::ScriptContext::ScriptContext(v8::Local<v8::Context> const&, blink::WebLocalFrame*, extensions::mojom::HostID const&, extensions::Extension const*, std::__1::optional<int>, extensions::mojom::ContextType, extensions::Extension const*, extensions::mojom::ContextType)",
+          65536
+        ],
+        [
+          "blink::ThirdPartyScriptDetector::From(blink::LocalDOMWindow&)",
+          65536
+        ],
+        [
+          "blink::ContentLayerClientImpl::UpdateCcPictureLayer(blink::PendingLayer const&, blink::PropertyTreeState)",
+          32768
+        ],
+        [
+          "cc::DisplayItemList::Finalize()",
+          32768
+        ],
+        [
+          "SkTextBlobBuilder::allocInternal(SkFont const&, SkTextBlob::GlyphPositioning, int, int, SkPoint, SkRect const*)",
+          32768
+        ],
+        [
+          "mojo::internal::InterfacePtrState<blink::mojom::blink::PaidContentMetadataObserver>::ConfigureProxyIfNecessary()",
+          32768
+        ]
+      ]
+    },
+    {
+      "cohort": "3-original",
+      "checkpoint": "navigation_15",
+      "samples": 63,
+      "sample_weight_total": 2588672,
+      "largest_buckets": [
+        [
+          "blink::StringImpl::CreateUninitialized(unsigned long, base::span<char16_t, 18446744073709551615ul, char16_t*>&)",
+          491520
+        ],
+        [
+          "cc::ResourcePool::PrepareForExport(cc::ResourcePool::InUsePoolResource const&, viz::TransferableResource::ResourceSource)",
+          163840
+        ],
+        [
+          "cc::ResourcePool::InUsePoolResource::InstallSoftwareBacking(scoped_refptr<gpu::SharedImageInterface>, std::__1::basic_string_view<char, std::__1::char_traits<char> >) const",
+          163840
+        ],
+        [
+          "cc::PaintOpBuffer::ReleaseAsRecord()",
+          131072
+        ],
+        [
+          "SkTextBlobBuilder::allocInternal(SkFont const&, SkTextBlob::GlyphPositioning, int, int, SkPoint, SkRect const*)",
+          98304
+        ],
+        [
+          "cc::DisplayItemList::Finalize()",
+          98304
+        ],
+        [
+          "std::__1::deque<base::sequence_manager::Task, std::__1::allocator<base::sequence_manager::Task> >::__add_back_capacity()",
+          65536
+        ],
+        [
+          "cc::PropertyTrees::ResetCachedData()",
+          65536
+        ],
+        [
+          "blink::PaintChunker::AddHitTestDataToCurrentChunk(blink::DisplayItem::Id const&, blink::DisplayItemClient const&, gfx::Rect const&, cc::TouchAction, bool, cc::HitTestOpaqueness)",
+          65536
+        ],
+        [
+          "blink::MatchedPropertiesCache::Add(blink::MatchedPropertiesCache::Key const&, blink::StyleAdjuster::ElementTypeForCache, blink::ComputedStyle const*, blink::ComputedStyle const*, blink::ComputedStyle const*, blink::ComputedStyle const*)",
+          65536
+        ],
+        [
+          "blink::URLLoaderFactoryBundle::Update(std::__1::unique_ptr<blink::PendingURLLoaderFactoryBundle, std::__1::default_delete<blink::PendingURLLoaderFactoryBundle> >)",
+          65536
+        ],
+        [
+          "cc::PaintShader::MakeLinearGradient(SkPoint const*, SkRGBA4f<(SkAlphaType)3> const*, float const*, int, SkTileMode, SkGradient::Interpolation, unsigned int, SkMatrix const*, SkRGBA4f<(SkAlphaType)3>)",
+          65536
+        ],
+        [
+          "blink::HTMLTokenizer::NextTokenImpl(blink::SegmentedString&)",
+          65536
+        ],
+        [
+          "cc::TileManager::CreateTaskSetFinishedTask(void (cc::TileManager::*)())",
+          32768
+        ],
+        [
+          "cc::TileManager::AssignGpuMemoryToTiles()",
+          32768
+        ]
+      ]
+    },
+    {
+      "cohort": "3-original",
+      "checkpoint": "navigation_20",
+      "samples": 47,
+      "sample_weight_total": 2031616,
+      "largest_buckets": [
+        [
+          "blink::StringImpl::CreateUninitialized(unsigned long, base::span<char16_t, 18446744073709551615ul, char16_t*>&)",
+          524288
+        ],
+        [
+          "cc::PaintOpBuffer::ReleaseAsRecord()",
+          131072
+        ],
+        [
+          "cc::PaintShader::MakeLinearGradient(SkPoint const*, SkRGBA4f<(SkAlphaType)3> const*, float const*, int, SkTileMode, SkGradient::Interpolation, unsigned int, SkMatrix const*, SkRGBA4f<(SkAlphaType)3>)",
+          131072
+        ],
+        [
+          "cc::PictureLayer::CreateLayerImpl(cc::LayerTreeImpl*) const",
+          131072
+        ],
+        [
+          "cc::PropertyTrees::operator=(cc::PropertyTrees const&)",
+          98304
+        ],
+        [
+          "cc::ResourcePool::InUsePoolResource::InstallSoftwareBacking(scoped_refptr<gpu::SharedImageInterface>, std::__1::basic_string_view<char, std::__1::char_traits<char> >) const",
+          65536
+        ],
+        [
+          "blink::ThirdPartyScriptDetector::From(blink::LocalDOMWindow&)",
+          65536
+        ],
+        [
+          "cc::PropertyTrees::ResetCachedData()",
+          65536
+        ],
+        [
+          "blink::Document::CompleteURLWithOverride(blink::String const&, blink::KURL const&, blink::Document::CompleteURLPreloadStatus) const",
+          65536
+        ],
+        [
+          "blink::HTMLTokenizer::NextTokenImpl(blink::SegmentedString&)",
+          65536
+        ],
+        [
+          "blink::URLLoaderFactoryBundle::Update(std::__1::unique_ptr<blink::PendingURLLoaderFactoryBundle, std::__1::default_delete<blink::PendingURLLoaderFactoryBundle> >)",
+          65536
+        ],
+        [
+          "blink::DevToolsSession::DispatchProtocolCommandImpl(int, blink::String const&, base::span<unsigned char const, 18446744073709551615ul, unsigned char const*>, blink::String const&)",
+          32768
+        ],
+        [
+          "SkTextBlobBuilder::allocInternal(SkFont const&, SkTextBlob::GlyphPositioning, int, int, SkPoint, SkRect const*)",
+          32768
+        ],
+        [
+          "autofill::form_util::ExtractFormData(blink::WebDocument const&, blink::WebFormElement const&, autofill::FieldDataManager const&, autofill::CallTimerState const&, base::flat_map<autofill::FormRendererId, std::__1::vector<std::__1::pair<std::__1::basic_string<char16_t, std::__1::char_traits<char16_t>, std::__1::allocator<char16_t> >, autofill::mojom::ButtonTitleType>, std::__1::allocator<std::__1::pair<std::__1::basic_string<char16_t, std::__1::char_traits<char16_t>, std::__1::allocator<char16_t> >, autofill::mojom::ButtonTitleType> > >, std::__1::less<void>, std::__1::vector<std::__1::pair<autofill::FormRendererId, std::__1::vector<std::__1::pair<std::__1::basic_string<char16_t, std::__1::char_traits<char16_t>, std::__1::allocator<char16_t> >, autofill::mojom::ButtonTitleType>, std::__1::allocator<std::__1::pair<std::__1::basic_string<char16_t, std::__1::char_traits<char16_t>, std::__1::allocator<char16_t> >, autofill::mojom::ButtonTitleType> > > >, std::__1::allocator<std::__1::pair<autofill::FormRendererId, std::__1::vector<std::__1::pair<std::__1::basic_string<char16_t, std::__1::char_traits<char16_t>, std::__1::allocator<char16_t> >, autofill::mojom::ButtonTitleType>, std::__1::allocator<std::__1::pair<std::__1::basic_string<char16_t, std::__1::char_traits<char16_t>, std::__1::allocator<char16_t> >, autofill::mojom::ButtonTitleType> > > > > > >*)",
+          32768
+        ],
+        [
+          "cc::PictureLayerTilingSet::AddTiling(gfx::AxisTransform2d const&, scoped_refptr<cc::RasterSource>, bool)",
+          32768
+        ]
+      ]
+    },
+    {
+      "cohort": "3-original",
+      "checkpoint": "navigation_5",
+      "samples": 51,
+      "sample_weight_total": 2162688,
+      "largest_buckets": [
+        [
+          "blink::StringImpl::CreateUninitialized(unsigned long, base::span<char16_t, 18446744073709551615ul, char16_t*>&)",
+          524288
+        ],
+        [
+          "cc::ResourcePool::InUsePoolResource::InstallSoftwareBacking(scoped_refptr<gpu::SharedImageInterface>, std::__1::basic_string_view<char, std::__1::char_traits<char> >) const",
+          131072
+        ],
+        [
+          "cc::PaintOpBuffer::ReleaseAsRecord()",
+          131072
+        ],
+        [
+          "cc::PaintShader::MakeLinearGradient(SkPoint const*, SkRGBA4f<(SkAlphaType)3> const*, float const*, int, SkTileMode, SkGradient::Interpolation, unsigned int, SkMatrix const*, SkRGBA4f<(SkAlphaType)3>)",
+          131072
+        ],
+        [
+          "cc::PictureLayer::CreateLayerImpl(cc::LayerTreeImpl*) const",
+          98304
+        ],
+        [
+          "cc::TileManager::CreateTile(cc::Tile::CreateInfo const&, int, int, int)",
+          65536
+        ],
+        [
+          "blink::MatchedPropertiesCache::Add(blink::MatchedPropertiesCache::Key const&, blink::StyleAdjuster::ElementTypeForCache, blink::ComputedStyle const*, blink::ComputedStyle const*, blink::ComputedStyle const*, blink::ComputedStyle const*)",
+          65536
+        ],
+        [
+          "cc::PropertyTrees::operator=(cc::PropertyTrees const&)",
+          65536
+        ],
+        [
+          "blink::RuleInvalidationDataBuilder::Merge(blink::RuleInvalidationData const&)",
+          65536
+        ],
+        [
+          "cc::LayerTreeHostImpl::ReleaseLayerTreeFrameSink()",
+          32768
+        ],
+        [
+          "blink::DOMTimer::DOMTimer(blink::ExecutionContext&, blink::ScheduledAction*, base::TimeDelta, bool, blink::probe::AsyncTaskContext::StackOptions)",
+          32768
+        ],
+        [
+          "mojo::core::Channel::OnReadComplete(unsigned long, unsigned long*)",
+          32768
+        ],
+        [
+          "std::__1::deque<base::sequence_manager::Task, std::__1::allocator<base::sequence_manager::Task> >::__add_back_capacity()",
+          32768
+        ],
+        [
+          "cc::PictureLayerImpl::CreateLayerImpl(cc::LayerTreeImpl*) const",
+          32768
+        ],
+        [
+          "cc::PropertyTrees::ResetCachedData()",
+          32768
+        ]
+      ]
+    },
+    {
+      "cohort": "3-original",
+      "checkpoint": "offscreen",
+      "samples": 62,
+      "sample_weight_total": 2588672,
+      "largest_buckets": [
+        [
+          "blink::StringImpl::CreateUninitialized(unsigned long, base::span<char16_t, 18446744073709551615ul, char16_t*>&)",
+          524288
+        ],
+        [
+          "cc::PaintOpBuffer::ReleaseAsRecord()",
+          98304
+        ],
+        [
+          "blink::PaintChunker::AddHitTestDataToCurrentChunk(blink::DisplayItem::Id const&, blink::DisplayItemClient const&, gfx::Rect const&, cc::TouchAction, bool, cc::HitTestOpaqueness)",
+          98304
+        ],
+        [
+          "cc::EffectTree::CreateOrReuseRenderSurfaces(std::__1::vector<std::__1::unique_ptr<cc::RenderSurfaceImpl, std::__1::default_delete<cc::RenderSurfaceImpl> >, std::__1::allocator<std::__1::unique_ptr<cc::RenderSurfaceImpl, std::__1::default_delete<cc::RenderSurfaceImpl> > > >*, cc::LayerTreeImpl*)",
+          98304
+        ],
+        [
+          "cc::PictureLayer::CreateLayerImpl(cc::LayerTreeImpl*) const",
+          98304
+        ],
+        [
+          "blink::Document::CompleteURLWithOverride(blink::String const&, blink::KURL const&, blink::Document::CompleteURLPreloadStatus) const",
+          98304
+        ],
+        [
+          "cc::TransformNode* std::__1::vector<cc::TransformNode, std::__1::allocator<cc::TransformNode> >::__emplace_back_slow_path<cc::TransformNode const&>(cc::TransformNode const&)",
+          98304
+        ],
+        [
+          "cc::PropertyTrees::operator=(cc::PropertyTrees const&)",
+          65536
+        ],
+        [
+          "cc::PictureLayerTilingSet::UpdateTilingsToCurrentRasterSourceForActivation(scoped_refptr<cc::RasterSource>, cc::PictureLayerTilingSet const*, cc::Region const&, float, float)",
+          65536
+        ],
+        [
+          "cc::ResourcePool::InUsePoolResource::InstallSoftwareBacking(scoped_refptr<gpu::SharedImageInterface>, std::__1::basic_string_view<char, std::__1::char_traits<char> >) const",
+          65536
+        ],
+        [
+          "blink::InvalidationSet::Backing<(blink::InvalidationSet::BackingType)2>::Add(blink::InvalidationSet::BackingFlags&, blink::AtomicString const&)",
+          65536
+        ],
+        [
+          "blink::HTMLLinkElement::ScheduleEvent()",
+          65536
+        ],
+        [
+          "SkTextBlobBuilder::allocInternal(SkFont const&, SkTextBlob::GlyphPositioning, int, int, SkPoint, SkRect const*)",
+          65536
+        ],
+        [
+          "cc::PaintShader::MakeLinearGradient(SkPoint const*, SkRGBA4f<(SkAlphaType)3> const*, float const*, int, SkTileMode, SkGradient::Interpolation, unsigned int, SkMatrix const*, SkRGBA4f<(SkAlphaType)3>)",
+          65536
+        ],
+        [
+          "cc::TileManager::CreateTile(cc::Tile::CreateInfo const&, int, int, int)",
+          32768
+        ]
+      ]
+    },
+    {
+      "cohort": "3-original",
+      "checkpoint": "picker_growth",
+      "samples": 160,
+      "sample_weight_total": 6455296,
+      "largest_buckets": [
+        [
+          "blink::PaintChunker::AddHitTestDataToCurrentChunk(blink::DisplayItem::Id const&, blink::DisplayItemClient const&, gfx::Rect const&, cc::TouchAction, bool, cc::HitTestOpaqueness)",
+          786432
+        ],
+        [
+          "blink::StringImpl::CreateUninitialized(unsigned long, base::span<char16_t, 18446744073709551615ul, char16_t*>&)",
+          720896
+        ],
+        [
+          "cc::PaintOpBuffer::ReleaseAsRecord()",
+          655360
+        ],
+        [
+          "blink::Canvas2DResourceProvider::CreateSkSurface() const",
+          491520
+        ],
+        [
+          "SkPathData::MakeNoCheck(SkSpan<SkPoint const>, SkSpan<SkPathVerb const>, SkSpan<float const>, std::__1::optional<SkRect>, std::__1::optional<unsigned int>)",
+          294912
+        ],
+        [
+          "SkPathData::MakeTransform(SkPathRaw const&, SkMatrix const&)",
+          294912
+        ],
+        [
+          "cc::ResourcePool::InUsePoolResource::InstallSoftwareBacking(scoped_refptr<gpu::SharedImageInterface>, std::__1::basic_string_view<char, std::__1::char_traits<char> >) const",
+          229376
+        ],
+        [
+          "cc::PropertyTrees::ResetCachedData()",
+          163840
+        ],
+        [
+          "SkTypeface_Fontations::onCreateScalerContextAsProxyTypeface(SkScalerContextEffects const&, SkDescriptor const*, SkTypeface*) const",
+          163840
+        ],
+        [
+          "cc::DisplayItemList::Finalize()",
+          131072
+        ],
+        [
+          "cc::PaintOpBuffer::ShrinkToFit()",
+          131072
+        ],
+        [
+          "blink::PhysicalFragmentRareData::PhysicalFragmentRareData(blink::PhysicalFragmentRareData const&)",
+          131072
+        ],
+        [
+          "cc::PropertyTrees::operator=(cc::PropertyTrees const&)",
+          131072
+        ],
+        [
+          "blink::RasterInvalidator::Generate(blink::PaintChunkSubset const&, gfx::Vector2dF const&, gfx::Size const&, blink::PropertyTreeState const&)",
+          98304
+        ],
+        [
+          "cc::PictureLayerTilingSet::Create(cc::WhichTree, cc::PictureLayerTilingClient*, int, float, int, float)",
+          98304
+        ]
+      ]
+    },
+    {
+      "cohort": "3-original",
+      "checkpoint": "reduced_motion",
+      "samples": 86,
+      "sample_weight_total": 3407872,
+      "largest_buckets": [
+        [
+          "blink::StringImpl::CreateUninitialized(unsigned long, base::span<char16_t, 18446744073709551615ul, char16_t*>&)",
+          524288
+        ],
+        [
+          "blink::CSSAnimationData::CSSAnimationData()",
+          491520
+        ],
+        [
+          "blink::PaintChunker::AddHitTestDataToCurrentChunk(blink::DisplayItem::Id const&, blink::DisplayItemClient const&, gfx::Rect const&, cc::TouchAction, bool, cc::HitTestOpaqueness)",
+          163840
+        ],
+        [
+          "blink::CascadeMap::Add(blink::CSSPropertyID, blink::CascadePriority)",
+          131072
+        ],
+        [
+          "cc::PropertyTrees::ResetCachedData()",
+          98304
+        ],
+        [
+          "cc::PropertyTrees::operator=(cc::PropertyTrees const&)",
+          98304
+        ],
+        [
+          "cc::EffectTree::CreateOrReuseRenderSurfaces(std::__1::vector<std::__1::unique_ptr<cc::RenderSurfaceImpl, std::__1::default_delete<cc::RenderSurfaceImpl> >, std::__1::allocator<std::__1::unique_ptr<cc::RenderSurfaceImpl, std::__1::default_delete<cc::RenderSurfaceImpl> > > >*, cc::LayerTreeImpl*)",
+          98304
+        ],
+        [
+          "cc::PictureLayer::CreateLayerImpl(cc::LayerTreeImpl*) const",
+          98304
+        ],
+        [
+          "blink::Document::CompleteURLWithOverride(blink::String const&, blink::KURL const&, blink::Document::CompleteURLPreloadStatus) const",
+          98304
+        ],
+        [
+          "cc::TransformNode* std::__1::vector<cc::TransformNode, std::__1::allocator<cc::TransformNode> >::__emplace_back_slow_path<cc::TransformNode const&>(cc::TransformNode const&)",
+          98304
+        ],
+        [
+          "cc::RollingTimeDeltaHistory::InsertSample(base::TimeDelta)",
+          65536
+        ],
+        [
+          "cc::PaintOpBuffer::ReleaseAsRecord()",
+          65536
+        ],
+        [
+          "blink::css_longhand::AnimationDirection::ApplyValue(blink::StyleResolverState&, blink::CSSValue const&, unsigned char) const",
+          65536
+        ],
+        [
+          "cc::ResourcePool::InUsePoolResource::InstallSoftwareBacking(scoped_refptr<gpu::SharedImageInterface>, std::__1::basic_string_view<char, std::__1::char_traits<char> >) const",
+          65536
+        ],
+        [
+          "blink::InvalidationSet::Backing<(blink::InvalidationSet::BackingType)2>::Add(blink::InvalidationSet::BackingFlags&, blink::AtomicString const&)",
+          65536
+        ]
+      ]
+    },
+    {
+      "cohort": "3-original",
+      "checkpoint": "seasonal_preview",
+      "samples": 219,
+      "sample_weight_total": 10256384,
+      "largest_buckets": [
+        [
+          "blink::StringImpl::CreateUninitialized(unsigned long, base::span<char16_t, 18446744073709551615ul, char16_t*>&)",
+          3080192
+        ],
+        [
+          "blink::PaintChunker::AddHitTestDataToCurrentChunk(blink::DisplayItem::Id const&, blink::DisplayItemClient const&, gfx::Rect const&, cc::TouchAction, bool, cc::HitTestOpaqueness)",
+          917504
+        ],
+        [
+          "cc::PaintShader::MakeLinearGradient(SkPoint const*, SkRGBA4f<(SkAlphaType)3> const*, float const*, int, SkTileMode, SkGradient::Interpolation, unsigned int, SkMatrix const*, SkRGBA4f<(SkAlphaType)3>)",
+          393216
+        ],
+        [
+          "blink::LocaleIcu::InitializeDateTimeFormat()",
+          360448
+        ],
+        [
+          "cc::PaintOpBuffer::ReleaseAsRecord()",
+          327680
+        ],
+        [
+          "SkTypeface_Fontations::onCreateScalerContextAsProxyTypeface(SkScalerContextEffects const&, SkDescriptor const*, SkTypeface*) const",
+          262144
+        ],
+        [
+          "blink::RuleInvalidationDataVisitor<(blink::RuleInvalidationDataVisitorType)0>::InvalidationSetForSimpleSelector(blink::CSSSelector const&, blink::InvalidationType, blink::RuleInvalidationDataVisitor<(blink::RuleInvalidationDataVisitorType)0>::PositionType, bool)",
+          196608
+        ],
+        [
+          "SkStrike::digestFor(skglyph::ActionType, SkPackedGlyphID)",
+          196608
+        ],
+        [
+          "cc::DisplayItemList::Finalize()",
+          163840
+        ],
+        [
+          "cc::ResourcePool::InUsePoolResource::InstallSoftwareBacking(scoped_refptr<gpu::SharedImageInterface>, std::__1::basic_string_view<char, std::__1::char_traits<char> >) const",
+          131072
+        ],
+        [
+          "blink::RasterInvalidator::Generate(blink::PaintChunkSubset const&, gfx::Vector2dF const&, gfx::Size const&, blink::PropertyTreeState const&)",
+          131072
+        ],
+        [
+          "blink::PendingLayer::UpdateCompositedLayer(blink::PendingLayer*, blink::PropertyTreeState, viz::Selection<cc::LayerSelectionBound>&, bool, cc::LayerTreeHost*)",
+          131072
+        ],
+        [
+          "std::__1::deque<base::sequence_manager::Task, std::__1::allocator<base::sequence_manager::Task> >::__add_back_capacity()",
+          131072
+        ],
+        [
+          "SkPathData::MakeNoCheck(SkSpan<SkPoint const>, SkSpan<SkPathVerb const>, SkSpan<float const>, std::__1::optional<SkRect>, std::__1::optional<unsigned int>)",
+          131072
+        ],
+        [
+          "SkPathData::MakeTransform(SkPathRaw const&, SkMatrix const&)",
+          131072
+        ]
+      ]
+    },
+    {
+      "cohort": "3-original",
+      "checkpoint": "wellness_care",
+      "samples": 78,
+      "sample_weight_total": 2818048,
+      "largest_buckets": [
+        [
+          "blink::PaintChunker::AddHitTestDataToCurrentChunk(blink::DisplayItem::Id const&, blink::DisplayItemClient const&, gfx::Rect const&, cc::TouchAction, bool, cc::HitTestOpaqueness)",
+          688128
+        ],
+        [
+          "blink::StringImpl::CreateUninitialized(unsigned long, base::span<char16_t, 18446744073709551615ul, char16_t*>&)",
+          294912
+        ],
+        [
+          "cc::ResourcePool::InUsePoolResource::InstallSoftwareBacking(scoped_refptr<gpu::SharedImageInterface>, std::__1::basic_string_view<char, std::__1::char_traits<char> >) const",
+          262144
+        ],
+        [
+          "SkPathData::MakeTransform(SkPathRaw const&, SkMatrix const&)",
+          163840
+        ],
+        [
+          "blink::PendingLayer::PendingLayer(blink::PaintArtifact const&, blink::PaintChunk const&, int, blink::PendingLayer::CompositingType)",
+          98304
+        ],
+        [
+          "skia_private::THashTable<SkGlyphDigest, SkPackedGlyphID, SkGlyphDigest>::resize(int)",
+          98304
+        ],
+        [
+          "base::tracing::PerfettoPlatform::GetOrCreateThreadLocalObject()",
+          65536
+        ],
+        [
+          "cc::PaintOpBuffer::ReleaseAsRecord()",
+          65536
+        ],
+        [
+          "SkStrike::digestFor(skglyph::ActionType, SkPackedGlyphID)",
+          65536
+        ],
+        [
+          "blink::URLLoaderFactoryBundle::Update(std::__1::unique_ptr<blink::PendingURLLoaderFactoryBundle, std::__1::default_delete<blink::PendingURLLoaderFactoryBundle> >)",
+          65536
+        ],
+        [
+          "blink::AtomicString blink::ToBlinkString<blink::AtomicString>(v8::Isolate*, v8::Local<v8::String>, blink::ExternalMode)",
+          32768
+        ],
+        [
+          "cc::PaintOpBuffer::ShrinkToFit()",
+          32768
+        ],
+        [
+          "blink::PaintController::PaintController(bool, blink::PaintControllerPersistentData*, blink::PaintBenchmarkMode)",
+          32768
+        ],
+        [
+          "mojo::core::Channel::OnReadComplete(unsigned long, unsigned long*)",
+          32768
+        ],
+        [
+          "blink::PhysicalFragmentRareData::PhysicalFragmentRareData(blink::PhysicalFragmentRareData const&)",
+          32768
+        ]
+      ]
+    }
+  ]
+}

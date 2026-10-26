@@ -1,0 +1,12 @@
+{
+  "acceptance": false,
+  "product_commit": "f700187",
+  "product_static_templates_diff": "empty",
+  "instrumented_workloads_completed": 8,
+  "source_hashes_verified": 156,
+  "archived_files_hash_verified": 288,
+  "native_profiles": 104,
+  "tests_passed": 41,
+  "test_command": ".venv/bin/python -m pytest -q tests/test_avatar_collection_analysis.py tests/test_avatar_memory_audit.py tests/test_avatar_verification_result.py tests/test_avatar_targeted_memory.py tests/test_avatar_candidate_audit.py",
+  "full_acceptance_run": false
+}

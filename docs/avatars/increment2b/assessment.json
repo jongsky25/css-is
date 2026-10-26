@@ -13,7 +13,7 @@
     "background": 19750912
   },
   "historical_incomplete_acceptance": "assessment-incomplete-audit.json",
-  "next_step": "Attribute natural document collection and native allocations across renderer lifetimes before choosing another product fix; 3A remains paused.",
+  "next_step": "Distinguish live native allocations from allocator-resident capacity after natural sweep completion; no forced GC or RSS subtraction. 3A remains paused.",
   "complete_memory_audit": "final-verification/complete-memory-audit.json",
   "corrected_overall_assessment": "final-verification/corrected-overall-assessment.json",
   "memory_comparisons": 104,
@@ -25,5 +25,11 @@
     "heap_failures": 1,
     "report": "lifecycle-memory-fix/REPORT.md",
     "audit": "lifecycle-memory-fix/candidate-hosted/independent-audit.json"
+  },
+  "collection_attribution": {
+    "status": "completed_without_attributable_product_fix",
+    "report": "collection-attribution/REPORT.md",
+    "instrumented_workloads": 8,
+    "acceptance": false
   }
 }

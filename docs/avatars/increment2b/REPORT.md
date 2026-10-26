@@ -45,3 +45,7 @@ The corrected checker includes every scenario/navigation checkpoint and rejects 
 ## Lifecycle correction experiment — rejected
 
 Candidate `509cd1a` passed its cleanup behavior checks but failed the hosted memory gate: eight RSS comparisons and one JS-heap comparison exceeded 10 MiB, reaching +28.738 MiB RSS and +10.063 MiB heap. All 234 diagnostic comparisons and 134 source hashes were independently audited. The candidate remains on `codex/avatar-2b-lifecycle-candidate`; this verification branch retains unchanged product `f700187`. Full acceptance was not started and 3A remains paused. See the [complete follow-up report](lifecycle-memory-fix/REPORT.md) for retained evidence and the next attribution experiment.
+
+### Natural collection attribution — complete, 2B still blocked
+
+Eight instrumented workloads in both orders establish natural C++/V8 collection and locate the dominant RSS delta in the app renderer. Documents are reclaimed but RSS can remain elevated, so no persistent application reference or validated product correction is established. Product stays f700187; full acceptance and later increments remain paused. See the [complete evidence and next attribution question](collection-attribution/REPORT.md).

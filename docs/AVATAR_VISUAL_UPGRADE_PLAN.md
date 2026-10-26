@@ -795,3 +795,7 @@ The earlier final-acceptance appendix is superseded. It checked five active scen
 ### 2B lifecycle correction experiment — 2026-10-26 — rejected
 
 The guarded pagehide cleanup candidate `509cd1a` fails eight RSS and one JS-heap comparison against the unchanged 10 MiB limit. Maximum increases are +28.738 MiB RSS and +10.063 MiB heap. The independent audit covers all 234 comparisons and 134 source hashes. The verification branch retains product `f700187`; the rejected candidate and raw evidence are preserved separately. Full acceptance and 3A/later increments remain paused. Next: correlate natural document collection, renderer lifetimes and native allocations before another product correction. See the [follow-up report](avatars/increment2b/lifecycle-memory-fix/REPORT.md).
+
+### Natural collection attribution — complete, 2B still blocked
+
+Eight instrumented workloads in both orders establish natural C++/V8 collection and locate the dominant RSS delta in the app renderer. Documents are reclaimed but RSS can remain elevated, so no persistent application reference or validated product correction is established. Product stays f700187; full acceptance and later increments remain paused. See the [complete evidence and next attribution question](avatars/increment2b/collection-attribution/REPORT.md).
