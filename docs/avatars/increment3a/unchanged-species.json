@@ -1,0 +1,21 @@
+{
+  "before": "f46d7af",
+  "source_commit": "d0df55779e3fe18ba945029fd549d9079425e53d",
+  "unchanged_species": 12,
+  "exact_svg_comparisons": 2448,
+  "static_and_interactive": true,
+  "runtime_and_audio_unchanged": true,
+  "changed_species": [
+    "bird",
+    "dog",
+    "rabbit",
+    "turtle"
+  ],
+  "product_sha256": {
+    "templates/_avatars.html": "425e8dc805b17472a65016207663c7104351d0ad243930e81d775d6f40f5b5fe",
+    "templates/_avatar_species/bird.html": "aefbdb13ca903e452887e5784c21cd9fb6b5203911636951941e3a8c20545730",
+    "templates/_avatar_species/dog.html": "298194d2ee352cb6b71cc6f52cf94999f8276040480b718575a3db4ba2431cd4",
+    "templates/_avatar_species/rabbit.html": "f1447d3e228b8dde1fa838233f63a352c784d46e54279ac5f838d69e25967e4e",
+    "templates/_avatar_species/turtle.html": "74f72aaf19471fd68e74e8613bef949b7b8706a6197e418a6249c2368bff57e6"
+  }
+}

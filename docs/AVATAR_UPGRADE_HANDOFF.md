@@ -1,8 +1,29 @@
 # Avatar upgrade: new-chat handoff
 
-Last verified: **2026-10-26 05:55 UTC**. Repository: `jongsky25/css-is`.
+Last verified: **2026-10-26; continuation in progress**. Repository: `jongsky25/css-is`.
 
-## Start here
+## Current continuation
+
+2B is **accepted** in commit `f46d7af` on `codex/avatar-2b-verification`.
+Final raw artifact audit `40277957839` passed; full evidence is preserved through
+November 25. See `docs/avatars/increment2b/REPORT.md` and `final-verification/`.
+The historical handoff below is retained for provenance; its pending 2B actions
+are completed and must not be repeated.
+
+3A is implemented in `d0df55779e3fe18ba945029fd549d9079425e53d` on
+`codex/avatar-3a` (current checkout). Local 103 unit/integration/harness checks,
+4 real animal-care checks, 51 sheets, 216 rig cases and 2,448 unchanged-species
+SVG comparisons pass. Its matched Chromium 156 verification is running:
+https://github.com/jongsky25/css-is/actions/runs/40279025648
+Job: `121427953574`. Do not push non-skip commits to this branch while relying
+on that run. Audit the raw result before accepting 3A or starting 3B.
+
+Current local dependencies: `/workspace/css-is/.venv`; local Chromium 154 is
+for functional/visual checks only. The previous Docker preflight image is absent.
+Full 2B evidence is extracted at `/workspace/avatar-final-review/evidence`.
+All later increments remain sequentially gated. No merge or deployment.
+
+## Historical start here
 
 Read this file, repository instructions, then [the execution plan](AVATAR_VISUAL_UPGRADE_PLAN.md).
 Continue the already authorized work one increment at a time. First finish the

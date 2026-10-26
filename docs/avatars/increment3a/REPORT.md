@@ -9,3 +9,5 @@ Local checks: 103 unit/integration/harness tests, 17 verifier regressions after 
 The gallery now loads the complete historical template tree, preserving the before version's split imports. Focused/whole-runtime benchmark species are configurable, retaining the original five runs, 30-second windows, controls and 50/33.3 ms budgets. A dedicated workflow measures this batch against fresh original baselines on pinned Chromium 156.
 
 **Performance acceptance remains pending. Do not start 3B until the raw hosted functional, focused, runtime and application-matrix evidence passes review. Release readiness remains false.**
+
+Verification source: `d0df557`, [run 40279025648](https://github.com/jongsky25/css-is/actions/runs/40279025648). [Exact untouched-species checks](unchanged-species.json): 2,448 static/interactive SVG comparisons; runtime/audio unchanged.
