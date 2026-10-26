@@ -807,3 +807,12 @@ Combined native allocator/collection tooling is implemented and validated: four 
 ### Source isolation and geometry candidate — 2026-10-26 — not promoted
 
 The 16-sample counterbalanced screen identified geometry observers and original SVG as leads. A shared-observer/navigation-cleanup candidate passed nine browser checks, but its hosted gate has six complete forward RSS failures (up to +49.984 MiB) and an incomplete reverse unchanged-current cohort caused by a preview timeout. Overall audit is inconclusive; the candidate is not promoted. All 27 completed samples and the failure log remain. Product stays f700187; full acceptance and later increments remain paused. See the [final candidate report](avatars/increment2b/geometry-lifecycle/REPORT.md).
+
+### Late-navigation timing follow-up — 2026-10-26
+
+Offline analysis of all four archived residency cohorts verifies 92 members and
+passes sixteen analysis tests. Natural reclamation and retained capacity occur
+in both sources; five navigation snapshots change document counts across the
+dump window. See [timing report](avatars/increment2b/navigation-collection/REPORT.md).
+No new acceptance samples or product changes; 2B and subsequent increments remain
+blocked. Next diagnostic requires finer lightweight timing with paired controls.

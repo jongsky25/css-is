@@ -28,6 +28,19 @@ trigger it as an acceptance audit of the cancelled cohort. No later increments,
 merge to main or deployment occurred. The historical handoff below is superseded by this
 correction wherever it suggests CI success establishes complete memory acceptance.
 
+## Late-navigation timing analysis complete
+
+The archived four-cohort residency evidence has now been aligned by completed
+MajorGC event end times. Read [the timing report](avatars/increment2b/navigation-collection/REPORT.md).
+All four archive identities and 92 members verified; sixteen analysis tests pass.
+Both sources reclaim documents while retaining Blink heap capacity. Five of twenty
+navigation checkpoints change document counts between initial and post-dump
+snapshots; dump delays of 330–763 ms prevent treating these as atomic states.
+This historical instrumented evidence does not establish the cause of the newer
+paired RSS signal. No product change or new measurement was made. Next use a
+predeclared lightweight per-navigation timing diagnostic with paired controls;
+keep detailed dumps separate, and preserve all acceptance gates. 2B stays blocked.
+
 ## Paired variance experiment complete — late-navigation target, unstable controls
 
 [Run 40335305139](https://github.com/jongsky25/css-is/actions/runs/40335305139)

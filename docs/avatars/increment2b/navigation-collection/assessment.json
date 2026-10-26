@@ -1,0 +1,784 @@
+{
+  "acceptance": false,
+  "new_measurements": 0,
+  "verified_archive_members": 92,
+  "cohorts": [
+    {
+      "app_pid": 19451,
+      "navigation": [
+        {
+          "checkpoint": "navigation_1",
+          "interval_start_checkpoint": "background",
+          "interval_ms": 1002.032,
+          "completed_major_gc": [],
+          "ms_since_last_completed_major_gc": 7626.818,
+          "documents": 17,
+          "nodes": 26680,
+          "document_delta": 2,
+          "rss_bytes": 485294080,
+          "rss_delta_bytes": -101273600,
+          "app_renderer_rss_bytes": 265506816,
+          "js_heap_bytes": 12420116,
+          "blink_heap_attributes_bytes": {
+            "allocated_objects_size": 34469840,
+            "committed_size": 40239184,
+            "effective_size": 5769156,
+            "pooled_size": 0,
+            "size": 40239184
+          },
+          "dump_delay_after_marker_ms": 482.796,
+          "major_gc_completing_between_marker_and_dump": [],
+          "post_dump_documents": 17,
+          "post_dump_rss_bytes": 496967680
+        },
+        {
+          "checkpoint": "navigation_5",
+          "interval_start_checkpoint": "navigation_1",
+          "interval_ms": 2170.396,
+          "completed_major_gc": [],
+          "ms_since_last_completed_major_gc": 9797.214,
+          "documents": 25,
+          "nodes": 37263,
+          "document_delta": 8,
+          "rss_bytes": 534421504,
+          "rss_delta_bytes": 49127424,
+          "app_renderer_rss_bytes": 314138624,
+          "js_heap_bytes": 15125304,
+          "blink_heap_attributes_bytes": {
+            "allocated_objects_size": 48347576,
+            "committed_size": 54919248,
+            "effective_size": 6571605,
+            "pooled_size": 0,
+            "size": 54919248
+          },
+          "dump_delay_after_marker_ms": 763.194,
+          "major_gc_completing_between_marker_and_dump": [],
+          "post_dump_documents": 25,
+          "post_dump_rss_bytes": 530182144
+        },
+        {
+          "checkpoint": "navigation_10",
+          "interval_start_checkpoint": "navigation_5",
+          "interval_ms": 3543.614,
+          "completed_major_gc": [
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 5574052,
+                "usedHeapSizeBefore": 16806116
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 6051,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 19451,
+              "tdur": 5641,
+              "tid": 19451,
+              "ts": 15534626848,
+              "tts": 11879842,
+              "end_timestamp_us": 15534632899
+            }
+          ],
+          "ms_since_last_completed_major_gc": 1888.45,
+          "documents": 8,
+          "nodes": 10576,
+          "document_delta": -17,
+          "rss_bytes": 526708736,
+          "rss_delta_bytes": -7712768,
+          "app_renderer_rss_bytes": 305876992,
+          "js_heap_bytes": 7529676,
+          "blink_heap_attributes_bytes": {
+            "allocated_objects_size": 13805056,
+            "committed_size": 61997056,
+            "effective_size": 48191768,
+            "pooled_size": 25690112,
+            "size": 61997056
+          },
+          "dump_delay_after_marker_ms": 467.831,
+          "major_gc_completing_between_marker_and_dump": [],
+          "post_dump_documents": 8,
+          "post_dump_rss_bytes": 528834560
+        },
+        {
+          "checkpoint": "navigation_15",
+          "interval_start_checkpoint": "navigation_10",
+          "interval_ms": 2521.222,
+          "completed_major_gc": [],
+          "ms_since_last_completed_major_gc": 4409.672,
+          "documents": 18,
+          "nodes": 23804,
+          "document_delta": 10,
+          "rss_bytes": 538427392,
+          "rss_delta_bytes": 11718656,
+          "app_renderer_rss_bytes": 317784064,
+          "js_heap_bytes": 9779892,
+          "blink_heap_attributes_bytes": {
+            "allocated_objects_size": 31039584,
+            "committed_size": 61997056,
+            "effective_size": 30957410,
+            "pooled_size": 21889024,
+            "size": 61997056
+          },
+          "dump_delay_after_marker_ms": 504.296,
+          "major_gc_completing_between_marker_and_dump": [],
+          "post_dump_documents": 18,
+          "post_dump_rss_bytes": 541532160
+        },
+        {
+          "checkpoint": "navigation_20",
+          "interval_start_checkpoint": "navigation_15",
+          "interval_ms": 2865.195,
+          "completed_major_gc": [
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 5592140,
+                "usedHeapSizeBefore": 9949996
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 12009,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 19451,
+              "tdur": 11535,
+              "tid": 19451,
+              "ts": 15539877471,
+              "tts": 13828718,
+              "end_timestamp_us": 15539889480
+            },
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 5574660,
+                "usedHeapSizeBefore": 7680476
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 6105,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 19451,
+              "tdur": 5922,
+              "tid": 19451,
+              "ts": 15540867688,
+              "tts": 14243542,
+              "end_timestamp_us": 15540873793
+            }
+          ],
+          "ms_since_last_completed_major_gc": 1033.973,
+          "documents": 6,
+          "nodes": 7932,
+          "document_delta": -12,
+          "rss_bytes": 532566016,
+          "rss_delta_bytes": -5861376,
+          "app_renderer_rss_bytes": 311742464,
+          "js_heap_bytes": 6934120,
+          "blink_heap_attributes_bytes": {
+            "allocated_objects_size": 10031696,
+            "committed_size": 61997056,
+            "effective_size": 51965292,
+            "pooled_size": 36044800,
+            "size": 61997056
+          },
+          "dump_delay_after_marker_ms": 453.766,
+          "major_gc_completing_between_marker_and_dump": [],
+          "post_dump_documents": 6,
+          "post_dump_rss_bytes": 531980288
+        }
+      ],
+      "cohort": "0-original",
+      "archive_sha256": "7ab2e56d12c0793bc2a6799703cbebc0ff88bd9653f36a1c5dd0b8dad61d3a9d"
+    },
+    {
+      "app_pid": 19652,
+      "navigation": [
+        {
+          "checkpoint": "navigation_1",
+          "interval_start_checkpoint": "background",
+          "interval_ms": 928.56,
+          "completed_major_gc": [],
+          "ms_since_last_completed_major_gc": 8360.217,
+          "documents": 16,
+          "nodes": 26125,
+          "document_delta": 2,
+          "rss_bytes": 492257280,
+          "rss_delta_bytes": -90189824,
+          "app_renderer_rss_bytes": 272592896,
+          "js_heap_bytes": 12373100,
+          "blink_heap_attributes_bytes": {
+            "allocated_objects_size": 36444120,
+            "committed_size": 42467488,
+            "effective_size": 6023183,
+            "pooled_size": 0,
+            "size": 42467488
+          },
+          "dump_delay_after_marker_ms": 463.988,
+          "major_gc_completing_between_marker_and_dump": [],
+          "post_dump_documents": 16,
+          "post_dump_rss_bytes": 503844864
+        },
+        {
+          "checkpoint": "navigation_5",
+          "interval_start_checkpoint": "navigation_1",
+          "interval_ms": 2151.285,
+          "completed_major_gc": [],
+          "ms_since_last_completed_major_gc": 10511.502,
+          "documents": 24,
+          "nodes": 36501,
+          "document_delta": 8,
+          "rss_bytes": 541868032,
+          "rss_delta_bytes": 49610752,
+          "app_renderer_rss_bytes": 321667072,
+          "js_heap_bytes": 15197092,
+          "blink_heap_attributes_bytes": {
+            "allocated_objects_size": 50262304,
+            "committed_size": 56885408,
+            "effective_size": 6622859,
+            "pooled_size": 0,
+            "size": 56885408
+          },
+          "dump_delay_after_marker_ms": 559.864,
+          "major_gc_completing_between_marker_and_dump": [],
+          "post_dump_documents": 2,
+          "post_dump_rss_bytes": 520916992
+        },
+        {
+          "checkpoint": "navigation_10",
+          "interval_start_checkpoint": "navigation_5",
+          "interval_ms": 2686.422,
+          "completed_major_gc": [
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 5644556,
+                "usedHeapSizeBefore": 15219396
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 6717,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 19652,
+              "tdur": 6322,
+              "tid": 19652,
+              "ts": 15664530917,
+              "tts": 13140198,
+              "end_timestamp_us": 15664537634
+            }
+          ],
+          "ms_since_last_completed_major_gc": 2087.084,
+          "documents": 12,
+          "nodes": 15562,
+          "document_delta": -12,
+          "rss_bytes": 531718144,
+          "rss_delta_bytes": -10149888,
+          "app_renderer_rss_bytes": 310980608,
+          "js_heap_bytes": 9087000,
+          "blink_heap_attributes_bytes": {
+            "allocated_objects_size": 20636504,
+            "committed_size": 56885248,
+            "effective_size": 36248616,
+            "pooled_size": 19922944,
+            "size": 56885248
+          },
+          "dump_delay_after_marker_ms": 466.388,
+          "major_gc_completing_between_marker_and_dump": [],
+          "post_dump_documents": 12,
+          "post_dump_rss_bytes": 533843968
+        },
+        {
+          "checkpoint": "navigation_15",
+          "interval_start_checkpoint": "navigation_10",
+          "interval_ms": 2631.967,
+          "completed_major_gc": [
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 5644384,
+                "usedHeapSizeBefore": 9244028
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 4367,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 19652,
+              "tdur": 3466,
+              "tid": 19652,
+              "ts": 15667228786,
+              "tts": 14099999,
+              "end_timestamp_us": 15667233153
+            }
+          ],
+          "ms_since_last_completed_major_gc": 2023.532,
+          "documents": 12,
+          "nodes": 15562,
+          "document_delta": 0,
+          "rss_bytes": 530984960,
+          "rss_delta_bytes": -733184,
+          "app_renderer_rss_bytes": 309616640,
+          "js_heap_bytes": 8940448,
+          "blink_heap_attributes_bytes": {
+            "allocated_objects_size": 20259872,
+            "committed_size": 56885248,
+            "effective_size": 36625316,
+            "pooled_size": 27525120,
+            "size": 56885248
+          },
+          "dump_delay_after_marker_ms": 449.276,
+          "major_gc_completing_between_marker_and_dump": [],
+          "post_dump_documents": 2,
+          "post_dump_rss_bytes": 526286848
+        },
+        {
+          "checkpoint": "navigation_20",
+          "interval_start_checkpoint": "navigation_15",
+          "interval_ms": 2891.83,
+          "completed_major_gc": [
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 5639464,
+                "usedHeapSizeBefore": 8962876
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 8034,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 19652,
+              "tdur": 3756,
+              "tid": 19652,
+              "ts": 15669762108,
+              "tts": 15002912,
+              "end_timestamp_us": 15669770142
+            },
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 5621080,
+                "usedHeapSizeBefore": 8926808
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 8444,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 19652,
+              "tdur": 7330,
+              "tid": 19652,
+              "ts": 15671946409,
+              "tts": 15749861,
+              "end_timestamp_us": 15671954853
+            }
+          ],
+          "ms_since_last_completed_major_gc": 193.662,
+          "documents": 2,
+          "nodes": 2592,
+          "document_delta": -10,
+          "rss_bytes": 525611008,
+          "rss_delta_bytes": -5373952,
+          "app_renderer_rss_bytes": 304517120,
+          "js_heap_bytes": 5779652,
+          "blink_heap_attributes_bytes": {
+            "allocated_objects_size": 3471880,
+            "committed_size": 56885248,
+            "effective_size": 53413312,
+            "pooled_size": 30408704,
+            "size": 56885248
+          },
+          "dump_delay_after_marker_ms": 387.598,
+          "major_gc_completing_between_marker_and_dump": [],
+          "post_dump_documents": 2,
+          "post_dump_rss_bytes": 526299136
+        }
+      ],
+      "cohort": "1-current",
+      "archive_sha256": "92c481195235b244e3a02e61b446b1198690a802584fdb6dd99f812d7d04f727"
+    },
+    {
+      "app_pid": 19850,
+      "navigation": [
+        {
+          "checkpoint": "navigation_1",
+          "interval_start_checkpoint": "background",
+          "interval_ms": 1056.267,
+          "completed_major_gc": [],
+          "ms_since_last_completed_major_gc": 8068.207,
+          "documents": 13,
+          "nodes": 18982,
+          "document_delta": 2,
+          "rss_bytes": 486047744,
+          "rss_delta_bytes": -99782656,
+          "app_renderer_rss_bytes": 264015872,
+          "js_heap_bytes": 11076560,
+          "blink_heap_attributes_bytes": {
+            "allocated_objects_size": 31703760,
+            "committed_size": 36700320,
+            "effective_size": 4996342,
+            "pooled_size": 0,
+            "size": 36700320
+          },
+          "dump_delay_after_marker_ms": 416.991,
+          "major_gc_completing_between_marker_and_dump": [],
+          "post_dump_documents": 13,
+          "post_dump_rss_bytes": 497573888
+        },
+        {
+          "checkpoint": "navigation_5",
+          "interval_start_checkpoint": "navigation_1",
+          "interval_ms": 2383.064,
+          "completed_major_gc": [],
+          "ms_since_last_completed_major_gc": 10451.271,
+          "documents": 21,
+          "nodes": 29358,
+          "document_delta": 8,
+          "rss_bytes": 536776704,
+          "rss_delta_bytes": 50728960,
+          "app_renderer_rss_bytes": 314269696,
+          "js_heap_bytes": 13899300,
+          "blink_heap_attributes_bytes": {
+            "allocated_objects_size": 46408792,
+            "committed_size": 52166816,
+            "effective_size": 5757884,
+            "pooled_size": 0,
+            "size": 52166816
+          },
+          "dump_delay_after_marker_ms": 647.246,
+          "major_gc_completing_between_marker_and_dump": [],
+          "post_dump_documents": 2,
+          "post_dump_rss_bytes": 515252224
+        },
+        {
+          "checkpoint": "navigation_10",
+          "interval_start_checkpoint": "navigation_5",
+          "interval_ms": 2849.395,
+          "completed_major_gc": [
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 5638592,
+                "usedHeapSizeBefore": 13921604
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 23102,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 19850,
+              "tdur": 14948,
+              "tid": 19850,
+              "ts": 15789817066,
+              "tts": 13150059,
+              "end_timestamp_us": 15789840168
+            }
+          ],
+          "ms_since_last_completed_major_gc": 2193.088,
+          "documents": 12,
+          "nodes": 15562,
+          "document_delta": -9,
+          "rss_bytes": 528543744,
+          "rss_delta_bytes": -8232960,
+          "app_renderer_rss_bytes": 305451008,
+          "js_heap_bytes": 8483724,
+          "blink_heap_attributes_bytes": {
+            "allocated_objects_size": 20658976,
+            "committed_size": 52166656,
+            "effective_size": 31507673,
+            "pooled_size": 18087936,
+            "size": 52166656
+          },
+          "dump_delay_after_marker_ms": 498.911,
+          "major_gc_completing_between_marker_and_dump": [],
+          "post_dump_documents": 2,
+          "post_dump_rss_bytes": 524673024
+        },
+        {
+          "checkpoint": "navigation_15",
+          "interval_start_checkpoint": "navigation_10",
+          "interval_ms": 3051.618,
+          "completed_major_gc": [
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 5634160,
+                "usedHeapSizeBefore": 8505636
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 7310,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 19850,
+              "tdur": 4344,
+              "tid": 19850,
+              "ts": 15792540820,
+              "tts": 14076436,
+              "end_timestamp_us": 15792548130
+            },
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 5615004,
+                "usedHeapSizeBefore": 8605320
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 18918,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 19850,
+              "tdur": 6658,
+              "tid": 19850,
+              "ts": 15794446247,
+              "tts": 14979917,
+              "end_timestamp_us": 15794465165
+            }
+          ],
+          "ms_since_last_completed_major_gc": 619.709,
+          "documents": 4,
+          "nodes": 5187,
+          "document_delta": -8,
+          "rss_bytes": 522043392,
+          "rss_delta_bytes": -6500352,
+          "app_renderer_rss_bytes": 299225088,
+          "js_heap_bytes": 6424464,
+          "blink_heap_attributes_bytes": {
+            "allocated_objects_size": 6921136,
+            "committed_size": 52166656,
+            "effective_size": 45245480,
+            "pooled_size": 27787264,
+            "size": 52166656
+          },
+          "dump_delay_after_marker_ms": 330.498,
+          "major_gc_completing_between_marker_and_dump": [],
+          "post_dump_documents": 4,
+          "post_dump_rss_bytes": 524697600
+        },
+        {
+          "checkpoint": "navigation_20",
+          "interval_start_checkpoint": "navigation_15",
+          "interval_ms": 2566.236,
+          "completed_major_gc": [],
+          "ms_since_last_completed_major_gc": 3185.945,
+          "documents": 14,
+          "nodes": 18157,
+          "document_delta": 10,
+          "rss_bytes": 528584704,
+          "rss_delta_bytes": 6541312,
+          "app_renderer_rss_bytes": 305115136,
+          "js_heap_bytes": 9873352,
+          "blink_heap_attributes_bytes": {
+            "allocated_objects_size": 24575960,
+            "committed_size": 52166656,
+            "effective_size": 27590611,
+            "pooled_size": 21233664,
+            "size": 52166656
+          },
+          "dump_delay_after_marker_ms": 387.474,
+          "major_gc_completing_between_marker_and_dump": [],
+          "post_dump_documents": 14,
+          "post_dump_rss_bytes": 523673600
+        }
+      ],
+      "cohort": "2-current",
+      "archive_sha256": "8a077fcbce6b68877bf5a8000e8cb8f6b9ae2eaa8660bc9f9e0b26e1bc679ee3"
+    },
+    {
+      "app_pid": 20087,
+      "navigation": [
+        {
+          "checkpoint": "navigation_1",
+          "interval_start_checkpoint": "background",
+          "interval_ms": 1433.439,
+          "completed_major_gc": [
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 5570856,
+                "usedHeapSizeBefore": 12606528
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 19573,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 20087,
+              "tdur": 21072,
+              "tid": 20087,
+              "ts": 15935496243,
+              "tts": 14863512,
+              "end_timestamp_us": 15935515816
+            }
+          ],
+          "ms_since_last_completed_major_gc": 260.421,
+          "documents": 2,
+          "nodes": 2641,
+          "document_delta": -12,
+          "rss_bytes": 438079488,
+          "rss_delta_bytes": -145334272,
+          "app_renderer_rss_bytes": 217079808,
+          "js_heap_bytes": 5744468,
+          "blink_heap_attributes_bytes": {
+            "allocated_objects_size": 3919456,
+            "committed_size": 23461968,
+            "effective_size": 4080033,
+            "pooled_size": 0,
+            "size": 7999568
+          },
+          "dump_delay_after_marker_ms": 633.606,
+          "major_gc_completing_between_marker_and_dump": [],
+          "post_dump_documents": 2,
+          "post_dump_rss_bytes": 445407232
+        },
+        {
+          "checkpoint": "navigation_5",
+          "interval_start_checkpoint": "navigation_1",
+          "interval_ms": 2652.929,
+          "completed_major_gc": [],
+          "ms_since_last_completed_major_gc": 2913.35,
+          "documents": 10,
+          "nodes": 13225,
+          "document_delta": 8,
+          "rss_bytes": 482754560,
+          "rss_delta_bytes": 44675072,
+          "app_renderer_rss_bytes": 260665344,
+          "js_heap_bytes": 7848144,
+          "blink_heap_attributes_bytes": {
+            "allocated_objects_size": 17891784,
+            "committed_size": 25821184,
+            "effective_size": 6798824,
+            "pooled_size": 0,
+            "size": 24690688
+          },
+          "dump_delay_after_marker_ms": 475.999,
+          "major_gc_completing_between_marker_and_dump": [],
+          "post_dump_documents": 10,
+          "post_dump_rss_bytes": 485801984
+        },
+        {
+          "checkpoint": "navigation_10",
+          "interval_start_checkpoint": "navigation_5",
+          "interval_ms": 2667.78,
+          "completed_major_gc": [
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 5587360,
+                "usedHeapSizeBefore": 8071536
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 7278,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 20087,
+              "tdur": 5143,
+              "tid": 20087,
+              "ts": 15939053938,
+              "tts": 16300968,
+              "end_timestamp_us": 15939061216
+            }
+          ],
+          "ms_since_last_completed_major_gc": 2035.73,
+          "documents": 12,
+          "nodes": 15865,
+          "document_delta": 2,
+          "rss_bytes": 488706048,
+          "rss_delta_bytes": 5951488,
+          "app_renderer_rss_bytes": 266203136,
+          "js_heap_bytes": 8203916,
+          "blink_heap_attributes_bytes": {
+            "allocated_objects_size": 19827928,
+            "committed_size": 25952256,
+            "effective_size": 5976736,
+            "pooled_size": 1048576,
+            "size": 25804800
+          },
+          "dump_delay_after_marker_ms": 384.947,
+          "major_gc_completing_between_marker_and_dump": [],
+          "post_dump_documents": 12,
+          "post_dump_rss_bytes": 490147840
+        },
+        {
+          "checkpoint": "navigation_15",
+          "interval_start_checkpoint": "navigation_10",
+          "interval_ms": 2564.686,
+          "completed_major_gc": [],
+          "ms_since_last_completed_major_gc": 4600.416,
+          "documents": 22,
+          "nodes": 29093,
+          "document_delta": 10,
+          "rss_bytes": 510550016,
+          "rss_delta_bytes": 21843968,
+          "app_renderer_rss_bytes": 289001472,
+          "js_heap_bytes": 10619552,
+          "blink_heap_attributes_bytes": {
+            "allocated_objects_size": 37225312,
+            "committed_size": 41025536,
+            "effective_size": 3800133,
+            "pooled_size": 0,
+            "size": 41025536
+          },
+          "dump_delay_after_marker_ms": 563.78,
+          "major_gc_completing_between_marker_and_dump": [],
+          "post_dump_documents": 2,
+          "post_dump_rss_bytes": 497459200
+        },
+        {
+          "checkpoint": "navigation_20",
+          "interval_start_checkpoint": "navigation_15",
+          "interval_ms": 3393.625,
+          "completed_major_gc": [
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 5581300,
+                "usedHeapSizeBefore": 10650404
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 17564,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 20087,
+              "tdur": 9266,
+              "tid": 20087,
+              "ts": 15944240426,
+              "tts": 18037196,
+              "end_timestamp_us": 15944257990
+            },
+            {
+              "args": {
+                "type": "finalize incremental marking via task",
+                "usedHeapSizeAfter": 5558440,
+                "usedHeapSizeBefore": 7814796
+              },
+              "cat": "devtools.timeline,v8",
+              "dur": 4174,
+              "name": "MajorGC",
+              "ph": "X",
+              "pid": 20087,
+              "tdur": 2431,
+              "tid": 20087,
+              "ts": 15945904751,
+              "tts": 18603268,
+              "end_timestamp_us": 15945908925
+            }
+          ],
+          "ms_since_last_completed_major_gc": 1146.332,
+          "documents": 6,
+          "nodes": 7932,
+          "document_delta": -16,
+          "rss_bytes": 507514880,
+          "rss_delta_bytes": -3035136,
+          "app_renderer_rss_bytes": 284598272,
+          "js_heap_bytes": 6937428,
+          "blink_heap_attributes_bytes": {
+            "allocated_objects_size": 9938536,
+            "committed_size": 41418752,
+            "effective_size": 31480044,
+            "pooled_size": 17432576,
+            "size": 41418752
+          },
+          "dump_delay_after_marker_ms": 569.598,
+          "major_gc_completing_between_marker_and_dump": [],
+          "post_dump_documents": 6,
+          "post_dump_rss_bytes": 497197056
+        }
+      ],
+      "cohort": "3-original",
+      "archive_sha256": "ef810dfd017425db9b9f069d873dadfec7e8c82fc979b2bd0530853243f13b79"
+    }
+  ],
+  "limits": "Historical instrumented cohorts only. GC completion refers to a V8 MajorGC duration, not whole Blink sweep completion. Snapshots, markers and dumps are sequential. Allocated objects may include garbage; heap capacity is not RSS. No allocator subtraction or acceptance substitution."
+}
