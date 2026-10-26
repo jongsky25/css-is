@@ -1,39 +1,41 @@
-# Increment 2B — accepted after final evidence audit
+# Increment 2B — acceptance withdrawn: uncovered memory failures
 
-**2B is complete. Release readiness remains false; increments 3A–6 are pending.**
-Product `f700187` and harness `e909de1` passed final [run 40263865865](https://github.com/jongsky25/css-is/actions/runs/40263865865).
-[Audit 40277957839](https://github.com/jongsky25/css-is/actions/runs/40277957839) passed, and independent local review verified the raw data rather than relying on the workflow badge.
+**2B is not accepted. Release readiness remains false.** The acceptance recorded in `f46d7af` was premature: the CI comparison and my first audit checked memory for five active scenarios but omitted offscreen, reduced-motion, background and navigation measurements. Those omissions cannot waive the unchanged 10 MiB budget.
 
-The final cohort uses Chromium **156.0.8078.47**, five 30-second samples per arm/configuration. All four phases passed: functional/visual, focused artwork/native, whole runtime, and original/current application matrix. All 40 matrix samples remain available. The original controls use historical callers with historical macros.
+The existing final run 40263865865 already contains these failures; no benchmark was rerun or sample replaced:
 
-## Measured results
-
-| Configuration | Home LCP median / worst (ms) | Median LCP delta (ms) | Picker RSS median delta (MiB) |
+| Warm desktop scenario | Original RSS median (bytes) | Current RSS median (bytes) | Increase (MiB) |
 |---|---:|---:|---:|
-| Desktop cold | 292 / 520 | +16 | -49.504 |
-| Desktop warm | 96 / 116 | +4 | +6.121 |
-| Mobile cold | 436 / 468 | +24 | -63.070 |
-| Mobile warm | 196 / 236 | -8 | -10.336 |
+| Offscreen | 479,694,848 | 491,581,440 | 11.335938 |
+| Reduced motion | 481,587,200 | 493,223,936 | 11.097656 |
+| Background probe | 613,728,256 | 633,479,168 | 18.835938 |
 
-- Maximum current owned callback: **3.505 ms** focused; **4.080 ms** whole runtime (50 ms limit).
-- Current native/trace and mobile interaction frame p95: **16.7–16.8 ms** (33.3 ms approved limit; original 33 ms retained in evidence).
-- Largest renderer RSS median increase across all five scenarios and four configurations: **8.5625 MiB**, warm-desktop seasonal preview. Warm-desktop picker: **6.1211 MiB**. All renderer/JS-heap median deltas meet 10 MiB; positive renderer counts match across arms. Cold RSS decreases are observed cohort differences, not a claim that SVG trimming alone saves that amount.
-- Added gzip CSS/JS: **3,194 bytes**; maximum Home/picker transferred document increase **1,247 / 2,370 bytes**, below 15/30/120 KiB budgets.
-- Every scenario's LCP and interaction median delta meets 100/20 ms. No new JavaScript errors or external requests.
+All five runs per arm have matching positive renderer counts (three for offscreen/reduced motion, four for the background probe). Background visibility is an automation limitation recorded in raw samples; this is the controlled background-probe RSS comparison, not a claim of physical hidden-tab behavior.
 
-## Evidence audit and visual acceptance
+The earlier candidate's opposite-order retained memory run also contains a background RSS increase of **26.171875 MiB** and seasonal-preview increase of **12.710938 MiB** in its reverse-order pair. Its passing picker numbers alone never established all-scenario acceptance. Repeated-navigation RSS differences also exceed 10 MiB (warm desktop +32.300781 MiB at mount 20); lifecycle findings remain unresolved.
 
-[Independent audit](final-verification/independent-audit.json) verifies 156 retained file hashes, source-file hashes against `e909de1`, all 51 PNG hashes against reference/preview hashes, 4,896 static cells, and recomputes all memory medians from raw samples. All same-paint-mode cells are identical. Reviewed the final bare contact sheet; existing six-stage/seasonal artwork acceptance remains applicable because geometry is unchanged. Static rasterization differs from the original composited antialiasing; the original differences remain retained.
+Shared-page measurements differ substantially: median summed Shared_Clean rises about 23.17 MiB, while summed Private_Dirty is slightly lower and PSS rises about 3.60 MiB. This does not prove a JavaScript retention leak, establish the root cause, or authorize subtracting shared memory from the RSS budget. An attributable, validated correction is still required.
 
-Eight browser regressions, 1,734 interactive SVG comparisons, seasonal live refresh without losing unsaved form state, native visibility/touch/keyboard and persisted fern/mushroom/succulent care pass. Static previews remove 1,032 SVG nodes per 96-cell sheet while preserving live SVG output.
+All functional/visual, callback/frame and five-active-scenario findings remain preserved in [the incomplete audit report](REPORT-incomplete-audit.md), [its assessment](assessment-incomplete-audit.json), and [the full numeric/visual archive](final-verification/numeric-and-visual-evidence.tar.gz). Full raw traces remain in [artifact 12630379820](https://github.com/jongsky25/css-is/actions/runs/40277957839/artifacts/12630379820), retained until November 25. The green workflow/audit labels did not cover the omitted gates.
 
-[Compact numeric/visual archive](final-verification/numeric-and-visual-evidence.tar.gz) retains all JSON/XML/text/PNG evidence. [Manifest](final-verification/review-manifest.json) hashes 60 compressed traces retained in the full remote artifact; those trace bytes were not downloaded/rehashed locally. [Provenance](final-verification/provenance.json) records artifact digests.
-Full raw evidence: [artifact 12630379820](https://github.com/jongsky25/css-is/actions/runs/40277957839/artifacts/12630379820), retained until **2026-11-25 06:08 UTC**. Compact artifact 12630544140 has the same 30-day retention. The original artifact expires November 2; its full copy is now preserved.
+3A work is preserved on `codex/avatar-3a`, but its workflow has been paused and run 40280615190 cancelled after this prerequisite failure was discovered. No 3B, wardrobe, motion increment or release work may be accepted on this basis. No merge or deployment occurred.
 
-## Limits and history
+## Complete retained-memory audit
 
-No physical mobile device was tested. CPU throttling is a proxy; RSS includes shared resident pages. Page-wide tasks are not automatically avatar-attributable. Existing offscreen motion, recurring timers and remount/listener findings remain increment 5 release blockers. No deployment or merge occurred.
+[104 recomputed comparisons](final-verification/complete-memory-audit.json) cover eight scenarios and five navigation checkpoints, two metrics, four device/cache groups. All cohorts and renderer counts are valid; eleven RSS comparisons fail. [Corrected overall assessment](final-verification/corrected-overall-assessment.json) rejects acceptance despite the four original green phase labels.
 
-[Prior report](REPORT-before-final-audit.md) and [prior assessment](assessment-before-final-audit.json) preserve all historical failures and superseded status statements, including Chromium 154 cohorts, rejected diagnostics, and the earlier 11.199 MiB failure. They are not mixed into this final matched Chromium 156 cohort. No sample was replaced or threshold relaxed.
+| Configuration | Scenario | RSS median delta (MiB) |
+|---|---|---:|
+| False-cold | navigation_10 | 26.011719 |
+| False-cold | navigation_15 | 21.824219 |
+| False-cold | navigation_20 | 12.851562 |
+| False-warm | offscreen | 11.335938 |
+| False-warm | reduced_motion | 11.097656 |
+| False-warm | background | 18.835938 |
+| False-warm | navigation_1 | 20.062500 |
+| False-warm | navigation_5 | 20.753906 |
+| False-warm | navigation_10 | 41.777344 |
+| False-warm | navigation_15 | 26.195312 |
+| False-warm | navigation_20 | 32.300781 |
 
-Next increment: **3A — dog, rabbit, bird, turtle**, six stages each with visual and performance gates.
+The corrected checker includes every scenario/navigation checkpoint and rejects missing/duplicate cohorts, zero memory and mismatched browsers/renderer counts. All 27 focused checker regressions pass. No new product optimization is claimed: the native allocation/retention cause is not established, and earlier successful active-scenario results do not override these failures.

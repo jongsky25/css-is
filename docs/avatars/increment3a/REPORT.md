@@ -1,4 +1,4 @@
-# Increment 3A — artwork implemented; acceptance pending
+# Increment 3A — artwork preserved; paused on 2B memory failure
 
 Dog, rabbit, bird and turtle now have 24 illustrated stages with changing head/body proportions, ears, wings and shell anatomy. Existing care, identity, growth, movement and seasonal policy remain. Original authored SVG reuses the existing gradient palette and adds head/neck accessory anchors. The illustrated rendering avoids the old drop-shadow filter.
 
@@ -8,7 +8,7 @@ Local checks: 103 unit/integration/harness tests, 18 verifier regressions coveri
 
 The gallery now loads the complete historical template tree, preserving the before version's split imports. Focused/whole-runtime benchmark species are configurable, retaining the original five runs, 30-second windows, controls and 50/33.3 ms budgets. A dedicated workflow measures this batch against fresh original baselines on pinned Chromium 156.
 
-**Performance acceptance remains pending. Do not start 3B until the raw hosted functional, focused, runtime and application-matrix evidence passes review. Release readiness remains false.**
+**Paused: the corrected complete 2B memory audit fails. Performance acceptance remains pending. Do not start 3B until the raw hosted functional, focused, runtime and application-matrix evidence passes review. Release readiness remains false.**
 
 Verification source: `d0df557`, [run 40279025648](https://github.com/jongsky25/css-is/actions/runs/40279025648). [Exact untouched-species checks](unchanged-species.json): 2,448 static/interactive SVG comparisons; runtime/audio unchanged.
 
@@ -19,3 +19,7 @@ A frozen 900 ms hide frame exposed the larger turtle head outside its shell desp
 Run 40279416578 passed functional/visual gates but is superseded during focused timing because the turtle correction changes product CSS/art. Its partial measurements cannot accept the corrected source. A fresh complete cohort is required; no budgets change.
 
 Current validation: source `cb2220f`, [run 40280615190](https://github.com/jongsky25/css-is/actions/runs/40280615190). The prepared audit branch splits retained evidence into bounded archive parts; do not rerun benchmarks merely to fix the current workflow’s compact packaging limit.
+
+## Prerequisite correction and pause
+
+2B acceptance was withdrawn after its omitted lifecycle/navigation memory rows were audited. This batch is preserved but cannot advance. Run 40280615190 is cancelled; [partial full evidence](https://github.com/jongsky25/css-is/actions/runs/40280615190/artifacts/12632724923) is retained through November 25. The 3A workflow is explicitly paused. Restore its job condition only after 2B passes the corrected complete memory gate, then measure the applicable final source. No 3B or later work started.

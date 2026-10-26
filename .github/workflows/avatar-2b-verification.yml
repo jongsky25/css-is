@@ -27,7 +27,7 @@ jobs:
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - name: Verify evidence accounting
         id: accounting
-        run: .venv/bin/python -m pytest tests/test_avatar_verification_result.py -q
+        run: .venv/bin/python -m pytest tests/test_avatar_verification_result.py tests/test_avatar_memory_audit.py -q
       - name: Functional and visual gates
         id: functional
         if: ${{ !cancelled() && steps.install.outcome == 'success' && steps.accounting.outcome == 'success' }}
