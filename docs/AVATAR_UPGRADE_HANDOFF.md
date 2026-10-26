@@ -25,7 +25,7 @@ The source run 40280615190 was cancelled by pause commit `2b6d154` after the
 2B prerequisite failure was discovered. Do not restart/accept 3A until 2B is fixed.
 The prepared audit branch `codex/avatar-3a-artifact-audit` is explicitly paused at `ade949e`; do not
 trigger it as an acceptance audit of the cancelled cohort. No later increments,
-merge or deployment occurred. The historical handoff below is superseded by this
+merge to main or deployment occurred. The historical handoff below is superseded by this
 correction wherever it suggests CI success establishes complete memory acceptance.
 
 ## Historical start here

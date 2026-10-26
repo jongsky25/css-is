@@ -18,7 +18,7 @@ Shared-page measurements differ substantially: median summed Shared_Clean rises 
 
 All functional/visual, callback/frame and five-active-scenario findings remain preserved in [the incomplete audit report](REPORT-incomplete-audit.md), [its assessment](assessment-incomplete-audit.json), and [the full numeric/visual archive](final-verification/numeric-and-visual-evidence.tar.gz). Full raw traces remain in [artifact 12630379820](https://github.com/jongsky25/css-is/actions/runs/40277957839/artifacts/12630379820), retained until November 25. The green workflow/audit labels did not cover the omitted gates.
 
-3A work is preserved on `codex/avatar-3a`, but its workflow has been paused and run 40280615190 cancelled after this prerequisite failure was discovered. No 3B, wardrobe, motion increment or release work may be accepted on this basis. No merge or deployment occurred.
+3A work is preserved on `codex/avatar-3a`, but its workflow has been paused and run 40280615190 cancelled after this prerequisite failure was discovered. No 3B, wardrobe, motion increment or release work may be accepted on this basis. No merge to main or deployment occurred.
 
 ## Complete retained-memory audit
 
