@@ -13,7 +13,7 @@ out = root / 'avatar-verification' / 'memory-diagnostic'
 out.mkdir(parents=True, exist_ok=False)
 before = root.parent / 'avatar-memory-original'
 subprocess.run(['git', 'worktree', 'add', '--detach', str(before), '1c964dc'], check=True)
-summary = {'acceptance': False, 'purpose': 'Attribute RSS variance without GC, cache flushing, or budget changes', 'cohorts': []}
+summary = {'acceptance': False, 'purpose': 'Reproduce every warm desktop scenario and navigation checkpoint in both execution orders; unchanged final 2B product; no GC, extra cache flushing, sample filtering or budget changes', 'cohorts': []}
 try:
     for name in ['test_avatar_baseline_browser.py', 'avatar_browser_fixture.py']:
         shutil.copy2(root / 'tests' / name, before / 'tests' / name)
@@ -35,17 +35,36 @@ try:
         if raw.exists():
             rows = json.loads(raw.read_text())
             cohort['raw_sha256'] = hashlib.sha256(raw.read_bytes()).hexdigest()
-            cohort['samples'] = [{
-                'run': r['run'],
-                'rss_bytes': r['scenarios']['picker_growth']['renderer_rss_sum_bytes'],
-                'heap_bytes': r['scenarios']['picker_growth']['js_heap_bytes'],
-                'details': r['scenarios']['picker_growth']['renderer_memory_detail'],
-                'dom': r['scenarios']['picker_growth']['dom_counters'],
-            } for r in rows]
-            cohort['rss_median_bytes'] = statistics.median(r['rss_bytes'] for r in cohort['samples'])
+            cohort['browser_versions'] = sorted({r['chromium'] for r in rows})
+            cohort['checkpoints'] = {}
+            for scenario in [*rows[0]['scenarios'], *('navigation_'+str(m) for m in (1,5,10,15,20))]:
+                def point(r):
+                    if scenario.startswith('navigation_'):
+                        return next(n for n in r['navigation_trend'] if n['mount']==int(scenario.split('_')[1]))
+                    return r['scenarios'][scenario]
+                points = [point(r) for r in rows]
+                cohort['checkpoints'][scenario] = {
+                    'rss_median_bytes': statistics.median(p['renderer_rss_sum_bytes'] for p in points),
+                    'heap_median_bytes': statistics.median(p['js_heap_bytes'] for p in points),
+                    'renderer_counts': [p['renderer_process_count'] for p in points],
+                    'rss_samples_bytes': [p['renderer_rss_sum_bytes'] for p in points],
+                    'dom_samples': [p['dom_counters'] for p in points],
+                }
         summary['cohorts'].append(cohort)
         (out / 'summary.json').write_text(json.dumps(summary, indent=2))
         print('MEMORY_COHORT=' + json.dumps(cohort, separators=(',', ':')), flush=True)
+    summary['pairs'] = []
+    for old_index,new_index in [(0,1),(3,2)]:
+        old,new = summary['cohorts'][old_index],summary['cohorts'][new_index]
+        if not old.get('checkpoints') or not new.get('checkpoints'): continue
+        comparisons = {}
+        for key in old['checkpoints']:
+            a,b = old['checkpoints'][key],new['checkpoints'][key]
+            delta = b['rss_median_bytes']-a['rss_median_bytes']
+            comparisons[key] = {'rss_delta_bytes':delta,'within_10_mib':delta<=10*1024*1024,
+                'before_renderer_counts':a['renderer_counts'],'after_renderer_counts':b['renderer_counts']}
+        summary['pairs'].append({'before_index':old_index,'after_index':new_index,'comparisons':comparisons})
+    (out/'summary.json').write_text(json.dumps(summary,indent=2)+'\n')
 finally:
     subprocess.run(['git', '-C', str(before), 'restore', 'tests/test_avatar_baseline_browser.py'], check=True)
     (before / 'tests/avatar_browser_fixture.py').unlink(missing_ok=True)

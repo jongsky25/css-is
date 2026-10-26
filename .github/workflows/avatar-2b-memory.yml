@@ -2,11 +2,11 @@ name: Avatar 2B memory diagnosis
 on:
   workflow_dispatch:
   push:
-    branches: [codex/avatar-2b-memory]
+    branches: [codex/avatar-2b-memory-lifecycle]
 permissions:
   contents: read
 concurrency:
-  group: avatar-2b-memory
+  group: avatar-2b-memory-lifecycle
   cancel-in-progress: false
 jobs:
   verify:
@@ -25,7 +25,7 @@ jobs:
           .venv/bin/python -m pip install --require-hashes --only-binary=:all: -r requirements-test.txt
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - name: Verify evidence accounting
-        run: .venv/bin/python -m pytest tests/test_avatar_verification_result.py -q
+        run: .venv/bin/python -m pytest tests/test_avatar_verification_result.py tests/test_avatar_memory_audit.py -q
       - name: Measure original and current in both orders
         env:
           CSS_AVATAR_CHROMIUM: 156.0.8078.47
