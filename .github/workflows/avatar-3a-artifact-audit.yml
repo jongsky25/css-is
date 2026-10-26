@@ -1,0 +1,103 @@
+name: Avatar 3A artifact audit
+on:
+  push:
+    branches: [codex/avatar-3a-artifact-audit]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    container: python:3.12-trixie@sha256:0d0db5b17f11b1b7d1aafa74ceadaa64ba0944b267ff6fc22008a197acd6b9ad
+    env:
+      AVATAR_SOURCE_RUN: '40280615190'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: 40280615190
+          name: avatar-3a-complete
+          path: avatar-verification
+      - name: Package independent transport parts
+        run: python scripts/avatar_baseline/package_batch_review.py avatar-verification --output avatar-3a-review
+      - name: Audit raw evidence
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          python scripts/avatar_baseline/audit_batch.py avatar-verification --kinds dog,rabbit,bird,turtle --output batch-audit.json
+      - name: Retain audit verdict and part index
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: avatar-3a-audit
+          path: |
+            batch-audit.json
+            avatar-3a-review-parts.json
+          retention-days: 30
+      - name: Retain portable part 1
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: avatar-3a-review-1
+          path: avatar-3a-review-1.tar.gz
+          if-no-files-found: ignore
+          retention-days: 30
+      - name: Retain portable part 2
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: avatar-3a-review-2
+          path: avatar-3a-review-2.tar.gz
+          if-no-files-found: ignore
+          retention-days: 30
+      - name: Retain portable part 3
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: avatar-3a-review-3
+          path: avatar-3a-review-3.tar.gz
+          if-no-files-found: ignore
+          retention-days: 30
+      - name: Retain portable part 4
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: avatar-3a-review-4
+          path: avatar-3a-review-4.tar.gz
+          if-no-files-found: ignore
+          retention-days: 30
+      - name: Retain portable part 5
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: avatar-3a-review-5
+          path: avatar-3a-review-5.tar.gz
+          if-no-files-found: ignore
+          retention-days: 30
+      - name: Retain portable part 6
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: avatar-3a-review-6
+          path: avatar-3a-review-6.tar.gz
+          if-no-files-found: ignore
+          retention-days: 30
+      - name: Retain portable part 7
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: avatar-3a-review-7
+          path: avatar-3a-review-7.tar.gz
+          if-no-files-found: ignore
+          retention-days: 30
+      - name: Retain portable part 8
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: avatar-3a-review-8
+          path: avatar-3a-review-8.tar.gz
+          if-no-files-found: ignore
+          retention-days: 30
