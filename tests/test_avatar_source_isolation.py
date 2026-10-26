@@ -55,3 +55,32 @@ def test_observer_plan_identity(fault):
     if fault=='none':assert validate_plan(plan)==(True,tuple(order),5)
     else:
         with pytest.raises(ValueError):validate_plan(plan)
+
+
+@pytest.mark.parametrize('arm',['geometry','svg'])
+def test_exact_validation_sources_match_retained_intervention(tmp_path,arm):
+    from pathlib import Path
+    import subprocess
+    from scripts.avatar_baseline.source_isolation import variant
+    from scripts.avatar_baseline.analyze_source_isolation import validation_source
+    repo=Path(__file__).resolve().parents[1]
+    paths=['static/js/avatars.js','templates/_avatars.html','templates/_avatars_art.html']
+    for name in paths:
+        target=tmp_path/name;target.parent.mkdir(parents=True,exist_ok=True)
+        target.write_bytes(subprocess.check_output(['git','show','f700187:'+name],cwd=repo))
+    changed=variant(repo,tmp_path,arm)
+    assert set(changed)==({'static/js/avatars.js'} if arm=='geometry' else {'templates/_avatars.html','templates/_avatars_art.html'})
+    for name in paths:assert (tmp_path/name).read_bytes()==validation_source(repo,arm,name)
+
+
+def test_svg_five_sample_plan_and_conflicting_flags():
+    from scripts.avatar_baseline.analyze_source_isolation import validate_plan
+    order=['current','svg','svg','current']
+    plan={'validation_arm':'svg','base':'f700187','acceptance':False,
+          'order':order,'samples_per_arm':5,
+          'cohorts':[{'index':i,'arm':a,'exit_code':0} for i,a in enumerate(order)]}
+    assert validate_plan(plan)==(True,tuple(order),5)
+    plan['observer_validation']=True
+    with pytest.raises(ValueError):validate_plan(plan)
+    plan['observer_validation']=False;plan['validation_arm']='unknown'
+    with pytest.raises(ValueError):validate_plan(plan)

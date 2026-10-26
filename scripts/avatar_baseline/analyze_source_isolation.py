@@ -44,14 +44,36 @@ def qualifies(pair):
 
 
 def validate_plan(plan):
-    validation=plan.get('observer_validation',False)
-    order=('current','geometry','geometry','current') if validation else ORDER
+    arm=plan.get('validation_arm') or ('geometry' if plan.get('observer_validation',False) else None)
+    if arm not in (None,'geometry','svg'):raise ValueError('Unknown validation intervention')
+    if plan.get('observer_validation',False) and arm!='geometry':raise ValueError('Conflicting validation interventions')
+    validation=arm is not None
+    order=('current',arm,arm,'current') if validation else ORDER
     samples=5 if validation else 2
     if (plan['base']!='f700187' or plan['acceptance'] is not False or
         plan['order']!=list(order) or plan['samples_per_arm']!=samples or
         plan['cohorts']!=[{'index':i,'arm':arm,'exit_code':0} for i,arm in enumerate(order)]):
         raise ValueError('Incomplete experiment')
     return validation,order,samples
+
+
+def validation_source(repo,arm,name):
+    data=subprocess.check_output(['git','show','f700187:'+name],cwd=repo)
+    if arm=='geometry' and name=='static/js/avatars.js':
+        if data.count(b'if (window.ResizeObserver) {')!=1:raise ValueError('Observer source changed')
+        return data.replace(b'if (window.ResizeObserver) {',b'if (false && window.ResizeObserver) {',1)
+    if arm=='svg' and name=='templates/_avatars_art.html':
+        original=subprocess.check_output(['git','show','1c964dc:'+name],cwd=repo)
+        signature=b'macro species_art(kind, s, m=0, costume="")'
+        if original.count(signature)!=1:raise ValueError('Original SVG signature changed')
+        return original.replace(signature,b'macro species_art(kind, s, m=0, costume="", scope="")',1)
+    if arm=='svg' and name=='templates/_avatars.html':
+        lines=data.splitlines(keepends=True)
+        selected=[i for i,line in enumerate(lines) if line.startswith(b'{% set scope = avatar_uid()')]
+        if len(selected)!=1:raise ValueError('SVG scope assignment changed')
+        lines[selected[0]]=b'{% set scope = "" %}\n'
+        return b''.join(lines)
+    return data
 
 
 def main():
@@ -70,22 +92,24 @@ def main():
     for i,arm in enumerate(order):
         folder=root/f'{i}-{arm}';env=json.loads((folder/'environment.json').read_text())
         if set(env['source_sha256'])!=required:raise ValueError('Incomplete source identity')
+        if validation:
+            changes={'static/js/avatars.js'} if arm=='geometry' else ({'templates/_avatars_art.html','templates/_avatars.html'} if arm=='svg' else set())
+            for name in changes:
+                if not (root/'variants'/arm/name).is_file():raise ValueError('Missing intervention source: '+name)
         for name,digest in env['source_sha256'].items():
             changed=root/'variants'/arm/name
             if changed.exists():
                 data=changed.read_bytes()
                 if validation:
-                    expected=subprocess.check_output(['git','show','f700187:'+name],cwd=repo)
-                    if arm=='geometry' and name=='static/js/avatars.js':
-                        expected=expected.replace(b'if (window.ResizeObserver) {',b'if (false && window.ResizeObserver) {',1)
-                    if data!=expected:raise ValueError('Unexpected observer intervention: '+name)
+                    expected=validation_source(repo,arm,name)
+                    if data!=expected:raise ValueError('Unexpected validation intervention: '+name)
             elif name.startswith('tests/'):data=(repo/name).read_bytes()
             else:data=subprocess.check_output(['git','show','f700187:'+name],cwd=repo)
             if hashlib.sha256(data).hexdigest()!=digest:raise ValueError('Source hash mismatch: '+name)
             verified+=1
         raw=folder/'False-warm.json';cohorts.append({'index':i,'arm':arm,'raw_sha256':hashlib.sha256(raw.read_bytes()).hexdigest(),'points':points(json.loads(raw.read_text()),samples)})
     comparisons=[];candidates={}
-    for arm,first,second in ([('geometry',1,2)] if validation else [('geometry',1,6),('preview',2,5),('svg',3,4)]):
+    for arm,first,second in ([(order[1],1,2)] if validation else [('geometry',1,6),('preview',2,5),('svg',3,4)]):
         pairs=[]
         for pair_order,a,b in [('forward',0,first),('reverse',len(order)-1,second)]:
             pair={'arm':arm,'order':pair_order,**compare(cohorts[a]['points'],cohorts[b]['points'])}

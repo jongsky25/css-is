@@ -38,3 +38,27 @@ This confirms a reproducible lazy-loading failure mode and a candidate correctio
 It does NOT prove the cause of the historical hosted timeout: the failed run did
 not preserve iframe state, and its normal layout could differ during loading.
 Do not relabel that incomplete cohort as valid or substitute diagnostic samples.
+
+## Container-only resize check
+
+The three existing geometry browser checks pass with observers disabled. Their
+combined resize/scroll test does not isolate container-only resizing: scrolling
+also invalidates the cache. A new real keyboard-input regression grows the play
+container by 150 px, with no window resize or scroll, then moves the avatar down.
+Current product reaches 394.797 px in the 395 px container. The exact disabled
+observer intervention stops at 244.797 px, 150 px short. Scroll stays at zero in
+both runs. The check passes on current and fails on the diagnostic intervention;
+raw logs and measured bounds are retained in `resize-behavior/`.
+
+Observer removal therefore cannot be promoted unchanged even if memory improves.
+Any correction must pass this new behavior check as well as the existing gates.
+
+## Separate preview correction
+
+Candidate `794c796` on `codex/avatar-preview-loading` implements eager loading on
+preview edits and bumps the script cache version. Both real HTTP regressions fail
+on old code and pass on the candidate; all 24 selected appearance checks pass.
+See that branch's `docs/avatars/increment2b/preview-loading-fix/REPORT.md` for logs,
+including the retained initial run with an incorrect scheduling-test clock.
+The candidate is not part of the running comparison and is not promoted to this
+branch. Its behavior checks are not memory acceptance.

@@ -38,11 +38,15 @@ def variant(root,cwd,arm):
 def main():
     parser=argparse.ArgumentParser();parser.add_argument('--output',type=Path,required=True)
     parser.add_argument('--browser-dir',type=Path,required=True)
-    parser.add_argument('--observer-validation',action='store_true');args=parser.parse_args()
-    arms=('current','geometry','geometry','current') if args.observer_validation else ARMS
-    samples=5 if args.observer_validation else 2
+    mode=parser.add_mutually_exclusive_group()
+    mode.add_argument('--observer-validation',action='store_true')
+    mode.add_argument('--validation-arm',choices=['geometry','svg'])
+    args=parser.parse_args()
+    validation_arm='geometry' if args.observer_validation else args.validation_arm
+    arms=('current',validation_arm,validation_arm,'current') if validation_arm else ARMS
+    samples=5 if validation_arm else 2
     root=Path(__file__).resolve().parents[2];out=args.output.resolve();out.mkdir(parents=True,exist_ok=False)
-    plan={'acceptance':False,'base':'f700187','order':arms,'samples_per_arm':samples,'observer_validation':args.observer_validation,
+    plan={'acceptance':False,'base':'f700187','order':arms,'samples_per_arm':samples,'observer_validation':validation_arm=='geometry','validation_arm':validation_arm,
         'protocol':'Full 30-second warm desktop workload, no tracing, native sampling, dump requests or concurrent analysis. Source isolation only; never final acceptance.',
         'variants':{'geometry':'Disable only avatar ResizeObserver registrations; keep cache, pointer, audio, SVG and static policy unchanged. Diagnostic can regress resize behavior.',
                     'preview':'Revert only f700187 static-preview wrapper/reaction omission, using its parent versions of three templates. Artwork remains current.',
