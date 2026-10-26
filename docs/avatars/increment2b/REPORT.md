@@ -1,5 +1,17 @@
 # Increment 2B — acceptance withdrawn: uncovered memory failures
 
+## Latest follow-up — both source leads unconfirmed
+
+Five-sample observer and SVG validation completed all 40 samples. Both independent
+audits agree with their producers, verifying 224 source hashes in total. Observer
+removal fails six reverse-order RSS gates (maximum +25.555 MiB); original SVG fails
+two forward-order RSS gates (maximum +13.102 MiB). The SVG experiment's unchanged
+current repeat also fails navigation 20 at +11.895 MiB. No correction is promoted,
+and the 10 MiB gates remain unchanged. See [observer results](observer-validation/REPORT.md)
+and [SVG results / next prerequisite](svg-validation/REPORT.md). 2B remains blocked;
+3A and later increments remain paused. No measurement run is active.
+
+
 **2B is not accepted. Release readiness remains false.** The acceptance recorded in `f46d7af` was premature: the CI comparison and my first audit checked memory for five active scenarios but omitted offscreen, reduced-motion, background and navigation measurements. Those omissions cannot waive the unchanged 10 MiB budget.
 
 The existing final run 40263865865 already contains these failures; no benchmark was rerun or sample replaced:

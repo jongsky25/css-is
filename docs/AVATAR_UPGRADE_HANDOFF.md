@@ -1,6 +1,6 @@
 # Avatar upgrade: new-chat handoff
 
-Last updated: **2026-10-26 12:20 UTC**. Repository: `jongsky25/css-is`.
+Last updated: **2026-10-26 13:38 UTC**. Repository: `jongsky25/css-is`.
 
 ## Current blocking correction
 
@@ -28,26 +28,33 @@ trigger it as an acceptance audit of the cancelled cohort. No later increments,
 merge to main or deployment occurred. The historical handoff below is superseded by this
 correction wherever it suggests CI success establishes complete memory acceptance.
 
-## Exact observer validation complete — proceed to SVG validation
+## Both exact source interventions failed five-sample validation
 
-[Run 40323560666](https://github.com/jongsky25/css-is/actions/runs/40323560666)
-completed all 20 samples with 112 verified source hashes. The exact observer-disable
-intervention does not qualify: forward navigation 10/20 improve by 20.273/19.340
-MiB, but reverse navigation 10/20 worsen by 25.555/20.094 MiB, with six RSS failures.
-The unchanged-current repeat passes. No sample exclusions or budget waivers.
-See [the retained audit](avatars/increment2b/observer-validation/REPORT.md).
-The workflow is paused; do not rerun this unchanged intervention or subdivide its
-registrations based on the earlier two-sample lead. Exact SVG validation is now running as
-[40327763515](https://github.com/jongsky25/css-is/actions/runs/40327763515), source
-`7c9f711`, five samples in current/SVG/SVG/current order. Do not start a duplicate. The runner/auditor support
-`--validation-arm svg`; this is diagnostic artwork rollback, never a product fix.
+All 40 samples completed with no exclusions across
+[observer run 40323560666](https://github.com/jongsky25/css-is/actions/runs/40323560666)
+and [SVG run 40327763515](https://github.com/jongsky25/css-is/actions/runs/40327763515).
+Each independent audit verifies 112 source hashes and agrees with its producer on
+all 78 comparisons. Observer removal fails six reverse-order RSS gates (maximum
++25.554688 MiB); original SVG fails two forward-order RSS gates (maximum
++13.101562 MiB). The SVG experiment's unchanged-current repeat itself fails
+navigation 20 RSS at +11.894531 MiB. No JS heap failures; no budget waiver.
 
-A new container-only resize test passes current and fails observer removal by
-150 px. Include it in any eventual geometry correction gate. Separately, preview
-candidate `794c796` on `codex/avatar-preview-loading` passes 24 functional checks
-(two regressions fail on old code); it remains separate from all memory cohorts.
-The historical preview timeout cause is still unproven. Product stays f700187;
-2B and every later increment remain blocked.
+Read [observer results](avatars/increment2b/observer-validation/REPORT.md) and
+[SVG results / next prerequisite](avatars/increment2b/svg-validation/REPORT.md).
+The two-sample leads did not replicate in both orders. Do not promote either
+intervention, subdivide a supposed confirmed observer/SVG cause, or rerun either
+unchanged for a favourable sample. Raw ZIPs, source logs, identities and both audits
+are retained in each report's `hosted/` folder. Both workflows are paused. No
+measurement run is active. Product remains f700187; 2B and later increments remain
+blocked. Before another product edit, establish a repeatable source effect with
+predeclared same-source negative controls and paired ordering, without changing
+budgets or the workload. Do not claim the current evidence identifies a fix.
+
+A container-only resize test passes current and fails observer removal by 150 px;
+it is now included in the full functional gate (nine browser checks). Separately,
+preview-loading correction `794c796` on `codex/avatar-preview-loading` passes 24
+functional checks; two new regressions fail on unchanged code. It remains a
+separate candidate, not a memory fix or proof of the historical timeout's cause.
 
 ## Latest source screen and geometry candidate — not promoted
 

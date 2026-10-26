@@ -13,7 +13,7 @@
     "background": 19750912
   },
   "historical_incomplete_acceptance": "assessment-incomplete-audit.json",
-  "next_step": "Validate the exact isolated observer/SVG intervention with five samples per arm in both orders before another product correction; investigate the preview-control timeout separately. Do not promote cccf843 or waive budgets. 3A remains paused.",
+  "next_step": "Both exact source interventions failed five-sample validation in both orders. Establish a repeatable source effect with predeclared same-source negative controls and paired ordering before another product correction. Preserve workloads, all samples and unchanged 10 MiB budgets; no unchanged reruns for favourable results. 3A and later increments remain paused.",
   "complete_memory_audit": "final-verification/complete-memory-audit.json",
   "corrected_overall_assessment": "final-verification/corrected-overall-assessment.json",
   "memory_comparisons": 104,
@@ -49,5 +49,35 @@
     "complete_samples": 27,
     "report": "geometry-lifecycle/REPORT.md",
     "full_acceptance_run": false
+  },
+  "exact_source_validation": {
+    "observer": {
+      "run_id": 40323560666,
+      "complete_samples": 20,
+      "source_hashes_verified": 112,
+      "qualifies": false,
+      "rss_failures": 6,
+      "max_rss_increase_mib": 25.5546875,
+      "report": "observer-validation/REPORT.md"
+    },
+    "svg": {
+      "run_id": 40327763515,
+      "complete_samples": 20,
+      "source_hashes_verified": 112,
+      "qualifies": false,
+      "rss_failures": 2,
+      "max_rss_increase_mib": 13.1015625,
+      "same_source_repeat_rss_failure_mib": 11.89453125,
+      "report": "svg-validation/REPORT.md"
+    },
+    "product_promoted": false,
+    "active_measurement_run": false
+  },
+  "preview_loading_candidate": {
+    "commit": "794c796",
+    "branch": "codex/avatar-preview-loading",
+    "functional_checks_passed": 24,
+    "product_promoted": false,
+    "historical_timeout_cause_proven": false
   }
 }
