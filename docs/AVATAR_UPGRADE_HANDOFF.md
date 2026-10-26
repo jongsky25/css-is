@@ -28,6 +28,18 @@ trigger it as an acceptance audit of the cancelled cohort. No later increments,
 merge to main or deployment occurred. The historical handoff below is superseded by this
 correction wherever it suggests CI success establishes complete memory acceptance.
 
+## Paired variance experiment active
+
+[Run 40335305139](https://github.com/jongsky25/css-is/actions/runs/40335305139),
+source `d27cb89`, executes the [predeclared paired protocol](avatars/increment2b/paired-variance/PROTOCOL.md).
+Five ABBA/BAAB blocks compare original/current with same-source negative controls;
+20 fresh process/database/browser slots retain the full warm-desktop workload and
+original screenshot ordinals through a frozen one-line fixture adapter. This
+session/order diagnosis is not replacement acceptance evidence. All 76 selected
+accounting tests pass. Do not launch a duplicate run or tune the declared criteria.
+Retrieve the artifact and audit with `analyze_paired_variance.py --harness-ref d27cb89`.
+Product remains f700187, all budgets unchanged, 2B/later increments paused.
+
 ## Both exact source interventions failed five-sample validation
 
 All 40 samples completed with no exclusions across
