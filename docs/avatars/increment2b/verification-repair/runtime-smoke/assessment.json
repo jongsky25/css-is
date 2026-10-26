@@ -1,0 +1,21 @@
+{
+  "status": "smoke_passed",
+  "acceptance": false,
+  "purpose": "Validate both complete-runtime checkouts and after-only trace mode with one fern sample each. Not the5-run acceptance cohort.",
+  "samples": {
+    "before": {
+      "source_commit": "5b580d9494ed172a4b38701ee399cac24e23ab1b",
+      "runtime_sha256": "69c5841d65c4e1a47093c93a2ded9498b176b3b6cfb9ea34d2d7d633e07d6bb1",
+      "after_only": true,
+      "max_callback_ms": 13.658,
+      "frame_p95_ms": 16.799999999999272
+    },
+    "after": {
+      "source_commit": "65f1e16572646fbf34ebdd0d63715e4be9b8d9dd",
+      "runtime_sha256": "c69e444b8d72fe84d0521d6ccabce07e9463209f5e451d96169b19aaca4191fb",
+      "after_only": true,
+      "max_callback_ms": 45.45,
+      "frame_p95_ms": 16.799999999999272
+    }
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "product_commit": "c2f404fa5aa58abebbe0127bbb537b5592993ce5",
+  "harness_commit": "65f1e16572646fbf34ebdd0d63715e4be9b8d9dd",
+  "github_repository_archived": false,
+  "github_workflow_runs": [
+    {
+      "id": 40245277942,
+      "status": "failed"
+    },
+    {
+      "id": 40245566959,
+      "status": "failed",
+      "reason": "Chromium154 package unavailable"
+    },
+    {
+      "id": 40247047928,
+      "status": "running",
+      "setup": "passed",
+      "unit_tests": "passed"
+    }
+  ],
+  "github_actions_settings": "Unobservable: environment proxy rejects api.github.com; connector lacks Actions settings/dispatch capabilities. Repository metadata is accessible.",
+  "old_browser_install": "Debian main index offers150.0.7871.181-1~deb13u1; security index offers156.0.8078.47-1~deb13u1. Original154.0.8037.57 package URL returns404.",
+  "new_browser": "156.0.8078.47",
+  "new_browser_debian_package": "156.0.8078.47-1~deb13u1",
+  "python_image": "python:3.12-trixie@sha256:0d0db5b17f11b1b7d1aafa74ceadaa64ba0944b267ff6fc22008a197acd6b9ad",
+  "container_build": "passed: exact Chromium/common install; pip --require-hashes --only-binary=:all:; chromium --version",
+  "local_image_id": "sha256:dc21df1f5a2ea0adb01e4871bcc1635c7c7e3eb107de44aa109404925b9b218f",
+  "protocol_change": "Explicit fresh156 browser baseline/current comparison; historical154 results are retained separately, never mixed numerically.",
+  "functional_result": "Passed on installed154: eight browser regression tests,1734 SVG comparisons, native hidden/touch/keyboard, persisted care for fern/mushroom/succulent. Product unchanged.",
+  "unit_tests": 16,
+  "limitations": "Container setup validation is not hosted CI execution or performance acceptance. Browser package is exact-pinned, not silently replaced if Debian later removes it.",
+  "github_discovery_correction": "Commit-workflow-runs connector falsely reported empty lists. Public GitHub Actions HTML discovers real IDs; direct connector job and log queries work. No network configuration change needed for monitoring.",
+  "local_chromium156_control": "All six blank-page CPU1/CPU4 samples pass; diagnostic fixture check, not avatar acceptance.",
+  "functional_chromium156": "All four functional phase checks passed, including8 regressions,1734 SVG equivalence, actual hidden/touch/keyboard and persisted care.",
+  "throttler_source_comparison": {
+    "versions": [
+      "154.0.8037.57",
+      "156.0.8078.47"
+    ],
+    "path": "third_party/blink/renderer/platform/scheduler/common/thread_cpu_throttler.cc",
+    "identical_sha256": "fdb0c3b9a72d2b9dcc0bbd26d38527be06152d519acf1bfd38408ebdcad3a727",
+    "conclusion": "No throttler-source fix is claimed from the version change. Fresh controls and all measurements remain required."
+  }
+}

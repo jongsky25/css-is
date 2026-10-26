@@ -38,11 +38,11 @@
   },
   "callback_limit_ms": 50,
   "frame_exception": "User-approved recorded33.3ms overrun remains accepted; no waiver of callback limit or large frame failures.",
-  "result": "Code fixes retain eight browser passes and 1,734 SVG comparisons. Native diagnostics establish an unstable local throttle mechanism; isolated cpuset also fails. Hosted verification prepared and pushed, but no hosted acceptance evidence yet. 2B remains unresolved.",
-  "not_run": "Complete hosted functional, focused and matched before/current matrices have no reported run or result. Earlier local failed samples remain retained.",
-  "next_step": "Start the dedicated workflow on a GitHub runner, retain all three phase artifacts, and assess callback50ms/frame33.3ms plus original comparative budgets. Resolve any genuine remaining regression before marking2B complete.",
+  "result": "Dependency installation and verification-driver defects repaired. Complete hosted verification now running; final acceptance remains pending.",
+  "not_run": "Hosted phases are running; final artifacts not yet available.",
+  "next_step": "Collect run40247047928 artifacts; assess all controls, complete source/runtime comparisons and unchanged budgets. Fix any established product regression.",
   "diagnostic_revision": "f421044b53840f12d754cc9c30b3c2f3ff268532",
-  "hosted_harness_revision": "0bd9092",
+  "hosted_harness_revision": "65f1e16572646fbf34ebdd0d63715e4be9b8d9dd",
   "native_throttle_diagnostic": {
     "samples": 10,
     "all_owned_callbacks_under_50ms": true,
@@ -56,13 +56,17 @@
   },
   "hosted_verification": {
     "branch": "codex/avatar-2b-verification",
-    "url": "https://github.com/jongsky25/css-is/tree/codex/avatar-2b-verification",
-    "status": "pushed; no workflow run reported by GitHub",
+    "url": "https://github.com/jongsky25/css-is/actions/runs/40247047928",
+    "status": "running; dependency installation and driver tests passed",
     "phases": [
       "functional",
       "focused",
+      "runtime",
       "matrix"
     ],
-    "results_available": false
+    "results_available": false,
+    "run_id": 40247047928,
+    "browser": "156.0.8078.47",
+    "monitoring_correction": "Commit-run connector falsely returned no runs; public Actions page and direct job queries confirm runs."
   }
 }

@@ -1,6 +1,6 @@
 # Avatar visual upgrade — phased execution plan for Sol
 
-Status: Increments0,1,2A complete. 2B product fixes through c2f404f pass8 browser checks and1,734 SVG comparisons. Native diagnostics confirm local Chromium throttle pauses up to345.950ms; independent cpuset candidate rejected. Complete hosted verification pushed (harness0bd9092), but GitHub has reported no run. Acceptance unresolved; approved33.3ms frame exception retained.3A pending.
+Status: Increments0,1,2A complete. 2B product fixes through c2f404f remain functionally verified. CI installation failure diagnosed and repaired: absent Chromium154 package, hidden by an empty connector response. Harness65f1e16 runs complete sequential verification with fresh matched Chromium156 baselines; hosted run40247047928 is active. Acceptance pending; approved33.3ms frame ceiling and50ms callback limit retained.3A pending.
 Created: 2026-10-25
 Repository: jongsky25/css-is
 Owner request: Material improvement to companion artwork, optional animal dress-up,
@@ -286,7 +286,7 @@ browser tests ran.
 | 0 Baseline | Complete — baseline established; release gates remain unmet | `94269dd` + evidence/ledger revision | [51 sheets](avatars/sheets/index.json), [monthly overview](avatars/sheets/monthly-stage6-overview.png), [hero/moods](avatars/smoke/) | [Report](avatars/BASELINE_REPORT.md), [20 full samples + summary](avatars/application/summary.json), native hidden/touch check; existing frame, picker, timer and remount failures retained. |
 | 1 Cat + plant slice | Complete — measured relative gates passed | `58cf98f`, `0be7fc3`, `ad4e7ad`, `d464461` + evidence revision | [Bare comparison](avatars/increment1/before-after-bare-light.png), [motion](avatars/increment1/before-after-motion.webm), [51 seasonal sheets](avatars/increment1/sheets/index.json) | [Report](avatars/increment1/REPORT.md), [20-sample comparison](avatars/increment1/comparison.json); 102 tests, native touch/keyboard/filter checks, sampled callback trace passed; baseline lifecycle/picker blockers retained. |
 | 2A Cactus/bonsai/sunflower | Complete — measured relative gates passed | `6064a82`, `1b453e0`, `28fbb7b` + evidence revision | [Six-stage comparison](avatars/increment2a/before-after-bare-light.png), [51 sheets](avatars/increment2a/sheets/index.json), [motion](avatars/increment2a/before-after-motion.webm) | [Report](avatars/increment2a/REPORT.md), [fresh 20 comparison](avatars/increment2a/comparison.json); 105 tests, 324 visual reaction cases, mature care/traces and native checks passed. Pre-fix failures retained; audio-sync feedback fixed. Remaining lifecycle/picker blockers persist. |
-| 2B Fern/mushroom/succulent | Acceptance unresolved — product fixes verified functionally; hosted performance run outstanding | Artwork `6ddce82`; product fixes through `c2f404f`; harness `0bd9092` | [Six-stage comparison](avatars/increment2b/before-after-bare-light.png), [51 sheets](avatars/increment2b/layout-fix/visual/sheets/index.json), [reaction checks](avatars/increment2b/layout-fix/visual/motion-rig-check.json) | [Report](avatars/increment2b/REPORT.md), [assessment](avatars/increment2b/assessment.json). Eight browser tests and1,734 SVG comparisons pass. Prior visual evidence:486 reactions/21 reduced-motion transitions and4,896 identical cells. Native throttle pauses up to345.950ms proven independently of callbacks; diagnostic passes do not replace acceptance. Cpuset candidate rejected at148.967ms. Complete hosted workflow pushed; no run reported. Callback50ms retained, frame33.3ms approved;3A pending. |
+| 2B Fern/mushroom/succulent | Acceptance pending — hosted verification running | Artwork `6ddce82`; product `c2f404f`; harness `65f1e16` | [Six-stage comparison](avatars/increment2b/before-after-bare-light.png), [51 sheets](avatars/increment2b/layout-fix/visual/sheets/index.json), [reaction checks](avatars/increment2b/layout-fix/visual/motion-rig-check.json) | [Report](avatars/increment2b/REPORT.md), [setup repair](avatars/increment2b/verification-repair/setup-assessment.json). Eight browser regressions,1734 SVG comparisons, native behavior and real care pass;13 driver tests pass. Chromium154 CI install failure fixed with explicit matched156 protocol. [Run40247047928](https://github.com/jongsky25/css-is/actions/runs/40247047928) active; final artifacts pending. Historical failures retained;3A pending. |
 | 3A Ground animals + bird | Pending | — | — | — |
 | 3B Swimmers + owl + bat | Pending | — | — | — |
 | 4A Wardrobe model/rendering | Pending | — | — | — |
@@ -679,3 +679,14 @@ callback50ms unchanged and the approved frame33.3ms ceiling. Local driver compil
 and workflow parse checks pass. GitHub confirms the branch exists but reports no
 workflow run; hosted results are unavailable and the cause is not established.
 **2B acceptance remains unresolved;3A pending.** No merge or deployment.
+
+### Increment2B verification repair — 2026-10-26
+
+See the [current report](avatars/increment2b/REPORT.md). GitHub did start the earlier
+workflows; the commit-run connector returned empty lists. Direct run/job lookup
+reveals missing Chromium154 packages caused installation failure. Workflow65f1e16
+uses exact Chromium156 with fresh before/current baselines, validates all test
+results, continues independent checks, and adds whole-runtime old/current traces.
+Run40247047928 has passed setup and13 driver tests and is executing four sequential
+phases. Final acceptance awaits all raw artifacts. Product unchanged atc2f404f;
+no main merge/deployment. Historical154 results remain separate and unaltered.

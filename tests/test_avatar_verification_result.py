@@ -72,3 +72,35 @@ def test_focused_driver_continues_after_missing_control(tmp_path, monkeypatch):
     assert result['status']=='inconclusive'
     assert 'empty_control' in result['harness_errors']
     assert all(kind+'_traces' in result['harness_errors'] for kind in ['fern','mushroom','succulent'])
+
+
+def test_complete_assessment_rejects_missing_phases(tmp_path):
+    from scripts.avatar_baseline.assess_complete import assess
+    verdict=assess(tmp_path)
+    assert verdict['status']=='inconclusive'
+    assert all(phase in verdict['harness_errors'] for phase in ['functional','focused','runtime','matrix'])
+
+
+def test_green_phase_labels_cannot_replace_raw_evidence(tmp_path):
+    from scripts.avatar_baseline.assess_complete import assess, PHASES
+    for phase in PHASES:
+        directory=tmp_path/phase;directory.mkdir()
+        (directory/'assessment.json').write_text(json.dumps({'status':'passed','gates':{'test':True},
+            'source_commit':'current','chromium':'Chromium 156','expected_chromium':'156',
+            'source_sha256':{'static/js/avatars.js':'current-js','templates/_avatars.html':'current-svg'}}))
+    verdict=assess(tmp_path)
+    assert verdict['gates']['functional'] is True
+    assert verdict['status']=='inconclusive'
+    assert 'fern_runtime_raw' in verdict['harness_errors']
+
+
+def test_mixed_source_phases_cannot_pass(tmp_path):
+    from scripts.avatar_baseline.assess_complete import assess, PHASES
+    for phase in PHASES:
+        directory=tmp_path/phase;directory.mkdir()
+        (directory/'assessment.json').write_text(json.dumps({'status':'passed','gates':{'test':True},
+            'source_commit':phase,'chromium':'Chromium 156','expected_chromium':'156',
+            'source_sha256':{'static/js/avatars.js':'current-js','templates/_avatars.html':'current-svg'}}))
+    verdict=assess(tmp_path)
+    assert verdict['status']=='inconclusive'
+    assert 'same_source_and_browser' in verdict['harness_errors']

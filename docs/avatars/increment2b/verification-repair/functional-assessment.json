@@ -1,0 +1,41 @@
+{
+  "source_commit": "2cff51772d329dbb3aba93e2aa936523366e4e99",
+  "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+  "platform": "Linux-6.18.55-x86_64-with-glibc2.41",
+  "cpu_count": 5,
+  "affinity": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "chromium": "Chromium 154.0.8037.57 built on Debian GNU/Linux 13 (trixie)",
+  "frame_budget_ms": 33.3,
+  "original_frame_budget_ms": 33,
+  "callback_budget_ms": 50,
+  "frame_exception": "User accepted0.3ms frame overrun; no waiver for callbacks or larger stalls.",
+  "source_sha256": {
+    "static/js/avatars.js": "c69e444b8d72fe84d0521d6ccabce07e9463209f5e451d96169b19aaca4191fb",
+    "templates/_avatars.html": "9d5b20608ca6b7db5106f45709048749161285300e5a3587f40aa6dbd30b31a5"
+  },
+  "phase": "functional",
+  "runner_statuses": {
+    "browser-regressions": 0,
+    "svg-equivalence": 0,
+    "native-behavior": 0,
+    "care": 0
+  },
+  "status": "passed",
+  "gates": {
+    "browser-regressions_tests": true,
+    "browser_regressions": true,
+    "svg_equivalence": true,
+    "native-behavior_tests": true,
+    "native_visibility_touch_keyboard": true,
+    "care_tests": true,
+    "persisted_plant_care": true
+  },
+  "environment_checks": {},
+  "harness_errors": {}
+}

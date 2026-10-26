@@ -61,3 +61,53 @@ included, subject to GitHub's default-branch discovery rules. The same driver ca
 be run on a configured runner as `python scripts/avatar_baseline/ci_verify.py`
 with each of `functional`, `focused`, and `matrix` in turn. **2B remains unresolved;
 3A stays pending.** Nothing was merged or deployed.
+
+
+## Verification repair — 2026-10-26
+
+Correction: the earlier statement that GitHub had no workflow run was based on
+an empty result from the commit-workflow-runs connector. The public Actions page
+shows runs40245277942 and40245566959; direct job/log queries confirm dependency
+installation failed because Chromium154.0.8037.57 is absent from Debian's current
+repositories. [Exact error](verification-repair/hosted-install-failure.txt).
+Actions was running; a monitoring blind spot hid the actual installation failure.
+
+Harness `65f1e16` fixes independent-check error isolation, validates JUnit counts
+and exit codes, rejects missing/skipped/lost/duplicate samples, and reports invalid
+controls as inconclusive. Test assertions use the already approved33.3ms ceiling;
+callbacks remain50ms. Historical baseline failures are retained separately from
+current failures. A new whole-runtime phase checks out pre-2B `5b580d9`, including
+its original JavaScript, rather than only substituting SVG into current runtime.
+All four hosted phases run sequentially and retain their outputs despite failures.
+
+The hosted protocol now explicitly pins Chromium156.0.8078.47 and collects fresh
+original/current comparisons with that same browser. No historical154 timing is
+mixed into156 deltas. The Python container is digest-pinned to the image whose
+exact browser and hash-locked Python dependency installation passed locally.
+[Setup evidence](verification-repair/setup-assessment.json).
+
+Thirteen driver regression tests pass. The unchanged product passes eight browser
+regressions,1734 exact SVG comparisons, actual hidden/touch/keyboard checks, and
+persisted care for all three plants on154. Six blank-page CPU1/CPU4 controls also
+pass on156; that diagnostic is not avatar acceptance. All retained checks are in
+[verification-repair](verification-repair/functional-assessment.json).
+
+[Hosted run40247047928](https://github.com/jongsky25/css-is/actions/runs/40247047928)
+has passed installation and driver tests and is executing complete verification.
+Final performance verdict is pending its artifacts. Product remains `c2f404f`;
+no new application optimization, merge, or deployment has been made.
+
+
+Additional local preflight: all functional checks also pass on156. The new
+artifact auditor has16 combined driver/audit regression tests. It checks raw
+cohort identities, source/browser consistency and missing artifacts rather than
+trusting green phase labels alone. A one-sample whole-runtime smoke comparison
+confirms genuinely different old/current JavaScript hashes; old/current callbacks
+are13.658/45.450ms and both framep95 values16.8ms. This validates harness operation,
+not acceptance or a statistically established regression. [Smoke evidence](verification-repair/runtime-smoke/assessment.json).
+
+The Chromium native throttler source file is byte-identical between154 and156;
+no throttler implementation fix is claimed from the browser upgrade. Its purpose
+is reproducible installation and a fresh matched protocol. Hosted measurements
+remain necessary. The final artifact audit can be reproduced with
+`python scripts/avatar_baseline/assess_complete.py <downloaded-artifact-root>`.

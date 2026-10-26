@@ -1,0 +1,9 @@
+fern after 0 frame 16.799999999999272 owned_call_wall 45.45
+.
+=============================== warnings summary ===============================
+tests/test_avatar_cpu_attribution.py::test_cpu_attribution[fern]
+  /workspace/css-is/tests/conftest.py:88: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+1 passed, 2 deselected, 1 warning in 49.06s

@@ -102,7 +102,7 @@ try:
                     pair=[read(out/arm/kind/'summary.json') for arm in ['before','after']]
                     for data in pair:
                         validate_samples(data['samples'],5)
-                        if not data.get('after_only') or any(r['trace_data_loss'] or not r['owned_call_count'] for r in data['samples']):
+                        if not data.get('after_only') or {(r['version'],r['run']) for r in data['samples']}!={('after',n) for n in range(5)} or any(r['trace_data_loss'] or not r['owned_call_count'] for r in data['samples']):
                             raise ValueError('Incomplete whole-runtime trace')
                     if pair[0]['source_commit']==pair[1]['source_commit'] or pair[0]['runtime_sha256']==pair[1]['runtime_sha256']:
                         raise ValueError('Runtime control did not change source')

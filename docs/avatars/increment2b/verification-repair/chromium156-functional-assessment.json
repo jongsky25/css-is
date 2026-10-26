@@ -1,0 +1,47 @@
+{
+  "baseline_findings": {},
+  "source_commit": "65f1e16572646fbf34ebdd0d63715e4be9b8d9dd",
+  "python": "3.12.15 (main, Oct 21 2026, 03:33:00) [GCC 14.2.0]",
+  "platform": "Linux-6.18.55-x86_64-with-glibc2.41",
+  "cpu_count": 5,
+  "affinity": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "chromium": "Chromium 156.0.8078.47 built on Debian GNU/Linux 13 (trixie)",
+  "expected_chromium": "156.0.8078.47",
+  "working_tree_status": " M .github/workflows/avatar-2b-verification.yml\n M scripts/avatar_baseline/ci_verify.py\n?? docs/avatars/increment2b/verification-repair/\n",
+  "frame_budget_ms": 33.3,
+  "original_frame_budget_ms": 33,
+  "callback_budget_ms": 50,
+  "frame_exception": "User accepted0.3ms frame overrun; no waiver for callbacks or larger stalls.",
+  "source_sha256": {
+    "static/js/avatars.js": "c69e444b8d72fe84d0521d6ccabce07e9463209f5e451d96169b19aaca4191fb",
+    "templates/_avatars.html": "9d5b20608ca6b7db5106f45709048749161285300e5a3587f40aa6dbd30b31a5",
+    "scripts/avatar_baseline/ci_verify.py": "133eaf585a1b70163e022121771a39316a75bf019993ed12cf9c7a8696845515",
+    "scripts/avatar_baseline/verification_result.py": "a709d30f6e8623e936515a2ea78a615d8fa0262ec29e53b6bf48aabf24dc77d0",
+    "tests/test_avatar_cpu_attribution.py": "150839bd87bd341479e964ede35d81d1490ff7cd05f68ade300dc4dc3a84e8cd"
+  },
+  "phase": "functional",
+  "runner_statuses": {
+    "browser-regressions": 0,
+    "svg-equivalence": 0,
+    "native-behavior": 0,
+    "care": 0
+  },
+  "status": "passed",
+  "gates": {
+    "browser-regressions_tests": true,
+    "browser_regressions": true,
+    "svg_equivalence": true,
+    "native-behavior_tests": true,
+    "native_visibility_touch_keyboard": true,
+    "care_tests": true,
+    "persisted_plant_care": true
+  },
+  "environment_checks": {},
+  "harness_errors": {}
+}

@@ -1,0 +1,7 @@
+Run: https://github.com/jongsky25/css-is/actions/runs/40245566959
+Job: 121326277202 (verify focused)
+2026-10-25T23:37:27.9914799Z E: Version '154.0.8037.57-1~deb13u1' for 'chromium' was not found
+2026-10-25T23:37:27.9966988Z Process completed with exit code 100.
+All three verification phases were skipped after dependency installation failed.
+The commit-workflow-runs connector returned an empty list despite this run existing.
+Public Actions-page discovery followed by direct run/job queries exposed the failure.
