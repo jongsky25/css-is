@@ -7,6 +7,6 @@
     4,
     4
   ],
-  "memory_acceptance": "pending hosted candidate controls; not established",
-  "full_acceptance": "not run pending targeted gate"
+  "memory_acceptance": "failed both orders; candidate rejected",
+  "full_acceptance": "not run because targeted gate failed"
 }

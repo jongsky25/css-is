@@ -1,8 +1,36 @@
-# 2B lifecycle-memory correction — candidate under measurement
+# 2B lifecycle-memory correction — candidate rejected
 
-**2B remains blocked.** No memory budget or callback limit has changed, and 3A
-remains paused. Candidate `509cd1a` has a verified lifecycle behavior change but
-has not yet established a memory correction or passed final acceptance.
+**2B remains blocked. Candidate 509cd1a is rejected as a memory fix.** Its
+real-navigation cleanup behavior passes, but both hosted memory orders fail.
+The experiment is preserved separately; the primary verification branch retains
+the unchanged f700187 product. Full acceptance was not run because the targeted
+gate failed. 3A and later increments remain paused.
+
+The independent audit verified **134 source-file hashes and all 234 comparisons**
+across six complete cohorts (30 full samples), with no source, protocol, or
+renderer-count errors. Against the original baseline, the candidate fails eight
+RSS checks and one JS-heap check:
+
+| Order | Checkpoint | Metric | Median increase (MiB) |
+|---|---|---|---:|
+| Forward | navigation 5 | RSS | 28.418 |
+| Forward | navigation 10 | RSS | 28.738 |
+| Forward | navigation 10 | JS heap | 10.063 |
+| Forward | navigation 15 | RSS | 26.992 |
+| Forward | navigation 20 | RSS | 19.496 |
+| Reverse | navigation 5 | RSS | 10.434 |
+| Reverse | navigation 10 | RSS | 22.598 |
+| Reverse | navigation 15 | RSS | 27.660 |
+| Reverse | navigation 20 | RSS | 21.426 |
+
+The limit remains 10 MiB. Against the unchanged current product, the candidate
+also fails reverse-order RSS checks at navigations 5, 15 and 20 (+20.789, +15.828,
++13.004 MiB). The local one-sample improvement did not establish a repeatable
+memory benefit. No sample was excluded or budget relaxed.
+
+See [independent candidate audit](candidate-hosted/independent-audit.json),
+[raw candidate evidence](candidate-hosted/evidence.zip), and
+[provenance](candidate-hosted/provenance.json).
 
 ## Unchanged-source reproduction
 
@@ -49,11 +77,11 @@ the avatar template only changes the JS cache version. The runtime adds 146 gzip
 bytes. See [validation evidence](candidate-validation/source-equivalence.json)
 and [navigation behavior](teardown-functional/candidate.json).
 
-The fixed candidate runs in [40292908517](https://github.com/jongsky25/css-is/actions/runs/40292908517):
+The rejected candidate completed [40292908517](https://github.com/jongsky25/css-is/actions/runs/40292908517):
 original/current/candidate/candidate/current/original, five full samples per
-cohort. Review both original-to-candidate pairs, both unchanged-to-candidate
-pairs, and same-source repeats. Only a validated candidate may proceed to the
-full desktop/mobile, cold/warm acceptance matrix and native callback/frame gates.
+cohort. All original-to-candidate and unchanged-to-candidate pairs and same-source
+repeats were retained and recomputed. Its targeted gate failed; no full matrix
+or callback/frame acceptance run was started on this rejected source.
 
 ## Evidence and continuation
 
@@ -65,8 +93,29 @@ Full original traces remain at the paths and SHA-256 values in the manifest.
 The local prototype uses an unguarded standalone pagehide listener; hosted
 candidate 509cd1a uses the existing initialization guard and is measured separately.
 
-The final CI workflow is prepared to include the teardown regression and a
-complete raw-memory audit. It will retain full evidence for 30 days and provide
-individually downloadable review parts, preserving trace hashes. It has not been
-triggered while the targeted candidate gate is pending. No deployment or merge
+The experimental branch retains its teardown regression. The primary final CI
+workflow retains a complete raw-memory audit. It will retain full evidence for 30 days and provide
+individually downloadable review parts, preserving trace hashes. It was not
+triggered because the targeted candidate gate failed. No deployment or merge
 to main has occurred.
+
+## Next discriminating experiment
+
+Do not repeat the rejected candidate or rerun unchanged cohorts hoping for a pass.
+The unresolved hypothesis is that differing collection of discarded documents
+explains the late-navigation memory delta. Capture natural Blink/V8 collection
+events, navigation timestamps, renderer-role/PID history and native allocation
+profiles together on original and unchanged current source, in both orders.
+Map app/preview and browser-UI renderers for attribution; retain the complete RSS
+sum as the gate. The existing target census contains Chromium omnibox UI targets,
+and renderer PID sets change after the background probe. Neither observation is
+permission to exclude memory or change the budget.
+
+Matching Chromium security-build symbols are now available and verified:
+`1c5dca8527a61d07372e489142bee26af1bcaf71`. Native stack sampling resolved 868
+Chromium frames in the picker probe and 409 in a full-sequence endpoint probe.
+These samples cover target-renderer allocations, not complete RSS or all renderer
+lifetimes; they do not establish a source cause. See [native sampling evidence](native-sampling/assessment.json).
+Only choose a new product correction after an attributable retained allocation
+or lifecycle reference is identified. No forced collection, extra cache flushing,
+RSS subtraction, or favourable-sample replacement is permitted.

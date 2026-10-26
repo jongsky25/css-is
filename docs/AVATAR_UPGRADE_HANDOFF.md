@@ -28,30 +28,32 @@ trigger it as an acceptance audit of the cancelled cohort. No later increments,
 merge to main or deployment occurred. The historical handoff below is superseded by this
 correction wherever it suggests CI success establishes complete memory acceptance.
 
-## Active 2B correction experiment — 2026-10-26
+## Latest 2B investigation — candidate rejected, 2026-10-26
 
-The unchanged-product repeat [40287821303](https://github.com/jongsky25/css-is/actions/runs/40287821303)
-completed 20 warm-desktop samples in both orders. The reverse pair still fails
-seasonal-preview RSS (+10.797 MiB); source-repeat variability is also retained.
-See `docs/avatars/increment2b/lifecycle-memory-fix/unchanged-hosted/`.
+Read [the follow-up report](avatars/increment2b/lifecycle-memory-fix/REPORT.md).
+Unchanged-source run 40287821303 retained 20 full warm-desktop samples and still
+fails reverse-order seasonal-preview RSS (+10.797 MiB). Candidate 509cd1a on
+`codex/avatar-2b-lifecycle-candidate` cancels owned animation effects on discarded
+pages. Its behavior check passes, but run 40292908517 (30 samples, three sources,
+both orders) fails both candidate memory gates: eight RSS failures up to +28.738
+MiB, plus a JS-heap failure +10.063 MiB. It also worsens three reverse-order RSS
+checks against unchanged current. The independent audit verifies 134 source
+hashes and 234 comparisons without validity errors. **Do not promote it.**
 
-Candidate product `509cd1a` on `codex/avatar-2b-lifecycle-candidate` ends owned
-avatar animation effects on non-persisted pagehide. Real navigation behavior
-fails on unchanged source and passes on candidate; persisted-page motion and
-unrelated animation are preserved. This is **not yet a validated memory fix**.
-[Run 40292908517](https://github.com/jongsky25/css-is/actions/runs/40292908517)
-measures original/current/candidate/candidate/current/original, five complete
-warm-desktop samples each, on pinned Chromium 156. Its source is 509cd1a.
-Wait for the complete artifact, audit all pairs and controls, and only then decide
-whether the candidate qualifies for the full final-source acceptance matrix.
-Do not rerun an incomplete subset or accept a green diagnostic workflow badge.
+The candidate branch preserves the rejected product and has its targeted workflow
+paused. The primary verification branch retains product f700187, with diagnostic
+evidence and audit tools. Full acceptance was not run after the failed targeted
+gate. All raw numeric evidence is preserved in the report's two hosted ZIPs and
+three native-probe ZIPs. Native allocation probes are instrumented diagnostics;
+early exploratory probes overlapped trace parsing and cannot establish causality.
 
-Local native allocation probes are attribution-only, one sample per variant;
-early probes overlapped preceding trace parsing and cannot establish causality.
-Clean original/current/prototype repeats and raw allocator extracts are preserved
-under `lifecycle-memory-fix/`. Full raw native traces remain in
-`/workspace/scratch/lifecycle-allocation/` with hashes in the portable manifest.
-The original 2B acceptance stays withdrawn; 3A and later increments stay paused.
+The next experiment must correlate natural Blink/V8 collection, navigation,
+renderer roles/PIDs and native allocation stacks on original/current source in
+both orders. Matching native debug symbols are now verified and reproducible;
+see `native-sampling/assessment.json` and `symbolize_native_memory.py`. Do not
+force GC, flush additional caches, subtract browser-UI/shared memory from RSS,
+or choose favourable samples. Do not rerun the rejected candidate without a new
+hypothesis. 2B remains unaccepted; 3A and later increments remain paused.
 
 ## Historical start here
 

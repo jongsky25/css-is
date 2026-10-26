@@ -1,0 +1,12 @@
+{
+  "run_id": 40292908517,
+  "job_id": 121471954813,
+  "artifact_id": 12639206719,
+  "artifact_sha256": "c5a6fee47e67fb09422281619093fb20f8c4808a6973e2cb24728618823e0bbe",
+  "artifact_bytes": 2744102,
+  "expires_at": "2026-11-25T09:15:36Z",
+  "source_commit": "509cd1adbe9265d7445d22134df1feaa7bd59a7d",
+  "candidate_rejected": true,
+  "acceptance": false,
+  "reason": "Both original-to-candidate orders fail; eight RSS and one JS-heap failures. Candidate also fails three RSS comparisons against unchanged current in the reverse order. Do not promote or run full acceptance on this candidate."
+}

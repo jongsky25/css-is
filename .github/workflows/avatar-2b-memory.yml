@@ -10,6 +10,8 @@ concurrency:
   cancel-in-progress: false
 jobs:
   verify:
+    # Candidate 509cd1a failed both memory orders. Require a new hypothesis before another run.
+    if: ${{ false }}
     runs-on: ubuntu-24.04
     container: python:3.12-trixie@sha256:0d0db5b17f11b1b7d1aafa74ceadaa64ba0944b267ff6fc22008a197acd6b9ad
     timeout-minutes: 90
