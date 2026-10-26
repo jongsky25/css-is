@@ -1,5 +1,17 @@
 # Increment 2B — acceptance withdrawn: uncovered memory failures
 
+## Latest paired variance diagnosis
+
+[Twenty counterbalanced slots](paired-variance/REPORT.md) completed and independently
+verified (390 source hashes). Same-source controls fail stability in nine RSS
+checkpoints and one JS-heap checkpoint, so no source effect qualifies under the
+predeclared criterion. Current RSS is nevertheless higher in all ten source pairs
+at navigation 10,15,20, with paired median increases around 20–30 MiB in both orders.
+This focuses the next allocation/collection-timing investigation on late navigation;
+it does not establish a component fix or waive historical failures. Product f700187
+is unchanged; 2B remains blocked. The workflow is paused, with no measurement active.
+
+
 ## Latest follow-up — both source leads unconfirmed
 
 Five-sample observer and SVG validation completed all 40 samples. Both independent

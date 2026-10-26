@@ -1,6 +1,6 @@
 # Avatar upgrade: new-chat handoff
 
-Last updated: **2026-10-26 13:38 UTC**. Repository: `jongsky25/css-is`.
+Last updated: **2026-10-26 14:39 UTC**. Repository: `jongsky25/css-is`.
 
 ## Current blocking correction
 
@@ -28,17 +28,34 @@ trigger it as an acceptance audit of the cancelled cohort. No later increments,
 merge to main or deployment occurred. The historical handoff below is superseded by this
 correction wherever it suggests CI success establishes complete memory acceptance.
 
-## Paired variance experiment active
+## Paired variance experiment complete — late-navigation target, unstable controls
 
-[Run 40335305139](https://github.com/jongsky25/css-is/actions/runs/40335305139),
-source `d27cb89`, executes the [predeclared paired protocol](avatars/increment2b/paired-variance/PROTOCOL.md).
-Five ABBA/BAAB blocks compare original/current with same-source negative controls;
-20 fresh process/database/browser slots retain the full warm-desktop workload and
-original screenshot ordinals through a frozen one-line fixture adapter. This
-session/order diagnosis is not replacement acceptance evidence. All 76 selected
-accounting tests pass. Do not launch a duplicate run or tune the declared criteria.
-Retrieve the artifact and audit with `analyze_paired_variance.py --harness-ref d27cb89`.
-Product remains f700187, all budgets unchanged, 2B/later increments paused.
+[Run 40335305139](https://github.com/jongsky25/css-is/actions/runs/40335305139)
+completed all 20 slots with no exclusions. Read the
+[paired result](avatars/increment2b/paired-variance/REPORT.md) and its frozen protocol.
+The independent audit verifies 390 source hashes, matches the producer, and raw
+recomputation confirms 520 pair differences plus 52 paired/aggregate median pairs.
+The screenshot ordinal adapter produced exactly four profile captures as planned.
+
+Nine RSS checkpoint/control sets and one JS-heap set fail stability: 15 same-source
+metric differences exceed 10 MiB in absolute value, with RSS swings up to 15.348
+MiB and heap swings up to 11.827 MiB. Both original and current have RSS control
+failures. No source effect qualifies under the declared stable-control criterion.
+Nevertheless current RSS exceeds original in every source pair at navigation
+10,15,20, with paired median increases of roughly 20–30 MiB in both orders. Treat
+this as an attribution target, not a qualified fix or proof no source effect exists.
+
+Next investigate natural allocation/collection timing in that late-navigation
+region, distinguishing transient document accumulation from retained native heap
+capacity. Snapshot document counts differ, but do not prove a leak or identify
+an owner. Preserve all budgets and historical failures; no forced GC or RSS
+subtraction. The fresh browser/database and block ordering changed together, so
+this diagnosis cannot replace acceptance or identify either as the cause.
+The earlier cohorts already used distinct measured renderer PIDs across samples.
+
+All 76 selected accounting tests pass. Raw ZIP, identities, logs and both audits
+are retained under `paired-variance/hosted/`. The workflow is paused; no measurement
+run is active. Product remains f700187; 2B and later increments remain blocked.
 
 ## Both exact source interventions failed five-sample validation
 

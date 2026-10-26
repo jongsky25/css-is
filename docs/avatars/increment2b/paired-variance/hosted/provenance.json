@@ -1,0 +1,20 @@
+{
+  "run_id": 40335305139,
+  "job_id": 121615150683,
+  "source_commit": "d27cb8911b456d0b64dbf71fb7a8423fb730e95c",
+  "independent_auditor_commit": "8ac1f62",
+  "artifact_id": 12658183591,
+  "artifact_bytes": 1870735,
+  "sha256": "d7b4ee7594963cb52e5b3724ff31f4bd84acfce636ad8c35a40828bf846c1488",
+  "expires_at": "2026-11-25T14:28:13Z",
+  "producer_independent_agree": true,
+  "independent_raw_pair_differences_recomputed": 520,
+  "paired_and_aggregate_median_pairs_recomputed": 52,
+  "profile_screenshot_slots": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "product_promoted": false
+}

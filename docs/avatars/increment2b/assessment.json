@@ -13,7 +13,7 @@
     "background": 19750912
   },
   "historical_incomplete_acceptance": "assessment-incomplete-audit.json",
-  "next_step": "Both exact source interventions failed five-sample validation in both orders. Establish a repeatable source effect with predeclared same-source negative controls and paired ordering before another product correction. Preserve workloads, all samples and unchanged 10 MiB budgets; no unchanged reruns for favourable results. 3A and later increments remain paused.",
+  "next_step": "Investigate natural allocation/collection timing at navigation 10,15,20, where all ten paired source differences have higher current RSS but same-source controls remain unstable. Distinguish transient document accumulation from retained native capacity before a component edit. Preserve budgets, all historical failures and no forced GC/RSS subtraction. 2B and later increments remain blocked.",
   "complete_memory_audit": "final-verification/complete-memory-audit.json",
   "corrected_overall_assessment": "final-verification/corrected-overall-assessment.json",
   "memory_comparisons": 104,
@@ -79,5 +79,20 @@
     "functional_checks_passed": 24,
     "product_promoted": false,
     "historical_timeout_cause_proven": false
+  },
+  "paired_variance": {
+    "run_id": 40335305139,
+    "complete_samples": 20,
+    "source_hashes_verified": 390,
+    "status": "measurement_variation",
+    "unstable_checkpoint_metrics": 10,
+    "unstable_same_source_differences": 15,
+    "max_abs_same_source_rss_delta_mib": 15.34765625,
+    "max_abs_same_source_heap_delta_mib": 11.826831817626953,
+    "qualified_repeatable_effects": 0,
+    "late_navigation_direction": "current RSS higher in all ten source pairs at each of navigation 10,15,20; controls fail stability, so not qualified",
+    "report": "paired-variance/REPORT.md",
+    "product_promoted": false,
+    "active_measurement_run": false
   }
 }

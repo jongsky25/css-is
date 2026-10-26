@@ -1,0 +1,453 @@
+{
+  "purpose": "Descriptive check of retained RSS renderer PID identities across all checkpoints. Distinct PIDs rule out claiming the old cohorts reused the same measured renderer; they do not isolate browser-parent or database reuse effects.",
+  "cohorts": [
+    {
+      "experiment": "observer-hosted",
+      "cohort": "0-current",
+      "samples": [
+        {
+          "sample": 0,
+          "renderer_pids": [
+            1607,
+            1618,
+            1620,
+            1684
+          ],
+          "pids_seen_in_prior_samples": []
+        },
+        {
+          "sample": 1,
+          "renderer_pids": [
+            1695,
+            1706,
+            1707,
+            1743
+          ],
+          "pids_seen_in_prior_samples": []
+        },
+        {
+          "sample": 2,
+          "renderer_pids": [
+            1754,
+            1763,
+            1764,
+            1809
+          ],
+          "pids_seen_in_prior_samples": []
+        },
+        {
+          "sample": 3,
+          "renderer_pids": [
+            1821,
+            1832,
+            1834,
+            1872
+          ],
+          "pids_seen_in_prior_samples": []
+        },
+        {
+          "sample": 4,
+          "renderer_pids": [
+            1884,
+            1895,
+            1897,
+            1929
+          ],
+          "pids_seen_in_prior_samples": []
+        }
+      ]
+    },
+    {
+      "experiment": "observer-hosted",
+      "cohort": "1-geometry",
+      "samples": [
+        {
+          "sample": 0,
+          "renderer_pids": [
+            2055,
+            2066,
+            2067,
+            2134
+          ],
+          "pids_seen_in_prior_samples": []
+        },
+        {
+          "sample": 1,
+          "renderer_pids": [
+            2145,
+            2155,
+            2158,
+            2192
+          ],
+          "pids_seen_in_prior_samples": []
+        },
+        {
+          "sample": 2,
+          "renderer_pids": [
+            2204,
+            2213,
+            2217,
+            2264
+          ],
+          "pids_seen_in_prior_samples": []
+        },
+        {
+          "sample": 3,
+          "renderer_pids": [
+            2275,
+            2284,
+            2285,
+            2323
+          ],
+          "pids_seen_in_prior_samples": []
+        },
+        {
+          "sample": 4,
+          "renderer_pids": [
+            2334,
+            2345,
+            2347,
+            2381
+          ],
+          "pids_seen_in_prior_samples": []
+        }
+      ]
+    },
+    {
+      "experiment": "observer-hosted",
+      "cohort": "2-geometry",
+      "samples": [
+        {
+          "sample": 0,
+          "renderer_pids": [
+            2506,
+            2517,
+            2518,
+            2581
+          ],
+          "pids_seen_in_prior_samples": []
+        },
+        {
+          "sample": 1,
+          "renderer_pids": [
+            2592,
+            2603,
+            2604,
+            2643
+          ],
+          "pids_seen_in_prior_samples": []
+        },
+        {
+          "sample": 2,
+          "renderer_pids": [
+            2654,
+            2665,
+            2666,
+            2711
+          ],
+          "pids_seen_in_prior_samples": []
+        },
+        {
+          "sample": 3,
+          "renderer_pids": [
+            2723,
+            2732,
+            2736,
+            2769
+          ],
+          "pids_seen_in_prior_samples": []
+        },
+        {
+          "sample": 4,
+          "renderer_pids": [
+            2780,
+            2791,
+            2793,
+            2831
+          ],
+          "pids_seen_in_prior_samples": []
+        }
+      ]
+    },
+    {
+      "experiment": "observer-hosted",
+      "cohort": "3-current",
+      "samples": [
+        {
+          "sample": 0,
+          "renderer_pids": [
+            2955,
+            2966,
+            2967,
+            3032
+          ],
+          "pids_seen_in_prior_samples": []
+        },
+        {
+          "sample": 1,
+          "renderer_pids": [
+            3044,
+            3053,
+            3054,
+            3091
+          ],
+          "pids_seen_in_prior_samples": []
+        },
+        {
+          "sample": 2,
+          "renderer_pids": [
+            3102,
+            3111,
+            3115,
+            3158
+          ],
+          "pids_seen_in_prior_samples": []
+        },
+        {
+          "sample": 3,
+          "renderer_pids": [
+            3169,
+            3180,
+            3182,
+            3216
+          ],
+          "pids_seen_in_prior_samples": []
+        },
+        {
+          "sample": 4,
+          "renderer_pids": [
+            3228,
+            3239,
+            3240,
+            3282
+          ],
+          "pids_seen_in_prior_samples": []
+        }
+      ]
+    },
+    {
+      "experiment": "svg-hosted",
+      "cohort": "0-current",
+      "samples": [
+        {
+          "sample": 0,
+          "renderer_pids": [
+            1625,
+            1636,
+            1638,
+            1701
+          ],
+          "pids_seen_in_prior_samples": []
+        },
+        {
+          "sample": 1,
+          "renderer_pids": [
+            1713,
+            1722,
+            1723,
+            1767
+          ],
+          "pids_seen_in_prior_samples": []
+        },
+        {
+          "sample": 2,
+          "renderer_pids": [
+            1778,
+            1787,
+            1789,
+            1838
+          ],
+          "pids_seen_in_prior_samples": []
+        },
+        {
+          "sample": 3,
+          "renderer_pids": [
+            1849,
+            1858,
+            1860,
+            1900
+          ],
+          "pids_seen_in_prior_samples": []
+        },
+        {
+          "sample": 4,
+          "renderer_pids": [
+            1911,
+            1922,
+            1923,
+            1961
+          ],
+          "pids_seen_in_prior_samples": []
+        }
+      ]
+    },
+    {
+      "experiment": "svg-hosted",
+      "cohort": "1-svg",
+      "samples": [
+        {
+          "sample": 0,
+          "renderer_pids": [
+            2088,
+            2099,
+            2101,
+            2163
+          ],
+          "pids_seen_in_prior_samples": []
+        },
+        {
+          "sample": 1,
+          "renderer_pids": [
+            2174,
+            2185,
+            2186,
+            2220
+          ],
+          "pids_seen_in_prior_samples": []
+        },
+        {
+          "sample": 2,
+          "renderer_pids": [
+            2231,
+            2240,
+            2243,
+            2293
+          ],
+          "pids_seen_in_prior_samples": []
+        },
+        {
+          "sample": 3,
+          "renderer_pids": [
+            2304,
+            2315,
+            2316,
+            2352
+          ],
+          "pids_seen_in_prior_samples": []
+        },
+        {
+          "sample": 4,
+          "renderer_pids": [
+            2363,
+            2374,
+            2375,
+            2413
+          ],
+          "pids_seen_in_prior_samples": []
+        }
+      ]
+    },
+    {
+      "experiment": "svg-hosted",
+      "cohort": "2-svg",
+      "samples": [
+        {
+          "sample": 0,
+          "renderer_pids": [
+            2540,
+            2551,
+            2553,
+            2619
+          ],
+          "pids_seen_in_prior_samples": []
+        },
+        {
+          "sample": 1,
+          "renderer_pids": [
+            2631,
+            2642,
+            2644,
+            2683
+          ],
+          "pids_seen_in_prior_samples": []
+        },
+        {
+          "sample": 2,
+          "renderer_pids": [
+            2694,
+            2705,
+            2707,
+            2754
+          ],
+          "pids_seen_in_prior_samples": []
+        },
+        {
+          "sample": 3,
+          "renderer_pids": [
+            2765,
+            2776,
+            2778,
+            2813
+          ],
+          "pids_seen_in_prior_samples": []
+        },
+        {
+          "sample": 4,
+          "renderer_pids": [
+            2824,
+            2835,
+            2837,
+            2878
+          ],
+          "pids_seen_in_prior_samples": []
+        }
+      ]
+    },
+    {
+      "experiment": "svg-hosted",
+      "cohort": "3-current",
+      "samples": [
+        {
+          "sample": 0,
+          "renderer_pids": [
+            3002,
+            3013,
+            3014,
+            3082
+          ],
+          "pids_seen_in_prior_samples": []
+        },
+        {
+          "sample": 1,
+          "renderer_pids": [
+            3093,
+            3103,
+            3105,
+            3142
+          ],
+          "pids_seen_in_prior_samples": []
+        },
+        {
+          "sample": 2,
+          "renderer_pids": [
+            3153,
+            3164,
+            3165,
+            3218
+          ],
+          "pids_seen_in_prior_samples": []
+        },
+        {
+          "sample": 3,
+          "renderer_pids": [
+            3229,
+            3240,
+            3242,
+            3276
+          ],
+          "pids_seen_in_prior_samples": []
+        },
+        {
+          "sample": 4,
+          "renderer_pids": [
+            3287,
+            3298,
+            3300,
+            3338
+          ],
+          "pids_seen_in_prior_samples": []
+        }
+      ]
+    }
+  ]
+}
