@@ -739,7 +739,8 @@ candidate is under visual/functional validation. No acceptance status changed.
 
 Picker and growth previews now request a static SVG variant that omits movement
 wrappers and invisible care/spark/sleep reaction layers. Live companion SVGs and
-JavaScript remain unchanged. This removes1,033 DOM nodes per96-preview sheet.
+JavaScript remain unchanged. This removes1,032 SVG DOM nodes per96-preview sheet. The raw fixture delta
+is1,033 because the reference additionally injects one paint-mode style element.
 All1,734 interactive SVG equivalence checks pass. The first original-pixel
 comparison changed because removing will-change-backed rasterization sharpens
 edges; those images and the failed exact comparison are retained. A controlled

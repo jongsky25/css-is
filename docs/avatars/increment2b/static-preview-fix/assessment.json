@@ -6,7 +6,6 @@
   ],
   "interactive_svg_checks": 1734,
   "static_pixel_cells_same_paint_mode": 4896,
-  "nodes_removed_per_96_preview_sheet": 1033,
   "original_pixel_comparison": "Different edge antialiasing from removal of movement compositing hint; original images and failed exact comparison retained. Candidate is sharper. No geometry differences when both use the same uncomposited paint mode.",
   "functional_status": "passed",
   "source_sha256": {
@@ -27,5 +26,9 @@
   ],
   "rss_budget_mib": 10,
   "hosted_memory_samples": 20,
-  "matched_renderer_count": 3
+  "matched_renderer_count": 3,
+  "fixture_dom_node_delta_per_96_previews": 1033,
+  "reference_only_style_nodes": 1,
+  "svg_nodes_removed_per_96_previews": 1032,
+  "profile_element_nodes_removed": 226
 }
