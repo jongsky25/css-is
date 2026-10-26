@@ -1,0 +1,1415 @@
+{
+  "acceptance": false,
+  "intentional_forced_gc": true,
+  "status": "complete_forensic_capture_with_sealed_recovery",
+  "cohorts": [
+    {
+      "index": 0,
+      "arm": "original",
+      "navigation_20_documents": 4,
+      "baseline_navigation_20_documents": 4,
+      "baseline_navigation_20_js_heap_bytes": 6347404,
+      "before_snapshot": {
+        "dom": {
+          "documents": 2,
+          "nodes": 2664,
+          "jsEventListeners": 74
+        },
+        "heap": {
+          "usedSize": 5675424,
+          "totalSize": 6488064,
+          "embedderHeapUsedSize": 7353768,
+          "backingStorageSize": 234402
+        }
+      },
+      "after_snapshot": {
+        "dom": {
+          "documents": 2,
+          "nodes": 2652,
+          "jsEventListeners": 74
+        },
+        "heap": {
+          "usedSize": 1471468,
+          "totalSize": 2621440,
+          "embedderHeapUsedSize": 4932328,
+          "backingStorageSize": 192868
+        }
+      },
+      "heap_node_count": 73846,
+      "heap_edge_count": 282291,
+      "native_documents": [
+        {
+          "name": "HTMLDocument",
+          "id": 78213,
+          "detachedness": 1
+        },
+        {
+          "name": "XMLDocument",
+          "id": 376,
+          "detachedness": 0
+        }
+      ],
+      "document_prototype_objects": [
+        {
+          "index": 35887,
+          "id": 71775,
+          "type": "object",
+          "name": "Document",
+          "self_size": 28,
+          "detachedness": 0
+        }
+      ],
+      "native_context_count": 3,
+      "native_document_representative_paths": [
+        {
+          "node": {
+            "index": 39106,
+            "id": 78213,
+            "type": "native",
+            "name": "HTMLDocument",
+            "self_size": 3456,
+            "detachedness": 1
+          },
+          "path": [
+            {
+              "from": {
+                "index": 0,
+                "id": 1,
+                "type": "synthetic",
+                "name": "",
+                "self_size": 0,
+                "detachedness": 0
+              },
+              "edge": {
+                "type": "element",
+                "name": 1
+              },
+              "to": {
+                "index": 1,
+                "id": 3,
+                "type": "synthetic",
+                "name": "(GC roots)",
+                "self_size": 0,
+                "detachedness": 0
+              }
+            },
+            {
+              "from": {
+                "index": 1,
+                "id": 3,
+                "type": "synthetic",
+                "name": "(GC roots)",
+                "self_size": 0,
+                "detachedness": 0
+              },
+              "edge": {
+                "type": "element",
+                "name": 10
+              },
+              "to": {
+                "index": 11,
+                "id": 23,
+                "type": "synthetic",
+                "name": "(Global handles)",
+                "self_size": 0,
+                "detachedness": 0
+              }
+            },
+            {
+              "from": {
+                "index": 11,
+                "id": 23,
+                "type": "synthetic",
+                "name": "(Global handles)",
+                "self_size": 0,
+                "detachedness": 0
+              },
+              "edge": {
+                "type": "internal",
+                "name": "46 / blink::ScriptStateProtectingContext::context_"
+              },
+              "to": {
+                "index": 3734,
+                "id": 7469,
+                "type": "native",
+                "name": "system / NativeContext / http://127.0.0.1:35313",
+                "self_size": 1244,
+                "detachedness": 0
+              }
+            },
+            {
+              "from": {
+                "index": 3734,
+                "id": 7469,
+                "type": "native",
+                "name": "system / NativeContext / http://127.0.0.1:35313",
+                "self_size": 1244,
+                "detachedness": 0
+              },
+              "edge": {
+                "type": "internal",
+                "name": "global_object"
+              },
+              "to": {
+                "index": 20125,
+                "id": 40251,
+                "type": "object",
+                "name": "Window [JSGlobalObject] / http://127.0.0.1:35313",
+                "self_size": 24,
+                "detachedness": 0
+              }
+            },
+            {
+              "from": {
+                "index": 20125,
+                "id": 40251,
+                "type": "object",
+                "name": "Window [JSGlobalObject] / http://127.0.0.1:35313",
+                "self_size": 24,
+                "detachedness": 0
+              },
+              "edge": {
+                "type": "property",
+                "name": "<symbol Window#DocumentCachedAccessor>"
+              },
+              "to": {
+                "index": 39106,
+                "id": 78213,
+                "type": "native",
+                "name": "HTMLDocument",
+                "self_size": 3456,
+                "detachedness": 1
+              }
+            }
+          ]
+        },
+        {
+          "node": {
+            "index": 42783,
+            "id": 376,
+            "type": "native",
+            "name": "XMLDocument",
+            "self_size": 3416,
+            "detachedness": 0
+          },
+          "path": [
+            {
+              "from": {
+                "index": 0,
+                "id": 1,
+                "type": "synthetic",
+                "name": "",
+                "self_size": 0,
+                "detachedness": 0
+              },
+              "edge": {
+                "type": "element",
+                "name": 1
+              },
+              "to": {
+                "index": 1,
+                "id": 3,
+                "type": "synthetic",
+                "name": "(GC roots)",
+                "self_size": 0,
+                "detachedness": 0
+              }
+            },
+            {
+              "from": {
+                "index": 1,
+                "id": 3,
+                "type": "synthetic",
+                "name": "(GC roots)",
+                "self_size": 0,
+                "detachedness": 0
+              },
+              "edge": {
+                "type": "element",
+                "name": 29
+              },
+              "to": {
+                "index": 42594,
+                "id": 85189,
+                "type": "synthetic",
+                "name": "C++ Persistent roots",
+                "self_size": 0,
+                "detachedness": 0
+              }
+            },
+            {
+              "from": {
+                "index": 42594,
+                "id": 85189,
+                "type": "synthetic",
+                "name": "C++ Persistent roots",
+                "self_size": 0,
+                "detachedness": 0
+              },
+              "edge": {
+                "type": "internal",
+                "name": "blink::SVGImage::SVGImage(ImageObserver *, bool)@../../third_party/blink/renderer/core/svg/graphics/svg_image.cc:88"
+              },
+              "to": {
+                "index": 42601,
+                "id": 14,
+                "type": "native",
+                "name": "blink::IsolatedSVGDocumentHost",
+                "self_size": 40,
+                "detachedness": 0
+              }
+            },
+            {
+              "from": {
+                "index": 42601,
+                "id": 14,
+                "type": "native",
+                "name": "blink::IsolatedSVGDocumentHost",
+                "self_size": 40,
+                "detachedness": 0
+              },
+              "edge": {
+                "type": "element",
+                "name": 1
+              },
+              "to": {
+                "index": 42784,
+                "id": 378,
+                "type": "native",
+                "name": "blink::Page",
+                "self_size": 1872,
+                "detachedness": 0
+              }
+            },
+            {
+              "from": {
+                "index": 42784,
+                "id": 378,
+                "type": "native",
+                "name": "blink::Page",
+                "self_size": 1872,
+                "detachedness": 0
+              },
+              "edge": {
+                "type": "element",
+                "name": 17
+              },
+              "to": {
+                "index": 42791,
+                "id": 392,
+                "type": "native",
+                "name": "blink::LocalFrame",
+                "self_size": 1480,
+                "detachedness": 0
+              }
+            },
+            {
+              "from": {
+                "index": 42791,
+                "id": 392,
+                "type": "native",
+                "name": "blink::LocalFrame",
+                "self_size": 1480,
+                "detachedness": 0
+              },
+              "edge": {
+                "type": "element",
+                "name": 12
+              },
+              "to": {
+                "index": 42824,
+                "id": 458,
+                "type": "native",
+                "name": "Window (cppgc)",
+                "self_size": 896,
+                "detachedness": 0
+              }
+            },
+            {
+              "from": {
+                "index": 42824,
+                "id": 458,
+                "type": "native",
+                "name": "Window (cppgc)",
+                "self_size": 896,
+                "detachedness": 0
+              },
+              "edge": {
+                "type": "element",
+                "name": 2
+              },
+              "to": {
+                "index": 42783,
+                "id": 376,
+                "type": "native",
+                "name": "XMLDocument",
+                "self_size": 3416,
+                "detachedness": 0
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "arm": "current",
+      "navigation_20_documents": 5,
+      "baseline_navigation_20_documents": 5,
+      "baseline_navigation_20_js_heap_bytes": 6773156,
+      "before_snapshot": {
+        "dom": {
+          "documents": 2,
+          "nodes": 2592,
+          "jsEventListeners": 77
+        },
+        "heap": {
+          "usedSize": 5649652,
+          "totalSize": 6488064,
+          "embedderHeapUsedSize": 4062968,
+          "backingStorageSize": 243363
+        }
+      },
+      "after_snapshot": {
+        "dom": {
+          "documents": 2,
+          "nodes": 2592,
+          "jsEventListeners": 77
+        },
+        "heap": {
+          "usedSize": 1476696,
+          "totalSize": 2883584,
+          "embedderHeapUsedSize": 3747312,
+          "backingStorageSize": 202999
+        }
+      },
+      "heap_node_count": 75463,
+      "heap_edge_count": 288737,
+      "native_documents": [
+        {
+          "name": "HTMLDocument",
+          "id": 83577,
+          "detachedness": 1
+        },
+        {
+          "name": "XMLDocument",
+          "id": 1688,
+          "detachedness": 0
+        }
+      ],
+      "document_prototype_objects": [
+        {
+          "index": 40805,
+          "id": 81611,
+          "type": "object",
+          "name": "Document",
+          "self_size": 28,
+          "detachedness": 0
+        }
+      ],
+      "native_context_count": 3,
+      "native_document_representative_paths": [
+        {
+          "node": {
+            "index": 41788,
+            "id": 83577,
+            "type": "native",
+            "name": "HTMLDocument",
+            "self_size": 3456,
+            "detachedness": 1
+          },
+          "path": [
+            {
+              "from": {
+                "index": 0,
+                "id": 1,
+                "type": "synthetic",
+                "name": "",
+                "self_size": 0,
+                "detachedness": 0
+              },
+              "edge": {
+                "type": "element",
+                "name": 1
+              },
+              "to": {
+                "index": 1,
+                "id": 3,
+                "type": "synthetic",
+                "name": "(GC roots)",
+                "self_size": 0,
+                "detachedness": 0
+              }
+            },
+            {
+              "from": {
+                "index": 1,
+                "id": 3,
+                "type": "synthetic",
+                "name": "(GC roots)",
+                "self_size": 0,
+                "detachedness": 0
+              },
+              "edge": {
+                "type": "element",
+                "name": 10
+              },
+              "to": {
+                "index": 11,
+                "id": 23,
+                "type": "synthetic",
+                "name": "(Global handles)",
+                "self_size": 0,
+                "detachedness": 0
+              }
+            },
+            {
+              "from": {
+                "index": 11,
+                "id": 23,
+                "type": "synthetic",
+                "name": "(Global handles)",
+                "self_size": 0,
+                "detachedness": 0
+              },
+              "edge": {
+                "type": "internal",
+                "name": "69 / gin::ContextHolder::context_"
+              },
+              "to": {
+                "index": 3759,
+                "id": 7519,
+                "type": "native",
+                "name": "system / NativeContext / http://127.0.0.1:54203",
+                "self_size": 1244,
+                "detachedness": 0
+              }
+            },
+            {
+              "from": {
+                "index": 3759,
+                "id": 7519,
+                "type": "native",
+                "name": "system / NativeContext / http://127.0.0.1:54203",
+                "self_size": 1244,
+                "detachedness": 0
+              },
+              "edge": {
+                "type": "internal",
+                "name": "global_object"
+              },
+              "to": {
+                "index": 19921,
+                "id": 39845,
+                "type": "object",
+                "name": "Window [JSGlobalObject] / http://127.0.0.1:54203",
+                "self_size": 24,
+                "detachedness": 0
+              }
+            },
+            {
+              "from": {
+                "index": 19921,
+                "id": 39845,
+                "type": "object",
+                "name": "Window [JSGlobalObject] / http://127.0.0.1:54203",
+                "self_size": 24,
+                "detachedness": 0
+              },
+              "edge": {
+                "type": "property",
+                "name": "<symbol Window#DocumentCachedAccessor>"
+              },
+              "to": {
+                "index": 41788,
+                "id": 83577,
+                "type": "native",
+                "name": "HTMLDocument",
+                "self_size": 3456,
+                "detachedness": 1
+              }
+            }
+          ]
+        },
+        {
+          "node": {
+            "index": 44349,
+            "id": 1688,
+            "type": "native",
+            "name": "XMLDocument",
+            "self_size": 3416,
+            "detachedness": 0
+          },
+          "path": [
+            {
+              "from": {
+                "index": 0,
+                "id": 1,
+                "type": "synthetic",
+                "name": "",
+                "self_size": 0,
+                "detachedness": 0
+              },
+              "edge": {
+                "type": "element",
+                "name": 1
+              },
+              "to": {
+                "index": 1,
+                "id": 3,
+                "type": "synthetic",
+                "name": "(GC roots)",
+                "self_size": 0,
+                "detachedness": 0
+              }
+            },
+            {
+              "from": {
+                "index": 1,
+                "id": 3,
+                "type": "synthetic",
+                "name": "(GC roots)",
+                "self_size": 0,
+                "detachedness": 0
+              },
+              "edge": {
+                "type": "element",
+                "name": 29
+              },
+              "to": {
+                "index": 43504,
+                "id": 87009,
+                "type": "synthetic",
+                "name": "C++ Persistent roots",
+                "self_size": 0,
+                "detachedness": 0
+              }
+            },
+            {
+              "from": {
+                "index": 43504,
+                "id": 87009,
+                "type": "synthetic",
+                "name": "C++ Persistent roots",
+                "self_size": 0,
+                "detachedness": 0
+              },
+              "edge": {
+                "type": "internal",
+                "name": "blink::SVGImage::SVGImage(ImageObserver *, bool)@../../third_party/blink/renderer/core/svg/graphics/svg_image.cc:88"
+              },
+              "to": {
+                "index": 43542,
+                "id": 76,
+                "type": "native",
+                "name": "blink::IsolatedSVGDocumentHost",
+                "self_size": 40,
+                "detachedness": 0
+              }
+            },
+            {
+              "from": {
+                "index": 43542,
+                "id": 76,
+                "type": "native",
+                "name": "blink::IsolatedSVGDocumentHost",
+                "self_size": 40,
+                "detachedness": 0
+              },
+              "edge": {
+                "type": "element",
+                "name": 1
+              },
+              "to": {
+                "index": 44350,
+                "id": 1690,
+                "type": "native",
+                "name": "blink::Page",
+                "self_size": 1872,
+                "detachedness": 0
+              }
+            },
+            {
+              "from": {
+                "index": 44350,
+                "id": 1690,
+                "type": "native",
+                "name": "blink::Page",
+                "self_size": 1872,
+                "detachedness": 0
+              },
+              "edge": {
+                "type": "element",
+                "name": 17
+              },
+              "to": {
+                "index": 44357,
+                "id": 1704,
+                "type": "native",
+                "name": "blink::LocalFrame",
+                "self_size": 1480,
+                "detachedness": 0
+              }
+            },
+            {
+              "from": {
+                "index": 44357,
+                "id": 1704,
+                "type": "native",
+                "name": "blink::LocalFrame",
+                "self_size": 1480,
+                "detachedness": 0
+              },
+              "edge": {
+                "type": "element",
+                "name": 12
+              },
+              "to": {
+                "index": 44390,
+                "id": 1770,
+                "type": "native",
+                "name": "Window (cppgc)",
+                "self_size": 896,
+                "detachedness": 0
+              }
+            },
+            {
+              "from": {
+                "index": 44390,
+                "id": 1770,
+                "type": "native",
+                "name": "Window (cppgc)",
+                "self_size": 896,
+                "detachedness": 0
+              },
+              "edge": {
+                "type": "element",
+                "name": 2
+              },
+              "to": {
+                "index": 44349,
+                "id": 1688,
+                "type": "native",
+                "name": "XMLDocument",
+                "self_size": 3416,
+                "detachedness": 0
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "arm": "current",
+      "navigation_20_documents": 43,
+      "baseline_navigation_20_documents": 43,
+      "baseline_navigation_20_js_heap_bytes": 19217236,
+      "before_snapshot": {
+        "dom": {
+          "documents": 2,
+          "nodes": 2592,
+          "jsEventListeners": 77
+        },
+        "heap": {
+          "usedSize": 5674364,
+          "totalSize": 14614528,
+          "embedderHeapUsedSize": 7008240,
+          "backingStorageSize": 243371
+        }
+      },
+      "after_snapshot": {
+        "dom": {
+          "documents": 2,
+          "nodes": 2592,
+          "jsEventListeners": 77
+        },
+        "heap": {
+          "usedSize": 1476836,
+          "totalSize": 2621440,
+          "embedderHeapUsedSize": 4064640,
+          "backingStorageSize": 202999
+        }
+      },
+      "heap_node_count": 75476,
+      "heap_edge_count": 288742,
+      "native_documents": [
+        {
+          "name": "HTMLDocument",
+          "id": 39163,
+          "detachedness": 1
+        },
+        {
+          "name": "XMLDocument",
+          "id": 1134,
+          "detachedness": 0
+        }
+      ],
+      "document_prototype_objects": [
+        {
+          "index": 19085,
+          "id": 38171,
+          "type": "object",
+          "name": "Document",
+          "self_size": 28,
+          "detachedness": 0
+        }
+      ],
+      "native_context_count": 3,
+      "native_document_representative_paths": [
+        {
+          "node": {
+            "index": 19581,
+            "id": 39163,
+            "type": "native",
+            "name": "HTMLDocument",
+            "self_size": 3456,
+            "detachedness": 1
+          },
+          "path": [
+            {
+              "from": {
+                "index": 0,
+                "id": 1,
+                "type": "synthetic",
+                "name": "",
+                "self_size": 0,
+                "detachedness": 0
+              },
+              "edge": {
+                "type": "element",
+                "name": 1
+              },
+              "to": {
+                "index": 1,
+                "id": 3,
+                "type": "synthetic",
+                "name": "(GC roots)",
+                "self_size": 0,
+                "detachedness": 0
+              }
+            },
+            {
+              "from": {
+                "index": 1,
+                "id": 3,
+                "type": "synthetic",
+                "name": "(GC roots)",
+                "self_size": 0,
+                "detachedness": 0
+              },
+              "edge": {
+                "type": "element",
+                "name": 10
+              },
+              "to": {
+                "index": 11,
+                "id": 23,
+                "type": "synthetic",
+                "name": "(Global handles)",
+                "self_size": 0,
+                "detachedness": 0
+              }
+            },
+            {
+              "from": {
+                "index": 11,
+                "id": 23,
+                "type": "synthetic",
+                "name": "(Global handles)",
+                "self_size": 0,
+                "detachedness": 0
+              },
+              "edge": {
+                "type": "internal",
+                "name": "40 / V8PerContextData::context_"
+              },
+              "to": {
+                "index": 3725,
+                "id": 7451,
+                "type": "native",
+                "name": "system / NativeContext / http://127.0.0.1:53847",
+                "self_size": 1244,
+                "detachedness": 0
+              }
+            },
+            {
+              "from": {
+                "index": 3725,
+                "id": 7451,
+                "type": "native",
+                "name": "system / NativeContext / http://127.0.0.1:53847",
+                "self_size": 1244,
+                "detachedness": 0
+              },
+              "edge": {
+                "type": "internal",
+                "name": "global_object"
+              },
+              "to": {
+                "index": 18654,
+                "id": 37309,
+                "type": "object",
+                "name": "Window [JSGlobalObject] / http://127.0.0.1:53847",
+                "self_size": 24,
+                "detachedness": 0
+              }
+            },
+            {
+              "from": {
+                "index": 18654,
+                "id": 37309,
+                "type": "object",
+                "name": "Window [JSGlobalObject] / http://127.0.0.1:53847",
+                "self_size": 24,
+                "detachedness": 0
+              },
+              "edge": {
+                "type": "property",
+                "name": "<symbol Window#DocumentCachedAccessor>"
+              },
+              "to": {
+                "index": 19581,
+                "id": 39163,
+                "type": "native",
+                "name": "HTMLDocument",
+                "self_size": 3456,
+                "detachedness": 1
+              }
+            }
+          ]
+        },
+        {
+          "node": {
+            "index": 44066,
+            "id": 1134,
+            "type": "native",
+            "name": "XMLDocument",
+            "self_size": 3416,
+            "detachedness": 0
+          },
+          "path": [
+            {
+              "from": {
+                "index": 0,
+                "id": 1,
+                "type": "synthetic",
+                "name": "",
+                "self_size": 0,
+                "detachedness": 0
+              },
+              "edge": {
+                "type": "element",
+                "name": 1
+              },
+              "to": {
+                "index": 1,
+                "id": 3,
+                "type": "synthetic",
+                "name": "(GC roots)",
+                "self_size": 0,
+                "detachedness": 0
+              }
+            },
+            {
+              "from": {
+                "index": 1,
+                "id": 3,
+                "type": "synthetic",
+                "name": "(GC roots)",
+                "self_size": 0,
+                "detachedness": 0
+              },
+              "edge": {
+                "type": "element",
+                "name": 29
+              },
+              "to": {
+                "index": 43498,
+                "id": 86997,
+                "type": "synthetic",
+                "name": "C++ Persistent roots",
+                "self_size": 0,
+                "detachedness": 0
+              }
+            },
+            {
+              "from": {
+                "index": 43498,
+                "id": 86997,
+                "type": "synthetic",
+                "name": "C++ Persistent roots",
+                "self_size": 0,
+                "detachedness": 0
+              },
+              "edge": {
+                "type": "internal",
+                "name": "blink::SVGImage::SVGImage(ImageObserver *, bool)@../../third_party/blink/renderer/core/svg/graphics/svg_image.cc:88"
+              },
+              "to": {
+                "index": 43567,
+                "id": 138,
+                "type": "native",
+                "name": "blink::IsolatedSVGDocumentHost",
+                "self_size": 40,
+                "detachedness": 0
+              }
+            },
+            {
+              "from": {
+                "index": 43567,
+                "id": 138,
+                "type": "native",
+                "name": "blink::IsolatedSVGDocumentHost",
+                "self_size": 40,
+                "detachedness": 0
+              },
+              "edge": {
+                "type": "element",
+                "name": 1
+              },
+              "to": {
+                "index": 44433,
+                "id": 1868,
+                "type": "native",
+                "name": "blink::Page",
+                "self_size": 1872,
+                "detachedness": 0
+              }
+            },
+            {
+              "from": {
+                "index": 44433,
+                "id": 1868,
+                "type": "native",
+                "name": "blink::Page",
+                "self_size": 1872,
+                "detachedness": 0
+              },
+              "edge": {
+                "type": "element",
+                "name": 17
+              },
+              "to": {
+                "index": 44014,
+                "id": 1030,
+                "type": "native",
+                "name": "blink::LocalFrame",
+                "self_size": 1480,
+                "detachedness": 0
+              }
+            },
+            {
+              "from": {
+                "index": 44014,
+                "id": 1030,
+                "type": "native",
+                "name": "blink::LocalFrame",
+                "self_size": 1480,
+                "detachedness": 0
+              },
+              "edge": {
+                "type": "element",
+                "name": 12
+              },
+              "to": {
+                "index": 44047,
+                "id": 1096,
+                "type": "native",
+                "name": "Window (cppgc)",
+                "self_size": 896,
+                "detachedness": 0
+              }
+            },
+            {
+              "from": {
+                "index": 44047,
+                "id": 1096,
+                "type": "native",
+                "name": "Window (cppgc)",
+                "self_size": 896,
+                "detachedness": 0
+              },
+              "edge": {
+                "type": "element",
+                "name": 2
+              },
+              "to": {
+                "index": 44066,
+                "id": 1134,
+                "type": "native",
+                "name": "XMLDocument",
+                "self_size": 3416,
+                "detachedness": 0
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "arm": "original",
+      "navigation_20_documents": 4,
+      "baseline_navigation_20_documents": 4,
+      "baseline_navigation_20_js_heap_bytes": 6401020,
+      "before_snapshot": {
+        "dom": {
+          "documents": 2,
+          "nodes": 2644,
+          "jsEventListeners": 74
+        },
+        "heap": {
+          "usedSize": 5647924,
+          "totalSize": 6488064,
+          "embedderHeapUsedSize": 4307296,
+          "backingStorageSize": 234406
+        }
+      },
+      "after_snapshot": {
+        "dom": {
+          "documents": 2,
+          "nodes": 2648,
+          "jsEventListeners": 74
+        },
+        "heap": {
+          "usedSize": 1464728,
+          "totalSize": 3145728,
+          "embedderHeapUsedSize": 4734696,
+          "backingStorageSize": 192872
+        }
+      },
+      "heap_node_count": 74200,
+      "heap_edge_count": 283480,
+      "native_documents": [
+        {
+          "name": "HTMLDocument",
+          "id": 56783,
+          "detachedness": 1
+        },
+        {
+          "name": "XMLDocument",
+          "id": 296,
+          "detachedness": 0
+        }
+      ],
+      "document_prototype_objects": [
+        {
+          "index": 27632,
+          "id": 55267,
+          "type": "object",
+          "name": "Document",
+          "self_size": 28,
+          "detachedness": 0
+        }
+      ],
+      "native_context_count": 3,
+      "native_document_representative_paths": [
+        {
+          "node": {
+            "index": 28391,
+            "id": 56783,
+            "type": "native",
+            "name": "HTMLDocument",
+            "self_size": 3456,
+            "detachedness": 1
+          },
+          "path": [
+            {
+              "from": {
+                "index": 0,
+                "id": 1,
+                "type": "synthetic",
+                "name": "",
+                "self_size": 0,
+                "detachedness": 0
+              },
+              "edge": {
+                "type": "element",
+                "name": 1
+              },
+              "to": {
+                "index": 1,
+                "id": 3,
+                "type": "synthetic",
+                "name": "(GC roots)",
+                "self_size": 0,
+                "detachedness": 0
+              }
+            },
+            {
+              "from": {
+                "index": 1,
+                "id": 3,
+                "type": "synthetic",
+                "name": "(GC roots)",
+                "self_size": 0,
+                "detachedness": 0
+              },
+              "edge": {
+                "type": "element",
+                "name": 10
+              },
+              "to": {
+                "index": 11,
+                "id": 23,
+                "type": "synthetic",
+                "name": "(Global handles)",
+                "self_size": 0,
+                "detachedness": 0
+              }
+            },
+            {
+              "from": {
+                "index": 11,
+                "id": 23,
+                "type": "synthetic",
+                "name": "(Global handles)",
+                "self_size": 0,
+                "detachedness": 0
+              },
+              "edge": {
+                "type": "internal",
+                "name": "1 / blink::ScriptStateProtectingContext::context_"
+              },
+              "to": {
+                "index": 3693,
+                "id": 7387,
+                "type": "native",
+                "name": "system / NativeContext / http://127.0.0.1:46433",
+                "self_size": 1244,
+                "detachedness": 0
+              }
+            },
+            {
+              "from": {
+                "index": 3693,
+                "id": 7387,
+                "type": "native",
+                "name": "system / NativeContext / http://127.0.0.1:46433",
+                "self_size": 1244,
+                "detachedness": 0
+              },
+              "edge": {
+                "type": "internal",
+                "name": "global_object"
+              },
+              "to": {
+                "index": 19753,
+                "id": 39509,
+                "type": "object",
+                "name": "Window [JSGlobalObject] / http://127.0.0.1:46433",
+                "self_size": 24,
+                "detachedness": 0
+              }
+            },
+            {
+              "from": {
+                "index": 19753,
+                "id": 39509,
+                "type": "object",
+                "name": "Window [JSGlobalObject] / http://127.0.0.1:46433",
+                "self_size": 24,
+                "detachedness": 0
+              },
+              "edge": {
+                "type": "property",
+                "name": "<symbol Window#DocumentCachedAccessor>"
+              },
+              "to": {
+                "index": 28391,
+                "id": 56783,
+                "type": "native",
+                "name": "HTMLDocument",
+                "self_size": 3456,
+                "detachedness": 1
+              }
+            }
+          ]
+        },
+        {
+          "node": {
+            "index": 42838,
+            "id": 296,
+            "type": "native",
+            "name": "XMLDocument",
+            "self_size": 3416,
+            "detachedness": 0
+          },
+          "path": [
+            {
+              "from": {
+                "index": 0,
+                "id": 1,
+                "type": "synthetic",
+                "name": "",
+                "self_size": 0,
+                "detachedness": 0
+              },
+              "edge": {
+                "type": "element",
+                "name": 1
+              },
+              "to": {
+                "index": 1,
+                "id": 3,
+                "type": "synthetic",
+                "name": "(GC roots)",
+                "self_size": 0,
+                "detachedness": 0
+              }
+            },
+            {
+              "from": {
+                "index": 1,
+                "id": 3,
+                "type": "synthetic",
+                "name": "(GC roots)",
+                "self_size": 0,
+                "detachedness": 0
+              },
+              "edge": {
+                "type": "element",
+                "name": 29
+              },
+              "to": {
+                "index": 42689,
+                "id": 85379,
+                "type": "synthetic",
+                "name": "C++ Persistent roots",
+                "self_size": 0,
+                "detachedness": 0
+              }
+            },
+            {
+              "from": {
+                "index": 42689,
+                "id": 85379,
+                "type": "synthetic",
+                "name": "C++ Persistent roots",
+                "self_size": 0,
+                "detachedness": 0
+              },
+              "edge": {
+                "type": "internal",
+                "name": "blink::SVGImage::SVGImage(ImageObserver *, bool)@../../third_party/blink/renderer/core/svg/graphics/svg_image.cc:88"
+              },
+              "to": {
+                "index": 42707,
+                "id": 36,
+                "type": "native",
+                "name": "blink::IsolatedSVGDocumentHost",
+                "self_size": 40,
+                "detachedness": 0
+              }
+            },
+            {
+              "from": {
+                "index": 42707,
+                "id": 36,
+                "type": "native",
+                "name": "blink::IsolatedSVGDocumentHost",
+                "self_size": 40,
+                "detachedness": 0
+              },
+              "edge": {
+                "type": "element",
+                "name": 1
+              },
+              "to": {
+                "index": 42839,
+                "id": 298,
+                "type": "native",
+                "name": "blink::Page",
+                "self_size": 1872,
+                "detachedness": 0
+              }
+            },
+            {
+              "from": {
+                "index": 42839,
+                "id": 298,
+                "type": "native",
+                "name": "blink::Page",
+                "self_size": 1872,
+                "detachedness": 0
+              },
+              "edge": {
+                "type": "element",
+                "name": 17
+              },
+              "to": {
+                "index": 42846,
+                "id": 312,
+                "type": "native",
+                "name": "blink::LocalFrame",
+                "self_size": 1480,
+                "detachedness": 0
+              }
+            },
+            {
+              "from": {
+                "index": 42846,
+                "id": 312,
+                "type": "native",
+                "name": "blink::LocalFrame",
+                "self_size": 1480,
+                "detachedness": 0
+              },
+              "edge": {
+                "type": "element",
+                "name": 12
+              },
+              "to": {
+                "index": 42879,
+                "id": 378,
+                "type": "native",
+                "name": "Window (cppgc)",
+                "self_size": 896,
+                "detachedness": 0
+              }
+            },
+            {
+              "from": {
+                "index": 42879,
+                "id": 378,
+                "type": "native",
+                "name": "Window (cppgc)",
+                "self_size": 896,
+                "detachedness": 0
+              },
+              "edge": {
+                "type": "element",
+                "name": 2
+              },
+              "to": {
+                "index": 42838,
+                "id": 296,
+                "type": "native",
+                "name": "XMLDocument",
+                "self_size": 3416,
+                "detachedness": 0
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "sealed_recoveries": [
+    {
+      "index": 3,
+      "arm": "original",
+      "sealed_sha256": "b651124db729997038f8b193e65faf539144d4c9cb64e253a6ef187e7811a90e",
+      "postclose_sha256": "38004af5ed0396b3169a0ffd290a8b232c56138adeef70bd7fdb5e917d440a39",
+      "appended_responses": [
+        {
+          "url": "/telemetry",
+          "status": 204,
+          "encoding": "identity"
+        }
+      ],
+      "all_other_fields_identical": true
+    }
+  ]
+}

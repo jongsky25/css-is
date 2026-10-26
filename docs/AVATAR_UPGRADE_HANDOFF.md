@@ -1,6 +1,6 @@
 # Avatar upgrade: new-chat handoff
 
-Last updated: **2026-10-26 22:59 UTC**. Repository: `jongsky25/css-is`.
+Last updated: **2026-10-26 23:20 UTC**. Repository: `jongsky25/css-is`.
 
 ## Current blocking correction
 
@@ -27,6 +27,34 @@ The prepared audit branch `codex/avatar-3a-artifact-audit` is explicitly paused 
 trigger it as an acceptance audit of the cancelled cohort. No later increments,
 merge to main or deployment occurred. The historical handoff below is superseded by this
 correction wherever it suggests CI success establishes complete memory acceptance.
+
+## Authorized forensic captures complete — transient documents gone before snapshot
+
+The user explicitly approved the four-slot post-workload snapshot exception.
+All four original/current/current/original workloads completed from `6568ac8`;
+no exclusions, replacements or additional browser runs. Read
+[the forensic report](avatars/increment2b/retaining-paths/REPORT.md).
+
+Current slot 2 had 43 documents at navigation 20, falling to 2 BEFORE the forced-GC
+snapshot call. All four graphs show the active HTML document and an isolated
+SVG-image XML document, plus a JS Document prototype object. No native document
+candidate is explicitly detached; XML detachedness is unknown. These graphs do
+not capture the earlier high-document state or establish an app retaining owner.
+The forced-GC JS heap reduction is forensic only and cannot enter acceptance.
+
+The first audit caught a sealed-row rewrite in final original slot 3: one late
+telemetry response was appended after capture. The exact pre-snapshot bytes were
+recovered against their stored SHA-256; all memory/other fields are identical.
+Raw artifact and initial failure remain unchanged. The explicit recovery audit
+and extraction re-audit agree: 86 source/probe hashes, 40 files, 80 natural timing
+observations, four graphs verified. Future adapter v2 freezes nested row data;
+139 selected tests pass and four real forensic browser workloads passed. No rerun.
+
+The approval was for this isolated experiment; it does not waive natural-GC or
+acceptance gates. Next focus transient allocation pressure/native capacity; no
+persistent extra-document owner is established. Product f700187 unchanged, 2B
+and later increments blocked, no measurement active. Older pending status below
+is historical and superseded by this completed experiment.
 
 ## Allocation ownership analysis complete — forensic capture prepared, not run
 

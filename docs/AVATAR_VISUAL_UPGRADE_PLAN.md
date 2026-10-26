@@ -837,3 +837,14 @@ four-slot forensic snapshot protocol/runner remains unexecuted pending an explic
 exception; no natural/acceptance measurement changes. 123 selected tests pass,
 one opt-in forensic browser test skipped. See [ownership report](avatars/increment2b/allocation-ownership/REPORT.md).
 2B and subsequent increments remain blocked; product unchanged, no active run.
+
+### Authorized forensic retaining paths completed — 2026-10-26
+
+Four fixed captures at 6568ac8 completed. Current slot 2's 43 documents at navigation
+20 fell to two before forced-GC capture. Graphs identify the live HTML document and
+isolated SVG-image document, not the earlier transient owners. Exact-hash recovery
+of one late telemetry response preserves sealed natural observations; raw failure
+and artifact remain archived. Future writer freezes rows. 86 source/probe hashes,
+40 files and 80 natural observations verify; 139 selected tests pass. See
+[report](avatars/increment2b/retaining-paths/REPORT.md). Forensic GC exception does
+not alter acceptance. Product unchanged, 2B/later blocked, no active run.

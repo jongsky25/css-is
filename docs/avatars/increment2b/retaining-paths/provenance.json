@@ -1,0 +1,20 @@
+{
+  "acceptance": false,
+  "intentional_forced_gc": true,
+  "authorization": "User explicitly approved the prepared four-slot post-workload diagnostic: yes run it.",
+  "harness_commit": "6568ac80c246192ccbf13beeba3170752d8c3ac3",
+  "archive_sha256": "e3e52f3f7f35a90c1a57f82f2352fdc4e6aefabd1b231ff3e245c8fa42468ed9",
+  "archive_bytes": 14900310,
+  "archive_crc_verified": true,
+  "scheduled_slots": 4,
+  "completed_slots": 4,
+  "replaced_slots": 0,
+  "new_snapshot_count": 4,
+  "raw_archive_unmodified": true,
+  "sealed_recovery_count": 1,
+  "archive_reaudit_matches": true,
+  "source_hashes_verified": 86,
+  "files_verified": 40,
+  "raw_native_document_counts_independently_verified": true,
+  "selected_tests_passed": 139
+}

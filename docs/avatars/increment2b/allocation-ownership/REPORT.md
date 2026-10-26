@@ -1,5 +1,10 @@
 # Allocation ownership investigation — native sites resolved, retaining paths pending
 
+Update: the user approved the exception and all four captures are now complete.
+See [forensic results](../retaining-paths/REPORT.md); pending language below records
+the earlier preparation state. No acceptance gate was changed.
+
+
 The twenty archived navigation profiles contain 929 native allocation samples.
 All 92 archive members verify; all 1,655 unique Chromium frame offsets resolve
 against the exact ELF build ID `1c5dca8527a61d07372e489142bee26af1bcaf71`.

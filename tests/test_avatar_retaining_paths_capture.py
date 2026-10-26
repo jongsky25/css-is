@@ -43,5 +43,5 @@ def test_adapter_saves_natural_rows_before_context_close():
     from scripts.avatar_baseline.run_retaining_paths import adapt_fixture
     name='tests/test_avatar_baseline_browser.py'
     adapted=adapt_fixture(name,Path(name).read_bytes())
-    assert b"rows.append(row); (out/f'{mobile}-{cache}.json').write_text(json.dumps(rows,indent=2)); context.close()" in adapted
+    assert b"rows.append(json.loads(json.dumps(row))); (out/f'{mobile}-{cache}.json').write_text(json.dumps(rows,indent=2)); context.close()" in adapted
     assert b'rows.append(row);context.close()' not in adapted

@@ -1,5 +1,15 @@
 # Increment 2B — acceptance withdrawn: uncovered memory failures
 
+## Authorized forensic snapshot experiment completed
+
+[Four captures](retaining-paths/REPORT.md) completed. One current slot reproduced
+43 documents at navigation 20, but only two remained before snapshot-induced GC.
+Graphs show the active HTML page and an isolated SVG-image document; no persistent
+extra-document owner is established. A late telemetry bookkeeping mutation was
+recovered byte-for-byte against the pre-snapshot hash and the writer was fixed.
+139 selected tests pass. Post-GC results are forensic only; 2B remains blocked.
+
+
 ## Allocation ownership tooling and limitation
 
 [Native ownership analysis](allocation-ownership/REPORT.md) resolves 929 samples

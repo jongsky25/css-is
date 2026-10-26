@@ -13,7 +13,7 @@
     "background": 19750912
   },
   "historical_incomplete_acceptance": "assessment-incomplete-audit.json",
-  "next_step": "Request an explicit exception for the prepared isolated post-workload forensic heap snapshots, which force GC and cannot enter acceptance. Standard CDP JS sampling also forces GC; do not call it a natural probe. Retaining-path ownership remains unresolved. All existing gates and failures remain unchanged.",
+  "next_step": "Investigate transient allocation pressure/native heap capacity under the unchanged workload. The authorized snapshots captured only the active HTML document and an isolated SVG-image document; the high-document state had disappeared before snapshot GC. No persistent extra-document owner or accepted fix is established. Preserve all gates; do not reuse forced-GC results as acceptance or rerun unchanged for favorable samples.",
   "complete_memory_audit": "final-verification/complete-memory-audit.json",
   "corrected_overall_assessment": "final-verification/corrected-overall-assessment.json",
   "memory_comparisons": 104,
@@ -115,7 +115,19 @@
     "resolved_offsets": 1655,
     "archive_members_verified": 92,
     "new_browser_measurements": 0,
-    "forensic_capture": "prepared_not_authorized_not_run",
+    "forensic_capture": "approved_and_completed_separate_forensic_experiment",
     "acceptance": false
+  },
+  "retaining_paths": {
+    "status": "complete_forensic_capture_with_sealed_recovery",
+    "report": "retaining-paths/REPORT.md",
+    "harness_commit": "6568ac8",
+    "slots": 4,
+    "intentional_forced_gc": true,
+    "acceptance": false,
+    "source_hashes_verified": 86,
+    "files_verified": 40,
+    "sealed_row_recoveries": 1,
+    "extra_document_owner_established": false
   }
 }

@@ -1,0 +1,4 @@
+SLOT 0 BLOCK 0 POSITION 0 original exit 0
+SLOT 1 BLOCK 0 POSITION 1 current exit 0
+SLOT 2 BLOCK 0 POSITION 2 current exit 0
+SLOT 3 BLOCK 0 POSITION 3 original exit 0

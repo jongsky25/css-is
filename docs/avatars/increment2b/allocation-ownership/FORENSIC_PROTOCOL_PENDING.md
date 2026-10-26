@@ -34,3 +34,10 @@ CSS_AVATAR_FORENSIC_GC=authorized .venv/bin/python scripts/avatar_baseline/run_r
 The runner still requires the explicit opt-in. Authorization covers these four
 post-workload forensic snapshots only; natural/acceptance gates remain unchanged.
 The original preparation and pending status are preserved in commit 8ff10ee.
+
+## Completion
+
+All four authorized slots completed at source 6568ac8 with no replacements.
+[Results](../retaining-paths/REPORT.md) retain all raw snapshots, the initial audit
+failure, exact-hash recovery and the future writer fix. No measurement is active;
+do not rerun this completed fixed experiment unchanged.

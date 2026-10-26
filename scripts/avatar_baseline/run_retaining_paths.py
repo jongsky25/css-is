@@ -22,7 +22,7 @@ def adapt_fixture(name,data):
         data=data.replace(old,b"for run in range(int(os.getenv('CSS_AVATAR_RUN_START', '0')), int(os.getenv('CSS_AVATAR_RUN_START', '0')) + runs):",1)
     if name=='tests/test_avatar_baseline_browser.py':
         old=b'rows.append(row);context.close()'
-        new=b"rows.append(row); (out/f'{mobile}-{cache}.json').write_text(json.dumps(rows,indent=2)); context.close()"
+        new=b"rows.append(json.loads(json.dumps(row))); (out/f'{mobile}-{cache}.json').write_text(json.dumps(rows,indent=2)); context.close()"
         if data.count(old)!=1:raise ValueError('Unexpected preclose save location')
         data=data.replace(old,new,1)
     return data
@@ -39,7 +39,7 @@ def main():
     out=args.output.resolve();out.mkdir(parents=True,exist_ok=False)
     head=subprocess.check_output(['git','rev-parse','HEAD'],cwd=root,text=True).strip()
     plan={'protocol':'retaining-paths-forensic-v1','acceptance':False,'harness_commit':head,
-          'refs':REFS,'blocks':BLOCKS,'samples_per_slot':1,'seconds':30,'fixture_adapter':'ordinal-and-preclose-save-v1',
+          'refs':REFS,'blocks':BLOCKS,'samples_per_slot':1,'seconds':30,'fixture_adapter':'ordinal-preclose-frozen-row-v2',
           'browser':'156.0.8078.47','budget_bytes':10*1024*1024,
           'session_policy':'Fresh pytest process, fixture database and browser for each slot. Existing warm-up and full workload unchanged. Diagnostic session/order change; not historical acceptance replacement.',
           'selection':'Four fixed forensic slots. Snapshot after natural trace closes; internal forced GC explicitly segregated. No acceptance/source-effect classification. Preserve all failures.',
