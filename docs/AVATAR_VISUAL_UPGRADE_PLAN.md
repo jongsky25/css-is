@@ -108,7 +108,8 @@ Hard gates:
   in the controlled fixtures. Investigate unstable results rather than hiding outliers.
 - No new avatar-attributable main-thread long tasks over 50 ms.
 - Animation work fits the display frame budget on the desktop fixture; under mobile
-  CPU throttle, p95 frame interval <= 33 ms during the defined interaction scenario.
+  CPU throttle, p95 frame interval <= 33.3 ms during the defined interaction scenario
+  (original33ms budget plus the user-approved0.3ms exception).
   Record baseline and regression; do not claim 60 fps solely from requestAnimationFrame.
 - Renderer/JS memory growth <= 10 MiB over baseline after identical scenarios.
   State measurement limits when browser memory APIs cannot capture all renderer memory.
@@ -715,3 +716,8 @@ is replaced. Diagnostic branchcodex/avatar-2b-memory measures two opposite-order
 original/current warm desktop cohorts with per-renderer status andsmaps_rollup;
 no forced GC, RSS subtraction, product edit or changed budget. Diagnostics alone
 cannot grant acceptance. Fix an established source, then validate affected gates.
+
+Standalone summarize/compare tools now use the same approved33.3ms helper as CI
+and expose original/current frame-budget metadata. Reprocessing a separate copy
+of all40 hosted matrix samples leaves every original numeric value and verdict
+unchanged. Archived source artifacts were not modified.

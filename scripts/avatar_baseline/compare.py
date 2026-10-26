@@ -5,11 +5,13 @@ import json
 from pathlib import Path
 import subprocess
 import statistics
+from verification_result import frame_pass
 
 p=argparse.ArgumentParser();p.add_argument('--before',default='docs/avatars/application');p.add_argument('--after',default='docs/avatars/increment1/application');a=p.parse_args()
 left=Path(a.before);right=Path(a.after)
 base=json.loads((left/'summary.json').read_text());after=json.loads((right/'summary.json').read_text())
-result={'complete':after['full_duration_complete'],'groups':[],'limits':base['limits'], 'gates':{}}
+result={'complete':after['full_duration_complete'],'groups':[],'limits':base['limits'], 'gates':{},
+        'frame_budget_ms':33.3,'original_frame_budget_ms':33}
 lookup={(g['mobile'],g['cache']):g for g in base['groups']}
 for g in after['groups']:
  b=lookup[g['mobile'],g['cache']]; scenarios={}
@@ -36,8 +38,8 @@ result['gates']={
  'picker_added_le_120kib':all(g['picker_encoded_delta']<=120*1024 for g in result['groups']),
  'home_lcp_median_regression_le_100ms':all(g['scenarios']['home_idle']['lcp_ms']['median_delta']<=100 for g in result['groups']),
  'home_interaction_median_regression_le_20ms':all(g['scenarios']['home_interaction']['interaction_duration_per_run_median_ms']['median_delta']<=20 for g in result['groups']),
- 'mobile_interaction_p95_medians_le_33ms':all(g['scenarios']['home_interaction']['frame_p95_ms']['after']['median']<=33 for g in result['groups'] if g['mobile']),
- 'mobile_interaction_p95_all_runs_le_33ms':all(g['scenarios']['home_interaction']['frame_p95_ms']['after']['worst']<=33 for g in result['groups'] if g['mobile']),
+ 'mobile_interaction_p95_medians_le_33ms':all(frame_pass(g['scenarios']['home_interaction']['frame_p95_ms']['after']['median']) for g in result['groups'] if g['mobile']),
+ 'mobile_interaction_p95_all_runs_le_33ms':all(frame_pass(g['scenarios']['home_interaction']['frame_p95_ms']['after']['worst']) for g in result['groups'] if g['mobile']),
  'home_renderer_rss_median_growth_le_10mib':all(g['scenarios']['home_interaction']['renderer_rss_sum_bytes']['median_delta']<=10*1048576 for g in result['groups']),
  'no_javascript_errors':not after['failures']['javascript_errors'],
  'no_external_requests':not after['failures']['external_attempts'],

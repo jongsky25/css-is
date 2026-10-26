@@ -3,6 +3,7 @@ import argparse
 import json
 import statistics
 from pathlib import Path
+from verification_result import frame_pass
 
 p=argparse.ArgumentParser();p.add_argument('directory',nargs='?',default='docs/avatars/application');a=p.parse_args()
 root=Path(a.directory); rows=[]
@@ -10,7 +11,8 @@ for file in sorted(root.glob('*.json')):
     if file.name=='summary.json':continue
     value=json.loads(file.read_text())
     if isinstance(value,list):rows.extend(value)
-summary={'samples':len(rows),'groups':[],'failures':{},'limits':[
+summary={'samples':len(rows),'groups':[],'failures':{},
+ 'frame_budget_ms':33.3,'original_frame_budget_ms':33,'limits':[
     'Event Timing reports events >=16 ms only; absent entries do not prove zero input latency.',
     'Long tasks are page-wide and not attributed to avatar script without a trace.',
     'Renderer RSS sums OS renderer-process resident pages; shared pages may be counted more than once. It is not private memory/PSS.',
@@ -46,6 +48,6 @@ summary['failures']={
     'hidden_not_verified':sum(not r['hidden_verified'] for r in rows),
     'offscreen_animating':sum(r['scenarios']['offscreen']['avatar_animations']>0 for r in rows),
     'reduced_motion_animating':sum(r['scenarios']['reduced_motion']['avatar_animations']>0 for r in rows),
-    'mobile_interaction_frame_gate_misses':sum(r['mobile'] and r['scenarios']['home_interaction']['frame_p95_ms']>33 for r in rows),
+    'mobile_interaction_frame_gate_misses':sum(r['mobile'] and not frame_pass(r['scenarios']['home_interaction']['frame_p95_ms']) for r in rows),
 }
 (root/'summary.json').write_text(json.dumps(summary,indent=2));print(json.dumps({'samples':len(rows),'failures':summary['failures']},indent=2))
