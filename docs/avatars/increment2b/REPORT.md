@@ -39,3 +39,5 @@ All functional/visual, callback/frame and five-active-scenario findings remain p
 | False-warm | navigation_20 | 32.300781 |
 
 The corrected checker includes every scenario/navigation checkpoint and rejects missing/duplicate cohorts, zero memory and mismatched browsers/renderer counts. All 27 focused checker regressions pass. No new product optimization is claimed: the native allocation/retention cause is not established, and earlier successful active-scenario results do not override these failures.
+
+[Native allocation breakdown](final-verification/native-memory-breakdown.json) retains per-run smaps, DOM and heap comparisons for all 52 configuration/scenario checkpoints. Warm-desktop mount 20 has higher native private-dirty memory despite lower median JS heap and fewer DOM nodes; this does not establish an accumulating JavaScript-object leak. The next diagnosis must isolate native retained allocations/page caching on the pinned runner before choosing a product correction. No forced collection, cache flushing, RSS subtraction or favourable-sample replacement is authorized by these findings.

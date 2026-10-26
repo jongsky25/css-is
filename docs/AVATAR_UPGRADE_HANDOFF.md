@@ -11,11 +11,19 @@ Final run 40263865865 warm-desktop RSS deltas are +11.335938, +11.097656 and
 match. Prior targeted candidate evidence also contains unreported reverse-order
 background +26.171875 MiB and seasonal-preview +12.710938 MiB. No memory waiver.
 Read the corrected `docs/avatars/increment2b/REPORT.md` before other instructions.
+Checker correction `a3717e8` enforces all eight scenarios plus five navigation
+checkpoints: 104 memory comparisons, eleven RSS failures, no invalid cohorts.
+All 27 focused checker tests pass. Recompute with `memory_audit.py`; the complete
+numeric/visual archive and corrected assessments are under `final-verification/`.
+`native-memory-breakdown.json` records retained smaps/DOM/heap comparisons without
+rerunning workloads. Native private and shared measurements differ; a cause or
+product fix has not been established. Do not equate low JS heap with an RSS pass.
 
 3A artwork/correction is preserved on `codex/avatar-3a` (product `cb2220f`).
+The preserved 3A branch is `9abc5ec` after receiving the complete memory checker.
 The source run 40280615190 was cancelled by pause commit `2b6d154` after the
 2B prerequisite failure was discovered. Do not restart/accept 3A until 2B is fixed.
-The prepared audit branch `codex/avatar-3a-artifact-audit` is staged only; do not
+The prepared audit branch `codex/avatar-3a-artifact-audit` is explicitly paused at `ade949e`; do not
 trigger it as an acceptance audit of the cancelled cohort. No later increments,
 merge or deployment occurred. The historical handoff below is superseded by this
 correction wherever it suggests CI success establishes complete memory acceptance.
