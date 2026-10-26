@@ -1,0 +1,64 @@
+{
+  "acceptance": false,
+  "base": "f700187",
+  "order": [
+    "current",
+    "geometry",
+    "preview",
+    "svg",
+    "svg",
+    "preview",
+    "geometry",
+    "current"
+  ],
+  "samples_per_arm": 2,
+  "protocol": "Full 30-second warm desktop workload, no tracing, native sampling, dump requests or concurrent analysis. Two-sample source screen only; never final acceptance.",
+  "variants": {
+    "geometry": "Disable only avatar ResizeObserver registrations; keep cache, pointer, audio, SVG and static policy unchanged. Diagnostic can regress resize behavior.",
+    "preview": "Revert only f700187 static-preview wrapper/reaction omission, using its parent versions of three templates. Artwork remains current.",
+    "svg": "Original species-art dispatcher with unused scope adapter; disable v2 scope/gradient emission. Current runtime and static-preview policy retained. Intentional visual reversion, never promotable unchanged."
+  },
+  "selection": "Require RSS improvement of at least 5 MiB at both navigation 10 and 20 in both orders, no RSS or heap checkpoint worsening >10 MiB, and valid samples/counts. Screen only; five-sample validation needed.",
+  "cohorts": [
+    {
+      "index": 0,
+      "arm": "current",
+      "exit_code": 0
+    },
+    {
+      "index": 1,
+      "arm": "geometry",
+      "exit_code": 0
+    },
+    {
+      "index": 2,
+      "arm": "preview",
+      "exit_code": 0
+    },
+    {
+      "index": 3,
+      "arm": "svg",
+      "exit_code": 0
+    },
+    {
+      "index": 4,
+      "arm": "svg",
+      "exit_code": 0
+    },
+    {
+      "index": 5,
+      "arm": "preview",
+      "exit_code": 0
+    },
+    {
+      "index": 6,
+      "arm": "geometry",
+      "exit_code": 0
+    },
+    {
+      "index": 7,
+      "arm": "current",
+      "exit_code": 0
+    }
+  ]
+}

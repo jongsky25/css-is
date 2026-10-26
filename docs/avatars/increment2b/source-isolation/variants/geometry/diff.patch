@@ -1,0 +1,13 @@
+diff --git a/static/js/avatars.js b/static/js/avatars.js
+index 9d2deda..c619c0d 100644
+--- a/static/js/avatars.js
++++ b/static/js/avatars.js
+@@ -120,7 +120,7 @@
+     queueGeometry();
+   }
+   function trackGeometry(w) {
+-    if (window.ResizeObserver) {
++    if (false && window.ResizeObserver) {
+       var observer = new ResizeObserver(function () {
+         if (!w.isConnected) { observer.disconnect(); return; }
+         // ResizeObserver runs after layout. Snapshot now: deferring the read

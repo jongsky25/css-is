@@ -1,0 +1,9 @@
+{
+  "source_hashes_verified": 224,
+  "screen_candidates": {
+    "geometry": true,
+    "preview": false,
+    "svg": true
+  },
+  "current_repeat_status": "passed"
+}

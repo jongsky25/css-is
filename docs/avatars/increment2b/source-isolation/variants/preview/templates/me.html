@@ -1,0 +1,341 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import flash %}
+{% from "_photo_crop.html" import photo_crop_styles, photo_adjust_button, photo_editor %}
+{% from "_avatars.html" import avatar_svg, avatar_defs %}
+{% from "_growth.html" import growth_defs, growth %}
+{% block title %}My profile{% endblock %}
+{% block page_width %}narrow{% endblock %}
+{% block content %}
+{{ avatar_defs() }}
+{{ growth_defs() }}
+{{ photo_crop_styles() }}
+<style>
+  .me-wrap { max-width:760px; margin:0 auto; }
+  .panel { border:1px solid var(--line); background:var(--surface); border-radius:16px;
+           padding:1.3rem 1.5rem; margin-bottom:1.2rem; box-shadow:0 1px 3px rgba(20,30,50,.05); }
+  .panel h2 { font-size:1.1rem; margin:.1rem 0 1rem; }
+  .field { margin-bottom:1rem; }
+  .field label { display:block; font-weight:700; margin-bottom:.3rem; }
+  .field input[type=text] { width:100%; font:inherit; padding:.55rem .7rem; border:1px solid var(--line);
+                            border-radius:10px; background:var(--bg); color:var(--ink); box-sizing:border-box; }
+  #calendar-feed { overflow-wrap:anywhere; }
+  #calendar-feed p > a { display:inline-block; min-height:24px; padding:.2rem 0; }
+  .feed-settings, .feed-actions { display:flex; flex-wrap:wrap; gap:.7rem; align-items:center; margin:.8rem 0; }
+  .feed-settings label { display:flex; flex-wrap:wrap; align-items:center; gap:.4rem; min-width:0; }
+  .feed-settings select { max-width:100%; min-width:0; }
+  .feed-help { margin-top:1rem; }
+  .feed-help summary { cursor:pointer; min-height:24px; }
+  .feed-help li { margin:.5rem 0; }
+  .hint { color:var(--soft); font-size:.83rem; margin:.2rem 0 0; }
+  .photo-row { display:flex; gap:1.1rem; align-items:center; flex-wrap:wrap; }
+  .photo-prev { width:88px; height:88px; border-radius:50%; object-fit:cover; background:var(--line);
+                display:inline-flex; align-items:center; justify-content:center; font-weight:800; color:var(--soft); font-size:1.4rem; }
+  .lbl { display:inline-block; font-weight:700; cursor:pointer; border:1px solid var(--accent); color:var(--accent);
+         background:var(--accent-bg); border-radius:10px; padding:.5rem 1rem; }
+  .avgrid { display:grid; grid-template-columns:repeat(auto-fill, minmax(120px, 1fr)); gap:.8rem; }
+  .avcard { position:relative; border:2px solid var(--line); border-radius:14px; padding:.6rem .4rem .5rem;
+            text-align:center; cursor:pointer; background:var(--bg); transition:border-color .15s, transform .1s; }
+  .avcard:hover { transform:translateY(-2px); }
+  .avcard svg { width:90px; height:104px; }
+  .avcard .nm { font-weight:700; font-size:.86rem; margin-top:.2rem; }
+  .avcard .fam { color:var(--soft); font-size:.72rem; text-transform:uppercase; letter-spacing:.03em; }
+  .avcard .blurb { color:var(--soft); font-size:.72rem; margin-top:.1rem; }
+  .avcard input { position:absolute; opacity:0; width:1px; height:1px; }
+  .avcard:has(input:checked) { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-bg); }
+  .avcard:focus-within { outline:2px solid var(--accent); outline-offset:2px; }
+  .btn { display:inline-block; font:inherit; font-weight:800; cursor:pointer; border:1px solid var(--accent);
+         background:var(--accent); color:var(--on-accent); border-radius:10px; padding:.65rem 1.5rem; }
+  .actions { text-align:center; }
+  /* Signature pad. touch-action:none is load-bearing on a phone: without it the
+     first finger stroke scrolls the page instead of drawing. */
+  .sigpad { position:relative; border:1px dashed var(--line); border-radius:12px; background:#fff;
+            height:170px; touch-action:none; overflow:hidden; }
+  .sigpad canvas { display:block; width:100%; height:100%; cursor:crosshair; }
+  .sigpad .rule { position:absolute; left:8%; right:8%; bottom:34px; border-bottom:1px solid #d9dee7; }
+  .sigpad .ph { position:absolute; left:0; right:0; bottom:12px; text-align:center; color:#9aa3b2;
+                font-size:.82rem; pointer-events:none; }
+  .sigpad.inked .ph { display:none; }
+  .sigtools { display:flex; gap:.6rem; align-items:center; flex-wrap:wrap; margin-top:.6rem; }
+  .sigtools button { font:inherit; font-weight:700; cursor:pointer; border:1px solid var(--line);
+                     background:var(--bg); color:var(--ink); border-radius:10px; padding:.45rem 1rem; }
+  .sigcur { margin-bottom:.7rem; }
+  .sigcur img { max-height:64px; max-width:260px; background:#fff; border:1px solid var(--line);
+                border-radius:10px; padding:4px; }
+</style>
+
+<div class="me-wrap">
+  <h1 style="text-align:center;margin:.3rem 0 1.2rem;">My profile</h1>
+  <p><a href="/account/integrations">Connected tools — manage read access</a></p>
+  {% if msg %}{{ flash(msg=msg) }}{% endif %}
+  {% if err %}{{ flash(err=err) }}{% endif %}
+
+  <form method="post" action="/me" enctype="application/x-www-form-urlencoded" id="meForm">
+    <input type="hidden" name="photo_data" id="photo_data" value="">
+    <input type="hidden" name="signature_data" id="signature_data" value="">
+
+    <div class="panel">
+      <h2>Photo{% if has_person %} &amp; name{% endif %}</h2>
+      <div class="field photo-row">
+        <span id="photoPrev" class="photo-prev">
+          {% if profile.photo_url %}<img src="{{ profile.photo_url }}?v=me" alt=""
+               style="width:100%;height:100%;border-radius:50%;object-fit:cover;">{% else %}{{ initials }}{% endif %}
+        </span>
+        <div>
+          <label>Profile photo</label>
+          <label class="lbl">Choose / change photo<input type="file" accept="image/*" hidden onchange="photoCrop.pick(this)"></label>
+          {{ photo_adjust_button() }}
+          <p class="hint">Shown beside your name{% if has_person %} and on your people page{% endif %}.</p>
+        </div>
+      </div>
+      {{ photo_editor() }}
+      {% if has_person %}
+      <div class="field">
+        <label for="display_name">Your name</label>
+        <input type="text" id="display_name" value="{{ profile.person_name }}" readonly>
+        <p class="hint">From the staff directory — ask an administrator to correct it.</p>
+      </div>
+      {% endif %}
+      <div class="field">
+        <label for="nickname">Nickname</label>
+        <input type="text" id="nickname" name="nickname" maxlength="40"
+               value="{{ profile.nickname }}" placeholder="e.g. Ray">
+        <p class="hint">What the home page calls you: “Hi, <em>nickname</em>”. Leave blank to use your first name.</p>
+      </div>
+      {% include "_birthday_field.html" %}
+      {% if my_cards %}<p class="hint"><a href="/me/cards">💌 You have {{ my_cards }} birthday card{{ "" if my_cards == 1 else "s" }} →</a></p>{% endif %}
+      <div class="field">
+        <input type="hidden" name="notify_present" value="1">
+        <label style="font-weight:400"><input type="checkbox" name="cal_email_changes" {{ "checked" if profile.cal_email_changes }} value="1">
+          Email me when a calendar item I'm on is added, changed or cancelled</label>
+        <p class="hint">One email per burst of edits, never for changes you make yourself.</p>
+        <label style="font-weight:400;display:block;margin-top:.6rem"><input type="checkbox" name="cal_email_week" {{ "checked" if profile.cal_email_extras.week }} value="1">
+          Put the week's calendar in my Monday email</label>
+        <label style="font-weight:400;display:block;margin-top:.6rem"><input type="checkbox" name="cal_email_daybefore" {{ "checked" if profile.cal_email_extras.daybefore }} value="1">
+          Remind me the day before a calendar item I'm on</label>
+        <label style="font-weight:400;display:block;margin-top:.6rem"><input type="checkbox" name="bday_notify" {{ "checked" if profile.bday_notify }} value="1">
+          Tell me about teammates' birthdays (the bell and the Monday email)</label>
+        <p class="hint">Only birthdays people chose to share with you, and never your own.</p>
+      </div>
+      <div class="field">
+        <label for="designation">Designation</label>
+        <input type="text" id="designation" name="designation" maxlength="120"
+               value="{{ profile.designation }}" placeholder="e.g. Section Head"
+               {{ 'readonly' if profile.rp_id }} aria-describedby="designation-help">
+        <p class="hint" id="designation-help">{% if profile.rp_id %}Contact an administrator to update your directory designation.{% else %}Your displayed job title. Approval assignments are managed separately.{% endif %}</p>
+      </div>
+      <div class="field">
+        <label for="employee_no">Employee number</label>
+        <input type="text" id="employee_no" name="employee_no" maxlength="30"
+               value="{{ profile.employee_no }}" placeholder="e.g. 12345">
+        <p class="hint">Printed on travel forms such as the Certification of Expenses Not Requiring Receipts. Optional.</p>
+      </div>
+    </div>
+
+    {#-- Sign with a finger or stylus: the register a chief approves shows this
+         drawing on the day of each break, so it must be capturable on a phone
+         without a scanner, a file to upload, or an administrator. --#}
+    <div class="panel">
+      <h2>My signature</h2>
+      {% if profile.has_signature %}
+      <div class="sigcur">
+        <img src="/me/signature.png?v=me" alt="Your signature currently on file">
+        <p class="hint">On file now. Sign again below to replace it.</p>
+      </div>
+      {% endif %}
+      <div class="sigpad" id="sigPad">
+        <canvas id="sigCanvas"></canvas>
+        <span class="rule"></span>
+        <span class="ph">Sign here — draw with your finger, stylus or mouse</span>
+      </div>
+      <div class="sigtools">
+        <button type="button" id="sigUndo">Undo stroke</button>
+        <button type="button" id="sigClear">Clear</button>
+        {% if profile.has_signature %}
+        <label style="font-weight:400;"><input type="checkbox" name="remove_signature" value="1">
+          Remove my signature</label>
+        {% endif %}
+      </div>
+      <p class="hint">Used where you sign inside the system — the wellness break
+        register you approve stamps it on the day of each break. It is never shown
+        publicly, and only you can see it here.</p>
+    </div>
+
+    <div class="panel" id="companion" style="scroll-margin-top:5rem">
+      <h2>Your companion</h2>
+      <div class="avgrid" role="radiogroup" aria-label="Choose your companion">
+        {% for a in catalog %}
+        <label class="avcard" title="{{ a.label }}">
+          <input type="radio" name="avatar_kind" value="{{ a.key }}"
+                 {{ 'checked' if a.key == profile.avatar_kind }} required>
+          <span class="{{ 'av-sway-c' if a.family == 'plant' else '' }}" style="display:inline-block;">{{ avatar_svg(a.key, 2) }}</span>
+          <div class="nm">{{ a.label }}</div>
+          <div class="fam">{{ a.family }}</div>
+          <div class="blurb">{{ a.blurb }}</div>
+        </label>
+        {% endfor %}
+      </div>
+      <div class="field" style="margin-top:1.1rem;">
+        <label for="avatar_name">Pet name</label>
+        <input type="text" id="avatar_name" name="avatar_name" maxlength="{{ name_maxlen }}"
+               value="{{ profile.avatar_name }}" required>
+        <p class="hint">Up to {{ name_maxlen }} characters.</p>
+      </div>
+    </div>
+
+    <section class="panel" aria-labelledby="companion-growth-title">
+      <h2 id="companion-growth-title">How your companion grows</h2>
+      {{ growth(profile.avatar_kind if profile and profile.avatar_kind else "plant",
+                ladder, growth_how, wstats, pet_name=(profile.avatar_name if profile else "")) }}
+    </section>
+
+    <div class="actions"><button class="btn" type="submit">Save changes</button></div>
+  </form>
+
+  {#-- The personal calendar link (office calendar G4): a subscribe URL for Google/Outlook/Apple. --#}
+  <section class="panel" id="calendar-feed" aria-labelledby="calendar-feed-h">
+    <h2 id="calendar-feed-h">Calendar link</h2>
+    <p><strong>{{ 'Subscription link active' if feed else 'No active subscription link' }}</strong></p>
+    <p class="hint">Subscribe to a read-only copy of your office calendar in Google Calendar, Outlook or Apple Calendar.
+      Changes made in those apps do not change the office calendar. A downloaded .ics file is a one-time copy, not a subscription.</p>
+    {% if feed %}
+    <p class="hint">Current selection: <strong>{{ feed_scopes[feed.scope] }}</strong>; birthdays {{ 'included when shared with you' if feed.birthdays else 'not included' }}.
+      This selection is separate from the filters on the office calendar page.</p>
+    <p><input type="text" readonly value="{{ feed.url }}" style="width:100%;box-sizing:border-box" onclick="this.select()" aria-label="Your calendar link" aria-describedby="calendar-feed-secret">
+       <a href="{{ feed.webcal }}">Subscribe in my calendar app</a></p>
+    <form method="post" action="/me/calendar-feed/settings" class="feed-settings">
+      <label>Show <select name="scope">{% for k, label in feed_scopes.items() %}<option value="{{ k }}" {{ 'selected' if feed.scope == k }}>{{ label }}</option>{% endfor %}</select></label>
+      <label><input type="checkbox" name="birthdays" {{ 'checked' if feed.birthdays }} value="1"> Include birthdays shared with me</label>
+      <button class="btn" type="submit">Save subscription settings</button>
+    </form>
+    <p class="hint" id="calendar-feed-secret">Anyone who has this link can read the calendar shared through it without signing in. Keep it private; if it gets shared, make a new link.</p>
+    <div class="feed-actions">
+      <form method="post" action="/me/calendar-feed/reset"
+            data-confirm="Make a new link? The old one stops working, so anything subscribed to it must be re-added.">
+        <button class="btn ghost" type="submit">Make a new link</button></form>
+      <form method="post" action="/me/calendar-feed/off">
+        <button class="btn ghost" type="submit">Turn the link off</button></form>
+    </div>
+    <p class="hint">A new link stops future reads through the old link; subscribe again with the new one. Turning the link off stops future reads. Neither action erases copies already downloaded by a calendar app.</p>
+    {% else %}
+    <p class="hint">Creating a link lets a calendar app read the items shared with you. It does not sign you up in an app automatically.</p>
+    <form method="post" action="/me/calendar-feed/reset"><button class="btn" type="submit">Create my calendar link</button></form>
+    {% endif %}
+    <details class="feed-help">
+      <summary>How to subscribe and check missing updates</summary>
+      <ol>
+        <li>Create your link above, choose what to show, and save the settings.</li>
+        <li>In Google Calendar, use <strong>Other calendars → From URL</strong>. In Outlook, use <strong>Add calendar → Subscribe from web</strong>. In Apple Calendar, use <strong>File → New Calendar Subscription</strong>, or try Subscribe above. Paste your private link.</li>
+        <li>Use a subscription, not a file import. Your calendar app controls refresh timing; updates can take many hours or a day. Check the office calendar for the latest saved schedule.</li>
+      </ol>
+      <p class="hint">If something is missing, check the saved selection above and your current access here. Page filters are not subscription settings. If you replaced the link, remove the old subscription in the app and subscribe with the new one. An app may keep older copies after access changes or the link is turned off.</p>
+      <p><a href="/calendar">Open the office calendar</a></p>
+    </details>
+  </section>
+</div>
+
+<script src="/static/js/photo-crop.js"></script>
+<script>
+  var photoCrop = PhotoCrop.init({ hidden: '#photo_data', preview: '#photoPrev' });
+
+  /* ---- Signature pad -------------------------------------------------------
+     Strokes are kept as point arrays rather than baked straight into the canvas,
+     so Undo can drop the last one and repaint, and so the export can be redrawn
+     at print resolution and trimmed to the ink. Pointer Events cover finger,
+     stylus and mouse in one path (same idiom as the photo crop editor). */
+  (function () {
+    var pad = document.getElementById("sigPad");
+    var cv = document.getElementById("sigCanvas");
+    if (!pad || !cv) return;
+    var ctx = cv.getContext("2d");
+    var strokes = [], cur = null, w = 0, h = 0;
+
+    function resize() {
+      var dpr = window.devicePixelRatio || 1;
+      w = pad.clientWidth; h = pad.clientHeight;
+      cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      repaint();
+    }
+    function line(ctx2, pts) {
+      if (!pts.length) return;
+      ctx2.beginPath();
+      if (pts.length === 1) {                    // a tap is a dot, not nothing
+        ctx2.arc(pts[0].x, pts[0].y, ctx2.lineWidth / 2, 0, Math.PI * 2);
+        ctx2.fill(); return;
+      }
+      ctx2.moveTo(pts[0].x, pts[0].y);
+      for (var i = 1; i < pts.length - 1; i++) { // midpoint curve = no polygon look
+        var mx = (pts[i].x + pts[i + 1].x) / 2, my = (pts[i].y + pts[i + 1].y) / 2;
+        ctx2.quadraticCurveTo(pts[i].x, pts[i].y, mx, my);
+      }
+      ctx2.lineTo(pts[pts.length - 1].x, pts[pts.length - 1].y);
+      ctx2.stroke();
+    }
+    function style(ctx2, width) {
+      ctx2.lineWidth = width; ctx2.lineCap = "round"; ctx2.lineJoin = "round";
+      ctx2.strokeStyle = "#12203a"; ctx2.fillStyle = "#12203a";
+    }
+    function repaint() {
+      ctx.clearRect(0, 0, w, h);
+      style(ctx, 2.2);
+      for (var i = 0; i < strokes.length; i++) line(ctx, strokes[i]);
+      pad.classList.toggle("inked", strokes.length > 0);
+    }
+    function at(e) {
+      var r = cv.getBoundingClientRect();
+      return { x: e.clientX - r.left, y: e.clientY - r.top };
+    }
+    cv.addEventListener("pointerdown", function (e) {
+      cur = [at(e)]; strokes.push(cur);
+      cv.setPointerCapture(e.pointerId);
+      repaint(); e.preventDefault();
+    });
+    cv.addEventListener("pointermove", function (e) {
+      if (!cur) return;
+      cur.push(at(e)); repaint(); e.preventDefault();
+    });
+    function end() { cur = null; }
+    cv.addEventListener("pointerup", end);
+    cv.addEventListener("pointercancel", end);
+
+    document.getElementById("sigUndo").addEventListener("click", function () {
+      strokes.pop(); repaint();
+    });
+    document.getElementById("sigClear").addEventListener("click", function () {
+      strokes = []; repaint();
+    });
+    window.addEventListener("resize", resize);
+    resize();
+
+    /* Export on submit: trim to the ink's bounding box (a signature drawn in the
+       corner should not carry half a page of blank with it), then redraw at up to
+       600px wide on a transparent background — PNG, like the uploaded signatures. */
+    var form = document.getElementById("meForm");
+    if (!form) return;
+    form.addEventListener("submit", function () {
+      if (!strokes.length) return;               // drew nothing: leave the field
+      var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      strokes.forEach(function (s) {
+        s.forEach(function (p) {
+          if (p.x < minX) minX = p.x; if (p.x > maxX) maxX = p.x;
+          if (p.y < minY) minY = p.y; if (p.y > maxY) maxY = p.y;
+        });
+      });
+      var pad2 = 6;
+      minX = Math.max(0, minX - pad2); minY = Math.max(0, minY - pad2);
+      maxX = Math.min(w, maxX + pad2); maxY = Math.min(h, maxY + pad2);
+      var bw = Math.max(1, maxX - minX), bh = Math.max(1, maxY - minY);
+      var scale = Math.min(600 / bw, 3);
+      var out = document.createElement("canvas");
+      out.width = Math.round(bw * scale); out.height = Math.round(bh * scale);
+      var octx = out.getContext("2d");
+      octx.setTransform(scale, 0, 0, scale, -minX * scale, -minY * scale);
+      style(octx, 2.2);
+      strokes.forEach(function (s) { line(octx, s); });
+      document.getElementById("signature_data").value = out.toDataURL("image/png");
+      var rm = document.querySelector("input[name=remove_signature]");
+      if (rm) rm.checked = false;                // signing again is not removing
+    });
+  })();
+</script>
+{% endblock %}

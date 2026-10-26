@@ -1,0 +1,61 @@
+diff --git a/templates/_avatars.html b/templates/_avatars.html
+index 35ecbe3..626b158 100644
+--- a/templates/_avatars.html
++++ b/templates/_avatars.html
+@@ -335,7 +335,7 @@
+ 
+ 
+ {#-- one species at a stage; returns just the <svg> so pickers/heroes can size it --#}
+-{% macro avatar_svg(kind, stage, outfit_month=none, outfit=none, static_preview=false) %}
++{% macro avatar_svg(kind, stage, outfit_month=none, outfit=none) %}
+ {% set s = [[stage|int, 6]|min, 1]|max %}
+ {% set scope = avatar_uid() if kind in ["cat","plant","cactus","bonsai","sunflower","fern","mushroom","succulent"] else "" %}
+ {% set accessory = avatar_month() if outfit_month is none else outfit_month %}
+@@ -359,9 +359,7 @@
+     <path d="M34 114 q6 -3 12 0 q6 3 12 0 q6 -3 12 0 q6 3 12 0" stroke="#ffffff55" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+   </g>
+   {% endif %}
+-  {# Decorative previews never run movement or care reactions. Avoid allocating
+-     their movement wrappers and permanently invisible reaction layers. #}
+-  {% if not static_preview %}<g class="avmove">
++  <g class="avmove">
+     <g class="avstage">{{ costume_back(kind, s, costume) }}{{ species_art(kind, s, accessory, costume, scope) }}</g>
+     {% if avatar_family(kind) == "plant" %}
+     <g class="av-drops" fill="#5fa8d8">
+@@ -380,9 +378,7 @@
+       <path d="M84 32 h7 l-7 7 h7" stroke-width="2.2"/>
+       <path d="M95 22 h5 l-5 5 h5" stroke-width="1.8"/>
+     </g>
+-  </g>{% else %}
+-  {{ costume_back(kind, s, costume) }}{{ species_art(kind, s, accessory, costume, scope) }}
+-  {% endif %}
++  </g>
+ </svg>
+ {% endmacro %}
+ 
+diff --git a/templates/_growth.html b/templates/_growth.html
+index 8a305f6..8ec2007 100644
+--- a/templates/_growth.html
++++ b/templates/_growth.html
+@@ -61,7 +61,7 @@
+              {%- if s.current %} where you are now
+              {%- elif s.reached %} already reached
+              {%- else %} unlocks at {{ s.points_at }} points{% endif %}.">
+-        {{ avatar_svg(kind, s.stage, static_preview=true) }}
++        {{ avatar_svg(kind, s.stage) }}
+       </div>
+       <div class="gl-name">{{ s.name }}</div>
+       {% if s.current %}<div class="gl-now">You are here</div>
+diff --git a/templates/me.html b/templates/me.html
+index cbe1773..5368a8b 100644
+--- a/templates/me.html
++++ b/templates/me.html
+@@ -167,7 +167,7 @@
+         <label class="avcard" title="{{ a.label }}">
+           <input type="radio" name="avatar_kind" value="{{ a.key }}"
+                  {{ 'checked' if a.key == profile.avatar_kind }} required>
+-          <span style="display:inline-block;">{{ avatar_svg(a.key, 2, static_preview=true) }}</span>
++          <span class="{{ 'av-sway-c' if a.family == 'plant' else '' }}" style="display:inline-block;">{{ avatar_svg(a.key, 2) }}</span>
+           <div class="nm">{{ a.label }}</div>
+           <div class="fam">{{ a.family }}</div>
+           <div class="blurb">{{ a.blurb }}</div>
