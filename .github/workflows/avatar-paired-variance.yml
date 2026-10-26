@@ -1,0 +1,39 @@
+name: Avatar paired memory variance
+on:
+  push:
+    branches: [codex/avatar-paired-variance]
+permissions:
+  contents: read
+concurrency:
+  group: avatar-paired-variance
+  cancel-in-progress: false
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    container: python:3.12-trixie@sha256:0d0db5b17f11b1b7d1aafa74ceadaa64ba0944b267ff6fc22008a197acd6b9ad
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install pinned dependencies
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends chromium=156.0.8078.47-1~deb13u1 chromium-common=156.0.8078.47-1~deb13u1 git procps
+          python -m venv .venv
+          .venv/bin/python -m pip install --require-hashes --only-binary=:all: -r requirements-test.txt
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - name: Check accounting
+        run: .venv/bin/python -m pytest tests/test_avatar_paired_variance.py -q
+      - name: Measure five counterbalanced paired blocks
+        run: .venv/bin/python scripts/avatar_baseline/paired_variance.py --output avatar-paired-variance --browser-dir /usr/bin
+      - name: Audit all samples
+        if: ${{ !cancelled() }}
+        run: .venv/bin/python scripts/avatar_baseline/analyze_paired_variance.py avatar-paired-variance --harness-ref "$GITHUB_SHA"
+      - name: Preserve complete and failed cohorts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: avatar-paired-variance
+          path: avatar-paired-variance/
+          retention-days: 30
