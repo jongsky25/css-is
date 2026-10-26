@@ -1,0 +1,52 @@
+diff --git a/.github/workflows/avatar-2b-artifact-audit.yml b/.github/workflows/avatar-2b-artifact-audit.yml
+index dbd3146..50a5112 100644
+--- a/.github/workflows/avatar-2b-artifact-audit.yml
++++ b/.github/workflows/avatar-2b-artifact-audit.yml
+@@ -13,9 +13,10 @@ jobs:
+     steps:
+       - uses: actions/checkout@v4
+       - uses: actions/download-artifact@v4
++        id: download
+         with:
+           github-token: ${{ secrets.GITHUB_TOKEN }}
+-          run-id: 40247047928
++          run-id: 40263865865
+           name: avatar-2b-complete
+           path: avatar-verification
+       - name: Audit every cohort and source identity
+@@ -30,3 +31,10 @@ jobs:
+           name: avatar-2b-reviewed-evidence
+           path: avatar-2b-review.tar.gz
+           retention-days: 30
++      - name: Preserve full traces and screenshots with the reviewed evidence
++        if: always() && steps.download.outcome == 'success'
++        uses: actions/upload-artifact@v4
++        with:
++          name: avatar-2b-full-reviewed-evidence
++          path: avatar-verification/
++          retention-days: 30
+diff --git a/scripts/avatar_baseline/package_review.py b/scripts/avatar_baseline/package_review.py
+index cd3fbd1..404d19b 100644
+--- a/scripts/avatar_baseline/package_review.py
++++ b/scripts/avatar_baseline/package_review.py
+@@ -18,7 +18,7 @@ def sha(path):
+ def read(relative):
+     return json.loads((root/relative).read_text())
+ 
+-summary={'source_run_id':40247047928,'audit_commit':os.getenv('GITHUB_SHA'),'errors':{}}
++summary={'source_run_id':40263865865,'audit_commit':os.getenv('GITHUB_SHA'),'errors':{}}
+ try:
+     summary['overall']=read('overall-assessment.json')
+ except Exception as error:summary['errors']['overall']=repr(error)
+@@ -48,9 +48,9 @@ except Exception as error:summary['errors']['matrix_or_native']=repr(error)
+ print('AVATAR_REVIEW_SUMMARY='+json.dumps(summary,separators=(',',':')))
+ 
+ files=[path for path in sorted(root.rglob('*')) if path.is_file() and path.name != 'review-manifest.json']
+-manifest={'source_run_id':40247047928,'source_artifact_name':'avatar-2b-complete',
++manifest={'source_run_id':40263865865,'source_artifact_name':'avatar-2b-complete',
+           'audit_commit':os.getenv('GITHUB_SHA'),'generated_during_audit':['overall-assessment.json','review-summary.json','review-manifest.json'],
+-          'source_run_url':'https://github.com/jongsky25/css-is/actions/runs/40247047928',
++          'source_run_url':'https://github.com/jongsky25/css-is/actions/runs/40263865865',
+           'files':{str(p.relative_to(root)):{'sha256':sha(p),'bytes':p.stat().st_size} for p in files},
+           'packaged':'All JSON, XML, text logs and PNG screenshots; compressed traces remain in source artifact and are hashed here.'}
+ (root/'review-manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
