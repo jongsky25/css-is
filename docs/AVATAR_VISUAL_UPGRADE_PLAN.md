@@ -721,3 +721,15 @@ Standalone summarize/compare tools now use the same approved33.3ms helper as CI
 and expose original/current frame-budget metadata. Reprocessing a separate copy
 of all40 hosted matrix samples leaves every original numeric value and verdict
 unchanged. Archived source artifacts were not modified.
+
+
+Memory attribution completed in [run40257027634](https://github.com/jongsky25/css-is/actions/runs/40257027634):
+20 full-duration warm desktop samples, original/current/current/original, five
+per cohort. RSS median deltas reproduce the regression in both orders:
++14.520MiB and+12.629MiB. Private memory also rises; this is not solely shared
+page noise. [All raw evidence](avatars/increment2b/memory-diagnosis/hosted-evidence.zip)
+and [summary](avatars/increment2b/memory-diagnosis/assessment.json) are retained.
+Hosted old/current desktop screenshots have identical1440×3498 dimensions,
+excluding a changed page-height explanation. The local paint-hint and allocation
+probes remain diagnostic; neither established a fix. A static-preview trimming
+candidate is under visual/functional validation. No acceptance status changed.

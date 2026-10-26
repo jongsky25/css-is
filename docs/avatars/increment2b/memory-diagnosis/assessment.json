@@ -3,7 +3,7 @@
   "product_changed": false,
   "hosted_run_id": 40257027634,
   "hosted_run_url": "https://github.com/jongsky25/css-is/actions/runs/40257027634",
-  "hosted_status": "running",
+  "hosted_status": "completed; regression reproduced in both orders",
   "local_probe": {
     "browser": "156.0.8078.47",
     "order": [
@@ -22,5 +22,13 @@
     "protocol": "Direct profile visit; fresh browser per condition; no warm Home/care sequence; not an acceptance cohort."
   },
   "retained_hosted_source_file_hashes_verified": 86,
-  "next": "Inspect native/private/shared memory in hosted opposite-order cohorts; retain original failed gate."
+  "next": "Test static SVG trimming candidate; verify all visual and performance gates before acceptance.",
+  "hosted_source_commit": "afcbaf9204f6427f45254c55487ca25253dd43b0",
+  "hosted_artifact_id": 12624200637,
+  "hosted_artifact_sha256": "ad964a49b82afca427b18ed61ba8896a444edc32ea37842791ad717422072c60",
+  "rss_growth_mib_by_order": [
+    14.51953125,
+    12.62890625
+  ],
+  "finding": "Warm desktop picker RSS regression reproduces in both orders. Private memory also rises; shared-page variability is not the whole explanation. No acceptance or budget waiver."
 }
