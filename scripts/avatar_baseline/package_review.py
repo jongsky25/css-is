@@ -18,7 +18,7 @@ def sha(path):
 def read(relative):
     return json.loads((root/relative).read_text())
 
-summary={'source_run_id':40247047928,'audit_commit':os.getenv('GITHUB_SHA'),'errors':{}}
+summary={'source_run_id':40263865865,'audit_commit':os.getenv('GITHUB_SHA'),'errors':{}}
 try:
     summary['overall']=read('overall-assessment.json')
 except Exception as error:summary['errors']['overall']=repr(error)
@@ -48,9 +48,9 @@ except Exception as error:summary['errors']['matrix_or_native']=repr(error)
 print('AVATAR_REVIEW_SUMMARY='+json.dumps(summary,separators=(',',':')))
 
 files=[path for path in sorted(root.rglob('*')) if path.is_file() and path.name != 'review-manifest.json']
-manifest={'source_run_id':40247047928,'source_artifact_name':'avatar-2b-complete',
+manifest={'source_run_id':40263865865,'source_artifact_name':'avatar-2b-complete',
           'audit_commit':os.getenv('GITHUB_SHA'),'generated_during_audit':['overall-assessment.json','review-summary.json','review-manifest.json'],
-          'source_run_url':'https://github.com/jongsky25/css-is/actions/runs/40247047928',
+          'source_run_url':'https://github.com/jongsky25/css-is/actions/runs/40263865865',
           'files':{str(p.relative_to(root)):{'sha256':sha(p),'bytes':p.stat().st_size} for p in files},
           'packaged':'All JSON, XML, text logs and PNG screenshots; compressed traces remain in source artifact and are hashed here.'}
 (root/'review-manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')

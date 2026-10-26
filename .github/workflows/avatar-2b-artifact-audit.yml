@@ -13,9 +13,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
+        id: download
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          run-id: 40247047928
+          run-id: 40263865865
           name: avatar-2b-complete
           path: avatar-verification
       - name: Audit every cohort and source identity
@@ -29,4 +30,11 @@ jobs:
         with:
           name: avatar-2b-reviewed-evidence
           path: avatar-2b-review.tar.gz
+          retention-days: 30
+      - name: Preserve full traces and screenshots with the reviewed evidence
+        if: always() && steps.download.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: avatar-2b-full-reviewed-evidence
+          path: avatar-verification/
           retention-days: 30
