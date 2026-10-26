@@ -10,7 +10,8 @@ five complete samples in each cohort. The intervention is exactly
 `if (false && window.ResizeObserver)`, matching the previous source screen.
 All other product sources remain f700187. Full 30-second warm-desktop workloads,
 Chromium 156.0.8078.47, no concurrent instrumentation or local analysis on the
-measurement host. No replacement samples. Status: running, not acceptance.
+measurement host. No replacement samples. Status: complete; observer intervention does not qualify. All 20 samples are valid,
+112 source hashes verified, no sample substitutions.
 
 The predeclared criterion remains at least 5 MiB RSS improvement at both navigation
 10 and 20 in both orders, with no checkpoint RSS/heap worsening above 10 MiB.
@@ -62,3 +63,25 @@ See that branch's `docs/avatars/increment2b/preview-loading-fix/REPORT.md` for l
 including the retained initial run with an incorrect scheduling-test clock.
 The candidate is not part of the running comparison and is not promoted to this
 branch. Its behavior checks are not memory acceptance.
+
+## Five-sample result — observer intervention rejected
+
+| Order | Navigation 10 RSS delta | Navigation 20 RSS delta | RSS checkpoints over +10 MiB | Qualifies |
+|---|---:|---:|---:|---|
+| Forward | -20.273438 MiB | -19.339844 MiB | 0 | Yes |
+| Reverse | +25.554688 MiB | +20.093750 MiB | 6 | No |
+
+Deltas are intervention minus current, using all five samples per cohort. Reverse
+RSS failures: background +18.460938, navigation 1 +16.722656, navigation 5
++15.742188, navigation 10 +25.554688, navigation 15 +21.433594, navigation 20
++20.093750 MiB. No JS heap gate fails. The unchanged-current repeat passes its
+26 comparisons; this does not establish zero drift. The intervention fails the
+predeclared both-orders criterion, and the container-only resize check also
+proves it is not a usable product correction.
+
+The hosted workflow succeeds because measurement/auditing completed; its own
+assessment says `geometry: false`. The independent audit agrees. All raw data,
+producer/independent assessments and artifact identity are retained in `hosted/`.
+No observer correction is promoted and no observer-registration subdivision is
+justified by this result. Next: five-sample validation of the exact original-SVG
+intervention from the source screen. Product remains f700187; 2B is blocked.

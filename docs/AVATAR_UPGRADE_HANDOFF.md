@@ -28,21 +28,25 @@ trigger it as an acceptance audit of the cancelled cohort. No later increments,
 merge to main or deployment occurred. The historical handoff below is superseded by this
 correction wherever it suggests CI success establishes complete memory acceptance.
 
-## Exact observer validation in progress
+## Exact observer validation complete — proceed to SVG validation
 
 [Run 40323560666](https://github.com/jongsky25/css-is/actions/runs/40323560666)
-measures five samples per cohort, current / observer-disabled / observer-disabled /
-current, at source b374358. This uses the exact one-line intervention from the
-screen, not the rejected shared-observer candidate. Do not start a duplicate run.
-Retrieve and independently audit its artifact before deciding the next intervention.
-Use the updated `analyze_source_isolation.py` on the complete artifact; the existing
-10 MiB gates and predeclared 5 MiB navigation improvement criterion remain intact.
+completed all 20 samples with 112 verified source hashes. The exact observer-disable
+intervention does not qualify: forward navigation 10/20 improve by 20.273/19.340
+MiB, but reverse navigation 10/20 worsen by 25.555/20.094 MiB, with six RSS failures.
+The unchanged-current repeat passes. No sample exclusions or budget waivers.
+See [the retained audit](avatars/increment2b/observer-validation/REPORT.md).
+The workflow is paused; do not rerun this unchanged intervention or subdivide its
+registrations based on the earlier two-sample lead. Next is exact SVG validation,
+five samples in current/SVG/SVG/current order. The runner/auditor support
+`--validation-arm svg`; this is diagnostic artwork rollback, never a product fix.
 
-[Preview diagnostic evidence](avatars/increment2b/observer-validation/REPORT.md)
-reproduces lazy-loading deferral only with the iframe deliberately moved far below
-the viewport; normal layout passes. A routed eager-on-update candidate passes all
-eight cases. The patch is preserved but not applied to product or memory fixtures.
-This is not proof of the historical timeout cause. Product remains f700187.
+A new container-only resize test passes current and fails observer removal by
+150 px. Include it in any eventual geometry correction gate. Separately, preview
+candidate `794c796` on `codex/avatar-preview-loading` passes 24 functional checks
+(two regressions fail on old code); it remains separate from all memory cohorts.
+The historical preview timeout cause is still unproven. Product stays f700187;
+2B and every later increment remain blocked.
 
 ## Latest source screen and geometry candidate — not promoted
 

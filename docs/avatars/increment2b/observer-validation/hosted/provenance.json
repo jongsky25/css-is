@@ -1,0 +1,11 @@
+{
+  "run_id": 40323560666,
+  "job_id": 121574355064,
+  "source_commit": "b3743585e315d243054dabc4bf5818c7fc6c103d",
+  "artifact_id": 12652275384,
+  "artifact_bytes": 1846586,
+  "sha256": "6c32ef63ba91bfe39f70880b938341c84861b9035afec839721e0cab8131490a",
+  "expires_at": "2026-11-25T13:03:50Z",
+  "independent_auditor_commit": "e8cd402",
+  "product_promoted": false
+}

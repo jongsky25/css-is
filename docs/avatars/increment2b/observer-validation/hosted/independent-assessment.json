@@ -1,0 +1,5192 @@
+{
+  "acceptance": false,
+  "samples_per_arm": 5,
+  "source_hashes_verified": 112,
+  "cohorts": [
+    {
+      "index": 0,
+      "arm": "current",
+      "raw_sha256": "5b57eccbe53de366b00ab748637ad5cc860297591fc57d5d90c82c3764073c78",
+      "points": {
+        "home_idle": {
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "renderer_rss_sum_bytes": {
+            "samples": [
+              420147200,
+              450945024,
+              451145728,
+              451276800,
+              450113536
+            ],
+            "median": 450945024
+          },
+          "js_heap_bytes": {
+            "samples": [
+              2624052,
+              2623472,
+              2636804,
+              2626028,
+              2624256
+            ],
+            "median": 2624256
+          }
+        },
+        "home_interaction": {
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "renderer_rss_sum_bytes": {
+            "samples": [
+              428724224,
+              451465216,
+              451608576,
+              452472832,
+              451297280
+            ],
+            "median": 451465216
+          },
+          "js_heap_bytes": {
+            "samples": [
+              4807824,
+              3703352,
+              3819024,
+              3889820,
+              3777212
+            ],
+            "median": 3819024
+          }
+        },
+        "wellness_care": {
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "renderer_rss_sum_bytes": {
+            "samples": [
+              427552768,
+              448516096,
+              448811008,
+              449560576,
+              448749568
+            ],
+            "median": 448749568
+          },
+          "js_heap_bytes": {
+            "samples": [
+              3195980,
+              3210684,
+              3214116,
+              3218332,
+              3213716
+            ],
+            "median": 3213716
+          }
+        },
+        "picker_growth": {
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "renderer_rss_sum_bytes": {
+            "samples": [
+              457670656,
+              478031872,
+              478085120,
+              479363072,
+              482516992
+            ],
+            "median": 478085120
+          },
+          "js_heap_bytes": {
+            "samples": [
+              5161400,
+              5168436,
+              5150224,
+              5579848,
+              5162896
+            ],
+            "median": 5162896
+          }
+        },
+        "seasonal_preview": {
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "renderer_rss_sum_bytes": {
+            "samples": [
+              500731904,
+              511119360,
+              520687616,
+              523866112,
+              516108288
+            ],
+            "median": 516108288
+          },
+          "js_heap_bytes": {
+            "samples": [
+              8751504,
+              9329368,
+              11180576,
+              13861764,
+              9817736
+            ],
+            "median": 9817736
+          }
+        },
+        "offscreen": {
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "renderer_rss_sum_bytes": {
+            "samples": [
+              478593024,
+              487124992,
+              496861184,
+              500178944,
+              493842432
+            ],
+            "median": 493842432
+          },
+          "js_heap_bytes": {
+            "samples": [
+              9596384,
+              9415384,
+              10793032,
+              14707684,
+              9377136
+            ],
+            "median": 9596384
+          }
+        },
+        "reduced_motion": {
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "renderer_rss_sum_bytes": {
+            "samples": [
+              479555584,
+              489193472,
+              498491392,
+              502296576,
+              496185344
+            ],
+            "median": 496185344
+          },
+          "js_heap_bytes": {
+            "samples": [
+              9753228,
+              9572188,
+              10949856,
+              14864472,
+              9534004
+            ],
+            "median": 9753228
+          }
+        },
+        "background": {
+          "renderer_counts": [
+            4,
+            4,
+            4,
+            4,
+            4
+          ],
+          "renderer_rss_sum_bytes": {
+            "samples": [
+              618541056,
+              630702080,
+              641478656,
+              644112384,
+              639524864
+            ],
+            "median": 639524864
+          },
+          "js_heap_bytes": {
+            "samples": [
+              9901376,
+              9721856,
+              11099608,
+              15014016,
+              9683816
+            ],
+            "median": 9901376
+          }
+        },
+        "navigation_1": {
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "renderer_rss_sum_bytes": {
+            "samples": [
+              505847808,
+              521891840,
+              532881408,
+              535994368,
+              530948096
+            ],
+            "median": 530948096
+          },
+          "js_heap_bytes": {
+            "samples": [
+              10692748,
+              10513024,
+              11901036,
+              11344880,
+              10479288
+            ],
+            "median": 10692748
+          }
+        },
+        "navigation_5": {
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "renderer_rss_sum_bytes": {
+            "samples": [
+              542679040,
+              570761216,
+              581795840,
+              572592128,
+              588914688
+            ],
+            "median": 572592128
+          },
+          "js_heap_bytes": {
+            "samples": [
+              13378128,
+              13198684,
+              14585080,
+              5918060,
+              13164680
+            ],
+            "median": 13198684
+          }
+        },
+        "navigation_10": {
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "renderer_rss_sum_bytes": {
+            "samples": [
+              570040320,
+              599113728,
+              610877440,
+              576131072,
+              592265216
+            ],
+            "median": 592265216
+          },
+          "js_heap_bytes": {
+            "samples": [
+              5422140,
+              16510008,
+              17901236,
+              9233872,
+              5582468
+            ],
+            "median": 9233872
+          }
+        },
+        "navigation_15": {
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "renderer_rss_sum_bytes": {
+            "samples": [
+              561319936,
+              592527360,
+              601485312,
+              581189632,
+              596291584
+            ],
+            "median": 592527360
+          },
+          "js_heap_bytes": {
+            "samples": [
+              8737700,
+              8093348,
+              8172460,
+              12547400,
+              8899676
+            ],
+            "median": 8737700
+          }
+        },
+        "navigation_20": {
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "renderer_rss_sum_bytes": {
+            "samples": [
+              558358528,
+              587980800,
+              597811200,
+              572035072,
+              592928768
+            ],
+            "median": 587980800
+          },
+          "js_heap_bytes": {
+            "samples": [
+              6195476,
+              6162548,
+              6251556,
+              5663460,
+              6161352
+            ],
+            "median": 6162548
+          }
+        }
+      }
+    },
+    {
+      "index": 1,
+      "arm": "geometry",
+      "raw_sha256": "75d0f73be00a5d61c7f0f1b8a1eb9b3f107574f94300c6c75c74bfd2f756b986",
+      "points": {
+        "home_idle": {
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "renderer_rss_sum_bytes": {
+            "samples": [
+              411525120,
+              440979456,
+              442310656,
+              441815040,
+              441831424
+            ],
+            "median": 441815040
+          },
+          "js_heap_bytes": {
+            "samples": [
+              2617916,
+              2622532,
+              2635584,
+              2635964,
+              2635864
+            ],
+            "median": 2635584
+          }
+        },
+        "home_interaction": {
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "renderer_rss_sum_bytes": {
+            "samples": [
+              418328576,
+              441860096,
+              442601472,
+              441958400,
+              441651200
+            ],
+            "median": 441860096
+          },
+          "js_heap_bytes": {
+            "samples": [
+              3869384,
+              3511140,
+              3471736,
+              3461804,
+              3406684
+            ],
+            "median": 3471736
+          }
+        },
+        "wellness_care": {
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "renderer_rss_sum_bytes": {
+            "samples": [
+              416600064,
+              440266752,
+              440688640,
+              440279040,
+              439902208
+            ],
+            "median": 440266752
+          },
+          "js_heap_bytes": {
+            "samples": [
+              3180292,
+              3174768,
+              3171624,
+              3173344,
+              3179112
+            ],
+            "median": 3174768
+          }
+        },
+        "picker_growth": {
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "renderer_rss_sum_bytes": {
+            "samples": [
+              448512000,
+              474488832,
+              474267648,
+              474124288,
+              469110784
+            ],
+            "median": 474124288
+          },
+          "js_heap_bytes": {
+            "samples": [
+              5154240,
+              5153332,
+              5135200,
+              5151320,
+              5551120
+            ],
+            "median": 5153332
+          }
+        },
+        "seasonal_preview": {
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "renderer_rss_sum_bytes": {
+            "samples": [
+              493985792,
+              508547072,
+              518889472,
+              512049152,
+              515231744
+            ],
+            "median": 512049152
+          },
+          "js_heap_bytes": {
+            "samples": [
+              10108820,
+              10282064,
+              11172480,
+              11137536,
+              13789476
+            ],
+            "median": 11137536
+          }
+        },
+        "offscreen": {
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "renderer_rss_sum_bytes": {
+            "samples": [
+              468570112,
+              482271232,
+              498061312,
+              488845312,
+              490766336
+            ],
+            "median": 488845312
+          },
+          "js_heap_bytes": {
+            "samples": [
+              10943144,
+              9961856,
+              10734844,
+              10757752,
+              14616100
+            ],
+            "median": 10757752
+          }
+        },
+        "reduced_motion": {
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "renderer_rss_sum_bytes": {
+            "samples": [
+              469561344,
+              484032512,
+              493387776,
+              490336256,
+              492400640
+            ],
+            "median": 490336256
+          },
+          "js_heap_bytes": {
+            "samples": [
+              11099964,
+              10118604,
+              5541444,
+              10914612,
+              14772916
+            ],
+            "median": 10914612
+          }
+        },
+        "background": {
+          "renderer_counts": [
+            4,
+            4,
+            4,
+            4,
+            4
+          ],
+          "renderer_rss_sum_bytes": {
+            "samples": [
+              608817152,
+              624812032,
+              632262656,
+              606027776,
+              633012224
+            ],
+            "median": 624812032
+          },
+          "js_heap_bytes": {
+            "samples": [
+              11248044,
+              10272932,
+              5697632,
+              11069108,
+              14927236
+            ],
+            "median": 11069108
+          }
+        },
+        "navigation_1": {
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "renderer_rss_sum_bytes": {
+            "samples": [
+              495644672,
+              517791744,
+              519536640,
+              499351552,
+              526376960
+            ],
+            "median": 517791744
+          },
+          "js_heap_bytes": {
+            "samples": [
+              12019804,
+              11045772,
+              6471308,
+              11841316,
+              11241516
+            ],
+            "median": 11241516
+          }
+        },
+        "navigation_5": {
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "renderer_rss_sum_bytes": {
+            "samples": [
+              538292224,
+              566734848,
+              550227968,
+              547610624,
+              573816832
+            ],
+            "median": 550227968
+          },
+          "js_heap_bytes": {
+            "samples": [
+              14627340,
+              13656064,
+              9082164,
+              14449640,
+              13850656
+            ],
+            "median": 13850656
+          }
+        },
+        "navigation_10": {
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "renderer_rss_sum_bytes": {
+            "samples": [
+              567816192,
+              594886656,
+              562130944,
+              576032768,
+              571006976
+            ],
+            "median": 571006976
+          },
+          "js_heap_bytes": {
+            "samples": [
+              17843132,
+              16870940,
+              12297720,
+              17667168,
+              7968936
+            ],
+            "median": 16870940
+          }
+        },
+        "navigation_15": {
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "renderer_rss_sum_bytes": {
+            "samples": [
+              561356800,
+              586985472,
+              565370880,
+              570032128,
+              576057344
+            ],
+            "median": 570032128
+          },
+          "js_heap_bytes": {
+            "samples": [
+              8030232,
+              7990344,
+              7719500,
+              7460428,
+              11187468
+            ],
+            "median": 7990344
+          }
+        },
+        "navigation_20": {
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "renderer_rss_sum_bytes": {
+            "samples": [
+              559083520,
+              584396800,
+              563040256,
+              567701504,
+              568020992
+            ],
+            "median": 567701504
+          },
+          "js_heap_bytes": {
+            "samples": [
+              6168676,
+              6139652,
+              6168632,
+              6140444,
+              6512612
+            ],
+            "median": 6168632
+          }
+        }
+      }
+    },
+    {
+      "index": 2,
+      "arm": "geometry",
+      "raw_sha256": "951542d5752a0a98f29f52474459c81b152ace4ed7e8b20c5883d873fa8b8a10",
+      "points": {
+        "home_idle": {
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "renderer_rss_sum_bytes": {
+            "samples": [
+              421031936,
+              450752512,
+              449368064,
+              449622016,
+              452042752
+            ],
+            "median": 449622016
+          },
+          "js_heap_bytes": {
+            "samples": [
+              2622968,
+              2635192,
+              2622620,
+              2635680,
+              2638216
+            ],
+            "median": 2635192
+          }
+        },
+        "home_interaction": {
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "renderer_rss_sum_bytes": {
+            "samples": [
+              427196416,
+              450727936,
+              450064384,
+              449695744,
+              451612672
+            ],
+            "median": 450064384
+          },
+          "js_heap_bytes": {
+            "samples": [
+              3845392,
+              3453796,
+              3457456,
+              3429688,
+              3552344
+            ],
+            "median": 3457456
+          }
+        },
+        "wellness_care": {
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "renderer_rss_sum_bytes": {
+            "samples": [
+              425480192,
+              449720320,
+              448425984,
+              448393216,
+              449748992
+            ],
+            "median": 448425984
+          },
+          "js_heap_bytes": {
+            "samples": [
+              3118604,
+              3173036,
+              3179888,
+              3178916,
+              3176564
+            ],
+            "median": 3176564
+          }
+        },
+        "picker_growth": {
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "renderer_rss_sum_bytes": {
+            "samples": [
+              453558272,
+              478494720,
+              483127296,
+              482091008,
+              479363072
+            ],
+            "median": 479363072
+          },
+          "js_heap_bytes": {
+            "samples": [
+              5162872,
+              5158332,
+              5560240,
+              5544660,
+              5545648
+            ],
+            "median": 5544660
+          }
+        },
+        "seasonal_preview": {
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "renderer_rss_sum_bytes": {
+            "samples": [
+              503685120,
+              519151616,
+              522100736,
+              522768384,
+              524390400
+            ],
+            "median": 522100736
+          },
+          "js_heap_bytes": {
+            "samples": [
+              8742868,
+              11143816,
+              11112652,
+              11161764,
+              10961884
+            ],
+            "median": 11112652
+          }
+        },
+        "offscreen": {
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "renderer_rss_sum_bytes": {
+            "samples": [
+              478380032,
+              497709056,
+              498892800,
+              498499584,
+              500994048
+            ],
+            "median": 498499584
+          },
+          "js_heap_bytes": {
+            "samples": [
+              9562416,
+              10737064,
+              10772012,
+              10799780,
+              10615624
+            ],
+            "median": 10737064
+          }
+        },
+        "reduced_motion": {
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "renderer_rss_sum_bytes": {
+            "samples": [
+              478777344,
+              499539968,
+              500654080,
+              499965952,
+              502624256
+            ],
+            "median": 499965952
+          },
+          "js_heap_bytes": {
+            "samples": [
+              9719316,
+              10893760,
+              10928836,
+              10956624,
+              10772420
+            ],
+            "median": 10893760
+          }
+        },
+        "background": {
+          "renderer_counts": [
+            4,
+            4,
+            4,
+            4,
+            4
+          ],
+          "renderer_rss_sum_bytes": {
+            "samples": [
+              618295296,
+              641761280,
+              642805760,
+              642420736,
+              644882432
+            ],
+            "median": 642420736
+          },
+          "js_heap_bytes": {
+            "samples": [
+              9867340,
+              11048036,
+              11083048,
+              11110884,
+              10926896
+            ],
+            "median": 11048036
+          }
+        },
+        "navigation_1": {
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "renderer_rss_sum_bytes": {
+            "samples": [
+              505307136,
+              532414464,
+              534179840,
+              534036480,
+              536416256
+            ],
+            "median": 534036480
+          },
+          "js_heap_bytes": {
+            "samples": [
+              10639324,
+              11820100,
+              11858652,
+              11887124,
+              11699676
+            ],
+            "median": 11820100
+          }
+        },
+        "navigation_5": {
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "renderer_rss_sum_bytes": {
+            "samples": [
+              541933568,
+              581820416,
+              582488064,
+              582979584,
+              584138752
+            ],
+            "median": 582488064
+          },
+          "js_heap_bytes": {
+            "samples": [
+              13246724,
+              14432948,
+              14467764,
+              14497356,
+              14308360
+            ],
+            "median": 14432948
+          }
+        },
+        "navigation_10": {
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "renderer_rss_sum_bytes": {
+            "samples": [
+              569683968,
+              610275328,
+              610516992,
+              610189312,
+              613441536
+            ],
+            "median": 610275328
+          },
+          "js_heap_bytes": {
+            "samples": [
+              16462484,
+              17651612,
+              17682872,
+              17713164,
+              17524572
+            ],
+            "median": 17651612
+          }
+        },
+        "navigation_15": {
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "renderer_rss_sum_bytes": {
+            "samples": [
+              563081216,
+              605097984,
+              604823552,
+              602894336,
+              609677312
+            ],
+            "median": 604823552
+          },
+          "js_heap_bytes": {
+            "samples": [
+              8040792,
+              7407916,
+              7983996,
+              7968852,
+              7457160
+            ],
+            "median": 7968852
+          }
+        },
+        "navigation_20": {
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "renderer_rss_sum_bytes": {
+            "samples": [
+              560455680,
+              603017216,
+              601989120,
+              600039424,
+              607907840
+            ],
+            "median": 601989120
+          },
+          "js_heap_bytes": {
+            "samples": [
+              6164348,
+              6141428,
+              6178324,
+              6141572,
+              6135936
+            ],
+            "median": 6141572
+          }
+        }
+      }
+    },
+    {
+      "index": 3,
+      "arm": "current",
+      "raw_sha256": "66af26b2715b1a524773a17432ed7130502fd4c29a3e4fd4902f6c2b8bdd5333",
+      "points": {
+        "home_idle": {
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "renderer_rss_sum_bytes": {
+            "samples": [
+              416858112,
+              446558208,
+              447385600,
+              446922752,
+              447160320
+            ],
+            "median": 446922752
+          },
+          "js_heap_bytes": {
+            "samples": [
+              2632296,
+              2636704,
+              2623960,
+              2636900,
+              2623164
+            ],
+            "median": 2632296
+          }
+        },
+        "home_interaction": {
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "renderer_rss_sum_bytes": {
+            "samples": [
+              423964672,
+              447442944,
+              448335872,
+              447508480,
+              449507328
+            ],
+            "median": 447508480
+          },
+          "js_heap_bytes": {
+            "samples": [
+              4783720,
+              3876932,
+              3117780,
+              3838256,
+              3195680
+            ],
+            "median": 3838256
+          }
+        },
+        "wellness_care": {
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "renderer_rss_sum_bytes": {
+            "samples": [
+              423936000,
+              445218816,
+              445587456,
+              441815040,
+              447041536
+            ],
+            "median": 445218816
+          },
+          "js_heap_bytes": {
+            "samples": [
+              4866388,
+              3154232,
+              3210492,
+              3214428,
+              3279364
+            ],
+            "median": 3214428
+          }
+        },
+        "picker_growth": {
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "renderer_rss_sum_bytes": {
+            "samples": [
+              452534272,
+              479789056,
+              479649792,
+              476925952,
+              481505280
+            ],
+            "median": 479649792
+          },
+          "js_heap_bytes": {
+            "samples": [
+              5152668,
+              5566812,
+              5162688,
+              5203524,
+              5245992
+            ],
+            "median": 5203524
+          }
+        },
+        "seasonal_preview": {
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "renderer_rss_sum_bytes": {
+            "samples": [
+              500363264,
+              520261632,
+              518369280,
+              518225920,
+              524550144
+            ],
+            "median": 518369280
+          },
+          "js_heap_bytes": {
+            "samples": [
+              8757064,
+              11452360,
+              11182880,
+              11124024,
+              13929584
+            ],
+            "median": 11182880
+          }
+        },
+        "offscreen": {
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "renderer_rss_sum_bytes": {
+            "samples": [
+              474746880,
+              496721920,
+              494948352,
+              494596096,
+              500690944
+            ],
+            "median": 494948352
+          },
+          "js_heap_bytes": {
+            "samples": [
+              9610060,
+              11044828,
+              10802980,
+              10785076,
+              14786688
+            ],
+            "median": 10802980
+          }
+        },
+        "reduced_motion": {
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "renderer_rss_sum_bytes": {
+            "samples": [
+              475389952,
+              498249728,
+              496427008,
+              496492544,
+              502124544
+            ],
+            "median": 496492544
+          },
+          "js_heap_bytes": {
+            "samples": [
+              9766992,
+              11201600,
+              10959728,
+              10941764,
+              14943480
+            ],
+            "median": 10959728
+          }
+        },
+        "background": {
+          "renderer_counts": [
+            4,
+            4,
+            4,
+            4,
+            4
+          ],
+          "renderer_rss_sum_bytes": {
+            "samples": [
+              613486592,
+              623063040,
+              611905536,
+              637501440,
+              642396160
+            ],
+            "median": 623063040
+          },
+          "js_heap_bytes": {
+            "samples": [
+              9915108,
+              11351432,
+              11109392,
+              11091268,
+              15093100
+            ],
+            "median": 11109392
+          }
+        },
+        "navigation_1": {
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "renderer_rss_sum_bytes": {
+            "samples": [
+              502697984,
+              516501504,
+              506228736,
+              530980864,
+              535425024
+            ],
+            "median": 516501504
+          },
+          "js_heap_bytes": {
+            "samples": [
+              10706660,
+              12143528,
+              11900760,
+              11891716,
+              11416716
+            ],
+            "median": 11891716
+          }
+        },
+        "navigation_5": {
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "renderer_rss_sum_bytes": {
+            "samples": [
+              541196288,
+              565981184,
+              554881024,
+              580120576,
+              572686336
+            ],
+            "median": 565981184
+          },
+          "js_heap_bytes": {
+            "samples": [
+              13390724,
+              14830160,
+              14586300,
+              14576928,
+              7866352
+            ],
+            "median": 14576928
+          }
+        },
+        "navigation_10": {
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "renderer_rss_sum_bytes": {
+            "samples": [
+              566513664,
+              593907712,
+              583479296,
+              607842304,
+              577302528
+            ],
+            "median": 583479296
+          },
+          "js_heap_bytes": {
+            "samples": [
+              5421828,
+              18145240,
+              17898240,
+              17891484,
+              11181360
+            ],
+            "median": 17891484
+          }
+        },
+        "navigation_15": {
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "renderer_rss_sum_bytes": {
+            "samples": [
+              558735360,
+              583708672,
+              572493824,
+              598142976,
+              582348800
+            ],
+            "median": 582348800
+          },
+          "js_heap_bytes": {
+            "samples": [
+              8735660,
+              8169740,
+              8174812,
+              8174808,
+              14493888
+            ],
+            "median": 8174812
+          }
+        },
+        "navigation_20": {
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "renderer_rss_sum_bytes": {
+            "samples": [
+              555323392,
+              580919296,
+              570322944,
+              595005440,
+              584892416
+            ],
+            "median": 580919296
+          },
+          "js_heap_bytes": {
+            "samples": [
+              6195408,
+              6769012,
+              6166600,
+              6167020,
+              6351736
+            ],
+            "median": 6195408
+          }
+        }
+      }
+    }
+  ],
+  "comparisons": [
+    {
+      "arm": "geometry",
+      "order": "forward",
+      "status": "passed",
+      "coverage": "warm desktop only",
+      "acceptance": false,
+      "records": [
+        {
+          "checkpoint": "home_idle",
+          "metric": "renderer_rss_sum_bytes",
+          "before": {
+            "samples": [
+              420147200,
+              450945024,
+              451145728,
+              451276800,
+              450113536
+            ],
+            "median": 450945024
+          },
+          "after": {
+            "samples": [
+              411525120,
+              440979456,
+              442310656,
+              441815040,
+              441831424
+            ],
+            "median": 441815040
+          },
+          "renderer_counts": [
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          ],
+          "matched_renderer_counts": true,
+          "median_delta_bytes": -9129984,
+          "within_10_mib": true
+        },
+        {
+          "checkpoint": "home_idle",
+          "metric": "js_heap_bytes",
+          "before": {
+            "samples": [
+              2624052,
+              2623472,
+              2636804,
+              2626028,
+              2624256
+            ],
+            "median": 2624256
+          },
+          "after": {
+            "samples": [
+              2617916,
+              2622532,
+              2635584,
+              2635964,
+              2635864
+            ],
+            "median": 2635584
+          },
+          "renderer_counts": [
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          ],
+          "matched_renderer_counts": true,
+          "median_delta_bytes": 11328,
+          "within_10_mib": true
+        },
+        {
+          "checkpoint": "home_interaction",
+          "metric": "renderer_rss_sum_bytes",
+          "before": {
+            "samples": [
+              428724224,
+              451465216,
+              451608576,
+              452472832,
+              451297280
+            ],
+            "median": 451465216
+          },
+          "after": {
+            "samples": [
+              418328576,
+              441860096,
+              442601472,
+              441958400,
+              441651200
+            ],
+            "median": 441860096
+          },
+          "renderer_counts": [
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          ],
+          "matched_renderer_counts": true,
+          "median_delta_bytes": -9605120,
+          "within_10_mib": true
+        },
+        {
+          "checkpoint": "home_interaction",
+          "metric": "js_heap_bytes",
+          "before": {
+            "samples": [
+              4807824,
+              3703352,
+              3819024,
+              3889820,
+              3777212
+            ],
+            "median": 3819024
+          },
+          "after": {
+            "samples": [
+              3869384,
+              3511140,
+              3471736,
+              3461804,
+              3406684
+            ],
+            "median": 3471736
+          },
+          "renderer_counts": [
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          ],
+          "matched_renderer_counts": true,
+          "median_delta_bytes": -347288,
+          "within_10_mib": true
+        },
+        {
+          "checkpoint": "wellness_care",
+          "metric": "renderer_rss_sum_bytes",
+          "before": {
+            "samples": [
+              427552768,
+              448516096,
+              448811008,
+              449560576,
+              448749568
+            ],
+            "median": 448749568
+          },
+          "after": {
+            "samples": [
+              416600064,
+              440266752,
+              440688640,
+              440279040,
+              439902208
+            ],
+            "median": 440266752
+          },
+          "renderer_counts": [
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          ],
+          "matched_renderer_counts": true,
+          "median_delta_bytes": -8482816,
+          "within_10_mib": true
+        },
+        {
+          "checkpoint": "wellness_care",
+          "metric": "js_heap_bytes",
+          "before": {
+            "samples": [
+              3195980,
+              3210684,
+              3214116,
+              3218332,
+              3213716
+            ],
+            "median": 3213716
+          },
+          "after": {
+            "samples": [
+              3180292,
+              3174768,
+              3171624,
+              3173344,
+              3179112
+            ],
+            "median": 3174768
+          },
+          "renderer_counts": [
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          ],
+          "matched_renderer_counts": true,
+          "median_delta_bytes": -38948,
+          "within_10_mib": true
+        },
+        {
+          "checkpoint": "picker_growth",
+          "metric": "renderer_rss_sum_bytes",
+          "before": {
+            "samples": [
+              457670656,
+              478031872,
+              478085120,
+              479363072,
+              482516992
+            ],
+            "median": 478085120
+          },
+          "after": {
+            "samples": [
+              448512000,
+              474488832,
+              474267648,
+              474124288,
+              469110784
+            ],
+            "median": 474124288
+          },
+          "renderer_counts": [
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          ],
+          "matched_renderer_counts": true,
+          "median_delta_bytes": -3960832,
+          "within_10_mib": true
+        },
+        {
+          "checkpoint": "picker_growth",
+          "metric": "js_heap_bytes",
+          "before": {
+            "samples": [
+              5161400,
+              5168436,
+              5150224,
+              5579848,
+              5162896
+            ],
+            "median": 5162896
+          },
+          "after": {
+            "samples": [
+              5154240,
+              5153332,
+              5135200,
+              5151320,
+              5551120
+            ],
+            "median": 5153332
+          },
+          "renderer_counts": [
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          ],
+          "matched_renderer_counts": true,
+          "median_delta_bytes": -9564,
+          "within_10_mib": true
+        },
+        {
+          "checkpoint": "seasonal_preview",
+          "metric": "renderer_rss_sum_bytes",
+          "before": {
+            "samples": [
+              500731904,
+              511119360,
+              520687616,
+              523866112,
+              516108288
+            ],
+            "median": 516108288
+          },
+          "after": {
+            "samples": [
+              493985792,
+              508547072,
+              518889472,
+              512049152,
+              515231744
+            ],
+            "median": 512049152
+          },
+          "renderer_counts": [
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          ],
+          "matched_renderer_counts": true,
+          "median_delta_bytes": -4059136,
+          "within_10_mib": true
+        },
+        {
+          "checkpoint": "seasonal_preview",
+          "metric": "js_heap_bytes",
+          "before": {
+            "samples": [
+              8751504,
+              9329368,
+              11180576,
+              13861764,
+              9817736
+            ],
+            "median": 9817736
+          },
+          "after": {
+            "samples": [
+              10108820,
+              10282064,
+              11172480,
+              11137536,
+              13789476
+            ],
+            "median": 11137536
+          },
+          "renderer_counts": [
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          ],
+          "matched_renderer_counts": true,
+          "median_delta_bytes": 1319800,
+          "within_10_mib": true
+        },
+        {
+          "checkpoint": "offscreen",
+          "metric": "renderer_rss_sum_bytes",
+          "before": {
+            "samples": [
+              478593024,
+              487124992,
+              496861184,
+              500178944,
+              493842432
+            ],
+            "median": 493842432
+          },
+          "after": {
+            "samples": [
+              468570112,
+              482271232,
+              498061312,
+              488845312,
+              490766336
+            ],
+            "median": 488845312
+          },
+          "renderer_counts": [
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          ],
+          "matched_renderer_counts": true,
+          "median_delta_bytes": -4997120,
+          "within_10_mib": true
+        },
+        {
+          "checkpoint": "offscreen",
+          "metric": "js_heap_bytes",
+          "before": {
+            "samples": [
+              9596384,
+              9415384,
+              10793032,
+              14707684,
+              9377136
+            ],
+            "median": 9596384
+          },
+          "after": {
+            "samples": [
+              10943144,
+              9961856,
+              10734844,
+              10757752,
+              14616100
+            ],
+            "median": 10757752
+          },
+          "renderer_counts": [
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          ],
+          "matched_renderer_counts": true,
+          "median_delta_bytes": 1161368,
+          "within_10_mib": true
+        },
+        {
+          "checkpoint": "reduced_motion",
+          "metric": "renderer_rss_sum_bytes",
+          "before": {
+            "samples": [
+              479555584,
+              489193472,
+              498491392,
+              502296576,
+              496185344
+            ],
+            "median": 496185344
+          },
+          "after": {
+            "samples": [
+              469561344,
+              484032512,
+              493387776,
+              490336256,
+              492400640
+            ],
+            "median": 490336256
+          },
+          "renderer_counts": [
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          ],
+          "matched_renderer_counts": true,
+          "median_delta_bytes": -5849088,
+          "within_10_mib": true
+        },
+        {
+          "checkpoint": "reduced_motion",
+          "metric": "js_heap_bytes",
+          "before": {
+            "samples": [
+              9753228,
+              9572188,
+              10949856,
+              14864472,
+              9534004
+            ],
+            "median": 9753228
+          },
+          "after": {
+            "samples": [
+              11099964,
+              10118604,
+              5541444,
+              10914612,
+              14772916
+            ],
+            "median": 10914612
+          },
+          "renderer_counts": [
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          ],
+          "matched_renderer_counts": true,
+          "median_delta_bytes": 1161384,
+          "within_10_mib": true
+        },
+        {
+          "checkpoint": "background",
+          "metric": "renderer_rss_sum_bytes",
+          "before": {
+            "samples": [
+              618541056,
+              630702080,
+              641478656,
+              644112384,
+              639524864
+            ],
+            "median": 639524864
+          },
+          "after": {
+            "samples": [
+              608817152,
+              624812032,
+              632262656,
+              606027776,
+              633012224
+            ],
+            "median": 624812032
+          },
+          "renderer_counts": [
+            [
+              4,
+              4,
+              4,
+              4,
+              4
+            ],
+            [
+              4,
+              4,
+              4,
+              4,
+              4
+            ]
+          ],
+          "matched_renderer_counts": true,
+          "median_delta_bytes": -14712832,
+          "within_10_mib": true
+        },
+        {
+          "checkpoint": "background",
+          "metric": "js_heap_bytes",
+          "before": {
+            "samples": [
+              9901376,
+              9721856,
+              11099608,
+              15014016,
+              9683816
+            ],
+            "median": 9901376
+          },
+          "after": {
+            "samples": [
+              11248044,
+              10272932,
+              5697632,
+              11069108,
+              14927236
+            ],
+            "median": 11069108
+          },
+          "renderer_counts": [
+            [
+              4,
+              4,
+              4,
+              4,
+              4
+            ],
+            [
+              4,
+              4,
+              4,
+              4,
+              4
+            ]
+          ],
+          "matched_renderer_counts": true,
+          "median_delta_bytes": 1167732,
+          "within_10_mib": true
+        },
+        {
+          "checkpoint": "navigation_1",
+          "metric": "renderer_rss_sum_bytes",
+          "before": {
+            "samples": [
+              505847808,
+              521891840,
+              532881408,
+              535994368,
+              530948096
+            ],
+            "median": 530948096
+          },
+          "after": {
+            "samples": [
+              495644672,
+              517791744,
+              519536640,
+              499351552,
+              526376960
+            ],
+            "median": 517791744
+          },
+          "renderer_counts": [
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          ],
+          "matched_renderer_counts": true,
+          "median_delta_bytes": -13156352,
+          "within_10_mib": true
+        },
+        {
+          "checkpoint": "navigation_1",
+          "metric": "js_heap_bytes",
+          "before": {
+            "samples": [
+              10692748,
+              10513024,
+              11901036,
+              11344880,
+              10479288
+            ],
+            "median": 10692748
+          },
+          "after": {
+            "samples": [
+              12019804,
+              11045772,
+              6471308,
+              11841316,
+              11241516
+            ],
+            "median": 11241516
+          },
+          "renderer_counts": [
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          ],
+          "matched_renderer_counts": true,
+          "median_delta_bytes": 548768,
+          "within_10_mib": true
+        },
+        {
+          "checkpoint": "navigation_5",
+          "metric": "renderer_rss_sum_bytes",
+          "before": {
+            "samples": [
+              542679040,
+              570761216,
+              581795840,
+              572592128,
+              588914688
+            ],
+            "median": 572592128
+          },
+          "after": {
+            "samples": [
+              538292224,
+              566734848,
+              550227968,
+              547610624,
+              573816832
+            ],
+            "median": 550227968
+          },
+          "renderer_counts": [
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          ],
+          "matched_renderer_counts": true,
+          "median_delta_bytes": -22364160,
+          "within_10_mib": true
+        },
+        {
+          "checkpoint": "navigation_5",
+          "metric": "js_heap_bytes",
+          "before": {
+            "samples": [
+              13378128,
+              13198684,
+              14585080,
+              5918060,
+              13164680
+            ],
+            "median": 13198684
+          },
+          "after": {
+            "samples": [
+              14627340,
+              13656064,
+              9082164,
+              14449640,
+              13850656
+            ],
+            "median": 13850656
+          },
+          "renderer_counts": [
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          ],
+          "matched_renderer_counts": true,
+          "median_delta_bytes": 651972,
+          "within_10_mib": true
+        },
+        {
+          "checkpoint": "navigation_10",
+          "metric": "renderer_rss_sum_bytes",
+          "before": {
+            "samples": [
+              570040320,
+              599113728,
+              610877440,
+              576131072,
+              592265216
+            ],
+            "median": 592265216
+          },
+          "after": {
+            "samples": [
+              567816192,
+              594886656,
+              562130944,
+              576032768,
+              571006976
+            ],
+            "median": 571006976
+          },
+          "renderer_counts": [
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          ],
+          "matched_renderer_counts": true,
+          "median_delta_bytes": -21258240,
+          "within_10_mib": true
+        },
+        {
+          "checkpoint": "navigation_10",
+          "metric": "js_heap_bytes",
+          "before": {
+            "samples": [
+              5422140,
+              16510008,
+              17901236,
+              9233872,
+              5582468
+            ],
+            "median": 9233872
+          },
+          "after": {
+            "samples": [
+              17843132,
+              16870940,
+              12297720,
+              17667168,
+              7968936
+            ],
+            "median": 16870940
+          },
+          "renderer_counts": [
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          ],
+          "matched_renderer_counts": true,
+          "median_delta_bytes": 7637068,
+          "within_10_mib": true
+        },
+        {
+          "checkpoint": "navigation_15",
+          "metric": "renderer_rss_sum_bytes",
+          "before": {
+            "samples": [
+              561319936,
+              592527360,
+              601485312,
+              581189632,
+              596291584
+            ],
+            "median": 592527360
+          },
+          "after": {
+            "samples": [
+              561356800,
+              586985472,
+              565370880,
+              570032128,
+              576057344
+            ],
+            "median": 570032128
+          },
+          "renderer_counts": [
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          ],
+          "matched_renderer_counts": true,
+          "median_delta_bytes": -22495232,
+          "within_10_mib": true
+        },
+        {
+          "checkpoint": "navigation_15",
+          "metric": "js_heap_bytes",
+          "before": {
+            "samples": [
+              8737700,
+              8093348,
+              8172460,
+              12547400,
+              8899676
+            ],
+            "median": 8737700
+          },
+          "after": {
+            "samples": [
+              8030232,
+              7990344,
+              7719500,
+              7460428,
+              11187468
+            ],
+            "median": 7990344
+          },
+          "renderer_counts": [
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          ],
+          "matched_renderer_counts": true,
+          "median_delta_bytes": -747356,
+          "within_10_mib": true
+        },
+        {
+          "checkpoint": "navigation_20",
+          "metric": "renderer_rss_sum_bytes",
+          "before": {
+            "samples": [
+              558358528,
+              587980800,
+              597811200,
+              572035072,
+              592928768
+            ],
+            "median": 587980800
+          },
+          "after": {
+            "samples": [
+              559083520,
+              584396800,
+              563040256,
+              567701504,
+              568020992
+            ],
+            "median": 567701504
+          },
+          "renderer_counts": [
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          ],
+          "matched_renderer_counts": true,
+          "median_delta_bytes": -20279296,
+          "within_10_mib": true
+        },
+        {
+          "checkpoint": "navigation_20",
+          "metric": "js_heap_bytes",
+          "before": {
+            "samples": [
+              6195476,
+              6162548,
+              6251556,
+              5663460,
+              6161352
+            ],
+            "median": 6162548
+          },
+          "after": {
+            "samples": [
+              6168676,
+              6139652,
+              6168632,
+              6140444,
+              6512612
+            ],
+            "median": 6168632
+          },
+          "renderer_counts": [
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          ],
+          "matched_renderer_counts": true,
+          "median_delta_bytes": 6084,
+          "within_10_mib": true
+        }
+      ],
+      "failures": [],
+      "screen_qualifies": true
+    },
+    {
+      "arm": "geometry",
+      "order": "reverse",
+      "status": "application_regression",
+      "coverage": "warm desktop only",
+      "acceptance": false,
+      "records": [
+        {
+          "checkpoint": "home_idle",
+          "metric": "renderer_rss_sum_bytes",
+          "before": {
+            "samples": [
+              416858112,
+              446558208,
+              447385600,
+              446922752,
+              447160320
+            ],
+            "median": 446922752
+          },
+          "after": {
+            "samples": [
+              421031936,
+              450752512,
+              449368064,
+              449622016,
+              452042752
+            ],
+            "median": 449622016
+          },
+          "renderer_counts": [
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          ],
+          "matched_renderer_counts": true,
+          "median_delta_bytes": 2699264,
+          "within_10_mib": true
+        },
+        {
+          "checkpoint": "home_idle",
+          "metric": "js_heap_bytes",
+          "before": {
+            "samples": [
+              2632296,
+              2636704,
+              2623960,
+              2636900,
+              2623164
+            ],
+            "median": 2632296
+          },
+          "after": {
+            "samples": [
+              2622968,
+              2635192,
+              2622620,
+              2635680,
+              2638216
+            ],
+            "median": 2635192
+          },
+          "renderer_counts": [
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          ],
+          "matched_renderer_counts": true,
+          "median_delta_bytes": 2896,
+          "within_10_mib": true
+        },
+        {
+          "checkpoint": "home_interaction",
+          "metric": "renderer_rss_sum_bytes",
+          "before": {
+            "samples": [
+              423964672,
+              447442944,
+              448335872,
+              447508480,
+              449507328
+            ],
+            "median": 447508480
+          },
+          "after": {
+            "samples": [
+              427196416,
+              450727936,
+              450064384,
+              449695744,
+              451612672
+            ],
+            "median": 450064384
+          },
+          "renderer_counts": [
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          ],
+          "matched_renderer_counts": true,
+          "median_delta_bytes": 2555904,
+          "within_10_mib": true
+        },
+        {
+          "checkpoint": "home_interaction",
+          "metric": "js_heap_bytes",
+          "before": {
+            "samples": [
+              4783720,
+              3876932,
+              3117780,
+              3838256,
+              3195680
+            ],
+            "median": 3838256
+          },
+          "after": {
+            "samples": [
+              3845392,
+              3453796,
+              3457456,
+              3429688,
+              3552344
+            ],
+            "median": 3457456
+          },
+          "renderer_counts": [
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          ],
+          "matched_renderer_counts": true,
+          "median_delta_bytes": -380800,
+          "within_10_mib": true
+        },
+        {
+          "checkpoint": "wellness_care",
+          "metric": "renderer_rss_sum_bytes",
+          "before": {
+            "samples": [
+              423936000,
+              445218816,
+              445587456,
+              441815040,
+              447041536
+            ],
+            "median": 445218816
+          },
+          "after": {
+            "samples": [
+              425480192,
+              449720320,
+              448425984,
+              448393216,
+              449748992
+            ],
+            "median": 448425984
+          },
+          "renderer_counts": [
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          ],
+          "matched_renderer_counts": true,
+          "median_delta_bytes": 3207168,
+          "within_10_mib": true
+        },
+        {
+          "checkpoint": "wellness_care",
+          "metric": "js_heap_bytes",
+          "before": {
+            "samples": [
+              4866388,
+              3154232,
+              3210492,
+              3214428,
+              3279364
+            ],
+            "median": 3214428
+          },
+          "after": {
+            "samples": [
+              3118604,
+              3173036,
+              3179888,
+              3178916,
+              3176564
+            ],
+            "median": 3176564
+          },
+          "renderer_counts": [
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          ],
+          "matched_renderer_counts": true,
+          "median_delta_bytes": -37864,
+          "within_10_mib": true
+        },
+        {
+          "checkpoint": "picker_growth",
+          "metric": "renderer_rss_sum_bytes",
+          "before": {
+            "samples": [
+              452534272,
+              479789056,
+              479649792,
+              476925952,
+              481505280
+            ],
+            "median": 479649792
+          },
+          "after": {
+            "samples": [
+              453558272,
+              478494720,
+              483127296,
+              482091008,
+              479363072
+            ],
+            "median": 479363072
+          },
+          "renderer_counts": [
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          ],
+          "matched_renderer_counts": true,
+          "median_delta_bytes": -286720,
+          "within_10_mib": true
+        },
+        {
+          "checkpoint": "picker_growth",
+          "metric": "js_heap_bytes",
+          "before": {
+            "samples": [
+              5152668,
+              5566812,
+              5162688,
+              5203524,
+              5245992
+            ],
+            "median": 5203524
+          },
+          "after": {
+            "samples": [
+              5162872,
+              5158332,
+              5560240,
+              5544660,
+              5545648
+            ],
+            "median": 5544660
+          },
+          "renderer_counts": [
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          ],
+          "matched_renderer_counts": true,
+          "median_delta_bytes": 341136,
+          "within_10_mib": true
+        },
+        {
+          "checkpoint": "seasonal_preview",
+          "metric": "renderer_rss_sum_bytes",
+          "before": {
+            "samples": [
+              500363264,
+              520261632,
+              518369280,
+              518225920,
+              524550144
+            ],
+            "median": 518369280
+          },
+          "after": {
+            "samples": [
+              503685120,
+              519151616,
+              522100736,
+              522768384,
+              524390400
+            ],
+            "median": 522100736
+          },
+          "renderer_counts": [
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          ],
+          "matched_renderer_counts": true,
+          "median_delta_bytes": 3731456,
+          "within_10_mib": true
+        },
+        {
+          "checkpoint": "seasonal_preview",
+          "metric": "js_heap_bytes",
+          "before": {
+            "samples": [
+              8757064,
+              11452360,
+              11182880,
+              11124024,
+              13929584
+            ],
+            "median": 11182880
+          },
+          "after": {
+            "samples": [
+              8742868,
+              11143816,
+              11112652,
+              11161764,
+              10961884
+            ],
+            "median": 11112652
+          },
+          "renderer_counts": [
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          ],
+          "matched_renderer_counts": true,
+          "median_delta_bytes": -70228,
+          "within_10_mib": true
+        },
+        {
+          "checkpoint": "offscreen",
+          "metric": "renderer_rss_sum_bytes",
+          "before": {
+            "samples": [
+              474746880,
+              496721920,
+              494948352,
+              494596096,
+              500690944
+            ],
+            "median": 494948352
+          },
+          "after": {
+            "samples": [
+              478380032,
+              497709056,
+              498892800,
+              498499584,
+              500994048
+            ],
+            "median": 498499584
+          },
+          "renderer_counts": [
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          ],
+          "matched_renderer_counts": true,
+          "median_delta_bytes": 3551232,
+          "within_10_mib": true
+        },
+        {
+          "checkpoint": "offscreen",
+          "metric": "js_heap_bytes",
+          "before": {
+            "samples": [
+              9610060,
+              11044828,
+              10802980,
+              10785076,
+              14786688
+            ],
+            "median": 10802980
+          },
+          "after": {
+            "samples": [
+              9562416,
+              10737064,
+              10772012,
+              10799780,
+              10615624
+            ],
+            "median": 10737064
+          },
+          "renderer_counts": [
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          ],
+          "matched_renderer_counts": true,
+          "median_delta_bytes": -65916,
+          "within_10_mib": true
+        },
+        {
+          "checkpoint": "reduced_motion",
+          "metric": "renderer_rss_sum_bytes",
+          "before": {
+            "samples": [
+              475389952,
+              498249728,
+              496427008,
+              496492544,
+              502124544
+            ],
+            "median": 496492544
+          },
+          "after": {
+            "samples": [
+              478777344,
+              499539968,
+              500654080,
+              499965952,
+              502624256
+            ],
+            "median": 499965952
+          },
+          "renderer_counts": [
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          ],
+          "matched_renderer_counts": true,
+          "median_delta_bytes": 3473408,
+          "within_10_mib": true
+        },
+        {
+          "checkpoint": "reduced_motion",
+          "metric": "js_heap_bytes",
+          "before": {
+            "samples": [
+              9766992,
+              11201600,
+              10959728,
+              10941764,
+              14943480
+            ],
+            "median": 10959728
+          },
+          "after": {
+            "samples": [
+              9719316,
+              10893760,
+              10928836,
+              10956624,
+              10772420
+            ],
+            "median": 10893760
+          },
+          "renderer_counts": [
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          ],
+          "matched_renderer_counts": true,
+          "median_delta_bytes": -65968,
+          "within_10_mib": true
+        },
+        {
+          "checkpoint": "background",
+          "metric": "renderer_rss_sum_bytes",
+          "before": {
+            "samples": [
+              613486592,
+              623063040,
+              611905536,
+              637501440,
+              642396160
+            ],
+            "median": 623063040
+          },
+          "after": {
+            "samples": [
+              618295296,
+              641761280,
+              642805760,
+              642420736,
+              644882432
+            ],
+            "median": 642420736
+          },
+          "renderer_counts": [
+            [
+              4,
+              4,
+              4,
+              4,
+              4
+            ],
+            [
+              4,
+              4,
+              4,
+              4,
+              4
+            ]
+          ],
+          "matched_renderer_counts": true,
+          "median_delta_bytes": 19357696,
+          "within_10_mib": false
+        },
+        {
+          "checkpoint": "background",
+          "metric": "js_heap_bytes",
+          "before": {
+            "samples": [
+              9915108,
+              11351432,
+              11109392,
+              11091268,
+              15093100
+            ],
+            "median": 11109392
+          },
+          "after": {
+            "samples": [
+              9867340,
+              11048036,
+              11083048,
+              11110884,
+              10926896
+            ],
+            "median": 11048036
+          },
+          "renderer_counts": [
+            [
+              4,
+              4,
+              4,
+              4,
+              4
+            ],
+            [
+              4,
+              4,
+              4,
+              4,
+              4
+            ]
+          ],
+          "matched_renderer_counts": true,
+          "median_delta_bytes": -61356,
+          "within_10_mib": true
+        },
+        {
+          "checkpoint": "navigation_1",
+          "metric": "renderer_rss_sum_bytes",
+          "before": {
+            "samples": [
+              502697984,
+              516501504,
+              506228736,
+              530980864,
+              535425024
+            ],
+            "median": 516501504
+          },
+          "after": {
+            "samples": [
+              505307136,
+              532414464,
+              534179840,
+              534036480,
+              536416256
+            ],
+            "median": 534036480
+          },
+          "renderer_counts": [
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          ],
+          "matched_renderer_counts": true,
+          "median_delta_bytes": 17534976,
+          "within_10_mib": false
+        },
+        {
+          "checkpoint": "navigation_1",
+          "metric": "js_heap_bytes",
+          "before": {
+            "samples": [
+              10706660,
+              12143528,
+              11900760,
+              11891716,
+              11416716
+            ],
+            "median": 11891716
+          },
+          "after": {
+            "samples": [
+              10639324,
+              11820100,
+              11858652,
+              11887124,
+              11699676
+            ],
+            "median": 11820100
+          },
+          "renderer_counts": [
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          ],
+          "matched_renderer_counts": true,
+          "median_delta_bytes": -71616,
+          "within_10_mib": true
+        },
+        {
+          "checkpoint": "navigation_5",
+          "metric": "renderer_rss_sum_bytes",
+          "before": {
+            "samples": [
+              541196288,
+              565981184,
+              554881024,
+              580120576,
+              572686336
+            ],
+            "median": 565981184
+          },
+          "after": {
+            "samples": [
+              541933568,
+              581820416,
+              582488064,
+              582979584,
+              584138752
+            ],
+            "median": 582488064
+          },
+          "renderer_counts": [
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          ],
+          "matched_renderer_counts": true,
+          "median_delta_bytes": 16506880,
+          "within_10_mib": false
+        },
+        {
+          "checkpoint": "navigation_5",
+          "metric": "js_heap_bytes",
+          "before": {
+            "samples": [
+              13390724,
+              14830160,
+              14586300,
+              14576928,
+              7866352
+            ],
+            "median": 14576928
+          },
+          "after": {
+            "samples": [
+              13246724,
+              14432948,
+              14467764,
+              14497356,
+              14308360
+            ],
+            "median": 14432948
+          },
+          "renderer_counts": [
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          ],
+          "matched_renderer_counts": true,
+          "median_delta_bytes": -143980,
+          "within_10_mib": true
+        },
+        {
+          "checkpoint": "navigation_10",
+          "metric": "renderer_rss_sum_bytes",
+          "before": {
+            "samples": [
+              566513664,
+              593907712,
+              583479296,
+              607842304,
+              577302528
+            ],
+            "median": 583479296
+          },
+          "after": {
+            "samples": [
+              569683968,
+              610275328,
+              610516992,
+              610189312,
+              613441536
+            ],
+            "median": 610275328
+          },
+          "renderer_counts": [
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          ],
+          "matched_renderer_counts": true,
+          "median_delta_bytes": 26796032,
+          "within_10_mib": false
+        },
+        {
+          "checkpoint": "navigation_10",
+          "metric": "js_heap_bytes",
+          "before": {
+            "samples": [
+              5421828,
+              18145240,
+              17898240,
+              17891484,
+              11181360
+            ],
+            "median": 17891484
+          },
+          "after": {
+            "samples": [
+              16462484,
+              17651612,
+              17682872,
+              17713164,
+              17524572
+            ],
+            "median": 17651612
+          },
+          "renderer_counts": [
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          ],
+          "matched_renderer_counts": true,
+          "median_delta_bytes": -239872,
+          "within_10_mib": true
+        },
+        {
+          "checkpoint": "navigation_15",
+          "metric": "renderer_rss_sum_bytes",
+          "before": {
+            "samples": [
+              558735360,
+              583708672,
+              572493824,
+              598142976,
+              582348800
+            ],
+            "median": 582348800
+          },
+          "after": {
+            "samples": [
+              563081216,
+              605097984,
+              604823552,
+              602894336,
+              609677312
+            ],
+            "median": 604823552
+          },
+          "renderer_counts": [
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          ],
+          "matched_renderer_counts": true,
+          "median_delta_bytes": 22474752,
+          "within_10_mib": false
+        },
+        {
+          "checkpoint": "navigation_15",
+          "metric": "js_heap_bytes",
+          "before": {
+            "samples": [
+              8735660,
+              8169740,
+              8174812,
+              8174808,
+              14493888
+            ],
+            "median": 8174812
+          },
+          "after": {
+            "samples": [
+              8040792,
+              7407916,
+              7983996,
+              7968852,
+              7457160
+            ],
+            "median": 7968852
+          },
+          "renderer_counts": [
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          ],
+          "matched_renderer_counts": true,
+          "median_delta_bytes": -205960,
+          "within_10_mib": true
+        },
+        {
+          "checkpoint": "navigation_20",
+          "metric": "renderer_rss_sum_bytes",
+          "before": {
+            "samples": [
+              555323392,
+              580919296,
+              570322944,
+              595005440,
+              584892416
+            ],
+            "median": 580919296
+          },
+          "after": {
+            "samples": [
+              560455680,
+              603017216,
+              601989120,
+              600039424,
+              607907840
+            ],
+            "median": 601989120
+          },
+          "renderer_counts": [
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          ],
+          "matched_renderer_counts": true,
+          "median_delta_bytes": 21069824,
+          "within_10_mib": false
+        },
+        {
+          "checkpoint": "navigation_20",
+          "metric": "js_heap_bytes",
+          "before": {
+            "samples": [
+              6195408,
+              6769012,
+              6166600,
+              6167020,
+              6351736
+            ],
+            "median": 6195408
+          },
+          "after": {
+            "samples": [
+              6164348,
+              6141428,
+              6178324,
+              6141572,
+              6135936
+            ],
+            "median": 6141572
+          },
+          "renderer_counts": [
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          ],
+          "matched_renderer_counts": true,
+          "median_delta_bytes": -53836,
+          "within_10_mib": true
+        }
+      ],
+      "failures": [
+        {
+          "checkpoint": "background",
+          "metric": "renderer_rss_sum_bytes",
+          "before": {
+            "samples": [
+              613486592,
+              623063040,
+              611905536,
+              637501440,
+              642396160
+            ],
+            "median": 623063040
+          },
+          "after": {
+            "samples": [
+              618295296,
+              641761280,
+              642805760,
+              642420736,
+              644882432
+            ],
+            "median": 642420736
+          },
+          "renderer_counts": [
+            [
+              4,
+              4,
+              4,
+              4,
+              4
+            ],
+            [
+              4,
+              4,
+              4,
+              4,
+              4
+            ]
+          ],
+          "matched_renderer_counts": true,
+          "median_delta_bytes": 19357696,
+          "within_10_mib": false
+        },
+        {
+          "checkpoint": "navigation_1",
+          "metric": "renderer_rss_sum_bytes",
+          "before": {
+            "samples": [
+              502697984,
+              516501504,
+              506228736,
+              530980864,
+              535425024
+            ],
+            "median": 516501504
+          },
+          "after": {
+            "samples": [
+              505307136,
+              532414464,
+              534179840,
+              534036480,
+              536416256
+            ],
+            "median": 534036480
+          },
+          "renderer_counts": [
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          ],
+          "matched_renderer_counts": true,
+          "median_delta_bytes": 17534976,
+          "within_10_mib": false
+        },
+        {
+          "checkpoint": "navigation_5",
+          "metric": "renderer_rss_sum_bytes",
+          "before": {
+            "samples": [
+              541196288,
+              565981184,
+              554881024,
+              580120576,
+              572686336
+            ],
+            "median": 565981184
+          },
+          "after": {
+            "samples": [
+              541933568,
+              581820416,
+              582488064,
+              582979584,
+              584138752
+            ],
+            "median": 582488064
+          },
+          "renderer_counts": [
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          ],
+          "matched_renderer_counts": true,
+          "median_delta_bytes": 16506880,
+          "within_10_mib": false
+        },
+        {
+          "checkpoint": "navigation_10",
+          "metric": "renderer_rss_sum_bytes",
+          "before": {
+            "samples": [
+              566513664,
+              593907712,
+              583479296,
+              607842304,
+              577302528
+            ],
+            "median": 583479296
+          },
+          "after": {
+            "samples": [
+              569683968,
+              610275328,
+              610516992,
+              610189312,
+              613441536
+            ],
+            "median": 610275328
+          },
+          "renderer_counts": [
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          ],
+          "matched_renderer_counts": true,
+          "median_delta_bytes": 26796032,
+          "within_10_mib": false
+        },
+        {
+          "checkpoint": "navigation_15",
+          "metric": "renderer_rss_sum_bytes",
+          "before": {
+            "samples": [
+              558735360,
+              583708672,
+              572493824,
+              598142976,
+              582348800
+            ],
+            "median": 582348800
+          },
+          "after": {
+            "samples": [
+              563081216,
+              605097984,
+              604823552,
+              602894336,
+              609677312
+            ],
+            "median": 604823552
+          },
+          "renderer_counts": [
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          ],
+          "matched_renderer_counts": true,
+          "median_delta_bytes": 22474752,
+          "within_10_mib": false
+        },
+        {
+          "checkpoint": "navigation_20",
+          "metric": "renderer_rss_sum_bytes",
+          "before": {
+            "samples": [
+              555323392,
+              580919296,
+              570322944,
+              595005440,
+              584892416
+            ],
+            "median": 580919296
+          },
+          "after": {
+            "samples": [
+              560455680,
+              603017216,
+              601989120,
+              600039424,
+              607907840
+            ],
+            "median": 601989120
+          },
+          "renderer_counts": [
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            [
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          ],
+          "matched_renderer_counts": true,
+          "median_delta_bytes": 21069824,
+          "within_10_mib": false
+        }
+      ],
+      "screen_qualifies": false
+    }
+  ],
+  "current_repeat": {
+    "status": "passed",
+    "coverage": "warm desktop only",
+    "acceptance": false,
+    "records": [
+      {
+        "checkpoint": "home_idle",
+        "metric": "renderer_rss_sum_bytes",
+        "before": {
+          "samples": [
+            420147200,
+            450945024,
+            451145728,
+            451276800,
+            450113536
+          ],
+          "median": 450945024
+        },
+        "after": {
+          "samples": [
+            416858112,
+            446558208,
+            447385600,
+            446922752,
+            447160320
+          ],
+          "median": 446922752
+        },
+        "renderer_counts": [
+          [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        ],
+        "matched_renderer_counts": true,
+        "median_delta_bytes": -4022272,
+        "within_10_mib": true
+      },
+      {
+        "checkpoint": "home_idle",
+        "metric": "js_heap_bytes",
+        "before": {
+          "samples": [
+            2624052,
+            2623472,
+            2636804,
+            2626028,
+            2624256
+          ],
+          "median": 2624256
+        },
+        "after": {
+          "samples": [
+            2632296,
+            2636704,
+            2623960,
+            2636900,
+            2623164
+          ],
+          "median": 2632296
+        },
+        "renderer_counts": [
+          [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        ],
+        "matched_renderer_counts": true,
+        "median_delta_bytes": 8040,
+        "within_10_mib": true
+      },
+      {
+        "checkpoint": "home_interaction",
+        "metric": "renderer_rss_sum_bytes",
+        "before": {
+          "samples": [
+            428724224,
+            451465216,
+            451608576,
+            452472832,
+            451297280
+          ],
+          "median": 451465216
+        },
+        "after": {
+          "samples": [
+            423964672,
+            447442944,
+            448335872,
+            447508480,
+            449507328
+          ],
+          "median": 447508480
+        },
+        "renderer_counts": [
+          [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        ],
+        "matched_renderer_counts": true,
+        "median_delta_bytes": -3956736,
+        "within_10_mib": true
+      },
+      {
+        "checkpoint": "home_interaction",
+        "metric": "js_heap_bytes",
+        "before": {
+          "samples": [
+            4807824,
+            3703352,
+            3819024,
+            3889820,
+            3777212
+          ],
+          "median": 3819024
+        },
+        "after": {
+          "samples": [
+            4783720,
+            3876932,
+            3117780,
+            3838256,
+            3195680
+          ],
+          "median": 3838256
+        },
+        "renderer_counts": [
+          [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        ],
+        "matched_renderer_counts": true,
+        "median_delta_bytes": 19232,
+        "within_10_mib": true
+      },
+      {
+        "checkpoint": "wellness_care",
+        "metric": "renderer_rss_sum_bytes",
+        "before": {
+          "samples": [
+            427552768,
+            448516096,
+            448811008,
+            449560576,
+            448749568
+          ],
+          "median": 448749568
+        },
+        "after": {
+          "samples": [
+            423936000,
+            445218816,
+            445587456,
+            441815040,
+            447041536
+          ],
+          "median": 445218816
+        },
+        "renderer_counts": [
+          [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        ],
+        "matched_renderer_counts": true,
+        "median_delta_bytes": -3530752,
+        "within_10_mib": true
+      },
+      {
+        "checkpoint": "wellness_care",
+        "metric": "js_heap_bytes",
+        "before": {
+          "samples": [
+            3195980,
+            3210684,
+            3214116,
+            3218332,
+            3213716
+          ],
+          "median": 3213716
+        },
+        "after": {
+          "samples": [
+            4866388,
+            3154232,
+            3210492,
+            3214428,
+            3279364
+          ],
+          "median": 3214428
+        },
+        "renderer_counts": [
+          [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        ],
+        "matched_renderer_counts": true,
+        "median_delta_bytes": 712,
+        "within_10_mib": true
+      },
+      {
+        "checkpoint": "picker_growth",
+        "metric": "renderer_rss_sum_bytes",
+        "before": {
+          "samples": [
+            457670656,
+            478031872,
+            478085120,
+            479363072,
+            482516992
+          ],
+          "median": 478085120
+        },
+        "after": {
+          "samples": [
+            452534272,
+            479789056,
+            479649792,
+            476925952,
+            481505280
+          ],
+          "median": 479649792
+        },
+        "renderer_counts": [
+          [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        ],
+        "matched_renderer_counts": true,
+        "median_delta_bytes": 1564672,
+        "within_10_mib": true
+      },
+      {
+        "checkpoint": "picker_growth",
+        "metric": "js_heap_bytes",
+        "before": {
+          "samples": [
+            5161400,
+            5168436,
+            5150224,
+            5579848,
+            5162896
+          ],
+          "median": 5162896
+        },
+        "after": {
+          "samples": [
+            5152668,
+            5566812,
+            5162688,
+            5203524,
+            5245992
+          ],
+          "median": 5203524
+        },
+        "renderer_counts": [
+          [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        ],
+        "matched_renderer_counts": true,
+        "median_delta_bytes": 40628,
+        "within_10_mib": true
+      },
+      {
+        "checkpoint": "seasonal_preview",
+        "metric": "renderer_rss_sum_bytes",
+        "before": {
+          "samples": [
+            500731904,
+            511119360,
+            520687616,
+            523866112,
+            516108288
+          ],
+          "median": 516108288
+        },
+        "after": {
+          "samples": [
+            500363264,
+            520261632,
+            518369280,
+            518225920,
+            524550144
+          ],
+          "median": 518369280
+        },
+        "renderer_counts": [
+          [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        ],
+        "matched_renderer_counts": true,
+        "median_delta_bytes": 2260992,
+        "within_10_mib": true
+      },
+      {
+        "checkpoint": "seasonal_preview",
+        "metric": "js_heap_bytes",
+        "before": {
+          "samples": [
+            8751504,
+            9329368,
+            11180576,
+            13861764,
+            9817736
+          ],
+          "median": 9817736
+        },
+        "after": {
+          "samples": [
+            8757064,
+            11452360,
+            11182880,
+            11124024,
+            13929584
+          ],
+          "median": 11182880
+        },
+        "renderer_counts": [
+          [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        ],
+        "matched_renderer_counts": true,
+        "median_delta_bytes": 1365144,
+        "within_10_mib": true
+      },
+      {
+        "checkpoint": "offscreen",
+        "metric": "renderer_rss_sum_bytes",
+        "before": {
+          "samples": [
+            478593024,
+            487124992,
+            496861184,
+            500178944,
+            493842432
+          ],
+          "median": 493842432
+        },
+        "after": {
+          "samples": [
+            474746880,
+            496721920,
+            494948352,
+            494596096,
+            500690944
+          ],
+          "median": 494948352
+        },
+        "renderer_counts": [
+          [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        ],
+        "matched_renderer_counts": true,
+        "median_delta_bytes": 1105920,
+        "within_10_mib": true
+      },
+      {
+        "checkpoint": "offscreen",
+        "metric": "js_heap_bytes",
+        "before": {
+          "samples": [
+            9596384,
+            9415384,
+            10793032,
+            14707684,
+            9377136
+          ],
+          "median": 9596384
+        },
+        "after": {
+          "samples": [
+            9610060,
+            11044828,
+            10802980,
+            10785076,
+            14786688
+          ],
+          "median": 10802980
+        },
+        "renderer_counts": [
+          [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        ],
+        "matched_renderer_counts": true,
+        "median_delta_bytes": 1206596,
+        "within_10_mib": true
+      },
+      {
+        "checkpoint": "reduced_motion",
+        "metric": "renderer_rss_sum_bytes",
+        "before": {
+          "samples": [
+            479555584,
+            489193472,
+            498491392,
+            502296576,
+            496185344
+          ],
+          "median": 496185344
+        },
+        "after": {
+          "samples": [
+            475389952,
+            498249728,
+            496427008,
+            496492544,
+            502124544
+          ],
+          "median": 496492544
+        },
+        "renderer_counts": [
+          [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        ],
+        "matched_renderer_counts": true,
+        "median_delta_bytes": 307200,
+        "within_10_mib": true
+      },
+      {
+        "checkpoint": "reduced_motion",
+        "metric": "js_heap_bytes",
+        "before": {
+          "samples": [
+            9753228,
+            9572188,
+            10949856,
+            14864472,
+            9534004
+          ],
+          "median": 9753228
+        },
+        "after": {
+          "samples": [
+            9766992,
+            11201600,
+            10959728,
+            10941764,
+            14943480
+          ],
+          "median": 10959728
+        },
+        "renderer_counts": [
+          [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        ],
+        "matched_renderer_counts": true,
+        "median_delta_bytes": 1206500,
+        "within_10_mib": true
+      },
+      {
+        "checkpoint": "background",
+        "metric": "renderer_rss_sum_bytes",
+        "before": {
+          "samples": [
+            618541056,
+            630702080,
+            641478656,
+            644112384,
+            639524864
+          ],
+          "median": 639524864
+        },
+        "after": {
+          "samples": [
+            613486592,
+            623063040,
+            611905536,
+            637501440,
+            642396160
+          ],
+          "median": 623063040
+        },
+        "renderer_counts": [
+          [
+            4,
+            4,
+            4,
+            4,
+            4
+          ],
+          [
+            4,
+            4,
+            4,
+            4,
+            4
+          ]
+        ],
+        "matched_renderer_counts": true,
+        "median_delta_bytes": -16461824,
+        "within_10_mib": true
+      },
+      {
+        "checkpoint": "background",
+        "metric": "js_heap_bytes",
+        "before": {
+          "samples": [
+            9901376,
+            9721856,
+            11099608,
+            15014016,
+            9683816
+          ],
+          "median": 9901376
+        },
+        "after": {
+          "samples": [
+            9915108,
+            11351432,
+            11109392,
+            11091268,
+            15093100
+          ],
+          "median": 11109392
+        },
+        "renderer_counts": [
+          [
+            4,
+            4,
+            4,
+            4,
+            4
+          ],
+          [
+            4,
+            4,
+            4,
+            4,
+            4
+          ]
+        ],
+        "matched_renderer_counts": true,
+        "median_delta_bytes": 1208016,
+        "within_10_mib": true
+      },
+      {
+        "checkpoint": "navigation_1",
+        "metric": "renderer_rss_sum_bytes",
+        "before": {
+          "samples": [
+            505847808,
+            521891840,
+            532881408,
+            535994368,
+            530948096
+          ],
+          "median": 530948096
+        },
+        "after": {
+          "samples": [
+            502697984,
+            516501504,
+            506228736,
+            530980864,
+            535425024
+          ],
+          "median": 516501504
+        },
+        "renderer_counts": [
+          [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        ],
+        "matched_renderer_counts": true,
+        "median_delta_bytes": -14446592,
+        "within_10_mib": true
+      },
+      {
+        "checkpoint": "navigation_1",
+        "metric": "js_heap_bytes",
+        "before": {
+          "samples": [
+            10692748,
+            10513024,
+            11901036,
+            11344880,
+            10479288
+          ],
+          "median": 10692748
+        },
+        "after": {
+          "samples": [
+            10706660,
+            12143528,
+            11900760,
+            11891716,
+            11416716
+          ],
+          "median": 11891716
+        },
+        "renderer_counts": [
+          [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        ],
+        "matched_renderer_counts": true,
+        "median_delta_bytes": 1198968,
+        "within_10_mib": true
+      },
+      {
+        "checkpoint": "navigation_5",
+        "metric": "renderer_rss_sum_bytes",
+        "before": {
+          "samples": [
+            542679040,
+            570761216,
+            581795840,
+            572592128,
+            588914688
+          ],
+          "median": 572592128
+        },
+        "after": {
+          "samples": [
+            541196288,
+            565981184,
+            554881024,
+            580120576,
+            572686336
+          ],
+          "median": 565981184
+        },
+        "renderer_counts": [
+          [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        ],
+        "matched_renderer_counts": true,
+        "median_delta_bytes": -6610944,
+        "within_10_mib": true
+      },
+      {
+        "checkpoint": "navigation_5",
+        "metric": "js_heap_bytes",
+        "before": {
+          "samples": [
+            13378128,
+            13198684,
+            14585080,
+            5918060,
+            13164680
+          ],
+          "median": 13198684
+        },
+        "after": {
+          "samples": [
+            13390724,
+            14830160,
+            14586300,
+            14576928,
+            7866352
+          ],
+          "median": 14576928
+        },
+        "renderer_counts": [
+          [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        ],
+        "matched_renderer_counts": true,
+        "median_delta_bytes": 1378244,
+        "within_10_mib": true
+      },
+      {
+        "checkpoint": "navigation_10",
+        "metric": "renderer_rss_sum_bytes",
+        "before": {
+          "samples": [
+            570040320,
+            599113728,
+            610877440,
+            576131072,
+            592265216
+          ],
+          "median": 592265216
+        },
+        "after": {
+          "samples": [
+            566513664,
+            593907712,
+            583479296,
+            607842304,
+            577302528
+          ],
+          "median": 583479296
+        },
+        "renderer_counts": [
+          [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        ],
+        "matched_renderer_counts": true,
+        "median_delta_bytes": -8785920,
+        "within_10_mib": true
+      },
+      {
+        "checkpoint": "navigation_10",
+        "metric": "js_heap_bytes",
+        "before": {
+          "samples": [
+            5422140,
+            16510008,
+            17901236,
+            9233872,
+            5582468
+          ],
+          "median": 9233872
+        },
+        "after": {
+          "samples": [
+            5421828,
+            18145240,
+            17898240,
+            17891484,
+            11181360
+          ],
+          "median": 17891484
+        },
+        "renderer_counts": [
+          [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        ],
+        "matched_renderer_counts": true,
+        "median_delta_bytes": 8657612,
+        "within_10_mib": true
+      },
+      {
+        "checkpoint": "navigation_15",
+        "metric": "renderer_rss_sum_bytes",
+        "before": {
+          "samples": [
+            561319936,
+            592527360,
+            601485312,
+            581189632,
+            596291584
+          ],
+          "median": 592527360
+        },
+        "after": {
+          "samples": [
+            558735360,
+            583708672,
+            572493824,
+            598142976,
+            582348800
+          ],
+          "median": 582348800
+        },
+        "renderer_counts": [
+          [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        ],
+        "matched_renderer_counts": true,
+        "median_delta_bytes": -10178560,
+        "within_10_mib": true
+      },
+      {
+        "checkpoint": "navigation_15",
+        "metric": "js_heap_bytes",
+        "before": {
+          "samples": [
+            8737700,
+            8093348,
+            8172460,
+            12547400,
+            8899676
+          ],
+          "median": 8737700
+        },
+        "after": {
+          "samples": [
+            8735660,
+            8169740,
+            8174812,
+            8174808,
+            14493888
+          ],
+          "median": 8174812
+        },
+        "renderer_counts": [
+          [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        ],
+        "matched_renderer_counts": true,
+        "median_delta_bytes": -562888,
+        "within_10_mib": true
+      },
+      {
+        "checkpoint": "navigation_20",
+        "metric": "renderer_rss_sum_bytes",
+        "before": {
+          "samples": [
+            558358528,
+            587980800,
+            597811200,
+            572035072,
+            592928768
+          ],
+          "median": 587980800
+        },
+        "after": {
+          "samples": [
+            555323392,
+            580919296,
+            570322944,
+            595005440,
+            584892416
+          ],
+          "median": 580919296
+        },
+        "renderer_counts": [
+          [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        ],
+        "matched_renderer_counts": true,
+        "median_delta_bytes": -7061504,
+        "within_10_mib": true
+      },
+      {
+        "checkpoint": "navigation_20",
+        "metric": "js_heap_bytes",
+        "before": {
+          "samples": [
+            6195476,
+            6162548,
+            6251556,
+            5663460,
+            6161352
+          ],
+          "median": 6162548
+        },
+        "after": {
+          "samples": [
+            6195408,
+            6769012,
+            6166600,
+            6167020,
+            6351736
+          ],
+          "median": 6195408
+        },
+        "renderer_counts": [
+          [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        ],
+        "matched_renderer_counts": true,
+        "median_delta_bytes": 32860,
+        "within_10_mib": true
+      }
+    ],
+    "failures": []
+  },
+  "screen_candidates": {
+    "geometry": false
+  },
+  "limits": "Warm desktop source isolation only. Not proof of causality or acceptance. Every candidate must repeat in five-sample original/current/candidate cohorts with no budget waiver."
+}
