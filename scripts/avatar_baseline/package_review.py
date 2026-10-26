@@ -2,6 +2,7 @@
 import argparse
 import hashlib
 import json
+import os
 from pathlib import Path
 import tarfile
 
@@ -14,8 +15,9 @@ def sha(path):
         for chunk in iter(lambda:source.read(1024*1024),b''):digest.update(chunk)
     return digest.hexdigest()
 
-files=[path for path in sorted(root.rglob('*')) if path.is_file()]
-manifest={'source_run_id':40247047928,
+files=[path for path in sorted(root.rglob('*')) if path.is_file() and path.name != 'review-manifest.json']
+manifest={'source_run_id':40247047928,'source_artifact_name':'avatar-2b-complete',
+          'audit_commit':os.getenv('GITHUB_SHA'),'generated_during_audit':['overall-assessment.json','review-manifest.json'],
           'source_run_url':'https://github.com/jongsky25/css-is/actions/runs/40247047928',
           'files':{str(p.relative_to(root)):{'sha256':sha(p),'bytes':p.stat().st_size} for p in files},
           'packaged':'All JSON, XML and text logs; binary screenshots and compressed traces remain in source artifact and are hashed here.'}
