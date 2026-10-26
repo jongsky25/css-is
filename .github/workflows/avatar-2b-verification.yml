@@ -2,7 +2,7 @@ name: Avatar 2B verification
 on:
   workflow_dispatch:
   push:
-    branches: [codex/avatar-2b-verification]
+    branches: [codex/avatar-2b-verification, codex/avatar-2b-full-lifecycle]
 permissions:
   contents: read
 concurrency:
@@ -27,7 +27,7 @@ jobs:
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - name: Verify evidence accounting
         id: accounting
-        run: .venv/bin/python -m pytest tests/test_avatar_verification_result.py tests/test_avatar_memory_audit.py -q
+        run: .venv/bin/python -m pytest tests/test_avatar_verification_result.py tests/test_avatar_memory_audit.py tests/test_avatar_targeted_memory.py tests/test_avatar_candidate_audit.py -q
       - name: Functional and visual gates
         id: functional
         if: ${{ !cancelled() && steps.install.outcome == 'success' && steps.accounting.outcome == 'success' }}
@@ -52,10 +52,86 @@ jobs:
         env:
           CSS_AVATAR_CHROMIUM: 156.0.8078.47
         run: .venv/bin/python scripts/avatar_baseline/ci_verify.py matrix
+      - name: Audit complete raw evidence and package portable review parts
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: |
+          .venv/bin/python scripts/avatar_baseline/assess_complete.py avatar-verification > avatar-verification/overall-audit.txt
+          .venv/bin/python scripts/avatar_baseline/package_review.py avatar-verification --output avatar-2b-review
       - name: Retain every measurement and failure
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: avatar-2b-complete
           path: avatar-verification/
-          retention-days: 7
+          retention-days: 30
+      - name: Retain portable review index
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: avatar-2b-review-index
+          path: avatar-2b-review-parts.json
+          retention-days: 30
+      - name: Retain portable review part 1
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: avatar-2b-review-1
+          path: avatar-2b-review-1.tar.gz
+          if-no-files-found: ignore
+          retention-days: 30
+      - name: Retain portable review part 2
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: avatar-2b-review-2
+          path: avatar-2b-review-2.tar.gz
+          if-no-files-found: ignore
+          retention-days: 30
+      - name: Retain portable review part 3
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: avatar-2b-review-3
+          path: avatar-2b-review-3.tar.gz
+          if-no-files-found: ignore
+          retention-days: 30
+      - name: Retain portable review part 4
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: avatar-2b-review-4
+          path: avatar-2b-review-4.tar.gz
+          if-no-files-found: ignore
+          retention-days: 30
+      - name: Retain portable review part 5
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: avatar-2b-review-5
+          path: avatar-2b-review-5.tar.gz
+          if-no-files-found: ignore
+          retention-days: 30
+      - name: Retain portable review part 6
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: avatar-2b-review-6
+          path: avatar-2b-review-6.tar.gz
+          if-no-files-found: ignore
+          retention-days: 30
+      - name: Retain portable review part 7
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: avatar-2b-review-7
+          path: avatar-2b-review-7.tar.gz
+          if-no-files-found: ignore
+          retention-days: 30
+      - name: Retain portable review part 8
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: avatar-2b-review-8
+          path: avatar-2b-review-8.tar.gz
+          if-no-files-found: ignore
+          retention-days: 30

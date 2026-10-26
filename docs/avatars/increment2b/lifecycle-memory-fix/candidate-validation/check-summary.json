@@ -1,0 +1,12 @@
+{
+  "unit_integration_existing_and_targeted": 186,
+  "independent_candidate_auditor": 3,
+  "browser_checks": 9,
+  "candidate_product": "509cd1a",
+  "geometry_pagehide_listener_count_before_after_20_evaluations": [
+    4,
+    4
+  ],
+  "memory_acceptance": "failed both orders; candidate rejected",
+  "full_acceptance": "not run because targeted gate failed"
+}

@@ -1,6 +1,6 @@
 # Avatar upgrade: new-chat handoff
 
-Last verified: **2026-10-26 05:55 UTC**. Repository: `jongsky25/css-is`.
+Last updated: **2026-10-26 09:38 UTC**. Repository: `jongsky25/css-is`.
 
 ## Current blocking correction
 
@@ -27,6 +27,33 @@ The prepared audit branch `codex/avatar-3a-artifact-audit` is explicitly paused 
 trigger it as an acceptance audit of the cancelled cohort. No later increments,
 merge to main or deployment occurred. The historical handoff below is superseded by this
 correction wherever it suggests CI success establishes complete memory acceptance.
+
+## Latest 2B investigation — candidate rejected, 2026-10-26
+
+Read [the follow-up report](avatars/increment2b/lifecycle-memory-fix/REPORT.md).
+Unchanged-source run 40287821303 retained 20 full warm-desktop samples and still
+fails reverse-order seasonal-preview RSS (+10.797 MiB). Candidate 509cd1a on
+`codex/avatar-2b-lifecycle-candidate` cancels owned animation effects on discarded
+pages. Its behavior check passes, but run 40292908517 (30 samples, three sources,
+both orders) fails both candidate memory gates: eight RSS failures up to +28.738
+MiB, plus a JS-heap failure +10.063 MiB. It also worsens three reverse-order RSS
+checks against unchanged current. The independent audit verifies 134 source
+hashes and 234 comparisons without validity errors. **Do not promote it.**
+
+The candidate branch preserves the rejected product and has its targeted workflow
+paused. The primary verification branch retains product f700187, with diagnostic
+evidence and audit tools. Full acceptance was not run after the failed targeted
+gate. All raw numeric evidence is preserved in the report's two hosted ZIPs and
+three native-probe ZIPs. Native allocation probes are instrumented diagnostics;
+early exploratory probes overlapped trace parsing and cannot establish causality.
+
+The next experiment must correlate natural Blink/V8 collection, navigation,
+renderer roles/PIDs and native allocation stacks on original/current source in
+both orders. Matching native debug symbols are now verified and reproducible;
+see `native-sampling/assessment.json` and `symbolize_native_memory.py`. Do not
+force GC, flush additional caches, subtract browser-UI/shared memory from RSS,
+or choose favourable samples. Do not rerun the rejected candidate without a new
+hypothesis. 2B remains unaccepted; 3A and later increments remain paused.
 
 ## Historical start here
 

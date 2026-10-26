@@ -1,0 +1,3736 @@
+{
+  "acceptance": false,
+  "instrumented": true,
+  "browser": "156.0.8078.47",
+  "limits": "One sample per variant; detailed dumps perturb execution. Early exploratory variants overlapped preceding trace parsing during startup. Only before-repeat/after-repeat/pagehide-cancel were cleanly serialized without parsing. Native allocator categories overlap. Prototype pagehide-cancel was unguarded; final candidate 509cd1a guards repeated initialization and is tested separately on hosted runner. No source cause or acceptance follows from these isolated deltas.",
+  "variants": [
+    {
+      "name": "before",
+      "source_environment": {
+        "source_commit": "1c964dcba2fa19de1eab077b00e0e5748d742554",
+        "platform": "Linux-6.18.55-x86_64-with-glibc2.41",
+        "python": "3.12.14",
+        "chromium": "156.0.8078.47",
+        "playwright": "1.62.0",
+        "fixture_date_local": "2026-07-15T12:00:00 Asia/Manila",
+        "browser_date": "2026-07-15T12:00:00Z + performance.now()",
+        "random_seed": 12345,
+        "source_sha256": {
+          "templates/_avatars.html": "1b21f18edc3b152d929d529d36bed73d372ddc54851d59f85707dcb262538da0",
+          "templates/_avatars_art.html": "aa542c3e007a4920cde6f32aa797cf79bb9b3ddf07250a459456f072b4c4ef29",
+          "templates/me.html": "251e987e3757c41c61926f93c3b6e265c05f34b086679b3dd5fe15c4ac3225fe",
+          "templates/_growth.html": "83b8db0de0c9a4b81d55047522c4878e0dfbd4f9e022e4d0540115dc03b6df42",
+          "static/js/avatars.js": "69c5841d65c4e1a47093c93a2ded9498b176b3b6cfb9ea34d2d7d633e07d6bb1",
+          "static/js/avatar-audio.js": "51de7cd0c5ab68874dfa5a50fab136ebbc415953fa8b5d0a09cae116d89303b9",
+          "static/js/search.js": "690833235cfe17debf3bbc4c164b3443a2f6597c3935d7961e1e47e2304b1a3c",
+          "templates/office_connect.html": "27b51b191807d4a859098f79250e10ab4195ba700f13966c05d61f45cd3b3577",
+          "templates/dash_layout.html": "89f27d671a1a1253ee6735635a9964ebec35be27c8efc8d848408064f840a735",
+          "tests/test_avatar_baseline_browser.py": "f56ba2198309e031212a2e04d7389ef7f6190ae57a4fb972bdf140031da01231",
+          "tests/avatar_browser_fixture.py": "208d41f1ab18b72052f25844a9cee54e7a3d516769bf4741de759fdd4db3399b"
+        },
+        "process_tree_cpu_affinity": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "requested_renderer_pin_cpu": null,
+        "proxy_compression": "test-local Starlette GZipMiddleware minimum_size=500"
+      },
+      "checkpoints": [
+        {
+          "checkpoint": "home_idle",
+          "rss_bytes": 399269888,
+          "js_heap_bytes": 2679152,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 1,
+            "nodes": 2669,
+            "jsEventListeners": 100
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 399269888,
+            "Pss": 187249664,
+            "Private_Dirty": 87154688,
+            "Shared_Clean": 249913344
+          },
+          "allocator_sizes": {
+            "malloc": 41778122,
+            "blink_gc": 19488848,
+            "v8": 17380320,
+            "partition_alloc": 11163551,
+            "cc/tile_memory": 19365888,
+            "shared_memory": 34906272,
+            "discardable": 13156352,
+            "skia": 436562
+          }
+        },
+        {
+          "checkpoint": "home_interaction",
+          "rss_bytes": 421167104,
+          "js_heap_bytes": 4490644,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 1,
+            "nodes": 2688,
+            "jsEventListeners": 124
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 421167104,
+            "Pss": 194295808,
+            "Private_Dirty": 89497600,
+            "Shared_Clean": 256790528
+          },
+          "allocator_sizes": {
+            "malloc": 41080956,
+            "blink_gc": 22372432,
+            "v8": 20006872,
+            "partition_alloc": 11001598,
+            "cc/tile_memory": 19251200,
+            "shared_memory": 34295968,
+            "discardable": 7647232,
+            "skia": 524652
+          }
+        },
+        {
+          "checkpoint": "wellness_care",
+          "rss_bytes": 427970560,
+          "js_heap_bytes": 3352680,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 1,
+            "nodes": 1500,
+            "jsEventListeners": 80
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 427970560,
+            "Pss": 199873536,
+            "Private_Dirty": 94171136,
+            "Shared_Clean": 257363968
+          },
+          "allocator_sizes": {
+            "malloc": 39467825,
+            "blink_gc": 22937760,
+            "v8": 21448656,
+            "partition_alloc": 10188208,
+            "cc/tile_memory": 18366464,
+            "shared_memory": 39305376,
+            "discardable": 13348864,
+            "skia": 740009
+          }
+        },
+        {
+          "checkpoint": "picker_growth",
+          "rss_bytes": 452993024,
+          "js_heap_bytes": 5000680,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 1,
+            "nodes": 4878,
+            "jsEventListeners": 104
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 452993024,
+            "Pss": 220599296,
+            "Private_Dirty": 105967616,
+            "Shared_Clean": 258592768
+          },
+          "allocator_sizes": {
+            "malloc": 46413749,
+            "blink_gc": 23031968,
+            "v8": 23039936,
+            "partition_alloc": 9647363,
+            "cc/tile_memory": 36126720,
+            "shared_memory": 59239072,
+            "discardable": 13422592,
+            "skia": 862141
+          }
+        },
+        {
+          "checkpoint": "seasonal_preview",
+          "rss_bytes": 481996800,
+          "js_heap_bytes": 9932688,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 9,
+            "nodes": 13823,
+            "jsEventListeners": 579
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 482000896,
+            "Pss": 243930112,
+            "Private_Dirty": 124141568,
+            "Shared_Clean": 262295552
+          },
+          "allocator_sizes": {
+            "malloc": 57427918,
+            "blink_gc": 30417136,
+            "v8": 27069288,
+            "partition_alloc": 13132852,
+            "cc/tile_memory": 42418176,
+            "shared_memory": 63778976,
+            "discardable": 13471744,
+            "skia": 1115502
+          }
+        },
+        {
+          "checkpoint": "offscreen",
+          "rss_bytes": 464556032,
+          "js_heap_bytes": 5582100,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 2,
+            "nodes": 2641,
+            "jsEventListeners": 74
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 464580608,
+            "Pss": 236975104,
+            "Private_Dirty": 127909888,
+            "Shared_Clean": 262529024
+          },
+          "allocator_sizes": {
+            "malloc": 48440614,
+            "blink_gc": 35365024,
+            "v8": 28365664,
+            "partition_alloc": 9711616,
+            "cc/tile_memory": 11829248,
+            "shared_memory": 33357984,
+            "discardable": 13545472,
+            "skia": 1115502
+          }
+        },
+        {
+          "checkpoint": "reduced_motion",
+          "rss_bytes": 460910592,
+          "js_heap_bytes": 5762528,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 2,
+            "nodes": 2645,
+            "jsEventListeners": 74
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 460910592,
+            "Pss": 233116672,
+            "Private_Dirty": 123863040,
+            "Shared_Clean": 262529024
+          },
+          "allocator_sizes": {
+            "malloc": 48079302,
+            "blink_gc": 35365024,
+            "v8": 28365664,
+            "partition_alloc": 10059776,
+            "cc/tile_memory": 11829248,
+            "shared_memory": 33394848,
+            "discardable": 13545472,
+            "skia": 1115502
+          }
+        },
+        {
+          "checkpoint": "background",
+          "rss_bytes": 571232256,
+          "js_heap_bytes": 5941156,
+          "renderer_count": 4,
+          "dom": {
+            "documents": 2,
+            "nodes": 2654,
+            "jsEventListeners": 74
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 571252736,
+            "Pss": 247442432,
+            "Private_Dirty": 132755456,
+            "Shared_Clean": 348721152
+          },
+          "allocator_sizes": {
+            "malloc": 51393566,
+            "blink_gc": 36806816,
+            "v8": 32108440,
+            "partition_alloc": 10289152,
+            "cc/tile_memory": 11829248,
+            "shared_memory": 34791632,
+            "discardable": 13545472,
+            "skia": 1115502
+          }
+        },
+        {
+          "checkpoint": "navigation_1",
+          "rss_bytes": 464281600,
+          "js_heap_bytes": 6714496,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 4,
+            "nodes": 5301,
+            "jsEventListeners": 172
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 464281600,
+            "Pss": 235764736,
+            "Private_Dirty": 125775872,
+            "Shared_Clean": 262471680
+          },
+          "allocator_sizes": {
+            "malloc": 51915286,
+            "blink_gc": 35184800,
+            "v8": 28365664,
+            "partition_alloc": 10706944,
+            "cc/tile_memory": 20135936,
+            "shared_memory": 41226400,
+            "discardable": 13545472,
+            "skia": 1115502
+          }
+        },
+        {
+          "checkpoint": "navigation_5",
+          "rss_bytes": 494432256,
+          "js_heap_bytes": 9276504,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 12,
+            "nodes": 15882,
+            "jsEventListeners": 564
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 494432256,
+            "Pss": 260188160,
+            "Private_Dirty": 144605184,
+            "Shared_Clean": 262602752
+          },
+          "allocator_sizes": {
+            "malloc": 58025422,
+            "blink_gc": 36421712,
+            "v8": 28265320,
+            "partition_alloc": 13671464,
+            "cc/tile_memory": 34930688,
+            "shared_memory": 67145888,
+            "discardable": 24563712,
+            "skia": 1115502
+          }
+        },
+        {
+          "checkpoint": "navigation_10",
+          "rss_bytes": 520302592,
+          "js_heap_bytes": 12434420,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 22,
+            "nodes": 29109,
+            "jsEventListeners": 1054
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 520302592,
+            "Pss": 286083072,
+            "Private_Dirty": 170524672,
+            "Shared_Clean": 262602752
+          },
+          "allocator_sizes": {
+            "malloc": 64620862,
+            "blink_gc": 54292560,
+            "v8": 30100328,
+            "partition_alloc": 18329600,
+            "cc/tile_memory": 34701312,
+            "shared_memory": 67055776,
+            "discardable": 24563712,
+            "skia": 1115502
+          }
+        },
+        {
+          "checkpoint": "navigation_15",
+          "rss_bytes": 512671744,
+          "js_heap_bytes": 5730932,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 2,
+            "nodes": 2641,
+            "jsEventListeners": 90
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 512671744,
+            "Pss": 277288960,
+            "Private_Dirty": 160628736,
+            "Shared_Clean": 262725632
+          },
+          "allocator_sizes": {
+            "malloc": 52447902,
+            "blink_gc": 54878288,
+            "v8": 23976808,
+            "partition_alloc": 9773056,
+            "cc/tile_memory": 34930688,
+            "shared_memory": 67432608,
+            "discardable": 24563712,
+            "skia": 1115502
+          }
+        },
+        {
+          "checkpoint": "navigation_20",
+          "rss_bytes": 512913408,
+          "js_heap_bytes": 8319204,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 12,
+            "nodes": 15867,
+            "jsEventListeners": 580
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 512913408,
+            "Pss": 278552576,
+            "Private_Dirty": 162975744,
+            "Shared_Clean": 262795264
+          },
+          "allocator_sizes": {
+            "malloc": 57701982,
+            "blink_gc": 55169104,
+            "v8": 24595304,
+            "partition_alloc": 12898600,
+            "cc/tile_memory": 34799616,
+            "shared_memory": 67436704,
+            "discardable": 24563712,
+            "skia": 1115502
+          }
+        }
+      ]
+    },
+    {
+      "name": "after",
+      "source_environment": {
+        "source_commit": "462934d27a8e94a1a1e06d674327e951179997e6",
+        "platform": "Linux-6.18.55-x86_64-with-glibc2.41",
+        "python": "3.12.14",
+        "chromium": "156.0.8078.47",
+        "playwright": "1.62.0",
+        "fixture_date_local": "2026-07-15T12:00:00 Asia/Manila",
+        "browser_date": "2026-07-15T12:00:00Z + performance.now()",
+        "random_seed": 12345,
+        "source_sha256": {
+          "templates/_avatars.html": "6babed91fede3a9bac7a8fb637b5273c6618539695726a44a976e1114df803c5",
+          "templates/_avatars_art.html": "25ebadba51e81177d2fe9526dd5eba5485fce77e617e13e48d0a7ca9c710412f",
+          "templates/me.html": "fa68d656a4936b82ed7600f21605650e22566cf8ef2ce7f5ab5c03d6ea8a4050",
+          "templates/_growth.html": "b7f52bf1ee876ab7f773a77ad58699d9121f16359d6124879cfb0fcf303c6b5b",
+          "static/js/avatars.js": "c69e444b8d72fe84d0521d6ccabce07e9463209f5e451d96169b19aaca4191fb",
+          "static/js/avatar-audio.js": "0434c719d23e149eb4e5b8471c06fdf439d8c1b3f1983192e5ce9e3ffa9fbf32",
+          "static/js/search.js": "5027eebe29b7170610d114834f85128da4afaef9393313b36f80946765cea3e7",
+          "templates/office_connect.html": "8bdb01bfa549a869d72829ffbcebbf3490f39e7cca74e501b3b3ee09f26b8290",
+          "templates/dash_layout.html": "f58e2c79bdab9f10ed9e3821114eaa0586488dc275d86530a7dd452587cd5452",
+          "tests/test_avatar_baseline_browser.py": "f56ba2198309e031212a2e04d7389ef7f6190ae57a4fb972bdf140031da01231",
+          "templates/_avatar_species/bat.html": "b8e6db951e4bce007308d6745467e42da864daf34a137a0ebd17c6c0a64d3978",
+          "templates/_avatar_species/bird.html": "9a2fdee73a9308602005d0bf629cbcab768f3e70f8208747e9e8c8d11e2eca04",
+          "templates/_avatar_species/bonsai.html": "5310a2fe1e50e485ca250431598fbae904da414a5767216e42b458b071d949a7",
+          "templates/_avatar_species/cactus.html": "55861c22dbc545170652890dc3fbaf20d8323e4805fbc83df76eb68fe83c5807",
+          "templates/_avatar_species/cat.html": "aff257f44c3d4a9fc1c4972a461db86d2555fd588fa3a26fe3ae2aeea018c6ea",
+          "templates/_avatar_species/dog.html": "140eb1a9cfac315abe8bccb50aa6151cb40cf91b7465462235c8e4b17cbafe63",
+          "templates/_avatar_species/dolphin.html": "2ae5aa9a8059b9588dcdfa5bba79177f12b5a65f687fa4305b09710439179f7d",
+          "templates/_avatar_species/fern.html": "74f102d6beaa84ab5270340856f050843b16e3ba61a8929f5818db7a5cfdf69d",
+          "templates/_avatar_species/fish.html": "556494934c8bf311036670be862984bf0cb30ad33ebc66891e4400379236303a",
+          "templates/_avatar_species/mushroom.html": "c37f87a3a97fe46f7e986320ba035941ffdbef24b1496757e058468a7a841bf5",
+          "templates/_avatar_species/owl.html": "99a108ada8b2b66bf1eab74707b7b4f1e540e01358f2202cbc078ba0491aefea",
+          "templates/_avatar_species/plant.html": "887462e4e7305885d3f0cecb042fe114f1c92b1c93dc984b35698cf7c0fcb0cc",
+          "templates/_avatar_species/rabbit.html": "4cd9118d7ab89444ed11540fda8624377d6e9134aea8013e27dda715915abed9",
+          "templates/_avatar_species/succulent.html": "09f2e6fc13bc4c719dbfbe96593079c2671dc190be5fb8ab74bb3d00f081418d",
+          "templates/_avatar_species/sunflower.html": "e2e05409cd112527916f84cab5f8f2461b6365a545e8a6fad106ca6879a3c69f",
+          "templates/_avatar_species/turtle.html": "a4c4b327de4cedf38dc5c2f6709e7aed9060da4d143f4e36e57729abcd7bb3d2",
+          "tests/avatar_browser_fixture.py": "208d41f1ab18b72052f25844a9cee54e7a3d516769bf4741de759fdd4db3399b",
+          "templates/_avatars_shared.html": "577b34f5385257b0051d19b699294ebd0521021457b6831e5ff19798fe812759"
+        },
+        "process_tree_cpu_affinity": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "requested_renderer_pin_cpu": null,
+        "proxy_compression": "test-local Starlette GZipMiddleware minimum_size=500"
+      },
+      "checkpoints": [
+        {
+          "checkpoint": "home_idle",
+          "rss_bytes": 400470016,
+          "js_heap_bytes": 2632784,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 1,
+            "nodes": 2599,
+            "jsEventListeners": 103
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 400470016,
+            "Pss": 188304384,
+            "Private_Dirty": 88158208,
+            "Shared_Clean": 249716736
+          },
+          "allocator_sizes": {
+            "malloc": 41364802,
+            "blink_gc": 19812512,
+            "v8": 17793000,
+            "partition_alloc": 10895325,
+            "cc/tile_memory": 20283392,
+            "shared_memory": 35807392,
+            "discardable": 13156352,
+            "skia": 436562
+          }
+        },
+        {
+          "checkpoint": "home_interaction",
+          "rss_bytes": 420655104,
+          "js_heap_bytes": 2840648,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 1,
+            "nodes": 2608,
+            "jsEventListeners": 103
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 420655104,
+            "Pss": 193743872,
+            "Private_Dirty": 89128960,
+            "Shared_Clean": 256798720
+          },
+          "allocator_sizes": {
+            "malloc": 39418652,
+            "blink_gc": 20861088,
+            "v8": 20686808,
+            "partition_alloc": 10406513,
+            "cc/tile_memory": 18284544,
+            "shared_memory": 33284256,
+            "discardable": 7647232,
+            "skia": 524652
+          }
+        },
+        {
+          "checkpoint": "wellness_care",
+          "rss_bytes": 428392448,
+          "js_heap_bytes": 4560960,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 3,
+            "nodes": 4116,
+            "jsEventListeners": 210
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 428396544,
+            "Pss": 200417280,
+            "Private_Dirty": 94875648,
+            "Shared_Clean": 257282048
+          },
+          "allocator_sizes": {
+            "malloc": 41929369,
+            "blink_gc": 21438624,
+            "v8": 21599192,
+            "partition_alloc": 11466188,
+            "cc/tile_memory": 17072128,
+            "shared_memory": 37904544,
+            "discardable": 13348864,
+            "skia": 740009
+          }
+        },
+        {
+          "checkpoint": "picker_growth",
+          "rss_bytes": 450641920,
+          "js_heap_bytes": 5471976,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 1,
+            "nodes": 4561,
+            "jsEventListeners": 106
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 450641920,
+            "Pss": 219470848,
+            "Private_Dirty": 110247936,
+            "Shared_Clean": 257929216
+          },
+          "allocator_sizes": {
+            "malloc": 47399141,
+            "blink_gc": 26927264,
+            "v8": 24050576,
+            "partition_alloc": 12010305,
+            "cc/tile_memory": 23265280,
+            "shared_memory": 46283424,
+            "discardable": 13422592,
+            "skia": 862141
+          }
+        },
+        {
+          "checkpoint": "seasonal_preview",
+          "rss_bytes": 477786112,
+          "js_heap_bytes": 9902052,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 9,
+            "nodes": 13794,
+            "jsEventListeners": 596
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 477786112,
+            "Pss": 241635328,
+            "Private_Dirty": 127856640,
+            "Shared_Clean": 261169152
+          },
+          "allocator_sizes": {
+            "malloc": 58591886,
+            "blink_gc": 32219376,
+            "v8": 28426120,
+            "partition_alloc": 13754368,
+            "cc/tile_memory": 31080448,
+            "shared_memory": 52322464,
+            "discardable": 13471744,
+            "skia": 1111102
+          }
+        },
+        {
+          "checkpoint": "offscreen",
+          "rss_bytes": 463294464,
+          "js_heap_bytes": 9665712,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 11,
+            "nodes": 16390,
+            "jsEventListeners": 697
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 463294464,
+            "Pss": 236449792,
+            "Private_Dirty": 132341760,
+            "Shared_Clean": 261537792
+          },
+          "allocator_sizes": {
+            "malloc": 53628502,
+            "blink_gc": 36806896,
+            "v8": 28501904,
+            "partition_alloc": 15769600,
+            "cc/tile_memory": 12189696,
+            "shared_memory": 33603744,
+            "discardable": 13545472,
+            "skia": 1111102
+          }
+        },
+        {
+          "checkpoint": "reduced_motion",
+          "rss_bytes": 464007168,
+          "js_heap_bytes": 9826684,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 11,
+            "nodes": 16390,
+            "jsEventListeners": 697
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 464007168,
+            "Pss": 237004800,
+            "Private_Dirty": 132739072,
+            "Shared_Clean": 261537792
+          },
+          "allocator_sizes": {
+            "malloc": 54777910,
+            "blink_gc": 38117616,
+            "v8": 28501904,
+            "partition_alloc": 15441314,
+            "cc/tile_memory": 12189696,
+            "shared_memory": 33661088,
+            "discardable": 13545472,
+            "skia": 1111102
+          }
+        },
+        {
+          "checkpoint": "background",
+          "rss_bytes": 576708608,
+          "js_heap_bytes": 9973408,
+          "renderer_count": 4,
+          "dom": {
+            "documents": 11,
+            "nodes": 16390,
+            "jsEventListeners": 697
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 576708608,
+            "Pss": 253886464,
+            "Private_Dirty": 144343040,
+            "Shared_Clean": 347697152
+          },
+          "allocator_sizes": {
+            "malloc": 58513542,
+            "blink_gc": 41119984,
+            "v8": 32345024,
+            "partition_alloc": 16226882,
+            "cc/tile_memory": 12189696,
+            "shared_memory": 35045584,
+            "discardable": 13545472,
+            "skia": 1111102
+          }
+        },
+        {
+          "checkpoint": "navigation_1",
+          "rss_bytes": 474370048,
+          "js_heap_bytes": 10766440,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 13,
+            "nodes": 18984,
+            "jsEventListeners": 798
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 474370048,
+            "Pss": 247636992,
+            "Private_Dirty": 143847424,
+            "Shared_Clean": 261730304
+          },
+          "allocator_sizes": {
+            "malloc": 58256070,
+            "blink_gc": 43675808,
+            "v8": 28501904,
+            "partition_alloc": 17055744,
+            "cc/tile_memory": 12107776,
+            "shared_memory": 33136800,
+            "discardable": 13545472,
+            "skia": 1111102
+          }
+        },
+        {
+          "checkpoint": "navigation_5",
+          "rss_bytes": 523411456,
+          "js_heap_bytes": 13454244,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 21,
+            "nodes": 29360,
+            "jsEventListeners": 1202
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 523411456,
+            "Pss": 289889280,
+            "Private_Dirty": 179445760,
+            "Shared_Clean": 261865472
+          },
+          "allocator_sizes": {
+            "malloc": 67820886,
+            "blink_gc": 58552480,
+            "v8": 30074768,
+            "partition_alloc": 20140032,
+            "cc/tile_memory": 35979264,
+            "shared_memory": 68153504,
+            "discardable": 24563712,
+            "skia": 1111102
+          }
+        },
+        {
+          "checkpoint": "navigation_10",
+          "rss_bytes": 517738496,
+          "js_heap_bytes": 8467708,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 12,
+            "nodes": 15562,
+            "jsEventListeners": 582
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 517738496,
+            "Pss": 283923456,
+            "Private_Dirty": 173187072,
+            "Shared_Clean": 261865472
+          },
+          "allocator_sizes": {
+            "malloc": 58261462,
+            "blink_gc": 58835024,
+            "v8": 26666896,
+            "partition_alloc": 14114816,
+            "cc/tile_memory": 35979264,
+            "shared_memory": 68296864,
+            "discardable": 24563712,
+            "skia": 1111102
+          }
+        },
+        {
+          "checkpoint": "navigation_15",
+          "rss_bytes": 522219520,
+          "js_heap_bytes": 10869448,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 22,
+            "nodes": 28532,
+            "jsEventListeners": 1087
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 522219520,
+            "Pss": 288302080,
+            "Private_Dirty": 177463296,
+            "Shared_Clean": 261865472
+          },
+          "allocator_sizes": {
+            "malloc": 68624838,
+            "blink_gc": 59162704,
+            "v8": 28501904,
+            "partition_alloc": 17416192,
+            "cc/tile_memory": 35848192,
+            "shared_memory": 68292768,
+            "discardable": 24563712,
+            "skia": 1111102
+          }
+        },
+        {
+          "checkpoint": "navigation_20",
+          "rss_bytes": 514617344,
+          "js_heap_bytes": 8363256,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 10,
+            "nodes": 12969,
+            "jsEventListeners": 505
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 514617344,
+            "Pss": 280580096,
+            "Private_Dirty": 169676800,
+            "Shared_Clean": 261931008
+          },
+          "allocator_sizes": {
+            "malloc": 55336374,
+            "blink_gc": 59273296,
+            "v8": 29026192,
+            "partition_alloc": 12578816,
+            "cc/tile_memory": 35979264,
+            "shared_memory": 68591776,
+            "discardable": 24563712,
+            "skia": 1111102
+          }
+        }
+      ]
+    },
+    {
+      "name": "original-runtime",
+      "source_environment": {
+        "source_commit": "462934d27a8e94a1a1e06d674327e951179997e6",
+        "platform": "Linux-6.18.55-x86_64-with-glibc2.41",
+        "python": "3.12.14",
+        "chromium": "156.0.8078.47",
+        "playwright": "1.62.0",
+        "fixture_date_local": "2026-07-15T12:00:00 Asia/Manila",
+        "browser_date": "2026-07-15T12:00:00Z + performance.now()",
+        "random_seed": 12345,
+        "source_sha256": {
+          "templates/_avatars.html": "6babed91fede3a9bac7a8fb637b5273c6618539695726a44a976e1114df803c5",
+          "templates/_avatars_art.html": "25ebadba51e81177d2fe9526dd5eba5485fce77e617e13e48d0a7ca9c710412f",
+          "templates/me.html": "fa68d656a4936b82ed7600f21605650e22566cf8ef2ce7f5ab5c03d6ea8a4050",
+          "templates/_growth.html": "b7f52bf1ee876ab7f773a77ad58699d9121f16359d6124879cfb0fcf303c6b5b",
+          "static/js/avatars.js": "69c5841d65c4e1a47093c93a2ded9498b176b3b6cfb9ea34d2d7d633e07d6bb1",
+          "static/js/avatar-audio.js": "0434c719d23e149eb4e5b8471c06fdf439d8c1b3f1983192e5ce9e3ffa9fbf32",
+          "static/js/search.js": "5027eebe29b7170610d114834f85128da4afaef9393313b36f80946765cea3e7",
+          "templates/office_connect.html": "8bdb01bfa549a869d72829ffbcebbf3490f39e7cca74e501b3b3ee09f26b8290",
+          "templates/dash_layout.html": "f58e2c79bdab9f10ed9e3821114eaa0586488dc275d86530a7dd452587cd5452",
+          "tests/test_avatar_baseline_browser.py": "f56ba2198309e031212a2e04d7389ef7f6190ae57a4fb972bdf140031da01231",
+          "templates/_avatar_species/bat.html": "b8e6db951e4bce007308d6745467e42da864daf34a137a0ebd17c6c0a64d3978",
+          "templates/_avatar_species/bird.html": "9a2fdee73a9308602005d0bf629cbcab768f3e70f8208747e9e8c8d11e2eca04",
+          "templates/_avatar_species/bonsai.html": "5310a2fe1e50e485ca250431598fbae904da414a5767216e42b458b071d949a7",
+          "templates/_avatar_species/cactus.html": "55861c22dbc545170652890dc3fbaf20d8323e4805fbc83df76eb68fe83c5807",
+          "templates/_avatar_species/cat.html": "aff257f44c3d4a9fc1c4972a461db86d2555fd588fa3a26fe3ae2aeea018c6ea",
+          "templates/_avatar_species/dog.html": "140eb1a9cfac315abe8bccb50aa6151cb40cf91b7465462235c8e4b17cbafe63",
+          "templates/_avatar_species/dolphin.html": "2ae5aa9a8059b9588dcdfa5bba79177f12b5a65f687fa4305b09710439179f7d",
+          "templates/_avatar_species/fern.html": "74f102d6beaa84ab5270340856f050843b16e3ba61a8929f5818db7a5cfdf69d",
+          "templates/_avatar_species/fish.html": "556494934c8bf311036670be862984bf0cb30ad33ebc66891e4400379236303a",
+          "templates/_avatar_species/mushroom.html": "c37f87a3a97fe46f7e986320ba035941ffdbef24b1496757e058468a7a841bf5",
+          "templates/_avatar_species/owl.html": "99a108ada8b2b66bf1eab74707b7b4f1e540e01358f2202cbc078ba0491aefea",
+          "templates/_avatar_species/plant.html": "887462e4e7305885d3f0cecb042fe114f1c92b1c93dc984b35698cf7c0fcb0cc",
+          "templates/_avatar_species/rabbit.html": "4cd9118d7ab89444ed11540fda8624377d6e9134aea8013e27dda715915abed9",
+          "templates/_avatar_species/succulent.html": "09f2e6fc13bc4c719dbfbe96593079c2671dc190be5fb8ab74bb3d00f081418d",
+          "templates/_avatar_species/sunflower.html": "e2e05409cd112527916f84cab5f8f2461b6365a545e8a6fad106ca6879a3c69f",
+          "templates/_avatar_species/turtle.html": "a4c4b327de4cedf38dc5c2f6709e7aed9060da4d143f4e36e57729abcd7bb3d2",
+          "tests/avatar_browser_fixture.py": "208d41f1ab18b72052f25844a9cee54e7a3d516769bf4741de759fdd4db3399b",
+          "templates/_avatars_shared.html": "577b34f5385257b0051d19b699294ebd0521021457b6831e5ff19798fe812759"
+        },
+        "process_tree_cpu_affinity": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "requested_renderer_pin_cpu": null,
+        "proxy_compression": "test-local Starlette GZipMiddleware minimum_size=500"
+      },
+      "checkpoints": [
+        {
+          "checkpoint": "home_idle",
+          "rss_bytes": 399765504,
+          "js_heap_bytes": 2614948,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 1,
+            "nodes": 2599,
+            "jsEventListeners": 100
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 399802368,
+            "Pss": 188044288,
+            "Private_Dirty": 88117248,
+            "Shared_Clean": 249704448
+          },
+          "allocator_sizes": {
+            "malloc": 41268338,
+            "blink_gc": 19673248,
+            "v8": 17791976,
+            "partition_alloc": 10838774,
+            "cc/tile_memory": 20283392,
+            "shared_memory": 35799200,
+            "discardable": 13156352,
+            "skia": 436562
+          }
+        },
+        {
+          "checkpoint": "home_interaction",
+          "rss_bytes": 421576704,
+          "js_heap_bytes": 3883860,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 1,
+            "nodes": 2627,
+            "jsEventListeners": 124
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 421576704,
+            "Pss": 194996224,
+            "Private_Dirty": 90767360,
+            "Shared_Clean": 256839680
+          },
+          "allocator_sizes": {
+            "malloc": 42649532,
+            "blink_gc": 21901472,
+            "v8": 20161496,
+            "partition_alloc": 11241333,
+            "cc/tile_memory": 20398080,
+            "shared_memory": 35381408,
+            "discardable": 7647232,
+            "skia": 524652
+          }
+        },
+        {
+          "checkpoint": "wellness_care",
+          "rss_bytes": 427175936,
+          "js_heap_bytes": 3303328,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 1,
+            "nodes": 1501,
+            "jsEventListeners": 80
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 427175936,
+            "Pss": 199427072,
+            "Private_Dirty": 94175232,
+            "Shared_Clean": 257359872
+          },
+          "allocator_sizes": {
+            "malloc": 39226393,
+            "blink_gc": 22577312,
+            "v8": 21114824,
+            "partition_alloc": 10120711,
+            "cc/tile_memory": 18104320,
+            "shared_memory": 38961312,
+            "discardable": 13348864,
+            "skia": 740009
+          }
+        },
+        {
+          "checkpoint": "picker_growth",
+          "rss_bytes": 443641856,
+          "js_heap_bytes": 5908328,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 1,
+            "nodes": 4561,
+            "jsEventListeners": 104
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 443641856,
+            "Pss": 212378624,
+            "Private_Dirty": 103264256,
+            "Shared_Clean": 258064384
+          },
+          "allocator_sizes": {
+            "malloc": 43109869,
+            "blink_gc": 23150752,
+            "v8": 23034824,
+            "partition_alloc": 10555392,
+            "cc/tile_memory": 24313856,
+            "shared_memory": 47356576,
+            "discardable": 13422592,
+            "skia": 862141
+          }
+        },
+        {
+          "checkpoint": "seasonal_preview",
+          "rss_bytes": 484155392,
+          "js_heap_bytes": 11153104,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 11,
+            "nodes": 20921,
+            "jsEventListeners": 584
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 484155392,
+            "Pss": 247424000,
+            "Private_Dirty": 129097728,
+            "Shared_Clean": 261582848
+          },
+          "allocator_sizes": {
+            "malloc": 56949782,
+            "blink_gc": 34160800,
+            "v8": 28492576,
+            "partition_alloc": 14618624,
+            "cc/tile_memory": 37666816,
+            "shared_memory": 58937504,
+            "discardable": 13471744,
+            "skia": 1103438
+          }
+        },
+        {
+          "checkpoint": "offscreen",
+          "rss_bytes": 469245952,
+          "js_heap_bytes": 10820036,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 13,
+            "nodes": 23516,
+            "jsEventListeners": 682
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 469245952,
+            "Pss": 242421760,
+            "Private_Dirty": 134189056,
+            "Shared_Clean": 261791744
+          },
+          "allocator_sizes": {
+            "malloc": 52859294,
+            "blink_gc": 39665824,
+            "v8": 28568360,
+            "partition_alloc": 15350544,
+            "cc/tile_memory": 12189696,
+            "shared_memory": 33632416,
+            "discardable": 13545472,
+            "skia": 1103438
+          }
+        },
+        {
+          "checkpoint": "reduced_motion",
+          "rss_bytes": 471834624,
+          "js_heap_bytes": 10985088,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 13,
+            "nodes": 23516,
+            "jsEventListeners": 682
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 471834624,
+            "Pss": 244795392,
+            "Private_Dirty": 136347648,
+            "Shared_Clean": 261791744
+          },
+          "allocator_sizes": {
+            "malloc": 54769902,
+            "blink_gc": 40583328,
+            "v8": 28830504,
+            "partition_alloc": 15953232,
+            "cc/tile_memory": 12189696,
+            "shared_memory": 33689760,
+            "discardable": 13545472,
+            "skia": 1103438
+          }
+        },
+        {
+          "checkpoint": "background",
+          "rss_bytes": 584769536,
+          "js_heap_bytes": 11129084,
+          "renderer_count": 4,
+          "dom": {
+            "documents": 13,
+            "nodes": 23516,
+            "jsEventListeners": 682
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 584781824,
+            "Pss": 260649984,
+            "Private_Dirty": 146874368,
+            "Shared_Clean": 349265920
+          },
+          "allocator_sizes": {
+            "malloc": 58817870,
+            "blink_gc": 43573408,
+            "v8": 32673624,
+            "partition_alloc": 16740080,
+            "cc/tile_memory": 12189696,
+            "shared_memory": 35090640,
+            "discardable": 13545472,
+            "skia": 1103438
+          }
+        },
+        {
+          "checkpoint": "navigation_1",
+          "rss_bytes": 481546240,
+          "js_heap_bytes": 11893484,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 15,
+            "nodes": 26110,
+            "jsEventListeners": 780
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 481546240,
+            "Pss": 254777344,
+            "Private_Dirty": 146673664,
+            "Shared_Clean": 261861376
+          },
+          "allocator_sizes": {
+            "malloc": 59297102,
+            "blink_gc": 46710944,
+            "v8": 29092648,
+            "partition_alloc": 17567744,
+            "cc/tile_memory": 21184512,
+            "shared_memory": 42242208,
+            "discardable": 13545472,
+            "skia": 1103438
+          }
+        },
+        {
+          "checkpoint": "navigation_5",
+          "rss_bytes": 531378176,
+          "js_heap_bytes": 14438808,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 23,
+            "nodes": 36486,
+            "jsEventListeners": 1172
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 531382272,
+            "Pss": 297793536,
+            "Private_Dirty": 182988800,
+            "Shared_Clean": 261992448
+          },
+          "allocator_sizes": {
+            "malloc": 68286142,
+            "blink_gc": 60862624,
+            "v8": 31451944,
+            "partition_alloc": 20615168,
+            "cc/tile_memory": 35848192,
+            "shared_memory": 68034720,
+            "discardable": 24563712,
+            "skia": 1103438
+          }
+        },
+        {
+          "checkpoint": "navigation_10",
+          "rss_bytes": 523448320,
+          "js_heap_bytes": 8198776,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 12,
+            "nodes": 15562,
+            "jsEventListeners": 564
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 523436032,
+            "Pss": 289892352,
+            "Private_Dirty": 175132672,
+            "Shared_Clean": 261992448
+          },
+          "allocator_sizes": {
+            "malloc": 59144878,
+            "blink_gc": 61411408,
+            "v8": 27781928,
+            "partition_alloc": 13639680,
+            "cc/tile_memory": 35979264,
+            "shared_memory": 68329632,
+            "discardable": 24563712,
+            "skia": 1103438
+          }
+        },
+        {
+          "checkpoint": "navigation_15",
+          "rss_bytes": 530223104,
+          "js_heap_bytes": 11334992,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 22,
+            "nodes": 28532,
+            "jsEventListeners": 1054
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 530223104,
+            "Pss": 296585216,
+            "Private_Dirty": 181731328,
+            "Shared_Clean": 261992448
+          },
+          "allocator_sizes": {
+            "malloc": 62834414,
+            "blink_gc": 61771856,
+            "v8": 28674856,
+            "partition_alloc": 17477632,
+            "cc/tile_memory": 36110336,
+            "shared_memory": 68591776,
+            "discardable": 24563712,
+            "skia": 1103438
+          }
+        },
+        {
+          "checkpoint": "navigation_20",
+          "rss_bytes": 523743232,
+          "js_heap_bytes": 8699124,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 12,
+            "nodes": 15562,
+            "jsEventListeners": 564
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 523743232,
+            "Pss": 289892352,
+            "Private_Dirty": 174882816,
+            "Shared_Clean": 262062080
+          },
+          "allocator_sizes": {
+            "malloc": 57669390,
+            "blink_gc": 61784144,
+            "v8": 27626280,
+            "partition_alloc": 14000128,
+            "cc/tile_memory": 27426816,
+            "shared_memory": 60076192,
+            "discardable": 24563712,
+            "skia": 1103438
+          }
+        }
+      ]
+    },
+    {
+      "name": "original-art",
+      "source_environment": {
+        "source_commit": "462934d27a8e94a1a1e06d674327e951179997e6",
+        "platform": "Linux-6.18.55-x86_64-with-glibc2.41",
+        "python": "3.12.14",
+        "chromium": "156.0.8078.47",
+        "playwright": "1.62.0",
+        "fixture_date_local": "2026-07-15T12:00:00 Asia/Manila",
+        "browser_date": "2026-07-15T12:00:00Z + performance.now()",
+        "random_seed": 12345,
+        "source_sha256": {
+          "templates/_avatars.html": "1b21f18edc3b152d929d529d36bed73d372ddc54851d59f85707dcb262538da0",
+          "templates/_avatars_art.html": "aa542c3e007a4920cde6f32aa797cf79bb9b3ddf07250a459456f072b4c4ef29",
+          "templates/me.html": "251e987e3757c41c61926f93c3b6e265c05f34b086679b3dd5fe15c4ac3225fe",
+          "templates/_growth.html": "83b8db0de0c9a4b81d55047522c4878e0dfbd4f9e022e4d0540115dc03b6df42",
+          "static/js/avatars.js": "c69e444b8d72fe84d0521d6ccabce07e9463209f5e451d96169b19aaca4191fb",
+          "static/js/avatar-audio.js": "0434c719d23e149eb4e5b8471c06fdf439d8c1b3f1983192e5ce9e3ffa9fbf32",
+          "static/js/search.js": "5027eebe29b7170610d114834f85128da4afaef9393313b36f80946765cea3e7",
+          "templates/office_connect.html": "8bdb01bfa549a869d72829ffbcebbf3490f39e7cca74e501b3b3ee09f26b8290",
+          "templates/dash_layout.html": "f58e2c79bdab9f10ed9e3821114eaa0586488dc275d86530a7dd452587cd5452",
+          "tests/test_avatar_baseline_browser.py": "f56ba2198309e031212a2e04d7389ef7f6190ae57a4fb972bdf140031da01231",
+          "templates/_avatar_species/bat.html": "b8e6db951e4bce007308d6745467e42da864daf34a137a0ebd17c6c0a64d3978",
+          "templates/_avatar_species/bird.html": "9a2fdee73a9308602005d0bf629cbcab768f3e70f8208747e9e8c8d11e2eca04",
+          "templates/_avatar_species/bonsai.html": "5310a2fe1e50e485ca250431598fbae904da414a5767216e42b458b071d949a7",
+          "templates/_avatar_species/cactus.html": "55861c22dbc545170652890dc3fbaf20d8323e4805fbc83df76eb68fe83c5807",
+          "templates/_avatar_species/cat.html": "aff257f44c3d4a9fc1c4972a461db86d2555fd588fa3a26fe3ae2aeea018c6ea",
+          "templates/_avatar_species/dog.html": "140eb1a9cfac315abe8bccb50aa6151cb40cf91b7465462235c8e4b17cbafe63",
+          "templates/_avatar_species/dolphin.html": "2ae5aa9a8059b9588dcdfa5bba79177f12b5a65f687fa4305b09710439179f7d",
+          "templates/_avatar_species/fern.html": "74f102d6beaa84ab5270340856f050843b16e3ba61a8929f5818db7a5cfdf69d",
+          "templates/_avatar_species/fish.html": "556494934c8bf311036670be862984bf0cb30ad33ebc66891e4400379236303a",
+          "templates/_avatar_species/mushroom.html": "c37f87a3a97fe46f7e986320ba035941ffdbef24b1496757e058468a7a841bf5",
+          "templates/_avatar_species/owl.html": "99a108ada8b2b66bf1eab74707b7b4f1e540e01358f2202cbc078ba0491aefea",
+          "templates/_avatar_species/plant.html": "887462e4e7305885d3f0cecb042fe114f1c92b1c93dc984b35698cf7c0fcb0cc",
+          "templates/_avatar_species/rabbit.html": "4cd9118d7ab89444ed11540fda8624377d6e9134aea8013e27dda715915abed9",
+          "templates/_avatar_species/succulent.html": "09f2e6fc13bc4c719dbfbe96593079c2671dc190be5fb8ab74bb3d00f081418d",
+          "templates/_avatar_species/sunflower.html": "e2e05409cd112527916f84cab5f8f2461b6365a545e8a6fad106ca6879a3c69f",
+          "templates/_avatar_species/turtle.html": "a4c4b327de4cedf38dc5c2f6709e7aed9060da4d143f4e36e57729abcd7bb3d2",
+          "tests/avatar_browser_fixture.py": "208d41f1ab18b72052f25844a9cee54e7a3d516769bf4741de759fdd4db3399b",
+          "templates/_avatars_shared.html": "577b34f5385257b0051d19b699294ebd0521021457b6831e5ff19798fe812759"
+        },
+        "process_tree_cpu_affinity": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "requested_renderer_pin_cpu": null,
+        "proxy_compression": "test-local Starlette GZipMiddleware minimum_size=500"
+      },
+      "checkpoints": [
+        {
+          "checkpoint": "home_idle",
+          "rss_bytes": 390316032,
+          "js_heap_bytes": 2632368,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 1,
+            "nodes": 2645,
+            "jsEventListeners": 103
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 390316032,
+            "Pss": 179283968,
+            "Private_Dirty": 79548416,
+            "Shared_Clean": 248229888
+          },
+          "allocator_sizes": {
+            "malloc": 41626322,
+            "blink_gc": 12259568,
+            "v8": 17637352,
+            "partition_alloc": 10379291,
+            "cc/tile_memory": 19365888,
+            "shared_memory": 34930848,
+            "discardable": 13172736,
+            "skia": 436562
+          }
+        },
+        {
+          "checkpoint": "home_interaction",
+          "rss_bytes": 419684352,
+          "js_heap_bytes": 3623116,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 1,
+            "nodes": 2667,
+            "jsEventListeners": 127
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 419692544,
+            "Pss": 194006016,
+            "Private_Dirty": 89608192,
+            "Shared_Clean": 255393792
+          },
+          "allocator_sizes": {
+            "malloc": 42254644,
+            "blink_gc": 21008624,
+            "v8": 19739616,
+            "partition_alloc": 11252788,
+            "cc/tile_memory": 19791872,
+            "shared_memory": 34803872,
+            "discardable": 7663616,
+            "skia": 524652
+          }
+        },
+        {
+          "checkpoint": "wellness_care",
+          "rss_bytes": 426905600,
+          "js_heap_bytes": 3343760,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 1,
+            "nodes": 1485,
+            "jsEventListeners": 83
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 426905600,
+            "Pss": 199844864,
+            "Private_Dirty": 94318592,
+            "Shared_Clean": 255889408
+          },
+          "allocator_sizes": {
+            "malloc": 40093441,
+            "blink_gc": 21577968,
+            "v8": 20884432,
+            "partition_alloc": 10436006,
+            "cc/tile_memory": 18579456,
+            "shared_memory": 39428256,
+            "discardable": 13340672,
+            "skia": 740009
+          }
+        },
+        {
+          "checkpoint": "picker_growth",
+          "rss_bytes": 451502080,
+          "js_heap_bytes": 4779928,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 1,
+            "nodes": 4878,
+            "jsEventListeners": 106
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 451502080,
+            "Pss": 219724800,
+            "Private_Dirty": 104730624,
+            "Shared_Clean": 256585728
+          },
+          "allocator_sizes": {
+            "malloc": 45698557,
+            "blink_gc": 23658736,
+            "v8": 22248392,
+            "partition_alloc": 9547161,
+            "cc/tile_memory": 35848192,
+            "shared_memory": 58882720,
+            "discardable": 13414400,
+            "skia": 862141
+          }
+        },
+        {
+          "checkpoint": "seasonal_preview",
+          "rss_bytes": 486256640,
+          "js_heap_bytes": 11333920,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 13,
+            "nodes": 21331,
+            "jsEventListeners": 598
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 486256640,
+            "Pss": 251080704,
+            "Private_Dirty": 132624384,
+            "Shared_Clean": 259698688
+          },
+          "allocator_sizes": {
+            "malloc": 58047510,
+            "blink_gc": 35315952,
+            "v8": 29695840,
+            "partition_alloc": 13967360,
+            "cc/tile_memory": 42795008,
+            "shared_memory": 64057504,
+            "discardable": 13463552,
+            "skia": 1136270
+          }
+        },
+        {
+          "checkpoint": "offscreen",
+          "rss_bytes": 469540864,
+          "js_heap_bytes": 10964972,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 15,
+            "nodes": 23972,
+            "jsEventListeners": 699
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 469540864,
+            "Pss": 243733504,
+            "Private_Dirty": 134897664,
+            "Shared_Clean": 260050944
+          },
+          "allocator_sizes": {
+            "malloc": 55612190,
+            "blink_gc": 40296688,
+            "v8": 29061976,
+            "partition_alloc": 15021666,
+            "cc/tile_memory": 11730944,
+            "shared_memory": 33165472,
+            "discardable": 13537280,
+            "skia": 1136270
+          }
+        },
+        {
+          "checkpoint": "reduced_motion",
+          "rss_bytes": 472109056,
+          "js_heap_bytes": 11129496,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 15,
+            "nodes": 23972,
+            "jsEventListeners": 699
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 472109056,
+            "Pss": 246203392,
+            "Private_Dirty": 137269248,
+            "Shared_Clean": 260050944
+          },
+          "allocator_sizes": {
+            "malloc": 56366430,
+            "blink_gc": 41345264,
+            "v8": 29061976,
+            "partition_alloc": 15548962,
+            "cc/tile_memory": 11730944,
+            "shared_memory": 33222816,
+            "discardable": 13537280,
+            "skia": 1136270
+          }
+        },
+        {
+          "checkpoint": "background",
+          "rss_bytes": 583786496,
+          "js_heap_bytes": 11273428,
+          "renderer_count": 4,
+          "dom": {
+            "documents": 15,
+            "nodes": 23972,
+            "jsEventListeners": 699
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 583798784,
+            "Pss": 262519808,
+            "Private_Dirty": 148250624,
+            "Shared_Clean": 345436160
+          },
+          "allocator_sizes": {
+            "malloc": 60086782,
+            "blink_gc": 44347632,
+            "v8": 32905096,
+            "partition_alloc": 16359250,
+            "cc/tile_memory": 11730944,
+            "shared_memory": 34644176,
+            "discardable": 13537280,
+            "skia": 1136270
+          }
+        },
+        {
+          "checkpoint": "navigation_1",
+          "rss_bytes": 481910784,
+          "js_heap_bytes": 12067288,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 17,
+            "nodes": 26612,
+            "jsEventListeners": 800
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 481910784,
+            "Pss": 256016384,
+            "Private_Dirty": 147271680,
+            "Shared_Clean": 260247552
+          },
+          "allocator_sizes": {
+            "malloc": 61042558,
+            "blink_gc": 47345904,
+            "v8": 29324120,
+            "partition_alloc": 17027072,
+            "cc/tile_memory": 20135936,
+            "shared_memory": 41173152,
+            "discardable": 13537280,
+            "skia": 1136270
+          }
+        },
+        {
+          "checkpoint": "navigation_5",
+          "rss_bytes": 530063360,
+          "js_heap_bytes": 14756892,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 25,
+            "nodes": 37172,
+            "jsEventListeners": 1204
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 530063360,
+            "Pss": 297407488,
+            "Private_Dirty": 181964800,
+            "Shared_Clean": 260313088
+          },
+          "allocator_sizes": {
+            "malloc": 68273038,
+            "blink_gc": 61907184,
+            "v8": 31189800,
+            "partition_alloc": 20021248,
+            "cc/tile_memory": 34930688,
+            "shared_memory": 67109024,
+            "discardable": 24555520,
+            "skia": 1136270
+          }
+        },
+        {
+          "checkpoint": "navigation_10",
+          "rss_bytes": 558919680,
+          "js_heap_bytes": 18074812,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 35,
+            "nodes": 50372,
+            "jsEventListeners": 1709
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 558919680,
+            "Pss": 326390784,
+            "Private_Dirty": 211075072,
+            "Shared_Clean": 260313088
+          },
+          "allocator_sizes": {
+            "malloc": 75122278,
+            "blink_gc": 80638272,
+            "v8": 34598624,
+            "partition_alloc": 24244224,
+            "cc/tile_memory": 34832384,
+            "shared_memory": 67170464,
+            "discardable": 24555520,
+            "skia": 1136270
+          }
+        },
+        {
+          "checkpoint": "navigation_15",
+          "rss_bytes": 547033088,
+          "js_heap_bytes": 8407868,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 12,
+            "nodes": 15838,
+            "jsEventListeners": 582
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 547033088,
+            "Pss": 314395648,
+            "Private_Dirty": 198971392,
+            "Shared_Clean": 260313088
+          },
+          "allocator_sizes": {
+            "malloc": 53499654,
+            "blink_gc": 81068192,
+            "v8": 27303648,
+            "partition_alloc": 14700544,
+            "cc/tile_memory": 34930688,
+            "shared_memory": 59531424,
+            "discardable": 24555520,
+            "skia": 1136270
+          }
+        },
+        {
+          "checkpoint": "navigation_20",
+          "rss_bytes": 544407552,
+          "js_heap_bytes": 8928484,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 12,
+            "nodes": 15838,
+            "jsEventListeners": 582
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 544407552,
+            "Pss": 311956480,
+            "Private_Dirty": 196780032,
+            "Shared_Clean": 260378624
+          },
+          "allocator_sizes": {
+            "malloc": 53785878,
+            "blink_gc": 81096864,
+            "v8": 24682208,
+            "partition_alloc": 13258752,
+            "cc/tile_memory": 34701312,
+            "shared_memory": 67338400,
+            "discardable": 24555520,
+            "skia": 1136270
+          }
+        }
+      ]
+    },
+    {
+      "name": "original-search",
+      "source_environment": {
+        "source_commit": "462934d27a8e94a1a1e06d674327e951179997e6",
+        "platform": "Linux-6.18.55-x86_64-with-glibc2.41",
+        "python": "3.12.14",
+        "chromium": "156.0.8078.47",
+        "playwright": "1.62.0",
+        "fixture_date_local": "2026-07-15T12:00:00 Asia/Manila",
+        "browser_date": "2026-07-15T12:00:00Z + performance.now()",
+        "random_seed": 12345,
+        "source_sha256": {
+          "templates/_avatars.html": "6babed91fede3a9bac7a8fb637b5273c6618539695726a44a976e1114df803c5",
+          "templates/_avatars_art.html": "25ebadba51e81177d2fe9526dd5eba5485fce77e617e13e48d0a7ca9c710412f",
+          "templates/me.html": "fa68d656a4936b82ed7600f21605650e22566cf8ef2ce7f5ab5c03d6ea8a4050",
+          "templates/_growth.html": "b7f52bf1ee876ab7f773a77ad58699d9121f16359d6124879cfb0fcf303c6b5b",
+          "static/js/avatars.js": "c69e444b8d72fe84d0521d6ccabce07e9463209f5e451d96169b19aaca4191fb",
+          "static/js/avatar-audio.js": "0434c719d23e149eb4e5b8471c06fdf439d8c1b3f1983192e5ce9e3ffa9fbf32",
+          "static/js/search.js": "690833235cfe17debf3bbc4c164b3443a2f6597c3935d7961e1e47e2304b1a3c",
+          "templates/office_connect.html": "27b51b191807d4a859098f79250e10ab4195ba700f13966c05d61f45cd3b3577",
+          "templates/dash_layout.html": "89f27d671a1a1253ee6735635a9964ebec35be27c8efc8d848408064f840a735",
+          "tests/test_avatar_baseline_browser.py": "f56ba2198309e031212a2e04d7389ef7f6190ae57a4fb972bdf140031da01231",
+          "templates/_avatar_species/bat.html": "b8e6db951e4bce007308d6745467e42da864daf34a137a0ebd17c6c0a64d3978",
+          "templates/_avatar_species/bird.html": "9a2fdee73a9308602005d0bf629cbcab768f3e70f8208747e9e8c8d11e2eca04",
+          "templates/_avatar_species/bonsai.html": "5310a2fe1e50e485ca250431598fbae904da414a5767216e42b458b071d949a7",
+          "templates/_avatar_species/cactus.html": "55861c22dbc545170652890dc3fbaf20d8323e4805fbc83df76eb68fe83c5807",
+          "templates/_avatar_species/cat.html": "aff257f44c3d4a9fc1c4972a461db86d2555fd588fa3a26fe3ae2aeea018c6ea",
+          "templates/_avatar_species/dog.html": "140eb1a9cfac315abe8bccb50aa6151cb40cf91b7465462235c8e4b17cbafe63",
+          "templates/_avatar_species/dolphin.html": "2ae5aa9a8059b9588dcdfa5bba79177f12b5a65f687fa4305b09710439179f7d",
+          "templates/_avatar_species/fern.html": "74f102d6beaa84ab5270340856f050843b16e3ba61a8929f5818db7a5cfdf69d",
+          "templates/_avatar_species/fish.html": "556494934c8bf311036670be862984bf0cb30ad33ebc66891e4400379236303a",
+          "templates/_avatar_species/mushroom.html": "c37f87a3a97fe46f7e986320ba035941ffdbef24b1496757e058468a7a841bf5",
+          "templates/_avatar_species/owl.html": "99a108ada8b2b66bf1eab74707b7b4f1e540e01358f2202cbc078ba0491aefea",
+          "templates/_avatar_species/plant.html": "887462e4e7305885d3f0cecb042fe114f1c92b1c93dc984b35698cf7c0fcb0cc",
+          "templates/_avatar_species/rabbit.html": "4cd9118d7ab89444ed11540fda8624377d6e9134aea8013e27dda715915abed9",
+          "templates/_avatar_species/succulent.html": "09f2e6fc13bc4c719dbfbe96593079c2671dc190be5fb8ab74bb3d00f081418d",
+          "templates/_avatar_species/sunflower.html": "e2e05409cd112527916f84cab5f8f2461b6365a545e8a6fad106ca6879a3c69f",
+          "templates/_avatar_species/turtle.html": "a4c4b327de4cedf38dc5c2f6709e7aed9060da4d143f4e36e57729abcd7bb3d2",
+          "tests/avatar_browser_fixture.py": "208d41f1ab18b72052f25844a9cee54e7a3d516769bf4741de759fdd4db3399b",
+          "templates/_avatars_shared.html": "577b34f5385257b0051d19b699294ebd0521021457b6831e5ff19798fe812759"
+        },
+        "process_tree_cpu_affinity": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "requested_renderer_pin_cpu": null,
+        "proxy_compression": "test-local Starlette GZipMiddleware minimum_size=500"
+      },
+      "checkpoints": [
+        {
+          "checkpoint": "home_idle",
+          "rss_bytes": 400678912,
+          "js_heap_bytes": 2706028,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 1,
+            "nodes": 2601,
+            "jsEventListeners": 103
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 407724032,
+            "Pss": 195832832,
+            "Private_Dirty": 95477760,
+            "Shared_Clean": 249495552
+          },
+          "allocator_sizes": {
+            "malloc": 40817794,
+            "blink_gc": 19706016,
+            "v8": 18181096,
+            "partition_alloc": 11670129,
+            "cc/tile_memory": 20283392,
+            "shared_memory": 35823776,
+            "discardable": 13176832,
+            "skia": 436562
+          }
+        },
+        {
+          "checkpoint": "home_interaction",
+          "rss_bytes": 418951168,
+          "js_heap_bytes": 3244496,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 1,
+            "nodes": 2618,
+            "jsEventListeners": 127
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 418955264,
+            "Pss": 192118784,
+            "Private_Dirty": 86921216,
+            "Shared_Clean": 256520192
+          },
+          "allocator_sizes": {
+            "malloc": 39107164,
+            "blink_gc": 20471968,
+            "v8": 19968984,
+            "partition_alloc": 10916140,
+            "cc/tile_memory": 18464768,
+            "shared_memory": 33476768,
+            "discardable": 7667712,
+            "skia": 524652
+          }
+        },
+        {
+          "checkpoint": "wellness_care",
+          "rss_bytes": 426782720,
+          "js_heap_bytes": 3354204,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 1,
+            "nodes": 1501,
+            "jsEventListeners": 83
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 426782720,
+            "Pss": 198899712,
+            "Private_Dirty": 92880896,
+            "Shared_Clean": 257257472
+          },
+          "allocator_sizes": {
+            "malloc": 39745945,
+            "blink_gc": 21012640,
+            "v8": 21278664,
+            "partition_alloc": 10293361,
+            "cc/tile_memory": 18186240,
+            "shared_memory": 39039136,
+            "discardable": 13344768,
+            "skia": 740009
+          }
+        },
+        {
+          "checkpoint": "picker_growth",
+          "rss_bytes": 447266816,
+          "js_heap_bytes": 5323604,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 1,
+            "nodes": 4561,
+            "jsEventListeners": 106
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 447127552,
+            "Pss": 217578496,
+            "Private_Dirty": 109441024,
+            "Shared_Clean": 257826816
+          },
+          "allocator_sizes": {
+            "malloc": 46749725,
+            "blink_gc": 23531680,
+            "v8": 24160184,
+            "partition_alloc": 11857841,
+            "cc/tile_memory": 23592960,
+            "shared_memory": 46127136,
+            "discardable": 13418496,
+            "skia": 862141
+          }
+        },
+        {
+          "checkpoint": "seasonal_preview",
+          "rss_bytes": 489566208,
+          "js_heap_bytes": 13051804,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 10,
+            "nodes": 20935,
+            "jsEventListeners": 474
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 489566208,
+            "Pss": 252470272,
+            "Private_Dirty": 132812800,
+            "Shared_Clean": 261378048
+          },
+          "allocator_sizes": {
+            "malloc": 58109998,
+            "blink_gc": 35959024,
+            "v8": 29631288,
+            "partition_alloc": 13885440,
+            "cc/tile_memory": 37961728,
+            "shared_memory": 59203744,
+            "discardable": 13467648,
+            "skia": 1113934
+          }
+        },
+        {
+          "checkpoint": "offscreen",
+          "rss_bytes": 471142400,
+          "js_heap_bytes": 13895832,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 12,
+            "nodes": 23532,
+            "jsEventListeners": 575
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 471142400,
+            "Pss": 244170752,
+            "Private_Dirty": 134959104,
+            "Shared_Clean": 261709824
+          },
+          "allocator_sizes": {
+            "malloc": 54121118,
+            "blink_gc": 38277360,
+            "v8": 30165800,
+            "partition_alloc": 15319040,
+            "cc/tile_memory": 12713984,
+            "shared_memory": 34128032,
+            "discardable": 13541376,
+            "skia": 1113934
+          }
+        },
+        {
+          "checkpoint": "reduced_motion",
+          "rss_bytes": 474841088,
+          "js_heap_bytes": 14050844,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 12,
+            "nodes": 23532,
+            "jsEventListeners": 575
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 474841088,
+            "Pss": 247844864,
+            "Private_Dirty": 138612736,
+            "Shared_Clean": 261709824
+          },
+          "allocator_sizes": {
+            "malloc": 56058126,
+            "blink_gc": 38801648,
+            "v8": 30427944,
+            "partition_alloc": 15638528,
+            "cc/tile_memory": 12713984,
+            "shared_memory": 34168992,
+            "discardable": 13541376,
+            "skia": 1113934
+          }
+        },
+        {
+          "checkpoint": "background",
+          "rss_bytes": 583487488,
+          "js_heap_bytes": 14199276,
+          "renderer_count": 4,
+          "dom": {
+            "documents": 12,
+            "nodes": 23532,
+            "jsEventListeners": 575
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 583499776,
+            "Pss": 260757504,
+            "Private_Dirty": 146182144,
+            "Shared_Clean": 347660288
+          },
+          "allocator_sizes": {
+            "malloc": 58843326,
+            "blink_gc": 40898800,
+            "v8": 34271064,
+            "partition_alloc": 16016522,
+            "cc/tile_memory": 12713984,
+            "shared_memory": 35565776,
+            "discardable": 13541376,
+            "skia": 1113934
+          }
+        },
+        {
+          "checkpoint": "navigation_1",
+          "rss_bytes": 483786752,
+          "js_heap_bytes": 14994988,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 14,
+            "nodes": 26128,
+            "jsEventListeners": 676
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 483786752,
+            "Pss": 255678464,
+            "Private_Dirty": 145358848,
+            "Shared_Clean": 261738496
+          },
+          "allocator_sizes": {
+            "malloc": 60001454,
+            "blink_gc": 44159216,
+            "v8": 31486744,
+            "partition_alloc": 16846848,
+            "cc/tile_memory": 21315584,
+            "shared_memory": 42348704,
+            "discardable": 13541376,
+            "skia": 1113934
+          }
+        },
+        {
+          "checkpoint": "navigation_5",
+          "rss_bytes": 529747968,
+          "js_heap_bytes": 13484140,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 22,
+            "nodes": 36512,
+            "jsEventListeners": 1080
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 529747968,
+            "Pss": 296036352,
+            "Private_Dirty": 180248576,
+            "Shared_Clean": 261873664
+          },
+          "allocator_sizes": {
+            "malloc": 68445950,
+            "blink_gc": 58757360,
+            "v8": 32269048,
+            "partition_alloc": 19544202,
+            "cc/tile_memory": 27688960,
+            "shared_memory": 59859104,
+            "discardable": 24559616,
+            "skia": 1113934
+          }
+        },
+        {
+          "checkpoint": "navigation_10",
+          "rss_bytes": 529780736,
+          "js_heap_bytes": 5778456,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 2,
+            "nodes": 2594,
+            "jsEventListeners": 77
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 529780736,
+            "Pss": 295174144,
+            "Private_Dirty": 178491392,
+            "Shared_Clean": 261873664
+          },
+          "allocator_sizes": {
+            "malloc": 55581582,
+            "blink_gc": 65814608,
+            "v8": 27550456,
+            "partition_alloc": 9752576,
+            "cc/tile_memory": 35979264,
+            "shared_memory": 68288672,
+            "discardable": 24559616,
+            "skia": 1113934
+          }
+        },
+        {
+          "checkpoint": "navigation_15",
+          "rss_bytes": 531902464,
+          "js_heap_bytes": 9096140,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 12,
+            "nodes": 15574,
+            "jsEventListeners": 582
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 531902464,
+            "Pss": 298473472,
+            "Private_Dirty": 182968320,
+            "Shared_Clean": 261873664
+          },
+          "allocator_sizes": {
+            "malloc": 61320190,
+            "blink_gc": 65945680,
+            "v8": 28074744,
+            "partition_alloc": 13078528,
+            "cc/tile_memory": 35979264,
+            "shared_memory": 68419744,
+            "discardable": 24559616,
+            "skia": 1113934
+          }
+        },
+        {
+          "checkpoint": "navigation_20",
+          "rss_bytes": 528424960,
+          "js_heap_bytes": 7663028,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 8,
+            "nodes": 10382,
+            "jsEventListeners": 380
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 528424960,
+            "Pss": 294524928,
+            "Private_Dirty": 178601984,
+            "Shared_Clean": 261939200
+          },
+          "allocator_sizes": {
+            "malloc": 53613566,
+            "blink_gc": 66093136,
+            "v8": 29385464,
+            "partition_alloc": 11911168,
+            "cc/tile_memory": 27426816,
+            "shared_memory": 65294496,
+            "discardable": 24559616,
+            "skia": 1113934
+          }
+        }
+      ]
+    },
+    {
+      "name": "original-runtime-audio",
+      "source_environment": {
+        "source_commit": "462934d27a8e94a1a1e06d674327e951179997e6",
+        "platform": "Linux-6.18.55-x86_64-with-glibc2.41",
+        "python": "3.12.14",
+        "chromium": "156.0.8078.47",
+        "playwright": "1.62.0",
+        "fixture_date_local": "2026-07-15T12:00:00 Asia/Manila",
+        "browser_date": "2026-07-15T12:00:00Z + performance.now()",
+        "random_seed": 12345,
+        "source_sha256": {
+          "templates/_avatars.html": "6babed91fede3a9bac7a8fb637b5273c6618539695726a44a976e1114df803c5",
+          "templates/_avatars_art.html": "25ebadba51e81177d2fe9526dd5eba5485fce77e617e13e48d0a7ca9c710412f",
+          "templates/me.html": "fa68d656a4936b82ed7600f21605650e22566cf8ef2ce7f5ab5c03d6ea8a4050",
+          "templates/_growth.html": "b7f52bf1ee876ab7f773a77ad58699d9121f16359d6124879cfb0fcf303c6b5b",
+          "static/js/avatars.js": "69c5841d65c4e1a47093c93a2ded9498b176b3b6cfb9ea34d2d7d633e07d6bb1",
+          "static/js/avatar-audio.js": "51de7cd0c5ab68874dfa5a50fab136ebbc415953fa8b5d0a09cae116d89303b9",
+          "static/js/search.js": "5027eebe29b7170610d114834f85128da4afaef9393313b36f80946765cea3e7",
+          "templates/office_connect.html": "8bdb01bfa549a869d72829ffbcebbf3490f39e7cca74e501b3b3ee09f26b8290",
+          "templates/dash_layout.html": "f58e2c79bdab9f10ed9e3821114eaa0586488dc275d86530a7dd452587cd5452",
+          "tests/test_avatar_baseline_browser.py": "f56ba2198309e031212a2e04d7389ef7f6190ae57a4fb972bdf140031da01231",
+          "templates/_avatar_species/bat.html": "b8e6db951e4bce007308d6745467e42da864daf34a137a0ebd17c6c0a64d3978",
+          "templates/_avatar_species/bird.html": "9a2fdee73a9308602005d0bf629cbcab768f3e70f8208747e9e8c8d11e2eca04",
+          "templates/_avatar_species/bonsai.html": "5310a2fe1e50e485ca250431598fbae904da414a5767216e42b458b071d949a7",
+          "templates/_avatar_species/cactus.html": "55861c22dbc545170652890dc3fbaf20d8323e4805fbc83df76eb68fe83c5807",
+          "templates/_avatar_species/cat.html": "aff257f44c3d4a9fc1c4972a461db86d2555fd588fa3a26fe3ae2aeea018c6ea",
+          "templates/_avatar_species/dog.html": "140eb1a9cfac315abe8bccb50aa6151cb40cf91b7465462235c8e4b17cbafe63",
+          "templates/_avatar_species/dolphin.html": "2ae5aa9a8059b9588dcdfa5bba79177f12b5a65f687fa4305b09710439179f7d",
+          "templates/_avatar_species/fern.html": "74f102d6beaa84ab5270340856f050843b16e3ba61a8929f5818db7a5cfdf69d",
+          "templates/_avatar_species/fish.html": "556494934c8bf311036670be862984bf0cb30ad33ebc66891e4400379236303a",
+          "templates/_avatar_species/mushroom.html": "c37f87a3a97fe46f7e986320ba035941ffdbef24b1496757e058468a7a841bf5",
+          "templates/_avatar_species/owl.html": "99a108ada8b2b66bf1eab74707b7b4f1e540e01358f2202cbc078ba0491aefea",
+          "templates/_avatar_species/plant.html": "887462e4e7305885d3f0cecb042fe114f1c92b1c93dc984b35698cf7c0fcb0cc",
+          "templates/_avatar_species/rabbit.html": "4cd9118d7ab89444ed11540fda8624377d6e9134aea8013e27dda715915abed9",
+          "templates/_avatar_species/succulent.html": "09f2e6fc13bc4c719dbfbe96593079c2671dc190be5fb8ab74bb3d00f081418d",
+          "templates/_avatar_species/sunflower.html": "e2e05409cd112527916f84cab5f8f2461b6365a545e8a6fad106ca6879a3c69f",
+          "templates/_avatar_species/turtle.html": "a4c4b327de4cedf38dc5c2f6709e7aed9060da4d143f4e36e57729abcd7bb3d2",
+          "tests/avatar_browser_fixture.py": "208d41f1ab18b72052f25844a9cee54e7a3d516769bf4741de759fdd4db3399b",
+          "templates/_avatars_shared.html": "577b34f5385257b0051d19b699294ebd0521021457b6831e5ff19798fe812759"
+        },
+        "process_tree_cpu_affinity": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "requested_renderer_pin_cpu": null,
+        "proxy_compression": "test-local Starlette GZipMiddleware minimum_size=500"
+      },
+      "checkpoints": [
+        {
+          "checkpoint": "home_idle",
+          "rss_bytes": 399458304,
+          "js_heap_bytes": 2702780,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 1,
+            "nodes": 2624,
+            "jsEventListeners": 100
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 399458304,
+            "Pss": 188376064,
+            "Private_Dirty": 88641536,
+            "Shared_Clean": 247922688
+          },
+          "allocator_sizes": {
+            "malloc": 42451050,
+            "blink_gc": 19886320,
+            "v8": 17936352,
+            "partition_alloc": 11251766,
+            "cc/tile_memory": 20283392,
+            "shared_memory": 35758240,
+            "discardable": 13115392,
+            "skia": 436562
+          }
+        },
+        {
+          "checkpoint": "home_interaction",
+          "rss_bytes": 424673280,
+          "js_heap_bytes": 3433164,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 1,
+            "nodes": 2640,
+            "jsEventListeners": 124
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 424673280,
+            "Pss": 198660096,
+            "Private_Dirty": 90206208,
+            "Shared_Clean": 255569920
+          },
+          "allocator_sizes": {
+            "malloc": 40002364,
+            "blink_gc": 22114544,
+            "v8": 20300760,
+            "partition_alloc": 11297173,
+            "cc/tile_memory": 19726336,
+            "shared_memory": 34680992,
+            "discardable": 7606272,
+            "skia": 524652
+          }
+        },
+        {
+          "checkpoint": "wellness_care",
+          "rss_bytes": 432435200,
+          "js_heap_bytes": 4547048,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 3,
+            "nodes": 4136,
+            "jsEventListeners": 204
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 432439296,
+            "Pss": 205400064,
+            "Private_Dirty": 96104448,
+            "Shared_Clean": 256057344
+          },
+          "allocator_sizes": {
+            "malloc": 42315825,
+            "blink_gc": 22683888,
+            "v8": 21342160,
+            "partition_alloc": 11364613,
+            "cc/tile_memory": 18071552,
+            "shared_memory": 38912160,
+            "discardable": 13332480,
+            "skia": 740009
+          }
+        },
+        {
+          "checkpoint": "picker_growth",
+          "rss_bytes": 454455296,
+          "js_heap_bytes": 5534420,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 1,
+            "nodes": 4561,
+            "jsEventListeners": 104
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 454455296,
+            "Pss": 223993856,
+            "Private_Dirty": 110735360,
+            "Shared_Clean": 256823296
+          },
+          "allocator_sizes": {
+            "malloc": 46453637,
+            "blink_gc": 26616048,
+            "v8": 23857040,
+            "partition_alloc": 10420224,
+            "cc/tile_memory": 23855104,
+            "shared_memory": 46860960,
+            "discardable": 13406208,
+            "skia": 862141
+          }
+        },
+        {
+          "checkpoint": "seasonal_preview",
+          "rss_bytes": 489144320,
+          "js_heap_bytes": 13754196,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 11,
+            "nodes": 20929,
+            "jsEventListeners": 585
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 489144320,
+            "Pss": 252981248,
+            "Private_Dirty": 134197248,
+            "Shared_Clean": 259969024
+          },
+          "allocator_sizes": {
+            "malloc": 55872302,
+            "blink_gc": 36053232,
+            "v8": 30552856,
+            "partition_alloc": 14761984,
+            "cc/tile_memory": 38125568,
+            "shared_memory": 59371680,
+            "discardable": 13455360,
+            "skia": 1107118
+          }
+        },
+        {
+          "checkpoint": "offscreen",
+          "rss_bytes": 472899584,
+          "js_heap_bytes": 14595324,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 13,
+            "nodes": 23536,
+            "jsEventListeners": 683
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 472899584,
+            "Pss": 246939648,
+            "Private_Dirty": 138604544,
+            "Shared_Clean": 260182016
+          },
+          "allocator_sizes": {
+            "malloc": 55035222,
+            "blink_gc": 41476336,
+            "v8": 31945472,
+            "partition_alloc": 15540096,
+            "cc/tile_memory": 12288000,
+            "shared_memory": 33697952,
+            "discardable": 13529088,
+            "skia": 1107118
+          }
+        },
+        {
+          "checkpoint": "reduced_motion",
+          "rss_bytes": 476164096,
+          "js_heap_bytes": 14774116,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 13,
+            "nodes": 23540,
+            "jsEventListeners": 683
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 476164096,
+            "Pss": 250025984,
+            "Private_Dirty": 141512704,
+            "Shared_Clean": 260182016
+          },
+          "allocator_sizes": {
+            "malloc": 56531838,
+            "blink_gc": 42262768,
+            "v8": 31950584,
+            "partition_alloc": 16141200,
+            "cc/tile_memory": 12288000,
+            "shared_memory": 33751200,
+            "discardable": 13529088,
+            "skia": 1107118
+          }
+        },
+        {
+          "checkpoint": "background",
+          "rss_bytes": 588218368,
+          "js_heap_bytes": 14954304,
+          "renderer_count": 4,
+          "dom": {
+            "documents": 13,
+            "nodes": 23550,
+            "jsEventListeners": 683
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 588222464,
+            "Pss": 266799104,
+            "Private_Dirty": 152989696,
+            "Shared_Clean": 345583616
+          },
+          "allocator_sizes": {
+            "malloc": 59926534,
+            "blink_gc": 45015280,
+            "v8": 35722032,
+            "partition_alloc": 16932496,
+            "cc/tile_memory": 12288000,
+            "shared_memory": 35143888,
+            "discardable": 13529088,
+            "skia": 1107118
+          }
+        },
+        {
+          "checkpoint": "navigation_1",
+          "rss_bytes": 486502400,
+          "js_heap_bytes": 11419072,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 15,
+            "nodes": 26150,
+            "jsEventListeners": 781
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 486502400,
+            "Pss": 260524032,
+            "Private_Dirty": 152514560,
+            "Shared_Clean": 260608000
+          },
+          "allocator_sizes": {
+            "malloc": 60981318,
+            "blink_gc": 47997168,
+            "v8": 27875056,
+            "partition_alloc": 17780736,
+            "cc/tile_memory": 20922368,
+            "shared_memory": 41955488,
+            "discardable": 13529088,
+            "skia": 1107118
+          }
+        },
+        {
+          "checkpoint": "navigation_5",
+          "rss_bytes": 523071488,
+          "js_heap_bytes": 6359868,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 4,
+            "nodes": 7758,
+            "jsEventListeners": 100
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 523075584,
+            "Pss": 289958912,
+            "Private_Dirty": 174878720,
+            "Shared_Clean": 260673536
+          },
+          "allocator_sizes": {
+            "malloc": 56304534,
+            "blink_gc": 62009584,
+            "v8": 28079856,
+            "partition_alloc": 10878976,
+            "cc/tile_memory": 35979264,
+            "shared_memory": 68153504,
+            "discardable": 24547328,
+            "skia": 1107118
+          }
+        },
+        {
+          "checkpoint": "navigation_10",
+          "rss_bytes": 525549568,
+          "js_heap_bytes": 9514472,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 14,
+            "nodes": 20744,
+            "jsEventListeners": 590
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 525549568,
+            "Pss": 292764672,
+            "Private_Dirty": 178016256,
+            "Shared_Clean": 260673536
+          },
+          "allocator_sizes": {
+            "malloc": 60230534,
+            "blink_gc": 61980832,
+            "v8": 29390576,
+            "partition_alloc": 13623296,
+            "cc/tile_memory": 36044800,
+            "shared_memory": 68341920,
+            "discardable": 24547328,
+            "skia": 1107118
+          }
+        },
+        {
+          "checkpoint": "navigation_15",
+          "rss_bytes": 457900032,
+          "js_heap_bytes": 5831928,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 2,
+            "nodes": 2597,
+            "jsEventListeners": 98
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 457900032,
+            "Pss": 228577280,
+            "Private_Dirty": 117342208,
+            "Shared_Clean": 260739072
+          },
+          "allocator_sizes": {
+            "malloc": 52416326,
+            "blink_gc": 17146016,
+            "v8": 22140656,
+            "partition_alloc": 10678272,
+            "cc/tile_memory": 27869184,
+            "shared_memory": 60424352,
+            "discardable": 24547328,
+            "skia": 1107118
+          }
+        },
+        {
+          "checkpoint": "navigation_20",
+          "rss_bytes": 470511616,
+          "js_heap_bytes": 6646072,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 6,
+            "nodes": 10367,
+            "jsEventListeners": 101
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 470454272,
+            "Pss": 240009216,
+            "Private_Dirty": 127660032,
+            "Shared_Clean": 260739072
+          },
+          "allocator_sizes": {
+            "malloc": 50679082,
+            "blink_gc": 35127456,
+            "v8": 22874096,
+            "partition_alloc": 9719808,
+            "cc/tile_memory": 20119552,
+            "shared_memory": 52859040,
+            "discardable": 24547328,
+            "skia": 1107266
+          }
+        }
+      ]
+    },
+    {
+      "name": "before-repeat",
+      "source_environment": {
+        "source_commit": "1c964dcba2fa19de1eab077b00e0e5748d742554",
+        "platform": "Linux-6.18.55-x86_64-with-glibc2.41",
+        "python": "3.12.14",
+        "chromium": "156.0.8078.47",
+        "playwright": "1.62.0",
+        "fixture_date_local": "2026-07-15T12:00:00 Asia/Manila",
+        "browser_date": "2026-07-15T12:00:00Z + performance.now()",
+        "random_seed": 12345,
+        "source_sha256": {
+          "templates/_avatars.html": "1b21f18edc3b152d929d529d36bed73d372ddc54851d59f85707dcb262538da0",
+          "templates/_avatars_art.html": "aa542c3e007a4920cde6f32aa797cf79bb9b3ddf07250a459456f072b4c4ef29",
+          "templates/me.html": "251e987e3757c41c61926f93c3b6e265c05f34b086679b3dd5fe15c4ac3225fe",
+          "templates/_growth.html": "83b8db0de0c9a4b81d55047522c4878e0dfbd4f9e022e4d0540115dc03b6df42",
+          "static/js/avatars.js": "69c5841d65c4e1a47093c93a2ded9498b176b3b6cfb9ea34d2d7d633e07d6bb1",
+          "static/js/avatar-audio.js": "51de7cd0c5ab68874dfa5a50fab136ebbc415953fa8b5d0a09cae116d89303b9",
+          "static/js/search.js": "690833235cfe17debf3bbc4c164b3443a2f6597c3935d7961e1e47e2304b1a3c",
+          "templates/office_connect.html": "27b51b191807d4a859098f79250e10ab4195ba700f13966c05d61f45cd3b3577",
+          "templates/dash_layout.html": "89f27d671a1a1253ee6735635a9964ebec35be27c8efc8d848408064f840a735",
+          "tests/test_avatar_baseline_browser.py": "f56ba2198309e031212a2e04d7389ef7f6190ae57a4fb972bdf140031da01231",
+          "tests/avatar_browser_fixture.py": "208d41f1ab18b72052f25844a9cee54e7a3d516769bf4741de759fdd4db3399b"
+        },
+        "process_tree_cpu_affinity": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "requested_renderer_pin_cpu": null,
+        "proxy_compression": "test-local Starlette GZipMiddleware minimum_size=500"
+      },
+      "checkpoints": [
+        {
+          "checkpoint": "home_idle",
+          "rss_bytes": 396902400,
+          "js_heap_bytes": 2666828,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 1,
+            "nodes": 2660,
+            "jsEventListeners": 100
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 396902400,
+            "Pss": 186735616,
+            "Private_Dirty": 87392256,
+            "Shared_Clean": 247214080
+          },
+          "allocator_sizes": {
+            "malloc": 42194754,
+            "blink_gc": 19488848,
+            "v8": 17787880,
+            "partition_alloc": 10868882,
+            "cc/tile_memory": 19365888,
+            "shared_memory": 34861216,
+            "discardable": 13131776,
+            "skia": 436562
+          }
+        },
+        {
+          "checkpoint": "home_interaction",
+          "rss_bytes": 422760448,
+          "js_heap_bytes": 4906284,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 1,
+            "nodes": 2677,
+            "jsEventListeners": 112
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 422760448,
+            "Pss": 197773312,
+            "Private_Dirty": 89812992,
+            "Shared_Clean": 254828544
+          },
+          "allocator_sizes": {
+            "malloc": 40896644,
+            "blink_gc": 21848144,
+            "v8": 20258784,
+            "partition_alloc": 11014797,
+            "cc/tile_memory": 19562496,
+            "shared_memory": 34541728,
+            "discardable": 7622656,
+            "skia": 524652
+          }
+        },
+        {
+          "checkpoint": "wellness_care",
+          "rss_bytes": 431386624,
+          "js_heap_bytes": 3345856,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 1,
+            "nodes": 1504,
+            "jsEventListeners": 80
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 431386624,
+            "Pss": 204667904,
+            "Private_Dirty": 95293440,
+            "Shared_Clean": 255709184
+          },
+          "allocator_sizes": {
+            "malloc": 40096137,
+            "blink_gc": 22478928,
+            "v8": 21787608,
+            "partition_alloc": 10622015,
+            "cc/tile_memory": 17367040,
+            "shared_memory": 38199456,
+            "discardable": 13348864,
+            "skia": 740009
+          }
+        },
+        {
+          "checkpoint": "picker_growth",
+          "rss_bytes": 448208896,
+          "js_heap_bytes": 5797580,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 1,
+            "nodes": 4878,
+            "jsEventListeners": 104
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 448208896,
+            "Pss": 218246144,
+            "Private_Dirty": 105336832,
+            "Shared_Clean": 256311296
+          },
+          "allocator_sizes": {
+            "malloc": 45887077,
+            "blink_gc": 23396432,
+            "v8": 23228352,
+            "partition_alloc": 9469952,
+            "cc/tile_memory": 26345472,
+            "shared_memory": 48867360,
+            "discardable": 13422592,
+            "skia": 862141
+          }
+        },
+        {
+          "checkpoint": "seasonal_preview",
+          "rss_bytes": 486006784,
+          "js_heap_bytes": 13856472,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 11,
+            "nodes": 21327,
+            "jsEventListeners": 584
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 486006784,
+            "Pss": 250587136,
+            "Private_Dirty": 132182016,
+            "Shared_Clean": 259428352
+          },
+          "allocator_sizes": {
+            "malloc": 58708206,
+            "blink_gc": 35455056,
+            "v8": 31045368,
+            "partition_alloc": 13893632,
+            "cc/tile_memory": 42647552,
+            "shared_memory": 63881376,
+            "discardable": 13471744,
+            "skia": 1113934
+          }
+        },
+        {
+          "checkpoint": "offscreen",
+          "rss_bytes": 471683072,
+          "js_heap_bytes": 14704928,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 13,
+            "nodes": 23983,
+            "jsEventListeners": 682
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 471683072,
+            "Pss": 246490112,
+            "Private_Dirty": 138510336,
+            "Shared_Clean": 259584000
+          },
+          "allocator_sizes": {
+            "malloc": 56300262,
+            "blink_gc": 39772240,
+            "v8": 31508208,
+            "partition_alloc": 15368192,
+            "cc/tile_memory": 11829248,
+            "shared_memory": 33226912,
+            "discardable": 13545472,
+            "skia": 1113934
+          }
+        },
+        {
+          "checkpoint": "reduced_motion",
+          "rss_bytes": 473153536,
+          "js_heap_bytes": 14881332,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 13,
+            "nodes": 23987,
+            "jsEventListeners": 682
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 473153536,
+            "Pss": 247856128,
+            "Private_Dirty": 139771904,
+            "Shared_Clean": 259584000
+          },
+          "allocator_sizes": {
+            "malloc": 56356134,
+            "blink_gc": 40820816,
+            "v8": 31508208,
+            "partition_alloc": 15855616,
+            "cc/tile_memory": 11829248,
+            "shared_memory": 33276064,
+            "discardable": 13545472,
+            "skia": 1113934
+          }
+        },
+        {
+          "checkpoint": "background",
+          "rss_bytes": 585650176,
+          "js_heap_bytes": 15058476,
+          "renderer_count": 4,
+          "dom": {
+            "documents": 13,
+            "nodes": 23997,
+            "jsEventListeners": 682
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 585678848,
+            "Pss": 264375296,
+            "Private_Dirty": 150974464,
+            "Shared_Clean": 346017792
+          },
+          "allocator_sizes": {
+            "malloc": 60745494,
+            "blink_gc": 44097616,
+            "v8": 35673872,
+            "partition_alloc": 16303252,
+            "cc/tile_memory": 11829248,
+            "shared_memory": 34693328,
+            "discardable": 13545472,
+            "skia": 1113934
+          }
+        },
+        {
+          "checkpoint": "navigation_1",
+          "rss_bytes": 480866304,
+          "js_heap_bytes": 11367844,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 15,
+            "nodes": 26644,
+            "jsEventListeners": 780
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 480866304,
+            "Pss": 255904768,
+            "Private_Dirty": 148348928,
+            "Shared_Clean": 259829760
+          },
+          "allocator_sizes": {
+            "malloc": 60941398,
+            "blink_gc": 46833744,
+            "v8": 30650080,
+            "partition_alloc": 16973824,
+            "cc/tile_memory": 11223040,
+            "shared_memory": 32252064,
+            "discardable": 13545472,
+            "skia": 1113934
+          }
+        },
+        {
+          "checkpoint": "navigation_5",
+          "rss_bytes": 513445888,
+          "js_heap_bytes": 6339800,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 4,
+            "nodes": 5287,
+            "jsEventListeners": 172
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 513433600,
+            "Pss": 281650176,
+            "Private_Dirty": 167333888,
+            "Shared_Clean": 259891200
+          },
+          "allocator_sizes": {
+            "malloc": 54120502,
+            "blink_gc": 56844288,
+            "v8": 31436512,
+            "partition_alloc": 11030528,
+            "cc/tile_memory": 34799616,
+            "shared_memory": 66957472,
+            "discardable": 24563712,
+            "skia": 1113934
+          }
+        },
+        {
+          "checkpoint": "navigation_10",
+          "rss_bytes": 515158016,
+          "js_heap_bytes": 6916104,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 6,
+            "nodes": 7931,
+            "jsEventListeners": 270
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 515158016,
+            "Pss": 283237376,
+            "Private_Dirty": 168783872,
+            "Shared_Clean": 259891200
+          },
+          "allocator_sizes": {
+            "malloc": 54344614,
+            "blink_gc": 57208832,
+            "v8": 28028640,
+            "partition_alloc": 11419648,
+            "cc/tile_memory": 35454976,
+            "shared_memory": 67748000,
+            "discardable": 24563712,
+            "skia": 1113934
+          }
+        },
+        {
+          "checkpoint": "navigation_15",
+          "rss_bytes": 515903488,
+          "js_heap_bytes": 8104068,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 10,
+            "nodes": 13221,
+            "jsEventListeners": 479
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 515903488,
+            "Pss": 283986944,
+            "Private_Dirty": 169537536,
+            "Shared_Clean": 259891200
+          },
+          "allocator_sizes": {
+            "malloc": 56919910,
+            "blink_gc": 57544704,
+            "v8": 28290784,
+            "partition_alloc": 12419072,
+            "cc/tile_memory": 34930688,
+            "shared_memory": 67350688,
+            "discardable": 24563712,
+            "skia": 1113934
+          }
+        },
+        {
+          "checkpoint": "navigation_20",
+          "rss_bytes": 514662400,
+          "js_heap_bytes": 6349308,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 4,
+            "nodes": 5287,
+            "jsEventListeners": 196
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 514662400,
+            "Pss": 282361856,
+            "Private_Dirty": 167579648,
+            "Shared_Clean": 259956736
+          },
+          "allocator_sizes": {
+            "malloc": 54278934,
+            "blink_gc": 57622528,
+            "v8": 29077216,
+            "partition_alloc": 10436608,
+            "cc/tile_memory": 34930688,
+            "shared_memory": 67498144,
+            "discardable": 24563712,
+            "skia": 1113934
+          }
+        }
+      ]
+    },
+    {
+      "name": "after-repeat",
+      "source_environment": {
+        "source_commit": "818cf231a924cff0b74f514051bc8023d7a02d28",
+        "platform": "Linux-6.18.55-x86_64-with-glibc2.41",
+        "python": "3.12.14",
+        "chromium": "156.0.8078.47",
+        "playwright": "1.62.0",
+        "fixture_date_local": "2026-07-15T12:00:00 Asia/Manila",
+        "browser_date": "2026-07-15T12:00:00Z + performance.now()",
+        "random_seed": 12345,
+        "source_sha256": {
+          "templates/_avatars.html": "6babed91fede3a9bac7a8fb637b5273c6618539695726a44a976e1114df803c5",
+          "templates/_avatars_art.html": "25ebadba51e81177d2fe9526dd5eba5485fce77e617e13e48d0a7ca9c710412f",
+          "templates/me.html": "fa68d656a4936b82ed7600f21605650e22566cf8ef2ce7f5ab5c03d6ea8a4050",
+          "templates/_growth.html": "b7f52bf1ee876ab7f773a77ad58699d9121f16359d6124879cfb0fcf303c6b5b",
+          "static/js/avatars.js": "c69e444b8d72fe84d0521d6ccabce07e9463209f5e451d96169b19aaca4191fb",
+          "static/js/avatar-audio.js": "0434c719d23e149eb4e5b8471c06fdf439d8c1b3f1983192e5ce9e3ffa9fbf32",
+          "static/js/search.js": "5027eebe29b7170610d114834f85128da4afaef9393313b36f80946765cea3e7",
+          "templates/office_connect.html": "8bdb01bfa549a869d72829ffbcebbf3490f39e7cca74e501b3b3ee09f26b8290",
+          "templates/dash_layout.html": "f58e2c79bdab9f10ed9e3821114eaa0586488dc275d86530a7dd452587cd5452",
+          "tests/test_avatar_baseline_browser.py": "f56ba2198309e031212a2e04d7389ef7f6190ae57a4fb972bdf140031da01231",
+          "templates/_avatar_species/bat.html": "b8e6db951e4bce007308d6745467e42da864daf34a137a0ebd17c6c0a64d3978",
+          "templates/_avatar_species/bird.html": "9a2fdee73a9308602005d0bf629cbcab768f3e70f8208747e9e8c8d11e2eca04",
+          "templates/_avatar_species/bonsai.html": "5310a2fe1e50e485ca250431598fbae904da414a5767216e42b458b071d949a7",
+          "templates/_avatar_species/cactus.html": "55861c22dbc545170652890dc3fbaf20d8323e4805fbc83df76eb68fe83c5807",
+          "templates/_avatar_species/cat.html": "aff257f44c3d4a9fc1c4972a461db86d2555fd588fa3a26fe3ae2aeea018c6ea",
+          "templates/_avatar_species/dog.html": "140eb1a9cfac315abe8bccb50aa6151cb40cf91b7465462235c8e4b17cbafe63",
+          "templates/_avatar_species/dolphin.html": "2ae5aa9a8059b9588dcdfa5bba79177f12b5a65f687fa4305b09710439179f7d",
+          "templates/_avatar_species/fern.html": "74f102d6beaa84ab5270340856f050843b16e3ba61a8929f5818db7a5cfdf69d",
+          "templates/_avatar_species/fish.html": "556494934c8bf311036670be862984bf0cb30ad33ebc66891e4400379236303a",
+          "templates/_avatar_species/mushroom.html": "c37f87a3a97fe46f7e986320ba035941ffdbef24b1496757e058468a7a841bf5",
+          "templates/_avatar_species/owl.html": "99a108ada8b2b66bf1eab74707b7b4f1e540e01358f2202cbc078ba0491aefea",
+          "templates/_avatar_species/plant.html": "887462e4e7305885d3f0cecb042fe114f1c92b1c93dc984b35698cf7c0fcb0cc",
+          "templates/_avatar_species/rabbit.html": "4cd9118d7ab89444ed11540fda8624377d6e9134aea8013e27dda715915abed9",
+          "templates/_avatar_species/succulent.html": "09f2e6fc13bc4c719dbfbe96593079c2671dc190be5fb8ab74bb3d00f081418d",
+          "templates/_avatar_species/sunflower.html": "e2e05409cd112527916f84cab5f8f2461b6365a545e8a6fad106ca6879a3c69f",
+          "templates/_avatar_species/turtle.html": "a4c4b327de4cedf38dc5c2f6709e7aed9060da4d143f4e36e57729abcd7bb3d2",
+          "tests/avatar_browser_fixture.py": "208d41f1ab18b72052f25844a9cee54e7a3d516769bf4741de759fdd4db3399b",
+          "templates/_avatars_shared.html": "577b34f5385257b0051d19b699294ebd0521021457b6831e5ff19798fe812759"
+        },
+        "process_tree_cpu_affinity": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "requested_renderer_pin_cpu": null,
+        "proxy_compression": "test-local Starlette GZipMiddleware minimum_size=500"
+      },
+      "checkpoints": [
+        {
+          "checkpoint": "home_idle",
+          "rss_bytes": 398618624,
+          "js_heap_bytes": 2633052,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 1,
+            "nodes": 2599,
+            "jsEventListeners": 103
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 398618624,
+            "Pss": 186966016,
+            "Private_Dirty": 87212032,
+            "Shared_Clean": 249561088
+          },
+          "allocator_sizes": {
+            "malloc": 41016682,
+            "blink_gc": 19660960,
+            "v8": 18162656,
+            "partition_alloc": 10568963,
+            "cc/tile_memory": 20283392,
+            "shared_memory": 35803296,
+            "discardable": 13156352,
+            "skia": 436562
+          }
+        },
+        {
+          "checkpoint": "home_interaction",
+          "rss_bytes": 418381824,
+          "js_heap_bytes": 2844528,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 1,
+            "nodes": 2608,
+            "jsEventListeners": 103
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 418381824,
+            "Pss": 192310272,
+            "Private_Dirty": 88403968,
+            "Shared_Clean": 256229376
+          },
+          "allocator_sizes": {
+            "malloc": 39743556,
+            "blink_gc": 21233824,
+            "v8": 19745744,
+            "partition_alloc": 10369649,
+            "cc/tile_memory": 19595264,
+            "shared_memory": 34586784,
+            "discardable": 7647232,
+            "skia": 524652
+          }
+        },
+        {
+          "checkpoint": "wellness_care",
+          "rss_bytes": 426520576,
+          "js_heap_bytes": 4561884,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 3,
+            "nodes": 4116,
+            "jsEventListeners": 210
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 426520576,
+            "Pss": 199219200,
+            "Private_Dirty": 94347264,
+            "Shared_Clean": 256811008
+          },
+          "allocator_sizes": {
+            "malloc": 39674377,
+            "blink_gc": 21778592,
+            "v8": 20889544,
+            "partition_alloc": 11473596,
+            "cc/tile_memory": 18186240,
+            "shared_memory": 39051424,
+            "discardable": 13348864,
+            "skia": 740009
+          }
+        },
+        {
+          "checkpoint": "picker_growth",
+          "rss_bytes": 447180800,
+          "js_heap_bytes": 5826864,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 1,
+            "nodes": 4561,
+            "jsEventListeners": 106
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 447180800,
+            "Pss": 216355840,
+            "Private_Dirty": 107565056,
+            "Shared_Clean": 257572864
+          },
+          "allocator_sizes": {
+            "malloc": 45709685,
+            "blink_gc": 26464416,
+            "v8": 22808464,
+            "partition_alloc": 10268672,
+            "cc/tile_memory": 24313856,
+            "shared_memory": 47360672,
+            "discardable": 13422592,
+            "skia": 862141
+          }
+        },
+        {
+          "checkpoint": "seasonal_preview",
+          "rss_bytes": 492462080,
+          "js_heap_bytes": 10932416,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 11,
+            "nodes": 20942,
+            "jsEventListeners": 598
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 492470272,
+            "Pss": 254402560,
+            "Private_Dirty": 134623232,
+            "Shared_Clean": 261582848
+          },
+          "allocator_sizes": {
+            "malloc": 55398526,
+            "blink_gc": 35614880,
+            "v8": 28635928,
+            "partition_alloc": 14442496,
+            "cc/tile_memory": 38977536,
+            "shared_memory": 60260512,
+            "discardable": 13471744,
+            "skia": 1144974
+          }
+        },
+        {
+          "checkpoint": "offscreen",
+          "rss_bytes": 470261760,
+          "js_heap_bytes": 11097084,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 13,
+            "nodes": 23537,
+            "jsEventListeners": 699
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 470261760,
+            "Pss": 243659776,
+            "Private_Dirty": 135553024,
+            "Shared_Clean": 261738496
+          },
+          "allocator_sizes": {
+            "malloc": 55358438,
+            "blink_gc": 40190112,
+            "v8": 28941072,
+            "partition_alloc": 15225122,
+            "cc/tile_memory": 12451840,
+            "shared_memory": 33906848,
+            "discardable": 13545472,
+            "skia": 1144974
+          }
+        },
+        {
+          "checkpoint": "reduced_motion",
+          "rss_bytes": 473620480,
+          "js_heap_bytes": 11259556,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 13,
+            "nodes": 23537,
+            "jsEventListeners": 699
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 473620480,
+            "Pss": 246825984,
+            "Private_Dirty": 138526720,
+            "Shared_Clean": 261738496
+          },
+          "allocator_sizes": {
+            "malloc": 56811222,
+            "blink_gc": 41107616,
+            "v8": 28941072,
+            "partition_alloc": 15825986,
+            "cc/tile_memory": 12451840,
+            "shared_memory": 33947808,
+            "discardable": 13545472,
+            "skia": 1144974
+          }
+        },
+        {
+          "checkpoint": "background",
+          "rss_bytes": 586043392,
+          "js_heap_bytes": 11403224,
+          "renderer_count": 4,
+          "dom": {
+            "documents": 13,
+            "nodes": 23537,
+            "jsEventListeners": 699
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 586067968,
+            "Pss": 263068672,
+            "Private_Dirty": 149463040,
+            "Shared_Clean": 348491776
+          },
+          "allocator_sizes": {
+            "malloc": 60395870,
+            "blink_gc": 44105888,
+            "v8": 32683848,
+            "partition_alloc": 16611234,
+            "cc/tile_memory": 12451840,
+            "shared_memory": 35344592,
+            "discardable": 13545472,
+            "skia": 1144974
+          }
+        },
+        {
+          "checkpoint": "navigation_1",
+          "rss_bytes": 482119680,
+          "js_heap_bytes": 12195304,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 15,
+            "nodes": 26131,
+            "jsEventListeners": 800
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 482119680,
+            "Pss": 255449088,
+            "Private_Dirty": 147472384,
+            "Shared_Clean": 261894144
+          },
+          "allocator_sizes": {
+            "malloc": 62121350,
+            "blink_gc": 46743712,
+            "v8": 29203216,
+            "partition_alloc": 16887010,
+            "cc/tile_memory": 21184512,
+            "shared_memory": 42246304,
+            "discardable": 13545472,
+            "skia": 1144974
+          }
+        },
+        {
+          "checkpoint": "navigation_5",
+          "rss_bytes": 533147648,
+          "js_heap_bytes": 14885320,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 23,
+            "nodes": 36507,
+            "jsEventListeners": 1204
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 533151744,
+            "Pss": 299724800,
+            "Private_Dirty": 185061376,
+            "Shared_Clean": 261963776
+          },
+          "allocator_sizes": {
+            "malloc": 67379702,
+            "blink_gc": 61468832,
+            "v8": 31477504,
+            "partition_alloc": 20467712,
+            "cc/tile_memory": 36110336,
+            "shared_memory": 68300960,
+            "discardable": 24563712,
+            "skia": 1144974
+          }
+        },
+        {
+          "checkpoint": "navigation_10",
+          "rss_bytes": 562130944,
+          "js_heap_bytes": 18205460,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 33,
+            "nodes": 49477,
+            "jsEventListeners": 1709
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 562130944,
+            "Pss": 328708096,
+            "Private_Dirty": 214048768,
+            "Shared_Clean": 261963776
+          },
+          "allocator_sizes": {
+            "malloc": 79025390,
+            "blink_gc": 80511216,
+            "v8": 35148472,
+            "partition_alloc": 24428544,
+            "cc/tile_memory": 35782656,
+            "shared_memory": 60354720,
+            "discardable": 24563712,
+            "skia": 1144974
+          }
+        },
+        {
+          "checkpoint": "navigation_15",
+          "rss_bytes": 548679680,
+          "js_heap_bytes": 8346076,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 12,
+            "nodes": 15573,
+            "jsEventListeners": 582
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 548679680,
+            "Pss": 315203584,
+            "Private_Dirty": 200544256,
+            "Shared_Clean": 262029312
+          },
+          "allocator_sizes": {
+            "malloc": 61539006,
+            "blink_gc": 80695376,
+            "v8": 27853496,
+            "partition_alloc": 14471168,
+            "cc/tile_memory": 35749888,
+            "shared_memory": 68280480,
+            "discardable": 24563712,
+            "skia": 1145598
+          }
+        },
+        {
+          "checkpoint": "navigation_20",
+          "rss_bytes": 549085184,
+          "js_heap_bytes": 10722560,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 22,
+            "nodes": 28543,
+            "jsEventListeners": 1087
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 549085184,
+            "Pss": 315204608,
+            "Private_Dirty": 200146944,
+            "Shared_Clean": 262029312
+          },
+          "allocator_sizes": {
+            "malloc": 68190718,
+            "blink_gc": 80945232,
+            "v8": 29164216,
+            "partition_alloc": 17555456,
+            "cc/tile_memory": 35979264,
+            "shared_memory": 68653216,
+            "discardable": 24563712,
+            "skia": 1145598
+          }
+        }
+      ]
+    },
+    {
+      "name": "pagehide-cancel",
+      "source_environment": {
+        "source_commit": "462934d27a8e94a1a1e06d674327e951179997e6",
+        "platform": "Linux-6.18.55-x86_64-with-glibc2.41",
+        "python": "3.12.14",
+        "chromium": "156.0.8078.47",
+        "playwright": "1.62.0",
+        "fixture_date_local": "2026-07-15T12:00:00 Asia/Manila",
+        "browser_date": "2026-07-15T12:00:00Z + performance.now()",
+        "random_seed": 12345,
+        "source_sha256": {
+          "templates/_avatars.html": "6babed91fede3a9bac7a8fb637b5273c6618539695726a44a976e1114df803c5",
+          "templates/_avatars_art.html": "25ebadba51e81177d2fe9526dd5eba5485fce77e617e13e48d0a7ca9c710412f",
+          "templates/me.html": "fa68d656a4936b82ed7600f21605650e22566cf8ef2ce7f5ab5c03d6ea8a4050",
+          "templates/_growth.html": "b7f52bf1ee876ab7f773a77ad58699d9121f16359d6124879cfb0fcf303c6b5b",
+          "static/js/avatars.js": "65da950cf8eaaaa8f1972b6dcf8947d15d5df87870bd5ad60b7272edefdfd672",
+          "static/js/avatar-audio.js": "0434c719d23e149eb4e5b8471c06fdf439d8c1b3f1983192e5ce9e3ffa9fbf32",
+          "static/js/search.js": "5027eebe29b7170610d114834f85128da4afaef9393313b36f80946765cea3e7",
+          "templates/office_connect.html": "8bdb01bfa549a869d72829ffbcebbf3490f39e7cca74e501b3b3ee09f26b8290",
+          "templates/dash_layout.html": "f58e2c79bdab9f10ed9e3821114eaa0586488dc275d86530a7dd452587cd5452",
+          "tests/test_avatar_baseline_browser.py": "f56ba2198309e031212a2e04d7389ef7f6190ae57a4fb972bdf140031da01231",
+          "templates/_avatar_species/bat.html": "b8e6db951e4bce007308d6745467e42da864daf34a137a0ebd17c6c0a64d3978",
+          "templates/_avatar_species/bird.html": "9a2fdee73a9308602005d0bf629cbcab768f3e70f8208747e9e8c8d11e2eca04",
+          "templates/_avatar_species/bonsai.html": "5310a2fe1e50e485ca250431598fbae904da414a5767216e42b458b071d949a7",
+          "templates/_avatar_species/cactus.html": "55861c22dbc545170652890dc3fbaf20d8323e4805fbc83df76eb68fe83c5807",
+          "templates/_avatar_species/cat.html": "aff257f44c3d4a9fc1c4972a461db86d2555fd588fa3a26fe3ae2aeea018c6ea",
+          "templates/_avatar_species/dog.html": "140eb1a9cfac315abe8bccb50aa6151cb40cf91b7465462235c8e4b17cbafe63",
+          "templates/_avatar_species/dolphin.html": "2ae5aa9a8059b9588dcdfa5bba79177f12b5a65f687fa4305b09710439179f7d",
+          "templates/_avatar_species/fern.html": "74f102d6beaa84ab5270340856f050843b16e3ba61a8929f5818db7a5cfdf69d",
+          "templates/_avatar_species/fish.html": "556494934c8bf311036670be862984bf0cb30ad33ebc66891e4400379236303a",
+          "templates/_avatar_species/mushroom.html": "c37f87a3a97fe46f7e986320ba035941ffdbef24b1496757e058468a7a841bf5",
+          "templates/_avatar_species/owl.html": "99a108ada8b2b66bf1eab74707b7b4f1e540e01358f2202cbc078ba0491aefea",
+          "templates/_avatar_species/plant.html": "887462e4e7305885d3f0cecb042fe114f1c92b1c93dc984b35698cf7c0fcb0cc",
+          "templates/_avatar_species/rabbit.html": "4cd9118d7ab89444ed11540fda8624377d6e9134aea8013e27dda715915abed9",
+          "templates/_avatar_species/succulent.html": "09f2e6fc13bc4c719dbfbe96593079c2671dc190be5fb8ab74bb3d00f081418d",
+          "templates/_avatar_species/sunflower.html": "e2e05409cd112527916f84cab5f8f2461b6365a545e8a6fad106ca6879a3c69f",
+          "templates/_avatar_species/turtle.html": "a4c4b327de4cedf38dc5c2f6709e7aed9060da4d143f4e36e57729abcd7bb3d2",
+          "tests/avatar_browser_fixture.py": "208d41f1ab18b72052f25844a9cee54e7a3d516769bf4741de759fdd4db3399b",
+          "templates/_avatars_shared.html": "577b34f5385257b0051d19b699294ebd0521021457b6831e5ff19798fe812759"
+        },
+        "process_tree_cpu_affinity": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "requested_renderer_pin_cpu": null,
+        "proxy_compression": "test-local Starlette GZipMiddleware minimum_size=500"
+      },
+      "checkpoints": [
+        {
+          "checkpoint": "home_idle",
+          "rss_bytes": 398069760,
+          "js_heap_bytes": 2626352,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 1,
+            "nodes": 2599,
+            "jsEventListeners": 104
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 398069760,
+            "Pss": 187640832,
+            "Private_Dirty": 87834624,
+            "Shared_Clean": 248246272
+          },
+          "allocator_sizes": {
+            "malloc": 41011642,
+            "blink_gc": 19611808,
+            "v8": 17524720,
+            "partition_alloc": 11001934,
+            "cc/tile_memory": 20545536,
+            "shared_memory": 36073632,
+            "discardable": 13156352,
+            "skia": 436562
+          }
+        },
+        {
+          "checkpoint": "home_interaction",
+          "rss_bytes": 418721792,
+          "js_heap_bytes": 3779080,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 1,
+            "nodes": 2623,
+            "jsEventListeners": 140
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 418721792,
+            "Pss": 193554432,
+            "Private_Dirty": 89124864,
+            "Shared_Clean": 254951424
+          },
+          "allocator_sizes": {
+            "malloc": 41688148,
+            "blink_gc": 21053600,
+            "v8": 19632096,
+            "partition_alloc": 11568589,
+            "cc/tile_memory": 20578304,
+            "shared_memory": 35565728,
+            "discardable": 7647232,
+            "skia": 524652
+          }
+        },
+        {
+          "checkpoint": "wellness_care",
+          "rss_bytes": 425832448,
+          "js_heap_bytes": 4552140,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 3,
+            "nodes": 4121,
+            "jsEventListeners": 212
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 425840640,
+            "Pss": 199808000,
+            "Private_Dirty": 94539776,
+            "Shared_Clean": 255475712
+          },
+          "allocator_sizes": {
+            "malloc": 43817961,
+            "blink_gc": 21598368,
+            "v8": 20784072,
+            "partition_alloc": 11579527,
+            "cc/tile_memory": 18104320,
+            "shared_memory": 38969504,
+            "discardable": 13348864,
+            "skia": 747177
+          }
+        },
+        {
+          "checkpoint": "picker_growth",
+          "rss_bytes": 445227008,
+          "js_heap_bytes": 5698644,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 1,
+            "nodes": 4561,
+            "jsEventListeners": 107
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 445227008,
+            "Pss": 215828480,
+            "Private_Dirty": 106708992,
+            "Shared_Clean": 256200704
+          },
+          "allocator_sizes": {
+            "malloc": 46604133,
+            "blink_gc": 26091680,
+            "v8": 22612880,
+            "partition_alloc": 10563584,
+            "cc/tile_memory": 23527424,
+            "shared_memory": 46566048,
+            "discardable": 13422592,
+            "skia": 869309
+          }
+        },
+        {
+          "checkpoint": "seasonal_preview",
+          "rss_bytes": 485748736,
+          "js_heap_bytes": 11301344,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 11,
+            "nodes": 20943,
+            "jsEventListeners": 603
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 485748736,
+            "Pss": 250041344,
+            "Private_Dirty": 130797568,
+            "Shared_Clean": 260509696
+          },
+          "allocator_sizes": {
+            "malloc": 57768038,
+            "blink_gc": 36147360,
+            "v8": 27860832,
+            "partition_alloc": 14606336,
+            "cc/tile_memory": 37961728,
+            "shared_memory": 59244704,
+            "discardable": 13471744,
+            "skia": 1144366
+          }
+        },
+        {
+          "checkpoint": "offscreen",
+          "rss_bytes": 469966848,
+          "js_heap_bytes": 10956304,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 13,
+            "nodes": 23538,
+            "jsEventListeners": 705
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 469966848,
+            "Pss": 244294656,
+            "Private_Dirty": 135438336,
+            "Shared_Clean": 260820992
+          },
+          "allocator_sizes": {
+            "malloc": 55357590,
+            "blink_gc": 41119904,
+            "v8": 28008288,
+            "partition_alloc": 15466770,
+            "cc/tile_memory": 12189696,
+            "shared_memory": 33640608,
+            "discardable": 13545472,
+            "skia": 1144366
+          }
+        },
+        {
+          "checkpoint": "reduced_motion",
+          "rss_bytes": 472686592,
+          "js_heap_bytes": 11118696,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 13,
+            "nodes": 23538,
+            "jsEventListeners": 705
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 472686592,
+            "Pss": 246813696,
+            "Private_Dirty": 137756672,
+            "Shared_Clean": 260820992
+          },
+          "allocator_sizes": {
+            "malloc": 55178214,
+            "blink_gc": 42299552,
+            "v8": 28008288,
+            "partition_alloc": 16071042,
+            "cc/tile_memory": 12189696,
+            "shared_memory": 33689760,
+            "discardable": 13545472,
+            "skia": 1144366
+          }
+        },
+        {
+          "checkpoint": "background",
+          "rss_bytes": 583933952,
+          "js_heap_bytes": 11262556,
+          "renderer_count": 4,
+          "dom": {
+            "documents": 13,
+            "nodes": 23538,
+            "jsEventListeners": 705
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 584003584,
+            "Pss": 262980608,
+            "Private_Dirty": 148697088,
+            "Shared_Clean": 346300416
+          },
+          "allocator_sizes": {
+            "malloc": 60173270,
+            "blink_gc": 45170848,
+            "v8": 31851408,
+            "partition_alloc": 16859458,
+            "cc/tile_memory": 12189696,
+            "shared_memory": 35078352,
+            "discardable": 13545472,
+            "skia": 1144366
+          }
+        },
+        {
+          "checkpoint": "navigation_1",
+          "rss_bytes": 483553280,
+          "js_heap_bytes": 12056052,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 15,
+            "nodes": 26132,
+            "jsEventListeners": 807
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 483553280,
+            "Pss": 257614848,
+            "Private_Dirty": 148664320,
+            "Shared_Clean": 260952064
+          },
+          "allocator_sizes": {
+            "malloc": 56647318,
+            "blink_gc": 48472224,
+            "v8": 28270432,
+            "partition_alloc": 17510400,
+            "cc/tile_memory": 21184512,
+            "shared_memory": 42242208,
+            "discardable": 13545472,
+            "skia": 1144366
+          }
+        },
+        {
+          "checkpoint": "navigation_5",
+          "rss_bytes": 535068672,
+          "js_heap_bytes": 14747452,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 23,
+            "nodes": 36508,
+            "jsEventListeners": 1215
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 535068672,
+            "Pss": 302578688,
+            "Private_Dirty": 187207680,
+            "Shared_Clean": 261083136
+          },
+          "allocator_sizes": {
+            "malloc": 71017582,
+            "blink_gc": 64700576,
+            "v8": 30403368,
+            "partition_alloc": 20832256,
+            "cc/tile_memory": 36110336,
+            "shared_memory": 68309152,
+            "discardable": 24563712,
+            "skia": 1144366
+          }
+        },
+        {
+          "checkpoint": "navigation_10",
+          "rss_bytes": 528019456,
+          "js_heap_bytes": 8421716,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 12,
+            "nodes": 15562,
+            "jsEventListeners": 588
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 528019456,
+            "Pss": 295633920,
+            "Private_Dirty": 180367360,
+            "Shared_Clean": 261083136
+          },
+          "allocator_sizes": {
+            "malloc": 60233182,
+            "blink_gc": 64999504,
+            "v8": 27519784,
+            "partition_alloc": 14434304,
+            "cc/tile_memory": 27590656,
+            "shared_memory": 59945120,
+            "discardable": 24563712,
+            "skia": 1144366
+          }
+        },
+        {
+          "checkpoint": "navigation_15",
+          "rss_bytes": 534368256,
+          "js_heap_bytes": 10818236,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 22,
+            "nodes": 28532,
+            "jsEventListeners": 1098
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 534368256,
+            "Pss": 301841408,
+            "Private_Dirty": 186433536,
+            "Shared_Clean": 261083136
+          },
+          "allocator_sizes": {
+            "malloc": 70172430,
+            "blink_gc": 65146960,
+            "v8": 28568360,
+            "partition_alloc": 17866752,
+            "cc/tile_memory": 35749888,
+            "shared_memory": 68239520,
+            "discardable": 24563712,
+            "skia": 1144366
+          }
+        },
+        {
+          "checkpoint": "navigation_20",
+          "rss_bytes": 526807040,
+          "js_heap_bytes": 8937960,
+          "renderer_count": 3,
+          "dom": {
+            "documents": 12,
+            "nodes": 15562,
+            "jsEventListeners": 588
+          },
+          "hidden": false,
+          "native_smaps_totals": {
+            "Rss": 526811136,
+            "Pss": 294269952,
+            "Private_Dirty": 178900992,
+            "Shared_Clean": 261148672
+          },
+          "allocator_sizes": {
+            "malloc": 59241294,
+            "blink_gc": 65212496,
+            "v8": 28830504,
+            "partition_alloc": 13332480,
+            "cc/tile_memory": 27033600,
+            "shared_memory": 59678880,
+            "discardable": 24563712,
+            "skia": 1144366
+          }
+        }
+      ]
+    }
+  ]
+}

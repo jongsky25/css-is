@@ -1,0 +1,21 @@
+{
+  "acceptance": false,
+  "diagnostic_only": true,
+  "protocol": "One native-sampling capability probe, direct Home then picker; 32 KiB sampling interval. Not the full scenario sequence or an acceptance run. No forced GC.",
+  "samples": 280,
+  "browser": "156.0.8078.47",
+  "browser_build_id": "1c5dca8527a61d07372e489142bee26af1bcaf71",
+  "available_debug_build_id": "a0dc2c18857f233d62a85406331b544dabf33e19",
+  "finding": "Matching symbols found in Debian security-debug repository. Browser/debug build IDs verified equal before resolving module-relative addresses. One picker sample; no lifecycle attribution or acceptance claim.",
+  "sha256": {
+    "probe.txt": "c7964667512f8a00e30c045cd52870a53a1d398aea6a9ab7e7fc12291cc50f92",
+    "probe.py": "b926bc7336486e556ef3d1d08583a498c8dbcc599af4157883f293c81cc6f00f",
+    "native-profile.json.gz": "6f7b2c1ccf6145915f47a55c608addbd098d91b756ead2e67a32a4444897d52b",
+    "environment.json": "bc043ea1d43735a0672becf9dadec0758243e955f7119d4e87b8225ad76a7c98"
+  },
+  "matching_debug_build_id": "1c5dca8527a61d07372e489142bee26af1bcaf71",
+  "debug_package_url": "https://deb.debian.org/debian-security-debug/pool/updates/main/c/chromium/chromium-dbgsym_156.0.8078.47-1~deb13u1_amd64.deb",
+  "debug_package_sha256": "3ceeef380f8ca3f3ca28065d0eeb1ddee58f4673973380459ad32c131618aafb",
+  "resolved_chromium_frames": 868,
+  "total_chromium_frames": 868
+}

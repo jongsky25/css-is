@@ -791,3 +791,7 @@ Final run 40263865865 and audit 40277957839 passed. Independent audit verified s
 ### Acceptance correction — complete memory audit
 
 The earlier final-acceptance appendix is superseded. It checked five active scenarios only and therefore did not establish the full memory gate. The corrected report retains the original evidence and records all uncovered failures. 3A remains unaccepted and paused on its separate branch; no 3B or later work has started.
+
+### 2B lifecycle correction experiment — 2026-10-26 — rejected
+
+The guarded pagehide cleanup candidate `509cd1a` fails eight RSS and one JS-heap comparison against the unchanged 10 MiB limit. Maximum increases are +28.738 MiB RSS and +10.063 MiB heap. The independent audit covers all 234 comparisons and 134 source hashes. The verification branch retains product `f700187`; the rejected candidate and raw evidence are preserved separately. Full acceptance and 3A/later increments remain paused. Next: correlate natural document collection, renderer lifetimes and native allocations before another product correction. See the [follow-up report](avatars/increment2b/lifecycle-memory-fix/REPORT.md).

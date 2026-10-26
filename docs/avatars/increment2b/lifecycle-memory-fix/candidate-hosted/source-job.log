@@ -1,0 +1,1728 @@
+﻿2026-10-26T08:32:03.8364128Z Current runner version: '2.338.0'
+2026-10-26T08:32:03.8388670Z ##[group]Runner Image Provisioner
+2026-10-26T08:32:03.8389714Z Hosted Compute Agent
+2026-10-26T08:32:03.8390332Z Version: 20261021.618
+2026-10-26T08:32:03.8390959Z Commit: 21505ad2541d5be6135ed84fc33697146cf75b8e
+2026-10-26T08:32:03.8391791Z Build Date: 2026-10-21T00:45:21Z
+2026-10-26T08:32:03.8392478Z Worker ID: {8327f764-df3b-4250-8740-5262e49da37b}
+2026-10-26T08:32:03.8393223Z Region: westus2
+2026-10-26T08:32:03.8393791Z Cloud: Azure
+2026-10-26T08:32:03.8394334Z ##[endgroup]
+2026-10-26T08:32:03.8395943Z ##[group]Operating System
+2026-10-26T08:32:03.8396654Z Ubuntu
+2026-10-26T08:32:03.8397303Z 24.04.5
+2026-10-26T08:32:03.8398174Z LTS
+2026-10-26T08:32:03.8398729Z ##[endgroup]
+2026-10-26T08:32:03.8399390Z ##[group]Runner Image
+2026-10-26T08:32:03.8400017Z Image: ubuntu-24.04
+2026-10-26T08:32:03.8400574Z Version: 20261012.334.1
+2026-10-26T08:32:03.8401896Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20261012.334/images/ubuntu/Ubuntu2404-Readme.md
+2026-10-26T08:32:03.8403914Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20261012.334
+2026-10-26T08:32:03.8404939Z ##[endgroup]
+2026-10-26T08:32:03.8406091Z ##[group]GITHUB_TOKEN Permissions
+2026-10-26T08:32:03.8408290Z Contents: read
+2026-10-26T08:32:03.8408966Z Metadata: read
+2026-10-26T08:32:03.8409652Z ##[endgroup]
+2026-10-26T08:32:03.8411940Z Secret source: Actions
+2026-10-26T08:32:03.8413197Z Cache mode: write
+2026-10-26T08:32:03.8413931Z Prepare workflow directory
+2026-10-26T08:32:03.8828275Z Prepare all required actions
+2026-10-26T08:32:03.8877789Z Getting action download info
+2026-10-26T08:32:04.2334185Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-10-26T08:32:04.3281499Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+2026-10-26T08:32:04.5435134Z Complete job name: verify
+2026-10-26T08:32:04.6060463Z ##[group]Checking docker version
+2026-10-26T08:32:04.6074067Z ##[command]/usr/bin/docker version --format '{{.Server.APIVersion}}'
+2026-10-26T08:32:04.7165119Z '1.48'
+2026-10-26T08:32:04.7187730Z Docker daemon API version: '1.48'
+2026-10-26T08:32:04.7188743Z ##[command]/usr/bin/docker version --format '{{.Client.APIVersion}}'
+2026-10-26T08:32:04.7351628Z '1.48'
+2026-10-26T08:32:04.7367015Z Docker client API version: '1.48'
+2026-10-26T08:32:04.7373126Z ##[endgroup]
+2026-10-26T08:32:04.7376908Z ##[group]Clean up resources from previous jobs
+2026-10-26T08:32:04.7382808Z ##[command]/usr/bin/docker ps --all --quiet --no-trunc --filter "label=5150ef"
+2026-10-26T08:32:04.7529990Z ##[command]/usr/bin/docker network prune --force --filter "label=5150ef"
+2026-10-26T08:32:04.7657851Z ##[endgroup]
+2026-10-26T08:32:04.7658406Z ##[group]Create local container network
+2026-10-26T08:32:04.7668700Z ##[command]/usr/bin/docker network create --label 5150ef github_network_86b1738a31f443e2976f9bd649b3452c
+2026-10-26T08:32:04.8209232Z 25f2f4e64e9e5d82f7020076b30cc971e06c30aaa862294e927370950334984e
+2026-10-26T08:32:04.8229138Z ##[endgroup]
+2026-10-26T08:32:04.8254566Z ##[group]Starting job container
+2026-10-26T08:32:04.8278750Z ##[command]/usr/bin/docker pull python:3.12-trixie@sha256:0d0db5b17f11b1b7d1aafa74ceadaa64ba0944b267ff6fc22008a197acd6b9ad
+2026-10-26T08:32:05.4631504Z docker.io/library/python@sha256:0d0db5b17f11b1b7d1aafa74ceadaa64ba0944b267ff6fc22008a197acd6b9ad: Pulling from library/python
+2026-10-26T08:32:05.7200260Z 8d0037029946: Pulling fs layer
+2026-10-26T08:32:05.7202149Z 63040bd9752a: Pulling fs layer
+2026-10-26T08:32:05.7203869Z 7046f4e749f0: Pulling fs layer
+2026-10-26T08:32:05.7205819Z 992d9e06c2e8: Pulling fs layer
+2026-10-26T08:32:05.7207328Z 57c559fa51a1: Pulling fs layer
+2026-10-26T08:32:05.7208750Z b23402e9b82f: Pulling fs layer
+2026-10-26T08:32:05.7210125Z 81c01e4d7d1c: Pulling fs layer
+2026-10-26T08:32:05.7211043Z 57c559fa51a1: Waiting
+2026-10-26T08:32:05.7211973Z b23402e9b82f: Waiting
+2026-10-26T08:32:05.7212834Z 81c01e4d7d1c: Waiting
+2026-10-26T08:32:05.7214222Z 992d9e06c2e8: Waiting
+2026-10-26T08:32:06.1107701Z 63040bd9752a: Verifying Checksum
+2026-10-26T08:32:06.1114898Z 63040bd9752a: Download complete
+2026-10-26T08:32:06.1808602Z 8d0037029946: Verifying Checksum
+2026-10-26T08:32:06.1816869Z 8d0037029946: Download complete
+2026-10-26T08:32:06.2461080Z 7046f4e749f0: Verifying Checksum
+2026-10-26T08:32:06.2462053Z 7046f4e749f0: Download complete
+2026-10-26T08:32:06.4985383Z 57c559fa51a1: Verifying Checksum
+2026-10-26T08:32:06.4986749Z 57c559fa51a1: Download complete
+2026-10-26T08:32:06.6462030Z b23402e9b82f: Verifying Checksum
+2026-10-26T08:32:06.6463979Z b23402e9b82f: Download complete
+2026-10-26T08:32:06.7273891Z 81c01e4d7d1c: Verifying Checksum
+2026-10-26T08:32:06.7274923Z 81c01e4d7d1c: Download complete
+2026-10-26T08:32:07.2169313Z 992d9e06c2e8: Verifying Checksum
+2026-10-26T08:32:07.2169966Z 992d9e06c2e8: Download complete
+2026-10-26T08:32:08.0698983Z 8d0037029946: Pull complete
+2026-10-26T08:32:11.7789824Z 63040bd9752a: Pull complete
+2026-10-26T08:32:14.2729993Z 7046f4e749f0: Pull complete
+2026-10-26T08:32:21.8759328Z 992d9e06c2e8: Pull complete
+2026-10-26T08:32:22.1561819Z 57c559fa51a1: Pull complete
+2026-10-26T08:32:22.8721013Z b23402e9b82f: Pull complete
+2026-10-26T08:32:22.8844467Z 81c01e4d7d1c: Pull complete
+2026-10-26T08:32:22.8877810Z Digest: sha256:0d0db5b17f11b1b7d1aafa74ceadaa64ba0944b267ff6fc22008a197acd6b9ad
+2026-10-26T08:32:22.8884057Z Status: Downloaded newer image for python@sha256:0d0db5b17f11b1b7d1aafa74ceadaa64ba0944b267ff6fc22008a197acd6b9ad
+2026-10-26T08:32:22.8894373Z docker.io/library/python:3.12-trixie@sha256:0d0db5b17f11b1b7d1aafa74ceadaa64ba0944b267ff6fc22008a197acd6b9ad
+2026-10-26T08:32:22.8980285Z ##[command]/usr/bin/docker create --name a7a4779517614370bbd7010b70559074_python312trixiesha2560d0db5b17f11b1b7d1aafa74ceadaa64ba0944b267ff6fc22008a197acd6b9ad_c4a4d5 --label 5150ef --workdir /__w/css-is/css-is --network github_network_86b1738a31f443e2976f9bd649b3452c  -e "HOME=/github/home" -e GITHUB_ACTIONS=true -e CI=true -v "/var/run/docker.sock":"/var/run/docker.sock" -v "/home/runner/work":"/__w" -v "/home/runner/actions-runner/cached/2.338.0/externals":"/__e":ro -v "/home/runner/work/_temp":"/__w/_temp" -v "/home/runner/work/_actions":"/__w/_actions" -v "/opt/hostedtoolcache":"/__t" -v "/home/runner/work/_temp/_github_home":"/github/home" -v "/home/runner/work/_temp/_github_workflow":"/github/workflow" --entrypoint "tail" python:3.12-trixie@sha256:0d0db5b17f11b1b7d1aafa74ceadaa64ba0944b267ff6fc22008a197acd6b9ad "-f" "/dev/null"
+2026-10-26T08:32:22.9259618Z 657204dd4c99b95fb07069dc8217a417b8633c50f86970a6fb14cf7a7b4ba28a
+2026-10-26T08:32:22.9288245Z ##[command]/usr/bin/docker start 657204dd4c99b95fb07069dc8217a417b8633c50f86970a6fb14cf7a7b4ba28a
+2026-10-26T08:32:23.1270982Z 657204dd4c99b95fb07069dc8217a417b8633c50f86970a6fb14cf7a7b4ba28a
+2026-10-26T08:32:23.1294102Z ##[command]/usr/bin/docker ps --all --filter id=657204dd4c99b95fb07069dc8217a417b8633c50f86970a6fb14cf7a7b4ba28a --filter status=running --no-trunc --format "{{.ID}} {{.Status}}"
+2026-10-26T08:32:23.1413183Z 657204dd4c99b95fb07069dc8217a417b8633c50f86970a6fb14cf7a7b4ba28a Up Less than a second
+2026-10-26T08:32:23.1432001Z ##[command]/usr/bin/docker inspect --format "{{range .Config.Env}}{{println .}}{{end}}" 657204dd4c99b95fb07069dc8217a417b8633c50f86970a6fb14cf7a7b4ba28a
+2026-10-26T08:32:23.1558919Z HOME=/github/home
+2026-10-26T08:32:23.1559898Z GITHUB_ACTIONS=true
+2026-10-26T08:32:23.1560280Z CI=true
+2026-10-26T08:32:23.1560820Z PATH=/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+2026-10-26T08:32:23.1561570Z LANG=C.UTF-8
+2026-10-26T08:32:23.1561970Z GPG_KEY=7169605F62C751356D054A26A821E680E5FA6305
+2026-10-26T08:32:23.1562465Z PYTHON_VERSION=3.12.15
+2026-10-26T08:32:23.1563081Z PYTHON_SHA256=c2c4321961fab0fb999d66e0cecf521c2ab3994c7992873ea99e306c1094fd5a
+2026-10-26T08:32:23.1581156Z ##[endgroup]
+2026-10-26T08:32:23.1590093Z ##[group]Waiting for all services to be ready
+2026-10-26T08:32:23.1592042Z ##[endgroup]
+2026-10-26T08:32:23.1902070Z ##[group]Run actions/checkout@v4
+2026-10-26T08:32:23.1902660Z with:
+2026-10-26T08:32:23.1902875Z   fetch-depth: 0
+2026-10-26T08:32:23.1903100Z   repository: jongsky25/css-is
+2026-10-26T08:32:23.1905368Z   token: ***
+2026-10-26T08:32:23.1905599Z   ssh-strict: true
+2026-10-26T08:32:23.1905835Z   ssh-user: git
+2026-10-26T08:32:23.1906047Z   persist-credentials: true
+2026-10-26T08:32:23.1906287Z   clean: true
+2026-10-26T08:32:23.1906501Z   sparse-checkout-cone-mode: true
+2026-10-26T08:32:23.1906761Z   fetch-tags: false
+2026-10-26T08:32:23.1906969Z   show-progress: true
+2026-10-26T08:32:23.1907176Z   lfs: false
+2026-10-26T08:32:23.1907362Z   submodules: false
+2026-10-26T08:32:23.1907915Z   set-safe-directory: true
+2026-10-26T08:32:23.1908168Z   allow-unsafe-pr-checkout: false
+2026-10-26T08:32:23.1908682Z ##[endgroup]
+2026-10-26T08:32:23.1970169Z ##[command]/usr/bin/docker exec  657204dd4c99b95fb07069dc8217a417b8633c50f86970a6fb14cf7a7b4ba28a sh -c "cat /etc/*release | grep ^ID"
+2026-10-26T08:32:23.3977249Z Syncing repository: jongsky25/css-is
+2026-10-26T08:32:23.3979285Z ##[group]Getting Git version info
+2026-10-26T08:32:23.3979808Z Working directory is '/__w/css-is/css-is'
+2026-10-26T08:32:23.3980668Z [command]/usr/bin/git version
+2026-10-26T08:32:23.3981063Z git version 2.47.3
+2026-10-26T08:32:23.3982340Z ##[endgroup]
+2026-10-26T08:32:23.3986627Z Temporarily overriding HOME='/__w/_temp/96d9102c-4190-4468-aacb-5184ba5d25a0' before making global git config changes
+2026-10-26T08:32:23.3988031Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-26T08:32:23.3988964Z [command]/usr/bin/git config --global --add safe.directory /__w/css-is/css-is
+2026-10-26T08:32:23.4025617Z Deleting the contents of '/__w/css-is/css-is'
+2026-10-26T08:32:23.4030683Z ##[group]Initializing the repository
+2026-10-26T08:32:23.4034899Z [command]/usr/bin/git init /__w/css-is/css-is
+2026-10-26T08:32:23.4090567Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-10-26T08:32:23.4091591Z hint: is subject to change. To configure the initial branch name to use in all
+2026-10-26T08:32:23.4092456Z hint: of your new repositories, which will suppress this warning, call:
+2026-10-26T08:32:23.4093035Z hint:
+2026-10-26T08:32:23.4093467Z hint: 	git config --global init.defaultBranch <name>
+2026-10-26T08:32:23.4094054Z hint:
+2026-10-26T08:32:23.4094626Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-10-26T08:32:23.4095506Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-10-26T08:32:23.4096236Z hint:
+2026-10-26T08:32:23.4096562Z hint: 	git branch -m <name>
+2026-10-26T08:32:23.4097033Z Initialized empty Git repository in /__w/css-is/css-is/.git/
+2026-10-26T08:32:23.4124517Z [command]/usr/bin/git remote add origin https://github.com/jongsky25/css-is
+2026-10-26T08:32:23.4141513Z ##[endgroup]
+2026-10-26T08:32:23.4142178Z ##[group]Disabling automatic garbage collection
+2026-10-26T08:32:23.4142977Z [command]/usr/bin/git config --local gc.auto 0
+2026-10-26T08:32:23.4174646Z ##[endgroup]
+2026-10-26T08:32:23.4175287Z ##[group]Setting up auth
+2026-10-26T08:32:23.4182356Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-10-26T08:32:23.4215179Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-10-26T08:32:23.4513940Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-26T08:32:23.4549485Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-10-26T08:32:23.4821964Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-26T08:32:23.4858549Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-10-26T08:32:23.5115358Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-10-26T08:32:23.5189440Z ##[endgroup]
+2026-10-26T08:32:23.5190342Z ##[group]Fetching the repository
+2026-10-26T08:32:23.5200487Z [command]/usr/bin/git -c protocol.version=2 fetch --prune --no-recurse-submodules origin +refs/heads/*:refs/remotes/origin/* +refs/tags/*:refs/tags/*
+2026-10-26T08:32:32.7179921Z From https://github.com/jongsky25/css-is
+2026-10-26T08:32:32.7181433Z  * [new branch]      calendar-menu-group     -> origin/calendar-menu-group
+2026-10-26T08:32:32.7183569Z  * [new branch]      chore/bump-6.30         -> origin/chore/bump-6.30
+2026-10-26T08:32:32.7184698Z  * [new branch]      chore/dependency-locks  -> origin/chore/dependency-locks
+2026-10-26T08:32:32.7189516Z  * [new branch]      ci/required-release-checks -> origin/ci/required-release-checks
+2026-10-26T08:32:32.7192545Z  * [new branch]      claude/2026-rating-quality-ranking-zeu2gm -> origin/claude/2026-rating-quality-ranking-zeu2gm
+2026-10-26T08:32:32.7196470Z  * [new branch]      claude/activities-excel-dedup-weuxeg -> origin/claude/activities-excel-dedup-weuxeg
+2026-10-26T08:32:32.7199201Z  * [new branch]      claude/activity-filtering-insights-2v8pww -> origin/claude/activity-filtering-insights-2v8pww
+2026-10-26T08:32:32.7200982Z  * [new branch]      claude/activity-merge-issue-8479ax -> origin/claude/activity-merge-issue-8479ax
+2026-10-26T08:32:32.7202806Z  * [new branch]      claude/activity-rating-questions-rlksvf -> origin/claude/activity-rating-questions-rlksvf
+2026-10-26T08:32:32.7204645Z  * [new branch]      claude/activity-report-pdf-comments-7qsdwn -> origin/claude/activity-report-pdf-comments-7qsdwn
+2026-10-26T08:32:32.7206477Z  * [new branch]      claude/activity-report-terminology-tcy9v5 -> origin/claude/activity-report-terminology-tcy9v5
+2026-10-26T08:32:32.7211714Z  * [new branch]      claude/admin-email-console-ui-i9krop -> origin/claude/admin-email-console-ui-i9krop
+2026-10-26T08:32:32.7213899Z  * [new branch]      claude/admin-email-controls -> origin/claude/admin-email-controls
+2026-10-26T08:32:32.7215489Z  * [new branch]      claude/admin-email-features-r169it -> origin/claude/admin-email-features-r169it
+2026-10-26T08:32:32.7238824Z  * [new branch]      claude/admin-head-escalates-to-director -> origin/claude/admin-head-escalates-to-director
+2026-10-26T08:32:32.7240401Z  * [new branch]      claude/admin-user-management-fit-f39y8u -> origin/claude/admin-user-management-fit-f39y8u
+2026-10-26T08:32:32.7241910Z  * [new branch]      claude/ai-fallback-integration-e1nfv7 -> origin/claude/ai-fallback-integration-e1nfv7
+2026-10-26T08:32:32.7243253Z  * [new branch]      claude/ai-handover-doc-plan-h78uf5 -> origin/claude/ai-handover-doc-plan-h78uf5
+2026-10-26T08:32:32.7244596Z  * [new branch]      claude/ai-integration-fallback-cdb3k9 -> origin/claude/ai-integration-fallback-cdb3k9
+2026-10-26T08:32:32.7245940Z  * [new branch]      claude/ai-integration-scope-6id78l -> origin/claude/ai-integration-scope-6id78l
+2026-10-26T08:32:32.7247193Z  * [new branch]      claude/ai-intelligence-max-flnvlc -> origin/claude/ai-intelligence-max-flnvlc
+2026-10-26T08:32:32.7248748Z  * [new branch]      claude/ai-search-question-learning-n8ldy3 -> origin/claude/ai-search-question-learning-n8ldy3
+2026-10-26T08:32:32.7250173Z  * [new branch]      claude/alt-work-break-rules-qe4sat -> origin/claude/alt-work-break-rules-qe4sat
+2026-10-26T08:32:32.7251275Z  * [new branch]      claude/appendix-a-142   -> origin/claude/appendix-a-142
+2026-10-26T08:32:32.7252310Z  * [new branch]      claude/appendix-ab-automation -> origin/claude/appendix-ab-automation
+2026-10-26T08:32:32.7253590Z  * [new branch]      claude/approvals-queue-friction-5lqbqn -> origin/claude/approvals-queue-friction-5lqbqn
+2026-10-26T08:32:32.7254968Z  * [new branch]      claude/august-data-population-cunm5i -> origin/claude/august-data-population-cunm5i
+2026-10-26T08:32:32.7256421Z  * [new branch]      claude/auto-deploy-on-merge -> origin/claude/auto-deploy-on-merge
+2026-10-26T08:32:32.7258201Z  * [new branch]      claude/auto-email-sending-plan-2kfh8v -> origin/claude/auto-email-sending-plan-2kfh8v
+2026-10-26T08:32:32.7259647Z  * [new branch]      claude/avatar-images-interactivity-3frf8m -> origin/claude/avatar-images-interactivity-3frf8m
+2026-10-26T08:32:32.7288692Z  * [new branch]      claude/avatar-size-adjustment-2u1clh -> origin/claude/avatar-size-adjustment-2u1clh
+2026-10-26T08:32:32.7290178Z  * [new branch]      claude/bhw-summit-results-display-0x0bb1 -> origin/claude/bhw-summit-results-display-0x0bb1
+2026-10-26T08:32:32.7291389Z  * [new branch]      claude/birthday-cards   -> origin/claude/birthday-cards
+2026-10-26T08:32:32.7292475Z  * [new branch]      claude/birthday-greeting-email -> origin/claude/birthday-greeting-email
+2026-10-26T08:32:32.7293604Z  * [new branch]      claude/birthday-greeting-signin -> origin/claude/birthday-greeting-signin
+2026-10-26T08:32:32.7294797Z  * [new branch]      claude/birthday-greetings-plan -> origin/claude/birthday-greetings-plan
+2026-10-26T08:32:32.7295952Z  * [new branch]      claude/blissful-fermat-nr6lhu -> origin/claude/blissful-fermat-nr6lhu
+2026-10-26T08:32:32.7297021Z  * [new branch]      claude/blissful-gates-1xzany -> origin/claude/blissful-gates-1xzany
+2026-10-26T08:32:32.7298410Z  * [new branch]      claude/build-telemetry-0t5qnc -> origin/claude/build-telemetry-0t5qnc
+2026-10-26T08:32:32.7299414Z  * [new branch]      claude/bump-6-14        -> origin/claude/bump-6-14
+2026-10-26T08:32:32.7300323Z  * [new branch]      claude/bump-version-2-27 -> origin/claude/bump-version-2-27
+2026-10-26T08:32:32.7301292Z  * [new branch]      claude/bump-version-2-75 -> origin/claude/bump-version-2-75
+2026-10-26T08:32:32.7302393Z  * [new branch]      claude/calendar-needs-documents -> origin/claude/calendar-needs-documents
+2026-10-26T08:32:32.7303458Z  * [new branch]      claude/calendar-phase1  -> origin/claude/calendar-phase1
+2026-10-26T08:32:32.7304382Z  * [new branch]      claude/calendar-phase2  -> origin/claude/calendar-phase2
+2026-10-26T08:32:32.7305299Z  * [new branch]      claude/calendar-phase3  -> origin/claude/calendar-phase3
+2026-10-26T08:32:32.7306221Z  * [new branch]      claude/calendar-phase4  -> origin/claude/calendar-phase4
+2026-10-26T08:32:32.7307119Z  * [new branch]      claude/calendar-phase5  -> origin/claude/calendar-phase5
+2026-10-26T08:32:32.7308291Z  * [new branch]      claude/calendar-ux-plan -> origin/claude/calendar-ux-plan
+2026-10-26T08:32:32.7309480Z  * [new branch]      claude/cards-personal-computer-fit-49sdsa -> origin/claude/cards-personal-computer-fit-49sdsa
+2026-10-26T08:32:32.7310792Z  * [new branch]      claude/change-companion-deeplink -> origin/claude/change-companion-deeplink
+2026-10-26T08:32:32.7311908Z  * [new branch]      claude/charming-knuth-io9teu -> origin/claude/charming-knuth-io9teu
+2026-10-26T08:32:32.7312948Z  * [new branch]      claude/charming-tesla-ytrlru -> origin/claude/charming-tesla-ytrlru
+2026-10-26T08:32:32.7314320Z  * [new branch]      claude/companion-rename-wellness-redirect-7gcqd5 -> origin/claude/companion-rename-wellness-redirect-7gcqd5
+2026-10-26T08:32:32.7331486Z  * [new branch]      claude/compassionate-cerf-7d44io -> origin/claude/compassionate-cerf-7d44io
+2026-10-26T08:32:32.7333121Z  * [new branch]      claude/completion-rate-preregistration-d5zll9 -> origin/claude/completion-rate-preregistration-d5zll9
+2026-10-26T08:32:32.7335033Z  * [new branch]      claude/concept-note-program-flow -> origin/claude/concept-note-program-flow
+2026-10-26T08:32:32.7336184Z  * [new branch]      claude/csm-public-form  -> origin/claude/csm-public-form
+2026-10-26T08:32:32.7337275Z  * [new branch]      claude/csm-results-baseline-guard -> origin/claude/csm-results-baseline-guard
+2026-10-26T08:32:32.7338737Z  * [new branch]      claude/css-break-request-limit-52og54 -> origin/claude/css-break-request-limit-52og54
+2026-10-26T08:32:32.7340293Z  * [new branch]      claude/css-building-loop-r2jerj -> origin/claude/css-building-loop-r2jerj
+2026-10-26T08:32:32.7341502Z  * [new branch]      claude/css-comment-selection-limit-crptik -> origin/claude/css-comment-selection-limit-crptik
+2026-10-26T08:32:32.7342719Z  * [new branch]      claude/css-landing-page-remove-2-l0im6y -> origin/claude/css-landing-page-remove-2-l0im6y
+2026-10-26T08:32:32.7345548Z  * [new branch]      claude/data-import-verification-h51oik -> origin/claude/data-import-verification-h51oik
+2026-10-26T08:32:32.7346900Z  * [new branch]      claude/dazzling-lovelace-29l4i8 -> origin/claude/dazzling-lovelace-29l4i8
+2026-10-26T08:32:32.7348286Z  * [new branch]      claude/dazzling-sagan-ala10v -> origin/claude/dazzling-sagan-ala10v
+2026-10-26T08:32:32.7352964Z  * [new branch]      claude/dazzling-sagan-ala10v-approvals-inbox -> origin/claude/dazzling-sagan-ala10v-approvals-inbox
+2026-10-26T08:32:32.7354779Z  * [new branch]      claude/dazzling-sagan-ala10v-error-details -> origin/claude/dazzling-sagan-ala10v-error-details
+2026-10-26T08:32:32.7356516Z  * [new branch]      claude/dazzling-sagan-ala10v-fold-screens -> origin/claude/dazzling-sagan-ala10v-fold-screens
+2026-10-26T08:32:32.7358143Z  * [new branch]      claude/dazzling-sagan-ala10v-home-tasks -> origin/claude/dazzling-sagan-ala10v-home-tasks
+2026-10-26T08:32:32.7359596Z  * [new branch]      claude/dazzling-sagan-ala10v-insights-tabs -> origin/claude/dazzling-sagan-ala10v-insights-tabs
+2026-10-26T08:32:32.7363947Z  * [new branch]      claude/dazzling-sagan-ala10v-mail-relay -> origin/claude/dazzling-sagan-ala10v-mail-relay
+2026-10-26T08:32:32.7381653Z  * [new branch]      claude/dazzling-sagan-ala10v-measurement -> origin/claude/dazzling-sagan-ala10v-measurement
+2026-10-26T08:32:32.7383393Z  * [new branch]      claude/dazzling-sagan-ala10v-pet-area -> origin/claude/dazzling-sagan-ala10v-pet-area
+2026-10-26T08:32:32.7385706Z  * [new branch]      claude/dazzling-sagan-ala10v-quick-fixes -> origin/claude/dazzling-sagan-ala10v-quick-fixes
+2026-10-26T08:32:32.7387441Z  * [new branch]      claude/dazzling-sagan-ala10v-remind-unfinished -> origin/claude/dazzling-sagan-ala10v-remind-unfinished
+2026-10-26T08:32:32.7390103Z  * [new branch]      claude/dazzling-sagan-ala10v-system-page -> origin/claude/dazzling-sagan-ala10v-system-page
+2026-10-26T08:32:32.7392067Z  * [new branch]      claude/deploy-allowlist-travel-readings -> origin/claude/deploy-allowlist-travel-readings
+2026-10-26T08:32:32.7394269Z  * [new branch]      claude/directory-archive-team-visibility-u0516c -> origin/claude/directory-archive-team-visibility-u0516c
+2026-10-26T08:32:32.7396235Z  * [new branch]      claude/doh-letterhead-widths -> origin/claude/doh-letterhead-widths
+2026-10-26T08:32:32.7397459Z  * [new branch]      claude/doh-logos        -> origin/claude/doh-logos
+2026-10-26T08:32:32.7398652Z  * [new branch]      claude/dpo-doh-format   -> origin/claude/dpo-doh-format
+2026-10-26T08:32:32.7399514Z  * [new branch]      claude/duplicate-activity-safeguards-s5n6xh -> origin/claude/duplicate-activity-safeguards-s5n6xh
+2026-10-26T08:32:32.7400378Z  * [new branch]      claude/eager-fermat-nfntiq -> origin/claude/eager-fermat-nfntiq
+2026-10-26T08:32:32.7408026Z  * [new branch]      claude/eager-sagan-33bbk5 -> origin/claude/eager-sagan-33bbk5
+2026-10-26T08:32:32.7409515Z  * [new branch]      claude/eloquent-lovelace-6547mc -> origin/claude/eloquent-lovelace-6547mc
+2026-10-26T08:32:32.7410886Z  * [new branch]      claude/email-notification-parameters-4ej70l -> origin/claude/email-notification-parameters-4ej70l
+2026-10-26T08:32:32.7411791Z  * [new branch]      claude/email-pinned-update -> origin/claude/email-pinned-update
+2026-10-26T08:32:32.7419799Z  * [new branch]      claude/email-plan-phase-2-a13jl8 -> origin/claude/email-plan-phase-2-a13jl8
+2026-10-26T08:32:32.7421046Z  * [new branch]      claude/email-sending-automation-kq639b -> origin/claude/email-sending-automation-kq639b
+2026-10-26T08:32:32.7422164Z  * [new branch]      claude/epic-einstein-vyai5d -> origin/claude/epic-einstein-vyai5d
+2026-10-26T08:32:32.7424083Z  * [new branch]      claude/error-500-diagnosis-t09cqt -> origin/claude/error-500-diagnosis-t09cqt
+2026-10-26T08:32:32.7428318Z  * [new branch]      claude/error-500-wu0f9a -> origin/claude/error-500-wu0f9a
+2026-10-26T08:32:32.7429363Z  * [new branch]      claude/event-registration-hub-plan -> origin/claude/event-registration-hub-plan
+2026-10-26T08:32:32.7430316Z  * [new branch]      claude/event-registration-hub-pr1 -> origin/claude/event-registration-hub-pr1
+2026-10-26T08:32:32.7450884Z  * [new branch]      claude/event-registration-hub-pr2 -> origin/claude/event-registration-hub-pr2
+2026-10-26T08:32:32.7452048Z  * [new branch]      claude/excel-activity-mrr-format-r4hzf0 -> origin/claude/excel-activity-mrr-format-r4hzf0
+2026-10-26T08:32:32.7453425Z  * [new branch]      claude/festive-allen-waeuea -> origin/claude/festive-allen-waeuea
+2026-10-26T08:32:32.7454482Z  * [new branch]      claude/fix-atoms-concat-500 -> origin/claude/fix-atoms-concat-500
+2026-10-26T08:32:32.7455592Z  * [new branch]      claude/fix-classic-home-link -> origin/claude/fix-classic-home-link
+2026-10-26T08:32:32.7456713Z  * [new branch]      claude/fix-referrer-policy-login -> origin/claude/fix-referrer-policy-login
+2026-10-26T08:32:32.7458058Z  * [new branch]      claude/fix-reopen-filing-form -> origin/claude/fix-reopen-filing-form
+2026-10-26T08:32:32.7459125Z  * [new branch]      claude/fix-stale-report-counts -> origin/claude/fix-stale-report-counts
+2026-10-26T08:32:32.7460203Z  * [new branch]      claude/fix-this-bc34si  -> origin/claude/fix-this-bc34si
+2026-10-26T08:32:32.7461202Z  * [new branch]      claude/fold-room-into-activity -> origin/claude/fold-room-into-activity
+2026-10-26T08:32:32.7462226Z  * [new branch]      claude/friendly-fermi-vc7ipe -> origin/claude/friendly-fermi-vc7ipe
+2026-10-26T08:32:32.7463339Z  * [new branch]      claude/friendly-thompson-zktd0c -> origin/claude/friendly-thompson-zktd0c
+2026-10-26T08:32:32.7464878Z  * [new branch]      claude/gate-send-reminders-jobs-s38827 -> origin/claude/gate-send-reminders-jobs-s38827
+2026-10-26T08:32:32.7465809Z  * [new branch]      claude/gemini-api-key-setup-cqwddj -> origin/claude/gemini-api-key-setup-cqwddj
+2026-10-26T08:32:32.7466556Z  * [new branch]      claude/gemini-api-response-quality-cz5u2h -> origin/claude/gemini-api-response-quality-cz5u2h
+2026-10-26T08:32:32.7470093Z  * [new branch]      claude/gifted-albattani-2xgfuk -> origin/claude/gifted-albattani-2xgfuk
+2026-10-26T08:32:32.7471393Z  * [new branch]      claude/gracious-fermat-e6uyji -> origin/claude/gracious-fermat-e6uyji
+2026-10-26T08:32:32.7473243Z  * [new branch]      claude/gracious-feynman-k8ygps -> origin/claude/gracious-feynman-k8ygps
+2026-10-26T08:32:32.7476335Z  * [new branch]      claude/groq-enablement-investigation-n21j6f -> origin/claude/groq-enablement-investigation-n21j6f
+2026-10-26T08:32:32.7478838Z  * [new branch]      claude/happy-shannon-zydd6x -> origin/claude/happy-shannon-zydd6x
+2026-10-26T08:32:32.7482408Z  * [new branch]      claude/home-search-assistant-phase-1-t49z0y -> origin/claude/home-search-assistant-phase-1-t49z0y
+2026-10-26T08:32:32.7484898Z  * [new branch]      claude/home-search-assistant-plan -> origin/claude/home-search-assistant-plan
+2026-10-26T08:32:32.7488142Z  * [new branch]      claude/hopeful-fermi-hnrv4z -> origin/claude/hopeful-fermi-hnrv4z
+2026-10-26T08:32:32.7491568Z  * [new branch]      claude/in-app-changelog-backfill -> origin/claude/in-app-changelog-backfill
+2026-10-26T08:32:32.7494018Z  * [new branch]      claude/keen-cray-i9vncq -> origin/claude/keen-cray-i9vncq
+2026-10-26T08:32:32.7511260Z  * [new branch]      claude/keen-lamport-2ngl4l -> origin/claude/keen-lamport-2ngl4l
+2026-10-26T08:32:32.7512113Z  * [new branch]      claude/kind-mendel-h8ze8q -> origin/claude/kind-mendel-h8ze8q
+2026-10-26T08:32:32.7513526Z  * [new branch]      claude/landing-page-improvements-razbip -> origin/claude/landing-page-improvements-razbip
+2026-10-26T08:32:32.7514900Z  * [new branch]      claude/landing-page-schedule-view-8uje29 -> origin/claude/landing-page-schedule-view-8uje29
+2026-10-26T08:32:32.7516458Z  * [new branch]      claude/laughing-cerf-rv0ft7 -> origin/claude/laughing-cerf-rv0ft7
+2026-10-26T08:32:32.7517961Z  * [new branch]      claude/laughing-einstein-m0j17q -> origin/claude/laughing-einstein-m0j17q
+2026-10-26T08:32:32.7519377Z  * [new branch]      claude/magical-gates-vckxdl -> origin/claude/magical-gates-vckxdl
+2026-10-26T08:32:32.7520628Z  * [new branch]      claude/meals-link-in-room-banner -> origin/claude/meals-link-in-room-banner
+2026-10-26T08:32:32.7521869Z  * [new branch]      claude/memo-invitation-format -> origin/claude/memo-invitation-format
+2026-10-26T08:32:32.7522746Z  * [new branch]      claude/mobile-drawer-menu -> origin/claude/mobile-drawer-menu
+2026-10-26T08:32:32.7523372Z  * [new branch]      claude/mobile-hugging-face-sync-ywdra3 -> origin/claude/mobile-hugging-face-sync-ywdra3
+2026-10-26T08:32:32.7524040Z  * [new branch]      claude/mobile-menu-display-gear -> origin/claude/mobile-menu-display-gear
+2026-10-26T08:32:32.7524731Z  * [new branch]      claude/mobile-photo-selection-css-x4snch -> origin/claude/mobile-photo-selection-css-x4snch
+2026-10-26T08:32:32.7540335Z  * [new branch]      claude/mobile-tablet-header-layout -> origin/claude/mobile-tablet-header-layout
+2026-10-26T08:32:32.7541446Z  * [new branch]      claude/modest-shannon-euthtf -> origin/claude/modest-shannon-euthtf
+2026-10-26T08:32:32.7542674Z  * [new branch]      claude/next-ai-build-plan-snxf9s -> origin/claude/next-ai-build-plan-snxf9s
+2026-10-26T08:32:32.7543984Z  * [new branch]      claude/next-ai-build-plan-xcztex -> origin/claude/next-ai-build-plan-xcztex
+2026-10-26T08:32:32.7545279Z  * [new branch]      claude/next-ai-plan-build-5v7w8a -> origin/claude/next-ai-plan-build-5v7w8a
+2026-10-26T08:32:32.7546570Z  * [new branch]      claude/next-ai-plan-build-7o4tzw -> origin/claude/next-ai-plan-build-7o4tzw
+2026-10-26T08:32:32.7548143Z  * [new branch]      claude/next-ai-plan-build-aazfus -> origin/claude/next-ai-plan-build-aazfus
+2026-10-26T08:32:32.7549349Z  * [new branch]      claude/next-ai-plan-build-j9wgat -> origin/claude/next-ai-plan-build-j9wgat
+2026-10-26T08:32:32.7550377Z  * [new branch]      claude/next-ai-plan-build-tet1eq -> origin/claude/next-ai-plan-build-tet1eq
+2026-10-26T08:32:32.7551140Z  * [new branch]      claude/next-ai-plan-build-v4esk6 -> origin/claude/next-ai-plan-build-v4esk6
+2026-10-26T08:32:32.7553560Z  * [new branch]      claude/nifty-cray-w4uyzs -> origin/claude/nifty-cray-w4uyzs
+2026-10-26T08:32:32.7554688Z  * [new branch]      claude/no-travel-claim-with-room -> origin/claude/no-travel-claim-with-room
+2026-10-26T08:32:32.7555879Z  * [new branch]      claude/office-menu-conference-room -> origin/claude/office-menu-conference-room
+2026-10-26T08:32:32.7557054Z  * [new branch]      claude/open-spot-feedback-7hut9e -> origin/claude/open-spot-feedback-7hut9e
+2026-10-26T08:32:32.7558476Z  * [new branch]      claude/open-spot-feedback-g4co5a -> origin/claude/open-spot-feedback-g4co5a
+2026-10-26T08:32:32.7559741Z  * [new branch]      claude/open-spot-feedback-pull-m9ckme -> origin/claude/open-spot-feedback-pull-m9ckme
+2026-10-26T08:32:32.7560887Z  * [new branch]      claude/pause-auto-deploy -> origin/claude/pause-auto-deploy
+2026-10-26T08:32:32.7561854Z  * [new branch]      claude/peaceful-fermi-9mzvj4 -> origin/claude/peaceful-fermi-9mzvj4
+2026-10-26T08:32:32.7562883Z  * [new branch]      claude/peaceful-fermi-qlhtw0 -> origin/claude/peaceful-fermi-qlhtw0
+2026-10-26T08:32:32.7563828Z  * [new branch]      claude/ph-holidays      -> origin/claude/ph-holidays
+2026-10-26T08:32:32.7566708Z  * [new branch]      claude/phase-5-1aje0v   -> origin/claude/phase-5-1aje0v
+2026-10-26T08:32:32.7569930Z  * [new branch]      claude/phase-8-ai-plan-build-8re2jr -> origin/claude/phase-8-ai-plan-build-8re2jr
+2026-10-26T08:32:32.7572500Z  * [new branch]      claude/psgc-crosswalk-infrastructure-0i9zee -> origin/claude/psgc-crosswalk-infrastructure-0i9zee
+2026-10-26T08:32:32.7574818Z  * [new branch]      claude/pull-feedback-i79tj9 -> origin/claude/pull-feedback-i79tj9
+2026-10-26T08:32:32.7577927Z  * [new branch]      claude/quick-add-date-prefill -> origin/claude/quick-add-date-prefill
+2026-10-26T08:32:32.7580845Z  * [new branch]      claude/relaxed-johnson-s1jujg -> origin/claude/relaxed-johnson-s1jujg
+2026-10-26T08:32:32.7583637Z  * [new branch]      claude/remove-growth-panel-profile -> origin/claude/remove-growth-panel-profile
+2026-10-26T08:32:32.7586371Z  * [new branch]      claude/remove-guessable-att -> origin/claude/remove-guessable-att
+2026-10-26T08:32:32.7589627Z  * [new branch]      claude/respondent-comments-reports-vwihwd -> origin/claude/respondent-comments-reports-vwihwd
+2026-10-26T08:32:32.7593130Z  * [new branch]      claude/respondent-override-completion-rate-1lglvb -> origin/claude/respondent-override-completion-rate-1lglvb
+2026-10-26T08:32:32.7595499Z  * [new branch]      claude/responders-list  -> origin/claude/responders-list
+2026-10-26T08:32:32.7598059Z  * [new branch]      claude/room-admin-section-only -> origin/claude/room-admin-section-only
+2026-10-26T08:32:32.7600907Z  * [new branch]      claude/room-line-calendar-entry -> origin/claude/room-line-calendar-entry
+2026-10-26T08:32:32.7604236Z  * [new branch]      claude/runtime-error-t1yif1 -> origin/claude/runtime-error-t1yif1
+2026-10-26T08:32:32.7605991Z  * [new branch]      claude/serene-hopper-u0w64v -> origin/claude/serene-hopper-u0w64v
+2026-10-26T08:32:32.7609106Z  * [new branch]      claude/serene-thompson-9aczxa -> origin/claude/serene-thompson-9aczxa
+2026-10-26T08:32:32.7611524Z  * [new branch]      claude/session-2sqrtk   -> origin/claude/session-2sqrtk
+2026-10-26T08:32:32.7614393Z  * [new branch]      claude/session-6jzq5s   -> origin/claude/session-6jzq5s
+2026-10-26T08:32:32.7617440Z  * [new branch]      claude/session-b2xy5p   -> origin/claude/session-b2xy5p
+2026-10-26T08:32:32.7620346Z  * [new branch]      claude/session-b4n1to   -> origin/claude/session-b4n1to
+2026-10-26T08:32:32.7623128Z  * [new branch]      claude/session-tjf9jk   -> origin/claude/session-tjf9jk
+2026-10-26T08:32:32.7626082Z  * [new branch]      claude/session-uc31d3   -> origin/claude/session-uc31d3
+2026-10-26T08:32:32.7628718Z  * [new branch]      claude/session-vnxo4z   -> origin/claude/session-vnxo4z
+2026-10-26T08:32:32.7631916Z  * [new branch]      claude/signatory-alexander-medel-dnfiq0 -> origin/claude/signatory-alexander-medel-dnfiq0
+2026-10-26T08:32:32.7634852Z  * [new branch]      claude/spot-141         -> origin/claude/spot-141
+2026-10-26T08:32:32.7640160Z  * [new branch]      claude/spot-143-146     -> origin/claude/spot-143-146
+2026-10-26T08:32:32.7640656Z  * [new branch]      claude/spot-145         -> origin/claude/spot-145
+2026-10-26T08:32:32.7646386Z  * [new branch]      claude/spot-feedback-117-114 -> origin/claude/spot-feedback-117-114
+2026-10-26T08:32:32.7647466Z  * [new branch]      claude/spot-feedback-120-124 -> origin/claude/spot-feedback-120-124
+2026-10-26T08:32:32.7648816Z  * [new branch]      claude/spot-feedback-170-172 -> origin/claude/spot-feedback-170-172
+2026-10-26T08:32:32.7649974Z  * [new branch]      claude/spot-feedback-173 -> origin/claude/spot-feedback-173
+2026-10-26T08:32:32.7651082Z  * [new branch]      claude/spot-feedback-174 -> origin/claude/spot-feedback-174
+2026-10-26T08:32:32.7653638Z  * [new branch]      claude/spot-feedback-6x2zw6 -> origin/claude/spot-feedback-6x2zw6
+2026-10-26T08:32:32.7656546Z  * [new branch]      claude/spot-feedback-access-bznrgu -> origin/claude/spot-feedback-access-bznrgu
+2026-10-26T08:32:32.7659021Z  * [new branch]      claude/spot-feedback-b5c200 -> origin/claude/spot-feedback-b5c200
+2026-10-26T08:32:32.7662475Z  * [new branch]      claude/spot-feedbacks-to-fix-mjcq84 -> origin/claude/spot-feedbacks-to-fix-mjcq84
+2026-10-26T08:32:32.7665582Z  * [new branch]      claude/spreadsheet-review-atf6ke -> origin/claude/spreadsheet-review-atf6ke
+2026-10-26T08:32:32.7668238Z  * [new branch]      claude/spreadsheet-review-y4aqia -> origin/claude/spreadsheet-review-y4aqia
+2026-10-26T08:32:32.7671289Z  * [new branch]      claude/sqd-official-wording -> origin/claude/sqd-official-wording
+2026-10-26T08:32:32.7674505Z  * [new branch]      claude/staff-onboarding-avatar-m3sril -> origin/claude/staff-onboarding-avatar-m3sril
+2026-10-26T08:32:32.7676938Z  * [new branch]      claude/sweet-cerf-zws302 -> origin/claude/sweet-cerf-zws302
+2026-10-26T08:32:32.7679821Z  * [new branch]      claude/sweet-ritchie-lwrzdg -> origin/claude/sweet-ritchie-lwrzdg
+2026-10-26T08:32:32.7682772Z  * [new branch]      claude/team-view-planning-mode-6du1i4 -> origin/claude/team-view-planning-mode-6du1i4
+2026-10-26T08:32:32.7686004Z  * [new branch]      claude/text-overlap-others-option-4vi8tl -> origin/claude/text-overlap-others-option-4vi8tl
+2026-10-26T08:32:32.7688207Z  * [new branch]      claude/travel-autofill-appb-report -> origin/claude/travel-autofill-appb-report
+2026-10-26T08:32:32.7691257Z  * [new branch]      claude/travel-claims-attachment-error-neq1pu -> origin/claude/travel-claims-attachment-error-neq1pu
+2026-10-26T08:32:32.7694041Z  * [new branch]      claude/travel-due-date-working-days -> origin/claude/travel-due-date-working-days
+2026-10-26T08:32:32.7700261Z  * [new branch]      claude/travel-filing-t1 -> origin/claude/travel-filing-t1
+2026-10-26T08:32:32.7701862Z  * [new branch]      claude/travel-filing-t2 -> origin/claude/travel-filing-t2
+2026-10-26T08:32:32.7704235Z  * [new branch]      claude/travel-filing-t3 -> origin/claude/travel-filing-t3
+2026-10-26T08:32:32.7705359Z  * [new branch]      claude/travel-filing-t4 -> origin/claude/travel-filing-t4
+2026-10-26T08:32:32.7708528Z  * [new branch]      claude/travel-filing-t5 -> origin/claude/travel-filing-t5
+2026-10-26T08:32:32.7711321Z  * [new branch]      claude/travel-filing-t6 -> origin/claude/travel-filing-t6
+2026-10-26T08:32:32.7713809Z  * [new branch]      claude/travel-filing-t7 -> origin/claude/travel-filing-t7
+2026-10-26T08:32:32.7717899Z  * [new branch]      claude/travel-filing-t8 -> origin/claude/travel-filing-t8
+2026-10-26T08:32:32.7720640Z  * [new branch]      claude/travel-policy-rates -> origin/claude/travel-policy-rates
+2026-10-26T08:32:32.7722599Z  * [new branch]      claude/travel-prepare-explain -> origin/claude/travel-prepare-explain
+2026-10-26T08:32:32.7726137Z  * [new branch]      claude/travel-prepare-field-errors -> origin/claude/travel-prepare-field-errors
+2026-10-26T08:32:32.7729670Z  * [new branch]      claude/travel-prev-dv-autofill -> origin/claude/travel-prev-dv-autofill
+2026-10-26T08:32:32.7732252Z  * [new branch]      claude/travel-rates-autofill -> origin/claude/travel-rates-autofill
+2026-10-26T08:32:32.7735473Z  * [new branch]      claude/travel-scan-deploy-fix -> origin/claude/travel-scan-deploy-fix
+2026-10-26T08:32:32.7740241Z  * [new branch]      claude/travel-scan-fares -> origin/claude/travel-scan-fares
+2026-10-26T08:32:32.7741262Z  * [new branch]      claude/travel-signer-title -> origin/claude/travel-signer-title
+2026-10-26T08:32:32.7742471Z  * [new branch]      claude/travel-step-flow -> origin/claude/travel-step-flow
+2026-10-26T08:32:32.7746718Z  * [new branch]      claude/travel-upload-dpo-checks -> origin/claude/travel-upload-dpo-checks
+2026-10-26T08:32:32.7748640Z  * [new branch]      claude/travel-upload-read -> origin/claude/travel-upload-read
+2026-10-26T08:32:32.7751604Z  * [new branch]      claude/travel-upload-to-drive -> origin/claude/travel-upload-to-drive
+2026-10-26T08:32:32.7755436Z  * [new branch]      claude/type-1-admin-edit-privilege-h9qqnw -> origin/claude/type-1-admin-edit-privilege-h9qqnw
+2026-10-26T08:32:32.7758385Z  * [new branch]      claude/type3-resource-person-ppt-export-qrjr6i -> origin/claude/type3-resource-person-ppt-export-qrjr6i
+2026-10-26T08:32:32.7761091Z  * [new branch]      claude/url-not-reflecting-nv9edi -> origin/claude/url-not-reflecting-nv9edi
+2026-10-26T08:32:32.7764504Z  * [new branch]      claude/user-interaction-recording-handoff-bb7pik -> origin/claude/user-interaction-recording-handoff-bb7pik
+2026-10-26T08:32:32.7767144Z  * [new branch]      claude/ux-insights-telemetry-handoff-doo7z2 -> origin/claude/ux-insights-telemetry-handoff-doo7z2
+2026-10-26T08:32:32.7769993Z  * [new branch]      claude/vibrant-dirac-d5wvr4 -> origin/claude/vibrant-dirac-d5wvr4
+2026-10-26T08:32:32.7772076Z  * [new branch]      claude/weekly-roster    -> origin/claude/weekly-roster
+2026-10-26T08:32:32.7776204Z  * [new branch]      claude/weekly-whereabouts -> origin/claude/weekly-whereabouts
+2026-10-26T08:32:32.7783919Z  * [new branch]      claude/wellness-break-2-hour-claim-8rp5ci -> origin/claude/wellness-break-2-hour-claim-8rp5ci
+2026-10-26T08:32:32.7785554Z  * [new branch]      claude/wellness-break-download-term-y15yn5 -> origin/claude/wellness-break-download-term-y15yn5
+2026-10-26T08:32:32.7793801Z  * [new branch]      claude/wellness-custom-time-fallback -> origin/claude/wellness-custom-time-fallback
+2026-10-26T08:32:32.7795502Z  * [new branch]      claude/wellness-datetime-picker-ux-6dw8yt -> origin/claude/wellness-datetime-picker-ux-6dw8yt
+2026-10-26T08:32:32.7797084Z  * [new branch]      claude/wellness-gamification-breaks-7n6df4 -> origin/claude/wellness-gamification-breaks-7n6df4
+2026-10-26T08:32:32.7800141Z  * [new branch]      claude/wellness-picker-version-bump -> origin/claude/wellness-picker-version-bump
+2026-10-26T08:32:32.7801599Z  * [new branch]      claude/wellness-register-time-range -> origin/claude/wellness-register-time-range
+2026-10-26T08:32:32.7803056Z  * [new branch]      claude/wellness-request-features-ez5yh2 -> origin/claude/wellness-request-features-ez5yh2
+2026-10-26T08:32:32.7804565Z  * [new branch]      claude/wellness-time-range-changelog -> origin/claude/wellness-time-range-changelog
+2026-10-26T08:32:32.7806115Z  * [new branch]      claude/work-arrangement-weekly-limit-d2zhyb -> origin/claude/work-arrangement-weekly-limit-d2zhyb
+2026-10-26T08:32:32.7807758Z  * [new branch]      claude/zealous-knuth-d2oprd -> origin/claude/zealous-knuth-d2oprd
+2026-10-26T08:32:32.7810241Z  * [new branch]      codex/avatar-2b-artifact-audit -> origin/codex/avatar-2b-artifact-audit
+2026-10-26T08:32:32.7812601Z  * [new branch]      codex/avatar-2b-lifecycle-candidate -> origin/codex/avatar-2b-lifecycle-candidate
+2026-10-26T08:32:32.7814845Z  * [new branch]      codex/avatar-2b-memory  -> origin/codex/avatar-2b-memory
+2026-10-26T08:32:32.7818175Z  * [new branch]      codex/avatar-2b-memory-lifecycle -> origin/codex/avatar-2b-memory-lifecycle
+2026-10-26T08:32:32.7819339Z  * [new branch]      codex/avatar-2b-verification -> origin/codex/avatar-2b-verification
+2026-10-26T08:32:32.7820287Z  * [new branch]      codex/avatar-3a         -> origin/codex/avatar-3a
+2026-10-26T08:32:32.7822176Z  * [new branch]      codex/avatar-3a-artifact-audit -> origin/codex/avatar-3a-artifact-audit
+2026-10-26T08:32:32.7824772Z  * [new branch]      codex/document-deploy-fix -> origin/codex/document-deploy-fix
+2026-10-26T08:32:32.7828023Z  * [new branch]      codex/document-enhancements -> origin/codex/document-enhancements
+2026-10-26T08:32:32.7829950Z  * [new branch]      codex/document-management -> origin/codex/document-management
+2026-10-26T08:32:32.7832134Z  * [new branch]      codex/document-workspace-intake -> origin/codex/document-workspace-intake
+2026-10-26T08:32:32.7834711Z  * [new branch]      codex/documents-actions -> origin/codex/documents-actions
+2026-10-26T08:32:32.7835850Z  * [new branch]      codex/documents-admin-setup -> origin/codex/documents-admin-setup
+2026-10-26T08:32:32.7838263Z  * [new branch]      codex/documents-enable-control -> origin/codex/documents-enable-control
+2026-10-26T08:32:32.7840214Z  * [new branch]      codex/fix-compressed-workspace-replies -> origin/codex/fix-compressed-workspace-replies
+2026-10-26T08:32:32.7841854Z  * [new branch]      codex/gmail-byte-array-import -> origin/codex/gmail-byte-array-import
+2026-10-26T08:32:32.7843606Z  * [new branch]      codex/gmail-intake-settings -> origin/codex/gmail-intake-settings
+2026-10-26T08:32:32.7845950Z  * [new branch]      codex/home-coming-up-team-7-25 -> origin/codex/home-coming-up-team-7-25
+2026-10-26T08:32:32.7848181Z  * [new branch]      codex/intake-connection-diagnostics -> origin/codex/intake-connection-diagnostics
+2026-10-26T08:32:32.7850179Z  * [new branch]      codex/intake-network-cause -> origin/codex/intake-network-cause
+2026-10-26T08:32:32.7851650Z  * [new branch]      codex/intake-ocr-content-check -> origin/codex/intake-ocr-content-check
+2026-10-26T08:32:32.7853829Z  * [new branch]      codex/isgd-public-links -> origin/codex/isgd-public-links
+2026-10-26T08:32:32.7856264Z  * [new branch]      codex/manual-short-links -> origin/codex/manual-short-links
+2026-10-26T08:32:32.7859869Z  * [new branch]      codex/move-travel-claim-off-monitor -> origin/codex/move-travel-claim-off-monitor
+2026-10-26T08:32:32.7861038Z  * [new branch]      codex/receipt-channel-dropdown -> origin/codex/receipt-channel-dropdown
+2026-10-26T08:32:32.7862822Z  * [new branch]      codex/release-7-04-whats-new -> origin/codex/release-7-04-whats-new
+2026-10-26T08:32:32.7864723Z  * [new branch]      codex/responsive-intake -> origin/codex/responsive-intake
+2026-10-26T08:32:32.7866869Z  * [new branch]      codex/routing-header-date -> origin/codex/routing-header-date
+2026-10-26T08:32:32.7869058Z  * [new branch]      codex/routing-slip-ocr  -> origin/codex/routing-slip-ocr
+2026-10-26T08:32:32.7870938Z  * [new branch]      codex/sender-direction  -> origin/codex/sender-direction
+2026-10-26T08:32:32.7872703Z  * [new branch]      codex/short-link-failure-status -> origin/codex/short-link-failure-status
+2026-10-26T08:32:32.7875777Z  * [new branch]      codex/simplify-travel-claims -> origin/codex/simplify-travel-claims
+2026-10-26T08:32:32.7879054Z  * [new branch]      directory-birthday-entry -> origin/directory-birthday-entry
+2026-10-26T08:32:32.7882297Z  * [new branch]      docs/document-management-phased-plan -> origin/docs/document-management-phased-plan
+2026-10-26T08:32:32.7884294Z  * [new branch]      docs/mcp-phased-expansion -> origin/docs/mcp-phased-expansion
+2026-10-26T08:32:32.7886843Z  * [new branch]      docs/telegram-t0-contract -> origin/docs/telegram-t0-contract
+2026-10-26T08:32:32.7888480Z  * [new branch]      docs/telegram-t4-4-pilot -> origin/docs/telegram-t4-4-pilot
+2026-10-26T08:32:32.7900381Z  * [new branch]      feat/a24-mcp-read       -> origin/feat/a24-mcp-read
+2026-10-26T08:32:32.7901420Z  * [new branch]      feat/a25-capacity-assessment -> origin/feat/a25-capacity-assessment
+2026-10-26T08:32:32.7902408Z  * [new branch]      feat/ai-action-evaluations -> origin/feat/ai-action-evaluations
+2026-10-26T08:32:32.7903549Z  * [new branch]      feat/ai-answer-evidence-ui -> origin/feat/ai-answer-evidence-ui
+2026-10-26T08:32:32.7904696Z  * [new branch]      feat/ai-checklist-upload-evaluations -> origin/feat/ai-checklist-upload-evaluations
+2026-10-26T08:32:32.7905938Z  * [new branch]      feat/ai-evaluation-gate -> origin/feat/ai-evaluation-gate
+2026-10-26T08:32:32.7907075Z  * [new branch]      feat/ai-feedback-triage-evaluations -> origin/feat/ai-feedback-triage-evaluations
+2026-10-26T08:32:32.7908529Z  * [new branch]      feat/ai-groq-fallback-evaluation -> origin/feat/ai-groq-fallback-evaluation
+2026-10-26T08:32:32.7909798Z  * [new branch]      feat/ai-harmonize-evaluations -> origin/feat/ai-harmonize-evaluations
+2026-10-26T08:32:32.7911105Z  * [new branch]      feat/ai-help-navigation-evaluation -> origin/feat/ai-help-navigation-evaluation
+2026-10-26T08:32:32.7912350Z  * [new branch]      feat/ai-invitation-upload-evaluations -> origin/feat/ai-invitation-upload-evaluations
+2026-10-26T08:32:32.7913501Z  * [new branch]      feat/ai-message-evaluations -> origin/feat/ai-message-evaluations
+2026-10-26T08:32:32.7916794Z  * [new branch]      feat/ai-operations-summary -> origin/feat/ai-operations-summary
+2026-10-26T08:32:32.7918109Z  * [new branch]      feat/ai-report-draft-evaluations -> origin/feat/ai-report-draft-evaluations
+2026-10-26T08:32:32.7919259Z  * [new branch]      feat/ai-travel-scan-evaluations -> origin/feat/ai-travel-scan-evaluations
+2026-10-26T08:32:32.7921135Z  * [new branch]      feat/ai-ux-evaluations  -> origin/feat/ai-ux-evaluations
+2026-10-26T08:32:32.7922144Z  * [new branch]      feat/ai-verbatim-evaluations -> origin/feat/ai-verbatim-evaluations
+2026-10-26T08:32:32.7923411Z  * [new branch]      feat/apprise-telegram-digests -> origin/feat/apprise-telegram-digests
+2026-10-26T08:32:32.7926235Z  * [new branch]      feat/arta-custom-date-range -> origin/feat/arta-custom-date-range
+2026-10-26T08:32:32.7928694Z  * [new branch]      feat/bounded-ocr-worker -> origin/feat/bounded-ocr-worker
+2026-10-26T08:32:32.7931295Z  * [new branch]      feat/bounded-pdf-reader -> origin/feat/bounded-pdf-reader
+2026-10-26T08:32:32.7932846Z  * [new branch]      feat/browser-security-defaults -> origin/feat/browser-security-defaults
+2026-10-26T08:32:32.7935096Z  * [new branch]      feat/calendar-guidance  -> origin/feat/calendar-guidance
+2026-10-26T08:32:32.7937762Z  * [new branch]      feat/calendar-schedule  -> origin/feat/calendar-schedule
+2026-10-26T08:32:32.7939571Z  * [new branch]      feat/dashboard-pdf-reports -> origin/feat/dashboard-pdf-reports
+2026-10-26T08:32:32.7942504Z  * [new branch]      feat/document-actions-guidance -> origin/feat/document-actions-guidance
+2026-10-26T08:32:32.7944422Z  * [new branch]      feat/document-background-sync -> origin/feat/document-background-sync
+2026-10-26T08:32:32.7946702Z  * [new branch]      feat/document-deadline-filters -> origin/feat/document-deadline-filters
+2026-10-26T08:32:32.7950032Z  * [new branch]      feat/document-external-responsiveness -> origin/feat/document-external-responsiveness
+2026-10-26T08:32:32.7951566Z  * [new branch]      feat/document-job-recovery -> origin/feat/document-job-recovery
+2026-10-26T08:32:32.7954336Z  * [new branch]      feat/document-next-step -> origin/feat/document-next-step
+2026-10-26T08:32:32.7956975Z  * [new branch]      feat/document-registration-retries -> origin/feat/document-registration-retries
+2026-10-26T08:32:32.7959277Z  * [new branch]      feat/document-registry-pagination -> origin/feat/document-registry-pagination
+2026-10-26T08:32:32.7961966Z  * [new branch]      feat/document-registry-saved-views -> origin/feat/document-registry-saved-views
+2026-10-26T08:32:32.7964232Z  * [new branch]      feat/document-registry-tabulator -> origin/feat/document-registry-tabulator
+2026-10-26T08:32:32.7966540Z  * [new branch]      feat/document-workload-dashboard -> origin/feat/document-workload-dashboard
+2026-10-26T08:32:32.7969559Z  * [new branch]      feat/documents-powerpoint-export -> origin/feat/documents-powerpoint-export
+2026-10-26T08:32:32.7971376Z  * [new branch]      feat/gmail-intake-foundation -> origin/feat/gmail-intake-foundation
+2026-10-26T08:32:32.7974035Z  * [new branch]      feat/google-meet-relay  -> origin/feat/google-meet-relay
+2026-10-26T08:32:32.7976117Z  * [new branch]      feat/home-request-read-reuse -> origin/feat/home-request-read-reuse
+2026-10-26T08:32:32.7979109Z  * [new branch]      feat/independent-meal-requests -> origin/feat/independent-meal-requests
+2026-10-26T08:32:32.7990346Z  * [new branch]      feat/integration-change-feed -> origin/feat/integration-change-feed
+2026-10-26T08:32:32.7991473Z  * [new branch]      feat/integration-read-api -> origin/feat/integration-read-api
+2026-10-26T08:32:32.7992766Z  * [new branch]      feat/integration-task-acknowledgement -> origin/feat/integration-task-acknowledgement
+2026-10-26T08:32:32.7993713Z  * [new branch]      feat/integration-task-submission -> origin/feat/integration-task-submission
+2026-10-26T08:32:32.7994695Z  * [new branch]      feat/mcp-activity-detail -> origin/feat/mcp-activity-detail
+2026-10-26T08:32:32.7995661Z  * [new branch]      feat/mcp-activity-person-links -> origin/feat/mcp-activity-person-links
+2026-10-26T08:32:32.7996444Z  * [new branch]      feat/mcp-calendar-read  -> origin/feat/mcp-calendar-read
+2026-10-26T08:32:32.7996924Z  * [new branch]      feat/mcp-csm-summary    -> origin/feat/mcp-csm-summary
+2026-10-26T08:32:32.8010429Z  * [new branch]      feat/mcp-csm-trends     -> origin/feat/mcp-csm-trends
+2026-10-26T08:32:32.8011366Z  * [new branch]      feat/mcp-m1-1           -> origin/feat/mcp-m1-1
+2026-10-26T08:32:32.8012490Z  * [new branch]      feat/mcp-person-trends  -> origin/feat/mcp-person-trends
+2026-10-26T08:32:32.8013841Z  * [new branch]      feat/mcp-readiness      -> origin/feat/mcp-readiness
+2026-10-26T08:32:32.8014813Z  * [new branch]      feat/mcp-type2-summary  -> origin/feat/mcp-type2-summary
+2026-10-26T08:32:32.8015657Z  * [new branch]      feat/mcp-type3-activity -> origin/feat/mcp-type3-activity
+2026-10-26T08:32:32.8016543Z  * [new branch]      feat/mcp-type3-summary  -> origin/feat/mcp-type3-summary
+2026-10-26T08:32:32.8017230Z  * [new branch]      feat/mcp-unit-surveys   -> origin/feat/mcp-unit-surveys
+2026-10-26T08:32:32.8018357Z  * [new branch]      feat/mcp-unit-trends    -> origin/feat/mcp-unit-trends
+2026-10-26T08:32:32.8019673Z  * [new branch]      feat/meet-attendees-join-button -> origin/feat/meet-attendees-join-button
+2026-10-26T08:32:32.8021053Z  * [new branch]      feat/natural-avatar-sounds -> origin/feat/natural-avatar-sounds
+2026-10-26T08:32:32.8022385Z  * [new branch]      feat/pdf-20mib          -> origin/feat/pdf-20mib
+2026-10-26T08:32:32.8023607Z  * [new branch]      feat/pdf-page-intake    -> origin/feat/pdf-page-intake
+2026-10-26T08:32:32.8024818Z  * [new branch]      feat/public-asset-zero-sql -> origin/feat/public-asset-zero-sql
+2026-10-26T08:32:32.8025913Z  * [new branch]      feat/registry-grouped-views -> origin/feat/registry-grouped-views
+2026-10-26T08:32:32.8027238Z  * [new branch]      feat/registry-lead-date-filters -> origin/feat/registry-lead-date-filters
+2026-10-26T08:32:32.8029314Z  * [new branch]      feat/registry-view-export -> origin/feat/registry-view-export
+2026-10-26T08:32:32.8032779Z  * [new branch]      feat/report-scope-clarity -> origin/feat/report-scope-clarity
+2026-10-26T08:32:32.8035617Z  * [new branch]      feat/room-reservation-guidance -> origin/feat/room-reservation-guidance
+2026-10-26T08:32:32.8038679Z  * [new branch]      feat/scoped-integration-access -> origin/feat/scoped-integration-access
+2026-10-26T08:32:32.8040924Z  * [new branch]      feat/seamless-intake    -> origin/feat/seamless-intake
+2026-10-26T08:32:32.8043624Z  * [new branch]      feat/seasonal-appearance -> origin/feat/seasonal-appearance
+2026-10-26T08:32:32.8045665Z  * [new branch]      feat/shared-accessibility -> origin/feat/shared-accessibility
+2026-10-26T08:32:32.8048840Z  * [new branch]      feat/signed-webhook-adapter -> origin/feat/signed-webhook-adapter
+2026-10-26T08:32:32.8050933Z  * [new branch]      feat/supplies-interactive-inventory -> origin/feat/supplies-interactive-inventory
+2026-10-26T08:32:32.8060688Z  * [new branch]      feat/supplies-powerpoint-export -> origin/feat/supplies-powerpoint-export
+2026-10-26T08:32:32.8061873Z  * [new branch]      feat/supplies-stock-dashboard -> origin/feat/supplies-stock-dashboard
+2026-10-26T08:32:32.8063346Z  * [new branch]      feat/survey-guidance    -> origin/feat/survey-guidance
+2026-10-26T08:32:32.8064460Z  * [new branch]      feat/telegram-t1-1-storage -> origin/feat/telegram-t1-1-storage
+2026-10-26T08:32:32.8065625Z  * [new branch]      feat/telegram-t1-2-webhook -> origin/feat/telegram-t1-2-webhook
+2026-10-26T08:32:32.8066563Z  * [new branch]      feat/telegram-t1-3-linking -> origin/feat/telegram-t1-3-linking
+2026-10-26T08:32:32.8067713Z  * [new branch]      feat/telegram-t1-4-groups -> origin/feat/telegram-t1-4-groups
+2026-10-26T08:32:32.8068949Z  * [new branch]      feat/telegram-t2-1-calendar -> origin/feat/telegram-t2-1-calendar
+2026-10-26T08:32:32.8070919Z  * [new branch]      feat/telegram-t2-2-rooms -> origin/feat/telegram-t2-2-rooms
+2026-10-26T08:32:32.8073916Z  * [new branch]      feat/telegram-t2-3-group-reads -> origin/feat/telegram-t2-3-group-reads
+2026-10-26T08:32:32.8076450Z  * [new branch]      feat/telegram-t3-1-confirmation -> origin/feat/telegram-t3-1-confirmation
+2026-10-26T08:32:32.8079324Z  * [new branch]      feat/telegram-t3-2-meetings -> origin/feat/telegram-t3-2-meetings
+2026-10-26T08:32:32.8082137Z  * [new branch]      feat/telegram-t3-3-room-requests -> origin/feat/telegram-t3-3-room-requests
+2026-10-26T08:32:32.8084670Z  * [new branch]      feat/telegram-t3-4-meeting-room -> origin/feat/telegram-t3-4-meeting-room
+2026-10-26T08:32:32.8086493Z  * [new branch]      feat/telegram-t4-1-change-events -> origin/feat/telegram-t4-1-change-events
+2026-10-26T08:32:32.8090389Z  * [new branch]      feat/telegram-t4-2-change-notices -> origin/feat/telegram-t4-2-change-notices
+2026-10-26T08:32:32.8091891Z  * [new branch]      feat/telegram-t4-3-1-preferences -> origin/feat/telegram-t4-3-1-preferences
+2026-10-26T08:32:32.8095520Z  * [new branch]      feat/telegram-t4-3-2-reminders -> origin/feat/telegram-t4-3-2-reminders
+2026-10-26T08:32:32.8097939Z  * [new branch]      feat/transient-pdf-intake -> origin/feat/transient-pdf-intake
+2026-10-26T08:32:32.8101138Z  * [new branch]      feat/transient-pdf-ocr  -> origin/feat/transient-pdf-ocr
+2026-10-26T08:32:32.8103380Z  * [new branch]      feat/travel-claims-csv  -> origin/feat/travel-claims-csv
+2026-10-26T08:32:32.8105039Z  * [new branch]      feat/travel-claims-grid -> origin/feat/travel-claims-grid
+2026-10-26T08:32:32.8109016Z  * [new branch]      feat/travel-guidance    -> origin/feat/travel-guidance
+2026-10-26T08:32:32.8110121Z  * [new branch]      feat/travel-saved-views -> origin/feat/travel-saved-views
+2026-10-26T08:32:32.8112920Z  * [new branch]      feat/travel-submission-recovery -> origin/feat/travel-submission-recovery
+2026-10-26T08:32:32.8116057Z  * [new branch]      feat/typo-tolerant-search -> origin/feat/typo-tolerant-search
+2026-10-26T08:32:32.8118803Z  * [new branch]      feat/verified-ai-facts  -> origin/feat/verified-ai-facts
+2026-10-26T08:32:32.8121434Z  * [new branch]      feature/activity-rp-links -> origin/feature/activity-rp-links
+2026-10-26T08:32:32.8130191Z  * [new branch]      feature/rp-results-by-activity -> origin/feature/rp-results-by-activity
+2026-10-26T08:32:32.8132107Z  * [new branch]      feature/supplies-through-s3-2 -> origin/feature/supplies-through-s3-2
+2026-10-26T08:32:32.8133383Z  * [new branch]      fix/approvals-hide-orphans-for-room-admins -> origin/fix/approvals-hide-orphans-for-room-admins
+2026-10-26T08:32:32.8134605Z  * [new branch]      fix/awa-next-period-reopen -> origin/fix/awa-next-period-reopen
+2026-10-26T08:32:32.8135584Z  * [new branch]      fix/awa-reopen-version-log -> origin/fix/awa-reopen-version-log
+2026-10-26T08:32:32.8136475Z  * [new branch]      fix/blhsd-outgoing      -> origin/fix/blhsd-outgoing
+2026-10-26T08:32:32.8137459Z  * [new branch]      fix/calendar-people-scroll-search -> origin/fix/calendar-people-scroll-search
+2026-10-26T08:32:32.8140210Z  * [new branch]      fix/deploy-allowlist-meet-relay -> origin/fix/deploy-allowlist-meet-relay
+2026-10-26T08:32:32.8141488Z  * [new branch]      fix/deploy-allowlist-work-modules -> origin/fix/deploy-allowlist-work-modules
+2026-10-26T08:32:32.8142727Z  * [new branch]      fix/deterministic-tests -> origin/fix/deterministic-tests
+2026-10-26T08:32:32.8144202Z  * [new branch]      fix/dpo-signatory-first-line-indent -> origin/fix/dpo-signatory-first-line-indent
+2026-10-26T08:32:32.8145630Z  * [new branch]      fix/dtrak-field-extraction -> origin/fix/dtrak-field-extraction
+2026-10-26T08:32:32.8148061Z  * [new branch]      fix/dtrak-subject-region -> origin/fix/dtrak-subject-region
+2026-10-26T08:32:32.8150909Z  * [new branch]      fix/mcp-consent-recovery -> origin/fix/mcp-consent-recovery
+2026-10-26T08:32:32.8153219Z  * [new branch]      fix/mcp-consent-scope-choice -> origin/fix/mcp-consent-scope-choice
+2026-10-26T08:32:32.8154747Z  * [new branch]      fix/mcp-read-registration -> origin/fix/mcp-read-registration
+2026-10-26T08:32:32.8157198Z  * [new branch]      fix/mcp-survey-discovery -> origin/fix/mcp-survey-discovery
+2026-10-26T08:32:32.8159236Z  * [new branch]      fix/mine-only-ignores-importer -> origin/fix/mine-only-ignores-importer
+2026-10-26T08:32:32.8161849Z  * [new branch]      fix/pdf-intake-feedback -> origin/fix/pdf-intake-feedback
+2026-10-26T08:32:32.8164001Z  * [new branch]      fix/pdf-intake-outcomes -> origin/fix/pdf-intake-outcomes
+2026-10-26T08:32:32.8170492Z  * [new branch]      fix/pdf-ocr-mobile      -> origin/fix/pdf-ocr-mobile
+2026-10-26T08:32:32.8172305Z  * [new branch]      fix/phase-0-authority-persistence-sessions -> origin/fix/phase-0-authority-persistence-sessions
+2026-10-26T08:32:32.8173225Z  * [new branch]      fix/phase1-analytics    -> origin/fix/phase1-analytics
+2026-10-26T08:32:32.8175842Z  * [new branch]      fix/phase1-request-origin -> origin/fix/phase1-request-origin
+2026-10-26T08:32:32.8176693Z  * [new branch]      fix/pill-overflow       -> origin/fix/pill-overflow
+2026-10-26T08:32:32.8178459Z  * [new branch]      fix/quick-add-more-options-keeps-input -> origin/fix/quick-add-more-options-keeps-input
+2026-10-26T08:32:32.8181386Z  * [new branch]      fix/registration-link-layout -> origin/fix/registration-link-layout
+2026-10-26T08:32:32.8182746Z  * [new branch]      fix/release-7-27-package -> origin/fix/release-7-27-package
+2026-10-26T08:32:32.8186196Z  * [new branch]      fix/release-verification-time-budget -> origin/fix/release-verification-time-budget
+2026-10-26T08:32:32.8188463Z  * [new branch]      fix/remaining-test-failures -> origin/fix/remaining-test-failures
+2026-10-26T08:32:32.8191152Z  * [new branch]      fix/rp-roster-merge-same-person-sessions -> origin/fix/rp-roster-merge-same-person-sessions
+2026-10-26T08:32:32.8193454Z  * [new branch]      fix/subject-reconciliation -> origin/fix/subject-reconciliation
+2026-10-26T08:32:32.8196556Z  * [new branch]      fix/table-overflow      -> origin/fix/table-overflow
+2026-10-26T08:32:32.8199080Z  * [new branch]      fix/telegram-setup-controls -> origin/fix/telegram-setup-controls
+2026-10-26T08:32:32.8202597Z  * [new branch]      fix/walkin-form-never-archived -> origin/fix/walkin-form-never-archived
+2026-10-26T08:32:32.8205116Z  * [new branch]      fix/wellness-check-in-time -> origin/fix/wellness-check-in-time
+2026-10-26T08:32:32.8210228Z  * [new branch]      main                    -> origin/main
+2026-10-26T08:32:32.8211185Z  * [new branch]      ops/clear-obsolete-deploy-20261023 -> origin/ops/clear-obsolete-deploy-20261023
+2026-10-26T08:32:32.8220344Z  * [new branch]      research/integration-candidates -> origin/research/integration-candidates
+2026-10-26T08:32:32.8221344Z  * [new branch]      supplies/release-7.85   -> origin/supplies/release-7.85
+2026-10-26T08:32:32.8222136Z  * [new branch]      verify/python311        -> origin/verify/python311
+2026-10-26T08:32:32.8316416Z [command]/usr/bin/git branch --list --remote origin/codex/avatar-2b-lifecycle-candidate
+2026-10-26T08:32:32.8394115Z   origin/codex/avatar-2b-lifecycle-candidate
+2026-10-26T08:32:32.8405431Z [command]/usr/bin/git rev-parse refs/remotes/origin/codex/avatar-2b-lifecycle-candidate
+2026-10-26T08:32:32.8432553Z 509cd1adbe9265d7445d22134df1feaa7bd59a7d
+2026-10-26T08:32:32.8436861Z ##[endgroup]
+2026-10-26T08:32:32.8437814Z ##[group]Determining the checkout info
+2026-10-26T08:32:32.8438989Z ##[endgroup]
+2026-10-26T08:32:32.8455636Z [command]/usr/bin/git sparse-checkout disable
+2026-10-26T08:32:32.8504772Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-10-26T08:32:32.8548034Z ##[group]Checking out the ref
+2026-10-26T08:32:32.8553582Z [command]/usr/bin/git checkout --progress --force -B codex/avatar-2b-lifecycle-candidate refs/remotes/origin/codex/avatar-2b-lifecycle-candidate
+2026-10-26T08:32:33.8711186Z Updating files:  38% (1043/2691)
+2026-10-26T08:32:33.9013291Z Updating files:  39% (1050/2691)
+2026-10-26T08:32:33.9374624Z Updating files:  40% (1077/2691)
+2026-10-26T08:32:33.9505431Z Updating files:  41% (1104/2691)
+2026-10-26T08:32:33.9654260Z Updating files:  42% (1131/2691)
+2026-10-26T08:32:34.0314979Z Updating files:  43% (1158/2691)
+2026-10-26T08:32:34.0688685Z Updating files:  44% (1185/2691)
+2026-10-26T08:32:34.1100589Z Updating files:  45% (1211/2691)
+2026-10-26T08:32:34.1908208Z Updating files:  46% (1238/2691)
+2026-10-26T08:32:34.2330776Z Updating files:  47% (1265/2691)
+2026-10-26T08:32:34.2993375Z Updating files:  48% (1292/2691)
+2026-10-26T08:32:34.3371389Z Updating files:  49% (1319/2691)
+2026-10-26T08:32:34.3668224Z Updating files:  50% (1346/2691)
+2026-10-26T08:32:34.4668674Z Updating files:  51% (1373/2691)
+2026-10-26T08:32:34.4968796Z Updating files:  52% (1400/2691)
+2026-10-26T08:32:34.5085583Z Updating files:  53% (1427/2691)
+2026-10-26T08:32:34.5200175Z Updating files:  54% (1454/2691)
+2026-10-26T08:32:34.5225707Z Updating files:  55% (1481/2691)
+2026-10-26T08:32:34.5255489Z Updating files:  56% (1507/2691)
+2026-10-26T08:32:34.5289549Z Updating files:  57% (1534/2691)
+2026-10-26T08:32:34.5322795Z Updating files:  58% (1561/2691)
+2026-10-26T08:32:34.5346764Z Updating files:  59% (1588/2691)
+2026-10-26T08:32:34.5367252Z Updating files:  60% (1615/2691)
+2026-10-26T08:32:34.5393930Z Updating files:  61% (1642/2691)
+2026-10-26T08:32:34.5420915Z Updating files:  62% (1669/2691)
+2026-10-26T08:32:34.5443363Z Updating files:  63% (1696/2691)
+2026-10-26T08:32:34.5512973Z Updating files:  64% (1723/2691)
+2026-10-26T08:32:34.5526587Z Updating files:  65% (1750/2691)
+2026-10-26T08:32:34.5543157Z Updating files:  66% (1777/2691)
+2026-10-26T08:32:34.5557030Z Updating files:  67% (1803/2691)
+2026-10-26T08:32:34.5571059Z Updating files:  68% (1830/2691)
+2026-10-26T08:32:34.5607017Z Updating files:  69% (1857/2691)
+2026-10-26T08:32:34.5638610Z Updating files:  70% (1884/2691)
+2026-10-26T08:32:34.5763787Z Updating files:  71% (1911/2691)
+2026-10-26T08:32:34.5837341Z Updating files:  72% (1938/2691)
+2026-10-26T08:32:34.5861788Z Updating files:  73% (1965/2691)
+2026-10-26T08:32:34.5879673Z Updating files:  74% (1992/2691)
+2026-10-26T08:32:34.5900001Z Updating files:  75% (2019/2691)
+2026-10-26T08:32:34.5920157Z Updating files:  76% (2046/2691)
+2026-10-26T08:32:34.5939247Z Updating files:  77% (2073/2691)
+2026-10-26T08:32:34.5965642Z Updating files:  78% (2099/2691)
+2026-10-26T08:32:34.5984122Z Updating files:  79% (2126/2691)
+2026-10-26T08:32:34.5997477Z Updating files:  80% (2153/2691)
+2026-10-26T08:32:34.6020971Z Updating files:  81% (2180/2691)
+2026-10-26T08:32:34.6039685Z Updating files:  82% (2207/2691)
+2026-10-26T08:32:34.6060704Z Updating files:  83% (2234/2691)
+2026-10-26T08:32:34.6083636Z Updating files:  84% (2261/2691)
+2026-10-26T08:32:34.6103369Z Updating files:  85% (2288/2691)
+2026-10-26T08:32:34.6125376Z Updating files:  86% (2315/2691)
+2026-10-26T08:32:34.6144803Z Updating files:  87% (2342/2691)
+2026-10-26T08:32:34.6170177Z Updating files:  88% (2369/2691)
+2026-10-26T08:32:34.6189483Z Updating files:  89% (2395/2691)
+2026-10-26T08:32:34.6213896Z Updating files:  90% (2422/2691)
+2026-10-26T08:32:34.6235437Z Updating files:  91% (2449/2691)
+2026-10-26T08:32:34.6261943Z Updating files:  92% (2476/2691)
+2026-10-26T08:32:34.6283118Z Updating files:  93% (2503/2691)
+2026-10-26T08:32:34.6306625Z Updating files:  94% (2530/2691)
+2026-10-26T08:32:34.6332340Z Updating files:  95% (2557/2691)
+2026-10-26T08:32:34.6355930Z Updating files:  96% (2584/2691)
+2026-10-26T08:32:34.6389555Z Updating files:  97% (2611/2691)
+2026-10-26T08:32:34.6419324Z Updating files:  98% (2638/2691)
+2026-10-26T08:32:34.6462983Z Updating files:  99% (2665/2691)
+2026-10-26T08:32:34.6463525Z Updating files: 100% (2691/2691)
+2026-10-26T08:32:34.6464101Z Updating files: 100% (2691/2691), done.
+2026-10-26T08:32:34.6505754Z Switched to a new branch 'codex/avatar-2b-lifecycle-candidate'
+2026-10-26T08:32:34.6510513Z branch 'codex/avatar-2b-lifecycle-candidate' set up to track 'origin/codex/avatar-2b-lifecycle-candidate'.
+2026-10-26T08:32:34.6665834Z ##[endgroup]
+2026-10-26T08:32:34.6710148Z [command]/usr/bin/git log -1 --format=%H
+2026-10-26T08:32:34.6743065Z 509cd1adbe9265d7445d22134df1feaa7bd59a7d
+2026-10-26T08:32:34.6992939Z ##[group]Run apt-get update
+2026-10-26T08:32:34.6993281Z [36;1mapt-get update[0m
+2026-10-26T08:32:34.6993920Z [36;1mapt-get install -y --no-install-recommends chromium=156.0.8078.47-1~deb13u1 chromium-common=156.0.8078.47-1~deb13u1 git procps[0m
+2026-10-26T08:32:34.6994522Z [36;1mpython -m venv .venv[0m
+2026-10-26T08:32:34.6994990Z [36;1m.venv/bin/python -m pip install --require-hashes --only-binary=:all: -r requirements-test.txt[0m
+2026-10-26T08:32:34.6995557Z [36;1mgit config --global --add safe.directory "$GITHUB_WORKSPACE"[0m
+2026-10-26T08:32:34.6999624Z shell: sh -e {0}
+2026-10-26T08:32:34.6999859Z ##[endgroup]
+2026-10-26T08:32:34.8250647Z Hit:1 http://deb.debian.org/debian trixie InRelease
+2026-10-26T08:32:34.8251451Z Get:2 http://deb.debian.org/debian trixie-updates InRelease [47.3 kB]
+2026-10-26T08:32:34.8304348Z Get:3 http://deb.debian.org/debian-security trixie-security InRelease [43.4 kB]
+2026-10-26T08:32:34.8453058Z Get:4 http://deb.debian.org/debian trixie/main amd64 Packages [9678 kB]
+2026-10-26T08:32:34.9241065Z Get:5 http://deb.debian.org/debian trixie-updates/main amd64 Packages [720 B]
+2026-10-26T08:32:34.9251278Z Get:6 http://deb.debian.org/debian-security trixie-security/main amd64 Packages [270 kB]
+2026-10-26T08:32:35.5818544Z Fetched 10.0 MB in 1s (12.8 MB/s)
+2026-10-26T08:32:36.0725292Z Reading package lists...
+2026-10-26T08:32:36.5634777Z Reading package lists...
+2026-10-26T08:32:36.6943271Z Building dependency tree...
+2026-10-26T08:32:36.6945049Z Reading state information...
+2026-10-26T08:32:36.8271230Z git is already the newest version (1:2.47.3-0+deb13u1).
+2026-10-26T08:32:36.8272030Z procps is already the newest version (2:4.0.4-9).
+2026-10-26T08:32:36.8272710Z The following additional packages will be installed:
+2026-10-26T08:32:36.8273443Z   adwaita-icon-theme at-spi2-common dbus dbus-bin dbus-daemon
+2026-10-26T08:32:36.8274380Z   dbus-session-bus-common dbus-system-bus-common dbus-user-session
+2026-10-26T08:32:36.8280051Z   dconf-gsettings-backend dconf-service gtk-update-icon-cache libapparmor1
+2026-10-26T08:32:36.8281244Z   libasound2-data libasound2t64 libasyncns0 libatk-bridge2.0-0t64
+2026-10-26T08:32:36.8282286Z   libatk1.0-0t64 libatspi2.0-0t64 libavahi-client3 libavahi-common-data
+2026-10-26T08:32:36.8283772Z   libavahi-common3 libcloudproviders0 libcolord2 libcups2t64 libdbus-1-3
+2026-10-26T08:32:36.8284952Z   libdconf1 libdouble-conversion3 libdrm-amdgpu1 libdrm-common libdrm-intel1
+2026-10-26T08:32:36.8286071Z   libdrm2 libepoxy0 libflac14 libgbm1 libgl1 libgl1-mesa-dri libglvnd0
+2026-10-26T08:32:36.8287365Z   libglx-mesa0 libglx0 libgtk-3-0t64 libgtk-3-common libllvm19 libminizip1t64
+2026-10-26T08:32:36.8288831Z   libmp3lame0 libmpg123-0t64 libnspr4 libnss3 libogg0 libopenh264-8 libopus0
+2026-10-26T08:32:36.8289928Z   libpam-systemd libpciaccess0 libpulse0 libsensors-config libsensors5
+2026-10-26T08:32:36.8291011Z   libsndfile1 libsystemd-shared libvorbis0a libvorbisenc2 libvulkan1
+2026-10-26T08:32:36.8292045Z   libwayland-client0 libwayland-cursor0 libwayland-egl1 libwayland-server0
+2026-10-26T08:32:36.8293436Z   libx11-xcb1 libxaw7 libxcb-dri3-0 libxcb-glx0 libxcb-present0 libxcb-randr0
+2026-10-26T08:32:36.8294427Z   libxcb-shape0 libxcb-sync1 libxcb-xfixes0 libxcomposite1 libxcursor1
+2026-10-26T08:32:36.8295505Z   libxdamage1 libxfixes3 libxi6 libxinerama1 libxkbcommon0 libxkbfile1 libxmu6
+2026-10-26T08:32:36.8296649Z   libxmuu1 libxnvctrl0 libxpm4 libxrandr2 libxshmfence1 libxtst6 libxv1
+2026-10-26T08:32:36.8297907Z   libxxf86dga1 libxxf86vm1 libz3-4 mesa-libgallium systemd systemd-sysv
+2026-10-26T08:32:36.8299010Z   x11-utils xdg-utils xkb-data
+2026-10-26T08:32:36.8299381Z Suggested packages:
+2026-10-26T08:32:36.8299738Z   adwaita-icon-theme-legacy chromium-l10n chromium-shell chromium-driver
+2026-10-26T08:32:36.8300427Z   alsa-utils libasound2-plugins colord cups-common gvfs opus-tools
+2026-10-26T08:32:36.8300894Z   libcryptsetup12 libtss2-rc0t64 pciutils pulseaudio lm-sensors
+2026-10-26T08:32:36.8301828Z   libarchive13t64 libbpf1 libdw1t64 libip4tc2 libpwquality1 libqrencode4
+2026-10-26T08:32:36.8302386Z   systemd-container systemd-homed systemd-userdbd systemd-boot
+2026-10-26T08:32:36.8302859Z   systemd-resolved systemd-repart libtss2-tcti-device0 polkitd mesa-utils
+2026-10-26T08:32:36.8303422Z Recommended packages:
+2026-10-26T08:32:36.8303800Z   upower udev fonts-liberation notification-daemon system-config-printer
+2026-10-26T08:32:36.8304416Z   alsa-ucm-conf alsa-topology-conf at-spi2-core libgtk-3-bin libkmod2
+2026-10-26T08:32:36.8305104Z   mesa-vulkan-drivers | vulkan-icd linux-sysctl-defaults systemd-timesyncd
+2026-10-26T08:32:36.8305809Z   | time-daemon systemd-cryptsetup libnss-systemd luit libfile-mimeinfo-perl
+2026-10-26T08:32:36.8306446Z   libnet-dbus-perl libx11-protocol-perl x11-xserver-utils
+2026-10-26T08:32:37.1984644Z The following NEW packages will be installed:
+2026-10-26T08:32:37.1985762Z   adwaita-icon-theme at-spi2-common chromium chromium-common dbus dbus-bin
+2026-10-26T08:32:37.1986979Z   dbus-daemon dbus-session-bus-common dbus-system-bus-common dbus-user-session
+2026-10-26T08:32:37.1988460Z   dconf-gsettings-backend dconf-service gtk-update-icon-cache libapparmor1
+2026-10-26T08:32:37.2009612Z   libasound2-data libasound2t64 libasyncns0 libatk-bridge2.0-0t64
+2026-10-26T08:32:37.2010514Z   libatk1.0-0t64 libatspi2.0-0t64 libavahi-client3 libavahi-common-data
+2026-10-26T08:32:37.2011397Z   libavahi-common3 libcloudproviders0 libcolord2 libcups2t64 libdbus-1-3
+2026-10-26T08:32:37.2012315Z   libdconf1 libdouble-conversion3 libdrm-amdgpu1 libdrm-common libdrm-intel1
+2026-10-26T08:32:37.2013219Z   libdrm2 libepoxy0 libflac14 libgbm1 libgl1 libgl1-mesa-dri libglvnd0
+2026-10-26T08:32:37.2014178Z   libglx-mesa0 libglx0 libgtk-3-0t64 libgtk-3-common libllvm19 libminizip1t64
+2026-10-26T08:32:37.2015152Z   libmp3lame0 libmpg123-0t64 libnspr4 libnss3 libogg0 libopenh264-8 libopus0
+2026-10-26T08:32:37.2016037Z   libpam-systemd libpciaccess0 libpulse0 libsensors-config libsensors5
+2026-10-26T08:32:37.2016879Z   libsndfile1 libsystemd-shared libvorbis0a libvorbisenc2 libvulkan1
+2026-10-26T08:32:37.2017919Z   libwayland-client0 libwayland-cursor0 libwayland-egl1 libwayland-server0
+2026-10-26T08:32:37.2018873Z   libx11-xcb1 libxaw7 libxcb-dri3-0 libxcb-glx0 libxcb-present0 libxcb-randr0
+2026-10-26T08:32:37.2019790Z   libxcb-shape0 libxcb-sync1 libxcb-xfixes0 libxcomposite1 libxcursor1
+2026-10-26T08:32:37.2020696Z   libxdamage1 libxfixes3 libxi6 libxinerama1 libxkbcommon0 libxkbfile1 libxmu6
+2026-10-26T08:32:37.2021595Z   libxmuu1 libxnvctrl0 libxpm4 libxrandr2 libxshmfence1 libxtst6 libxv1
+2026-10-26T08:32:37.2022415Z   libxxf86dga1 libxxf86vm1 libz3-4 mesa-libgallium systemd systemd-sysv
+2026-10-26T08:32:37.2023057Z   x11-utils xdg-utils xkb-data
+2026-10-26T08:32:37.2332758Z 0 upgraded, 100 newly installed, 0 to remove and 7 not upgraded.
+2026-10-26T08:32:37.2333183Z Need to get 194 MB of archives.
+2026-10-26T08:32:37.2333524Z After this operation, 713 MB of additional disk space will be used.
+2026-10-26T08:32:37.2334138Z Get:1 http://deb.debian.org/debian trixie/main amd64 libsystemd-shared amd64 257.13-1~deb13u1 [2155 kB]
+2026-10-26T08:32:37.2917443Z Get:2 http://deb.debian.org/debian trixie/main amd64 libapparmor1 amd64 4.1.0-1 [43.7 kB]
+2026-10-26T08:32:37.2971745Z Get:3 http://deb.debian.org/debian trixie/main amd64 systemd amd64 257.13-1~deb13u1 [3094 kB]
+2026-10-26T08:32:37.3119924Z Get:4 http://deb.debian.org/debian trixie/main amd64 systemd-sysv amd64 257.13-1~deb13u1 [64.9 kB]
+2026-10-26T08:32:37.3130114Z Get:5 http://deb.debian.org/debian trixie/main amd64 libdbus-1-3 amd64 1.16.2-2 [178 kB]
+2026-10-26T08:32:37.3141769Z Get:6 http://deb.debian.org/debian trixie/main amd64 dbus-bin amd64 1.16.2-2 [80.0 kB]
+2026-10-26T08:32:37.3144699Z Get:7 http://deb.debian.org/debian trixie/main amd64 dbus-session-bus-common all 1.16.2-2 [52.3 kB]
+2026-10-26T08:32:37.3146630Z Get:8 http://deb.debian.org/debian trixie/main amd64 dbus-daemon amd64 1.16.2-2 [159 kB]
+2026-10-26T08:32:37.3154249Z Get:9 http://deb.debian.org/debian trixie/main amd64 dbus-system-bus-common all 1.16.2-2 [53.5 kB]
+2026-10-26T08:32:37.3161867Z Get:10 http://deb.debian.org/debian trixie/main amd64 dbus amd64 1.16.2-2 [71.6 kB]
+2026-10-26T08:32:37.3169339Z Get:11 http://deb.debian.org/debian trixie/main amd64 libpam-systemd amd64 257.13-1~deb13u1 [297 kB]
+2026-10-26T08:32:37.3177388Z Get:12 http://deb.debian.org/debian trixie/main amd64 gtk-update-icon-cache amd64 4.18.6+ds-2 [52.7 kB]
+2026-10-26T08:32:37.3185194Z Get:13 http://deb.debian.org/debian trixie/main amd64 adwaita-icon-theme all 48.1-1 [504 kB]
+2026-10-26T08:32:37.3236312Z Get:14 http://deb.debian.org/debian trixie/main amd64 at-spi2-common all 2.56.2-1+deb13u2 [171 kB]
+2026-10-26T08:32:37.3245706Z Get:15 http://deb.debian.org/debian trixie/main amd64 libasound2-data all 1.2.14-1+deb13u1 [21.2 kB]
+2026-10-26T08:32:37.3298870Z Get:16 http://deb.debian.org/debian trixie/main amd64 libasound2t64 amd64 1.2.14-1+deb13u1 [381 kB]
+2026-10-26T08:32:37.3325103Z Get:17 http://deb.debian.org/debian trixie/main amd64 libatk1.0-0t64 amd64 2.56.2-1+deb13u2 [52.0 kB]
+2026-10-26T08:32:37.3332111Z Get:18 http://deb.debian.org/debian trixie/main amd64 libxi6 amd64 2:1.8.2-1 [78.9 kB]
+2026-10-26T08:32:37.3337968Z Get:19 http://deb.debian.org/debian trixie/main amd64 libatspi2.0-0t64 amd64 2.56.2-1+deb13u2 [81.1 kB]
+2026-10-26T08:32:37.3346586Z Get:20 http://deb.debian.org/debian trixie/main amd64 libatk-bridge2.0-0t64 amd64 2.56.2-1+deb13u2 [68.5 kB]
+2026-10-26T08:32:37.3351780Z Get:21 http://deb.debian.org/debian trixie/main amd64 libavahi-common-data amd64 0.8-16 [112 kB]
+2026-10-26T08:32:37.3358248Z Get:22 http://deb.debian.org/debian trixie/main amd64 libavahi-common3 amd64 0.8-16 [44.2 kB]
+2026-10-26T08:32:37.3366459Z Get:23 http://deb.debian.org/debian trixie/main amd64 libavahi-client3 amd64 0.8-16 [48.4 kB]
+2026-10-26T08:32:37.3369426Z Get:24 http://deb.debian.org/debian trixie/main amd64 libcups2t64 amd64 2.4.10-3+deb13u2 [252 kB]
+2026-10-26T08:32:37.3377429Z Get:25 http://deb.debian.org/debian trixie/main amd64 libdouble-conversion3 amd64 3.3.1-1 [41.8 kB]
+2026-10-26T08:32:37.3395694Z Get:26 http://deb.debian.org/debian trixie/main amd64 libogg0 amd64 1.3.5-3+b2 [23.8 kB]
+2026-10-26T08:32:37.3455240Z Get:27 http://deb.debian.org/debian trixie/main amd64 libflac14 amd64 1.5.0+ds-2 [210 kB]
+2026-10-26T08:32:37.3474751Z Get:28 http://deb.debian.org/debian trixie/main amd64 libdrm-common all 2.4.124-2 [8288 B]
+2026-10-26T08:32:37.3481852Z Get:29 http://deb.debian.org/debian trixie/main amd64 libdrm2 amd64 2.4.124-2 [39.0 kB]
+2026-10-26T08:32:37.3488923Z Get:30 http://deb.debian.org/debian trixie/main amd64 libwayland-server0 amd64 1.23.1-3 [34.4 kB]
+2026-10-26T08:32:37.3495642Z Get:31 http://deb.debian.org/debian trixie/main amd64 libdrm-amdgpu1 amd64 2.4.124-2 [22.6 kB]
+2026-10-26T08:32:37.3499109Z Get:32 http://deb.debian.org/debian trixie/main amd64 libpciaccess0 amd64 0.17-3+b3 [51.9 kB]
+2026-10-26T08:32:37.3503556Z Get:33 http://deb.debian.org/debian trixie/main amd64 libdrm-intel1 amd64 2.4.124-2 [64.1 kB]
+2026-10-26T08:32:37.3508064Z Get:34 http://deb.debian.org/debian trixie/main amd64 libz3-4 amd64 4.13.3-1 [8560 kB]
+2026-10-26T08:32:37.3884159Z Get:35 http://deb.debian.org/debian trixie/main amd64 libllvm19 amd64 1:19.1.7-3+b1 [26.0 MB]
+2026-10-26T08:32:37.4939865Z Get:36 http://deb.debian.org/debian trixie/main amd64 libsensors-config all 1:3.6.2-2 [16.2 kB]
+2026-10-26T08:32:37.4941377Z Get:37 http://deb.debian.org/debian trixie/main amd64 libsensors5 amd64 1:3.6.2-2 [37.5 kB]
+2026-10-26T08:32:37.4944366Z Get:38 http://deb.debian.org/debian trixie/main amd64 libx11-xcb1 amd64 2:1.8.12-1 [247 kB]
+2026-10-26T08:32:37.4954925Z Get:39 http://deb.debian.org/debian trixie/main amd64 libxcb-dri3-0 amd64 1.17.0-2+b1 [107 kB]
+2026-10-26T08:32:37.4961257Z Get:40 http://deb.debian.org/debian trixie/main amd64 libxcb-present0 amd64 1.17.0-2+b1 [106 kB]
+2026-10-26T08:32:37.4969487Z Get:41 http://deb.debian.org/debian trixie/main amd64 libxcb-randr0 amd64 1.17.0-2+b1 [117 kB]
+2026-10-26T08:32:37.4975024Z Get:42 http://deb.debian.org/debian trixie/main amd64 libxcb-sync1 amd64 1.17.0-2+b1 [109 kB]
+2026-10-26T08:32:37.4980359Z Get:43 http://deb.debian.org/debian trixie/main amd64 libxcb-xfixes0 amd64 1.17.0-2+b1 [109 kB]
+2026-10-26T08:32:37.4986293Z Get:44 http://deb.debian.org/debian trixie/main amd64 libxshmfence1 amd64 1.3.3-1 [10.9 kB]
+2026-10-26T08:32:37.5000371Z Get:45 http://deb.debian.org/debian trixie/main amd64 mesa-libgallium amd64 25.0.7-2+deb13u1 [9630 kB]
+2026-10-26T08:32:37.5368012Z Get:46 http://deb.debian.org/debian trixie/main amd64 libgbm1 amd64 25.0.7-2+deb13u1 [44.6 kB]
+2026-10-26T08:32:37.5371247Z Get:47 http://deb.debian.org/debian trixie/main amd64 libminizip1t64 amd64 1:1.3.dfsg+really1.3.1-1+b1 [53.3 kB]
+2026-10-26T08:32:37.5374234Z Get:48 http://deb.debian.org/debian trixie/main amd64 libnspr4 amd64 2:4.36-1 [110 kB]
+2026-10-26T08:32:37.5381613Z Get:49 http://deb.debian.org/debian trixie/main amd64 libnss3 amd64 2:3.110-1+deb13u4 [1394 kB]
+2026-10-26T08:32:37.5429412Z Get:50 http://deb.debian.org/debian trixie/main amd64 libopenh264-8 amd64 2.6.0+dfsg-2 [395 kB]
+2026-10-26T08:32:37.5446353Z Get:51 http://deb.debian.org/debian trixie/main amd64 libopus0 amd64 1.5.2-2 [2852 kB]
+2026-10-26T08:32:37.5551565Z Get:52 http://deb.debian.org/debian trixie/main amd64 libasyncns0 amd64 0.8-6+b5 [12.0 kB]
+2026-10-26T08:32:37.5553598Z Get:53 http://deb.debian.org/debian trixie/main amd64 libmp3lame0 amd64 3.100-6+b3 [363 kB]
+2026-10-26T08:32:37.5568374Z Get:54 http://deb.debian.org/debian trixie/main amd64 libmpg123-0t64 amd64 1.32.10-1+deb13u1 [149 kB]
+2026-10-26T08:32:37.5575199Z Get:55 http://deb.debian.org/debian trixie/main amd64 libvorbis0a amd64 1.3.7-3 [90.0 kB]
+2026-10-26T08:32:37.5580722Z Get:56 http://deb.debian.org/debian trixie/main amd64 libvorbisenc2 amd64 1.3.7-3 [75.4 kB]
+2026-10-26T08:32:37.5603180Z Get:57 http://deb.debian.org/debian trixie/main amd64 libsndfile1 amd64 1.2.2-2+deb13u1 [199 kB]
+2026-10-26T08:32:37.5613851Z Get:58 http://deb.debian.org/debian trixie/main amd64 libpulse0 amd64 17.0+dfsg1-2+b1 [276 kB]
+2026-10-26T08:32:37.5625374Z Get:59 http://deb.debian.org/debian trixie/main amd64 libxcomposite1 amd64 1:0.4.6-1 [16.3 kB]
+2026-10-26T08:32:37.5632314Z Get:60 http://deb.debian.org/debian trixie/main amd64 libxdamage1 amd64 1:1.1.6-1+b2 [15.5 kB]
+2026-10-26T08:32:37.5633313Z Get:61 http://deb.debian.org/debian trixie/main amd64 libxfixes3 amd64 1:6.0.0-2+b4 [20.2 kB]
+2026-10-26T08:32:37.5667063Z Get:62 http://deb.debian.org/debian trixie/main amd64 xkb-data all 2.42-1 [790 kB]
+2026-10-26T08:32:37.5715028Z Get:63 http://deb.debian.org/debian trixie/main amd64 libxkbcommon0 amd64 1.7.0-2 [113 kB]
+2026-10-26T08:32:37.5722518Z Get:64 http://deb.debian.org/debian trixie/main amd64 libxnvctrl0 amd64 535.171.04-1+b2 [14.2 kB]
+2026-10-26T08:32:37.5729572Z Get:65 http://deb.debian.org/debian trixie/main amd64 libxrandr2 amd64 2:1.5.4-1+b3 [36.3 kB]
+2026-10-26T08:32:37.5734433Z Get:66 http://deb.debian.org/debian trixie/main amd64 libcloudproviders0 amd64 0.3.6-2 [29.2 kB]
+2026-10-26T08:32:37.5736904Z Get:67 http://deb.debian.org/debian trixie/main amd64 libcolord2 amd64 1.4.7-3 [139 kB]
+2026-10-26T08:32:37.5744216Z Get:68 http://deb.debian.org/debian trixie/main amd64 libepoxy0 amd64 1.5.10-2 [193 kB]
+2026-10-26T08:32:37.5752557Z Get:69 http://deb.debian.org/debian trixie/main amd64 libwayland-client0 amd64 1.23.1-3 [26.8 kB]
+2026-10-26T08:32:37.5760412Z Get:70 http://deb.debian.org/debian trixie/main amd64 libwayland-cursor0 amd64 1.23.1-3 [11.9 kB]
+2026-10-26T08:32:37.5762084Z Get:71 http://deb.debian.org/debian trixie/main amd64 libwayland-egl1 amd64 1.23.1-3 [5860 B]
+2026-10-26T08:32:37.5779415Z Get:72 http://deb.debian.org/debian trixie/main amd64 libxcursor1 amd64 1:1.2.3-1 [39.7 kB]
+2026-10-26T08:32:37.5830678Z Get:73 http://deb.debian.org/debian trixie/main amd64 libxinerama1 amd64 2:1.1.4-3+b4 [16.0 kB]
+2026-10-26T08:32:37.5835635Z Get:74 http://deb.debian.org/debian trixie/main amd64 dbus-user-session amd64 1.16.2-2 [52.1 kB]
+2026-10-26T08:32:37.5842712Z Get:75 http://deb.debian.org/debian trixie/main amd64 libdconf1 amd64 0.40.0-5 [41.8 kB]
+2026-10-26T08:32:37.5846744Z Get:76 http://deb.debian.org/debian trixie/main amd64 dconf-service amd64 0.40.0-5 [32.4 kB]
+2026-10-26T08:32:37.5855938Z Get:77 http://deb.debian.org/debian trixie/main amd64 dconf-gsettings-backend amd64 0.40.0-5 [28.6 kB]
+2026-10-26T08:32:37.5861496Z Get:78 http://deb.debian.org/debian trixie/main amd64 libgtk-3-common all 3.24.49-3 [4908 kB]
+2026-10-26T08:32:37.6061709Z Get:79 http://deb.debian.org/debian trixie/main amd64 libgtk-3-0t64 amd64 3.24.49-3 [2769 kB]
+2026-10-26T08:32:37.6156679Z Get:80 http://deb.debian.org/debian trixie/main amd64 libglvnd0 amd64 1.7.0-1+b2 [52.0 kB]
+2026-10-26T08:32:37.6161061Z Get:81 http://deb.debian.org/debian trixie/main amd64 libxcb-glx0 amd64 1.17.0-2+b1 [122 kB]
+2026-10-26T08:32:37.6168392Z Get:82 http://deb.debian.org/debian trixie/main amd64 libxxf86vm1 amd64 1:1.1.4-1+b4 [19.3 kB]
+2026-10-26T08:32:37.6170893Z Get:83 http://deb.debian.org/debian trixie/main amd64 libvulkan1 amd64 1.4.309.0-1 [130 kB]
+2026-10-26T08:32:37.6177230Z Get:84 http://deb.debian.org/debian trixie/main amd64 libgl1-mesa-dri amd64 25.0.7-2+deb13u1 [46.2 kB]
+2026-10-26T08:32:37.6181701Z Get:85 http://deb.debian.org/debian trixie/main amd64 libglx-mesa0 amd64 25.0.7-2+deb13u1 [143 kB]
+2026-10-26T08:32:37.6189022Z Get:86 http://deb.debian.org/debian trixie/main amd64 libglx0 amd64 1.7.0-1+b2 [34.9 kB]
+2026-10-26T08:32:37.6191828Z Get:87 http://deb.debian.org/debian trixie/main amd64 libgl1 amd64 1.7.0-1+b2 [89.5 kB]
+2026-10-26T08:32:37.6197450Z Get:88 http://deb.debian.org/debian trixie/main amd64 libxmu6 amd64 2:1.1.3-3+b4 [59.0 kB]
+2026-10-26T08:32:37.6220042Z Get:89 http://deb.debian.org/debian trixie/main amd64 libxpm4 amd64 1:3.5.17-1+deb13u1 [55.9 kB]
+2026-10-26T08:32:37.6275047Z Get:90 http://deb.debian.org/debian trixie/main amd64 libxaw7 amd64 2:1.0.16-1 [212 kB]
+2026-10-26T08:32:37.6285236Z Get:91 http://deb.debian.org/debian trixie/main amd64 libxcb-shape0 amd64 1.17.0-2+b1 [106 kB]
+2026-10-26T08:32:37.6291923Z Get:92 http://deb.debian.org/debian trixie/main amd64 libxkbfile1 amd64 1:1.1.0-1+b4 [76.5 kB]
+2026-10-26T08:32:37.6300945Z Get:93 http://deb.debian.org/debian trixie/main amd64 libxmuu1 amd64 2:1.1.3-3+b4 [21.9 kB]
+2026-10-26T08:32:37.6302214Z Get:94 http://deb.debian.org/debian trixie/main amd64 libxtst6 amd64 2:1.2.5-1 [25.8 kB]
+2026-10-26T08:32:37.6303740Z Get:95 http://deb.debian.org/debian trixie/main amd64 libxv1 amd64 2:1.0.11-1.1+b3 [23.4 kB]
+2026-10-26T08:32:37.6311285Z Get:96 http://deb.debian.org/debian trixie/main amd64 libxxf86dga1 amd64 2:1.1.5-1+b3 [20.8 kB]
+2026-10-26T08:32:37.6312427Z Get:97 http://deb.debian.org/debian trixie/main amd64 x11-utils amd64 7.7+7 [182 kB]
+2026-10-26T08:32:37.6318981Z Get:98 http://deb.debian.org/debian trixie/main amd64 xdg-utils all 1.2.1-2 [75.8 kB]
+2026-10-26T08:32:37.6361332Z Get:99 http://deb.debian.org/debian-security trixie-security/main amd64 chromium-common amd64 156.0.8078.47-1~deb13u1 [31.7 MB]
+2026-10-26T08:32:37.6991595Z Get:100 http://deb.debian.org/debian-security trixie-security/main amd64 chromium amd64 156.0.8078.47-1~deb13u1 [91.7 MB]
+2026-10-26T08:32:38.0283655Z debconf: unable to initialize frontend: Dialog
+2026-10-26T08:32:38.0284398Z debconf: (TERM is not set, so the dialog frontend is not usable.)
+2026-10-26T08:32:38.0285080Z debconf: falling back to frontend: Readline
+2026-10-26T08:32:38.0349792Z debconf: unable to initialize frontend: Readline
+2026-10-26T08:32:38.0350442Z debconf: (This frontend requires a controlling tty.)
+2026-10-26T08:32:38.0351036Z debconf: falling back to frontend: Teletype
+2026-10-26T08:32:38.0392332Z debconf: unable to initialize frontend: Teletype
+2026-10-26T08:32:38.0393012Z debconf: (This frontend requires a controlling tty.)
+2026-10-26T08:32:38.0393613Z debconf: falling back to frontend: Noninteractive
+2026-10-26T08:32:39.9322381Z Fetched 194 MB in 1s (293 MB/s)
+2026-10-26T08:32:39.9466723Z Selecting previously unselected package libsystemd-shared:amd64.
+2026-10-26T08:32:39.9555569Z (Reading database ... 
+2026-10-26T08:32:39.9556434Z (Reading database ... 5%
+2026-10-26T08:32:39.9556759Z (Reading database ... 10%
+2026-10-26T08:32:39.9557094Z (Reading database ... 15%
+2026-10-26T08:32:39.9557442Z (Reading database ... 20%
+2026-10-26T08:32:39.9557979Z (Reading database ... 25%
+2026-10-26T08:32:39.9558345Z (Reading database ... 30%
+2026-10-26T08:32:39.9558733Z (Reading database ... 35%
+2026-10-26T08:32:39.9559110Z (Reading database ... 40%
+2026-10-26T08:32:39.9559486Z (Reading database ... 45%
+2026-10-26T08:32:39.9559806Z (Reading database ... 50%
+2026-10-26T08:32:39.9560121Z (Reading database ... 55%
+2026-10-26T08:32:39.9560734Z (Reading database ... 60%
+2026-10-26T08:32:39.9586321Z (Reading database ... 65%
+2026-10-26T08:32:39.9601584Z (Reading database ... 70%
+2026-10-26T08:32:39.9629154Z (Reading database ... 75%
+2026-10-26T08:32:39.9642925Z (Reading database ... 80%
+2026-10-26T08:32:39.9656412Z (Reading database ... 85%
+2026-10-26T08:32:39.9672042Z (Reading database ... 90%
+2026-10-26T08:32:39.9685292Z (Reading database ... 95%
+2026-10-26T08:32:39.9685856Z (Reading database ... 100%
+2026-10-26T08:32:39.9686427Z (Reading database ... 26758 files and directories currently installed.)
+2026-10-26T08:32:39.9694569Z Preparing to unpack .../libsystemd-shared_257.13-1~deb13u1_amd64.deb ...
+2026-10-26T08:32:39.9704885Z Unpacking libsystemd-shared:amd64 (257.13-1~deb13u1) ...
+2026-10-26T08:32:40.0672012Z Selecting previously unselected package libapparmor1:amd64.
+2026-10-26T08:32:40.0697578Z Preparing to unpack .../libapparmor1_4.1.0-1_amd64.deb ...
+2026-10-26T08:32:40.0711687Z Unpacking libapparmor1:amd64 (4.1.0-1) ...
+2026-10-26T08:32:40.0940415Z Setting up libsystemd-shared:amd64 (257.13-1~deb13u1) ...
+2026-10-26T08:32:40.1167489Z Selecting previously unselected package systemd.
+2026-10-26T08:32:40.1209883Z (Reading database ... 
+2026-10-26T08:32:40.1210491Z (Reading database ... 5%
+2026-10-26T08:32:40.1210927Z (Reading database ... 10%
+2026-10-26T08:32:40.1211348Z (Reading database ... 15%
+2026-10-26T08:32:40.1211762Z (Reading database ... 20%
+2026-10-26T08:32:40.1212201Z (Reading database ... 25%
+2026-10-26T08:32:40.1212617Z (Reading database ... 30%
+2026-10-26T08:32:40.1213021Z (Reading database ... 35%
+2026-10-26T08:32:40.1213578Z (Reading database ... 40%
+2026-10-26T08:32:40.1214095Z (Reading database ... 45%
+2026-10-26T08:32:40.1214613Z (Reading database ... 50%
+2026-10-26T08:32:40.1215101Z (Reading database ... 55%
+2026-10-26T08:32:40.1215611Z (Reading database ... 60%
+2026-10-26T08:32:40.1241051Z (Reading database ... 65%
+2026-10-26T08:32:40.1256254Z (Reading database ... 70%
+2026-10-26T08:32:40.1284294Z (Reading database ... 75%
+2026-10-26T08:32:40.1299120Z (Reading database ... 80%
+2026-10-26T08:32:40.1312737Z (Reading database ... 85%
+2026-10-26T08:32:40.1328504Z (Reading database ... 90%
+2026-10-26T08:32:40.1341885Z (Reading database ... 95%
+2026-10-26T08:32:40.1342317Z (Reading database ... 100%
+2026-10-26T08:32:40.1342945Z (Reading database ... 26771 files and directories currently installed.)
+2026-10-26T08:32:40.1349839Z Preparing to unpack .../systemd_257.13-1~deb13u1_amd64.deb ...
+2026-10-26T08:32:40.1447446Z Unpacking systemd (257.13-1~deb13u1) ...
+2026-10-26T08:32:40.3472591Z Setting up libapparmor1:amd64 (4.1.0-1) ...
+2026-10-26T08:32:40.3490714Z Setting up systemd (257.13-1~deb13u1) ...
+2026-10-26T08:32:40.3632629Z Created symlink '/etc/systemd/system/getty.target.wants/getty@tty1.service' → '/usr/lib/systemd/system/getty@.service'.
+2026-10-26T08:32:40.3677132Z Created symlink '/etc/systemd/system/multi-user.target.wants/remote-fs.target' → '/usr/lib/systemd/system/remote-fs.target'.
+2026-10-26T08:32:40.3725371Z Created symlink '/etc/systemd/system/sysinit.target.wants/systemd-pstore.service' → '/usr/lib/systemd/system/systemd-pstore.service'.
+2026-10-26T08:32:40.3760171Z Initializing machine ID from random generator.
+2026-10-26T08:32:40.3936368Z Creating group 'systemd-journal' with GID 999.
+2026-10-26T08:32:40.3938266Z Creating group 'systemd-network' with GID 998.
+2026-10-26T08:32:40.3939340Z Creating user 'systemd-network' (systemd Network Management) with UID 998 and GID 998.
+2026-10-26T08:32:40.4028021Z /usr/lib/tmpfiles.d/legacy.conf:14: Duplicate line for path "/run/lock", ignoring.
+2026-10-26T08:32:40.4395096Z Selecting previously unselected package systemd-sysv.
+2026-10-26T08:32:40.4436793Z (Reading database ... 
+2026-10-26T08:32:40.4437434Z (Reading database ... 5%
+2026-10-26T08:32:40.4437887Z (Reading database ... 10%
+2026-10-26T08:32:40.4438481Z (Reading database ... 15%
+2026-10-26T08:32:40.4438895Z (Reading database ... 20%
+2026-10-26T08:32:40.4439319Z (Reading database ... 25%
+2026-10-26T08:32:40.4440156Z (Reading database ... 30%
+2026-10-26T08:32:40.4440495Z (Reading database ... 35%
+2026-10-26T08:32:40.4440842Z (Reading database ... 40%
+2026-10-26T08:32:40.4441188Z (Reading database ... 45%
+2026-10-26T08:32:40.4441559Z (Reading database ... 50%
+2026-10-26T08:32:40.4442191Z (Reading database ... 55%
+2026-10-26T08:32:40.4442561Z (Reading database ... 60%
+2026-10-26T08:32:40.4458277Z (Reading database ... 65%
+2026-10-26T08:32:40.4473366Z (Reading database ... 70%
+2026-10-26T08:32:40.4500608Z (Reading database ... 75%
+2026-10-26T08:32:40.4514531Z (Reading database ... 80%
+2026-10-26T08:32:40.4528460Z (Reading database ... 85%
+2026-10-26T08:32:40.4544268Z (Reading database ... 90%
+2026-10-26T08:32:40.4560202Z (Reading database ... 95%
+2026-10-26T08:32:40.4560601Z (Reading database ... 100%
+2026-10-26T08:32:40.4561137Z (Reading database ... 27697 files and directories currently installed.)
+2026-10-26T08:32:40.4569581Z Preparing to unpack .../00-systemd-sysv_257.13-1~deb13u1_amd64.deb ...
+2026-10-26T08:32:40.4578657Z Unpacking systemd-sysv (257.13-1~deb13u1) ...
+2026-10-26T08:32:40.4770686Z Selecting previously unselected package libdbus-1-3:amd64.
+2026-10-26T08:32:40.4794274Z Preparing to unpack .../01-libdbus-1-3_1.16.2-2_amd64.deb ...
+2026-10-26T08:32:40.4802839Z Unpacking libdbus-1-3:amd64 (1.16.2-2) ...
+2026-10-26T08:32:40.5013910Z Selecting previously unselected package dbus-bin.
+2026-10-26T08:32:40.5039684Z Preparing to unpack .../02-dbus-bin_1.16.2-2_amd64.deb ...
+2026-10-26T08:32:40.5045912Z Unpacking dbus-bin (1.16.2-2) ...
+2026-10-26T08:32:40.5220984Z Selecting previously unselected package dbus-session-bus-common.
+2026-10-26T08:32:40.5246088Z Preparing to unpack .../03-dbus-session-bus-common_1.16.2-2_all.deb ...
+2026-10-26T08:32:40.5253963Z Unpacking dbus-session-bus-common (1.16.2-2) ...
+2026-10-26T08:32:40.5443558Z Selecting previously unselected package dbus-daemon.
+2026-10-26T08:32:40.5468142Z Preparing to unpack .../04-dbus-daemon_1.16.2-2_amd64.deb ...
+2026-10-26T08:32:40.5476052Z Unpacking dbus-daemon (1.16.2-2) ...
+2026-10-26T08:32:40.5684922Z Selecting previously unselected package dbus-system-bus-common.
+2026-10-26T08:32:40.5710802Z Preparing to unpack .../05-dbus-system-bus-common_1.16.2-2_all.deb ...
+2026-10-26T08:32:40.5717891Z Unpacking dbus-system-bus-common (1.16.2-2) ...
+2026-10-26T08:32:40.5908365Z Selecting previously unselected package dbus.
+2026-10-26T08:32:40.5933789Z Preparing to unpack .../06-dbus_1.16.2-2_amd64.deb ...
+2026-10-26T08:32:40.5954633Z Unpacking dbus (1.16.2-2) ...
+2026-10-26T08:32:40.6140702Z Selecting previously unselected package libpam-systemd:amd64.
+2026-10-26T08:32:40.6166668Z Preparing to unpack .../07-libpam-systemd_257.13-1~deb13u1_amd64.deb ...
+2026-10-26T08:32:40.6174778Z Unpacking libpam-systemd:amd64 (257.13-1~deb13u1) ...
+2026-10-26T08:32:40.6464474Z Selecting previously unselected package gtk-update-icon-cache.
+2026-10-26T08:32:40.6489928Z Preparing to unpack .../08-gtk-update-icon-cache_4.18.6+ds-2_amd64.deb ...
+2026-10-26T08:32:40.6574955Z No diversion 'diversion of /usr/sbin/update-icon-caches to /usr/sbin/update-icon-caches.gtk2 by libgtk-3-bin', none removed.
+2026-10-26T08:32:40.6631056Z No diversion 'diversion of /usr/share/man/man8/update-icon-caches.8.gz to /usr/share/man/man8/update-icon-caches.gtk2.8.gz by libgtk-3-bin', none removed.
+2026-10-26T08:32:40.6635750Z Unpacking gtk-update-icon-cache (4.18.6+ds-2) ...
+2026-10-26T08:32:40.6809819Z Selecting previously unselected package adwaita-icon-theme.
+2026-10-26T08:32:40.6836383Z Preparing to unpack .../09-adwaita-icon-theme_48.1-1_all.deb ...
+2026-10-26T08:32:40.6843309Z Unpacking adwaita-icon-theme (48.1-1) ...
+2026-10-26T08:32:40.8279603Z Selecting previously unselected package at-spi2-common.
+2026-10-26T08:32:40.8307863Z Preparing to unpack .../10-at-spi2-common_2.56.2-1+deb13u2_all.deb ...
+2026-10-26T08:32:40.8315347Z Unpacking at-spi2-common (2.56.2-1+deb13u2) ...
+2026-10-26T08:32:40.9018510Z Selecting previously unselected package libasound2-data.
+2026-10-26T08:32:40.9044906Z Preparing to unpack .../11-libasound2-data_1.2.14-1+deb13u1_all.deb ...
+2026-10-26T08:32:40.9053204Z Unpacking libasound2-data (1.2.14-1+deb13u1) ...
+2026-10-26T08:32:40.9301359Z Selecting previously unselected package libasound2t64:amd64.
+2026-10-26T08:32:40.9328463Z Preparing to unpack .../12-libasound2t64_1.2.14-1+deb13u1_amd64.deb ...
+2026-10-26T08:32:40.9335400Z Unpacking libasound2t64:amd64 (1.2.14-1+deb13u1) ...
+2026-10-26T08:32:40.9650080Z Selecting previously unselected package libatk1.0-0t64:amd64.
+2026-10-26T08:32:40.9676348Z Preparing to unpack .../13-libatk1.0-0t64_2.56.2-1+deb13u2_amd64.deb ...
+2026-10-26T08:32:40.9684364Z Unpacking libatk1.0-0t64:amd64 (2.56.2-1+deb13u2) ...
+2026-10-26T08:32:40.9888427Z Selecting previously unselected package libxi6:amd64.
+2026-10-26T08:32:40.9915109Z Preparing to unpack .../14-libxi6_2%3a1.8.2-1_amd64.deb ...
+2026-10-26T08:32:40.9924812Z Unpacking libxi6:amd64 (2:1.8.2-1) ...
+2026-10-26T08:32:41.0113586Z Selecting previously unselected package libatspi2.0-0t64:amd64.
+2026-10-26T08:32:41.0140561Z Preparing to unpack .../15-libatspi2.0-0t64_2.56.2-1+deb13u2_amd64.deb ...
+2026-10-26T08:32:41.0148131Z Unpacking libatspi2.0-0t64:amd64 (2.56.2-1+deb13u2) ...
+2026-10-26T08:32:41.0336696Z Selecting previously unselected package libatk-bridge2.0-0t64:amd64.
+2026-10-26T08:32:41.0363683Z Preparing to unpack .../16-libatk-bridge2.0-0t64_2.56.2-1+deb13u2_amd64.deb ...
+2026-10-26T08:32:41.0371553Z Unpacking libatk-bridge2.0-0t64:amd64 (2.56.2-1+deb13u2) ...
+2026-10-26T08:32:41.0553305Z Selecting previously unselected package libavahi-common-data:amd64.
+2026-10-26T08:32:41.0579101Z Preparing to unpack .../17-libavahi-common-data_0.8-16_amd64.deb ...
+2026-10-26T08:32:41.0586803Z Unpacking libavahi-common-data:amd64 (0.8-16) ...
+2026-10-26T08:32:41.0886867Z Selecting previously unselected package libavahi-common3:amd64.
+2026-10-26T08:32:41.0913444Z Preparing to unpack .../18-libavahi-common3_0.8-16_amd64.deb ...
+2026-10-26T08:32:41.0921224Z Unpacking libavahi-common3:amd64 (0.8-16) ...
+2026-10-26T08:32:41.1096724Z Selecting previously unselected package libavahi-client3:amd64.
+2026-10-26T08:32:41.1122656Z Preparing to unpack .../19-libavahi-client3_0.8-16_amd64.deb ...
+2026-10-26T08:32:41.1130718Z Unpacking libavahi-client3:amd64 (0.8-16) ...
+2026-10-26T08:32:41.1310856Z Selecting previously unselected package libcups2t64:amd64.
+2026-10-26T08:32:41.1337234Z Preparing to unpack .../20-libcups2t64_2.4.10-3+deb13u2_amd64.deb ...
+2026-10-26T08:32:41.1345832Z Unpacking libcups2t64:amd64 (2.4.10-3+deb13u2) ...
+2026-10-26T08:32:41.1599824Z Selecting previously unselected package libdouble-conversion3:amd64.
+2026-10-26T08:32:41.1625801Z Preparing to unpack .../21-libdouble-conversion3_3.3.1-1_amd64.deb ...
+2026-10-26T08:32:41.1634073Z Unpacking libdouble-conversion3:amd64 (3.3.1-1) ...
+2026-10-26T08:32:41.1809931Z Selecting previously unselected package libogg0:amd64.
+2026-10-26T08:32:41.1836481Z Preparing to unpack .../22-libogg0_1.3.5-3+b2_amd64.deb ...
+2026-10-26T08:32:41.1843170Z Unpacking libogg0:amd64 (1.3.5-3+b2) ...
+2026-10-26T08:32:41.2009075Z Selecting previously unselected package libflac14:amd64.
+2026-10-26T08:32:41.2034430Z Preparing to unpack .../23-libflac14_1.5.0+ds-2_amd64.deb ...
+2026-10-26T08:32:41.2042216Z Unpacking libflac14:amd64 (1.5.0+ds-2) ...
+2026-10-26T08:32:41.2268472Z Selecting previously unselected package libdrm-common.
+2026-10-26T08:32:41.2294328Z Preparing to unpack .../24-libdrm-common_2.4.124-2_all.deb ...
+2026-10-26T08:32:41.2301428Z Unpacking libdrm-common (2.4.124-2) ...
+2026-10-26T08:32:41.2451970Z Selecting previously unselected package libdrm2:amd64.
+2026-10-26T08:32:41.2477739Z Preparing to unpack .../25-libdrm2_2.4.124-2_amd64.deb ...
+2026-10-26T08:32:41.2484696Z Unpacking libdrm2:amd64 (2.4.124-2) ...
+2026-10-26T08:32:41.2648949Z Selecting previously unselected package libwayland-server0:amd64.
+2026-10-26T08:32:41.2674961Z Preparing to unpack .../26-libwayland-server0_1.23.1-3_amd64.deb ...
+2026-10-26T08:32:41.2683667Z Unpacking libwayland-server0:amd64 (1.23.1-3) ...
+2026-10-26T08:32:41.2856527Z Selecting previously unselected package libdrm-amdgpu1:amd64.
+2026-10-26T08:32:41.2881515Z Preparing to unpack .../27-libdrm-amdgpu1_2.4.124-2_amd64.deb ...
+2026-10-26T08:32:41.2889728Z Unpacking libdrm-amdgpu1:amd64 (2.4.124-2) ...
+2026-10-26T08:32:41.3094249Z Selecting previously unselected package libpciaccess0:amd64.
+2026-10-26T08:32:41.3119145Z Preparing to unpack .../28-libpciaccess0_0.17-3+b3_amd64.deb ...
+2026-10-26T08:32:41.3129230Z Unpacking libpciaccess0:amd64 (0.17-3+b3) ...
+2026-10-26T08:32:41.3318350Z Selecting previously unselected package libdrm-intel1:amd64.
+2026-10-26T08:32:41.3344463Z Preparing to unpack .../29-libdrm-intel1_2.4.124-2_amd64.deb ...
+2026-10-26T08:32:41.3353030Z Unpacking libdrm-intel1:amd64 (2.4.124-2) ...
+2026-10-26T08:32:41.3531332Z Selecting previously unselected package libz3-4:amd64.
+2026-10-26T08:32:41.3557901Z Preparing to unpack .../30-libz3-4_4.13.3-1_amd64.deb ...
+2026-10-26T08:32:41.3565574Z Unpacking libz3-4:amd64 (4.13.3-1) ...
+2026-10-26T08:32:41.6707916Z Selecting previously unselected package libllvm19:amd64.
+2026-10-26T08:32:41.6735833Z Preparing to unpack .../31-libllvm19_1%3a19.1.7-3+b1_amd64.deb ...
+2026-10-26T08:32:41.6743805Z Unpacking libllvm19:amd64 (1:19.1.7-3+b1) ...
+2026-10-26T08:32:42.2618351Z Selecting previously unselected package libsensors-config.
+2026-10-26T08:32:42.2645562Z Preparing to unpack .../32-libsensors-config_1%3a3.6.2-2_all.deb ...
+2026-10-26T08:32:42.2656000Z Unpacking libsensors-config (1:3.6.2-2) ...
+2026-10-26T08:32:42.2820507Z Selecting previously unselected package libsensors5:amd64.
+2026-10-26T08:32:42.2846855Z Preparing to unpack .../33-libsensors5_1%3a3.6.2-2_amd64.deb ...
+2026-10-26T08:32:42.2854953Z Unpacking libsensors5:amd64 (1:3.6.2-2) ...
+2026-10-26T08:32:42.3027660Z Selecting previously unselected package libx11-xcb1:amd64.
+2026-10-26T08:32:42.3053151Z Preparing to unpack .../34-libx11-xcb1_2%3a1.8.12-1_amd64.deb ...
+2026-10-26T08:32:42.3061415Z Unpacking libx11-xcb1:amd64 (2:1.8.12-1) ...
+2026-10-26T08:32:42.3254273Z Selecting previously unselected package libxcb-dri3-0:amd64.
+2026-10-26T08:32:42.3280101Z Preparing to unpack .../35-libxcb-dri3-0_1.17.0-2+b1_amd64.deb ...
+2026-10-26T08:32:42.3288024Z Unpacking libxcb-dri3-0:amd64 (1.17.0-2+b1) ...
+2026-10-26T08:32:42.3472227Z Selecting previously unselected package libxcb-present0:amd64.
+2026-10-26T08:32:42.3497988Z Preparing to unpack .../36-libxcb-present0_1.17.0-2+b1_amd64.deb ...
+2026-10-26T08:32:42.3505447Z Unpacking libxcb-present0:amd64 (1.17.0-2+b1) ...
+2026-10-26T08:32:42.3692449Z Selecting previously unselected package libxcb-randr0:amd64.
+2026-10-26T08:32:42.3718852Z Preparing to unpack .../37-libxcb-randr0_1.17.0-2+b1_amd64.deb ...
+2026-10-26T08:32:42.3726171Z Unpacking libxcb-randr0:amd64 (1.17.0-2+b1) ...
+2026-10-26T08:32:42.3918098Z Selecting previously unselected package libxcb-sync1:amd64.
+2026-10-26T08:32:42.3945001Z Preparing to unpack .../38-libxcb-sync1_1.17.0-2+b1_amd64.deb ...
+2026-10-26T08:32:42.3953091Z Unpacking libxcb-sync1:amd64 (1.17.0-2+b1) ...
+2026-10-26T08:32:42.4185187Z Selecting previously unselected package libxcb-xfixes0:amd64.
+2026-10-26T08:32:42.4212563Z Preparing to unpack .../39-libxcb-xfixes0_1.17.0-2+b1_amd64.deb ...
+2026-10-26T08:32:42.4220166Z Unpacking libxcb-xfixes0:amd64 (1.17.0-2+b1) ...
+2026-10-26T08:32:42.4404009Z Selecting previously unselected package libxshmfence1:amd64.
+2026-10-26T08:32:42.4429887Z Preparing to unpack .../40-libxshmfence1_1.3.3-1_amd64.deb ...
+2026-10-26T08:32:42.4438034Z Unpacking libxshmfence1:amd64 (1.3.3-1) ...
+2026-10-26T08:32:42.4598854Z Selecting previously unselected package mesa-libgallium:amd64.
+2026-10-26T08:32:42.4625498Z Preparing to unpack .../41-mesa-libgallium_25.0.7-2+deb13u1_amd64.deb ...
+2026-10-26T08:32:42.4634581Z Unpacking mesa-libgallium:amd64 (25.0.7-2+deb13u1) ...
+2026-10-26T08:32:42.8133784Z Selecting previously unselected package libgbm1:amd64.
+2026-10-26T08:32:42.8161221Z Preparing to unpack .../42-libgbm1_25.0.7-2+deb13u1_amd64.deb ...
+2026-10-26T08:32:42.8167386Z Unpacking libgbm1:amd64 (25.0.7-2+deb13u1) ...
+2026-10-26T08:32:42.8346517Z Selecting previously unselected package libminizip1t64:amd64.
+2026-10-26T08:32:42.8373921Z Preparing to unpack .../43-libminizip1t64_1%3a1.3.dfsg+really1.3.1-1+b1_amd64.deb ...
+2026-10-26T08:32:42.8381434Z Unpacking libminizip1t64:amd64 (1:1.3.dfsg+really1.3.1-1+b1) ...
+2026-10-26T08:32:42.8572775Z Selecting previously unselected package libnspr4:amd64.
+2026-10-26T08:32:42.8600264Z Preparing to unpack .../44-libnspr4_2%3a4.36-1_amd64.deb ...
+2026-10-26T08:32:42.8607659Z Unpacking libnspr4:amd64 (2:4.36-1) ...
+2026-10-26T08:32:42.8815790Z Selecting previously unselected package libnss3:amd64.
+2026-10-26T08:32:42.8843567Z Preparing to unpack .../45-libnss3_2%3a3.110-1+deb13u4_amd64.deb ...
+2026-10-26T08:32:42.8852184Z Unpacking libnss3:amd64 (2:3.110-1+deb13u4) ...
+2026-10-26T08:32:42.9575775Z Selecting previously unselected package libopenh264-8:amd64.
+2026-10-26T08:32:42.9604822Z Preparing to unpack .../46-libopenh264-8_2.6.0+dfsg-2_amd64.deb ...
+2026-10-26T08:32:42.9614283Z Unpacking libopenh264-8:amd64 (2.6.0+dfsg-2) ...
+2026-10-26T08:32:42.9938303Z Selecting previously unselected package libopus0:amd64.
+2026-10-26T08:32:42.9965867Z Preparing to unpack .../47-libopus0_1.5.2-2_amd64.deb ...
+2026-10-26T08:32:42.9973520Z Unpacking libopus0:amd64 (1.5.2-2) ...
+2026-10-26T08:32:43.1066446Z Selecting previously unselected package libasyncns0:amd64.
+2026-10-26T08:32:43.1094204Z Preparing to unpack .../48-libasyncns0_0.8-6+b5_amd64.deb ...
+2026-10-26T08:32:43.1102703Z Unpacking libasyncns0:amd64 (0.8-6+b5) ...
+2026-10-26T08:32:43.1268074Z Selecting previously unselected package libmp3lame0:amd64.
+2026-10-26T08:32:43.1295793Z Preparing to unpack .../49-libmp3lame0_3.100-6+b3_amd64.deb ...
+2026-10-26T08:32:43.1306358Z Unpacking libmp3lame0:amd64 (3.100-6+b3) ...
+2026-10-26T08:32:43.1547088Z Selecting previously unselected package libmpg123-0t64:amd64.
+2026-10-26T08:32:43.1574384Z Preparing to unpack .../50-libmpg123-0t64_1.32.10-1+deb13u1_amd64.deb ...
+2026-10-26T08:32:43.1583304Z Unpacking libmpg123-0t64:amd64 (1.32.10-1+deb13u1) ...
+2026-10-26T08:32:43.1817949Z Selecting previously unselected package libvorbis0a:amd64.
+2026-10-26T08:32:43.1845595Z Preparing to unpack .../51-libvorbis0a_1.3.7-3_amd64.deb ...
+2026-10-26T08:32:43.1853130Z Unpacking libvorbis0a:amd64 (1.3.7-3) ...
+2026-10-26T08:32:43.2055690Z Selecting previously unselected package libvorbisenc2:amd64.
+2026-10-26T08:32:43.2082931Z Preparing to unpack .../52-libvorbisenc2_1.3.7-3_amd64.deb ...
+2026-10-26T08:32:43.2091765Z Unpacking libvorbisenc2:amd64 (1.3.7-3) ...
+2026-10-26T08:32:43.2303556Z Selecting previously unselected package libsndfile1:amd64.
+2026-10-26T08:32:43.2331306Z Preparing to unpack .../53-libsndfile1_1.2.2-2+deb13u1_amd64.deb ...
+2026-10-26T08:32:43.2339340Z Unpacking libsndfile1:amd64 (1.2.2-2+deb13u1) ...
+2026-10-26T08:32:43.2591113Z Selecting previously unselected package libpulse0:amd64.
+2026-10-26T08:32:43.2618671Z Preparing to unpack .../54-libpulse0_17.0+dfsg1-2+b1_amd64.deb ...
+2026-10-26T08:32:43.2627209Z Unpacking libpulse0:amd64 (17.0+dfsg1-2+b1) ...
+2026-10-26T08:32:43.2912025Z Selecting previously unselected package libxcomposite1:amd64.
+2026-10-26T08:32:43.2939776Z Preparing to unpack .../55-libxcomposite1_1%3a0.4.6-1_amd64.deb ...
+2026-10-26T08:32:43.2946726Z Unpacking libxcomposite1:amd64 (1:0.4.6-1) ...
+2026-10-26T08:32:43.3109275Z Selecting previously unselected package libxdamage1:amd64.
+2026-10-26T08:32:43.3136891Z Preparing to unpack .../56-libxdamage1_1%3a1.1.6-1+b2_amd64.deb ...
+2026-10-26T08:32:43.3146791Z Unpacking libxdamage1:amd64 (1:1.1.6-1+b2) ...
+2026-10-26T08:32:43.3305962Z Selecting previously unselected package libxfixes3:amd64.
+2026-10-26T08:32:43.3333620Z Preparing to unpack .../57-libxfixes3_1%3a6.0.0-2+b4_amd64.deb ...
+2026-10-26T08:32:43.3341285Z Unpacking libxfixes3:amd64 (1:6.0.0-2+b4) ...
+2026-10-26T08:32:43.3495579Z Selecting previously unselected package xkb-data.
+2026-10-26T08:32:43.3522164Z Preparing to unpack .../58-xkb-data_2.42-1_all.deb ...
+2026-10-26T08:32:43.3532143Z Unpacking xkb-data (2.42-1) ...
+2026-10-26T08:32:43.4406744Z Selecting previously unselected package libxkbcommon0:amd64.
+2026-10-26T08:32:43.4435569Z Preparing to unpack .../59-libxkbcommon0_1.7.0-2_amd64.deb ...
+2026-10-26T08:32:43.4445406Z Unpacking libxkbcommon0:amd64 (1.7.0-2) ...
+2026-10-26T08:32:43.4654314Z Selecting previously unselected package libxnvctrl0:amd64.
+2026-10-26T08:32:43.4681624Z Preparing to unpack .../60-libxnvctrl0_535.171.04-1+b2_amd64.deb ...
+2026-10-26T08:32:43.4692603Z Unpacking libxnvctrl0:amd64 (535.171.04-1+b2) ...
+2026-10-26T08:32:43.4860451Z Selecting previously unselected package libxrandr2:amd64.
+2026-10-26T08:32:43.4888003Z Preparing to unpack .../61-libxrandr2_2%3a1.5.4-1+b3_amd64.deb ...
+2026-10-26T08:32:43.4894930Z Unpacking libxrandr2:amd64 (2:1.5.4-1+b3) ...
+2026-10-26T08:32:43.5064475Z Selecting previously unselected package libcloudproviders0:amd64.
+2026-10-26T08:32:43.5091966Z Preparing to unpack .../62-libcloudproviders0_0.3.6-2_amd64.deb ...
+2026-10-26T08:32:43.5132270Z Unpacking libcloudproviders0:amd64 (0.3.6-2) ...
+2026-10-26T08:32:43.5306413Z Selecting previously unselected package libcolord2:amd64.
+2026-10-26T08:32:43.5334073Z Preparing to unpack .../63-libcolord2_1.4.7-3_amd64.deb ...
+2026-10-26T08:32:43.5343653Z Unpacking libcolord2:amd64 (1.4.7-3) ...
+2026-10-26T08:32:43.5577514Z Selecting previously unselected package libepoxy0:amd64.
+2026-10-26T08:32:43.5605051Z Preparing to unpack .../64-libepoxy0_1.5.10-2_amd64.deb ...
+2026-10-26T08:32:43.5614090Z Unpacking libepoxy0:amd64 (1.5.10-2) ...
+2026-10-26T08:32:43.5887027Z Selecting previously unselected package libwayland-client0:amd64.
+2026-10-26T08:32:43.5914884Z Preparing to unpack .../65-libwayland-client0_1.23.1-3_amd64.deb ...
+2026-10-26T08:32:43.5924769Z Unpacking libwayland-client0:amd64 (1.23.1-3) ...
+2026-10-26T08:32:43.6104226Z Selecting previously unselected package libwayland-cursor0:amd64.
+2026-10-26T08:32:43.6131302Z Preparing to unpack .../66-libwayland-cursor0_1.23.1-3_amd64.deb ...
+2026-10-26T08:32:43.6140428Z Unpacking libwayland-cursor0:amd64 (1.23.1-3) ...
+2026-10-26T08:32:43.6338763Z Selecting previously unselected package libwayland-egl1:amd64.
+2026-10-26T08:32:43.6366175Z Preparing to unpack .../67-libwayland-egl1_1.23.1-3_amd64.deb ...
+2026-10-26T08:32:43.6376358Z Unpacking libwayland-egl1:amd64 (1.23.1-3) ...
+2026-10-26T08:32:43.6534630Z Selecting previously unselected package libxcursor1:amd64.
+2026-10-26T08:32:43.6561657Z Preparing to unpack .../68-libxcursor1_1%3a1.2.3-1_amd64.deb ...
+2026-10-26T08:32:43.6571302Z Unpacking libxcursor1:amd64 (1:1.2.3-1) ...
+2026-10-26T08:32:43.6753863Z Selecting previously unselected package libxinerama1:amd64.
+2026-10-26T08:32:43.6780882Z Preparing to unpack .../69-libxinerama1_2%3a1.1.4-3+b4_amd64.deb ...
+2026-10-26T08:32:43.6792224Z Unpacking libxinerama1:amd64 (2:1.1.4-3+b4) ...
+2026-10-26T08:32:43.6961000Z Selecting previously unselected package dbus-user-session.
+2026-10-26T08:32:43.6987126Z Preparing to unpack .../70-dbus-user-session_1.16.2-2_amd64.deb ...
+2026-10-26T08:32:43.6995586Z Unpacking dbus-user-session (1.16.2-2) ...
+2026-10-26T08:32:43.7186298Z Selecting previously unselected package libdconf1:amd64.
+2026-10-26T08:32:43.7213754Z Preparing to unpack .../71-libdconf1_0.40.0-5_amd64.deb ...
+2026-10-26T08:32:43.7221526Z Unpacking libdconf1:amd64 (0.40.0-5) ...
+2026-10-26T08:32:43.7407947Z Selecting previously unselected package dconf-service.
+2026-10-26T08:32:43.7434052Z Preparing to unpack .../72-dconf-service_0.40.0-5_amd64.deb ...
+2026-10-26T08:32:43.7441983Z Unpacking dconf-service (0.40.0-5) ...
+2026-10-26T08:32:43.7612331Z Selecting previously unselected package dconf-gsettings-backend:amd64.
+2026-10-26T08:32:43.7639483Z Preparing to unpack .../73-dconf-gsettings-backend_0.40.0-5_amd64.deb ...
+2026-10-26T08:32:43.7647100Z Unpacking dconf-gsettings-backend:amd64 (0.40.0-5) ...
+2026-10-26T08:32:43.7828628Z Selecting previously unselected package libgtk-3-common.
+2026-10-26T08:32:43.7855041Z Preparing to unpack .../74-libgtk-3-common_3.24.49-3_all.deb ...
+2026-10-26T08:32:43.7862918Z Unpacking libgtk-3-common (3.24.49-3) ...
+2026-10-26T08:32:44.0020555Z Selecting previously unselected package libgtk-3-0t64:amd64.
+2026-10-26T08:32:44.0049183Z Preparing to unpack .../75-libgtk-3-0t64_3.24.49-3_amd64.deb ...
+2026-10-26T08:32:44.0175229Z Unpacking libgtk-3-0t64:amd64 (3.24.49-3) ...
+2026-10-26T08:32:44.1392439Z Selecting previously unselected package libglvnd0:amd64.
+2026-10-26T08:32:44.1420183Z Preparing to unpack .../76-libglvnd0_1.7.0-1+b2_amd64.deb ...
+2026-10-26T08:32:44.1428074Z Unpacking libglvnd0:amd64 (1.7.0-1+b2) ...
+2026-10-26T08:32:44.1642069Z Selecting previously unselected package libxcb-glx0:amd64.
+2026-10-26T08:32:44.1671365Z Preparing to unpack .../77-libxcb-glx0_1.17.0-2+b1_amd64.deb ...
+2026-10-26T08:32:44.1704822Z Unpacking libxcb-glx0:amd64 (1.17.0-2+b1) ...
+2026-10-26T08:32:44.1902424Z Selecting previously unselected package libxxf86vm1:amd64.
+2026-10-26T08:32:44.1930331Z Preparing to unpack .../78-libxxf86vm1_1%3a1.1.4-1+b4_amd64.deb ...
+2026-10-26T08:32:44.1938191Z Unpacking libxxf86vm1:amd64 (1:1.1.4-1+b4) ...
+2026-10-26T08:32:44.2114001Z Selecting previously unselected package libvulkan1:amd64.
+2026-10-26T08:32:44.2142453Z Preparing to unpack .../79-libvulkan1_1.4.309.0-1_amd64.deb ...
+2026-10-26T08:32:44.2151363Z Unpacking libvulkan1:amd64 (1.4.309.0-1) ...
+2026-10-26T08:32:44.2387005Z Selecting previously unselected package libgl1-mesa-dri:amd64.
+2026-10-26T08:32:44.2415474Z Preparing to unpack .../80-libgl1-mesa-dri_25.0.7-2+deb13u1_amd64.deb ...
+2026-10-26T08:32:44.2472200Z Unpacking libgl1-mesa-dri:amd64 (25.0.7-2+deb13u1) ...
+2026-10-26T08:32:44.2672601Z Selecting previously unselected package libglx-mesa0:amd64.
+2026-10-26T08:32:44.2701573Z Preparing to unpack .../81-libglx-mesa0_25.0.7-2+deb13u1_amd64.deb ...
+2026-10-26T08:32:44.2712931Z Unpacking libglx-mesa0:amd64 (25.0.7-2+deb13u1) ...
+2026-10-26T08:32:44.2948266Z Selecting previously unselected package libglx0:amd64.
+2026-10-26T08:32:44.2976698Z Preparing to unpack .../82-libglx0_1.7.0-1+b2_amd64.deb ...
+2026-10-26T08:32:44.2984894Z Unpacking libglx0:amd64 (1.7.0-1+b2) ...
+2026-10-26T08:32:44.3430645Z Selecting previously unselected package libgl1:amd64.
+2026-10-26T08:32:44.3458793Z Preparing to unpack .../83-libgl1_1.7.0-1+b2_amd64.deb ...
+2026-10-26T08:32:44.3466705Z Unpacking libgl1:amd64 (1.7.0-1+b2) ...
+2026-10-26T08:32:44.3679936Z Selecting previously unselected package libxmu6:amd64.
+2026-10-26T08:32:44.3708078Z Preparing to unpack .../84-libxmu6_2%3a1.1.3-3+b4_amd64.deb ...
+2026-10-26T08:32:44.3716430Z Unpacking libxmu6:amd64 (2:1.1.3-3+b4) ...
+2026-10-26T08:32:44.3916962Z Selecting previously unselected package libxpm4:amd64.
+2026-10-26T08:32:44.3944860Z Preparing to unpack .../85-libxpm4_1%3a3.5.17-1+deb13u1_amd64.deb ...
+2026-10-26T08:32:44.3954175Z Unpacking libxpm4:amd64 (1:3.5.17-1+deb13u1) ...
+2026-10-26T08:32:44.4132200Z Selecting previously unselected package libxaw7:amd64.
+2026-10-26T08:32:44.4159482Z Preparing to unpack .../86-libxaw7_2%3a1.0.16-1_amd64.deb ...
+2026-10-26T08:32:44.4166344Z Unpacking libxaw7:amd64 (2:1.0.16-1) ...
+2026-10-26T08:32:44.4417464Z Selecting previously unselected package libxcb-shape0:amd64.
+2026-10-26T08:32:44.4457217Z Preparing to unpack .../87-libxcb-shape0_1.17.0-2+b1_amd64.deb ...
+2026-10-26T08:32:44.4458480Z Unpacking libxcb-shape0:amd64 (1.17.0-2+b1) ...
+2026-10-26T08:32:44.4642152Z Selecting previously unselected package libxkbfile1:amd64.
+2026-10-26T08:32:44.4670747Z Preparing to unpack .../88-libxkbfile1_1%3a1.1.0-1+b4_amd64.deb ...
+2026-10-26T08:32:44.4679770Z Unpacking libxkbfile1:amd64 (1:1.1.0-1+b4) ...
+2026-10-26T08:32:44.4881385Z Selecting previously unselected package libxmuu1:amd64.
+2026-10-26T08:32:44.4909471Z Preparing to unpack .../89-libxmuu1_2%3a1.1.3-3+b4_amd64.deb ...
+2026-10-26T08:32:44.4917381Z Unpacking libxmuu1:amd64 (2:1.1.3-3+b4) ...
+2026-10-26T08:32:44.5110431Z Selecting previously unselected package libxtst6:amd64.
+2026-10-26T08:32:44.5142225Z Preparing to unpack .../90-libxtst6_2%3a1.2.5-1_amd64.deb ...
+2026-10-26T08:32:44.5148398Z Unpacking libxtst6:amd64 (2:1.2.5-1) ...
+2026-10-26T08:32:44.5313219Z Selecting previously unselected package libxv1:amd64.
+2026-10-26T08:32:44.5341410Z Preparing to unpack .../91-libxv1_2%3a1.0.11-1.1+b3_amd64.deb ...
+2026-10-26T08:32:44.5350057Z Unpacking libxv1:amd64 (2:1.0.11-1.1+b3) ...
+2026-10-26T08:32:44.5525599Z Selecting previously unselected package libxxf86dga1:amd64.
+2026-10-26T08:32:44.5552637Z Preparing to unpack .../92-libxxf86dga1_2%3a1.1.5-1+b3_amd64.deb ...
+2026-10-26T08:32:44.5560766Z Unpacking libxxf86dga1:amd64 (2:1.1.5-1+b3) ...
+2026-10-26T08:32:44.5741069Z Selecting previously unselected package x11-utils.
+2026-10-26T08:32:44.5770132Z Preparing to unpack .../93-x11-utils_7.7+7_amd64.deb ...
+2026-10-26T08:32:44.5776567Z Unpacking x11-utils (7.7+7) ...
+2026-10-26T08:32:44.6062339Z Selecting previously unselected package xdg-utils.
+2026-10-26T08:32:44.6092365Z Preparing to unpack .../94-xdg-utils_1.2.1-2_all.deb ...
+2026-10-26T08:32:44.6114713Z Unpacking xdg-utils (1.2.1-2) ...
+2026-10-26T08:32:44.6330666Z Selecting previously unselected package chromium-common.
+2026-10-26T08:32:44.6358928Z Preparing to unpack .../95-chromium-common_156.0.8078.47-1~deb13u1_amd64.deb ...
+2026-10-26T08:32:44.6367560Z Unpacking chromium-common (156.0.8078.47-1~deb13u1) ...
+2026-10-26T08:32:45.0345132Z Selecting previously unselected package chromium.
+2026-10-26T08:32:45.0373684Z Preparing to unpack .../96-chromium_156.0.8078.47-1~deb13u1_amd64.deb ...
+2026-10-26T08:32:45.0383488Z Unpacking chromium (156.0.8078.47-1~deb13u1) ...
+2026-10-26T08:32:46.4731915Z Setting up libxcb-dri3-0:amd64 (1.17.0-2+b1) ...
+2026-10-26T08:32:46.4749310Z Setting up libwayland-server0:amd64 (1.23.1-3) ...
+2026-10-26T08:32:46.4770956Z Setting up gtk-update-icon-cache (4.18.6+ds-2) ...
+2026-10-26T08:32:46.4788959Z Setting up libx11-xcb1:amd64 (2:1.8.12-1) ...
+2026-10-26T08:32:46.4811593Z Setting up libpciaccess0:amd64 (0.17-3+b3) ...
+2026-10-26T08:32:46.4830513Z Setting up systemd-sysv (257.13-1~deb13u1) ...
+2026-10-26T08:32:46.5045788Z Setting up libdouble-conversion3:amd64 (3.3.1-1) ...
+2026-10-26T08:32:46.5062546Z Setting up libxmu6:amd64 (2:1.1.3-3+b4) ...
+2026-10-26T08:32:46.5079662Z Setting up libxdamage1:amd64 (1:1.1.6-1+b2) ...
+2026-10-26T08:32:46.5098381Z Setting up libxcb-xfixes0:amd64 (1.17.0-2+b1) ...
+2026-10-26T08:32:46.5115570Z Setting up libogg0:amd64 (1.3.5-3+b2) ...
+2026-10-26T08:32:46.5135247Z Setting up libxpm4:amd64 (1:3.5.17-1+deb13u1) ...
+2026-10-26T08:32:46.5152106Z Setting up libxi6:amd64 (2:1.8.2-1) ...
+2026-10-26T08:32:46.5174042Z Setting up libglvnd0:amd64 (1.7.0-1+b2) ...
+2026-10-26T08:32:46.5192589Z Setting up libxtst6:amd64 (2:1.2.5-1) ...
+2026-10-26T08:32:46.5213135Z Setting up libxcb-glx0:amd64 (1.17.0-2+b1) ...
+2026-10-26T08:32:46.5234163Z Setting up libxcb-shape0:amd64 (1.17.0-2+b1) ...
+2026-10-26T08:32:46.5255820Z Setting up libsensors-config (1:3.6.2-2) ...
+2026-10-26T08:32:46.5286965Z Setting up libxxf86dga1:amd64 (2:1.1.5-1+b3) ...
+2026-10-26T08:32:46.5305650Z Setting up libcloudproviders0:amd64 (0.3.6-2) ...
+2026-10-26T08:32:46.5331076Z Setting up xkb-data (2.42-1) ...
+2026-10-26T08:32:46.5351789Z Setting up libxaw7:amd64 (2:1.0.16-1) ...
+2026-10-26T08:32:46.5371519Z Setting up libmpg123-0t64:amd64 (1.32.10-1+deb13u1) ...
+2026-10-26T08:32:46.5390406Z Setting up libcolord2:amd64 (1.4.7-3) ...
+2026-10-26T08:32:46.5413261Z Setting up libxxf86vm1:amd64 (1:1.1.4-1+b4) ...
+2026-10-26T08:32:46.5432623Z Setting up libxnvctrl0:amd64 (535.171.04-1+b2) ...
+2026-10-26T08:32:46.5451960Z Setting up libxcb-present0:amd64 (1.17.0-2+b1) ...
+2026-10-26T08:32:46.5473455Z Setting up libdconf1:amd64 (0.40.0-5) ...
+2026-10-26T08:32:46.5494448Z Setting up libasound2-data (1.2.14-1+deb13u1) ...
+2026-10-26T08:32:46.5513184Z Setting up libz3-4:amd64 (4.13.3-1) ...
+2026-10-26T08:32:46.5532625Z Setting up libasound2t64:amd64 (1.2.14-1+deb13u1) ...
+2026-10-26T08:32:46.5554201Z Setting up adwaita-icon-theme (48.1-1) ...
+2026-10-26T08:32:46.5748557Z update-alternatives: using /usr/share/icons/Adwaita/cursor.theme to provide /usr/share/icons/default/index.theme (x-cursor-theme) in auto mode
+2026-10-26T08:32:46.5770061Z Setting up libepoxy0:amd64 (1.5.10-2) ...
+2026-10-26T08:32:46.5791443Z Setting up libnspr4:amd64 (2:4.36-1) ...
+2026-10-26T08:32:46.5813071Z Setting up libxfixes3:amd64 (1:6.0.0-2+b4) ...
+2026-10-26T08:32:46.5834179Z Setting up libxcb-sync1:amd64 (1.17.0-2+b1) ...
+2026-10-26T08:32:46.5854580Z Setting up libavahi-common-data:amd64 (0.8-16) ...
+2026-10-26T08:32:46.5882256Z Setting up libdbus-1-3:amd64 (1.16.2-2) ...
+2026-10-26T08:32:46.5913905Z Setting up libopus0:amd64 (1.5.2-2) ...
+2026-10-26T08:32:46.5935503Z Setting up libxinerama1:amd64 (2:1.1.4-3+b4) ...
+2026-10-26T08:32:46.5978599Z Setting up libxv1:amd64 (2:1.0.11-1.1+b3) ...
+2026-10-26T08:32:46.6001038Z Setting up libvorbis0a:amd64 (1.3.7-3) ...
+2026-10-26T08:32:46.6021204Z Setting up libxrandr2:amd64 (2:1.5.4-1+b3) ...
+2026-10-26T08:32:46.6044684Z Setting up libflac14:amd64 (1.5.0+ds-2) ...
+2026-10-26T08:32:46.6064280Z Setting up libsensors5:amd64 (1:3.6.2-2) ...
+2026-10-26T08:32:46.6084400Z Setting up libopenh264-8:amd64 (2.6.0+dfsg-2) ...
+2026-10-26T08:32:46.6104807Z Setting up libvulkan1:amd64 (1.4.309.0-1) ...
+2026-10-26T08:32:46.6131196Z Setting up libminizip1t64:amd64 (1:1.3.dfsg+really1.3.1-1+b1) ...
+2026-10-26T08:32:46.6161912Z Setting up libasyncns0:amd64 (0.8-6+b5) ...
+2026-10-26T08:32:46.6190513Z Setting up libxshmfence1:amd64 (1.3.3-1) ...
+2026-10-26T08:32:46.6210448Z Setting up at-spi2-common (2.56.2-1+deb13u2) ...
+2026-10-26T08:32:46.6231054Z Setting up libxcb-randr0:amd64 (1.17.0-2+b1) ...
+2026-10-26T08:32:46.6253345Z Setting up dbus-session-bus-common (1.16.2-2) ...
+2026-10-26T08:32:46.6277049Z Setting up libwayland-egl1:amd64 (1.23.1-3) ...
+2026-10-26T08:32:46.6301172Z Setting up libxkbfile1:amd64 (1:1.1.0-1+b4) ...
+2026-10-26T08:32:46.6321272Z Setting up dbus-system-bus-common (1.16.2-2) ...
+2026-10-26T08:32:46.6388425Z Creating group 'messagebus' with GID 997.
+2026-10-26T08:32:46.6389470Z Creating user 'messagebus' (System Message Bus) with UID 997 and GID 997.
+2026-10-26T08:32:46.6462097Z Setting up libdrm-common (2.4.124-2) ...
+2026-10-26T08:32:46.6489461Z Setting up libxcomposite1:amd64 (1:0.4.6-1) ...
+2026-10-26T08:32:46.6510793Z Setting up xdg-utils (1.2.1-2) ...
+2026-10-26T08:32:46.6551895Z update-alternatives: using /usr/bin/xdg-open to provide /usr/bin/open (open) in auto mode
+2026-10-26T08:32:46.6572466Z Setting up libxmuu1:amd64 (2:1.1.3-3+b4) ...
+2026-10-26T08:32:46.6595126Z Setting up dbus-bin (1.16.2-2) ...
+2026-10-26T08:32:46.6616800Z Setting up libmp3lame0:amd64 (3.100-6+b3) ...
+2026-10-26T08:32:46.6639648Z Setting up libvorbisenc2:amd64 (1.3.7-3) ...
+2026-10-26T08:32:46.6668962Z Setting up libxkbcommon0:amd64 (1.7.0-2) ...
+2026-10-26T08:32:46.6693811Z Setting up libwayland-client0:amd64 (1.23.1-3) ...
+2026-10-26T08:32:46.6717603Z Setting up libllvm19:amd64 (1:19.1.7-3+b1) ...
+2026-10-26T08:32:46.6741416Z Setting up libatk1.0-0t64:amd64 (2.56.2-1+deb13u2) ...
+2026-10-26T08:32:46.6763139Z Setting up libxcursor1:amd64 (1:1.2.3-1) ...
+2026-10-26T08:32:46.6786717Z Setting up libavahi-common3:amd64 (0.8-16) ...
+2026-10-26T08:32:46.6807997Z Setting up libnss3:amd64 (2:3.110-1+deb13u4) ...
+2026-10-26T08:32:46.6832484Z Setting up dbus-daemon (1.16.2-2) ...
+2026-10-26T08:32:46.6939395Z Setting up libatspi2.0-0t64:amd64 (2.56.2-1+deb13u2) ...
+2026-10-26T08:32:46.6960357Z Setting up dbus (1.16.2-2) ...
+2026-10-26T08:32:46.7195355Z invoke-rc.d: could not determine current runlevel
+2026-10-26T08:32:46.7229477Z invoke-rc.d: policy-rc.d denied execution of start.
+2026-10-26T08:32:46.7241604Z Setting up libdrm2:amd64 (2.4.124-2) ...
+2026-10-26T08:32:46.7264134Z Setting up libwayland-cursor0:amd64 (1.23.1-3) ...
+2026-10-26T08:32:46.7285769Z Setting up libpam-systemd:amd64 (257.13-1~deb13u1) ...
+2026-10-26T08:32:46.7972814Z debconf: unable to initialize frontend: Dialog
+2026-10-26T08:32:46.7973300Z debconf: (TERM is not set, so the dialog frontend is not usable.)
+2026-10-26T08:32:46.7974003Z debconf: falling back to frontend: Readline
+2026-10-26T08:32:46.8038860Z debconf: unable to initialize frontend: Readline
+2026-10-26T08:32:46.8039991Z debconf: (This frontend requires a controlling tty.)
+2026-10-26T08:32:46.8040952Z debconf: falling back to frontend: Teletype
+2026-10-26T08:32:46.8081781Z debconf: unable to initialize frontend: Teletype
+2026-10-26T08:32:46.8082427Z debconf: (This frontend requires a controlling tty.)
+2026-10-26T08:32:46.8083028Z debconf: falling back to frontend: Noninteractive
+2026-10-26T08:32:46.8606393Z Setting up libsndfile1:amd64 (1.2.2-2+deb13u1) ...
+2026-10-26T08:32:46.8626808Z Setting up libavahi-client3:amd64 (0.8-16) ...
+2026-10-26T08:32:46.8652021Z Setting up libdrm-amdgpu1:amd64 (2.4.124-2) ...
+2026-10-26T08:32:46.8675255Z Setting up libatk-bridge2.0-0t64:amd64 (2.56.2-1+deb13u2) ...
+2026-10-26T08:32:46.8697659Z Setting up libpulse0:amd64 (17.0+dfsg1-2+b1) ...
+2026-10-26T08:32:46.8725973Z Setting up libdrm-intel1:amd64 (2.4.124-2) ...
+2026-10-26T08:32:46.8999205Z Setting up dbus-user-session (1.16.2-2) ...
+2026-10-26T08:32:46.9027847Z Setting up libcups2t64:amd64 (2.4.10-3+deb13u2) ...
+2026-10-26T08:32:46.9046808Z Setting up mesa-libgallium:amd64 (25.0.7-2+deb13u1) ...
+2026-10-26T08:32:46.9070976Z Setting up libgbm1:amd64 (25.0.7-2+deb13u1) ...
+2026-10-26T08:32:46.9092359Z Setting up libgl1-mesa-dri:amd64 (25.0.7-2+deb13u1) ...
+2026-10-26T08:32:46.9164313Z Setting up dconf-service (0.40.0-5) ...
+2026-10-26T08:32:46.9189868Z Setting up libglx-mesa0:amd64 (25.0.7-2+deb13u1) ...
+2026-10-26T08:32:46.9213445Z Setting up libglx0:amd64 (1.7.0-1+b2) ...
+2026-10-26T08:32:46.9234232Z Setting up dconf-gsettings-backend:amd64 (0.40.0-5) ...
+2026-10-26T08:32:46.9252626Z Setting up libgl1:amd64 (1.7.0-1+b2) ...
+2026-10-26T08:32:46.9273400Z Setting up x11-utils (7.7+7) ...
+2026-10-26T08:32:46.9373264Z Setting up chromium-common (156.0.8078.47-1~deb13u1) ...
+2026-10-26T08:32:46.9394518Z Setting up libgtk-3-common (3.24.49-3) ...
+2026-10-26T08:32:46.9457237Z Processing triggers for hicolor-icon-theme (0.18-2) ...
+2026-10-26T08:32:46.9708864Z Processing triggers for libc-bin (2.41-12+deb13u4) ...
+2026-10-26T08:32:47.0062565Z Processing triggers for libglib2.0-0t64:amd64 (2.84.4-3~deb13u5) ...
+2026-10-26T08:32:47.0165739Z Setting up libgtk-3-0t64:amd64 (3.24.49-3) ...
+2026-10-26T08:32:47.0351498Z Processing triggers for shared-mime-info (2.4-5+b2) ...
+2026-10-26T08:32:47.6706609Z Processing triggers for procps (2:4.0.4-9) ...
+2026-10-26T08:32:47.6741874Z procps: Applying updated sysctl configuration
+2026-10-26T08:32:47.6751878Z sysctl: permission denied on key "kernel.core_pattern"
+2026-10-26T08:32:47.6752324Z sysctl: permission denied on key "kernel.pid_max"
+2026-10-26T08:32:47.6769179Z Setting up chromium (156.0.8078.47-1~deb13u1) ...
+2026-10-26T08:32:47.6848925Z update-alternatives: using /usr/bin/chromium to provide /usr/bin/x-www-browser (x-www-browser) in auto mode
+2026-10-26T08:32:47.6876290Z update-alternatives: using /usr/bin/chromium to provide /usr/bin/gnome-www-browser (gnome-www-browser) in auto mode
+2026-10-26T08:32:47.6898366Z Processing triggers for libc-bin (2.41-12+deb13u4) ...
+2026-10-26T08:32:50.6953392Z WARNING: The directory '/github/home/.cache/pip' or its parent directory is not owned or is not writable by the current user. The cache has been disabled. Check the permissions and owner of that directory. If executing pip with sudo, you should use sudo's -H flag.
+2026-10-26T08:32:50.8636375Z Ignoring colorama: markers 'sys_platform == "win32"' don't match your environment
+2026-10-26T08:32:50.8640607Z Ignoring contourpy: markers 'python_full_version < "3.12"' don't match your environment
+2026-10-26T08:32:50.8643133Z Ignoring networkx: markers 'python_full_version < "3.12"' don't match your environment
+2026-10-26T08:32:50.8649966Z Ignoring pywin32: markers 'sys_platform == "win32"' don't match your environment
+2026-10-26T08:32:50.8653788Z Ignoring tzdata: markers 'sys_platform == "emscripten" or sys_platform == "win32"' don't match your environment
+2026-10-26T08:32:50.9106042Z Collecting annotated-doc==0.0.5 (from -r requirements-test.txt (line 6))
+2026-10-26T08:32:50.9408550Z   Downloading annotated_doc-0.0.5-py3-none-any.whl (5.3 kB)
+2026-10-26T08:32:50.9519202Z Collecting annotated-types==0.8.0 (from -r requirements-test.txt (line 12))
+2026-10-26T08:32:50.9584120Z   Downloading annotated_types-0.8.0-py3-none-any.whl (13 kB)
+2026-10-26T08:32:50.9766170Z Collecting anyio==4.15.1 (from -r requirements-test.txt (line 18))
+2026-10-26T08:32:50.9829278Z   Downloading anyio-4.15.1-py3-none-any.whl (132 kB)
+2026-10-26T08:32:51.0130661Z Collecting apprise==2.0.1 (from -r requirements-test.txt (line 28))
+2026-10-26T08:32:51.0209460Z   Downloading apprise-2.0.1-py3-none-any.whl (2.5 MB)
+2026-10-26T08:32:51.0513671Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.5/2.5 MB 114.1 MB/s eta 0:00:00
+2026-10-26T08:32:51.0771352Z Collecting attrs==26.1.0 (from -r requirements-test.txt (line 34))
+2026-10-26T08:32:51.0836439Z   Downloading attrs-26.1.0-py3-none-any.whl (67 kB)
+2026-10-26T08:32:51.1006274Z Collecting certifi==2026.10.19 (from -r requirements-test.txt (line 41))
+2026-10-26T08:32:51.1081560Z   Downloading certifi-2026.10.19-py3-none-any.whl (136 kB)
+2026-10-26T08:32:51.2138736Z Collecting cffi==2.1.1 (from -r requirements-test.txt (line 50))
+2026-10-26T08:32:51.2207766Z   Downloading cffi-2.1.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (221 kB)
+2026-10-26T08:32:51.3344905Z Collecting charset-normalizer==3.5.2 (from -r requirements-test.txt (line 154))
+2026-10-26T08:32:51.3412925Z   Downloading charset_normalizer-3.5.2-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (257 kB)
+2026-10-26T08:32:51.3591156Z Collecting click==8.5.0 (from -r requirements-test.txt (line 331))
+2026-10-26T08:32:51.3654366Z   Downloading click-8.5.0-py3-none-any.whl (125 kB)
+2026-10-26T08:32:51.4206763Z Collecting contourpy==1.4.0 (from -r requirements-test.txt (line 421))
+2026-10-26T08:32:51.4274032Z   Downloading contourpy-1.4.0-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (383 kB)
+2026-10-26T08:32:51.5970117Z Collecting cryptography==50.0.2 (from -r requirements-test.txt (line 495))
+2026-10-26T08:32:51.6038501Z   Downloading cryptography-50.0.2-cp311-abi3-manylinux_2_34_x86_64.whl (4.8 MB)
+2026-10-26T08:32:51.6204938Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.8/4.8 MB 325.6 MB/s eta 0:00:00
+2026-10-26T08:32:51.6351219Z Collecting cycler==0.12.1 (from -r requirements-test.txt (line 558))
+2026-10-26T08:32:51.6417542Z   Downloading cycler-0.12.1-py3-none-any.whl (8.3 kB)
+2026-10-26T08:32:51.6516253Z Collecting et-xmlfile==2.0.0 (from -r requirements-test.txt (line 564))
+2026-10-26T08:32:51.6581778Z   Downloading et_xmlfile-2.0.0-py3-none-any.whl (18 kB)
+2026-10-26T08:32:51.7027160Z Collecting fastapi==0.150.0 (from -r requirements-test.txt (line 570))
+2026-10-26T08:32:51.7114695Z   Downloading fastapi-0.150.0-py3-none-any.whl (145 kB)
+2026-10-26T08:32:51.7315906Z Collecting flatbuffers==25.12.19 (from -r requirements-test.txt (line 576))
+2026-10-26T08:32:51.7382364Z   Downloading flatbuffers-25.12.19-py2.py3-none-any.whl (26 kB)
+2026-10-26T08:32:51.8760471Z Collecting fonttools==4.67.0 (from -r requirements-test.txt (line 579))
+2026-10-26T08:32:51.8826212Z   Downloading fonttools-4.67.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (5.4 MB)
+2026-10-26T08:32:51.8927362Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 5.4/5.4 MB 702.9 MB/s eta 0:00:00
+2026-10-26T08:32:52.0568789Z Collecting greenlet==3.5.6 (from -r requirements-test.txt (line 641))
+2026-10-26T08:32:52.0636440Z   Downloading greenlet-3.5.6-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl (621 kB)
+2026-10-26T08:32:52.0668429Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 621.4/621.4 kB 629.0 MB/s eta 0:00:00
+2026-10-26T08:32:52.0787591Z Collecting h11==0.16.0 (from -r requirements-test.txt (line 722))
+2026-10-26T08:32:52.0850927Z   Downloading h11-0.16.0-py3-none-any.whl (37 kB)
+2026-10-26T08:32:52.0998394Z Collecting httpcore==1.0.9 (from -r requirements-test.txt (line 729))
+2026-10-26T08:32:52.1061519Z   Downloading httpcore-1.0.9-py3-none-any.whl (78 kB)
+2026-10-26T08:32:52.1406002Z Collecting httptools==0.9.0 (from -r requirements-test.txt (line 735))
+2026-10-26T08:32:52.1476967Z   Downloading httptools-0.9.0-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (552 kB)
+2026-10-26T08:32:52.1506707Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 552.8/552.8 kB 671.8 MB/s eta 0:00:00
+2026-10-26T08:32:52.1674892Z Collecting httpx==0.28.1 (from -r requirements-test.txt (line 857))
+2026-10-26T08:32:52.1740187Z   Downloading httpx-0.28.1-py3-none-any.whl (73 kB)
+2026-10-26T08:32:52.1853330Z Collecting httpx-sse==0.4.3 (from -r requirements-test.txt (line 864))
+2026-10-26T08:32:52.1920124Z   Downloading httpx_sse-0.4.3-py3-none-any.whl (9.0 kB)
+2026-10-26T08:32:52.2049316Z Collecting idna==3.20 (from -r requirements-test.txt (line 870))
+2026-10-26T08:32:52.2114559Z   Downloading idna-3.20-py3-none-any.whl (69 kB)
+2026-10-26T08:32:52.2231654Z Collecting iniconfig==2.3.1 (from -r requirements-test.txt (line 878))
+2026-10-26T08:32:52.2296386Z   Downloading iniconfig-2.3.1-py3-none-any.whl (7.6 kB)
+2026-10-26T08:32:52.2429883Z Collecting jinja2==3.1.6 (from -r requirements-test.txt (line 882))
+2026-10-26T08:32:52.2493174Z   Downloading jinja2-3.1.6-py3-none-any.whl (134 kB)
+2026-10-26T08:32:52.2689327Z Collecting jsonschema==4.26.0 (from -r requirements-test.txt (line 888))
+2026-10-26T08:32:52.2755032Z   Downloading jsonschema-4.26.0-py3-none-any.whl (90 kB)
+2026-10-26T08:32:52.2902546Z Collecting jsonschema-specifications==2025.9.1 (from -r requirements-test.txt (line 894))
+2026-10-26T08:32:52.2967625Z   Downloading jsonschema_specifications-2025.9.1-py3-none-any.whl (18 kB)
+2026-10-26T08:32:52.3587988Z Collecting kiwisolver==1.5.1 (from -r requirements-test.txt (line 900))
+2026-10-26T08:32:52.3654684Z   Downloading kiwisolver-1.5.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (1.5 MB)
+2026-10-26T08:32:52.3697108Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.5/1.5 MB 728.2 MB/s eta 0:00:00
+2026-10-26T08:32:52.5790561Z Collecting lxml==6.1.3 (from -r requirements-test.txt (line 1045))
+2026-10-26T08:32:52.5860905Z   Downloading lxml-6.1.3-cp312-cp312-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl (5.2 MB)
+2026-10-26T08:32:52.5957654Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 5.2/5.2 MB 689.6 MB/s eta 0:00:00
+2026-10-26T08:32:52.6156305Z Collecting markdown==3.11.2 (from -r requirements-test.txt (line 1226))
+2026-10-26T08:32:52.6222848Z   Downloading markdown-3.11.2-py3-none-any.whl (114 kB)
+2026-10-26T08:32:52.6727633Z Collecting markupsafe==3.0.4 (from -r requirements-test.txt (line 1232))
+2026-10-26T08:32:52.6795299Z   Downloading markupsafe-3.0.4-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (22 kB)
+2026-10-26T08:32:52.7962736Z Collecting matplotlib==3.11.2 (from -r requirements-test.txt (line 1388))
+2026-10-26T08:32:52.8033516Z   Downloading matplotlib-3.11.2-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (9.9 MB)
+2026-10-26T08:32:52.8198813Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 9.9/9.9 MB 702.4 MB/s eta 0:00:00
+2026-10-26T08:32:52.8577456Z Collecting mcp==1.30.0 (from -r requirements-test.txt (line 1445))
+2026-10-26T08:32:52.8640196Z   Downloading mcp-1.30.0-py3-none-any.whl (234 kB)
+2026-10-26T08:32:52.8859642Z Collecting networkx==3.7 (from -r requirements-test.txt (line 1455))
+2026-10-26T08:32:52.8925472Z   Downloading networkx-3.7-py3-none-any.whl (2.1 MB)
+2026-10-26T08:32:52.8980221Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.1/2.1 MB 668.3 MB/s eta 0:00:00
+2026-10-26T08:32:53.1045835Z Collecting numpy==2.4.6 (from -r requirements-test.txt (line 1459))
+2026-10-26T08:32:53.1116134Z   Downloading numpy-2.4.6-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (16.6 MB)
+2026-10-26T08:32:53.1385084Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 16.6/16.6 MB 682.1 MB/s eta 0:00:00
+2026-10-26T08:32:53.1692371Z Collecting oauthlib==4.0.0 (from -r requirements-test.txt (line 1540))
+2026-10-26T08:32:53.1759159Z   Downloading oauthlib-4.0.0-py3-none-any.whl (159 kB)
+2026-10-26T08:32:53.2349658Z Collecting onnxruntime==1.31.0 (from -r requirements-test.txt (line 1546))
+2026-10-26T08:32:53.2453605Z   Downloading onnxruntime-1.31.0-cp312-cp312-manylinux_2_28_x86_64.whl (23.8 MB)
+2026-10-26T08:32:53.3209275Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 23.8/23.8 MB 323.3 MB/s eta 0:00:00
+2026-10-26T08:32:53.3535004Z Collecting openpyxl==3.1.5 (from -r requirements-test.txt (line 1572))
+2026-10-26T08:32:53.3599969Z   Downloading openpyxl-3.1.5-py2.py3-none-any.whl (250 kB)
+2026-10-26T08:32:53.3794080Z Collecting opentelemetry-api==1.45.1 (from -r requirements-test.txt (line 1578))
+2026-10-26T08:32:53.3859620Z   Downloading opentelemetry_api-1.45.1-py3-none-any.whl (60 kB)
+2026-10-26T08:32:53.4006396Z Collecting packaging==26.3 (from -r requirements-test.txt (line 1584))
+2026-10-26T08:32:53.4096613Z   Downloading packaging-26.3-py3-none-any.whl (129 kB)
+2026-10-26T08:32:53.5193648Z Collecting pandas==3.0.6 (from -r requirements-test.txt (line 1593))
+2026-10-26T08:32:53.5261591Z   Downloading pandas-3.0.6-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl (10.8 MB)
+2026-10-26T08:32:53.5440914Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 10.8/10.8 MB 700.2 MB/s eta 0:00:00
+2026-10-26T08:32:53.7413386Z Collecting pillow==13.0.0 (from -r requirements-test.txt (line 1655))
+2026-10-26T08:32:53.7480081Z   Downloading pillow-13.0.0-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (7.1 MB)
+2026-10-26T08:32:53.7602790Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 7.1/7.1 MB 712.4 MB/s eta 0:00:00
+2026-10-26T08:32:53.7927982Z Collecting pip==26.2.1 (from -r requirements-test.txt (line 1746))
+2026-10-26T08:32:53.7995346Z   Downloading pip-26.2.1-py3-none-any.whl (1.8 MB)
+2026-10-26T08:32:53.8041119Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.8/1.8 MB 744.7 MB/s eta 0:00:00
+2026-10-26T08:32:53.8443269Z Collecting playwright==1.62.0 (from -r requirements-test.txt (line 1752))
+2026-10-26T08:32:53.8512283Z   Downloading playwright-1.62.0-py3-none-manylinux1_x86_64.whl (47.7 MB)
+2026-10-26T08:32:54.0529104Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 47.7/47.7 MB 240.3 MB/s eta 0:00:00
+2026-10-26T08:32:54.0999436Z Collecting pluggy==1.7.0 (from -r requirements-test.txt (line 1762))
+2026-10-26T08:32:54.1062622Z   Downloading pluggy-1.7.0-py3-none-any.whl (27 kB)
+2026-10-26T08:32:54.2671358Z Collecting protobuf==7.36.2 (from -r requirements-test.txt (line 1766))
+2026-10-26T08:32:54.2737691Z   Downloading protobuf-7.36.2-cp310-abi3-manylinux2014_x86_64.whl (343 kB)
+2026-10-26T08:32:54.3332645Z Collecting psutil==7.2.2 (from -r requirements-test.txt (line 1776))
+2026-10-26T08:32:54.3399312Z   Downloading psutil-7.2.2-cp36-abi3-manylinux2010_x86_64.manylinux_2_12_x86_64.manylinux_2_28_x86_64.whl (155 kB)
+2026-10-26T08:32:54.3548366Z Collecting pycparser==3.12 (from -r requirements-test.txt (line 1799))
+2026-10-26T08:32:54.3618493Z   Downloading pycparser-3.12-py3-none-any.whl (62 kB)
+2026-10-26T08:32:54.4575215Z Collecting pydantic==2.14.1 (from -r requirements-test.txt (line 1805))
+2026-10-26T08:32:54.4652476Z   Downloading pydantic-2.14.1-py3-none-any.whl (488 kB)
+2026-10-26T08:32:55.1087148Z Collecting pydantic-core==2.50.1 (from -r requirements-test.txt (line 1813))
+2026-10-26T08:32:55.1156982Z   Downloading pydantic_core-2.50.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (2.2 MB)
+2026-10-26T08:32:55.1211223Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.2/2.2 MB 694.4 MB/s eta 0:00:00
+2026-10-26T08:32:55.1368737Z Collecting pydantic-settings==2.16.1 (from -r requirements-test.txt (line 1954))
+2026-10-26T08:32:55.1432373Z   Downloading pydantic_settings-2.16.1-py3-none-any.whl (80 kB)
+2026-10-26T08:32:55.1579679Z Collecting pyee==13.0.1 (from -r requirements-test.txt (line 1960))
+2026-10-26T08:32:55.1642568Z   Downloading pyee-13.0.1-py3-none-any.whl (15 kB)
+2026-10-26T08:32:55.1835183Z Collecting pygments==2.21.0 (from -r requirements-test.txt (line 1964))
+2026-10-26T08:32:55.1903928Z   Downloading pygments-2.21.0-py3-none-any.whl (1.3 MB)
+2026-10-26T08:32:55.1944389Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.3/1.3 MB 730.1 MB/s eta 0:00:00
+2026-10-26T08:32:55.2123807Z Collecting pyjwt==2.15.1 (from -r requirements-test.txt (line 1968))
+2026-10-26T08:32:55.2192475Z   Downloading pyjwt-2.15.1-py3-none-any.whl (33 kB)
+2026-10-26T08:32:55.3466156Z Collecting pymupdf==2.0 (from -r requirements-test.txt (line 1974))
+2026-10-26T08:32:55.3532998Z   Downloading pymupdf-2.0-cp311-abi3-manylinux_2_28_x86_64.whl (68.9 MB)
+2026-10-26T08:32:55.6442894Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 68.9/68.9 MB 238.9 MB/s eta 0:00:00
+2026-10-26T08:32:55.7063596Z Collecting pymupdf-layout==2.0 (from -r requirements-test.txt (line 1981))
+2026-10-26T08:32:55.7129187Z   Downloading pymupdf_layout-2.0-py3-none-any.whl (927 bytes)
+2026-10-26T08:32:55.7266689Z Collecting pymupdf4llm==2.0 (from -r requirements-test.txt (line 1984))
+2026-10-26T08:32:55.7329006Z   Downloading pymupdf4llm-2.0-py3-none-any.whl (904 bytes)
+2026-10-26T08:32:55.7533742Z Collecting pyparsing==3.3.3 (from -r requirements-test.txt (line 1987))
+2026-10-26T08:32:55.7599815Z   Downloading pyparsing-3.3.3-py3-none-any.whl (126 kB)
+2026-10-26T08:32:55.7821021Z Collecting pypdf==6.21.2 (from -r requirements-test.txt (line 1993))
+2026-10-26T08:32:55.7886626Z   Downloading pypdf-6.21.2-py3-none-any.whl (407 kB)
+2026-10-26T08:32:55.8746400Z Collecting pypdfium2==5.14.0 (from -r requirements-test.txt (line 1999))
+2026-10-26T08:32:55.8814134Z   Downloading pypdfium2-5.14.0-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (3.8 MB)
+2026-10-26T08:32:55.8889905Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.8/3.8 MB 715.9 MB/s eta 0:00:00
+2026-10-26T08:32:55.9214681Z Collecting pytest==9.1.1 (from -r requirements-test.txt (line 2026))
+2026-10-26T08:32:55.9278025Z   Downloading pytest-9.1.1-py3-none-any.whl (386 kB)
+2026-10-26T08:32:55.9425042Z Collecting python-dateutil==2.9.0.post0 (from -r requirements-test.txt (line 2030))
+2026-10-26T08:32:55.9491780Z   Downloading python_dateutil-2.9.0.post0-py2.py3-none-any.whl (229 kB)
+2026-10-26T08:32:55.9608612Z Collecting python-docx==1.2.0 (from -r requirements-test.txt (line 2038))
+2026-10-26T08:32:55.9673452Z   Downloading python_docx-1.2.0-py3-none-any.whl (252 kB)
+2026-10-26T08:32:55.9828468Z Collecting python-dotenv==1.2.4 (from -r requirements-test.txt (line 2044))
+2026-10-26T08:32:55.9894387Z   Downloading python_dotenv-1.2.4-py3-none-any.whl (23 kB)
+2026-10-26T08:32:56.0032321Z Collecting python-multipart==0.0.32 (from -r requirements-test.txt (line 2051))
+2026-10-26T08:32:56.0095862Z   Downloading python_multipart-0.0.32-py3-none-any.whl (30 kB)
+2026-10-26T08:32:56.0203587Z Collecting python-pptx==1.0.2 (from -r requirements-test.txt (line 2058))
+2026-10-26T08:32:56.0269118Z   Downloading python_pptx-1.0.2-py3-none-any.whl (472 kB)
+2026-10-26T08:32:56.0607865Z Collecting pyyaml==6.0.3 (from -r requirements-test.txt (line 2089))
+2026-10-26T08:32:56.0681200Z   Downloading pyyaml-6.0.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (807 kB)
+2026-10-26T08:32:56.0714199Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 807.9/807.9 kB 741.1 MB/s eta 0:00:00
+2026-10-26T08:32:56.0834708Z Collecting qrcode==8.2 (from -r requirements-test.txt (line 2168))
+2026-10-26T08:32:56.0898940Z   Downloading qrcode-8.2-py3-none-any.whl (45 kB)
+2026-10-26T08:32:56.1122118Z Collecting referencing==0.37.0 (from -r requirements-test.txt (line 2174))
+2026-10-26T08:32:56.1185744Z   Downloading referencing-0.37.0-py3-none-any.whl (26 kB)
+2026-10-26T08:32:56.2536124Z Collecting reportlab==5.0.1 (from -r requirements-test.txt (line 2181))
+2026-10-26T08:32:56.2616901Z   Downloading reportlab-5.0.1-py3-none-any.whl (2.0 MB)
+2026-10-26T08:32:56.2684963Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.0/2.0 MB 384.8 MB/s eta 0:00:00
+2026-10-26T08:32:56.2908964Z Collecting requests==2.34.2 (from -r requirements-test.txt (line 2187))
+2026-10-26T08:32:56.2969457Z   Downloading requests-2.34.2-py3-none-any.whl (73 kB)
+2026-10-26T08:32:56.3094308Z Collecting requests-oauthlib==2.0.0 (from -r requirements-test.txt (line 2194))
+2026-10-26T08:32:56.3162285Z   Downloading requests_oauthlib-2.0.0-py2.py3-none-any.whl (24 kB)
+2026-10-26T08:32:56.5433889Z Collecting rpds-py==2026.9.1 (from -r requirements-test.txt (line 2200))
+2026-10-26T08:32:56.5502760Z   Downloading rpds_py-2026.9.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (371 kB)
+2026-10-26T08:32:56.6265275Z Collecting setuptools==84.2.0 (from -r requirements-test.txt (line 2333))
+2026-10-26T08:32:56.6331312Z   Downloading setuptools-84.2.0-py3-none-any.whl (875 kB)
+2026-10-26T08:32:56.6395682Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 875.8/875.8 kB 181.2 MB/s eta 0:00:00
+2026-10-26T08:32:56.6607317Z Collecting six==1.17.0 (from -r requirements-test.txt (line 2339))
+2026-10-26T08:32:56.6674252Z   Downloading six-1.17.0-py2.py3-none-any.whl (11 kB)
+2026-10-26T08:32:56.6840346Z Collecting sse-starlette==3.5.0 (from -r requirements-test.txt (line 2345))
+2026-10-26T08:32:56.6908705Z   Downloading sse_starlette-3.5.0-py3-none-any.whl (17 kB)
+2026-10-26T08:32:56.7150161Z Collecting starlette==1.9.0 (from -r requirements-test.txt (line 2351))
+2026-10-26T08:32:56.7214800Z   Downloading starlette-1.9.0-py3-none-any.whl (80 kB)
+2026-10-26T08:32:56.7333464Z Collecting tabulate==0.10.0 (from -r requirements-test.txt (line 2360))
+2026-10-26T08:32:56.7397215Z   Downloading tabulate-0.10.0-py3-none-any.whl (39 kB)
+2026-10-26T08:32:56.7570233Z Collecting typing-extensions==4.16.0 (from -r requirements-test.txt (line 2364))
+2026-10-26T08:32:56.7635578Z   Downloading typing_extensions-4.16.0-py3-none-any.whl (45 kB)
+2026-10-26T08:32:56.7738885Z Collecting typing-inspection==0.4.4 (from -r requirements-test.txt (line 2382))
+2026-10-26T08:32:56.7806770Z   Downloading typing_inspection-0.4.4-py3-none-any.whl (14 kB)
+2026-10-26T08:32:56.8010148Z Collecting urllib3==2.8.0 (from -r requirements-test.txt (line 2398))
+2026-10-26T08:32:56.8074769Z   Downloading urllib3-2.8.0-py3-none-any.whl (135 kB)
+2026-10-26T08:32:56.8303360Z Collecting uvicorn==0.54.0 (from -r requirements-test.txt (line 2405))
+2026-10-26T08:32:56.8374011Z   Downloading uvicorn-0.54.0-py3-none-any.whl (87 kB)
+2026-10-26T08:32:56.8739599Z Collecting uvloop==0.23.0 (from -r requirements-test.txt (line 2412))
+2026-10-26T08:32:56.8812391Z   Downloading uvloop-0.23.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (4.5 MB)
+2026-10-26T08:32:56.8922529Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.5/4.5 MB 557.6 MB/s eta 0:00:00
+2026-10-26T08:32:56.9635470Z Collecting watchfiles==1.3.0 (from -r requirements-test.txt (line 2477))
+2026-10-26T08:32:56.9704538Z   Downloading watchfiles-1.3.0-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (458 kB)
+2026-10-26T08:32:57.0792769Z Collecting websockets==17.3 (from -r requirements-test.txt (line 2514))
+2026-10-26T08:32:57.0860557Z   Downloading websockets-17.3-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (225 kB)
+2026-10-26T08:32:57.1039113Z Collecting wheel==0.48.0 (from -r requirements-test.txt (line 2672))
+2026-10-26T08:32:57.1105327Z   Downloading wheel-0.48.0-py3-none-any.whl (33 kB)
+2026-10-26T08:32:57.1799077Z Collecting xlsxwriter==3.2.9 (from -r requirements-test.txt (line 2678))
+2026-10-26T08:32:57.1867468Z   Downloading xlsxwriter-3.2.9-py3-none-any.whl (175 kB)
+2026-10-26T08:32:57.7361349Z Installing collected packages: pymupdf4llm, pymupdf-layout, flatbuffers, xlsxwriter, websockets, uvloop, urllib3, typing-extensions, tabulate, six, setuptools, rpds-py, qrcode, pyyaml, python-multipart, python-dotenv, pypdfium2, pypdf, pyparsing, pyjwt, pygments, pycparser, psutil, protobuf, pluggy, pip, pillow, packaging, oauthlib, numpy, networkx, markupsafe, markdown, lxml, kiwisolver, iniconfig, idna, httpx-sse, httptools, h11, greenlet, fonttools, et-xmlfile, cycler, click, charset-normalizer, certifi, attrs, annotated-types, annotated-doc, wheel, uvicorn, typing-inspection, requests, reportlab, referencing, python-pptx, python-docx, python-dateutil, pytest, pyee, pydantic-core, opentelemetry-api, openpyxl, onnxruntime, jinja2, httpcore, contourpy, cffi, anyio, watchfiles, starlette, requests-oauthlib, pymupdf, pydantic, playwright, pandas, matplotlib, jsonschema-specifications, httpx, cryptography, sse-starlette, pydantic-settings, jsonschema, fastapi, apprise, mcp
+2026-10-26T08:33:00.0995565Z   Attempting uninstall: pip
+2026-10-26T08:33:00.1025770Z     Found existing installation: pip 25.0.1
+2026-10-26T08:33:00.1436097Z     Uninstalling pip-25.0.1:
+2026-10-26T08:33:00.1507499Z       Successfully uninstalled pip-25.0.1
+2026-10-26T08:33:17.6902893Z Successfully installed annotated-doc-0.0.5 annotated-types-0.8.0 anyio-4.15.1 apprise-2.0.1 attrs-26.1.0 certifi-2026.10.19 cffi-2.1.1 charset-normalizer-3.5.2 click-8.5.0 contourpy-1.4.0 cryptography-50.0.2 cycler-0.12.1 et-xmlfile-2.0.0 fastapi-0.150.0 flatbuffers-25.12.19 fonttools-4.67.0 greenlet-3.5.6 h11-0.16.0 httpcore-1.0.9 httptools-0.9.0 httpx-0.28.1 httpx-sse-0.4.3 idna-3.20 iniconfig-2.3.1 jinja2-3.1.6 jsonschema-4.26.0 jsonschema-specifications-2025.9.1 kiwisolver-1.5.1 lxml-6.1.3 markdown-3.11.2 markupsafe-3.0.4 matplotlib-3.11.2 mcp-1.30.0 networkx-3.7 numpy-2.4.6 oauthlib-4.0.0 onnxruntime-1.31.0 openpyxl-3.1.5 opentelemetry-api-1.45.1 packaging-26.3 pandas-3.0.6 pillow-13.0.0 pip-26.2.1 playwright-1.62.0 pluggy-1.7.0 protobuf-7.36.2 psutil-7.2.2 pycparser-3.12 pydantic-2.14.1 pydantic-core-2.50.1 pydantic-settings-2.16.1 pyee-13.0.1 pygments-2.21.0 pyjwt-2.15.1 pymupdf-2.0 pymupdf-layout-2.0 pymupdf4llm-2.0 pyparsing-3.3.3 pypdf-6.21.2 pypdfium2-5.14.0 pytest-9.1.1 python-dateutil-2.9.0.post0 python-docx-1.2.0 python-dotenv-1.2.4 python-multipart-0.0.32 python-pptx-1.0.2 pyyaml-6.0.3 qrcode-8.2 referencing-0.37.0 reportlab-5.0.1 requests-2.34.2 requests-oauthlib-2.0.0 rpds-py-2026.9.1 setuptools-84.2.0 six-1.17.0 sse-starlette-3.5.0 starlette-1.9.0 tabulate-0.10.0 typing-extensions-4.16.0 typing-inspection-0.4.4 urllib3-2.8.0 uvicorn-0.54.0 uvloop-0.23.0 watchfiles-1.3.0 websockets-17.3 wheel-0.48.0 xlsxwriter-3.2.9
+2026-10-26T08:33:17.7619780Z 
+2026-10-26T08:33:17.7620425Z [notice] A new release of pip is available: 26.2.1 -> 26.2.2
+2026-10-26T08:33:17.7621059Z [notice] To update, run: python -m pip install --upgrade pip
+2026-10-26T08:33:18.0686127Z ##[group]Run .venv/bin/python -m pytest tests/test_avatar_verification_result.py tests/test_avatar_memory_audit.py tests/test_avatar_targeted_memory.py -q
+2026-10-26T08:33:18.0687230Z [36;1m.venv/bin/python -m pytest tests/test_avatar_verification_result.py tests/test_avatar_memory_audit.py tests/test_avatar_targeted_memory.py -q[0m
+2026-10-26T08:33:18.0688623Z shell: sh -e {0}
+2026-10-26T08:33:18.0688836Z ##[endgroup]
+2026-10-26T08:33:19.4643137Z ..................................                                       [100%]
+2026-10-26T08:33:19.4644044Z =============================== warnings summary ===============================
+2026-10-26T08:33:19.4650540Z tests/test_avatar_verification_result.py::test_missing_evidence_does_not_skip_next_check
+2026-10-26T08:33:19.4651987Z   /__w/css-is/css-is/tests/conftest.py:88: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+2026-10-26T08:33:19.4652911Z     from starlette.testclient import TestClient
+2026-10-26T08:33:19.4653167Z 
+2026-10-26T08:33:19.4653421Z -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+2026-10-26T08:33:19.5148530Z ##[group]Run .venv/bin/python -m pytest tests/test_avatar_pagehide_browser.py -q
+2026-10-26T08:33:19.5149156Z [36;1m.venv/bin/python -m pytest tests/test_avatar_pagehide_browser.py -q[0m
+2026-10-26T08:33:19.5149632Z shell: sh -e {0}
+2026-10-26T08:33:19.5149830Z env:
+2026-10-26T08:33:19.5150024Z   CSS_TEST_NOW: 2026-07-15T12:00:00
+2026-10-26T08:33:19.5150282Z   CSS_AVATAR_CHROMIUM: 156.0.8078.47
+2026-10-26T08:33:19.5150536Z   CSS_AVATAR_LIFECYCLE: 1
+2026-10-26T08:33:19.5150827Z   CSS_AVATAR_OUT: avatar-verification/lifecycle-behavior
+2026-10-26T08:33:19.5151159Z ##[endgroup]
+2026-10-26T08:33:26.9193281Z .                                                                        [100%]
+2026-10-26T08:33:26.9194219Z =============================== warnings summary ===============================
+2026-10-26T08:33:26.9195206Z tests/test_avatar_pagehide_browser.py::test_pagehide_cleanup
+2026-10-26T08:33:26.9196702Z   /__w/css-is/css-is/tests/conftest.py:88: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+2026-10-26T08:33:26.9198479Z     from starlette.testclient import TestClient
+2026-10-26T08:33:26.9198865Z 
+2026-10-26T08:33:26.9199236Z -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+2026-10-26T08:33:27.3391386Z ##[group]Run .venv/bin/python scripts/avatar_baseline/lifecycle_candidate.py
+2026-10-26T08:33:27.3392244Z [36;1m.venv/bin/python scripts/avatar_baseline/lifecycle_candidate.py[0m
+2026-10-26T08:33:27.3392817Z shell: sh -e {0}
+2026-10-26T08:33:27.3393114Z env:
+2026-10-26T08:33:27.3393473Z   CSS_AVATAR_CHROMIUM: 156.0.8078.47
+2026-10-26T08:33:27.3444453Z ##[endgroup]
+2026-10-26T08:33:27.4382881Z Preparing worktree (detached HEAD 1c964dc)
+2026-10-26T08:33:27.8260701Z HEAD is now at 1c964dc docs: complete avatar baseline ledger with full application evidence
+2026-10-26T08:33:27.8322434Z Preparing worktree (detached HEAD f700187)
+2026-10-26T08:33:28.8452928Z Updating files:  38% (1030/2652)
+2026-10-26T08:33:28.8741346Z Updating files:  39% (1035/2652)
+2026-10-26T08:33:28.9083332Z Updating files:  40% (1061/2652)
+2026-10-26T08:33:28.9227176Z Updating files:  41% (1088/2652)
+2026-10-26T08:33:28.9822798Z Updating files:  42% (1114/2652)
+2026-10-26T08:33:29.0112283Z Updating files:  43% (1141/2652)
+2026-10-26T08:33:29.0411665Z Updating files:  44% (1167/2652)
+2026-10-26T08:33:29.0929695Z Updating files:  45% (1194/2652)
+2026-10-26T08:33:29.1740001Z Updating files:  46% (1220/2652)
+2026-10-26T08:33:29.2333128Z Updating files:  47% (1247/2652)
+2026-10-26T08:33:29.2580495Z Updating files:  48% (1273/2652)
+2026-10-26T08:33:29.2931857Z Updating files:  49% (1300/2652)
+2026-10-26T08:33:29.3226735Z Updating files:  50% (1326/2652)
+2026-10-26T08:33:29.4299175Z Updating files:  51% (1353/2652)
+2026-10-26T08:33:29.4439481Z Updating files:  52% (1380/2652)
+2026-10-26T08:33:29.4556431Z Updating files:  53% (1406/2652)
+2026-10-26T08:33:29.4628569Z Updating files:  54% (1433/2652)
+2026-10-26T08:33:29.4653850Z Updating files:  55% (1459/2652)
+2026-10-26T08:33:29.4683577Z Updating files:  56% (1486/2652)
+2026-10-26T08:33:29.4713207Z Updating files:  57% (1512/2652)
+2026-10-26T08:33:29.4752057Z Updating files:  58% (1539/2652)
+2026-10-26T08:33:29.4771037Z Updating files:  59% (1565/2652)
+2026-10-26T08:33:29.4793974Z Updating files:  60% (1592/2652)
+2026-10-26T08:33:29.4819834Z Updating files:  61% (1618/2652)
+2026-10-26T08:33:29.4846521Z Updating files:  62% (1645/2652)
+2026-10-26T08:33:29.4866443Z Updating files:  63% (1671/2652)
+2026-10-26T08:33:29.4930954Z Updating files:  64% (1698/2652)
+2026-10-26T08:33:29.4945497Z Updating files:  65% (1724/2652)
+2026-10-26T08:33:29.4960474Z Updating files:  66% (1751/2652)
+2026-10-26T08:33:29.4974799Z Updating files:  67% (1777/2652)
+2026-10-26T08:33:29.4987468Z Updating files:  68% (1804/2652)
+2026-10-26T08:33:29.5030974Z Updating files:  69% (1830/2652)
+2026-10-26T08:33:29.5056140Z Updating files:  70% (1857/2652)
+2026-10-26T08:33:29.5185269Z Updating files:  71% (1883/2652)
+2026-10-26T08:33:29.5251545Z Updating files:  72% (1910/2652)
+2026-10-26T08:33:29.5271508Z Updating files:  73% (1936/2652)
+2026-10-26T08:33:29.5285012Z Updating files:  74% (1963/2652)
+2026-10-26T08:33:29.5306264Z Updating files:  75% (1989/2652)
+2026-10-26T08:33:29.5327799Z Updating files:  76% (2016/2652)
+2026-10-26T08:33:29.5348819Z Updating files:  77% (2043/2652)
+2026-10-26T08:33:29.5375986Z Updating files:  78% (2069/2652)
+2026-10-26T08:33:29.5392042Z Updating files:  79% (2096/2652)
+2026-10-26T08:33:29.5406198Z Updating files:  80% (2122/2652)
+2026-10-26T08:33:29.5427121Z Updating files:  81% (2149/2652)
+2026-10-26T08:33:29.5445552Z Updating files:  82% (2175/2652)
+2026-10-26T08:33:29.5464093Z Updating files:  83% (2202/2652)
+2026-10-26T08:33:29.5487149Z Updating files:  84% (2228/2652)
+2026-10-26T08:33:29.5507443Z Updating files:  85% (2255/2652)
+2026-10-26T08:33:29.5529255Z Updating files:  86% (2281/2652)
+2026-10-26T08:33:29.5550819Z Updating files:  87% (2308/2652)
+2026-10-26T08:33:29.5575513Z Updating files:  88% (2334/2652)
+2026-10-26T08:33:29.5596707Z Updating files:  89% (2361/2652)
+2026-10-26T08:33:29.5621076Z Updating files:  90% (2387/2652)
+2026-10-26T08:33:29.5642313Z Updating files:  91% (2414/2652)
+2026-10-26T08:33:29.5668682Z Updating files:  92% (2440/2652)
+2026-10-26T08:33:29.5689181Z Updating files:  93% (2467/2652)
+2026-10-26T08:33:29.5713896Z Updating files:  94% (2493/2652)
+2026-10-26T08:33:29.5738116Z Updating files:  95% (2520/2652)
+2026-10-26T08:33:29.5763088Z Updating files:  96% (2546/2652)
+2026-10-26T08:33:29.5795502Z Updating files:  97% (2573/2652)
+2026-10-26T08:33:29.5825925Z Updating files:  98% (2599/2652)
+2026-10-26T08:33:29.5869000Z Updating files:  99% (2626/2652)
+2026-10-26T08:33:29.5869469Z Updating files: 100% (2652/2652)
+2026-10-26T08:33:29.5869996Z Updating files: 100% (2652/2652), done.
+2026-10-26T08:33:29.5895565Z HEAD is now at f700187 perf: omit unused movement and reaction layers from static avatar previews
+2026-10-26T08:40:29.9359833Z COHORT 0 original exit 0 valid True
+2026-10-26T08:47:30.8730284Z COHORT 1 current exit 0 valid True
+2026-10-26T08:54:31.3725813Z COHORT 2 candidate exit 0 valid True
+2026-10-26T09:01:32.3248042Z COHORT 3 candidate exit 0 valid True
+2026-10-26T09:08:33.0431801Z COHORT 4 current exit 0 valid True
+2026-10-26T09:15:34.6567922Z COHORT 5 original exit 0 valid True
+2026-10-26T09:15:34.6569520Z COMPARISON original-to-candidate-forward application_regression failures 5
+2026-10-26T09:15:34.6570473Z COMPARISON original-to-candidate-reverse application_regression failures 4
+2026-10-26T09:15:34.6571075Z COMPARISON current-to-candidate-forward passed failures 0
+2026-10-26T09:15:34.6571633Z COMPARISON current-to-candidate-reverse application_regression failures 3
+2026-10-26T09:15:34.6572253Z COMPARISON original-to-current-forward application_regression failures 4
+2026-10-26T09:15:34.6572863Z COMPARISON original-to-current-reverse application_regression failures 2
+2026-10-26T09:15:34.6573440Z COMPARISON original-repeat application_regression failures 1
+2026-10-26T09:15:34.6573896Z COMPARISON current-repeat passed failures 0
+2026-10-26T09:15:34.6574279Z COMPARISON candidate-repeat passed failures 0
+2026-10-26T09:15:35.9409868Z ##[group]Run actions/upload-artifact@v4
+2026-10-26T09:15:35.9410177Z with:
+2026-10-26T09:15:35.9410405Z   name: avatar-2b-lifecycle-candidate
+2026-10-26T09:15:35.9410685Z   path: avatar-verification/
+2026-10-26T09:15:35.9410926Z   retention-days: 30
+2026-10-26T09:15:35.9411136Z   if-no-files-found: warn
+2026-10-26T09:15:35.9411357Z   compression-level: 6
+2026-10-26T09:15:35.9411763Z   overwrite: false
+2026-10-26T09:15:35.9411975Z   include-hidden-files: false
+2026-10-26T09:15:35.9412206Z ##[endgroup]
+2026-10-26T09:15:35.9415877Z ##[command]/usr/bin/docker exec  657204dd4c99b95fb07069dc8217a417b8633c50f86970a6fb14cf7a7b4ba28a sh -c "cat /etc/*release | grep ^ID"
+2026-10-26T09:15:36.2088837Z (node:4415) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-26T09:15:36.2090129Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-26T09:15:36.2352079Z With the provided path, there will be 33 files uploaded
+2026-10-26T09:15:36.2353330Z Artifact name is valid!
+2026-10-26T09:15:36.2353931Z Root directory input is valid!
+2026-10-26T09:15:36.6320754Z Beginning upload of artifact content to blob storage
+2026-10-26T09:15:36.9036553Z (node:4415) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-10-26T09:15:37.7175282Z Uploaded bytes 2744102
+2026-10-26T09:15:37.7976668Z Finished uploading artifact content to blob storage!
+2026-10-26T09:15:37.7977475Z SHA256 digest of uploaded artifact zip is c5a6fee47e67fb09422281619093fb20f8c4808a6973e2cb24728618823e0bbe
+2026-10-26T09:15:37.7978957Z Finalizing artifact upload
+2026-10-26T09:15:38.2783955Z Artifact avatar-2b-lifecycle-candidate.zip successfully finalized. Artifact ID 12639206719
+2026-10-26T09:15:38.2785859Z Artifact avatar-2b-lifecycle-candidate has been successfully uploaded! Final size is 2744102 bytes. Artifact ID is 12639206719
+2026-10-26T09:15:38.2792769Z Artifact download URL: https://github.com/jongsky25/css-is/actions/runs/40292908517/artifacts/12639206719
+2026-10-26T09:15:38.3039898Z Post job cleanup.
+2026-10-26T09:15:38.3046902Z ##[command]/usr/bin/docker exec  657204dd4c99b95fb07069dc8217a417b8633c50f86970a6fb14cf7a7b4ba28a sh -c "cat /etc/*release | grep ^ID"
+2026-10-26T09:15:38.4865363Z [command]/usr/bin/git version
+2026-10-26T09:15:38.4912152Z git version 2.47.3
+2026-10-26T09:15:38.4969827Z Copying '/github/home/.gitconfig' to '/__w/_temp/acc330ea-196c-43a1-b923-2886bc869ada/.gitconfig'
+2026-10-26T09:15:38.4979640Z Temporarily overriding HOME='/__w/_temp/acc330ea-196c-43a1-b923-2886bc869ada' before making global git config changes
+2026-10-26T09:15:38.4986729Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-26T09:15:38.4993902Z [command]/usr/bin/git config --global --add safe.directory /__w/css-is/css-is
+2026-10-26T09:15:38.5044077Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-10-26T09:15:38.5123331Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-10-26T09:15:38.5433841Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-26T09:15:38.5462260Z http.https://github.com/.extraheader
+2026-10-26T09:15:38.5480926Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-10-26T09:15:38.5525848Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-10-26T09:15:38.5959803Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-26T09:15:38.6000428Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-10-26T09:15:38.6415373Z Stop and remove container: a7a4779517614370bbd7010b70559074_python312trixiesha2560d0db5b17f11b1b7d1aafa74ceadaa64ba0944b267ff6fc22008a197acd6b9ad_c4a4d5
+2026-10-26T09:15:38.6420543Z ##[command]/usr/bin/docker rm --force 657204dd4c99b95fb07069dc8217a417b8633c50f86970a6fb14cf7a7b4ba28a
+2026-10-26T09:15:39.2183657Z 657204dd4c99b95fb07069dc8217a417b8633c50f86970a6fb14cf7a7b4ba28a
+2026-10-26T09:15:39.2215892Z Remove container network: github_network_86b1738a31f443e2976f9bd649b3452c
+2026-10-26T09:15:39.2221307Z ##[command]/usr/bin/docker network rm github_network_86b1738a31f443e2976f9bd649b3452c
+2026-10-26T09:15:39.3256078Z github_network_86b1738a31f443e2976f9bd649b3452c
+2026-10-26T09:15:39.3332705Z Cleaning up orphan processes
+2026-10-26T09:15:39.3766620Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/upload-artifact@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

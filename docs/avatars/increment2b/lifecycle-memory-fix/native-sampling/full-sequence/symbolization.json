@@ -1,0 +1,10 @@
+{
+  "acceptance": false,
+  "build_id": "1c5dca8527a61d07372e489142bee26af1bcaf71",
+  "profile_sha256": "b7918d848aefff87b0670ccff51371d0241d13632fe4189a9018bdfec624ecbc",
+  "debug_sha256": "3cc0a23a46948354fc39d4e3e124e23120916f661ecac533ae9dd45d4d3c6057",
+  "samples": 53,
+  "resolved_chromium_frames": 409,
+  "total_chromium_frames": 409,
+  "scope": "Sampled native allocation stacks in the target renderer. Not complete RSS accounting, not a memory acceptance measurement, and not causal attribution by itself."
+}

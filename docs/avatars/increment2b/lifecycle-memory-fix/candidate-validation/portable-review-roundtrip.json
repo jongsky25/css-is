@@ -1,0 +1,21 @@
+{
+  "files_verified": 157,
+  "parts": [
+    {
+      "file": "2b-review-probe-1.tar.gz",
+      "bytes": 9338571,
+      "sha256": "e7cb8d296747c4387345a95e0d23552763ffa1b182aa1e034d2270af181ea45d"
+    },
+    {
+      "file": "2b-review-probe-2.tar.gz",
+      "bytes": 3138218,
+      "sha256": "4c5f5e2429701d7d8f265d95c8ca16449e28d9a201480b6af1808ad593f4b0d4"
+    },
+    {
+      "file": "2b-review-probe-3.tar.gz",
+      "bytes": 1647846,
+      "sha256": "ee4f47cbfdcc2d6ca7b7a8ab326ce326ee3a9c2d0f204fec7e535c991f34c075"
+    }
+  ],
+  "input": "Retained previous 2B numeric/visual evidence; packaging test only, no benchmark rerun."
+}

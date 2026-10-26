@@ -1,0 +1,11 @@
+{
+  "branch": "codex/avatar-2b-verification",
+  "product_commit": "f700187553bd555dd3a9b638d5aa8e5fb59f3142",
+  "product_static_and_templates_diff": "empty",
+  "rejected_candidate_branch": "codex/avatar-2b-lifecycle-candidate",
+  "preserved_candidate_head": "3a80d76",
+  "focused_accounting_tests": 37,
+  "focused_accounting_status": "passed",
+  "full_acceptance_run": false,
+  "release_ready": false
+}

@@ -1,0 +1,7 @@
+{
+  "avatar_runtime_sha256": "d09ce17ad2b95a1c0777c230a24b588760bacb21a5aae7c97e2922ab1e1452fe",
+  "runtime_gzip_delta_vs_f700187_bytes": 146,
+  "art_css_audio_search_unchanged": true,
+  "avatar_frame_template_change": "Only JS cache version 8.21 to 8.22; SVG/CSS unchanged.",
+  "acceptance": false
+}
