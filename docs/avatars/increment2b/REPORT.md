@@ -8,9 +8,9 @@ full SVG under the same uncomposited paint mode. Original rasterized pixels diff
 [Candidate evidence](static-preview-fix/assessment.json).
 
 The original warm desktop memory failure reproduced in both execution orders:
-+14.520MiB and+12.629MiB. Candidate memory verification is running in
++14.520MiB and+12.629MiB. Candidate memory verification passed both orders (+8.551/+8.285MiB) in
 [40260864049](https://github.com/jongsky25/css-is/actions/runs/40260864049).
-No candidate performance acceptance is claimed. The completed timing results
+Complete final verification is running in [40263865865](https://github.com/jongsky25/css-is/actions/runs/40263865865), harness`e909de1`;2B acceptance remains pending. The completed timing results
 below apply to the unchanged-runtime prior productc2f404f.
 
 

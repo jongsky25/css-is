@@ -1,5 +1,5 @@
 {
-  "status": "blocked",
+  "status": "pending_final_verification",
   "source_commit": "c2f404fa5aa58abebbe0127bbb537b5592993ce5",
   "runtime_sha256": "c69e444b8d72fe84d0521d6ccabce07e9463209f5e451d96169b19aaca4191fb",
   "functional_browser_tests": 8,
@@ -38,9 +38,9 @@
   },
   "callback_limit_ms": 50,
   "frame_exception": "User-approved recorded33.3ms overrun remains accepted; no waiver of callback limit or large frame failures.",
-  "result": "Complete hosted timing/functional gates passed on c2f404f, but picker RSS regression reproduced. Static-preview candidate f700187 passes local functional/visual checks; hosted memory verification pending.",
+  "result": "Static-preview candidate f700187 passes both targeted memory orders (8.551/8.285MiB <=10MiB), local visual/functional/seasonal checks. Complete final verification runs on harness e909de12c42fe8fe99ce58d922bbef71c711e574.",
   "not_run": "Memory attribution diagnostic pending; no acceptance claimed.",
-  "next_step": "Review candidate run40260864049; if both memory cohorts meet 10MiB, run complete final gates. Do not promote local visual/functional passes to performance acceptance.",
+  "next_step": "Collect and audit all four final phases from run40263865865 before accepting2B.",
   "diagnostic_revision": "f421044b53840f12d754cc9c30b3c2f3ff268532",
   "hosted_harness_revision": "65f1e16572646fbf34ebdd0d63715e4be9b8d9dd",
   "native_throttle_diagnostic": {
@@ -80,7 +80,15 @@
   "candidate_verification": {
     "run_id": 40260864049,
     "url": "https://github.com/jongsky25/css-is/actions/runs/40260864049",
-    "status": "running",
+    "status": "completed; both memory orders pass",
     "scope": "two opposite-order warm desktop original/current comparisons, five samples per arm per order"
+  },
+  "final_verification": {
+    "run_id": 40263865865,
+    "url": "https://github.com/jongsky25/css-is/actions/runs/40263865865",
+    "source_commit": "e909de12c42fe8fe99ce58d922bbef71c711e574",
+    "status": "running",
+    "superseded_run_id": 40263432618,
+    "superseded_reason": "Historical art macro and current growth caller API mismatch identified before completion; matching historical callers added and regression-tested."
   }
 }
