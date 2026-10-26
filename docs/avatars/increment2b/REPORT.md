@@ -1,5 +1,19 @@
 # Increment2B — complete hosted verification
 
+Current candidate: **`f700187`**, static picker/growth SVG trimming. Eight browser
+regressions, actual native input/visibility, persisted care, seasonal live refresh
+and1,734 unchanged live SVG checks pass locally.4,896 static cells match the
+full SVG under the same uncomposited paint mode. Original rasterized pixels differ
+(sharper static edges); both comparisons are retained.
+[Candidate evidence](static-preview-fix/assessment.json).
+
+The original warm desktop memory failure reproduced in both execution orders:
++14.520MiB and+12.629MiB. Candidate memory verification is running in
+[40260864049](https://github.com/jongsky25/css-is/actions/runs/40260864049).
+No candidate performance acceptance is claimed. The completed timing results
+below apply to the unchanged-runtime prior productc2f404f.
+
+
 **One remaining acceptance failure: warm desktop picker renderer memory.**
 [Audited results](hosted-complete/summary.json) and
 [all numeric evidence](hosted-complete/numeric-evidence.tar.gz).

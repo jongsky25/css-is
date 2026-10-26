@@ -38,9 +38,9 @@
   },
   "callback_limit_ms": 50,
   "frame_exception": "User-approved recorded33.3ms overrun remains accepted; no waiver of callback limit or large frame failures.",
-  "result": "Hosted controls and timing gates pass; only warm desktop picker RSS exceeds 10MiB.",
+  "result": "Complete hosted timing/functional gates passed on c2f404f, but picker RSS regression reproduced. Static-preview candidate f700187 passes local functional/visual checks; hosted memory verification pending.",
   "not_run": "Memory attribution diagnostic pending; no acceptance claimed.",
-  "next_step": "Attribute native picker memory with per-process diagnostics and opposite execution orders; fix established source and verify affected gates.",
+  "next_step": "Review candidate run40260864049; if both memory cohorts meet 10MiB, run complete final gates. Do not promote local visual/functional passes to performance acceptance.",
   "diagnostic_revision": "f421044b53840f12d754cc9c30b3c2f3ff268532",
   "hosted_harness_revision": "65f1e16572646fbf34ebdd0d63715e4be9b8d9dd",
   "native_throttle_diagnostic": {
@@ -75,5 +75,12 @@
       "budget_bytes": 10485760,
       "overage_bytes": 1257472
     }
+  },
+  "current_candidate_commit": "f700187",
+  "candidate_verification": {
+    "run_id": 40260864049,
+    "url": "https://github.com/jongsky25/css-is/actions/runs/40260864049",
+    "status": "running",
+    "scope": "two opposite-order warm desktop original/current comparisons, five samples per arm per order"
   }
 }
