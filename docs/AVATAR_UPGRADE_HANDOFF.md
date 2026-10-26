@@ -1,6 +1,6 @@
 # Avatar upgrade: new-chat handoff
 
-Last verified: **2026-10-26 05:55 UTC**. Repository: `jongsky25/css-is`.
+Last updated: **2026-10-26 08:58 UTC**. Repository: `jongsky25/css-is`.
 
 ## Current blocking correction
 
@@ -27,6 +27,31 @@ The prepared audit branch `codex/avatar-3a-artifact-audit` is explicitly paused 
 trigger it as an acceptance audit of the cancelled cohort. No later increments,
 merge to main or deployment occurred. The historical handoff below is superseded by this
 correction wherever it suggests CI success establishes complete memory acceptance.
+
+## Active 2B correction experiment — 2026-10-26
+
+The unchanged-product repeat [40287821303](https://github.com/jongsky25/css-is/actions/runs/40287821303)
+completed 20 warm-desktop samples in both orders. The reverse pair still fails
+seasonal-preview RSS (+10.797 MiB); source-repeat variability is also retained.
+See `docs/avatars/increment2b/lifecycle-memory-fix/unchanged-hosted/`.
+
+Candidate product `509cd1a` on `codex/avatar-2b-lifecycle-candidate` ends owned
+avatar animation effects on non-persisted pagehide. Real navigation behavior
+fails on unchanged source and passes on candidate; persisted-page motion and
+unrelated animation are preserved. This is **not yet a validated memory fix**.
+[Run 40292908517](https://github.com/jongsky25/css-is/actions/runs/40292908517)
+measures original/current/candidate/candidate/current/original, five complete
+warm-desktop samples each, on pinned Chromium 156. Its source is 509cd1a.
+Wait for the complete artifact, audit all pairs and controls, and only then decide
+whether the candidate qualifies for the full final-source acceptance matrix.
+Do not rerun an incomplete subset or accept a green diagnostic workflow badge.
+
+Local native allocation probes are attribution-only, one sample per variant;
+early probes overlapped preceding trace parsing and cannot establish causality.
+Clean original/current/prototype repeats and raw allocator extracts are preserved
+under `lifecycle-memory-fix/`. Full raw native traces remain in
+`/workspace/scratch/lifecycle-allocation/` with hashes in the portable manifest.
+The original 2B acceptance stays withdrawn; 3A and later increments stay paused.
 
 ## Historical start here
 

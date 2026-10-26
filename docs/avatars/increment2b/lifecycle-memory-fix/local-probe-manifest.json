@@ -1,0 +1,266 @@
+{
+  "acceptance": false,
+  "full_traces": {
+    "before": {
+      "path": "/workspace/scratch/lifecycle-allocation/before/memory-trace.json.gz",
+      "sha256": "e4a9ad3458cafbf70e213e97c6d98459be89fcfb730f16dd3352c621c4545c39",
+      "retained_extract_sha256": "f62973e248f2cd86e7565f38aa391c7fbbc3a763321a16fe7e77836875626aaf",
+      "extract": "Exact renderer allocator events consumed by analysis; unrelated VM maps and non-renderer allocations remain in the full local trace."
+    },
+    "after": {
+      "path": "/workspace/scratch/lifecycle-allocation/after/memory-trace.json.gz",
+      "sha256": "d158b76f4ec5624430cba7a4a9789e0702de76a6f952f0a15097f01f946b51b0",
+      "retained_extract_sha256": "a15f2d7aca4b66488ba2ab661d0e70217843a57d2f2c3ba25e9744d8b72eaf57",
+      "extract": "Exact renderer allocator events consumed by analysis; unrelated VM maps and non-renderer allocations remain in the full local trace."
+    },
+    "original-runtime": {
+      "path": "/workspace/scratch/lifecycle-allocation/original-runtime/memory-trace.json.gz",
+      "sha256": "84e7156665b2916cf5e40d4193a52632e184a97598b18e660337febbe6a4e906",
+      "retained_extract_sha256": "8fcfc8c00f175bdf7d422ff6aab50fad1fccdff897e49bd15f69d30e665c8315",
+      "extract": "Exact renderer allocator events consumed by analysis; unrelated VM maps and non-renderer allocations remain in the full local trace."
+    },
+    "original-art": {
+      "path": "/workspace/scratch/lifecycle-allocation/original-art/memory-trace.json.gz",
+      "sha256": "74aa470be56ae48cb1bb98bde48390d7ebc26176e0fd172989e1c906d74d8abf",
+      "retained_extract_sha256": "835bab01c255b9ad366d6a031c5ddef9de6e105f7be0020753e545079923d5f5",
+      "extract": "Exact renderer allocator events consumed by analysis; unrelated VM maps and non-renderer allocations remain in the full local trace."
+    },
+    "original-search": {
+      "path": "/workspace/scratch/lifecycle-allocation/original-search/memory-trace.json.gz",
+      "sha256": "512d1ed4ef06553c6df215856c6e05aa62c2fce1e36c275c11dfcc3345278924",
+      "retained_extract_sha256": "eab677ed9042d7f753e8553b4c840b9110c71b76bb50c74a456275f76cc920fc",
+      "extract": "Exact renderer allocator events consumed by analysis; unrelated VM maps and non-renderer allocations remain in the full local trace."
+    },
+    "original-runtime-audio": {
+      "path": "/workspace/scratch/lifecycle-allocation/original-runtime-audio/memory-trace.json.gz",
+      "sha256": "5b653506d90e780e9ff32f43887c158e1ff35ec5253351a8e913ee88452552c7",
+      "retained_extract_sha256": "a0fe3ae846dca933e07d0a6ce80edb2de74e87a162dfc03e9514bf3e05c9ff27",
+      "extract": "Exact renderer allocator events consumed by analysis; unrelated VM maps and non-renderer allocations remain in the full local trace."
+    },
+    "before-repeat": {
+      "path": "/workspace/scratch/lifecycle-allocation/before-repeat/memory-trace.json.gz",
+      "sha256": "45e0d1e8e654a07083add690062498115b01c51764782a4f444f49bf89137881",
+      "retained_extract_sha256": "4a603e0d477efc0ff762ac8709b4df942bd64b57175e57ce06a6a1408b0e3f7f",
+      "extract": "Exact renderer allocator events consumed by analysis; unrelated VM maps and non-renderer allocations remain in the full local trace."
+    },
+    "after-repeat": {
+      "path": "/workspace/scratch/lifecycle-allocation/after-repeat/memory-trace.json.gz",
+      "sha256": "8b4583d2d9c571f3cc60da2eebd926b65470b5f3117fcde44dfd4c73e845a3b3",
+      "retained_extract_sha256": "d07ca64d469aea2504ead82d851766773f82d49e73bfee8d89cb27b52f4fd60d",
+      "extract": "Exact renderer allocator events consumed by analysis; unrelated VM maps and non-renderer allocations remain in the full local trace."
+    },
+    "pagehide-cancel": {
+      "path": "/workspace/scratch/lifecycle-allocation/pagehide-cancel/memory-trace.json.gz",
+      "sha256": "690b38fd89356a19227610615e895a83f792c28833a909b3b8c69da51ba10221",
+      "retained_extract_sha256": "f0a82c199a5caa7805b3250165ed38d99938f17fe45c008debfd6f213388ac28",
+      "extract": "Exact renderer allocator events consumed by analysis; unrelated VM maps and non-renderer allocations remain in the full local trace."
+    }
+  },
+  "files": {
+    "before/environment.json": {
+      "bytes": 1669,
+      "sha256": "6d477c639ee39f335c4f19fc591e829b66d374640c4a597e9a9864c82f3042b2"
+    },
+    "before/False-warm.json": {
+      "bytes": 569020,
+      "sha256": "8fbc3c67a71a40911c2be9dd713b21460121d7c41737d304eef82dcd54657240"
+    },
+    "before/allocation-requests.json": {
+      "bytes": 477457,
+      "sha256": "1d6b4952908b1b01c9d1a30827de2b63de35f52f9abe0ea9374724c91dc96f60"
+    },
+    "before/allocator-dumps.json.gz": {
+      "bytes": 4071895,
+      "sha256": "f62973e248f2cd86e7565f38aa391c7fbbc3a763321a16fe7e77836875626aaf"
+    },
+    "before/profile-False-warm.png": {
+      "bytes": 341515,
+      "sha256": "852f11296707561f42296a08909255d86df5808dca305dcf4145243dac694748"
+    },
+    "after/environment.json": {
+      "bytes": 3573,
+      "sha256": "c754d8e71cbde53fc6e2b510bea18358d6000589eac4e4a30c95e609e71077f5"
+    },
+    "after/False-warm.json": {
+      "bytes": 531539,
+      "sha256": "25260b3515d6c38067b20ca748a9493e36a80808ced830b5b71288cf56615fdf"
+    },
+    "after/allocation-requests.json": {
+      "bytes": 442778,
+      "sha256": "fd210dd2baec71e4ec3597f0a45067ca1480a0cd09db753bcb94689b2d8ab08c"
+    },
+    "after/allocator-dumps.json.gz": {
+      "bytes": 4961182,
+      "sha256": "a15f2d7aca4b66488ba2ab661d0e70217843a57d2f2c3ba25e9744d8b72eaf57"
+    },
+    "after/profile-False-warm.png": {
+      "bytes": 351715,
+      "sha256": "e1facd70cf41b66f1a2d044a41b4149f159aeeb9979ffb69a0f1dcfb508667ac"
+    },
+    "original-runtime/environment.json": {
+      "bytes": 3573,
+      "sha256": "f64f80ef4f10899f2b93c34bd79de7c9710820007f7828033426b0f211667ff1"
+    },
+    "original-runtime/False-warm.json": {
+      "bytes": 538473,
+      "sha256": "79f75b3df6b921d653e65b89f01a184966321f99ed51aeefb26932132ac9de0d"
+    },
+    "original-runtime/allocation-requests.json": {
+      "bytes": 449234,
+      "sha256": "16a5ea1153c12bb953b4d5931a8f659e955cb660deb315db5e1218e1eed986e0"
+    },
+    "original-runtime/allocator-dumps.json.gz": {
+      "bytes": 5055997,
+      "sha256": "8fcfc8c00f175bdf7d422ff6aab50fad1fccdff897e49bd15f69d30e665c8315"
+    },
+    "original-runtime/profile-False-warm.png": {
+      "bytes": 351715,
+      "sha256": "e1facd70cf41b66f1a2d044a41b4149f159aeeb9979ffb69a0f1dcfb508667ac"
+    },
+    "original-art/environment.json": {
+      "bytes": 3573,
+      "sha256": "7b09b477e50ab513ac494b089b8cf6d93f3bfcf4e6e8e65f029532c760db3aa9"
+    },
+    "original-art/False-warm.json": {
+      "bytes": 523744,
+      "sha256": "f216c29fe7cddb6081edd764060a5a45c1647f40c61c7cb12f6a4f9c33cbd9dd"
+    },
+    "original-art/allocation-requests.json": {
+      "bytes": 435417,
+      "sha256": "3735748293173ae2776391466649776cec4922d3de3e868daf10dcd54542ff06"
+    },
+    "original-art/allocator-dumps.json.gz": {
+      "bytes": 5313457,
+      "sha256": "835bab01c255b9ad366d6a031c5ddef9de6e105f7be0020753e545079923d5f5"
+    },
+    "original-art/profile-False-warm.png": {
+      "bytes": 341531,
+      "sha256": "73fc1a1cb4610cf0bbaf36da0001f380898ae322ed33f5eebc8a8f443fd9933b"
+    },
+    "original-search/environment.json": {
+      "bytes": 3573,
+      "sha256": "98af073413a686947647820874e282bcdcc49fe533e3c63768c2ef3bbc8e84d6"
+    },
+    "original-search/False-warm.json": {
+      "bytes": 465266,
+      "sha256": "fe9d3a4f44685941cbac43ec5742c3a04e08d9a79d92193d55d9681b2d5a0846"
+    },
+    "original-search/allocation-requests.json": {
+      "bytes": 381409,
+      "sha256": "e36fe7d4e6ea8f978891c26db43d14a97ed33216a01cd7ee5bc506c2efb5e741"
+    },
+    "original-search/allocator-dumps.json.gz": {
+      "bytes": 4638970,
+      "sha256": "eab677ed9042d7f753e8553b4c840b9110c71b76bb50c74a456275f76cc920fc"
+    },
+    "original-search/profile-False-warm.png": {
+      "bytes": 351715,
+      "sha256": "e1facd70cf41b66f1a2d044a41b4149f159aeeb9979ffb69a0f1dcfb508667ac"
+    },
+    "original-runtime-audio/environment.json": {
+      "bytes": 3573,
+      "sha256": "bc975b080f284e01bd53630303413a04825ce7379b0f1c7bcd2a5531ff9135f8"
+    },
+    "original-runtime-audio/False-warm.json": {
+      "bytes": 597671,
+      "sha256": "82dd417d53985bab8baaa6a84aed763f3964fc96335fcacfb4c1d64836508cc6"
+    },
+    "original-runtime-audio/allocation-requests.json": {
+      "bytes": 504084,
+      "sha256": "02e4e74a2f5084c83409f2f6b2d2dddc6dfcb73e9eb21239834e920570200578"
+    },
+    "original-runtime-audio/allocator-dumps.json.gz": {
+      "bytes": 4482594,
+      "sha256": "a0fe3ae846dca933e07d0a6ce80edb2de74e87a162dfc03e9514bf3e05c9ff27"
+    },
+    "original-runtime-audio/profile-False-warm.png": {
+      "bytes": 351715,
+      "sha256": "e1facd70cf41b66f1a2d044a41b4149f159aeeb9979ffb69a0f1dcfb508667ac"
+    },
+    "before-repeat/environment.json": {
+      "bytes": 1669,
+      "sha256": "6d477c639ee39f335c4f19fc591e829b66d374640c4a597e9a9864c82f3042b2"
+    },
+    "before-repeat/False-warm.json": {
+      "bytes": 568820,
+      "sha256": "62f89b86bd0cba003a8dac57fa18c66b94806052c12e9e4d6b14b5d110b60fa6"
+    },
+    "before-repeat/allocation-requests.json": {
+      "bytes": 477403,
+      "sha256": "3dcbe1949da19dff251c9c0575f346375e4e90235338f39499df65120637d573"
+    },
+    "before-repeat/allocator-dumps.json.gz": {
+      "bytes": 4444951,
+      "sha256": "4a603e0d477efc0ff762ac8709b4df942bd64b57175e57ce06a6a1408b0e3f7f"
+    },
+    "before-repeat/profile-False-warm.png": {
+      "bytes": 341292,
+      "sha256": "4d9cd98af8172f32a1c08108b22ca19284fa94876bad1c56ba3fff108b1a4baf"
+    },
+    "after-repeat/environment.json": {
+      "bytes": 3573,
+      "sha256": "7af919b93d103bd7ab68fdd428e1854dfa44c1f53fe3af5617ab84eb79c8e43a"
+    },
+    "after-repeat/False-warm.json": {
+      "bytes": 541997,
+      "sha256": "42eb8612ba70b69729be14f558659cda9ea11c6b59a922376d06e3a92b2d85b7"
+    },
+    "after-repeat/allocation-requests.json": {
+      "bytes": 452407,
+      "sha256": "872ba8229aeb9bee0c8e88100dead53ee045315529500f4df8d3bc0ee0a11072"
+    },
+    "after-repeat/allocator-dumps.json.gz": {
+      "bytes": 5475918,
+      "sha256": "d07ca64d469aea2504ead82d851766773f82d49e73bfee8d89cb27b52f4fd60d"
+    },
+    "after-repeat/profile-False-warm.png": {
+      "bytes": 351715,
+      "sha256": "e1facd70cf41b66f1a2d044a41b4149f159aeeb9979ffb69a0f1dcfb508667ac"
+    },
+    "after-repeat/diagnostic-provenance.json": {
+      "bytes": 316,
+      "sha256": "d0e594914c416260c9b6c9bb4e1e37d5e2e8901fb39fcd0afe647a4181368b2f"
+    },
+    "pagehide-cancel/environment.json": {
+      "bytes": 3573,
+      "sha256": "7d4edf9f1e0e07e3300ba1cd1a7f2ee90b4eabd0afab1b718717ea07718854d7"
+    },
+    "pagehide-cancel/False-warm.json": {
+      "bytes": 511473,
+      "sha256": "707ab2c17cb38c9dc0442d2e254aa50eb95b3b52ccd3389742538127bd380211"
+    },
+    "pagehide-cancel/allocation-requests.json": {
+      "bytes": 424420,
+      "sha256": "b75d125bccc5da2c15b08c09a8ee2b6e41a2f569f9c208ffca9abed9a07482c6"
+    },
+    "pagehide-cancel/allocator-dumps.json.gz": {
+      "bytes": 5231804,
+      "sha256": "f0a82c199a5caa7805b3250165ed38d99938f17fe45c008debfd6f213388ac28"
+    },
+    "pagehide-cancel/profile-False-warm.png": {
+      "bytes": 351715,
+      "sha256": "e1facd70cf41b66f1a2d044a41b4149f159aeeb9979ffb69a0f1dcfb508667ac"
+    },
+    "pagehide-cancel/diagnostic-provenance.json": {
+      "bytes": 641,
+      "sha256": "76f7cefbda920272e0d53cfdb74c3cb38c6fc0ad6344540e6d58d64be1d25c5b"
+    }
+  },
+  "parts": [
+    {
+      "file": "native-probes-1.zip",
+      "bytes": 15144916,
+      "sha256": "aa9bc1d30529ca8b7e8279e878ae32c30f3684f97401e9c6ff3e828159b3645a"
+    },
+    {
+      "file": "native-probes-2.zip",
+      "bytes": 15491422,
+      "sha256": "6518ca7a39fe353f37a9b5dfd2f1f88aececd97a11aca2e746345a664e81d7bf"
+    },
+    {
+      "file": "native-probes-3.zip",
+      "bytes": 16208876,
+      "sha256": "98fd157a293076ca9c19492eb4500d17da266aec071074a2f001d7496b340cfb"
+    }
+  ]
+}
