@@ -30,14 +30,12 @@ if(avatarLoafSupported){window.avatarLoafObserver=new PerformanceObserver(l=>l.g
 @pytest.mark.parametrize('kind',['fern','mushroom','succulent'])
 def test_native_art_control(baseline_server,app_mod,tmp_path,kind):
     import storage as st
-    from jinja2 import ChoiceLoader,FileSystemLoader
+    from tests.avatar_browser_fixture import historical_art_loader
     from playwright.sync_api import sync_playwright
     origin,cookie,uid=baseline_server
     conn=st.connect(app_mod.DB);st.set_user_avatar(conn,uid,kind,'Native Control');conn.close()
     env=app_mod.templates.env;loader=env.loader
-    folder=tmp_path/'old';folder.mkdir()
-    for name in ['_avatars.html','_avatars_art.html']:(folder/name).write_bytes(subprocess.check_output(['git','show','5b580d9:templates/'+name]))
-    loaders={'before':ChoiceLoader([FileSystemLoader(folder),loader]),'after':loader}
+    loaders={'before':historical_art_loader(loader,tmp_path/'old'),'after':loader}
     after_only=os.getenv('CSS_AVATAR_NATIVE_AFTER_ONLY')=='1'
     source_commit=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()
     out=Path(os.environ['CSS_AVATAR_OUT']).parent/kind;out.mkdir(parents=True,exist_ok=True);rows=[]

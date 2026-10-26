@@ -17,21 +17,19 @@ pytestmark=pytest.mark.skipif(os.getenv('CSS_AVATAR_CPU_DIAGNOSTIC')!='1',reason
 @pytest.mark.parametrize('kind',['fern','mushroom','succulent'])
 def test_cpu_attribution(baseline_server,app_mod,tmp_path,kind):
     import storage as st
-    from jinja2 import ChoiceLoader,FileSystemLoader
+    from tests.avatar_browser_fixture import historical_art_loader
     from playwright.sync_api import sync_playwright
     origin,cookie,uid=baseline_server
     conn=st.connect(app_mod.DB);st.set_user_avatar(conn,uid,kind,'Native Control');conn.close()
     env=app_mod.templates.env;original=env.loader
-    folder=tmp_path/'old';folder.mkdir()
-    for name in ['_avatars.html','_avatars_art.html']:
-        (folder/name).write_bytes(subprocess.check_output(['git','show','5b580d9:templates/'+name]))
+    old_loader=historical_art_loader(original,tmp_path/'old')
     out=Path(os.environ['CSS_AVATAR_OUT']).parent/kind;out.mkdir(parents=True,exist_ok=True)
     rows=[];runs=int(os.getenv('CSS_AVATAR_CPU_RUNS','1'));after_only=os.getenv('CSS_AVATAR_CPU_AFTER_ONLY')=='1'
     try:
         with sync_playwright() as pw:
             for run in range(runs):
                 for version in (['after'] if after_only else (['before','after'] if run%2==0 else ['after','before'])):
-                    env.loader=ChoiceLoader([FileSystemLoader(folder),original]) if version=='before' else original
+                    env.loader=old_loader if version=='before' else original
                     env.cache.clear()
                     browser=pw.chromium.launch(executable_path=shutil.which('chromium'),args=['--no-sandbox'])
                     assert browser.version==os.getenv('CSS_AVATAR_CHROMIUM','154.0.8037.57')

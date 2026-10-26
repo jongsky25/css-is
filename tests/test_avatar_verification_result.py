@@ -104,3 +104,26 @@ def test_mixed_source_phases_cannot_pass(tmp_path):
     verdict=assess(tmp_path)
     assert verdict['status']=='inconclusive'
     assert 'same_source_and_browser' in verdict['harness_errors']
+
+
+def test_historical_art_renders_matching_growth_callers(tmp_path):
+    from itertools import count
+    from jinja2 import Environment, FileSystemLoader, StrictUndefined
+    from tests.avatar_browser_fixture import historical_art_loader
+    root = Path(__file__).resolve().parents[1]
+    current = FileSystemLoader(root / 'templates')
+    stages = [dict(stage=n, name=str(n), current=n == 1, reached=n == 1,
+                   points_at=n * 10) for n in range(1, 7)]
+    how = dict(points=[], care=dict(verb='water', badge='Cared for', blurb='A test'))
+    for historical in [True, False]:
+        loader = historical_art_loader(current, tmp_path / 'old') if historical else current
+        env = Environment(loader=loader, autoescape=True, undefined=StrictUndefined)
+        ids = count(1)
+        env.globals.update(avatar_uid=lambda: 'compat-' + str(next(ids)),
+            avatar_family=lambda kind: 'plant', avatar_is_swimmer=lambda kind: False,
+            avatar_month=lambda: 7, avatar_outfit=lambda: 'default',
+            avatar_care_verb=lambda kind: 'water')
+        macro = env.get_template('_avatars.html').module.avatar_svg
+        assert ('static_preview' in macro.arguments) is not historical
+        html = str(env.get_template('_growth.html').module.growth('fern', stages, how, None))
+        assert html.count('data-avatar-kind="fern"') == 6

@@ -3,6 +3,18 @@ import os
 from pathlib import Path
 
 
+def historical_art_loader(current_loader, folder):
+    """Load original art with callers that support its historical macro API."""
+    import subprocess
+    from jinja2 import ChoiceLoader, FileSystemLoader
+    folder = Path(folder)
+    folder.mkdir(parents=True, exist_ok=True)
+    for name in ['_avatars.html', '_avatars_art.html', '_growth.html', 'me.html']:
+        (folder / name).write_bytes(subprocess.check_output([
+            'git', 'show', '5b580d9:templates/' + name]))
+    return ChoiceLoader([FileSystemLoader(folder), current_loader])
+
+
 def pin_renderer_threads(browser):
     """Keep synthetic-throttle signals and the renderer on the same CPU.
 

@@ -765,3 +765,13 @@ priorc2f404f to4561 on the candidate; original baseline is4878.
 Full functional/focused/runtime/device-cache verification follows.2B is not yet accepted.
 Final workflow exposes each sequential phase independently and records native
 allocation details in both matrix arms, without changing any measurement or budget.
+
+
+Final verifier preflight found a historical-control compatibility issue after
+startingrun40263432618 (b1079aa): its old-art overlay loaded only the old macro,
+while current growth callers now passstatic_preview. The control loader now
+uses the matching original5b580d9 growth/profile caller templates as well;
+historical macros are not patched or modernized. A regression renders six
+stages through both historical/current caller APIs; all17 driver checks pass.
+The obsolete run is superseded using verification-branch concurrency cancellation.
+Productf700187 and both passing memory cohorts remain unchanged.
