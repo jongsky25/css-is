@@ -1,0 +1,16 @@
+{
+  "home": {
+    "decorative": 0,
+    "decorative_running": 0,
+    "live_running": 1
+  },
+  "profile": {
+    "previews": 16,
+    "running": 0
+  },
+  "first_bounce_time_ms": 133.29800000059765,
+  "replayed_bounce_time_ms": 49.999999999999936,
+  "active_replay_offset_width_reads": 0,
+  "completed_replay_clears_happy": true,
+  "errors": []
+}

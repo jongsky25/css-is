@@ -1,0 +1,44 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+____________ test_shared_geometry_observer_and_navigation_teardown _____________
+
+baseline_server = ('http://127.0.0.1:34749', {'name': 'css_session', 'value': 'eyJ1aWQiOjQsInUiOiJhZG1pbkB0ZXN0LmxvY2FsIiwiciI6ImFkbWluI...NDBkMGQxMzJhIn0.4397ac78cad13e6755eec55659700b73882e70cb53817e18ff7e1f96b6bee0ce', 'url': 'http://127.0.0.1:34749'}, 4)
+
+    def test_shared_geometry_observer_and_navigation_teardown(baseline_server):
+        from playwright.sync_api import sync_playwright
+        origin,cookie,_=baseline_server
+        with sync_playwright() as pw:
+            browser=pw.chromium.launch(executable_path=shutil.which('chromium'),args=['--no-sandbox'])
+            context=browser.new_context(viewport={'width':1440,'height':1000},timezone_id='UTC')
+            context.add_cookies([cookie]);context.add_init_script(PROBE)
+            context.add_init_script('''(()=>{const Native=ResizeObserver;window.geometryObserverRecords=[];
+              window.ResizeObserver=class extends Native{constructor(cb){super(cb);this.targets=new Set();geometryObserverRecords.push(this)}
+                observe(el,options){this.targets.add(el);return super.observe(el,options)}
+                unobserve(el){this.targets.delete(el);return super.unobserve(el)}
+                disconnect(){this.targets.clear();return super.disconnect()}};})()''')
+            page=context.new_page();errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
+            page.goto(origin+'/?view=me');page.wait_for_timeout(500)
+            page.evaluate('''()=>{const wrap=document.querySelector('.avwrap[data-interactive]');const copy=wrap.cloneNode(true);
+              copy.id='geometry-extra-wrap';wrap.parentNode.appendChild(copy)}''')
+            page.wait_for_timeout(400)
+            before=page.evaluate('''()=>{const wraps=[...document.querySelectorAll('.avwrap[data-interactive]')],o=__cssAvatarGeometry.bodyObserver;
+              return {wraps:wraps.length,observed:wraps.every(w=>o.targets.has(w)),body:o.targets.has(document.body),
+                owners:geometryObserverRecords.filter(r=>wraps.some(w=>r.targets.has(w))).length}}''')
+>           assert before=={'wraps':2,'observed':True,'body':True,'owners':1}
+E           AssertionError: assert {'wraps': 2, ..., 'owners': 2} == {'wraps': 2, ..., 'owners': 1}
+E             
+E             Omitting 2 identical items, use -vv to show
+E             Differing items:
+E             {'owners': 2} != {'owners': 1}
+E             {'observed': False} != {'observed': True}
+E             Use -v to get more diff
+
+tests/test_avatar_geometry_lifecycle_browser.py:32: AssertionError
+=============================== warnings summary ===============================
+tests/test_avatar_geometry_lifecycle_browser.py::test_shared_geometry_observer_and_navigation_teardown
+  /tmp/geometry-regression-vx1j928s/current/tests/conftest.py:88: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_avatar_geometry_lifecycle_browser.py::test_shared_geometry_observer_and_navigation_teardown
