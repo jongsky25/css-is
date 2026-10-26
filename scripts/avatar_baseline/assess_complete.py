@@ -9,6 +9,11 @@ try:
 except ImportError:
     from verification_result import Results, frame_pass, read_json, validate_samples
 
+try:
+    from .memory_audit import audit_memory
+except ImportError:
+    from memory_audit import audit_memory
+
 PHASES = ('functional', 'focused', 'runtime', 'matrix')
 
 
@@ -103,7 +108,10 @@ def assess(root):
                         raise ValueError('Matrix protocol mismatch')
         return True
     result.check('matrix_protocol',matrix,environment=True)
-    return {**result.as_dict(), 'phase_statuses':{p:d['status'] for p,d in phases.items()},
+    memory=audit_memory(root/'matrix/before/application',root/'matrix/after/application')
+    result.check('complete_memory_cohorts',lambda: memory['status']!='inconclusive',environment=True)
+    result.check('all_scenario_and_navigation_memory',lambda: memory['status']=='passed')
+    return {**result.as_dict(), 'full_memory_audit':memory, 'phase_statuses':{p:d['status'] for p,d in phases.items()},
             'source_commit':phases.get('functional',{}).get('source_commit'),
             'artifact_assessment_sha256':{p:hashlib.sha256((root/p/'assessment.json').read_bytes()).hexdigest() for p in phases},
             'scope':'Increment2B; pre-existing offscreen motion, timer activity and listener retention remain separately tracked release blockers.',

@@ -6,6 +6,7 @@ from pathlib import Path
 import subprocess
 import statistics
 from verification_result import frame_pass
+from memory_audit import audit_memory
 
 p=argparse.ArgumentParser();p.add_argument('--before',default='docs/avatars/application');p.add_argument('--after',default='docs/avatars/increment1/application');a=p.parse_args()
 left=Path(a.before);right=Path(a.after)
@@ -44,6 +45,11 @@ result['gates']={
  'no_javascript_errors':not after['failures']['javascript_errors'],
  'no_external_requests':not after['failures']['external_attempts'],
 }
+memory=audit_memory(left,right)
+result['full_memory_audit']=memory
+result['environment_checks']=memory['environment_checks']
+result['gates'].update({'memory-'+name:passed for name,passed in memory['gates'].items()})
+result['gates']['complete_valid_memory_cohorts']=memory['status']!='inconclusive'
 result['requires_investigation']=['Page-wide long tasks need attribution before declaring the avatar-specific long-task gate passed.',
  'Renderer RSS must be compared at identical renderer-process counts; shared pages are not private memory.',
  'The mobile hard frame gate applies to each sample; median-only reporting cannot hide slower samples.',

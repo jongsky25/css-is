@@ -14,8 +14,28 @@ All five runs per arm have matching positive renderer counts (three for offscree
 
 The earlier candidate's opposite-order retained memory run also contains a background RSS increase of **26.171875 MiB** and seasonal-preview increase of **12.710938 MiB** in its reverse-order pair. Its passing picker numbers alone never established all-scenario acceptance. Repeated-navigation RSS differences also exceed 10 MiB (warm desktop +32.300781 MiB at mount 20); lifecycle findings remain unresolved.
 
-The largest final background increase is mostly shared resident pages: median summed Shared_Clean rises about 23.17 MiB, while summed Private_Dirty is slightly lower and PSS rises about 3.60 MiB. This does not prove a JavaScript retention leak, establish the root cause, or authorize subtracting shared memory from the RSS budget. An attributable, validated correction is still required.
+Shared-page measurements differ substantially: median summed Shared_Clean rises about 23.17 MiB, while summed Private_Dirty is slightly lower and PSS rises about 3.60 MiB. This does not prove a JavaScript retention leak, establish the root cause, or authorize subtracting shared memory from the RSS budget. An attributable, validated correction is still required.
 
 All functional/visual, callback/frame and five-active-scenario findings remain preserved in [the incomplete audit report](REPORT-incomplete-audit.md), [its assessment](assessment-incomplete-audit.json), and [the full numeric/visual archive](final-verification/numeric-and-visual-evidence.tar.gz). Full raw traces remain in [artifact 12630379820](https://github.com/jongsky25/css-is/actions/runs/40277957839/artifacts/12630379820), retained until November 25. The green workflow/audit labels did not cover the omitted gates.
 
 3A work is preserved on `codex/avatar-3a`, but its workflow has been paused and run 40280615190 cancelled after this prerequisite failure was discovered. No 3B, wardrobe, motion increment or release work may be accepted on this basis. No merge or deployment occurred.
+
+## Complete retained-memory audit
+
+[104 recomputed comparisons](final-verification/complete-memory-audit.json) cover eight scenarios and five navigation checkpoints, two metrics, four device/cache groups. All cohorts and renderer counts are valid; eleven RSS comparisons fail. [Corrected overall assessment](final-verification/corrected-overall-assessment.json) rejects acceptance despite the four original green phase labels.
+
+| Configuration | Scenario | RSS median delta (MiB) |
+|---|---|---:|
+| False-cold | navigation_10 | 26.011719 |
+| False-cold | navigation_15 | 21.824219 |
+| False-cold | navigation_20 | 12.851562 |
+| False-warm | offscreen | 11.335938 |
+| False-warm | reduced_motion | 11.097656 |
+| False-warm | background | 18.835938 |
+| False-warm | navigation_1 | 20.062500 |
+| False-warm | navigation_5 | 20.753906 |
+| False-warm | navigation_10 | 41.777344 |
+| False-warm | navigation_15 | 26.195312 |
+| False-warm | navigation_20 | 32.300781 |
+
+The corrected checker includes every scenario/navigation checkpoint and rejects missing/duplicate cohorts, zero memory and mismatched browsers/renderer counts. All 27 focused checker regressions pass. No new product optimization is claimed: the native allocation/retention cause is not established, and earlier successful active-scenario results do not override these failures.

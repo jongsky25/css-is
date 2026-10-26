@@ -132,6 +132,7 @@ try:
                 results.check('summarize-'+name,lambda: run('summarize-'+name,[python,'scripts/avatar_baseline/summarize.py',str(out/name/'application')])==0,environment=True)
             results.check('comparison_runner',lambda: run('compare',[python,'scripts/avatar_baseline/compare.py','--before',str(out/'before/application'),'--after',str(out/'after/application')])==0,environment=True)
             comparison=read(out/'after/comparison.json');gates.update(comparison['gates'])
+            results.environment.update(comparison.get('environment_checks',{}))
             for name in ['before','after']:
                 results.environment[name+'_complete']=read(out/name/'application/summary.json')['full_duration_complete']
             # RSS is comparable only with the same renderer-process counts.

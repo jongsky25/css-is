@@ -13,5 +13,9 @@
     "background": 19750912
   },
   "historical_incomplete_acceptance": "assessment-incomplete-audit.json",
-  "next_step": "Correct evidence coverage, diagnose retained native memory differences, then validate an attributable fix before 3A acceptance."
+  "next_step": "Correct evidence coverage, diagnose retained native memory differences, then validate an attributable fix before 3A acceptance.",
+  "complete_memory_audit": "final-verification/complete-memory-audit.json",
+  "corrected_overall_assessment": "final-verification/corrected-overall-assessment.json",
+  "memory_comparisons": 104,
+  "memory_failures": 11
 }

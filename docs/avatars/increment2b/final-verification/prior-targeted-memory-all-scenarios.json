@@ -1,0 +1,402 @@
+{
+  "source": "../static-preview-fix/hosted-memory-evidence.zip",
+  "diagnostic_only": true,
+  "pairs": [
+    {
+      "before": "0-before",
+      "after": "1-after",
+      "records": [
+        {
+          "scenario": "home_idle",
+          "medians": {
+            "before": 443195392,
+            "after": 451731456
+          },
+          "delta_bytes": 8536064,
+          "counts": {
+            "before": [
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            "after": [
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          }
+        },
+        {
+          "scenario": "home_interaction",
+          "medians": {
+            "before": 444002304,
+            "after": 453226496
+          },
+          "delta_bytes": 9224192,
+          "counts": {
+            "before": [
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            "after": [
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          }
+        },
+        {
+          "scenario": "wellness_care",
+          "medians": {
+            "before": 442793984,
+            "after": 450826240
+          },
+          "delta_bytes": 8032256,
+          "counts": {
+            "before": [
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            "after": [
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          }
+        },
+        {
+          "scenario": "picker_growth",
+          "medians": {
+            "before": 472444928,
+            "after": 481411072
+          },
+          "delta_bytes": 8966144,
+          "counts": {
+            "before": [
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            "after": [
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          }
+        },
+        {
+          "scenario": "seasonal_preview",
+          "medians": {
+            "before": 515051520,
+            "after": 525152256
+          },
+          "delta_bytes": 10100736,
+          "counts": {
+            "before": [
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            "after": [
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          }
+        },
+        {
+          "scenario": "offscreen",
+          "medians": {
+            "before": 488067072,
+            "after": 493109248
+          },
+          "delta_bytes": 5042176,
+          "counts": {
+            "before": [
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            "after": [
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          }
+        },
+        {
+          "scenario": "reduced_motion",
+          "medians": {
+            "before": 490229760,
+            "after": 494211072
+          },
+          "delta_bytes": 3981312,
+          "counts": {
+            "before": [
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            "after": [
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          }
+        },
+        {
+          "scenario": "background",
+          "medians": {
+            "before": 630894592,
+            "after": 634630144
+          },
+          "delta_bytes": 3735552,
+          "counts": {
+            "before": [
+              4,
+              4,
+              4,
+              4,
+              4
+            ],
+            "after": [
+              4,
+              4,
+              4,
+              4,
+              4
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "before": "3-before",
+      "after": "2-after",
+      "records": [
+        {
+          "scenario": "home_idle",
+          "medians": {
+            "before": 446951424,
+            "after": 452882432
+          },
+          "delta_bytes": 5931008,
+          "counts": {
+            "before": [
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            "after": [
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          }
+        },
+        {
+          "scenario": "home_interaction",
+          "medians": {
+            "before": 446824448,
+            "after": 453537792
+          },
+          "delta_bytes": 6713344,
+          "counts": {
+            "before": [
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            "after": [
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          }
+        },
+        {
+          "scenario": "wellness_care",
+          "medians": {
+            "before": 444997632,
+            "after": 450953216
+          },
+          "delta_bytes": 5955584,
+          "counts": {
+            "before": [
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            "after": [
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          }
+        },
+        {
+          "scenario": "picker_growth",
+          "medians": {
+            "before": 475545600,
+            "after": 484233216
+          },
+          "delta_bytes": 8687616,
+          "counts": {
+            "before": [
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            "after": [
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          }
+        },
+        {
+          "scenario": "seasonal_preview",
+          "medians": {
+            "before": 512897024,
+            "after": 526225408
+          },
+          "delta_bytes": 13328384,
+          "counts": {
+            "before": [
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            "after": [
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          }
+        },
+        {
+          "scenario": "offscreen",
+          "medians": {
+            "before": 490340352,
+            "after": 499351552
+          },
+          "delta_bytes": 9011200,
+          "counts": {
+            "before": [
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            "after": [
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          }
+        },
+        {
+          "scenario": "reduced_motion",
+          "medians": {
+            "before": 492421120,
+            "after": 500854784
+          },
+          "delta_bytes": 8433664,
+          "counts": {
+            "before": [
+              3,
+              3,
+              3,
+              3,
+              3
+            ],
+            "after": [
+              3,
+              3,
+              3,
+              3,
+              3
+            ]
+          }
+        },
+        {
+          "scenario": "background",
+          "medians": {
+            "before": 615510016,
+            "after": 642953216
+          },
+          "delta_bytes": 27443200,
+          "counts": {
+            "before": [
+              4,
+              4,
+              4,
+              4,
+              4
+            ],
+            "after": [
+              4,
+              4,
+              4,
+              4,
+              4
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

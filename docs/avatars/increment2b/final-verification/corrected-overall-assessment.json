@@ -1,0 +1,5731 @@
+{
+  "status": "application_regression",
+  "gates": {
+    "functional": true,
+    "focused": true,
+    "runtime": true,
+    "matrix": true,
+    "fern_focused_raw": true,
+    "fern_runtime_raw": true,
+    "mushroom_focused_raw": true,
+    "mushroom_runtime_raw": true,
+    "succulent_focused_raw": true,
+    "succulent_runtime_raw": true,
+    "all_scenario_and_navigation_memory": false
+  },
+  "environment_checks": {
+    "same_source_and_browser": true,
+    "focused_control_raw": true,
+    "runtime_control_raw": true,
+    "matrix_control_raw": true,
+    "matrix_protocol": true,
+    "complete_memory_cohorts": true
+  },
+  "harness_errors": {},
+  "full_memory_audit": {
+    "status": "application_regression",
+    "budget_bytes": 10485760,
+    "gates": {
+      "False-cold-home_idle-renderer_rss_sum_bytes": true,
+      "False-cold-home_idle-js_heap_bytes": true,
+      "False-cold-home_interaction-renderer_rss_sum_bytes": true,
+      "False-cold-home_interaction-js_heap_bytes": true,
+      "False-cold-wellness_care-renderer_rss_sum_bytes": true,
+      "False-cold-wellness_care-js_heap_bytes": true,
+      "False-cold-picker_growth-renderer_rss_sum_bytes": true,
+      "False-cold-picker_growth-js_heap_bytes": true,
+      "False-cold-seasonal_preview-renderer_rss_sum_bytes": true,
+      "False-cold-seasonal_preview-js_heap_bytes": true,
+      "False-cold-offscreen-renderer_rss_sum_bytes": true,
+      "False-cold-offscreen-js_heap_bytes": true,
+      "False-cold-reduced_motion-renderer_rss_sum_bytes": true,
+      "False-cold-reduced_motion-js_heap_bytes": true,
+      "False-cold-background-renderer_rss_sum_bytes": true,
+      "False-cold-background-js_heap_bytes": true,
+      "False-cold-navigation_1-renderer_rss_sum_bytes": true,
+      "False-cold-navigation_1-js_heap_bytes": true,
+      "False-cold-navigation_5-renderer_rss_sum_bytes": true,
+      "False-cold-navigation_5-js_heap_bytes": true,
+      "False-cold-navigation_10-renderer_rss_sum_bytes": false,
+      "False-cold-navigation_10-js_heap_bytes": true,
+      "False-cold-navigation_15-renderer_rss_sum_bytes": false,
+      "False-cold-navigation_15-js_heap_bytes": true,
+      "False-cold-navigation_20-renderer_rss_sum_bytes": false,
+      "False-cold-navigation_20-js_heap_bytes": true,
+      "False-warm-home_idle-renderer_rss_sum_bytes": true,
+      "False-warm-home_idle-js_heap_bytes": true,
+      "False-warm-home_interaction-renderer_rss_sum_bytes": true,
+      "False-warm-home_interaction-js_heap_bytes": true,
+      "False-warm-wellness_care-renderer_rss_sum_bytes": true,
+      "False-warm-wellness_care-js_heap_bytes": true,
+      "False-warm-picker_growth-renderer_rss_sum_bytes": true,
+      "False-warm-picker_growth-js_heap_bytes": true,
+      "False-warm-seasonal_preview-renderer_rss_sum_bytes": true,
+      "False-warm-seasonal_preview-js_heap_bytes": true,
+      "False-warm-offscreen-renderer_rss_sum_bytes": false,
+      "False-warm-offscreen-js_heap_bytes": true,
+      "False-warm-reduced_motion-renderer_rss_sum_bytes": false,
+      "False-warm-reduced_motion-js_heap_bytes": true,
+      "False-warm-background-renderer_rss_sum_bytes": false,
+      "False-warm-background-js_heap_bytes": true,
+      "False-warm-navigation_1-renderer_rss_sum_bytes": false,
+      "False-warm-navigation_1-js_heap_bytes": true,
+      "False-warm-navigation_5-renderer_rss_sum_bytes": false,
+      "False-warm-navigation_5-js_heap_bytes": true,
+      "False-warm-navigation_10-renderer_rss_sum_bytes": false,
+      "False-warm-navigation_10-js_heap_bytes": true,
+      "False-warm-navigation_15-renderer_rss_sum_bytes": false,
+      "False-warm-navigation_15-js_heap_bytes": true,
+      "False-warm-navigation_20-renderer_rss_sum_bytes": false,
+      "False-warm-navigation_20-js_heap_bytes": true,
+      "True-cold-home_idle-renderer_rss_sum_bytes": true,
+      "True-cold-home_idle-js_heap_bytes": true,
+      "True-cold-home_interaction-renderer_rss_sum_bytes": true,
+      "True-cold-home_interaction-js_heap_bytes": true,
+      "True-cold-wellness_care-renderer_rss_sum_bytes": true,
+      "True-cold-wellness_care-js_heap_bytes": true,
+      "True-cold-picker_growth-renderer_rss_sum_bytes": true,
+      "True-cold-picker_growth-js_heap_bytes": true,
+      "True-cold-seasonal_preview-renderer_rss_sum_bytes": true,
+      "True-cold-seasonal_preview-js_heap_bytes": true,
+      "True-cold-offscreen-renderer_rss_sum_bytes": true,
+      "True-cold-offscreen-js_heap_bytes": true,
+      "True-cold-reduced_motion-renderer_rss_sum_bytes": true,
+      "True-cold-reduced_motion-js_heap_bytes": true,
+      "True-cold-background-renderer_rss_sum_bytes": true,
+      "True-cold-background-js_heap_bytes": true,
+      "True-cold-navigation_1-renderer_rss_sum_bytes": true,
+      "True-cold-navigation_1-js_heap_bytes": true,
+      "True-cold-navigation_5-renderer_rss_sum_bytes": true,
+      "True-cold-navigation_5-js_heap_bytes": true,
+      "True-cold-navigation_10-renderer_rss_sum_bytes": true,
+      "True-cold-navigation_10-js_heap_bytes": true,
+      "True-cold-navigation_15-renderer_rss_sum_bytes": true,
+      "True-cold-navigation_15-js_heap_bytes": true,
+      "True-cold-navigation_20-renderer_rss_sum_bytes": true,
+      "True-cold-navigation_20-js_heap_bytes": true,
+      "True-warm-home_idle-renderer_rss_sum_bytes": true,
+      "True-warm-home_idle-js_heap_bytes": true,
+      "True-warm-home_interaction-renderer_rss_sum_bytes": true,
+      "True-warm-home_interaction-js_heap_bytes": true,
+      "True-warm-wellness_care-renderer_rss_sum_bytes": true,
+      "True-warm-wellness_care-js_heap_bytes": true,
+      "True-warm-picker_growth-renderer_rss_sum_bytes": true,
+      "True-warm-picker_growth-js_heap_bytes": true,
+      "True-warm-seasonal_preview-renderer_rss_sum_bytes": true,
+      "True-warm-seasonal_preview-js_heap_bytes": true,
+      "True-warm-offscreen-renderer_rss_sum_bytes": true,
+      "True-warm-offscreen-js_heap_bytes": true,
+      "True-warm-reduced_motion-renderer_rss_sum_bytes": true,
+      "True-warm-reduced_motion-js_heap_bytes": true,
+      "True-warm-background-renderer_rss_sum_bytes": true,
+      "True-warm-background-js_heap_bytes": true,
+      "True-warm-navigation_1-renderer_rss_sum_bytes": true,
+      "True-warm-navigation_1-js_heap_bytes": true,
+      "True-warm-navigation_5-renderer_rss_sum_bytes": true,
+      "True-warm-navigation_5-js_heap_bytes": true,
+      "True-warm-navigation_10-renderer_rss_sum_bytes": true,
+      "True-warm-navigation_10-js_heap_bytes": true,
+      "True-warm-navigation_15-renderer_rss_sum_bytes": true,
+      "True-warm-navigation_15-js_heap_bytes": true,
+      "True-warm-navigation_20-renderer_rss_sum_bytes": true,
+      "True-warm-navigation_20-js_heap_bytes": true
+    },
+    "environment_checks": {
+      "False-cold-home_idle-renderer_counts": true,
+      "False-cold-home_interaction-renderer_counts": true,
+      "False-cold-wellness_care-renderer_counts": true,
+      "False-cold-picker_growth-renderer_counts": true,
+      "False-cold-seasonal_preview-renderer_counts": true,
+      "False-cold-offscreen-renderer_counts": true,
+      "False-cold-reduced_motion-renderer_counts": true,
+      "False-cold-background-renderer_counts": true,
+      "False-cold-navigation_1-renderer_counts": true,
+      "False-cold-navigation_5-renderer_counts": true,
+      "False-cold-navigation_10-renderer_counts": true,
+      "False-cold-navigation_15-renderer_counts": true,
+      "False-cold-navigation_20-renderer_counts": true,
+      "False-warm-home_idle-renderer_counts": true,
+      "False-warm-home_interaction-renderer_counts": true,
+      "False-warm-wellness_care-renderer_counts": true,
+      "False-warm-picker_growth-renderer_counts": true,
+      "False-warm-seasonal_preview-renderer_counts": true,
+      "False-warm-offscreen-renderer_counts": true,
+      "False-warm-reduced_motion-renderer_counts": true,
+      "False-warm-background-renderer_counts": true,
+      "False-warm-navigation_1-renderer_counts": true,
+      "False-warm-navigation_5-renderer_counts": true,
+      "False-warm-navigation_10-renderer_counts": true,
+      "False-warm-navigation_15-renderer_counts": true,
+      "False-warm-navigation_20-renderer_counts": true,
+      "True-cold-home_idle-renderer_counts": true,
+      "True-cold-home_interaction-renderer_counts": true,
+      "True-cold-wellness_care-renderer_counts": true,
+      "True-cold-picker_growth-renderer_counts": true,
+      "True-cold-seasonal_preview-renderer_counts": true,
+      "True-cold-offscreen-renderer_counts": true,
+      "True-cold-reduced_motion-renderer_counts": true,
+      "True-cold-background-renderer_counts": true,
+      "True-cold-navigation_1-renderer_counts": true,
+      "True-cold-navigation_5-renderer_counts": true,
+      "True-cold-navigation_10-renderer_counts": true,
+      "True-cold-navigation_15-renderer_counts": true,
+      "True-cold-navigation_20-renderer_counts": true,
+      "True-warm-home_idle-renderer_counts": true,
+      "True-warm-home_interaction-renderer_counts": true,
+      "True-warm-wellness_care-renderer_counts": true,
+      "True-warm-picker_growth-renderer_counts": true,
+      "True-warm-seasonal_preview-renderer_counts": true,
+      "True-warm-offscreen-renderer_counts": true,
+      "True-warm-reduced_motion-renderer_counts": true,
+      "True-warm-background-renderer_counts": true,
+      "True-warm-navigation_1-renderer_counts": true,
+      "True-warm-navigation_5-renderer_counts": true,
+      "True-warm-navigation_10-renderer_counts": true,
+      "True-warm-navigation_15-renderer_counts": true,
+      "True-warm-navigation_20-renderer_counts": true,
+      "all_scenarios_and_navigation_complete": true
+    },
+    "harness_errors": {},
+    "records": [
+      {
+        "group": "False-cold",
+        "scenario": "home_idle",
+        "metric": "renderer_rss_sum_bytes",
+        "samples": {
+          "before": [
+            433774592,
+            469749760,
+            470282240,
+            470339584,
+            470454272
+          ],
+          "after": [
+            407011328,
+            436699136,
+            435503104,
+            435249152,
+            435630080
+          ]
+        },
+        "medians": {
+          "before": 470282240,
+          "after": 435503104
+        },
+        "worst": {
+          "before": 470454272,
+          "after": 436699136
+        },
+        "median_delta_bytes": -34779136,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "False-cold",
+        "scenario": "home_idle",
+        "metric": "js_heap_bytes",
+        "samples": {
+          "before": [
+            2824564,
+            2828304,
+            2864044,
+            2829680,
+            2843544
+          ],
+          "after": [
+            2627652,
+            2628392,
+            2628448,
+            2628688,
+            2644800
+          ]
+        },
+        "medians": {
+          "before": 2829680,
+          "after": 2628448
+        },
+        "worst": {
+          "before": 2864044,
+          "after": 2644800
+        },
+        "median_delta_bytes": -201232,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "False-cold",
+        "scenario": "home_interaction",
+        "metric": "renderer_rss_sum_bytes",
+        "samples": {
+          "before": [
+            484376576,
+            502460416,
+            503529472,
+            503926784,
+            502542336
+          ],
+          "after": [
+            427663360,
+            452104192,
+            450633728,
+            451424256,
+            451100672
+          ]
+        },
+        "medians": {
+          "before": 502542336,
+          "after": 451100672
+        },
+        "worst": {
+          "before": 503926784,
+          "after": 452104192
+        },
+        "median_delta_bytes": -51441664,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "False-cold",
+        "scenario": "home_interaction",
+        "metric": "js_heap_bytes",
+        "samples": {
+          "before": [
+            2757680,
+            3589352,
+            3756552,
+            3613284,
+            3571164
+          ],
+          "after": [
+            2776324,
+            3158956,
+            3804632,
+            3123468,
+            3883044
+          ]
+        },
+        "medians": {
+          "before": 3589352,
+          "after": 3158956
+        },
+        "worst": {
+          "before": 3756552,
+          "after": 3883044
+        },
+        "median_delta_bytes": -430396,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "False-cold",
+        "scenario": "wellness_care",
+        "metric": "renderer_rss_sum_bytes",
+        "samples": {
+          "before": [
+            486072320,
+            501039104,
+            501690368,
+            503173120,
+            501850112
+          ],
+          "after": [
+            427290624,
+            449900544,
+            448884736,
+            449744896,
+            449253376
+          ]
+        },
+        "medians": {
+          "before": 501690368,
+          "after": 449253376
+        },
+        "worst": {
+          "before": 503173120,
+          "after": 449900544
+        },
+        "median_delta_bytes": -52436992,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "False-cold",
+        "scenario": "wellness_care",
+        "metric": "js_heap_bytes",
+        "samples": {
+          "before": [
+            4454480,
+            3215736,
+            3289172,
+            3216060,
+            3213304
+          ],
+          "after": [
+            4431368,
+            3209872,
+            3209452,
+            3212328,
+            3205420
+          ]
+        },
+        "medians": {
+          "before": 3216060,
+          "after": 3209872
+        },
+        "worst": {
+          "before": 4454480,
+          "after": 4431368
+        },
+        "median_delta_bytes": -6188,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "False-cold",
+        "scenario": "picker_growth",
+        "metric": "renderer_rss_sum_bytes",
+        "samples": {
+          "before": [
+            514392064,
+            531537920,
+            530882560,
+            528850944,
+            533291008
+          ],
+          "after": [
+            463757312,
+            484769792,
+            478973952,
+            479571968,
+            478011392
+          ]
+        },
+        "medians": {
+          "before": 530882560,
+          "after": 478973952
+        },
+        "worst": {
+          "before": 533291008,
+          "after": 484769792
+        },
+        "median_delta_bytes": -51908608,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "False-cold",
+        "scenario": "picker_growth",
+        "metric": "js_heap_bytes",
+        "samples": {
+          "before": [
+            4410784,
+            4415732,
+            4439276,
+            4425236,
+            4518572
+          ],
+          "after": [
+            5163212,
+            5216532,
+            5171312,
+            5158948,
+            5149812
+          ]
+        },
+        "medians": {
+          "before": 4425236,
+          "after": 5163212
+        },
+        "worst": {
+          "before": 4518572,
+          "after": 5216532
+        },
+        "median_delta_bytes": 737976,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "False-cold",
+        "scenario": "seasonal_preview",
+        "metric": "renderer_rss_sum_bytes",
+        "samples": {
+          "before": [
+            548446208,
+            568541184,
+            571265024,
+            556257280,
+            569741312
+          ],
+          "after": [
+            510652416,
+            523108352,
+            528392192,
+            527867904,
+            528834560
+          ]
+        },
+        "medians": {
+          "before": 568541184,
+          "after": 527867904
+        },
+        "worst": {
+          "before": 571265024,
+          "after": 528834560
+        },
+        "median_delta_bytes": -40673280,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "False-cold",
+        "scenario": "seasonal_preview",
+        "metric": "js_heap_bytes",
+        "samples": {
+          "before": [
+            10466284,
+            10335420,
+            12176004,
+            10443284,
+            10983256
+          ],
+          "after": [
+            7292236,
+            11112268,
+            11097740,
+            11181568,
+            10988176
+          ]
+        },
+        "medians": {
+          "before": 10466284,
+          "after": 11097740
+        },
+        "worst": {
+          "before": 12176004,
+          "after": 11181568
+        },
+        "median_delta_bytes": 631456,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "False-cold",
+        "scenario": "offscreen",
+        "metric": "renderer_rss_sum_bytes",
+        "samples": {
+          "before": [
+            512770048,
+            531976192,
+            542101504,
+            534372352,
+            532992000
+          ],
+          "after": [
+            478179328,
+            502345728,
+            500547584,
+            499875840,
+            500977664
+          ]
+        },
+        "medians": {
+          "before": 532992000,
+          "after": 500547584
+        },
+        "worst": {
+          "before": 542101504,
+          "after": 502345728
+        },
+        "median_delta_bytes": -32444416,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "False-cold",
+        "scenario": "offscreen",
+        "metric": "js_heap_bytes",
+        "samples": {
+          "before": [
+            10081384,
+            10022788,
+            13026664,
+            10113824,
+            10657348
+          ],
+          "after": [
+            7150332,
+            10712332,
+            10772676,
+            10841240,
+            10751012
+          ]
+        },
+        "medians": {
+          "before": 10113824,
+          "after": 10751012
+        },
+        "worst": {
+          "before": 13026664,
+          "after": 10841240
+        },
+        "median_delta_bytes": 637188,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "False-cold",
+        "scenario": "reduced_motion",
+        "metric": "renderer_rss_sum_bytes",
+        "samples": {
+          "before": [
+            513880064,
+            533159936,
+            541212672,
+            535474176,
+            534552576
+          ],
+          "after": [
+            478990336,
+            504344576,
+            502337536,
+            501542912,
+            502575104
+          ]
+        },
+        "medians": {
+          "before": 534552576,
+          "after": 502337536
+        },
+        "worst": {
+          "before": 541212672,
+          "after": 504344576
+        },
+        "median_delta_bytes": -32215040,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "False-cold",
+        "scenario": "reduced_motion",
+        "metric": "js_heap_bytes",
+        "samples": {
+          "before": [
+            10244268,
+            10188568,
+            13192780,
+            10280020,
+            10821104
+          ],
+          "after": [
+            7307052,
+            10869016,
+            10929396,
+            10998060,
+            10904824
+          ]
+        },
+        "medians": {
+          "before": 10280020,
+          "after": 10904824
+        },
+        "worst": {
+          "before": 13192780,
+          "after": 10998060
+        },
+        "median_delta_bytes": 624804,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "False-cold",
+        "scenario": "background",
+        "metric": "renderer_rss_sum_bytes",
+        "samples": {
+          "before": [
+            653033472,
+            660992000,
+            680992768,
+            674775040,
+            673705984
+          ],
+          "after": [
+            619425792,
+            646057984,
+            644669440,
+            643018752,
+            645042176
+          ]
+        },
+        "medians": {
+          "before": 673705984,
+          "after": 644669440
+        },
+        "worst": {
+          "before": 680992768,
+          "after": 646057984
+        },
+        "median_delta_bytes": -29036544,
+        "renderer_counts": {
+          "before": [
+            4,
+            4,
+            4,
+            4,
+            4
+          ],
+          "after": [
+            4,
+            4,
+            4,
+            4,
+            4
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "False-cold",
+        "scenario": "background",
+        "metric": "js_heap_bytes",
+        "samples": {
+          "before": [
+            10415092,
+            10358868,
+            13363168,
+            10450488,
+            10991488
+          ],
+          "after": [
+            7455244,
+            11018780,
+            11079040,
+            11147888,
+            11055512
+          ]
+        },
+        "medians": {
+          "before": 10450488,
+          "after": 11055512
+        },
+        "worst": {
+          "before": 13363168,
+          "after": 11147888
+        },
+        "median_delta_bytes": 605024,
+        "renderer_counts": {
+          "before": [
+            4,
+            4,
+            4,
+            4,
+            4
+          ],
+          "after": [
+            4,
+            4,
+            4,
+            4,
+            4
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "False-cold",
+        "scenario": "navigation_1",
+        "metric": "renderer_rss_sum_bytes",
+        "samples": {
+          "before": [
+            542879744,
+            550653952,
+            572903424,
+            563609600,
+            565321728
+          ],
+          "after": [
+            506634240,
+            537505792,
+            536055808,
+            534958080,
+            536842240
+          ]
+        },
+        "medians": {
+          "before": 563609600,
+          "after": 536055808
+        },
+        "worst": {
+          "before": 572903424,
+          "after": 537505792
+        },
+        "median_delta_bytes": -27553792,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "False-cold",
+        "scenario": "navigation_1",
+        "metric": "js_heap_bytes",
+        "samples": {
+          "before": [
+            11179460,
+            11122492,
+            5405828,
+            11217324,
+            11756620
+          ],
+          "after": [
+            8246584,
+            11818740,
+            11868516,
+            11941012,
+            11848264
+          ]
+        },
+        "medians": {
+          "before": 11179460,
+          "after": 11848264
+        },
+        "worst": {
+          "before": 11756620,
+          "after": 11941012
+        },
+        "median_delta_bytes": 668804,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "False-cold",
+        "scenario": "navigation_5",
+        "metric": "renderer_rss_sum_bytes",
+        "samples": {
+          "before": [
+            574275584,
+            582180864,
+            587853824,
+            593911808,
+            594558976
+          ],
+          "after": [
+            531767296,
+            585719808,
+            590000128,
+            580374528,
+            585175040
+          ]
+        },
+        "medians": {
+          "before": 587853824,
+          "after": 585175040
+        },
+        "worst": {
+          "before": 594558976,
+          "after": 590000128
+        },
+        "median_delta_bytes": -2678784,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "False-cold",
+        "scenario": "navigation_5",
+        "metric": "js_heap_bytes",
+        "samples": {
+          "before": [
+            13734604,
+            13678936,
+            6177244,
+            6157048,
+            14310460
+          ],
+          "after": [
+            10931924,
+            14503972,
+            14554588,
+            14627412,
+            14534760
+          ]
+        },
+        "medians": {
+          "before": 13678936,
+          "after": 14534760
+        },
+        "worst": {
+          "before": 14310460,
+          "after": 14627412
+        },
+        "median_delta_bytes": 855824,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "False-cold",
+        "scenario": "navigation_10",
+        "metric": "renderer_rss_sum_bytes",
+        "samples": {
+          "before": [
+            567881728,
+            578191360,
+            586424320,
+            589484032,
+            594632704
+          ],
+          "after": [
+            574402560,
+            615030784,
+            619257856,
+            610836480,
+            613699584
+          ]
+        },
+        "medians": {
+          "before": 586424320,
+          "after": 613699584
+        },
+        "worst": {
+          "before": 594632704,
+          "after": 619257856
+        },
+        "median_delta_bytes": 27275264,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": false
+      },
+      {
+        "group": "False-cold",
+        "scenario": "navigation_10",
+        "metric": "js_heap_bytes",
+        "samples": {
+          "before": [
+            7337448,
+            6730104,
+            7355236,
+            6750204,
+            6103604
+          ],
+          "after": [
+            14242172,
+            17818120,
+            5393456,
+            5392540,
+            17847712
+          ]
+        },
+        "medians": {
+          "before": 6750204,
+          "after": 14242172
+        },
+        "worst": {
+          "before": 7355236,
+          "after": 17847712
+        },
+        "median_delta_bytes": 7491968,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "False-cold",
+        "scenario": "navigation_15",
+        "metric": "renderer_rss_sum_bytes",
+        "samples": {
+          "before": [
+            568057856,
+            577056768,
+            596434944,
+            579395584,
+            590954496
+          ],
+          "after": [
+            566919168,
+            603537408,
+            602279936,
+            598462464,
+            602566656
+          ]
+        },
+        "medians": {
+          "before": 579395584,
+          "after": 602279936
+        },
+        "worst": {
+          "before": 596434944,
+          "after": 603537408
+        },
+        "median_delta_bytes": 22884352,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": false
+      },
+      {
+        "group": "False-cold",
+        "scenario": "navigation_15",
+        "metric": "js_heap_bytes",
+        "samples": {
+          "before": [
+            7920368,
+            5542256,
+            9533816,
+            6777196,
+            8693084
+          ],
+          "after": [
+            8195556,
+            8180728,
+            8710904,
+            8711672,
+            8180172
+          ]
+        },
+        "medians": {
+          "before": 7920368,
+          "after": 8195556
+        },
+        "worst": {
+          "before": 9533816,
+          "after": 8711672
+        },
+        "median_delta_bytes": 275188,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "False-cold",
+        "scenario": "navigation_20",
+        "metric": "renderer_rss_sum_bytes",
+        "samples": {
+          "before": [
+            562044928,
+            569757696,
+            586866688,
+            579444736,
+            603254784
+          ],
+          "after": [
+            553885696,
+            596418560,
+            592920576,
+            590585856,
+            596451328
+          ]
+        },
+        "medians": {
+          "before": 579444736,
+          "after": 592920576
+        },
+        "worst": {
+          "before": 603254784,
+          "after": 596451328
+        },
+        "median_delta_bytes": 13475840,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": false
+      },
+      {
+        "group": "False-cold",
+        "scenario": "navigation_20",
+        "metric": "js_heap_bytes",
+        "samples": {
+          "before": [
+            5563288,
+            7298160,
+            6502956,
+            5559404,
+            10897068
+          ],
+          "after": [
+            6189740,
+            6797552,
+            5912284,
+            5426116,
+            6800252
+          ]
+        },
+        "medians": {
+          "before": 6502956,
+          "after": 6189740
+        },
+        "worst": {
+          "before": 10897068,
+          "after": 6800252
+        },
+        "median_delta_bytes": -313216,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "False-warm",
+        "scenario": "home_idle",
+        "metric": "renderer_rss_sum_bytes",
+        "samples": {
+          "before": [
+            419778560,
+            446513152,
+            446517248,
+            447647744,
+            423849984
+          ],
+          "after": [
+            420732928,
+            446988288,
+            446648320,
+            447062016,
+            447926272
+          ]
+        },
+        "medians": {
+          "before": 446513152,
+          "after": 446988288
+        },
+        "worst": {
+          "before": 447647744,
+          "after": 447926272
+        },
+        "median_delta_bytes": 475136,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "False-warm",
+        "scenario": "home_idle",
+        "metric": "js_heap_bytes",
+        "samples": {
+          "before": [
+            2660968,
+            2733280,
+            2440304,
+            2720176,
+            2722508
+          ],
+          "after": [
+            2619752,
+            2623756,
+            2624144,
+            2636932,
+            2625008
+          ]
+        },
+        "medians": {
+          "before": 2720176,
+          "after": 2624144
+        },
+        "worst": {
+          "before": 2733280,
+          "after": 2636932
+        },
+        "median_delta_bytes": -96032,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "False-warm",
+        "scenario": "home_interaction",
+        "metric": "renderer_rss_sum_bytes",
+        "samples": {
+          "before": [
+            429629440,
+            446496768,
+            447340544,
+            446820352,
+            423993344
+          ],
+          "after": [
+            422567936,
+            447500288,
+            447033344,
+            447520768,
+            448266240
+          ]
+        },
+        "medians": {
+          "before": 446496768,
+          "after": 447500288
+        },
+        "worst": {
+          "before": 447340544,
+          "after": 448266240
+        },
+        "median_delta_bytes": 1003520,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "False-warm",
+        "scenario": "home_interaction",
+        "metric": "js_heap_bytes",
+        "samples": {
+          "before": [
+            3890076,
+            2704564,
+            3849296,
+            3662512,
+            3704392
+          ],
+          "after": [
+            3414816,
+            3923536,
+            3788632,
+            3853436,
+            3114608
+          ]
+        },
+        "medians": {
+          "before": 3704392,
+          "after": 3788632
+        },
+        "worst": {
+          "before": 3890076,
+          "after": 3923536
+        },
+        "median_delta_bytes": 84240,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "False-warm",
+        "scenario": "wellness_care",
+        "metric": "renderer_rss_sum_bytes",
+        "samples": {
+          "before": [
+            428482560,
+            445358080,
+            442658816,
+            444678144,
+            422031360
+          ],
+          "after": [
+            420540416,
+            445784064,
+            444334080,
+            445313024,
+            445927424
+          ]
+        },
+        "medians": {
+          "before": 442658816,
+          "after": 445313024
+        },
+        "worst": {
+          "before": 445358080,
+          "after": 445927424
+        },
+        "median_delta_bytes": 2654208,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "False-warm",
+        "scenario": "wellness_care",
+        "metric": "js_heap_bytes",
+        "samples": {
+          "before": [
+            3215936,
+            4402708,
+            3228120,
+            3226628,
+            3165664
+          ],
+          "after": [
+            2957212,
+            3276660,
+            3213236,
+            3213548,
+            3214800
+          ]
+        },
+        "medians": {
+          "before": 3226628,
+          "after": 3213548
+        },
+        "worst": {
+          "before": 4402708,
+          "after": 3276660
+        },
+        "median_delta_bytes": -13080,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "False-warm",
+        "scenario": "picker_growth",
+        "metric": "renderer_rss_sum_bytes",
+        "samples": {
+          "before": [
+            455954432,
+            480546816,
+            468504576,
+            471572480,
+            452911104
+          ],
+          "after": [
+            453419008,
+            474923008,
+            474337280,
+            478633984,
+            479760384
+          ]
+        },
+        "medians": {
+          "before": 468504576,
+          "after": 474923008
+        },
+        "worst": {
+          "before": 480546816,
+          "after": 479760384
+        },
+        "median_delta_bytes": 6418432,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "False-warm",
+        "scenario": "picker_growth",
+        "metric": "js_heap_bytes",
+        "samples": {
+          "before": [
+            4419544,
+            4399936,
+            4391788,
+            4415508,
+            5900964
+          ],
+          "after": [
+            5129464,
+            5241204,
+            5170260,
+            5559616,
+            5594984
+          ]
+        },
+        "medians": {
+          "before": 4415508,
+          "after": 5241204
+        },
+        "worst": {
+          "before": 5900964,
+          "after": 5594984
+        },
+        "median_delta_bytes": 825696,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "False-warm",
+        "scenario": "seasonal_preview",
+        "metric": "renderer_rss_sum_bytes",
+        "samples": {
+          "before": [
+            517746688,
+            521297920,
+            513224704,
+            514568192,
+            484102144
+          ],
+          "after": [
+            498610176,
+            523546624,
+            524333056,
+            519749632,
+            524996608
+          ]
+        },
+        "medians": {
+          "before": 514568192,
+          "after": 523546624
+        },
+        "worst": {
+          "before": 521297920,
+          "after": 524996608
+        },
+        "median_delta_bytes": 8978432,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "False-warm",
+        "scenario": "seasonal_preview",
+        "metric": "js_heap_bytes",
+        "samples": {
+          "before": [
+            13639108,
+            10638308,
+            9561252,
+            9544424,
+            10849148
+          ],
+          "after": [
+            8723612,
+            12643228,
+            10471860,
+            10503868,
+            11036748
+          ]
+        },
+        "medians": {
+          "before": 10638308,
+          "after": 10503868
+        },
+        "worst": {
+          "before": 13639108,
+          "after": 12643228
+        },
+        "median_delta_bytes": -134440,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "False-warm",
+        "scenario": "offscreen",
+        "metric": "renderer_rss_sum_bytes",
+        "samples": {
+          "before": [
+            470974464,
+            494415872,
+            479694848,
+            479850496,
+            466833408
+          ],
+          "after": [
+            473325568,
+            491692032,
+            491581440,
+            491491328,
+            494436352
+          ]
+        },
+        "medians": {
+          "before": 479694848,
+          "after": 491581440
+        },
+        "worst": {
+          "before": 494415872,
+          "after": 494436352
+        },
+        "median_delta_bytes": 11886592,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": false
+      },
+      {
+        "group": "False-warm",
+        "scenario": "offscreen",
+        "metric": "js_heap_bytes",
+        "samples": {
+          "before": [
+            14480640,
+            11478480,
+            10454480,
+            9260392,
+            10646788
+          ],
+          "after": [
+            9570248,
+            13485492,
+            10127196,
+            10127556,
+            10685832
+          ]
+        },
+        "medians": {
+          "before": 10646788,
+          "after": 10127556
+        },
+        "worst": {
+          "before": 14480640,
+          "after": 13485492
+        },
+        "median_delta_bytes": -519232,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "False-warm",
+        "scenario": "reduced_motion",
+        "metric": "renderer_rss_sum_bytes",
+        "samples": {
+          "before": [
+            472862720,
+            496496640,
+            481587200,
+            481906688,
+            468828160
+          ],
+          "after": [
+            474484736,
+            493240320,
+            493015040,
+            493223936,
+            495730688
+          ]
+        },
+        "medians": {
+          "before": 481587200,
+          "after": 493223936
+        },
+        "worst": {
+          "before": 496496640,
+          "after": 495730688
+        },
+        "median_delta_bytes": 11636736,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": false
+      },
+      {
+        "group": "False-warm",
+        "scenario": "reduced_motion",
+        "metric": "js_heap_bytes",
+        "samples": {
+          "before": [
+            14646188,
+            11642020,
+            10620672,
+            9426064,
+            10812936
+          ],
+          "after": [
+            9727404,
+            13642548,
+            10283952,
+            10284168,
+            10842888
+          ]
+        },
+        "medians": {
+          "before": 10812936,
+          "after": 10284168
+        },
+        "worst": {
+          "before": 14646188,
+          "after": 13642548
+        },
+        "median_delta_bytes": -528768,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "False-warm",
+        "scenario": "background",
+        "metric": "renderer_rss_sum_bytes",
+        "samples": {
+          "before": [
+            613728256,
+            637202432,
+            597299200,
+            622424064,
+            609550336
+          ],
+          "after": [
+            613687296,
+            632020992,
+            633479168,
+            634044416,
+            636334080
+          ]
+        },
+        "medians": {
+          "before": 613728256,
+          "after": 633479168
+        },
+        "worst": {
+          "before": 637202432,
+          "after": 636334080
+        },
+        "median_delta_bytes": 19750912,
+        "renderer_counts": {
+          "before": [
+            4,
+            4,
+            4,
+            4,
+            4
+          ],
+          "after": [
+            4,
+            4,
+            4,
+            4,
+            4
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": false
+      },
+      {
+        "group": "False-warm",
+        "scenario": "background",
+        "metric": "js_heap_bytes",
+        "samples": {
+          "before": [
+            14815912,
+            11812192,
+            10791036,
+            9596944,
+            10983360
+          ],
+          "after": [
+            9875216,
+            5476484,
+            10433572,
+            10433624,
+            10992632
+          ]
+        },
+        "medians": {
+          "before": 10983360,
+          "after": 10433572
+        },
+        "worst": {
+          "before": 14815912,
+          "after": 10992632
+        },
+        "median_delta_bytes": -549788,
+        "renderer_counts": {
+          "before": [
+            4,
+            4,
+            4,
+            4,
+            4
+          ],
+          "after": [
+            4,
+            4,
+            4,
+            4,
+            4
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "False-warm",
+        "scenario": "navigation_1",
+        "metric": "renderer_rss_sum_bytes",
+        "samples": {
+          "before": [
+            498212864,
+            531525632,
+            489824256,
+            515960832,
+            505683968
+          ],
+          "after": [
+            501940224,
+            513794048,
+            526721024,
+            527093760,
+            530079744
+          ]
+        },
+        "medians": {
+          "before": 505683968,
+          "after": 526721024
+        },
+        "worst": {
+          "before": 531525632,
+          "after": 530079744
+        },
+        "median_delta_bytes": 21037056,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": false
+      },
+      {
+        "group": "False-warm",
+        "scenario": "navigation_1",
+        "metric": "js_heap_bytes",
+        "samples": {
+          "before": [
+            5573864,
+            12575992,
+            11555228,
+            10360576,
+            11748344
+          ],
+          "after": [
+            10667072,
+            6273768,
+            11235480,
+            11224484,
+            11784812
+          ]
+        },
+        "medians": {
+          "before": 11555228,
+          "after": 11224484
+        },
+        "worst": {
+          "before": 12575992,
+          "after": 11784812
+        },
+        "median_delta_bytes": -330744,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "False-warm",
+        "scenario": "navigation_5",
+        "metric": "renderer_rss_sum_bytes",
+        "samples": {
+          "before": [
+            534200320,
+            559767552,
+            519004160,
+            562577408,
+            552943616
+          ],
+          "after": [
+            534839296,
+            550785024,
+            574705664,
+            576000000,
+            577568768
+          ]
+        },
+        "medians": {
+          "before": 552943616,
+          "after": 574705664
+        },
+        "worst": {
+          "before": 562577408,
+          "after": 577568768
+        },
+        "median_delta_bytes": 21762048,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": false
+      },
+      {
+        "group": "False-warm",
+        "scenario": "navigation_5",
+        "metric": "js_heap_bytes",
+        "samples": {
+          "before": [
+            8129628,
+            6150832,
+            6708768,
+            12914608,
+            14301236
+          ],
+          "after": [
+            13353452,
+            8958816,
+            13920236,
+            13910520,
+            14470848
+          ]
+        },
+        "medians": {
+          "before": 8129628,
+          "after": 13910520
+        },
+        "worst": {
+          "before": 14301236,
+          "after": 14470848
+        },
+        "median_delta_bytes": 5780892,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "False-warm",
+        "scenario": "navigation_10",
+        "metric": "renderer_rss_sum_bytes",
+        "samples": {
+          "before": [
+            526753792,
+            560877568,
+            518250496,
+            567980032,
+            566214656
+          ],
+          "after": [
+            575672320,
+            564817920,
+            611323904,
+            604684288,
+            613388288
+          ]
+        },
+        "medians": {
+          "before": 560877568,
+          "after": 604684288
+        },
+        "worst": {
+          "before": 567980032,
+          "after": 613388288
+        },
+        "median_delta_bytes": 43806720,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": false
+      },
+      {
+        "group": "False-warm",
+        "scenario": "navigation_10",
+        "metric": "js_heap_bytes",
+        "samples": {
+          "before": [
+            7325156,
+            7332616,
+            6127248,
+            5520600,
+            5544924
+          ],
+          "after": [
+            5434620,
+            12271088,
+            17230356,
+            5394568,
+            5398852
+          ]
+        },
+        "medians": {
+          "before": 6127248,
+          "after": 5434620
+        },
+        "worst": {
+          "before": 7332616,
+          "after": 17230356
+        },
+        "median_delta_bytes": -692628,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "False-warm",
+        "scenario": "navigation_15",
+        "metric": "renderer_rss_sum_bytes",
+        "samples": {
+          "before": [
+            526688256,
+            567988224,
+            528490496,
+            574218240,
+            564133888
+          ],
+          "after": [
+            559017984,
+            567103488,
+            591601664,
+            594661376,
+            601399296
+          ]
+        },
+        "medians": {
+          "before": 564133888,
+          "after": 591601664
+        },
+        "worst": {
+          "before": 574218240,
+          "after": 601399296
+        },
+        "median_delta_bytes": 27467776,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": false
+      },
+      {
+        "group": "False-warm",
+        "scenario": "navigation_15",
+        "metric": "js_heap_bytes",
+        "samples": {
+          "before": [
+            7346948,
+            7998724,
+            6110128,
+            7274344,
+            8693152
+          ],
+          "after": [
+            8752108,
+            7855640,
+            8207328,
+            8712676,
+            8714404
+          ]
+        },
+        "medians": {
+          "before": 7346948,
+          "after": 8712676
+        },
+        "worst": {
+          "before": 8693152,
+          "after": 8752108
+        },
+        "median_delta_bytes": 1365728,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "False-warm",
+        "scenario": "navigation_20",
+        "metric": "renderer_rss_sum_bytes",
+        "samples": {
+          "before": [
+            538910720,
+            561352704,
+            523272192,
+            575328256,
+            557391872
+          ],
+          "after": [
+            546877440,
+            565194752,
+            591261696,
+            599654400,
+            607825920
+          ]
+        },
+        "medians": {
+          "before": 557391872,
+          "after": 591261696
+        },
+        "worst": {
+          "before": 575328256,
+          "after": 607825920
+        },
+        "median_delta_bytes": 33869824,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": false
+      },
+      {
+        "group": "False-warm",
+        "scenario": "navigation_20",
+        "metric": "js_heap_bytes",
+        "samples": {
+          "before": [
+            10492920,
+            7929444,
+            9257604,
+            9262096,
+            7320700
+          ],
+          "after": [
+            6247820,
+            5597912,
+            8146560,
+            6793808,
+            12028780
+          ]
+        },
+        "medians": {
+          "before": 9257604,
+          "after": 6793808
+        },
+        "worst": {
+          "before": 10492920,
+          "after": 12028780
+        },
+        "median_delta_bytes": -2463796,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "True-cold",
+        "scenario": "home_idle",
+        "metric": "renderer_rss_sum_bytes",
+        "samples": {
+          "before": [
+            430014464,
+            459538432,
+            459866112,
+            460251136,
+            459673600
+          ],
+          "after": [
+            390795264,
+            416915456,
+            417218560,
+            418697216,
+            416337920
+          ]
+        },
+        "medians": {
+          "before": 459673600,
+          "after": 416915456
+        },
+        "worst": {
+          "before": 460251136,
+          "after": 418697216
+        },
+        "median_delta_bytes": -42758144,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "True-cold",
+        "scenario": "home_idle",
+        "metric": "js_heap_bytes",
+        "samples": {
+          "before": [
+            2861352,
+            2880552,
+            2881272,
+            2864516,
+            2881096
+          ],
+          "after": [
+            2660396,
+            2679916,
+            2660956,
+            2676460,
+            2663028
+          ]
+        },
+        "medians": {
+          "before": 2880552,
+          "after": 2663028
+        },
+        "worst": {
+          "before": 2881272,
+          "after": 2679916
+        },
+        "median_delta_bytes": -217524,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "True-cold",
+        "scenario": "home_interaction",
+        "metric": "renderer_rss_sum_bytes",
+        "samples": {
+          "before": [
+            473165824,
+            489377792,
+            489824256,
+            490053632,
+            489197568
+          ],
+          "after": [
+            411054080,
+            429670400,
+            429789184,
+            430575616,
+            428138496
+          ]
+        },
+        "medians": {
+          "before": 489377792,
+          "after": 429670400
+        },
+        "worst": {
+          "before": 490053632,
+          "after": 430575616
+        },
+        "median_delta_bytes": -59707392,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "True-cold",
+        "scenario": "home_interaction",
+        "metric": "js_heap_bytes",
+        "samples": {
+          "before": [
+            2793528,
+            3208256,
+            3752132,
+            3807132,
+            3645676
+          ],
+          "after": [
+            3931828,
+            3809188,
+            4395360,
+            3095196,
+            3674836
+          ]
+        },
+        "medians": {
+          "before": 3645676,
+          "after": 3809188
+        },
+        "worst": {
+          "before": 3807132,
+          "after": 4395360
+        },
+        "median_delta_bytes": 163512,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "True-cold",
+        "scenario": "wellness_care",
+        "metric": "renderer_rss_sum_bytes",
+        "samples": {
+          "before": [
+            479887360,
+            494915584,
+            495538176,
+            496644096,
+            495403008
+          ],
+          "after": [
+            418557952,
+            437727232,
+            436830208,
+            438657024,
+            435081216
+          ]
+        },
+        "medians": {
+          "before": 495403008,
+          "after": 436830208
+        },
+        "worst": {
+          "before": 496644096,
+          "after": 438657024
+        },
+        "median_delta_bytes": -58572800,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "True-cold",
+        "scenario": "wellness_care",
+        "metric": "js_heap_bytes",
+        "samples": {
+          "before": [
+            4498756,
+            3255164,
+            3245796,
+            3251596,
+            3245172
+          ],
+          "after": [
+            3231576,
+            3226344,
+            3230664,
+            4758880,
+            3217448
+          ]
+        },
+        "medians": {
+          "before": 3251596,
+          "after": 3230664
+        },
+        "worst": {
+          "before": 4498756,
+          "after": 4758880
+        },
+        "median_delta_bytes": -20932,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "True-cold",
+        "scenario": "picker_growth",
+        "metric": "renderer_rss_sum_bytes",
+        "samples": {
+          "before": [
+            501841920,
+            521084928,
+            521248768,
+            523051008,
+            521859072
+          ],
+          "after": [
+            437514240,
+            455114752,
+            454754304,
+            459931648,
+            457322496
+          ]
+        },
+        "medians": {
+          "before": 521248768,
+          "after": 455114752
+        },
+        "worst": {
+          "before": 523051008,
+          "after": 459931648
+        },
+        "median_delta_bytes": -66134016,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "True-cold",
+        "scenario": "picker_growth",
+        "metric": "js_heap_bytes",
+        "samples": {
+          "before": [
+            5875104,
+            4999736,
+            4474372,
+            4573404,
+            4479564
+          ],
+          "after": [
+            4248176,
+            5319928,
+            5658760,
+            4853592,
+            5245492
+          ]
+        },
+        "medians": {
+          "before": 4573404,
+          "after": 5245492
+        },
+        "worst": {
+          "before": 5875104,
+          "after": 5658760
+        },
+        "median_delta_bytes": 672088,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "True-cold",
+        "scenario": "seasonal_preview",
+        "metric": "renderer_rss_sum_bytes",
+        "samples": {
+          "before": [
+            513810432,
+            533401600,
+            534011904,
+            532234240,
+            533995520
+          ],
+          "after": [
+            462708736,
+            483864576,
+            474025984,
+            481886208,
+            486428672
+          ]
+        },
+        "medians": {
+          "before": 533401600,
+          "after": 481886208
+        },
+        "worst": {
+          "before": 534011904,
+          "after": 486428672
+        },
+        "median_delta_bytes": -51515392,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "True-cold",
+        "scenario": "seasonal_preview",
+        "metric": "js_heap_bytes",
+        "samples": {
+          "before": [
+            12930568,
+            12770460,
+            9757428,
+            9601224,
+            8717000
+          ],
+          "after": [
+            7088980,
+            12137292,
+            8425536,
+            11009208,
+            11669312
+          ]
+        },
+        "medians": {
+          "before": 9757428,
+          "after": 11009208
+        },
+        "worst": {
+          "before": 12930568,
+          "after": 12137292
+        },
+        "median_delta_bytes": 1251780,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "True-cold",
+        "scenario": "offscreen",
+        "metric": "renderer_rss_sum_bytes",
+        "samples": {
+          "before": [
+            505769984,
+            527843328,
+            527605760,
+            520163328,
+            522596352
+          ],
+          "after": [
+            451719168,
+            479301632,
+            467107840,
+            479756288,
+            480559104
+          ]
+        },
+        "medians": {
+          "before": 522596352,
+          "after": 479301632
+        },
+        "worst": {
+          "before": 527843328,
+          "after": 480559104
+        },
+        "median_delta_bytes": -43294720,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "True-cold",
+        "scenario": "offscreen",
+        "metric": "js_heap_bytes",
+        "samples": {
+          "before": [
+            13771232,
+            13625592,
+            9955120,
+            6133612,
+            9591640
+          ],
+          "after": [
+            7177396,
+            13002852,
+            8541636,
+            9946600,
+            12522748
+          ]
+        },
+        "medians": {
+          "before": 9955120,
+          "after": 9946600
+        },
+        "worst": {
+          "before": 13771232,
+          "after": 13002852
+        },
+        "median_delta_bytes": -8520,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "True-cold",
+        "scenario": "reduced_motion",
+        "metric": "renderer_rss_sum_bytes",
+        "samples": {
+          "before": [
+            506474496,
+            528433152,
+            528105472,
+            520269824,
+            522862592
+          ],
+          "after": [
+            452165632,
+            474365952,
+            467836928,
+            481378304,
+            482320384
+          ]
+        },
+        "medians": {
+          "before": 522862592,
+          "after": 474365952
+        },
+        "worst": {
+          "before": 528433152,
+          "after": 482320384
+        },
+        "median_delta_bytes": -48496640,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "True-cold",
+        "scenario": "reduced_motion",
+        "metric": "js_heap_bytes",
+        "samples": {
+          "before": [
+            13939480,
+            13791324,
+            10123796,
+            6302508,
+            9760340
+          ],
+          "after": [
+            7334760,
+            5567160,
+            8698496,
+            10103336,
+            12679824
+          ]
+        },
+        "medians": {
+          "before": 10123796,
+          "after": 8698496
+        },
+        "worst": {
+          "before": 13939480,
+          "after": 12679824
+        },
+        "median_delta_bytes": -1425300,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "True-cold",
+        "scenario": "background",
+        "metric": "renderer_rss_sum_bytes",
+        "samples": {
+          "before": [
+            644419584,
+            665214976,
+            659062784,
+            657195008,
+            661069824
+          ],
+          "after": [
+            592191488,
+            611835904,
+            607391744,
+            605700096,
+            621895680
+          ]
+        },
+        "medians": {
+          "before": 659062784,
+          "after": 607391744
+        },
+        "worst": {
+          "before": 665214976,
+          "after": 621895680
+        },
+        "median_delta_bytes": -51671040,
+        "renderer_counts": {
+          "before": [
+            4,
+            4,
+            4,
+            4,
+            4
+          ],
+          "after": [
+            4,
+            4,
+            4,
+            4,
+            4
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "True-cold",
+        "scenario": "background",
+        "metric": "js_heap_bytes",
+        "samples": {
+          "before": [
+            14114400,
+            13966060,
+            5554784,
+            6477468,
+            9930736
+          ],
+          "after": [
+            7490312,
+            5719212,
+            8853344,
+            10257748,
+            12833272
+          ]
+        },
+        "medians": {
+          "before": 9930736,
+          "after": 8853344
+        },
+        "worst": {
+          "before": 14114400,
+          "after": 12833272
+        },
+        "median_delta_bytes": -1077392,
+        "renderer_counts": {
+          "before": [
+            4,
+            4,
+            4,
+            4,
+            4
+          ],
+          "after": [
+            4,
+            4,
+            4,
+            4,
+            4
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "True-cold",
+        "scenario": "navigation_1",
+        "metric": "renderer_rss_sum_bytes",
+        "samples": {
+          "before": [
+            534482944,
+            548388864,
+            546652160,
+            545574912,
+            550674432
+          ],
+          "after": [
+            481562624,
+            499904512,
+            500879360,
+            490139648,
+            516300800
+          ]
+        },
+        "medians": {
+          "before": 546652160,
+          "after": 499904512
+        },
+        "worst": {
+          "before": 550674432,
+          "after": 516300800
+        },
+        "median_delta_bytes": -46747648,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "True-cold",
+        "scenario": "navigation_1",
+        "metric": "js_heap_bytes",
+        "samples": {
+          "before": [
+            14886492,
+            5520916,
+            6330740,
+            7254496,
+            10704352
+          ],
+          "after": [
+            8288276,
+            6519332,
+            9656144,
+            5566400,
+            13632060
+          ]
+        },
+        "medians": {
+          "before": 7254496,
+          "after": 8288276
+        },
+        "worst": {
+          "before": 14886492,
+          "after": 13632060
+        },
+        "median_delta_bytes": 1033780,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "True-cold",
+        "scenario": "navigation_5",
+        "metric": "renderer_rss_sum_bytes",
+        "samples": {
+          "before": [
+            539844608,
+            563249152,
+            562409472,
+            565444608,
+            566632448
+          ],
+          "after": [
+            491864064,
+            514052096,
+            526409728,
+            505020416,
+            525582336
+          ]
+        },
+        "medians": {
+          "before": 563249152,
+          "after": 514052096
+        },
+        "worst": {
+          "before": 566632448,
+          "after": 526409728
+        },
+        "median_delta_bytes": -49197056,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "True-cold",
+        "scenario": "navigation_5",
+        "metric": "js_heap_bytes",
+        "samples": {
+          "before": [
+            6754928,
+            6123416,
+            6733776,
+            9846108,
+            13298912
+          ],
+          "after": [
+            6249604,
+            9241064,
+            5564640,
+            7665848,
+            6833188
+          ]
+        },
+        "medians": {
+          "before": 6754928,
+          "after": 6833188
+        },
+        "worst": {
+          "before": 13298912,
+          "after": 9241064
+        },
+        "median_delta_bytes": 78260,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "True-cold",
+        "scenario": "navigation_10",
+        "metric": "renderer_rss_sum_bytes",
+        "samples": {
+          "before": [
+            544260096,
+            563924992,
+            564027392,
+            564244480,
+            578830336
+          ],
+          "after": [
+            491483136,
+            508469248,
+            526995456,
+            504066048,
+            526704640
+          ]
+        },
+        "medians": {
+          "before": 564027392,
+          "after": 508469248
+        },
+        "worst": {
+          "before": 578830336,
+          "after": 526995456
+        },
+        "median_delta_bytes": -55558144,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "True-cold",
+        "scenario": "navigation_10",
+        "metric": "js_heap_bytes",
+        "samples": {
+          "before": [
+            7955132,
+            7322592,
+            7916640,
+            6724084,
+            13712856
+          ],
+          "after": [
+            6877388,
+            8106908,
+            5556732,
+            6837864,
+            6189328
+          ]
+        },
+        "medians": {
+          "before": 7916640,
+          "after": 6837864
+        },
+        "worst": {
+          "before": 13712856,
+          "after": 8106908
+        },
+        "median_delta_bytes": -1078776,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "True-cold",
+        "scenario": "navigation_15",
+        "metric": "renderer_rss_sum_bytes",
+        "samples": {
+          "before": [
+            545042432,
+            557899776,
+            560742400,
+            562749440,
+            569991168
+          ],
+          "after": [
+            496500736,
+            514461696,
+            526327808,
+            506331136,
+            531820544
+          ]
+        },
+        "medians": {
+          "before": 560742400,
+          "after": 514461696
+        },
+        "worst": {
+          "before": 569991168,
+          "after": 531820544
+        },
+        "median_delta_bytes": -46280704,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "True-cold",
+        "scenario": "navigation_15",
+        "metric": "js_heap_bytes",
+        "samples": {
+          "before": [
+            7952736,
+            6120548,
+            6133168,
+            5516768,
+            6115844
+          ],
+          "after": [
+            5613424,
+            5561304,
+            6845360,
+            8104036,
+            8531196
+          ]
+        },
+        "medians": {
+          "before": 6120548,
+          "after": 6845360
+        },
+        "worst": {
+          "before": 7952736,
+          "after": 8531196
+        },
+        "median_delta_bytes": 724812,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "True-cold",
+        "scenario": "navigation_20",
+        "metric": "renderer_rss_sum_bytes",
+        "samples": {
+          "before": [
+            542638080,
+            559243264,
+            560615424,
+            563568640,
+            566800384
+          ],
+          "after": [
+            497668096,
+            514449408,
+            526635008,
+            503975936,
+            529272832
+          ]
+        },
+        "medians": {
+          "before": 560615424,
+          "after": 514449408
+        },
+        "worst": {
+          "before": 566800384,
+          "after": 529272832
+        },
+        "median_delta_bytes": -46166016,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "True-cold",
+        "scenario": "navigation_20",
+        "metric": "js_heap_bytes",
+        "samples": {
+          "before": [
+            5549308,
+            5516192,
+            5515276,
+            6717616,
+            6115248
+          ],
+          "after": [
+            6877888,
+            6839924,
+            7473288,
+            6214424,
+            7457672
+          ]
+        },
+        "medians": {
+          "before": 5549308,
+          "after": 6877888
+        },
+        "worst": {
+          "before": 6717616,
+          "after": 7473288
+        },
+        "median_delta_bytes": 1328580,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "True-warm",
+        "scenario": "home_idle",
+        "metric": "renderer_rss_sum_bytes",
+        "samples": {
+          "before": [
+            408555520,
+            434724864,
+            434339840,
+            439226368,
+            433786880
+          ],
+          "after": [
+            408567808,
+            433238016,
+            434372608,
+            433545216,
+            434286592
+          ]
+        },
+        "medians": {
+          "before": 434339840,
+          "after": 433545216
+        },
+        "worst": {
+          "before": 439226368,
+          "after": 434372608
+        },
+        "median_delta_bytes": -794624,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "True-warm",
+        "scenario": "home_idle",
+        "metric": "js_heap_bytes",
+        "samples": {
+          "before": [
+            2688028,
+            2753664,
+            2361672,
+            2667776,
+            2754480
+          ],
+          "after": [
+            2654372,
+            2660764,
+            2660532,
+            2664588,
+            2670860
+          ]
+        },
+        "medians": {
+          "before": 2688028,
+          "after": 2660764
+        },
+        "worst": {
+          "before": 2754480,
+          "after": 2670860
+        },
+        "median_delta_bytes": -27264,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "True-warm",
+        "scenario": "home_interaction",
+        "metric": "renderer_rss_sum_bytes",
+        "samples": {
+          "before": [
+            414994432,
+            435175424,
+            434008064,
+            444809216,
+            440107008
+          ],
+          "after": [
+            414896128,
+            431505408,
+            433270784,
+            432975872,
+            434302976
+          ]
+        },
+        "medians": {
+          "before": 435175424,
+          "after": 432975872
+        },
+        "worst": {
+          "before": 444809216,
+          "after": 434302976
+        },
+        "median_delta_bytes": -2199552,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "True-warm",
+        "scenario": "home_interaction",
+        "metric": "js_heap_bytes",
+        "samples": {
+          "before": [
+            4686140,
+            3085356,
+            3697548,
+            3888324,
+            2776944
+          ],
+          "after": [
+            4475960,
+            3699776,
+            3060868,
+            3318176,
+            4706040
+          ]
+        },
+        "medians": {
+          "before": 3697548,
+          "after": 3699776
+        },
+        "worst": {
+          "before": 4686140,
+          "after": 4706040
+        },
+        "median_delta_bytes": 2228,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "True-warm",
+        "scenario": "wellness_care",
+        "metric": "renderer_rss_sum_bytes",
+        "samples": {
+          "before": [
+            420020224,
+            442986496,
+            439611392,
+            449331200,
+            445849600
+          ],
+          "after": [
+            420847616,
+            436969472,
+            439083008,
+            439410688,
+            439857152
+          ]
+        },
+        "medians": {
+          "before": 442986496,
+          "after": 439083008
+        },
+        "worst": {
+          "before": 449331200,
+          "after": 439857152
+        },
+        "median_delta_bytes": -3903488,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "True-warm",
+        "scenario": "wellness_care",
+        "metric": "js_heap_bytes",
+        "samples": {
+          "before": [
+            3770664,
+            4793796,
+            3182072,
+            3201500,
+            4485812
+          ],
+          "after": [
+            3235920,
+            3220624,
+            4727060,
+            4318016,
+            3227576
+          ]
+        },
+        "medians": {
+          "before": 3770664,
+          "after": 3235920
+        },
+        "worst": {
+          "before": 4793796,
+          "after": 4727060
+        },
+        "median_delta_bytes": -534744,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "True-warm",
+        "scenario": "picker_growth",
+        "metric": "renderer_rss_sum_bytes",
+        "samples": {
+          "before": [
+            449404928,
+            466907136,
+            461623296,
+            470679552,
+            470437888
+          ],
+          "after": [
+            438931456,
+            456048640,
+            460623872,
+            456069120,
+            457879552
+          ]
+        },
+        "medians": {
+          "before": 466907136,
+          "after": 456069120
+        },
+        "worst": {
+          "before": 470679552,
+          "after": 460623872
+        },
+        "median_delta_bytes": -10838016,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "True-warm",
+        "scenario": "picker_growth",
+        "metric": "js_heap_bytes",
+        "samples": {
+          "before": [
+            5898528,
+            5212876,
+            4438436,
+            6214472,
+            5221104
+          ],
+          "after": [
+            5321164,
+            5648344,
+            4418552,
+            5084740,
+            5401940
+          ]
+        },
+        "medians": {
+          "before": 5221104,
+          "after": 5321164
+        },
+        "worst": {
+          "before": 6214472,
+          "after": 5648344
+        },
+        "median_delta_bytes": 100060,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "True-warm",
+        "scenario": "seasonal_preview",
+        "metric": "renderer_rss_sum_bytes",
+        "samples": {
+          "before": [
+            464035840,
+            485007360,
+            475181056,
+            482271232,
+            489848832
+          ],
+          "after": [
+            465022976,
+            490053632,
+            489033728,
+            491778048,
+            484085760
+          ]
+        },
+        "medians": {
+          "before": 482271232,
+          "after": 489033728
+        },
+        "worst": {
+          "before": 489848832,
+          "after": 491778048
+        },
+        "median_delta_bytes": 6762496,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "True-warm",
+        "scenario": "seasonal_preview",
+        "metric": "js_heap_bytes",
+        "samples": {
+          "before": [
+            12713860,
+            10475992,
+            10791288,
+            7683348,
+            11973764
+          ],
+          "after": [
+            14150272,
+            8406096,
+            10548368,
+            10359164,
+            13831644
+          ]
+        },
+        "medians": {
+          "before": 10791288,
+          "after": 10548368
+        },
+        "worst": {
+          "before": 12713860,
+          "after": 14150272
+        },
+        "median_delta_bytes": -242920,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "True-warm",
+        "scenario": "offscreen",
+        "metric": "renderer_rss_sum_bytes",
+        "samples": {
+          "before": [
+            461590528,
+            478375936,
+            476663808,
+            476217344,
+            487628800
+          ],
+          "after": [
+            462299136,
+            478740480,
+            486293504,
+            484814848,
+            482156544
+          ]
+        },
+        "medians": {
+          "before": 476663808,
+          "after": 482156544
+        },
+        "worst": {
+          "before": 487628800,
+          "after": 486293504
+        },
+        "median_delta_bytes": 5492736,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "True-warm",
+        "scenario": "offscreen",
+        "metric": "js_heap_bytes",
+        "samples": {
+          "before": [
+            13571340,
+            10146824,
+            11747868,
+            7891632,
+            12832316
+          ],
+          "after": [
+            14997940,
+            8662884,
+            10741008,
+            10489316,
+            14698052
+          ]
+        },
+        "medians": {
+          "before": 11747868,
+          "after": 10741008
+        },
+        "worst": {
+          "before": 13571340,
+          "after": 14997940
+        },
+        "median_delta_bytes": -1006860,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "True-warm",
+        "scenario": "reduced_motion",
+        "metric": "renderer_rss_sum_bytes",
+        "samples": {
+          "before": [
+            463327232,
+            478666752,
+            478253056,
+            476131328,
+            488976384
+          ],
+          "after": [
+            463585280,
+            479264768,
+            487809024,
+            485220352,
+            483577856
+          ]
+        },
+        "medians": {
+          "before": 478253056,
+          "after": 483577856
+        },
+        "worst": {
+          "before": 488976384,
+          "after": 487809024
+        },
+        "median_delta_bytes": 5324800,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "True-warm",
+        "scenario": "reduced_motion",
+        "metric": "js_heap_bytes",
+        "samples": {
+          "before": [
+            13737192,
+            10315300,
+            11914456,
+            8059968,
+            12998608
+          ],
+          "after": [
+            15154696,
+            8819524,
+            10898132,
+            10646124,
+            14855008
+          ]
+        },
+        "medians": {
+          "before": 11914456,
+          "after": 10898132
+        },
+        "worst": {
+          "before": 13737192,
+          "after": 15154696
+        },
+        "median_delta_bytes": -1016324,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "True-warm",
+        "scenario": "background",
+        "metric": "renderer_rss_sum_bytes",
+        "samples": {
+          "before": [
+            604377088,
+            617832448,
+            618409984,
+            615612416,
+            630190080
+          ],
+          "after": [
+            604336128,
+            618778624,
+            628752384,
+            624844800,
+            625262592
+          ]
+        },
+        "medians": {
+          "before": 617832448,
+          "after": 624844800
+        },
+        "worst": {
+          "before": 630190080,
+          "after": 628752384
+        },
+        "median_delta_bytes": 7012352,
+        "renderer_counts": {
+          "before": [
+            4,
+            4,
+            4,
+            4,
+            4
+          ],
+          "after": [
+            4,
+            4,
+            4,
+            4,
+            4
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "True-warm",
+        "scenario": "background",
+        "metric": "js_heap_bytes",
+        "samples": {
+          "before": [
+            13911276,
+            10489812,
+            12089092,
+            8234752,
+            13169092
+          ],
+          "after": [
+            5462024,
+            8969708,
+            11052696,
+            10800772,
+            15009660
+          ]
+        },
+        "medians": {
+          "before": 12089092,
+          "after": 10800772
+        },
+        "worst": {
+          "before": 13911276,
+          "after": 15009660
+        },
+        "median_delta_bytes": -1288320,
+        "renderer_counts": {
+          "before": [
+            4,
+            4,
+            4,
+            4,
+            4
+          ],
+          "after": [
+            4,
+            4,
+            4,
+            4,
+            4
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "True-warm",
+        "scenario": "navigation_1",
+        "metric": "renderer_rss_sum_bytes",
+        "samples": {
+          "before": [
+            496553984,
+            507437056,
+            512094208,
+            506019840,
+            523251712
+          ],
+          "after": [
+            486076416,
+            507322368,
+            521601024,
+            514838528,
+            508153856
+          ]
+        },
+        "medians": {
+          "before": 507437056,
+          "after": 508153856
+        },
+        "worst": {
+          "before": 523251712,
+          "after": 521601024
+        },
+        "median_delta_bytes": 716800,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "True-warm",
+        "scenario": "navigation_1",
+        "metric": "js_heap_bytes",
+        "samples": {
+          "before": [
+            14684292,
+            11260852,
+            12860320,
+            9008836,
+            13940916
+          ],
+          "after": [
+            6269772,
+            9771120,
+            11852000,
+            11601784,
+            5564912
+          ]
+        },
+        "medians": {
+          "before": 12860320,
+          "after": 9771120
+        },
+        "worst": {
+          "before": 14684292,
+          "after": 11852000
+        },
+        "median_delta_bytes": -3089200,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "True-warm",
+        "scenario": "navigation_5",
+        "metric": "renderer_rss_sum_bytes",
+        "samples": {
+          "before": [
+            510660608,
+            533815296,
+            519258112,
+            531750912,
+            539234304
+          ],
+          "after": [
+            505303040,
+            539525120,
+            537178112,
+            542584832,
+            525676544
+          ]
+        },
+        "medians": {
+          "before": 531750912,
+          "after": 537178112
+        },
+        "worst": {
+          "before": 539234304,
+          "after": 542584832
+        },
+        "median_delta_bytes": 5427200,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "True-warm",
+        "scenario": "navigation_5",
+        "metric": "js_heap_bytes",
+        "samples": {
+          "before": [
+            6748568,
+            13858788,
+            5528284,
+            11608288,
+            6121844
+          ],
+          "after": [
+            8987372,
+            12491788,
+            6833792,
+            14339180,
+            8292264
+          ]
+        },
+        "medians": {
+          "before": 6748568,
+          "after": 8987372
+        },
+        "worst": {
+          "before": 13858788,
+          "after": 14339180
+        },
+        "median_delta_bytes": 2238804,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "True-warm",
+        "scenario": "navigation_10",
+        "metric": "renderer_rss_sum_bytes",
+        "samples": {
+          "before": [
+            519757824,
+            558305280,
+            519974912,
+            539443200,
+            539185152
+          ],
+          "after": [
+            503676928,
+            536211456,
+            539193344,
+            574611456,
+            526041088
+          ]
+        },
+        "medians": {
+          "before": 539185152,
+          "after": 536211456
+        },
+        "worst": {
+          "before": 558305280,
+          "after": 574611456
+        },
+        "median_delta_bytes": -2973696,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "True-warm",
+        "scenario": "navigation_10",
+        "metric": "js_heap_bytes",
+        "samples": {
+          "before": [
+            5390088,
+            17050524,
+            6722512,
+            6745084,
+            7341640
+          ],
+          "after": [
+            8138168,
+            8121304,
+            9184072,
+            17693320,
+            6835372
+          ]
+        },
+        "medians": {
+          "before": 6745084,
+          "after": 8138168
+        },
+        "worst": {
+          "before": 17050524,
+          "after": 17693320
+        },
+        "median_delta_bytes": 1393084,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "True-warm",
+        "scenario": "navigation_15",
+        "metric": "renderer_rss_sum_bytes",
+        "samples": {
+          "before": [
+            516059136,
+            558149632,
+            518172672,
+            537411584,
+            545071104
+          ],
+          "after": [
+            499011584,
+            541990912,
+            538800128,
+            571949056,
+            524656640
+          ]
+        },
+        "medians": {
+          "before": 537411584,
+          "after": 538800128
+        },
+        "worst": {
+          "before": 558149632,
+          "after": 571949056
+        },
+        "median_delta_bytes": 1388544,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "True-warm",
+        "scenario": "navigation_15",
+        "metric": "js_heap_bytes",
+        "samples": {
+          "before": [
+            8586908,
+            6724880,
+            6117324,
+            5517476,
+            5511888
+          ],
+          "after": [
+            6866544,
+            11471452,
+            6198652,
+            7475672,
+            6200664
+          ]
+        },
+        "medians": {
+          "before": 6117324,
+          "after": 6866544
+        },
+        "worst": {
+          "before": 8586908,
+          "after": 11471452
+        },
+        "median_delta_bytes": 749220,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "True-warm",
+        "scenario": "navigation_20",
+        "metric": "renderer_rss_sum_bytes",
+        "samples": {
+          "before": [
+            511643648,
+            560640000,
+            519360512,
+            536481792,
+            542478336
+          ],
+          "after": [
+            499789824,
+            536911872,
+            538583040,
+            575905792,
+            525320192
+          ]
+        },
+        "medians": {
+          "before": 536481792,
+          "after": 536911872
+        },
+        "worst": {
+          "before": 560640000,
+          "after": 575905792
+        },
+        "median_delta_bytes": 430080,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      },
+      {
+        "group": "True-warm",
+        "scenario": "navigation_20",
+        "metric": "js_heap_bytes",
+        "samples": {
+          "before": [
+            5547208,
+            9915000,
+            7312616,
+            6120080,
+            6722024
+          ],
+          "after": [
+            8139160,
+            8099240,
+            9549860,
+            10834108,
+            7473644
+          ]
+        },
+        "medians": {
+          "before": 6722024,
+          "after": 8139160
+        },
+        "worst": {
+          "before": 9915000,
+          "after": 10834108
+        },
+        "median_delta_bytes": 1417136,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": true
+      }
+    ],
+    "failures": [
+      {
+        "group": "False-cold",
+        "scenario": "navigation_10",
+        "metric": "renderer_rss_sum_bytes",
+        "samples": {
+          "before": [
+            567881728,
+            578191360,
+            586424320,
+            589484032,
+            594632704
+          ],
+          "after": [
+            574402560,
+            615030784,
+            619257856,
+            610836480,
+            613699584
+          ]
+        },
+        "medians": {
+          "before": 586424320,
+          "after": 613699584
+        },
+        "worst": {
+          "before": 594632704,
+          "after": 619257856
+        },
+        "median_delta_bytes": 27275264,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": false
+      },
+      {
+        "group": "False-cold",
+        "scenario": "navigation_15",
+        "metric": "renderer_rss_sum_bytes",
+        "samples": {
+          "before": [
+            568057856,
+            577056768,
+            596434944,
+            579395584,
+            590954496
+          ],
+          "after": [
+            566919168,
+            603537408,
+            602279936,
+            598462464,
+            602566656
+          ]
+        },
+        "medians": {
+          "before": 579395584,
+          "after": 602279936
+        },
+        "worst": {
+          "before": 596434944,
+          "after": 603537408
+        },
+        "median_delta_bytes": 22884352,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": false
+      },
+      {
+        "group": "False-cold",
+        "scenario": "navigation_20",
+        "metric": "renderer_rss_sum_bytes",
+        "samples": {
+          "before": [
+            562044928,
+            569757696,
+            586866688,
+            579444736,
+            603254784
+          ],
+          "after": [
+            553885696,
+            596418560,
+            592920576,
+            590585856,
+            596451328
+          ]
+        },
+        "medians": {
+          "before": 579444736,
+          "after": 592920576
+        },
+        "worst": {
+          "before": 603254784,
+          "after": 596451328
+        },
+        "median_delta_bytes": 13475840,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": false
+      },
+      {
+        "group": "False-warm",
+        "scenario": "offscreen",
+        "metric": "renderer_rss_sum_bytes",
+        "samples": {
+          "before": [
+            470974464,
+            494415872,
+            479694848,
+            479850496,
+            466833408
+          ],
+          "after": [
+            473325568,
+            491692032,
+            491581440,
+            491491328,
+            494436352
+          ]
+        },
+        "medians": {
+          "before": 479694848,
+          "after": 491581440
+        },
+        "worst": {
+          "before": 494415872,
+          "after": 494436352
+        },
+        "median_delta_bytes": 11886592,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": false
+      },
+      {
+        "group": "False-warm",
+        "scenario": "reduced_motion",
+        "metric": "renderer_rss_sum_bytes",
+        "samples": {
+          "before": [
+            472862720,
+            496496640,
+            481587200,
+            481906688,
+            468828160
+          ],
+          "after": [
+            474484736,
+            493240320,
+            493015040,
+            493223936,
+            495730688
+          ]
+        },
+        "medians": {
+          "before": 481587200,
+          "after": 493223936
+        },
+        "worst": {
+          "before": 496496640,
+          "after": 495730688
+        },
+        "median_delta_bytes": 11636736,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": false
+      },
+      {
+        "group": "False-warm",
+        "scenario": "background",
+        "metric": "renderer_rss_sum_bytes",
+        "samples": {
+          "before": [
+            613728256,
+            637202432,
+            597299200,
+            622424064,
+            609550336
+          ],
+          "after": [
+            613687296,
+            632020992,
+            633479168,
+            634044416,
+            636334080
+          ]
+        },
+        "medians": {
+          "before": 613728256,
+          "after": 633479168
+        },
+        "worst": {
+          "before": 637202432,
+          "after": 636334080
+        },
+        "median_delta_bytes": 19750912,
+        "renderer_counts": {
+          "before": [
+            4,
+            4,
+            4,
+            4,
+            4
+          ],
+          "after": [
+            4,
+            4,
+            4,
+            4,
+            4
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": false
+      },
+      {
+        "group": "False-warm",
+        "scenario": "navigation_1",
+        "metric": "renderer_rss_sum_bytes",
+        "samples": {
+          "before": [
+            498212864,
+            531525632,
+            489824256,
+            515960832,
+            505683968
+          ],
+          "after": [
+            501940224,
+            513794048,
+            526721024,
+            527093760,
+            530079744
+          ]
+        },
+        "medians": {
+          "before": 505683968,
+          "after": 526721024
+        },
+        "worst": {
+          "before": 531525632,
+          "after": 530079744
+        },
+        "median_delta_bytes": 21037056,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": false
+      },
+      {
+        "group": "False-warm",
+        "scenario": "navigation_5",
+        "metric": "renderer_rss_sum_bytes",
+        "samples": {
+          "before": [
+            534200320,
+            559767552,
+            519004160,
+            562577408,
+            552943616
+          ],
+          "after": [
+            534839296,
+            550785024,
+            574705664,
+            576000000,
+            577568768
+          ]
+        },
+        "medians": {
+          "before": 552943616,
+          "after": 574705664
+        },
+        "worst": {
+          "before": 562577408,
+          "after": 577568768
+        },
+        "median_delta_bytes": 21762048,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": false
+      },
+      {
+        "group": "False-warm",
+        "scenario": "navigation_10",
+        "metric": "renderer_rss_sum_bytes",
+        "samples": {
+          "before": [
+            526753792,
+            560877568,
+            518250496,
+            567980032,
+            566214656
+          ],
+          "after": [
+            575672320,
+            564817920,
+            611323904,
+            604684288,
+            613388288
+          ]
+        },
+        "medians": {
+          "before": 560877568,
+          "after": 604684288
+        },
+        "worst": {
+          "before": 567980032,
+          "after": 613388288
+        },
+        "median_delta_bytes": 43806720,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": false
+      },
+      {
+        "group": "False-warm",
+        "scenario": "navigation_15",
+        "metric": "renderer_rss_sum_bytes",
+        "samples": {
+          "before": [
+            526688256,
+            567988224,
+            528490496,
+            574218240,
+            564133888
+          ],
+          "after": [
+            559017984,
+            567103488,
+            591601664,
+            594661376,
+            601399296
+          ]
+        },
+        "medians": {
+          "before": 564133888,
+          "after": 591601664
+        },
+        "worst": {
+          "before": 574218240,
+          "after": 601399296
+        },
+        "median_delta_bytes": 27467776,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": false
+      },
+      {
+        "group": "False-warm",
+        "scenario": "navigation_20",
+        "metric": "renderer_rss_sum_bytes",
+        "samples": {
+          "before": [
+            538910720,
+            561352704,
+            523272192,
+            575328256,
+            557391872
+          ],
+          "after": [
+            546877440,
+            565194752,
+            591261696,
+            599654400,
+            607825920
+          ]
+        },
+        "medians": {
+          "before": 557391872,
+          "after": 591261696
+        },
+        "worst": {
+          "before": 575328256,
+          "after": 607825920
+        },
+        "median_delta_bytes": 33869824,
+        "renderer_counts": {
+          "before": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "matched_renderer_counts": true,
+        "within_budget": false
+      }
+    ],
+    "release_ready": false
+  },
+  "phase_statuses": {
+    "functional": "passed",
+    "focused": "passed",
+    "runtime": "passed",
+    "matrix": "passed"
+  },
+  "source_commit": "e909de12c42fe8fe99ce58d922bbef71c711e574",
+  "artifact_assessment_sha256": {
+    "functional": "399688dab2ddb85e39b69538da0d214da8437d3efcb3e5ae800aade25bb5e2e7",
+    "focused": "8cff800a28ee904d2ae28f39c6b4c354a07f05d33f2e4dc0da3341cd407b18fb",
+    "runtime": "3f31510c4176a969d8c099f024033f72a77c5e642538c9c598f2c0b210d2fef0",
+    "matrix": "5a75db44e26bbb2a4708db9e0d6d2b65266b2af722cc8fb73e86476ec6445a20"
+  },
+  "scope": "Increment2B; pre-existing offscreen motion, timer activity and listener retention remain separately tracked release blockers.",
+  "release_ready": false
+}
