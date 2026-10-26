@@ -2,7 +2,25 @@
 
 Last verified: **2026-10-26 05:55 UTC**. Repository: `jongsky25/css-is`.
 
-## Start here
+## Current blocking correction
+
+The 2B acceptance in `f46d7af` was withdrawn: the comparison/audit omitted
+memory budgets for offscreen, reduced-motion, background and repeated navigation.
+Final run 40263865865 warm-desktop RSS deltas are +11.335938, +11.097656 and
++18.835938 MiB for the three omitted scenarios (10 MiB limit). Renderer counts
+match. Prior targeted candidate evidence also contains unreported reverse-order
+background +26.171875 MiB and seasonal-preview +12.710938 MiB. No memory waiver.
+Read the corrected `docs/avatars/increment2b/REPORT.md` before other instructions.
+
+3A artwork/correction is preserved on `codex/avatar-3a` (product `cb2220f`).
+The source run 40280615190 was cancelled by pause commit `2b6d154` after the
+2B prerequisite failure was discovered. Do not restart/accept 3A until 2B is fixed.
+The prepared audit branch `codex/avatar-3a-artifact-audit` is staged only; do not
+trigger it as an acceptance audit of the cancelled cohort. No later increments,
+merge or deployment occurred. The historical handoff below is superseded by this
+correction wherever it suggests CI success establishes complete memory acceptance.
+
+## Historical start here
 
 Read this file, repository instructions, then [the execution plan](AVATAR_VISUAL_UPGRADE_PLAN.md).
 Continue the already authorized work one increment at a time. First finish the

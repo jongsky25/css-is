@@ -1,6 +1,6 @@
 # Avatar visual upgrade — phased execution plan for Sol
 
-Status: Increments 0, 1, 2A and 2B complete. Final 2B evidence audited and accepted; release_ready remains false. Increment 3A is next.
+Status: 2B acceptance withdrawn after omitted memory gates were audited. Offscreen, reduced-motion, background and navigation RSS exceed the unchanged budget. 3A work is preserved separately but paused; later increments remain pending.
 Created: 2026-10-25
 Repository: jongsky25/css-is
 Owner request: Material improvement to companion artwork, optional animal dress-up,
@@ -287,7 +287,7 @@ browser tests ran.
 | 0 Baseline | Complete — baseline established; release gates remain unmet | `94269dd` + evidence/ledger revision | [51 sheets](avatars/sheets/index.json), [monthly overview](avatars/sheets/monthly-stage6-overview.png), [hero/moods](avatars/smoke/) | [Report](avatars/BASELINE_REPORT.md), [20 full samples + summary](avatars/application/summary.json), native hidden/touch check; existing frame, picker, timer and remount failures retained. |
 | 1 Cat + plant slice | Complete — measured relative gates passed | `58cf98f`, `0be7fc3`, `ad4e7ad`, `d464461` + evidence revision | [Bare comparison](avatars/increment1/before-after-bare-light.png), [motion](avatars/increment1/before-after-motion.webm), [51 seasonal sheets](avatars/increment1/sheets/index.json) | [Report](avatars/increment1/REPORT.md), [20-sample comparison](avatars/increment1/comparison.json); 102 tests, native touch/keyboard/filter checks, sampled callback trace passed; baseline lifecycle/picker blockers retained. |
 | 2A Cactus/bonsai/sunflower | Complete — measured relative gates passed | `6064a82`, `1b453e0`, `28fbb7b` + evidence revision | [Six-stage comparison](avatars/increment2a/before-after-bare-light.png), [51 sheets](avatars/increment2a/sheets/index.json), [motion](avatars/increment2a/before-after-motion.webm) | [Report](avatars/increment2a/REPORT.md), [fresh 20 comparison](avatars/increment2a/comparison.json); 105 tests, 324 visual reaction cases, mature care/traces and native checks passed. Pre-fix failures retained; audio-sync feedback fixed. Remaining lifecycle/picker blockers persist. |
-| 2B Fern/mushroom/succulent | Complete — final evidence audited | Artwork `6ddce82`; product `f700187`; harness `e909de1`; audit `6a47396` | [51 sheets / 4,896 cells](avatars/increment2b/final-verification/numeric-and-visual-evidence.tar.gz) | [Final report](avatars/increment2b/REPORT.md); all four phases and raw audit pass; max RSS delta 8.563 MiB, callbacks 4.080 ms, frame p95 16.8 ms. Historical failures retained. Release blockers remain for increment 5. |
+| 2B Fern/mushroom/succulent | Blocked — prior acceptance withdrawn | Product `f700187`; final source `e909de1` | Existing visual/functional passes retained | [Corrected report](avatars/increment2b/REPORT.md): warm desktop offscreen +11.336, reduced motion +11.098, background +18.836 MiB; 10 MiB limit. Prior checker omitted these scenarios. |
 | 3A Ground animals + bird | Pending | — | — | — |
 | 3B Swimmers + owl + bat | Pending | — | — | — |
 | 4A Wardrobe model/rendering | Pending | — | — | — |
@@ -787,3 +787,7 @@ discovery plus direct run/job queries now track the actual runs.
 ### Final 2B acceptance — 2026-10-26
 
 Final run 40263865865 and audit 40277957839 passed. Independent audit verified source identities, 156 retained file hashes, 51 PNGs/4,896 cells and all raw matrix memory medians. [Final report](avatars/increment2b/REPORT.md) supersedes earlier pending/blocked statements for 2B while preserving their historical evidence. All unchanged budgets pass; release_ready remains false. Full traces retained to November 25. Proceed to 3A.
+
+### Acceptance correction — complete memory audit
+
+The earlier final-acceptance appendix is superseded. It checked five active scenarios only and therefore did not establish the full memory gate. The corrected report retains the original evidence and records all uncovered failures. 3A remains unaccepted and paused on its separate branch; no 3B or later work has started.
