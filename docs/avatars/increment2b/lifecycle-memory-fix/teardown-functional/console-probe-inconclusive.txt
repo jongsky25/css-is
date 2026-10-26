@@ -1,0 +1,44 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+____________________________ test_pagehide_cleanup _____________________________
+
+baseline_server = ('http://127.0.0.1:36247', {'name': 'css_session', 'value': 'eyJ1aWQiOjQsInUiOiJhZG1pbkB0ZXN0LmxvY2FsIiwiciI6ImFkbWluI...YjdmOTZkODQxIn0.c0f67b88c728f9efdb12c914276783d1f4b6ad6024c1e1aba3c108f6c1cdfba5', 'url': 'http://127.0.0.1:36247'}, 4)
+
+    def test_pagehide_cleanup(baseline_server):
+        from playwright.sync_api import sync_playwright
+        origin,cookie,_=baseline_server
+        observations=[]
+        with sync_playwright() as pw:
+            browser=pw.chromium.launch(executable_path=shutil.which('chromium'),args=['--no-sandbox'])
+            context=browser.new_context(viewport={'width':1440,'height':1000},timezone_id='UTC',service_workers='block')
+            context.add_cookies([cookie]);context.add_init_script(PROBE)
+            page=context.new_page()
+            page.on('console',lambda msg: observations.append(json.loads(msg.text.removeprefix('AVATAR_PAGEHIDE:'))) if msg.text.startswith('AVATAR_PAGEHIDE:') else None)
+            page.goto(origin+'/?view=me');page.wait_for_timeout(500)
+            before=page.evaluate("document.querySelector('.avwrap[data-interactive]').getAnimations({subtree:true}).filter(a=>a.playState==='running').length")
+            assert before>0
+            page.evaluate("window.dispatchEvent(new PageTransitionEvent('pagehide',{persisted:true}))")
+            preserved=page.evaluate("document.querySelector('.avwrap[data-interactive]').getAnimations({subtree:true}).filter(a=>a.playState==='running').length")
+            assert preserved==before, 'Cached-page animations must survive'
+            page.evaluate('''()=>{const element=document.createElement('div');element.id='outside-avatar-animation';document.body.append(element);
+              element.animate([{opacity:0},{opacity:1}],{duration:1000,iterations:Infinity});
+              window.addEventListener('pagehide',event=>console.log('AVATAR_PAGEHIDE:'+JSON.stringify({persisted:event.persisted,
+                avatar:document.querySelector('.avwrap[data-interactive]').getAnimations({subtree:true}).filter(a=>a.playState==='running').length,
+                outside:element.getAnimations().filter(a=>a.playState==='running').length})));}''')
+            page.goto(origin+'/me')
+            context.close();browser.close()
+        out=Path(os.environ['CSS_AVATAR_OUT']);out.mkdir(parents=True,exist_ok=True)
+        (out/'pagehide-behavior.json').write_text(json.dumps({'before':before,'preserved':preserved,'observations':observations},indent=2))
+>       assert len(observations)==1 and observations[0]=={'persisted':False,'avatar':0,'outside':1}
+E       assert (0 == 1)
+E        +  where 0 = len([])
+
+tests/test_pagehide_cleanup_probe.py:34: AssertionError
+=============================== warnings summary ===============================
+tests/test_pagehide_cleanup_probe.py::test_pagehide_cleanup
+  /workspace/avatar-memory-isolation/tests/conftest.py:88: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_pagehide_cleanup_probe.py::test_pagehide_cleanup - assert (...

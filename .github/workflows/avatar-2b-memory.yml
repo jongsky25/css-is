@@ -1,18 +1,18 @@
-name: Avatar 2B memory diagnosis
+name: Avatar 2B lifecycle candidate diagnosis
 on:
   workflow_dispatch:
   push:
-    branches: [codex/avatar-2b-memory-lifecycle]
+    branches: [codex/avatar-2b-lifecycle-candidate]
 permissions:
   contents: read
 concurrency:
-  group: avatar-2b-memory-lifecycle
+  group: avatar-2b-lifecycle-candidate
   cancel-in-progress: false
 jobs:
   verify:
     runs-on: ubuntu-24.04
     container: python:3.12-trixie@sha256:0d0db5b17f11b1b7d1aafa74ceadaa64ba0944b267ff6fc22008a197acd6b9ad
-    timeout-minutes: 60
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
         with:
@@ -25,15 +25,22 @@ jobs:
           .venv/bin/python -m pip install --require-hashes --only-binary=:all: -r requirements-test.txt
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - name: Verify evidence accounting
-        run: .venv/bin/python -m pytest tests/test_avatar_verification_result.py tests/test_avatar_memory_audit.py -q
-      - name: Measure original and current in both orders
+        run: .venv/bin/python -m pytest tests/test_avatar_verification_result.py tests/test_avatar_memory_audit.py tests/test_avatar_targeted_memory.py -q
+      - name: Verify real navigation teardown and persisted-page preservation
+        env:
+          CSS_TEST_NOW: '2026-07-15T12:00:00'
+          CSS_AVATAR_CHROMIUM: 156.0.8078.47
+          CSS_AVATAR_LIFECYCLE: '1'
+          CSS_AVATAR_OUT: avatar-verification/lifecycle-behavior
+        run: .venv/bin/python -m pytest tests/test_avatar_pagehide_browser.py -q
+      - name: Measure original, unchanged current and candidate in both orders
         env:
           CSS_AVATAR_CHROMIUM: 156.0.8078.47
-        run: .venv/bin/python scripts/avatar_baseline/memory_diagnostic.py
+        run: .venv/bin/python scripts/avatar_baseline/lifecycle_candidate.py
       - name: Retain every measurement and failure
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: avatar-2b-memory-diagnostic
+          name: avatar-2b-lifecycle-candidate
           path: avatar-verification/
           retention-days: 30

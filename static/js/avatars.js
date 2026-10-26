@@ -144,6 +144,17 @@
     geometryState.listening = true;
     window.addEventListener("resize", invalidateGeometry, { passive: true });
     document.addEventListener("scroll", invalidateGeometry, { passive: true, capture: true });
+    // Discarded pages no longer need animation effects or their native resources.
+    // Preserve effects when the browser keeps the document for back/forward use.
+    window.addEventListener("pagehide", function (event) {
+      if (event.persisted) return;
+      var wraps = document.querySelectorAll(".avwrap");
+      for (var i = 0; i < wraps.length; i++) {
+        if (!wraps[i].getAnimations) continue;
+        var animations = wraps[i].getAnimations({ subtree: true });
+        for (var j = 0; j < animations.length; j++) animations[j].cancel();
+      }
+    });
   }
 
   /* ---- night-time sleep: 9pm-6am on the viewer's clock ------------------ */
