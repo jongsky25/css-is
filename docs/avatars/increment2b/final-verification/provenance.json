@@ -1,0 +1,22 @@
+{
+  "source_run_id": 40263865865,
+  "source_commit": "e909de12c42fe8fe99ce58d922bbef71c711e574",
+  "product_commit": "f700187553bd555dd3a9b638d5aa8e5fb59f3142",
+  "audit_run_id": 40277957839,
+  "audit_commit": "6a473968697583f4da417ef67fc9f760ae4a13dd",
+  "source_artifact": {
+    "id": 12629865325,
+    "sha256": "b3bcfbf6146afdf38e4ab7f1ee872ac77c4ad063d2cb0fbcf2f5c36a70bee1f4",
+    "expires": "2026-11-02T05:23:02Z"
+  },
+  "compact_artifact": {
+    "id": 12630544140,
+    "sha256": "5067947b4af063387c66d68c0b15c76db7865382f2487ad4bc6952e2959f1c3f",
+    "expires": "2026-11-25T06:08:02Z"
+  },
+  "full_artifact": {
+    "id": 12630379820,
+    "sha256": "78f4bff626336f7289a2c78f91fa8de0ae70d1ebf1bb2b9b44f6e82d9f53f2d4",
+    "expires": "2026-11-25T06:08:04Z"
+  }
+}

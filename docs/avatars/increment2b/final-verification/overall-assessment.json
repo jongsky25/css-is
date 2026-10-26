@@ -1,0 +1,38 @@
+{
+  "status": "passed",
+  "gates": {
+    "functional": true,
+    "focused": true,
+    "runtime": true,
+    "matrix": true,
+    "fern_focused_raw": true,
+    "fern_runtime_raw": true,
+    "mushroom_focused_raw": true,
+    "mushroom_runtime_raw": true,
+    "succulent_focused_raw": true,
+    "succulent_runtime_raw": true
+  },
+  "environment_checks": {
+    "same_source_and_browser": true,
+    "focused_control_raw": true,
+    "runtime_control_raw": true,
+    "matrix_control_raw": true,
+    "matrix_protocol": true
+  },
+  "harness_errors": {},
+  "phase_statuses": {
+    "functional": "passed",
+    "focused": "passed",
+    "runtime": "passed",
+    "matrix": "passed"
+  },
+  "source_commit": "e909de12c42fe8fe99ce58d922bbef71c711e574",
+  "artifact_assessment_sha256": {
+    "functional": "399688dab2ddb85e39b69538da0d214da8437d3efcb3e5ae800aade25bb5e2e7",
+    "focused": "8cff800a28ee904d2ae28f39c6b4c354a07f05d33f2e4dc0da3341cd407b18fb",
+    "runtime": "3f31510c4176a969d8c099f024033f72a77c5e642538c9c598f2c0b210d2fef0",
+    "matrix": "5a75db44e26bbb2a4708db9e0d6d2b65266b2af722cc8fb73e86476ec6445a20"
+  },
+  "scope": "Increment2B; pre-existing offscreen motion, timer activity and listener retention remain separately tracked release blockers.",
+  "release_ready": false
+}

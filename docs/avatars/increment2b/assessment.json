@@ -1,94 +1,74 @@
 {
-  "status": "pending_final_verification",
-  "source_commit": "c2f404fa5aa58abebbe0127bbb537b5592993ce5",
+  "status": "accepted",
+  "gates": {
+    "functional": true,
+    "focused": true,
+    "runtime": true,
+    "matrix": true,
+    "fern_focused_raw": true,
+    "fern_runtime_raw": true,
+    "mushroom_focused_raw": true,
+    "mushroom_runtime_raw": true,
+    "succulent_focused_raw": true,
+    "succulent_runtime_raw": true
+  },
+  "environment_checks": {
+    "same_source_and_browser": true,
+    "focused_control_raw": true,
+    "runtime_control_raw": true,
+    "matrix_control_raw": true,
+    "matrix_protocol": true
+  },
+  "harness_errors": {},
+  "phase_statuses": {
+    "functional": "passed",
+    "focused": "passed",
+    "runtime": "passed",
+    "matrix": "passed"
+  },
+  "source_commit": "e909de12c42fe8fe99ce58d922bbef71c711e574",
+  "artifact_assessment_sha256": {
+    "functional": "399688dab2ddb85e39b69538da0d214da8437d3efcb3e5ae800aade25bb5e2e7",
+    "focused": "8cff800a28ee904d2ae28f39c6b4c354a07f05d33f2e4dc0da3341cd407b18fb",
+    "runtime": "3f31510c4176a969d8c099f024033f72a77c5e642538c9c598f2c0b210d2fef0",
+    "matrix": "5a75db44e26bbb2a4708db9e0d6d2b65266b2af722cc8fb73e86476ec6445a20"
+  },
+  "scope": "Increment2B; pre-existing offscreen motion, timer activity and listener retention remain separately tracked release blockers.",
+  "release_ready": false,
+  "source_run_id": 40263865865,
+  "product_commit": "f700187553bd555dd3a9b638d5aa8e5fb59f3142",
+  "audit_run_id": 40277957839,
+  "audit_commit": "6a473968697583f4da417ef67fc9f760ae4a13dd",
+  "source_artifact": {
+    "id": 12629865325,
+    "sha256": "b3bcfbf6146afdf38e4ab7f1ee872ac77c4ad063d2cb0fbcf2f5c36a70bee1f4",
+    "expires": "2026-11-02T05:23:02Z"
+  },
+  "compact_artifact": {
+    "id": 12630544140,
+    "sha256": "5067947b4af063387c66d68c0b15c76db7865382f2487ad4bc6952e2959f1c3f",
+    "expires": "2026-11-25T06:08:02Z"
+  },
+  "full_artifact": {
+    "id": 12630379820,
+    "sha256": "78f4bff626336f7289a2c78f91fa8de0ae70d1ebf1bb2b9b44f6e82d9f53f2d4",
+    "expires": "2026-11-25T06:08:04Z"
+  },
+  "browser": "156.0.8078.47",
   "runtime_sha256": "c69e444b8d72fe84d0521d6ccabce07e9463209f5e451d96169b19aaca4191fb",
-  "functional_browser_tests": 8,
-  "svg_equivalence_checks": 1734,
-  "before": {
-    "callback_maxima_ms": [
-      81.97,
-      6.265,
-      6.399,
-      163.949,
-      158.973
-    ],
-    "frame_p95_ms": [
-      16.799999999999272,
-      16.700000000000728,
-      16.799999999999272,
-      99.90000000000146,
-      66.70000000000073
-    ]
+  "limits": {
+    "callback_ms": 50,
+    "frame_p95_ms": 33.3,
+    "memory_growth_bytes": 10485760
   },
-  "after": {
-    "callback_maxima_ms": [
-      20.765,
-      49.782,
-      210.804,
-      13.408,
-      13.204
-    ],
-    "frame_p95_ms": [
-      16.799999999999272,
-      33.400000000001455,
-      16.80000000000109,
-      16.799999999999272,
-      16.799999999999272
-    ]
-  },
-  "callback_limit_ms": 50,
-  "frame_exception": "User-approved recorded33.3ms overrun remains accepted; no waiver of callback limit or large frame failures.",
-  "result": "Static-preview candidate f700187 passes both targeted memory orders (8.551/8.285MiB <=10MiB), local visual/functional/seasonal checks. Complete final verification runs on harness e909de12c42fe8fe99ce58d922bbef71c711e574.",
-  "not_run": "Memory attribution diagnostic pending; no acceptance claimed.",
-  "next_step": "Collect and audit all four final phases from run40263865865 before accepting2B.",
-  "diagnostic_revision": "f421044b53840f12d754cc9c30b3c2f3ff268532",
-  "hosted_harness_revision": "65f1e16572646fbf34ebdd0d63715e4be9b8d9dd",
-  "native_throttle_diagnostic": {
-    "samples": 10,
-    "all_owned_callbacks_under_50ms": true,
-    "maximum_handler_pause_in_input_window_ms": 345.95,
-    "acceptance": false,
-    "reason": "Native probe changes measurement/scheduling. Proves emulator pauses can occur independently of avatar callbacks, not that every previous callback failure was emulator time. No duration subtraction."
-  },
-  "cpuset_candidate": {
-    "status": "rejected",
-    "current_callback_max_ms": 148.967
-  },
-  "hosted_verification": {
-    "branch": "codex/avatar-2b-verification",
-    "url": "https://github.com/jongsky25/css-is/actions/runs/40247047928",
-    "status": "completed: application_regression",
-    "phases": [
-      "functional",
-      "focused",
-      "runtime",
-      "matrix"
-    ],
-    "results_available": true,
-    "run_id": 40247047928,
-    "browser": "156.0.8078.47",
-    "monitoring_correction": "The commit-workflow-runs tool explicitly filters to PR-triggered runs; using it to infer absence of push-triggered runs was an assistant monitoring error. Public Actions discovery and direct run/job queries work. No network configuration change was needed.",
-    "audit_run_id": 40256359917,
-    "remaining_failure": {
-      "gate": "False-warm-picker_growth-renderer_rss_sum_bytes",
-      "delta_bytes": 11743232,
-      "budget_bytes": 10485760,
-      "overage_bytes": 1257472
-    }
-  },
-  "current_candidate_commit": "f700187",
-  "candidate_verification": {
-    "run_id": 40260864049,
-    "url": "https://github.com/jongsky25/css-is/actions/runs/40260864049",
-    "status": "completed; both memory orders pass",
-    "scope": "two opposite-order warm desktop original/current comparisons, five samples per arm per order"
-  },
-  "final_verification": {
-    "run_id": 40263865865,
-    "url": "https://github.com/jongsky25/css-is/actions/runs/40263865865",
-    "source_commit": "e909de12c42fe8fe99ce58d922bbef71c711e574",
-    "status": "running",
-    "superseded_run_id": 40263432618,
-    "superseded_reason": "Historical art macro and current growth caller API mismatch identified before completion; matching historical callers added and regression-tested."
-  }
+  "evidence": "final-verification/numeric-and-visual-evidence.tar.gz",
+  "remaining": [
+    "3A",
+    "3B",
+    "4A",
+    "4B",
+    "5",
+    "6"
+  ],
+  "historical_assessment": "assessment-before-final-audit.json"
 }
