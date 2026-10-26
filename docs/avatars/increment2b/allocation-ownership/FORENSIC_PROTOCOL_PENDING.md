@@ -1,7 +1,7 @@
-# Prepared retaining-path capture — NOT AUTHORIZED, NOT RUN
+# Retaining-path capture — authorized for this four-slot experiment
 
 The handoff forbids forced GC. Chromium 156 heap snapshots force it internally.
-This protocol requires an explicit exception for this separate forensic experiment;
+The user explicitly approved this exception with “yes run it” on 2026-10-26;
 it does not alter any acceptance workload or budget.
 
 Four fixed fresh-browser/database slots: original/current/current/original,
@@ -25,11 +25,12 @@ lead, not proof it explains earlier natural samples; absence can mean the snapsh
 collected the transient objects. No change is promoted without separate functional
 and unchanged uninstrumented memory gates.
 
-Prepared entry point (DO NOT execute until the exception is explicitly approved):
+Authorized entry point:
 
 ```sh
 CSS_AVATAR_FORENSIC_GC=authorized .venv/bin/python scripts/avatar_baseline/run_retaining_paths.py --output /workspace/scratch/avatar-retaining-paths --browser-dir /workspace/scratch/chromium156-bin
 ```
 
-The runner refuses execution without the explicit opt-in. Mock tests exercise
-serialization/labeling only; no browser heap snapshot has been taken.
+The runner still requires the explicit opt-in. Authorization covers these four
+post-workload forensic snapshots only; natural/acceptance gates remain unchanged.
+The original preparation and pending status are preserved in commit 8ff10ee.
