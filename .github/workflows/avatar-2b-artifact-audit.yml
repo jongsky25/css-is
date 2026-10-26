@@ -1,0 +1,32 @@
+name: Avatar 2B artifact audit
+on:
+  push:
+    branches: [codex/avatar-2b-artifact-audit]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    container: python:3.12-trixie@sha256:0d0db5b17f11b1b7d1aafa74ceadaa64ba0944b267ff6fc22008a197acd6b9ad
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: 40247047928
+          name: avatar-2b-complete
+          path: avatar-verification
+      - name: Audit every cohort and source identity
+        id: assess
+        run: python scripts/avatar_baseline/assess_complete.py avatar-verification
+      - name: Package all numeric evidence and trace hashes
+        if: always() && steps.assess.outcome != 'skipped'
+        run: python scripts/avatar_baseline/package_review.py avatar-verification
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: avatar-2b-reviewed-evidence
+          path: avatar-2b-review.tar.gz
+          retention-days: 30
