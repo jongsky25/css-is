@@ -30,3 +30,10 @@ def test_invalid_screen_is_rejected(tmp_path,fault):
     elif fault=='errors':rows[0]['errors']=['application failure']
     else:rows[0]['scenarios']['background']['renderer_process_count']=0
     with pytest.raises(ValueError):points(rows)
+
+
+def test_five_sample_validation_requires_all_five(tmp_path):
+    _,_,rows=cohort(tmp_path)
+    assert points(rows,5)
+    with pytest.raises(ValueError):points(rows[:2],5)
+    with pytest.raises(ValueError):points(rows)

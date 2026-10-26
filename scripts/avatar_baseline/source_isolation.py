@@ -37,20 +37,23 @@ def variant(root,cwd,arm):
 
 def main():
     parser=argparse.ArgumentParser();parser.add_argument('--output',type=Path,required=True)
-    parser.add_argument('--browser-dir',type=Path,required=True);args=parser.parse_args()
+    parser.add_argument('--browser-dir',type=Path,required=True)
+    parser.add_argument('--observer-validation',action='store_true');args=parser.parse_args()
+    arms=('current','geometry','geometry','current') if args.observer_validation else ARMS
+    samples=5 if args.observer_validation else 2
     root=Path(__file__).resolve().parents[2];out=args.output.resolve();out.mkdir(parents=True,exist_ok=False)
-    plan={'acceptance':False,'base':'f700187','order':ARMS,'samples_per_arm':2,
-        'protocol':'Full 30-second warm desktop workload, no tracing, native sampling, dump requests or concurrent analysis. Two-sample source screen only; never final acceptance.',
+    plan={'acceptance':False,'base':'f700187','order':arms,'samples_per_arm':samples,'observer_validation':args.observer_validation,
+        'protocol':'Full 30-second warm desktop workload, no tracing, native sampling, dump requests or concurrent analysis. Source isolation only; never final acceptance.',
         'variants':{'geometry':'Disable only avatar ResizeObserver registrations; keep cache, pointer, audio, SVG and static policy unchanged. Diagnostic can regress resize behavior.',
                     'preview':'Revert only f700187 static-preview wrapper/reaction omission, using its parent versions of three templates. Artwork remains current.',
                     'svg':'Original species-art dispatcher with unused scope adapter; disable v2 scope/gradient emission. Current runtime and static-preview policy retained. Intentional visual reversion, never promotable unchanged.'},
-        'selection':'Require RSS improvement of at least 5 MiB at both navigation 10 and 20 in both orders, no RSS or heap checkpoint worsening >10 MiB, and valid samples/counts. Screen only; five-sample validation needed.',
+        'selection':'Require RSS improvement of at least 5 MiB at both navigation 10 and 20 in both orders, no RSS or heap checkpoint worsening >10 MiB, and valid samples/counts. Source isolation only; full original/current/candidate acceptance still required.',
         'cohorts':[]}
     (out/'experiment.json').write_text(json.dumps(plan,indent=2)+'\n')
     saved={};roots={}
     with tempfile.TemporaryDirectory(prefix='avatar-source-screen-') as temp:
         try:
-            for arm in dict.fromkeys(ARMS):
+            for arm in dict.fromkeys(arms):
                 cwd=Path(temp)/arm
                 subprocess.run(['git','worktree','add','--quiet','--detach',str(cwd),'f700187'],cwd=root,check=True)
                 roots[arm]=cwd;saved[arm]={}
@@ -64,11 +67,11 @@ def main():
                     target=evidence/path;target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes(data)
                 (evidence/'diff.patch').write_bytes(subprocess.check_output(['git','diff','--','static','templates'],cwd=cwd))
                 (evidence/'hashes.json').write_text(json.dumps({p:hashlib.sha256(d).hexdigest() for p,d in changes.items()},indent=2)+'\n')
-            for index,arm in enumerate(ARMS):
+            for index,arm in enumerate(arms):
                 dest=out/f'{index}-{arm}';dest.mkdir()
                 env=dict(os.environ,PATH=str(args.browser_dir.resolve())+os.pathsep+os.environ['PATH'],
                     CSS_TEST_NOW='2026-07-15T12:00:00',CSS_AVATAR_BASELINE='1',CSS_AVATAR_PIN_RENDERER='0',
-                    CSS_AVATAR_MEMORY_DIAGNOSTIC='1',CSS_AVATAR_RUNS='2',CSS_AVATAR_SECONDS='30',
+                    CSS_AVATAR_MEMORY_DIAGNOSTIC='1',CSS_AVATAR_RUNS=str(samples),CSS_AVATAR_SECONDS='30',
                     CSS_AVATAR_CHROMIUM='156.0.8078.47',CSS_AVATAR_OUT=str(dest))
                 with (dest/'runner.txt').open('w') as stream:
                     result=subprocess.run([sys.executable,'-m','pytest',
