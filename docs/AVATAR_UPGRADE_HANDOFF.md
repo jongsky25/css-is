@@ -10,13 +10,42 @@ November 25. See `docs/avatars/increment2b/REPORT.md` and `final-verification/`.
 The historical handoff below is retained for provenance; its pending 2B actions
 are completed and must not be repeated.
 
-3A is implemented in `d0df55779e3fe18ba945029fd549d9079425e53d` on
-`codex/avatar-3a` (current checkout). Local 103 unit/integration/harness checks,
-4 real animal-care checks, 51 sheets, 216 rig cases and 2,448 unchanged-species
-SVG comparisons pass. Its first hosted preflight failed a hardcoded-species harness assertion before benchmarks. The repaired harness `512df84` passes all 18 accounting checks, including both batch configurations. Run below is superseded during focused timing by the turtle retraction correction (the previous larger head stayed exposed). A new complete run is required on the correction; discover it from the branch Actions page:
-https://github.com/jongsky25/css-is/actions/runs/40279416578
-Job: `121429157804`. Do not push non-skip commits to this branch while relying
-on that run. Audit the raw result before accepting 3A or starting 3B. The workflow uploads full `avatar-3a-complete` and compact `avatar-3a-review` artifacts for 30 days. Extract the compact archive and run `scripts/avatar_baseline/audit_batch.py <evidence> --kinds dog,rabbit,bird,turtle --output <assessment.json>`; inspect screenshots and retain all raw failures.
+3A artwork is implemented in `d0df557`, corrected by `cb2220f` on
+`codex/avatar-3a` (current checkout). The larger turtle head initially stayed
+exposed during hiding; the correction is verified by actual eye-occlusion hit
+testing at all six stages and three moods across three themes. 103 initial
+unit/integration/harness checks, 18 updated harness checks, four real animal-care
+checks, 51 sheets, 216 rig cases and 2,448 unchanged-species comparisons pass locally.
+
+**Current complete verification: run 40280615190**, job `121432908224`, source
+`cb2220f`. https://github.com/jongsky25/css-is/actions/runs/40280615190
+At last observation setup/accounting passed; functional/visual was running.
+Do not start 3B until this source's complete raw performance evidence passes audit.
+Do not push non-skip commits to the product branch while relying on this run.
+
+Prior run 40279025648 failed a hardcoded-species harness regression before any
+benchmark. Run 40279416578 passed functional/visual but was cancelled during
+focused timing for the turtle correction. Its partial raw evidence is retained
+as artifact 12631798663 (30 days), with logs/metadata in `pre-retraction-fix/`.
+Its compact packaging also exceeded the 25 MiB transport target. The current
+product workflow still has that packaging limitation; a packaging-step failure
+must not be mistaken for a failed performance phase or cause a benchmark rerun.
+
+Prepared audit branch: `codex/avatar-3a-artifact-audit`, HEAD `853d76e` (contains
+splitter/workflow `808a773`), checkout `/workspace/avatar-3a-artifact-audit`.
+It is pushed with `[skip ci]`, so no audit has been started prematurely.
+After source run 40280615190 uploads `avatar-3a-complete`, commit an empty non-skip
+trigger on the audit branch and push it from the primary checkout. It downloads
+that exact source artifact, splits all JSON/XML/text/PNG evidence into individually
+bounded archives, checks source identities/raw gates, and uploads numbered review
+parts plus the audit verdict. A local round-trip test verified all 157 packaged
+files from a copy of the final 2B evidence; no original evidence was changed.
+
+Download ALL numbered review parts via the GitHub tool/Sediment file IDs, extract
+into one directory, then run `scripts/avatar_baseline/audit_batch.py <evidence>
+--kinds dog,rabbit,bird,turtle --output <assessment.json>`. Inspect screenshots,
+source identities and any failure; keep full raw artifact links and original
+failures. Accept 3A only if supported, then proceed 3B, 4A, 4B, 5, 6 sequentially.
 
 Current local dependencies: `/workspace/css-is/.venv`; local Chromium 154 is
 for functional/visual checks only. The previous Docker preflight image is absent.
