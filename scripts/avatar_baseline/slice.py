@@ -26,8 +26,11 @@ def prototypes(page):
  page.locator('.av-anchor-pot').evaluate_all('''els=>els.forEach(el=>{el.innerHTML='<path d="M-21-2Q0 4 21-2L19 10Q0 16-19 10Z" fill="#588c9b" stroke="#355a70" stroke-width="1"/><path d="M-15 4Q0 9 15 4" fill="none" stroke="#b7dcce" stroke-width="2"/>'})''')
 
 with tempfile.TemporaryDirectory() as tmp, sync_playwright() as pw:
- for name in ['_avatars.html','_avatars_art.html']:
-  Path(tmp,name).write_bytes(subprocess.check_output(['git','show',a.before+':templates/'+name]))
+ # Load the complete historical macro tree; split species import shared helpers.
+ for name in subprocess.check_output(['git','ls-tree','-r','--name-only',a.before,'templates'],text=True).splitlines():
+  if Path(name).name.startswith('_avatar') or '/_avatar_species/' in name:
+   target=Path(tmp)/Path(name).relative_to('templates');target.parent.mkdir(parents=True,exist_ok=True)
+   target.write_bytes(subprocess.check_output(['git','show',a.before+':'+name]))
  before=module(tmp,'before-');after=module(ROOT/'templates','slice-')
  browser=pw.chromium.launch(executable_path=shutil.which('chromium'),args=['--no-sandbox'])
  for theme in ['light','dark','contrast']:

@@ -1,56 +1,31 @@
-{# rabbit artwork. Keep placement groups separate from animated groups. #}
+{# Original authored illustrated artwork; placement and motion groups stay separate. #}
 {% from "_avatars_shared.html" import costume_front, eye as _eye, shadow as _shadow, accessory as _accessory, regalia as _regalia %}
-
 {% macro art(s, m=0, costume="") %}
-  {% set sc = 0.62 + (s - 1) * 0.076 %}
-  {{ _shadow(24) }}
-  <g transform="translate(60 96) scale({{ '%.3f'|format(sc) }}) translate(-60 -96)">
-    <circle cx="79" cy="108" r="5.5" fill="#fff"/>
-    <path d="M44 118 Q40 92 60 88 Q80 92 76 118 Z" fill="url(#avg-rabbit)"/>
-    <path d="M52 118 Q53 102 60 100 Q67 102 68 118 Z" fill="url(#avg-rabbit2)"/>
-    <ellipse cx="51" cy="118" rx="7.5" ry="3.6" fill="url(#avg-rabbit2)"/>
-    <ellipse cx="69" cy="118" rx="7.5" ry="3.6" fill="url(#avg-rabbit2)"/>
-    {{ costume_front("rabbit", s, costume, scaled=true) }}
-    {{ _regalia(s, 60, 88, 0.8) }}
-    <g class="av-head">
-      <g class="av-ear-l">
-        <ellipse cx="53" cy="44" rx="5.6" ry="{{ 13 + s }}" fill="url(#avg-rabbit)" transform="rotate(-9 53 58)"/>
-        <ellipse cx="53" cy="46" rx="2.8" ry="{{ 9 + s }}" fill="#f2c4cf" transform="rotate(-9 53 58)"/>
-      </g>
-      <g class="av-ear-r">
-        <ellipse cx="67" cy="44" rx="5.6" ry="{{ 13 + s }}" fill="url(#avg-rabbit)" transform="rotate(9 67 58)"/>
-        <ellipse cx="67" cy="46" rx="2.8" ry="{{ 9 + s }}" fill="#f2c4cf" transform="rotate(9 67 58)"/>
-      </g>
-      <circle cx="60" cy="70" r="15.5" fill="url(#avg-rabbit)"/>
-      <path d="M49 62 Q54 57 59 59" stroke="#ffffff48" stroke-width="2.4" fill="none" stroke-linecap="round"/>
-      <ellipse cx="49" cy="75" rx="5" ry="4.2" fill="url(#avg-rabbit2)"/>
-      <ellipse cx="71" cy="75" rx="5" ry="4.2" fill="url(#avg-rabbit2)"/>
-      {{ _eye(53.5, 68, 3.2, "#54423a", "#e4dcd0") }}
-      {{ _eye(66.5, 68, 3.2, "#54423a", "#e4dcd0") }}
-      <path d="M60 73.5 l-2 2.4 h4 Z" fill="#e89aac"/>
-      <path d="M60 75.9 l0 2.2 M60 78.1 q-2.6 2 -5 1.4 M60 78.1 q2.6 2 5 1.4" stroke="#6a564a" stroke-width="1" fill="none" stroke-linecap="round"/>
-      {% if s >= 3 %}
-      <rect x="57.7" y="79.4" width="2.1" height="3.2" rx=".8" fill="#fff"/>
-      <rect x="60.2" y="79.4" width="2.1" height="3.2" rx=".8" fill="#fff"/>
-      {% endif %}
-      <circle cx="47" cy="73" r=".55" fill="#8a7666"/><circle cx="45" cy="76" r=".55" fill="#8a7666"/>
-      <circle cx="73" cy="73" r=".55" fill="#8a7666"/><circle cx="75" cy="76" r=".55" fill="#8a7666"/>
-      {% if s >= 5 %}
-      {% for a in [0, 72, 144, 216, 288] %}
-      <ellipse cx="46" cy="51.4" rx="1.5" ry="2.8" fill="url(#avg-petal)" transform="rotate({{ a }} 46 54)"/>
-      {% endfor %}
-      <circle cx="46" cy="54" r="1.5" fill="url(#avg-sun)"/>
-      {% endif %}
-      {{ _accessory(m, 60, 55, 0.85, costume=costume) }}
-    </g>
-    {% if s >= 6 %}
-    <path d="M88 54 l2 4.4 4.8 .7 -3.5 3.4 .9 4.8 -4.2 -2.3 -4.2 2.3 .9 -4.8 -3.5 -3.4 4.8 -.7 Z" fill="url(#avg-sun)"/>
-    {% endif %}
-    {# hidden treat: a carrot #}
-    <g class="av-food">
-      <path d="M92 30 l4 14 4 -14 Z" fill="#f0862e" transform="rotate(18 96 37)"/>
-      <path d="M92 30 q0 -6 -3 -8 M96 30 q0 -7 0 -9 M100 30 q0 -6 3 -8"
-            stroke="#5d9b4c" stroke-width="1.8" fill="none" stroke-linecap="round" transform="rotate(18 96 37)"/>
-    </g>
-  </g>
+{% set sc = 0.64 + (s-1)*0.072 %}
+{% set ear = [19,24,29,32,35,38][s-1] %}
+{% set hy = 75 if s<3 else 71 %}
+{{ _shadow(28) }}
+<g class="av-v2 av-body" transform="translate(60 98) scale({{ sc }}) translate(-60 -98)" stroke-linejoin="round">
+ <g class="av-tail"><circle cx="84" cy="108" r="{{ 6+s/2 }}" fill="#fff6e9" stroke="#ae9f94" stroke-width="1.3"/></g>
+ <path d="M41 119 Q{{ 32 if s>=3 else 39 }} 98 49 88 Q60 82 72 89 Q{{ 88 if s>=3 else 81 }} 99 79 119Z" fill="url(#avg-rabbit)" stroke="#9c8b80" stroke-width="1.5"/>
+ <ellipse cx="60" cy="108" rx="13" ry="16" fill="#fff6e9"/>
+ {% if s>=3 %}<path d="M40 104Q29 113 41 121M80 104Q91 113 79 121" fill="url(#avg-rabbit)" stroke="#9c8b80" stroke-width="1.3"/>{% endif %}
+ <g fill="#fff6e9" stroke="#9c8b80" stroke-width="1.2"><ellipse cx="46" cy="121" rx="11" ry="5"/><ellipse cx="74" cy="121" rx="11" ry="5"/>{% if s>=2 %}<path d="M51 103L50 117Q54 121 57 117L58 104M62 104L63 117Q67 121 70 117L69 103"/>{% endif %}</g>
+ <g class="av-head">
+  <g class="av-ear-l"><path d="M43 {{ hy-13 }}Q{{ 27 if s>=5 else 33 }} {{ hy-ear-30 }} 44 {{ hy-ear-25 }}Q56 {{ hy-ear-29 }} 55 {{ hy-12 }}Z" fill="url(#avg-rabbit)" stroke="#9c8b80" stroke-width="1.5"/><path d="M46 {{ hy-19 }}Q38 {{ hy-ear-16 }} 44 {{ hy-ear-18 }}Q49 {{ hy-ear-20 }} 49 {{ hy-19 }}Z" fill="#e8b3bd"/></g>
+  <g class="av-ear-r"><path d="M65 {{ hy-12 }}Q64 {{ hy-ear-26 }} 76 {{ hy-ear-25 }}Q{{ 92 if s>=4 else 87 }} {{ hy-ear-22 }} 77 {{ hy-13 }}Z" fill="url(#avg-rabbit)" stroke="#9c8b80" stroke-width="1.5"/><path d="M70 {{ hy-19 }}Q70 {{ hy-ear-18 }} 76 {{ hy-ear-18 }}Q82 {{ hy-ear-16 }} 74 {{ hy-19 }}Z" fill="#e8b3bd"/></g>
+  <path d="M38 {{ hy-4 }}Q38 {{ hy-25 }} 60 {{ hy-24 }}Q82 {{ hy-25 }} 82 {{ hy-4 }}Q91 {{ hy+12 }} 76 {{ hy+19 }}Q60 {{ hy+28 }} 44 {{ hy+19 }}Q29 {{ hy+12 }} 38 {{ hy-4 }}Z" fill="url(#avg-rabbit)" stroke="#9c8b80" stroke-width="1.5"/>
+  <path d="M44 {{ hy-14 }}Q49 {{ hy-20 }} 55 {{ hy-18 }}" fill="none" stroke="#fff9ee" stroke-width="3" stroke-linecap="round"/>
+  {{ _eye(48,hy,4.8 if s<3 else 4.2,"#6b5553","#efe5d7") }}{{ _eye(72,hy,4.8 if s<3 else 4.2,"#6b5553","#efe5d7") }}
+  <ellipse cx="49" cy="{{ hy+12 }}" rx="10" ry="7" fill="#fff8ee"/><ellipse cx="71" cy="{{ hy+12 }}" rx="10" ry="7" fill="#fff8ee"/>
+  <path d="M56 {{ hy+8 }}Q60 {{ hy+5 }} 64 {{ hy+8 }}L60 {{ hy+12 }}Z" fill="#cd8998"/><path d="M60 {{ hy+12 }}v3q-4 4-8 0m8 0q4 4 8 0" stroke="#8c7168" stroke-width="1.2" fill="none"/>
+  {% if s>=3 %}<path d="M57 {{ hy+18 }}h6v5h-6Z" fill="#fff" stroke="#c5b4a4" stroke-width=".8"/><path d="M60 {{ hy+18 }}v4" stroke="#c5b4a4" stroke-width=".8"/>{% endif %}
+  {% if s>=4 %}<path d="M40 {{ hy+9 }}l-10-2m10 7-10 2m50-7 10-2m-10 7 10 2" stroke="#a98c7d" stroke-width="1"/>{% endif %}
+  <g class="av-anchor-head" data-anchor="head" transform="translate(60 {{ hy-23 }})"></g>{{ _accessory(m,60,hy-23,0.85,costume=costume) }}
+ </g>
+ {{ costume_front("rabbit",s,costume,scaled=true) }}{{ _regalia(s,60,99,0.8) }}
+ <g class="av-anchor-neck" data-anchor="neck" transform="translate(60 99)"></g>
+ {% if s>=6 %}<path d="M48 96l5 5 7-4 7 4 5-5" fill="#fff6e9"/>{% endif %}
+ <g class="av-food"><path d="M88 30l8 17 6-19Z" fill="#ed9c50"/><path d="M94 30l-3-9m6 8 2-10" stroke="#689568" stroke-width="2"/></g>
+</g>
 {% endmacro %}

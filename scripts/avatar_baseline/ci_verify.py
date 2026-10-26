@@ -9,10 +9,11 @@ import subprocess
 import sys
 from verification_result import Results, frame_pass, validate_samples, pytest_evidence
 
-p=argparse.ArgumentParser();p.add_argument('phase',choices=['functional','control','focused','runtime','matrix']);p.add_argument('--output',type=Path,default=Path('avatar-verification'));a=p.parse_args()
+p=argparse.ArgumentParser();p.add_argument('phase',choices=['functional','batch-functional','control','focused','runtime','matrix']);p.add_argument('--output',type=Path,default=Path('avatar-verification'));a=p.parse_args()
 root=Path.cwd();out=(a.output/a.phase).resolve();out.mkdir(parents=True,exist_ok=False)
 python=sys.executable
 base_env=dict(os.environ,CSS_TEST_NOW='2026-07-15T12:00:00',CSS_AVATAR_BASELINE='1',CSS_AVATAR_PIN_RENDERER='0')
+kinds=os.getenv("CSS_AVATAR_BATCH_KINDS","fern,mushroom,succulent").split(",")
 statuses={}
 results=Results()
 def run(name,args,*,cwd=root,extra=None):
@@ -66,13 +67,22 @@ try:
         results.check('seasonal_live_refresh',lambda: pytest('seasonal-live-refresh',['tests/test_appearance_browser.py::test_publish_private_preview_mobile_and_live_outfit_without_form_reload'],expected=1)==0)
         results.check('native_visibility_touch_keyboard',lambda: pytest('native-behavior',['tests/test_avatar_baseline_browser.py','-k','native_visibility_and_touch'],{'CSS_AVATAR_OUT':str(out/'native/application')},expected=1)==0)
         results.check('persisted_plant_care',lambda: pytest('care',['tests/test_avatar_baseline_browser.py','-k','plant_care_live_surfaces'],{'CSS_AVATAR_OUT':str(out/'care/application'),'CSS_AVATAR_MATURE':'1','CSS_AVATAR_PLANTS':'fern,mushroom,succulent'},expected=1)==0)
+    elif a.phase=='batch-functional':
+        files=['tests/test_avatar_motion_preference_browser.py','tests/test_avatar_chase_writes_browser.py','tests/test_avatar_geometry_browser.py','tests/test_avatar_pointer_browser.py','tests/test_avatar_static_preview_browser.py','tests/test_home_search_boot_browser.py']
+        results.check('browser_regressions',lambda: pytest('browser-regressions',files,{'CSS_AVATAR_OUT':str(out/'functional/application')},expected=8)==0)
+        results.check('static_preview_pixels',lambda: run('static-preview-pixels',[python,'scripts/avatar_baseline/check_static_previews.py','--out',str(out/'static-preview-visual')])==0)
+        results.check('seasonal_live_refresh',lambda: pytest('seasonal-live-refresh',['tests/test_appearance_browser.py::test_publish_private_preview_mobile_and_live_outfit_without_form_reload'],expected=1)==0)
+        results.check('native_visibility_touch_keyboard',lambda: pytest('native-behavior',['tests/test_avatar_baseline_browser.py','-k','native_visibility_and_touch'],{'CSS_AVATAR_OUT':str(out/'native/application')},expected=1)==0)
+        results.check('persisted_animal_care',lambda: pytest('care',['tests/test_avatar_animal_batch_browser.py'],{'CSS_AVATAR_OUT':str(out/'care/application'),'CSS_AVATAR_MATURE':'1'},expected=len(kinds))==0)
+        results.check('seasonal_sheets',lambda: run('sheets',[python,'scripts/avatar_baseline/sheets.py','--out',str(out/'sheets')])==0)
+        results.check('motion_rigs',lambda: run('motion-rigs',[python,'scripts/avatar_baseline/animal_motion.py','--out',str(out/'motion')])==0)
     elif a.phase=='control':
         run_control()
     elif a.phase=='focused':
         run_control()
-        results.check('native_runner',lambda: pytest('native',['tests/test_avatar_native_control.py'],{'CSS_AVATAR_OUT':str(out/'native/application'),'CSS_AVATAR_MATURE':'1','CSS_AVATAR_NATIVE_AFTER_ONLY':'1'},expected=3)==0)
-        results.check('trace_runner',lambda: pytest('traces',['tests/test_avatar_cpu_attribution.py'],{'CSS_AVATAR_OUT':str(out/'traces/application'),'CSS_AVATAR_MATURE':'1','CSS_AVATAR_CPU_DIAGNOSTIC':'1','CSS_AVATAR_CPU_RUNS':'5'},expected=3)==0)
-        for kind in ['fern','mushroom','succulent']:
+        results.check('native_runner',lambda: pytest('native',['tests/test_avatar_native_control.py'],{'CSS_AVATAR_OUT':str(out/'native/application'),'CSS_AVATAR_MATURE':'1','CSS_AVATAR_NATIVE_AFTER_ONLY':'1'},expected=len(kinds))==0)
+        results.check('trace_runner',lambda: pytest('traces',['tests/test_avatar_cpu_attribution.py'],{'CSS_AVATAR_OUT':str(out/'traces/application'),'CSS_AVATAR_MATURE':'1','CSS_AVATAR_CPU_DIAGNOSTIC':'1','CSS_AVATAR_CPU_RUNS':'5'},expected=len(kinds))==0)
+        for kind in kinds:
             def native_check():
                 native=read(out/f'native/{kind}/native-control.json');rows=native['samples']
                 validate_samples(rows,5)
@@ -98,8 +108,8 @@ try:
                 path=before/'tests'/name;existed[name]=path.read_bytes() if path.exists() else None
                 shutil.copy2(root/'tests'/name,path)
             for arm,cwd in [('before',before),('after',root)]:
-                results.check(arm+'_runner',lambda: pytest('runtime-'+arm,['tests/test_avatar_cpu_attribution.py'],{'CSS_AVATAR_OUT':str(out/arm/'application'),'CSS_AVATAR_MATURE':'1','CSS_AVATAR_CPU_DIAGNOSTIC':'1','CSS_AVATAR_CPU_RUNS':'5','CSS_AVATAR_CPU_AFTER_ONLY':'1'},cwd=cwd,expected=3)==0)
-            for kind in ['fern','mushroom','succulent']:
+                results.check(arm+'_runner',lambda: pytest('runtime-'+arm,['tests/test_avatar_cpu_attribution.py'],{'CSS_AVATAR_OUT':str(out/arm/'application'),'CSS_AVATAR_MATURE':'1','CSS_AVATAR_CPU_DIAGNOSTIC':'1','CSS_AVATAR_CPU_RUNS':'5','CSS_AVATAR_CPU_AFTER_ONLY':'1'},cwd=cwd,expected=len(kinds))==0)
+            for kind in kinds:
                 def compare_runtime():
                     pair=[read(out/arm/kind/'summary.json') for arm in ['before','after']]
                     for data in pair:

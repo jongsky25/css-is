@@ -1,0 +1,63 @@
+name: Avatar 3A verification
+on:
+  workflow_dispatch:
+  push:
+    branches: [codex/avatar-3a]
+permissions:
+  contents: read
+concurrency:
+  group: avatar-3a-verification
+  cancel-in-progress: true
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    container: python:3.12-trixie@sha256:0d0db5b17f11b1b7d1aafa74ceadaa64ba0944b267ff6fc22008a197acd6b9ad
+    env:
+      CSS_AVATAR_BATCH_KINDS: dog,rabbit,bird,turtle
+    timeout-minutes: 210
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install exact browser and locked test dependencies
+        id: install
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends chromium=156.0.8078.47-1~deb13u1 chromium-common=156.0.8078.47-1~deb13u1 git procps
+          python -m venv .venv
+          .venv/bin/python -m pip install --require-hashes --only-binary=:all: -r requirements-test.txt
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - name: Verify evidence accounting
+        id: accounting
+        run: .venv/bin/python -m pytest tests/test_avatar_verification_result.py -q
+      - name: Functional and visual gates
+        id: functional
+        if: ${{ !cancelled() && steps.install.outcome == 'success' && steps.accounting.outcome == 'success' }}
+        env:
+          CSS_AVATAR_CHROMIUM: 156.0.8078.47
+        run: .venv/bin/python scripts/avatar_baseline/ci_verify.py batch-functional
+      - name: Focused artwork and native frame gates
+        id: focused
+        if: ${{ !cancelled() && steps.install.outcome == 'success' && steps.accounting.outcome == 'success' }}
+        env:
+          CSS_AVATAR_CHROMIUM: 156.0.8078.47
+        run: .venv/bin/python scripts/avatar_baseline/ci_verify.py focused
+      - name: Complete original and current runtime gates
+        id: runtime
+        if: ${{ !cancelled() && steps.install.outcome == 'success' && steps.accounting.outcome == 'success' }}
+        env:
+          CSS_AVATAR_CHROMIUM: 156.0.8078.47
+        run: .venv/bin/python scripts/avatar_baseline/ci_verify.py runtime
+      - name: Full original and current application matrix
+        id: matrix
+        if: ${{ !cancelled() && steps.install.outcome == 'success' && steps.accounting.outcome == 'success' }}
+        env:
+          CSS_AVATAR_CHROMIUM: 156.0.8078.47
+        run: .venv/bin/python scripts/avatar_baseline/ci_verify.py matrix
+      - name: Retain every measurement and failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: avatar-3a-complete
+          path: avatar-verification/
+          retention-days: 30

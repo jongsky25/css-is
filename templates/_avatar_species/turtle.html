@@ -1,42 +1,30 @@
-{# turtle artwork. Keep placement groups separate from animated groups. #}
+{# Original authored illustrated artwork; placement and motion groups stay separate. #}
 {% from "_avatars_shared.html" import costume_front, eye as _eye, shadow as _shadow, accessory as _accessory, regalia as _regalia %}
-
 {% macro art(s, m=0, costume="") %}
-  {% set sc = 0.62 + (s - 1) * 0.074 %}
-  {{ _shadow(30) }}
-  <g transform="translate(60 100) scale({{ '%.3f'|format(sc) }}) translate(-60 -100)">
-    <ellipse cx="38" cy="112" rx="7" ry="5" fill="url(#avg-turtleskin)"/>
-    <ellipse cx="82" cy="112" rx="7" ry="5" fill="url(#avg-turtleskin)"/>
-    {% if s >= 4 %}
-    <path d="M35 114 l0 2.6 M38 115 l0 2.4 M41 114 l0 2.6 M79 114 l0 2.6 M82 115 l0 2.4 M85 114 l0 2.6" stroke="#5a8a58" stroke-width=".9" stroke-linecap="round"/>
-    {% endif %}
-    <g class="av-head">
-      <ellipse cx="90" cy="96" rx="9.5" ry="7.5" fill="url(#avg-turtleskin)"/>
-      <path d="M84 91 Q88 88 92 89" stroke="#ffffff38" stroke-width="1.8" fill="none" stroke-linecap="round"/>
-      {{ _eye(92, 93.5, 2.2, "#375237", "#9ccb97") }}
-      <path d="M95 98 q2.6 .4 3.6 -1" stroke="#4a7a48" stroke-width="1" fill="none" stroke-linecap="round"/>
-      <ellipse cx="88" cy="98" rx="1.8" ry="1" fill="#f2b8a0" opacity=".5"/>
-      {{ _accessory(m, 90, 88, 0.55, costume=costume) }}
-    </g>
-    {# domed shell: dark rim, lit dome, scute pattern #}
-    <path d="M30 104 Q32 {{ '%.0f'|format(90 - s * 2.2) }} 60 {{ '%.0f'|format(86 - s * 2.6) }} Q88 {{ '%.0f'|format(90 - s * 2.2) }} 90 104 Z" fill="url(#avg-shell2)"/>
-    <path d="M34 104 Q37 {{ '%.0f'|format(93 - s * 2.2) }} 60 {{ '%.0f'|format(90 - s * 2.6) }} Q83 {{ '%.0f'|format(93 - s * 2.2) }} 86 104 Z" fill="url(#avg-shell)"/>
-    <path d="M40 {{ '%.0f'|format(99 - s * 1.6) }} Q48 {{ '%.0f'|format(93 - s * 2.2) }} 58 {{ '%.0f'|format(92 - s * 2.5) }}" stroke="#ffffff30" stroke-width="2.4" fill="none" stroke-linecap="round"/>
-    {% if s >= 3 %}
-      <path d="M60 {{ '%.0f'|format(90 - s * 2.6) }} L60 104 M44 100 L60 {{ '%.0f'|format(93 - s * 1.6) }} L76 100" stroke="#2f6a44" stroke-width="1.4" fill="none" opacity=".8"/>
-    {% endif %}
-    {% if s >= 4 %}
-      {% for cx, cy in [(50, 98), (70, 98), (60, 96)] %}<path d="M{{ cx }} {{ cy }} l3 0 -1.5 -3 Z" fill="#2f6a44" opacity=".8"/>{% endfor %}
-    {% endif %}
-    {{ costume_front("turtle", s, costume, scaled=true) }}
-    {{ _regalia(s, 60, 94, 0.7) }}
-    {% if s >= 6 %}
-      <path d="M60 {{ '%.0f'|format(88 - s * 2.6) }} l1.6 4 4 .6 -3 3 .8 4.2 -3.4 -2 -3.4 2 .8 -4.2 -3 -3 4 -.6 Z" fill="url(#avg-sun)"/>
-    {% endif %}
-    {# hidden treat: a lettuce leaf #}
-    <g class="av-food">
-      <path d="M92 30 q8 -6 14 0 q-2 8 -8 8 q-6 -2 -6 -8 Z" fill="url(#avg-leaf)"/>
-      <path d="M94 34 q5 -3 10 -2" stroke="#3a6e2e" stroke-width=".9" fill="none" opacity=".6"/>
-    </g>
-  </g>
+{% set sc = 0.64 + (s-1)*0.072 %}
+{% set top = [83,78,72,66,61,57][s-1] %}
+{{ _shadow(32) }}
+<g class="av-v2 av-body" transform="translate(60 100) scale({{ sc }}) translate(-60 -100)" stroke-linejoin="round">
+ <path d="M31 106l-12 1 14 6" fill="url(#avg-turtleskin)" stroke="#547951" stroke-width="1.3"/>
+ <g fill="url(#avg-turtleskin)" stroke="#547951" stroke-width="1.3"><path d="M35 103Q23 106 27 116Q34 121 43 115L45 104Z"/><path d="M70 103Q68 118 79 119Q90 119 88 112L83 103Z"/></g>
+ {% if s>=3 %}<path d="M29 115v3m5-2v3m43-1v3m5-4v3" stroke="#c9d8a2" stroke-width="1.5"/>{% endif %}
+ <g class="av-head">
+  <path d="M77 98Q78 79 94 79Q109 79 108 94Q109 106 97 108L80 108Z" fill="url(#avg-turtleskin)" stroke="#547951" stroke-width="1.5"/>
+  <path d="M86 86Q91 81 97 84" stroke="#dbebba" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  {{ _eye(96,91,4.2 if s<3 else 3.7,"#536d49","#bbd7a3") }}
+  <path d="M98 101q6 1 8-3" stroke="#547951" stroke-width="1.2" fill="none" stroke-linecap="round"/><ellipse cx="89" cy="100" rx="3" ry="2" fill="#deb69a"/>
+  <g class="av-anchor-head" data-anchor="head" transform="translate(92 79)"></g>{{ _accessory(m,92,79,0.5,costume=costume) }}
+ </g>
+ <path d="M26 104Q27 {{ top }} 54 {{ top }}Q82 {{ top-2 }} 88 104Q60 120 26 104Z" fill="url(#avg-shell2)" stroke="#3f6a4e" stroke-width="1.5"/>
+ <path d="M30 101Q33 {{ top+4 }} 54 {{ top+4 }}Q77 {{ top+2 }} 83 102Q59 112 30 101Z" fill="url(#avg-shell)"/>
+ <path d="M34 {{ (top+101)/2 }}Q40 {{ top+5 }} 53 {{ top+6 }}" stroke="#bad496" stroke-width="3" fill="none" stroke-linecap="round"/>
+ {% if s>=2 %}<path d="M49 {{ top+9 }}L63 {{ top+9 }}L72 {{ (top+103)/2 }}L65 101H47L39 {{ (top+103)/2 }}Z" fill="none" stroke="#477857" stroke-width="1.5"/>{% endif %}
+ {% if s>=3 %}<path d="M49 {{ top+9 }}L45 {{ top+3 }}M63 {{ top+9 }}L67 {{ top+5 }}M72 {{ (top+103)/2 }}L81 {{ (top+105)/2 }}M39 {{ (top+103)/2 }}L31 {{ (top+105)/2 }}M47 101L43 108M65 101L70 108" fill="none" stroke="#477857" stroke-width="1.4"/>{% endif %}
+ {% if s>=4 %}<path d="M49 {{ top+16 }}L60 {{ top+16 }}L65 {{ (top+107)/2 }}L60 96H51L46 {{ (top+107)/2 }}Z" fill="#8cba7c" stroke="#74a36a" stroke-width="1"/>{% endif %}
+ {% if s>=5 %}<path d="M32 103Q58 116 83 103" stroke="#c0d391" stroke-width="2" fill="none"/>{% endif %}
+ {% if s>=6 %}<path d="M53 80l4-6 5 6-5 6Z" fill="#b4ce89"/>{% endif %}
+ {{ costume_front("turtle",s,costume,scaled=true) }}{{ _regalia(s,60,96,0.7) }}
+ <g class="av-anchor-neck" data-anchor="neck" transform="translate(60 96)"></g>
+ <g class="av-food"><path d="M91 32q8-9 16-2-1 11-11 12Z" fill="url(#avg-leaf)"/><path d="M94 38l10-7" stroke="#537c53" stroke-width="1"/></g>
+</g>
 {% endmacro %}

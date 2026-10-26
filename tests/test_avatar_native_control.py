@@ -27,7 +27,7 @@ if(avatarLoafSupported){window.avatarLoafObserver=new PerformanceObserver(l=>l.g
 })();'''
 
 
-@pytest.mark.parametrize('kind',['fern','mushroom','succulent'])
+@pytest.mark.parametrize('kind',os.getenv('CSS_AVATAR_BATCH_KINDS','fern,mushroom,succulent').split(','))
 def test_native_art_control(baseline_server,app_mod,tmp_path,kind):
     import storage as st
     from tests.avatar_browser_fixture import historical_art_loader
