@@ -128,7 +128,7 @@ try:
             assert len(set(fs.values()))==1,'Before/current filesystem mismatch'
             (out/'filesystems.json').write_text(json.dumps(fs,indent=2))
             for name,cwd in [('before',before),('after',root)]:
-                results.check(name+'_runner',lambda: pytest(name,['tests/test_avatar_baseline_browser.py','-k','real_application_baseline'],{'CSS_AVATAR_OUT':str(out/name/'application'),'CSS_AVATAR_RUNS':'5','CSS_AVATAR_SECONDS':'30'},cwd=cwd,expected=4)==0)
+                results.check(name+'_runner',lambda: pytest(name,['tests/test_avatar_baseline_browser.py','-k','real_application_baseline'],{'CSS_AVATAR_OUT':str(out/name/'application'),'CSS_AVATAR_RUNS':'5','CSS_AVATAR_SECONDS':'30','CSS_AVATAR_MEMORY_DIAGNOSTIC':'1'},cwd=cwd,expected=4)==0)
                 results.check('summarize-'+name,lambda: run('summarize-'+name,[python,'scripts/avatar_baseline/summarize.py',str(out/name/'application')])==0,environment=True)
             results.check('comparison_runner',lambda: run('compare',[python,'scripts/avatar_baseline/compare.py','--before',str(out/'before/application'),'--after',str(out/'after/application')])==0,environment=True)
             comparison=read(out/'after/comparison.json');gates.update(comparison['gates'])
