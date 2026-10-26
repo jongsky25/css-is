@@ -17,3 +17,22 @@ No observer/SVG intervention, preview candidate, GC forcing, extra cache flushin
 RSS subtraction, or budget waiver is applied. 2B remains blocked; later increments
 remain paused. No source correction is justified until the declared controls and
 repeatability conditions are evaluated from complete evidence.
+
+## Historical control context — descriptive, outside the new sample set
+
+Recomputing repeats from already retained data finds absolute changes above 10 MiB
+even when the one-sided release-budget check passes. These are differences of
+five-sample cohort medians, not new measurements or paired single-sample controls:
+
+| Retained experiment / repeated source | RSS minimum delta MiB | RSS maximum delta MiB | Checkpoints with absolute change >10 MiB |
+|---|---:|---:|---:|
+| Observer / unchanged current | -15.699 | +2.156 | 2 |
+| Observer / unchanged observer-disabled | +4.996 | +37.449 | 6 |
+| SVG / unchanged current | -5.070 | +11.895 | 1 |
+| SVG / unchanged original-SVG intervention | -10.555 | -3.332 | 1 |
+
+All deltas are later minus earlier. No JS heap absolute repeat delta exceeds
+10 MiB in these cohort-median comparisons. Full records are retained in
+`historical-controls.json`. A decline is still variation, even though it is not a
+release-budget regression. This descriptive analysis does not alter the protocol
+or merge historical observations into the new paired sample set.
