@@ -66,7 +66,7 @@ def main():
     out.mkdir(parents=True,exist_ok=False)
     roots={'candidate':root};saved={};cohorts=[]
     result={'acceptance':False,'budget_bytes':BUDGET,'order':ORDER,
-        'method':'Five full 30-second warm-desktop samples per cohort. Original/current/candidate then candidate/current/original. No concurrent analysis, tracing, GC, extra cache flushing or sample filtering. Candidate has animation teardown on discarded pages only.',
+        'method':'Five full 30-second warm-desktop samples per cohort. Original/current/candidate then candidate/current/original. No concurrent analysis, tracing, GC, extra cache flushing or sample filtering. Candidate shares geometry observation and releases it on discarded pages.',
         'cohorts':cohorts,'comparisons':[]}
     try:
         for arm,ref in [('original',ORIGINAL),('current',CURRENT)]:

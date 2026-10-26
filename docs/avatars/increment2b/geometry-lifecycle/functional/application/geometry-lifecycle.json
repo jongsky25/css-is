@@ -1,0 +1,15 @@
+{
+  "before": {
+    "wraps": 2,
+    "observed": true,
+    "body": true,
+    "owners": 1
+  },
+  "after": {
+    "persisted": false,
+    "observerReleased": true,
+    "rafReleased": true,
+    "observedAvatarTargets": 0
+  },
+  "errors": []
+}

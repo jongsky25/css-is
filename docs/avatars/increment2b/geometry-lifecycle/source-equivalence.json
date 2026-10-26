@@ -1,0 +1,11 @@
+{
+  "acceptance": false,
+  "changed_product_files": [
+    "static/js/avatars.js",
+    "templates/_avatars.html"
+  ],
+  "template_only_cache_version": true,
+  "artwork_css_audio_search_unchanged": true,
+  "runtime_sha256": "c0b3e160e687d0339d4b0a83735ebb4b6e3c38ebaa287ae9854b6265831865d0",
+  "runtime_gzip_delta_bytes": 47
+}

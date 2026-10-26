@@ -121,22 +121,18 @@
   }
   function trackGeometry(w) {
     if (window.ResizeObserver) {
-      var observer = new ResizeObserver(function () {
-        if (!w.isConnected) { observer.disconnect(); return; }
-        // ResizeObserver runs after layout. Snapshot now: deferring the read
-        // to next frame lets intervening animation writes dirty layout again.
-        measureGeometry(w);
-      });
-      observer.observe(w);
-      var play = w.closest(".av-play");
-      if (play) observer.observe(play);
-      if (!geometryState.bodyObserver && document.body) {
+      // One observer owns the document's geometry targets. Its callback looks
+      // up current companions instead of closing over each mounted wrapper.
+      if (!geometryState.bodyObserver) {
         geometryState.bodyObserver = new ResizeObserver(function () {
           var wraps = document.querySelectorAll(".avwrap[data-interactive]");
           for (var i = 0; i < wraps.length; i++) measureGeometry(wraps[i]);
         });
-        geometryState.bodyObserver.observe(document.body);
+        if (document.body) geometryState.bodyObserver.observe(document.body);
       }
+      geometryState.bodyObserver.observe(w);
+      var play = w.closest(".av-play");
+      if (play) geometryState.bodyObserver.observe(play);
     }
     queueGeometry();
   }
@@ -144,6 +140,13 @@
     geometryState.listening = true;
     window.addEventListener("resize", invalidateGeometry, { passive: true });
     document.addEventListener("scroll", invalidateGeometry, { passive: true, capture: true });
+    window.addEventListener("pagehide", function (event) {
+      if (event.persisted) return;
+      if (geometryState.bodyObserver) geometryState.bodyObserver.disconnect();
+      geometryState.bodyObserver = null;
+      if (geometryState.raf !== null) cancelAnimationFrame(geometryState.raf);
+      geometryState.raf = null;
+    });
   }
 
   /* ---- night-time sleep: 9pm-6am on the viewer's clock ------------------ */
