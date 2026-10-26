@@ -1,5 +1,5 @@
 {
-  "status": "candidate; memory verification pending",
+  "status": "targeted memory, visual and functional checks passed; complete final verification pending",
   "changes": [
     "Static picker and growth SVGs omit movement wrappers and invisible water/spark/sleep reaction layers.",
     "Interactive macro output and runtime JavaScript unchanged; seasonal anchor groups retained."
@@ -16,6 +16,16 @@
     "static/js/avatars.js": "c69e444b8d72fe84d0521d6ccabce07e9463209f5e451d96169b19aaca4191fb"
   },
   "acceptance": false,
-  "next": "Hosted opposite-order memory cohorts, then complete final gates if repaired.",
-  "seasonal_live_refresh": "passed; unsaved form preserved and outfit anchors refreshed"
+  "next": "Complete functional/focused/runtime/full-matrix verification; keep prior failures and all candidate samples.",
+  "seasonal_live_refresh": "passed; unsaved form preserved and outfit anchors refreshed",
+  "hosted_memory_run_id": 40260864049,
+  "hosted_memory_artifact_id": 12624908294,
+  "hosted_memory_artifact_sha256": "aca84a2071edfbfb68edfa84b56bceda8fbe4802b95bb6bb9ae54cf76024a685",
+  "rss_growth_mib_by_order": [
+    8.55078125,
+    8.28515625
+  ],
+  "rss_budget_mib": 10,
+  "hosted_memory_samples": 20,
+  "matched_renderer_count": 3
 }

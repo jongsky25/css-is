@@ -1,6 +1,6 @@
 # Avatar visual upgrade — phased execution plan for Sol
 
-Status: Increments0,1,2A complete. Complete hosted2B verification finished: functional, focused/native, whole-runtime and all timing gates pass. One gate fails: warm desktop picker renderer RSS +11.20MiB versus10MiB budget. Raw evidence audited and retained; memory attribution next. Static-preview candidate f700187 passes local functional/visual gates; hosted memory run40260864049 active.3A pending.
+Status: Increments0,1,2A complete. Complete hosted2B verification finished: functional, focused/native, whole-runtime and all timing gates pass. One gate fails: warm desktop picker renderer RSS +11.20MiB versus10MiB budget. Raw evidence audited and retained; memory attribution next. Static-preview candidate f700187 passes local functional/visual gates; hosted memory run40260864049 passes both orders (+8.55/+8.29MiB). Complete final verification pending.3A pending.
 Created: 2026-10-25
 Repository: jongsky25/css-is
 Owner request: Material improvement to companion artwork, optional animal dress-up,
@@ -753,3 +753,15 @@ preserve unsaved form edits and replace existing costume/accessory anchors.
 Memory improvement is not yet claimed; hosted measurement is next.2B stays blocked.
 
 Candidatef700187 memory verification: [run40260864049](https://github.com/jongsky25/css-is/actions/runs/40260864049), two opposite-order five-run pairs. Full final verification follows only if the measured memory candidate succeeds.
+
+
+Static-preview candidatef700187 passes both targeted memory orders in
+[run40260864049](https://github.com/jongsky25/css-is/actions/runs/40260864049):
++8.551MiB and+8.285MiB, both below unchanged10MiB. All20 samples have
+matching three-renderer counts,30-second windows, all16 selections, browser156
+and no JS errors or external requests. Picker DOM counters fall from5086 on
+priorc2f404f to4561 on the candidate; original baseline is4878.
+[All raw candidate memory samples](avatars/increment2b/static-preview-fix/hosted-memory-evidence.zip).
+Full functional/focused/runtime/device-cache verification follows.2B is not yet accepted.
+Final workflow exposes each sequential phase independently and records native
+allocation details in both matrix arms, without changing any measurement or budget.
