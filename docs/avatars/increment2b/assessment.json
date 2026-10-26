@@ -13,7 +13,7 @@
     "background": 19750912
   },
   "historical_incomplete_acceptance": "assessment-incomplete-audit.json",
-  "next_step": "Distinguish live native allocations from allocator-resident capacity after natural sweep completion; no forced GC or RSS subtraction. 3A remains paused.",
+  "next_step": "Use combined collection/allocator evidence to establish a repeatable source-level allocation cause before another product correction; no forced GC, RSS subtraction or budget change. 3A remains paused.",
   "complete_memory_audit": "final-verification/complete-memory-audit.json",
   "corrected_overall_assessment": "final-verification/corrected-overall-assessment.json",
   "memory_comparisons": 104,
@@ -30,6 +30,13 @@
     "status": "completed_without_attributable_product_fix",
     "report": "collection-attribution/REPORT.md",
     "instrumented_workloads": 8,
+    "acceptance": false
+  },
+  "residency_attribution": {
+    "status": "implemented_and_validated",
+    "report": "residency-attribution/REPORT.md",
+    "matched_dumps": 52,
+    "focused_tests": 48,
     "acceptance": false
   }
 }

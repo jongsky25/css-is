@@ -49,3 +49,7 @@ Candidate `509cd1a` passed its cleanup behavior checks but failed the hosted mem
 ### Natural collection attribution — complete, 2B still blocked
 
 Eight instrumented workloads in both orders establish natural C++/V8 collection and locate the dominant RSS delta in the app renderer. Documents are reclaimed but RSS can remain elevated, so no persistent application reference or validated product correction is established. Product stays f700187; full acceptance and later increments remain paused. See the [complete evidence and next attribution question](collection-attribution/REPORT.md).
+
+### Native residency implementation — 2026-10-26
+
+Combined native allocator/collection tooling is implemented and validated: four counterbalanced diagnostic workloads, 52 matched dumps, 48 passing analysis/accounting tests. Heap capacity remains above allocated-object totals in both sources; no repeatable source-level correction is established. Product remains f700187, 2B blocked, later increments paused. See the [implementation and findings](residency-attribution/REPORT.md).

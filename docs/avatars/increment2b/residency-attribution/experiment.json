@@ -1,0 +1,35 @@
+{
+  "acceptance": false,
+  "order": [
+    "original",
+    "current",
+    "current",
+    "original"
+  ],
+  "refs": {
+    "original": "1c964dc",
+    "current": "f700187"
+  },
+  "cohorts": [
+    {
+      "index": 0,
+      "arm": "original",
+      "exit_code": 0
+    },
+    {
+      "index": 1,
+      "arm": "current",
+      "exit_code": 0
+    },
+    {
+      "index": 2,
+      "arm": "current",
+      "exit_code": 0
+    },
+    {
+      "index": 3,
+      "arm": "original",
+      "exit_code": 0
+    }
+  ]
+}

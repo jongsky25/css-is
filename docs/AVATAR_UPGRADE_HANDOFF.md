@@ -1,6 +1,6 @@
 # Avatar upgrade: new-chat handoff
 
-Last updated: **2026-10-26 10:14 UTC**. Repository: `jongsky25/css-is`.
+Last updated: **2026-10-26 10:38 UTC**. Repository: `jongsky25/css-is`.
 
 ## Current blocking correction
 
@@ -27,6 +27,19 @@ The prepared audit branch `codex/avatar-3a-artifact-audit` is explicitly paused 
 trigger it as an acceptance audit of the cancelled cohort. No later increments,
 merge to main or deployment occurred. The historical handoff below is superseded by this
 correction wherever it suggests CI success establishes complete memory acceptance.
+
+## Native residency implementation — 2026-10-26
+
+The combined collection/allocator probe and isolated runner are implemented and
+validated across four original/current/current/original workloads. Read
+[the residency report](avatars/increment2b/residency-attribution/REPORT.md) and
+[usage](avatars/increment2b/residency-attribution/README.md). All 52 dumps match
+unambiguously by checkpoint clock intervals; exported trace IDs differ from CDP
+GUIDs. Disjoint dump fragments are joined, overlapping/ambiguous data rejected.
+48 analysis/accounting tests pass. Natural collection leaves heap capacity well
+above allocated-object totals in both sources, but no repeatable source-level
+cause or validated product correction is established. Product f700187 is unchanged;
+2B and subsequent increments remain blocked. No acceptance rerun was launched.
 
 ## Natural-collection attribution follow-up — 2026-10-26
 
