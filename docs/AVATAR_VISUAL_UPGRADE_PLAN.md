@@ -777,3 +777,8 @@ The obsolete run is superseded using verification-branch concurrency cancellatio
 Productf700187 and both passing memory cohorts remain unchanged.
 
 Final [run40263865865](https://github.com/jongsky25/css-is/actions/runs/40263865865) uses harness`e909de1`, unchanged product`f700187`. Setup and all17 verifier regressions pass; four gate phases are running sequentially. Supersededrun40263432618 is confirmed cancelled.
+
+Monitoring diagnosis correction: the commit-workflow-runs tool explicitly filters
+to PR-triggered runs. Its empty result for a push-triggered run was expected;
+the assistant inference that no workflow had started was wrong. Public Actions
+discovery plus direct run/job queries now track the actual runs.

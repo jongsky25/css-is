@@ -100,7 +100,9 @@ an empty result from the commit-workflow-runs connector. The public Actions page
 shows runs40245277942 and40245566959; direct job/log queries confirm dependency
 installation failed because Chromium154.0.8037.57 is absent from Debian's current
 repositories. [Exact error](verification-repair/hosted-install-failure.txt).
-Actions was running; a monitoring blind spot hid the actual installation failure.
+Actions was running. The commit-run tool explicitly filters to PR-triggered runs;
+I incorrectly treated its empty result as evidence that no push-triggered run
+existed. Direct run/job queries and public Actions discovery resolve that monitoring error.
 
 Harness `65f1e16` fixes independent-check error isolation, validates JUnit counts
 and exit codes, rejects missing/skipped/lost/duplicate samples, and reports invalid

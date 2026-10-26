@@ -30,7 +30,7 @@
   "functional_result": "Passed on installed154: eight browser regression tests,1734 SVG comparisons, native hidden/touch/keyboard, persisted care for fern/mushroom/succulent. Product unchanged.",
   "unit_tests": 16,
   "limitations": "Container setup validation is not hosted CI execution or performance acceptance. Browser package is exact-pinned, not silently replaced if Debian later removes it.",
-  "github_discovery_correction": "Commit-workflow-runs connector falsely reported empty lists. Public GitHub Actions HTML discovers real IDs; direct connector job and log queries work. No network configuration change needed for monitoring.",
+  "github_discovery_correction": "The commit-workflow-runs tool explicitly filters to PR-triggered runs; using it to infer absence of push-triggered runs was an assistant monitoring error. Public Actions discovery and direct run/job queries work. No network configuration change was needed.",
   "local_chromium156_control": "All six blank-page CPU1/CPU4 samples pass; diagnostic fixture check, not avatar acceptance.",
   "functional_chromium156": "All four functional phase checks passed, including8 regressions,1734 SVG equivalence, actual hidden/touch/keyboard and persisted care.",
   "throttler_source_comparison": {

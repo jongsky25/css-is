@@ -67,7 +67,7 @@
     "results_available": true,
     "run_id": 40247047928,
     "browser": "156.0.8078.47",
-    "monitoring_correction": "Commit-run connector falsely returned no runs; public Actions page and direct job queries confirm runs.",
+    "monitoring_correction": "The commit-workflow-runs tool explicitly filters to PR-triggered runs; using it to infer absence of push-triggered runs was an assistant monitoring error. Public Actions discovery and direct run/job queries work. No network configuration change was needed.",
     "audit_run_id": 40256359917,
     "remaining_failure": {
       "gate": "False-warm-picker_growth-renderer_rss_sum_bytes",
