@@ -26,6 +26,7 @@ def baseline_server(app_mod):
     output = Path(os.getenv('CSS_AVATAR_OUT', 'docs/avatars/application'))
     output.mkdir(parents=True, exist_ok=True)
     sources = ['templates/_avatars.html', 'templates/_avatars_art.html',
+               'templates/me.html', 'templates/_growth.html',
                'static/js/avatars.js', 'static/js/avatar-audio.js', 'static/js/search.js',
                'templates/office_connect.html', 'templates/dash_layout.html', __file__]
     sources += [str(p) for p in sorted(Path('templates').glob('_avatar_species/*.html'))]

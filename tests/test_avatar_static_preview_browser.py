@@ -42,6 +42,7 @@ def test_previews_static_live_companion_replays(baseline_server):
         profile=page.evaluate('''()=>({previews:document.querySelectorAll('.avcard svg').length,
           running:document.getAnimations().filter(a=>a.playState==='running'&&a.effect.target.closest('.avcard, .avwrap:not([data-interactive])')).length})''')
         assert profile['previews']>=16 and profile['running']==0
+        assert page.locator('.avcard .avmove, .gl-art .avmove, .avcard .av-spark, .gl-art .av-spark').count()==0
         assert not errors
         context.close();browser.close()
     out=Path(os.environ['CSS_AVATAR_OUT']).parent

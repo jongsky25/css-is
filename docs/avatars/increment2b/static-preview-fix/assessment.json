@@ -1,0 +1,21 @@
+{
+  "status": "candidate; memory verification pending",
+  "changes": [
+    "Static picker and growth SVGs omit movement wrappers and invisible water/spark/sleep reaction layers.",
+    "Interactive macro output and runtime JavaScript unchanged; seasonal anchor groups retained."
+  ],
+  "interactive_svg_checks": 1734,
+  "static_pixel_cells_same_paint_mode": 4896,
+  "nodes_removed_per_96_preview_sheet": 1033,
+  "original_pixel_comparison": "Different edge antialiasing from removal of movement compositing hint; original images and failed exact comparison retained. Candidate is sharper. No geometry differences when both use the same uncomposited paint mode.",
+  "functional_status": "passed",
+  "source_sha256": {
+    "templates/_avatars.html": "6babed91fede3a9bac7a8fb637b5273c6618539695726a44a976e1114df803c5",
+    "templates/_growth.html": "b7f52bf1ee876ab7f773a77ad58699d9121f16359d6124879cfb0fcf303c6b5b",
+    "templates/me.html": "fa68d656a4936b82ed7600f21605650e22566cf8ef2ce7f5ab5c03d6ea8a4050",
+    "static/js/avatars.js": "c69e444b8d72fe84d0521d6ccabce07e9463209f5e451d96169b19aaca4191fb"
+  },
+  "acceptance": false,
+  "next": "Hosted opposite-order memory cohorts, then complete final gates if repaired.",
+  "seasonal_live_refresh": "passed; unsaved form preserved and outfit anchors refreshed"
+}

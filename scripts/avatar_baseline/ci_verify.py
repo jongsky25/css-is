@@ -50,7 +50,7 @@ try:
           'python':sys.version,'platform':__import__('platform').platform(),'cpu_count':os.cpu_count(),'affinity':sorted(os.sched_getaffinity(0)),'chromium':subprocess.check_output(['chromium','--version'],text=True).strip(),
           'expected_chromium':os.getenv('CSS_AVATAR_CHROMIUM','154.0.8037.57'),'working_tree_status':subprocess.check_output(['git','status','--porcelain'],text=True),'frame_budget_ms':33.3,'original_frame_budget_ms':33,'callback_budget_ms':50,
           'frame_exception':'User accepted0.3ms frame overrun; no waiver for callbacks or larger stalls.',
-          'source_sha256':{f:hashlib.sha256((root/f).read_bytes()).hexdigest() for f in ['static/js/avatars.js','templates/_avatars.html','scripts/avatar_baseline/ci_verify.py','scripts/avatar_baseline/verification_result.py','tests/test_avatar_cpu_attribution.py']}}
+          'source_sha256':{f:hashlib.sha256((root/f).read_bytes()).hexdigest() for f in ['static/js/avatars.js','templates/_avatars.html','templates/me.html','templates/_growth.html','scripts/avatar_baseline/ci_verify.py','scripts/avatar_baseline/verification_result.py','tests/test_avatar_cpu_attribution.py']}}
     if meta['chromium'].split()[1] != meta['expected_chromium']:
         raise ValueError('Installed browser differs from explicit benchmark version')
     (out/'environment.json').write_text(json.dumps(meta,indent=2))
@@ -62,6 +62,8 @@ try:
         files=['tests/test_avatar_motion_preference_browser.py','tests/test_avatar_chase_writes_browser.py','tests/test_avatar_geometry_browser.py','tests/test_avatar_pointer_browser.py','tests/test_avatar_static_preview_browser.py','tests/test_home_search_boot_browser.py']
         results.check('browser_regressions',lambda: pytest('browser-regressions',files,{'CSS_AVATAR_OUT':str(out/'functional/application')},expected=8)==0)
         results.check('svg_equivalence',lambda: run('svg-equivalence',[python,'scripts/avatar_baseline/check_lazy_equivalence.py','--out',str(out/'visual')])==0)
+        results.check('static_preview_pixels',lambda: run('static-preview-pixels',[python,'scripts/avatar_baseline/check_static_previews.py','--out',str(out/'static-preview-visual')])==0)
+        results.check('seasonal_live_refresh',lambda: pytest('seasonal-live-refresh',['tests/test_appearance_browser.py::test_publish_private_preview_mobile_and_live_outfit_without_form_reload'],expected=1)==0)
         results.check('native_visibility_touch_keyboard',lambda: pytest('native-behavior',['tests/test_avatar_baseline_browser.py','-k','native_visibility_and_touch'],{'CSS_AVATAR_OUT':str(out/'native/application')},expected=1)==0)
         results.check('persisted_plant_care',lambda: pytest('care',['tests/test_avatar_baseline_browser.py','-k','plant_care_live_surfaces'],{'CSS_AVATAR_OUT':str(out/'care/application'),'CSS_AVATAR_MATURE':'1','CSS_AVATAR_PLANTS':'fern,mushroom,succulent'},expected=1)==0)
     elif a.phase=='control':

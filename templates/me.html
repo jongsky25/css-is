@@ -167,7 +167,7 @@
         <label class="avcard" title="{{ a.label }}">
           <input type="radio" name="avatar_kind" value="{{ a.key }}"
                  {{ 'checked' if a.key == profile.avatar_kind }} required>
-          <span class="{{ 'av-sway-c' if a.family == 'plant' else '' }}" style="display:inline-block;">{{ avatar_svg(a.key, 2) }}</span>
+          <span style="display:inline-block;">{{ avatar_svg(a.key, 2, static_preview=true) }}</span>
           <div class="nm">{{ a.label }}</div>
           <div class="fam">{{ a.family }}</div>
           <div class="blurb">{{ a.blurb }}</div>

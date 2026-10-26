@@ -1,0 +1,467 @@
+{
+  "browser": "156.0.8078.47",
+  "reference_paint_mode": "Full SVG with static movement will-change disabled; original composited pixels differ and are retained separately.",
+  "cells": 4896,
+  "all_pixel_identical": true,
+  "sheets": [
+    {
+      "file": "light-default-00.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "full_nodes": 5814,
+      "preview_nodes": 4781,
+      "reference_sha256": "bdd8f1bc48495d76ee8e78738588ab2898fe682859a74ff9a24d1f11f5caedad",
+      "preview_sha256": "bdd8f1bc48495d76ee8e78738588ab2898fe682859a74ff9a24d1f11f5caedad"
+    },
+    {
+      "file": "light-default-01.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "full_nodes": 6170,
+      "preview_nodes": 5137,
+      "reference_sha256": "04ea27dd87238b52a66739ca22e9a07af80c44ffbf76557607c96822143e28f3",
+      "preview_sha256": "04ea27dd87238b52a66739ca22e9a07af80c44ffbf76557607c96822143e28f3"
+    },
+    {
+      "file": "light-default-02.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "full_nodes": 6108,
+      "preview_nodes": 5075,
+      "reference_sha256": "507219c24d4a4ea74c537b05157f4a28eb0ebfc7473c123c1d93beee80440b62",
+      "preview_sha256": "507219c24d4a4ea74c537b05157f4a28eb0ebfc7473c123c1d93beee80440b62"
+    },
+    {
+      "file": "light-default-03.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "full_nodes": 6356,
+      "preview_nodes": 5323,
+      "reference_sha256": "3572b52015df03fffa782b471fbcd51c02a19c339b41bad7948571680741e868",
+      "preview_sha256": "3572b52015df03fffa782b471fbcd51c02a19c339b41bad7948571680741e868"
+    },
+    {
+      "file": "light-default-04.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "full_nodes": 6170,
+      "preview_nodes": 5137,
+      "reference_sha256": "efffe517854bcf3aabd9f6274dda3384bf5572d9cb7a2ff8a6a903b543a3d65f",
+      "preview_sha256": "efffe517854bcf3aabd9f6274dda3384bf5572d9cb7a2ff8a6a903b543a3d65f"
+    },
+    {
+      "file": "light-default-05.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "full_nodes": 6170,
+      "preview_nodes": 5137,
+      "reference_sha256": "7101bf4a63597c2fb0e3114d603acc006dd59bcfaeb822e915b6f01fb5980226",
+      "preview_sha256": "7101bf4a63597c2fb0e3114d603acc006dd59bcfaeb822e915b6f01fb5980226"
+    },
+    {
+      "file": "light-default-06.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "full_nodes": 6170,
+      "preview_nodes": 5137,
+      "reference_sha256": "c725f553a6388987e1a2adce621064078220c65f76da2894645f98120af57e43",
+      "preview_sha256": "c725f553a6388987e1a2adce621064078220c65f76da2894645f98120af57e43"
+    },
+    {
+      "file": "light-default-07.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "full_nodes": 6108,
+      "preview_nodes": 5075,
+      "reference_sha256": "cf0b0f1653a65dd1efa4ee09303a4c04135444cac7820c8c480b1f41f44a9cb6",
+      "preview_sha256": "cf0b0f1653a65dd1efa4ee09303a4c04135444cac7820c8c480b1f41f44a9cb6"
+    },
+    {
+      "file": "light-default-08.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "full_nodes": 6356,
+      "preview_nodes": 5323,
+      "reference_sha256": "8ca69bd888046db190f1d448e462db3e54b9412419e5288d00302c71614d35cd",
+      "preview_sha256": "8ca69bd888046db190f1d448e462db3e54b9412419e5288d00302c71614d35cd"
+    },
+    {
+      "file": "light-default-09.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "full_nodes": 6170,
+      "preview_nodes": 5137,
+      "reference_sha256": "bd08ff04d3009788ee49f712683b0cc533181a5fedef563784239cd7720ebf69",
+      "preview_sha256": "bd08ff04d3009788ee49f712683b0cc533181a5fedef563784239cd7720ebf69"
+    },
+    {
+      "file": "light-default-10.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "full_nodes": 6170,
+      "preview_nodes": 5137,
+      "reference_sha256": "4e26cd37c8cdd464c8d8de6b1eb79bc21f0afdd386a6c1f0e956ce276d18f0ed",
+      "preview_sha256": "4e26cd37c8cdd464c8d8de6b1eb79bc21f0afdd386a6c1f0e956ce276d18f0ed"
+    },
+    {
+      "file": "light-default-11.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "full_nodes": 6232,
+      "preview_nodes": 5199,
+      "reference_sha256": "f28eed75d9b4b0dc48d7d7cc2addf4ac894cf7ba44827fe095a3e2e3d5b6e6f1",
+      "preview_sha256": "f28eed75d9b4b0dc48d7d7cc2addf4ac894cf7ba44827fe095a3e2e3d5b6e6f1"
+    },
+    {
+      "file": "light-default-12.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "full_nodes": 6170,
+      "preview_nodes": 5137,
+      "reference_sha256": "a9e84ac8996e0cfe759eea1a39fdce1d5412f3c6ea9560ba17c283084aaf4b0b",
+      "preview_sha256": "a9e84ac8996e0cfe759eea1a39fdce1d5412f3c6ea9560ba17c283084aaf4b0b"
+    },
+    {
+      "file": "light-halloween-10.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "full_nodes": 6632,
+      "preview_nodes": 5599,
+      "reference_sha256": "819d35242ec82c3d5e0cba816c63a82df30da5c85e0fdc4056ec2912fc53769d",
+      "preview_sha256": "819d35242ec82c3d5e0cba816c63a82df30da5c85e0fdc4056ec2912fc53769d"
+    },
+    {
+      "file": "light-halloween_vampire-10.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "full_nodes": 6542,
+      "preview_nodes": 5509,
+      "reference_sha256": "d50dd1332653147ee60e2490079bbba0b2854faccc1dae81c62151bb0aa8d397",
+      "preview_sha256": "d50dd1332653147ee60e2490079bbba0b2854faccc1dae81c62151bb0aa8d397"
+    },
+    {
+      "file": "light-halloween_pumpkin-10.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "full_nodes": 6554,
+      "preview_nodes": 5521,
+      "reference_sha256": "760b66a5b7eeca39ea8b20c5ac40779fd3c9e66225c0d4ea9f9af74a3a2e234e",
+      "preview_sha256": "760b66a5b7eeca39ea8b20c5ac40779fd3c9e66225c0d4ea9f9af74a3a2e234e"
+    },
+    {
+      "file": "light-christmas-12.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "full_nodes": 6170,
+      "preview_nodes": 5137,
+      "reference_sha256": "a9e84ac8996e0cfe759eea1a39fdce1d5412f3c6ea9560ba17c283084aaf4b0b",
+      "preview_sha256": "a9e84ac8996e0cfe759eea1a39fdce1d5412f3c6ea9560ba17c283084aaf4b0b"
+    },
+    {
+      "file": "dark-default-00.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "full_nodes": 5814,
+      "preview_nodes": 4781,
+      "reference_sha256": "9b293f593493029680ce26b297bed5e9294000549fae3c42826c17efb085ce7a",
+      "preview_sha256": "9b293f593493029680ce26b297bed5e9294000549fae3c42826c17efb085ce7a"
+    },
+    {
+      "file": "dark-default-01.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "full_nodes": 6170,
+      "preview_nodes": 5137,
+      "reference_sha256": "0fa57859454f152e4955e6bbd27008a03d4fe762953a70a18a94c1792ccc5376",
+      "preview_sha256": "0fa57859454f152e4955e6bbd27008a03d4fe762953a70a18a94c1792ccc5376"
+    },
+    {
+      "file": "dark-default-02.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "full_nodes": 6108,
+      "preview_nodes": 5075,
+      "reference_sha256": "2f4b21a0554db72f72677c38723cd72239d0242288bb4cea0fe897b320cedc9b",
+      "preview_sha256": "2f4b21a0554db72f72677c38723cd72239d0242288bb4cea0fe897b320cedc9b"
+    },
+    {
+      "file": "dark-default-03.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "full_nodes": 6356,
+      "preview_nodes": 5323,
+      "reference_sha256": "fb39adb4da625e63ea6d4fd57847233fbf2896ac9468884f719acd3188864fae",
+      "preview_sha256": "fb39adb4da625e63ea6d4fd57847233fbf2896ac9468884f719acd3188864fae"
+    },
+    {
+      "file": "dark-default-04.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "full_nodes": 6170,
+      "preview_nodes": 5137,
+      "reference_sha256": "d131f6e5afcf41c8a77d23bc6feb5f62dcc4b670a3986ed9f26202ca60c4f8a9",
+      "preview_sha256": "d131f6e5afcf41c8a77d23bc6feb5f62dcc4b670a3986ed9f26202ca60c4f8a9"
+    },
+    {
+      "file": "dark-default-05.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "full_nodes": 6170,
+      "preview_nodes": 5137,
+      "reference_sha256": "bda059a495e33b859c78b140cee95d10c8a162718a136adf17b70eaf4ddf4d3f",
+      "preview_sha256": "bda059a495e33b859c78b140cee95d10c8a162718a136adf17b70eaf4ddf4d3f"
+    },
+    {
+      "file": "dark-default-06.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "full_nodes": 6170,
+      "preview_nodes": 5137,
+      "reference_sha256": "56afcaa375706a0fa8436fd280337ce33d233446e5f5f96cf62b666ced01a6f9",
+      "preview_sha256": "56afcaa375706a0fa8436fd280337ce33d233446e5f5f96cf62b666ced01a6f9"
+    },
+    {
+      "file": "dark-default-07.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "full_nodes": 6108,
+      "preview_nodes": 5075,
+      "reference_sha256": "527d61c71f08a10cb7f285f399eb3ff43b2bfcb09445aad2b0d84a5c9e8d44c5",
+      "preview_sha256": "527d61c71f08a10cb7f285f399eb3ff43b2bfcb09445aad2b0d84a5c9e8d44c5"
+    },
+    {
+      "file": "dark-default-08.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "full_nodes": 6356,
+      "preview_nodes": 5323,
+      "reference_sha256": "01a842e74b48cdbfab2c509641332f4db6c635a86f4e9a64250373f014ba272c",
+      "preview_sha256": "01a842e74b48cdbfab2c509641332f4db6c635a86f4e9a64250373f014ba272c"
+    },
+    {
+      "file": "dark-default-09.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "full_nodes": 6170,
+      "preview_nodes": 5137,
+      "reference_sha256": "84b385941e031bebd140f09b71979fde1077b7337c2eb928533eb301efce5263",
+      "preview_sha256": "84b385941e031bebd140f09b71979fde1077b7337c2eb928533eb301efce5263"
+    },
+    {
+      "file": "dark-default-10.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "full_nodes": 6170,
+      "preview_nodes": 5137,
+      "reference_sha256": "eed96fbedd6ac303b9f18eba0647ec6f01d1c7fafa0d0630bbc1bbb13a794125",
+      "preview_sha256": "eed96fbedd6ac303b9f18eba0647ec6f01d1c7fafa0d0630bbc1bbb13a794125"
+    },
+    {
+      "file": "dark-default-11.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "full_nodes": 6232,
+      "preview_nodes": 5199,
+      "reference_sha256": "42f0fc60f657da8e1e9319850cb1ed911f78468cbbd53eab4e01596d878479b8",
+      "preview_sha256": "42f0fc60f657da8e1e9319850cb1ed911f78468cbbd53eab4e01596d878479b8"
+    },
+    {
+      "file": "dark-default-12.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "full_nodes": 6170,
+      "preview_nodes": 5137,
+      "reference_sha256": "d97f85587d2d3af924e04f1ea9a862755460affcec6907210b1959ae45d892f7",
+      "preview_sha256": "d97f85587d2d3af924e04f1ea9a862755460affcec6907210b1959ae45d892f7"
+    },
+    {
+      "file": "dark-halloween-10.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "full_nodes": 6632,
+      "preview_nodes": 5599,
+      "reference_sha256": "34defc0af48e9c7cc4112cedec7ba1394506154cdfaec8f958e545e3aae5de10",
+      "preview_sha256": "34defc0af48e9c7cc4112cedec7ba1394506154cdfaec8f958e545e3aae5de10"
+    },
+    {
+      "file": "dark-halloween_vampire-10.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "full_nodes": 6542,
+      "preview_nodes": 5509,
+      "reference_sha256": "fbe6d9f11552b301ebf45d5bf8cd44d888eadc640844c460f44ef1ccd2f405e4",
+      "preview_sha256": "fbe6d9f11552b301ebf45d5bf8cd44d888eadc640844c460f44ef1ccd2f405e4"
+    },
+    {
+      "file": "dark-halloween_pumpkin-10.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "full_nodes": 6554,
+      "preview_nodes": 5521,
+      "reference_sha256": "ac6183b60fa6f71701ca98588640aa8a2f732c03d1d39a44d86d70ec5772933c",
+      "preview_sha256": "ac6183b60fa6f71701ca98588640aa8a2f732c03d1d39a44d86d70ec5772933c"
+    },
+    {
+      "file": "dark-christmas-12.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "full_nodes": 6170,
+      "preview_nodes": 5137,
+      "reference_sha256": "d97f85587d2d3af924e04f1ea9a862755460affcec6907210b1959ae45d892f7",
+      "preview_sha256": "d97f85587d2d3af924e04f1ea9a862755460affcec6907210b1959ae45d892f7"
+    },
+    {
+      "file": "contrast-default-00.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "full_nodes": 5814,
+      "preview_nodes": 4781,
+      "reference_sha256": "eeca9f228bcb04167b2f3f8993c484d2f5f2fee7608d034fa2be5cee22d8982f",
+      "preview_sha256": "eeca9f228bcb04167b2f3f8993c484d2f5f2fee7608d034fa2be5cee22d8982f"
+    },
+    {
+      "file": "contrast-default-01.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "full_nodes": 6170,
+      "preview_nodes": 5137,
+      "reference_sha256": "2b533096c7a5ce7412bcd6273911c49058f8b18ec46d05dd33acb54f8d1042da",
+      "preview_sha256": "2b533096c7a5ce7412bcd6273911c49058f8b18ec46d05dd33acb54f8d1042da"
+    },
+    {
+      "file": "contrast-default-02.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "full_nodes": 6108,
+      "preview_nodes": 5075,
+      "reference_sha256": "1180bc7762931af35650af9e6455dc750ea8d81e8d84e3a06f0fb93dc365bc98",
+      "preview_sha256": "1180bc7762931af35650af9e6455dc750ea8d81e8d84e3a06f0fb93dc365bc98"
+    },
+    {
+      "file": "contrast-default-03.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "full_nodes": 6356,
+      "preview_nodes": 5323,
+      "reference_sha256": "69b794f92b480bada88374cde61471c14d8769b69c1ba6583bf9fed98809b2f8",
+      "preview_sha256": "69b794f92b480bada88374cde61471c14d8769b69c1ba6583bf9fed98809b2f8"
+    },
+    {
+      "file": "contrast-default-04.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "full_nodes": 6170,
+      "preview_nodes": 5137,
+      "reference_sha256": "6a7a9cb58f6a2d411c4f50cb5a2066c9a41cd3d2de68a950237f88b2ded3ea6c",
+      "preview_sha256": "6a7a9cb58f6a2d411c4f50cb5a2066c9a41cd3d2de68a950237f88b2ded3ea6c"
+    },
+    {
+      "file": "contrast-default-05.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "full_nodes": 6170,
+      "preview_nodes": 5137,
+      "reference_sha256": "b8ff424d66c5560f1699ce340f9a2836d27ac1c3b92dc9329c4224569bb8949b",
+      "preview_sha256": "b8ff424d66c5560f1699ce340f9a2836d27ac1c3b92dc9329c4224569bb8949b"
+    },
+    {
+      "file": "contrast-default-06.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "full_nodes": 6170,
+      "preview_nodes": 5137,
+      "reference_sha256": "f0faf1a6d6468451308fb0d3c9151a0a956b172906aa1b5f48e459d9e384df0d",
+      "preview_sha256": "f0faf1a6d6468451308fb0d3c9151a0a956b172906aa1b5f48e459d9e384df0d"
+    },
+    {
+      "file": "contrast-default-07.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "full_nodes": 6108,
+      "preview_nodes": 5075,
+      "reference_sha256": "8cca50710ae95767d2eca0d55259530a5d06f5ac2541ac989daa27f8a300ac1f",
+      "preview_sha256": "8cca50710ae95767d2eca0d55259530a5d06f5ac2541ac989daa27f8a300ac1f"
+    },
+    {
+      "file": "contrast-default-08.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "full_nodes": 6356,
+      "preview_nodes": 5323,
+      "reference_sha256": "42cc2e96d9c2430395b9a61821d1c6bdb78a26d8edb8d22d660e20a4daab9c2b",
+      "preview_sha256": "42cc2e96d9c2430395b9a61821d1c6bdb78a26d8edb8d22d660e20a4daab9c2b"
+    },
+    {
+      "file": "contrast-default-09.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "full_nodes": 6170,
+      "preview_nodes": 5137,
+      "reference_sha256": "9c095776f9bc86f40499014289068ff4553019727d0f09011e83ba49f9643a6a",
+      "preview_sha256": "9c095776f9bc86f40499014289068ff4553019727d0f09011e83ba49f9643a6a"
+    },
+    {
+      "file": "contrast-default-10.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "full_nodes": 6170,
+      "preview_nodes": 5137,
+      "reference_sha256": "7ba5a822152dbcca2546bdd239af7fc3cbdb86ebf04031702b04484a2ff50084",
+      "preview_sha256": "7ba5a822152dbcca2546bdd239af7fc3cbdb86ebf04031702b04484a2ff50084"
+    },
+    {
+      "file": "contrast-default-11.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "full_nodes": 6232,
+      "preview_nodes": 5199,
+      "reference_sha256": "02aacdb268d94638c3038b556405755b3c5a69edee01da010253911bcbc79c27",
+      "preview_sha256": "02aacdb268d94638c3038b556405755b3c5a69edee01da010253911bcbc79c27"
+    },
+    {
+      "file": "contrast-default-12.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "full_nodes": 6170,
+      "preview_nodes": 5137,
+      "reference_sha256": "8ebb33057f3bd6514c80b937e9dd7cd0c98d799d9ca21ac60cef620b41ce58ed",
+      "preview_sha256": "8ebb33057f3bd6514c80b937e9dd7cd0c98d799d9ca21ac60cef620b41ce58ed"
+    },
+    {
+      "file": "contrast-halloween-10.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "full_nodes": 6632,
+      "preview_nodes": 5599,
+      "reference_sha256": "9a0a47eab48a3c65f220baeffcad07c3972fd719c2ccba9647d47d0ba319e43a",
+      "preview_sha256": "9a0a47eab48a3c65f220baeffcad07c3972fd719c2ccba9647d47d0ba319e43a"
+    },
+    {
+      "file": "contrast-halloween_vampire-10.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "full_nodes": 6542,
+      "preview_nodes": 5509,
+      "reference_sha256": "5ded7accee91950d70d4cc409051c83fa5b51f156b280f6cd15277998b2a4c90",
+      "preview_sha256": "5ded7accee91950d70d4cc409051c83fa5b51f156b280f6cd15277998b2a4c90"
+    },
+    {
+      "file": "contrast-halloween_pumpkin-10.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "full_nodes": 6554,
+      "preview_nodes": 5521,
+      "reference_sha256": "afabca0a6d9b67f9ece7f6334e2f2e1e8844c14854344a450e84427dcfa11106",
+      "preview_sha256": "afabca0a6d9b67f9ece7f6334e2f2e1e8844c14854344a450e84427dcfa11106"
+    },
+    {
+      "file": "contrast-christmas-12.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "full_nodes": 6170,
+      "preview_nodes": 5137,
+      "reference_sha256": "8ebb33057f3bd6514c80b937e9dd7cd0c98d799d9ca21ac60cef620b41ce58ed",
+      "preview_sha256": "8ebb33057f3bd6514c80b937e9dd7cd0c98d799d9ca21ac60cef620b41ce58ed"
+    }
+  ]
+}

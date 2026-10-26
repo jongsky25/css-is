@@ -335,7 +335,7 @@
 
 
 {#-- one species at a stage; returns just the <svg> so pickers/heroes can size it --#}
-{% macro avatar_svg(kind, stage, outfit_month=none, outfit=none) %}
+{% macro avatar_svg(kind, stage, outfit_month=none, outfit=none, static_preview=false) %}
 {% set s = [[stage|int, 6]|min, 1]|max %}
 {% set scope = avatar_uid() if kind in ["cat","plant","cactus","bonsai","sunflower","fern","mushroom","succulent"] else "" %}
 {% set accessory = avatar_month() if outfit_month is none else outfit_month %}
@@ -359,7 +359,9 @@
     <path d="M34 114 q6 -3 12 0 q6 3 12 0 q6 -3 12 0 q6 3 12 0" stroke="#ffffff55" stroke-width="1.6" fill="none" stroke-linecap="round"/>
   </g>
   {% endif %}
-  <g class="avmove">
+  {# Decorative previews never run movement or care reactions. Avoid allocating
+     their movement wrappers and permanently invisible reaction layers. #}
+  {% if not static_preview %}<g class="avmove">
     <g class="avstage">{{ costume_back(kind, s, costume) }}{{ species_art(kind, s, accessory, costume, scope) }}</g>
     {% if avatar_family(kind) == "plant" %}
     <g class="av-drops" fill="#5fa8d8">
@@ -378,7 +380,9 @@
       <path d="M84 32 h7 l-7 7 h7" stroke-width="2.2"/>
       <path d="M95 22 h5 l-5 5 h5" stroke-width="1.8"/>
     </g>
-  </g>
+  </g>{% else %}
+  {{ costume_back(kind, s, costume) }}{{ species_art(kind, s, accessory, costume, scope) }}
+  {% endif %}
 </svg>
 {% endmacro %}
 

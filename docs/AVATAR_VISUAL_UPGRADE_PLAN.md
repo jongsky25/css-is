@@ -733,3 +733,21 @@ Hosted old/current desktop screenshots have identical1440×3498 dimensions,
 excluding a changed page-height explanation. The local paint-hint and allocation
 probes remain diagnostic; neither established a fix. A static-preview trimming
 candidate is under visual/functional validation. No acceptance status changed.
+
+
+### Static-preview memory candidate — 2026-10-26
+
+Picker and growth previews now request a static SVG variant that omits movement
+wrappers and invisible care/spark/sleep reaction layers. Live companion SVGs and
+JavaScript remain unchanged. This removes1,033 DOM nodes per96-preview sheet.
+All1,734 interactive SVG equivalence checks pass. The first original-pixel
+comparison changed because removing will-change-backed rasterization sharpens
+edges; those images and the failed exact comparison are retained. A controlled
+reference with the same static paint mode gives4,896 pixel-identical cells
+across all stages, outfits and three surfaces. No artwork geometry was removed.
+
+Eight browser regressions, actual hidden/touch/keyboard checks, persisted care
+for allthree plants and live seasonal updates pass. Seasonal updates still
+preserve unsaved form edits and replace existing costume/accessory anchors.
+[Candidate assessment and all evidence](avatars/increment2b/static-preview-fix/assessment.json).
+Memory improvement is not yet claimed; hosted measurement is next.2B stays blocked.

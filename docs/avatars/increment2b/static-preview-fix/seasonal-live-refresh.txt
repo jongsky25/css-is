@@ -1,0 +1,7 @@
+.                                                                        [100%]
+=============================== warnings summary ===============================
+tests/test_appearance_browser.py::test_publish_private_preview_mobile_and_live_outfit_without_form_reload
+  /workspace/css-is/tests/conftest.py:88: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
