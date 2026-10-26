@@ -803,3 +803,7 @@ Eight instrumented workloads in both orders establish natural C++/V8 collection 
 ### Native residency implementation — 2026-10-26
 
 Combined native allocator/collection tooling is implemented and validated: four counterbalanced diagnostic workloads, 52 matched dumps, 48 passing analysis/accounting tests. Heap capacity remains above allocated-object totals in both sources; no repeatable source-level correction is established. Product remains f700187, 2B blocked, later increments paused. See the [implementation and findings](avatars/increment2b/residency-attribution/REPORT.md).
+
+### Source isolation and geometry candidate — 2026-10-26 — not promoted
+
+The 16-sample counterbalanced screen identified geometry observers and original SVG as leads. A shared-observer/navigation-cleanup candidate passed nine browser checks, but its hosted gate has six complete forward RSS failures (up to +49.984 MiB) and an incomplete reverse unchanged-current cohort caused by a preview timeout. Overall audit is inconclusive; the candidate is not promoted. All 27 completed samples and the failure log remain. Product stays f700187; full acceptance and later increments remain paused. See the [final candidate report](avatars/increment2b/geometry-lifecycle/REPORT.md).

@@ -13,7 +13,7 @@
     "background": 19750912
   },
   "historical_incomplete_acceptance": "assessment-incomplete-audit.json",
-  "next_step": "Use combined collection/allocator evidence to establish a repeatable source-level allocation cause before another product correction; no forced GC, RSS subtraction or budget change. 3A remains paused.",
+  "next_step": "Validate the exact isolated observer/SVG intervention with five samples per arm in both orders before another product correction; investigate the preview-control timeout separately. Do not promote cccf843 or waive budgets. 3A remains paused.",
   "complete_memory_audit": "final-verification/complete-memory-audit.json",
   "corrected_overall_assessment": "final-verification/corrected-overall-assessment.json",
   "memory_comparisons": 104,
@@ -38,5 +38,16 @@
     "matched_dumps": 52,
     "focused_tests": 48,
     "acceptance": false
+  },
+  "geometry_lifecycle_candidate": {
+    "candidate_source": "cccf843825b5705df5f04242cd25f23fb755280f",
+    "disposition": "not_promoted",
+    "overall_audit_status": "inconclusive",
+    "complete_forward_rss_failures": 6,
+    "max_forward_rss_increase_mib": 49.984375,
+    "invalid_cohort": "reverse unchanged-current seasonal-preview timeout",
+    "complete_samples": 27,
+    "report": "geometry-lifecycle/REPORT.md",
+    "full_acceptance_run": false
   }
 }
