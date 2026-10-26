@@ -37,8 +37,9 @@ MiB, but reverse navigation 10/20 worsen by 25.555/20.094 MiB, with six RSS fail
 The unchanged-current repeat passes. No sample exclusions or budget waivers.
 See [the retained audit](avatars/increment2b/observer-validation/REPORT.md).
 The workflow is paused; do not rerun this unchanged intervention or subdivide its
-registrations based on the earlier two-sample lead. Next is exact SVG validation,
-five samples in current/SVG/SVG/current order. The runner/auditor support
+registrations based on the earlier two-sample lead. Exact SVG validation is now running as
+[40327763515](https://github.com/jongsky25/css-is/actions/runs/40327763515), source
+`7c9f711`, five samples in current/SVG/SVG/current order. Do not start a duplicate. The runner/auditor support
 `--validation-arm svg`; this is diagnostic artwork rollback, never a product fix.
 
 A new container-only resize test passes current and fails observer removal by
