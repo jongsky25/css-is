@@ -65,6 +65,7 @@ def audit(root, kinds, repository):
             frames.append(row['scenario']['frame_p95_ms'])
         focused=read(f'focused/traces/{kind}/summary.json')
         validate_samples(focused['samples'],10)
+        check(focused['before_art']=='5b580d9' and focused['same_runtime_both_arms'] and not focused['after_only'],'focused historical control '+kind)
         check(focused['source_commit']==source and focused['runtime_sha256']==phases['focused']['source_sha256']['static/js/avatars.js'],'focused source '+kind)
         check({(r['version'],r['run']) for r in focused['samples']}=={(v,n) for v in ['before','after'] for n in range(5)},'focused identities '+kind)
         pair={a:read(f'runtime/{a}/{kind}/summary.json') for a in ['before','after']}
@@ -73,6 +74,10 @@ def audit(root, kinds, repository):
         for arm,data in pair.items():
             validate_samples(data['samples'],5)
             check(data['after_only'] and {(r['version'],r['run']) for r in data['samples']}=={('after',n) for n in range(5)},'runtime identities '+kind)
+        for prefix, cohort in [(f'focused/traces/{kind}',focused['samples'])]+[(f'runtime/{arm}/{kind}',data['samples']) for arm,data in pair.items()]:
+            for row in cohort:
+                trace=manifest['files'].get(prefix+'/'+row['trace_file'])
+                check(trace and trace['bytes']>0 and len(trace['sha256'])==64,'missing retained raw trace '+prefix+'/'+row['trace_file'])
         for cohort in [focused['samples'],pair['before']['samples'],pair['after']['samples']]:
             check(all(not r['trace_data_loss'] and r['owned_call_count'] and not r['errors'] for r in cohort),'trace completeness '+kind)
         for row in [r for r in focused['samples'] if r['version']=='after']+pair['after']['samples']:
