@@ -1,0 +1,2872 @@
+{
+  "acceptance": false,
+  "purpose": "Reproduce every warm desktop scenario and navigation checkpoint in both execution orders; unchanged final 2B product; no GC, extra cache flushing, sample filtering or budget changes",
+  "cohorts": [
+    {
+      "index": 0,
+      "arm": "before",
+      "exit_code": 0,
+      "raw_sha256": "93d08ba91316f971b7a26d4c247b439c8252492542277ecd6950ab367a18693d",
+      "browser_versions": [
+        "156.0.8078.47"
+      ],
+      "checkpoints": {
+        "home_idle": {
+          "rss_median_bytes": 453001216,
+          "heap_median_bytes": 2717684,
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "rss_samples_bytes": [
+            422834176,
+            453001216,
+            453038080,
+            453664768,
+            452907008
+          ],
+          "dom_samples": [
+            {
+              "documents": 1,
+              "nodes": 2667,
+              "jsEventListeners": 100
+            },
+            {
+              "documents": 1,
+              "nodes": 2680,
+              "jsEventListeners": 100
+            },
+            {
+              "documents": 1,
+              "nodes": 2670,
+              "jsEventListeners": 100
+            },
+            {
+              "documents": 1,
+              "nodes": 2681,
+              "jsEventListeners": 100
+            },
+            {
+              "documents": 1,
+              "nodes": 2683,
+              "jsEventListeners": 100
+            }
+          ]
+        },
+        "home_interaction": {
+          "rss_median_bytes": 453197824,
+          "heap_median_bytes": 3560928,
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "rss_samples_bytes": [
+            435154944,
+            453058560,
+            454053888,
+            453824512,
+            453197824
+          ],
+          "dom_samples": [
+            {
+              "documents": 1,
+              "nodes": 2656,
+              "jsEventListeners": 100
+            },
+            {
+              "documents": 1,
+              "nodes": 2679,
+              "jsEventListeners": 124
+            },
+            {
+              "documents": 1,
+              "nodes": 2666,
+              "jsEventListeners": 112
+            },
+            {
+              "documents": 1,
+              "nodes": 2681,
+              "jsEventListeners": 124
+            },
+            {
+              "documents": 1,
+              "nodes": 2678,
+              "jsEventListeners": 124
+            }
+          ]
+        },
+        "wellness_care": {
+          "rss_median_bytes": 451629056,
+          "heap_median_bytes": 3212248,
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "rss_samples_bytes": [
+            433930240,
+            450904064,
+            452059136,
+            452243456,
+            451629056
+          ],
+          "dom_samples": [
+            {
+              "documents": 3,
+              "nodes": 4170,
+              "jsEventListeners": 204
+            },
+            {
+              "documents": 1,
+              "nodes": 1504,
+              "jsEventListeners": 80
+            },
+            {
+              "documents": 1,
+              "nodes": 1496,
+              "jsEventListeners": 80
+            },
+            {
+              "documents": 1,
+              "nodes": 1504,
+              "jsEventListeners": 80
+            },
+            {
+              "documents": 1,
+              "nodes": 1504,
+              "jsEventListeners": 80
+            }
+          ]
+        },
+        "picker_growth": {
+          "rss_median_bytes": 484757504,
+          "heap_median_bytes": 4421256,
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "rss_samples_bytes": [
+            463736832,
+            485289984,
+            485068800,
+            480858112,
+            484757504
+          ],
+          "dom_samples": [
+            {
+              "documents": 1,
+              "nodes": 4878,
+              "jsEventListeners": 104
+            },
+            {
+              "documents": 1,
+              "nodes": 4878,
+              "jsEventListeners": 104
+            },
+            {
+              "documents": 1,
+              "nodes": 4878,
+              "jsEventListeners": 104
+            },
+            {
+              "documents": 1,
+              "nodes": 4878,
+              "jsEventListeners": 104
+            },
+            {
+              "documents": 1,
+              "nodes": 4878,
+              "jsEventListeners": 104
+            }
+          ]
+        },
+        "seasonal_preview": {
+          "rss_median_bytes": 516964352,
+          "heap_median_bytes": 10938460,
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "rss_samples_bytes": [
+            492556288,
+            517558272,
+            518569984,
+            511614976,
+            516964352
+          ],
+          "dom_samples": [
+            {
+              "documents": 9,
+              "nodes": 13826,
+              "jsEventListeners": 582
+            },
+            {
+              "documents": 11,
+              "nodes": 21327,
+              "jsEventListeners": 584
+            },
+            {
+              "documents": 12,
+              "nodes": 21331,
+              "jsEventListeners": 584
+            },
+            {
+              "documents": 9,
+              "nodes": 13837,
+              "jsEventListeners": 582
+            },
+            {
+              "documents": 11,
+              "nodes": 21316,
+              "jsEventListeners": 584
+            }
+          ]
+        },
+        "offscreen": {
+          "rss_median_bytes": 494415872,
+          "heap_median_bytes": 10639528,
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "rss_samples_bytes": [
+            469622784,
+            496648192,
+            497328128,
+            491642880,
+            494415872
+          ],
+          "dom_samples": [
+            {
+              "documents": 11,
+              "nodes": 16480,
+              "jsEventListeners": 680
+            },
+            {
+              "documents": 13,
+              "nodes": 23981,
+              "jsEventListeners": 682
+            },
+            {
+              "documents": 14,
+              "nodes": 23985,
+              "jsEventListeners": 682
+            },
+            {
+              "documents": 11,
+              "nodes": 16491,
+              "jsEventListeners": 680
+            },
+            {
+              "documents": 13,
+              "nodes": 23970,
+              "jsEventListeners": 682
+            }
+          ]
+        },
+        "reduced_motion": {
+          "rss_median_bytes": 496562176,
+          "heap_median_bytes": 10805312,
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "rss_samples_bytes": [
+            471490560,
+            498417664,
+            499392512,
+            494059520,
+            496562176
+          ],
+          "dom_samples": [
+            {
+              "documents": 11,
+              "nodes": 16482,
+              "jsEventListeners": 680
+            },
+            {
+              "documents": 13,
+              "nodes": 23983,
+              "jsEventListeners": 682
+            },
+            {
+              "documents": 14,
+              "nodes": 23987,
+              "jsEventListeners": 682
+            },
+            {
+              "documents": 11,
+              "nodes": 16493,
+              "jsEventListeners": 680
+            },
+            {
+              "documents": 13,
+              "nodes": 23972,
+              "jsEventListeners": 682
+            }
+          ]
+        },
+        "background": {
+          "rss_median_bytes": 638382080,
+          "heap_median_bytes": 10975552,
+          "renderer_counts": [
+            4,
+            4,
+            4,
+            4,
+            4
+          ],
+          "rss_samples_bytes": [
+            613195776,
+            640167936,
+            641523712,
+            629694464,
+            638382080
+          ],
+          "dom_samples": [
+            {
+              "documents": 11,
+              "nodes": 16490,
+              "jsEventListeners": 680
+            },
+            {
+              "documents": 13,
+              "nodes": 23991,
+              "jsEventListeners": 682
+            },
+            {
+              "documents": 14,
+              "nodes": 23995,
+              "jsEventListeners": 682
+            },
+            {
+              "documents": 2,
+              "nodes": 2644,
+              "jsEventListeners": 74
+            },
+            {
+              "documents": 13,
+              "nodes": 23980,
+              "jsEventListeners": 682
+            }
+          ]
+        },
+        "navigation_1": {
+          "rss_median_bytes": 530886656,
+          "heap_median_bytes": 11741212,
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "rss_samples_bytes": [
+            493993984,
+            532893696,
+            536870912,
+            516337664,
+            530886656
+          ],
+          "dom_samples": [
+            {
+              "documents": 4,
+              "nodes": 5286,
+              "jsEventListeners": 172
+            },
+            {
+              "documents": 15,
+              "nodes": 26636,
+              "jsEventListeners": 780
+            },
+            {
+              "documents": 16,
+              "nodes": 26640,
+              "jsEventListeners": 780
+            },
+            {
+              "documents": 4,
+              "nodes": 5289,
+              "jsEventListeners": 172
+            },
+            {
+              "documents": 15,
+              "nodes": 26626,
+              "jsEventListeners": 780
+            }
+          ]
+        },
+        "navigation_5": {
+          "rss_median_bytes": 581357568,
+          "heap_median_bytes": 14295488,
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "rss_samples_bytes": [
+            524419072,
+            583802880,
+            581394432,
+            547004416,
+            581357568
+          ],
+          "dom_samples": [
+            {
+              "documents": 6,
+              "nodes": 7931,
+              "jsEventListeners": 270
+            },
+            {
+              "documents": 23,
+              "nodes": 37216,
+              "jsEventListeners": 1172
+            },
+            {
+              "documents": 24,
+              "nodes": 37221,
+              "jsEventListeners": 1172
+            },
+            {
+              "documents": 12,
+              "nodes": 15869,
+              "jsEventListeners": 564
+            },
+            {
+              "documents": 23,
+              "nodes": 37206,
+              "jsEventListeners": 1172
+            }
+          ]
+        },
+        "navigation_10": {
+          "rss_median_bytes": 588541952,
+          "heap_median_bytes": 6112452,
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "rss_samples_bytes": [
+            529182720,
+            591237120,
+            588541952,
+            556232704,
+            596086784
+          ],
+          "dom_samples": [
+            {
+              "documents": 16,
+              "nodes": 21156,
+              "jsEventListeners": 760
+            },
+            {
+              "documents": 4,
+              "nodes": 5287,
+              "jsEventListeners": 185
+            },
+            {
+              "documents": 6,
+              "nodes": 7932,
+              "jsEventListeners": 294
+            },
+            {
+              "documents": 4,
+              "nodes": 5287,
+              "jsEventListeners": 172
+            },
+            {
+              "documents": 2,
+              "nodes": 2642,
+              "jsEventListeners": 74
+            }
+          ]
+        },
+        "navigation_15": {
+          "rss_median_bytes": 585347072,
+          "heap_median_bytes": 6109180,
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "rss_samples_bytes": [
+            545460224,
+            589398016,
+            585347072,
+            563294208,
+            596004864
+          ],
+          "dom_samples": [
+            {
+              "documents": 3,
+              "nodes": 5273,
+              "jsEventListeners": 99
+            },
+            {
+              "documents": 4,
+              "nodes": 5287,
+              "jsEventListeners": 191
+            },
+            {
+              "documents": 4,
+              "nodes": 5287,
+              "jsEventListeners": 172
+            },
+            {
+              "documents": 14,
+              "nodes": 18512,
+              "jsEventListeners": 662
+            },
+            {
+              "documents": 12,
+              "nodes": 15867,
+              "jsEventListeners": 564
+            }
+          ]
+        },
+        "navigation_20": {
+          "rss_median_bytes": 589819904,
+          "heap_median_bytes": 9015368,
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "rss_samples_bytes": [
+            548233216,
+            590397440,
+            589819904,
+            569401344,
+            600903680
+          ],
+          "dom_samples": [
+            {
+              "documents": 13,
+              "nodes": 18498,
+              "jsEventListeners": 589
+            },
+            {
+              "documents": 8,
+              "nodes": 10577,
+              "jsEventListeners": 368
+            },
+            {
+              "documents": 14,
+              "nodes": 18512,
+              "jsEventListeners": 662
+            },
+            {
+              "documents": 2,
+              "nodes": 2642,
+              "jsEventListeners": 74
+            },
+            {
+              "documents": 22,
+              "nodes": 29092,
+              "jsEventListeners": 1054
+            }
+          ]
+        }
+      }
+    },
+    {
+      "index": 1,
+      "arm": "after",
+      "exit_code": 0,
+      "raw_sha256": "3cf23e581b4d129acf12233b24d29342a7cb8b1ac5f67c197a1f5e9d5b596abd",
+      "browser_versions": [
+        "156.0.8078.47"
+      ],
+      "checkpoints": {
+        "home_idle": {
+          "rss_median_bytes": 445677568,
+          "heap_median_bytes": 2636508,
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "rss_samples_bytes": [
+            416841728,
+            447762432,
+            423481344,
+            448647168,
+            445677568
+          ],
+          "dom_samples": [
+            {
+              "documents": 1,
+              "nodes": 2599,
+              "jsEventListeners": 103
+            },
+            {
+              "documents": 1,
+              "nodes": 2599,
+              "jsEventListeners": 103
+            },
+            {
+              "documents": 1,
+              "nodes": 2599,
+              "jsEventListeners": 103
+            },
+            {
+              "documents": 1,
+              "nodes": 2599,
+              "jsEventListeners": 103
+            },
+            {
+              "documents": 1,
+              "nodes": 2599,
+              "jsEventListeners": 103
+            }
+          ]
+        },
+        "home_interaction": {
+          "rss_median_bytes": 448270336,
+          "heap_median_bytes": 3846804,
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "rss_samples_bytes": [
+            424103936,
+            448278528,
+            425062400,
+            448905216,
+            448270336
+          ],
+          "dom_samples": [
+            {
+              "documents": 1,
+              "nodes": 2614,
+              "jsEventListeners": 115
+            },
+            {
+              "documents": 1,
+              "nodes": 2623,
+              "jsEventListeners": 139
+            },
+            {
+              "documents": 1,
+              "nodes": 2625,
+              "jsEventListeners": 139
+            },
+            {
+              "documents": 1,
+              "nodes": 2626,
+              "jsEventListeners": 139
+            },
+            {
+              "documents": 1,
+              "nodes": 2623,
+              "jsEventListeners": 139
+            }
+          ]
+        },
+        "wellness_care": {
+          "rss_median_bytes": 445681664,
+          "heap_median_bytes": 3213840,
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "rss_samples_bytes": [
+            423702528,
+            445755392,
+            422010880,
+            446701568,
+            445681664
+          ],
+          "dom_samples": [
+            {
+              "documents": 3,
+              "nodes": 4122,
+              "jsEventListeners": 222
+            },
+            {
+              "documents": 1,
+              "nodes": 1501,
+              "jsEventListeners": 83
+            },
+            {
+              "documents": 1,
+              "nodes": 1501,
+              "jsEventListeners": 83
+            },
+            {
+              "documents": 1,
+              "nodes": 1501,
+              "jsEventListeners": 83
+            },
+            {
+              "documents": 1,
+              "nodes": 1501,
+              "jsEventListeners": 83
+            }
+          ]
+        },
+        "picker_growth": {
+          "rss_median_bytes": 475615232,
+          "heap_median_bytes": 5168636,
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "rss_samples_bytes": [
+            455495680,
+            479875072,
+            457027584,
+            475615232,
+            475648000
+          ],
+          "dom_samples": [
+            {
+              "documents": 1,
+              "nodes": 4561,
+              "jsEventListeners": 106
+            },
+            {
+              "documents": 1,
+              "nodes": 4561,
+              "jsEventListeners": 106
+            },
+            {
+              "documents": 1,
+              "nodes": 4561,
+              "jsEventListeners": 106
+            },
+            {
+              "documents": 1,
+              "nodes": 4561,
+              "jsEventListeners": 106
+            },
+            {
+              "documents": 1,
+              "nodes": 4561,
+              "jsEventListeners": 106
+            }
+          ]
+        },
+        "seasonal_preview": {
+          "rss_median_bytes": 516055040,
+          "heap_median_bytes": 13865672,
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "rss_samples_bytes": [
+            501202944,
+            520003584,
+            498262016,
+            521138176,
+            516055040
+          ],
+          "dom_samples": [
+            {
+              "documents": 7,
+              "nodes": 16349,
+              "jsEventListeners": 225
+            },
+            {
+              "documents": 11,
+              "nodes": 20930,
+              "jsEventListeners": 577
+            },
+            {
+              "documents": 12,
+              "nodes": 20935,
+              "jsEventListeners": 598
+            },
+            {
+              "documents": 12,
+              "nodes": 20957,
+              "jsEventListeners": 598
+            },
+            {
+              "documents": 12,
+              "nodes": 20957,
+              "jsEventListeners": 598
+            }
+          ]
+        },
+        "offscreen": {
+          "rss_median_bytes": 492396544,
+          "heap_median_bytes": 14711340,
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "rss_samples_bytes": [
+            475480064,
+            498298880,
+            474689536,
+            499765248,
+            492396544
+          ],
+          "dom_samples": [
+            {
+              "documents": 9,
+              "nodes": 18944,
+              "jsEventListeners": 326
+            },
+            {
+              "documents": 13,
+              "nodes": 23526,
+              "jsEventListeners": 699
+            },
+            {
+              "documents": 14,
+              "nodes": 23530,
+              "jsEventListeners": 699
+            },
+            {
+              "documents": 14,
+              "nodes": 23552,
+              "jsEventListeners": 699
+            },
+            {
+              "documents": 14,
+              "nodes": 23552,
+              "jsEventListeners": 699
+            }
+          ]
+        },
+        "reduced_motion": {
+          "rss_median_bytes": 493838336,
+          "heap_median_bytes": 11184984,
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "rss_samples_bytes": [
+            476237824,
+            499830784,
+            476516352,
+            495603712,
+            493838336
+          ],
+          "dom_samples": [
+            {
+              "documents": 9,
+              "nodes": 18944,
+              "jsEventListeners": 326
+            },
+            {
+              "documents": 13,
+              "nodes": 23526,
+              "jsEventListeners": 699
+            },
+            {
+              "documents": 14,
+              "nodes": 23530,
+              "jsEventListeners": 699
+            },
+            {
+              "documents": 2,
+              "nodes": 2592,
+              "jsEventListeners": 77
+            },
+            {
+              "documents": 14,
+              "nodes": 23552,
+              "jsEventListeners": 699
+            }
+          ]
+        },
+        "background": {
+          "rss_median_bytes": 617881600,
+          "heap_median_bytes": 10653180,
+          "renderer_counts": [
+            4,
+            4,
+            4,
+            4,
+            4
+          ],
+          "rss_samples_bytes": [
+            616284160,
+            633069568,
+            617881600,
+            612278272,
+            635047936
+          ],
+          "dom_samples": [
+            {
+              "documents": 9,
+              "nodes": 18944,
+              "jsEventListeners": 326
+            },
+            {
+              "documents": 2,
+              "nodes": 2592,
+              "jsEventListeners": 77
+            },
+            {
+              "documents": 14,
+              "nodes": 23530,
+              "jsEventListeners": 699
+            },
+            {
+              "documents": 2,
+              "nodes": 2592,
+              "jsEventListeners": 77
+            },
+            {
+              "documents": 14,
+              "nodes": 23552,
+              "jsEventListeners": 699
+            }
+          ]
+        },
+        "navigation_1": {
+          "rss_median_bytes": 509947904,
+          "heap_median_bytes": 11340356,
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "rss_samples_bytes": [
+            502841344,
+            519577600,
+            509947904,
+            498593792,
+            527581184
+          ],
+          "dom_samples": [
+            {
+              "documents": 11,
+              "nodes": 21538,
+              "jsEventListeners": 427
+            },
+            {
+              "documents": 4,
+              "nodes": 5186,
+              "jsEventListeners": 178
+            },
+            {
+              "documents": 16,
+              "nodes": 26124,
+              "jsEventListeners": 800
+            },
+            {
+              "documents": 4,
+              "nodes": 5186,
+              "jsEventListeners": 178
+            },
+            {
+              "documents": 16,
+              "nodes": 26146,
+              "jsEventListeners": 800
+            }
+          ]
+        },
+        "navigation_5": {
+          "rss_median_bytes": 549736448,
+          "heap_median_bytes": 14026192,
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "rss_samples_bytes": [
+            544030720,
+            549736448,
+            558125056,
+            528674816,
+            575995904
+          ],
+          "dom_samples": [
+            {
+              "documents": 19,
+              "nodes": 31914,
+              "jsEventListeners": 831
+            },
+            {
+              "documents": 12,
+              "nodes": 15562,
+              "jsEventListeners": 582
+            },
+            {
+              "documents": 24,
+              "nodes": 36500,
+              "jsEventListeners": 1204
+            },
+            {
+              "documents": 12,
+              "nodes": 15562,
+              "jsEventListeners": 582
+            },
+            {
+              "documents": 24,
+              "nodes": 36522,
+              "jsEventListeners": 1204
+            }
+          ]
+        },
+        "navigation_10": {
+          "rss_median_bytes": 569413632,
+          "heap_median_bytes": 12356604,
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "rss_samples_bytes": [
+            571154432,
+            569413632,
+            557305856,
+            548495360,
+            604577792
+          ],
+          "dom_samples": [
+            {
+              "documents": 4,
+              "nodes": 6069,
+              "jsEventListeners": 77
+            },
+            {
+              "documents": 22,
+              "nodes": 28532,
+              "jsEventListeners": 1087
+            },
+            {
+              "documents": 8,
+              "nodes": 10376,
+              "jsEventListeners": 404
+            },
+            {
+              "documents": 22,
+              "nodes": 28532,
+              "jsEventListeners": 1087
+            },
+            {
+              "documents": 34,
+              "nodes": 49492,
+              "jsEventListeners": 1709
+            }
+          ]
+        },
+        "navigation_15": {
+          "rss_median_bytes": 562487296,
+          "heap_median_bytes": 8170112,
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "rss_samples_bytes": [
+            562487296,
+            570187776,
+            561381376,
+            545492992,
+            594055168
+          ],
+          "dom_samples": [
+            {
+              "documents": 12,
+              "nodes": 15562,
+              "jsEventListeners": 582
+            },
+            {
+              "documents": 8,
+              "nodes": 10376,
+              "jsEventListeners": 404
+            },
+            {
+              "documents": 18,
+              "nodes": 23346,
+              "jsEventListeners": 909
+            },
+            {
+              "documents": 10,
+              "nodes": 12969,
+              "jsEventListeners": 505
+            },
+            {
+              "documents": 10,
+              "nodes": 12970,
+              "jsEventListeners": 505
+            }
+          ]
+        },
+        "navigation_20": {
+          "rss_median_bytes": 560525312,
+          "heap_median_bytes": 6162748,
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "rss_samples_bytes": [
+            560525312,
+            568995840,
+            554098688,
+            543772672,
+            591806464
+          ],
+          "dom_samples": [
+            {
+              "documents": 4,
+              "nodes": 5186,
+              "jsEventListeners": 178
+            },
+            {
+              "documents": 4,
+              "nodes": 5186,
+              "jsEventListeners": 178
+            },
+            {
+              "documents": 7,
+              "nodes": 12930,
+              "jsEventListeners": 205
+            },
+            {
+              "documents": 4,
+              "nodes": 5186,
+              "jsEventListeners": 178
+            },
+            {
+              "documents": 4,
+              "nodes": 5186,
+              "jsEventListeners": 178
+            }
+          ]
+        }
+      }
+    },
+    {
+      "index": 2,
+      "arm": "after",
+      "exit_code": 0,
+      "raw_sha256": "9153072b2ed61a03f210bf0302ac4d40de5f141f858ab377b66308eb3891d905",
+      "browser_versions": [
+        "156.0.8078.47"
+      ],
+      "checkpoints": {
+        "home_idle": {
+          "rss_median_bytes": 447045632,
+          "heap_median_bytes": 2636588,
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "rss_samples_bytes": [
+            416038912,
+            448229376,
+            446185472,
+            447045632,
+            447369216
+          ],
+          "dom_samples": [
+            {
+              "documents": 1,
+              "nodes": 2599,
+              "jsEventListeners": 103
+            },
+            {
+              "documents": 1,
+              "nodes": 2599,
+              "jsEventListeners": 103
+            },
+            {
+              "documents": 1,
+              "nodes": 2599,
+              "jsEventListeners": 103
+            },
+            {
+              "documents": 1,
+              "nodes": 2599,
+              "jsEventListeners": 103
+            },
+            {
+              "documents": 1,
+              "nodes": 2599,
+              "jsEventListeners": 103
+            }
+          ]
+        },
+        "home_interaction": {
+          "rss_median_bytes": 447254528,
+          "heap_median_bytes": 3752504,
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "rss_samples_bytes": [
+            423596032,
+            449155072,
+            446722048,
+            447672320,
+            447254528
+          ],
+          "dom_samples": [
+            {
+              "documents": 1,
+              "nodes": 2615,
+              "jsEventListeners": 115
+            },
+            {
+              "documents": 1,
+              "nodes": 2626,
+              "jsEventListeners": 139
+            },
+            {
+              "documents": 1,
+              "nodes": 2623,
+              "jsEventListeners": 139
+            },
+            {
+              "documents": 1,
+              "nodes": 2623,
+              "jsEventListeners": 139
+            },
+            {
+              "documents": 1,
+              "nodes": 2626,
+              "jsEventListeners": 139
+            }
+          ]
+        },
+        "wellness_care": {
+          "rss_median_bytes": 445231104,
+          "heap_median_bytes": 3212652,
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "rss_samples_bytes": [
+            422244352,
+            446513152,
+            444641280,
+            445792256,
+            445231104
+          ],
+          "dom_samples": [
+            {
+              "documents": 1,
+              "nodes": 1500,
+              "jsEventListeners": 83
+            },
+            {
+              "documents": 1,
+              "nodes": 1501,
+              "jsEventListeners": 83
+            },
+            {
+              "documents": 1,
+              "nodes": 1501,
+              "jsEventListeners": 83
+            },
+            {
+              "documents": 1,
+              "nodes": 1501,
+              "jsEventListeners": 83
+            },
+            {
+              "documents": 1,
+              "nodes": 1501,
+              "jsEventListeners": 83
+            }
+          ]
+        },
+        "picker_growth": {
+          "rss_median_bytes": 475275264,
+          "heap_median_bytes": 5167500,
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "rss_samples_bytes": [
+            452763648,
+            475275264,
+            473612288,
+            480595968,
+            479215616
+          ],
+          "dom_samples": [
+            {
+              "documents": 1,
+              "nodes": 4561,
+              "jsEventListeners": 106
+            },
+            {
+              "documents": 1,
+              "nodes": 4561,
+              "jsEventListeners": 106
+            },
+            {
+              "documents": 1,
+              "nodes": 4561,
+              "jsEventListeners": 106
+            },
+            {
+              "documents": 1,
+              "nodes": 4561,
+              "jsEventListeners": 106
+            },
+            {
+              "documents": 1,
+              "nodes": 4561,
+              "jsEventListeners": 106
+            }
+          ]
+        },
+        "seasonal_preview": {
+          "rss_median_bytes": 519376896,
+          "heap_median_bytes": 11122068,
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "rss_samples_bytes": [
+            498216960,
+            515833856,
+            520941568,
+            519376896,
+            520634368
+          ],
+          "dom_samples": [
+            {
+              "documents": 6,
+              "nodes": 13765,
+              "jsEventListeners": 224
+            },
+            {
+              "documents": 11,
+              "nodes": 20931,
+              "jsEventListeners": 598
+            },
+            {
+              "documents": 12,
+              "nodes": 20954,
+              "jsEventListeners": 598
+            },
+            {
+              "documents": 12,
+              "nodes": 20946,
+              "jsEventListeners": 598
+            },
+            {
+              "documents": 12,
+              "nodes": 20946,
+              "jsEventListeners": 598
+            }
+          ]
+        },
+        "offscreen": {
+          "rss_median_bytes": 495214592,
+          "heap_median_bytes": 10793212,
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "rss_samples_bytes": [
+            472031232,
+            491728896,
+            497000448,
+            496054272,
+            495214592
+          ],
+          "dom_samples": [
+            {
+              "documents": 8,
+              "nodes": 16360,
+              "jsEventListeners": 325
+            },
+            {
+              "documents": 13,
+              "nodes": 23526,
+              "jsEventListeners": 699
+            },
+            {
+              "documents": 14,
+              "nodes": 23549,
+              "jsEventListeners": 699
+            },
+            {
+              "documents": 14,
+              "nodes": 23541,
+              "jsEventListeners": 699
+            },
+            {
+              "documents": 14,
+              "nodes": 23541,
+              "jsEventListeners": 699
+            }
+          ]
+        },
+        "reduced_motion": {
+          "rss_median_bytes": 496803840,
+          "heap_median_bytes": 10949980,
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "rss_samples_bytes": [
+            472907776,
+            493510656,
+            498749440,
+            497549312,
+            496803840
+          ],
+          "dom_samples": [
+            {
+              "documents": 8,
+              "nodes": 16360,
+              "jsEventListeners": 325
+            },
+            {
+              "documents": 13,
+              "nodes": 23526,
+              "jsEventListeners": 699
+            },
+            {
+              "documents": 14,
+              "nodes": 23549,
+              "jsEventListeners": 699
+            },
+            {
+              "documents": 14,
+              "nodes": 23541,
+              "jsEventListeners": 699
+            },
+            {
+              "documents": 14,
+              "nodes": 23541,
+              "jsEventListeners": 699
+            }
+          ]
+        },
+        "background": {
+          "rss_median_bytes": 632823808,
+          "heap_median_bytes": 11099768,
+          "renderer_counts": [
+            4,
+            4,
+            4,
+            4,
+            4
+          ],
+          "rss_samples_bytes": [
+            611168256,
+            632823808,
+            638464000,
+            637243392,
+            620716032
+          ],
+          "dom_samples": [
+            {
+              "documents": 8,
+              "nodes": 16360,
+              "jsEventListeners": 325
+            },
+            {
+              "documents": 13,
+              "nodes": 23526,
+              "jsEventListeners": 699
+            },
+            {
+              "documents": 14,
+              "nodes": 23549,
+              "jsEventListeners": 699
+            },
+            {
+              "documents": 14,
+              "nodes": 23541,
+              "jsEventListeners": 699
+            },
+            {
+              "documents": 14,
+              "nodes": 23541,
+              "jsEventListeners": 699
+            }
+          ]
+        },
+        "navigation_1": {
+          "rss_median_bytes": 525930496,
+          "heap_median_bytes": 11901900,
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "rss_samples_bytes": [
+            500617216,
+            525930496,
+            532062208,
+            531423232,
+            515059712
+          ],
+          "dom_samples": [
+            {
+              "documents": 10,
+              "nodes": 18954,
+              "jsEventListeners": 426
+            },
+            {
+              "documents": 15,
+              "nodes": 26120,
+              "jsEventListeners": 800
+            },
+            {
+              "documents": 16,
+              "nodes": 26143,
+              "jsEventListeners": 800
+            },
+            {
+              "documents": 16,
+              "nodes": 26135,
+              "jsEventListeners": 800
+            },
+            {
+              "documents": 16,
+              "nodes": 26135,
+              "jsEventListeners": 800
+            }
+          ]
+        },
+        "navigation_5": {
+          "rss_median_bytes": 574746624,
+          "heap_median_bytes": 14587108,
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "rss_samples_bytes": [
+            538972160,
+            574746624,
+            580579328,
+            579690496,
+            573161472
+          ],
+          "dom_samples": [
+            {
+              "documents": 18,
+              "nodes": 29330,
+              "jsEventListeners": 830
+            },
+            {
+              "documents": 23,
+              "nodes": 36496,
+              "jsEventListeners": 1204
+            },
+            {
+              "documents": 24,
+              "nodes": 36519,
+              "jsEventListeners": 1204
+            },
+            {
+              "documents": 24,
+              "nodes": 36511,
+              "jsEventListeners": 1204
+            },
+            {
+              "documents": 24,
+              "nodes": 36511,
+              "jsEventListeners": 1204
+            }
+          ]
+        },
+        "navigation_10": {
+          "rss_median_bytes": 603172864,
+          "heap_median_bytes": 17900720,
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "rss_samples_bytes": [
+            566935552,
+            603172864,
+            608612352,
+            608063488,
+            592564224
+          ],
+          "dom_samples": [
+            {
+              "documents": 28,
+              "nodes": 42300,
+              "jsEventListeners": 1335
+            },
+            {
+              "documents": 25,
+              "nodes": 40216,
+              "jsEventListeners": 972
+            },
+            {
+              "documents": 34,
+              "nodes": 49489,
+              "jsEventListeners": 1709
+            },
+            {
+              "documents": 34,
+              "nodes": 49481,
+              "jsEventListeners": 1709
+            },
+            {
+              "documents": 34,
+              "nodes": 49481,
+              "jsEventListeners": 1709
+            }
+          ]
+        },
+        "navigation_15": {
+          "rss_median_bytes": 592691200,
+          "heap_median_bytes": 8174984,
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "rss_samples_bytes": [
+            559075328,
+            592691200,
+            597688320,
+            596865024,
+            582049792
+          ],
+          "dom_samples": [
+            {
+              "documents": 10,
+              "nodes": 12970,
+              "jsEventListeners": 505
+            },
+            {
+              "documents": 12,
+              "nodes": 15562,
+              "jsEventListeners": 582
+            },
+            {
+              "documents": 10,
+              "nodes": 12970,
+              "jsEventListeners": 505
+            },
+            {
+              "documents": 10,
+              "nodes": 12970,
+              "jsEventListeners": 505
+            },
+            {
+              "documents": 10,
+              "nodes": 12969,
+              "jsEventListeners": 505
+            }
+          ]
+        },
+        "navigation_20": {
+          "rss_median_bytes": 588845056,
+          "heap_median_bytes": 6166824,
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "rss_samples_bytes": [
+            557199360,
+            588845056,
+            594993152,
+            594853888,
+            580145152
+          ],
+          "dom_samples": [
+            {
+              "documents": 4,
+              "nodes": 5186,
+              "jsEventListeners": 178
+            },
+            {
+              "documents": 4,
+              "nodes": 5187,
+              "jsEventListeners": 178
+            },
+            {
+              "documents": 4,
+              "nodes": 5186,
+              "jsEventListeners": 178
+            },
+            {
+              "documents": 4,
+              "nodes": 5186,
+              "jsEventListeners": 178
+            },
+            {
+              "documents": 4,
+              "nodes": 5186,
+              "jsEventListeners": 178
+            }
+          ]
+        }
+      }
+    },
+    {
+      "index": 3,
+      "arm": "before",
+      "exit_code": 0,
+      "raw_sha256": "2eca66ea5df84554a84650d7d05a2102b4d23a7f22315cb7d1512d3974bdcb37",
+      "browser_versions": [
+        "156.0.8078.47"
+      ],
+      "checkpoints": {
+        "home_idle": {
+          "rss_median_bytes": 443133952,
+          "heap_median_bytes": 2720356,
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "rss_samples_bytes": [
+            412774400,
+            443088896,
+            443514880,
+            443133952,
+            443441152
+          ],
+          "dom_samples": [
+            {
+              "documents": 1,
+              "nodes": 2660,
+              "jsEventListeners": 100
+            },
+            {
+              "documents": 1,
+              "nodes": 2684,
+              "jsEventListeners": 100
+            },
+            {
+              "documents": 1,
+              "nodes": 2680,
+              "jsEventListeners": 100
+            },
+            {
+              "documents": 1,
+              "nodes": 2681,
+              "jsEventListeners": 100
+            },
+            {
+              "documents": 1,
+              "nodes": 2682,
+              "jsEventListeners": 100
+            }
+          ]
+        },
+        "home_interaction": {
+          "rss_median_bytes": 444215296,
+          "heap_median_bytes": 3637244,
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "rss_samples_bytes": [
+            426340352,
+            444215296,
+            444354560,
+            443678720,
+            444375040
+          ],
+          "dom_samples": [
+            {
+              "documents": 1,
+              "nodes": 2686,
+              "jsEventListeners": 124
+            },
+            {
+              "documents": 1,
+              "nodes": 2693,
+              "jsEventListeners": 136
+            },
+            {
+              "documents": 1,
+              "nodes": 2677,
+              "jsEventListeners": 124
+            },
+            {
+              "documents": 1,
+              "nodes": 2678,
+              "jsEventListeners": 124
+            },
+            {
+              "documents": 1,
+              "nodes": 2683,
+              "jsEventListeners": 124
+            }
+          ]
+        },
+        "wellness_care": {
+          "rss_median_bytes": 442269696,
+          "heap_median_bytes": 3221080,
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "rss_samples_bytes": [
+            424665088,
+            443097088,
+            442621952,
+            442060800,
+            442269696
+          ],
+          "dom_samples": [
+            {
+              "documents": 1,
+              "nodes": 1504,
+              "jsEventListeners": 80
+            },
+            {
+              "documents": 1,
+              "nodes": 1504,
+              "jsEventListeners": 80
+            },
+            {
+              "documents": 1,
+              "nodes": 1504,
+              "jsEventListeners": 80
+            },
+            {
+              "documents": 1,
+              "nodes": 1504,
+              "jsEventListeners": 80
+            },
+            {
+              "documents": 1,
+              "nodes": 1504,
+              "jsEventListeners": 80
+            }
+          ]
+        },
+        "picker_growth": {
+          "rss_median_bytes": 473518080,
+          "heap_median_bytes": 4444744,
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "rss_samples_bytes": [
+            452550656,
+            473518080,
+            476688384,
+            471797760,
+            476188672
+          ],
+          "dom_samples": [
+            {
+              "documents": 1,
+              "nodes": 4878,
+              "jsEventListeners": 104
+            },
+            {
+              "documents": 1,
+              "nodes": 4878,
+              "jsEventListeners": 104
+            },
+            {
+              "documents": 1,
+              "nodes": 4878,
+              "jsEventListeners": 104
+            },
+            {
+              "documents": 1,
+              "nodes": 4878,
+              "jsEventListeners": 104
+            },
+            {
+              "documents": 1,
+              "nodes": 4878,
+              "jsEventListeners": 104
+            }
+          ]
+        },
+        "seasonal_preview": {
+          "rss_median_bytes": 508055552,
+          "heap_median_bytes": 10993244,
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "rss_samples_bytes": [
+            490262528,
+            498606080,
+            508055552,
+            521175040,
+            508162048
+          ],
+          "dom_samples": [
+            {
+              "documents": 11,
+              "nodes": 21316,
+              "jsEventListeners": 584
+            },
+            {
+              "documents": 9,
+              "nodes": 13815,
+              "jsEventListeners": 582
+            },
+            {
+              "documents": 11,
+              "nodes": 21327,
+              "jsEventListeners": 584
+            },
+            {
+              "documents": 11,
+              "nodes": 21316,
+              "jsEventListeners": 584
+            },
+            {
+              "documents": 12,
+              "nodes": 21342,
+              "jsEventListeners": 584
+            }
+          ]
+        },
+        "offscreen": {
+          "rss_median_bytes": 485879808,
+          "heap_median_bytes": 10649924,
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "rss_samples_bytes": [
+            467918848,
+            481030144,
+            488845312,
+            485879808,
+            487432192
+          ],
+          "dom_samples": [
+            {
+              "documents": 13,
+              "nodes": 23970,
+              "jsEventListeners": 682
+            },
+            {
+              "documents": 11,
+              "nodes": 16469,
+              "jsEventListeners": 680
+            },
+            {
+              "documents": 13,
+              "nodes": 23981,
+              "jsEventListeners": 682
+            },
+            {
+              "documents": 13,
+              "nodes": 23970,
+              "jsEventListeners": 682
+            },
+            {
+              "documents": 14,
+              "nodes": 23996,
+              "jsEventListeners": 682
+            }
+          ]
+        },
+        "reduced_motion": {
+          "rss_median_bytes": 487796736,
+          "heap_median_bytes": 10815632,
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "rss_samples_bytes": [
+            469483520,
+            483004416,
+            491048960,
+            487796736,
+            489504768
+          ],
+          "dom_samples": [
+            {
+              "documents": 13,
+              "nodes": 23972,
+              "jsEventListeners": 682
+            },
+            {
+              "documents": 11,
+              "nodes": 16471,
+              "jsEventListeners": 680
+            },
+            {
+              "documents": 13,
+              "nodes": 23983,
+              "jsEventListeners": 682
+            },
+            {
+              "documents": 13,
+              "nodes": 23972,
+              "jsEventListeners": 682
+            },
+            {
+              "documents": 14,
+              "nodes": 23998,
+              "jsEventListeners": 682
+            }
+          ]
+        },
+        "background": {
+          "rss_median_bytes": 629190656,
+          "heap_median_bytes": 10985684,
+          "renderer_counts": [
+            4,
+            4,
+            4,
+            4,
+            4
+          ],
+          "rss_samples_bytes": [
+            611069952,
+            624553984,
+            632197120,
+            629190656,
+            630636544
+          ],
+          "dom_samples": [
+            {
+              "documents": 13,
+              "nodes": 23980,
+              "jsEventListeners": 682
+            },
+            {
+              "documents": 11,
+              "nodes": 16479,
+              "jsEventListeners": 680
+            },
+            {
+              "documents": 13,
+              "nodes": 23991,
+              "jsEventListeners": 682
+            },
+            {
+              "documents": 13,
+              "nodes": 23980,
+              "jsEventListeners": 682
+            },
+            {
+              "documents": 14,
+              "nodes": 24006,
+              "jsEventListeners": 682
+            }
+          ]
+        },
+        "navigation_1": {
+          "rss_median_bytes": 522293248,
+          "heap_median_bytes": 11683848,
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "rss_samples_bytes": [
+            500883456,
+            515760128,
+            525320192,
+            522293248,
+            523444224
+          ],
+          "dom_samples": [
+            {
+              "documents": 15,
+              "nodes": 26626,
+              "jsEventListeners": 780
+            },
+            {
+              "documents": 13,
+              "nodes": 19124,
+              "jsEventListeners": 778
+            },
+            {
+              "documents": 15,
+              "nodes": 26636,
+              "jsEventListeners": 780
+            },
+            {
+              "documents": 15,
+              "nodes": 26625,
+              "jsEventListeners": 780
+            },
+            {
+              "documents": 16,
+              "nodes": 26652,
+              "jsEventListeners": 780
+            }
+          ]
+        },
+        "navigation_5": {
+          "rss_median_bytes": 569397248,
+          "heap_median_bytes": 14239948,
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "rss_samples_bytes": [
+            531980288,
+            564568064,
+            573136896,
+            569397248,
+            571871232
+          ],
+          "dom_samples": [
+            {
+              "documents": 6,
+              "nodes": 7931,
+              "jsEventListeners": 270
+            },
+            {
+              "documents": 21,
+              "nodes": 29704,
+              "jsEventListeners": 1170
+            },
+            {
+              "documents": 23,
+              "nodes": 37216,
+              "jsEventListeners": 1172
+            },
+            {
+              "documents": 23,
+              "nodes": 37205,
+              "jsEventListeners": 1172
+            },
+            {
+              "documents": 24,
+              "nodes": 37232,
+              "jsEventListeners": 1172
+            }
+          ]
+        },
+        "navigation_10": {
+          "rss_median_bytes": 593522688,
+          "heap_median_bytes": 16135940,
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "rss_samples_bytes": [
+            530935808,
+            593522688,
+            573825024,
+            597475328,
+            600383488
+          ],
+          "dom_samples": [
+            {
+              "documents": 4,
+              "nodes": 5286,
+              "jsEventListeners": 172
+            },
+            {
+              "documents": 31,
+              "nodes": 42929,
+              "jsEventListeners": 1660
+            },
+            {
+              "documents": 8,
+              "nodes": 10577,
+              "jsEventListeners": 381
+            },
+            {
+              "documents": 33,
+              "nodes": 50430,
+              "jsEventListeners": 1662
+            },
+            {
+              "documents": 34,
+              "nodes": 50457,
+              "jsEventListeners": 1662
+            }
+          ]
+        },
+        "navigation_15": {
+          "rss_median_bytes": 584159232,
+          "heap_median_bytes": 6702168,
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "rss_samples_bytes": [
+            534900736,
+            584159232,
+            567648256,
+            589643776,
+            612794368
+          ],
+          "dom_samples": [
+            {
+              "documents": 14,
+              "nodes": 18511,
+              "jsEventListeners": 662
+            },
+            {
+              "documents": 10,
+              "nodes": 13223,
+              "jsEventListeners": 490
+            },
+            {
+              "documents": 6,
+              "nodes": 7932,
+              "jsEventListeners": 289
+            },
+            {
+              "documents": 4,
+              "nodes": 5287,
+              "jsEventListeners": 185
+            },
+            {
+              "documents": 2,
+              "nodes": 2642,
+              "jsEventListeners": 95
+            }
+          ]
+        },
+        "navigation_20": {
+          "rss_median_bytes": 583622656,
+          "heap_median_bytes": 7917792,
+          "renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "rss_samples_bytes": [
+            533491712,
+            583622656,
+            568500224,
+            593145856,
+            612655104
+          ],
+          "dom_samples": [
+            {
+              "documents": 8,
+              "nodes": 10577,
+              "jsEventListeners": 368
+            },
+            {
+              "documents": 8,
+              "nodes": 10577,
+              "jsEventListeners": 387
+            },
+            {
+              "documents": 10,
+              "nodes": 13222,
+              "jsEventListeners": 490
+            },
+            {
+              "documents": 14,
+              "nodes": 18512,
+              "jsEventListeners": 675
+            },
+            {
+              "documents": 12,
+              "nodes": 15867,
+              "jsEventListeners": 585
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "pairs": [
+    {
+      "before_index": 0,
+      "after_index": 1,
+      "comparisons": {
+        "home_idle": {
+          "rss_delta_bytes": -7323648,
+          "within_10_mib": true,
+          "before_renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after_renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "home_interaction": {
+          "rss_delta_bytes": -4927488,
+          "within_10_mib": true,
+          "before_renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after_renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "wellness_care": {
+          "rss_delta_bytes": -5947392,
+          "within_10_mib": true,
+          "before_renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after_renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "picker_growth": {
+          "rss_delta_bytes": -9142272,
+          "within_10_mib": true,
+          "before_renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after_renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "seasonal_preview": {
+          "rss_delta_bytes": -909312,
+          "within_10_mib": true,
+          "before_renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after_renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "offscreen": {
+          "rss_delta_bytes": -2019328,
+          "within_10_mib": true,
+          "before_renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after_renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "reduced_motion": {
+          "rss_delta_bytes": -2723840,
+          "within_10_mib": true,
+          "before_renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after_renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "background": {
+          "rss_delta_bytes": -20500480,
+          "within_10_mib": true,
+          "before_renderer_counts": [
+            4,
+            4,
+            4,
+            4,
+            4
+          ],
+          "after_renderer_counts": [
+            4,
+            4,
+            4,
+            4,
+            4
+          ]
+        },
+        "navigation_1": {
+          "rss_delta_bytes": -20938752,
+          "within_10_mib": true,
+          "before_renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after_renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "navigation_5": {
+          "rss_delta_bytes": -31621120,
+          "within_10_mib": true,
+          "before_renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after_renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "navigation_10": {
+          "rss_delta_bytes": -19128320,
+          "within_10_mib": true,
+          "before_renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after_renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "navigation_15": {
+          "rss_delta_bytes": -22859776,
+          "within_10_mib": true,
+          "before_renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after_renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "navigation_20": {
+          "rss_delta_bytes": -29294592,
+          "within_10_mib": true,
+          "before_renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after_renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        }
+      }
+    },
+    {
+      "before_index": 3,
+      "after_index": 2,
+      "comparisons": {
+        "home_idle": {
+          "rss_delta_bytes": 3911680,
+          "within_10_mib": true,
+          "before_renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after_renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "home_interaction": {
+          "rss_delta_bytes": 3039232,
+          "within_10_mib": true,
+          "before_renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after_renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "wellness_care": {
+          "rss_delta_bytes": 2961408,
+          "within_10_mib": true,
+          "before_renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after_renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "picker_growth": {
+          "rss_delta_bytes": 1757184,
+          "within_10_mib": true,
+          "before_renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after_renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "seasonal_preview": {
+          "rss_delta_bytes": 11321344,
+          "within_10_mib": false,
+          "before_renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after_renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "offscreen": {
+          "rss_delta_bytes": 9334784,
+          "within_10_mib": true,
+          "before_renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after_renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "reduced_motion": {
+          "rss_delta_bytes": 9007104,
+          "within_10_mib": true,
+          "before_renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after_renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "background": {
+          "rss_delta_bytes": 3633152,
+          "within_10_mib": true,
+          "before_renderer_counts": [
+            4,
+            4,
+            4,
+            4,
+            4
+          ],
+          "after_renderer_counts": [
+            4,
+            4,
+            4,
+            4,
+            4
+          ]
+        },
+        "navigation_1": {
+          "rss_delta_bytes": 3637248,
+          "within_10_mib": true,
+          "before_renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after_renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "navigation_5": {
+          "rss_delta_bytes": 5349376,
+          "within_10_mib": true,
+          "before_renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after_renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "navigation_10": {
+          "rss_delta_bytes": 9650176,
+          "within_10_mib": true,
+          "before_renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after_renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "navigation_15": {
+          "rss_delta_bytes": 8531968,
+          "within_10_mib": true,
+          "before_renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after_renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        },
+        "navigation_20": {
+          "rss_delta_bytes": 5222400,
+          "within_10_mib": true,
+          "before_renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "after_renderer_counts": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ]
+        }
+      }
+    }
+  ]
+}

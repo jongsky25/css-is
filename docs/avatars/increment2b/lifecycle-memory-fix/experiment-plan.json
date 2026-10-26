@@ -36,9 +36,14 @@
       "change": "same original baseline again to check same-source variation"
     },
     {
+      "name": "after-repeat",
+      "change": "unchanged current product; clean serialization after before-repeat, no concurrent trace parsing"
+    },
+    {
       "name": "pagehide-cancel",
       "change": "current product; cancel only avatar animation effects on non-persisted pagehide; preserve BFCache pages",
       "hypothesis": "Eager disposal of obsolete animation effects releases retained native document/rendering resources without GC or cache flushing."
     }
-  ]
+  ],
+  "exploratory_limits": "Early local probes after, original-runtime, original-art, original-search and original-runtime-audio overlapped parsing of a preceding trace during startup. Treat as exploratory observations only: memory pressure may confound comparisons. The before-repeat, after-repeat and pagehide-cancel sequence runs without concurrent trace analysis."
 }
