@@ -1,0 +1,26 @@
+{
+  "status": "diagnostic_only",
+  "product_changed": false,
+  "hosted_run_id": 40257027634,
+  "hosted_run_url": "https://github.com/jongsky25/css-is/actions/runs/40257027634",
+  "hosted_status": "running",
+  "local_probe": {
+    "browser": "156.0.8078.47",
+    "order": [
+      "current",
+      "no-hint",
+      "no-hint",
+      "current"
+    ],
+    "rss_mib": [
+      465.32,
+      462.47,
+      465.61,
+      467.11
+    ],
+    "finding": "Removing static will-change hints gave small RSS differences but no consistent private-memory saving. LayerTree emitted no layer list, so compositor mechanism is unproven. Do not promote as a product fix.",
+    "protocol": "Direct profile visit; fresh browser per condition; no warm Home/care sequence; not an acceptance cohort."
+  },
+  "retained_hosted_source_file_hashes_verified": 86,
+  "next": "Inspect native/private/shared memory in hosted opposite-order cohorts; retain original failed gate."
+}
