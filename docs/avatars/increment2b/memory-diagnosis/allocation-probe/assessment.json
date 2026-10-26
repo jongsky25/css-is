@@ -1,0 +1,85 @@
+{
+  "acceptance": false,
+  "protocol": "One diagnostic per arm; direct Home then picker; detailed memory dumps perturb execution. No forced GC. No comparison with acceptance timing.",
+  "cohorts": {
+    "before": {
+      "full_trace_sha256": "c1df7d851762d660ad15d40139621cab93de4df8a79992423311369a72017073",
+      "full_trace_local_path": "avatar-verification/allocation-probe/before/memory-trace.json.gz",
+      "raw_memory_dump_events": 34,
+      "picker_trace_dump_id": "0x1",
+      "note": "Returned CDP dump GUIDs differ from serialized IDs; two dump groups mapped in chronological request order.",
+      "rss_bytes": 529788928,
+      "allocators": [
+        {
+          "pid": 120,
+          "malloc": 17046840,
+          "v8": 14791680,
+          "blink_gc": 8323152,
+          "partition_alloc": 9635347,
+          "shared_memory": 790576,
+          "skia": 4960
+        },
+        {
+          "pid": 131,
+          "malloc": 5136712,
+          "v8": 3027000,
+          "blink_gc": 917504,
+          "partition_alloc": 483328,
+          "shared_memory": 397360
+        },
+        {
+          "pid": 133,
+          "malloc": 35062535,
+          "v8": 10108908,
+          "blink_gc": 25034832,
+          "partition_alloc": 5613178,
+          "cc": 32038912,
+          "cc/tile_memory": 26525696,
+          "shared_memory": 46320192,
+          "discardable": 12890112,
+          "skia": 312571
+        }
+      ]
+    },
+    "after": {
+      "full_trace_sha256": "f37932e50eb9e6c9adcf259b78092b84afe8d117a6edeca4b7a11a0bb11ce65b",
+      "full_trace_local_path": "avatar-verification/allocation-probe/after/memory-trace.json.gz",
+      "raw_memory_dump_events": 34,
+      "picker_trace_dump_id": "0x1",
+      "note": "Returned CDP dump GUIDs differ from serialized IDs; two dump groups mapped in chronological request order.",
+      "rss_bytes": 525312000,
+      "allocators": [
+        {
+          "pid": 121,
+          "malloc": 17109192,
+          "v8": 14598144,
+          "blink_gc": 8388768,
+          "partition_alloc": 9635235,
+          "shared_memory": 790576,
+          "skia": 4960
+        },
+        {
+          "pid": 131,
+          "malloc": 5101656,
+          "v8": 3027000,
+          "blink_gc": 917504,
+          "partition_alloc": 483328,
+          "shared_memory": 397360
+        },
+        {
+          "pid": 141,
+          "malloc": 35337311,
+          "v8": 10638308,
+          "blink_gc": 21758032,
+          "partition_alloc": 7083488,
+          "cc": 33906688,
+          "cc/tile_memory": 28393472,
+          "shared_memory": 48433728,
+          "discardable": 12890112,
+          "skia": 312571
+        }
+      ]
+    }
+  },
+  "finding": "Picker paint-tile allocations increased 1.781MiB locally, while total RSS decreased 4.270MiB. Does not reproduce or explain hosted warm-picker +11.199MiB; confirms aggregate RSS is not a direct measure of artwork allocation. Allocator categories overlap and must not be summed."
+}

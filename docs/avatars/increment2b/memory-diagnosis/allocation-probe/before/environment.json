@@ -1,0 +1,30 @@
+{
+  "source_commit": "1c964dcba2fa19de1eab077b00e0e5748d742554",
+  "platform": "Linux-6.18.55-x86_64-with-glibc2.41",
+  "python": "3.12.15",
+  "chromium": "156.0.8078.47",
+  "playwright": "1.62.0",
+  "fixture_date_local": "2026-07-15T12:00:00 Asia/Manila",
+  "browser_date": "2026-07-15T12:00:00Z + performance.now()",
+  "random_seed": 12345,
+  "source_sha256": {
+    "templates/_avatars.html": "1b21f18edc3b152d929d529d36bed73d372ddc54851d59f85707dcb262538da0",
+    "templates/_avatars_art.html": "aa542c3e007a4920cde6f32aa797cf79bb9b3ddf07250a459456f072b4c4ef29",
+    "static/js/avatars.js": "69c5841d65c4e1a47093c93a2ded9498b176b3b6cfb9ea34d2d7d633e07d6bb1",
+    "static/js/avatar-audio.js": "51de7cd0c5ab68874dfa5a50fab136ebbc415953fa8b5d0a09cae116d89303b9",
+    "static/js/search.js": "690833235cfe17debf3bbc4c164b3443a2f6597c3935d7961e1e47e2304b1a3c",
+    "templates/office_connect.html": "27b51b191807d4a859098f79250e10ab4195ba700f13966c05d61f45cd3b3577",
+    "templates/dash_layout.html": "89f27d671a1a1253ee6735635a9964ebec35be27c8efc8d848408064f840a735",
+    "tests/test_avatar_baseline_browser.py": "7e946dceb7ecd2ccd95a04dbaab25eea5cdd1854799626e6da68dc4c7b97ff41",
+    "tests/avatar_browser_fixture.py": "c9cbf5bbf60b516abe8cbf2bad3dce9681bbebd369b78d3e2a04818b8ebcc452"
+  },
+  "process_tree_cpu_affinity": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "requested_renderer_pin_cpu": null,
+  "proxy_compression": "test-local Starlette GZipMiddleware minimum_size=500"
+}
