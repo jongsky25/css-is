@@ -28,6 +28,22 @@ trigger it as an acceptance audit of the cancelled cohort. No later increments,
 merge to main or deployment occurred. The historical handoff below is superseded by this
 correction wherever it suggests CI success establishes complete memory acceptance.
 
+## Exact observer validation in progress
+
+[Run 40323560666](https://github.com/jongsky25/css-is/actions/runs/40323560666)
+measures five samples per cohort, current / observer-disabled / observer-disabled /
+current, at source b374358. This uses the exact one-line intervention from the
+screen, not the rejected shared-observer candidate. Do not start a duplicate run.
+Retrieve and independently audit its artifact before deciding the next intervention.
+Use the updated `analyze_source_isolation.py` on the complete artifact; the existing
+10 MiB gates and predeclared 5 MiB navigation improvement criterion remain intact.
+
+[Preview diagnostic evidence](avatars/increment2b/observer-validation/REPORT.md)
+reproduces lazy-loading deferral only with the iframe deliberately moved far below
+the viewport; normal layout passes. A routed eager-on-update candidate passes all
+eight cases. The patch is preserved but not applied to product or memory fixtures.
+This is not proof of the historical timeout cause. Product remains f700187.
+
 ## Latest source screen and geometry candidate — not promoted
 
 Read [source isolation](avatars/increment2b/source-isolation/REPORT.md) and

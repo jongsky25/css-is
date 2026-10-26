@@ -37,3 +37,21 @@ def test_five_sample_validation_requires_all_five(tmp_path):
     assert points(rows,5)
     with pytest.raises(ValueError):points(rows[:2],5)
     with pytest.raises(ValueError):points(rows)
+
+
+@pytest.mark.parametrize('fault',['none','missing','exit','order','index','samples','base'])
+def test_observer_plan_identity(fault):
+    from scripts.avatar_baseline.analyze_source_isolation import validate_plan
+    order=['current','geometry','geometry','current']
+    plan={'observer_validation':True,'base':'f700187','acceptance':False,
+          'order':order,'samples_per_arm':5,
+          'cohorts':[{'index':i,'arm':a,'exit_code':0} for i,a in enumerate(order)]}
+    if fault=='missing':plan['cohorts'].pop()
+    elif fault=='exit':plan['cohorts'][1]['exit_code']=1
+    elif fault=='order':plan['cohorts'][1]['arm']='current'
+    elif fault=='index':plan['cohorts'][1]['index']=0
+    elif fault=='samples':plan['samples_per_arm']=2
+    elif fault=='base':plan['base']='1c964dc'
+    if fault=='none':assert validate_plan(plan)==(True,tuple(order),5)
+    else:
+        with pytest.raises(ValueError):validate_plan(plan)

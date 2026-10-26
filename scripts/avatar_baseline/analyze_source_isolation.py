@@ -43,19 +43,33 @@ def qualifies(pair):
     return len(selected)==2 and all(r['median_delta_bytes']<=-5*1024*1024 for r in selected)
 
 
+def validate_plan(plan):
+    validation=plan.get('observer_validation',False)
+    order=('current','geometry','geometry','current') if validation else ORDER
+    samples=5 if validation else 2
+    if (plan['base']!='f700187' or plan['acceptance'] is not False or
+        plan['order']!=list(order) or plan['samples_per_arm']!=samples or
+        plan['cohorts']!=[{'index':i,'arm':arm,'exit_code':0} for i,arm in enumerate(order)]):
+        raise ValueError('Incomplete experiment')
+    return validation,order,samples
+
+
 def main():
     parser=argparse.ArgumentParser();parser.add_argument('root',type=Path);args=parser.parse_args()
     root=args.root;repo=Path(__file__).resolve().parents[2]
     plan=json.loads((root/'experiment.json').read_text())
-    validation=plan.get('observer_validation',False)
-    order=('current','geometry','geometry','current') if validation else ORDER
-    samples=5 if validation else 2
-    if (plan['order']!=list(order) or plan['samples_per_arm']!=samples or
-        plan['cohorts']!=[{'index':i,'arm':arm,'exit_code':0} for i,arm in enumerate(order)]):
-        raise ValueError('Incomplete experiment')
+    validation,order,samples=validate_plan(plan)
+    required={'templates/_avatars.html','templates/_avatars_art.html','templates/me.html',
+              'templates/_growth.html','static/js/avatars.js','static/js/avatar-audio.js',
+              'static/js/search.js','templates/office_connect.html','templates/dash_layout.html',
+              'tests/test_avatar_baseline_browser.py','tests/avatar_browser_fixture.py',
+              'templates/_avatars_shared.html'}
+    required.update(subprocess.check_output(['git','ls-tree','-r','--name-only','f700187',
+        'templates/_avatar_species'],cwd=repo,text=True).splitlines())
     cohorts=[];verified=0
     for i,arm in enumerate(order):
         folder=root/f'{i}-{arm}';env=json.loads((folder/'environment.json').read_text())
+        if set(env['source_sha256'])!=required:raise ValueError('Incomplete source identity')
         for name,digest in env['source_sha256'].items():
             changed=root/'variants'/arm/name
             if changed.exists():
@@ -73,8 +87,8 @@ def main():
     comparisons=[];candidates={}
     for arm,first,second in ([('geometry',1,2)] if validation else [('geometry',1,6),('preview',2,5),('svg',3,4)]):
         pairs=[]
-        for order,a,b in [('forward',0,first),('reverse',len(order)-1,second)]:
-            pair={'arm':arm,'order':order,**compare(cohorts[a]['points'],cohorts[b]['points'])}
+        for pair_order,a,b in [('forward',0,first),('reverse',len(order)-1,second)]:
+            pair={'arm':arm,'order':pair_order,**compare(cohorts[a]['points'],cohorts[b]['points'])}
             pair['screen_qualifies']=qualifies(pair);pairs.append(pair);comparisons.append(pair)
         candidates[arm]=all(p['screen_qualifies'] for p in pairs)
     repeat=compare(cohorts[0]['points'],cohorts[-1]['points'])

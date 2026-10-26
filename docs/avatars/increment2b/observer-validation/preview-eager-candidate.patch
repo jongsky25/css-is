@@ -1,0 +1,11 @@
+--- a/static/js/appearance-admin.js
++++ b/static/js/appearance-admin.js
+@@ -15,7 +15,7 @@
+       theme:editor.querySelector('[name="theme"]:checked').value,
+       outfit:editor.elements.outfit.value,effects:editor.elements.effects.checked?'1':'0',
+       artwork:editor.elements.artwork.checked?'1':'0',banner:editor.elements.banner.value});
+-    document.getElementById('appearance-preview').src='/?'+params.toString();
++    var frame=document.getElementById('appearance-preview');frame.loading='eager';frame.src='/?'+params.toString();
+   }
+   var previewTimer;
+   document.getElementById('appearance-preview-button').addEventListener('click',function(){clearTimeout(previewTimer);updatePreview();});
