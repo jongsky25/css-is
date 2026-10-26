@@ -59,8 +59,8 @@ except Exception as error:
 gates=results.gates
 try:
     if a.phase=='functional':
-        files=['tests/test_avatar_motion_preference_browser.py','tests/test_avatar_chase_writes_browser.py','tests/test_avatar_geometry_browser.py','tests/test_avatar_pointer_browser.py','tests/test_avatar_static_preview_browser.py','tests/test_home_search_boot_browser.py']
-        results.check('browser_regressions',lambda: pytest('browser-regressions',files,{'CSS_AVATAR_OUT':str(out/'functional/application')},expected=8)==0)
+        files=['tests/test_avatar_motion_preference_browser.py','tests/test_avatar_chase_writes_browser.py','tests/test_avatar_geometry_browser.py','tests/test_avatar_container_resize_browser.py','tests/test_avatar_pointer_browser.py','tests/test_avatar_static_preview_browser.py','tests/test_home_search_boot_browser.py']
+        results.check('browser_regressions',lambda: pytest('browser-regressions',files,{'CSS_AVATAR_OUT':str(out/'functional/application')},expected=9)==0)
         results.check('svg_equivalence',lambda: run('svg-equivalence',[python,'scripts/avatar_baseline/check_lazy_equivalence.py','--out',str(out/'visual')])==0)
         results.check('static_preview_pixels',lambda: run('static-preview-pixels',[python,'scripts/avatar_baseline/check_static_previews.py','--out',str(out/'static-preview-visual')])==0)
         results.check('seasonal_live_refresh',lambda: pytest('seasonal-live-refresh',['tests/test_appearance_browser.py::test_publish_private_preview_mobile_and_live_outfit_without_form_reload'],expected=1)==0)
