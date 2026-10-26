@@ -1,6 +1,6 @@
 # Avatar upgrade: new-chat handoff
 
-Last updated: **2026-10-26 10:38 UTC**. Repository: `jongsky25/css-is`.
+Last updated: **2026-10-26 12:20 UTC**. Repository: `jongsky25/css-is`.
 
 ## Current blocking correction
 
@@ -28,19 +28,29 @@ trigger it as an acceptance audit of the cancelled cohort. No later increments,
 merge to main or deployment occurred. The historical handoff below is superseded by this
 correction wherever it suggests CI success establishes complete memory acceptance.
 
-## Active geometry candidate — source screen completed
+## Latest source screen and geometry candidate — not promoted
 
-Read [source isolation](avatars/increment2b/source-isolation/REPORT.md).
-All 16 samples and both orders are complete; 224 source hashes verified.
-Geometry-observer disabling and original SVG qualify as leads; restoring preview
-wrappers does not. Product candidate cccf843 on `codex/avatar-2b-geometry-lifecycle`
-shares one geometry observer and disconnects it on discarded-page pagehide.
-Nine local browser regressions and 44 accounting checks pass. Artwork is unchanged.
-[Hosted run 40315985656](https://github.com/jongsky25/css-is/actions/runs/40315985656)
-is executing five-sample original/current/candidate cohorts in both orders, with
-an independent raw/source audit. See [candidate report](avatars/increment2b/geometry-lifecycle/REPORT.md).
-Do not accept or promote before the targeted gate and full validation pass.
-The verification branch retains f700187 product plus source-screen evidence.
+Read [source isolation](avatars/increment2b/source-isolation/REPORT.md) and
+[the final geometry report](avatars/increment2b/geometry-lifecycle/REPORT.md).
+All 16 local screening samples and both orders completed; geometry-observer
+removal and original SVG qualified as leads, preview wrapper restoration did not.
+Candidate cccf843 shares observation and disconnects it on discarded navigation.
+Nine browser checks and 44 accounting checks pass, with artwork unchanged.
+
+Hosted run 40315985656 did not pass. Its complete forward candidate/original pair
+fails six RSS budgets, reaching +49.984 MiB against 10 MiB. The reverse candidate
+pair passes, but the reverse unchanged-current control timed out at the seasonal
+preview and completed only two samples. The overall independent audit is
+inconclusive: 106 source hashes and 156 valid comparisons, one invalid cohort.
+All 27 completed samples and the failure log are retained. No replacement samples.
+
+Candidate branch `codex/avatar-2b-geometry-lifecycle` preserves the experiment and
+is paused. The primary verification branch retains f700187 product plus evidence.
+Full acceptance, 3A and later increments remain paused. Before another product
+correction, validate the exact isolated observer/SVG intervention with five
+samples in both orders; the two-sample screen alone was insufficient. Investigate
+the current-control preview timeout separately. Do not promote the geometry
+candidate, roll back the artwork, waive budgets, or rerun for a favourable sample.
 
 ## Native residency implementation — 2026-10-26
 

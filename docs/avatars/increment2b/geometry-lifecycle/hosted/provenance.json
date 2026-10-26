@@ -1,0 +1,13 @@
+{
+  "run_id": 40315985656,
+  "job_id": 121548579839,
+  "candidate_source": "cccf843825b5705df5f04242cd25f23fb755280f",
+  "artifact_id": 12647834472,
+  "artifact_sha256": "178808866d1e229746ec45e0912c82d3d970a53fd593ba6ab9b642f300a74c84",
+  "artifact_bytes": 2659184,
+  "expires_at": "2026-11-25T12:14:09Z",
+  "audit_status": "inconclusive",
+  "complete_forward_candidate_failures": 6,
+  "candidate_disposition": "not_promoted",
+  "full_acceptance_run": false
+}
