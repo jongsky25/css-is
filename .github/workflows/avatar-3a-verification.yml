@@ -61,3 +61,13 @@ jobs:
           name: avatar-3a-complete
           path: avatar-verification/
           retention-days: 30
+      - name: Package portable review evidence
+        if: always()
+        run: python scripts/avatar_baseline/package_batch_review.py avatar-verification --output avatar-3a-review.tar.gz
+      - name: Retain portable review evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: avatar-3a-review
+          path: avatar-3a-review.tar.gz
+          retention-days: 30

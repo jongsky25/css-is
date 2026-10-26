@@ -1,4 +1,4 @@
-.................                                                        [100%]
+..................                                                       [100%]
 =============================== warnings summary ===============================
 tests/test_avatar_verification_result.py::test_missing_evidence_does_not_skip_next_check
   /workspace/css-is/tests/conftest.py:88: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.

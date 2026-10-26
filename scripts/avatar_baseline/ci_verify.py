@@ -54,6 +54,8 @@ try:
           'source_sha256':{f:hashlib.sha256((root/f).read_bytes()).hexdigest() for f in ['static/js/avatars.js','templates/_avatars.html','templates/me.html','templates/_growth.html','scripts/avatar_baseline/ci_verify.py','scripts/avatar_baseline/verification_result.py','tests/test_avatar_cpu_attribution.py']}}
     if meta['chromium'].split()[1] != meta['expected_chromium']:
         raise ValueError('Installed browser differs from explicit benchmark version')
+    meta['batch_kinds']=kinds
+    meta['species_sha256']={kind:hashlib.sha256((root/'templates/_avatar_species'/f'{kind}.html').read_bytes()).hexdigest() for kind in kinds}
     (out/'environment.json').write_text(json.dumps(meta,indent=2))
 except Exception as error:
     results.errors['metadata']=repr(error)

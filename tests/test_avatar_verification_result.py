@@ -52,7 +52,12 @@ def test_only_approved_frame_exception(value, passed):
     assert accepted_frame(value) is passed
 
 
-def test_focused_driver_continues_after_missing_control(tmp_path, monkeypatch):
+@pytest.mark.parametrize('batch_kinds', [None, 'dog,rabbit,bird,turtle'])
+def test_focused_driver_continues_after_missing_control(tmp_path, monkeypatch, batch_kinds):
+    if batch_kinds is None:
+        monkeypatch.delenv('CSS_AVATAR_BATCH_KINDS', raising=False)
+    else:
+        monkeypatch.setenv('CSS_AVATAR_BATCH_KINDS', batch_kinds)
     script=Path(__file__).resolve().parents[1]/'scripts/avatar_baseline/ci_verify.py'
     monkeypatch.syspath_prepend(str(script.parent))
     monkeypatch.chdir(tmp_path)
@@ -71,7 +76,7 @@ def test_focused_driver_continues_after_missing_control(tmp_path, monkeypatch):
     result=json.loads((tmp_path/'avatar-verification/focused/assessment.json').read_text())
     assert result['status']=='inconclusive'
     assert 'empty_control' in result['harness_errors']
-    assert all(kind+'_traces' in result['harness_errors'] for kind in ['fern','mushroom','succulent'])
+    assert all(kind+'_traces' in result['harness_errors'] for kind in (batch_kinds or 'fern,mushroom,succulent').split(','))
 
 
 def test_complete_assessment_rejects_missing_phases(tmp_path):
