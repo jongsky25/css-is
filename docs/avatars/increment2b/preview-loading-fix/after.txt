@@ -1,0 +1,45 @@
+.........F....F.........                                                 [100%]
+=================================== FAILURES ===================================
+________ test_drafts_disabled_events_override_reset_resume_and_restore _________
+
+conn = <sqlite3.Connection object at 0x7f0c649246d0>
+
+    def test_drafts_disabled_events_override_reset_resume_and_restore(conn):
+        initial = store.load(conn)
+        config = store.mutate(conn, 'admin', 0, 'draft', {'theme': 'christmas', 'outfit': 'halloween'})
+        assert rules.resolve(config)['theme'] == 'default'
+        assert not store.history(conn)
+        config = store.mutate(conn, 'admin', config['revision'], 'event', event(status='draft'))
+        assert rules.resolve(config)['source'] == 'default'
+        config = store.mutate(conn, 'admin', config['revision'], 'event', event(event_id=config['events'][0]['id']))
+>       assert rules.resolve(config)['source'] == 'scheduled'
+E       AssertionError: assert 'default' == 'scheduled'
+E         
+E         - scheduled
+E         + default
+
+tests/test_appearance.py:87: AssertionError
+_________ test_schedule_routes_edit_disable_remove_and_overlap_errors __________
+
+admin = <starlette.testclient.TestClient object at 0x7f0c6493d9a0>
+viewer = <starlette.testclient.TestClient object at 0x7f0c544032c0>
+conn = <sqlite3.Connection object at 0x7f0c7e1c1990>
+
+    def test_schedule_routes_edit_disable_remove_and_overlap_errors(admin, viewer, conn):
+        assert submit(admin, 'event', **event()).status_code == 303
+>       assert viewer.get('/appearance/current').json()['source'] == 'scheduled'
+E       AssertionError: assert 'default' == 'scheduled'
+E         
+E         - scheduled
+E         + default
+
+tests/test_appearance.py:139: AssertionError
+=============================== warnings summary ===============================
+tests/test_avatar_preview_loading_browser.py::test_edited_preview_loads_when_far_below_viewport[update-button]
+  /workspace/avatar-preview-loading/tests/conftest.py:88: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_appearance.py::test_drafts_disabled_events_override_reset_resume_and_restore
+FAILED tests/test_appearance.py::test_schedule_routes_edit_disable_remove_and_overlap_errors
