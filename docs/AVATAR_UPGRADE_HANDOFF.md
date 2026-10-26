@@ -13,7 +13,7 @@ are completed and must not be repeated.
 3A is implemented in `d0df55779e3fe18ba945029fd549d9079425e53d` on
 `codex/avatar-3a` (current checkout). Local 103 unit/integration/harness checks,
 4 real animal-care checks, 51 sheets, 216 rig cases and 2,448 unchanged-species
-SVG comparisons pass. Its first hosted preflight failed a hardcoded-species harness assertion before benchmarks. The repaired harness `512df84` passes all 18 accounting checks, including both batch configurations. Matched Chromium 156 verification is running:
+SVG comparisons pass. Its first hosted preflight failed a hardcoded-species harness assertion before benchmarks. The repaired harness `512df84` passes all 18 accounting checks, including both batch configurations. Run below is superseded during focused timing by the turtle retraction correction (the previous larger head stayed exposed). A new complete run is required on the correction; discover it from the branch Actions page:
 https://github.com/jongsky25/css-is/actions/runs/40279416578
 Job: `121429157804`. Do not push non-skip commits to this branch while relying
 on that run. Audit the raw result before accepting 3A or starting 3B. The workflow uploads full `avatar-3a-complete` and compact `avatar-3a-review` artifacts for 30 days. Extract the compact archive and run `scripts/avatar_baseline/audit_batch.py <evidence> --kinds dog,rabbit,bird,turtle --output <assessment.json>`; inspect screenshots and retain all raw failures.

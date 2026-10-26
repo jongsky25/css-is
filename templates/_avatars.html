@@ -103,7 +103,9 @@
   .av-do-peek .avstage       { animation:av-crouch 1.5s ease; }
   @keyframes av-crouch { 0%,100%{ transform:scale(1,1);} 25%,60%{ transform:scale(1.05,.84);} }
   .av-do-hide .av-head       { animation:av-retract 1.8s ease; }
-  @keyframes av-retract{ 0%,100%{ transform:translateX(0);} 30%,65%{ transform:translateX(-8px) scale(.92);} }
+  /* The illustrated turtle has a larger head; tuck it inside its shallow baby shell too. */
+  .av-turtle-head { --av-retract-x:-26px; --av-retract-y:7px; --av-retract-scale:.55; }
+  @keyframes av-retract{ 0%,100%{ transform:translateX(0);} 30%,65%{ transform:translate(var(--av-retract-x,-8px),var(--av-retract-y,0px)) scale(var(--av-retract-scale,.92));} }
   .av-do-turn .av-head       { animation:av-headturn 2.4s ease-in-out; }
   @keyframes av-headturn { 0%,100%{ transform:rotate(0);} 30%{ transform:rotate(-11deg);} 65%{ transform:rotate(11deg);} }
   .av-do-bubbles .av-bubbles { animation:av-rise 1.6s ease-out; }

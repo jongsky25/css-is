@@ -21,12 +21,16 @@ with sync_playwright() as pw:
    wraps.evaluate_all('(els,reaction)=>els.forEach(e=>{e.setAttribute("data-interactive","");e.classList.add("av-do-"+reaction)})',reaction)
    assert wraps.locator(hook).count()==18
    assert wraps.locator(hook).evaluate_all('(es)=>es.every(e=>getComputedStyle(e).animationName!=="none")')
-  page.evaluate('document.getAnimations().forEach(a=>{a.pause();a.currentTime=450})')
+  page.evaluate('document.getAnimations().forEach(a=>{a.pause();a.currentTime=a.animationName==="av-retract"?900:450})')
   page.screenshot(path=str(a.out/f'reactions-{theme}.png'),full_page=True)
   for kind,(_,hook,animation) in rigs.items():
    for wrapper in page.locator(f'.avwrap[data-kind="{kind}"]').all():
     assert wrapper.locator(hook).first.evaluate('(e)=>getComputedStyle(e).animationName')==animation
     assert wrapper.locator('svg[data-avatar-kind]').evaluate('(e)=>getComputedStyle(e).filter')=='none'
+    if kind=='turtle':
+     wrapper.scroll_into_view_if_needed()
+     hidden=wrapper.evaluate('''e=>{const eye=e.querySelector('.av-eye'),r=eye.getBoundingClientRect(),top=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return !!top&&e.contains(top)&&!e.querySelector('.av-head').contains(top)}''')
+     assert hidden, 'Turtle face is still exposed during hiding'
     rows.append({'theme':theme,'kind':kind,'stage':wrapper.locator('svg[data-avatar-kind]').get_attribute('data-avatar-stage'),'mood':wrapper.get_attribute('data-mood'),'animation':animation})
   page.emulate_media(reduced_motion='reduce')
   assert page.locator('.avwrap svg *').evaluate_all('(es)=>es.every(e=>getComputedStyle(e).animationName==="none")')
