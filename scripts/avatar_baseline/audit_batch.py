@@ -11,6 +11,7 @@ import subprocess
 import sys
 
 from verification_result import frame_pass, validate_samples, pytest_evidence
+from memory_audit import audit_memory
 
 
 def audit(root, kinds, repository):
@@ -87,6 +88,8 @@ def audit(root, kinds, repository):
     check(environments['before']['source_commit'].startswith('1c964dc') and environments['after']['source_commit']==source,'matrix source identities')
     check(all(e['chromium']=='156.0.8078.47' for e in environments.values()),'matched matrix browser')
     check(environments['before']['source_sha256']['static/js/avatars.js']!=environments['after']['source_sha256']['static/js/avatars.js'],'matrix original runtime')
+    full_memory=audit_memory(root/'matrix/before/application',root/'matrix/after/application')
+    check(full_memory['status']=='passed','Complete scenario/navigation memory audit failed: '+full_memory['status'])
     comparison=read('matrix/after/comparison.json')
     check(comparison['complete'] and all(comparison['gates'].values()),'matrix comparison')
     check(comparison['css_js_gzip_delta_bytes']<=15*1024,'code transfer')
