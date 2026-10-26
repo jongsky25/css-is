@@ -1,0 +1,44 @@
+{
+  "status": "diagnosis_in_progress",
+  "acceptance": false,
+  "hosted_run": 40287821303,
+  "hosted_source": "462934d27a8e94a1a1e06d674327e951179997e6",
+  "local_browser": "156.0.8078.47",
+  "protocol": "One traced warm-desktop sample per variant; full original scenario sequence. Attribution only; never acceptance. All variants retained; no outlier filtering or forced GC.",
+  "probe_sha256": "648ffae785778fa0e32bbbae1c057f9cd2c8115198079101a3a2194210034569",
+  "experiments_in_order": [
+    {
+      "name": "before",
+      "change": "original baseline 1c964dc"
+    },
+    {
+      "name": "after",
+      "change": "current unchanged 2B product f700187 on harness 462934d"
+    },
+    {
+      "name": "original-runtime",
+      "change": "current product with only static/js/avatars.js from 1c964dc"
+    },
+    {
+      "name": "original-art",
+      "change": "current runtime/search with templates/_avatars.html, _avatars_art.html, _growth.html, me.html from 1c964dc"
+    },
+    {
+      "name": "original-search",
+      "change": "current avatar art/runtime with templates/office_connect.html, dash_layout.html, static/js/search.js from 1c964dc"
+    },
+    {
+      "name": "original-runtime-audio",
+      "change": "current art/search with avatars.js and avatar-audio.js from 1c964dc, including historical feedback loop; not a viable fix"
+    },
+    {
+      "name": "before-repeat",
+      "change": "same original baseline again to check same-source variation"
+    },
+    {
+      "name": "pagehide-cancel",
+      "change": "current product; cancel only avatar animation effects on non-persisted pagehide; preserve BFCache pages",
+      "hypothesis": "Eager disposal of obsolete animation effects releases retained native document/rendering resources without GC or cache flushing."
+    }
+  ]
+}
