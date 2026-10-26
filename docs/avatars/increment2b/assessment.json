@@ -13,7 +13,7 @@
     "background": 19750912
   },
   "historical_incomplete_acceptance": "assessment-incomplete-audit.json",
-  "next_step": "Identify document/JS allocations or references remaining after observed natural collection in divergent same-source repeats, distinguishing delayed whole-heap reclamation from retention and native capacity. GC-age bins alone are insufficient. Preserve all gates and historical failures; no unchanged favorable rerun, forced GC or RSS subtraction. 2B and later increments remain blocked.",
+  "next_step": "Request an explicit exception for the prepared isolated post-workload forensic heap snapshots, which force GC and cannot enter acceptance. Standard CDP JS sampling also forces GC; do not call it a natural probe. Retaining-path ownership remains unresolved. All existing gates and failures remain unchanged.",
   "complete_memory_audit": "final-verification/complete-memory-audit.json",
   "corrected_overall_assessment": "final-verification/corrected-overall-assessment.json",
   "memory_comparisons": 104,
@@ -106,6 +106,16 @@
     "phase_matched_source_comparisons": 44,
     "source_comparisons": 80,
     "same_source_absolute_budget_exceedances": 10,
+    "acceptance": false
+  },
+  "allocation_ownership": {
+    "report": "allocation-ownership/REPORT.md",
+    "status": "native_sites_resolved_retaining_paths_unresolved",
+    "native_samples": 929,
+    "resolved_offsets": 1655,
+    "archive_members_verified": 92,
+    "new_browser_measurements": 0,
+    "forensic_capture": "prepared_not_authorized_not_run",
     "acceptance": false
   }
 }

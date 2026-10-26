@@ -1,0 +1,189 @@
+{
+  "acceptance": false,
+  "native_samples": 929,
+  "verified_members": 92,
+  "resolved_offsets": 1655,
+  "build_id": "1c5dca8527a61d07372e489142bee26af1bcaf71",
+  "profiles": [
+    {
+      "cohort": "0-original",
+      "checkpoint": "navigation_1",
+      "documents": 17,
+      "sample_count": 49,
+      "estimated_sample_bytes": 2097152,
+      "sampled_object_bytes": 586154,
+      "inspector_network_inclusive_estimated_bytes": 524288
+    },
+    {
+      "cohort": "0-original",
+      "checkpoint": "navigation_5",
+      "documents": 25,
+      "sample_count": 54,
+      "estimated_sample_bytes": 2359296,
+      "sampled_object_bytes": 730932,
+      "inspector_network_inclusive_estimated_bytes": 524288
+    },
+    {
+      "cohort": "0-original",
+      "checkpoint": "navigation_10",
+      "documents": 8,
+      "sample_count": 56,
+      "estimated_sample_bytes": 2293760,
+      "sampled_object_bytes": 649754,
+      "inspector_network_inclusive_estimated_bytes": 425984
+    },
+    {
+      "cohort": "0-original",
+      "checkpoint": "navigation_15",
+      "documents": 18,
+      "sample_count": 50,
+      "estimated_sample_bytes": 2097152,
+      "sampled_object_bytes": 667796,
+      "inspector_network_inclusive_estimated_bytes": 491520
+    },
+    {
+      "cohort": "0-original",
+      "checkpoint": "navigation_20",
+      "documents": 6,
+      "sample_count": 63,
+      "estimated_sample_bytes": 2621440,
+      "sampled_object_bytes": 656740,
+      "inspector_network_inclusive_estimated_bytes": 524288
+    },
+    {
+      "cohort": "1-current",
+      "checkpoint": "navigation_1",
+      "documents": 16,
+      "sample_count": 41,
+      "estimated_sample_bytes": 1835008,
+      "sampled_object_bytes": 669136,
+      "inspector_network_inclusive_estimated_bytes": 458752
+    },
+    {
+      "cohort": "1-current",
+      "checkpoint": "navigation_5",
+      "documents": 24,
+      "sample_count": 38,
+      "estimated_sample_bytes": 1835008,
+      "sampled_object_bytes": 775095,
+      "inspector_network_inclusive_estimated_bytes": 524288
+    },
+    {
+      "cohort": "1-current",
+      "checkpoint": "navigation_10",
+      "documents": 12,
+      "sample_count": 50,
+      "estimated_sample_bytes": 2293760,
+      "sampled_object_bytes": 790546,
+      "inspector_network_inclusive_estimated_bytes": 557056
+    },
+    {
+      "cohort": "1-current",
+      "checkpoint": "navigation_15",
+      "documents": 12,
+      "sample_count": 34,
+      "estimated_sample_bytes": 1605632,
+      "sampled_object_bytes": 608229,
+      "inspector_network_inclusive_estimated_bytes": 524288
+    },
+    {
+      "cohort": "1-current",
+      "checkpoint": "navigation_20",
+      "documents": 2,
+      "sample_count": 42,
+      "estimated_sample_bytes": 1933312,
+      "sampled_object_bytes": 691316,
+      "inspector_network_inclusive_estimated_bytes": 524288
+    },
+    {
+      "cohort": "2-current",
+      "checkpoint": "navigation_1",
+      "documents": 13,
+      "sample_count": 33,
+      "estimated_sample_bytes": 1474560,
+      "sampled_object_bytes": 586688,
+      "inspector_network_inclusive_estimated_bytes": 425984
+    },
+    {
+      "cohort": "2-current",
+      "checkpoint": "navigation_5",
+      "documents": 21,
+      "sample_count": 54,
+      "estimated_sample_bytes": 2260992,
+      "sampled_object_bytes": 671249,
+      "inspector_network_inclusive_estimated_bytes": 557056
+    },
+    {
+      "cohort": "2-current",
+      "checkpoint": "navigation_10",
+      "documents": 12,
+      "sample_count": 45,
+      "estimated_sample_bytes": 2129920,
+      "sampled_object_bytes": 787192,
+      "inspector_network_inclusive_estimated_bytes": 524288
+    },
+    {
+      "cohort": "2-current",
+      "checkpoint": "navigation_15",
+      "documents": 4,
+      "sample_count": 41,
+      "estimated_sample_bytes": 2031616,
+      "sampled_object_bytes": 699652,
+      "inspector_network_inclusive_estimated_bytes": 557056
+    },
+    {
+      "cohort": "2-current",
+      "checkpoint": "navigation_20",
+      "documents": 14,
+      "sample_count": 33,
+      "estimated_sample_bytes": 1671168,
+      "sampled_object_bytes": 694264,
+      "inspector_network_inclusive_estimated_bytes": 589824
+    },
+    {
+      "cohort": "3-original",
+      "checkpoint": "navigation_1",
+      "documents": 2,
+      "sample_count": 47,
+      "estimated_sample_bytes": 1867776,
+      "sampled_object_bytes": 606616,
+      "inspector_network_inclusive_estimated_bytes": 327680
+    },
+    {
+      "cohort": "3-original",
+      "checkpoint": "navigation_5",
+      "documents": 10,
+      "sample_count": 46,
+      "estimated_sample_bytes": 1998848,
+      "sampled_object_bytes": 628796,
+      "inspector_network_inclusive_estimated_bytes": 491520
+    },
+    {
+      "cohort": "3-original",
+      "checkpoint": "navigation_10",
+      "documents": 12,
+      "sample_count": 57,
+      "estimated_sample_bytes": 2359296,
+      "sampled_object_bytes": 670677,
+      "inspector_network_inclusive_estimated_bytes": 524288
+    },
+    {
+      "cohort": "3-original",
+      "checkpoint": "navigation_15",
+      "documents": 22,
+      "sample_count": 58,
+      "estimated_sample_bytes": 2392064,
+      "sampled_object_bytes": 774897,
+      "inspector_network_inclusive_estimated_bytes": 524288
+    },
+    {
+      "cohort": "3-original",
+      "checkpoint": "navigation_20",
+      "documents": 6,
+      "sample_count": 38,
+      "estimated_sample_bytes": 1703936,
+      "sampled_object_bytes": 568798,
+      "inspector_network_inclusive_estimated_bytes": 458752
+    }
+  ]
+}

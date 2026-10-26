@@ -827,3 +827,13 @@ V8 GC-age observations, despite recorded natural collection/sweep activity.
 See [report](avatars/increment2b/navigation-timing/REPORT.md) for all comparisons,
 overhead, raw traces and the separate post-hoc follow-up. Retaining paths remain
 unknown. Product unchanged; 2B/3A/later gates remain blocked, no measurement active.
+
+### Allocation ownership analysis — 2026-10-26
+
+Resolved 929 archived native samples (1,655 offsets; 92 members verified). Native
+allocation sites do not identify document retaining references. Exact Chromium/V8
+source confirms standard JS profile reads and heap snapshots force GC. Prepared
+four-slot forensic snapshot protocol/runner remains unexecuted pending an explicit
+exception; no natural/acceptance measurement changes. 123 selected tests pass,
+one opt-in forensic browser test skipped. See [ownership report](avatars/increment2b/allocation-ownership/REPORT.md).
+2B and subsequent increments remain blocked; product unchanged, no active run.

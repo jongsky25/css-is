@@ -1,6 +1,6 @@
 # Avatar upgrade: new-chat handoff
 
-Last updated: **2026-10-26 22:47 UTC**. Repository: `jongsky25/css-is`.
+Last updated: **2026-10-26 22:59 UTC**. Repository: `jongsky25/css-is`.
 
 ## Current blocking correction
 
@@ -27,6 +27,24 @@ The prepared audit branch `codex/avatar-3a-artifact-audit` is explicitly paused 
 trigger it as an acceptance audit of the cancelled cohort. No later increments,
 merge to main or deployment occurred. The historical handoff below is superseded by this
 correction wherever it suggests CI success establishes complete memory acceptance.
+
+## Allocation ownership analysis complete — forensic capture prepared, not run
+
+Read [the ownership report](avatars/increment2b/allocation-ownership/REPORT.md).
+All twenty archived navigation native profiles are symbolized: 929 samples,
+1,655 resolved Chromium offsets, 92 archive members verified. Paint/layout and
+DevTools network-buffer allocation sites are visible, but no document retaining
+paths or specific app owner are established. No new browser workload was run.
+
+Exact Chromium 156/V8 source inspection shows CDP JavaScript sampling profiles
+force GC when read, and heap snapshots force GC before graph capture. Source
+files and hashes are retained. Do not silently use these APIs as natural probes.
+A four-slot post-workload heap-snapshot runner and
+[pending protocol](avatars/increment2b/allocation-ownership/FORENSIC_PROTOCOL_PENDING.md)
+are prepared, NOT authorized or executed. They require an explicit exception to
+“No GC/cache flushing”; any snapshot is forensic only and cannot enter acceptance.
+The default guard is tested. 123 selected tests pass, one forensic browser test is
+intentionally skipped. Product unchanged, 2B/later increments blocked, no active run.
 
 ## Per-navigation paired timing experiment complete — no source fix
 

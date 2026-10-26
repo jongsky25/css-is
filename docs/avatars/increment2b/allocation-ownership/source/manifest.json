@@ -1,0 +1,27 @@
+[
+  {
+    "name": "chromium-DEPS",
+    "url": "https://raw.githubusercontent.com/chromium/chromium/156.0.8078.47/DEPS",
+    "sha256": "3535b3175635f9984c82a3f0c2a8e70f0ed2cfdb2a352f40446c9fddf2490703"
+  },
+  {
+    "name": "v8-heap-profiler-agent-impl.cc",
+    "url": "https://raw.githubusercontent.com/v8/v8/392e44423f46d75904da712fadea4c7d5d97967f/src/inspector/v8-heap-profiler-agent-impl.cc",
+    "sha256": "bf1263240633724bb5d030412ec66b715db3233656de21334c9659792af6a1eb"
+  },
+  {
+    "name": "sampling-heap-profiler.cc",
+    "url": "https://raw.githubusercontent.com/v8/v8/392e44423f46d75904da712fadea4c7d5d97967f/src/profiler/sampling-heap-profiler.cc",
+    "sha256": "b462b8d477f138b6134cdd346fb7ab39ff409daa0cc43f59e48179b3d04d21fc"
+  },
+  {
+    "name": "inspector_memory_agent.cc",
+    "url": "https://raw.githubusercontent.com/chromium/chromium/156.0.8078.47/third_party/blink/renderer/core/inspector/inspector_memory_agent.cc",
+    "sha256": "0ae325bcb3499afe45b0e6d1b99c3dedb36aaea04421fda91aacabea60e8feb6"
+  },
+  {
+    "name": "heap-snapshot-generator.cc",
+    "url": "https://raw.githubusercontent.com/v8/v8/392e44423f46d75904da712fadea4c7d5d97967f/src/profiler/heap-snapshot-generator.cc",
+    "sha256": "749efe2aec9c547c50af7ad997d23a26709ce13b32c9e0dafddb0e0b7a5013fa"
+  }
+]

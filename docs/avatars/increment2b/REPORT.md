@@ -1,5 +1,14 @@
 # Increment 2B — acceptance withdrawn: uncovered memory failures
 
+## Allocation ownership tooling and limitation
+
+[Native ownership analysis](allocation-ownership/REPORT.md) resolves 929 samples
+across twenty archived profiles, but allocation stacks do not identify retaining
+references. Exact-browser source confirms standard JS sampling/snapshot APIs force
+GC. A separate post-workload forensic capture is prepared, not run; it requires
+an explicit exception to the handoff's no-GC rule. No acceptance or product change.
+
+
 ## Per-navigation paired timing completed
 
 [Eight fixed instrumented slots](navigation-timing/REPORT.md) completed with 160
