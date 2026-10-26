@@ -1,0 +1,465 @@
+{
+  "source_run_id": 40247047928,
+  "audit_commit": "01abf605e614530175a9eb81f13e16f8df036a2c",
+  "errors": {},
+  "overall": {
+    "status": "application_regression",
+    "gates": {
+      "functional": true,
+      "focused": true,
+      "runtime": true,
+      "matrix": false,
+      "fern_focused_raw": true,
+      "fern_runtime_raw": true,
+      "mushroom_focused_raw": true,
+      "mushroom_runtime_raw": true,
+      "succulent_focused_raw": true,
+      "succulent_runtime_raw": true
+    },
+    "environment_checks": {
+      "same_source_and_browser": true,
+      "focused_control_raw": true,
+      "runtime_control_raw": true,
+      "matrix_control_raw": true,
+      "matrix_protocol": true
+    },
+    "harness_errors": {},
+    "phase_statuses": {
+      "functional": "passed",
+      "focused": "passed",
+      "runtime": "passed",
+      "matrix": "application_regression"
+    },
+    "source_commit": "65f1e16572646fbf34ebdd0d63715e4be9b8d9dd",
+    "artifact_assessment_sha256": {
+      "functional": "7d3c1d5d2f9897b2d10164082ddebdd9ec8166eced2daf2e39c2c97eed1da6a2",
+      "focused": "4027f5098c485e399022770ffcb5c07329414c827bcd99b94f3275b8ed3a6be6",
+      "runtime": "3a10f9592aa0f826247df5a065bfe2cf2ebc20765a8381c91c3d83dfc5fa394b",
+      "matrix": "62c9edf945ee1b0449577e375310201fbb48fb16e2a434563110a190af1fea77"
+    },
+    "scope": "Increment2B; pre-existing offscreen motion, timer activity and listener retention remain separately tracked release blockers.",
+    "release_ready": false
+  },
+  "focused": {
+    "fern": {
+      "before": {
+        "callback_maxima_ms": [
+          2.934,
+          2.651,
+          3.402,
+          3.148,
+          4.344
+        ],
+        "frame_p95_ms": [
+          16.700000000000728,
+          16.700000000000728,
+          16.700000000000728,
+          16.799999999999272,
+          16.700000000000728
+        ]
+      },
+      "after": {
+        "callback_maxima_ms": [
+          2.314,
+          2.954,
+          2.936,
+          2.38,
+          2.189
+        ],
+        "frame_p95_ms": [
+          16.700000000000728,
+          16.700000000000728,
+          16.700000000000728,
+          16.700000000000728,
+          16.799999999999272
+        ]
+      }
+    },
+    "mushroom": {
+      "before": {
+        "callback_maxima_ms": [
+          2.191,
+          1.553,
+          2.208,
+          1.929,
+          2.139
+        ],
+        "frame_p95_ms": [
+          16.700000000000728,
+          16.799999999999272,
+          16.700000000000728,
+          16.700000000000728,
+          16.700000000000728
+        ]
+      },
+      "after": {
+        "callback_maxima_ms": [
+          1.882,
+          2.035,
+          2.645,
+          2.908,
+          1.863
+        ],
+        "frame_p95_ms": [
+          16.700000000000728,
+          16.700000000000728,
+          16.799999999999272,
+          16.700000000000728,
+          16.700000000000728
+        ]
+      }
+    },
+    "succulent": {
+      "before": {
+        "callback_maxima_ms": [
+          3.041,
+          2.536,
+          3.124,
+          2.833,
+          2.97
+        ],
+        "frame_p95_ms": [
+          16.799999999999272,
+          16.700000000000728,
+          16.799999999999272,
+          16.799999999999272,
+          16.700000000000728
+        ]
+      },
+      "after": {
+        "callback_maxima_ms": [
+          3.257,
+          2.036,
+          2.749,
+          2.946,
+          3.018
+        ],
+        "frame_p95_ms": [
+          16.700000000000728,
+          16.799999999999272,
+          16.700000000000728,
+          16.700000000000728,
+          16.700000000000728
+        ]
+      }
+    }
+  },
+  "runtime": {
+    "fern": {
+      "before": {
+        "callback_maxima_ms": [
+          3.21,
+          3.193,
+          3.332,
+          4.978,
+          4.485
+        ],
+        "frame_p95_ms": [
+          16.700000000000728,
+          16.700000000000728,
+          16.700000000000728,
+          16.700000000000728,
+          16.700000000000728
+        ]
+      },
+      "after": {
+        "callback_maxima_ms": [
+          2.632,
+          2.231,
+          2.125,
+          3.381,
+          2.161
+        ],
+        "frame_p95_ms": [
+          16.799999999999272,
+          16.700000000000728,
+          16.700000000000728,
+          16.700000000000728,
+          16.700000000000728
+        ]
+      }
+    },
+    "mushroom": {
+      "before": {
+        "callback_maxima_ms": [
+          4.47,
+          5.109,
+          6.805,
+          5.531,
+          2.529
+        ],
+        "frame_p95_ms": [
+          16.700000000000728,
+          16.700000000000728,
+          16.700000000000728,
+          16.700000000000728,
+          16.700000000000728
+        ]
+      },
+      "after": {
+        "callback_maxima_ms": [
+          2.636,
+          2.451,
+          2.817,
+          2.927,
+          4.079
+        ],
+        "frame_p95_ms": [
+          16.700000000000728,
+          16.799999999999272,
+          16.799999999999272,
+          16.799999999999272,
+          16.700000000000728
+        ]
+      }
+    },
+    "succulent": {
+      "before": {
+        "callback_maxima_ms": [
+          5.96,
+          4.52,
+          4.001,
+          3.548,
+          3.857
+        ],
+        "frame_p95_ms": [
+          16.700000000000728,
+          16.700000000000728,
+          16.700000000000728,
+          16.799999999999272,
+          16.700000000000728
+        ]
+      },
+      "after": {
+        "callback_maxima_ms": [
+          3.094,
+          3.317,
+          3.443,
+          3.68,
+          2.371
+        ],
+        "frame_p95_ms": [
+          16.700000000000728,
+          16.799999999999272,
+          16.700000000000728,
+          16.700000000000728,
+          16.700000000000728
+        ]
+      }
+    }
+  },
+  "css_js_gzip_delta_bytes": 3194,
+  "matrix_groups": [
+    {
+      "mobile": false,
+      "cache": "cold",
+      "runs": 5,
+      "home_encoded_delta": 1252,
+      "picker_encoded_delta": 2733,
+      "scenario_deltas": {
+        "home_idle": {
+          "lcp_ms": -12,
+          "frame_p95_ms": -0.09999999999854481,
+          "js_heap_bytes": 69388,
+          "renderer_rss_sum_bytes": -13606912
+        },
+        "home_interaction": {
+          "lcp_ms": -12,
+          "frame_p95_ms": -0.09999999999126885,
+          "interaction_duration_per_run_median_ms": 0.0,
+          "js_heap_bytes": -143436,
+          "renderer_rss_sum_bytes": -4177920
+        },
+        "picker_growth": {
+          "lcp_ms": -4,
+          "frame_p95_ms": 0.09999999999899956,
+          "interaction_duration_per_run_median_ms": 0,
+          "js_heap_bytes": 951876,
+          "renderer_rss_sum_bytes": -782336
+        },
+        "seasonal_preview": {
+          "lcp_ms": -32,
+          "frame_p95_ms": 0.0,
+          "interaction_duration_per_run_median_ms": -8.0,
+          "js_heap_bytes": 665032,
+          "renderer_rss_sum_bytes": -6959104
+        },
+        "wellness_care": {
+          "lcp_ms": -8,
+          "frame_p95_ms": 0.0,
+          "interaction_duration_per_run_median_ms": -8,
+          "js_heap_bytes": -24120,
+          "renderer_rss_sum_bytes": -4747264
+        }
+      }
+    },
+    {
+      "mobile": false,
+      "cache": "warm",
+      "runs": 5,
+      "home_encoded_delta": 1253,
+      "picker_encoded_delta": 2735,
+      "scenario_deltas": {
+        "home_idle": {
+          "lcp_ms": -16,
+          "frame_p95_ms": -0.09999999999854481,
+          "js_heap_bytes": -90420,
+          "renderer_rss_sum_bytes": -5771264
+        },
+        "home_interaction": {
+          "lcp_ms": -16,
+          "frame_p95_ms": 0.0,
+          "interaction_duration_per_run_median_ms": 0.0,
+          "js_heap_bytes": 65708,
+          "renderer_rss_sum_bytes": 901120
+        },
+        "picker_growth": {
+          "lcp_ms": 0,
+          "frame_p95_ms": -4.547473508864641e-13,
+          "interaction_duration_per_run_median_ms": 0.0,
+          "js_heap_bytes": 913388,
+          "renderer_rss_sum_bytes": 11743232
+        },
+        "seasonal_preview": {
+          "lcp_ms": -12,
+          "frame_p95_ms": 0.0,
+          "interaction_duration_per_run_median_ms": 4.0,
+          "js_heap_bytes": 772776,
+          "renderer_rss_sum_bytes": 4050944
+        },
+        "wellness_care": {
+          "lcp_ms": 0,
+          "frame_p95_ms": 0.0,
+          "interaction_duration_per_run_median_ms": 0,
+          "js_heap_bytes": -19944,
+          "renderer_rss_sum_bytes": 1077248
+        }
+      }
+    },
+    {
+      "mobile": true,
+      "cache": "cold",
+      "runs": 5,
+      "home_encoded_delta": 1250,
+      "picker_encoded_delta": 2735,
+      "scenario_deltas": {
+        "home_idle": {
+          "lcp_ms": -28,
+          "frame_p95_ms": 0.0,
+          "js_heap_bytes": 77656,
+          "renderer_rss_sum_bytes": -7901184
+        },
+        "home_interaction": {
+          "lcp_ms": -28,
+          "frame_p95_ms": 0.0,
+          "interaction_duration_per_run_median_ms": -8.0,
+          "js_heap_bytes": -314180,
+          "renderer_rss_sum_bytes": -1495040
+        },
+        "picker_growth": {
+          "lcp_ms": 0,
+          "frame_p95_ms": -2.2737367544323206e-13,
+          "interaction_duration_per_run_median_ms": -16.0,
+          "js_heap_bytes": 1151552,
+          "renderer_rss_sum_bytes": 561152
+        },
+        "seasonal_preview": {
+          "lcp_ms": -12,
+          "frame_p95_ms": 0,
+          "interaction_duration_per_run_median_ms": -4.0,
+          "js_heap_bytes": -1782100,
+          "renderer_rss_sum_bytes": 1601536
+        },
+        "wellness_care": {
+          "lcp_ms": -28,
+          "frame_p95_ms": 2.2737367544323206e-13,
+          "interaction_duration_per_run_median_ms": 0,
+          "js_heap_bytes": -15248,
+          "renderer_rss_sum_bytes": -1511424
+        }
+      }
+    },
+    {
+      "mobile": true,
+      "cache": "warm",
+      "runs": 5,
+      "home_encoded_delta": 1251,
+      "picker_encoded_delta": 2734,
+      "scenario_deltas": {
+        "home_idle": {
+          "lcp_ms": 4,
+          "frame_p95_ms": 0.0,
+          "js_heap_bytes": -102672,
+          "renderer_rss_sum_bytes": -7610368
+        },
+        "home_interaction": {
+          "lcp_ms": 4,
+          "frame_p95_ms": 0.0,
+          "interaction_duration_per_run_median_ms": 8.0,
+          "js_heap_bytes": 321916,
+          "renderer_rss_sum_bytes": -143360
+        },
+        "picker_growth": {
+          "lcp_ms": 20,
+          "frame_p95_ms": -0.09999999999899956,
+          "interaction_duration_per_run_median_ms": -4.0,
+          "js_heap_bytes": 1379340,
+          "renderer_rss_sum_bytes": 3801088
+        },
+        "seasonal_preview": {
+          "lcp_ms": 4,
+          "frame_p95_ms": 0,
+          "interaction_duration_per_run_median_ms": 4.0,
+          "js_heap_bytes": 445788,
+          "renderer_rss_sum_bytes": -3678208
+        },
+        "wellness_care": {
+          "lcp_ms": 0,
+          "frame_p95_ms": 0.09999999999854481,
+          "interaction_duration_per_run_median_ms": 0,
+          "js_heap_bytes": -1251172,
+          "renderer_rss_sum_bytes": 1318912
+        }
+      }
+    }
+  ],
+  "native_frame_p95_ms": {
+    "fern": [
+      16.700000000000728,
+      16.700000000000728,
+      16.700000000000728,
+      16.700000000000728,
+      16.799999999999272
+    ],
+    "mushroom": [
+      16.700000000000728,
+      16.700000000000728,
+      16.799999999999272,
+      16.799999999999272,
+      16.799999999999272
+    ],
+    "succulent": [
+      16.700000000000728,
+      16.700000000000728,
+      16.799999999999272,
+      16.799999999999272,
+      16.700000000000728
+    ]
+  },
+  "matrix_mobile_frame_p95_ms": {
+    "cold": [
+      16.700000000004366,
+      16.700000000004366,
+      16.700000000004366,
+      16.700000000004366,
+      16.799999999995634
+    ],
+    "warm": [
+      16.700000000004366,
+      16.700000000004366,
+      16.700000000004366,
+      16.700000000004366,
+      16.700000000004366
+    ]
+  }
+}

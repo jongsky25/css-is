@@ -119,6 +119,25 @@ resources:performance.getEntriesByType('resource').map(r=>({name:r.name.split(lo
             rss.extend(int(line.split()[1])*1024 for line in fields if line.startswith('VmRSS:'))
     result['renderer_rss_sum_bytes'] = sum(rss)
     result['renderer_process_count'] = len(rss)
+    if os.getenv('CSS_AVATAR_MEMORY_DIAGNOSTIC') == '1':
+        # Additional observations only: preserve the original RSS sample above.
+        # Do not force GC, flush caches, or subtract shared allocations.
+        result['renderer_memory_detail'] = []
+        for process in processes:
+            if process['type'] != 'renderer':
+                continue
+            proc = Path(f"/proc/{process['id']}")
+            detail = {'pid': process['id']}
+            for filename in ['status', 'smaps_rollup']:
+                try:
+                    detail[filename] = {
+                        line.split(':', 1)[0]: int(line.split()[1]) * 1024
+                        for line in (proc / filename).read_text().splitlines()
+                        if line.endswith(' kB')
+                    }
+                except (FileNotFoundError, PermissionError) as error:
+                    detail[filename + '_error'] = repr(error)
+            result['renderer_memory_detail'].append(detail)
     result['js_heap_bytes'] = cdp.send('Runtime.getHeapUsage')['usedSize']
     result['dom_counters'] = cdp.send('Memory.getDOMCounters')
     listeners = cdp.send('Runtime.evaluate', {'expression': "Object.fromEntries(Object.entries(getEventListeners(document)).map(([k,v])=>[k,v.length]))", 'includeCommandLineAPI': True, 'returnByValue': True})

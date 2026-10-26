@@ -1,4 +1,20 @@
-# Increment2B — preference-cache follow-up
+# Increment2B — complete hosted verification
+
+**One remaining acceptance failure: warm desktop picker renderer memory.**
+[Audited results](hosted-complete/summary.json) and
+[all numeric evidence](hosted-complete/numeric-evidence.tar.gz).
+
+Hosted run40247047928 completed all four phases. Functional, focused/native,
+whole-runtime, controls and all callback/frame gates pass. The only failed gate
+is warm desktop picker RSS: +11.199MiB, exceeding10MiB by1.199MiB.
+Other picker device/cache groups pass. Source remainsc2f404f.
+A memory diagnostic records per-process RSS/private/shared allocations in both
+execution orders before selecting an optimization. No gate is waived.
+
+The sections below preserve the earlier investigation chronologically; their
+“running”/“no run” statements are superseded by this completed outcome.
+
+## Historical preference-cache follow-up
 
 **Acceptance remains unresolved.** Product revision `c2f404fa5aa58abebbe0127bbb537b5592993ce5`.
 [Assessment](preference-cache-fix/assessment.json).

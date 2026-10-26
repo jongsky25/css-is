@@ -1,6 +1,6 @@
 # Avatar visual upgrade — phased execution plan for Sol
 
-Status: Increments0,1,2A complete. 2B product fixes through c2f404f remain functionally verified. CI installation failure diagnosed and repaired: absent Chromium154 package, hidden by an empty connector response. Harness65f1e16 runs complete sequential verification with fresh matched Chromium156 baselines; hosted run40247047928 is active. Acceptance pending; approved33.3ms frame ceiling and50ms callback limit retained.3A pending.
+Status: Increments0,1,2A complete. Complete hosted2B verification finished: functional, focused/native, whole-runtime and all timing gates pass. One gate fails: warm desktop picker renderer RSS +11.20MiB versus10MiB budget. Raw evidence audited and retained; memory attribution next. Product remains c2f404f;3A pending.
 Created: 2026-10-25
 Repository: jongsky25/css-is
 Owner request: Material improvement to companion artwork, optional animal dress-up,
@@ -286,7 +286,7 @@ browser tests ran.
 | 0 Baseline | Complete — baseline established; release gates remain unmet | `94269dd` + evidence/ledger revision | [51 sheets](avatars/sheets/index.json), [monthly overview](avatars/sheets/monthly-stage6-overview.png), [hero/moods](avatars/smoke/) | [Report](avatars/BASELINE_REPORT.md), [20 full samples + summary](avatars/application/summary.json), native hidden/touch check; existing frame, picker, timer and remount failures retained. |
 | 1 Cat + plant slice | Complete — measured relative gates passed | `58cf98f`, `0be7fc3`, `ad4e7ad`, `d464461` + evidence revision | [Bare comparison](avatars/increment1/before-after-bare-light.png), [motion](avatars/increment1/before-after-motion.webm), [51 seasonal sheets](avatars/increment1/sheets/index.json) | [Report](avatars/increment1/REPORT.md), [20-sample comparison](avatars/increment1/comparison.json); 102 tests, native touch/keyboard/filter checks, sampled callback trace passed; baseline lifecycle/picker blockers retained. |
 | 2A Cactus/bonsai/sunflower | Complete — measured relative gates passed | `6064a82`, `1b453e0`, `28fbb7b` + evidence revision | [Six-stage comparison](avatars/increment2a/before-after-bare-light.png), [51 sheets](avatars/increment2a/sheets/index.json), [motion](avatars/increment2a/before-after-motion.webm) | [Report](avatars/increment2a/REPORT.md), [fresh 20 comparison](avatars/increment2a/comparison.json); 105 tests, 324 visual reaction cases, mature care/traces and native checks passed. Pre-fix failures retained; audio-sync feedback fixed. Remaining lifecycle/picker blockers persist. |
-| 2B Fern/mushroom/succulent | Acceptance pending — hosted verification running | Artwork `6ddce82`; product `c2f404f`; harness `65f1e16` | [Six-stage comparison](avatars/increment2b/before-after-bare-light.png), [51 sheets](avatars/increment2b/layout-fix/visual/sheets/index.json), [reaction checks](avatars/increment2b/layout-fix/visual/motion-rig-check.json) | [Report](avatars/increment2b/REPORT.md), [setup repair](avatars/increment2b/verification-repair/setup-assessment.json). Eight browser regressions,1734 SVG comparisons, native behavior and real care pass;13 driver tests pass. Chromium154 CI install failure fixed with explicit matched156 protocol. [Run40247047928](https://github.com/jongsky25/css-is/actions/runs/40247047928) active; final artifacts pending. Historical failures retained;3A pending. |
+| 2B Fern/mushroom/succulent | Acceptance blocked — warm desktop picker RSS | Artwork `6ddce82`; product `c2f404f`; harness `65f1e16` | [Six-stage comparison](avatars/increment2b/before-after-bare-light.png), [51 sheets](avatars/increment2b/layout-fix/visual/sheets/index.json), [reaction checks](avatars/increment2b/layout-fix/visual/motion-rig-check.json) | [Report](avatars/increment2b/REPORT.md), [setup repair](avatars/increment2b/verification-repair/setup-assessment.json). Eight browser regressions,1734 SVG comparisons, native behavior and real care pass;13 driver tests pass. Chromium154 CI install failure fixed with explicit matched156 protocol. [Run40247047928](https://github.com/jongsky25/css-is/actions/runs/40247047928) completed; all callback/frame gates pass, only warm desktop picker RSS fails (+11.20MiB). [Audited evidence](avatars/increment2b/hosted-complete/summary.json). Historical failures retained;3A pending. |
 | 3A Ground animals + bird | Pending | — | — | — |
 | 3B Swimmers + owl + bat | Pending | — | — | — |
 | 4A Wardrobe model/rendering | Pending | — | — | — |
@@ -690,3 +690,28 @@ results, continues independent checks, and adds whole-runtime old/current traces
 Run40247047928 has passed setup and13 driver tests and is executing four sequential
 phases. Final acceptance awaits all raw artifacts. Product unchanged atc2f404f;
 no main merge/deployment. Historical154 results remain separate and unaltered.
+
+
+### Complete hosted outcome and memory attribution — 2026-10-26
+
+Run40247047928 completed on harness65f1e16, unchanged productc2f404f,
+Chromium156.0.8078.47. Audit40256359917 independently verified all raw cohorts,
+source identities and controls. Functional, focused and whole-runtime phases pass.
+All40 matrix samples completed. Current callback maxima across focused/runtime
+traces are3.257/4.079ms; framep95 stays16.7–16.8ms. No50ms waiver.
+
+One gate fails: warm desktop picker RSS median grows11,743,232bytes (11.199MiB),
+exceeding10MiB by1,257,472bytes (1.199MiB). Other picker deltas are
+−782,336bytes desktopcold, +561,152 mobilecold, +3,801,088 mobilewarm.
+Warmdesktop picker has one live document in every sample, stable5086 DOM
+counter nodes and106 listeners; heap median growth913,388bytes. This does
+not establish a preview-retention leak. Native allocations need attribution.
+
+[All numeric/log evidence](avatars/increment2b/hosted-complete/numeric-evidence.tar.gz)
+includes source manifests and hashes for full traces retained in the original
+artifact12622154659 (expires2026-11-02). Compact audit artifact12622139879
+expires2026-11-25. Neither the failing cohort nor historical local failures
+is replaced. Diagnostic branchcodex/avatar-2b-memory measures two opposite-order
+original/current warm desktop cohorts with per-renderer status andsmaps_rollup;
+no forced GC, RSS subtraction, product edit or changed budget. Diagnostics alone
+cannot grant acceptance. Fix an established source, then validate affected gates.
