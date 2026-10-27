@@ -1,3 +1,10 @@
+## 8.78 — October 27, 2026
+
+- Add a default-off MCP pilot to prepare marking one own shared-work notice read, with separate optional notifications:mark_read consent excluded from server default scopes; preserve existing grants and refresh scope parity.
+- Require an expiring actor/grant/target/revision-bound preview and explicit signed-in browser confirmation. Share the existing UI service and atomically commit the read marker, durable receipt and audit; reject stale, revoked and cross-user requests and serialize replays.
+- Preserve the connection ID during atomic OAuth token rotation so pending previews, receipts and owner revocation links remain bound to the same grant; old tokens remain invalid.
+- Add same-key recovery, readiness/consent controls, bounded preparation and mobile no-script confirmation. Record operator-reported read acceptance and the write contract/activation runbook; hosted write acceptance remains pending.
+
 ## 8.77 — October 25, 2026
 
 - Add separate default-off private Telegram reminder lead times for confirmed timed calendar occurrences and own approved room bookings, using current channel choices, read consent and Manila quiet hours. Preserve existing email reminders, interactive replies, group update controls and independent digests.

@@ -17704,7 +17704,8 @@ if _MCP_ENABLED:
         if not pending:
             return _mcp_consent_error('This request expired. Start again in ChatGPT.', 410)
         client_id, params = pending
-        labels = {'surveys:person_activities:read': 'Permitted resource-person satisfaction for one activity (no individual responses)',
+        labels = {'notifications:mark_read': 'Prepare marking your own shared-work notices read (each action requires browser confirmation)',
+                  'surveys:person_activities:read': 'Permitted resource-person satisfaction for one activity (no individual responses)',
                   'surveys:resource_person_trends:read': 'Permitted resource-person discovery and year-to-year satisfaction comparisons (no individual responses or peer rankings)',
                   'surveys:csm_trends:read': 'Bureau-wide CSM satisfaction comparisons between consecutive months (no individual responses)',
                   'surveys:unit_trends:read': 'Unit activity satisfaction comparisons between consecutive quarters (no individual responses)',
@@ -17722,12 +17723,25 @@ if _MCP_ENABLED:
                   'travel:read': 'Your travel filing status and deadlines'}
         scopes = ''.join('<li>' + html.escape(labels[s]) + '</li>' for s in params['scopes'])
         optional = sorted(_mcp_provider.consent_scopes(client_id) - set(params['scopes']))
-        choices = ''.join(
-            '<p><label><input type="checkbox" name="scope_' + html.escape(scope, quote=True)
-            + '" value="1"> ' + html.escape(labels[scope]) + '</label></p>' for scope in optional)
+        def scope_choices(available):
+            return ''.join(
+                '<p><label><input type="checkbox" name="scope_' + html.escape(scope, quote=True)
+                + '" value="1"> ' + html.escape(labels[scope]) + '</label></p>' for scope in available)
+        read_choices = scope_choices([s for s in optional if s in mcp_auth.READ_SCOPES])
+        write_choices = scope_choices([s for s in optional if s in mcp_auth.WRITE_SCOPES])
         extra = ('<fieldset><legend>Optional additional read access</legend>'
                  '<p>Select any other information you want this connection to read. '
-                 'Unchecked permissions are not added.</p>' + choices + '</fieldset>') if choices else ''
+                 'Unchecked permissions are not added.</p>' + read_choices + '</fieldset>') if read_choices else ''
+        if write_choices:
+            extra += ('<fieldset><legend>Optional action permission</legend>'
+                      '<p>Allow preparing an action for your own work notices. Every action still '
+                      'requires your confirmation on a signed-in Office Connect page. Unchecked permissions are not added.</p>'
+                      + write_choices + '</fieldset>')
+        has_actions = bool(set(params['scopes']) & mcp_auth.WRITE_SCOPES)
+        consent_intro = ('This lets ChatGPT use the following permissions as ' if has_actions
+                         else 'This lets ChatGPT read the following information as ')
+        consent_boundary = ('No files or private task submissions are included. The optional notice action '
+                            'requires separate permission and confirmation on Office Connect. You can disconnect this access later.')
         page = ('<!doctype html><html lang="en"><meta charset="utf-8">'
                 '<meta name="viewport" content="width=device-width,initial-scale=1">'
                 '<title>Connect Office Connect to ChatGPT</title>'
@@ -17736,17 +17750,16 @@ if _MCP_ENABLED:
                 'button,input{font:inherit}button{margin:.5rem .5rem .5rem 0;padding:.5rem .8rem}'
                 'input{max-width:100%;box-sizing:border-box;padding:.4rem}</style>'
                 '<main><h1>Connect Office Connect to ChatGPT?</h1>'
-                '<p>This lets ChatGPT read the following information as '
+                '<p>' + consent_intro
                 + html.escape(user['username']) + ':</p><ul>' + scopes + '</ul>'
-                '<p>No files, private task submissions or changes to records are included. '
-                'You can disconnect this access later.</p>'
+                '<p>' + consent_boundary + '</p>'
                 '<p>After you allow access, return to ChatGPT and finish adding the connection.</p>'
                 '<form method="post" action="/mcp-consent">'
                 + extra + '<input type="hidden" name="ticket" value="' + html.escape(ticket, quote=True) + '">'
                 '<input type="hidden" name="csrf" value="' + _mcp_consent_token(request, ticket) + '">'
                 '<label>Confirm your Office Connect password '
                 '<input type="password" name="password" autocomplete="current-password" required></label>'
-                '<button name="decision" value="approve" type="submit">Allow read access</button> '
+                '<button name="decision" value="approve" type="submit">Allow access</button> '
                 '<button name="decision" value="deny" type="submit">Decline</button>'
                 '</form></main></html>')
         return HTMLResponse(page, headers={'Cache-Control': 'private, no-store',

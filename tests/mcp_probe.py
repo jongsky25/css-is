@@ -146,7 +146,7 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
         assert metadata.json()['resource'] == 'https://office.example/mcp'
         scopes = {'surveys:person_activities:read', 'surveys:resource_person_trends:read', 'surveys:csm_trends:read', 'surveys:unit_trends:read', 'surveys:units:read', 'activities:read', 'calendar:read', 'documents:read',
                   'supplies:read', 'travel:read', 'work:read', 'notifications:read', 'surveys:csm:read', 'surveys:activities:read', 'surveys:resource_persons:read', 'surveys:activity_details:read'}
-        assert set(metadata.json()['scopes_supported']) == scopes
+        assert set(metadata.json()['scopes_supported']) == scopes | {'notifications:mark_read'}
         denied = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 1, 'method': 'initialize',
                                           'params': {'protocolVersion': '2025-06-18',
                                                      'capabilities': {}, 'clientInfo': {'name': 'probe', 'version': '1'}}},
@@ -164,7 +164,7 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
             'grant_types': ['authorization_code', 'refresh_token'],
             'response_types': ['code']})
         assert registered.status_code == 201, registered.text
-        assert set(registered.json()['scope'].split()) == scopes
+        assert set(registered.json()['scope'].split()) == scopes | {'notifications:mark_read'}
         client_id = registered.json()['client_id']
         auth_url = client.get('/authorize', params={
             'response_type': 'code', 'client_id': client_id, 'redirect_uri': callback,
@@ -227,7 +227,7 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
         assert listed.status_code == 200, listed.text
         names = {tool['name'] for tool in listed.json()['result']['tools']}
         assert {'my_work', 'find_documents', 'get_document'} <= names
-        assert names == {'get_resource_person_activity_survey', 'find_survey_resource_persons', 'compare_resource_person_surveys', 'compare_csm_months', 'compare_unit_activity_surveys', 'find_survey_units', 'get_unit_activity_survey_summary', 'my_work', 'find_documents', 'get_document',
+        assert names == {'mark_my_notification_read', 'get_mcp_operation', 'get_resource_person_activity_survey', 'find_survey_resource_persons', 'compare_resource_person_surveys', 'compare_csm_months', 'compare_unit_activity_surveys', 'find_survey_units', 'get_unit_activity_survey_summary', 'my_work', 'find_documents', 'get_document',
                          'list_work_items', 'get_work_item', 'list_work_tasks', 'list_calendar_events',
                          'list_supply_queue', 'list_my_travel_filings', 'list_activity_progress',
                          'my_office_overview', 'list_my_notifications', 'get_room_availability', 'get_csm_summary', 'get_activity_survey_summary', 'get_resource_person_survey_summary', 'find_survey_activities', 'get_activity_survey_detail'}
@@ -566,7 +566,7 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
         assert stale.status_code == 401
         # Reproduce a client requesting only work, despite registering all reads.
         # Optional consent must be explicit, and token/refresh must reflect it.
-        for choose_calendar in (False, True):
+        for choose_calendar, choose_write in ((False, False), (True, False), (False, True)):
             narrow = client.get('/authorize', params={
                 'response_type': 'code', 'client_id': client_id, 'redirect_uri': callback,
                 'code_challenge': challenge, 'code_challenge_method': 'S256',
@@ -581,6 +581,8 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
             values.update(decision='approve', password='Synthetic123!')
             if choose_calendar:
                 values['scope_calendar:read'] = '1'
+            if choose_write:
+                values['scope_notifications:mark_read'] = '1'
             consent = browser.post('/mcp-consent', data=values,
                 headers={'Origin': 'https://office.example'}, follow_redirects=False)
             assert consent.status_code == 303, consent.text
@@ -590,6 +592,8 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
                 'resource': 'https://office.example/mcp'})
             assert token.status_code == 200, token.text
             expected = {'work:read', 'calendar:read'} if choose_calendar else {'work:read'}
+            if choose_write:
+                expected.add('notifications:mark_read')
             assert set(token.json()['scope'].split()) == expected
             narrow_headers = dict(headers, Authorization='Bearer ' + token.json()['access_token'])
             calendar_call = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 100, 'method': 'tools/call',
@@ -597,18 +601,73 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
                     'start_date': '2026-10-24', 'end_date': '2026-10-24'}}}, headers=narrow_headers)
             assert calendar_call.status_code == 200
             assert bool(calendar_call.json()['result'].get('isError')) == (not choose_calendar)
+            if choose_write:
+                # Full remote journey: real OAuth bearer -> MCP preview ->
+                # browser confirmation -> receipt using the rotated token.
+                previous_flags = {name: os.environ.get(name) for name in
+                    ('CSS_MCP_NOTIFICATIONS_ENABLED', 'CSS_MCP_NOTIFICATION_WRITES_ENABLED')}
+                for name in previous_flags:
+                    os.environ[name] = '1'
+                conn = st.connect(os.environ['CSS_DB'])
+                st.set_setting(conn, 'work.enabled', '1')
+                st.set_setting(conn, 'documents.enabled', '1')
+                write_case = conn.execute('INSERT INTO work_case(title,outcome,unit_id,creator_id,created_at,updated_at) '
+                    'VALUES (?,?,?,?,?,?)', ('Synthetic notice work', 'Outcome', unit, owner, '2026-10-20', '2026-10-20')).lastrowid
+                write_comment = conn.execute('INSERT INTO work_comment(case_id,author_id,created_at) VALUES (?,?,?)',
+                    (write_case, other, '2026-10-20')).lastrowid
+                conn.execute('INSERT INTO work_comment_revision VALUES (?,1,?,?)',
+                    (write_comment, 'Private synthetic message body', '2026-10-20'))
+                write_notice = conn.execute("INSERT INTO work_notice(comment_id,user_id,revision,reason,created_at) VALUES (?,?,1,'mention',?)",
+                    (write_comment, owner, '2026-10-20')).lastrowid
+                conn.commit()
+                write_args = {'notification_id': write_notice, 'operation_id': 'remote-notice-write-operation-001'}
+                prepared = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 101, 'method': 'tools/call',
+                    'params': {'name': 'mark_my_notification_read', 'arguments': write_args}}, headers=narrow_headers)
+                assert prepared.status_code == 200 and not prepared.json()['result'].get('isError'), prepared.text
+                preview = json.loads(prepared.json()['result']['content'][0]['text'])
+                assert preview['status'] == 'awaiting_confirmation'
+                assert conn.execute('SELECT COUNT(*) FROM work_comment_read WHERE comment_id=?', (write_comment,)).fetchone()[0] == 0
+                conn.close()
             rotated = client.post('/token', data={'grant_type': 'refresh_token', 'client_id': client_id,
                 'refresh_token': token.json()['refresh_token'], 'resource': 'https://office.example/mcp'})
             assert rotated.status_code == 200
             assert set(rotated.json()['scope'].split()) == expected
+            if choose_write:
+                confirmation = browser.get(preview['confirmation_url'])
+                assert confirmation.status_code == 200, confirmation.text
+                assert 'Private synthetic message body' not in confirmation.text
+                confirm_values = {name: re.search(r'name="' + name + r'" value="([^\"]+)"', confirmation.text).group(1)
+                                  for name in ('csrf', 'preview_digest')}
+                confirm_values['confirm'] = 'yes'
+                confirmed = browser.post(preview['confirmation_url'], data=confirm_values,
+                    headers={'Origin': 'https://office.example'})
+                assert confirmed.status_code == 200 and 'Work notice marked read' in confirmed.text, confirmed.text
+                recovered = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 102, 'method': 'tools/call',
+                    'params': {'name': 'get_mcp_operation', 'arguments': {'operation_id': write_args['operation_id']}}},
+                    headers=dict(headers, Authorization='Bearer ' + rotated.json()['access_token']))
+                assert recovered.status_code == 200 and not recovered.json()['result'].get('isError'), recovered.text
+                receipt = json.loads(recovered.json()['result']['content'][0]['text'])
+                assert receipt['status'] == 'completed' and receipt['completed_at']
+                conn = st.connect(os.environ['CSS_DB'])
+                assert conn.execute('SELECT revision FROM work_comment_read WHERE comment_id=? AND user_id=?',
+                    (write_comment, owner)).fetchone()[0] == 1
+                conn.close()
+                for name, previous in previous_flags.items():
+                    if previous is None:
+                        os.environ.pop(name, None)
+                    else:
+                        os.environ[name] = previous
 
+        # Start a new synthetic operator session after the consent matrix.
+        import ratelimit
+        ratelimit.reset()
         # Legacy stored registrations must also offer choices, without changing grants.
         restricted = client.post('/register', json={
             'redirect_uris': [callback], 'client_name': 'Legacy ChatGPT', 'scope': 'work:read',
             'token_endpoint_auth_method': 'none', 'grant_types': ['authorization_code', 'refresh_token'],
             'response_types': ['code']})
         assert restricted.status_code == 201
-        assert set(restricted.json()['scope'].split()) == scopes
+        assert set(restricted.json()['scope'].split()) == scopes | {'notifications:mark_read'}
         restricted_id = restricted.json()['client_id']
         import json
         conn = st.connect(os.environ['CSS_DB'])

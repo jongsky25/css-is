@@ -1,6 +1,6 @@
 # Office Connect MCP expansion plan
 
-Status: **Proposed**, October 24, 2026. Baseline: the read-only MCP expansion in v8.35 (PR #444). This document plans later increments; it does not enable any write tool or widen an existing OAuth grant. Production acceptance of v8.35 remains a separate deployment and real-client check.
+Status: **Incremental implementation**, updated October 27, 2026. Baseline: the read-only MCP expansion in v8.35 (PR #444). M1 reads and the default-off M2.1 notification confirmation pilot are implemented as recorded below. Existing OAuth grants are not widened. Hosted write acceptance remains separate from implementation.
 
 ## Goal and boundary
 
@@ -171,3 +171,26 @@ activity metadata now carries an explicit activity/member ID for the new tool.
 Annual and activity-specific contracts remain distinct; no existing grant is
 widened. Live activation and per-person Summit/source-page acceptance remain
 pending consent, host switch and a supported ChatGPT catalog refresh.
+
+### Operator-reported read acceptance — October 27, 2026
+
+The operator reports all requested live read checks passed. The Summit's two
+named-person activity scorecards were retrieved through the refreshed ChatGPT
+catalog and explicitly confirmed against their exact source pages. This closes
+the reported desktop setup and Summit score-parity blocker. No deployment SHA,
+per-role evidence, revocation timing or capacity measurements were supplied;
+those M0 operating evidence fields remain unrecorded. See the
+[acceptance handoff and write contract](MCP_WRITE_PILOT.md).
+
+### M2.1 implementation — v8.78
+
+Add `mark_my_notification_read` to prepare one own shared-work notice action and
+`get_mcp_operation` to recover its durable receipt. Separate optional
+`notifications:mark_read` consent and default-off
+`CSS_MCP_NOTIFICATION_WRITES_ENABLED` govern the pilot. Execution requires an
+actor/grant/revision-bound, expiring preview and explicit signed-in browser
+confirmation. Share the UI domain service and atomically commit the marker,
+receipt and audit; reject stale, revoked and cross-user requests and serialize
+duplicate confirmations. Tests include recovery, rollback and mobile no-script
+confirmation. See [operator activation and acceptance](MCP_WRITE_PILOT.md).
+Hosted write acceptance remains pending; other M2/M3/M4 actions remain future work.

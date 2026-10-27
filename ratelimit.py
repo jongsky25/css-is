@@ -25,6 +25,7 @@ def _limits(bucket):
     CSS_RL_<BUCKET>="<max>/<window_seconds>", e.g. CSS_RL_CHECK="120/60"."""
     defaults = {
         "integration_issue": (5, 900),  # password confirmation attempts per owner
+        "mcp_action": (30, 60),  # prepare, confirmation and recovery per actor
         "integration_read": (120, 60),  # delegated reads per owner, across credentials
         "mcp_oauth": (30, 60),     # public OAuth metadata/registration/token endpoints per client IP
         "check": (300, 60),      # email duplicate-check probe (cheap GET, on keystroke)

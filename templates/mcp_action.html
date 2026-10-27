@@ -1,0 +1,28 @@
+{% extends "dash_layout.html" %}
+{% block title %}Review work notice action — Office Connect{% endblock %}
+{% block content %}
+<div style="max-width:42rem;margin:auto;overflow-wrap:anywhere">
+{% if result.status == 'completed' %}
+<h1>Work notice marked read</h1>
+<p>This action completed at {{ result.completed_at }}. Reopening or submitting this receipt again does not repeat the action.</p>
+{% else %}
+<h1>Mark this work notice read?</h1>
+<p>You are reviewing an action prepared through ChatGPT. Confirm only if you want this notice removed from your unread shared-work updates.</p>
+<dl>
+<dt>Shared work</dt><dd>{{ result.case_title }}</dd>
+<dt>Notice</dt><dd>{{ result.notification_id }}</dd>
+<dt>Category</dt><dd>{{ result.category }}</dd>
+<dt>Created</dt><dd>{{ result.created_at }}</dd>
+<dt>Message revision to mark read</dt><dd>{{ result.observed_revision }}</dd>
+</dl>
+<p>The preview expires ten minutes after preparation. A changed message or read state requires a new preview.</p>
+<form method="post">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<input type="hidden" name="preview_digest" value="{{ result.preview_digest }}">
+<button type="submit" name="confirm" value="yes">Confirm: mark this notice read</button>
+</form>
+{% endif %}
+<p>Operation receipt: <code>{{ result.operation_id }}</code></p>
+<p><a href="{{ result.web_url }}">Open my shared-work updates</a> · <a href="/account/integrations">Connected tools</a></p>
+</div>
+{% endblock %}

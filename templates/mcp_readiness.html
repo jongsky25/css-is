@@ -37,7 +37,7 @@
 <p>Only your own latest 50 grants appear, newest first. Grant active means unrevoked with time remaining to refresh; it does not verify ChatGPT's stored token or identify which connection a chat uses.</p>
 {% for entry in entries %}<article>
 <h3>{{ entry.name }}</h3><p><strong>{{ entry.status }}</strong><br>Refresh expires: {{ entry.expires_label }}</p>
-<details><summary>Check this connection's survey permissions</summary>
+<details><summary>Check this connection's permissions</summary>
 <ul>{% for pilot in pilots %}<li>{{ pilot.label }}: <strong>{{ 'Granted' if pilot.scope in entry.scopes else 'Missing' }}</strong>{% if entry.status != 'Grant active' %} (connection inactive){% endif %}</li>{% endfor %}</ul>
 <p>All granted permissions: {% for scope in entry.scopes %}<code>{{ scope }}</code>{% if not loop.last %}, {% endif %}{% endfor %}</p></details>
 </article>{% else %}<p>No ChatGPT connections found for your account.</p>{% endfor %}

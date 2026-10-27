@@ -18,8 +18,10 @@ import auth
 import storage as st
 
 
-SCOPES = frozenset({'surveys:person_activities:read', 'surveys:resource_person_trends:read', 'surveys:csm_trends:read', 'surveys:unit_trends:read', 'surveys:units:read', 'activities:read', 'calendar:read', 'documents:read',
+READ_SCOPES = frozenset({'surveys:person_activities:read', 'surveys:resource_person_trends:read', 'surveys:csm_trends:read', 'surveys:unit_trends:read', 'surveys:units:read', 'activities:read', 'calendar:read', 'documents:read',
                     'supplies:read', 'travel:read', 'work:read', 'notifications:read', 'surveys:csm:read', 'surveys:activities:read', 'surveys:resource_persons:read', 'surveys:activity_details:read'})
+WRITE_SCOPES = frozenset({'notifications:mark_read'})
+SCOPES = READ_SCOPES | WRITE_SCOPES
 ACCESS_SECONDS = 3600
 REFRESH_SECONDS = 30 * 86400
 CODE_SECONDS = 120
@@ -54,6 +56,8 @@ def install(conn):
       WHERE owner_id=OLD.id;
     END;
     ''')
+    import mcp_actions
+    mcp_actions.install(conn)
 
 
 def _digest(value):
@@ -116,8 +120,8 @@ class Provider(OAuthAuthorizationServerProvider[AuthorizationCode, RefreshToken,
                 or not all(_callback_allowed(uri) for uri in client_info.redirect_uris)
                 or client_info.token_endpoint_auth_method not in ('none', 'client_secret_post', 'client_secret_basic')
                 or set((client_info.scope or '').split()) - SCOPES):
-            raise RegistrationError('invalid_client_metadata', 'Use a supported ChatGPT callback and read scope.')
-        # Return and persist the server's effective read-only registration.
+            raise RegistrationError('invalid_client_metadata', 'Use a supported ChatGPT callback and permission.')
+        # Return and persist permission eligibility; it is not a grant.
         # The authorize request and explicit consent still choose actual grants.
         client_info.scope = ' '.join(sorted(SCOPES))
         def save(conn):
@@ -137,10 +141,10 @@ class Provider(OAuthAuthorizationServerProvider[AuthorizationCode, RefreshToken,
         await asyncio.to_thread(self._run, save)
 
     async def authorize(self, client, params: AuthorizationParams):
-        scopes = list(params.scopes or sorted(SCOPES))
+        scopes = list(params.scopes or sorted(READ_SCOPES))
         if (params.resource != self.resource or not scopes or set(scopes) - SCOPES
                 or (client.scope and set(scopes) - set(client.scope.split()))):
-            raise AuthorizeError('invalid_scope', 'Choose permitted read scopes for this MCP server.')
+            raise AuthorizeError('invalid_scope', 'Choose permitted scopes for this MCP server.')
         ticket = secrets.token_urlsafe(32)
         payload = params.model_dump(mode='json')
         payload['scopes'] = scopes
@@ -161,7 +165,7 @@ class Provider(OAuthAuthorizationServerProvider[AuthorizationCode, RefreshToken,
         return self._run(read)
 
     def consent_scopes(self, client_id):
-        """Offer supported reads to registered clients, including legacy ones."""
+        """Offer supported permissions to registered clients, including legacy ones."""
         def read(conn):
             row = conn.execute('SELECT metadata_json FROM mcp_oauth_client WHERE id=?',
                                (client_id,)).fetchone()
@@ -182,7 +186,7 @@ class Provider(OAuthAuthorizationServerProvider[AuthorizationCode, RefreshToken,
                 params = json.loads(raw)
                 if approve:
                     # Recheck registration under the writer lock. The server
-                    # offers only its read allowlist, including to legacy clients.
+                    # offers only its explicit permission allowlist, including to legacy clients.
                     row_client = conn.execute('SELECT metadata_json FROM mcp_oauth_client WHERE id=?',
                                               (client_id,)).fetchone()
                     if not row_client:
@@ -200,7 +204,7 @@ class Provider(OAuthAuthorizationServerProvider[AuthorizationCode, RefreshToken,
                 st.audit(conn, _active(conn, owner_id)['username'],
                          'integration_issue' if approve else 'integration_revoke',
                          target_type='mcp_oauth', target_id=client_id,
-                         summary='MCP read consent approved' if approve else 'MCP read consent declined', commit=False)
+                         summary='MCP consent approved' if approve else 'MCP consent declined', commit=False)
                 conn.commit()
                 return params, code
             except Exception:
@@ -225,14 +229,23 @@ class Provider(OAuthAuthorizationServerProvider[AuthorizationCode, RefreshToken,
         return await asyncio.to_thread(self._run, read)
 
     @staticmethod
-    def _tokens(conn, client_id, owner_id, scopes, resource):
+    def _tokens(conn, client_id, owner_id, scopes, resource, *, grant_id=None):
         now = int(time.time())
         access = 'oc_mcp_' + secrets.token_urlsafe(32)
         refresh = 'oc_mcp_refresh_' + secrets.token_urlsafe(32)
-        conn.execute('INSERT INTO mcp_oauth_grant VALUES (?,?,?,?,?,?,?,?,?,?,?)',
-                     (secrets.token_hex(16), client_id, owner_id, json.dumps(scopes), resource,
-                      _digest(access), now + ACCESS_SECONDS, _digest(refresh), now + REFRESH_SECONDS,
-                      None, now))
+        if grant_id is None:
+            conn.execute('INSERT INTO mcp_oauth_grant VALUES (?,?,?,?,?,?,?,?,?,?,?)',
+                         (secrets.token_hex(16), client_id, owner_id, json.dumps(scopes), resource,
+                          _digest(access), now + ACCESS_SECONDS, _digest(refresh), now + REFRESH_SECONDS,
+                          None, now))
+        else:
+            # The writer-locked refresh exchange already checked this grant.
+            # Rotate both secrets atomically while preserving connection identity
+            # for browser confirmations, receipts and owner revocation links.
+            conn.execute('UPDATE mcp_oauth_grant SET scopes_json=?,access_hash=?,access_expires=?, '
+                         'refresh_hash=?,refresh_expires=? WHERE id=?',
+                         (json.dumps(scopes), _digest(access), now + ACCESS_SECONDS,
+                          _digest(refresh), now + REFRESH_SECONDS, grant_id))
         return OAuthToken(access_token=access, token_type='Bearer', expires_in=ACCESS_SECONDS,
                           refresh_token=refresh, scope=' '.join(scopes))
 
@@ -278,8 +291,7 @@ class Provider(OAuthAuthorizationServerProvider[AuthorizationCode, RefreshToken,
                 chosen = scopes or granted
                 if set(chosen) - set(granted):
                     raise TokenError('invalid_scope', 'The requested scope exceeds the grant.')
-                conn.execute('UPDATE mcp_oauth_grant SET revoked_at=? WHERE id=?', (int(time.time()), row[0]))
-                result = self._tokens(conn, client.client_id, row[1], chosen, row[3])
+                result = self._tokens(conn, client.client_id, row[1], chosen, row[3], grant_id=row[0])
                 conn.commit()
                 return result
             except Exception:
