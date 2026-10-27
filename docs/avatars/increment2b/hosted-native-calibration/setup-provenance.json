@@ -1,0 +1,14 @@
+{
+  "pr_url": "https://github.com/jongsky25/css-is/pull/513",
+  "run_url": "https://github.com/jongsky25/css-is/actions/runs/40508949824",
+  "harness_commit": "0af68b81a2f1ecb86526f20f23d8e32c0de70f44",
+  "workflow_commit": "d7e2d316a95d1aef81bdfacfe380293548cea3b8",
+  "workflow_sha256": "21b5cdabffd282c4b74a7f117e4c00d389e7013c39a6b9eb703de77e44740759",
+  "controller_policy_commit": "264d7bf",
+  "local_focused_tests": 104,
+  "cloud_preflight_tests_expected": 60,
+  "trigger": "pull_request:opened only",
+  "native_capability": "SYS_PTRACE inside job container only",
+  "merge_performed": false,
+  "deployment_performed": false
+}

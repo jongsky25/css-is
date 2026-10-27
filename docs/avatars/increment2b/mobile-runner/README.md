@@ -1,5 +1,12 @@
 # Cloud runner access from a phone
 
+Follow-up: the [full hosted native calibration](../hosted-native-calibration/REPORT.md)
+now passes in separate PR #513. Its artifact is avatar-native-calibration, distinct
+from the original control-only artifact documented below. Automatic control PR
+validation is guarded against further repeated measurements. This remains separate
+from default-branch registration and 2B acceptance.
+
+
 Setup PR: https://github.com/jongsky25/css-is/pull/511
 
 A standard GitHub Linux x64 runner can be used without a local computer or SSH.

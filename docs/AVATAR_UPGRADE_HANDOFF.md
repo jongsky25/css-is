@@ -2,7 +2,7 @@
 
 Last updated: **2026-10-27 UTC**. Repository: `jongsky25/css-is`.
 
-## Start here — Sol handoff, current after mobile hosted workflow
+## Start here — Sol handoff, current after hosted native calibration
 
 **Objective: unblock 2B only. Do not start or resume 3A or later increments.**
 This section supersedes older next-step instructions below. The chronology is
@@ -11,14 +11,13 @@ retained as evidence, not a queue of experiments to repeat.
 ### Checkout and current state
 
 - Repository: `jongsky25/css-is`; resume `codex/avatar-2b-verification`.
-- Latest completed work: standard GitHub Linux x64 diagnostic successfully runs
-  from setup PR #511. Workflow 3bb633c pins harness 92b8428; cloud run
-  40503804962 completes all four controls and identical independent re-audit.
-  Earlier setup and early-timer failures are retained, not rerun unchanged.
-  The user accepted standard hosted runners; physical reservation is not required
-  to evaluate this new environment. Default-branch registration is still pending
-  the existing release-version gate; no merge/deploy or app comparison occurred.
-  Use latest branch HEAD for reports/evidence, not a reset to a harness commit.
+- Latest completed experiment: full hosted native recorder calibration **passed**.
+  Harness 0af68b8 / workflow d7e2d31 / cloud run 40508949824. Fresh native and
+  receiver proofs pass, both probes pass all gates, controls vary only 1.8382%.
+  Instrument qualified for a separately frozen application calibration on this
+  hosted condition; application qualification and 2B acceptance remain false.
+  Separate setup PR #513 is unmerged. Controller mistakes/incidental control run
+  and all earlier failed measurements remain archived. Latest HEAD has reports.
 - Comparison baseline: `1c964dcba2fa19de1eab077b00e0e5748d742554`.
 - Current experimental product: `cf363bfe547d5e23619eee28cdaf68bd4b6d7753`,
   including the thread-owned reader candidate and avatar product `f700187`.
@@ -49,14 +48,13 @@ markup and improves navigation 20 in both orders, but those partial benefits
 cannot override the failed gates. This screen compares current versus candidate;
 it is not the complete original-versus-candidate acceptance matrix.
 
-Latest workflow/result: [mobile hosted runner](avatars/increment2b/mobile-runner/REPORT.md).
-Four standard-hosted controls complete with ~2.16% range and zero reported CPU steal;
-this separate diagnostic does not reverse the failed qualification below.
-The native C recorder now passes both cost bounds (2.9486/3.7522%) and preserves
-all 1,536 receiver joins and all-mode source-labelled reclamation per probe.
-Twenty labelled generations overlap native sweeping. The complete calibration
-still fails: controls differ by 20.7568% (>20%). No application comparison or product
-fix follows. Product acceptance and every earlier failure remain unchanged.
+Latest instrument result: [hosted native calibration](avatars/increment2b/hosted-native-calibration/REPORT.md).
+The complete native calibration now passes: observation 2.7115/2.9615% (<5%),
+controls 1.8382% (<20%), paired ratios 1.01442/1.01464 (<1.20), exact 1,536 joins per
+probe and all-mode measured source-labelled reclamation with natural MajorGC/sweeps.
+Independent proof/screen/period audits reproduce identically. This qualifies only
+the instrument for application calibration on the declared hosted condition.
+Original product memory acceptance and earlier failed samples remain unresolved.
 
 There is no defensible percentage or ETA. At least three milestones remain:
 
@@ -76,7 +74,9 @@ verification**. No candidate currently qualifies to unblock 2B.
 
 Read these in order before changing code or launching browsers:
 
-1. [Mobile hosted runner](avatars/increment2b/mobile-runner/REPORT.md),
+1. [Hosted native calibration](avatars/increment2b/hosted-native-calibration/REPORT.md),
+   proof/screen archive, exact assessment and [native setup PR #513](https://github.com/jongsky25/css-is/pull/513).
+   Then [mobile hosted runner](avatars/increment2b/mobile-runner/REPORT.md),
    [phone instructions](avatars/increment2b/mobile-runner/README.md), and
    [setup PR #511](https://github.com/jongsky25/css-is/pull/511).
    The earlier [runner isolation blocker](avatars/increment2b/runner-isolation/REPORT.md) and
@@ -113,32 +113,33 @@ extra queries change the workload. V12 remains failed at 20.7568% control variat
 though both recorder cost/reclamation probes passed. No timing subtraction,
 post-hoc load filter, quiet-window rerun or budget waiver is allowed.
 
-The user explicitly accepted evaluating a standard hosted Linux x64 runner from a
-phone; the earlier reserved-only external prerequisite is superseded. PR #511 adds
-only workflow/phone instructions to main and pins separate diagnostic code, without
-merging verification-branch product changes. Final hosted run 40503804962 succeeds:
-control durations 3900.752/3818.159/3845.508/3893.634ms (~2.16% range), zero reported
-aggregate CPU steal/throttle in sampled operations, exact identity/fixture audit.
-New host is Azure/AMD/four visible CPUs with no cgroup quota; this differs from the
-old KVM/Xeon/five-CPU/four-quota runner. No absolute cross-host product conclusion.
+The actual hosted native calibration is complete and passes every original gate.
+Fresh native selftest and 384-pair mixed receiver proof precede four fresh fixed
+control/probe/probe/control slots. Probes preserve 1536 joins and ten measured
+labelled returns each (DOM4/SVG3/style3), all twenty overlapping natural sweeps.
+Costs 2.7115/2.9615%, maximum observation <=13.004ms, control variation 1.8382%,
+paired ratios 1.01442/1.01464. All proofs and the full audit/period summary reproduce
+identically; 57 native artifact manifest entries verify. 104 local/60 cloud tests.
 
-Initial image Python mismatch and three early browser-timer returns are preserved.
-Verified Python 3.12.14 image and diagnostic v2 monotonic wait-floor repair are
-frozen; historical audits remain failed. All archives/manifests verify, complete
-and failed timer audits reproduce identically, and 101 focused tests pass. No app
-calibration or native probe screen was run on the new host.
+Runner condition is standard GitHub Azure/AMD EPYC 7763, four CPUs, no container
+CPU quota, exact Python/browser/toolchain; container-only SYS_PTRACE for native
+proofs. No physical exclusivity claim or host isolation changes. Product cf363bf
+and unpromoted cd94bf3 remain unchanged. No app measurement or acceptance yet.
 
-Phone access now: open the successful GitHub run or PR Checks and download the
-avatar-runner-diagnostic artifact. For a recurring Run workflow button, default-
-branch registration is still needed. Existing main release checks require an app
-version increase even for setup-only PR #511 (8.98 equals base); no gate/version
-metadata was changed or merge/deployment performed. Keep this separate from 2B.
+Initial invalid controller YAML and incidental control retrigger 40508311821 are
+retained. PR #511 now guards automatic control repeats; separate native PR #513
+uses an opened-only trigger. The incidental run does not replace any sample or
+qualify the instrument. Both setup PRs remain unmerged; default-branch manual
+registration still faces existing release-version policy. No waiver or deploy.
 
-Next experimental prerequisite is a newly frozen native-recorder calibration on
-the hosted condition: full control/probe/probe/control, prior proofs, all original
-cost/integrity/reclamation/stability gates. A successful control-only diagnostic
-cannot qualify the instrument or automatically launch application measurements.
-Product cf363bf and unpromoted cd94bf3 remain unchanged; no 2B/later advance.
+Next freeze an application-observer calibration on this hosted condition: actual
+app receiver selection/observable integrity, exact workload/source identities and
+complete control/probe schedule. Carry forward native proof/agent continuity,
+unchanged cost/stability gates and complete failure retention. Synthetic proof
+cannot establish application attribution or observer cost by itself. Only after
+that prerequisite passes may memory attribution/comparison proceed. Old native
+v12 on the managed host stays failed, earlier memory budgets stay failed, and
+full 2B original-baseline acceptance remains outstanding. No later increment.
 
 ### Important traps and execution constraints
 

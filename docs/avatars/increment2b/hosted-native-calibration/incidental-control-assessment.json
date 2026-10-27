@@ -1,0 +1,11 @@
+{
+  "run_url": "https://github.com/jongsky25/css-is/actions/runs/40508311821",
+  "artifact_id": 12735104203,
+  "artifact_sha256": "ade11e70e18003ac029c3fadb7cc17b3f71c5f482522e0115cd77ae5094d97a9",
+  "internal_hashes_verified": 35,
+  "status": "diagnostic_complete",
+  "identical_reaudit": true,
+  "use_for_native_qualification": false,
+  "replaces_any_prior_sample": false,
+  "reason": "Unintended cumulative-PR path retrigger; retained separately; guard prevents future automatic repeats."
+}

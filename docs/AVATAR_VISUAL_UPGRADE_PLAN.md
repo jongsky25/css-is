@@ -25,6 +25,21 @@ seasonal administration, and accessibility behavior.
 A phase fails if its visuals remain essentially the same except for color changes,
 or if it exceeds a performance gate. Fix or reduce complexity before expanding it.
 
+## Hosted native calibration — instrument prerequisite passed
+
+[Latest report](avatars/increment2b/hosted-native-calibration/REPORT.md) and [cloud run](https://github.com/jongsky25/css-is/actions/runs/40508949824):
+frozen 0af68b8 passes fresh native/receiver proofs and the full four-slot schedule.
+Probe costs **2.7115/2.9615%**, control variation **1.8382%**, paired durations
+**1.01442/1.01464**; exact 1,536 joins and DOM4/SVG3/style3 measured returns per probe,
+all twenty overlapping native sweeps with natural MajorGC. All gates unchanged.
+Proof/screen/period outputs independently reproduce; 57 artifact hashes verify.
+**104 local and 60 cloud tests pass.** Instrument qualified for a separately frozen
+application calibration on this hosted condition; application/2B acceptance false.
+Controller mistakes/incidental controls are retained and cannot replace samples.
+Separate native setup PR #513 is unmerged; no product changes/deployment. Next
+freeze application-specific selection/integrity/cost calibration before memory
+attribution or app comparisons. Earlier failed budgets/acceptance obligations stand.
+
 ## Mobile hosted runner — cloud diagnostic succeeds, registration pending
 
 [Latest report](avatars/increment2b/mobile-runner/REPORT.md): setup [PR #511](https://github.com/jongsky25/css-is/pull/511)

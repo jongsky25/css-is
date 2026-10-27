@@ -1,0 +1,66 @@
+{
+  "run_url": "https://github.com/jongsky25/css-is/actions/runs/40508949824",
+  "artifact_id": 12736566674,
+  "artifact_sha256": "2c1de48749d1eefeb04782e2034879bf7392ce137bddb1b3a16f734159b25a0d",
+  "harness_commit": "0af68b81a2f1ecb86526f20f23d8e32c0de70f44",
+  "status": "calibration_passed",
+  "acceptance": false,
+  "application_qualified": false,
+  "instrument_qualified_for_application_calibration": true,
+  "internal_hashes_verified": 57,
+  "independent_native_preflight_identical": true,
+  "independent_receiver_proof_identical": true,
+  "independent_calibration_audit_identical": true,
+  "native_periods_identical": true,
+  "source_hashes_verified": 16,
+  "files_verified": 14,
+  "receiver_capability_files_verified": 4,
+  "receiver_capability_source_hashes_verified": 5,
+  "cohorts": [
+    {
+      "index": 0,
+      "mode": "control",
+      "duration_ms": 3599.442818,
+      "observation_fraction_bound": 0.023479951835145393,
+      "maximum_observation_ms": 8.306643,
+      "receiver_records": null,
+      "matched_receivers": null,
+      "membership_status": "valid_control"
+    },
+    {
+      "index": 1,
+      "mode": "probe",
+      "duration_ms": 3651.359701,
+      "observation_fraction_bound": 0.02711496267346245,
+      "maximum_observation_ms": 8.575011,
+      "receiver_records": 1536,
+      "matched_receivers": 1536,
+      "membership_status": "capability_passed"
+    },
+    {
+      "index": 2,
+      "mode": "probe",
+      "duration_ms": 3719.273697,
+      "observation_fraction_bound": 0.02961529399916061,
+      "maximum_observation_ms": 13.00354,
+      "receiver_records": 1536,
+      "matched_receivers": 1536,
+      "membership_status": "capability_passed"
+    },
+    {
+      "index": 3,
+      "mode": "control",
+      "duration_ms": 3665.607484,
+      "observation_fraction_bound": 0.023989082405529046,
+      "maximum_observation_ms": 8.277801,
+      "receiver_records": null,
+      "matched_receivers": null,
+      "membership_status": "valid_control"
+    }
+  ],
+  "control_variation_percent": 1.8381918909539436,
+  "paired_durations": [
+    1.014423588767788,
+    1.014640469072111
+  ]
+}
