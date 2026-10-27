@@ -130,8 +130,10 @@ def delete_note(conn, filing, note_id):
     conn.commit()
 
 
-def send_feedback(conn, filing, by):
+def send_feedback(conn, filing, by, *, commit=True):
     """Send the drafted notes back to the traveller."""
+    if not commit and not conn.in_transaction:
+        raise RuntimeError("A caller-owned travel review transaction is required.")
     filing = _get(conn, filing["id"])
     _need_state(filing, "requested", why="This claim is not waiting for a review.")
     drafts = notes_of(conn, filing["id"], ("draft",))
@@ -141,11 +143,14 @@ def send_feedback(conn, filing, by):
     conn.execute("UPDATE travel_review_note SET state='sent' WHERE filing_id=? AND state='draft'", (filing["id"],))
     conn.execute("UPDATE travel_filing SET review_state='changes', review_decided_at=?, updated_at=? WHERE id=?",
                  (now, now, filing["id"]))
-    conn.commit()
+    if commit:
+        conn.commit()
     return _get(conn, filing["id"]), drafts
 
 
-def approve(conn, filing, by):
+def approve(conn, filing, by, *, commit=True):
+    if not commit and not conn.in_transaction:
+        raise RuntimeError("A caller-owned travel review transaction is required.")
     filing = _get(conn, filing["id"])
     _need_state(filing, "requested", why="This claim is not waiting for a review.")
     if notes_of(conn, filing["id"], ("draft",)):
@@ -153,7 +158,8 @@ def approve(conn, filing, by):
     now = tz.now_iso()
     conn.execute("UPDATE travel_filing SET review_state='approved', review_decided_at=?, updated_at=? WHERE id=?",
                  (now, now, filing["id"]))
-    conn.commit()
+    if commit:
+        conn.commit()
     return _get(conn, filing["id"])
 
 

@@ -8,7 +8,7 @@
 {% if err %}<div class="tv-warn" id="travel-form-error" tabindex="-1" role="alert"><strong>Not saved.</strong> {{ err }}</div>{% endif %}
 
 <div class="tv-card">
-  <p class="tv-note">{{ traveller }} · {{ f.act_start }}{% if f.act_end != f.act_start %} to {{ f.act_end }}{% endif %}{% if f.act_venue %} · {{ f.act_venue }}{% endif %} · Round {{ f.review_round }} · <span class="badge amber">{{ state_label }}</span></p>
+  <p class="tv-note">Filing ID {{ f.id }} · {{ traveller }} · {{ f.act_start }}{% if f.act_end != f.act_start %} to {{ f.act_end }}{% endif %}{% if f.act_venue %} · {{ f.act_venue }}{% endif %} · Round {{ f.review_round }} · <span class="badge amber">{{ state_label }}</span></p>
   <p class="tv-hint">Open each generated form and uploaded document and check that it is complete and correct. Note what is missing or wrong; the traveller fixes it and asks again. Approve only when everything is in order. This does not approve or pay the claim.</p>
 </div>
 

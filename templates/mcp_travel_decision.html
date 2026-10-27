@@ -1,0 +1,40 @@
+{% extends "dash_layout.html" %}
+{% block title %}Confirm travel papers decision — Office Connect{% endblock %}
+{% block content %}
+<div style="max-width:44rem;margin:auto;overflow-wrap:anywhere">
+{% if result.status == 'completed' %}
+<h1>Travel papers decision recorded</h1>
+<p>Original decision: <strong>{{ 'Papers complete' if result.decision == 'approve' else 'Changes needed' }}</strong>, review round {{ result.review_round }}, recorded {{ result.completed_at }}. {{ result.returned_note_count }} notes returned.</p>
+<p>The traveller acts next: fix returned notes and ask again, or mark approved papers Ready. This receipt preserves the original decision even if the filing has changed since.</p>
+<p>Notification status: <strong>{{ result.notification_status }}</strong>. Queued is not sent. Sent means the transport reported acceptance. Uncertain attempts will not be resent automatically; inspect the source and mail log before arranging a separate notification.</p>
+<p><a href="{{ result.web_url }}">Open current reviewer page</a></p>
+{% else %}
+<h1>Confirm travel papers decision?</h1>
+<dl>
+<dt>Decision</dt><dd><strong>{{ 'Approve papers as complete' if result.snapshot.decision == 'approve' else 'Return the exact drafted notes below' }}</strong></dd>
+<dt>Filing</dt><dd>{{ result.snapshot.reference }} · {{ result.snapshot.title }}</dd>
+<dt>Activity dates</dt><dd>{{ result.snapshot.start }} to {{ result.snapshot.end }}</dd>
+<dt>Current review round</dt><dd>{{ result.snapshot.review_round }}</dd>
+<dt>Selected reviewer</dt><dd>{{ result.snapshot.reviewer.name }} (account {{ result.snapshot.reviewer.id }})</dd>
+<dt>Traveller and email recipient</dt><dd>{{ result.snapshot.traveller.name }} · {{ result.snapshot.traveller.email }}</dd>
+<dt>Email</dt><dd>{{ 'Enabled: one notice queued for one transport attempt' if result.snapshot.email_enabled else 'Disabled: permanently skipped for this decision' }}</dd>
+<dt>Email content</dt><dd>Traveller name, reference, activity title, the decision{% if result.snapshot.notes %}, every note shown below{% endif %} and a signed-in filing link. No files or attachments.</dd>
+</dl>
+<h2>Current document checklist</h2>
+<ul>{% for item in result.snapshot.documents %}<li>{{ item.label }} · {{ item.state }} · {{ item.copies }} copies{% if item.wet_sign %} · wet signature required{% endif %}</li>{% endfor %}</ul>
+{% if result.snapshot.notes %}
+<h2>Exact notes to return</h2>
+<ol>{% for note in result.snapshot.notes %}<li><strong>{{ note.document or 'Whole claim' }} · {{ note.kind }}</strong><p style="white-space:pre-wrap">{{ note.note }}</p></li>{% endfor %}</ol>
+{% endif %}
+<p><a href="/travel/review/{{ result.snapshot.reference }}">Inspect the exact saved papers and notes in the reviewer page</a></p>
+<p>Confirm only after inspecting the saved papers. Approval records completeness of the papers. Returning notes changes this round to Changes needed and sends these existing drafts back to the traveller. New notes must first be drafted on the normal reviewer page.</p>
+<p>This keeps the filing Open. It does not approve or pay the claim, sign or dispatch documents, mark Ready, generate files, or record paper handover. Changed papers, notes, people or mail policy require a fresh preview. This preview expires ten minutes after preparation.</p>
+<form method="post">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<input type="hidden" name="preview_digest" value="{{ result.preview_digest }}">
+<button type="submit" name="confirm" value="yes">{{ 'Confirm: papers are complete' if result.snapshot.decision == 'approve' else 'Confirm: return these notes' }}</button>
+</form>
+{% endif %}
+<p>Operation receipt: <code>{{ result.operation_id }}</code></p>
+</div>
+{% endblock %}
