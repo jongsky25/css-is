@@ -10,8 +10,9 @@ from scripts.avatar_baseline.element_membership_lifecycle import BROWSER, Handle
 pytestmark = pytest.mark.skipif(os.getenv('CSS_MEMBERSHIP_TRANSPORT') != '1', reason='Opt-in pinned transport capability')
 
 
-def test_binding_survives_departing_document():
+def test_beacon_survives_departing_document():
     server = ThreadingHTTPServer(('127.0.0.1', 0), Handler)
+    server.lifecycle_events = []
     threading.Thread(target=server.serve_forever, daemon=True).start()
     try:
         with sync_playwright() as pw:
@@ -20,15 +21,13 @@ def test_binding_survives_departing_document():
             context = browser.new_context()
             context.add_init_script('''addEventListener('pagehide', event => {
                 const m = location.pathname.match(/^\\/fixture\\/(\\d+)$/);
-                if (m) globalThis.membershipLifecycle(JSON.stringify({index: Number(m[1]), persisted: event.persisted}));
+                if (m) navigator.sendBeacon('/lifecycle', JSON.stringify({index: Number(m[1]), persisted: event.persisted}));
             });''')
-            page = context.new_page(); cdp = context.new_cdp_session(page); received = []
-            cdp.on('Runtime.bindingCalled', lambda e: received.append(json.loads(e['payload'])))
-            cdp.send('Runtime.enable'); cdp.send('Runtime.addBinding', {'name': 'membershipLifecycle'})
+            page = context.new_page()
             origin = f'http://127.0.0.1:{server.server_port}'
             page.goto(origin + '/fixture/0'); page.wait_for_timeout(220)
             page.goto(origin + '/fixture/1'); page.wait_for_timeout(220)
-            assert received == [{'index': 0, 'persisted': False}]
+            assert [{k: v for k,v in e.items() if k != 'received_ns'} for e in server.lifecycle_events] == [{'index': 0, 'persisted': False}]
             browser.close()
     finally:
         server.shutdown(); server.server_close()

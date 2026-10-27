@@ -15,7 +15,7 @@ BUILD = '1c5dca8527a61d07372e489142bee26af1bcaf71'
 COUNT = 512  # Retained v1 census profile.
 CENSUS = 128
 FIXTURE_COUNT = 4096
-PROTOCOL = 'native-membership-lifecycle-v3'
+PROTOCOL = 'native-membership-lifecycle-v4'
 STAGES = 12
 BROWSER = Path('/workspace/scratch/avatar-runtime/root/usr/lib/chromium/chromium')
 HOOK = Path(__file__).resolve().parent / 'native/element_membership_lifecycle.js'
@@ -35,6 +35,18 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(200); self.send_header('Content-Type', 'text/html; charset=utf-8')
         self.send_header('Content-Length', str(len(raw))); self.end_headers(); self.wfile.write(raw)
 
+    def do_POST(self):
+        if self.path != '/lifecycle':
+            self.send_error(404); return
+        length = int(self.headers.get('Content-Length', '0'))
+        if not 0 < length <= 256:
+            self.send_error(400); return
+        data = json.loads(self.rfile.read(length))
+        if set(data) != {'index', 'persisted'} or type(data['index']) is not int or type(data['persisted']) is not bool:
+            self.send_error(400); return
+        self.server.lifecycle_events.append({**data, 'received_ns': time.monotonic_ns()})
+        self.send_response(204); self.send_header('Content-Length', '0'); self.end_headers()
+
 
 def digest(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
@@ -52,6 +64,7 @@ def run(out, mode):
         raise ValueError('Wrong browser build')
     result['build_id'] = BUILD
     server = ThreadingHTTPServer(('127.0.0.1', 0), Handler)
+    server.lifecycle_events = result['lifecycle_events']
     threading.Thread(target=server.serve_forever, daemon=True).start()
     attached = None
     try:
@@ -67,7 +80,7 @@ def run(out, mode):
                     if (!match) return;
                     const data = {index: Number(match[1]), persisted: event.persisted};
                     console.timeStamp('membership-pagehide:' + data.index + ':' + data.persisted);
-                    globalThis.membershipLifecycle(JSON.stringify(data));
+                    navigator.sendBeacon('/lifecycle', JSON.stringify(data));
                 });
             })();''')
             page = context.new_page(); cdp = browser.new_browser_cdp_session(); completed = []
@@ -81,14 +94,7 @@ def run(out, mode):
             del arguments
             result['playwright_version'] = __import__('importlib.metadata', fromlist=['version']).version('playwright')
             page_cdp = context.new_cdp_session(page)
-            def binding_event(event):
-                if event['name'] == 'membershipLifecycle':
-                    data = json.loads(event['payload'])
-                    result['lifecycle_events'].append({**data, 'received_ns': time.monotonic_ns()})
-            page_cdp.on('Runtime.bindingCalled', binding_event)
-            page_cdp.send('Runtime.enable')
-            page_cdp.send('Runtime.addBinding', {'name': 'membershipLifecycle'})
-            result['lifecycle_transport'] = 'cdp-runtime-binding'
+            result['lifecycle_transport'] = 'same-origin-beacon'
             cdp.on('Tracing.tracingComplete', lambda e: completed.append(e))
             cdp.send('Tracing.start', {'transferMode': 'ReturnAsStream', 'traceConfig': {
                 'excludedCategories': ['*'], 'includedCategories': ['devtools.timeline'], 'recordMode': 'recordUntilFull'}})
