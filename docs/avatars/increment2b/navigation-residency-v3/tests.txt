@@ -1,0 +1,7 @@
+.......................                                                  [100%]
+=============================== warnings summary ===============================
+tests/test_avatar_navigation_light_analysis.py::test_sealed_capture_and_post_workload_dump
+  /workspace/css-is/tests/conftest.py:88: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
