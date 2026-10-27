@@ -31,6 +31,7 @@ import mcp_meal_requests
 import mcp_room_requests
 import mcp_travel_submissions
 import mcp_travel_reviews
+import mcp_supply_approvals
 import mcp_supply_submissions
 import mcp_task_acceptances
 import mcp_task_submissions
@@ -596,6 +597,55 @@ def build_server(get_conn, origin):
         """
         return await action(lambda conn, token: mcp_travel_submissions.recover(
             conn, token, provider.resource, origin, operation_id), mcp_travel_submissions.SCOPE)
+
+    @server.tool(title='Read scoped supply approval context', annotations=READ_ONLY)
+    async def get_supply_approval_context(request_id: StrictInt) -> dict:
+        """Read exact revision for full approval of another person's supply request.
+
+        Requires separate supplies:request:approve, its flag, enabled Supplies
+        and a current request_approver grant for the immutable submitted unit.
+        Self-approval and technical-admin/custodian authority alone are refused.
+        Only submitted requests with 1–20 unchanged active item lines, no earlier
+        reservation cycle and bounded non-displacing allocation effects. Returns
+        IDs/revisions/count/source, without purpose, identities or stock/queue data.
+        """
+        return await action(lambda conn, token: mcp_supply_approvals.read_context(
+            conn, token, provider.resource, origin, request_id), mcp_supply_approvals.SCOPE)
+
+    @server.tool(title='Prepare full supply request approval and reservations', annotations=ToolAnnotations(
+        readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=False))
+    async def prepare_supply_request_approval(request_id: StrictInt, revision: StrictInt,
+            expected_revision: StrictStr, reason: StrictStr, operation_id: StrictStr) -> dict:
+        """Prepare ONE approval at the exact submitted quantities, including stock reservations.
+
+        Requires supplies:request:approve and current scoped non-requester authority.
+        Read fresh get_supply_approval_context first. Show confirmation_url for
+        exact submitted requester/unit/purpose/date, every full approved quantity,
+        initial reserved/awaiting-stock quantities and decision reason. Explicit
+        signed-in confirmation approves and allocates via the normal oldest-first
+        Supplies service. Changed stock/queue/catalog/grants require fresh review;
+        effects displacing another request's reservation are refused by this pilot.
+        No quantity reduction, return/rejection, issue/handover, physical movement,
+        purchase, payment, signature/dispatch or direct mail. Custodian fulfillment
+        and normal stock-warning processing remain separate. Keep one random
+        16–80 character operation_id; recover it after timeout before another key.
+        """
+        return await action(lambda conn, token: mcp_supply_approvals.prepare(
+            conn, token, provider.resource, origin, operation_id,
+            {'request_id': request_id, 'revision': revision,
+             'expected_revision': expected_revision, 'reason': reason}), mcp_supply_approvals.SCOPE)
+
+    @server.tool(title='Check my supply approval decision receipt', annotations=READ_ONLY)
+    async def get_supply_approval_operation(operation_id: StrictStr) -> dict:
+        """Recover original approval/revision/source without request text or stock details.
+
+        Same active connection/scope and current scoped non-requester approval
+        authority are required. Original immutable decision/domain receipt is
+        verified. Later ordinary stock/issuance/correction changes are preserved;
+        recovery never approves, reserves, issues or sends a second time.
+        """
+        return await action(lambda conn, token: mcp_supply_approvals.recover(
+            conn, token, provider.resource, origin, operation_id), mcp_supply_approvals.SCOPE)
 
     @server.tool(title='Read confirmed-lead task acceptance context', annotations=READ_ONLY)
     async def get_task_acceptance_context(work_item_id: StrictInt, task_id: StrictInt) -> dict:

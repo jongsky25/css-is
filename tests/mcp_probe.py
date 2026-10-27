@@ -147,7 +147,7 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
         assert metadata.json()['resource'] == 'https://office.example/mcp'
         scopes = {'surveys:person_activities:read', 'surveys:resource_person_trends:read', 'surveys:csm_trends:read', 'surveys:unit_trends:read', 'surveys:units:read', 'activities:read', 'calendar:read', 'documents:read',
                   'supplies:read', 'travel:read', 'work:read', 'notifications:read', 'surveys:csm:read', 'surveys:activities:read', 'surveys:resource_persons:read', 'surveys:activity_details:read'}
-        assert set(metadata.json()['scopes_supported']) == scopes | {'notifications:mark_read', 'supplies:request:draft', 'work:comment:draft', 'reports:view:save', 'calendar:entry:create', 'travel:filing:draft', 'work:task:acknowledge', 'work:task:submit', 'supplies:request:submit', 'travel:review:request', 'travel:filing:submit', 'rooms:request', 'meals:request', 'work_arrangements:request', 'activities:dates:update', 'activities:draft:save', 'activities:draft:create', 'activities:announcement:publish', 'work:task:accept'}
+        assert set(metadata.json()['scopes_supported']) == scopes | {'notifications:mark_read', 'supplies:request:draft', 'work:comment:draft', 'reports:view:save', 'calendar:entry:create', 'travel:filing:draft', 'work:task:acknowledge', 'work:task:submit', 'supplies:request:submit', 'travel:review:request', 'travel:filing:submit', 'rooms:request', 'meals:request', 'work_arrangements:request', 'activities:dates:update', 'activities:draft:save', 'activities:draft:create', 'activities:announcement:publish', 'work:task:accept', 'supplies:request:approve'}
         denied = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 1, 'method': 'initialize',
                                           'params': {'protocolVersion': '2025-06-18',
                                                      'capabilities': {}, 'clientInfo': {'name': 'probe', 'version': '1'}}},
@@ -165,7 +165,7 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
             'grant_types': ['authorization_code', 'refresh_token'],
             'response_types': ['code']})
         assert registered.status_code == 201, registered.text
-        assert set(registered.json()['scope'].split()) == scopes | {'notifications:mark_read', 'supplies:request:draft', 'work:comment:draft', 'reports:view:save', 'calendar:entry:create', 'travel:filing:draft', 'work:task:acknowledge', 'work:task:submit', 'supplies:request:submit', 'travel:review:request', 'travel:filing:submit', 'rooms:request', 'meals:request', 'work_arrangements:request', 'activities:dates:update', 'activities:draft:save', 'activities:draft:create', 'activities:announcement:publish', 'work:task:accept'}
+        assert set(registered.json()['scope'].split()) == scopes | {'notifications:mark_read', 'supplies:request:draft', 'work:comment:draft', 'reports:view:save', 'calendar:entry:create', 'travel:filing:draft', 'work:task:acknowledge', 'work:task:submit', 'supplies:request:submit', 'travel:review:request', 'travel:filing:submit', 'rooms:request', 'meals:request', 'work_arrangements:request', 'activities:dates:update', 'activities:draft:save', 'activities:draft:create', 'activities:announcement:publish', 'work:task:accept', 'supplies:request:approve'}
         client_id = registered.json()['client_id']
         auth_url = client.get('/authorize', params={
             'response_type': 'code', 'client_id': client_id, 'redirect_uri': callback,
@@ -228,7 +228,7 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
         assert listed.status_code == 200, listed.text
         names = {tool['name'] for tool in listed.json()['result']['tools']}
         assert {'my_work', 'find_documents', 'get_document'} <= names
-        assert names == {'get_task_acceptance_context', 'prepare_task_acceptance', 'get_task_acceptance_operation', 'get_activity_announcement_context', 'prepare_activity_announcement', 'get_activity_announcement_operation', 'get_activity_creation_context', 'prepare_activity_from_draft', 'get_activity_creation_operation', 'get_activity_draft_context', 'prepare_activity_draft', 'get_activity_draft_operation', 'get_activity_date_context', 'prepare_activity_date_update', 'get_activity_date_operation', 'get_my_work_arrangement_context', 'prepare_work_arrangement_request', 'get_work_arrangement_operation', 'get_my_meal_request_context', 'prepare_meal_request', 'get_meal_request_operation', 'get_my_room_request_context', 'prepare_room_request', 'get_room_request_operation', 'get_my_travel_submission_context', 'prepare_travel_filing_submission', 'get_travel_submission_operation', 'get_my_travel_review_context', 'prepare_travel_review_request', 'get_travel_review_request_operation', 'prepare_supply_request_submission', 'get_supply_submission_operation', 'prepare_task_submission', 'get_task_submission_operation', 'prepare_task_acknowledgement', 'get_task_acknowledgement_operation', 'prepare_travel_reimbursement_draft', 'get_travel_draft_operation', 'prepare_personal_calendar_entry', 'get_personal_calendar_operation', 'prepare_saved_report_view', 'get_saved_report_view_operation', 'prepare_task_comment_draft', 'get_task_comment_draft_operation', 'prepare_supply_request_draft', 'get_supply_draft_operation', 'mark_my_notification_read', 'get_mcp_operation', 'get_resource_person_activity_survey', 'find_survey_resource_persons', 'compare_resource_person_surveys', 'compare_csm_months', 'compare_unit_activity_surveys', 'find_survey_units', 'get_unit_activity_survey_summary', 'my_work', 'find_documents', 'get_document',
+        assert names == {'get_supply_approval_context', 'prepare_supply_request_approval', 'get_supply_approval_operation', 'get_task_acceptance_context', 'prepare_task_acceptance', 'get_task_acceptance_operation', 'get_activity_announcement_context', 'prepare_activity_announcement', 'get_activity_announcement_operation', 'get_activity_creation_context', 'prepare_activity_from_draft', 'get_activity_creation_operation', 'get_activity_draft_context', 'prepare_activity_draft', 'get_activity_draft_operation', 'get_activity_date_context', 'prepare_activity_date_update', 'get_activity_date_operation', 'get_my_work_arrangement_context', 'prepare_work_arrangement_request', 'get_work_arrangement_operation', 'get_my_meal_request_context', 'prepare_meal_request', 'get_meal_request_operation', 'get_my_room_request_context', 'prepare_room_request', 'get_room_request_operation', 'get_my_travel_submission_context', 'prepare_travel_filing_submission', 'get_travel_submission_operation', 'get_my_travel_review_context', 'prepare_travel_review_request', 'get_travel_review_request_operation', 'prepare_supply_request_submission', 'get_supply_submission_operation', 'prepare_task_submission', 'get_task_submission_operation', 'prepare_task_acknowledgement', 'get_task_acknowledgement_operation', 'prepare_travel_reimbursement_draft', 'get_travel_draft_operation', 'prepare_personal_calendar_entry', 'get_personal_calendar_operation', 'prepare_saved_report_view', 'get_saved_report_view_operation', 'prepare_task_comment_draft', 'get_task_comment_draft_operation', 'prepare_supply_request_draft', 'get_supply_draft_operation', 'mark_my_notification_read', 'get_mcp_operation', 'get_resource_person_activity_survey', 'find_survey_resource_persons', 'compare_resource_person_surveys', 'compare_csm_months', 'compare_unit_activity_surveys', 'find_survey_units', 'get_unit_activity_survey_summary', 'my_work', 'find_documents', 'get_document',
                          'list_work_items', 'get_work_item', 'list_work_tasks', 'list_calendar_events',
                          'list_supply_queue', 'list_my_travel_filings', 'list_activity_progress',
                          'my_office_overview', 'list_my_notifications', 'get_room_availability', 'get_csm_summary', 'get_activity_survey_summary', 'get_resource_person_survey_summary', 'find_survey_activities', 'get_activity_survey_detail'}
@@ -568,10 +568,10 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
         # Reproduce a client requesting only work, despite registering all reads.
         # Optional consent must be explicit, and token/refresh must reflect it.
         # No optional grant, then each optional permission independently.
-        for choice in range(21):
+        for choice in range(22):
             (choose_calendar, choose_write, choose_supply, choose_comment, choose_view,
              choose_personal, choose_travel, choose_ack, choose_submit, choose_supply_submit,
-             choose_review, choose_paper, choose_room, choose_meal, choose_wa, choose_dates, choose_activity_draft, choose_creation, choose_announcement, choose_accept) = [choice == i for i in range(1, 21)]
+             choose_review, choose_paper, choose_room, choose_meal, choose_wa, choose_dates, choose_activity_draft, choose_creation, choose_announcement, choose_accept, choose_supply_approval) = [choice == i for i in range(1, 22)]
             if choose_activity_draft or choose_creation:
                 # A role change revokes sessions/grants: issue a current fixture
                 # session BEFORE starting this case's fresh OAuth authorization.
@@ -634,6 +634,8 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
                 values['scope_activities:announcement:publish'] = '1'
             if choose_accept:
                 values['scope_work:task:accept'] = '1'
+            if choose_supply_approval:
+                values['scope_supplies:request:approve'] = '1'
             consent = browser.post('/mcp-consent', data=values,
                 headers={'Origin': 'https://office.example'}, follow_redirects=False)
             assert consent.status_code == 303, consent.text
@@ -681,6 +683,8 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
                 expected.add('activities:announcement:publish')
             if choose_accept:
                 expected.add('work:task:accept')
+            if choose_supply_approval:
+                expected.add('supplies:request:approve')
             assert set(token.json()['scope'].split()) == expected
             narrow_headers = dict(headers, Authorization='Bearer ' + token.json()['access_token'])
             calendar_call = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 100, 'method': 'tools/call',
@@ -1183,6 +1187,43 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
                 conn=st.connect(os.environ['CSS_DB'])
                 assert conn.execute('SELECT status,revision FROM work_task WHERE id=?',(accept_task['id'],)).fetchone()==('for_review',accept_task['revision'])
                 conn.close()
+            if choose_supply_approval:
+                import supplies_requests as supply_requests
+                import supplies
+                from uuid import uuid4
+                os.environ['CSS_MCP_SUPPLY_APPROVALS_ENABLED']='1'
+                conn=st.connect(os.environ['CSS_DB'])
+                st.set_setting(conn,'supplies.enabled','1')
+                # A current independent module grant, not the operator's technical role.
+                conn.execute("INSERT INTO supply_role_grant(user_id,role,unit_id,granted_by,created_at) VALUES (?,'request_approver',?,?,?)",(owner,unit,manager,'2026-10-24'));conn.commit()
+                approval_requester_rp=st.add_rp(conn,'Synthetic independent approval requester',True,unit)
+                conn.execute('UPDATE admin_user SET rp_id=? WHERE id=?',(approval_requester_rp,other));conn.commit()
+                supply_actor=st.get_admin_user_by_id(conn,other)
+                supply_item=conn.execute("SELECT id FROM supply_item WHERE code='MCP-LOW'").fetchone()[0]
+                approval_draft=supply_requests.save_draft(conn,supply_actor,
+                    {'purpose':'Synthetic full approval purpose','date_needed':'2026-11-09','lines':[{'item_id':supply_item,'requested_quantity':3}]},operation_key=str(uuid4()))
+                approval_request=supply_requests.submit(conn,supply_actor,approval_draft['id'],expected_revision=approval_draft['revision'],operation_key=str(uuid4()))
+                conn.close()
+                current=client.post('/mcp',json={'jsonrpc':'2.0','id':170,'method':'tools/call',
+                    'params':{'name':'get_supply_approval_context','arguments':{'request_id':approval_request['id']}}},headers=narrow_headers)
+                assert current.status_code==200 and not current.json()['result'].get('isError'),current.text
+                approval_context=json.loads(current.json()['result']['content'][0]['text'])
+                assert approval_context['line_count']==1 and 'Synthetic full approval purpose' not in current.text
+                approval_args={'request_id':approval_request['id'],'revision':approval_context['revision'],
+                               'expected_revision':approval_context['expected_revision'],'reason':'Synthetic scoped full approval','operation_id':'remote-supply-approval-001'}
+                prepared=client.post('/mcp',json={'jsonrpc':'2.0','id':171,'method':'tools/call',
+                    'params':{'name':'prepare_supply_request_approval','arguments':approval_args}},headers=narrow_headers)
+                assert prepared.status_code==200 and not prepared.json()['result'].get('isError'),prepared.text
+                approval_preview=json.loads(prepared.json()['result']['content'][0]['text'])
+                assert approval_preview['status']=='awaiting_confirmation' and 'Synthetic scoped full approval' not in prepared.text
+                confirmation=browser.get(approval_preview['confirmation_url'])
+                assert confirmation.status_code==200 and 'Synthetic full approval purpose' in confirmation.text and '3 / 3 pieces' in confirmation.text,confirmation.text
+                approval_values={name:re.search(r'name="'+name+r'" value="([^\"]+)"',confirmation.text).group(1) for name in ('csrf','preview_digest')}
+                approval_values['confirm']='yes'
+                conn=st.connect(os.environ['CSS_DB'])
+                assert conn.execute('SELECT approval_status FROM supply_request WHERE id=?',(approval_request['id'],)).fetchone()[0]=='submitted'
+                approval_movements=conn.execute('SELECT * FROM supply_stock_movement').fetchall()
+                conn.close()
             rotated = client.post('/token', data={'grant_type': 'refresh_token', 'client_id': client_id,
                 'refresh_token': token.json()['refresh_token'], 'resource': 'https://office.example/mcp'})
             assert rotated.status_code == 200
@@ -1558,6 +1599,24 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
                 assert work.raw(conn,accept_case['id'])['status']=='open'
                 conn.close();os.environ.pop('CSS_MCP_TASK_ACCEPTANCES_ENABLED',None)
 
+            if choose_supply_approval:
+                confirmed=browser.post(approval_preview['confirmation_url'],data=approval_values,headers={'Origin':'https://office.example'})
+                assert confirmed.status_code==200 and 'Supply request approved' in confirmed.text,confirmed.text
+                recovered=client.post('/mcp',json={'jsonrpc':'2.0','id':172,'method':'tools/call',
+                    'params':{'name':'get_supply_approval_operation','arguments':{'operation_id':approval_args['operation_id']}}},
+                    headers=dict(headers,Authorization='Bearer '+rotated.json()['access_token']))
+                assert recovered.status_code==200 and not recovered.json()['result'].get('isError'),recovered.text
+                receipt=json.loads(recovered.json()['result']['content'][0]['text'])
+                assert receipt['approval_status']=='approved' and receipt['result_revision']==approval_request['revision']+1
+                assert 'Synthetic full approval purpose' not in recovered.text and 'Synthetic scoped full approval' not in recovered.text
+                assert browser.post(approval_preview['confirmation_url'],data=approval_values,headers={'Origin':'https://office.example'}).status_code==200
+                conn=st.connect(os.environ['CSS_DB'])
+                assert conn.execute('SELECT COUNT(*) FROM supply_request_decision WHERE request_id=?',(approval_request['id'],)).fetchone()[0]==1
+                reservation=conn.execute('SELECT reserved_quantity FROM supply_reservation WHERE request_id=?',(approval_request['id'],)).fetchone()[0]
+                assert 0<=reservation<=3
+                assert conn.execute('SELECT * FROM supply_stock_movement').fetchall()==approval_movements
+                conn.close();os.environ.pop('CSS_MCP_SUPPLY_APPROVALS_ENABLED',None)
+
         # Start a new synthetic operator session after the consent matrix.
         import ratelimit
         ratelimit.reset()
@@ -1567,7 +1626,7 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
             'token_endpoint_auth_method': 'none', 'grant_types': ['authorization_code', 'refresh_token'],
             'response_types': ['code']})
         assert restricted.status_code == 201
-        assert set(restricted.json()['scope'].split()) == scopes | {'notifications:mark_read', 'supplies:request:draft', 'work:comment:draft', 'reports:view:save', 'calendar:entry:create', 'travel:filing:draft', 'work:task:acknowledge', 'work:task:submit', 'supplies:request:submit', 'travel:review:request', 'travel:filing:submit', 'rooms:request', 'meals:request', 'work_arrangements:request', 'activities:dates:update', 'activities:draft:save', 'activities:draft:create', 'activities:announcement:publish', 'work:task:accept'}
+        assert set(restricted.json()['scope'].split()) == scopes | {'notifications:mark_read', 'supplies:request:draft', 'work:comment:draft', 'reports:view:save', 'calendar:entry:create', 'travel:filing:draft', 'work:task:acknowledge', 'work:task:submit', 'supplies:request:submit', 'travel:review:request', 'travel:filing:submit', 'rooms:request', 'meals:request', 'work_arrangements:request', 'activities:dates:update', 'activities:draft:save', 'activities:draft:create', 'activities:announcement:publish', 'work:task:accept', 'supplies:request:approve'}
         restricted_id = restricted.json()['client_id']
         import json
         conn = st.connect(os.environ['CSS_DB'])

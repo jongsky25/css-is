@@ -343,3 +343,9 @@ The separate default-off confirmed-lead task acceptance decision is documented i
 [M4.1 setup and named pilot acceptance](MCP_TASK_ACCEPTANCE_PILOT.md). It requires
 exact browser review and separation from the owner/actual submitter, with a
 recorded hosted go/no-go before any staff decision pilot.
+
+
+The separate default-off scoped full supply approval decision is documented in
+[M4.2 setup and named pilot acceptance](MCP_SUPPLY_APPROVAL_PILOT.md). It requires
+exact browser review of initial reservations/shortage, preserves stock on-hand,
+and needs a recorded hosted go/no-go before any staff decision pilot.

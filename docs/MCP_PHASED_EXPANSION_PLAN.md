@@ -1,6 +1,6 @@
 # Office Connect MCP expansion plan
 
-Status: **Incremental implementation**, updated October 27, 2026. Baseline: the read-only MCP expansion in v8.35 (PR #444). M1 reads and default-off M2.1–M2.7 and M3.1–M3.11 and M4.1 pilots are implemented as recorded below. Existing OAuth grants are not widened. Hosted write acceptance remains separate from implementation.
+Status: **Incremental implementation**, updated October 27, 2026. Baseline: the read-only MCP expansion in v8.35 (PR #444). M1 reads and default-off M2.1–M2.7 and M3.1–M3.11 and M4.1–M4.2 pilots are implemented as recorded below. Existing OAuth grants are not widened. Hosted write acceptance remains separate from implementation.
 
 ## Goal and boundary
 
@@ -593,3 +593,32 @@ Hosted M4 acceptance remains pending; no flag or staff decision pilot is enabled
 This does not complete the whole work item or approve/close/sign/dispatch official
 documents, directly send mail, or post financial/stock operations. Other M4
 review/approval/posting decisions remain separate bounded increments.
+
+
+M4.1 merged in [PR #509](https://github.com/jongsky25/css-is/pull/509), commit
+`bf066ada663c92b754dad05675a7b94fad4d9427`.
+
+### M4.2 implementation — v8.98
+
+Separate default-off `supplies:request:approve` prepares full approval of another
+person's exact submitted supply quantities under current independent scoped
+request-approver authority. Browser review shows immutable requester/unit/purpose/
+date, every item/quantity, exact initial reservations/shortage and decision reason.
+Self-approval and technical/custodian rank alone are refused. The first pilot
+accepts 1–20 unchanged active item lines, bounded allocation queues and no earlier
+reservation cycle, and refuses displacement of another request's reservation.
+
+Native ordinary approval and MCP share a caller-owned decision transaction; the
+writer and preview share oldest-first arithmetic. Actual post-insert effects are
+checked against the reviewed plan before allocation. Decision, reservations,
+domain operation/events/audit, durable stock-warning snapshots and minimal MCP
+receipt commit together. Post-commit warning projection retains normal retry/
+reconciliation without repeating a decision. Physical stock is unchanged; the
+custodian separately issues available reserved stock or awaits replenishment.
+
+See [M4.2 setup, stock equations and named acceptance](MCP_SUPPLY_APPROVAL_PILOT.md).
+Hosted go/no-go remains pending and no flag is enabled. Reductions, return/reject,
+correction cycles and larger/displacing queues stay in ordinary Supplies. Other
+room/travel decisions, stock/financial posting, purchase/payment and official
+signing/dispatch remain separate work. Old receipt recovery preserves later
+ordinary fulfillment and stock changes and never approves/reserves a second time.
