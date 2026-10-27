@@ -1,6 +1,6 @@
 # Office Connect MCP expansion plan
 
-Status: **Incremental implementation**, updated October 27, 2026. Baseline: the read-only MCP expansion in v8.35 (PR #444). M1 reads and default-off M2.1 notification, M2.2 supply-draft, M2.3 private-comment-draft and M2.4 saved-report-view and M2.5 personal-calendar pilots are implemented as recorded below. Existing OAuth grants are not widened. Hosted write acceptance remains separate from implementation.
+Status: **Incremental implementation**, updated October 27, 2026. Baseline: the read-only MCP expansion in v8.35 (PR #444). M1 reads and default-off M2.1 through M2.6 pilots are implemented as recorded below. Existing OAuth grants are not widened. Hosted write acceptance remains separate from implementation.
 
 ## Goal and boundary
 
@@ -269,3 +269,24 @@ atomically with the entry; retries never overwrite later normal Calendar edits.
 See [setup, boundaries and acceptance](MCP_PERSONAL_CALENDAR_PILOT.md).
 Automated OAuth/MCP/browser and domain checks cover local behavior. Hosted write
 acceptance remains pending; further M2 and all M3/M4 actions remain separate work.
+
+M2.5 merged in [PR #495](https://github.com/jongsky25/css-is/pull/495), commit
+`9db1f2c1c877cdee1aea9c0cac90375e699be9e7`.
+
+### M2.6 implementation — v8.84
+
+The default-off travel reimbursement pilot adds separate `travel:filing:draft`
+consent, excluded from default OAuth scopes. ChatGPT prepares an own standalone
+reimbursement filing; signed-in browser confirmation opens its normal incomplete
+In progress checklist. Exact activity/DPO/role fields, every proposed Yes/No
+answer, initial checklist, working-day deadline, Admin Unit visibility and ordinary
+reminder behavior are shown before confirmation. Current policy, session,
+connection, scope and payload are rechecked under the writer lock.
+
+The normal travel domain service creates the filing/checklist atomically with
+original identity, content-free integration audit and receipt. Exact retries do
+not overwrite later normal travel actions. Completed/expired preview and derived
+checklist copies are cleared. No linked calendar/activity, cash advance,
+liquidation, amounts, generation, review request, submission, approval or payment
+is performed. See [pilot setup and acceptance](MCP_TRAVEL_DRAFT_PILOT.md).
+Hosted acceptance remains pending; further M2 and all M3/M4 writes are separate.

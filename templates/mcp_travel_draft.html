@@ -1,0 +1,38 @@
+{% extends "dash_layout.html" %}
+{% block title %}Review reimbursement draft — Office Connect{% endblock %}
+{% block content %}
+<div style="max-width:44rem;margin:auto;overflow-wrap:anywhere">
+{% if result.status == 'completed' %}
+<h1>Reimbursement draft opened</h1>
+<p>Opened at {{ result.completed_at }} in progress. This receipt records creation, not submission or approval. Later checklist changes and submissions are separate actions.</p>
+<p><a href="{{ result.web_url }}">Open my reimbursement checklist</a></p>
+{% else %}
+<h1>Open this reimbursement draft?</h1>
+<dl>
+<dt>Activity</dt><dd>{{ result.fields.title }}</dd>
+<dt>Dates</dt><dd>{{ result.fields.start_date }} to {{ result.fields.end_date }}</dd>
+<dt>Venue</dt><dd>{{ result.fields.venue or 'None' }}</dd>
+<dt>DPO number</dt><dd>{{ result.fields.dpo_no }}</dd>
+<dt>DPO date</dt><dd>{{ result.fields.dpo_date or 'Not provided' }}</dd>
+<dt>Your role</dt><dd>{{ result.fields.role.replace('_', ' ') }}</dd>
+<dt>Filing deadline</dt><dd>{{ result.snapshot.deadline_date }} (normal working-day rules)</dd>
+<dt>Kind and initial status</dt><dd>Reimbursement · In progress · Documents not generated</dd>
+<dt>Visibility</dt><dd>You and the Admin Unit under normal travel access rules</dd>
+</dl>
+<h2>Proposed checklist answers</h2>
+<p>Review every answer, including any proposed No answers, before confirming.</p>
+<dl>{% for question in result.questions %}<dt>{{ question.label }}</dt><dd>{{ 'Yes' if question.answer else 'No' }}</dd>{% endfor %}</dl>
+<h2>Initial document checklist</h2>
+<ul>{% for item in result.snapshot['items'] %}<li>{{ item.label }} — {{ item.requirement }}, {{ item.copies }} {{ 'copy' if item.copies == 1 else 'copies' }}{% if item.note %} · {{ item.note }}{% endif %}</li>{% endfor %}</ul>
+<p>This opens a standalone filing using the activity details above, with no linked calendar entry or activity record. It creates an incomplete checklist and the normal filing deadline; ordinary due-date notices and reminders may follow. MC 114 justification is set to none. It requests no cash advance, enters no amounts, generates no documents and makes no reviewer request, submission, approval or payment.</p>
+<p>If you already have a filing or a cash advance for this activity, review My travel claims before continuing. Use the ordinary travel screen for linked activities, liquidation or other filing kinds. The preview expires ten minutes after preparation. To change the proposal, prepare a new operation after inspecting this one.</p>
+<form method="post">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<input type="hidden" name="preview_digest" value="{{ result.preview_digest }}">
+<button type="submit" name="confirm" value="yes">Confirm: open my reimbursement draft</button>
+</form>
+{% endif %}
+<p>Operation receipt: <code>{{ result.operation_id }}</code></p>
+<p><a href="/travel">My travel claims</a></p>
+</div>
+{% endblock %}

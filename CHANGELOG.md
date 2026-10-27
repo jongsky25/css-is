@@ -1,3 +1,9 @@
+## 8.84 — October 27, 2026
+
+- Add default-off travel reimbursement draft preparation and receipt tools with separate travel:filing:draft consent excluded from default scopes. Limit the pilot to own standalone unsubmitted reimbursement checklists with bounded exact activity/DPO/role fields and strict boolean answers.
+- Require actor/grant/payload/policy-bound browser review of every answer, normal deadline, Admin Unit visibility and ordinary reminder behavior. Recheck working-day policy and checklist before the existing domain service atomically creates the filing, missing-item checklist, original identity, receipt and content-free audit.
+- Add safe recovery through token rotation, duplicate confirmations and later UI changes; clear completed/expired preview and derived checklist copies. No linked activity/calendar, cash advance, liquidation, amounts, generation, review request, submission, approval or payment. Include runtime packaging, OAuth/MCP/mobile/browser checks and the operator runbook; hosted acceptance remains pending.
+
 ## 8.83 — October 27, 2026
 
 - Add default-off personal calendar preparation and receipt tools with separate calendar:entry:create consent excluded from default scopes. Constrain creation to one tentative meeting, current owner as sole participant, people-only visibility and bounded exact text/date/time inputs.

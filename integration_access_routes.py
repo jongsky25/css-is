@@ -16,6 +16,7 @@ import mcp_auth
 import mcp_actions
 import mcp_supply_drafts
 import mcp_comment_drafts
+import mcp_travel_drafts
 import mcp_personal_calendar
 import mcp_report_views
 import report_views
@@ -36,6 +37,7 @@ def csrf(request):
 
 # Explicit allowlist: never expose the hosting environment or credential material.
 MCP_PILOTS = (
+    ('Travel reimbursement drafts (browser confirmation)', 'TRAVEL_DRAFTS', 'travel:filing:draft', ('prepare_travel_reimbursement_draft', 'get_travel_draft_operation')),
     ('Personal calendar entries (browser confirmation)', 'PERSONAL_CALENDAR', 'calendar:entry:create', ('prepare_personal_calendar_entry', 'get_personal_calendar_operation')),
     ('Personal saved report views (browser confirmation)', 'REPORT_VIEWS', 'reports:view:save', ('prepare_saved_report_view', 'get_saved_report_view_operation')),
     ('Private task comment drafts (browser confirmation)', 'COMMENT_DRAFTS', 'work:comment:draft', ('prepare_task_comment_draft', 'get_task_comment_draft_operation')),
@@ -153,10 +155,10 @@ def make_router(templates, get_conn, mcp_readiness=None):
         conn = get_conn()
         try:
             origin = action_origin(request)
-            service = {'notice': mcp_actions, 'supply': mcp_supply_drafts, 'comment': mcp_comment_drafts, 'report': mcp_report_views, 'calendar': mcp_personal_calendar}[kind]
+            service = {'notice': mcp_actions, 'supply': mcp_supply_drafts, 'comment': mcp_comment_drafts, 'report': mcp_report_views, 'calendar': mcp_personal_calendar, 'travel': mcp_travel_drafts}[kind]
             result = service.browser(conn, payload(request), origin + '/mcp', origin,
                                          operation_id, confirm_digest=confirm_digest)
-            return templates.TemplateResponse(request, {'notice': 'mcp_action.html', 'supply': 'mcp_supply_draft.html', 'comment': 'mcp_comment_draft.html', 'report': 'mcp_report_view.html', 'calendar': 'mcp_personal_calendar.html'}[kind],
+            return templates.TemplateResponse(request, {'notice': 'mcp_action.html', 'supply': 'mcp_supply_draft.html', 'comment': 'mcp_comment_draft.html', 'report': 'mcp_report_view.html', 'calendar': 'mcp_personal_calendar.html', 'travel': 'mcp_travel_draft.html'}[kind],
                 {'show_scope': False, 'result': result, 'csrf': csrf(request)}, headers=private)
         except (permissions.Denied, supplies_storage.Denied):
             return HTMLResponse('Action not found or unavailable to you. Sign in with the account that prepared it.', status_code=404, headers=private)
@@ -228,6 +230,14 @@ def make_router(templates, get_conn, mcp_readiness=None):
             return HTMLResponse('Private draft not found or unavailable to you.', status_code=404, headers=private)
         finally:
             conn.close()
+
+    @router.get('/account/integrations/mcp/travel-drafts/{operation_id}', response_class=HTMLResponse)
+    def travel_draft_preview(request: Request, operation_id: str):
+        return action_screen(request, operation_id, kind='travel')
+
+    @router.post('/account/integrations/mcp/travel-drafts/{operation_id}', response_class=HTMLResponse)
+    async def travel_draft_confirm(request: Request, operation_id: str):
+        return await confirm_action(request, operation_id, kind='travel')
 
     @router.get('/account/integrations/mcp/personal-calendar/{operation_id}', response_class=HTMLResponse)
     def personal_calendar_preview(request: Request, operation_id: str):
