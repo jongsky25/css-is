@@ -5046,6 +5046,15 @@ def _telegram_tick():
         conn.close()
 
 
+def _mcp_travel_review_tick():
+    import travel_review_delivery
+    conn = get_conn()
+    try:
+        return travel_review_delivery.run(conn)
+    finally:
+        conn.close()
+
+
 async def _scheduler_loop():
     while True:
         try:
@@ -5088,6 +5097,10 @@ async def _scheduler_loop():
         try:
             await asyncio.to_thread(_telegram_tick)
         except Exception:         # Telegram failure cannot stop other scheduled jobs
+            pass
+        try:
+            await asyncio.to_thread(_mcp_travel_review_tick)
+        except Exception:         # A pending notification cannot stop other jobs.
             pass
         await asyncio.sleep(_SCHED_TICK)
 
@@ -17704,7 +17717,7 @@ if _MCP_ENABLED:
         if not pending:
             return _mcp_consent_error('This request expired. Start again in ChatGPT.', 410)
         client_id, params = pending
-        labels = {'supplies:request:submit': 'Submit your own draft or returned supply request for approval (browser confirmation; no stock reservation or issuance)', 'work:task:submit': 'Submit your assigned In progress task for review (browser confirmation; saves output and note in shared-work history)', 'work:task:acknowledge': 'Acknowledge your assigned To do task as In progress (browser confirmation; records your note in shared-work history)', 'travel:filing:draft': 'Open your own unsubmitted reimbursement checklist (browser confirmation; normal travel access and deadline reminders apply)', 'calendar:entry:create': 'Create your own tentative personal calendar entry (each save requires browser confirmation; no invitations or room bookings)', 'reports:view:save': 'Save your own named survey report selections (each save requires browser confirmation; no results or exports)',
+        labels = {'travel:review:request': 'Request review of your complete travel papers (browser confirmation; queues one email to the selected reviewer)', 'supplies:request:submit': 'Submit your own draft or returned supply request for approval (browser confirmation; no stock reservation or issuance)', 'work:task:submit': 'Submit your assigned In progress task for review (browser confirmation; saves output and note in shared-work history)', 'work:task:acknowledge': 'Acknowledge your assigned To do task as In progress (browser confirmation; records your note in shared-work history)', 'travel:filing:draft': 'Open your own unsubmitted reimbursement checklist (browser confirmation; normal travel access and deadline reminders apply)', 'calendar:entry:create': 'Create your own tentative personal calendar entry (each save requires browser confirmation; no invitations or room bookings)', 'reports:view:save': 'Save your own named survey report selections (each save requires browser confirmation; no results or exports)',
                   'work:comment:draft': 'Prepare private task comment drafts (each save requires browser confirmation; no posting or notices)',
                   'supplies:request:draft': 'Prepare new personal supply request drafts (each save requires browser confirmation; no submission or stock allocation)',
                   'notifications:mark_read': 'Prepare marking your own shared-work notices read (each action requires browser confirmation)',

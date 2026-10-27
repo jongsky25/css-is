@@ -1,0 +1,36 @@
+{% extends "dash_layout.html" %}
+{% block title %}Review travel review request — Office Connect{% endblock %}
+{% block content %}
+<div style="max-width:44rem;margin:auto;overflow-wrap:anywhere">
+{% if result.status == 'completed' %}
+<h1>Travel review requested</h1>
+<p>Recorded at {{ result.completed_at }} for review round {{ result.review_round }}. Reviewer account {{ result.next_actor.user_id }} acts next. This is the original request result; later changes or decisions are separate.</p>
+<p>Notification status: <strong>{{ result.notification_status }}</strong>. Queued is not sent. Sent means the transport reported acceptance, not that the person read it. Uncertain means the attempt will not retry automatically; inspect the normal reviewer queue and mail log before arranging any separate notification.</p>
+<p><a href="{{ result.web_url }}">Open my travel filing</a></p>
+{% else %}
+<h1>Request review of these travel papers?</h1>
+<dl>
+<dt>Filing</dt><dd>{{ result.snapshot.ref_code }} · {{ result.snapshot.title }}</dd>
+<dt>Activity dates</dt><dd>{{ result.snapshot.start }} to {{ result.snapshot.end }}</dd>
+<dt>Expected update stamp</dt><dd>{{ result.fields.expected_updated_at }}</dd>
+<dt>Selected reviewer</dt><dd>{{ result.snapshot.reviewer.name }} (account {{ result.snapshot.reviewer.id }})</dd>
+<dt>Email recipient</dt><dd>{{ result.snapshot.reviewer.email }}</dd>
+<dt>Email content</dt><dd>Your name, filing reference, activity title and a signed-in link to the review page. No document links or attachments are included.</dd>
+<dt>Email feature</dt><dd>{{ 'Enabled; one notice will be queued for a single transport attempt' if result.snapshot.email_enabled else 'Disabled; the worker will record skipped_off without sending' }}</dd>
+<dt>Change</dt><dd>Open filing stays open; review becomes requested in round {{ result.snapshot.review_round + 1 }}</dd>
+<dt>Previous feedback</dt><dd>{{ result.snapshot.sent_notes_to_resolve }} sent notes will be marked resolved as part of asking again.</dd>
+</dl>
+<h2>Current document checklist</h2>
+<ul>{% for item in result.snapshot.documents %}<li>{{ item.label }} · {{ item.state }}</li>{% endfor %}</ul>
+<p><a href="/travel/f/{{ result.snapshot.ref_code }}">Review the exact saved papers in the filing</a></p>
+<p>Confirm only after reviewing the papers and selected recipient. This records a request in the reviewer's normal queue and queues one email under the normal email feature setting. Queued does not mean delivered; failed or uncertain attempts are never automatically resent. Later revocation, reviewer changes or an obsolete review round can cancel a queued notice.</p>
+<p>This does not approve the papers or claim, mark ready, record paper submission, generate files or make payment. The preview expires ten minutes after preparation; changed papers, notes, reviewer eligibility or mail settings require a new preview.</p>
+<form method="post">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<input type="hidden" name="preview_digest" value="{{ result.preview_digest }}">
+<button type="submit" name="confirm" value="yes">Confirm: request travel review</button>
+</form>
+{% endif %}
+<p>Operation receipt: <code>{{ result.operation_id }}</code></p>
+</div>
+{% endblock %}

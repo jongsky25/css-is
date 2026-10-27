@@ -1,3 +1,9 @@
+## 8.88 — October 27, 2026
+
+- Add scoped own-review preparation context (fresh update stamp, readiness and paginated eligible account IDs/names), plus default-off own travel review request preparation/recovery with separate travel:review:request consent excluded from default scopes. Browser review binds the full filing/paper/note snapshot, current update stamp, eligible reviewer and selected email recipient before setting review Requested and incrementing the round.
+- Allow the existing review domain service to join the caller's writer transaction while preserving ordinary UI behavior. Atomically commit filing/note changes, audits, receipt and one notification keyed to the review round; report original reviewer responsibility and current mail status separately.
+- Add scheduler-driven durable single-attempt mail delivery with committed claim markers, current recipient/authority/feature checks, payload integrity, bounded cleanup and explicit queued/uncertain/skipped/unconfigured states. Never automatically retry ambiguous/crashed attempts. Include runtime packaging, OAuth/MCP/browser/mobile/travel/delivery checks and the operator runbook. No paper approval, ready/submitted transition, document generation or payment; hosted acceptance remains pending.
+
 ## 8.87 — October 27, 2026
 
 - Add default-off own supply request submission preparation/recovery with separate supplies:request:submit consent excluded from default scopes. Signed-in browser review binds an existing draft/returned request, every purpose/date/item/quantity/catalog field, current requester/unit, approver routing and numbering year.
