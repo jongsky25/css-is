@@ -1,4 +1,4 @@
-"""Browser-only consent, one-time disclosure and revocation of read credentials."""
+"""Browser consent, credential management and explicit MCP action confirmation."""
 import asyncio
 from datetime import datetime, timezone
 import hashlib
@@ -13,6 +13,9 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 import auth
 import integration_access as access
 import mcp_auth
+import mcp_actions
+import documents_permissions as permissions
+from request_security import same_origin_write
 import ratelimit as rl
 import storage as st
 import tzutil as tz
@@ -25,6 +28,7 @@ def csrf(request):
 
 # Explicit allowlist: never expose the hosting environment or credential material.
 MCP_PILOTS = (
+    ('Mark own work notice read (browser confirmation)', 'NOTIFICATION_WRITES', 'notifications:mark_read', ('mark_my_notification_read', 'get_mcp_operation')),
     ('Monthly CSM summaries', 'CSM', 'surveys:csm:read', ('get_csm_summary',)),
     ('Monthly CSM comparisons', 'CSM_TRENDS', 'surveys:csm_trends:read', ('compare_csm_months',)),
     ('Quarterly activity summaries', 'ACTIVITY_SURVEYS', 'surveys:activities:read', ('get_activity_survey_summary',)),
@@ -121,6 +125,58 @@ def make_router(templates, get_conn, mcp_readiness=None):
     @router.get('/admin/integrations',response_class=HTMLResponse)
     def admin_list(request: Request):
         return screen(request,admin=True)
+
+    def action_origin(request):
+        canonical = os.environ.get('CSS_BASE_URL')
+        if not canonical and os.environ.get('SPACE_HOST'):
+            canonical = 'https://' + os.environ['SPACE_HOST']
+        parts = access._origin(canonical or str(request.base_url))
+        if parts is None:
+            raise mcp_actions.ActionError('invalid_origin', 'The deployment origin is unavailable.')
+        scheme, host, port = parts
+        host = '[' + host + ']' if ':' in host else host
+        return scheme + '://' + host + (':' + str(port) if port != (443 if scheme == 'https' else 80) else '')
+
+    def action_screen(request, operation_id, confirm_digest=None):
+        conn = get_conn()
+        try:
+            origin = action_origin(request)
+            result = mcp_actions.browser(conn, payload(request), origin + '/mcp', origin,
+                                         operation_id, confirm_digest=confirm_digest)
+            return templates.TemplateResponse(request, 'mcp_action.html',
+                {'show_scope': False, 'result': result, 'csrf': csrf(request)}, headers=private)
+        except permissions.Denied:
+            return HTMLResponse('Action not found or unavailable to you. Sign in with the account that prepared it.', status_code=404, headers=private)
+        except mcp_actions.ActionError as exc:
+            # All action error messages are fixed server-owned text.
+            return HTMLResponse(str(exc), status_code=409, headers=private)
+        finally:
+            conn.close()
+
+    @router.get('/account/integrations/mcp/actions/{operation_id}', response_class=HTMLResponse)
+    def action_preview(request: Request, operation_id: str):
+        return action_screen(request, operation_id)
+
+    @router.post('/account/integrations/mcp/actions/{operation_id}', response_class=HTMLResponse)
+    async def action_confirm(request: Request, operation_id: str):
+        canonical = action_origin(request)
+        if not same_origin_write(request, canonical):
+            return HTMLResponse('Request verification failed.', status_code=403, headers=private)
+        raw = bytearray()
+        async for chunk in request.stream():
+            raw.extend(chunk)
+            if len(raw) > 2048:
+                return HTMLResponse('The confirmation form is too large.', status_code=413, headers=private)
+        request._body = bytes(raw)
+        form = await request.form(max_fields=3, max_files=0)
+        if (set(form) != {'csrf', 'preview_digest', 'confirm'}
+                or any(len(form.getlist(k)) != 1 for k in form)
+                or form.get('confirm') != 'yes'
+                or not hmac.compare_digest(str(form.get('csrf', '')).encode(), csrf(request).encode())):
+            return HTMLResponse('The confirmation expired or is invalid. Reload the preview.', status_code=403, headers=private)
+        if not rl.allow('mcp_action', str(request.state.user['id'])):
+            return HTMLResponse('Too many confirmations. Retry later with the same link.', status_code=429, headers=private)
+        return await asyncio.to_thread(action_screen, request, operation_id, str(form['preview_digest']))
 
     def create_credential(request,form):
         if not rl.allow('integration_issue',str(request.state.user['id'])):

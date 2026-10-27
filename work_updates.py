@@ -86,16 +86,23 @@ def read_revision(conn, user_id, comment_id):
 def mark_read(conn, user, case_id, task_id, observed):
     """Record only displayed revisions. A concurrent edit stays unread."""
     with transaction(conn):
-        user, _, _ = discussion.scope(conn, user, case_id, task_id)
-        if not isinstance(observed, list) or len(observed) > 30:
-            raise ValueError('Mark at most 30 displayed messages at a time.')
-        for pair in observed:
-            cid, revision = map(int, pair)
-            current = discussion.message(conn, case_id, task_id, cid)
-            if not 1 <= revision <= current['revision']:
-                raise ValueError('Invalid displayed message revision.')
-            conn.execute('INSERT INTO work_comment_read VALUES (?,?,?) ON CONFLICT(comment_id,user_id) DO UPDATE SET revision=MAX(revision,excluded.revision)',
-                         (cid, user['id'], revision))
+        mark_read_in_transaction(conn, user, case_id, task_id, observed)
+
+
+def mark_read_in_transaction(conn, user, case_id, task_id, observed):
+    """Shared UI/MCP mutation; caller owns the transaction and receipt."""
+    if not conn.in_transaction:
+        raise RuntimeError('An active transaction is required')
+    user, _, _ = discussion.scope(conn, user, case_id, task_id)
+    if not isinstance(observed, list) or len(observed) > 30:
+        raise ValueError('Mark at most 30 displayed messages at a time.')
+    for pair in observed:
+        cid, revision = map(int, pair)
+        current = discussion.message(conn, case_id, task_id, cid)
+        if not 1 <= revision <= current['revision']:
+            raise ValueError('Invalid displayed message revision.')
+        conn.execute('INSERT INTO work_comment_read VALUES (?,?,?) ON CONFLICT(comment_id,user_id) DO UPDATE SET revision=MAX(revision,excluded.revision)',
+                     (cid, user['id'], revision))
 
 
 def inbox(conn, user, before=None, limit=25, category="all", *, metadata_only=False):
