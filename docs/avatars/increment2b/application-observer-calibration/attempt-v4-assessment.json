@@ -1,0 +1,3548 @@
+{
+  "run_url": "https://github.com/jongsky25/css-is/actions/runs/40527921415",
+  "artifact_id": 12745706348,
+  "artifact_sha256": "c72fe6c6d6aee4fbfaff0df64cb7c1a34a29319c912ec6c80b8abb69ec4dad65",
+  "internal_hashes_verified": 196,
+  "harness_commit": "3cdbb3720c4f096d566642a347effcfc18d1428d",
+  "status": "application_calibration_failed",
+  "independent_application_audit_identical": true,
+  "native_qualified_in_same_job": true,
+  "assessment": {
+    "status": "application_calibration_failed",
+    "acceptance": false,
+    "application_memory_accepted": false,
+    "harness_commit": "3cdbb3720c4f096d566642a347effcfc18d1428d",
+    "receiver_proof": {
+      "status": "application_receiver_proof_passed",
+      "acceptance": false,
+      "groups": {
+        "avatar": [
+          "defs",
+          "linearGradient",
+          "stop",
+          "stop",
+          "stop",
+          "linearGradient",
+          "stop",
+          "stop",
+          "g",
+          "g",
+          "g",
+          "ellipse",
+          "g",
+          "g",
+          "path",
+          "path",
+          "path",
+          "path",
+          "g",
+          "ellipse",
+          "ellipse",
+          "path",
+          "g",
+          "g",
+          "path",
+          "path",
+          "g",
+          "path",
+          "path",
+          "path",
+          "path",
+          "path"
+        ],
+        "other": [
+          "div",
+          "div",
+          "div",
+          "div",
+          "span",
+          "div",
+          "span",
+          "span",
+          "a",
+          "span",
+          "a",
+          "span",
+          "a",
+          "span",
+          "a",
+          "span",
+          "div",
+          "a",
+          "span",
+          "span",
+          "div",
+          "span",
+          "a",
+          "span",
+          "span",
+          "div",
+          "span",
+          "a",
+          "span",
+          "span",
+          "div",
+          "span"
+        ]
+      },
+      "receivers": 128,
+      "references": 128
+    },
+    "observer_qualified_for_application_attribution": false,
+    "errors": [
+      "Slot 1: Observation bound exceeds 5% or 250ms",
+      "Slot 2: Observation bound exceeds 5% or 250ms"
+    ],
+    "cohorts": [
+      {
+        "index": 0,
+        "status": "valid_capture",
+        "mode": "control",
+        "duration_ms": 7539.984988,
+        "workload_duration_ms": 84367.57598,
+        "observation_fraction_bound": 0.04905196171990044,
+        "maximum_observation_ms": 29.510542,
+        "errors": []
+      },
+      {
+        "index": 1,
+        "status": "valid_capture",
+        "mode": "probe",
+        "duration_ms": 7617.038667,
+        "workload_duration_ms": 86423.886393,
+        "observation_fraction_bound": 0.0565453473232316,
+        "maximum_observation_ms": 27.117391,
+        "errors": [
+          "Observation bound exceeds 5% or 250ms"
+        ],
+        "receiver_records": 2560,
+        "coverage": {
+          "avatar": 1.0,
+          "other": 1.0
+        },
+        "unknown_pool_returns": 3,
+        "labelled_returns": [
+          {
+            "generation": 34,
+            "groups": [
+              "other"
+            ],
+            "return_interval_ns": [
+              415278609478,
+              415278611201
+            ],
+            "sweep_overlap": [
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "cppgc",
+                "dur": 5996,
+                "name": "CppGC.ConcurrentSweep",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 5982,
+                "tid": 3530,
+                "ts": 415275729,
+                "tts": 1000295
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "cppgc",
+                "dur": 5306,
+                "name": "CppGC.IncrementalSweep",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 5300,
+                "tid": 3520,
+                "ts": 415276043,
+                "tts": 8567339
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false,
+                  "max_duration_ms": 5,
+                  "sweeping_mode": "only-finalizers"
+                },
+                "cat": "cppgc",
+                "dur": 5302,
+                "name": "CppGC.SweepInLowPriorityTask",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 5297,
+                "tid": 3520,
+                "ts": 415276046,
+                "tts": 8567341
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 2647,
+                "name": "CppGC.SweepFinalizeEmptyPages",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 2648,
+                "tid": 3520,
+                "ts": 415276050,
+                "tts": 8567344
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 64,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 64,
+                "tid": 3520,
+                "ts": 415278702,
+                "tts": 8569994
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 1163,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 1164,
+                "tid": 3520,
+                "ts": 415278768,
+                "tts": 8570059
+              }
+            ]
+          },
+          {
+            "generation": 393,
+            "groups": [
+              "avatar",
+              "other"
+            ],
+            "return_interval_ns": [
+              415278559815,
+              415278561689
+            ],
+            "sweep_overlap": [
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "cppgc",
+                "dur": 5996,
+                "name": "CppGC.ConcurrentSweep",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 5982,
+                "tid": 3530,
+                "ts": 415275729,
+                "tts": 1000295
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "cppgc",
+                "dur": 5306,
+                "name": "CppGC.IncrementalSweep",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 5300,
+                "tid": 3520,
+                "ts": 415276043,
+                "tts": 8567339
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false,
+                  "max_duration_ms": 5,
+                  "sweeping_mode": "only-finalizers"
+                },
+                "cat": "cppgc",
+                "dur": 5302,
+                "name": "CppGC.SweepInLowPriorityTask",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 5297,
+                "tid": 3520,
+                "ts": 415276046,
+                "tts": 8567341
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 2647,
+                "name": "CppGC.SweepFinalizeEmptyPages",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 2648,
+                "tid": 3520,
+                "ts": 415276050,
+                "tts": 8567344
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 64,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 64,
+                "tid": 3520,
+                "ts": 415278702,
+                "tts": 8569994
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 1163,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 1164,
+                "tid": 3520,
+                "ts": 415278768,
+                "tts": 8570059
+              }
+            ]
+          },
+          {
+            "generation": 444,
+            "groups": [
+              "avatar",
+              "other"
+            ],
+            "return_interval_ns": [
+              411703168939,
+              411703170803
+            ],
+            "sweep_overlap": [
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "cppgc",
+                "dur": 5048,
+                "name": "CppGC.IncrementalSweep",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 5038,
+                "tid": 3520,
+                "ts": 411702893,
+                "tts": 7504009
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false,
+                  "max_duration_ms": 5,
+                  "sweeping_mode": "all"
+                },
+                "cat": "cppgc",
+                "dur": 5045,
+                "name": "CppGC.SweepInLowPriorityTask",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 5035,
+                "tid": 3520,
+                "ts": 411702895,
+                "tts": 7504011
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 359,
+                "name": "CppGC.SweepFinalizeEmptyPages",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 359,
+                "tid": 3520,
+                "ts": 411702899,
+                "tts": 7504014
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 202,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 202,
+                "tid": 3520,
+                "ts": 411703261,
+                "tts": 7504375
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 1157,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 1157,
+                "tid": 3520,
+                "ts": 411703465,
+                "tts": 7504578
+              }
+            ]
+          },
+          {
+            "generation": 447,
+            "groups": [
+              "avatar",
+              "other"
+            ],
+            "return_interval_ns": [
+              411703185440,
+              411703186913
+            ],
+            "sweep_overlap": [
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "cppgc",
+                "dur": 5048,
+                "name": "CppGC.IncrementalSweep",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 5038,
+                "tid": 3520,
+                "ts": 411702893,
+                "tts": 7504009
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false,
+                  "max_duration_ms": 5,
+                  "sweeping_mode": "all"
+                },
+                "cat": "cppgc",
+                "dur": 5045,
+                "name": "CppGC.SweepInLowPriorityTask",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 5035,
+                "tid": 3520,
+                "ts": 411702895,
+                "tts": 7504011
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 359,
+                "name": "CppGC.SweepFinalizeEmptyPages",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 359,
+                "tid": 3520,
+                "ts": 411702899,
+                "tts": 7504014
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 202,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 202,
+                "tid": 3520,
+                "ts": 411703261,
+                "tts": 7504375
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 1157,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 1157,
+                "tid": 3520,
+                "ts": 411703465,
+                "tts": 7504578
+              }
+            ]
+          },
+          {
+            "generation": 453,
+            "groups": [
+              "avatar",
+              "other"
+            ],
+            "return_interval_ns": [
+              411703199095,
+              411703200578
+            ],
+            "sweep_overlap": [
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "cppgc",
+                "dur": 5048,
+                "name": "CppGC.IncrementalSweep",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 5038,
+                "tid": 3520,
+                "ts": 411702893,
+                "tts": 7504009
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false,
+                  "max_duration_ms": 5,
+                  "sweeping_mode": "all"
+                },
+                "cat": "cppgc",
+                "dur": 5045,
+                "name": "CppGC.SweepInLowPriorityTask",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 5035,
+                "tid": 3520,
+                "ts": 411702895,
+                "tts": 7504011
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 359,
+                "name": "CppGC.SweepFinalizeEmptyPages",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 359,
+                "tid": 3520,
+                "ts": 411702899,
+                "tts": 7504014
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 202,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 202,
+                "tid": 3520,
+                "ts": 411703261,
+                "tts": 7504375
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 1157,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 1157,
+                "tid": 3520,
+                "ts": 411703465,
+                "tts": 7504578
+              }
+            ]
+          },
+          {
+            "generation": 460,
+            "groups": [
+              "avatar",
+              "other"
+            ],
+            "return_interval_ns": [
+              411703213502,
+              411703214965
+            ],
+            "sweep_overlap": [
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "cppgc",
+                "dur": 5048,
+                "name": "CppGC.IncrementalSweep",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 5038,
+                "tid": 3520,
+                "ts": 411702893,
+                "tts": 7504009
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false,
+                  "max_duration_ms": 5,
+                  "sweeping_mode": "all"
+                },
+                "cat": "cppgc",
+                "dur": 5045,
+                "name": "CppGC.SweepInLowPriorityTask",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 5035,
+                "tid": 3520,
+                "ts": 411702895,
+                "tts": 7504011
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 359,
+                "name": "CppGC.SweepFinalizeEmptyPages",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 359,
+                "tid": 3520,
+                "ts": 411702899,
+                "tts": 7504014
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 202,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 202,
+                "tid": 3520,
+                "ts": 411703261,
+                "tts": 7504375
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 1157,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 1157,
+                "tid": 3520,
+                "ts": 411703465,
+                "tts": 7504578
+              }
+            ]
+          },
+          {
+            "generation": 478,
+            "groups": [
+              "avatar",
+              "other"
+            ],
+            "return_interval_ns": [
+              411703227419,
+              411703228841
+            ],
+            "sweep_overlap": [
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "cppgc",
+                "dur": 5048,
+                "name": "CppGC.IncrementalSweep",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 5038,
+                "tid": 3520,
+                "ts": 411702893,
+                "tts": 7504009
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false,
+                  "max_duration_ms": 5,
+                  "sweeping_mode": "all"
+                },
+                "cat": "cppgc",
+                "dur": 5045,
+                "name": "CppGC.SweepInLowPriorityTask",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 5035,
+                "tid": 3520,
+                "ts": 411702895,
+                "tts": 7504011
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 359,
+                "name": "CppGC.SweepFinalizeEmptyPages",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 359,
+                "tid": 3520,
+                "ts": 411702899,
+                "tts": 7504014
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 202,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 202,
+                "tid": 3520,
+                "ts": 411703261,
+                "tts": 7504375
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 1157,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 1157,
+                "tid": 3520,
+                "ts": 411703465,
+                "tts": 7504578
+              }
+            ]
+          },
+          {
+            "generation": 499,
+            "groups": [
+              "avatar",
+              "other"
+            ],
+            "return_interval_ns": [
+              411703241555,
+              411703242717
+            ],
+            "sweep_overlap": [
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "cppgc",
+                "dur": 5048,
+                "name": "CppGC.IncrementalSweep",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 5038,
+                "tid": 3520,
+                "ts": 411702893,
+                "tts": 7504009
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false,
+                  "max_duration_ms": 5,
+                  "sweeping_mode": "all"
+                },
+                "cat": "cppgc",
+                "dur": 5045,
+                "name": "CppGC.SweepInLowPriorityTask",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 5035,
+                "tid": 3520,
+                "ts": 411702895,
+                "tts": 7504011
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 359,
+                "name": "CppGC.SweepFinalizeEmptyPages",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 359,
+                "tid": 3520,
+                "ts": 411702899,
+                "tts": 7504014
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 202,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 202,
+                "tid": 3520,
+                "ts": 411703261,
+                "tts": 7504375
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 1157,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 1157,
+                "tid": 3520,
+                "ts": 411703465,
+                "tts": 7504578
+              }
+            ]
+          },
+          {
+            "generation": 521,
+            "groups": [
+              "avatar",
+              "other"
+            ],
+            "return_interval_ns": [
+              411703257695,
+              411703258787
+            ],
+            "sweep_overlap": [
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "cppgc",
+                "dur": 5048,
+                "name": "CppGC.IncrementalSweep",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 5038,
+                "tid": 3520,
+                "ts": 411702893,
+                "tts": 7504009
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false,
+                  "max_duration_ms": 5,
+                  "sweeping_mode": "all"
+                },
+                "cat": "cppgc",
+                "dur": 5045,
+                "name": "CppGC.SweepInLowPriorityTask",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 5035,
+                "tid": 3520,
+                "ts": 411702895,
+                "tts": 7504011
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 359,
+                "name": "CppGC.SweepFinalizeEmptyPages",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 359,
+                "tid": 3520,
+                "ts": 411702899,
+                "tts": 7504014
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 202,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 202,
+                "tid": 3520,
+                "ts": 411703261,
+                "tts": 7504375
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 1157,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 1157,
+                "tid": 3520,
+                "ts": 411703465,
+                "tts": 7504578
+              }
+            ]
+          },
+          {
+            "generation": 548,
+            "groups": [
+              "avatar",
+              "other"
+            ],
+            "return_interval_ns": [
+              415278577218,
+              415278578349
+            ],
+            "sweep_overlap": [
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "cppgc",
+                "dur": 5996,
+                "name": "CppGC.ConcurrentSweep",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 5982,
+                "tid": 3530,
+                "ts": 415275729,
+                "tts": 1000295
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "cppgc",
+                "dur": 5306,
+                "name": "CppGC.IncrementalSweep",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 5300,
+                "tid": 3520,
+                "ts": 415276043,
+                "tts": 8567339
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false,
+                  "max_duration_ms": 5,
+                  "sweeping_mode": "only-finalizers"
+                },
+                "cat": "cppgc",
+                "dur": 5302,
+                "name": "CppGC.SweepInLowPriorityTask",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 5297,
+                "tid": 3520,
+                "ts": 415276046,
+                "tts": 8567341
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 2647,
+                "name": "CppGC.SweepFinalizeEmptyPages",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 2648,
+                "tid": 3520,
+                "ts": 415276050,
+                "tts": 8567344
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 64,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 64,
+                "tid": 3520,
+                "ts": 415278702,
+                "tts": 8569994
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 1163,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 1164,
+                "tid": 3520,
+                "ts": 415278768,
+                "tts": 8570059
+              }
+            ]
+          },
+          {
+            "generation": 573,
+            "groups": [
+              "avatar",
+              "other"
+            ],
+            "return_interval_ns": [
+              415278623384,
+              415278624426
+            ],
+            "sweep_overlap": [
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "cppgc",
+                "dur": 5996,
+                "name": "CppGC.ConcurrentSweep",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 5982,
+                "tid": 3530,
+                "ts": 415275729,
+                "tts": 1000295
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "cppgc",
+                "dur": 5306,
+                "name": "CppGC.IncrementalSweep",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 5300,
+                "tid": 3520,
+                "ts": 415276043,
+                "tts": 8567339
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false,
+                  "max_duration_ms": 5,
+                  "sweeping_mode": "only-finalizers"
+                },
+                "cat": "cppgc",
+                "dur": 5302,
+                "name": "CppGC.SweepInLowPriorityTask",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 5297,
+                "tid": 3520,
+                "ts": 415276046,
+                "tts": 8567341
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 2647,
+                "name": "CppGC.SweepFinalizeEmptyPages",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 2648,
+                "tid": 3520,
+                "ts": 415276050,
+                "tts": 8567344
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 64,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 64,
+                "tid": 3520,
+                "ts": 415278702,
+                "tts": 8569994
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 1163,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 1164,
+                "tid": 3520,
+                "ts": 415278768,
+                "tts": 8570059
+              }
+            ]
+          },
+          {
+            "generation": 599,
+            "groups": [
+              "avatar",
+              "other"
+            ],
+            "return_interval_ns": [
+              415278639153,
+              415278640225
+            ],
+            "sweep_overlap": [
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "cppgc",
+                "dur": 5996,
+                "name": "CppGC.ConcurrentSweep",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 5982,
+                "tid": 3530,
+                "ts": 415275729,
+                "tts": 1000295
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "cppgc",
+                "dur": 5306,
+                "name": "CppGC.IncrementalSweep",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 5300,
+                "tid": 3520,
+                "ts": 415276043,
+                "tts": 8567339
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false,
+                  "max_duration_ms": 5,
+                  "sweeping_mode": "only-finalizers"
+                },
+                "cat": "cppgc",
+                "dur": 5302,
+                "name": "CppGC.SweepInLowPriorityTask",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 5297,
+                "tid": 3520,
+                "ts": 415276046,
+                "tts": 8567341
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 2647,
+                "name": "CppGC.SweepFinalizeEmptyPages",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 2648,
+                "tid": 3520,
+                "ts": 415276050,
+                "tts": 8567344
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 64,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 64,
+                "tid": 3520,
+                "ts": 415278702,
+                "tts": 8569994
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 1163,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 1164,
+                "tid": 3520,
+                "ts": 415278768,
+                "tts": 8570059
+              }
+            ]
+          },
+          {
+            "generation": 608,
+            "groups": [
+              "avatar",
+              "other"
+            ],
+            "return_interval_ns": [
+              415278592546,
+              415278593818
+            ],
+            "sweep_overlap": [
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "cppgc",
+                "dur": 5996,
+                "name": "CppGC.ConcurrentSweep",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 5982,
+                "tid": 3530,
+                "ts": 415275729,
+                "tts": 1000295
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "cppgc",
+                "dur": 5306,
+                "name": "CppGC.IncrementalSweep",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 5300,
+                "tid": 3520,
+                "ts": 415276043,
+                "tts": 8567339
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false,
+                  "max_duration_ms": 5,
+                  "sweeping_mode": "only-finalizers"
+                },
+                "cat": "cppgc",
+                "dur": 5302,
+                "name": "CppGC.SweepInLowPriorityTask",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 5297,
+                "tid": 3520,
+                "ts": 415276046,
+                "tts": 8567341
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 2647,
+                "name": "CppGC.SweepFinalizeEmptyPages",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 2648,
+                "tid": 3520,
+                "ts": 415276050,
+                "tts": 8567344
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 64,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 64,
+                "tid": 3520,
+                "ts": 415278702,
+                "tts": 8569994
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 1163,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 1164,
+                "tid": 3520,
+                "ts": 415278768,
+                "tts": 8570059
+              }
+            ]
+          },
+          {
+            "generation": 626,
+            "groups": [
+              "avatar",
+              "other"
+            ],
+            "return_interval_ns": [
+              415278653680,
+              415278654923
+            ],
+            "sweep_overlap": [
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "cppgc",
+                "dur": 5996,
+                "name": "CppGC.ConcurrentSweep",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 5982,
+                "tid": 3530,
+                "ts": 415275729,
+                "tts": 1000295
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "cppgc",
+                "dur": 5306,
+                "name": "CppGC.IncrementalSweep",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 5300,
+                "tid": 3520,
+                "ts": 415276043,
+                "tts": 8567339
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false,
+                  "max_duration_ms": 5,
+                  "sweeping_mode": "only-finalizers"
+                },
+                "cat": "cppgc",
+                "dur": 5302,
+                "name": "CppGC.SweepInLowPriorityTask",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 5297,
+                "tid": 3520,
+                "ts": 415276046,
+                "tts": 8567341
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 2647,
+                "name": "CppGC.SweepFinalizeEmptyPages",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 2648,
+                "tid": 3520,
+                "ts": 415276050,
+                "tts": 8567344
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 64,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 64,
+                "tid": 3520,
+                "ts": 415278702,
+                "tts": 8569994
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 1163,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 1164,
+                "tid": 3520,
+                "ts": 415278768,
+                "tts": 8570059
+              }
+            ]
+          },
+          {
+            "generation": 628,
+            "groups": [
+              "avatar",
+              "other"
+            ],
+            "return_interval_ns": [
+              415278668117,
+              415278669550
+            ],
+            "sweep_overlap": [
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "cppgc",
+                "dur": 5996,
+                "name": "CppGC.ConcurrentSweep",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 5982,
+                "tid": 3530,
+                "ts": 415275729,
+                "tts": 1000295
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "cppgc",
+                "dur": 5306,
+                "name": "CppGC.IncrementalSweep",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 5300,
+                "tid": 3520,
+                "ts": 415276043,
+                "tts": 8567339
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false,
+                  "max_duration_ms": 5,
+                  "sweeping_mode": "only-finalizers"
+                },
+                "cat": "cppgc",
+                "dur": 5302,
+                "name": "CppGC.SweepInLowPriorityTask",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 5297,
+                "tid": 3520,
+                "ts": 415276046,
+                "tts": 8567341
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 2647,
+                "name": "CppGC.SweepFinalizeEmptyPages",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 2648,
+                "tid": 3520,
+                "ts": 415276050,
+                "tts": 8567344
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 64,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 64,
+                "tid": 3520,
+                "ts": 415278702,
+                "tts": 8569994
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 1163,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 1164,
+                "tid": 3520,
+                "ts": 415278768,
+                "tts": 8570059
+              }
+            ]
+          },
+          {
+            "generation": 633,
+            "groups": [
+              "avatar",
+              "other"
+            ],
+            "return_interval_ns": [
+              415278682404,
+              415278683476
+            ],
+            "sweep_overlap": [
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "cppgc",
+                "dur": 5996,
+                "name": "CppGC.ConcurrentSweep",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 5982,
+                "tid": 3530,
+                "ts": 415275729,
+                "tts": 1000295
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "cppgc",
+                "dur": 5306,
+                "name": "CppGC.IncrementalSweep",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 5300,
+                "tid": 3520,
+                "ts": 415276043,
+                "tts": 8567339
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false,
+                  "max_duration_ms": 5,
+                  "sweeping_mode": "only-finalizers"
+                },
+                "cat": "cppgc",
+                "dur": 5302,
+                "name": "CppGC.SweepInLowPriorityTask",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 5297,
+                "tid": 3520,
+                "ts": 415276046,
+                "tts": 8567341
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 2647,
+                "name": "CppGC.SweepFinalizeEmptyPages",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 2648,
+                "tid": 3520,
+                "ts": 415276050,
+                "tts": 8567344
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 64,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 64,
+                "tid": 3520,
+                "ts": 415278702,
+                "tts": 8569994
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 1163,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 1164,
+                "tid": 3520,
+                "ts": 415278768,
+                "tts": 8570059
+              }
+            ]
+          },
+          {
+            "generation": 638,
+            "groups": [
+              "avatar",
+              "other"
+            ],
+            "return_interval_ns": [
+              415278696530,
+              415278697542
+            ],
+            "sweep_overlap": [
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "cppgc",
+                "dur": 5996,
+                "name": "CppGC.ConcurrentSweep",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 5982,
+                "tid": 3530,
+                "ts": 415275729,
+                "tts": 1000295
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "cppgc",
+                "dur": 5306,
+                "name": "CppGC.IncrementalSweep",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 5300,
+                "tid": 3520,
+                "ts": 415276043,
+                "tts": 8567339
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false,
+                  "max_duration_ms": 5,
+                  "sweeping_mode": "only-finalizers"
+                },
+                "cat": "cppgc",
+                "dur": 5302,
+                "name": "CppGC.SweepInLowPriorityTask",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 5297,
+                "tid": 3520,
+                "ts": 415276046,
+                "tts": 8567341
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 2647,
+                "name": "CppGC.SweepFinalizeEmptyPages",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 2648,
+                "tid": 3520,
+                "ts": 415276050,
+                "tts": 8567344
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 64,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 64,
+                "tid": 3520,
+                "ts": 415278702,
+                "tts": 8569994
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 1163,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3520,
+                "tdur": 1164,
+                "tid": 3520,
+                "ts": 415278768,
+                "tts": 8570059
+              }
+            ]
+          }
+        ],
+        "gc_counts": {
+          "CppGC.IncrementalMark": 50,
+          "CppGC.MarkIncrementalStart": 2,
+          "CppGC.MarkVisitRoots": 4,
+          "CppGC.MarkVisitPersistents": 4,
+          "CppGC.MarkTransitiveClosureWithDeadline": 56,
+          "CppGC.MarkTransitiveClosure": 56,
+          "CppGC.MarkProcessMarkingWorklist": 33,
+          "CppGC.ConcurrentMark": 32,
+          "CppGC.ConcurrentMarkProcessMarkingWorklist": 42,
+          "CppGC.MarkProcessBailOutObjects": 24,
+          "CppGC.MarkOnAllocation": 10,
+          "CppGC.ConcurrentMarkProcessWriteBarrierWorklist": 24,
+          "CppGC.MarkProcessWriteBarrierWorklist": 16,
+          "CppGC.MarkProcessRetraceWorklist": 1,
+          "MajorGC": 2,
+          "CppGC.AtomicMark": 12,
+          "CppGC.MarkAtomicPrologue": 2,
+          "CppGC.MarkVisitStack": 1,
+          "CppGC.MarkVisitNotFullyConstructedObjects": 1,
+          "CppGC.MarkFlushEphemerons": 10,
+          "CppGC.MarkProcessEphemerons": 10,
+          "CppGC.MarkVisitCrossThreadPersistents": 2,
+          "CppGC.AtomicWeak": 4,
+          "CppGC.MarkAtomicEpilogue": 2,
+          "CppGC.ConcurrentWeakCallback": 2,
+          "CppGC.WeakContainerCallbacksProcessing": 2,
+          "CppGC.CustomCallbacksProcessing": 2,
+          "CppGC.AtomicSweep": 4,
+          "CppGC.SweepInvokePreFinalizers": 2,
+          "CppGC.ConcurrentSweep": 2,
+          "CppGC.IncrementalSweep": 17,
+          "CppGC.SweepOnAllocation": 9,
+          "CppGC.SweepFinalizeEmptyPages": 13,
+          "CppGC.SweepInLowPriorityTask": 8,
+          "CppGC.SweepFinalizeSweptPages": 25
+        },
+        "clock": {
+          "offset_us": [
+            -379.6269999742508,
+            574.630999982357
+          ],
+          "coverage_us": [
+            408100228,
+            415711374
+          ]
+        }
+      },
+      {
+        "index": 2,
+        "status": "valid_capture",
+        "mode": "probe",
+        "duration_ms": 7499.488938,
+        "workload_duration_ms": 86371.163274,
+        "observation_fraction_bound": 0.05310256529376322,
+        "maximum_observation_ms": 28.445244,
+        "errors": [
+          "Observation bound exceeds 5% or 250ms"
+        ],
+        "receiver_records": 2560,
+        "coverage": {
+          "avatar": 1.0,
+          "other": 1.0
+        },
+        "unknown_pool_returns": 3,
+        "labelled_returns": [
+          {
+            "generation": 34,
+            "groups": [
+              "other"
+            ],
+            "return_interval_ns": [
+              505709110866,
+              505709112289
+            ],
+            "sweep_overlap": [
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "cppgc",
+                "dur": 5177,
+                "name": "CppGC.IncrementalSweep",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 5170,
+                "tid": 3763,
+                "ts": 505705882,
+                "tts": 7516354
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false,
+                  "max_duration_ms": 5,
+                  "sweeping_mode": "all"
+                },
+                "cat": "cppgc",
+                "dur": 5171,
+                "name": "CppGC.SweepInLowPriorityTask",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 5167,
+                "tid": 3763,
+                "ts": 505705886,
+                "tts": 7516356
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 3360,
+                "name": "CppGC.SweepFinalizeEmptyPages",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 3360,
+                "tid": 3763,
+                "ts": 505705889,
+                "tts": 7516359
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 263,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 263,
+                "tid": 3763,
+                "ts": 505709252,
+                "tts": 7519721
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 1534,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 1535,
+                "tid": 3763,
+                "ts": 505709519,
+                "tts": 7519986
+              }
+            ]
+          },
+          {
+            "generation": 369,
+            "groups": [
+              "avatar",
+              "other"
+            ],
+            "return_interval_ns": [
+              505709071343,
+              505709073066
+            ],
+            "sweep_overlap": [
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "cppgc",
+                "dur": 5177,
+                "name": "CppGC.IncrementalSweep",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 5170,
+                "tid": 3763,
+                "ts": 505705882,
+                "tts": 7516354
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false,
+                  "max_duration_ms": 5,
+                  "sweeping_mode": "all"
+                },
+                "cat": "cppgc",
+                "dur": 5171,
+                "name": "CppGC.SweepInLowPriorityTask",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 5167,
+                "tid": 3763,
+                "ts": 505705886,
+                "tts": 7516356
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 3360,
+                "name": "CppGC.SweepFinalizeEmptyPages",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 3360,
+                "tid": 3763,
+                "ts": 505705889,
+                "tts": 7516359
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 263,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 263,
+                "tid": 3763,
+                "ts": 505709252,
+                "tts": 7519721
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 1534,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 1535,
+                "tid": 3763,
+                "ts": 505709519,
+                "tts": 7519986
+              }
+            ]
+          },
+          {
+            "generation": 388,
+            "groups": [
+              "avatar"
+            ],
+            "return_interval_ns": [
+              505709090548,
+              505709092231
+            ],
+            "sweep_overlap": [
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "cppgc",
+                "dur": 5177,
+                "name": "CppGC.IncrementalSweep",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 5170,
+                "tid": 3763,
+                "ts": 505705882,
+                "tts": 7516354
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false,
+                  "max_duration_ms": 5,
+                  "sweeping_mode": "all"
+                },
+                "cat": "cppgc",
+                "dur": 5171,
+                "name": "CppGC.SweepInLowPriorityTask",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 5167,
+                "tid": 3763,
+                "ts": 505705886,
+                "tts": 7516356
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 3360,
+                "name": "CppGC.SweepFinalizeEmptyPages",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 3360,
+                "tid": 3763,
+                "ts": 505705889,
+                "tts": 7516359
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 263,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 263,
+                "tid": 3763,
+                "ts": 505709252,
+                "tts": 7519721
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 1534,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 1535,
+                "tid": 3763,
+                "ts": 505709519,
+                "tts": 7519986
+              }
+            ]
+          },
+          {
+            "generation": 451,
+            "groups": [
+              "avatar",
+              "other"
+            ],
+            "return_interval_ns": [
+              505709140492,
+              505709141934
+            ],
+            "sweep_overlap": [
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "cppgc",
+                "dur": 5177,
+                "name": "CppGC.IncrementalSweep",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 5170,
+                "tid": 3763,
+                "ts": 505705882,
+                "tts": 7516354
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false,
+                  "max_duration_ms": 5,
+                  "sweeping_mode": "all"
+                },
+                "cat": "cppgc",
+                "dur": 5171,
+                "name": "CppGC.SweepInLowPriorityTask",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 5167,
+                "tid": 3763,
+                "ts": 505705886,
+                "tts": 7516356
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 3360,
+                "name": "CppGC.SweepFinalizeEmptyPages",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 3360,
+                "tid": 3763,
+                "ts": 505705889,
+                "tts": 7516359
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 263,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 263,
+                "tid": 3763,
+                "ts": 505709252,
+                "tts": 7519721
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 1534,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 1535,
+                "tid": 3763,
+                "ts": 505709519,
+                "tts": 7519986
+              }
+            ]
+          },
+          {
+            "generation": 463,
+            "groups": [
+              "avatar",
+              "other"
+            ],
+            "return_interval_ns": [
+              505709153726,
+              505709155189
+            ],
+            "sweep_overlap": [
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "cppgc",
+                "dur": 5177,
+                "name": "CppGC.IncrementalSweep",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 5170,
+                "tid": 3763,
+                "ts": 505705882,
+                "tts": 7516354
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false,
+                  "max_duration_ms": 5,
+                  "sweeping_mode": "all"
+                },
+                "cat": "cppgc",
+                "dur": 5171,
+                "name": "CppGC.SweepInLowPriorityTask",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 5167,
+                "tid": 3763,
+                "ts": 505705886,
+                "tts": 7516356
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 3360,
+                "name": "CppGC.SweepFinalizeEmptyPages",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 3360,
+                "tid": 3763,
+                "ts": 505705889,
+                "tts": 7516359
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 263,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 263,
+                "tid": 3763,
+                "ts": 505709252,
+                "tts": 7519721
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 1534,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 1535,
+                "tid": 3763,
+                "ts": 505709519,
+                "tts": 7519986
+              }
+            ]
+          },
+          {
+            "generation": 485,
+            "groups": [
+              "avatar",
+              "other"
+            ],
+            "return_interval_ns": [
+              505709173704,
+              505709175397
+            ],
+            "sweep_overlap": [
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "cppgc",
+                "dur": 5177,
+                "name": "CppGC.IncrementalSweep",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 5170,
+                "tid": 3763,
+                "ts": 505705882,
+                "tts": 7516354
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false,
+                  "max_duration_ms": 5,
+                  "sweeping_mode": "all"
+                },
+                "cat": "cppgc",
+                "dur": 5171,
+                "name": "CppGC.SweepInLowPriorityTask",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 5167,
+                "tid": 3763,
+                "ts": 505705886,
+                "tts": 7516356
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 3360,
+                "name": "CppGC.SweepFinalizeEmptyPages",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 3360,
+                "tid": 3763,
+                "ts": 505705889,
+                "tts": 7516359
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 263,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 263,
+                "tid": 3763,
+                "ts": 505709252,
+                "tts": 7519721
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 1534,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 1535,
+                "tid": 3763,
+                "ts": 505709519,
+                "tts": 7519986
+              }
+            ]
+          },
+          {
+            "generation": 509,
+            "groups": [
+              "avatar",
+              "other"
+            ],
+            "return_interval_ns": [
+              505709191637,
+              505709193140
+            ],
+            "sweep_overlap": [
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "cppgc",
+                "dur": 5177,
+                "name": "CppGC.IncrementalSweep",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 5170,
+                "tid": 3763,
+                "ts": 505705882,
+                "tts": 7516354
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false,
+                  "max_duration_ms": 5,
+                  "sweeping_mode": "all"
+                },
+                "cat": "cppgc",
+                "dur": 5171,
+                "name": "CppGC.SweepInLowPriorityTask",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 5167,
+                "tid": 3763,
+                "ts": 505705886,
+                "tts": 7516356
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 3360,
+                "name": "CppGC.SweepFinalizeEmptyPages",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 3360,
+                "tid": 3763,
+                "ts": 505705889,
+                "tts": 7516359
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 263,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 263,
+                "tid": 3763,
+                "ts": 505709252,
+                "tts": 7519721
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 1534,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 1535,
+                "tid": 3763,
+                "ts": 505709519,
+                "tts": 7519986
+              }
+            ]
+          },
+          {
+            "generation": 531,
+            "groups": [
+              "avatar",
+              "other"
+            ],
+            "return_interval_ns": [
+              505709209470,
+              505709211104
+            ],
+            "sweep_overlap": [
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "cppgc",
+                "dur": 5177,
+                "name": "CppGC.IncrementalSweep",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 5170,
+                "tid": 3763,
+                "ts": 505705882,
+                "tts": 7516354
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false,
+                  "max_duration_ms": 5,
+                  "sweeping_mode": "all"
+                },
+                "cat": "cppgc",
+                "dur": 5171,
+                "name": "CppGC.SweepInLowPriorityTask",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 5167,
+                "tid": 3763,
+                "ts": 505705886,
+                "tts": 7516356
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 3360,
+                "name": "CppGC.SweepFinalizeEmptyPages",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 3360,
+                "tid": 3763,
+                "ts": 505705889,
+                "tts": 7516359
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 263,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 263,
+                "tid": 3763,
+                "ts": 505709252,
+                "tts": 7519721
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 1534,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 1535,
+                "tid": 3763,
+                "ts": 505709519,
+                "tts": 7519986
+              }
+            ]
+          },
+          {
+            "generation": 557,
+            "groups": [
+              "avatar",
+              "other"
+            ],
+            "return_interval_ns": [
+              505709230590,
+              505709231922
+            ],
+            "sweep_overlap": [
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "cppgc",
+                "dur": 5177,
+                "name": "CppGC.IncrementalSweep",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 5170,
+                "tid": 3763,
+                "ts": 505705882,
+                "tts": 7516354
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false,
+                  "max_duration_ms": 5,
+                  "sweeping_mode": "all"
+                },
+                "cat": "cppgc",
+                "dur": 5171,
+                "name": "CppGC.SweepInLowPriorityTask",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 5167,
+                "tid": 3763,
+                "ts": 505705886,
+                "tts": 7516356
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 3360,
+                "name": "CppGC.SweepFinalizeEmptyPages",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 3360,
+                "tid": 3763,
+                "ts": 505705889,
+                "tts": 7516359
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 263,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 263,
+                "tid": 3763,
+                "ts": 505709252,
+                "tts": 7519721
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 1534,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 1535,
+                "tid": 3763,
+                "ts": 505709519,
+                "tts": 7519986
+              }
+            ]
+          },
+          {
+            "generation": 584,
+            "groups": [
+              "avatar",
+              "other"
+            ],
+            "return_interval_ns": [
+              505709247401,
+              505709248824
+            ],
+            "sweep_overlap": [
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "cppgc",
+                "dur": 5177,
+                "name": "CppGC.IncrementalSweep",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 5170,
+                "tid": 3763,
+                "ts": 505705882,
+                "tts": 7516354
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false,
+                  "max_duration_ms": 5,
+                  "sweeping_mode": "all"
+                },
+                "cat": "cppgc",
+                "dur": 5171,
+                "name": "CppGC.SweepInLowPriorityTask",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 5167,
+                "tid": 3763,
+                "ts": 505705886,
+                "tts": 7516356
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 3360,
+                "name": "CppGC.SweepFinalizeEmptyPages",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 3360,
+                "tid": 3763,
+                "ts": 505705889,
+                "tts": 7516359
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 263,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 263,
+                "tid": 3763,
+                "ts": 505709252,
+                "tts": 7519721
+              },
+              {
+                "args": {
+                  "epoch": 11,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 1534,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 1535,
+                "tid": 3763,
+                "ts": 505709519,
+                "tts": 7519986
+              }
+            ]
+          },
+          {
+            "generation": 610,
+            "groups": [
+              "avatar",
+              "other"
+            ],
+            "return_interval_ns": [
+              509358537188,
+              509358538891
+            ],
+            "sweep_overlap": [
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "cppgc",
+                "dur": 5274,
+                "name": "CppGC.IncrementalSweep",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 5267,
+                "tid": 3763,
+                "ts": 509357925,
+                "tts": 8572164
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false,
+                  "max_duration_ms": 5,
+                  "sweeping_mode": "all"
+                },
+                "cat": "cppgc",
+                "dur": 5266,
+                "name": "CppGC.SweepInLowPriorityTask",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 5262,
+                "tid": 3763,
+                "ts": 509357931,
+                "tts": 8572168
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 709,
+                "name": "CppGC.SweepFinalizeEmptyPages",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 709,
+                "tid": 3763,
+                "ts": 509357935,
+                "tts": 8572172
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 147,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 147,
+                "tid": 3763,
+                "ts": 509358649,
+                "tts": 8572884
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 1468,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 1469,
+                "tid": 3763,
+                "ts": 509358799,
+                "tts": 8573033
+              }
+            ]
+          },
+          {
+            "generation": 618,
+            "groups": [
+              "avatar",
+              "other"
+            ],
+            "return_interval_ns": [
+              509358519725,
+              509358521118
+            ],
+            "sweep_overlap": [
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "cppgc",
+                "dur": 5274,
+                "name": "CppGC.IncrementalSweep",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 5267,
+                "tid": 3763,
+                "ts": 509357925,
+                "tts": 8572164
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false,
+                  "max_duration_ms": 5,
+                  "sweeping_mode": "all"
+                },
+                "cat": "cppgc",
+                "dur": 5266,
+                "name": "CppGC.SweepInLowPriorityTask",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 5262,
+                "tid": 3763,
+                "ts": 509357931,
+                "tts": 8572168
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 709,
+                "name": "CppGC.SweepFinalizeEmptyPages",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 709,
+                "tid": 3763,
+                "ts": 509357935,
+                "tts": 8572172
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 147,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 147,
+                "tid": 3763,
+                "ts": 509358649,
+                "tts": 8572884
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 1468,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 1469,
+                "tid": 3763,
+                "ts": 509358799,
+                "tts": 8573033
+              }
+            ]
+          },
+          {
+            "generation": 626,
+            "groups": [
+              "avatar",
+              "other"
+            ],
+            "return_interval_ns": [
+              509358497163,
+              509358499066
+            ],
+            "sweep_overlap": [
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "cppgc",
+                "dur": 5274,
+                "name": "CppGC.IncrementalSweep",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 5267,
+                "tid": 3763,
+                "ts": 509357925,
+                "tts": 8572164
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false,
+                  "max_duration_ms": 5,
+                  "sweeping_mode": "all"
+                },
+                "cat": "cppgc",
+                "dur": 5266,
+                "name": "CppGC.SweepInLowPriorityTask",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 5262,
+                "tid": 3763,
+                "ts": 509357931,
+                "tts": 8572168
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 709,
+                "name": "CppGC.SweepFinalizeEmptyPages",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 709,
+                "tid": 3763,
+                "ts": 509357935,
+                "tts": 8572172
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 147,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 147,
+                "tid": 3763,
+                "ts": 509358649,
+                "tts": 8572884
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 1468,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 1469,
+                "tid": 3763,
+                "ts": 509358799,
+                "tts": 8573033
+              }
+            ]
+          },
+          {
+            "generation": 644,
+            "groups": [
+              "avatar",
+              "other"
+            ],
+            "return_interval_ns": [
+              509358556844,
+              509358558858
+            ],
+            "sweep_overlap": [
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "cppgc",
+                "dur": 5274,
+                "name": "CppGC.IncrementalSweep",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 5267,
+                "tid": 3763,
+                "ts": 509357925,
+                "tts": 8572164
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false,
+                  "max_duration_ms": 5,
+                  "sweeping_mode": "all"
+                },
+                "cat": "cppgc",
+                "dur": 5266,
+                "name": "CppGC.SweepInLowPriorityTask",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 5262,
+                "tid": 3763,
+                "ts": 509357931,
+                "tts": 8572168
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 709,
+                "name": "CppGC.SweepFinalizeEmptyPages",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 709,
+                "tid": 3763,
+                "ts": 509357935,
+                "tts": 8572172
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 147,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 147,
+                "tid": 3763,
+                "ts": 509358649,
+                "tts": 8572884
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 1468,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 1469,
+                "tid": 3763,
+                "ts": 509358799,
+                "tts": 8573033
+              }
+            ]
+          },
+          {
+            "generation": 647,
+            "groups": [
+              "avatar",
+              "other"
+            ],
+            "return_interval_ns": [
+              509358576591,
+              509358578385
+            ],
+            "sweep_overlap": [
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "cppgc",
+                "dur": 5274,
+                "name": "CppGC.IncrementalSweep",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 5267,
+                "tid": 3763,
+                "ts": 509357925,
+                "tts": 8572164
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false,
+                  "max_duration_ms": 5,
+                  "sweeping_mode": "all"
+                },
+                "cat": "cppgc",
+                "dur": 5266,
+                "name": "CppGC.SweepInLowPriorityTask",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 5262,
+                "tid": 3763,
+                "ts": 509357931,
+                "tts": 8572168
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 709,
+                "name": "CppGC.SweepFinalizeEmptyPages",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 709,
+                "tid": 3763,
+                "ts": 509357935,
+                "tts": 8572172
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 147,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 147,
+                "tid": 3763,
+                "ts": 509358649,
+                "tts": 8572884
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 1468,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 1469,
+                "tid": 3763,
+                "ts": 509358799,
+                "tts": 8573033
+              }
+            ]
+          },
+          {
+            "generation": 653,
+            "groups": [
+              "avatar",
+              "other"
+            ],
+            "return_interval_ns": [
+              509358596749,
+              509358598412
+            ],
+            "sweep_overlap": [
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "cppgc",
+                "dur": 5274,
+                "name": "CppGC.IncrementalSweep",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 5267,
+                "tid": 3763,
+                "ts": 509357925,
+                "tts": 8572164
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false,
+                  "max_duration_ms": 5,
+                  "sweeping_mode": "all"
+                },
+                "cat": "cppgc",
+                "dur": 5266,
+                "name": "CppGC.SweepInLowPriorityTask",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 5262,
+                "tid": 3763,
+                "ts": 509357931,
+                "tts": 8572168
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 709,
+                "name": "CppGC.SweepFinalizeEmptyPages",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 709,
+                "tid": 3763,
+                "ts": 509357935,
+                "tts": 8572172
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 147,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 147,
+                "tid": 3763,
+                "ts": 509358649,
+                "tts": 8572884
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 1468,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 1469,
+                "tid": 3763,
+                "ts": 509358799,
+                "tts": 8573033
+              }
+            ]
+          },
+          {
+            "generation": 658,
+            "groups": [
+              "avatar",
+              "other"
+            ],
+            "return_interval_ns": [
+              509358622247,
+              509358624000
+            ],
+            "sweep_overlap": [
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "cppgc",
+                "dur": 5274,
+                "name": "CppGC.IncrementalSweep",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 5267,
+                "tid": 3763,
+                "ts": 509357925,
+                "tts": 8572164
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false,
+                  "max_duration_ms": 5,
+                  "sweeping_mode": "all"
+                },
+                "cat": "cppgc",
+                "dur": 5266,
+                "name": "CppGC.SweepInLowPriorityTask",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 5262,
+                "tid": 3763,
+                "ts": 509357931,
+                "tts": 8572168
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 709,
+                "name": "CppGC.SweepFinalizeEmptyPages",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 709,
+                "tid": 3763,
+                "ts": 509357935,
+                "tts": 8572172
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 147,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 147,
+                "tid": 3763,
+                "ts": 509358649,
+                "tts": 8572884
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 1468,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 1469,
+                "tid": 3763,
+                "ts": 509358799,
+                "tts": 8573033
+              }
+            ]
+          },
+          {
+            "generation": 663,
+            "groups": [
+              "avatar",
+              "other"
+            ],
+            "return_interval_ns": [
+              509358641863,
+              509358643827
+            ],
+            "sweep_overlap": [
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "cppgc",
+                "dur": 5274,
+                "name": "CppGC.IncrementalSweep",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 5267,
+                "tid": 3763,
+                "ts": 509357925,
+                "tts": 8572164
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false,
+                  "max_duration_ms": 5,
+                  "sweeping_mode": "all"
+                },
+                "cat": "cppgc",
+                "dur": 5266,
+                "name": "CppGC.SweepInLowPriorityTask",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 5262,
+                "tid": 3763,
+                "ts": 509357931,
+                "tts": 8572168
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 709,
+                "name": "CppGC.SweepFinalizeEmptyPages",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 709,
+                "tid": 3763,
+                "ts": 509357935,
+                "tts": 8572172
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 147,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 147,
+                "tid": 3763,
+                "ts": 509358649,
+                "tts": 8572884
+              },
+              {
+                "args": {
+                  "epoch": 12,
+                  "forced": false
+                },
+                "cat": "disabled-by-default-cppgc",
+                "dur": 1468,
+                "name": "CppGC.SweepFinalizeSweptPages",
+                "ph": "X",
+                "pid": 3763,
+                "tdur": 1469,
+                "tid": 3763,
+                "ts": 509358799,
+                "tts": 8573033
+              }
+            ]
+          }
+        ],
+        "gc_counts": {
+          "CppGC.IncrementalMark": 23,
+          "CppGC.MarkIncrementalStart": 2,
+          "CppGC.MarkVisitRoots": 4,
+          "CppGC.MarkVisitPersistents": 4,
+          "CppGC.MarkTransitiveClosureWithDeadline": 27,
+          "CppGC.MarkTransitiveClosure": 27,
+          "CppGC.ConcurrentMark": 19,
+          "CppGC.MarkProcessMarkingWorklist": 10,
+          "CppGC.ConcurrentMarkProcessMarkingWorklist": 26,
+          "CppGC.MarkOnAllocation": 5,
+          "CppGC.MarkProcessBailOutObjects": 7,
+          "CppGC.ConcurrentMarkProcessWriteBarrierWorklist": 13,
+          "CppGC.MarkProcessWriteBarrierWorklist": 5,
+          "MajorGC": 2,
+          "CppGC.AtomicMark": 10,
+          "CppGC.MarkAtomicPrologue": 2,
+          "CppGC.MarkFlushEphemerons": 6,
+          "CppGC.MarkProcessEphemerons": 6,
+          "CppGC.MarkVisitCrossThreadPersistents": 2,
+          "CppGC.AtomicWeak": 4,
+          "CppGC.MarkAtomicEpilogue": 2,
+          "CppGC.ConcurrentWeakCallback": 2,
+          "CppGC.WeakContainerCallbacksProcessing": 2,
+          "CppGC.CustomCallbacksProcessing": 2,
+          "CppGC.AtomicSweep": 4,
+          "CppGC.SweepInvokePreFinalizers": 2,
+          "CppGC.ConcurrentSweep": 2,
+          "CppGC.IncrementalSweep": 16,
+          "CppGC.SweepInLowPriorityTask": 10,
+          "CppGC.SweepFinalizeEmptyPages": 11,
+          "CppGC.SweepFinalizeSweptPages": 26,
+          "CppGC.ConcurrentMarkProcessNotFullyconstructedWorklist": 1,
+          "CppGC.SweepOnAllocation": 6
+        },
+        "clock": {
+          "offset_us": [
+            -356.2670000195503,
+            650.8500000238419
+          ],
+          "coverage_us": [
+            502245825,
+            509740726
+          ]
+        }
+      },
+      {
+        "index": 3,
+        "status": "valid_capture",
+        "mode": "control",
+        "duration_ms": 7596.981021,
+        "workload_duration_ms": 84448.626958,
+        "observation_fraction_bound": 0.04954405348118876,
+        "maximum_observation_ms": 27.360458,
+        "errors": []
+      }
+    ]
+  }
+}

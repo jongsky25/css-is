@@ -26,18 +26,51 @@ const observe=(group,kind)=>{
 };
 '''
 QUERY_JS = '({group,kind})=>{'+SELECT_JS+'return observe(group,kind);}'
-BATCH_JS = '()=>{'+SELECT_JS+'''const groups=[];for(const group of ['avatar','other']){
- const nodes=pools[group],metadata=info(group),before=attributes(nodes),repeats=[];
- for(const repeat of [0,1])repeats.push(nodes.map(n=>Number(n.getAttributeNodeNS('urn:css-is:membership:absent','absent')===null)));
- const after=attributes(nodes);groups.push({group,...metadata,before_attributes:before,after_attributes:after,geometry_counts:[],repeats});
-}return groups;}'''
+BATCH_JS = '()=>{const wholeStart=performance.now();'+SELECT_JS+'''const groups=[];
+const pack=values=>values.reduce((mask,value,index)=>mask|(Number(value)<<index),0)>>>0;
+for(const group of ['avatar','other']){
+ const nodes=pools[group],metadata=info(group),before=attributes(nodes),repeat_masks=[];
+ for(const repeat of [0,1]){const values=nodes.map(n=>Number(n.getAttributeNodeNS('urn:css-is:membership:absent','absent')===null));repeat_masks.push(pack(values));}
+ const after=attributes(nodes),same=before===after,uniform=metadata.namespaces.every(value=>value===metadata.namespaces[0]);
+ const wire={group,...metadata,encoding:'lossless-census-v1',before_attributes:before,
+ after_attributes:same?null:after,after_equals_before:same,geometry_counts:[],repeat_masks,
+ ownership_mask:pack(metadata.ownership),in_main_mask:pack(metadata.in_main),namespace_uniform:uniform};
+ delete wire.ownership;delete wire.in_main;
+ if(uniform){wire.namespace_value=metadata.namespaces[0];delete wire.namespaces;}
+ groups.push(wire);
+}return {groups,browser_elapsed_ms:performance.now()-wholeStart};}'''
 
 
-def expand_groups(groups):
+def decode_mask(value):
+    if type(value) is not int or not 0<=value<=0xffffffff:raise ValueError('Invalid lossless mask')
+    return [(value>>index)&1 for index in range(32)]
+
+
+def expand_groups(payload):
+    groups=payload['groups'] if isinstance(payload,dict) else payload
+    if [g['group'] for g in groups]!=['avatar','other']:raise ValueError('Changed compact census schedule')
     rows=[]
-    if [g['group'] for g in groups]!=['avatar','other'] or any(len(g['repeats'])!=2 for g in groups):
-        raise ValueError('Changed compact census schedule')
-    for group in groups:
+    for original in groups:
+        group=dict(original)
+        if group.get('encoding')=='lossless-census-v1':
+            group.pop('encoding')
+            if group['count']!=32 or len(group['repeat_masks'])!=2:raise ValueError('Changed lossless sample')
+            group['repeats']=[decode_mask(mask) for mask in group.pop('repeat_masks')]
+            group['ownership']=[bool(v) for v in decode_mask(group.pop('ownership_mask'))]
+            group['in_main']=[bool(v) for v in decode_mask(group.pop('in_main_mask'))]
+            uniform=group.pop('namespace_uniform')
+            if type(uniform) is not bool:raise ValueError('Invalid namespace encoding')
+            if uniform:
+                value=group.pop('namespace_value')
+                if not isinstance(value,str):raise ValueError('Invalid namespace string')
+                group['namespaces']=[value]*32
+            same=group.pop('after_equals_before')
+            if type(same) is not bool:raise ValueError('Invalid attribute encoding')
+            if same:
+                if group['after_attributes'] is not None:raise ValueError('Ambiguous attribute encoding')
+                group['after_attributes']=group['before_attributes']
+            elif not isinstance(group['after_attributes'],str):raise ValueError('Missing changed attributes')
+        if len(group['repeats'])!=2:raise ValueError('Changed compact census schedule')
         common={k:v for k,v in group.items() if k!='repeats'}
         for repeat,values in enumerate(group['repeats']):rows.append({**common,'repeat':repeat,'values':values})
     return rows

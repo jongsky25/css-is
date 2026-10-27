@@ -56,7 +56,8 @@ def test_application_membership(baseline_server,app_mod,monkeypatch):
         row={'mount':index,'begin_ns':start,'arm_end_ns':armed,'goto_end_ns':loaded}
         state['navigations'].append(row)
         if mode!='proof':
-            begin=time.monotonic_ns();rows=expand_groups(page.evaluate(BATCH_JS));end=time.monotonic_ns()
+            begin=time.monotonic_ns();payload=page.evaluate(BATCH_JS);rows=expand_groups(payload);end=time.monotonic_ns()
+            row['browser_census_ms']=payload.get('browser_elapsed_ms') if isinstance(payload,dict) else None
             row['census_interval_ns']=[begin,end];row['censuses']=rows
         row['end_ns']=time.monotonic_ns();return result
     def capture(page,session):

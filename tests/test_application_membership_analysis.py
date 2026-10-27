@@ -95,3 +95,38 @@ def test_stable_main_scope_rejects_append_only_body_chrome():
     validate_selection(r,'other',require_scope=True)
     r['in_main'][-1]=False
     with pytest.raises(ValueError):validate_selection(r,'other',require_scope=True)
+
+
+@pytest.mark.parametrize('mask',[0,1,0x80000000,0xffffffff,0xa5a55a5a])
+def test_lossless_masks_retain_all_32_positions(mask):
+    from tests.avatar_application_membership import decode_mask
+    values=decode_mask(mask)
+    assert len(values)==32 and sum(value<<index for index,value in enumerate(values))==mask
+
+
+@pytest.mark.parametrize('mask',[-1,0x100000000,True,1.0,'1'])
+def test_invalid_lossless_masks_are_rejected(mask):
+    from tests.avatar_application_membership import decode_mask
+    with pytest.raises(ValueError):decode_mask(mask)
+
+
+def wire_group(name):
+    r=row(name);r.pop('values');r.pop('ownership');r.pop('namespaces')
+    return {'group':name,**r,'encoding':'lossless-census-v1','repeat_masks':[0xffffffff,0xffffffff],
+            'ownership_mask':0xffffffff if name=='avatar' else 0,'in_main_mask':0xffffffff,
+            'namespace_uniform':True,'namespace_value':'http://www.w3.org/2000/svg' if name=='avatar' else 'http://www.w3.org/1999/xhtml',
+            'after_equals_before':True,'after_attributes':None}
+
+
+def test_lossless_transport_roundtrip_and_mutation_cannot_be_hidden():
+    from tests.avatar_application_membership import expand_groups
+    groups=[wire_group('avatar'),wire_group('other')]
+    rows=expand_groups({'groups':groups})
+    assert len(rows)==4 and sum(len(r['values']) for r in rows)==128
+    for r in rows:validate_selection(r,r['group'])
+    groups[0]['repeat_masks'][0]=0xfffffffe
+    assert expand_groups({'groups':groups})[0]['values'][0]==0
+    groups[0].update(after_equals_before=False,after_attributes='changed')
+    with pytest.raises(ValueError):validate_selection(expand_groups(groups)[0],'avatar')
+    groups[0].update(after_equals_before=True,after_attributes='unaccounted')
+    with pytest.raises(ValueError):expand_groups(groups)

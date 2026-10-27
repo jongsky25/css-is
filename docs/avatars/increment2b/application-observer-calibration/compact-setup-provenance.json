@@ -1,0 +1,30 @@
+{
+  "active_pr": "https://github.com/jongsky25/css-is/pull/518",
+  "superseded_prs": [
+    515,
+    516,
+    517
+  ],
+  "run_url": "https://github.com/jongsky25/css-is/actions/runs/40527921415",
+  "harness_commit": "3cdbb3720c4f096d566642a347effcfc18d1428d",
+  "workflow_commit": "aeb246ba582571a5a14f985582041ce74fc6abe5",
+  "workflow_sha256": "abf97d2109edc643ae6341214fb647ab94923df1cb6d0e9b5b1f88a04daa2021",
+  "protocol": "application-membership-v2",
+  "product_ref": "cf363bfe547d5e23619eee28cdaf68bd4b6d7753",
+  "preflight_tests": 69,
+  "local_focused_tests": 126,
+  "source_scope": "live cat SVG / main-content HTML div-span-a outside avatar wrappers",
+  "sample_per_group": 32,
+  "native_getters_per_probe": 2560,
+  "snapshot_count": 13,
+  "navigation_count": 20,
+  "window_checkpoints": [
+    1,
+    5,
+    10,
+    15,
+    20
+  ],
+  "merge_performed": false,
+  "deployment_performed": false
+}
