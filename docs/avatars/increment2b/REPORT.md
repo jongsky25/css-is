@@ -1,5 +1,16 @@
 # Increment 2B — acceptance withdrawn: uncovered memory failures
 
+## CPU attribution complete — connection setup hotspot, no acceptance
+
+[Four-slot CPU diagnostic](navigation-cpu-v2/REPORT.md) has full 20-navigation
+coverage, 124 source/probe hashes/32 files verified, identical archive re-audit
+and 83 tests passing. Repeated SQLite setup accounts for about 89% of SQLite
+execute CPU (240 connections per profile). Removing journal_mode merely shifts
+initialization cost to synchronous in a fixed synthetic-schema probe. Reducing
+connection churn is a concrete candidate, not yet implemented or validated.
+Style/paint dominate recorded native browser categories. Profiles exceed timing/
+reader limits and cannot qualify acceptance. Product unchanged; 2B still blocked.
+
 ## Scheduler evidence — CPU execution varies, calibration still fails
 
 [New four-slot calibration](navigation-residency-v6/REPORT.md) verifies 120 source

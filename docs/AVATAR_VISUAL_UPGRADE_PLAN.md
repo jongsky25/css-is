@@ -900,3 +900,14 @@ No recorded cgroup throttling; extra Page.goto time accompanies additional Pytho
 and renderer CPU execution, with smaller queue-delay changes. Function-level and
 execution-rate cause remains open. No rerun, exclusion, waiver or product change;
 2B/later remain blocked. No measurement active.
+
+### Python/Chromium CPU attribution — 2026-10-27 — complete diagnostic, no acceptance
+
+[Report](avatars/increment2b/navigation-cpu-v2/REPORT.md), `bcbf0b4`: four fixed
+workloads complete, V8 samples cover all 20 navigations, 124 source/probe hashes
+and 32 files verify, archive audit identical, 83 tests pass. Partial v1 preserved.
+SQLite connection setup is ~89% of execute CPU; fixed per-PRAGMA probe shows deleting
+journal_mode shifts cost to synchronous. Connection reuse with explicit thread/
+transaction safety is the next concrete candidate; not implemented. Native browser
+style/paint dominates recorded categories. Intrusive profiling fails timing gates;
+no source comparison, product fix, memory waiver or acceptance. No measurement active.

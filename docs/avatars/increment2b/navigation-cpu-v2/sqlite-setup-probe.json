@@ -1,0 +1,5809 @@
+{
+  "acceptance": false,
+  "scope": "Serial fresh connections to a newly created synthetic current schema; no browser, no production DB or product edit. Full/no-WAL/no-WAL/full fixed blocks, 50 samples each. Skipping WAL is a diagnostic ablation after initial WAL setup, not a proposed safe product policy. Per-connection PRAGMAs and observed settings retained.",
+  "sqlite_version": "3.53.1",
+  "storage_sha256": "13c24c1f2a0073824887a40080dec8c14698e9e8279803e30fad11ecd8a08d30",
+  "schema_objects": 619,
+  "samples": [
+    {
+      "block": 0,
+      "mode": "full",
+      "run": 0,
+      "open_cpu_ns": 148692,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 12318
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 4925
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 9629509
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 8046
+        }
+      ],
+      "close_cpu_ns": 1541358,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 0,
+      "mode": "full",
+      "run": 1,
+      "open_cpu_ns": 327290,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 12106
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3921
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 7727529
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 13880
+        }
+      ],
+      "close_cpu_ns": 2472489,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 0,
+      "mode": "full",
+      "run": 2,
+      "open_cpu_ns": 343476,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 11053
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 7797
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 10506072
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6890
+        }
+      ],
+      "close_cpu_ns": 1185353,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 0,
+      "mode": "full",
+      "run": 3,
+      "open_cpu_ns": 304740,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10655
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3859
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 4940776
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 7089
+        }
+      ],
+      "close_cpu_ns": 522256,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 0,
+      "mode": "full",
+      "run": 4,
+      "open_cpu_ns": 289399,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 8238
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3057
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 7508848
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 7029
+        }
+      ],
+      "close_cpu_ns": 517054,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 0,
+      "mode": "full",
+      "run": 5,
+      "open_cpu_ns": 237697,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 7754
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3477
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 12995581
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 7008
+        }
+      ],
+      "close_cpu_ns": 2669994,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 0,
+      "mode": "full",
+      "run": 6,
+      "open_cpu_ns": 2629721,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 11171
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 156615
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 7355458
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 7066
+        }
+      ],
+      "close_cpu_ns": 534692,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 0,
+      "mode": "full",
+      "run": 7,
+      "open_cpu_ns": 237098,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 7938
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3466
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 10294846
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 48057
+        }
+      ],
+      "close_cpu_ns": 847253,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 0,
+      "mode": "full",
+      "run": 8,
+      "open_cpu_ns": 1602999,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10779
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3450
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 8793900
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 7093
+        }
+      ],
+      "close_cpu_ns": 1208808,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 0,
+      "mode": "full",
+      "run": 9,
+      "open_cpu_ns": 652154,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10961
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3664
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 9900317
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 7123
+        }
+      ],
+      "close_cpu_ns": 1919613,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 0,
+      "mode": "full",
+      "run": 10,
+      "open_cpu_ns": 881207,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 13000
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3670
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 6813785
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 7098
+        }
+      ],
+      "close_cpu_ns": 1428637,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 0,
+      "mode": "full",
+      "run": 11,
+      "open_cpu_ns": 1616731,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10835
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3523
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 7761547
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6919
+        }
+      ],
+      "close_cpu_ns": 523440,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 0,
+      "mode": "full",
+      "run": 12,
+      "open_cpu_ns": 244075,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 7731
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3174
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 5419827
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6903
+        }
+      ],
+      "close_cpu_ns": 582840,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 0,
+      "mode": "full",
+      "run": 13,
+      "open_cpu_ns": 246168,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 1725639
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 4275
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 6603454
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 13245
+        }
+      ],
+      "close_cpu_ns": 1510620,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 0,
+      "mode": "full",
+      "run": 14,
+      "open_cpu_ns": 306834,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 44522
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 4300
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 10792932
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 7161
+        }
+      ],
+      "close_cpu_ns": 507863,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 0,
+      "mode": "full",
+      "run": 15,
+      "open_cpu_ns": 2139817,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 11313
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3786
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 5709448
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6862
+        }
+      ],
+      "close_cpu_ns": 467786,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 0,
+      "mode": "full",
+      "run": 16,
+      "open_cpu_ns": 232400,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 5512
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 2936
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 6200282
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 73286
+        }
+      ],
+      "close_cpu_ns": 566352,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 0,
+      "mode": "full",
+      "run": 17,
+      "open_cpu_ns": 1501590,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 11716
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 4034
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 8872415
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6798
+        }
+      ],
+      "close_cpu_ns": 525868,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 0,
+      "mode": "full",
+      "run": 18,
+      "open_cpu_ns": 5386071,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10566
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3490
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 6019044
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6548
+        }
+      ],
+      "close_cpu_ns": 1056169,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 0,
+      "mode": "full",
+      "run": 19,
+      "open_cpu_ns": 321121,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10640
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 43173
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 5429325
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6500
+        }
+      ],
+      "close_cpu_ns": 473606,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 0,
+      "mode": "full",
+      "run": 20,
+      "open_cpu_ns": 2078251,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 13302
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 10420
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 6848087
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6574
+        }
+      ],
+      "close_cpu_ns": 529348,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 0,
+      "mode": "full",
+      "run": 21,
+      "open_cpu_ns": 239048,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 7781
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3117
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 7716110
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6757
+        }
+      ],
+      "close_cpu_ns": 465452,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 0,
+      "mode": "full",
+      "run": 22,
+      "open_cpu_ns": 293718,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 7517
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3552
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 9016307
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 7274
+        }
+      ],
+      "close_cpu_ns": 1781029,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 0,
+      "mode": "full",
+      "run": 23,
+      "open_cpu_ns": 329667,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10834
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3932
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 7200606
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 7115
+        }
+      ],
+      "close_cpu_ns": 1590749,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 0,
+      "mode": "full",
+      "run": 24,
+      "open_cpu_ns": 2060831,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10960
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3703
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 6767517
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6567
+        }
+      ],
+      "close_cpu_ns": 475027,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 0,
+      "mode": "full",
+      "run": 25,
+      "open_cpu_ns": 232940,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 6276
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3125
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 8541438
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6930
+        }
+      ],
+      "close_cpu_ns": 3478909,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 0,
+      "mode": "full",
+      "run": 26,
+      "open_cpu_ns": 1088853,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 40393
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3860
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 9624201
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 13204
+        }
+      ],
+      "close_cpu_ns": 1872239,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 0,
+      "mode": "full",
+      "run": 27,
+      "open_cpu_ns": 1179679,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 11205
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3658
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 5472469
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 7011
+        }
+      ],
+      "close_cpu_ns": 2785369,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 0,
+      "mode": "full",
+      "run": 28,
+      "open_cpu_ns": 423493,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10649
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3654
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 7356839
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 7044
+        }
+      ],
+      "close_cpu_ns": 1158856,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 0,
+      "mode": "full",
+      "run": 29,
+      "open_cpu_ns": 254328,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10486
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3834
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 5807661
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 8002
+        }
+      ],
+      "close_cpu_ns": 511853,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 0,
+      "mode": "full",
+      "run": 30,
+      "open_cpu_ns": 239988,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 6448
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3012
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 4708390
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6875
+        }
+      ],
+      "close_cpu_ns": 2367553,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 0,
+      "mode": "full",
+      "run": 31,
+      "open_cpu_ns": 329849,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10710
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3524
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 7085308
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6927
+        }
+      ],
+      "close_cpu_ns": 3287541,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 0,
+      "mode": "full",
+      "run": 32,
+      "open_cpu_ns": 379795,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10644
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3492
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 7154863
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6635
+        }
+      ],
+      "close_cpu_ns": 471051,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 0,
+      "mode": "full",
+      "run": 33,
+      "open_cpu_ns": 293797,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10698
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3209
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 6770886
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6729
+        }
+      ],
+      "close_cpu_ns": 525553,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 0,
+      "mode": "full",
+      "run": 34,
+      "open_cpu_ns": 240295,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 7384
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3238
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 4439797
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6987
+        }
+      ],
+      "close_cpu_ns": 2671275,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 0,
+      "mode": "full",
+      "run": 35,
+      "open_cpu_ns": 482434,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10925
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3500
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 7331747
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6581
+        }
+      ],
+      "close_cpu_ns": 1939525,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 0,
+      "mode": "full",
+      "run": 36,
+      "open_cpu_ns": 360765,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10648
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3400
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 6022962
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 7187
+        }
+      ],
+      "close_cpu_ns": 488391,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 0,
+      "mode": "full",
+      "run": 37,
+      "open_cpu_ns": 237028,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 6387
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3173
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 9015094
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6790
+        }
+      ],
+      "close_cpu_ns": 695559,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 0,
+      "mode": "full",
+      "run": 38,
+      "open_cpu_ns": 239306,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 8989
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3362
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 8362276
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6688
+        }
+      ],
+      "close_cpu_ns": 2308047,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 0,
+      "mode": "full",
+      "run": 39,
+      "open_cpu_ns": 270320,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10647
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 9863
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 4128889
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 7885
+        }
+      ],
+      "close_cpu_ns": 2153093,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 0,
+      "mode": "full",
+      "run": 40,
+      "open_cpu_ns": 262205,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10229
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3739
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 6753292
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 7027
+        }
+      ],
+      "close_cpu_ns": 521582,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 0,
+      "mode": "full",
+      "run": 41,
+      "open_cpu_ns": 1741982,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 11111
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3701
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 7116100
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6939
+        }
+      ],
+      "close_cpu_ns": 515127,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 0,
+      "mode": "full",
+      "run": 42,
+      "open_cpu_ns": 1674323,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 11079
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3543
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 8898467
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6420
+        }
+      ],
+      "close_cpu_ns": 549687,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 0,
+      "mode": "full",
+      "run": 43,
+      "open_cpu_ns": 247625,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 9239
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3527
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 8855487
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6631
+        }
+      ],
+      "close_cpu_ns": 1107629,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 0,
+      "mode": "full",
+      "run": 44,
+      "open_cpu_ns": 2760475,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 13189
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3886
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 12149772
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6364
+        }
+      ],
+      "close_cpu_ns": 542295,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 0,
+      "mode": "full",
+      "run": 45,
+      "open_cpu_ns": 253133,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 7792
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3152
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 7511176
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 14097
+        }
+      ],
+      "close_cpu_ns": 516957,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 0,
+      "mode": "full",
+      "run": 46,
+      "open_cpu_ns": 2200445,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10771
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3459
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 4744675
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6735
+        }
+      ],
+      "close_cpu_ns": 620768,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 0,
+      "mode": "full",
+      "run": 47,
+      "open_cpu_ns": 262423,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 9728
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3814
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 6550476
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6666
+        }
+      ],
+      "close_cpu_ns": 533754,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 0,
+      "mode": "full",
+      "run": 48,
+      "open_cpu_ns": 284798,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10405
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3445
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 5403297
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6913
+        }
+      ],
+      "close_cpu_ns": 2434801,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 0,
+      "mode": "full",
+      "run": 49,
+      "open_cpu_ns": 358641,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10467
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3742
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 7112562
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6957
+        }
+      ],
+      "close_cpu_ns": 480335,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 1,
+      "mode": "without_wal",
+      "run": 0,
+      "open_cpu_ns": 297577,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 7592
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3010
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 8421529
+        }
+      ],
+      "close_cpu_ns": 517170,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 1,
+      "mode": "without_wal",
+      "run": 1,
+      "open_cpu_ns": 244417,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 7395
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3225
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 5731150
+        }
+      ],
+      "close_cpu_ns": 1865892,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 1,
+      "mode": "without_wal",
+      "run": 2,
+      "open_cpu_ns": 296005,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10726
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 4523
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 5785758
+        }
+      ],
+      "close_cpu_ns": 483337,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 1,
+      "mode": "without_wal",
+      "run": 3,
+      "open_cpu_ns": 279564,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 8318
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3362
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 10269500
+        }
+      ],
+      "close_cpu_ns": 522229,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 1,
+      "mode": "without_wal",
+      "run": 4,
+      "open_cpu_ns": 1454462,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 11339
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 4219
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 7340218
+        }
+      ],
+      "close_cpu_ns": 2151526,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 1,
+      "mode": "without_wal",
+      "run": 5,
+      "open_cpu_ns": 481115,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10600
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 4067
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 9412534
+        }
+      ],
+      "close_cpu_ns": 542528,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 1,
+      "mode": "without_wal",
+      "run": 6,
+      "open_cpu_ns": 244691,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 8288
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3550
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 5926207
+        }
+      ],
+      "close_cpu_ns": 2339041,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 1,
+      "mode": "without_wal",
+      "run": 7,
+      "open_cpu_ns": 410229,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10567
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3580
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6894761
+        }
+      ],
+      "close_cpu_ns": 2383898,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 1,
+      "mode": "without_wal",
+      "run": 8,
+      "open_cpu_ns": 260534,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10659
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3644
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 11182105
+        }
+      ],
+      "close_cpu_ns": 530966,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 1,
+      "mode": "without_wal",
+      "run": 9,
+      "open_cpu_ns": 890454,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10544
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3756
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 11134836
+        }
+      ],
+      "close_cpu_ns": 717194,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 1,
+      "mode": "without_wal",
+      "run": 10,
+      "open_cpu_ns": 1492985,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10775
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 4152
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 3908646
+        }
+      ],
+      "close_cpu_ns": 1724000,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 1,
+      "mode": "without_wal",
+      "run": 11,
+      "open_cpu_ns": 562354,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 11126
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 851203
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6649523
+        }
+      ],
+      "close_cpu_ns": 516073,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 1,
+      "mode": "without_wal",
+      "run": 12,
+      "open_cpu_ns": 240208,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 7590
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3447
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6106374
+        }
+      ],
+      "close_cpu_ns": 698305,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 1,
+      "mode": "without_wal",
+      "run": 13,
+      "open_cpu_ns": 374486,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10200
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3377
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 3562513
+        }
+      ],
+      "close_cpu_ns": 1729980,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 1,
+      "mode": "without_wal",
+      "run": 14,
+      "open_cpu_ns": 304359,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10079
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3754
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6428556
+        }
+      ],
+      "close_cpu_ns": 542609,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 1,
+      "mode": "without_wal",
+      "run": 15,
+      "open_cpu_ns": 238563,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 8364
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3483
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 3485901
+        }
+      ],
+      "close_cpu_ns": 480243,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 1,
+      "mode": "without_wal",
+      "run": 16,
+      "open_cpu_ns": 3416817,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10946
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3910
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 5561899
+        }
+      ],
+      "close_cpu_ns": 1540470,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 1,
+      "mode": "without_wal",
+      "run": 17,
+      "open_cpu_ns": 313300,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10449
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3493
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 8304900
+        }
+      ],
+      "close_cpu_ns": 487779,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 1,
+      "mode": "without_wal",
+      "run": 18,
+      "open_cpu_ns": 234167,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 6413
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 8627
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6097762
+        }
+      ],
+      "close_cpu_ns": 798486,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 1,
+      "mode": "without_wal",
+      "run": 19,
+      "open_cpu_ns": 1875453,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10754
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3784
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 5935616
+        }
+      ],
+      "close_cpu_ns": 709478,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 1,
+      "mode": "without_wal",
+      "run": 20,
+      "open_cpu_ns": 261709,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 9594
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3806
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 7860317
+        }
+      ],
+      "close_cpu_ns": 478717,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 1,
+      "mode": "without_wal",
+      "run": 21,
+      "open_cpu_ns": 313574,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 8041
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3441
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 8096660
+        }
+      ],
+      "close_cpu_ns": 501371,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 1,
+      "mode": "without_wal",
+      "run": 22,
+      "open_cpu_ns": 2383171,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 22441
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3717
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 7765474
+        }
+      ],
+      "close_cpu_ns": 1784933,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 1,
+      "mode": "without_wal",
+      "run": 23,
+      "open_cpu_ns": 320013,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10536
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 4135
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 7693517
+        }
+      ],
+      "close_cpu_ns": 3681495,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 1,
+      "mode": "without_wal",
+      "run": 24,
+      "open_cpu_ns": 403673,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10978
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3833
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 5407098
+        }
+      ],
+      "close_cpu_ns": 534714,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 1,
+      "mode": "without_wal",
+      "run": 25,
+      "open_cpu_ns": 251765,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 7866
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3171
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 9944529
+        }
+      ],
+      "close_cpu_ns": 862790,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 1,
+      "mode": "without_wal",
+      "run": 26,
+      "open_cpu_ns": 369223,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10521
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 10024
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 5039688
+        }
+      ],
+      "close_cpu_ns": 510094,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 1,
+      "mode": "without_wal",
+      "run": 27,
+      "open_cpu_ns": 2438890,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10625
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3503
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 8137927
+        }
+      ],
+      "close_cpu_ns": 1737110,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 1,
+      "mode": "without_wal",
+      "run": 28,
+      "open_cpu_ns": 283348,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10748
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3517
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 8226309
+        }
+      ],
+      "close_cpu_ns": 1023048,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 1,
+      "mode": "without_wal",
+      "run": 29,
+      "open_cpu_ns": 377755,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10070
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3274
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6920573
+        }
+      ],
+      "close_cpu_ns": 500704,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 1,
+      "mode": "without_wal",
+      "run": 30,
+      "open_cpu_ns": 297583,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 7923
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3319
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6939218
+        }
+      ],
+      "close_cpu_ns": 1172601,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 1,
+      "mode": "without_wal",
+      "run": 31,
+      "open_cpu_ns": 1352440,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10719
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3834
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 7502756
+        }
+      ],
+      "close_cpu_ns": 3076473,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 1,
+      "mode": "without_wal",
+      "run": 32,
+      "open_cpu_ns": 813248,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10644
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3565
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 5041489
+        }
+      ],
+      "close_cpu_ns": 480872,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 1,
+      "mode": "without_wal",
+      "run": 33,
+      "open_cpu_ns": 4402182,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10804
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3638
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 5234312
+        }
+      ],
+      "close_cpu_ns": 1864851,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 1,
+      "mode": "without_wal",
+      "run": 34,
+      "open_cpu_ns": 327382,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10800
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 30511
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 8513289
+        }
+      ],
+      "close_cpu_ns": 470195,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 1,
+      "mode": "without_wal",
+      "run": 35,
+      "open_cpu_ns": 232773,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 5945
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3172
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 9520012
+        }
+      ],
+      "close_cpu_ns": 771860,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 1,
+      "mode": "without_wal",
+      "run": 36,
+      "open_cpu_ns": 247568,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 9612
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3449
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 7835407
+        }
+      ],
+      "close_cpu_ns": 950110,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 1,
+      "mode": "without_wal",
+      "run": 37,
+      "open_cpu_ns": 1930023,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10537
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3479
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 9057650
+        }
+      ],
+      "close_cpu_ns": 475533,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 1,
+      "mode": "without_wal",
+      "run": 38,
+      "open_cpu_ns": 278857,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 7602
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3179
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 9018550
+        }
+      ],
+      "close_cpu_ns": 2764522,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 1,
+      "mode": "without_wal",
+      "run": 39,
+      "open_cpu_ns": 426973,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10392
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3638
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 7059589
+        }
+      ],
+      "close_cpu_ns": 2317108,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 1,
+      "mode": "without_wal",
+      "run": 40,
+      "open_cpu_ns": 487400,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10639
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3428
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 5993623
+        }
+      ],
+      "close_cpu_ns": 449029,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 1,
+      "mode": "without_wal",
+      "run": 41,
+      "open_cpu_ns": 1997295,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10805
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3544
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 7414888
+        }
+      ],
+      "close_cpu_ns": 475018,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 1,
+      "mode": "without_wal",
+      "run": 42,
+      "open_cpu_ns": 231607,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 52433
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 10378
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 11753900
+        }
+      ],
+      "close_cpu_ns": 3421965,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 1,
+      "mode": "without_wal",
+      "run": 43,
+      "open_cpu_ns": 331069,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10804
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3688
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 13199397
+        }
+      ],
+      "close_cpu_ns": 549212,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 1,
+      "mode": "without_wal",
+      "run": 44,
+      "open_cpu_ns": 292974,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 8488
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3118
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6272805
+        }
+      ],
+      "close_cpu_ns": 462673,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 1,
+      "mode": "without_wal",
+      "run": 45,
+      "open_cpu_ns": 263335,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 7398
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3351
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 14675313
+        }
+      ],
+      "close_cpu_ns": 799406,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 1,
+      "mode": "without_wal",
+      "run": 46,
+      "open_cpu_ns": 407203,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 23271
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3401
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 9456064
+        }
+      ],
+      "close_cpu_ns": 1369008,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 1,
+      "mode": "without_wal",
+      "run": 47,
+      "open_cpu_ns": 890888,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 11085
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3960
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 8455356
+        }
+      ],
+      "close_cpu_ns": 490022,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 1,
+      "mode": "without_wal",
+      "run": 48,
+      "open_cpu_ns": 237998,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 7645
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3345
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 7884551
+        }
+      ],
+      "close_cpu_ns": 515912,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 1,
+      "mode": "without_wal",
+      "run": 49,
+      "open_cpu_ns": 279396,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 8210
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3312
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 7065047
+        }
+      ],
+      "close_cpu_ns": 2806818,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 2,
+      "mode": "without_wal",
+      "run": 0,
+      "open_cpu_ns": 412849,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10567
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3448
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6616206
+        }
+      ],
+      "close_cpu_ns": 473578,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 2,
+      "mode": "without_wal",
+      "run": 1,
+      "open_cpu_ns": 286216,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 8294
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3285
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 7340064
+        }
+      ],
+      "close_cpu_ns": 2086789,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 2,
+      "mode": "without_wal",
+      "run": 2,
+      "open_cpu_ns": 299395,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10100
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3761
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 7316946
+        }
+      ],
+      "close_cpu_ns": 1859090,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 2,
+      "mode": "without_wal",
+      "run": 3,
+      "open_cpu_ns": 311168,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10548
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3689
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6620829
+        }
+      ],
+      "close_cpu_ns": 526804,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 2,
+      "mode": "without_wal",
+      "run": 4,
+      "open_cpu_ns": 1026991,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 309525
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 9212
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 8295097
+        }
+      ],
+      "close_cpu_ns": 477952,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 2,
+      "mode": "without_wal",
+      "run": 5,
+      "open_cpu_ns": 3072952,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10859
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3809
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 8942992
+        }
+      ],
+      "close_cpu_ns": 2510912,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 2,
+      "mode": "without_wal",
+      "run": 6,
+      "open_cpu_ns": 262098,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10395
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3596
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 7854731
+        }
+      ],
+      "close_cpu_ns": 3509389,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 2,
+      "mode": "without_wal",
+      "run": 7,
+      "open_cpu_ns": 329740,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10548
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3666
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 3727295
+        }
+      ],
+      "close_cpu_ns": 2942156,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 2,
+      "mode": "without_wal",
+      "run": 8,
+      "open_cpu_ns": 383311,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10876
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3330
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 7098199
+        }
+      ],
+      "close_cpu_ns": 2811014,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 2,
+      "mode": "without_wal",
+      "run": 9,
+      "open_cpu_ns": 87393,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10769
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3600
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6593753
+        }
+      ],
+      "close_cpu_ns": 453282,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 2,
+      "mode": "without_wal",
+      "run": 10,
+      "open_cpu_ns": 1786526,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 14821
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3496
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6029016
+        }
+      ],
+      "close_cpu_ns": 763593,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 2,
+      "mode": "without_wal",
+      "run": 11,
+      "open_cpu_ns": 305662,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 9954
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3489
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 7216438
+        }
+      ],
+      "close_cpu_ns": 458893,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 2,
+      "mode": "without_wal",
+      "run": 12,
+      "open_cpu_ns": 263607,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 7823
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3263
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 8618455
+        }
+      ],
+      "close_cpu_ns": 2763817,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 2,
+      "mode": "without_wal",
+      "run": 13,
+      "open_cpu_ns": 252029,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10699
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3530
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 4433574
+        }
+      ],
+      "close_cpu_ns": 552070,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 2,
+      "mode": "without_wal",
+      "run": 14,
+      "open_cpu_ns": 553156,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 11825
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3952
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 7794604
+        }
+      ],
+      "close_cpu_ns": 1159252,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 2,
+      "mode": "without_wal",
+      "run": 15,
+      "open_cpu_ns": 1108326,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 11270
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3522
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6056906
+        }
+      ],
+      "close_cpu_ns": 496760,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 2,
+      "mode": "without_wal",
+      "run": 16,
+      "open_cpu_ns": 2458233,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 11059
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3756
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6302145
+        }
+      ],
+      "close_cpu_ns": 1666600,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 2,
+      "mode": "without_wal",
+      "run": 17,
+      "open_cpu_ns": 285641,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10590
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3278
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 8089168
+        }
+      ],
+      "close_cpu_ns": 2709691,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 2,
+      "mode": "without_wal",
+      "run": 18,
+      "open_cpu_ns": 299408,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10683
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3994
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 8181324
+        }
+      ],
+      "close_cpu_ns": 488032,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 2,
+      "mode": "without_wal",
+      "run": 19,
+      "open_cpu_ns": 234305,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 6261
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3375
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 7204417
+        }
+      ],
+      "close_cpu_ns": 463318,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 2,
+      "mode": "without_wal",
+      "run": 20,
+      "open_cpu_ns": 233681,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 6364
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3573
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 8744184
+        }
+      ],
+      "close_cpu_ns": 555730,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 2,
+      "mode": "without_wal",
+      "run": 21,
+      "open_cpu_ns": 248587,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 8580
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3696
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6832612
+        }
+      ],
+      "close_cpu_ns": 504025,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 2,
+      "mode": "without_wal",
+      "run": 22,
+      "open_cpu_ns": 242024,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 7234
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3462
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 7817645
+        }
+      ],
+      "close_cpu_ns": 2351360,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 2,
+      "mode": "without_wal",
+      "run": 23,
+      "open_cpu_ns": 278904,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 11003
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3619
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6477007
+        }
+      ],
+      "close_cpu_ns": 4106169,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 2,
+      "mode": "without_wal",
+      "run": 24,
+      "open_cpu_ns": 491037,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 11119
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 4096
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 5892401
+        }
+      ],
+      "close_cpu_ns": 539763,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 2,
+      "mode": "without_wal",
+      "run": 25,
+      "open_cpu_ns": 249063,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 8119
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3503
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 7803784
+        }
+      ],
+      "close_cpu_ns": 468400,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 2,
+      "mode": "without_wal",
+      "run": 26,
+      "open_cpu_ns": 1659248,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10932
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3852
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 8368688
+        }
+      ],
+      "close_cpu_ns": 1330872,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 2,
+      "mode": "without_wal",
+      "run": 27,
+      "open_cpu_ns": 1937708,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10924
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3426
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 4716197
+        }
+      ],
+      "close_cpu_ns": 1210511,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 2,
+      "mode": "without_wal",
+      "run": 28,
+      "open_cpu_ns": 4094476,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10980
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3868
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6432667
+        }
+      ],
+      "close_cpu_ns": 514074,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 2,
+      "mode": "without_wal",
+      "run": 29,
+      "open_cpu_ns": 84628,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10853
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3567
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 7376117
+        }
+      ],
+      "close_cpu_ns": 507897,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 2,
+      "mode": "without_wal",
+      "run": 30,
+      "open_cpu_ns": 278902,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 8344
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3229
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 10760913
+        }
+      ],
+      "close_cpu_ns": 1884527,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 2,
+      "mode": "without_wal",
+      "run": 31,
+      "open_cpu_ns": 554736,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10486
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3499
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 9806240
+        }
+      ],
+      "close_cpu_ns": 472632,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 2,
+      "mode": "without_wal",
+      "run": 32,
+      "open_cpu_ns": 2925355,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10828
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3594
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 4042564
+        }
+      ],
+      "close_cpu_ns": 529044,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 2,
+      "mode": "without_wal",
+      "run": 33,
+      "open_cpu_ns": 246093,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 3650080
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 9614
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 3141912
+        }
+      ],
+      "close_cpu_ns": 569487,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 2,
+      "mode": "without_wal",
+      "run": 34,
+      "open_cpu_ns": 298661,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 9165
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 4153
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 5812375
+        }
+      ],
+      "close_cpu_ns": 493927,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 2,
+      "mode": "without_wal",
+      "run": 35,
+      "open_cpu_ns": 237390,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 7314
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 2914
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 5834233
+        }
+      ],
+      "close_cpu_ns": 503316,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 2,
+      "mode": "without_wal",
+      "run": 36,
+      "open_cpu_ns": 240376,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 7108
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3254
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 7144684
+        }
+      ],
+      "close_cpu_ns": 1679428,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 2,
+      "mode": "without_wal",
+      "run": 37,
+      "open_cpu_ns": 686083,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10523
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3702
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6301197
+        }
+      ],
+      "close_cpu_ns": 1004199,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 2,
+      "mode": "without_wal",
+      "run": 38,
+      "open_cpu_ns": 308257,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10126
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3407
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 7836454
+        }
+      ],
+      "close_cpu_ns": 475404,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 2,
+      "mode": "without_wal",
+      "run": 39,
+      "open_cpu_ns": 294514,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 8369
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3556
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 9040654
+        }
+      ],
+      "close_cpu_ns": 469672,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 2,
+      "mode": "without_wal",
+      "run": 40,
+      "open_cpu_ns": 556300,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10263
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3724
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6934205
+        }
+      ],
+      "close_cpu_ns": 1225277,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 2,
+      "mode": "without_wal",
+      "run": 41,
+      "open_cpu_ns": 2267779,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 11472
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3371
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 4076272
+        }
+      ],
+      "close_cpu_ns": 1675936,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 2,
+      "mode": "without_wal",
+      "run": 42,
+      "open_cpu_ns": 256254,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10327
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 4197
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6755932
+        }
+      ],
+      "close_cpu_ns": 3368791,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 2,
+      "mode": "without_wal",
+      "run": 43,
+      "open_cpu_ns": 297156,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10454
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 4075
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 3095007
+        }
+      ],
+      "close_cpu_ns": 456745,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 2,
+      "mode": "without_wal",
+      "run": 44,
+      "open_cpu_ns": 1397676,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10668
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3501
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6922667
+        }
+      ],
+      "close_cpu_ns": 570161,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 2,
+      "mode": "without_wal",
+      "run": 45,
+      "open_cpu_ns": 1057387,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 11347
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 4020
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6131959
+        }
+      ],
+      "close_cpu_ns": 461019,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 2,
+      "mode": "without_wal",
+      "run": 46,
+      "open_cpu_ns": 229885,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 5970
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3098
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 7026862
+        }
+      ],
+      "close_cpu_ns": 478445,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 2,
+      "mode": "without_wal",
+      "run": 47,
+      "open_cpu_ns": 239670,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 7528
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3524
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 7617642
+        }
+      ],
+      "close_cpu_ns": 483797,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 2,
+      "mode": "without_wal",
+      "run": 48,
+      "open_cpu_ns": 1392555,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 11124
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3792
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6693973
+        }
+      ],
+      "close_cpu_ns": 1599725,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 2,
+      "mode": "without_wal",
+      "run": 49,
+      "open_cpu_ns": 70422,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10567
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3529
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 8040613
+        }
+      ],
+      "close_cpu_ns": 517391,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 3,
+      "mode": "full",
+      "run": 0,
+      "open_cpu_ns": 1932701,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 13899
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3804
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 8949459
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6370
+        }
+      ],
+      "close_cpu_ns": 485965,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 3,
+      "mode": "full",
+      "run": 1,
+      "open_cpu_ns": 775242,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10272
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3839
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 8338351
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6543
+        }
+      ],
+      "close_cpu_ns": 2195195,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 3,
+      "mode": "full",
+      "run": 2,
+      "open_cpu_ns": 1446680,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10541
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 4115
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 8972125
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6611
+        }
+      ],
+      "close_cpu_ns": 517511,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 3,
+      "mode": "full",
+      "run": 3,
+      "open_cpu_ns": 292199,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 8571
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3430
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 5363607
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6734
+        }
+      ],
+      "close_cpu_ns": 2361701,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 3,
+      "mode": "full",
+      "run": 4,
+      "open_cpu_ns": 318722,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10293
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3692
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 6629925
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 11633
+        }
+      ],
+      "close_cpu_ns": 478360,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 3,
+      "mode": "full",
+      "run": 5,
+      "open_cpu_ns": 274167,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 7412
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3133
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 6447418
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 7203
+        }
+      ],
+      "close_cpu_ns": 490810,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 3,
+      "mode": "full",
+      "run": 6,
+      "open_cpu_ns": 237812,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 7175
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 2927
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 6448329
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6893
+        }
+      ],
+      "close_cpu_ns": 473958,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 3,
+      "mode": "full",
+      "run": 7,
+      "open_cpu_ns": 239780,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 7651
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3368
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 8335504
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6760
+        }
+      ],
+      "close_cpu_ns": 4449195,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 3,
+      "mode": "full",
+      "run": 8,
+      "open_cpu_ns": 302047,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10394
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3431
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 9624955
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6686
+        }
+      ],
+      "close_cpu_ns": 477246,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 3,
+      "mode": "full",
+      "run": 9,
+      "open_cpu_ns": 270656,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 7596
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3225
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 7506392
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6988
+        }
+      ],
+      "close_cpu_ns": 1922344,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 3,
+      "mode": "full",
+      "run": 10,
+      "open_cpu_ns": 1218531,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 11149
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3969
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 10928655
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6677
+        }
+      ],
+      "close_cpu_ns": 523611,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 3,
+      "mode": "full",
+      "run": 11,
+      "open_cpu_ns": 907493,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 11201
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3420
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 5033739
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6335
+        }
+      ],
+      "close_cpu_ns": 476473,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 3,
+      "mode": "full",
+      "run": 12,
+      "open_cpu_ns": 3544784,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 12763
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3643
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 7685735
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 7814
+        }
+      ],
+      "close_cpu_ns": 511084,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 3,
+      "mode": "full",
+      "run": 13,
+      "open_cpu_ns": 1738638,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10853
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3443
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 5472957
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6539
+        }
+      ],
+      "close_cpu_ns": 503494,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 3,
+      "mode": "full",
+      "run": 14,
+      "open_cpu_ns": 239154,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 7838
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3306
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 13576504
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6604
+        }
+      ],
+      "close_cpu_ns": 2628337,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 3,
+      "mode": "full",
+      "run": 15,
+      "open_cpu_ns": 360284,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 11032
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3976
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 7908441
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 429861
+        }
+      ],
+      "close_cpu_ns": 557182,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 3,
+      "mode": "full",
+      "run": 16,
+      "open_cpu_ns": 1550112,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10499
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3186
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 7107651
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6516
+        }
+      ],
+      "close_cpu_ns": 1062173,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 3,
+      "mode": "full",
+      "run": 17,
+      "open_cpu_ns": 316474,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10483
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 7653
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 7802819
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6880
+        }
+      ],
+      "close_cpu_ns": 1362472,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 3,
+      "mode": "full",
+      "run": 18,
+      "open_cpu_ns": 363235,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10636
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3711
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 8211471
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6498
+        }
+      ],
+      "close_cpu_ns": 492784,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 3,
+      "mode": "full",
+      "run": 19,
+      "open_cpu_ns": 241291,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 4106669
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 7614
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 5626459
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6859
+        }
+      ],
+      "close_cpu_ns": 2757382,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 3,
+      "mode": "full",
+      "run": 20,
+      "open_cpu_ns": 315757,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10785
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 4045
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 8035520
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 7075
+        }
+      ],
+      "close_cpu_ns": 2543238,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 3,
+      "mode": "full",
+      "run": 21,
+      "open_cpu_ns": 1168904,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10880
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3691
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 10853701
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6405
+        }
+      ],
+      "close_cpu_ns": 3526314,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 3,
+      "mode": "full",
+      "run": 22,
+      "open_cpu_ns": 389639,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 11020
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3822
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 5736214
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6598
+        }
+      ],
+      "close_cpu_ns": 505948,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 3,
+      "mode": "full",
+      "run": 23,
+      "open_cpu_ns": 71268,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 7934
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3255
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 8914508
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 13209
+        }
+      ],
+      "close_cpu_ns": 2729612,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 3,
+      "mode": "full",
+      "run": 24,
+      "open_cpu_ns": 948357,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10607
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3434
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 9042175
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6769
+        }
+      ],
+      "close_cpu_ns": 615275,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 3,
+      "mode": "full",
+      "run": 25,
+      "open_cpu_ns": 262598,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 9137
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3208
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 11690300
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6989
+        }
+      ],
+      "close_cpu_ns": 470862,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 3,
+      "mode": "full",
+      "run": 26,
+      "open_cpu_ns": 233047,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 5284
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3019
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 8508457
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6796
+        }
+      ],
+      "close_cpu_ns": 496724,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 3,
+      "mode": "full",
+      "run": 27,
+      "open_cpu_ns": 1989606,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 11051
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3716
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 11104527
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 7456
+        }
+      ],
+      "close_cpu_ns": 2017432,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 3,
+      "mode": "full",
+      "run": 28,
+      "open_cpu_ns": 1527851,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 12301
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3779
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 7110584
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 13998
+        }
+      ],
+      "close_cpu_ns": 2247241,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 3,
+      "mode": "full",
+      "run": 29,
+      "open_cpu_ns": 1535321,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10709
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3845
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 8126578
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 7093
+        }
+      ],
+      "close_cpu_ns": 2148815,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 3,
+      "mode": "full",
+      "run": 30,
+      "open_cpu_ns": 276827,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 11001
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3600
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 10765709
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6818
+        }
+      ],
+      "close_cpu_ns": 891962,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 3,
+      "mode": "full",
+      "run": 31,
+      "open_cpu_ns": 287701,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10531
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3914
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 9611588
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6903
+        }
+      ],
+      "close_cpu_ns": 583208,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 3,
+      "mode": "full",
+      "run": 32,
+      "open_cpu_ns": 2622176,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 12944
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 7941
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 5017837
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6934
+        }
+      ],
+      "close_cpu_ns": 2395161,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 3,
+      "mode": "full",
+      "run": 33,
+      "open_cpu_ns": 298104,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10445
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3760
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 9722281
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6800
+        }
+      ],
+      "close_cpu_ns": 1630438,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 3,
+      "mode": "full",
+      "run": 34,
+      "open_cpu_ns": 2292277,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10977
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3683
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 8785082
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6582
+        }
+      ],
+      "close_cpu_ns": 465089,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 3,
+      "mode": "full",
+      "run": 35,
+      "open_cpu_ns": 236672,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 5808
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 2990
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 8308162
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 7064
+        }
+      ],
+      "close_cpu_ns": 458811,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 3,
+      "mode": "full",
+      "run": 36,
+      "open_cpu_ns": 261628,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 7282
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 7428
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 10396307
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6490
+        }
+      ],
+      "close_cpu_ns": 479948,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 3,
+      "mode": "full",
+      "run": 37,
+      "open_cpu_ns": 2311643,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 11340
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3687
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 6099596
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6920
+        }
+      ],
+      "close_cpu_ns": 659662,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 3,
+      "mode": "full",
+      "run": 38,
+      "open_cpu_ns": 316625,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 9958
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3832
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 12457064
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 7117
+        }
+      ],
+      "close_cpu_ns": 505813,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 3,
+      "mode": "full",
+      "run": 39,
+      "open_cpu_ns": 235633,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 7045
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3123
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 9257842
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 7465
+        }
+      ],
+      "close_cpu_ns": 510504,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 3,
+      "mode": "full",
+      "run": 40,
+      "open_cpu_ns": 237759,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 6205
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3201
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 8918741
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6664
+        }
+      ],
+      "close_cpu_ns": 484540,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 3,
+      "mode": "full",
+      "run": 41,
+      "open_cpu_ns": 2498013,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10979
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3515
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 4388484
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6735
+        }
+      ],
+      "close_cpu_ns": 2124444,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 3,
+      "mode": "full",
+      "run": 42,
+      "open_cpu_ns": 387546,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 11125
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3554
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 7828473
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 12870
+        }
+      ],
+      "close_cpu_ns": 530156,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 3,
+      "mode": "full",
+      "run": 43,
+      "open_cpu_ns": 354397,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 9014
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3771
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 6725330
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6844
+        }
+      ],
+      "close_cpu_ns": 1060994,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 3,
+      "mode": "full",
+      "run": 44,
+      "open_cpu_ns": 2594847,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10727
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3497
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 4253377
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6916
+        }
+      ],
+      "close_cpu_ns": 5584852,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 3,
+      "mode": "full",
+      "run": 45,
+      "open_cpu_ns": 397662,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 10909
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3585
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 3133360
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6747
+        }
+      ],
+      "close_cpu_ns": 1398871,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 3,
+      "mode": "full",
+      "run": 46,
+      "open_cpu_ns": 272737,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 9487
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3595
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 7634319
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6735
+        }
+      ],
+      "close_cpu_ns": 476196,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 3,
+      "mode": "full",
+      "run": 47,
+      "open_cpu_ns": 237354,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 6024
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3103
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 8741780
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6786
+        }
+      ],
+      "close_cpu_ns": 534944,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 3,
+      "mode": "full",
+      "run": 48,
+      "open_cpu_ns": 245359,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 7631
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3396
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 6486423
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6919
+        }
+      ],
+      "close_cpu_ns": 484090,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    },
+    {
+      "block": 3,
+      "mode": "full",
+      "run": 49,
+      "open_cpu_ns": 3540512,
+      "steps": [
+        {
+          "sql": "PRAGMA busy_timeout = 5000",
+          "cpu_ns": 11173
+        },
+        {
+          "sql": "PRAGMA foreign_keys = ON",
+          "cpu_ns": 3370
+        },
+        {
+          "sql": "PRAGMA journal_mode = WAL",
+          "cpu_ns": 8875068
+        },
+        {
+          "sql": "PRAGMA synchronous = NORMAL",
+          "cpu_ns": 6651
+        }
+      ],
+      "close_cpu_ns": 571981,
+      "settings": {
+        "journal_mode": "wal",
+        "foreign_keys": 1,
+        "synchronous": 1,
+        "busy_timeout": 5000
+      }
+    }
+  ]
+}

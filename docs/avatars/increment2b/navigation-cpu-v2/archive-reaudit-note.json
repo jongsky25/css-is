@@ -1,0 +1,6 @@
+{
+  "acceptance": false,
+  "initial_failure": "Raw in-memory audit used integer navigation keys; persisted JSON uses string keys. Direct Python-object comparison therefore failed despite matching JSON values.",
+  "correction": "Normalize re-audit through JSON serialization before equality check. Archived samples, audit values and acceptance gates unchanged.",
+  "final_result": "identical_serialized_reaudit"
+}

@@ -28,6 +28,28 @@ trigger it as an acceptance audit of the cancelled cohort. No later increments,
 merge to main or deployment occurred. The historical handoff below is superseded by this
 correction wherever it suggests CI success establishes complete memory acceptance.
 
+## CPU profiles complete — repeated SQLite setup is the next concrete candidate
+
+[Latest report](avatars/increment2b/navigation-cpu-v2/REPORT.md): fixed four-slot
+current control/profile/profile/control from `bcbf0b4` completes with 124 verified
+source/probe hashes, 32 files, all six traces intact and V8 coverage at all 20
+navigations in both profiles. Extracted archive audit matches; 83 tests pass.
+V1 partial V8 coverage and all audit repairs remain preserved. Product unchanged.
+
+Both profiles show 240 storage.connect calls and 960 setup PRAGMAs; setup consumes
+1.23–1.40s CPU, about 89% of SQLite execute CPU. A separate fixed synthetic-schema
+probe finds removing journal_mode only shifts initialization cost to synchronous.
+Do not remove PRAGMAs as a fix. The concrete next candidate is reducing connection
+churn with thread ownership/transaction cleanup, then behavioral tests and the
+unchanged unprofiled control/memory gates. It has NOT been implemented.
+
+Browser native coverage is dominated by style/paint, without avatar-specific
+ownership proof. Profiles are intrusive: +86.87%/+48.41% paired duration, individual
+pauses and reader CPU exceed gates. complete_cpu_diagnostic is attribution only,
+not calibration, source comparison or 2B acceptance. Historical control slowdown
+and RSS failures are not causally resolved. No new measurement active; 2B/later
+remain blocked. Earlier sections are historical evidence.
+
 ## Scheduler capture — control variance persists without recorded throttling
 
 [Latest report](avatars/increment2b/navigation-residency-v6/REPORT.md): new V6
