@@ -363,12 +363,16 @@ browser tests ran.
 
 ## New-chat invocation
 
-Use Sol. Read docs/AVATAR_VISUAL_UPGRADE_PLAN.md in jongsky25/css-is and the
-repository instructions. Inspect the execution ledger and current code, then
-execute the next pending increment completely. Preserve the plan's visual and
-performance gates. Record evidence, tests, commit and remaining work in the ledger.
-Continue through subsequent increments if the session permits. Prepare reviewable
-changes; do not deploy without deployment authorization.
+Use Sol. Continue `jongsky25/css-is` on `codex/avatar-2b-verification` and read
+[the authoritative restart handoff](AVATAR_UPGRADE_HANDOFF.md#start-here--sol-handoff-current-as-of-dc06be8)
+before the historical ledger. **Unblock 2B only; do not advance to 3A or later
+increments.** Latest shared-cat-gradient candidate `cd94bf3` passed visual checks
+but failed its memory screen; completed evidence is recorded in `dc06be8`.
+A validated memory correction, stable same-source controls and complete audited
+acceptance remain outstanding. Start with retained evidence, preserve all failures,
+and execute one supported intervention with its frozen validation gates. Do not
+merge, deploy, waive budgets or repeat unchanged failed candidates for a favorable
+result. Update the handoff and ledger after the next completed experiment.
 
 ### Increment 0 execution note — 2026-10-25
 

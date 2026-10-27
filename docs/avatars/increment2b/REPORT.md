@@ -1,5 +1,17 @@
 # Increment 2B — acceptance withdrawn: uncovered memory failures
 
+## Readiness and next-session entry point
+
+2B is **not at final verification**. Artwork and extensive visual/functional checks
+are complete, but no candidate has demonstrated a repeatable memory correction
+with stable controls. Remaining milestones: a supported fix, qualified candidate
+validation, then complete original-baseline acceptance across all device/cache
+and scenario groups. No defensible percentage or ETA is established.
+
+Use the [Sol restart handoff](../../AVATAR_UPGRADE_HANDOFF.md#start-here--sol-handoff-current-as-of-dc06be8)
+for current source identities, evidence order, next bounded work and constraints.
+Older next-step instructions in this report are historical where superseded.
+
 ## Shared cat-gradient candidate tested — memory screen failed
 
 [Latest report](shared-cat-gradients/REPORT.md): candidate cd94bf3 shares identical cat gradients through
