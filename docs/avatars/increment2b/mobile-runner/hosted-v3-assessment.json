@@ -1,0 +1,43 @@
+{
+  "run_url": "https://github.com/jongsky25/css-is/actions/runs/40503804962",
+  "artifact_id": 12734336153,
+  "artifact_sha256": "1fa78e3eeda7cbafb63283005fd3666ecb998907541729ae6b5cf2f4ec1ef0fe",
+  "internal_hashes_verified": 35,
+  "harness_commit": "92b842826b60b8741e3032f252c09b6e350af66d",
+  "audit_status": "diagnostic_complete",
+  "identical_reaudit": true,
+  "identical_context_summary": true,
+  "source_hashes_verified": 5,
+  "files_verified": 12,
+  "controls": [
+    {
+      "index": 0,
+      "duration_ms": 3900.751591,
+      "system_steal_fraction": 0.0,
+      "telemetry_ms": 139.683122,
+      "throttle_ms": 0.0
+    },
+    {
+      "index": 1,
+      "duration_ms": 3818.159371,
+      "system_steal_fraction": 0.0,
+      "telemetry_ms": 144.103024,
+      "throttle_ms": 0.0
+    },
+    {
+      "index": 2,
+      "duration_ms": 3845.507566,
+      "system_steal_fraction": 0.0,
+      "telemetry_ms": 138.396884,
+      "throttle_ms": 0.0
+    },
+    {
+      "index": 3,
+      "duration_ms": 3893.633538,
+      "system_steal_fraction": 0.0,
+      "telemetry_ms": 140.7763,
+      "throttle_ms": 0.0
+    }
+  ],
+  "qualification": false
+}

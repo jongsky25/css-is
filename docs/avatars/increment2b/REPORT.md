@@ -8,10 +8,25 @@ with stable controls. Remaining milestones: a supported fix, qualified candidate
 validation, then complete original-baseline acceptance across all device/cache
 and scenario groups. No defensible percentage or ETA is established.
 
-Use the [Sol restart handoff](../../AVATAR_UPGRADE_HANDOFF.md#start-here--sol-handoff-current-after-runner-isolation-capability-check)
+Use the [Sol restart handoff](../../AVATAR_UPGRADE_HANDOFF.md#start-here--sol-handoff-current-after-mobile-hosted-workflow)
 for current source identities, evidence order, next bounded work and constraints.
-The runner isolation capability check below is the latest completed work.
+The mobile hosted workflow below is the latest completed work.
 Older next-step instructions in this report are historical where superseded.
+
+## Mobile hosted runner — cloud diagnostic succeeds, registration pending
+
+[Latest report](mobile-runner/REPORT.md): setup [PR #511](https://github.com/jongsky25/css-is/pull/511)
+adds only a phone-accessible workflow and instructions to main, with frozen harness
+92b8428 checked out separately. Standard hosted run 40503804962 completes four
+controls (3900.752/3818.159/3845.508/3893.634ms; ~2.16% range), zero reported CPU
+steal/throttle, and identical independent audits. All initial image/timer failures
+remain archived. **101 focused tests pass.** User acceptance supersedes the earlier
+reserved-runner-only prerequisite; no physical isolation claim is made.
+The cloud result is viewable now. Run workflow button registration remains pending
+main's existing release-version check; no merge/version bump/deployment occurred.
+No native probe calibration, application comparison or 2B acceptance follows.
+Next freeze a complete native-recorder calibration on this hosted condition with
+all unchanged gates; never reinterpret the control-only diagnostic as qualification.
 
 ## Runner isolation capability — external infrastructure required
 

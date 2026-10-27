@@ -2,7 +2,7 @@
 
 Last updated: **2026-10-27 UTC**. Repository: `jongsky25/css-is`.
 
-## Start here — Sol handoff, current after runner isolation capability check
+## Start here — Sol handoff, current after mobile hosted workflow
 
 **Objective: unblock 2B only. Do not start or resume 3A or later increments.**
 This section supersedes older next-step instructions below. The chronology is
@@ -11,12 +11,13 @@ retained as evidence, not a queue of experiments to repeat.
 ### Checkout and current state
 
 - Repository: `jongsky25/css-is`; resume `codex/avatar-2b-verification`.
-- Latest completed work: runner isolation capability inventory, frozen script
-  `ccb4365`. KVM/five guest CPUs/four-CPU quota; no exclusive cpuset and CPU
-  controls not writable. Runtime tools expose no capacity/isolation action;
-  GitHub runner discovery was denied. **Externally configured isolated runner
-  access is now required. No further unchanged local experiment is queued.**
-  Prior control diagnostic 84ce8e9 and failed C recorder v12 remain evidence.
+- Latest completed work: standard GitHub Linux x64 diagnostic successfully runs
+  from setup PR #511. Workflow 3bb633c pins harness 92b8428; cloud run
+  40503804962 completes all four controls and identical independent re-audit.
+  Earlier setup and early-timer failures are retained, not rerun unchanged.
+  The user accepted standard hosted runners; physical reservation is not required
+  to evaluate this new environment. Default-branch registration is still pending
+  the existing release-version gate; no merge/deploy or app comparison occurred.
   Use latest branch HEAD for reports/evidence, not a reset to a harness commit.
 - Comparison baseline: `1c964dcba2fa19de1eab077b00e0e5748d742554`.
 - Current experimental product: `cf363bfe547d5e23619eee28cdaf68bd4b6d7753`,
@@ -48,8 +49,9 @@ markup and improves navigation 20 in both orders, but those partial benefits
 cannot override the failed gates. This screen compares current versus candidate;
 it is not the complete original-versus-candidate acceptance matrix.
 
-Latest capability check: [runner isolation blocker](avatars/increment2b/runner-isolation/REPORT.md).
-Latest measured diagnostic: [control phase timing](avatars/increment2b/control-phase-timing/REPORT.md).
+Latest workflow/result: [mobile hosted runner](avatars/increment2b/mobile-runner/REPORT.md).
+Four standard-hosted controls complete with ~2.16% range and zero reported CPU steal;
+this separate diagnostic does not reverse the failed qualification below.
 The native C recorder now passes both cost bounds (2.9486/3.7522%) and preserves
 all 1,536 receiver joins and all-mode source-labelled reclamation per probe.
 Twenty labelled generations overlap native sweeping. The complete calibration
@@ -74,7 +76,10 @@ verification**. No candidate currently qualifies to unblock 2B.
 
 Read these in order before changing code or launching browsers:
 
-1. [Runner isolation blocker](avatars/increment2b/runner-isolation/REPORT.md) and
+1. [Mobile hosted runner](avatars/increment2b/mobile-runner/REPORT.md),
+   [phone instructions](avatars/increment2b/mobile-runner/README.md), and
+   [setup PR #511](https://github.com/jongsky25/css-is/pull/511).
+   The earlier [runner isolation blocker](avatars/increment2b/runner-isolation/REPORT.md) and
    [concrete runner requirements](avatars/increment2b/runner-isolation/RUNNER_REQUIREMENTS.md).
    Then [control timing diagnostic](avatars/increment2b/control-phase-timing/REPORT.md),
    both frozen protocols, failed initialization and complete control/CPU evidence.
@@ -108,21 +113,32 @@ extra queries change the workload. V12 remains failed at 20.7568% control variat
 though both recorder cost/reclamation probes passed. No timing subtraction,
 post-hoc load filter, quiet-window rerun or budget waiver is allowed.
 
-Runner isolation capability check ccb4365 is complete: no exclusive cpuset is
-reported, CPU controls are not writable, and connected runtime tools have no
-resource reservation/migration/configuration action. Read-only GitHub runner
-inventory was denied, so alternate runner availability is unknown. No environment
-mutation or new performance run occurred. Do not repeat this inventory, v12, or the
-same control diagnostic as if it could establish a supported intervention.
+The user explicitly accepted evaluating a standard hosted Linux x64 runner from a
+phone; the earlier reserved-only external prerequisite is superseded. PR #511 adds
+only workflow/phone instructions to main and pins separate diagnostic code, without
+merging verification-branch product changes. Final hosted run 40503804962 succeeds:
+control durations 3900.752/3818.159/3845.508/3893.634ms (~2.16% range), zero reported
+aggregate CPU steal/throttle in sampled operations, exact identity/fixture audit.
+New host is Azure/AMD/four visible CPUs with no cgroup quota; this differs from the
+old KVM/Xeon/five-CPU/four-quota runner. No absolute cross-host product conclusion.
 
-**Hard external prerequisite:** supply an existing reserved Linux x64 runner or
-configure this task's host through its supported environment configuration UI.
-Retain provider/operator evidence of the isolation scope and resource differences;
-guest affinity/cpuset or an ubuntu runner label cannot establish host reservation.
-Follow RUNNER_REQUIREMENTS.md for exact toolchain/browser/paths and permissions.
-Only after a concrete new runner condition exists may a new diagnostic/calibration
-policy be frozen. Retain all slots and gates. Product cf363bf and unpromoted cd94bf3
-remain unchanged; no application calibration, 2B acceptance or later increment.
+Initial image Python mismatch and three early browser-timer returns are preserved.
+Verified Python 3.12.14 image and diagnostic v2 monotonic wait-floor repair are
+frozen; historical audits remain failed. All archives/manifests verify, complete
+and failed timer audits reproduce identically, and 101 focused tests pass. No app
+calibration or native probe screen was run on the new host.
+
+Phone access now: open the successful GitHub run or PR Checks and download the
+avatar-runner-diagnostic artifact. For a recurring Run workflow button, default-
+branch registration is still needed. Existing main release checks require an app
+version increase even for setup-only PR #511 (8.98 equals base); no gate/version
+metadata was changed or merge/deployment performed. Keep this separate from 2B.
+
+Next experimental prerequisite is a newly frozen native-recorder calibration on
+the hosted condition: full control/probe/probe/control, prior proofs, all original
+cost/integrity/reclamation/stability gates. A successful control-only diagnostic
+cannot qualify the instrument or automatically launch application measurements.
+Product cf363bf and unpromoted cd94bf3 remain unchanged; no 2B/later advance.
 
 ### Important traps and execution constraints
 

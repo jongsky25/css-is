@@ -25,6 +25,21 @@ seasonal administration, and accessibility behavior.
 A phase fails if its visuals remain essentially the same except for color changes,
 or if it exceeds a performance gate. Fix or reduce complexity before expanding it.
 
+## Mobile hosted runner — cloud diagnostic succeeds, registration pending
+
+[Latest report](avatars/increment2b/mobile-runner/REPORT.md): setup [PR #511](https://github.com/jongsky25/css-is/pull/511)
+adds only a phone-accessible workflow and instructions to main, with frozen harness
+92b8428 checked out separately. Standard hosted run 40503804962 completes four
+controls (3900.752/3818.159/3845.508/3893.634ms; ~2.16% range), zero reported CPU
+steal/throttle, and identical independent audits. All initial image/timer failures
+remain archived. **101 focused tests pass.** User acceptance supersedes the earlier
+reserved-runner-only prerequisite; no physical isolation claim is made.
+The cloud result is viewable now. Run workflow button registration remains pending
+main's existing release-version check; no merge/version bump/deployment occurred.
+No native probe calibration, application comparison or 2B acceptance follows.
+Next freeze a complete native-recorder calibration on this hosted condition with
+all unchanged gates; never reinterpret the control-only diagnostic as qualification.
+
 ## Runner isolation capability — external infrastructure required
 
 [Latest report](avatars/increment2b/runner-isolation/REPORT.md) confirms a hard runner-access blocker. Frozen inventory

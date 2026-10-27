@@ -1,5 +1,10 @@
 # Runner isolation: infrastructure blocker confirmed
 
+**Superseded runner choice:** the user has since accepted evaluating a standard
+GitHub Linux x64 runner from a phone. Physical reservation was not proved necessary.
+Use [mobile runner setup](../mobile-runner/README.md) and PR #511; this inventory
+remains evidence about the original managed host, not an active reserved-only gate.
+
 **No supported isolation intervention is available from this session.** We have
 completed the current runtime/control inventory and prepared a concrete
 [runner handoff](RUNNER_REQUIREMENTS.md). Continuing requires an externally

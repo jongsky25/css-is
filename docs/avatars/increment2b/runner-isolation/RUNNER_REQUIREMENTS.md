@@ -1,5 +1,10 @@
 # Concrete handoff for an isolated measurement runner
 
+**Superseded runner choice:** the user has since accepted evaluating a standard
+GitHub Linux x64 runner from a phone. Physical reservation was not proved necessary.
+Use [mobile runner setup](../mobile-runner/README.md) and PR #511; this inventory
+remains evidence about the original managed host, not an active reserved-only gate.
+
 Current task is blocked on **runner access/capacity**, not another application
 approval. This session cannot allocate, migrate or reserve its managed host. The
 connected runtime API exposes only status/network diagnostics; repository runner

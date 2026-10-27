@@ -1,0 +1,18 @@
+{
+  "pr_url": "https://github.com/jongsky25/css-is/pull/511",
+  "setup_branch": "codex/avatar-mobile-runner-setup",
+  "setup_head": "3bb633c8572f08c4b94f1a8c6525af4c22b2a250",
+  "harness_commit": "92b842826b60b8741e3032f252c09b6e350af66d",
+  "reviewed_workflow_sha256": "988ad2cfe98992ce2e6b9b99ba93cb06bc7d997f243e6a61a9cc1465fe35c203",
+  "python_image": "python:3.12.14-trixie@sha256:4d1caded1f729ae443eb803f26ffde7b61e696aeaef62f099abb6dd6b14257c7",
+  "offline_container_validation": {
+    "network": "none",
+    "python": "3.12.14",
+    "machine": "x86_64"
+  },
+  "local_preflight_tests": 35,
+  "workflow_structure_and_bash_syntax_valid": true,
+  "merge_performed": false,
+  "deployment_performed": false,
+  "registration_gate": "Existing release check requires version increase from 8.98; no product metadata or gate was changed."
+}
