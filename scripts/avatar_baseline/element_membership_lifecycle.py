@@ -27,13 +27,18 @@ def digest(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def run(out, mode):
+def run(out, mode, timing=None):
+    if timing is not None and mode != 'control':
+        raise ValueError('Timing diagnostic must remain uninjected')
     out.mkdir(parents=True, exist_ok=False)
     root = Path(__file__).resolve().parents[2]
     result = {'protocol': PROTOCOL, 'acceptance': False, 'forced_gc': False,
               'mode': mode, 'selection_policy': 'per-evaluate-selector-cache', 'fixture_profile': 'legacy-dom-svg-style-3000-v1', 'fixture_schedule': SCHEDULE, 'observable': 'absent-attribute-node-ns', 'attribute_namespace': 'urn:css-is:membership:absent', 'attribute_local_name': 'absent', 'count_per_group': CENSUS, 'fixture_count_per_group': FIXTURE_COUNT, 'stage_count': STAGES, 'stages': [], 'messages': [],
               'harness_commit': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=root, text=True).strip(),
               'runner_sha256': digest(Path(__file__)), 'hook_sha256': digest(HOOK), 'frida_version': frida.__version__, 'lifecycle_events': []}
+    if timing is not None:
+        result['protocol'] = 'control-phase-timing-v1'
+        result['control_timing'] = timing.data
     notes = subprocess.check_output(['readelf', '-n', str(BROWSER)], text=True)
     if 'Build ID: ' + BUILD not in notes:
         raise ValueError('Wrong browser build')
@@ -105,6 +110,8 @@ def run(out, mode):
                 start = time.monotonic_ns()
                 cdp.send('Tracing.recordClockSyncMarker', {'syncId': name})
                 return {'name': name, 'begin_ns': start, 'end_ns': time.monotonic_ns()}
+            if timing is not None:
+                timing.initialize(browser_pids[0], pid)
             result['begin_ns'] = time.monotonic_ns()
             if mode == 'probe':
                 start = time.monotonic_ns()
@@ -118,10 +125,13 @@ def run(out, mode):
                 stage = {'index': index, 'fixture_mode': SCHEDULE[index], 'begin_ns': time.monotonic_ns(), 'censuses': []}
                 result['stages'].append(stage)
                 if script: script.exports_sync.setphase(f'navigation:{index}')
-                page.goto(origin + f'/fixture/{index}'); page.wait_for_timeout(220)
-                before = page.evaluate('document.documentElement.outerHTML')
+                def timed(name, operation):
+                    return timing.measure(index, name, operation) if timing is not None else operation()
+                timed('navigation', lambda: page.goto(origin + f'/fixture/{index}'))
+                timed('fixed_wait', lambda: page.wait_for_timeout(220))
+                before = timed('serialize_before', lambda: page.evaluate('document.documentElement.outerHTML'))
                 start = time.monotonic_ns()
-                observed = page.evaluate('''({count,mode}) => {'''+SELECT_JS+'''
+                observed = timed('census', lambda: page.evaluate('''({count,mode}) => {'''+SELECT_JS+'''
                     const result = [];
                     for (const group of ['avatar', 'other']) {
                         for (const repeat of [0, 1]) {
@@ -131,22 +141,30 @@ def run(out, mode):
                         }
                     }
                     return result;
-                }''', {'count':CENSUS,'mode':SCHEDULE[index]})
+                }''', {'count':CENSUS,'mode':SCHEDULE[index]}))
                 stop = time.monotonic_ns()
                 stage['batch_census_interval_ns'] = [start, stop]
                 for row in observed:
                     group, repeat = row.pop('group'), row.pop('repeat')
                     stage['censuses'].append({'phase': f'census:{index}:{group}:{repeat}',
                         'begin_ns': start, 'end_ns': stop, 'result': row})
-                after = page.evaluate('document.documentElement.outerHTML')
-                stage['dom_before_sha256'] = hashlib.sha256(before.encode()).hexdigest()
-                stage['dom_after_sha256'] = hashlib.sha256(after.encode()).hexdigest()
+                after = timed('serialize_after', lambda: page.evaluate('document.documentElement.outerHTML'))
+                def hash_dom():
+                    stage['dom_before_sha256'] = hashlib.sha256(before.encode()).hexdigest()
+                    stage['dom_after_sha256'] = hashlib.sha256(after.encode()).hexdigest()
+                timed('hash_dom', hash_dom)
                 start = time.monotonic_ns()
-                stage['heap'] = {'value': page_cdp.send('Runtime.getHeapUsage'),
+                stage['heap'] = {'value': timed('heap_counter', lambda: page_cdp.send('Runtime.getHeapUsage')),
                                  'interval_ns': [start, time.monotonic_ns()]}
                 start = time.monotonic_ns()
-                stage['dom'] = {'value': page_cdp.send('Memory.getDOMCounters'),
+                stage['dom'] = {'value': timed('dom_counter', lambda: page_cdp.send('Memory.getDOMCounters')),
                                 'interval_ns': [start, time.monotonic_ns()]}
+                if timing is not None:
+                    stage['navigation_timing'] = timed('navigation_timing', lambda: page.evaluate('''() => {
+                        const n=performance.getEntriesByType('navigation')[0];
+                        return Object.fromEntries(['fetchStart','requestStart','responseStart','responseEnd',
+                        'domInteractive','domContentLoadedEventEnd','loadEventEnd','duration'].map(k=>[k,n[k]]));
+                    }'''))
                 stage['end_ns'] = time.monotonic_ns()
             result['end_ns'] = time.monotonic_ns()
             if mode == 'probe':
