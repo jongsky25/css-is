@@ -1,0 +1,18 @@
+{
+  "run_url": "https://github.com/jongsky25/css-is/actions/runs/40518161854",
+  "artifact_id": 12739259403,
+  "artifact_sha256": "e2cbc3c52cbf339a737f8d7ed7f9f909901522147c127d724d8acee8794cf986",
+  "internal_hashes_verified": 164,
+  "harness_commit": "5146cad8c30e9a9cd83933ec3185a8618abdc8f1",
+  "status": "application_calibration_failed",
+  "error": "ValueError('Application receiver prerequisite/capture failed; see raw proof and runner log')",
+  "native_qualification_reaudit_identical": true,
+  "native_instrument_qualified_in_same_job": true,
+  "application_proof_workloads_completed": 1,
+  "proof_snapshots": 13,
+  "proof_mounts": 20,
+  "getter_records": 128,
+  "reference_records": 0,
+  "application_calibration_slots_started": 0,
+  "cause": "Reference JS called getBoundingClientRect; qualified native witness offset is Element::getClientRects."
+}

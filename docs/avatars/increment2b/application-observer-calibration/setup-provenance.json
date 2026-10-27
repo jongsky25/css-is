@@ -1,0 +1,13 @@
+{
+  "setup_pr": "https://github.com/jongsky25/css-is/pull/516",
+  "superseded_pr": "https://github.com/jongsky25/css-is/pull/515",
+  "harness_commit": "5146cad8c30e9a9cd83933ec3185a8618abdc8f1",
+  "workflow_commit": "dd0f4e1c62f7ff6580b4f1670157ef0ad8d3f0b3",
+  "workflow_sha256": "aced8d95be6da693d9845ebdc98c790f8f623c4a20ffed8dd2127e6264864411",
+  "product_commit": "cf363bfe547d5e23619eee28cdaf68bd4b6d7753",
+  "native_qualification": "Fresh full fixed calibration in the same allocated job, independently audited before any app workload",
+  "local_preflight_tests": 64,
+  "trigger": "pull_request opened only",
+  "merge": false,
+  "deployment": false
+}

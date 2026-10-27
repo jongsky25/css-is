@@ -14,9 +14,11 @@ const info=group=>({pool_count:group==='avatar'?avatar.length:other.length,
 const attributes=nodes=>JSON.stringify(nodes.map(n=>[n.localName,n.getAttributeNames().map(name=>[name,n.getAttribute(name)])]));
 const observe=(group,kind)=>{
  const nodes=pools[group],before=attributes(nodes);
- const values=nodes.map(n=>kind==='reference'?(n.getBoundingClientRect(),1):Number(n.getAttributeNodeNS('urn:css-is:membership:absent','absent')===null));
+ const geometry_counts=[];
+ const values=nodes.map(n=>{if(kind==='reference'){const count=n.getClientRects().length;geometry_counts.push(count);return Number(Number.isInteger(count)&&count>=0);}
+ return Number(n.getAttributeNodeNS('urn:css-is:membership:absent','absent')===null);});
  const after=attributes(nodes);
- return {...info(group),values,before_attributes:before,after_attributes:after};
+ return {...info(group),values,geometry_counts,before_attributes:before,after_attributes:after};
 };
 '''
 QUERY_JS = '({group,kind})=>{'+SELECT_JS+'return observe(group,kind);}'

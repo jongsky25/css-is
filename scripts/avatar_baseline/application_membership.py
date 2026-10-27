@@ -80,6 +80,7 @@ def proof(p,raw):
     if {e['phase'] for e in receivers}!=set(expected):raise ValueError('Unexpected application receiver call')
     for q in queries:
         phase=q['phase'];kind,_,group,repeat=phase.split(':');r=q['result'];validate_selection(r,group)
+        if kind=='reference' and (len(r.get('geometry_counts',[]))!=32 or any(type(v) is not int or v<0 for v in r['geometry_counts'])):raise ValueError('Missing actual client-rect count witness')
         es=[e for e in receivers if e['phase']==phase]
         if len(es)!=32 or len({e['address'] for e in es})!=32 or any(not q['begin_ns']<=e['begin_ns']<=e['returned_ns']<=q['end_ns'] for e in es):raise ValueError('Proof receiver identity/bracket mismatch')
         seen[phase]=[e['address'] for e in es]
