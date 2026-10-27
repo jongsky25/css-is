@@ -3,8 +3,8 @@
 
 {% macro art(s, m=0, costume="", scope="") %}
 {% set sc = 0.62 + (s - 1) * 0.076 %}
-{% set fur = 'url(#' ~ scope ~ '-fur)' if scope else 'url(#avg-catfur)' %}
-{% set cream = 'url(#' ~ scope ~ '-cream)' if scope else 'url(#avg-catfur2)' %}
+{% set fur = 'url(#avg-cat-v2-fur)' %}
+{% set cream = 'url(#avg-cat-v2-cream)' %}
 {% set head_y = 72 if s <= 2 else (69 if s < 5 else 67) %}
 {{ _shadow(30) }}
 <g class="av-v2 av-body" transform="translate(60 96) scale({{ sc }}) translate(-60 -96)" stroke-linejoin="round">
