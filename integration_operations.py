@@ -58,6 +58,12 @@ def acknowledge_in_transaction(conn, payload, case_id, task_id, operation_id, re
                                   'acknowledge', {'reason': reason})
 
 
+def submit_in_transaction(conn, payload, case_id, task_id, operation_id, revision, reason, submission):
+    """Use the canonical submission receipt in the caller's writer transaction."""
+    return _change_in_transaction(conn, payload, case_id, task_id, operation_id, revision,
+                                  'submit', {'reason': reason, 'submission': submission})
+
+
 def _change(conn, payload, case_id, task_id, operation_id, revision, action, fields):
     with transaction(conn):
         return _change_in_transaction(conn, payload, case_id, task_id, operation_id, revision, action, fields)

@@ -22,6 +22,7 @@ import mcp_auth
 import mcp_actions
 import mcp_supply_drafts
 import mcp_comment_drafts
+import mcp_task_submissions
 import mcp_task_acknowledgements
 import mcp_travel_drafts
 import travel_drafts
@@ -410,6 +411,44 @@ def build_server(get_conn, origin):
         """
         return await action(lambda conn, token: mcp_task_acknowledgements.recover(
             conn, token, provider.resource, origin, operation_id), mcp_task_acknowledgements.SCOPE)
+
+    @server.tool(title='Prepare submitting my assigned task for review', annotations=ToolAnnotations(
+        readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=False))
+    async def prepare_task_submission(work_item_id: StrictInt, task_id: StrictInt,
+            revision: StrictInt, reason: StrictStr, submission: StrictStr, operation_id: StrictStr) -> dict:
+        """Prepare In progress -> For review for a task currently assigned to you.
+
+        Requires separate work:task:submit consent; acknowledgement/draft/read
+        grants do not authorize this action. Read the current revision first.
+        Supply a 1–2000 character review note and 1–8000 character output/evidence.
+        Show confirmation_url for the user to review the ENTIRE exact output,
+        note, task/revision, next reviewer and normal shared-work effects in the
+        signed-in browser. Preparation does not submit. Confirmation rechecks
+        authority, blockers, dependencies, linked-record access and revisions,
+        then uses the canonical API receipt. Saved output replaces earlier task
+        output, with versions retained in normal history for permitted readers.
+        No approval, acceptance, completion, file upload or evidence-link fetch.
+        Reuse one random 16–80 character operation_id across retries; recover the
+        original before making a replacement after timeout/unavailability.
+        """
+        return await action(lambda conn, token: mcp_task_submissions.prepare(
+            conn, token, provider.resource, origin, operation_id,
+            {'work_item_id': work_item_id, 'task_id': task_id, 'revision': revision,
+             'reason': reason, 'submission': submission}), mcp_task_submissions.SCOPE)
+
+    @server.tool(title='Check my task submission receipt', annotations=READ_ONLY)
+    async def get_task_submission_operation(operation_id: StrictStr) -> dict:
+        """Recover the original task preview or canonical submission receipt.
+
+        Requires original active connection, work:task:submit consent and current
+        source access. Returns original result revision/status, review routing
+        and source/API receipt links, never output or note text. Completed means
+        submitted for review, not accepted or approved. Later UI/API work is
+        separate; recovery never repeats or overwrites it. Unavailability/timeout
+        is not proof of failure. Inspect the original operation before a new key.
+        """
+        return await action(lambda conn, token: mcp_task_submissions.recover(
+            conn, token, provider.resource, origin, operation_id), mcp_task_submissions.SCOPE)
 
     def supply_queue(conn, user, queue, state, query, page, limit):
         if queue not in ('requests', 'approvals', 'warnings'):

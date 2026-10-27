@@ -1,3 +1,9 @@
+## 8.86 — October 27, 2026
+
+- Add default-off assigned-task submission preparation and recovery with separate work:task:submit consent excluded from default scopes. Browser confirmation binds exact output, review note, task/work-item revisions and lead/unit routing before moving In progress to For review; explain replacement of saved output and normal history visibility/effects.
+- Reuse the canonical API submission fingerprint, session/authority checks, task service and immutable receipt through a caller-owned transactional entry point. Atomically commit task/output/history/audit/review/notice effects with API/MCP receipts and historical next-review-party metadata; preserve one UUID v4 key across replay and refresh.
+- Recheck current blockers, unfinished prerequisites, changed decisions, routing, ownership, linked access and workflow state. Clear completed/expired preview copies, preserve later UI/API review decisions and add runtime packaging, OAuth/MCP/API/browser/mobile checks and the pilot runbook. No acceptance, approval, completion, owner/deadline changes, uploads, evidence fetching or external relay; hosted acceptance remains pending.
+
 ## 8.85 — October 27, 2026
 
 - Add default-off own assigned-task acknowledgement preparation and recovery with separate work:task:acknowledge consent excluded from default scopes. Browser review binds exact IDs, current task/work-item revisions, progress note and normal shared-work history/review/notice effects before moving To do to In progress.
