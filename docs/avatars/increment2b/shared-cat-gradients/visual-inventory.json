@@ -1,0 +1,20 @@
+{
+  "original": {
+    "elements": 294,
+    "attributes": 852,
+    "distinct_attribute_vectors": 44,
+    "attribute_utf8_bytes": 12012
+  },
+  "current": {
+    "elements": 384,
+    "attributes": 1134,
+    "distinct_attribute_vectors": 109,
+    "attribute_utf8_bytes": 17058
+  },
+  "candidate": {
+    "elements": 336,
+    "attributes": 1026,
+    "distinct_attribute_vectors": 51,
+    "attribute_utf8_bytes": 16110
+  }
+}

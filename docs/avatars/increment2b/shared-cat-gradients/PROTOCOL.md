@@ -31,3 +31,17 @@ preserves the candidate separately. Existing original/current failures remain.
 Audit independently frozen source identities, avatar and backend manifests,
 fixture bytes, visual prerequisite hash and every evidence file. Archive and
 re-audit after extraction. No later increment, deployment or merge.
+
+## Pre-measurement test-selection correction
+
+The initial regression selection mistakenly included `test_pagehide_cleanup` as
+an existing passing regression. Commit 186feeb introduced it to reproduce missing
+teardown; lifecycle candidates that made it pass were not promoted (see the
+lifecycle-memory-fix report). It fails identically on this candidate and unchanged
+verification source: before=1, preserved=1, nonpersisted avatar=1, outside=1.
+Runtime JS is byte-identical. Both failures are retained. This is an existing
+issue, not a new gradient regression; no lifecycle fix is claimed. The prerequisite
+for this bounded screen is the eight applicable passing interaction regressions,
+the new real-HTTP gradient test and full visual gate. This correction is frozen
+before memory collection; all memory thresholds, controls and schedule stay.
+The unresolved lifecycle diagnostic remains part of the broader 2B findings.

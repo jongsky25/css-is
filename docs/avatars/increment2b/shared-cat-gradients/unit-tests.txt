@@ -1,0 +1,8 @@
+................................                                         [100%]
+=============================== warnings summary ===============================
+tests/test_cat_gradient_screen.py::test_visual_complete_matrix
+  /workspace/css-is/tests/conftest.py:88: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+32 passed, 1 warning in 0.47s

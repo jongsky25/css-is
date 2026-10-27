@@ -1,0 +1,40 @@
+{
+  "visual_harness": "82a8926",
+  "candidate": "cd94bf35d29b796ca0d6467756221e4b545a40be",
+  "visual_cells": 2880,
+  "pixels_identical": true,
+  "normalized_paint_and_geometry_identical": true,
+  "applicable_regressions_passed": 8,
+  "new_gradient_test_passed": 1,
+  "focused_gate_tests_passed": 32,
+  "historical_pagehide_probe": {
+    "current": {
+      "before": 1,
+      "preserved": 1,
+      "observations": [
+        {
+          "persisted": false,
+          "avatar": 1,
+          "outside": 1
+        }
+      ]
+    },
+    "candidate": {
+      "before": 1,
+      "preserved": 1,
+      "observations": [
+        {
+          "persisted": false,
+          "avatar": 1,
+          "outside": 1
+        }
+      ]
+    },
+    "interpretation": "Existing failure reproduced unchanged; original selection corrected before memory run; no teardown fix claimed."
+  },
+  "partial_visual_v1": {
+    "completed_sheets": 5,
+    "completed_failures": 0,
+    "stopped_reason": "Nested Playwright state transport slow; preserved partial run. Full v2 uses equivalent JSON-string transfer."
+  }
+}

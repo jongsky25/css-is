@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="9" time="40.999" timestamp="2026-10-27T07:25:21.848236+00:00" hostname="9356d384ab63"><testcase classname="tests.test_avatar_pointer_browser" name="test_curiosity_and_lean_survive_batched_geometry" time="7.757" /><testcase classname="tests.test_avatar_geometry_browser" name="test_cached_geometry_preserves_drag_chase_resize_scroll" time="4.924" /><testcase classname="tests.test_avatar_geometry_browser" name="test_cached_lean_tracks_actual_transition_position" time="3.957" /><testcase classname="tests.test_avatar_geometry_browser" name="test_plant_geometry_does_not_read_unused_svg_head" time="2.052" /><testcase classname="tests.test_avatar_container_resize_browser" name="test_container_resize_without_window_resize_or_scroll" time="2.883" /><testcase classname="tests.test_avatar_motion_preference_browser" name="test_pointer_uses_event_updated_motion_preference" time="2.781" /><testcase classname="tests.test_avatar_chase_writes_browser" name="test_clamped_chase_avoids_redundant_style_writes" time="4.359" /><testcase classname="tests.test_avatar_static_preview_browser" name="test_previews_static_live_companion_replays" time="3.554" /><testcase classname="tests.test_avatar_pagehide_browser" name="test_pagehide_cleanup" time="7.589"><failure message="AssertionError: assert (1 == 1 and {'persisted':... 'outside': 1} == {'persisted':... 'outside': 1}&#10; +  where 1 = len([{'persisted': False, 'avatar': 1, 'outside': 1}])&#10;  &#10;  Omitting 2 identical items, use -vv to show&#10;  Differing items:&#10;  {'avatar': 1} != {'avatar': 0}&#10;  Use -v to get more diff)">baseline_server = ('http://127.0.0.1:32775', {'name': 'css_session', 'value': 'eyJ1aWQiOjQsInUiOiJhZG1pbkB0ZXN0LmxvY2FsIiwiciI6ImFkbWluI...YmNiNGY3MjkxIn0.20c196e20afb51ef68bd1026c7b4bb763623db8089cc3643021531c907a5afcd', 'url': 'http://127.0.0.1:32775'}, 4)
+
+    def test_pagehide_cleanup(baseline_server):
+        from playwright.sync_api import sync_playwright
+        origin,cookie,_=baseline_server
+        observations=[]
+        with sync_playwright() as pw:
+            browser=pw.chromium.launch(executable_path=shutil.which('chromium'),args=['--no-sandbox'])
+            context=browser.new_context(viewport={'width':1440,'height':1000},timezone_id='UTC',service_workers='block')
+            context.add_cookies([cookie]);context.add_init_script(PROBE)
+            page=context.new_page()
+            page.goto(origin+'/?view=me');page.wait_for_timeout(500)
+            before=page.evaluate("document.querySelector('.avwrap[data-interactive]').getAnimations({subtree:true}).filter(a=&gt;a.playState==='running').length")
+            assert before&gt;0
+            page.evaluate("window.dispatchEvent(new PageTransitionEvent('pagehide',{persisted:true}))")
+            preserved=page.evaluate("document.querySelector('.avwrap[data-interactive]').getAnimations({subtree:true}).filter(a=&gt;a.playState==='running').length")
+            assert preserved==before, 'Cached-page animations must survive'
+            page.evaluate('''()=&gt;{const element=document.createElement('div');element.id='outside-avatar-animation';document.body.append(element);
+              element.animate([{opacity:0},{opacity:1}],{duration:1000,iterations:Infinity});
+              window.addEventListener('pagehide',event=&gt;sessionStorage.setItem('avatar-cleanup-probe',JSON.stringify({persisted:event.persisted,
+                avatar:document.querySelector('.avwrap[data-interactive]').getAnimations({subtree:true}).filter(a=&gt;a.playState==='running').length,
+                outside:element.getAnimations().filter(a=&gt;a.playState==='running').length})));}''')
+            page.goto(origin+'/me')
+            value=page.evaluate("sessionStorage.getItem('avatar-cleanup-probe')")
+            if value:observations.append(json.loads(value))
+            context.close();browser.close()
+        out=Path(os.environ['CSS_AVATAR_OUT']);out.mkdir(parents=True,exist_ok=True)
+        (out/'pagehide-behavior.json').write_text(json.dumps({'before':before,'preserved':preserved,'observations':observations},indent=2))
+&gt;       assert len(observations)==1 and observations[0]=={'persisted':False,'avatar':0,'outside':1}
+E       AssertionError: assert (1 == 1 and {'persisted':... 'outside': 1} == {'persisted':... 'outside': 1}
+E        +  where 1 = len([{'persisted': False, 'avatar': 1, 'outside': 1}])
+E         
+E         Omitting 2 identical items, use -vv to show
+E         Differing items:
+E         {'avatar': 1} != {'avatar': 0}
+E         Use -v to get more diff)
+
+tests/test_avatar_pagehide_browser.py:38: AssertionError</failure></testcase></testsuite></testsuites>

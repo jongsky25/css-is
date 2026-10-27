@@ -1,0 +1,945 @@
+{
+  "acceptance": false,
+  "refs": {
+    "original": "1c964dcba2fa19de1eab077b00e0e5748d742554",
+    "current": "cf363bfe547d5e23619eee28cdaf68bd4b6d7753",
+    "candidate": "cd94bf35d29b796ca0d6467756221e4b545a40be"
+  },
+  "browser": "156.0.8078.47",
+  "sheets": [
+    {
+      "case": "light-default-live",
+      "cells": 96,
+      "pixel_identical": true,
+      "state_comparison": {
+        "identical": true,
+        "nodes": [
+          6310,
+          6310
+        ],
+        "differences": [],
+        "sha256": [
+          "ff11ccdd10d63209c61b19e9e8ff08919fc31d57ea811e9899d70ad4e5021fdf",
+          "ff11ccdd10d63209c61b19e9e8ff08919fc31d57ea811e9899d70ad4e5021fdf"
+        ]
+      },
+      "checks": [
+        {
+          "ids_unique": true,
+          "missing": [],
+          "avatars": 96,
+          "cat_v2": 6
+        },
+        {
+          "ids_unique": true,
+          "missing": [],
+          "avatars": 96,
+          "cat_v2": 6
+        }
+      ]
+    },
+    {
+      "case": "light-default-preview",
+      "cells": 96,
+      "pixel_identical": true,
+      "state_comparison": {
+        "identical": true,
+        "nodes": [
+          4600,
+          4600
+        ],
+        "differences": [],
+        "sha256": [
+          "bbc3f0cb2ebc0d170b9d65bc96606579771c95a45cc7fb97481a45a1913da428",
+          "bbc3f0cb2ebc0d170b9d65bc96606579771c95a45cc7fb97481a45a1913da428"
+        ]
+      },
+      "checks": [
+        {
+          "ids_unique": true,
+          "missing": [],
+          "avatars": 96,
+          "cat_v2": 6
+        },
+        {
+          "ids_unique": true,
+          "missing": [],
+          "avatars": 96,
+          "cat_v2": 6
+        }
+      ]
+    },
+    {
+      "case": "light-halloween-live",
+      "cells": 96,
+      "pixel_identical": true,
+      "state_comparison": {
+        "identical": true,
+        "nodes": [
+          7128,
+          7128
+        ],
+        "differences": [],
+        "sha256": [
+          "552a6d70c420e6b304ca7d398974f571765caf5ebfe04b936d07c89dd97ad809",
+          "552a6d70c420e6b304ca7d398974f571765caf5ebfe04b936d07c89dd97ad809"
+        ]
+      },
+      "checks": [
+        {
+          "ids_unique": true,
+          "missing": [],
+          "avatars": 96,
+          "cat_v2": 6
+        },
+        {
+          "ids_unique": true,
+          "missing": [],
+          "avatars": 96,
+          "cat_v2": 6
+        }
+      ]
+    },
+    {
+      "case": "light-halloween-preview",
+      "cells": 96,
+      "pixel_identical": true,
+      "state_comparison": {
+        "identical": true,
+        "nodes": [
+          5418,
+          5418
+        ],
+        "differences": [],
+        "sha256": [
+          "0de3c41195f5911bcc007518324f436f3e9901847885d407809cb47cba3e797b",
+          "0de3c41195f5911bcc007518324f436f3e9901847885d407809cb47cba3e797b"
+        ]
+      },
+      "checks": [
+        {
+          "ids_unique": true,
+          "missing": [],
+          "avatars": 96,
+          "cat_v2": 6
+        },
+        {
+          "ids_unique": true,
+          "missing": [],
+          "avatars": 96,
+          "cat_v2": 6
+        }
+      ]
+    },
+    {
+      "case": "light-halloween_vampire-live",
+      "cells": 96,
+      "pixel_identical": true,
+      "state_comparison": {
+        "identical": true,
+        "nodes": [
+          7038,
+          7038
+        ],
+        "differences": [],
+        "sha256": [
+          "ce0478c4ea016287cda3fba0b0e8a1cbdc80587837e996d0bdff135ec83301f9",
+          "ce0478c4ea016287cda3fba0b0e8a1cbdc80587837e996d0bdff135ec83301f9"
+        ]
+      },
+      "checks": [
+        {
+          "ids_unique": true,
+          "missing": [],
+          "avatars": 96,
+          "cat_v2": 6
+        },
+        {
+          "ids_unique": true,
+          "missing": [],
+          "avatars": 96,
+          "cat_v2": 6
+        }
+      ]
+    },
+    {
+      "case": "light-halloween_vampire-preview",
+      "cells": 96,
+      "pixel_identical": true,
+      "state_comparison": {
+        "identical": true,
+        "nodes": [
+          5328,
+          5328
+        ],
+        "differences": [],
+        "sha256": [
+          "5f2f2271e19bed3aefa0b30dbf02c94a089af8c90d17f049ac8e2e7f98d37f92",
+          "5f2f2271e19bed3aefa0b30dbf02c94a089af8c90d17f049ac8e2e7f98d37f92"
+        ]
+      },
+      "checks": [
+        {
+          "ids_unique": true,
+          "missing": [],
+          "avatars": 96,
+          "cat_v2": 6
+        },
+        {
+          "ids_unique": true,
+          "missing": [],
+          "avatars": 96,
+          "cat_v2": 6
+        }
+      ]
+    },
+    {
+      "case": "light-halloween_pumpkin-live",
+      "cells": 96,
+      "pixel_identical": true,
+      "state_comparison": {
+        "identical": true,
+        "nodes": [
+          7050,
+          7050
+        ],
+        "differences": [],
+        "sha256": [
+          "14ac62bd7b29f70b6aeb0a370931768d0ab446179fea832e5c24795c3bd7a4b9",
+          "14ac62bd7b29f70b6aeb0a370931768d0ab446179fea832e5c24795c3bd7a4b9"
+        ]
+      },
+      "checks": [
+        {
+          "ids_unique": true,
+          "missing": [],
+          "avatars": 96,
+          "cat_v2": 6
+        },
+        {
+          "ids_unique": true,
+          "missing": [],
+          "avatars": 96,
+          "cat_v2": 6
+        }
+      ]
+    },
+    {
+      "case": "light-halloween_pumpkin-preview",
+      "cells": 96,
+      "pixel_identical": true,
+      "state_comparison": {
+        "identical": true,
+        "nodes": [
+          5340,
+          5340
+        ],
+        "differences": [],
+        "sha256": [
+          "ab6729e4a9aae1af5a83c9268fb4659c3bc29e1df08a1fb90286cf34852476f7",
+          "ab6729e4a9aae1af5a83c9268fb4659c3bc29e1df08a1fb90286cf34852476f7"
+        ]
+      },
+      "checks": [
+        {
+          "ids_unique": true,
+          "missing": [],
+          "avatars": 96,
+          "cat_v2": 6
+        },
+        {
+          "ids_unique": true,
+          "missing": [],
+          "avatars": 96,
+          "cat_v2": 6
+        }
+      ]
+    },
+    {
+      "case": "light-christmas-live",
+      "cells": 96,
+      "pixel_identical": true,
+      "state_comparison": {
+        "identical": true,
+        "nodes": [
+          6666,
+          6666
+        ],
+        "differences": [],
+        "sha256": [
+          "6b4c3f62bd645193557c4887db2a44db2316beeefdead58e20620110c6d1ca67",
+          "6b4c3f62bd645193557c4887db2a44db2316beeefdead58e20620110c6d1ca67"
+        ]
+      },
+      "checks": [
+        {
+          "ids_unique": true,
+          "missing": [],
+          "avatars": 96,
+          "cat_v2": 6
+        },
+        {
+          "ids_unique": true,
+          "missing": [],
+          "avatars": 96,
+          "cat_v2": 6
+        }
+      ]
+    },
+    {
+      "case": "light-christmas-preview",
+      "cells": 96,
+      "pixel_identical": true,
+      "state_comparison": {
+        "identical": true,
+        "nodes": [
+          4956,
+          4956
+        ],
+        "differences": [],
+        "sha256": [
+          "574de0738183885497151b185a052a6f2039aa16e30d0a3aae1af81d5ca73184",
+          "574de0738183885497151b185a052a6f2039aa16e30d0a3aae1af81d5ca73184"
+        ]
+      },
+      "checks": [
+        {
+          "ids_unique": true,
+          "missing": [],
+          "avatars": 96,
+          "cat_v2": 6
+        },
+        {
+          "ids_unique": true,
+          "missing": [],
+          "avatars": 96,
+          "cat_v2": 6
+        }
+      ]
+    },
+    {
+      "case": "dark-default-live",
+      "cells": 96,
+      "pixel_identical": true,
+      "state_comparison": {
+        "identical": true,
+        "nodes": [
+          6310,
+          6310
+        ],
+        "differences": [],
+        "sha256": [
+          "ff11ccdd10d63209c61b19e9e8ff08919fc31d57ea811e9899d70ad4e5021fdf",
+          "ff11ccdd10d63209c61b19e9e8ff08919fc31d57ea811e9899d70ad4e5021fdf"
+        ]
+      },
+      "checks": [
+        {
+          "ids_unique": true,
+          "missing": [],
+          "avatars": 96,
+          "cat_v2": 6
+        },
+        {
+          "ids_unique": true,
+          "missing": [],
+          "avatars": 96,
+          "cat_v2": 6
+        }
+      ]
+    },
+    {
+      "case": "dark-default-preview",
+      "cells": 96,
+      "pixel_identical": true,
+      "state_comparison": {
+        "identical": true,
+        "nodes": [
+          4600,
+          4600
+        ],
+        "differences": [],
+        "sha256": [
+          "bbc3f0cb2ebc0d170b9d65bc96606579771c95a45cc7fb97481a45a1913da428",
+          "bbc3f0cb2ebc0d170b9d65bc96606579771c95a45cc7fb97481a45a1913da428"
+        ]
+      },
+      "checks": [
+        {
+          "ids_unique": true,
+          "missing": [],
+          "avatars": 96,
+          "cat_v2": 6
+        },
+        {
+          "ids_unique": true,
+          "missing": [],
+          "avatars": 96,
+          "cat_v2": 6
+        }
+      ]
+    },
+    {
+      "case": "dark-halloween-live",
+      "cells": 96,
+      "pixel_identical": true,
+      "state_comparison": {
+        "identical": true,
+        "nodes": [
+          7128,
+          7128
+        ],
+        "differences": [],
+        "sha256": [
+          "552a6d70c420e6b304ca7d398974f571765caf5ebfe04b936d07c89dd97ad809",
+          "552a6d70c420e6b304ca7d398974f571765caf5ebfe04b936d07c89dd97ad809"
+        ]
+      },
+      "checks": [
+        {
+          "ids_unique": true,
+          "missing": [],
+          "avatars": 96,
+          "cat_v2": 6
+        },
+        {
+          "ids_unique": true,
+          "missing": [],
+          "avatars": 96,
+          "cat_v2": 6
+        }
+      ]
+    },
+    {
+      "case": "dark-halloween-preview",
+      "cells": 96,
+      "pixel_identical": true,
+      "state_comparison": {
+        "identical": true,
+        "nodes": [
+          5418,
+          5418
+        ],
+        "differences": [],
+        "sha256": [
+          "0de3c41195f5911bcc007518324f436f3e9901847885d407809cb47cba3e797b",
+          "0de3c41195f5911bcc007518324f436f3e9901847885d407809cb47cba3e797b"
+        ]
+      },
+      "checks": [
+        {
+          "ids_unique": true,
+          "missing": [],
+          "avatars": 96,
+          "cat_v2": 6
+        },
+        {
+          "ids_unique": true,
+          "missing": [],
+          "avatars": 96,
+          "cat_v2": 6
+        }
+      ]
+    },
+    {
+      "case": "dark-halloween_vampire-live",
+      "cells": 96,
+      "pixel_identical": true,
+      "state_comparison": {
+        "identical": true,
+        "nodes": [
+          7038,
+          7038
+        ],
+        "differences": [],
+        "sha256": [
+          "ce0478c4ea016287cda3fba0b0e8a1cbdc80587837e996d0bdff135ec83301f9",
+          "ce0478c4ea016287cda3fba0b0e8a1cbdc80587837e996d0bdff135ec83301f9"
+        ]
+      },
+      "checks": [
+        {
+          "ids_unique": true,
+          "missing": [],
+          "avatars": 96,
+          "cat_v2": 6
+        },
+        {
+          "ids_unique": true,
+          "missing": [],
+          "avatars": 96,
+          "cat_v2": 6
+        }
+      ]
+    },
+    {
+      "case": "dark-halloween_vampire-preview",
+      "cells": 96,
+      "pixel_identical": true,
+      "state_comparison": {
+        "identical": true,
+        "nodes": [
+          5328,
+          5328
+        ],
+        "differences": [],
+        "sha256": [
+          "5f2f2271e19bed3aefa0b30dbf02c94a089af8c90d17f049ac8e2e7f98d37f92",
+          "5f2f2271e19bed3aefa0b30dbf02c94a089af8c90d17f049ac8e2e7f98d37f92"
+        ]
+      },
+      "checks": [
+        {
+          "ids_unique": true,
+          "missing": [],
+          "avatars": 96,
+          "cat_v2": 6
+        },
+        {
+          "ids_unique": true,
+          "missing": [],
+          "avatars": 96,
+          "cat_v2": 6
+        }
+      ]
+    },
+    {
+      "case": "dark-halloween_pumpkin-live",
+      "cells": 96,
+      "pixel_identical": true,
+      "state_comparison": {
+        "identical": true,
+        "nodes": [
+          7050,
+          7050
+        ],
+        "differences": [],
+        "sha256": [
+          "14ac62bd7b29f70b6aeb0a370931768d0ab446179fea832e5c24795c3bd7a4b9",
+          "14ac62bd7b29f70b6aeb0a370931768d0ab446179fea832e5c24795c3bd7a4b9"
+        ]
+      },
+      "checks": [
+        {
+          "ids_unique": true,
+          "missing": [],
+          "avatars": 96,
+          "cat_v2": 6
+        },
+        {
+          "ids_unique": true,
+          "missing": [],
+          "avatars": 96,
+          "cat_v2": 6
+        }
+      ]
+    },
+    {
+      "case": "dark-halloween_pumpkin-preview",
+      "cells": 96,
+      "pixel_identical": true,
+      "state_comparison": {
+        "identical": true,
+        "nodes": [
+          5340,
+          5340
+        ],
+        "differences": [],
+        "sha256": [
+          "ab6729e4a9aae1af5a83c9268fb4659c3bc29e1df08a1fb90286cf34852476f7",
+          "ab6729e4a9aae1af5a83c9268fb4659c3bc29e1df08a1fb90286cf34852476f7"
+        ]
+      },
+      "checks": [
+        {
+          "ids_unique": true,
+          "missing": [],
+          "avatars": 96,
+          "cat_v2": 6
+        },
+        {
+          "ids_unique": true,
+          "missing": [],
+          "avatars": 96,
+          "cat_v2": 6
+        }
+      ]
+    },
+    {
+      "case": "dark-christmas-live",
+      "cells": 96,
+      "pixel_identical": true,
+      "state_comparison": {
+        "identical": true,
+        "nodes": [
+          6666,
+          6666
+        ],
+        "differences": [],
+        "sha256": [
+          "6b4c3f62bd645193557c4887db2a44db2316beeefdead58e20620110c6d1ca67",
+          "6b4c3f62bd645193557c4887db2a44db2316beeefdead58e20620110c6d1ca67"
+        ]
+      },
+      "checks": [
+        {
+          "ids_unique": true,
+          "missing": [],
+          "avatars": 96,
+          "cat_v2": 6
+        },
+        {
+          "ids_unique": true,
+          "missing": [],
+          "avatars": 96,
+          "cat_v2": 6
+        }
+      ]
+    },
+    {
+      "case": "dark-christmas-preview",
+      "cells": 96,
+      "pixel_identical": true,
+      "state_comparison": {
+        "identical": true,
+        "nodes": [
+          4956,
+          4956
+        ],
+        "differences": [],
+        "sha256": [
+          "574de0738183885497151b185a052a6f2039aa16e30d0a3aae1af81d5ca73184",
+          "574de0738183885497151b185a052a6f2039aa16e30d0a3aae1af81d5ca73184"
+        ]
+      },
+      "checks": [
+        {
+          "ids_unique": true,
+          "missing": [],
+          "avatars": 96,
+          "cat_v2": 6
+        },
+        {
+          "ids_unique": true,
+          "missing": [],
+          "avatars": 96,
+          "cat_v2": 6
+        }
+      ]
+    },
+    {
+      "case": "contrast-default-live",
+      "cells": 96,
+      "pixel_identical": true,
+      "state_comparison": {
+        "identical": true,
+        "nodes": [
+          6310,
+          6310
+        ],
+        "differences": [],
+        "sha256": [
+          "ff11ccdd10d63209c61b19e9e8ff08919fc31d57ea811e9899d70ad4e5021fdf",
+          "ff11ccdd10d63209c61b19e9e8ff08919fc31d57ea811e9899d70ad4e5021fdf"
+        ]
+      },
+      "checks": [
+        {
+          "ids_unique": true,
+          "missing": [],
+          "avatars": 96,
+          "cat_v2": 6
+        },
+        {
+          "ids_unique": true,
+          "missing": [],
+          "avatars": 96,
+          "cat_v2": 6
+        }
+      ]
+    },
+    {
+      "case": "contrast-default-preview",
+      "cells": 96,
+      "pixel_identical": true,
+      "state_comparison": {
+        "identical": true,
+        "nodes": [
+          4600,
+          4600
+        ],
+        "differences": [],
+        "sha256": [
+          "bbc3f0cb2ebc0d170b9d65bc96606579771c95a45cc7fb97481a45a1913da428",
+          "bbc3f0cb2ebc0d170b9d65bc96606579771c95a45cc7fb97481a45a1913da428"
+        ]
+      },
+      "checks": [
+        {
+          "ids_unique": true,
+          "missing": [],
+          "avatars": 96,
+          "cat_v2": 6
+        },
+        {
+          "ids_unique": true,
+          "missing": [],
+          "avatars": 96,
+          "cat_v2": 6
+        }
+      ]
+    },
+    {
+      "case": "contrast-halloween-live",
+      "cells": 96,
+      "pixel_identical": true,
+      "state_comparison": {
+        "identical": true,
+        "nodes": [
+          7128,
+          7128
+        ],
+        "differences": [],
+        "sha256": [
+          "552a6d70c420e6b304ca7d398974f571765caf5ebfe04b936d07c89dd97ad809",
+          "552a6d70c420e6b304ca7d398974f571765caf5ebfe04b936d07c89dd97ad809"
+        ]
+      },
+      "checks": [
+        {
+          "ids_unique": true,
+          "missing": [],
+          "avatars": 96,
+          "cat_v2": 6
+        },
+        {
+          "ids_unique": true,
+          "missing": [],
+          "avatars": 96,
+          "cat_v2": 6
+        }
+      ]
+    },
+    {
+      "case": "contrast-halloween-preview",
+      "cells": 96,
+      "pixel_identical": true,
+      "state_comparison": {
+        "identical": true,
+        "nodes": [
+          5418,
+          5418
+        ],
+        "differences": [],
+        "sha256": [
+          "0de3c41195f5911bcc007518324f436f3e9901847885d407809cb47cba3e797b",
+          "0de3c41195f5911bcc007518324f436f3e9901847885d407809cb47cba3e797b"
+        ]
+      },
+      "checks": [
+        {
+          "ids_unique": true,
+          "missing": [],
+          "avatars": 96,
+          "cat_v2": 6
+        },
+        {
+          "ids_unique": true,
+          "missing": [],
+          "avatars": 96,
+          "cat_v2": 6
+        }
+      ]
+    },
+    {
+      "case": "contrast-halloween_vampire-live",
+      "cells": 96,
+      "pixel_identical": true,
+      "state_comparison": {
+        "identical": true,
+        "nodes": [
+          7038,
+          7038
+        ],
+        "differences": [],
+        "sha256": [
+          "ce0478c4ea016287cda3fba0b0e8a1cbdc80587837e996d0bdff135ec83301f9",
+          "ce0478c4ea016287cda3fba0b0e8a1cbdc80587837e996d0bdff135ec83301f9"
+        ]
+      },
+      "checks": [
+        {
+          "ids_unique": true,
+          "missing": [],
+          "avatars": 96,
+          "cat_v2": 6
+        },
+        {
+          "ids_unique": true,
+          "missing": [],
+          "avatars": 96,
+          "cat_v2": 6
+        }
+      ]
+    },
+    {
+      "case": "contrast-halloween_vampire-preview",
+      "cells": 96,
+      "pixel_identical": true,
+      "state_comparison": {
+        "identical": true,
+        "nodes": [
+          5328,
+          5328
+        ],
+        "differences": [],
+        "sha256": [
+          "5f2f2271e19bed3aefa0b30dbf02c94a089af8c90d17f049ac8e2e7f98d37f92",
+          "5f2f2271e19bed3aefa0b30dbf02c94a089af8c90d17f049ac8e2e7f98d37f92"
+        ]
+      },
+      "checks": [
+        {
+          "ids_unique": true,
+          "missing": [],
+          "avatars": 96,
+          "cat_v2": 6
+        },
+        {
+          "ids_unique": true,
+          "missing": [],
+          "avatars": 96,
+          "cat_v2": 6
+        }
+      ]
+    },
+    {
+      "case": "contrast-halloween_pumpkin-live",
+      "cells": 96,
+      "pixel_identical": true,
+      "state_comparison": {
+        "identical": true,
+        "nodes": [
+          7050,
+          7050
+        ],
+        "differences": [],
+        "sha256": [
+          "14ac62bd7b29f70b6aeb0a370931768d0ab446179fea832e5c24795c3bd7a4b9",
+          "14ac62bd7b29f70b6aeb0a370931768d0ab446179fea832e5c24795c3bd7a4b9"
+        ]
+      },
+      "checks": [
+        {
+          "ids_unique": true,
+          "missing": [],
+          "avatars": 96,
+          "cat_v2": 6
+        },
+        {
+          "ids_unique": true,
+          "missing": [],
+          "avatars": 96,
+          "cat_v2": 6
+        }
+      ]
+    },
+    {
+      "case": "contrast-halloween_pumpkin-preview",
+      "cells": 96,
+      "pixel_identical": true,
+      "state_comparison": {
+        "identical": true,
+        "nodes": [
+          5340,
+          5340
+        ],
+        "differences": [],
+        "sha256": [
+          "ab6729e4a9aae1af5a83c9268fb4659c3bc29e1df08a1fb90286cf34852476f7",
+          "ab6729e4a9aae1af5a83c9268fb4659c3bc29e1df08a1fb90286cf34852476f7"
+        ]
+      },
+      "checks": [
+        {
+          "ids_unique": true,
+          "missing": [],
+          "avatars": 96,
+          "cat_v2": 6
+        },
+        {
+          "ids_unique": true,
+          "missing": [],
+          "avatars": 96,
+          "cat_v2": 6
+        }
+      ]
+    },
+    {
+      "case": "contrast-christmas-live",
+      "cells": 96,
+      "pixel_identical": true,
+      "state_comparison": {
+        "identical": true,
+        "nodes": [
+          6666,
+          6666
+        ],
+        "differences": [],
+        "sha256": [
+          "6b4c3f62bd645193557c4887db2a44db2316beeefdead58e20620110c6d1ca67",
+          "6b4c3f62bd645193557c4887db2a44db2316beeefdead58e20620110c6d1ca67"
+        ]
+      },
+      "checks": [
+        {
+          "ids_unique": true,
+          "missing": [],
+          "avatars": 96,
+          "cat_v2": 6
+        },
+        {
+          "ids_unique": true,
+          "missing": [],
+          "avatars": 96,
+          "cat_v2": 6
+        }
+      ]
+    },
+    {
+      "case": "contrast-christmas-preview",
+      "cells": 96,
+      "pixel_identical": true,
+      "state_comparison": {
+        "identical": true,
+        "nodes": [
+          4956,
+          4956
+        ],
+        "differences": [],
+        "sha256": [
+          "574de0738183885497151b185a052a6f2039aa16e30d0a3aae1af81d5ca73184",
+          "574de0738183885497151b185a052a6f2039aa16e30d0a3aae1af81d5ca73184"
+        ]
+      },
+      "checks": [
+        {
+          "ids_unique": true,
+          "missing": [],
+          "avatars": 96,
+          "cat_v2": 6
+        },
+        {
+          "ids_unique": true,
+          "missing": [],
+          "avatars": 96,
+          "cat_v2": 6
+        }
+      ]
+    }
+  ],
+  "cells": 2880,
+  "all_pixels_identical": true,
+  "all_states_identical": true,
+  "normalization": "Cat nonpainting defs excluded; scoped gradient IDs and equivalent references normalized. Other attributes, paint styles, geometry and transforms compare exactly. Unique IDs and resolved references checked before normalization. Isolated-paint fixture; no memory claim."
+}
