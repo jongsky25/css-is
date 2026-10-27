@@ -1,0 +1,36 @@
+{% extends "dash_layout.html" %}
+{% block title %}Review linked room request — Office Connect{% endblock %}
+{% block content %}
+<div style="max-width:44rem;margin:auto;overflow-wrap:anywhere">
+{% if result.status == 'completed' %}
+<h1>Room request recorded</h1>
+<p>{{ result.reference }} was requested at {{ result.completed_at }}, pending Administrative Section approval. No booking was held by this operation. This is the original request result; later decisions are separate.</p>
+<p>Next: an Administrative Section room approver ({{ result.next_actor.initial_notice_recipient_count }} initial notice recipients, excluding the requester).</p>
+<p>Current initial-notice states: {% for state,count in result.notification_status_counts.items() %}{{ state }}: {{ count }}{% if not loop.last %}; {% endif %}{% else %}No recipient notices{% endfor %}. Queued is not sent. Sent means transport acceptance, not reading; uncertain attempts never automatically retry.</p>
+<p><a href="{{ result.web_url }}">Open my room requests</a> · <a href="{{ result.calendar_url }}">Open the linked meeting</a></p>
+{% else %}
+<h1>Request the room for this meeting?</h1>
+<dl>
+<dt>Meeting</dt><dd>{{ result.snapshot.title }} (entry {{ result.snapshot.entry_id }})</dd>
+<dt>Day and timezone</dt><dd>{{ result.snapshot.day }} · Asia/Manila</dd>
+<dt>Calendar status</dt><dd>{{ result.snapshot.calendar_status }}</dd>
+<dt>Meeting time</dt><dd>{{ result.snapshot.meeting_start or 'Not set' }} to {{ result.snapshot.meeting_end or 'Not set' }}</dd>
+<dt>Requested room hours</dt><dd>{{ result.snapshot.from_time }} to {{ result.snapshot.to_time }}</dd>
+<dt>Exact configured slots</dt><dd>{% for slot in result.snapshot.slots %}{{ slot.label }}{% if not loop.last %}, {% endif %}{% endfor %}</dd>
+<dt>Requester</dt><dd>{{ result.snapshot.requester.name }} (you)</dd>
+<dt>Request type</dt><dd>One internal face-to-face request, linked to the existing meeting</dd>
+</dl>
+<h2>Initial notification recipients</h2>
+<ul>{% for recipient in result.snapshot.recipients %}<li>{{ recipient.name }} · {{ recipient.email }}</li>{% else %}<li>No other active Administrative Section account will receive an initial notice. The request can be recorded pending approval; contact the Administrative Section to check routing.</li>{% endfor %}</ul>
+<p>Email feature: {{ 'enabled' if result.snapshot.email_enabled else 'disabled; notices will be marked skipped_off without sending' }}. The normal room-request message includes your identity, meeting title, day/hours and the approver's authenticated decision links. Normal room reminders and summaries may follow separately.</p>
+<p>This creates a <strong>Requested</strong> record and initial notices in one transaction. Requested is pending approval and holds no booking; other requests can compete for the same hours. It creates no meal request, standby booking, repeating series or new meeting, changes no meeting schedule and grants no approval. Only a separate authorized approval can hold the room.</p>
+<p><a href="{{ result.calendar_url }}">Inspect the current meeting</a>. Review the exact requested hours and recipients before confirmation. A changed meeting, configured hours, requester, routing, closure or approved booking requires a fresh check. The preview expires ten minutes after preparation.</p>
+<form method="post">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<input type="hidden" name="preview_digest" value="{{ result.preview_digest }}">
+<button type="submit" name="confirm" value="yes">Confirm: request the room</button>
+</form>
+{% endif %}
+<p>Operation receipt: <code>{{ result.operation_id }}</code></p>
+</div>
+{% endblock %}

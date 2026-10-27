@@ -354,9 +354,14 @@ def flush(conn, base_url, now=None, send=None):
     import telegram_preferences as notification_prefs
     cutoff = (now - RETRY_AFTER).isoformat(timespec="seconds")
     stale = (now - STALE_AFTER).isoformat(timespec="seconds")
+    # MCP notices have their own durable single-attempt worker. The mapping is
+    # committed atomically with the notice, so the legacy retry loop never sees
+    # an unprotected MCP message, including while its pilot is disabled.
+    protected = conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='mcp_room_notice'").fetchone()
+    exclude = ' AND NOT EXISTS (SELECT 1 FROM mcp_room_notice m WHERE m.notice_id=room_notice.id)' if protected else ''
     rows = conn.execute(
         "SELECT id, user_id, email, kind, reservation_id, version, text, attempts, created_at FROM room_notice "
-        "WHERE email_status IS NULL OR (email_status='failed' AND attempts<? AND emailed_at<=?) ORDER BY id",
+        "WHERE (email_status IS NULL OR (email_status='failed' AND attempts<? AND emailed_at<=?))" + exclude + " ORDER BY id",
         (email_params.param(conn, "send_retry_attempts"), cutoff)).fetchall()
     tally = {}
     for rid_, user_id, email, kind, res_id, version, text, attempts, created in rows:

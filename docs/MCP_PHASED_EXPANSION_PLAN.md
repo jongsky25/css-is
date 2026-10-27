@@ -1,6 +1,6 @@
 # Office Connect MCP expansion plan
 
-Status: **Incremental implementation**, updated October 27, 2026. Baseline: the read-only MCP expansion in v8.35 (PR #444). M1 reads and default-off M2.1 through M2.6 and M3.1 acknowledgement, M3.2 task-submission and M3.3 supply-submission and M3.4 travel-review-request and M3.5 paper-submission-record pilots are implemented as recorded below. Existing OAuth grants are not widened. Hosted write acceptance remains separate from implementation.
+Status: **Incremental implementation**, updated October 27, 2026. Baseline: the read-only MCP expansion in v8.35 (PR #444). M1 reads and default-off M2.1–M2.6 and M3.1–M3.6 pilots are implemented as recorded below. Existing OAuth grants are not widened. Hosted write acceptance remains separate from implementation.
 
 ## Goal and boundary
 
@@ -400,3 +400,24 @@ retries and independent keys do not duplicate the record. No Ready transition,
 signing, dispatch/upload, review decision, email, stock or financial effect is
 added. See [M3.5 setup and acceptance](MCP_TRAVEL_SUBMISSION_PILOT.md). Hosted
 acceptance remains pending; no switch is enabled. Other M3/M4 work remains separate.
+
+M3.5 merged in [PR #501](https://github.com/jongsky25/css-is/pull/501), commit
+`e56a1e5f1f9d8460cc5cae0f5313927195933f0e`.
+
+### M3.6 implementation — v8.90
+
+Separate default-off `rooms:request` consent prepares one pending self-owned
+request linked to a permitted existing one-day plain meeting. Context supplies
+the exact revision and safe configured-hour availability; signed-in review binds
+meeting/hours/requester/recipient routing. Current access, duplicate links,
+closures and availability are rechecked before shared room/link services commit
+request, unapproved slots, initial notices, identity and receipt atomically.
+
+Requested holds no booking; separate authorization is required for approval.
+Mapped initial notices use a committed single-attempt worker and are excluded
+from the legacy sender's retry loop even when the pilot is off. Original request
+and current initial-notice states remain distinct from later room decisions.
+No meals, standby, repeats, calendar edits or financial action are added. See
+[M3.6 setup, notification semantics and acceptance](MCP_ROOM_REQUEST_PILOT.md).
+Hosted write acceptance remains pending and no flag is activated. Other M3/M4
+work remains separate.

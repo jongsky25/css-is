@@ -20,6 +20,7 @@ DIRECT_SEND_ALLOWED = {
     ("app.py", "_provision_account"), ("app.py", "forgot_submit"), ("app.py", "admin_users_reset_default"),
     ("app.py", "monitor_resend_link"), ("app.py", "admin_email_test"),
     ("send_reminders.py", "_send"),
+    ("room_request_delivery.py", "_transport"),  # gated, claimed MCP room-notice worker
     ("travel_review_delivery.py", "_transport"),  # claimed worker gates feature/pause and logs each outcome
 }
 
