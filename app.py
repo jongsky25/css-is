@@ -108,6 +108,7 @@ import backups as bk
 import monitoring as mon
 import name_cleanup as ncl
 import harmonize as hz
+import activity_creation
 import activity_drafts
 import activity_draft_routes
 import activity_permissions
@@ -5052,6 +5053,15 @@ def _mcp_work_arrangement_tick():
         conn.close()
 
 
+def _mcp_activity_creation_tick():
+    import activity_creation_delivery
+    conn = get_conn()
+    try:
+        return activity_creation_delivery.run(conn)
+    finally:
+        conn.close()
+
+
 async def _scheduler_loop():
     while True:
         try:
@@ -5102,6 +5112,10 @@ async def _scheduler_loop():
         try:
             await asyncio.to_thread(_mcp_work_arrangement_tick)
         except Exception:         # Pending filing notices cannot stop other jobs.
+            pass
+        try:
+            await asyncio.to_thread(_mcp_activity_creation_tick)
+        except Exception:         # Creation notices cannot stop other jobs.
             pass
         await asyncio.sleep(_SCHED_TICK)
 
@@ -6812,13 +6826,21 @@ async def create_survey(request: Request):
         created = []        # display rows: {kind, form_id, qr_token, label}
         created_ids = []    # raw form_instance ids (for the entry window)
 
+        precreated_event = None
+        plain_fields = {'activity_name': activity_name, 'event_date': event_date,
+                        'section_id': lead_id, 'venue': venue or ''}
+        plain_bureau = (event_type == 'bureau' and not speakers and not end_date
+                        and not open_at and not close_at and modality == 'f2f'
+                        and activity_creation.plain_fields_supported(conn, request.state.user, plain_fields))
         if event_type == "bureau":
             organizer_label = f"{lead_name} (internal)"
-            # Form 2 — the event review (organizer = the chosen section, internal).
-            f2_id = st.create_form_instance(
-                conn, survey_type=2, form="F2", event_date=event_date, end_date=end_date,
-                venue=venue, modality=modality, topic=activity_name, lead_org_id=lead_id,
-                created_by=request.state.user["username"])
+            if plain_bureau:
+                precreated_event, f2_id = activity_creation.create_bureau(conn, request.state.user, plain_fields)
+            else:
+                f2_id = st.create_form_instance(
+                    conn, survey_type=2, form="F2", event_date=event_date, end_date=end_date,
+                    venue=venue, modality=modality, topic=activity_name, lead_org_id=lead_id,
+                    created_by=request.state.user["username"])
             f2_tok = _token_of(conn, f2_id)
             created_ids.append(f2_id)
             created.append({"kind": "Event review (Form 2)",
@@ -6861,7 +6883,7 @@ async def create_survey(request: Request):
         # combined QR (the link tree); the outside combined QR stays /seq.
         event_token = None
         if event_type == "bureau":
-            ev = st.create_event(conn, activity_name, event_date, end_date=end_date,
+            ev = precreated_event or st.create_event(conn, activity_name, event_date, end_date=end_date,
                                   venue=venue, modality=modality,
                                   organizer=organizer_label, lead_org_id=lead_id,
                                   form_instance_ids=created_ids,
@@ -17731,7 +17753,7 @@ if _MCP_ENABLED:
         if not pending:
             return _mcp_consent_error('This request expired. Start again in ChatGPT.', 410)
         client_id, params = pending
-        labels = {'activities:draft:save': 'Save your own private activity preparation draft (browser confirmation; no event, survey, public link or email; separate Create review)', 'activities:dates:update': 'Update the date of a permitted upcoming unused activity (browser confirmation; updates its event review too; no rescheduling email or linked-work updates)', 'work_arrangements:request': 'File your own new work arrangement for approval (browser confirmation; shared schedule/approval visibility and queued approver emails; no auto-approval or changes)', 'meals:request': 'Submit your own standalone meal request (browser confirmation; visible to Administrative Section, awaiting order; no supplier order or email)', 'rooms:request': 'Request a room for a permitted existing meeting (browser confirmation; pending approval, no booking held; queues approver notices)', 'travel:filing:submit': 'Record your own Ready filing as Submitted after physically handing in papers (browser attestation; not office receipt or payment)', 'travel:review:request': 'Request review of your complete travel papers (browser confirmation; queues one email to the selected reviewer)', 'supplies:request:submit': 'Submit your own draft or returned supply request for approval (browser confirmation; no stock reservation or issuance)', 'work:task:submit': 'Submit your assigned In progress task for review (browser confirmation; saves output and note in shared-work history)', 'work:task:acknowledge': 'Acknowledge your assigned To do task as In progress (browser confirmation; records your note in shared-work history)', 'travel:filing:draft': 'Open your own unsubmitted reimbursement checklist (browser confirmation; normal travel access and deadline reminders apply)', 'calendar:entry:create': 'Create your own tentative personal calendar entry (each save requires browser confirmation; no invitations or room bookings)', 'reports:view:save': 'Save your own named survey report selections (each save requires browser confirmation; no results or exports)',
+        labels = {'activities:draft:create': 'Create a live activity and public registration/feedback links from your own private draft (browser confirmation; queues creator/section-chief emails; no approval or participant invitations)', 'activities:draft:save': 'Save your own private activity preparation draft (browser confirmation; no event, survey, public link or email; separate Create review)', 'activities:dates:update': 'Update the date of a permitted upcoming unused activity (browser confirmation; updates its event review too; no rescheduling email or linked-work updates)', 'work_arrangements:request': 'File your own new work arrangement for approval (browser confirmation; shared schedule/approval visibility and queued approver emails; no auto-approval or changes)', 'meals:request': 'Submit your own standalone meal request (browser confirmation; visible to Administrative Section, awaiting order; no supplier order or email)', 'rooms:request': 'Request a room for a permitted existing meeting (browser confirmation; pending approval, no booking held; queues approver notices)', 'travel:filing:submit': 'Record your own Ready filing as Submitted after physically handing in papers (browser attestation; not office receipt or payment)', 'travel:review:request': 'Request review of your complete travel papers (browser confirmation; queues one email to the selected reviewer)', 'supplies:request:submit': 'Submit your own draft or returned supply request for approval (browser confirmation; no stock reservation or issuance)', 'work:task:submit': 'Submit your assigned In progress task for review (browser confirmation; saves output and note in shared-work history)', 'work:task:acknowledge': 'Acknowledge your assigned To do task as In progress (browser confirmation; records your note in shared-work history)', 'travel:filing:draft': 'Open your own unsubmitted reimbursement checklist (browser confirmation; normal travel access and deadline reminders apply)', 'calendar:entry:create': 'Create your own tentative personal calendar entry (each save requires browser confirmation; no invitations or room bookings)', 'reports:view:save': 'Save your own named survey report selections (each save requires browser confirmation; no results or exports)',
                   'work:comment:draft': 'Prepare private task comment drafts (each save requires browser confirmation; no posting or notices)',
                   'supplies:request:draft': 'Prepare new personal supply request drafts (each save requires browser confirmation; no submission or stock allocation)',
                   'notifications:mark_read': 'Prepare marking your own shared-work notices read (each action requires browser confirmation)',

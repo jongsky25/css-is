@@ -164,3 +164,12 @@ collection and Create prefill remain available. Bounded expired-preview cleanup
 still runs before rejected action access. Rollback never deletes a private copy,
 creates or reverses a live activity, or sends a message. No hosted activation is
 claimed by this implementation.
+
+
+## Later separate live-creation pilot
+
+v8.95 adds separately consented/default-off `activities:draft:create` with its
+own exact public-effect confirmation and durable one-per-draft creation mapping.
+It does not consume or edit this private preparation copy. Ordinary manual
+Create remains independent; the private source now shows a previously confirmed
+creation where one exists. See [live-creation contract](MCP_ACTIVITY_CREATION_PILOT.md).

@@ -22,6 +22,7 @@ import mcp_auth
 import mcp_actions
 import mcp_supply_drafts
 import mcp_comment_drafts
+import mcp_activity_creation
 import mcp_activity_drafts
 import mcp_activity_dates
 import mcp_work_arrangements
@@ -593,6 +594,58 @@ def build_server(get_conn, origin):
         """
         return await action(lambda conn, token: mcp_travel_submissions.recover(
             conn, token, provider.resource, origin, operation_id), mcp_travel_submissions.SCOPE)
+
+    @server.tool(title='Read my live activity creation context', annotations=READ_ONLY)
+    async def get_activity_creation_context(draft_key: StrictStr) -> dict:
+        """Read revision/date for live creation from an own private activity draft.
+
+        Requires separate activities:draft:create and current Create capability.
+        Use the UUID key from the /activity-drafts/KEY source link. Returns exact
+        revision, source/date, one-form count and internal-notice count; no title,
+        venue, directory identities or email addresses. Today/future only. A draft
+        already created through this flow or a strong activity duplicate is refused.
+        """
+        return await action(lambda conn, token: mcp_activity_creation.read_context(
+            conn, token, provider.resource, origin, draft_key), mcp_activity_creation.SCOPE)
+
+    @server.tool(title='Prepare creating a live activity from my draft', annotations=ToolAnnotations(
+        readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=False))
+    async def prepare_activity_from_draft(draft_key: StrictStr, expected_revision: StrictStr,
+            operation_id: StrictStr) -> dict:
+        """Prepare ONE LIVE bureau activity, not another private save or approval.
+
+        Requires activities:draft:create, its hosting flag and current Create
+        capability; save/read/date-update consent cannot authorize publication.
+        Read get_activity_creation_context for the UUID source and exact revision.
+        Show confirmation_url for signed-in review of the complete saved title,
+        date, current organizing section, venue, public registration/feedback link
+        effects and exact creator/section-chief email recipients. Confirmation
+        creates one live activity and its F2 with no entry window, queues normal
+        internal notices, and retains one draft-to-activity identity atomically.
+        A draft creates at most once through this flow, including across different
+        keys; strong duplicates cannot be overridden. No speakers, end date,
+        participant invitations, room/calendar/travel links, approval or signature.
+        Ordinary manual Create remains independent. Initial email attempts are
+        durable and never automatically retried after ambiguity; queued is not sent.
+        Keep one random 16–80 character operation_id across retries and recover
+        after timeout before a replacement key or separate live activity creation.
+        """
+        return await action(lambda conn, token: mcp_activity_creation.prepare(
+            conn, token, provider.resource, origin, operation_id,
+            {'draft_key': draft_key, 'expected_revision': expected_revision}), mcp_activity_creation.SCOPE)
+
+    @server.tool(title='Check my live activity creation receipt', annotations=READ_ONLY)
+    async def get_activity_creation_operation(operation_id: StrictStr) -> dict:
+        """Recover original live creation and current internal-notice state counts.
+
+        Same active connection/scope, original private owner/Create capability and
+        current management access to the original event/form are required. Returns
+        original event/date, Manage and public link, no title/venue/recipient data.
+        Later edits or registrations are separate. Recovery creates no event,
+        form, public token, invitation or repeat email.
+        """
+        return await action(lambda conn, token: mcp_activity_creation.recover(
+            conn, token, provider.resource, origin, operation_id), mcp_activity_creation.SCOPE)
 
     @server.tool(title='Read my private activity draft choices', annotations=READ_ONLY)
     async def get_activity_draft_context(limit: StrictInt = 25, offset: StrictInt = 0) -> dict:

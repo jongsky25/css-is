@@ -16,6 +16,7 @@ SOURCES = [f for f in sorted(glob.glob(os.path.join(ROOT, "*.py")))]
 # st.email_feature_enabled themselves (or are only reached through a gated caller);
 # the rest are account/recovery mail, which is never switchable.
 DIRECT_SEND_ALLOWED = {
+    ("activity_creation_delivery.py", "_transport"),  # gated, durably claimed/logged creation notices
     ("work_arrangement_delivery.py", "_transport"),  # gated, durably claimed/logged MCP filing notices
     ("app.py", "_notify_account"), ("app.py", "_notify_email"), ("app.py", "_send_and_log"),
     ("app.py", "_provision_account"), ("app.py", "forgot_submit"), ("app.py", "admin_users_reset_default"),

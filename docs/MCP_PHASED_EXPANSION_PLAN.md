@@ -1,6 +1,6 @@
 # Office Connect MCP expansion plan
 
-Status: **Incremental implementation**, updated October 27, 2026. Baseline: the read-only MCP expansion in v8.35 (PR #444). M1 reads and default-off M2.1–M2.7 and M3.1–M3.9 pilots are implemented as recorded below. Existing OAuth grants are not widened. Hosted write acceptance remains separate from implementation.
+Status: **Incremental implementation**, updated October 27, 2026. Baseline: the read-only MCP expansion in v8.35 (PR #444). M1 reads and default-off M2.1–M2.7 and M3.1–M3.10 pilots are implemented as recorded below. Existing OAuth grants are not widened. Hosted write acceptance remains separate from implementation.
 
 ## Goal and boundary
 
@@ -510,3 +510,30 @@ Create capability is required; other managers/admins cannot inspect someone's
 draft. See [M2.7 setup and acceptance](MCP_ACTIVITY_DRAFT_PILOT.md). Hosted MCP
 acceptance remains pending and no flag is enabled. Live draft submission,
 invitation and M4 decisions remain separate increments.
+
+M2.7 merged in [PR #506](https://github.com/jongsky25/css-is/pull/506), commit
+`8d1d6b547fb005f7a67879be197f0bd42e2191ec`.
+
+### M3.10 implementation — v8.95
+
+Separate default-off `activities:draft:create` consent prepares one live bureau
+activity and Form 2 from an own original private draft for today/a future date.
+Signed-in exact review distinguishes live public registration/feedback links from
+private saving or approval, and binds full fields, current section/requester,
+normal duplicate hints and creator/section-chief email routing. Strong duplicates
+are refused; this pilot cannot override the ordinary Create warning.
+
+A shared plain-bureau helper serves supported ordinary Create and the confirmed
+creation flow using caller-owned event/form transactions. The event/form,
+permanent one-per-draft mapping, audits, receipt and initial internal notice
+states commit together. Different keys cannot create the same draft again, even
+after edits/archive/deletion; original identity/current management authority are
+rechecked on recovery. Private copies remain unchanged; ordinary manual Create
+remains independent and the private source shows an existing confirmed creation.
+
+Initial internal emails have durable single-attempt delivery, permanent skips
+when disabled at confirmation, current source/routing gates and explicit
+uncertainty. No participant invitation, calendar/room/travel record, speaker
+survey, approval, signature or cancellation is added. See [M3.10 setup and
+acceptance](MCP_ACTIVITY_CREATION_PILOT.md). Hosted acceptance remains pending and
+no flag is enabled. Invitation workflows and M4 decisions remain separate work.

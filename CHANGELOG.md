@@ -1,3 +1,9 @@
+## 8.95 — October 27, 2026
+
+- Add default-off `activities:draft:create` context/preview/recovery for one live bureau activity plus Form 2 from an own private draft. Exact signed-in review shows public-link effects, current fields/section and creator/section-chief mail recipients; no participant invitations, bookings, approval or signature is added.
+- Share an atomic plain-bureau creation helper with supported ordinary Create submissions, allowing the existing event/form services to join caller-owned transactions. Retain one draft-to-activity identity across keys, reject strong duplicates, and commit event/form, mapping, audits, receipt and initial notice states together.
+- Deliver enabled internal notices through durable single-attempt claims with current authority/source/routing/mail checks. Disabled-at-confirmation notices skip permanently, ambiguous/crashed attempts never resend, original receipts preserve later edits, and private sources show an existing confirmed creation. Include concurrency, rollback, OAuth, public/ordinary UI, mail, mobile, packaging and operator acceptance coverage.
+
 ## 8.94 — October 27, 2026
 
 - Add owner-private single-day bureau activity drafts with a shared strict save service, ordinary new/list/source screens and guarded Create prefill. Saving/loading creates no event, survey, public registration/link, calendar/room/travel record or notification; later manual Create submission stays separate and is not tracked as draft consumption.
