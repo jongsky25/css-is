@@ -10,6 +10,7 @@ import time
 import pytest
 from playwright.sync_api import BrowserContext, Page
 from tests import test_avatar_baseline_browser as baseline
+from tests.avatar_scheduler_probe import read_scheduler, scheduler_environment
 from tests.test_avatar_baseline_browser import baseline_server
 
 pytestmark = pytest.mark.skipif(os.getenv('CSS_AVATAR_NAVIGATION_LIGHT') != '1', reason='Opt-in diagnostic')
@@ -19,13 +20,18 @@ GC_CATEGORIES = ['devtools.timeline', 'cppgc', 'disabled-by-default-cppgc', 'dis
 def test_navigation_light(baseline_server, app_mod, monkeypatch):
     out = Path(os.environ['CSS_AVATAR_OUT'])
     traced = os.environ['CSS_AVATAR_TRACE_MODE'] == 'trace'
-    state = {'protocol': 'navigation-light-v5', 'mode': 'trace' if traced else 'control',
+    state = {'protocol': 'navigation-light-v6', 'mode': 'trace' if traced else 'control',
              'acceptance': False, 'forced_gc': False, 'snapshots': 0, 'mount': 0,
              'segments': [], 'rotations': [], 'checkpoints': [], 'samples': [], 'pids': [],
              'probe_sha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest()}
+    state['scheduler_environment'] = scheduler_environment()
+    state['navigation_intervals'] = []
+    state['scheduler_edges'] = []
+    state['scheduler_probe_sha256'] = hashlib.sha256(Path(__file__).with_name('avatar_scheduler_probe.py').read_bytes()).hexdigest()
     stop = threading.Event()
     worker = None
     attach_original = BrowserContext.new_cdp_session
+    goto_original = Page.goto
     wait_original = Page.wait_for_timeout
     snapshot_original = baseline.snapshot
     completions = []
@@ -45,6 +51,7 @@ def test_navigation_light(baseline_server, app_mod, monkeypatch):
                     row['renderers'].append({'pid': pid, 'status': fields})
                 except FileNotFoundError:
                     row['missing_pids'].append(pid)
+            row['scheduler'] = read_scheduler(state['pids'], os.getpid(), threading.get_native_id())
             row['end_ns'] = time.monotonic_ns()
             state['samples'].append(row)
             stop.wait(.1)
@@ -103,10 +110,20 @@ def test_navigation_light(baseline_server, app_mod, monkeypatch):
             state['transfers'].append({'number': segment['number'], 'begin_ns': begin,
                                        'end_ns': time.monotonic_ns(), 'bytes': path.stat().st_size})
 
+    def goto(page, *args, **kwargs):
+        if page is state.get('page') and 8 <= state['snapshots'] < 13:
+            begin = time.monotonic_ns()
+            result = goto_original(page, *args, **kwargs)
+            state['navigation_intervals'].append({'mount': len(state['navigation_intervals']) + 1,
+                                                  'begin_ns': begin, 'goto_end_ns': time.monotonic_ns()})
+            return result
+        return goto_original(page, *args, **kwargs)
+
     def wait(page, timeout):
         result = wait_original(page, timeout)
         if page is state.get('page') and 8 <= state['snapshots'] < 13 and timeout == 220:
             state['mount'] += 1
+            state['navigation_intervals'][-1]['wait_end_ns'] = time.monotonic_ns()
         return result
 
     def snapshot(page, cdp):
@@ -117,6 +134,7 @@ def test_navigation_light(baseline_server, app_mod, monkeypatch):
         state['snapshots'] += 1
         state['pids'] = [d['pid'] for d in observed['renderer_memory_detail']]
         if state['snapshots'] == 8:
+            state['scheduler_edges'].append(read_scheduler(state['pids'], os.getpid(), threading.get_native_id()))
             state['navigation_begin_ns'] = time.monotonic_ns()
             worker = threading.Thread(target=sample_status, daemon=True)
             worker.start()
@@ -140,6 +158,7 @@ def test_navigation_light(baseline_server, app_mod, monkeypatch):
                 stop.set()
                 worker.join(timeout=5)
                 assert not worker.is_alive()
+                state['scheduler_edges'].append(read_scheduler(state['pids'], os.getpid(), threading.get_native_id()))
                 if traced:
                     finish_trace()
                     start_trace(2, ['disabled-by-default-memory-infra'])
@@ -154,6 +173,7 @@ def test_navigation_light(baseline_server, app_mod, monkeypatch):
 
     monkeypatch.setattr(BrowserContext, 'new_cdp_session', attach)
     monkeypatch.setattr(Page, 'wait_for_timeout', wait)
+    monkeypatch.setattr(Page, 'goto', goto)
     monkeypatch.setattr(baseline, 'snapshot', snapshot)
     try:
         baseline.test_real_application_baseline(baseline_server, app_mod, False, 'warm')

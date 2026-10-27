@@ -13,7 +13,7 @@ REFS={'original':'1c964dcba2fa19de1eab077b00e0e5748d742554',
 BLOCKS=(('original','current','current','original'),
         ('current','original','original','current'))
 HARNESS=('tests/test_avatar_baseline_browser.py','tests/avatar_browser_fixture.py',
-         'tests/test_avatar_navigation_light_browser.py')
+         'tests/test_avatar_navigation_light_browser.py','tests/avatar_scheduler_probe.py')
 
 
 def adapt_fixture(name,data):
@@ -35,15 +35,15 @@ def main():
     if args.phase=='comparison':
         if not args.calibration_audit:raise ValueError('Calibration audit required')
         gate=json.loads(args.calibration_audit.read_text())
-        if gate.get('status')!='calibration_passed' or gate.get('protocol')!='navigation-light-v5':raise ValueError('Calibration did not pass')
+        if gate.get('status')!='calibration_passed' or gate.get('protocol')!='navigation-light-v6':raise ValueError('Calibration did not pass')
     blocks=(('current','current','current','current'),) if args.phase=='calibration' else BLOCKS
     out=args.output.resolve();out.mkdir(parents=True,exist_ok=False)
     head=subprocess.check_output(['git','rev-parse','HEAD'],cwd=root,text=True).strip()
-    plan={'protocol':'navigation-light-v5','phase':args.phase,'acceptance':False,'harness_commit':head,
+    plan={'protocol':'navigation-light-v6','phase':args.phase,'acceptance':False,'harness_commit':head,
           'refs':REFS,'blocks':blocks,'samples_per_slot':1,'seconds':30,'fixture_adapter':'sample-ordinal-v1',
           'browser':'156.0.8078.47','budget_bytes':10*1024*1024,
           'session_policy':'Fresh pytest process, fixture database and browser for each slot. Existing warm-up and full workload unchanged. Diagnostic session/order change; not historical acceptance replacement.',
-          'selection':'Fixed calibration control/trace/trace/control; then eight comparison trace slots if calibration passes. Two bounded navigation traces with deferred stream transfer, one post-workload dump. No replacements or forced GC.',
+          'selection':'Fixed calibration control/trace/trace/control; then eight comparison trace slots if calibration passes. Two bounded navigation traces with deferred stream transfer, one post-workload dump. Scheduler/cgroup counters and navigation intervals in every arm. No replacements or forced GC.',
           'calibration_audit_sha256':hashlib.sha256(args.calibration_audit.read_bytes()).hexdigest() if args.calibration_audit else None,
           'cohorts':[]}
     def save():(out/'experiment.json').write_text(json.dumps(plan,indent=2)+'\n')

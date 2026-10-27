@@ -10,6 +10,7 @@ import sys
 
 from scripts.avatar_baseline.analyze_paired_variance import REFS, expected_fixture, required_sources, slot_points, source
 from scripts.avatar_baseline.analyze_navigation_residency import join_dump
+from scripts.avatar_baseline.analyze_scheduler import scheduler_observation
 
 PROBE = 'tests/test_avatar_navigation_light_browser.py'
 HARNESS = ['tests/test_avatar_baseline_browser.py', 'tests/avatar_browser_fixture.py', PROBE]
@@ -24,6 +25,8 @@ def calibration_gate(cohorts):
     for c in cohorts:
         if c['overhead_fraction'] > .05 or c['max_rotation_ms'] > 250:
             errors.append(f"Slot {c['index']}: explicit trace overhead exceeds 5% or 250ms")
+        if c.get('scheduler', {}).get('reader_cpu_fraction', 0) > .01:
+            errors.append(f"Slot {c['index']}: scheduler reader CPU exceeds 1%")
     durations = [c['navigation_ms'] for c in cohorts]
     for control, traced in [(0, 1), (3, 2)]:
         if durations[traced] > durations[control] * 1.2:
@@ -43,7 +46,7 @@ def clocks(events, names):
 def inspect_capture(folder, provenance, raw):
     p = provenance
     mode = p['mode']
-    if p['protocol'] not in ('navigation-light-v3', 'navigation-light-v4', 'navigation-light-v5') or p['acceptance'] is not False or p['forced_gc'] is not False:
+    if p['protocol'] not in ('navigation-light-v3', 'navigation-light-v4', 'navigation-light-v5', 'navigation-light-v6') or p['acceptance'] is not False or p['forced_gc'] is not False:
         raise ValueError('Invalid capture protocol')
     if p['snapshots'] != 13 or p['mount'] != 20 or [c['mount'] for c in p['checkpoints']] != [1, 5, 10, 15, 20]:
         raise ValueError('Incomplete navigation')
@@ -69,7 +72,7 @@ def inspect_capture(folder, provenance, raw):
               'max_rotation_ms': max(rotations) / 1e6, 'trace_segments': [], 'endpoint': None}
     if len(p['segments']) != (nav_segments + 1 if mode == 'trace' else 0):
         raise ValueError('Incorrect segment count')
-    if p['protocol'] == 'navigation-light-v5' and mode == 'trace':
+    if p['protocol'] in ('navigation-light-v5', 'navigation-light-v6') and mode == 'trace':
         transfers = p.get('transfers', [])
         if [t['number'] for t in transfers] != list(range(nav_segments + 1)):
             raise ValueError('Missing deferred transfers')
@@ -171,6 +174,8 @@ def inspect_capture(folder, provenance, raw):
                         'overlapping_gc_events': gc})
             previous = point
         result['minimum_anonymous_step_bytes'] = min(anon)
+    if p['protocol'] == 'navigation-light-v6':
+        result['scheduler'] = scheduler_observation(p)
     return result
 
 
@@ -207,7 +212,7 @@ def audit(root, repo, ref):
     plan = json.loads((root / 'experiment.json').read_text())
     phase = plan['phase']
     blocks = [['current'] * 4] if phase == 'calibration' else BLOCKS
-    if (phase not in ('calibration', 'comparison') or plan['protocol'] not in ('navigation-light-v3', 'navigation-light-v4', 'navigation-light-v5') or
+    if (phase not in ('calibration', 'comparison') or plan['protocol'] not in ('navigation-light-v3', 'navigation-light-v4', 'navigation-light-v5', 'navigation-light-v6') or
         plan['harness_commit'] != ref or plan['refs'] != REFS or plan['blocks'] != blocks or
         plan['acceptance'] is not False or plan['seconds'] != 30 or plan['samples_per_slot'] != 1 or
         plan['fixture_adapter'] != 'sample-ordinal-v1' or plan['browser'] != '156.0.8078.47' or
@@ -215,7 +220,8 @@ def audit(root, repo, ref):
         raise ValueError('Protocol identity mismatch')
     result['phase'] = phase
     result['protocol'] = plan['protocol']
-    for name in HARNESS:
+    harness = HARNESS + (['tests/avatar_scheduler_probe.py'] if plan['protocol'] == 'navigation-light-v6' else [])
+    for name in harness:
         if (root / 'harness' / name).read_bytes() != expected_fixture(repo, ref, name):
             raise ValueError('Harness identity mismatch')
     for i, entry in enumerate(plan['cohorts']):
@@ -249,6 +255,10 @@ def audit(root, repo, ref):
             if p['protocol'] != plan['protocol'] or p['mode'] != mode or p['probe_sha256'] != hashlib.sha256(source(repo, ref, PROBE)).hexdigest():
                 raise ValueError('Probe hash mismatch')
             result['source_hashes_verified'] += 1
+            if plan['protocol'] == 'navigation-light-v6':
+                if p['scheduler_probe_sha256'] != hashlib.sha256(source(repo, ref, 'tests/avatar_scheduler_probe.py')).hexdigest():
+                    raise ValueError('Scheduler probe hash mismatch')
+                result['source_hashes_verified'] += 1
             raw_path = folder / 'False-warm.json'
             if hashlib.sha256(raw_path.read_bytes()).hexdigest() != entry['raw_sha256']:
                 raise ValueError('Raw identity mismatch')
@@ -268,7 +278,7 @@ def audit(root, repo, ref):
     elif not result['errors']:
         # Instrumentation limits remain checked for every comparison slot.
         result['gate_errors'] = [f"Slot {c['index']}: overhead exceeds calibration limits" for c in result['cohorts']
-                                 if c['overhead_fraction'] > .05 or c['max_rotation_ms'] > 250]
+                                 if c['overhead_fraction'] > .05 or c['max_rotation_ms'] > 250 or c.get('scheduler', {}).get('reader_cpu_fraction', 0) > .01]
         result['status'] = 'complete_diagnostic' if not result['gate_errors'] else 'overhead_gate_failed'
     return result
 
