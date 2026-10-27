@@ -20,7 +20,7 @@ import storage as st
 
 READ_SCOPES = frozenset({'surveys:person_activities:read', 'surveys:resource_person_trends:read', 'surveys:csm_trends:read', 'surveys:unit_trends:read', 'surveys:units:read', 'activities:read', 'calendar:read', 'documents:read',
                     'supplies:read', 'travel:read', 'work:read', 'notifications:read', 'surveys:csm:read', 'surveys:activities:read', 'surveys:resource_persons:read', 'surveys:activity_details:read'})
-WRITE_SCOPES = frozenset({'notifications:mark_read', 'supplies:request:draft', 'work:comment:draft', 'reports:view:save', 'calendar:entry:create', 'travel:filing:draft', 'work:task:acknowledge', 'work:task:submit', 'supplies:request:submit', 'travel:review:request'})
+WRITE_SCOPES = frozenset({'notifications:mark_read', 'supplies:request:draft', 'work:comment:draft', 'reports:view:save', 'calendar:entry:create', 'travel:filing:draft', 'work:task:acknowledge', 'work:task:submit', 'supplies:request:submit', 'travel:review:request', 'travel:filing:submit'})
 SCOPES = READ_SCOPES | WRITE_SCOPES
 ACCESS_SECONDS = 3600
 REFRESH_SECONDS = 30 * 86400
@@ -76,6 +76,8 @@ def install(conn):
     mcp_supply_submissions.install(conn)
     import mcp_travel_reviews
     mcp_travel_reviews.install(conn)
+    import mcp_travel_submissions
+    mcp_travel_submissions.install(conn)
 
 
 def _digest(value):

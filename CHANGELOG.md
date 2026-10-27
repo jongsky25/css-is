@@ -1,3 +1,9 @@
+## 8.89 — October 27, 2026
+
+- Add default-off own travel paper-submission context/preparation/recovery with separate travel:filing:submit consent excluded from default scopes. Browser review requires the owner to attest an already completed physical handover before changing an existing Ready filing to Submitted; it does not establish office receipt, claim approval or payment.
+- Bind current stamp and full filing/paper/flag/review snapshot, and recheck Ready state, complete checklist and current required-review approval under the writer lock. Allow the existing mark_submitted service to join the caller's transaction while preserving normal UI behavior; atomically commit status/timestamps, handover/audit and receipt.
+- Return original recorded state/time and traveller follow-up responsibility without document URLs or financial fields. Recover safely across refresh/replay/races, clear completed/expired previews, and add runtime packaging, OAuth/MCP/travel/browser/mobile checks plus the operator runbook. No automatic Ready step, signing, sending, uploads, review decisions, email, stock or payment; hosted acceptance remains pending.
+
 ## 8.88 — October 27, 2026
 
 - Add scoped own-review preparation context (fresh update stamp, readiness and paginated eligible account IDs/names), plus default-off own travel review request preparation/recovery with separate travel:review:request consent excluded from default scopes. Browser review binds the full filing/paper/note snapshot, current update stamp, eligible reviewer and selected email recipient before setting review Requested and incrementing the round.

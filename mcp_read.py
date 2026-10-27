@@ -22,6 +22,7 @@ import mcp_auth
 import mcp_actions
 import mcp_supply_drafts
 import mcp_comment_drafts
+import mcp_travel_submissions
 import mcp_travel_reviews
 import mcp_supply_submissions
 import mcp_task_submissions
@@ -539,6 +540,54 @@ def build_server(get_conn, origin):
         """
         return await action(lambda conn, token: mcp_travel_reviews.recover(
             conn, token, provider.resource, origin, operation_id), mcp_travel_reviews.SCOPE)
+
+    @server.tool(title='Read my travel paper submission context', annotations=READ_ONLY)
+    async def get_my_travel_submission_context(filing_id: StrictInt) -> dict:
+        """Read current source stamp and eligibility before recording paper handover.
+
+        Requires separate travel:filing:submit consent and current ownership.
+        Returns status/review/readiness metadata and exact expected_updated_at,
+        not document links, notes or amounts. Use this stamp in preparation.
+        Ready eligibility does not prove physical handover; only the user can
+        attest in the signed-in browser that papers were already handed in.
+        """
+        return await action(lambda conn, token: mcp_travel_submissions.read_context(
+            conn, token, provider.resource, origin, filing_id), mcp_travel_submissions.SCOPE)
+
+    @server.tool(title='Prepare recording my travel paper submission', annotations=ToolAnnotations(
+        readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=False))
+    async def prepare_travel_filing_submission(filing_id: StrictInt, expected_updated_at: StrictStr,
+                                               operation_id: StrictStr) -> dict:
+        """Prepare Ready -> Submitted as a record of physical paper handover.
+
+        Requires travel:filing:submit; other read/draft/review grants do not
+        authorize this. Call get_my_travel_submission_context for the current
+        stamp, never guess it. The filing must already be Ready with complete
+        papers and any currently required review approved. Show confirmation_url
+        so the owner reviews the exact filing/checklist and attests that they
+        ALREADY handed in the papers. Preparation changes no status. This action
+        never prints/signs/sends/uploads papers, marks Ready, approves or pays.
+        A completed receipt records the owner's handover statement, not office
+        receipt. Reuse one random 16–80 character operation_id across retries;
+        recover before using another key after timeout/unavailability.
+        """
+        return await action(lambda conn, token: mcp_travel_submissions.prepare(
+            conn, token, provider.resource, origin, operation_id,
+            {'filing_id': filing_id, 'expected_updated_at': expected_updated_at}), mcp_travel_submissions.SCOPE)
+
+    @server.tool(title='Check my travel paper submission receipt', annotations=READ_ONLY)
+    async def get_travel_submission_operation(operation_id: StrictStr) -> dict:
+        """Recover the original paper-handover preview/record without resubmitting.
+
+        Requires original active connection, travel:filing:submit and current
+        ownership. Returns original Submitted status/time, handover attestation,
+        traveller follow-up responsibility and source; no document links, notes
+        or financial values. It never confirms office receipt, approval/payment
+        or overwrites later work. Timeout/unavailability is not proof of failure:
+        inspect the original operation/source before a replacement key.
+        """
+        return await action(lambda conn, token: mcp_travel_submissions.recover(
+            conn, token, provider.resource, origin, operation_id), mcp_travel_submissions.SCOPE)
 
     def supply_queue(conn, user, queue, state, query, page, limit):
         if queue not in ('requests', 'approvals', 'warnings'):

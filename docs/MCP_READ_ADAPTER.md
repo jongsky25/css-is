@@ -310,3 +310,6 @@ Own supply request submission is a separate default-off M3 pilot: see
 
 Own travel papers review requests are a separate default-off M3 pilot with durable
 notification status: see [setup and acceptance](MCP_TRAVEL_REVIEW_PILOT.md).
+
+Recording an owner-attested travel paper handover is a separate default-off M3
+pilot: see [setup and acceptance](MCP_TRAVEL_SUBMISSION_PILOT.md).

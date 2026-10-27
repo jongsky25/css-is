@@ -1069,7 +1069,9 @@ def mark_ready(conn, filing):
     return get_filing(conn, filing["id"])
 
 
-def mark_submitted(conn, filing):
+def mark_submitted(conn, filing, *, commit=True):
+    if not commit and not conn.in_transaction:
+        raise RuntimeError("A caller-owned travel submission transaction is required.")
     filing = get_filing(conn, filing["id"])
     if not filing or filing["status"] != "ready":
         raise TravelError("Mark the filing ready before marking it submitted.")
@@ -1079,7 +1081,8 @@ def mark_submitted(conn, filing):
     now = tz.now_iso()
     conn.execute("UPDATE travel_filing SET status='submitted', submitted_at=?, updated_at=? WHERE id=?",
                  (now, now, filing["id"]))
-    conn.commit()
+    if commit:
+        conn.commit()
     return get_filing(conn, filing["id"])
 
 
