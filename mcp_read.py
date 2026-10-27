@@ -22,6 +22,7 @@ import mcp_auth
 import mcp_actions
 import mcp_supply_drafts
 import mcp_comment_drafts
+import mcp_activity_dates
 import mcp_work_arrangements
 import mcp_meal_requests
 import mcp_room_requests
@@ -591,6 +592,57 @@ def build_server(get_conn, origin):
         """
         return await action(lambda conn, token: mcp_travel_submissions.recover(
             conn, token, provider.resource, origin, operation_id), mcp_travel_submissions.SCOPE)
+
+    @server.tool(title='Read permitted activity date context', annotations=READ_ONLY)
+    async def get_activity_date_context(event_token: StrictStr) -> dict:
+        """Read fresh revision/date with separate activities:dates:update consent.
+
+        Use event_token from the activity's /monitor/TOKEN or
+        /activities/TOKEN/manage source link; an existing custom slug also works.
+        Returns the exact event_id for preparation, never guess a form/group ID.
+        Requires current creator/admin or team-management authority, exactly as
+        the Manage screen. Only future single-day bureau activities with one
+        unused event-review form and no entry window or linked work are eligible.
+        Returns revision, current date, horizon and source; no title, venue,
+        messages, respondent details or report content.
+        """
+        return await action(lambda conn, token: mcp_activity_dates.read_context(
+            conn, token, provider.resource, origin, event_token), mcp_activity_dates.SCOPE)
+
+    @server.tool(title='Prepare updating an upcoming activity date', annotations=ToolAnnotations(
+        readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=False))
+    async def prepare_activity_date_update(event_id: StrictInt, expected_revision: StrictStr,
+            event_date: StrictStr, operation_id: StrictStr) -> dict:
+        """Prepare ONE date update for an eligible existing managed activity.
+
+        Requires activities:dates:update; read/create/calendar scopes do not grant
+        it. Read get_activity_date_context for the exact event ID and revision. Use a
+        different future YYYY-MM-DD within the ordinary two-year horizon. Show
+        confirmation_url for signed-in review of exact activity and old/new date
+        and reporting-period consequences. Confirmation rechecks current authority,
+        revision, unused form and absent registrations/responses/linked work, then
+        updates activity and its one F2 together. Existing public links show new
+        dates; no rescheduling email is sent. Normal future reminder rules remain
+        separate. No new activity, title/venue edits, invitation, room/calendar/
+        travel update, response edit, approval or cancellation. Keep one random
+        16–80 character operation_id across retries; after timeout recover the
+        original receipt/source before another key.
+        """
+        return await action(lambda conn, token: mcp_activity_dates.prepare(
+            conn, token, provider.resource, origin, operation_id,
+            {'event_id': event_id, 'expected_revision': expected_revision, 'event_date': event_date}), mcp_activity_dates.SCOPE)
+
+    @server.tool(title='Check my activity date change receipt', annotations=READ_ONLY)
+    async def get_activity_date_operation(operation_id: StrictStr) -> dict:
+        """Recover original old/new dates and management source link.
+
+        Same active connection/scope and current activity-management authority
+        required. Later ordinary date edits remain separate; this original receipt
+        never overwrites them. No title, venue, private text or respondent data.
+        Recovery creates no date change or notification.
+        """
+        return await action(lambda conn, token: mcp_activity_dates.recover(
+            conn, token, provider.resource, origin, operation_id), mcp_activity_dates.SCOPE)
 
     @server.tool(title='Read my work arrangement filing context', annotations=READ_ONLY)
     async def get_my_work_arrangement_context(period_start: StrictStr) -> dict:

@@ -1,6 +1,6 @@
 # Office Connect MCP expansion plan
 
-Status: **Incremental implementation**, updated October 27, 2026. Baseline: the read-only MCP expansion in v8.35 (PR #444). M1 reads and default-off M2.1–M2.6 and M3.1–M3.8 pilots are implemented as recorded below. Existing OAuth grants are not widened. Hosted write acceptance remains separate from implementation.
+Status: **Incremental implementation**, updated October 27, 2026. Baseline: the read-only MCP expansion in v8.35 (PR #444). M1 reads and default-off M2.1–M2.6 and M3.1–M3.9 pilots are implemented as recorded below. Existing OAuth grants are not widened. Hosted write acceptance remains separate from implementation.
 
 ## Goal and boundary
 
@@ -464,3 +464,26 @@ Recovery preserves later decisions and uses an owner-only operation-bound source
 link. See [M3.8 setup and acceptance](MCP_WORK_ARRANGEMENT_PILOT.md). Hosted
 acceptance remains pending and no flag is enabled. Activity/invitation work and
 M4 decisions remain separate increments.
+
+M3.8 merged in [PR #504](https://github.com/jongsky25/css-is/pull/504), commit
+`24d348416133bc9494285ccfdd9410557427ee44`.
+
+### M3.9 implementation — v8.93
+
+Separate default-off `activities:dates:update` consent implements the coverage
+map's permitted activity-schedule update through the existing Dates service.
+The current Create screen creates live survey activities rather than a persisted
+activity-draft state, so this increment does not invent or label a live creation
+as draft submission. Creation and invitation publication remain separate work.
+
+Fresh context and signed-in review bind current creator/admin/team authority,
+full event/form metadata, exact old/new future dates and reporting-period effects.
+The first delivery accepts only an unused single-day bureau activity with one
+unarchived F2, no registration/response/window/attendance and no linked calendar,
+room or travel work. The event/form dates, audits and receipt commit atomically;
+existing app caches invalidate after HTTP confirmation. Original receipts preserve
+later UI edits, and current authority/original event identity are checked on
+recovery. No new activity, invitation, email, response edit, linked-work update,
+approval or cancellation is added. See [M3.9 setup and acceptance](MCP_ACTIVITY_DATE_PILOT.md).
+Hosted acceptance remains pending and no flag is enabled. Remaining M3 activity
+creation/invitation workflows and M4 decisions remain separate increments.

@@ -1,0 +1,32 @@
+{% extends "dash_layout.html" %}
+{% block title %}Review activity date change — Office Connect{% endblock %}
+{% block content %}
+<div style="max-width:44rem;margin:auto;overflow-wrap:anywhere">
+{% if result.status == 'completed' %}
+<h1>Activity date updated</h1>
+<p>Activity {{ result.event_id }} and its {{ result.updated_forms }} event-review form changed from {{ result.old_event_date }} to {{ result.event_date }} at {{ result.completed_at }} (Asia/Manila).</p>
+<p>This is the original change result; later edits are separate. Reporting period: {{ result.reporting_period_before.year }} Q{{ result.reporting_period_before.quarter }} → {{ result.reporting_period_after.year }} Q{{ result.reporting_period_after.quarter }}.</p>
+<p><a href="{{ result.web_url }}">Open the activity's current dates</a>. No rescheduling email or notification was created.</p>
+{% else %}
+<h1>Change this activity's date?</h1>
+<dl>
+<dt>Activity</dt><dd>{{ result.snapshot.title }} (event {{ result.snapshot.event_id }})</dd>
+<dt>Current date</dt><dd>{{ result.snapshot.old_event_date }}</dd>
+<dt>New date</dt><dd>{{ result.snapshot.new_event_date }}</dd>
+<dt>Timezone</dt><dd>Asia/Manila</dd>
+<dt>Records updated together</dt><dd>The existing activity and its one unused Form 2 event review (form {{ result.snapshot.form_id }})</dd>
+</dl>
+<p>The activity's start date sets its reporting month, quarter and year. This change moves that date on both records; it does not create a new activity or edit any ratings.</p>
+<p>Existing public activity and survey links will show the new date. This does not send invitations or rescheduling emails. Tell anyone who already received a link through your normal channels. Normal future activity reminders follow their existing rules using the changed date.</p>
+<p>This pilot requires a future single-day bureau activity with one unarchived, unused event-review form, no registration or response records, no entry window and no linked calendar, room or travel records. It changes no title, venue, public link/token, survey window, report response, booking, filing or approval.</p>
+<p>Your normal activity-management authority is checked again at confirmation. Source edits, retagged teams, registrations, responses, linked work or the start of the activity day require a fresh check or the ordinary management screen. This preview expires ten minutes after preparation.</p>
+<p><a href="{{ result.web_url }}">Inspect the current activity</a></p>
+<form method="post">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<input type="hidden" name="preview_digest" value="{{ result.preview_digest }}">
+<button type="submit" name="confirm" value="yes">Confirm: change activity date</button>
+</form>
+{% endif %}
+<p>Operation receipt: <code>{{ result.operation_id }}</code>. Recover this key after a lost response before preparing a replacement.</p>
+</div>
+{% endblock %}
