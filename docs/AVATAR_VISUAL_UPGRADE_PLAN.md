@@ -25,6 +25,20 @@ seasonal administration, and accessibility behavior.
 A phase fails if its visuals remain essentially the same except for color changes,
 or if it exceeds a performance gate. Fix or reduce complexity before expanding it.
 
+## Latest 2B verification — reader candidate does not clear memory
+
+Candidate `cf363bf`, harness `586f81c`: thread-owned session/appearance connection
+reuse is implemented and behavior-tested (220 distinct tests passing). Four-slot
+calibration passes with 0.169% control duration change. The authorized fixed eight-
+slot memory comparison completes with all integrity/overhead gates passing, but
+10 source RSS and 16 same-source RSS checks fail the unchanged 10MiB limit.
+Heap/count gates pass; this is not 2B acceptance. 336 source/probe hashes and 110
+files verify; archives re-audit identically. Candidate remains on the verification
+branch without deployment/promotion. Next investigate captured renderer document/
+native-heap reclamation before another allocation change. No active measurement.
+See [full report](avatars/increment2b/sqlite-reader/REPORT.md). Older status entries
+below remain historical evidence; 3A and later stay paused.
+
 ## Current implementation and constraints
 
 - Sixteen species, each with six growth stages: 96 base combinations.

@@ -1,5 +1,17 @@
 # Increment 2B — acceptance withdrawn: uncovered memory failures
 
+## Reader candidate: calibration passed; fixed memory screen failed
+
+[Latest evidence](sqlite-reader/REPORT.md): `cf363bf` implements thread-owned
+session/appearance reads. 220 distinct tests pass; all four calibration and eight
+comparison workloads/captures pass. Controls differ 0.169%; unchanged timing gates
+pass. 336 source/probe hashes and 110 files verify; extracted archives re-audit
+identically. Memory still fails: 10/52 source RSS checks, 16/52 same-source RSS
+checks; all heap checks pass. Largest source +62.137MiB, repeat swing 60.488MiB.
+Anonymous renderer memory/retained-document variation persists. Candidate remains
+unpromoted and is not a 2B fix. Next analyze the captured document/native-heap
+reclamation; no later increment or active measurement. Earlier sections historical.
+
 ## CPU attribution complete — connection setup hotspot, no acceptance
 
 [Four-slot CPU diagnostic](navigation-cpu-v2/REPORT.md) has full 20-navigation

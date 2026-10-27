@@ -28,6 +28,31 @@ trigger it as an acceptance audit of the cancelled cohort. No later increments,
 merge to main or deployment occurred. The historical handoff below is superseded by this
 correction wherever it suggests CI success establishes complete memory acceptance.
 
+## Reader candidate tested — calibration passes, memory still blocks 2B
+
+[Latest report](avatars/increment2b/sqlite-reader/REPORT.md): candidate `cf363bf`
+adds one thread-owned, read-only connection for session/appearance callbacks;
+writes stay fresh, no result caching, cleanup/revocation/shutdown tested. 220 distinct
+tests pass across checks (one separate opt-in test skipped). Harness `586f81c` runs
+four fixed calibration slots and then eight fixed original/candidate comparisons.
+All workloads/trace/overhead checks pass; 336 source/probe hashes and 110 files
+verify; both extracted archives re-audit identically. All failures preserved.
+
+Calibration controls differ only 0.169%, but the memory screen FAILS: 10/52 source
+RSS checks and 16/52 same-source RSS controls exceed 10MiB. All 104 heap checks
+pass; renderer counts match. Largest source increase +62.137MiB, largest repeat
+swing 60.488MiB. At the latter checkpoint ~59.809MiB is anonymous renderer memory,
+with identical live node counts but differing retained-document/native Blink heaps.
+This does not prove a leak or avatar ownership; source effects remain confounded
+by unstable memory controls. Backend reuse is NOT a validated 2B fix.
+
+Next: analyze already captured document/native-heap reclamation in the qualified
+comparison traces before selecting a browser allocation change. No unchanged
+rerun, waiver, 3A or deployment. No active measurements. Candidate code is on this
+verification branch only; original avatar product f700187 remains the pre-candidate
+reference. Earlier sections below are historical and superseded where they say
+connection reuse is not implemented or a new comparison has not run.
+
 ## CPU profiles complete — repeated SQLite setup is the next concrete candidate
 
 [Latest report](avatars/increment2b/navigation-cpu-v2/REPORT.md): fixed four-slot

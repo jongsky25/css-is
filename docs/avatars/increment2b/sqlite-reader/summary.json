@@ -1,0 +1,305 @@
+{
+  "acceptance": false,
+  "candidate": "cf363bfe547d5e23619eee28cdaf68bd4b6d7753",
+  "harness": "586f81c0af4071c6c976bf2978810e200814cb96",
+  "calibration": {
+    "status": "calibration_passed",
+    "navigation_ms": [
+      7739.9578,
+      8276.598434,
+      7929.725888,
+      7726.901358
+    ],
+    "control_change_percent": -0.16868880086141624,
+    "paired_trace_increase_percent": [
+      6.9333793266934896,
+      2.6249141874964854
+    ]
+  },
+  "comparison_capture_status": "complete_diagnostic",
+  "source_checks": 104,
+  "source_failures": [
+    {
+      "pair": "source-forward-0",
+      "checkpoint": "navigation_1",
+      "metric": "renderer_rss_sum_bytes",
+      "delta_bytes": 14675968,
+      "renderer_counts_match": true,
+      "within_10_mib": false,
+      "delta_mib": 13.99609375
+    },
+    {
+      "pair": "source-forward-0",
+      "checkpoint": "navigation_5",
+      "metric": "renderer_rss_sum_bytes",
+      "delta_bytes": 35905536,
+      "renderer_counts_match": true,
+      "within_10_mib": false,
+      "delta_mib": 34.2421875
+    },
+    {
+      "pair": "source-forward-0",
+      "checkpoint": "navigation_10",
+      "metric": "renderer_rss_sum_bytes",
+      "delta_bytes": 65155072,
+      "renderer_counts_match": true,
+      "within_10_mib": false,
+      "delta_mib": 62.13671875
+    },
+    {
+      "pair": "source-forward-0",
+      "checkpoint": "navigation_15",
+      "metric": "renderer_rss_sum_bytes",
+      "delta_bytes": 50069504,
+      "renderer_counts_match": true,
+      "within_10_mib": false,
+      "delta_mib": 47.75
+    },
+    {
+      "pair": "source-forward-0",
+      "checkpoint": "navigation_20",
+      "metric": "renderer_rss_sum_bytes",
+      "delta_bytes": 38920192,
+      "renderer_counts_match": true,
+      "within_10_mib": false,
+      "delta_mib": 37.1171875
+    },
+    {
+      "pair": "source-reverse-0",
+      "checkpoint": "navigation_10",
+      "metric": "renderer_rss_sum_bytes",
+      "delta_bytes": 17088512,
+      "renderer_counts_match": true,
+      "within_10_mib": false,
+      "delta_mib": 16.296875
+    },
+    {
+      "pair": "source-reverse-1",
+      "checkpoint": "navigation_5",
+      "metric": "renderer_rss_sum_bytes",
+      "delta_bytes": 10776576,
+      "renderer_counts_match": true,
+      "within_10_mib": false,
+      "delta_mib": 10.27734375
+    },
+    {
+      "pair": "source-reverse-1",
+      "checkpoint": "navigation_10",
+      "metric": "renderer_rss_sum_bytes",
+      "delta_bytes": 32149504,
+      "renderer_counts_match": true,
+      "within_10_mib": false,
+      "delta_mib": 30.66015625
+    },
+    {
+      "pair": "source-reverse-1",
+      "checkpoint": "navigation_15",
+      "metric": "renderer_rss_sum_bytes",
+      "delta_bytes": 54435840,
+      "renderer_counts_match": true,
+      "within_10_mib": false,
+      "delta_mib": 51.9140625
+    },
+    {
+      "pair": "source-reverse-1",
+      "checkpoint": "navigation_20",
+      "metric": "renderer_rss_sum_bytes",
+      "delta_bytes": 32415744,
+      "renderer_counts_match": true,
+      "within_10_mib": false,
+      "delta_mib": 30.9140625
+    }
+  ],
+  "control_checks": 104,
+  "control_failures": [
+    {
+      "pair": "original-control-0",
+      "checkpoint": "background",
+      "metric": "renderer_rss_sum_bytes",
+      "delta_bytes": 16875520,
+      "renderer_counts_match": true,
+      "within_10_mib": false,
+      "delta_mib": 16.09375
+    },
+    {
+      "pair": "original-control-0",
+      "checkpoint": "navigation_1",
+      "metric": "renderer_rss_sum_bytes",
+      "delta_bytes": 20774912,
+      "renderer_counts_match": true,
+      "within_10_mib": false,
+      "delta_mib": 19.8125
+    },
+    {
+      "pair": "original-control-0",
+      "checkpoint": "navigation_5",
+      "metric": "renderer_rss_sum_bytes",
+      "delta_bytes": 21458944,
+      "renderer_counts_match": true,
+      "within_10_mib": false,
+      "delta_mib": 20.46484375
+    },
+    {
+      "pair": "original-control-0",
+      "checkpoint": "navigation_10",
+      "metric": "renderer_rss_sum_bytes",
+      "delta_bytes": 21827584,
+      "renderer_counts_match": true,
+      "within_10_mib": false,
+      "delta_mib": 20.81640625
+    },
+    {
+      "pair": "original-control-0",
+      "checkpoint": "navigation_15",
+      "metric": "renderer_rss_sum_bytes",
+      "delta_bytes": 20660224,
+      "renderer_counts_match": true,
+      "within_10_mib": false,
+      "delta_mib": 19.703125
+    },
+    {
+      "pair": "original-control-0",
+      "checkpoint": "navigation_20",
+      "metric": "renderer_rss_sum_bytes",
+      "delta_bytes": 15220736,
+      "renderer_counts_match": true,
+      "within_10_mib": false,
+      "delta_mib": 14.515625
+    },
+    {
+      "pair": "current-control-0",
+      "checkpoint": "seasonal_preview",
+      "metric": "renderer_rss_sum_bytes",
+      "delta_bytes": 13135872,
+      "renderer_counts_match": true,
+      "within_10_mib": false,
+      "delta_mib": 12.52734375
+    },
+    {
+      "pair": "current-control-0",
+      "checkpoint": "navigation_5",
+      "metric": "renderer_rss_sum_bytes",
+      "delta_bytes": -17485824,
+      "renderer_counts_match": true,
+      "within_10_mib": false,
+      "delta_mib": -16.67578125
+    },
+    {
+      "pair": "current-control-0",
+      "checkpoint": "navigation_10",
+      "metric": "renderer_rss_sum_bytes",
+      "delta_bytes": -26238976,
+      "renderer_counts_match": true,
+      "within_10_mib": false,
+      "delta_mib": -25.0234375
+    },
+    {
+      "pair": "current-control-0",
+      "checkpoint": "navigation_15",
+      "metric": "renderer_rss_sum_bytes",
+      "delta_bytes": -22138880,
+      "renderer_counts_match": true,
+      "within_10_mib": false,
+      "delta_mib": -21.11328125
+    },
+    {
+      "pair": "current-control-0",
+      "checkpoint": "navigation_20",
+      "metric": "renderer_rss_sum_bytes",
+      "delta_bytes": -14524416,
+      "renderer_counts_match": true,
+      "within_10_mib": false,
+      "delta_mib": -13.8515625
+    },
+    {
+      "pair": "original-control-1",
+      "checkpoint": "navigation_10",
+      "metric": "renderer_rss_sum_bytes",
+      "delta_bytes": 12136448,
+      "renderer_counts_match": true,
+      "within_10_mib": false,
+      "delta_mib": 11.57421875
+    },
+    {
+      "pair": "current-control-1",
+      "checkpoint": "navigation_5",
+      "metric": "renderer_rss_sum_bytes",
+      "delta_bytes": -15249408,
+      "renderer_counts_match": true,
+      "within_10_mib": false,
+      "delta_mib": -14.54296875
+    },
+    {
+      "pair": "current-control-1",
+      "checkpoint": "navigation_10",
+      "metric": "renderer_rss_sum_bytes",
+      "delta_bytes": -42160128,
+      "renderer_counts_match": true,
+      "within_10_mib": false,
+      "delta_mib": -40.20703125
+    },
+    {
+      "pair": "current-control-1",
+      "checkpoint": "navigation_15",
+      "metric": "renderer_rss_sum_bytes",
+      "delta_bytes": -63426560,
+      "renderer_counts_match": true,
+      "within_10_mib": false,
+      "delta_mib": -60.48828125
+    },
+    {
+      "pair": "current-control-1",
+      "checkpoint": "navigation_20",
+      "metric": "renderer_rss_sum_bytes",
+      "delta_bytes": -47435776,
+      "renderer_counts_match": true,
+      "within_10_mib": false,
+      "delta_mib": -45.23828125
+    }
+  ],
+  "renderer_counts_all_match": true,
+  "heap_checks_all_pass": true,
+  "source_hashes_verified": 336,
+  "files_verified": 110,
+  "largest_control_pair_navigation_15": [
+    {
+      "slot": 4,
+      "mount": 15,
+      "rss_mib": 551.609375,
+      "js_heap_mib": 5.150272369384766,
+      "live_nodes": 1075,
+      "dom_counters": {
+        "documents": 44,
+        "nodes": 37044,
+        "jsEventListeners": 2214
+      },
+      "status_mib": {
+        "VmRSS": 551.6015625,
+        "RssAnon": 239.8359375,
+        "RssFile": 258.4921875,
+        "RssShmem": 53.2734375
+      },
+      "post_workload_blink_size_mib": 85.375
+    },
+    {
+      "slot": 7,
+      "mount": 15,
+      "rss_mib": 491.12109375,
+      "js_heap_mib": 12.205970764160156,
+      "live_nodes": 1075,
+      "dom_counters": {
+        "documents": 24,
+        "nodes": 31126,
+        "jsEventListeners": 1188
+      },
+      "status_mib": {
+        "VmRSS": 491.12109375,
+        "RssAnon": 180.02734375,
+        "RssFile": 258.3203125,
+        "RssShmem": 52.7734375
+      },
+      "post_workload_blink_size_mib": 52.75
+    }
+  ],
+  "disposition": "Memory screen failed; same-source controls unstable; candidate is not a 2B fix. No causal attribution from these pairs."
+}
