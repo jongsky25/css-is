@@ -65,3 +65,17 @@ def test_nonchronological_host_probe_rejected():
 def test_no_gc_events_is_retained_as_no_observed_collection():
     e,r,s=fixture();e=[x for x in e if x.get('cat')!='cppgc']
     assert observation(e,r,s)['cpp_gc_event_count']==0
+
+
+def test_trace_loss_is_invalid_even_if_workload_exit_was_zero():
+    from scripts.avatar_baseline.analyze_navigation_residency import capture_issue
+    assert 'Trace data loss' in capture_issue({'exit_code':0},{'trace_completion':{'dataLossOccurred':True}})
+
+
+def test_invalid_slot_stays_in_all_affected_pairs():
+    from scripts.avatar_baseline.analyze_navigation_residency import pair_comparisons
+    cohorts=[{'index':i,'status':'valid_capture','navigation':[]} for i in range(8)]
+    cohorts[4]['status']='invalid_capture'
+    rows=pair_comparisons(cohorts)
+    assert len(rows)==8
+    assert [r['name'] for r in rows if r['status']=='unavailable_invalid_capture']==['block1-source-reverse','block1-current-control']

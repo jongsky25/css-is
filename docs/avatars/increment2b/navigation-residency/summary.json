@@ -1,0 +1,302 @@
+{
+  "acceptance": false,
+  "status": "inconclusive",
+  "source_hashes_verified": 164,
+  "files_verified": 67,
+  "errors": [
+    "Slot 4: Trace data loss; retained but excluded from correlation, not replaced"
+  ],
+  "cohorts": [
+    {
+      "index": 0,
+      "arm": "original",
+      "status": "valid_capture",
+      "app_pid": 16233,
+      "allocator_dumps": 20,
+      "status_samples": 161,
+      "max_clock_roundtrip_ms": 7.678846999999999,
+      "max_status_poll_gap_ms": 121.737751,
+      "dump_ms": {
+        "median": 348.907,
+        "max": 681.525
+      },
+      "median_post_minus_pre_dump_status_mib": {
+        "VmRSS": 7.451171875,
+        "RssAnon": 0.041015625,
+        "RssShmem": 8.046875
+      },
+      "rss_drops_ge_5mib": 41,
+      "drops_overlapping_dump": 9,
+      "outside_dump_drops_with_gc_category_overlap": 8,
+      "exploratory_min_anonymous_poll_delta_mib": -23.96875,
+      "navigation_20": {
+        "app_rss_mib": 244.984375,
+        "documents": 8,
+        "js_heap_mib": 7.821159362792969,
+        "blink_heap_size_mib": 33.125,
+        "blink_allocated_objects_mib": 13.310142517089844
+      }
+    },
+    {
+      "index": 1,
+      "arm": "current",
+      "status": "valid_capture",
+      "app_pid": 16432,
+      "allocator_dumps": 20,
+      "status_samples": 165,
+      "max_clock_roundtrip_ms": 8.090301,
+      "max_status_poll_gap_ms": 154.946612,
+      "dump_ms": {
+        "median": 361.85,
+        "max": 677.964
+      },
+      "median_post_minus_pre_dump_status_mib": {
+        "VmRSS": 8.134765625,
+        "RssAnon": -0.265625,
+        "RssShmem": 8.203125
+      },
+      "rss_drops_ge_5mib": 37,
+      "drops_overlapping_dump": 10,
+      "outside_dump_drops_with_gc_category_overlap": 8,
+      "exploratory_min_anonymous_poll_delta_mib": -12.80859375,
+      "navigation_20": {
+        "app_rss_mib": 256.03125,
+        "documents": 6,
+        "js_heap_mib": 6.835514068603516,
+        "blink_heap_size_mib": 38.0,
+        "blink_allocated_objects_mib": 9.813209533691406
+      }
+    },
+    {
+      "index": 2,
+      "arm": "current",
+      "status": "valid_capture",
+      "app_pid": 16630,
+      "allocator_dumps": 20,
+      "status_samples": 164,
+      "max_clock_roundtrip_ms": 4.160767,
+      "max_status_poll_gap_ms": 204.258829,
+      "dump_ms": {
+        "median": 347.6755,
+        "max": 652.43
+      },
+      "median_post_minus_pre_dump_status_mib": {
+        "VmRSS": 9.255859375,
+        "RssAnon": 1.11328125,
+        "RssShmem": 8.150390625
+      },
+      "rss_drops_ge_5mib": 34,
+      "drops_overlapping_dump": 9,
+      "outside_dump_drops_with_gc_category_overlap": 6,
+      "exploratory_min_anonymous_poll_delta_mib": -15.41015625,
+      "navigation_20": {
+        "app_rss_mib": 254.67578125,
+        "documents": 8,
+        "js_heap_mib": 7.866905212402344,
+        "blink_heap_size_mib": 37.375,
+        "blink_allocated_objects_mib": 13.378021240234375
+      }
+    },
+    {
+      "index": 3,
+      "arm": "original",
+      "status": "valid_capture",
+      "app_pid": 16828,
+      "allocator_dumps": 20,
+      "status_samples": 159,
+      "max_clock_roundtrip_ms": 5.091600000000001,
+      "max_status_poll_gap_ms": 124.147593,
+      "dump_ms": {
+        "median": 353.10699999999997,
+        "max": 456.58
+      },
+      "median_post_minus_pre_dump_status_mib": {
+        "VmRSS": 8.771484375,
+        "RssAnon": 0.8671875,
+        "RssShmem": 8.068359375
+      },
+      "rss_drops_ge_5mib": 32,
+      "drops_overlapping_dump": 8,
+      "outside_dump_drops_with_gc_category_overlap": 9,
+      "exploratory_min_anonymous_poll_delta_mib": -10.9375,
+      "navigation_20": {
+        "app_rss_mib": 253.08984375,
+        "documents": 8,
+        "js_heap_mib": 7.932884216308594,
+        "blink_heap_size_mib": 36.875,
+        "blink_allocated_objects_mib": 13.683502197265625
+      }
+    },
+    {
+      "index": 4,
+      "arm": "current",
+      "status": "invalid_capture",
+      "reason": "Trace data loss; retained but excluded from correlation, not replaced",
+      "exit_code": 1,
+      "trace_completion": {
+        "dataLossOccurred": true,
+        "stream": "1",
+        "traceFormat": "json",
+        "streamCompression": "none"
+      },
+      "captured_navigation_records": 20
+    },
+    {
+      "index": 5,
+      "arm": "original",
+      "status": "valid_capture",
+      "app_pid": 17220,
+      "allocator_dumps": 20,
+      "status_samples": 184,
+      "max_clock_roundtrip_ms": 6.451707000000001,
+      "max_status_poll_gap_ms": 182.035547,
+      "dump_ms": {
+        "median": 388.218,
+        "max": 1500.657
+      },
+      "median_post_minus_pre_dump_status_mib": {
+        "VmRSS": 7.619140625,
+        "RssAnon": 0.630859375,
+        "RssShmem": 7.802734375
+      },
+      "rss_drops_ge_5mib": 34,
+      "drops_overlapping_dump": 13,
+      "outside_dump_drops_with_gc_category_overlap": 11,
+      "exploratory_min_anonymous_poll_delta_mib": -21.0,
+      "navigation_20": {
+        "app_rss_mib": 242.30859375,
+        "documents": 6,
+        "js_heap_mib": 6.138298034667969,
+        "blink_heap_size_mib": 31.5,
+        "blink_allocated_objects_mib": 9.845787048339844
+      }
+    },
+    {
+      "index": 6,
+      "arm": "original",
+      "status": "valid_capture",
+      "app_pid": 17418,
+      "allocator_dumps": 20,
+      "status_samples": 205,
+      "max_clock_roundtrip_ms": 10.93224,
+      "max_status_poll_gap_ms": 189.959987,
+      "dump_ms": {
+        "median": 394.8055,
+        "max": 704.66
+      },
+      "median_post_minus_pre_dump_status_mib": {
+        "VmRSS": 5.833984375,
+        "RssAnon": -0.4296875,
+        "RssShmem": 6.349609375
+      },
+      "rss_drops_ge_5mib": 38,
+      "drops_overlapping_dump": 19,
+      "outside_dump_drops_with_gc_category_overlap": 13,
+      "exploratory_min_anonymous_poll_delta_mib": -32.42578125,
+      "navigation_20": {
+        "app_rss_mib": 263.20703125,
+        "documents": 8,
+        "js_heap_mib": 7.021278381347656,
+        "blink_heap_size_mib": 50.625,
+        "blink_allocated_objects_mib": 13.955192565917969
+      }
+    },
+    {
+      "index": 7,
+      "arm": "current",
+      "status": "valid_capture",
+      "app_pid": 17614,
+      "allocator_dumps": 20,
+      "status_samples": 204,
+      "max_clock_roundtrip_ms": 30.796834999999998,
+      "max_status_poll_gap_ms": 1184.165893,
+      "dump_ms": {
+        "median": 389.069,
+        "max": 3104.704
+      },
+      "median_post_minus_pre_dump_status_mib": {
+        "VmRSS": 8.345703125,
+        "RssAnon": -0.072265625,
+        "RssShmem": 8.107421875
+      },
+      "rss_drops_ge_5mib": 33,
+      "drops_overlapping_dump": 9,
+      "outside_dump_drops_with_gc_category_overlap": 11,
+      "exploratory_min_anonymous_poll_delta_mib": -28.12890625,
+      "navigation_20": {
+        "app_rss_mib": 261.79296875,
+        "documents": 4,
+        "js_heap_mib": 6.084037780761719,
+        "blink_heap_size_mib": 52.875,
+        "blink_allocated_objects_mib": 6.70892333984375
+      }
+    }
+  ],
+  "pairs": [
+    {
+      "name": "block0-source-forward",
+      "left": 0,
+      "right": 1,
+      "acceptance": false,
+      "status": "descriptive_only",
+      "navigation_20_app_rss_delta_mib": 11.046875
+    },
+    {
+      "name": "block0-source-reverse",
+      "left": 3,
+      "right": 2,
+      "acceptance": false,
+      "status": "descriptive_only",
+      "navigation_20_app_rss_delta_mib": 1.5859375
+    },
+    {
+      "name": "block0-original-control",
+      "left": 0,
+      "right": 3,
+      "acceptance": false,
+      "status": "descriptive_only",
+      "navigation_20_app_rss_delta_mib": 8.10546875
+    },
+    {
+      "name": "block0-current-control",
+      "left": 1,
+      "right": 2,
+      "acceptance": false,
+      "status": "descriptive_only",
+      "navigation_20_app_rss_delta_mib": -1.35546875
+    },
+    {
+      "name": "block1-source-reverse",
+      "left": 5,
+      "right": 4,
+      "acceptance": false,
+      "status": "unavailable_invalid_capture",
+      "navigation_20_app_rss_delta_mib": null
+    },
+    {
+      "name": "block1-source-forward",
+      "left": 6,
+      "right": 7,
+      "acceptance": false,
+      "status": "descriptive_only",
+      "navigation_20_app_rss_delta_mib": -1.4140625
+    },
+    {
+      "name": "block1-original-control",
+      "left": 5,
+      "right": 6,
+      "acceptance": false,
+      "status": "descriptive_only",
+      "navigation_20_app_rss_delta_mib": 20.8984375
+    },
+    {
+      "name": "block1-current-control",
+      "left": 4,
+      "right": 7,
+      "acceptance": false,
+      "status": "unavailable_invalid_capture",
+      "navigation_20_app_rss_delta_mib": null
+    }
+  ],
+  "limits": "All eight slots retained; slot 4 trace loss prevents complete comparison. Outside marked dump intervals does not exclude delayed instrumentation effects. Clock and polling uncertainty retained. Native allocator families overlap. Different run from prior 52MiB anonymous release; no attribution of that earlier event."
+}

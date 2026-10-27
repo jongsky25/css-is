@@ -1,0 +1,90 @@
+[
+  {
+    "cohort": "00-original",
+    "dump_key_counts": {
+      "level_of_detail": 340,
+      "process_totals": 160,
+      "allocators": 180,
+      "allocators_graph": 180
+    },
+    "trace_metadata": {},
+    "trace_events": 34965
+  },
+  {
+    "cohort": "01-current",
+    "dump_key_counts": {
+      "level_of_detail": 340,
+      "process_totals": 160,
+      "allocators": 180,
+      "allocators_graph": 180
+    },
+    "trace_metadata": {},
+    "trace_events": 35036
+  },
+  {
+    "cohort": "02-current",
+    "dump_key_counts": {
+      "level_of_detail": 340,
+      "process_totals": 160,
+      "allocators": 180,
+      "allocators_graph": 180
+    },
+    "trace_metadata": {},
+    "trace_events": 32009
+  },
+  {
+    "cohort": "03-original",
+    "dump_key_counts": {
+      "level_of_detail": 340,
+      "process_totals": 160,
+      "allocators": 180,
+      "allocators_graph": 180
+    },
+    "trace_metadata": {},
+    "trace_events": 32032
+  },
+  {
+    "cohort": "04-current",
+    "dump_key_counts": {
+      "level_of_detail": 339,
+      "process_totals": 160,
+      "allocators": 179,
+      "allocators_graph": 179
+    },
+    "trace_metadata": {},
+    "trace_events": 34020
+  },
+  {
+    "cohort": "05-original",
+    "dump_key_counts": {
+      "level_of_detail": 340,
+      "process_totals": 160,
+      "allocators": 180,
+      "allocators_graph": 180
+    },
+    "trace_metadata": {},
+    "trace_events": 33630
+  },
+  {
+    "cohort": "06-original",
+    "dump_key_counts": {
+      "level_of_detail": 340,
+      "process_totals": 160,
+      "allocators": 180,
+      "allocators_graph": 180
+    },
+    "trace_metadata": {},
+    "trace_events": 41425
+  },
+  {
+    "cohort": "07-current",
+    "dump_key_counts": {
+      "level_of_detail": 340,
+      "process_totals": 160,
+      "allocators": 180,
+      "allocators_graph": 180
+    },
+    "trace_metadata": {},
+    "trace_events": 35365
+  }
+]

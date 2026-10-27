@@ -1,5 +1,14 @@
 # Increment 2B — acceptance withdrawn: uncovered memory failures
 
+## Per-navigation allocator capture — inconclusive
+
+[Eight-slot v2 capture](navigation-residency/REPORT.md) ran after preserving an
+invalid v1 attempt. Seven traces pass, slot 4 has trace loss. All 164 source hashes
+and 67 files verify; 140 detailed dumps and all pair dispositions are retained.
+Dump timing/memory overhead is substantial; the prior 52MiB anonymous release
+was not reproduced. GC/sweep correlations and retained Blink heap size do not
+identify a product fix. 38 focused tests pass. No acceptance or active measurement.
+
 ## Offline unchanged-source residency review
 
 [Archived per-renderer accounting](shared-stylesheet/memory-screen/REPORT.md)

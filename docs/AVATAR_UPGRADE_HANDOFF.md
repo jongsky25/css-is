@@ -28,6 +28,26 @@ trigger it as an acceptance audit of the cancelled cohort. No later increments,
 merge to main or deployment occurred. The historical handoff below is superseded by this
 correction wherever it suggests CI success establishes complete memory acceptance.
 
+## Targeted navigation allocator capture — partial, no fix
+
+[Capture report](avatars/increment2b/navigation-residency/REPORT.md): v1 aborted
+on trace loss (two failed slots, third interrupted; all partial files retained).
+Corrected navigation-only v2 ran all eight slots from `bbcba53`; seven pass, slot
+4 current has trace loss and is not replaced. Audit verifies 164 source/probe
+hashes and 67 files; 140 bounded dumps are valid, overall status inconclusive.
+Thirty-eight focused tests pass. Every scheduled slot and pair disposition stays
+visible; source comparisons involving slot 4 remain unavailable.
+
+Dump instrumentation is material: median intervals 349–395ms, median post-dump
+RSS increases 5.8–9.3MiB, mostly shared-memory RSS. Natural GC/sweeping overlaps
+some sampled drops, but the prior 52MiB anonymous release was not reproduced.
+Blink object allocations fall while reported heap size remains high in both
+sources; no exact allocator/page or app owner is established. Full dumps have no
+process memory-map entries. Raw traces and all failures are archived/re-audited.
+No product correction, waiver, source-effect claim or acceptance. A future probe
+needs lower overhead/bounded trace segments before another fixed schedule; no
+replacement run is active. Primary product remains f700187; 2B/later stay blocked.
+
 ## Offline residency review — unchanged-code swing localized
 
 [Per-renderer review](avatars/increment2b/shared-stylesheet/memory-screen/REPORT.md)

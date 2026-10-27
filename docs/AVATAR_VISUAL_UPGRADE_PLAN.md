@@ -869,3 +869,12 @@ b521760: all eight workloads complete, 114 source hashes/20 files verified, 104
 comparisons independently recomputed. Reverse navigation 20 +12.863281 MiB and
 both unstable repeat controls block qualification. Candidate 6960562 preserved;
 no promotion, larger validation, 2B acceptance or later increments. No active run.
+
+### Targeted native allocator correlation — 2026-10-27 — inconclusive
+
+[Full report](avatars/increment2b/navigation-residency/REPORT.md): v1 trace-loss
+attempt preserved; all eight v2 slots ran from bbcba53, seven valid and one trace-
+loss failure. 164 source hashes/67 files verified, 140 allocator dumps retained,
+38 focused tests pass. Probe overhead and missing memory maps limit attribution;
+no reproduction of prior 52MiB anonymous release or validated product correction.
+No waiver, replacement sample, 2B acceptance or later increment. No active run.

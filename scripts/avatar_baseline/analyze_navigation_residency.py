@@ -90,6 +90,35 @@ def observation(events,records,status):
         'interpretation':'Clock estimates use nearest sync midpoint plus explicit request uncertainty, not exact GC attribution. Dump intervals are separate from navigation intervals. Allocator families overlap; do not sum or subtract from RSS. No acceptance claim.'}
 
 
+
+def capture_issue(entry,provenance):
+    if provenance['trace_completion'].get('dataLossOccurred'):return 'Trace data loss; retained but excluded from correlation, not replaced'
+    if entry['exit_code']!=0:return 'Workload failed; retained but not valid evidence'
+    return None
+
+
+def pair_comparisons(cohorts):
+    by_index={c['index']:c for c in cohorts};output=[]
+    for name,left,right in [('block0-source-forward',0,1),('block0-source-reverse',3,2),
+                            ('block0-original-control',0,3),('block0-current-control',1,2),
+                            ('block1-source-reverse',5,4),('block1-source-forward',6,7),
+                            ('block1-original-control',5,6),('block1-current-control',4,7)]:
+        a,b=by_index[left],by_index[right]
+        row={'name':name,'left':left,'right':right,'acceptance':False}
+        if a['status']!='valid_capture' or b['status']!='valid_capture':
+            row.update(status='unavailable_invalid_capture',navigation=[])
+        else:
+            rows=[]
+            for x,y in zip(a['navigation'],b['navigation']):
+                assert x['mount']==y['mount']
+                delta={family:{attr:y['allocators'][family][attr]-value for attr,value in values.items() if attr in y['allocators'][family]} for family,values in x['allocators'].items() if family in y['allocators']}
+                rows.append({'mount':x['mount'],'app_rss_delta':y['snapshot']['app']['status']['VmRSS']-x['snapshot']['app']['status']['VmRSS'],
+                    'js_heap_delta':y['snapshot']['heap']-x['snapshot']['heap'],'allocator_deltas':delta})
+            row.update(status='descriptive_only',navigation=rows)
+        output.append(row)
+    return output
+
+
 def audit(root, repo, ref):
     result={'acceptance':False,'status':'inconclusive','errors':[], 'source_hashes_verified':0,
             'files_verified':0,'cohorts':[]}
@@ -104,12 +133,13 @@ def audit(root, repo, ref):
             if (root/'harness'/name).read_bytes()!=expected_fixture(repo,ref,name):raise ValueError('Harness mismatch')
         for index,entry in enumerate(plan['cohorts']):
             block,position=divmod(index,4);arm=BLOCKS[block][position]
-            if any(entry.get(k)!=v for k,v in dict(index=index,block=block,position=position,arm=arm,exit_code=0).items()):
+            if any(entry.get(k)!=v for k,v in dict(index=index,block=block,position=position,arm=arm).items()):
                 raise ValueError('Failed or misidentified slot '+str(index))
             folder=root/f'{index:02d}-{arm}'
             files=entry['files_sha256']
             required={'False-warm.json','environment.json','runner.txt','junit.xml',
                       'navigation-residency.json','navigation-residency-trace.json.gz','residency-provenance.json','renderer-status.json'}
+            if entry['exit_code']!=0:required.remove('False-warm.json')
             if not required<=set(files):raise ValueError('Missing required evidence')
             for name,digest in files.items():
                 if Path(name).name!=name or hashlib.sha256((folder/name).read_bytes()).hexdigest()!=digest:
@@ -125,10 +155,17 @@ def audit(root, repo, ref):
             provenance=json.loads((folder/'residency-provenance.json').read_text())
             if (provenance.get('trace_scope')!='navigation-only-v2' or provenance['acceptance'] is not False or provenance['native_sampling'] is not False or
                 provenance['allocator_dumps']!=20 or provenance.get('forced_gc') is not False or provenance.get('dump_determinism')!='none' or provenance['snapshots']!=13 or
-                provenance['navigation_observations']!=20 or provenance['trace_completion'].get('dataLossOccurred') or
+                provenance['navigation_observations']!=20 or
                 provenance['probe_sha256']!=hashlib.sha256(source(repo,ref,PROBE)).hexdigest()):
                 raise ValueError('Invalid probe provenance')
             result['source_hashes_verified']+=1
+            issue=capture_issue(entry,provenance)
+            if issue:
+                result['errors'].append(f'Slot {index}: '+issue)
+                result['cohorts'].append({'index':index,'arm':arm,'status':'invalid_capture','reason':issue,
+                    'exit_code':entry['exit_code'],'trace_completion':provenance['trace_completion'],
+                    'captured_navigation_records':len(json.loads((folder/'navigation-residency.json').read_text()))})
+                continue
             raw=folder/'False-warm.json'
             if entry['raw_sha256']!=hashlib.sha256(raw.read_bytes()).hexdigest():raise ValueError('Raw identity mismatch')
             points=slot_points(json.loads(raw.read_text()),block)
@@ -138,8 +175,9 @@ def audit(root, repo, ref):
             for snap in [*rawrows[0]['scenarios'].values(),*rawrows[0]['navigation_trend']]:
                 if observed['app_pid'] not in [d['pid'] for d in snap['renderer_memory_detail']]:
                     raise ValueError('Trace app PID absent from baseline renderer observations')
-            result['cohorts'].append({'index':index,'arm':arm,'points':points,**observed})
-        result['status']='complete_diagnostic'
+            result['cohorts'].append({'index':index,'arm':arm,'status':'valid_capture','points':points,**observed})
+        result['status']='inconclusive' if result['errors'] else 'complete_diagnostic'
+        result['pair_comparisons']=pair_comparisons(result['cohorts'])
     except (OSError,ValueError,KeyError,TypeError,subprocess.CalledProcessError) as e:result['errors'].append(repr(e))
     return result
 

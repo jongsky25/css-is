@@ -1,0 +1,12 @@
+{
+  "status": "identical_reaudit",
+  "members_verified": 72,
+  "source_hashes_verified": 164,
+  "cohort_files_verified": 67,
+  "experiment_status": "inconclusive",
+  "errors": [
+    "Slot 4: Trace data loss; retained but excluded from correlation, not replaced"
+  ],
+  "archive_sha256": "c7af3c637cfee1162f0d201aa08b8a0f9773f4c9b4d9eb0a431ba8a70990aae5",
+  "acceptance": false
+}
