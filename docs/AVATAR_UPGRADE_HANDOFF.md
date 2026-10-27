@@ -2,7 +2,7 @@
 
 Last updated: **2026-10-27 UTC**. Repository: `jongsky25/css-is`.
 
-## Start here — Sol handoff, current after application observer calibration
+## Start here — Sol handoff, current after native root diagnostic
 
 **Objective: unblock 2B only. Do not start or resume 3A or later increments.**
 This section supersedes older next-step instructions below. The chronology is
@@ -11,7 +11,16 @@ retained as evidence, not a queue of experiments to repeat.
 ### Checkout and current state
 
 - Repository: `jongsky25/css-is`; resume `codex/avatar-2b-verification`.
-- Latest completed run: lossless application observer harness 9e47c14 / workflow 3563eb2,
+- Latest completed work: separate native root diagnostic, harness 2a1f2f4 /
+  workflow 8535690, [PR #520](https://github.com/jongsky25/css-is/pull/520),
+  [run 40596878155](https://github.com/jongsky25/css-is/actions/runs/40596878155).
+  Four natural-GC graphs complete; all show the low-retention profile, three native
+  contexts and one native HTMLDocument. The failed root is not reproduced or
+  identified. All 42 hashes verify; four independent graph analyses and native
+  selftest audit match. 43 local/cloud preflight tests pass. Snapshot work finishes
+  some sweeping/changes scheduling; no qualification or memory acceptance follows.
+  No supported correction or unchanged rerun is queued.
+- Latest application calibration run: lossless application observer harness 9e47c14 / workflow 3563eb2,
   [PR #519](https://github.com/jongsky25/css-is/pull/519),
   [run40532187252](https://github.com/jongsky25/css-is/actions/runs/40532187252).
   Fresh full native qualification fails: first probe has no source-labelled natural
@@ -56,14 +65,15 @@ markup and improves navigation 20 in both orders, but those partial benefits
 cannot override the failed gates. This screen compares current versus candidate;
 it is not the complete original-versus-candidate acceptance matrix.
 
-Latest result: [application observer calibration](avatars/increment2b/application-observer-calibration/REPORT.md).
-The new lossless transport is unmeasured because fresh same-job native qualification
-fails labelled natural reclamation in one probe. Both native probes retain exact
-1,536 joins and pass cost/timing; natural GC and unrelated pool returns alone do not
-satisfy source-labelled returns. All results remain failed where the gate fails.
-Earlier [hosted native success](avatars/increment2b/hosted-native-calibration/REPORT.md)
-and previous complete application failures remain archived, without substituting
-for the latest job. Original product memory acceptance remains unresolved.
+Latest result: [native root diagnostic](avatars/increment2b/native-root-retention/REPORT.md).
+Previous trace analysis shows that an uninjected control also retains old documents;
+the passing probe already returns labelled pages during its first GC. This rules
+out neither every recorder effect nor GC timing, but those simple explanations
+are insufficient. New graphs show only the low-retention profile and cannot reveal
+the extra retaining root in the failed sample. No supported correction yet.
+The [application transport](avatars/increment2b/application-observer-calibration/REPORT.md)
+remains unmeasured; fresh native qualification and original memory acceptance
+remain blocked. All prior failures stay failed and archived.
 
 There is no defensible percentage or ETA. At least three milestones remain:
 
@@ -83,7 +93,9 @@ verification**. No candidate currently qualifies to unblock 2B.
 
 Read these in order before changing code or launching browsers:
 
-1. [Application observer calibration](avatars/increment2b/application-observer-calibration/REPORT.md),
+1. [Native root diagnostic](avatars/increment2b/native-root-retention/REPORT.md),
+   frozen protocol, prior trace analysis and independently checked graphs. Then
+   [application observer calibration](avatars/increment2b/application-observer-calibration/REPORT.md),
    all five attempts and frozen protocols. Then
    [hosted native calibration](avatars/increment2b/hosted-native-calibration/REPORT.md),
    proof/screen archive, exact assessment and [native setup PR #513](https://github.com/jongsky25/css-is/pull/513).
@@ -144,15 +156,15 @@ uses an opened-only trigger. The incidental run does not replace any sample or
 qualify the instrument. Both setup PRs remain unmerged; default-branch manual
 registration still faces existing release-version policy. No waiver or deploy.
 
-Application observer calibration is now implemented. Read the
-[application report](avatars/increment2b/application-observer-calibration/REPORT.md)
-and frozen protocols first; previous attempts are retained as failed prerequisites.
-Latest run and independent audit are complete. Next inspect the retained native
-generations/trace to explain missing labelled returns in the first probe before
-freezing a supported change. Do not rerun unchanged for favorable GC. Lossless
-application transport still requires measurement after fresh native qualification.
-No source attribution/product comparison, load padding or gate waiver. Full 2B
-original-baseline acceptance remains outstanding; do not resume later increments.
+Application observer calibration is implemented but blocked. Root diagnostic v1
+is complete, with no supported correction: all four perturbed captures reclaim old
+documents. Do not count it as qualification or rerun it unchanged to seek a different
+profile. Next record context creation/disposal and persistent-handle ownership
+around natural GC with source-audited instrumentation that requests neither a
+snapshot nor collection. The required evidence is the owner/path of extra contexts
+in a retained-document capture. Freeze any new bounded diagnostic before capture.
+After a supported correction, fresh native qualification must pass before measuring
+the frozen lossless application transport. Original 2B acceptance remains outstanding.
 
 ### Important traps and execution constraints
 

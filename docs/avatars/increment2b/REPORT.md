@@ -8,10 +8,31 @@ with stable controls. Remaining milestones: a supported fix, qualified candidate
 validation, then complete original-baseline acceptance across all device/cache
 and scenario groups. No defensible percentage or ETA is established.
 
-Use the [Sol restart handoff](../../AVATAR_UPGRADE_HANDOFF.md#start-here--sol-handoff-current-after-application-observer-calibration)
+Use the [Sol restart handoff](../../AVATAR_UPGRADE_HANDOFF.md#start-here--sol-handoff-current-after-native-root-diagnostic)
 for current source identities, evidence order, next bounded work and constraints.
-The application observer result below is the latest completed experiment.
+The native root diagnostic below is the latest completed experiment.
 Older next-step instructions in this report are historical where superseded.
+
+## Native root diagnostic — complete, retaining root not identified
+
+[Latest report](native-root-retention/REPORT.md) and
+[run40596878155](https://github.com/jongsky25/css-is/actions/runs/40596878155):
+frozen 2a1f2f4 completes four root captures after the first natural major GC.
+All four show the low-retention profile, with three native contexts and one native
+HTMLDocument. Their paths cannot identify the extra roots in the previous failure.
+All **42** manifest hashes verify; all four independent graph analyses and the
+native selftest audit match. **43 local/cloud preflight tests pass.**
+
+Previous failed-run evidence shows the same retained-document profile in an
+uninjected control; the passing probe already reclaims selected pages during its
+first GC. Hooks alone and a universal second-GC requirement are insufficient
+explanations. Snapshot generation finishes some sweeping and changes scheduling:
+this is diagnostic evidence, never a replacement qualification or memory result.
+
+No supported correction yet. Next record context disposal and persistent-handle
+ownership around natural GC without snapshots or forced collections. Application
+transport remains unmeasured, original 2B gates unchanged. PR520 is unmerged; no
+active measurement, product change, candidate promotion, acceptance or deployment.
 
 ## Application observer calibration — fresh native prerequisite blocked
 

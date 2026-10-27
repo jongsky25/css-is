@@ -1,0 +1,408 @@
+{
+  "source_artifact_sha256": "5e066d46a033ae2fdc8f68ea3d06f6c37e1bf248e8f29185f4bfb8f235df5b6b",
+  "internal_hashes_verified": 145,
+  "source_run": 40532187252,
+  "cohorts": [
+    {
+      "index": 0,
+      "mode": "control",
+      "snapshots": [
+        {
+          "stage": 0,
+          "documents": 6,
+          "nodes": 9031,
+          "event_listeners": 3,
+          "used_heap_bytes": 1981620
+        },
+        {
+          "stage": 1,
+          "documents": 8,
+          "nodes": 12042,
+          "event_listeners": 4,
+          "used_heap_bytes": 1983392
+        },
+        {
+          "stage": 2,
+          "documents": 10,
+          "nodes": 18054,
+          "event_listeners": 5,
+          "used_heap_bytes": 2665676
+        },
+        {
+          "stage": 3,
+          "documents": 12,
+          "nodes": 27065,
+          "event_listeners": 6,
+          "used_heap_bytes": 2810352
+        },
+        {
+          "stage": 4,
+          "documents": 14,
+          "nodes": 30076,
+          "event_listeners": 7,
+          "used_heap_bytes": 3508548
+        },
+        {
+          "stage": 5,
+          "documents": 16,
+          "nodes": 36088,
+          "event_listeners": 8,
+          "used_heap_bytes": 4190500
+        },
+        {
+          "stage": 6,
+          "documents": 1,
+          "nodes": 9007,
+          "event_listeners": 1,
+          "used_heap_bytes": 1204344
+        },
+        {
+          "stage": 7,
+          "documents": 3,
+          "nodes": 12018,
+          "event_listeners": 2,
+          "used_heap_bytes": 1900704
+        },
+        {
+          "stage": 8,
+          "documents": 5,
+          "nodes": 18030,
+          "event_listeners": 3,
+          "used_heap_bytes": 1653808
+        },
+        {
+          "stage": 9,
+          "documents": 7,
+          "nodes": 27041,
+          "event_listeners": 4,
+          "used_heap_bytes": 2504068
+        },
+        {
+          "stage": 10,
+          "documents": 9,
+          "nodes": 30052,
+          "event_listeners": 5,
+          "used_heap_bytes": 2487436
+        },
+        {
+          "stage": 11,
+          "documents": 1,
+          "nodes": 6008,
+          "event_listeners": 1,
+          "used_heap_bytes": 1035792
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "mode": "probe",
+      "snapshots": [
+        {
+          "stage": 0,
+          "documents": 6,
+          "nodes": 9031,
+          "event_listeners": 3,
+          "used_heap_bytes": 1981620
+        },
+        {
+          "stage": 1,
+          "documents": 8,
+          "nodes": 12042,
+          "event_listeners": 4,
+          "used_heap_bytes": 1983468
+        },
+        {
+          "stage": 2,
+          "documents": 10,
+          "nodes": 18054,
+          "event_listeners": 5,
+          "used_heap_bytes": 2665860
+        },
+        {
+          "stage": 3,
+          "documents": 12,
+          "nodes": 27065,
+          "event_listeners": 6,
+          "used_heap_bytes": 2825944
+        },
+        {
+          "stage": 4,
+          "documents": 14,
+          "nodes": 30076,
+          "event_listeners": 7,
+          "used_heap_bytes": 3518400
+        },
+        {
+          "stage": 5,
+          "documents": 16,
+          "nodes": 36088,
+          "event_listeners": 8,
+          "used_heap_bytes": 4203412
+        },
+        {
+          "stage": 6,
+          "documents": 9,
+          "nodes": 45063,
+          "event_listeners": 1,
+          "used_heap_bytes": 2949192
+        },
+        {
+          "stage": 7,
+          "documents": 11,
+          "nodes": 48074,
+          "event_listeners": 2,
+          "used_heap_bytes": 3642776
+        },
+        {
+          "stage": 8,
+          "documents": 13,
+          "nodes": 54086,
+          "event_listeners": 3,
+          "used_heap_bytes": 3397780
+        },
+        {
+          "stage": 9,
+          "documents": 15,
+          "nodes": 63097,
+          "event_listeners": 4,
+          "used_heap_bytes": 4248160
+        },
+        {
+          "stage": 10,
+          "documents": 17,
+          "nodes": 66108,
+          "event_listeners": 5,
+          "used_heap_bytes": 4219744
+        },
+        {
+          "stage": 11,
+          "documents": 19,
+          "nodes": 72120,
+          "event_listeners": 6,
+          "used_heap_bytes": 4901576
+        }
+      ],
+      "major_gc_statistics": [
+        {
+          "gc": "mc",
+          "reason": "finalize incremental marking via task",
+          "collector_reason": "GC in old space requested",
+          "stack": false,
+          "is_incremental": true,
+          "mark.js_global_proxies": 11,
+          "start_object_size": 4608292,
+          "end_object_size": 2501964,
+          "start_global_consumed_size": 112236388,
+          "end_global_consumed_size": 19512178
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "mode": "probe",
+      "snapshots": [
+        {
+          "stage": 0,
+          "documents": 6,
+          "nodes": 9031,
+          "event_listeners": 3,
+          "used_heap_bytes": 1981620
+        },
+        {
+          "stage": 1,
+          "documents": 8,
+          "nodes": 12042,
+          "event_listeners": 4,
+          "used_heap_bytes": 1983160
+        },
+        {
+          "stage": 2,
+          "documents": 10,
+          "nodes": 18054,
+          "event_listeners": 5,
+          "used_heap_bytes": 2665556
+        },
+        {
+          "stage": 3,
+          "documents": 12,
+          "nodes": 27065,
+          "event_listeners": 6,
+          "used_heap_bytes": 2817496
+        },
+        {
+          "stage": 4,
+          "documents": 14,
+          "nodes": 30076,
+          "event_listeners": 7,
+          "used_heap_bytes": 3509940
+        },
+        {
+          "stage": 5,
+          "documents": 16,
+          "nodes": 36088,
+          "event_listeners": 8,
+          "used_heap_bytes": 4191996
+        },
+        {
+          "stage": 6,
+          "documents": 1,
+          "nodes": 9007,
+          "event_listeners": 1,
+          "used_heap_bytes": 1204420
+        },
+        {
+          "stage": 7,
+          "documents": 3,
+          "nodes": 12018,
+          "event_listeners": 2,
+          "used_heap_bytes": 1900780
+        },
+        {
+          "stage": 8,
+          "documents": 5,
+          "nodes": 18030,
+          "event_listeners": 3,
+          "used_heap_bytes": 1653468
+        },
+        {
+          "stage": 9,
+          "documents": 7,
+          "nodes": 27041,
+          "event_listeners": 4,
+          "used_heap_bytes": 2504080
+        },
+        {
+          "stage": 10,
+          "documents": 9,
+          "nodes": 30052,
+          "event_listeners": 5,
+          "used_heap_bytes": 2493484
+        },
+        {
+          "stage": 11,
+          "documents": 1,
+          "nodes": 6008,
+          "event_listeners": 1,
+          "used_heap_bytes": 1035868
+        }
+      ],
+      "major_gc_statistics": [
+        {
+          "gc": "mc",
+          "reason": "finalize incremental marking via task",
+          "collector_reason": "GC in old space requested",
+          "stack": false,
+          "is_incremental": true,
+          "mark.js_global_proxies": 3,
+          "start_object_size": 4596876,
+          "end_object_size": 756936,
+          "start_global_consumed_size": 115878248,
+          "end_global_consumed_size": 9780986
+        },
+        {
+          "gc": "mc",
+          "reason": "finalize incremental marking via task",
+          "collector_reason": "GC in old space requested",
+          "stack": false,
+          "is_incremental": true,
+          "mark.js_global_proxies": 3,
+          "start_object_size": 2898380,
+          "end_object_size": 756936,
+          "start_global_consumed_size": 81417416,
+          "end_global_consumed_size": 9716402
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "mode": "control",
+      "snapshots": [
+        {
+          "stage": 0,
+          "documents": 6,
+          "nodes": 9031,
+          "event_listeners": 3,
+          "used_heap_bytes": 1981620
+        },
+        {
+          "stage": 1,
+          "documents": 8,
+          "nodes": 12042,
+          "event_listeners": 4,
+          "used_heap_bytes": 1979088
+        },
+        {
+          "stage": 2,
+          "documents": 10,
+          "nodes": 18054,
+          "event_listeners": 5,
+          "used_heap_bytes": 2661376
+        },
+        {
+          "stage": 3,
+          "documents": 12,
+          "nodes": 27065,
+          "event_listeners": 6,
+          "used_heap_bytes": 2825488
+        },
+        {
+          "stage": 4,
+          "documents": 14,
+          "nodes": 30076,
+          "event_listeners": 7,
+          "used_heap_bytes": 3517836
+        },
+        {
+          "stage": 5,
+          "documents": 16,
+          "nodes": 36088,
+          "event_listeners": 8,
+          "used_heap_bytes": 4203336
+        },
+        {
+          "stage": 6,
+          "documents": 9,
+          "nodes": 45063,
+          "event_listeners": 1,
+          "used_heap_bytes": 2949116
+        },
+        {
+          "stage": 7,
+          "documents": 11,
+          "nodes": 48074,
+          "event_listeners": 2,
+          "used_heap_bytes": 3642700
+        },
+        {
+          "stage": 8,
+          "documents": 13,
+          "nodes": 54086,
+          "event_listeners": 3,
+          "used_heap_bytes": 3395464
+        },
+        {
+          "stage": 9,
+          "documents": 15,
+          "nodes": 63097,
+          "event_listeners": 4,
+          "used_heap_bytes": 4246040
+        },
+        {
+          "stage": 10,
+          "documents": 17,
+          "nodes": 66108,
+          "event_listeners": 5,
+          "used_heap_bytes": 4236724
+        },
+        {
+          "stage": 11,
+          "documents": 19,
+          "nodes": 72120,
+          "event_listeners": 6,
+          "used_heap_bytes": 4918460
+        }
+      ]
+    }
+  ],
+  "interpretation": "Retained profile occurs in an uninjected control. Passing probe already returns selected generations during its first GC. Trace global proxy count is a marked-object count (exact V8 source checked), not a retaining path or evidence of a particular root."
+}

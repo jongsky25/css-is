@@ -67,14 +67,27 @@ matches the captured failure; [full assessment](attempt-v5-assessment.json).
    qualification fails as described above, so application effectiveness is unknown.
 
 Each archive and original assessment remains committed. Superseded PRs515–518 are
-closed without merge; PR519 remains reviewable. Its opened-only trigger prevents
+closed without merge; PR #519 remains reviewable. Its opened-only trigger prevents
 documentation updates from repeating measurements. Default-branch manual button
 registration remains subject to the existing release-version policy.
 
+## Root diagnostic follow-up
+
+[Native root diagnostic](../native-root-retention/REPORT.md) completes four separately
+frozen captures with graphs after the first natural major GC. All four show the
+low-retention profile; the extra retaining root remains unidentified. An uninjected
+control in the previous failed run has the retained profile, and the passing probe
+already returns selected pages during its first GC. Neither hooks alone nor a
+universal second-GC requirement explains the evidence. All 42 graph-result hashes
+verify; independent analyses agree. This perturbed diagnostic cannot replace
+fresh native qualification or measure the application transport.
+
 ## Next bounded work
 
-Inspect the retained native generations and trace to establish why selected pages
-have no natural labelled return in slot 1, while slot 2 passes. Any new measurement
+Next record context creation/disposal and persistent-handle ownership around
+natural GC with source-audited instrumentation, without snapshots or forced GC.
+The missing evidence is the owner of the extra surviving contexts in a retained
+capture; no supported correction follows from the low-retention graphs. Any new measurement
 requires a concrete supported change and separately frozen protocol preserving
 all gates. Do not rerun this unchanged build for a favorable GC outcome, force GC,
 flush caches, add waits to pad the budget, relax coverage, or substitute prior native

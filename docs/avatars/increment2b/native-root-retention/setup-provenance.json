@@ -1,0 +1,20 @@
+{
+  "pr": "https://github.com/jongsky25/css-is/pull/520",
+  "harness_commit": "2a1f2f43c1e6812abebb2e290e98cec3cff06356",
+  "workflow_commit": "85356907ea7725314ac027cb327f8837e2b8adac",
+  "workflow_sha256": "40d99c618485ff83e2ca9c61ea241ce87f015196c929b622ef4a2d5785efb4d0",
+  "preflight_tests": 43,
+  "protocol": "native-root-retention-diagnostic-v1",
+  "product_ref": "cf363bfe547d5e23619eee28cdaf68bd4b6d7753",
+  "acceptance": false,
+  "instrument_qualified": false,
+  "application_qualified": false,
+  "merge": false,
+  "deployment": false,
+  "run_url": "https://github.com/jongsky25/css-is/actions/runs/40596878155",
+  "status": "diagnostic_complete",
+  "artifact_id": 12776532037,
+  "internal_hashes_verified": 42,
+  "failed_retention_profile_observed": false,
+  "independent_graph_analyses_identical": true
+}

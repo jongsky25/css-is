@@ -1,0 +1,128 @@
+{
+  "protocol": "native-root-retention-diagnostic-v1",
+  "status": "diagnostic_complete",
+  "run_url": "https://github.com/jongsky25/css-is/actions/runs/40596878155",
+  "artifact_id": 12776532037,
+  "artifact_sha256": "22f3159ba0415cb281d5617141d4c55d4d5ad4e65f43d8c4966ea41c83b5b14c",
+  "internal_hashes_verified": 42,
+  "native_selftest_independent_audit_identical": true,
+  "all_four_graph_analyses_independently_identical": true,
+  "harness_sources_match_frozen_commit": true,
+  "harness_commit": "2a1f2f43c1e6812abebb2e290e98cec3cff06356",
+  "workflow_commit": "85356907ea7725314ac027cb327f8837e2b8adac",
+  "acceptance": false,
+  "instrument_qualified": false,
+  "application_qualified": false,
+  "failed_retention_profile_observed": false,
+  "cohorts": [
+    {
+      "index": 0,
+      "mode": "control",
+      "graph_nodes": 151199,
+      "graph_edges": 454618,
+      "native_contexts": 3,
+      "native_context_handle_names": {
+        "V8PerContextData::context_": 2,
+        "extensions::ScriptContext::v8_context_": 1
+      },
+      "html_documents": 1,
+      "stage_6": {
+        "index": 6,
+        "documents": 1,
+        "nodes": 9007,
+        "jsEventListeners": 1,
+        "heap": 1204304
+      },
+      "stage_11": {
+        "index": 11,
+        "documents": 1,
+        "nodes": 6008,
+        "jsEventListeners": 1,
+        "heap": 1035792
+      },
+      "snapshot_sha256": "0abaa186705adaec002a03bc5897107305f1fcb03f18192a9436d6947f4ff91b"
+    },
+    {
+      "index": 1,
+      "mode": "probe",
+      "graph_nodes": 151180,
+      "graph_edges": 454500,
+      "native_contexts": 3,
+      "native_context_handle_names": {
+        "V8PerContextData::context_": 2,
+        "extensions::ScriptContext::v8_context_": 1
+      },
+      "html_documents": 1,
+      "stage_6": {
+        "index": 6,
+        "documents": 1,
+        "nodes": 9007,
+        "jsEventListeners": 1,
+        "heap": 1204380
+      },
+      "stage_11": {
+        "index": 11,
+        "documents": 1,
+        "nodes": 6008,
+        "jsEventListeners": 1,
+        "heap": 1035868
+      },
+      "snapshot_sha256": "8c0fb5468883cfb084daf9c83dc89b073f9e0c5d3fe2e56ba7dd6e20f0c542c0"
+    },
+    {
+      "index": 2,
+      "mode": "probe",
+      "graph_nodes": 152140,
+      "graph_edges": 454500,
+      "native_contexts": 3,
+      "native_context_handle_names": {
+        "V8PerContextData::context_": 2,
+        "extensions::ScriptContext::v8_context_": 1
+      },
+      "html_documents": 1,
+      "stage_6": {
+        "index": 6,
+        "documents": 1,
+        "nodes": 9007,
+        "jsEventListeners": 1,
+        "heap": 1204380
+      },
+      "stage_11": {
+        "index": 11,
+        "documents": 1,
+        "nodes": 6008,
+        "jsEventListeners": 1,
+        "heap": 1035868
+      },
+      "snapshot_sha256": "0ba152003b741a32f6c999630d49708276771d875b6e3d3bf17a4e76f246ffb6"
+    },
+    {
+      "index": 3,
+      "mode": "control",
+      "graph_nodes": 151845,
+      "graph_edges": 454498,
+      "native_contexts": 3,
+      "native_context_handle_names": {
+        "V8PerContextData::context_": 2,
+        "extensions::ScriptContext::v8_context_": 1
+      },
+      "html_documents": 1,
+      "stage_6": {
+        "index": 6,
+        "documents": 1,
+        "nodes": 9007,
+        "jsEventListeners": 1,
+        "heap": 1204304
+      },
+      "stage_11": {
+        "index": 11,
+        "documents": 1,
+        "nodes": 6008,
+        "jsEventListeners": 1,
+        "heap": 1035792
+      },
+      "snapshot_sha256": "fffe7ae12f30c0059c1a8db63c49e4c73fed1f3a26c22cd40ac50d3a25f860aa"
+    }
+  ],
+  "limits": "All four perturbed captures show the low-retention profile. They cannot establish the extra retaining root in the previous failure or qualify any measurement. No supported correction follows."
+}
