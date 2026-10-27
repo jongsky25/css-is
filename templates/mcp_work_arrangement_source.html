@@ -1,0 +1,21 @@
+{% extends "dash_layout.html" %}
+{% block title %}My work arrangement filing — Office Connect{% endblock %}
+{% block content %}
+<div style="max-width:44rem;margin:auto;overflow-wrap:anywhere">
+<h1>My work arrangement filing</h1>
+<dl>
+<dt>Request ID</dt><dd>{{ record.id }}</dd>
+<dt>Period</dt><dd>{{ record.period_label }} · Asia/Manila</dd>
+<dt>Arrangement</dt><dd>{{ record.arrangement_label }}</dd>
+<dt>Recurring weekday</dt><dd>{{ record.weekday_name or 'None' }}</dd>
+<dt>Current status</dt><dd>{{ record.status }}</dd>
+<dt>Proposed effectivity (requires approval)</dt><dd>{{ record.effective_from }}</dd>
+<dt>Shared note</dt><dd style="white-space:pre-wrap">{{ record.note or 'None' }}</dd>
+<dt>Filed at</dt><dd>{{ record.created_at }}</dd>
+{% if record.decided_at %}<dt>Decision</dt><dd>{{ record.decided_by_name }} · {{ record.decided_at }}</dd><dt>Decision note</dt><dd style="white-space:pre-wrap">{{ record.decide_note or 'None' }}</dd>{% endif %}
+</dl>
+{% if record.week_override_note %}<p>{{ record.week_override_note }}</p>{% endif %}
+<p>Pending filings are not approved schedules. Changes, decisions and follow-up use the ordinary work arrangement screens.</p>
+<p><a href="/work-arrangement">Open my work arrangement hub</a></p>
+</div>
+{% endblock %}

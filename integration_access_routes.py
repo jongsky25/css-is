@@ -16,6 +16,7 @@ import mcp_auth
 import mcp_actions
 import mcp_supply_drafts
 import mcp_comment_drafts
+import mcp_work_arrangements
 import mcp_meal_requests
 import mcp_room_requests
 import mcp_travel_submissions
@@ -44,6 +45,7 @@ def csrf(request):
 
 # Explicit allowlist: never expose the hosting environment or credential material.
 MCP_PILOTS = (
+    ('File own work arrangement for approval (browser confirmation)', 'WORK_ARRANGEMENTS', 'work_arrangements:request', ('get_my_work_arrangement_context', 'prepare_work_arrangement_request', 'get_work_arrangement_operation')),
     ('Submit own standalone meal requests (browser confirmation)', 'MEAL_REQUESTS', 'meals:request', ('get_my_meal_request_context', 'prepare_meal_request', 'get_meal_request_operation')),
     ('Request a room for own meeting (browser confirmation)', 'ROOM_REQUESTS', 'rooms:request', ('get_my_room_request_context', 'prepare_room_request', 'get_room_request_operation')),
     ('Record own travel paper handover (browser confirmation)', 'TRAVEL_SUBMISSIONS', 'travel:filing:submit', ('get_my_travel_submission_context', 'prepare_travel_filing_submission', 'get_travel_submission_operation')),
@@ -169,10 +171,10 @@ def make_router(templates, get_conn, mcp_readiness=None):
         conn = get_conn()
         try:
             origin = action_origin(request)
-            service = {'notice': mcp_actions, 'supply': mcp_supply_drafts, 'comment': mcp_comment_drafts, 'report': mcp_report_views, 'calendar': mcp_personal_calendar, 'travel': mcp_travel_drafts, 'ack': mcp_task_acknowledgements, 'submit': mcp_task_submissions, 'supply_submit': mcp_supply_submissions, 'travel_review': mcp_travel_reviews, 'travel_submit': mcp_travel_submissions, 'room': mcp_room_requests, 'meal': mcp_meal_requests}[kind]
+            service = {'notice': mcp_actions, 'supply': mcp_supply_drafts, 'comment': mcp_comment_drafts, 'report': mcp_report_views, 'calendar': mcp_personal_calendar, 'travel': mcp_travel_drafts, 'ack': mcp_task_acknowledgements, 'submit': mcp_task_submissions, 'supply_submit': mcp_supply_submissions, 'travel_review': mcp_travel_reviews, 'travel_submit': mcp_travel_submissions, 'room': mcp_room_requests, 'meal': mcp_meal_requests, 'wa': mcp_work_arrangements}[kind]
             result = service.browser(conn, payload(request), origin + '/mcp', origin,
                                          operation_id, confirm_digest=confirm_digest)
-            return templates.TemplateResponse(request, {'notice': 'mcp_action.html', 'supply': 'mcp_supply_draft.html', 'comment': 'mcp_comment_draft.html', 'report': 'mcp_report_view.html', 'calendar': 'mcp_personal_calendar.html', 'travel': 'mcp_travel_draft.html', 'ack': 'mcp_task_acknowledgement.html', 'submit': 'mcp_task_submission.html', 'supply_submit': 'mcp_supply_submission.html', 'travel_review': 'mcp_travel_review.html', 'travel_submit': 'mcp_travel_submission.html', 'room': 'mcp_room_request.html', 'meal': 'mcp_meal_request.html'}[kind],
+            return templates.TemplateResponse(request, {'notice': 'mcp_action.html', 'supply': 'mcp_supply_draft.html', 'comment': 'mcp_comment_draft.html', 'report': 'mcp_report_view.html', 'calendar': 'mcp_personal_calendar.html', 'travel': 'mcp_travel_draft.html', 'ack': 'mcp_task_acknowledgement.html', 'submit': 'mcp_task_submission.html', 'supply_submit': 'mcp_supply_submission.html', 'travel_review': 'mcp_travel_review.html', 'travel_submit': 'mcp_travel_submission.html', 'room': 'mcp_room_request.html', 'meal': 'mcp_meal_request.html', 'wa': 'mcp_work_arrangement.html'}[kind],
                 {'show_scope': False, 'result': result, 'csrf': csrf(request)}, headers=private)
         except (permissions.Denied, supplies_storage.Denied):
             return HTMLResponse('Action not found or unavailable to you. Sign in with the account that prepared it.', status_code=404, headers=private)
@@ -244,6 +246,29 @@ def make_router(templates, get_conn, mcp_readiness=None):
             return HTMLResponse('Private draft not found or unavailable to you.', status_code=404, headers=private)
         finally:
             conn.close()
+
+    @router.get('/account/integrations/mcp/work-arrangement-requests/saved/{operation_id}', response_class=HTMLResponse)
+    def work_arrangement_source(request: Request, operation_id: str):
+        conn = get_conn()
+        try:
+            user = st.session_actor(conn, payload(request))
+            if not user:
+                raise permissions.Denied('Sign in again.')
+            record = mcp_work_arrangements.source(conn, user, operation_id)
+            return templates.TemplateResponse(request, 'mcp_work_arrangement_source.html',
+                {'show_scope': False, 'record': record}, headers=private)
+        except (permissions.Denied, ValueError):
+            return HTMLResponse('Work arrangement source unavailable to you.', status_code=404, headers=private)
+        finally:
+            conn.close()
+
+    @router.get('/account/integrations/mcp/work-arrangement-requests/{operation_id}', response_class=HTMLResponse)
+    def work_arrangement_preview(request: Request, operation_id: str):
+        return action_screen(request, operation_id, kind='wa')
+
+    @router.post('/account/integrations/mcp/work-arrangement-requests/{operation_id}', response_class=HTMLResponse)
+    async def work_arrangement_confirm(request: Request, operation_id: str):
+        return await confirm_action(request, operation_id, kind='wa')
 
     @router.get('/account/integrations/mcp/meal-requests/{operation_id}', response_class=HTMLResponse)
     def meal_request_preview(request: Request, operation_id: str):

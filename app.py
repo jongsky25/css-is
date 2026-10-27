@@ -5057,6 +5057,15 @@ def _mcp_travel_review_tick():
         conn.close()
 
 
+def _mcp_work_arrangement_tick():
+    import work_arrangement_delivery
+    conn = get_conn()
+    try:
+        return work_arrangement_delivery.run(conn)
+    finally:
+        conn.close()
+
+
 async def _scheduler_loop():
     while True:
         try:
@@ -5103,6 +5112,10 @@ async def _scheduler_loop():
         try:
             await asyncio.to_thread(_mcp_travel_review_tick)
         except Exception:         # A pending notification cannot stop other jobs.
+            pass
+        try:
+            await asyncio.to_thread(_mcp_work_arrangement_tick)
+        except Exception:         # Pending filing notices cannot stop other jobs.
             pass
         await asyncio.sleep(_SCHED_TICK)
 
@@ -17719,7 +17732,7 @@ if _MCP_ENABLED:
         if not pending:
             return _mcp_consent_error('This request expired. Start again in ChatGPT.', 410)
         client_id, params = pending
-        labels = {'meals:request': 'Submit your own standalone meal request (browser confirmation; visible to Administrative Section, awaiting order; no supplier order or email)', 'rooms:request': 'Request a room for a permitted existing meeting (browser confirmation; pending approval, no booking held; queues approver notices)', 'travel:filing:submit': 'Record your own Ready filing as Submitted after physically handing in papers (browser attestation; not office receipt or payment)', 'travel:review:request': 'Request review of your complete travel papers (browser confirmation; queues one email to the selected reviewer)', 'supplies:request:submit': 'Submit your own draft or returned supply request for approval (browser confirmation; no stock reservation or issuance)', 'work:task:submit': 'Submit your assigned In progress task for review (browser confirmation; saves output and note in shared-work history)', 'work:task:acknowledge': 'Acknowledge your assigned To do task as In progress (browser confirmation; records your note in shared-work history)', 'travel:filing:draft': 'Open your own unsubmitted reimbursement checklist (browser confirmation; normal travel access and deadline reminders apply)', 'calendar:entry:create': 'Create your own tentative personal calendar entry (each save requires browser confirmation; no invitations or room bookings)', 'reports:view:save': 'Save your own named survey report selections (each save requires browser confirmation; no results or exports)',
+        labels = {'work_arrangements:request': 'File your own new work arrangement for approval (browser confirmation; shared schedule/approval visibility and queued approver emails; no auto-approval or changes)', 'meals:request': 'Submit your own standalone meal request (browser confirmation; visible to Administrative Section, awaiting order; no supplier order or email)', 'rooms:request': 'Request a room for a permitted existing meeting (browser confirmation; pending approval, no booking held; queues approver notices)', 'travel:filing:submit': 'Record your own Ready filing as Submitted after physically handing in papers (browser attestation; not office receipt or payment)', 'travel:review:request': 'Request review of your complete travel papers (browser confirmation; queues one email to the selected reviewer)', 'supplies:request:submit': 'Submit your own draft or returned supply request for approval (browser confirmation; no stock reservation or issuance)', 'work:task:submit': 'Submit your assigned In progress task for review (browser confirmation; saves output and note in shared-work history)', 'work:task:acknowledge': 'Acknowledge your assigned To do task as In progress (browser confirmation; records your note in shared-work history)', 'travel:filing:draft': 'Open your own unsubmitted reimbursement checklist (browser confirmation; normal travel access and deadline reminders apply)', 'calendar:entry:create': 'Create your own tentative personal calendar entry (each save requires browser confirmation; no invitations or room bookings)', 'reports:view:save': 'Save your own named survey report selections (each save requires browser confirmation; no results or exports)',
                   'work:comment:draft': 'Prepare private task comment drafts (each save requires browser confirmation; no posting or notices)',
                   'supplies:request:draft': 'Prepare new personal supply request drafts (each save requires browser confirmation; no submission or stock allocation)',
                   'notifications:mark_read': 'Prepare marking your own shared-work notices read (each action requires browser confirmation)',

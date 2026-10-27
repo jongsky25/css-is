@@ -1,6 +1,6 @@
 # Office Connect MCP expansion plan
 
-Status: **Incremental implementation**, updated October 27, 2026. Baseline: the read-only MCP expansion in v8.35 (PR #444). M1 reads and default-off M2.1–M2.6 and M3.1–M3.7 pilots are implemented as recorded below. Existing OAuth grants are not widened. Hosted write acceptance remains separate from implementation.
+Status: **Incremental implementation**, updated October 27, 2026. Baseline: the read-only MCP expansion in v8.35 (PR #444). M1 reads and default-off M2.1–M2.6 and M3.1–M3.8 pilots are implemented as recorded below. Existing OAuth grants are not widened. Hosted write acceptance remains separate from implementation.
 
 ## Goal and boundary
 
@@ -443,3 +443,24 @@ delivery or withdrawal. No room/calendar record, supplier order, notification,
 approval or payment is created. See [M3.7 setup and acceptance](MCP_MEAL_REQUEST_PILOT.md).
 Hosted acceptance remains pending and no flag is enabled. Work-arrangement,
 activity/invitation and M4 decisions remain separate work.
+
+M3.7 merged in [PR #503](https://github.com/jongsky25/css-is/pull/503), commit
+`7e833bbb6350cad34f1e6a00c38f4ac6951dbd0f`.
+
+### M3.8 implementation — v8.92
+
+Separate default-off `work_arrangements:request` consent prepares one new own
+Pending filing for an open/reopened half-month period. Signed-in review binds
+exact arrangement/weekday/note, period/deadline, canonical boundary-week effectivity,
+advisory coverage, current requester and chain/OIC approval-email routing. Director
+filings that auto-approve remain on the ordinary screen. Existing approved
+arrangements, changes/replacement, No AWA overrides and decisions are excluded.
+
+The shared filing validator and caller-owned creation path commit request,
+normal/integration audit, source identity, receipt and initial notices together.
+Durable single-attempt email claims distinguish queue, transport acceptance and
+uncertainty; ordinary approval digests and later decision emails remain separate.
+Recovery preserves later decisions and uses an owner-only operation-bound source
+link. See [M3.8 setup and acceptance](MCP_WORK_ARRANGEMENT_PILOT.md). Hosted
+acceptance remains pending and no flag is enabled. Activity/invitation work and
+M4 decisions remain separate increments.

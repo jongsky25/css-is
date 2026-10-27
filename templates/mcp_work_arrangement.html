@@ -1,0 +1,40 @@
+{% extends "dash_layout.html" %}
+{% block title %}Review work arrangement filing — Office Connect{% endblock %}
+{% block content %}
+<div style="max-width:44rem;margin:auto;overflow-wrap:anywhere">
+{% if result.status == 'completed' %}
+<h1>Work arrangement filed</h1>
+<p>Request {{ result.work_arrangement_id }} was filed Pending at {{ result.completed_at }}. This is the original filing result, not an approved schedule; later decisions are separate.</p>
+<p>Next: {{ 'your chain-of-command approver' if result.next_actor.role == 'chain_of_command_approver' else 'the existing orphan-request approval fallback; contact your office to check routing' }}. Initial notice recipients: {{ result.next_actor.initial_notice_recipient_count }}.</p>
+<p>Current initial-notice states: {% for state,count in result.notification_status_counts.items() %}{{ state }}: {{ count }}{% if not loop.last %}; {% endif %}{% else %}No initial notices{% endfor %}. Queued is not sent. Sent means transport acceptance, not reading or approval. Uncertain attempts never automatically retry.</p>
+<p><a href="{{ result.web_url }}">Open my filing and current status</a></p>
+{% else %}
+<h1>File this work arrangement for approval?</h1>
+<dl>
+<dt>Requester</dt><dd>{{ result.snapshot.requester.name }} (you)</dd>
+<dt>Half-month period</dt><dd>{{ result.snapshot.period_label }} · Asia/Manila</dd>
+<dt>Filing deadline</dt><dd>{{ result.snapshot.deadline_label }}{{ ' · temporarily reopened by the office' if result.snapshot.reopened else '' }}</dd>
+<dt>Arrangement</dt><dd>{{ result.snapshot.arrangement_label }}</dd>
+<dt>Recurring weekday</dt><dd>{{ result.snapshot.weekday_name or 'None; regular five-day on-site schedule' }}</dd>
+<dt>Proposed effectivity if approved</dt><dd>{{ result.snapshot.effective_from }}</dd>
+<dt>Nominated weekday dates (before holiday exclusions)</dt><dd>{{ result.snapshot.proposed_weekdays|join(', ') or 'None' }}</dd>
+<dt>Shared note</dt><dd style="white-space:pre-wrap">{{ result.fields.note or 'None' }}</dd>
+</dl>
+{% if result.snapshot.week_override_note %}<p><strong>Boundary-week adjustment:</strong> {{ result.snapshot.week_override_note }}</p>{% endif %}
+{% if result.snapshot.coverage_advisory %}<p><strong>Advisory section coverage:</strong> {{ result.snapshot.coverage_advisory }} This is a warning for you and the approver; it does not block filing.</p>{% endif %}
+<p>Proposed dates remain subject to the normal holiday and schedule-display rules after a separate approval. This filing does not change the schedule currently in force.</p>
+<h2>Initial approval email recipients</h2>
+<ul>{% for recipient in result.snapshot.recipients %}<li>{{ recipient.name }} · {{ recipient.email }}</li>{% else %}<li>No active chain-of-command email recipient is configured. The filing can remain pending under the existing orphan-request fallback. Contact your office to check routing.</li>{% endfor %}</ul>
+<p>Routing: {{ result.snapshot.approver_title }}. Email feature: {{ 'enabled' if result.snapshot.email_enabled else 'disabled; notices will be marked skipped_off' }}. The normal email includes your name, period, arrangement type and the signed-in approvals inbox link; it does not include your note or weekday. Queued notices are not proof of delivery. Normal weekly approval digests and later decision emails remain separate events with their existing controls.</p>
+<p>Your filing and note use normal work-arrangement visibility: your own hub, authorized approval queues and permitted team/bureau schedule and annex views. Approval and schedule-view grants are separate. Current membership and grants can change who sees it later.</p>
+<p>Confirmation creates one new Pending filing, its receipt and initial approval email queue atomically. It does not approve, replace an approved arrangement, override No AWA, change a filing, withdraw, sign/export an annex or submit a whereabouts report. Director filings that auto-approve require the ordinary screen.</p>
+<p>This preview expires ten minutes after preparation. A changed requester, period, effectivity, coverage advisory, approver routing or mail setting requires a fresh preview.</p>
+<form method="post">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<input type="hidden" name="preview_digest" value="{{ result.preview_digest }}">
+<button type="submit" name="confirm" value="yes">Confirm: file for approval</button>
+</form>
+{% endif %}
+<p>Operation receipt: <code>{{ result.operation_id }}</code>. Recover this key after a lost response before preparing a replacement.</p>
+</div>
+{% endblock %}

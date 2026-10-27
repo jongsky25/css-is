@@ -1,3 +1,9 @@
+## 8.92 — October 27, 2026
+
+- Add default-off `work_arrangements:request` preparation context, signed-in exact preview, pending-only new filing and historical receipt/current notice counts with an owner-only operation-bound source page.
+- Reuse canonical filing rules inside a caller-owned transaction, preserving period/reopen deadlines, No AWA and live-filing guards, boundary-week effectivity, advisory coverage and chain/OIC routing. Director auto-approved filings remain on the ordinary screen; no change/replacement or decision is exposed.
+- Commit filing, audits, source identity, receipt and initial approval-email queue atomically. Deliver normal `awa_approval` messages with durable single-attempt claims, current authority/recipient checks and explicit uncertainty; preserve ordinary digests and later decision emails. Add security, concurrency, mail, OAuth, mobile, packaging and operator acceptance coverage.
+
 ## 8.91 — October 27, 2026
 
 - Add default-off `meals:request` consent with preparation context, browser-confirmed standalone meal submission and owner-only original receipt recovery.

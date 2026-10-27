@@ -22,6 +22,7 @@ import mcp_auth
 import mcp_actions
 import mcp_supply_drafts
 import mcp_comment_drafts
+import mcp_work_arrangements
 import mcp_meal_requests
 import mcp_room_requests
 import mcp_travel_submissions
@@ -590,6 +591,54 @@ def build_server(get_conn, origin):
         """
         return await action(lambda conn, token: mcp_travel_submissions.recover(
             conn, token, provider.resource, origin, operation_id), mcp_travel_submissions.SCOPE)
+
+    @server.tool(title='Read my work arrangement filing context', annotations=READ_ONLY)
+    async def get_my_work_arrangement_context(period_start: StrictStr) -> dict:
+        """Read own half-month filing eligibility with work_arrangements:request consent.
+
+        Use exact YYYY-MM-01 or YYYY-MM-16. Returns open/reopened/deadline state,
+        own live filing/No AWA indicators, arrangement/weekday choices and initial
+        chain-notice recipient count. No others' filings or approver identities.
+        Director auto-approved filings require the ordinary screen.
+        """
+        return await action(lambda conn, token: mcp_work_arrangements.read_context(
+            conn, token, provider.resource, origin, period_start), mcp_work_arrangements.SCOPE)
+
+    @server.tool(title='Prepare filing my work arrangement for approval', annotations=ToolAnnotations(
+        readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=False))
+    async def prepare_work_arrangement_request(period_start: StrictStr,
+            arrangement: Literal['REG', 'CWW', 'WFH'], operation_id: StrictStr,
+            weekday: StrictInt | None = None, note: StrictStr = '') -> dict:
+        """Prepare ONE new own pending filing for a currently open half-month period.
+
+        Separate work_arrangements:request consent is required. REG has no weekday;
+        CWW/WFH require Monday=0 through Friday=4. Note max 1000 characters. Show
+        confirmation_url for signed-in review of period, recurring weekday, exact
+        proposed dates/effectivity, shared note, advisory coverage and approver
+        emails. Current routing, reopen/deadline, No AWA, duplicate filing and
+        boundary-week policy are rechecked. Confirming files Pending and queues
+        initial approval notices; neither schedule approval nor mail delivery is
+        implied. Coverage is advisory. Ambiguous email attempts never auto-retry.
+        No changes/replacement, withdrawal, approval, No AWA override, whereabouts
+        report, external calendar, official annex export or signature. Director
+        auto-approved filings use the ordinary UI. Keep one random 16–80 character
+        operation_id across retries and recover after timeout before another key.
+        """
+        return await action(lambda conn, token: mcp_work_arrangements.prepare(
+            conn, token, provider.resource, origin, operation_id,
+            {'period_start': period_start, 'arrangement': arrangement, 'weekday': weekday, 'note': note}), mcp_work_arrangements.SCOPE)
+
+    @server.tool(title='Check my work arrangement filing receipt', annotations=READ_ONLY)
+    async def get_work_arrangement_operation(operation_id: StrictStr) -> dict:
+        """Recover original Pending result and current initial-notice state counts.
+
+        Same active connection/consent and source ownership are required. Source
+        link shows current state; later decisions remain separate. Returns no
+        weekday, note, directory identities or email addresses. Recovery creates
+        no filing, schedule approval or repeat email.
+        """
+        return await action(lambda conn, token: mcp_work_arrangements.recover(
+            conn, token, provider.resource, origin, operation_id), mcp_work_arrangements.SCOPE)
 
     @server.tool(title='Read my meal request preparation context', annotations=READ_ONLY)
     async def get_my_meal_request_context() -> dict:
