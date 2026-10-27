@@ -28,6 +28,24 @@ trigger it as an acceptance audit of the cancelled cohort. No later increments,
 merge to main or deployment occurred. The historical handoff below is superseded by this
 correction wherever it suggests CI success establishes complete memory acceptance.
 
+## Scheduler capture — control variance persists without recorded throttling
+
+[Latest report](avatars/increment2b/navigation-residency-v6/REPORT.md): new V6
+four-slot calibration (`75c6e85`) records CPU/scheduling counters in EVERY slot.
+All workloads/traces are intact; 120 source/probe hashes and 30 files verify;
+archive re-audit matches; 65 focused tests pass. Trace overhead and <=1% scheduler
+reader CPU gates pass. Controls still vary 10.702/8.388 seconds (21.62%; limit 20%).
+No source comparison was launched, and no sample was replaced or excluded.
+
+All four navigation windows have zero recorded cgroup throttling. About 2.123s
+of the controls' 2.314s difference is inside Page.goto; waits differ only 31.7ms.
+The slower control has more Python and renderer CPU execution plus smaller queue
+delays. Counters do not identify the functions responsible, effective CPU speed,
+or the cause of historical V5's stall. Next evidence needed: bounded Python and
+Chromium CPU-work/execution-rate profiling, with costs and fixed controls, before
+choosing a product or environment change. No such new run is active. Product
+remains f700187; 2B and later remain blocked. Historical sections below are retained.
+
 ## Lightweight capture implemented — calibration control variance blocks comparison
 
 [Latest report](avatars/increment2b/navigation-residency-v5/REPORT.md): v3/v4/v5

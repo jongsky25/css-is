@@ -889,3 +889,14 @@ V5 controls vary 16.757/8.474 seconds, failing the unchanged 20% duration gate.
 53 focused tests pass. No source comparison, replacement, waiver or product fix.
 Next evidence gap is scheduling/throttling attribution for the early control stall.
 2B and later increments remain blocked; no measurement active.
+
+### Navigation scheduling evidence — 2026-10-27 — control gate still fails
+
+[V6 report](avatars/increment2b/navigation-residency-v6/REPORT.md), `75c6e85`:
+all four fixed workloads complete; 120 source/probe hashes and 30 files verify;
+archive re-audit identical; 65 focused tests pass. All trace/pause/reader CPU gates
+pass, but control duration differs 21.62% (>20%), preventing source comparison.
+No recorded cgroup throttling; extra Page.goto time accompanies additional Python
+and renderer CPU execution, with smaller queue-delay changes. Function-level and
+execution-rate cause remains open. No rerun, exclusion, waiver or product change;
+2B/later remain blocked. No measurement active.

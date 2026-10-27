@@ -1,0 +1,493 @@
+{
+  "acceptance": false,
+  "status": "inconclusive",
+  "gate_errors": [
+    "Control navigation duration varies more than 20%"
+  ],
+  "slots": [
+    {
+      "index": 0,
+      "mode": "control",
+      "navigation_ms": 10702.467536,
+      "goto_total_ms": 5886.531398,
+      "wait_total_ms": 4474.078897,
+      "cgroup_delta": {
+        "burst_usec": 0,
+        "nice_usec": 0,
+        "nr_bursts": 0,
+        "nr_periods": 107,
+        "nr_throttled": 0,
+        "system_usec": 3753623,
+        "throttled_usec": 0,
+        "usage_usec": 19647928,
+        "user_usec": 15894305
+      },
+      "reader_cpu_fraction": 0.00882322564234499,
+      "explicit_pause_fraction": 2.1555776667763022e-07,
+      "max_rotation_ms": 0.001494,
+      "tasks": [
+        {
+          "pid": 22655,
+          "role": "pytest_process",
+          "start_ticks": 1345160,
+          "process_user_ms": 4500.0,
+          "process_system_ms": 850.0,
+          "main_thread_runtime_ms": 1383.443473,
+          "main_thread_wait_ms": 562.103789,
+          "minor_faults": 5768,
+          "major_faults": 0
+        },
+        {
+          "pid": 22755,
+          "role": "observed_renderer",
+          "start_ticks": 1346025,
+          "process_user_ms": 80.0,
+          "process_system_ms": 20.0,
+          "main_thread_runtime_ms": 71.474112,
+          "main_thread_wait_ms": 37.97855,
+          "minor_faults": 386,
+          "major_faults": 0
+        },
+        {
+          "pid": 22767,
+          "role": "observed_renderer",
+          "start_ticks": 1346030,
+          "process_user_ms": 5210.0,
+          "process_system_ms": 1570.0,
+          "main_thread_runtime_ms": 4008.896126,
+          "main_thread_wait_ms": 674.242464,
+          "minor_faults": 93964,
+          "major_faults": 0
+        },
+        {
+          "pid": 22816,
+          "role": "observed_renderer",
+          "start_ticks": 1354045,
+          "process_user_ms": 0.0,
+          "process_system_ms": 0.0,
+          "main_thread_runtime_ms": 2.524076,
+          "main_thread_wait_ms": 1.261674,
+          "minor_faults": 5,
+          "major_faults": 0
+        }
+      ],
+      "checkpoint_long_tasks": [
+        {
+          "mount": 1,
+          "lcp_ms": 204,
+          "long_tasks": [],
+          "dom": {
+            "documents": 12,
+            "nodes": 21554,
+            "jsEventListeners": 527
+          }
+        },
+        {
+          "mount": 5,
+          "lcp_ms": 256,
+          "long_tasks": [],
+          "dom": {
+            "documents": 20,
+            "nodes": 31930,
+            "jsEventListeners": 931
+          }
+        },
+        {
+          "mount": 10,
+          "lcp_ms": 336,
+          "long_tasks": [
+            {
+              "start": 144.90000000037253,
+              "duration": 146,
+              "name": "self"
+            }
+          ],
+          "dom": {
+            "documents": 4,
+            "nodes": 5187,
+            "jsEventListeners": 202
+          }
+        },
+        {
+          "mount": 15,
+          "lcp_ms": 272,
+          "long_tasks": [],
+          "dom": {
+            "documents": 14,
+            "nodes": 18157,
+            "jsEventListeners": 707
+          }
+        },
+        {
+          "mount": 20,
+          "lcp_ms": 208,
+          "long_tasks": [],
+          "dom": {
+            "documents": 4,
+            "nodes": 5186,
+            "jsEventListeners": 178
+          }
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "mode": "trace",
+      "navigation_ms": 9127.849783,
+      "goto_total_ms": 4237.048694,
+      "wait_total_ms": 4450.461032,
+      "cgroup_delta": {
+        "burst_usec": 0,
+        "nice_usec": 0,
+        "nr_bursts": 0,
+        "nr_periods": 91,
+        "nr_throttled": 0,
+        "system_usec": 3006413,
+        "throttled_usec": 0,
+        "usage_usec": 15353734,
+        "user_usec": 12347321
+      },
+      "reader_cpu_fraction": 0.006227804066832111,
+      "explicit_pause_fraction": 0.02176615234948592,
+      "max_rotation_ms": 159.068065,
+      "tasks": [
+        {
+          "pid": 22830,
+          "role": "pytest_process",
+          "start_ticks": 1355460,
+          "process_user_ms": 3400.0,
+          "process_system_ms": 710.0,
+          "main_thread_runtime_ms": 895.719229,
+          "main_thread_wait_ms": 403.203834,
+          "minor_faults": 6162,
+          "major_faults": 0
+        },
+        {
+          "pid": 22926,
+          "role": "observed_renderer",
+          "start_ticks": 1356060,
+          "process_user_ms": 70.0,
+          "process_system_ms": 10.0,
+          "main_thread_runtime_ms": 54.103049,
+          "main_thread_wait_ms": 61.56923,
+          "minor_faults": 489,
+          "major_faults": 0
+        },
+        {
+          "pid": 22938,
+          "role": "observed_renderer",
+          "start_ticks": 1356065,
+          "process_user_ms": 3970.0,
+          "process_system_ms": 1320.0,
+          "main_thread_runtime_ms": 3211.994597,
+          "main_thread_wait_ms": 515.347034,
+          "minor_faults": 94435,
+          "major_faults": 0
+        },
+        {
+          "pid": 23033,
+          "role": "observed_renderer",
+          "start_ticks": 1364145,
+          "process_user_ms": 10.0,
+          "process_system_ms": 0.0,
+          "main_thread_runtime_ms": 2.375187,
+          "main_thread_wait_ms": 1.852273,
+          "minor_faults": 32,
+          "major_faults": 0
+        }
+      ],
+      "checkpoint_long_tasks": [
+        {
+          "mount": 1,
+          "lcp_ms": 220,
+          "long_tasks": [],
+          "dom": {
+            "documents": 13,
+            "nodes": 18983,
+            "jsEventListeners": 793
+          }
+        },
+        {
+          "mount": 5,
+          "lcp_ms": 152,
+          "long_tasks": [],
+          "dom": {
+            "documents": 4,
+            "nodes": 5186,
+            "jsEventListeners": 199
+          }
+        },
+        {
+          "mount": 10,
+          "lcp_ms": 208,
+          "long_tasks": [],
+          "dom": {
+            "documents": 14,
+            "nodes": 18156,
+            "jsEventListeners": 704
+          }
+        },
+        {
+          "mount": 15,
+          "lcp_ms": 148,
+          "long_tasks": [],
+          "dom": {
+            "documents": 24,
+            "nodes": 31126,
+            "jsEventListeners": 1209
+          }
+        },
+        {
+          "mount": 20,
+          "lcp_ms": 216,
+          "long_tasks": [],
+          "dom": {
+            "documents": 2,
+            "nodes": 2593,
+            "jsEventListeners": 101
+          }
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "mode": "trace",
+      "navigation_ms": 8771.072027,
+      "goto_total_ms": 3895.008771,
+      "wait_total_ms": 4459.182843,
+      "cgroup_delta": {
+        "burst_usec": 0,
+        "nice_usec": 0,
+        "nr_bursts": 0,
+        "nr_periods": 88,
+        "nr_throttled": 0,
+        "system_usec": 2577240,
+        "throttled_usec": 0,
+        "usage_usec": 13697394,
+        "user_usec": 11120154
+      },
+      "reader_cpu_fraction": 0.007388199504065023,
+      "explicit_pause_fraction": 0.021018746902601398,
+      "max_rotation_ms": 165.526663,
+      "tasks": [
+        {
+          "pid": 23063,
+          "role": "pytest_process",
+          "start_ticks": 1365602,
+          "process_user_ms": 3190.0,
+          "process_system_ms": 610.0,
+          "main_thread_runtime_ms": 775.145641,
+          "main_thread_wait_ms": 391.273066,
+          "minor_faults": 6460,
+          "major_faults": 0
+        },
+        {
+          "pid": 23160,
+          "role": "observed_renderer",
+          "start_ticks": 1366076,
+          "process_user_ms": 50.0,
+          "process_system_ms": 20.0,
+          "main_thread_runtime_ms": 64.502901,
+          "main_thread_wait_ms": 54.010114,
+          "minor_faults": 486,
+          "major_faults": 0
+        },
+        {
+          "pid": 23173,
+          "role": "observed_renderer",
+          "start_ticks": 1366080,
+          "process_user_ms": 3310.0,
+          "process_system_ms": 1190.0,
+          "main_thread_runtime_ms": 2603.456136,
+          "main_thread_wait_ms": 538.467497,
+          "minor_faults": 100814,
+          "major_faults": 0
+        },
+        {
+          "pid": 23265,
+          "role": "observed_renderer",
+          "start_ticks": 1373648,
+          "process_user_ms": 10.0,
+          "process_system_ms": 10.0,
+          "main_thread_runtime_ms": 0.819173,
+          "main_thread_wait_ms": 0.587144,
+          "minor_faults": 33,
+          "major_faults": 0
+        }
+      ],
+      "checkpoint_long_tasks": [
+        {
+          "mount": 1,
+          "lcp_ms": 168,
+          "long_tasks": [],
+          "dom": {
+            "documents": 15,
+            "nodes": 26120,
+            "jsEventListeners": 800
+          }
+        },
+        {
+          "mount": 5,
+          "lcp_ms": 184,
+          "long_tasks": [],
+          "dom": {
+            "documents": 23,
+            "nodes": 36496,
+            "jsEventListeners": 1204
+          }
+        },
+        {
+          "mount": 10,
+          "lcp_ms": 184,
+          "long_tasks": [],
+          "dom": {
+            "documents": 33,
+            "nodes": 49466,
+            "jsEventListeners": 1709
+          }
+        },
+        {
+          "mount": 15,
+          "lcp_ms": 184,
+          "long_tasks": [],
+          "dom": {
+            "documents": 2,
+            "nodes": 2593,
+            "jsEventListeners": 77
+          }
+        },
+        {
+          "mount": 20,
+          "lcp_ms": 216,
+          "long_tasks": [],
+          "dom": {
+            "documents": 12,
+            "nodes": 15563,
+            "jsEventListeners": 582
+          }
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "mode": "control",
+      "navigation_ms": 8388.222319,
+      "goto_total_ms": 3763.16463,
+      "wait_total_ms": 4442.407039,
+      "cgroup_delta": {
+        "burst_usec": 0,
+        "nice_usec": 0,
+        "nr_bursts": 0,
+        "nr_periods": 83,
+        "nr_throttled": 0,
+        "system_usec": 2032079,
+        "throttled_usec": 0,
+        "usage_usec": 12740955,
+        "user_usec": 10708876
+      },
+      "reader_cpu_fraction": 0.006872523617956817,
+      "explicit_pause_fraction": 2.952949869234385e-07,
+      "max_rotation_ms": 0.001481,
+      "tasks": [
+        {
+          "pid": 23299,
+          "role": "pytest_process",
+          "start_ticks": 1375104,
+          "process_user_ms": 3210.0,
+          "process_system_ms": 480.0,
+          "main_thread_runtime_ms": 733.910433,
+          "main_thread_wait_ms": 374.033602,
+          "minor_faults": 6218,
+          "major_faults": 0
+        },
+        {
+          "pid": 23399,
+          "role": "observed_renderer",
+          "start_ticks": 1375635,
+          "process_user_ms": 70.0,
+          "process_system_ms": 10.0,
+          "main_thread_runtime_ms": 67.450047,
+          "main_thread_wait_ms": 26.629481,
+          "minor_faults": 399,
+          "major_faults": 0
+        },
+        {
+          "pid": 23410,
+          "role": "observed_renderer",
+          "start_ticks": 1375639,
+          "process_user_ms": 3540.0,
+          "process_system_ms": 680.0,
+          "main_thread_runtime_ms": 2529.563557,
+          "main_thread_wait_ms": 383.324894,
+          "minor_faults": 90042,
+          "major_faults": 0
+        },
+        {
+          "pid": 23460,
+          "role": "observed_renderer",
+          "start_ticks": 1383188,
+          "process_user_ms": 0.0,
+          "process_system_ms": 0.0,
+          "main_thread_runtime_ms": 0.0,
+          "main_thread_wait_ms": 0.0,
+          "minor_faults": 0,
+          "major_faults": 0
+        }
+      ],
+      "checkpoint_long_tasks": [
+        {
+          "mount": 1,
+          "lcp_ms": 140,
+          "long_tasks": [],
+          "dom": {
+            "documents": 15,
+            "nodes": 26132,
+            "jsEventListeners": 800
+          }
+        },
+        {
+          "mount": 5,
+          "lcp_ms": 172,
+          "long_tasks": [],
+          "dom": {
+            "documents": 4,
+            "nodes": 5187,
+            "jsEventListeners": 199
+          }
+        },
+        {
+          "mount": 10,
+          "lcp_ms": 188,
+          "long_tasks": [],
+          "dom": {
+            "documents": 14,
+            "nodes": 18157,
+            "jsEventListeners": 704
+          }
+        },
+        {
+          "mount": 15,
+          "lcp_ms": 148,
+          "long_tasks": [],
+          "dom": {
+            "documents": 24,
+            "nodes": 31127,
+            "jsEventListeners": 1209
+          }
+        },
+        {
+          "mount": 20,
+          "lcp_ms": 152,
+          "long_tasks": [],
+          "dom": {
+            "documents": 9,
+            "nodes": 12955,
+            "jsEventListeners": 322
+          }
+        }
+      ]
+    }
+  ],
+  "control_duration_change_percent": -21.623473364582036,
+  "limits": "Untraced controls have no authoritative page/PID link: report each observed renderer, not an invented app identity. Process CPU includes threads; schedstat covers main thread. Cgroup includes other tasks. CPU and queue deltas overlap across threads/processes and cannot be added to account for elapsed wall time. V5 history cannot be reconstructed."
+}

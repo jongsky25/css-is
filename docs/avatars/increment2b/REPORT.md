@@ -1,5 +1,15 @@
 # Increment 2B — acceptance withdrawn: uncovered memory failures
 
+## Scheduler evidence — CPU execution varies, calibration still fails
+
+[New four-slot calibration](navigation-residency-v6/REPORT.md) verifies 120 source
+hashes/30 files, all traces and overhead gates, plus identical archive re-audit;
+65 tests pass. Controls differ 21.62% (>20%), so no comparison was launched.
+Neither control records quota throttling. Most extra elapsed time is inside
+Page.goto, accompanied by more Python/renderer CPU execution and some queue delay.
+Function-level cause and effective CPU speed remain unmeasured; no product fix or
+acceptance follows. All prior failures remain; no active measurement.
+
 ## Lighter capture — comparison blocked by control stability
 
 [Latest calibration](navigation-residency-v5/REPORT.md) removes in-workload dumps
