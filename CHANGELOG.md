@@ -1,3 +1,9 @@
+## 8.85 — October 27, 2026
+
+- Add default-off own assigned-task acknowledgement preparation and recovery with separate work:task:acknowledge consent excluded from default scopes. Browser review binds exact IDs, current task/work-item revisions, progress note and normal shared-work history/review/notice effects before moving To do to In progress.
+- Extract a caller-owned transactional acknowledgement entry point from the existing API operation service while preserving canonical fingerprints, current session/authority checks, immutable receipts and API behavior. Persist a canonical UUID v4 key and atomically commit task/history/audit effects with both API and MCP receipts; report original status/revision, next actor and source links.
+- Reject stale, reassigned, unavailable, revoked, changed and cross-account requests; recover safely across rotation, duplicate confirmations, API replay and later UI/API work. Clear completed/expired preview copies and add runtime packaging, operator acceptance/rollback and OAuth/MCP/API/browser/mobile coverage. No output submission, approval, ownership/deadline changes or external relay; hosted write acceptance remains pending.
+
 ## 8.84 — October 27, 2026
 
 - Add default-off travel reimbursement draft preparation and receipt tools with separate travel:filing:draft consent excluded from default scopes. Limit the pilot to own standalone unsubmitted reimbursement checklists with bounded exact activity/DPO/role fields and strict boolean answers.

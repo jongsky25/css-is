@@ -1,6 +1,6 @@
 # Office Connect MCP expansion plan
 
-Status: **Incremental implementation**, updated October 27, 2026. Baseline: the read-only MCP expansion in v8.35 (PR #444). M1 reads and default-off M2.1 through M2.6 pilots are implemented as recorded below. Existing OAuth grants are not widened. Hosted write acceptance remains separate from implementation.
+Status: **Incremental implementation**, updated October 27, 2026. Baseline: the read-only MCP expansion in v8.35 (PR #444). M1 reads and default-off M2.1 through M2.6 and M3.1 own-task acknowledgement pilots are implemented as recorded below. Existing OAuth grants are not widened. Hosted write acceptance remains separate from implementation.
 
 ## Goal and boundary
 
@@ -290,3 +290,25 @@ checklist copies are cleared. No linked calendar/activity, cash advance,
 liquidation, amounts, generation, review request, submission, approval or payment
 is performed. See [pilot setup and acceptance](MCP_TRAVEL_DRAFT_PILOT.md).
 Hosted acceptance remains pending; further M2 and all M3/M4 writes are separate.
+
+M2.6 merged in [PR #496](https://github.com/jongsky25/css-is/pull/496), commit
+`6bd192a863b6574caf040e52b90ae30f781a822d`.
+
+### M3.1 implementation — v8.85
+
+A separately consented, default-off `work:task:acknowledge` pilot prepares an
+acknowledgement for the current owner's To do task. Signed-in browser review
+shows exact task/work-item identity and revision, progress note, In progress
+transition and ordinary shared-work history/review/notice effects. Confirmation
+rechecks current authority, workflow and snapshot under the writer lock.
+
+The canonical API operation service now supplies a caller-owned transactional
+acknowledgement entry point, preserving fingerprint and immutable-receipt
+contracts. One persisted UUID v4 key supports canonical API reads/replays; task,
+history/audit effects and API/MCP receipts commit atomically. Recovery reports
+original status/revision, next actor and source links without repeating later
+work. No submission, approval, owner/deadline change or external relay is added.
+
+See [M3.1 setup, acceptance and rollback](MCP_TASK_ACKNOWLEDGEMENT_PILOT.md).
+Hosted M2/M3 acceptance remains pending and no write flag is activated. Other
+M3 actions and all M4 decisions remain separate increments.

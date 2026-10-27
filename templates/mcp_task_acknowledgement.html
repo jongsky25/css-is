@@ -1,0 +1,31 @@
+{% extends "dash_layout.html" %}
+{% block title %}Review task acknowledgement — Office Connect{% endblock %}
+{% block content %}
+<div style="max-width:44rem;margin:auto;overflow-wrap:anywhere">
+{% if result.status == 'completed' %}
+<h1>Task acknowledged</h1>
+<p>Recorded at {{ result.completed_at }}. The task moved to In progress at revision {{ result.result_revision }}. The assigned task owner acts next. This is the original result; later changes are separate.</p>
+<p><a href="{{ result.web_url }}">Open my task</a> · <a href="{{ result.api_receipt_url }}">Canonical API receipt</a></p>
+{% else %}
+<h1>Acknowledge this assigned task?</h1>
+<dl>
+<dt>Work item</dt><dd>{{ result.snapshot.case_title }} ({{ result.fields.work_item_id }})</dd>
+<dt>Task</dt><dd>{{ result.snapshot.task_title }} ({{ result.fields.task_id }})</dd>
+<dt>Expected revision</dt><dd>{{ result.fields.revision }}</dd>
+<dt>Assigned owner</dt><dd>You (account {{ result.snapshot.owner_id }})</dd>
+<dt>Due date</dt><dd>{{ result.snapshot.due_date or 'None' }}</dd>
+<dt>Change</dt><dd>To do → In progress</dd>
+<dt>Progress note</dt><dd style="white-space:pre-wrap">{{ result.fields.reason }}</dd>
+</dl>
+<p>This changes the assigned task and records your note in normal shared-work history, visible to permitted readers. The normal workflow may invalidate work-item reviews and cancel pending legacy deadline or milestone notices. It sends no invitation and submits no output. Ownership and due date stay as shown. The assigned task owner acts next.</p>
+<p>Review the exact task, note and revision before confirming. This preview expires ten minutes after preparation; a changed task or work item requires a new preview.</p>
+<form method="post">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<input type="hidden" name="preview_digest" value="{{ result.preview_digest }}">
+<button type="submit" name="confirm" value="yes">Confirm: acknowledge my task</button>
+</form>
+{% endif %}
+<p>Operation receipt: <code>{{ result.operation_id }}</code></p>
+<p><a href="{{ result.web_url }}">Review the task in Office Connect</a></p>
+</div>
+{% endblock %}

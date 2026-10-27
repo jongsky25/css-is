@@ -48,42 +48,58 @@ def submit(conn, payload, case_id, task_id, operation_id, revision, reason, subm
                    {'reason': reason, 'submission': submission})
 
 
+def acknowledge_in_transaction(conn, payload, case_id, task_id, operation_id, revision, reason):
+    """Shared API receipt contract for an already verified browser confirmation.
+
+    The caller owns the writer transaction; current session/target authority is
+    checked here again and the caller must commit the receipt with its own state.
+    """
+    return _change_in_transaction(conn, payload, case_id, task_id, operation_id, revision,
+                                  'acknowledge', {'reason': reason})
+
+
 def _change(conn, payload, case_id, task_id, operation_id, revision, action, fields):
+    with transaction(conn):
+        return _change_in_transaction(conn, payload, case_id, task_id, operation_id, revision, action, fields)
+
+
+def _change_in_transaction(conn, payload, case_id, task_id, operation_id, revision, action, fields):
+    if not conn.in_transaction:
+        raise RuntimeError('A caller-owned task-operation transaction is required.')
     # Keep the 7.97 acknowledgement fingerprint byte-for-byte compatible.
     content = [action, str(case_id), str(task_id), revision, fields['reason']]
     if action == 'submit':
         content.append(fields['submission'])
     digest = hashlib.sha256(json.dumps(content, ensure_ascii=False, separators=(',', ':')).encode()).hexdigest()
-    with transaction(conn):
-        user = session_actor(conn, payload)
-        # Check current target visibility before revealing a key collision.
-        current_task = work_reads.task(conn, user, case_id, task_id)
-        found = rows(conn, 'SELECT * FROM work_api_operation WHERE actor_id=? AND operation_id=?',
-                     (user['id'], operation_id))
-        if found:
-            receipt = find(conn, user, operation_id)
-            if receipt['request_digest'] != digest:
-                raise OperationError(409, 'idempotency_conflict',
-                                     'This operation key was already used for a different request.')
-            return receipt
-        try:
-            # Shared UI service owns feature switches, open-case checks, task
-            # revision, owner/officer authority, audit and review invalidation.
-            updated = work_tasks.mutate_in_transaction(conn, user, case_id, task_id,
-                                                       revision, action, fields)
-        except docs.Conflict:
-            if current_task['revision'] != revision:
-                raise OperationError(409, 'revision_conflict',
-                                     'The task changed. Read its current revision before making a new request.') from None
-            raise OperationError(409, 'action_unavailable',
-                                 'A related workflow operation needs attention. Review the task in the system.') from None
-        except permissions.Denied:
-            raise
-        except ValueError:
-            raise OperationError(409, 'action_unavailable',
-                                 'The task action is unavailable in the current workflow. Review it in the system.') from None
-        conn.execute('''INSERT INTO work_api_operation
-            (actor_id,operation_id,request_digest,case_id,task_id,result_revision,completed_at,action)
-            VALUES(?,?,?,?,?,?,?,?)''',
-            (user['id'], operation_id, digest, case_id, task_id, updated['revision'], tz.now_iso(), action))
-        return find(conn, user, operation_id)
+    user = session_actor(conn, payload)
+    # Check current target visibility before revealing a key collision.
+    current_task = work_reads.task(conn, user, case_id, task_id)
+    found = rows(conn, 'SELECT * FROM work_api_operation WHERE actor_id=? AND operation_id=?',
+                 (user['id'], operation_id))
+    if found:
+        receipt = find(conn, user, operation_id)
+        if receipt['request_digest'] != digest:
+            raise OperationError(409, 'idempotency_conflict',
+                                 'This operation key was already used for a different request.')
+        return receipt
+    try:
+        # Shared UI service owns feature switches, open-case checks, task
+        # revision, owner/officer authority, audit and review invalidation.
+        updated = work_tasks.mutate_in_transaction(conn, user, case_id, task_id,
+                                                   revision, action, fields)
+    except docs.Conflict:
+        if current_task['revision'] != revision:
+            raise OperationError(409, 'revision_conflict',
+                                 'The task changed. Read its current revision before making a new request.') from None
+        raise OperationError(409, 'action_unavailable',
+                             'A related workflow operation needs attention. Review the task in the system.') from None
+    except permissions.Denied:
+        raise
+    except ValueError:
+        raise OperationError(409, 'action_unavailable',
+                             'The task action is unavailable in the current workflow. Review it in the system.') from None
+    conn.execute('''INSERT INTO work_api_operation
+        (actor_id,operation_id,request_digest,case_id,task_id,result_revision,completed_at,action)
+        VALUES(?,?,?,?,?,?,?,?)''',
+        (user['id'], operation_id, digest, case_id, task_id, updated['revision'], tz.now_iso(), action))
+    return find(conn, user, operation_id)

@@ -298,3 +298,6 @@ Personal calendar entry preparation is a separate default-off pilot: see
 
 Unsubmitted reimbursement checklists are a separate default-off pilot: see
 [M2.6 setup and acceptance](MCP_TRAVEL_DRAFT_PILOT.md).
+
+Own task acknowledgement is a separate default-off M3 pilot using canonical API
+receipts: see [setup and acceptance](MCP_TASK_ACKNOWLEDGEMENT_PILOT.md).
