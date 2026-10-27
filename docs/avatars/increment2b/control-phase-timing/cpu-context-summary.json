@@ -1,0 +1,6279 @@
+{
+  "acceptance": false,
+  "instrument_qualified_for_application_calibration": false,
+  "audit_status": "diagnostic_complete",
+  "audit_errors": [],
+  "harness_commit": "84ce8e9df632fa6ce7465ddc807b2d598cd49909",
+  "analysis_sha256": "1fe05e124d5bec5fb9b5f53d026d84f598083a0fe9fbc960a89516a0094606f9",
+  "cohorts": [
+    {
+      "index": 0,
+      "capture_sha256": "23d6b3a6d7f60099e0464003c8d44534d2afe1fa51b4e5069af419aa84740b17",
+      "duration_ms": 4074.812032,
+      "phase_ms": {
+        "navigation": 876.8771629999999,
+        "fixed_wait": 2653.849838,
+        "serialize_before": 161.325228,
+        "census": 90.226661,
+        "serialize_after": 129.50379700000002,
+        "hash_dom": 3.135134,
+        "heap_counter": 25.399662,
+        "dom_counter": 41.305459000000006,
+        "navigation_timing": 28.254434999999997
+      },
+      "telemetry_ms": 63.942021,
+      "throttle_ms": 0.0,
+      "system_steal_ticks": 62.0,
+      "system_cpu_total_ticks": 2057.0,
+      "system_steal_fraction": 0.030140982012639768,
+      "optional_counter_availability": {
+        "cgroup_pressure": {
+          "unavailable": "FileNotFoundError"
+        },
+        "host_pressure": {
+          "unavailable": "FileNotFoundError"
+        }
+      },
+      "phases": [
+        {
+          "index": 0,
+          "phase": "navigation",
+          "wall_ms": 128.193907,
+          "system_cpu_total_ticks": 65,
+          "system_steal_ticks": 2,
+          "system_steal_fraction": 0.03076923076923077,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.608404,
+            "browser": 8.302499,
+            "renderer": 8.183115,
+            "driver": 0.669627
+          },
+          "browser_navigation_ms": 124.29999999888241,
+          "host_minus_browser_ms": 3.893907001117583
+        },
+        {
+          "index": 0,
+          "phase": "fixed_wait",
+          "wall_ms": 221.174204,
+          "system_cpu_total_ticks": 111,
+          "system_steal_ticks": 1,
+          "system_steal_fraction": 0.009009009009009009,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 3.817495,
+            "renderer": 0.472171,
+            "driver": 0.557976
+          }
+        },
+        {
+          "index": 0,
+          "phase": "serialize_before",
+          "wall_ms": 15.217387,
+          "system_cpu_total_ticks": 10,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 1.559564,
+            "renderer": 0.0,
+            "driver": 0.139024
+          }
+        },
+        {
+          "index": 0,
+          "phase": "census",
+          "wall_ms": 12.56931,
+          "system_cpu_total_ticks": 5,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.066185,
+            "renderer": 0.0,
+            "driver": 0.008277
+          }
+        },
+        {
+          "index": 0,
+          "phase": "serialize_after",
+          "wall_ms": 8.436684,
+          "system_cpu_total_ticks": 4,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.181673,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 0,
+          "phase": "hash_dom",
+          "wall_ms": 0.216999,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 0,
+          "phase": "heap_counter",
+          "wall_ms": 1.335938,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.069744,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 0,
+          "phase": "dom_counter",
+          "wall_ms": 1.072342,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.058917,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 0,
+          "phase": "navigation_timing",
+          "wall_ms": 2.016084,
+          "system_cpu_total_ticks": 2,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.080179,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 1,
+          "phase": "navigation",
+          "wall_ms": 46.669846,
+          "system_cpu_total_ticks": 24,
+          "system_steal_ticks": 1,
+          "system_steal_fraction": 0.041666666666666664,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.267996,
+            "browser": 3.825967,
+            "renderer": 0.345482,
+            "driver": 1.63001
+          },
+          "browser_navigation_ms": 40.90000000037253,
+          "host_minus_browser_ms": 5.769845999627471
+        },
+        {
+          "index": 1,
+          "phase": "fixed_wait",
+          "wall_ms": 221.619708,
+          "system_cpu_total_ticks": 111,
+          "system_steal_ticks": 1,
+          "system_steal_fraction": 0.009009009009009009,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 2.578974,
+            "renderer": 0.0,
+            "driver": 0.012373
+          }
+        },
+        {
+          "index": 1,
+          "phase": "serialize_before",
+          "wall_ms": 11.507906,
+          "system_cpu_total_ticks": 7,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.005318,
+            "browser": 1.547678,
+            "renderer": 0.0,
+            "driver": 0.138138
+          }
+        },
+        {
+          "index": 1,
+          "phase": "census",
+          "wall_ms": 10.112839,
+          "system_cpu_total_ticks": 4,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.076407,
+            "renderer": 0.272229,
+            "driver": 0.874727
+          }
+        },
+        {
+          "index": 1,
+          "phase": "serialize_after",
+          "wall_ms": 31.902153,
+          "system_cpu_total_ticks": 16,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.032715,
+            "renderer": 7.149603,
+            "driver": 5.850898
+          }
+        },
+        {
+          "index": 1,
+          "phase": "hash_dom",
+          "wall_ms": 0.253769,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 1,
+          "phase": "heap_counter",
+          "wall_ms": 1.28706,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.080551,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 1,
+          "phase": "dom_counter",
+          "wall_ms": 1.157734,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.038715,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 1,
+          "phase": "navigation_timing",
+          "wall_ms": 1.69808,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.039892,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 2,
+          "phase": "navigation",
+          "wall_ms": 82.698155,
+          "system_cpu_total_ticks": 42,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 1.435006,
+            "browser": 8.581051,
+            "renderer": 3.748583,
+            "driver": 0.0
+          },
+          "browser_navigation_ms": 77.80000000074506,
+          "host_minus_browser_ms": 4.898154999254942
+        },
+        {
+          "index": 2,
+          "phase": "fixed_wait",
+          "wall_ms": 220.712535,
+          "system_cpu_total_ticks": 111,
+          "system_steal_ticks": 1,
+          "system_steal_fraction": 0.009009009009009009,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 1.701199,
+            "renderer": 1.029437,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 2,
+          "phase": "serialize_before",
+          "wall_ms": 18.722475,
+          "system_cpu_total_ticks": 11,
+          "system_steal_ticks": 1,
+          "system_steal_fraction": 0.09090909090909091,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.142738,
+            "renderer": 0.0114,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 2,
+          "phase": "census",
+          "wall_ms": 5.097386,
+          "system_cpu_total_ticks": 2,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.016733,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 2,
+          "phase": "serialize_after",
+          "wall_ms": 10.180412,
+          "system_cpu_total_ticks": 6,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.179523,
+            "renderer": 0.0,
+            "driver": 0.0292
+          }
+        },
+        {
+          "index": 2,
+          "phase": "hash_dom",
+          "wall_ms": 0.327065,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 2,
+          "phase": "heap_counter",
+          "wall_ms": 1.267818,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.014636,
+            "browser": 0.054325,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 2,
+          "phase": "dom_counter",
+          "wall_ms": 0.798319,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.053225,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 2,
+          "phase": "navigation_timing",
+          "wall_ms": 1.835014,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.034386,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 3,
+          "phase": "navigation",
+          "wall_ms": 58.017592,
+          "system_cpu_total_ticks": 27,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 3.257448,
+            "browser": 2.778444,
+            "renderer": 3.76998,
+            "driver": 0.002388
+          },
+          "browser_navigation_ms": 54.5,
+          "host_minus_browser_ms": 3.5175920000000005
+        },
+        {
+          "index": 3,
+          "phase": "fixed_wait",
+          "wall_ms": 220.775255,
+          "system_cpu_total_ticks": 112,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 1.622431,
+            "renderer": 1.09144,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 3,
+          "phase": "serialize_before",
+          "wall_ms": 11.277221,
+          "system_cpu_total_ticks": 8,
+          "system_steal_ticks": 1,
+          "system_steal_fraction": 0.125,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.213246,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 3,
+          "phase": "census",
+          "wall_ms": 6.982449,
+          "system_cpu_total_ticks": 2,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.038558,
+            "renderer": 0.0,
+            "driver": 0.06866
+          }
+        },
+        {
+          "index": 3,
+          "phase": "serialize_after",
+          "wall_ms": 5.394286,
+          "system_cpu_total_ticks": 4,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.047167,
+            "renderer": 0.0,
+            "driver": 0.057848
+          }
+        },
+        {
+          "index": 3,
+          "phase": "hash_dom",
+          "wall_ms": 0.204129,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 3,
+          "phase": "heap_counter",
+          "wall_ms": 2.428706,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.246753,
+            "renderer": 0.062626,
+            "driver": 0.026718
+          }
+        },
+        {
+          "index": 3,
+          "phase": "dom_counter",
+          "wall_ms": 0.89763,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.021521,
+            "renderer": 0.0,
+            "driver": 0.035889
+          }
+        },
+        {
+          "index": 3,
+          "phase": "navigation_timing",
+          "wall_ms": 1.809341,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.028336,
+            "renderer": 0.0,
+            "driver": 0.1365
+          }
+        },
+        {
+          "index": 4,
+          "phase": "navigation",
+          "wall_ms": 52.079455,
+          "system_cpu_total_ticks": 31,
+          "system_steal_ticks": 1,
+          "system_steal_fraction": 0.03225806451612903,
+          "main_thread_runqueue_wait_ms": {
+            "python": 1.035529,
+            "browser": 1.438978,
+            "renderer": 1.436387,
+            "driver": 2.594864
+          },
+          "browser_navigation_ms": 47.30000000074506,
+          "host_minus_browser_ms": 4.779454999254945
+        },
+        {
+          "index": 4,
+          "phase": "fixed_wait",
+          "wall_ms": 221.029352,
+          "system_cpu_total_ticks": 109,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 1.390666,
+            "renderer": 0.0,
+            "driver": 0.222024
+          }
+        },
+        {
+          "index": 4,
+          "phase": "serialize_before",
+          "wall_ms": 8.623564,
+          "system_cpu_total_ticks": 6,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.007155,
+            "browser": 1.382306,
+            "renderer": 0.0,
+            "driver": 0.077172
+          }
+        },
+        {
+          "index": 4,
+          "phase": "census",
+          "wall_ms": 4.521721,
+          "system_cpu_total_ticks": 2,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.118517
+          }
+        },
+        {
+          "index": 4,
+          "phase": "serialize_after",
+          "wall_ms": 5.771853,
+          "system_cpu_total_ticks": 3,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.158598
+          }
+        },
+        {
+          "index": 4,
+          "phase": "hash_dom",
+          "wall_ms": 0.213697,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 4,
+          "phase": "heap_counter",
+          "wall_ms": 1.180904,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.042958,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 4,
+          "phase": "dom_counter",
+          "wall_ms": 0.848726,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.042311,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 4,
+          "phase": "navigation_timing",
+          "wall_ms": 1.586844,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.091215,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 5,
+          "phase": "navigation",
+          "wall_ms": 67.013462,
+          "system_cpu_total_ticks": 34,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.717825,
+            "browser": 3.482511,
+            "renderer": 0.133524,
+            "driver": 3.024995
+          },
+          "browser_navigation_ms": 62.80000000074506,
+          "host_minus_browser_ms": 4.213461999254946
+        },
+        {
+          "index": 5,
+          "phase": "fixed_wait",
+          "wall_ms": 221.210591,
+          "system_cpu_total_ticks": 111,
+          "system_steal_ticks": 2,
+          "system_steal_fraction": 0.018018018018018018,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.05313,
+            "browser": 2.047144,
+            "renderer": 0.03799,
+            "driver": 0.153749
+          }
+        },
+        {
+          "index": 5,
+          "phase": "serialize_before",
+          "wall_ms": 13.79577,
+          "system_cpu_total_ticks": 8,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.221225,
+            "renderer": 0.006756,
+            "driver": 0.340256
+          }
+        },
+        {
+          "index": 5,
+          "phase": "census",
+          "wall_ms": 7.292704,
+          "system_cpu_total_ticks": 4,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.6915,
+            "browser": 0.143406,
+            "renderer": 0.0,
+            "driver": 1.376584
+          }
+        },
+        {
+          "index": 5,
+          "phase": "serialize_after",
+          "wall_ms": 6.745781,
+          "system_cpu_total_ticks": 3,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.112814,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.271107
+          }
+        },
+        {
+          "index": 5,
+          "phase": "hash_dom",
+          "wall_ms": 0.338491,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 5,
+          "phase": "heap_counter",
+          "wall_ms": 1.271186,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.322653,
+            "browser": 0.053384,
+            "renderer": 0.0,
+            "driver": 0.070671
+          }
+        },
+        {
+          "index": 5,
+          "phase": "dom_counter",
+          "wall_ms": 2.54238,
+          "system_cpu_total_ticks": 2,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.435903,
+            "browser": 0.688884,
+            "renderer": 0.0,
+            "driver": 0.947559
+          }
+        },
+        {
+          "index": 5,
+          "phase": "navigation_timing",
+          "wall_ms": 2.706678,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.380332,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.061633
+          }
+        },
+        {
+          "index": 6,
+          "phase": "navigation",
+          "wall_ms": 66.080346,
+          "system_cpu_total_ticks": 36,
+          "system_steal_ticks": 1,
+          "system_steal_fraction": 0.027777777777777776,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.631664,
+            "browser": 0.634621,
+            "renderer": 0.013486,
+            "driver": 2.228332
+          },
+          "browser_navigation_ms": 61.80000000074506,
+          "host_minus_browser_ms": 4.280345999254948
+        },
+        {
+          "index": 6,
+          "phase": "fixed_wait",
+          "wall_ms": 220.882423,
+          "system_cpu_total_ticks": 113,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.274796,
+            "browser": 1.327805,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 6,
+          "phase": "serialize_before",
+          "wall_ms": 9.157805,
+          "system_cpu_total_ticks": 5,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.580908,
+            "browser": 0.843189,
+            "renderer": 0.0,
+            "driver": 0.039236
+          }
+        },
+        {
+          "index": 6,
+          "phase": "census",
+          "wall_ms": 5.669867,
+          "system_cpu_total_ticks": 2,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 2.431336,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 6,
+          "phase": "serialize_after",
+          "wall_ms": 5.507787,
+          "system_cpu_total_ticks": 4,
+          "system_steal_ticks": 1,
+          "system_steal_fraction": 0.25,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 1.55749,
+            "renderer": 0.0,
+            "driver": 0.113138
+          }
+        },
+        {
+          "index": 6,
+          "phase": "hash_dom",
+          "wall_ms": 0.236885,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 6,
+          "phase": "heap_counter",
+          "wall_ms": 1.045394,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.004963,
+            "renderer": 0.0,
+            "driver": 0.158923
+          }
+        },
+        {
+          "index": 6,
+          "phase": "dom_counter",
+          "wall_ms": 0.82778,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.00387,
+            "renderer": 0.0,
+            "driver": 0.135652
+          }
+        },
+        {
+          "index": 6,
+          "phase": "navigation_timing",
+          "wall_ms": 4.483708,
+          "system_cpu_total_ticks": 2,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.345073,
+            "renderer": 0.0,
+            "driver": 0.159654
+          }
+        },
+        {
+          "index": 7,
+          "phase": "navigation",
+          "wall_ms": 38.143076,
+          "system_cpu_total_ticks": 19,
+          "system_steal_ticks": 1,
+          "system_steal_fraction": 0.05263157894736842,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.414442,
+            "browser": 8.839406,
+            "renderer": 3.022656,
+            "driver": 1.873839
+          },
+          "browser_navigation_ms": 32.19999999925494,
+          "host_minus_browser_ms": 5.943076000745059
+        },
+        {
+          "index": 7,
+          "phase": "fixed_wait",
+          "wall_ms": 221.326646,
+          "system_cpu_total_ticks": 114,
+          "system_steal_ticks": 1,
+          "system_steal_fraction": 0.008771929824561403,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.707246,
+            "renderer": 0.024148,
+            "driver": 0.017738
+          }
+        },
+        {
+          "index": 7,
+          "phase": "serialize_before",
+          "wall_ms": 18.904368,
+          "system_cpu_total_ticks": 10,
+          "system_steal_ticks": 1,
+          "system_steal_fraction": 0.1,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.039394,
+            "renderer": 0.112545,
+            "driver": 0.210268
+          }
+        },
+        {
+          "index": 7,
+          "phase": "census",
+          "wall_ms": 12.162451,
+          "system_cpu_total_ticks": 6,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 1.412957,
+            "renderer": 0.0,
+            "driver": 0.033764
+          }
+        },
+        {
+          "index": 7,
+          "phase": "serialize_after",
+          "wall_ms": 14.75208,
+          "system_cpu_total_ticks": 9,
+          "system_steal_ticks": 1,
+          "system_steal_fraction": 0.1111111111111111,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.012611,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.038474
+          }
+        },
+        {
+          "index": 7,
+          "phase": "hash_dom",
+          "wall_ms": 0.211327,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 7,
+          "phase": "heap_counter",
+          "wall_ms": 1.439089,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.008117
+          }
+        },
+        {
+          "index": 7,
+          "phase": "dom_counter",
+          "wall_ms": 1.104663,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.012795,
+            "renderer": 0.0,
+            "driver": 0.008255
+          }
+        },
+        {
+          "index": 7,
+          "phase": "navigation_timing",
+          "wall_ms": 1.597555,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.009035
+          }
+        },
+        {
+          "index": 8,
+          "phase": "navigation",
+          "wall_ms": 75.017351,
+          "system_cpu_total_ticks": 39,
+          "system_steal_ticks": 5,
+          "system_steal_fraction": 0.1282051282051282,
+          "main_thread_runqueue_wait_ms": {
+            "python": 3.537218,
+            "browser": 5.217659,
+            "renderer": 6.290566,
+            "driver": 0.619618
+          },
+          "browser_navigation_ms": 68.20000000111759,
+          "host_minus_browser_ms": 6.817350998882418
+        },
+        {
+          "index": 8,
+          "phase": "fixed_wait",
+          "wall_ms": 221.381576,
+          "system_cpu_total_ticks": 112,
+          "system_steal_ticks": 1,
+          "system_steal_fraction": 0.008928571428571428,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 2.498166,
+            "renderer": 0.883333,
+            "driver": 0.074537
+          }
+        },
+        {
+          "index": 8,
+          "phase": "serialize_before",
+          "wall_ms": 14.93702,
+          "system_cpu_total_ticks": 8,
+          "system_steal_ticks": 1,
+          "system_steal_fraction": 0.125,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 1.023629,
+            "renderer": 0.160315,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 8,
+          "phase": "census",
+          "wall_ms": 6.511476,
+          "system_cpu_total_ticks": 3,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.004067,
+            "renderer": 0.245648,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 8,
+          "phase": "serialize_after",
+          "wall_ms": 8.175656,
+          "system_cpu_total_ticks": 5,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.004242,
+            "renderer": 0.17378,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 8,
+          "phase": "hash_dom",
+          "wall_ms": 0.319553,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 8,
+          "phase": "heap_counter",
+          "wall_ms": 1.292084,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0038,
+            "renderer": 0.058271,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 8,
+          "phase": "dom_counter",
+          "wall_ms": 0.901492,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.023051,
+            "renderer": 0.043176,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 8,
+          "phase": "navigation_timing",
+          "wall_ms": 1.51243,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.002298,
+            "renderer": 0.003394,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 9,
+          "phase": "navigation",
+          "wall_ms": 80.026223,
+          "system_cpu_total_ticks": 44,
+          "system_steal_ticks": 4,
+          "system_steal_fraction": 0.09090909090909091,
+          "main_thread_runqueue_wait_ms": {
+            "python": 1.071141,
+            "browser": 2.164554,
+            "renderer": 7.331363,
+            "driver": 1.12897
+          },
+          "browser_navigation_ms": 72.5,
+          "host_minus_browser_ms": 7.526223000000002
+        },
+        {
+          "index": 9,
+          "phase": "fixed_wait",
+          "wall_ms": 221.334409,
+          "system_cpu_total_ticks": 111,
+          "system_steal_ticks": 1,
+          "system_steal_fraction": 0.009009009009009009,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 1.188949,
+            "renderer": 0.107316,
+            "driver": 0.059129
+          }
+        },
+        {
+          "index": 9,
+          "phase": "serialize_before",
+          "wall_ms": 13.436709,
+          "system_cpu_total_ticks": 7,
+          "system_steal_ticks": 1,
+          "system_steal_fraction": 0.14285714285714285,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.138945,
+            "renderer": 0.131054,
+            "driver": 0.163817
+          }
+        },
+        {
+          "index": 9,
+          "phase": "census",
+          "wall_ms": 5.53102,
+          "system_cpu_total_ticks": 4,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.01724,
+            "browser": 0.056838,
+            "renderer": 0.081624,
+            "driver": 0.250623
+          }
+        },
+        {
+          "index": 9,
+          "phase": "serialize_after",
+          "wall_ms": 18.331389,
+          "system_cpu_total_ticks": 6,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 3.372854,
+            "renderer": 0.085015,
+            "driver": 6.044803
+          }
+        },
+        {
+          "index": 9,
+          "phase": "hash_dom",
+          "wall_ms": 0.222112,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 9,
+          "phase": "heap_counter",
+          "wall_ms": 4.719309,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.012158,
+            "renderer": 0.04116,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 9,
+          "phase": "dom_counter",
+          "wall_ms": 24.487987,
+          "system_cpu_total_ticks": 13,
+          "system_steal_ticks": 4,
+          "system_steal_fraction": 0.3076923076923077,
+          "main_thread_runqueue_wait_ms": {
+            "python": 1.854635,
+            "browser": 0.012793,
+            "renderer": 0.035757,
+            "driver": 0.25002
+          }
+        },
+        {
+          "index": 9,
+          "phase": "navigation_timing",
+          "wall_ms": 2.078203,
+          "system_cpu_total_ticks": 3,
+          "system_steal_ticks": 1,
+          "system_steal_fraction": 0.3333333333333333,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.042297,
+            "renderer": 0.071245,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 10,
+          "phase": "navigation",
+          "wall_ms": 103.115469,
+          "system_cpu_total_ticks": 55,
+          "system_steal_ticks": 8,
+          "system_steal_fraction": 0.14545454545454545,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.117403,
+            "browser": 5.103335,
+            "renderer": 1.230058,
+            "driver": 1.136428
+          },
+          "browser_navigation_ms": 97.69999999925494,
+          "host_minus_browser_ms": 5.4154690007450625
+        },
+        {
+          "index": 10,
+          "phase": "fixed_wait",
+          "wall_ms": 221.043443,
+          "system_cpu_total_ticks": 117,
+          "system_steal_ticks": 8,
+          "system_steal_fraction": 0.06837606837606838,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 2.287936,
+            "renderer": 0.052734,
+            "driver": 0.621918
+          }
+        },
+        {
+          "index": 10,
+          "phase": "serialize_before",
+          "wall_ms": 16.653185,
+          "system_cpu_total_ticks": 9,
+          "system_steal_ticks": 1,
+          "system_steal_fraction": 0.1111111111111111,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.038345,
+            "browser": 2.235325,
+            "renderer": 0.0,
+            "driver": 3.652357
+          }
+        },
+        {
+          "index": 10,
+          "phase": "census",
+          "wall_ms": 5.448572,
+          "system_cpu_total_ticks": 3,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.52459,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.120076
+          }
+        },
+        {
+          "index": 10,
+          "phase": "serialize_after",
+          "wall_ms": 5.855985,
+          "system_cpu_total_ticks": 4,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.045364,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 1.516469
+          }
+        },
+        {
+          "index": 10,
+          "phase": "hash_dom",
+          "wall_ms": 0.259556,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 10,
+          "phase": "heap_counter",
+          "wall_ms": 2.026468,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.006607,
+            "browser": 0.079904,
+            "renderer": 0.0,
+            "driver": 2.002356
+          }
+        },
+        {
+          "index": 10,
+          "phase": "dom_counter",
+          "wall_ms": 3.483243,
+          "system_cpu_total_ticks": 3,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.27289,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 10,
+          "phase": "navigation_timing",
+          "wall_ms": 2.006972,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.533006,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0593
+          }
+        },
+        {
+          "index": 11,
+          "phase": "navigation",
+          "wall_ms": 79.822281,
+          "system_cpu_total_ticks": 40,
+          "system_steal_ticks": 5,
+          "system_steal_fraction": 0.125,
+          "main_thread_runqueue_wait_ms": {
+            "python": 1.158926,
+            "browser": 4.395736,
+            "renderer": 0.0,
+            "driver": 0.244163
+          },
+          "browser_navigation_ms": 72.19999999925494,
+          "host_minus_browser_ms": 7.622281000745062
+        },
+        {
+          "index": 11,
+          "phase": "fixed_wait",
+          "wall_ms": 221.359696,
+          "system_cpu_total_ticks": 113,
+          "system_steal_ticks": 4,
+          "system_steal_fraction": 0.035398230088495575,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.009283,
+            "browser": 6.352321,
+            "renderer": 0.058329,
+            "driver": 0.544536
+          }
+        },
+        {
+          "index": 11,
+          "phase": "serialize_before",
+          "wall_ms": 9.091818,
+          "system_cpu_total_ticks": 4,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.185717,
+            "renderer": 0.0,
+            "driver": 0.108729
+          }
+        },
+        {
+          "index": 11,
+          "phase": "census",
+          "wall_ms": 8.326866,
+          "system_cpu_total_ticks": 3,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.105814,
+            "renderer": 0.0,
+            "driver": 0.043004
+          }
+        },
+        {
+          "index": 11,
+          "phase": "serialize_after",
+          "wall_ms": 8.449731,
+          "system_cpu_total_ticks": 5,
+          "system_steal_ticks": 1,
+          "system_steal_fraction": 0.2,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.052379,
+            "renderer": 0.0,
+            "driver": 0.205703
+          }
+        },
+        {
+          "index": 11,
+          "phase": "hash_dom",
+          "wall_ms": 0.331551,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 11,
+          "phase": "heap_counter",
+          "wall_ms": 6.105706,
+          "system_cpu_total_ticks": 3,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.036923,
+            "renderer": 0.02459,
+            "driver": 0.039751
+          }
+        },
+        {
+          "index": 11,
+          "phase": "dom_counter",
+          "wall_ms": 3.183163,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.018999,
+            "renderer": 0.0,
+            "driver": 0.056487
+          }
+        },
+        {
+          "index": 11,
+          "phase": "navigation_timing",
+          "wall_ms": 4.923526,
+          "system_cpu_total_ticks": 3,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.356657
+          }
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "capture_sha256": "e6f2762930a0f7051cb4e4b9ad05c7677f397d1cc612c3daa5b7599e0e9f1d38",
+      "duration_ms": 3687.714204,
+      "phase_ms": {
+        "navigation": 634.0053690000001,
+        "fixed_wait": 2651.877689,
+        "serialize_before": 117.275473,
+        "census": 72.65142499999999,
+        "serialize_after": 93.654623,
+        "hash_dom": 4.073639,
+        "heap_counter": 17.339042000000003,
+        "dom_counter": 13.771258,
+        "navigation_timing": 20.766600000000004
+      },
+      "telemetry_ms": 61.582409,
+      "throttle_ms": 0.0,
+      "system_steal_ticks": 18.0,
+      "system_cpu_total_ticks": 1831.0,
+      "system_steal_fraction": 0.009830693610049153,
+      "optional_counter_availability": {
+        "cgroup_pressure": {
+          "unavailable": "FileNotFoundError"
+        },
+        "host_pressure": {
+          "unavailable": "FileNotFoundError"
+        }
+      },
+      "phases": [
+        {
+          "index": 0,
+          "phase": "navigation",
+          "wall_ms": 50.187133,
+          "system_cpu_total_ticks": 24,
+          "system_steal_ticks": 1,
+          "system_steal_fraction": 0.041666666666666664,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.27501,
+            "browser": 0.117237,
+            "renderer": 6.766262,
+            "driver": 1.909079
+          },
+          "browser_navigation_ms": 46.90000000037253,
+          "host_minus_browser_ms": 3.287132999627474
+        },
+        {
+          "index": 0,
+          "phase": "fixed_wait",
+          "wall_ms": 222.648541,
+          "system_cpu_total_ticks": 111,
+          "system_steal_ticks": 1,
+          "system_steal_fraction": 0.009009009009009009,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.637196,
+            "renderer": 2.068669,
+            "driver": 0.040887
+          }
+        },
+        {
+          "index": 0,
+          "phase": "serialize_before",
+          "wall_ms": 11.569472,
+          "system_cpu_total_ticks": 6,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.005114,
+            "renderer": 0.218753,
+            "driver": 0.213116
+          }
+        },
+        {
+          "index": 0,
+          "phase": "census",
+          "wall_ms": 8.104537,
+          "system_cpu_total_ticks": 4,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.003661,
+            "renderer": 0.095403,
+            "driver": 0.088345
+          }
+        },
+        {
+          "index": 0,
+          "phase": "serialize_after",
+          "wall_ms": 5.680998,
+          "system_cpu_total_ticks": 3,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.002985,
+            "renderer": 0.130246,
+            "driver": 0.032902
+          }
+        },
+        {
+          "index": 0,
+          "phase": "hash_dom",
+          "wall_ms": 0.244194,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 0,
+          "phase": "heap_counter",
+          "wall_ms": 1.347222,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.003912,
+            "renderer": 0.042723,
+            "driver": 0.007419
+          }
+        },
+        {
+          "index": 0,
+          "phase": "dom_counter",
+          "wall_ms": 0.976717,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.00204,
+            "renderer": 0.042227,
+            "driver": 0.0065
+          }
+        },
+        {
+          "index": 0,
+          "phase": "navigation_timing",
+          "wall_ms": 2.211561,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.001427,
+            "renderer": 0.087682,
+            "driver": 0.081644
+          }
+        },
+        {
+          "index": 1,
+          "phase": "navigation",
+          "wall_ms": 40.652499,
+          "system_cpu_total_ticks": 22,
+          "system_steal_ticks": 1,
+          "system_steal_fraction": 0.045454545454545456,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.76152,
+            "browser": 2.301766,
+            "renderer": 1.104323,
+            "driver": 2.111781
+          },
+          "browser_navigation_ms": 35.20000000111759,
+          "host_minus_browser_ms": 5.452498998882412
+        },
+        {
+          "index": 1,
+          "phase": "fixed_wait",
+          "wall_ms": 221.106567,
+          "system_cpu_total_ticks": 113,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 1.70831,
+            "renderer": 0.0,
+            "driver": 0.004113
+          }
+        },
+        {
+          "index": 1,
+          "phase": "serialize_before",
+          "wall_ms": 9.135299,
+          "system_cpu_total_ticks": 3,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.14344,
+            "browser": 0.070419,
+            "renderer": 0.119227,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 1,
+          "phase": "census",
+          "wall_ms": 8.25574,
+          "system_cpu_total_ticks": 7,
+          "system_steal_ticks": 1,
+          "system_steal_fraction": 0.14285714285714285,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.095109,
+            "renderer": 1.488403,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 1,
+          "phase": "serialize_after",
+          "wall_ms": 24.035461,
+          "system_cpu_total_ticks": 10,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 2.180876,
+            "browser": 2.574609,
+            "renderer": 0.053765,
+            "driver": 0.203369
+          }
+        },
+        {
+          "index": 1,
+          "phase": "hash_dom",
+          "wall_ms": 0.256151,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 1,
+          "phase": "heap_counter",
+          "wall_ms": 1.769195,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.099124,
+            "renderer": 0.016882,
+            "driver": 0.14906
+          }
+        },
+        {
+          "index": 1,
+          "phase": "dom_counter",
+          "wall_ms": 1.15423,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.047375,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 1,
+          "phase": "navigation_timing",
+          "wall_ms": 2.224558,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.054051,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 2,
+          "phase": "navigation",
+          "wall_ms": 57.923783,
+          "system_cpu_total_ticks": 30,
+          "system_steal_ticks": 1,
+          "system_steal_fraction": 0.03333333333333333,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.189867,
+            "browser": 5.114952,
+            "renderer": 4.116518,
+            "driver": 0.0
+          },
+          "browser_navigation_ms": 53.30000000074506,
+          "host_minus_browser_ms": 4.623782999254942
+        },
+        {
+          "index": 2,
+          "phase": "fixed_wait",
+          "wall_ms": 221.054972,
+          "system_cpu_total_ticks": 109,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.88178,
+            "renderer": 0.248516,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 2,
+          "phase": "serialize_before",
+          "wall_ms": 9.482982,
+          "system_cpu_total_ticks": 5,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.140383,
+            "renderer": 0.0,
+            "driver": 0.159179
+          }
+        },
+        {
+          "index": 2,
+          "phase": "census",
+          "wall_ms": 5.127366,
+          "system_cpu_total_ticks": 3,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.091993,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 2,
+          "phase": "serialize_after",
+          "wall_ms": 6.828664,
+          "system_cpu_total_ticks": 2,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.17175,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 2,
+          "phase": "hash_dom",
+          "wall_ms": 1.028934,
+          "system_cpu_total_ticks": 2,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 2,
+          "phase": "heap_counter",
+          "wall_ms": 1.73949,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.085397,
+            "renderer": 0.0,
+            "driver": 0.1907
+          }
+        },
+        {
+          "index": 2,
+          "phase": "dom_counter",
+          "wall_ms": 1.03497,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.081806,
+            "renderer": 0.0,
+            "driver": 0.029332
+          }
+        },
+        {
+          "index": 2,
+          "phase": "navigation_timing",
+          "wall_ms": 1.48682,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.118372,
+            "renderer": 0.0,
+            "driver": 0.031382
+          }
+        },
+        {
+          "index": 3,
+          "phase": "navigation",
+          "wall_ms": 88.551978,
+          "system_cpu_total_ticks": 45,
+          "system_steal_ticks": 1,
+          "system_steal_fraction": 0.022222222222222223,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.012318,
+            "browser": 3.810105,
+            "renderer": 0.0,
+            "driver": 0.587156
+          },
+          "browser_navigation_ms": 82.20000000111759,
+          "host_minus_browser_ms": 6.351977998882418
+        },
+        {
+          "index": 3,
+          "phase": "fixed_wait",
+          "wall_ms": 221.324747,
+          "system_cpu_total_ticks": 112,
+          "system_steal_ticks": 1,
+          "system_steal_fraction": 0.008928571428571428,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.217481,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 3,
+          "phase": "serialize_before",
+          "wall_ms": 7.810016,
+          "system_cpu_total_ticks": 3,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 3,
+          "phase": "census",
+          "wall_ms": 6.527016,
+          "system_cpu_total_ticks": 3,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.065926
+          }
+        },
+        {
+          "index": 3,
+          "phase": "serialize_after",
+          "wall_ms": 7.243313,
+          "system_cpu_total_ticks": 4,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.740954
+          }
+        },
+        {
+          "index": 3,
+          "phase": "hash_dom",
+          "wall_ms": 0.315038,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 3,
+          "phase": "heap_counter",
+          "wall_ms": 1.520224,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 3,
+          "phase": "dom_counter",
+          "wall_ms": 1.045817,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 3,
+          "phase": "navigation_timing",
+          "wall_ms": 1.87575,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 4,
+          "phase": "navigation",
+          "wall_ms": 42.822915,
+          "system_cpu_total_ticks": 22,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.490398,
+            "browser": 3.251064,
+            "renderer": 0.383093,
+            "driver": 0.162701
+          },
+          "browser_navigation_ms": 38.399999998509884,
+          "host_minus_browser_ms": 4.422915001490118
+        },
+        {
+          "index": 4,
+          "phase": "fixed_wait",
+          "wall_ms": 220.68691,
+          "system_cpu_total_ticks": 111,
+          "system_steal_ticks": 1,
+          "system_steal_fraction": 0.009009009009009009,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.293952,
+            "renderer": 0.0,
+            "driver": 0.033274
+          }
+        },
+        {
+          "index": 4,
+          "phase": "serialize_before",
+          "wall_ms": 10.521342,
+          "system_cpu_total_ticks": 6,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.059917,
+            "renderer": 0.0,
+            "driver": 0.332855
+          }
+        },
+        {
+          "index": 4,
+          "phase": "census",
+          "wall_ms": 5.455534,
+          "system_cpu_total_ticks": 2,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.066752,
+            "browser": 0.005583,
+            "renderer": 0.0,
+            "driver": 0.038025
+          }
+        },
+        {
+          "index": 4,
+          "phase": "serialize_after",
+          "wall_ms": 5.910816,
+          "system_cpu_total_ticks": 2,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.006583,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 4,
+          "phase": "hash_dom",
+          "wall_ms": 0.215148,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 4,
+          "phase": "heap_counter",
+          "wall_ms": 1.421964,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.004678,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 4,
+          "phase": "dom_counter",
+          "wall_ms": 1.146344,
+          "system_cpu_total_ticks": 2,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.026611,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 4,
+          "phase": "navigation_timing",
+          "wall_ms": 1.806894,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.026767,
+            "renderer": 0.0,
+            "driver": 0.018881
+          }
+        },
+        {
+          "index": 5,
+          "phase": "navigation",
+          "wall_ms": 58.80639,
+          "system_cpu_total_ticks": 28,
+          "system_steal_ticks": 2,
+          "system_steal_fraction": 0.07142857142857142,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 4.504869,
+            "renderer": 1.144044,
+            "driver": 1.647496
+          },
+          "browser_navigation_ms": 54.09999999962747,
+          "host_minus_browser_ms": 4.706390000372529
+        },
+        {
+          "index": 5,
+          "phase": "fixed_wait",
+          "wall_ms": 221.131695,
+          "system_cpu_total_ticks": 112,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 3.797152,
+            "renderer": 0.33731,
+            "driver": 0.086233
+          }
+        },
+        {
+          "index": 5,
+          "phase": "serialize_before",
+          "wall_ms": 9.533482,
+          "system_cpu_total_ticks": 5,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.25659,
+            "renderer": 0.0,
+            "driver": 0.074487
+          }
+        },
+        {
+          "index": 5,
+          "phase": "census",
+          "wall_ms": 6.533345,
+          "system_cpu_total_ticks": 3,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.053591,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 5,
+          "phase": "serialize_after",
+          "wall_ms": 7.000419,
+          "system_cpu_total_ticks": 2,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.051716,
+            "renderer": 0.0,
+            "driver": 0.046192
+          }
+        },
+        {
+          "index": 5,
+          "phase": "hash_dom",
+          "wall_ms": 0.322754,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 5,
+          "phase": "heap_counter",
+          "wall_ms": 1.462875,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.015885,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 5,
+          "phase": "dom_counter",
+          "wall_ms": 2.370553,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 5,
+          "phase": "navigation_timing",
+          "wall_ms": 1.943473,
+          "system_cpu_total_ticks": 2,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.029337,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 6,
+          "phase": "navigation",
+          "wall_ms": 48.204684,
+          "system_cpu_total_ticks": 22,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.027933,
+            "browser": 4.457087,
+            "renderer": 0.033693,
+            "driver": 4.55023
+          },
+          "browser_navigation_ms": 43.90000000037253,
+          "host_minus_browser_ms": 4.304683999627471
+        },
+        {
+          "index": 6,
+          "phase": "fixed_wait",
+          "wall_ms": 220.926518,
+          "system_cpu_total_ticks": 112,
+          "system_steal_ticks": 2,
+          "system_steal_fraction": 0.017857142857142856,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 4.766637,
+            "renderer": 0.096827,
+            "driver": 0.261408
+          }
+        },
+        {
+          "index": 6,
+          "phase": "serialize_before",
+          "wall_ms": 7.783256,
+          "system_cpu_total_ticks": 4,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.046185,
+            "renderer": 0.0,
+            "driver": 0.136883
+          }
+        },
+        {
+          "index": 6,
+          "phase": "census",
+          "wall_ms": 5.67241,
+          "system_cpu_total_ticks": 4,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.116728
+          }
+        },
+        {
+          "index": 6,
+          "phase": "serialize_after",
+          "wall_ms": 5.44822,
+          "system_cpu_total_ticks": 3,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.043309,
+            "renderer": 0.0,
+            "driver": 0.148
+          }
+        },
+        {
+          "index": 6,
+          "phase": "hash_dom",
+          "wall_ms": 0.249823,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 6,
+          "phase": "heap_counter",
+          "wall_ms": 1.124185,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.018526
+          }
+        },
+        {
+          "index": 6,
+          "phase": "dom_counter",
+          "wall_ms": 0.928287,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.017356
+          }
+        },
+        {
+          "index": 6,
+          "phase": "navigation_timing",
+          "wall_ms": 1.464663,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.019132
+          }
+        },
+        {
+          "index": 7,
+          "phase": "navigation",
+          "wall_ms": 39.814922,
+          "system_cpu_total_ticks": 20,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.333511,
+            "browser": 1.956787,
+            "renderer": 0.13218,
+            "driver": 0.728166
+          },
+          "browser_navigation_ms": 36.5,
+          "host_minus_browser_ms": 3.314922000000003
+        },
+        {
+          "index": 7,
+          "phase": "fixed_wait",
+          "wall_ms": 220.892091,
+          "system_cpu_total_ticks": 111,
+          "system_steal_ticks": 1,
+          "system_steal_fraction": 0.009009009009009009,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 2.817834,
+            "renderer": 0.0,
+            "driver": 0.234431
+          }
+        },
+        {
+          "index": 7,
+          "phase": "serialize_before",
+          "wall_ms": 8.935878,
+          "system_cpu_total_ticks": 5,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.077089,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 7,
+          "phase": "census",
+          "wall_ms": 4.8149,
+          "system_cpu_total_ticks": 2,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.050738,
+            "renderer": 0.0,
+            "driver": 0.040865
+          }
+        },
+        {
+          "index": 7,
+          "phase": "serialize_after",
+          "wall_ms": 5.963497,
+          "system_cpu_total_ticks": 3,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.088224,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 7,
+          "phase": "hash_dom",
+          "wall_ms": 0.217234,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 7,
+          "phase": "heap_counter",
+          "wall_ms": 1.118702,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.038433,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 7,
+          "phase": "dom_counter",
+          "wall_ms": 0.968947,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.03524,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 7,
+          "phase": "navigation_timing",
+          "wall_ms": 1.357501,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.032776,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 8,
+          "phase": "navigation",
+          "wall_ms": 71.315226,
+          "system_cpu_total_ticks": 36,
+          "system_steal_ticks": 1,
+          "system_steal_fraction": 0.027777777777777776,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.220456,
+            "browser": 1.912258,
+            "renderer": 1.268662,
+            "driver": 0.562406
+          },
+          "browser_navigation_ms": 67.79999999888241,
+          "host_minus_browser_ms": 3.5152260011175827
+        },
+        {
+          "index": 8,
+          "phase": "fixed_wait",
+          "wall_ms": 220.283242,
+          "system_cpu_total_ticks": 110,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.074281,
+            "renderer": 0.0,
+            "driver": 0.007243
+          }
+        },
+        {
+          "index": 8,
+          "phase": "serialize_before",
+          "wall_ms": 12.080435,
+          "system_cpu_total_ticks": 7,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.081186,
+            "renderer": 0.0,
+            "driver": 0.043449
+          }
+        },
+        {
+          "index": 8,
+          "phase": "census",
+          "wall_ms": 6.338443,
+          "system_cpu_total_ticks": 4,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 8,
+          "phase": "serialize_after",
+          "wall_ms": 7.759862,
+          "system_cpu_total_ticks": 4,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.358418,
+            "renderer": 0.0,
+            "driver": 0.038765
+          }
+        },
+        {
+          "index": 8,
+          "phase": "hash_dom",
+          "wall_ms": 0.326161,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 8,
+          "phase": "heap_counter",
+          "wall_ms": 1.425581,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 8,
+          "phase": "dom_counter",
+          "wall_ms": 1.124011,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.032495
+          }
+        },
+        {
+          "index": 8,
+          "phase": "navigation_timing",
+          "wall_ms": 1.451071,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.025271,
+            "renderer": 0.0,
+            "driver": 0.034212
+          }
+        },
+        {
+          "index": 9,
+          "phase": "navigation",
+          "wall_ms": 47.287859,
+          "system_cpu_total_ticks": 27,
+          "system_steal_ticks": 1,
+          "system_steal_fraction": 0.037037037037037035,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.153827,
+            "browser": 1.084351,
+            "renderer": 0.267088,
+            "driver": 0.118135
+          },
+          "browser_navigation_ms": 43,
+          "host_minus_browser_ms": 4.287858999999997
+        },
+        {
+          "index": 9,
+          "phase": "fixed_wait",
+          "wall_ms": 220.315065,
+          "system_cpu_total_ticks": 109,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.294805,
+            "renderer": 0.0,
+            "driver": 0.282363
+          }
+        },
+        {
+          "index": 9,
+          "phase": "serialize_before",
+          "wall_ms": 11.484364,
+          "system_cpu_total_ticks": 7,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.19262
+          }
+        },
+        {
+          "index": 9,
+          "phase": "census",
+          "wall_ms": 5.31427,
+          "system_cpu_total_ticks": 2,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.024109,
+            "browser": 0.035684,
+            "renderer": 0.0,
+            "driver": 0.019695
+          }
+        },
+        {
+          "index": 9,
+          "phase": "serialize_after",
+          "wall_ms": 5.404118,
+          "system_cpu_total_ticks": 2,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.041349
+          }
+        },
+        {
+          "index": 9,
+          "phase": "hash_dom",
+          "wall_ms": 0.263508,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 9,
+          "phase": "heap_counter",
+          "wall_ms": 1.411135,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.012467,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.01464
+          }
+        },
+        {
+          "index": 9,
+          "phase": "dom_counter",
+          "wall_ms": 1.060559,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.025383
+          }
+        },
+        {
+          "index": 9,
+          "phase": "navigation_timing",
+          "wall_ms": 1.760107,
+          "system_cpu_total_ticks": 3,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.136556
+          }
+        },
+        {
+          "index": 10,
+          "phase": "navigation",
+          "wall_ms": 46.681401,
+          "system_cpu_total_ticks": 26,
+          "system_steal_ticks": 2,
+          "system_steal_fraction": 0.07692307692307693,
+          "main_thread_runqueue_wait_ms": {
+            "python": 2.070441,
+            "browser": 8.527735,
+            "renderer": 3.354179,
+            "driver": 3.292513
+          },
+          "browser_navigation_ms": 42.20000000111759,
+          "host_minus_browser_ms": 4.481400998882414
+        },
+        {
+          "index": 10,
+          "phase": "fixed_wait",
+          "wall_ms": 220.834927,
+          "system_cpu_total_ticks": 111,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 3.943686,
+            "renderer": 0.466132,
+            "driver": 0.49382
+          }
+        },
+        {
+          "index": 10,
+          "phase": "serialize_before",
+          "wall_ms": 9.090928,
+          "system_cpu_total_ticks": 5,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.141554
+          }
+        },
+        {
+          "index": 10,
+          "phase": "census",
+          "wall_ms": 5.125241,
+          "system_cpu_total_ticks": 3,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.028044,
+            "browser": 0.143797,
+            "renderer": 0.038901,
+            "driver": 0.005746
+          }
+        },
+        {
+          "index": 10,
+          "phase": "serialize_after",
+          "wall_ms": 5.549397,
+          "system_cpu_total_ticks": 2,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.015274,
+            "browser": 0.05424,
+            "renderer": 0.980272,
+            "driver": 0.034342
+          }
+        },
+        {
+          "index": 10,
+          "phase": "hash_dom",
+          "wall_ms": 0.219748,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 10,
+          "phase": "heap_counter",
+          "wall_ms": 1.173818,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.047182,
+            "renderer": 0.0,
+            "driver": 0.006508
+          }
+        },
+        {
+          "index": 10,
+          "phase": "dom_counter",
+          "wall_ms": 0.971168,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.046932,
+            "renderer": 0.0,
+            "driver": 0.005314
+          }
+        },
+        {
+          "index": 10,
+          "phase": "navigation_timing",
+          "wall_ms": 1.52886,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.076829,
+            "renderer": 0.0,
+            "driver": 0.005694
+          }
+        },
+        {
+          "index": 11,
+          "phase": "navigation",
+          "wall_ms": 41.756579,
+          "system_cpu_total_ticks": 21,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 2.511776,
+            "browser": 1.921567,
+            "renderer": 2.322068,
+            "driver": 0.558252
+          },
+          "browser_navigation_ms": 38.399999998509884,
+          "host_minus_browser_ms": 3.3565790014901182
+        },
+        {
+          "index": 11,
+          "phase": "fixed_wait",
+          "wall_ms": 220.672414,
+          "system_cpu_total_ticks": 110,
+          "system_steal_ticks": 1,
+          "system_steal_fraction": 0.00909090909090909,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.015593,
+            "renderer": 2.195348,
+            "driver": 0.094557
+          }
+        },
+        {
+          "index": 11,
+          "phase": "serialize_before",
+          "wall_ms": 9.848019,
+          "system_cpu_total_ticks": 5,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.20692,
+            "driver": 0.053216
+          }
+        },
+        {
+          "index": 11,
+          "phase": "census",
+          "wall_ms": 5.382623,
+          "system_cpu_total_ticks": 3,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.147396,
+            "driver": 0.006341
+          }
+        },
+        {
+          "index": 11,
+          "phase": "serialize_after",
+          "wall_ms": 6.829858,
+          "system_cpu_total_ticks": 3,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.049849
+          }
+        },
+        {
+          "index": 11,
+          "phase": "hash_dom",
+          "wall_ms": 0.414946,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 11,
+          "phase": "heap_counter",
+          "wall_ms": 1.824651,
+          "system_cpu_total_ticks": 2,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.081883,
+            "browser": 0.0,
+            "renderer": 0.294065,
+            "driver": 0.040955
+          }
+        },
+        {
+          "index": 11,
+          "phase": "dom_counter",
+          "wall_ms": 0.989655,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.036679
+          }
+        },
+        {
+          "index": 11,
+          "phase": "navigation_timing",
+          "wall_ms": 1.655342,
+          "system_cpu_total_ticks": 2,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.016692
+          }
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "capture_sha256": "6f2add966e3c7cd1f919249d23131bf767b50c3a93da07f52f0cbb910a87883e",
+      "duration_ms": 4283.091905,
+      "phase_ms": {
+        "navigation": 1018.696546,
+        "fixed_wait": 2664.4689089999997,
+        "serialize_before": 279.533789,
+        "census": 79.84440199999999,
+        "serialize_after": 107.35622899999998,
+        "hash_dom": 3.281192,
+        "heap_counter": 20.568698999999995,
+        "dom_counter": 18.523421,
+        "navigation_timing": 24.185679999999998
+      },
+      "telemetry_ms": 65.545351,
+      "throttle_ms": 0.0,
+      "system_steal_ticks": 187.0,
+      "system_cpu_total_ticks": 2172.0,
+      "system_steal_fraction": 0.08609576427255985,
+      "optional_counter_availability": {
+        "cgroup_pressure": {
+          "unavailable": "FileNotFoundError"
+        },
+        "host_pressure": {
+          "unavailable": "FileNotFoundError"
+        }
+      },
+      "phases": [
+        {
+          "index": 0,
+          "phase": "navigation",
+          "wall_ms": 284.79463,
+          "system_cpu_total_ticks": 145,
+          "system_steal_ticks": 45,
+          "system_steal_fraction": 0.3103448275862069,
+          "main_thread_runqueue_wait_ms": {
+            "python": 1.749464,
+            "browser": 17.302052,
+            "renderer": 5.666848,
+            "driver": 6.367988
+          },
+          "browser_navigation_ms": 112.60000000149012,
+          "host_minus_browser_ms": 172.19462999850987
+        },
+        {
+          "index": 0,
+          "phase": "fixed_wait",
+          "wall_ms": 221.750935,
+          "system_cpu_total_ticks": 113,
+          "system_steal_ticks": 27,
+          "system_steal_fraction": 0.23893805309734514,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 12.994425,
+            "renderer": 0.007468,
+            "driver": 0.003272
+          }
+        },
+        {
+          "index": 0,
+          "phase": "serialize_before",
+          "wall_ms": 171.234502,
+          "system_cpu_total_ticks": 111,
+          "system_steal_ticks": 43,
+          "system_steal_fraction": 0.38738738738738737,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 6.63276,
+            "renderer": 6.612761,
+            "driver": 3.899331
+          }
+        },
+        {
+          "index": 0,
+          "phase": "census",
+          "wall_ms": 8.887167,
+          "system_cpu_total_ticks": 5,
+          "system_steal_ticks": 1,
+          "system_steal_fraction": 0.2,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 3.496671,
+            "renderer": 0.181527,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 0,
+          "phase": "serialize_after",
+          "wall_ms": 6.3885,
+          "system_cpu_total_ticks": 2,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 3.136248,
+            "renderer": 0.185542,
+            "driver": 0.349437
+          }
+        },
+        {
+          "index": 0,
+          "phase": "hash_dom",
+          "wall_ms": 0.216099,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 0,
+          "phase": "heap_counter",
+          "wall_ms": 4.063998,
+          "system_cpu_total_ticks": 4,
+          "system_steal_ticks": 1,
+          "system_steal_fraction": 0.25,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.066514,
+            "browser": 0.50164,
+            "renderer": 0.092438,
+            "driver": 0.430849
+          }
+        },
+        {
+          "index": 0,
+          "phase": "dom_counter",
+          "wall_ms": 1.57167,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.302671,
+            "renderer": 0.0,
+            "driver": 0.008071
+          }
+        },
+        {
+          "index": 0,
+          "phase": "navigation_timing",
+          "wall_ms": 4.751343,
+          "system_cpu_total_ticks": 3,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.874412,
+            "renderer": 0.0,
+            "driver": 0.102072
+          }
+        },
+        {
+          "index": 1,
+          "phase": "navigation",
+          "wall_ms": 98.17221,
+          "system_cpu_total_ticks": 51,
+          "system_steal_ticks": 11,
+          "system_steal_fraction": 0.21568627450980393,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.134369,
+            "browser": 14.124056,
+            "renderer": 14.608237,
+            "driver": 10.142245
+          },
+          "browser_navigation_ms": 67.40000000037253,
+          "host_minus_browser_ms": 30.772209999627478
+        },
+        {
+          "index": 1,
+          "phase": "fixed_wait",
+          "wall_ms": 221.555849,
+          "system_cpu_total_ticks": 112,
+          "system_steal_ticks": 7,
+          "system_steal_fraction": 0.0625,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 5.13511,
+            "renderer": 2.987234,
+            "driver": 0.153269
+          }
+        },
+        {
+          "index": 1,
+          "phase": "serialize_before",
+          "wall_ms": 7.649851,
+          "system_cpu_total_ticks": 3,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.117373,
+            "renderer": 0.007093,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 1,
+          "phase": "census",
+          "wall_ms": 6.860092,
+          "system_cpu_total_ticks": 4,
+          "system_steal_ticks": 1,
+          "system_steal_fraction": 0.25,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.061001,
+            "renderer": 0.003049,
+            "driver": 1.002078
+          }
+        },
+        {
+          "index": 1,
+          "phase": "serialize_after",
+          "wall_ms": 27.998265,
+          "system_cpu_total_ticks": 13,
+          "system_steal_ticks": 1,
+          "system_steal_fraction": 0.07692307692307693,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.005633,
+            "renderer": 3.223427,
+            "driver": 4.37312
+          }
+        },
+        {
+          "index": 1,
+          "phase": "hash_dom",
+          "wall_ms": 0.347853,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 1,
+          "phase": "heap_counter",
+          "wall_ms": 1.263722,
+          "system_cpu_total_ticks": 2,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.049458,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 1,
+          "phase": "dom_counter",
+          "wall_ms": 0.956581,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.027267,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 1,
+          "phase": "navigation_timing",
+          "wall_ms": 1.677253,
+          "system_cpu_total_ticks": 2,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.033609,
+            "renderer": 0.004716,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 2,
+          "phase": "navigation",
+          "wall_ms": 73.60035,
+          "system_cpu_total_ticks": 35,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 1.54787,
+            "browser": 1.760726,
+            "renderer": 0.698962,
+            "driver": 2.489312
+          },
+          "browser_navigation_ms": 67.90000000037253,
+          "host_minus_browser_ms": 5.700349999627477
+        },
+        {
+          "index": 2,
+          "phase": "fixed_wait",
+          "wall_ms": 221.150889,
+          "system_cpu_total_ticks": 112,
+          "system_steal_ticks": 1,
+          "system_steal_fraction": 0.008928571428571428,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.016108,
+            "browser": 0.034078,
+            "renderer": 0.007817,
+            "driver": 0.154029
+          }
+        },
+        {
+          "index": 2,
+          "phase": "serialize_before",
+          "wall_ms": 8.962143,
+          "system_cpu_total_ticks": 5,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.641146,
+            "browser": 0.042528,
+            "renderer": 0.0,
+            "driver": 0.229988
+          }
+        },
+        {
+          "index": 2,
+          "phase": "census",
+          "wall_ms": 5.120542,
+          "system_cpu_total_ticks": 2,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.529359,
+            "browser": 0.003449,
+            "renderer": 0.389079,
+            "driver": 0.187271
+          }
+        },
+        {
+          "index": 2,
+          "phase": "serialize_after",
+          "wall_ms": 6.747931,
+          "system_cpu_total_ticks": 3,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.003942,
+            "renderer": 0.0,
+            "driver": 0.057182
+          }
+        },
+        {
+          "index": 2,
+          "phase": "hash_dom",
+          "wall_ms": 0.373985,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 2,
+          "phase": "heap_counter",
+          "wall_ms": 1.12983,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.004944,
+            "renderer": 0.0,
+            "driver": 0.044952
+          }
+        },
+        {
+          "index": 2,
+          "phase": "dom_counter",
+          "wall_ms": 0.927137,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.003649,
+            "renderer": 0.0,
+            "driver": 0.015705
+          }
+        },
+        {
+          "index": 2,
+          "phase": "navigation_timing",
+          "wall_ms": 1.515614,
+          "system_cpu_total_ticks": 2,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.002205,
+            "renderer": 0.0,
+            "driver": 0.029361
+          }
+        },
+        {
+          "index": 3,
+          "phase": "navigation",
+          "wall_ms": 48.727883,
+          "system_cpu_total_ticks": 24,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 1.74003,
+            "browser": 2.680966,
+            "renderer": 0.710449,
+            "driver": 2.27311
+          },
+          "browser_navigation_ms": 45.19999999925494,
+          "host_minus_browser_ms": 3.5278830007450566
+        },
+        {
+          "index": 3,
+          "phase": "fixed_wait",
+          "wall_ms": 220.149853,
+          "system_cpu_total_ticks": 111,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.303163,
+            "browser": 0.720827,
+            "renderer": 0.093241,
+            "driver": 0.117277
+          }
+        },
+        {
+          "index": 3,
+          "phase": "serialize_before",
+          "wall_ms": 7.317282,
+          "system_cpu_total_ticks": 4,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.560769,
+            "browser": 0.00667,
+            "renderer": 0.0,
+            "driver": 0.129881
+          }
+        },
+        {
+          "index": 3,
+          "phase": "census",
+          "wall_ms": 7.486949,
+          "system_cpu_total_ticks": 4,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.427786,
+            "browser": 0.002689,
+            "renderer": 0.0,
+            "driver": 1.393603
+          }
+        },
+        {
+          "index": 3,
+          "phase": "serialize_after",
+          "wall_ms": 5.192417,
+          "system_cpu_total_ticks": 3,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.081723,
+            "browser": 0.005867,
+            "renderer": 0.083407,
+            "driver": 0.018022
+          }
+        },
+        {
+          "index": 3,
+          "phase": "hash_dom",
+          "wall_ms": 0.213202,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 3,
+          "phase": "heap_counter",
+          "wall_ms": 1.177287,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.278799,
+            "browser": 0.006061,
+            "renderer": 0.030984,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 3,
+          "phase": "dom_counter",
+          "wall_ms": 1.08571,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.28531,
+            "browser": 0.004835,
+            "renderer": 0.020843,
+            "driver": 0.032973
+          }
+        },
+        {
+          "index": 3,
+          "phase": "navigation_timing",
+          "wall_ms": 1.522884,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.356473,
+            "browser": 0.003903,
+            "renderer": 0.045056,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 4,
+          "phase": "navigation",
+          "wall_ms": 47.068093,
+          "system_cpu_total_ticks": 25,
+          "system_steal_ticks": 1,
+          "system_steal_fraction": 0.04,
+          "main_thread_runqueue_wait_ms": {
+            "python": 1.772393,
+            "browser": 1.434916,
+            "renderer": 3.544094,
+            "driver": 0.807398
+          },
+          "browser_navigation_ms": 43.5,
+          "host_minus_browser_ms": 3.5680929999999975
+        },
+        {
+          "index": 4,
+          "phase": "fixed_wait",
+          "wall_ms": 221.977798,
+          "system_cpu_total_ticks": 111,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.014562,
+            "browser": 0.882177,
+            "renderer": 1.140068,
+            "driver": 0.376796
+          }
+        },
+        {
+          "index": 4,
+          "phase": "serialize_before",
+          "wall_ms": 9.095442,
+          "system_cpu_total_ticks": 5,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.546171,
+            "browser": 0.110616,
+            "renderer": 0.144854,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 4,
+          "phase": "census",
+          "wall_ms": 5.164462,
+          "system_cpu_total_ticks": 3,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.682444,
+            "browser": 0.035084,
+            "renderer": 0.015036,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 4,
+          "phase": "serialize_after",
+          "wall_ms": 5.654656,
+          "system_cpu_total_ticks": 2,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.348276,
+            "renderer": 0.018323,
+            "driver": 0.21788
+          }
+        },
+        {
+          "index": 4,
+          "phase": "hash_dom",
+          "wall_ms": 0.25881,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 4,
+          "phase": "heap_counter",
+          "wall_ms": 1.028044,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.021658,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 4,
+          "phase": "dom_counter",
+          "wall_ms": 0.809663,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.028868,
+            "browser": 0.023043,
+            "renderer": 0.003309,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 4,
+          "phase": "navigation_timing",
+          "wall_ms": 1.529814,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.003159,
+            "renderer": 0.100765,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 5,
+          "phase": "navigation",
+          "wall_ms": 58.295182,
+          "system_cpu_total_ticks": 29,
+          "system_steal_ticks": 1,
+          "system_steal_fraction": 0.034482758620689655,
+          "main_thread_runqueue_wait_ms": {
+            "python": 1.570301,
+            "browser": 2.198327,
+            "renderer": 2.443222,
+            "driver": 1.359004
+          },
+          "browser_navigation_ms": 54.69999999925494,
+          "host_minus_browser_ms": 3.595182000745055
+        },
+        {
+          "index": 5,
+          "phase": "fixed_wait",
+          "wall_ms": 221.209699,
+          "system_cpu_total_ticks": 110,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 1.376179,
+            "renderer": 0.329871,
+            "driver": 0.334909
+          }
+        },
+        {
+          "index": 5,
+          "phase": "serialize_before",
+          "wall_ms": 9.725787,
+          "system_cpu_total_ticks": 5,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.012353
+          }
+        },
+        {
+          "index": 5,
+          "phase": "census",
+          "wall_ms": 6.184542,
+          "system_cpu_total_ticks": 3,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 5,
+          "phase": "serialize_after",
+          "wall_ms": 7.711221,
+          "system_cpu_total_ticks": 5,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 5,
+          "phase": "hash_dom",
+          "wall_ms": 0.335476,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 5,
+          "phase": "heap_counter",
+          "wall_ms": 1.367522,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.029537,
+            "renderer": 0.0,
+            "driver": 0.014355
+          }
+        },
+        {
+          "index": 5,
+          "phase": "dom_counter",
+          "wall_ms": 2.718694,
+          "system_cpu_total_ticks": 2,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 1.577239,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.006947
+          }
+        },
+        {
+          "index": 5,
+          "phase": "navigation_timing",
+          "wall_ms": 1.566059,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.023858
+          }
+        },
+        {
+          "index": 6,
+          "phase": "navigation",
+          "wall_ms": 57.787416,
+          "system_cpu_total_ticks": 31,
+          "system_steal_ticks": 2,
+          "system_steal_fraction": 0.06451612903225806,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.291878,
+            "browser": 1.238745,
+            "renderer": 3.069072,
+            "driver": 0.519338
+          },
+          "browser_navigation_ms": 54,
+          "host_minus_browser_ms": 3.7874160000000003
+        },
+        {
+          "index": 6,
+          "phase": "fixed_wait",
+          "wall_ms": 221.360968,
+          "system_cpu_total_ticks": 112,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.802036,
+            "renderer": 0.04279,
+            "driver": 0.019327
+          }
+        },
+        {
+          "index": 6,
+          "phase": "serialize_before",
+          "wall_ms": 8.468364,
+          "system_cpu_total_ticks": 4,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.12656,
+            "renderer": 0.0,
+            "driver": 0.284788
+          }
+        },
+        {
+          "index": 6,
+          "phase": "census",
+          "wall_ms": 6.482291,
+          "system_cpu_total_ticks": 3,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.078989,
+            "renderer": 0.306746,
+            "driver": 0.068672
+          }
+        },
+        {
+          "index": 6,
+          "phase": "serialize_after",
+          "wall_ms": 5.151081,
+          "system_cpu_total_ticks": 2,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.039722,
+            "renderer": 0.0,
+            "driver": 0.097677
+          }
+        },
+        {
+          "index": 6,
+          "phase": "hash_dom",
+          "wall_ms": 0.2161,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 6,
+          "phase": "heap_counter",
+          "wall_ms": 1.012368,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.061459,
+            "renderer": 0.0,
+            "driver": 0.063331
+          }
+        },
+        {
+          "index": 6,
+          "phase": "dom_counter",
+          "wall_ms": 0.807457,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.060174,
+            "renderer": 0.0,
+            "driver": 0.040107
+          }
+        },
+        {
+          "index": 6,
+          "phase": "navigation_timing",
+          "wall_ms": 1.512994,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.011328,
+            "renderer": 0.0,
+            "driver": 0.007437
+          }
+        },
+        {
+          "index": 7,
+          "phase": "navigation",
+          "wall_ms": 43.869042,
+          "system_cpu_total_ticks": 23,
+          "system_steal_ticks": 1,
+          "system_steal_fraction": 0.043478260869565216,
+          "main_thread_runqueue_wait_ms": {
+            "python": 1.786663,
+            "browser": 2.046356,
+            "renderer": 3.237191,
+            "driver": 1.329532
+          },
+          "browser_navigation_ms": 35.40000000037253,
+          "host_minus_browser_ms": 8.469041999627471
+        },
+        {
+          "index": 7,
+          "phase": "fixed_wait",
+          "wall_ms": 221.62691,
+          "system_cpu_total_ticks": 111,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.554602,
+            "renderer": 0.0,
+            "driver": 0.111929
+          }
+        },
+        {
+          "index": 7,
+          "phase": "serialize_before",
+          "wall_ms": 7.72926,
+          "system_cpu_total_ticks": 4,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 1.57797,
+            "renderer": 0.0,
+            "driver": 0.225953
+          }
+        },
+        {
+          "index": 7,
+          "phase": "census",
+          "wall_ms": 4.253682,
+          "system_cpu_total_ticks": 2,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 1.472787,
+            "renderer": 0.0,
+            "driver": 0.153219
+          }
+        },
+        {
+          "index": 7,
+          "phase": "serialize_after",
+          "wall_ms": 5.060682,
+          "system_cpu_total_ticks": 2,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 1.591161,
+            "renderer": 0.0,
+            "driver": 0.098989
+          }
+        },
+        {
+          "index": 7,
+          "phase": "hash_dom",
+          "wall_ms": 0.215503,
+          "system_cpu_total_ticks": 2,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 7,
+          "phase": "heap_counter",
+          "wall_ms": 0.987299,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.009669,
+            "renderer": 0.0,
+            "driver": 0.038256
+          }
+        },
+        {
+          "index": 7,
+          "phase": "dom_counter",
+          "wall_ms": 0.707489,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.027,
+            "renderer": 0.0,
+            "driver": 0.004033
+          }
+        },
+        {
+          "index": 7,
+          "phase": "navigation_timing",
+          "wall_ms": 1.413328,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.057496,
+            "renderer": 0.0,
+            "driver": 0.015566
+          }
+        },
+        {
+          "index": 8,
+          "phase": "navigation",
+          "wall_ms": 63.444609,
+          "system_cpu_total_ticks": 31,
+          "system_steal_ticks": 1,
+          "system_steal_fraction": 0.03225806451612903,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.760263,
+            "browser": 6.48103,
+            "renderer": 3.657747,
+            "driver": 0.439084
+          },
+          "browser_navigation_ms": 58.5,
+          "host_minus_browser_ms": 4.944609
+        },
+        {
+          "index": 8,
+          "phase": "fixed_wait",
+          "wall_ms": 221.63031,
+          "system_cpu_total_ticks": 111,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 2.572192,
+            "renderer": 0.367941,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 8,
+          "phase": "serialize_before",
+          "wall_ms": 10.058475,
+          "system_cpu_total_ticks": 5,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.06649,
+            "renderer": 0.132535,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 8,
+          "phase": "census",
+          "wall_ms": 4.609996,
+          "system_cpu_total_ticks": 2,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.085652,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 8,
+          "phase": "serialize_after",
+          "wall_ms": 7.218526,
+          "system_cpu_total_ticks": 4,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.101896,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 8,
+          "phase": "hash_dom",
+          "wall_ms": 0.330825,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 8,
+          "phase": "heap_counter",
+          "wall_ms": 1.369671,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.023465,
+            "renderer": 0.037773,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 8,
+          "phase": "dom_counter",
+          "wall_ms": 0.979635,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.034655,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 8,
+          "phase": "navigation_timing",
+          "wall_ms": 1.660563,
+          "system_cpu_total_ticks": 2,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.066817,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 9,
+          "phase": "navigation",
+          "wall_ms": 56.693636,
+          "system_cpu_total_ticks": 29,
+          "system_steal_ticks": 1,
+          "system_steal_fraction": 0.034482758620689655,
+          "main_thread_runqueue_wait_ms": {
+            "python": 1.016325,
+            "browser": 0.074582,
+            "renderer": 3.795052,
+            "driver": 0.381095
+          },
+          "browser_navigation_ms": 52.09999999962747,
+          "host_minus_browser_ms": 4.593636000372527
+        },
+        {
+          "index": 9,
+          "phase": "fixed_wait",
+          "wall_ms": 220.593426,
+          "system_cpu_total_ticks": 109,
+          "system_steal_ticks": 1,
+          "system_steal_fraction": 0.009174311926605505,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.012916,
+            "browser": 0.0,
+            "renderer": 0.092029,
+            "driver": 0.792711
+          }
+        },
+        {
+          "index": 9,
+          "phase": "serialize_before",
+          "wall_ms": 12.848192,
+          "system_cpu_total_ticks": 9,
+          "system_steal_ticks": 1,
+          "system_steal_fraction": 0.1111111111111111,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.65042,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.167983
+          }
+        },
+        {
+          "index": 9,
+          "phase": "census",
+          "wall_ms": 8.067815,
+          "system_cpu_total_ticks": 4,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.034998,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 3.309038
+          }
+        },
+        {
+          "index": 9,
+          "phase": "serialize_after",
+          "wall_ms": 8.705962,
+          "system_cpu_total_ticks": 6,
+          "system_steal_ticks": 1,
+          "system_steal_fraction": 0.16666666666666666,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.434927,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.197299
+          }
+        },
+        {
+          "index": 9,
+          "phase": "hash_dom",
+          "wall_ms": 0.216759,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 9,
+          "phase": "heap_counter",
+          "wall_ms": 1.284913,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.01045,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 1.851073
+          }
+        },
+        {
+          "index": 9,
+          "phase": "dom_counter",
+          "wall_ms": 1.716303,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.260056,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 9,
+          "phase": "navigation_timing",
+          "wall_ms": 1.722492,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.015529,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 10,
+          "phase": "navigation",
+          "wall_ms": 58.931056,
+          "system_cpu_total_ticks": 29,
+          "system_steal_ticks": 4,
+          "system_steal_fraction": 0.13793103448275862,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.601605,
+            "browser": 2.613571,
+            "renderer": 3.844654,
+            "driver": 0.240841
+          },
+          "browser_navigation_ms": 41.5,
+          "host_minus_browser_ms": 17.431055999999998
+        },
+        {
+          "index": 10,
+          "phase": "fixed_wait",
+          "wall_ms": 230.412328,
+          "system_cpu_total_ticks": 119,
+          "system_steal_ticks": 11,
+          "system_steal_fraction": 0.09243697478991597,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 4.502108,
+            "renderer": 3.240513,
+            "driver": 1.028677
+          }
+        },
+        {
+          "index": 10,
+          "phase": "serialize_before",
+          "wall_ms": 12.11294,
+          "system_cpu_total_ticks": 6,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.049449,
+            "renderer": 0.0,
+            "driver": 0.014623
+          }
+        },
+        {
+          "index": 10,
+          "phase": "census",
+          "wall_ms": 6.377248,
+          "system_cpu_total_ticks": 4,
+          "system_steal_ticks": 1,
+          "system_steal_fraction": 0.25,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.078247,
+            "renderer": 0.191942,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 10,
+          "phase": "serialize_after",
+          "wall_ms": 8.755957,
+          "system_cpu_total_ticks": 4,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.075242,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 10,
+          "phase": "hash_dom",
+          "wall_ms": 0.223845,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 10,
+          "phase": "heap_counter",
+          "wall_ms": 1.885536,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.054985,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 10,
+          "phase": "dom_counter",
+          "wall_ms": 1.191403,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.069345,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 10,
+          "phase": "navigation_timing",
+          "wall_ms": 3.369872,
+          "system_cpu_total_ticks": 4,
+          "system_steal_ticks": 1,
+          "system_steal_fraction": 0.25,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.063741,
+            "renderer": 0.0,
+            "driver": 0.022455
+          }
+        },
+        {
+          "index": 11,
+          "phase": "navigation",
+          "wall_ms": 127.312439,
+          "system_cpu_total_ticks": 67,
+          "system_steal_ticks": 13,
+          "system_steal_fraction": 0.19402985074626866,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.09244,
+            "browser": 7.772458,
+            "renderer": 3.541664,
+            "driver": 0.17421
+          },
+          "browser_navigation_ms": 119.90000000037253,
+          "host_minus_browser_ms": 7.412438999627469
+        },
+        {
+          "index": 11,
+          "phase": "fixed_wait",
+          "wall_ms": 221.049944,
+          "system_cpu_total_ticks": 113,
+          "system_steal_ticks": 6,
+          "system_steal_fraction": 0.05309734513274336,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 1.488091,
+            "renderer": 0.443888,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 11,
+          "phase": "serialize_before",
+          "wall_ms": 14.331551,
+          "system_cpu_total_ticks": 7,
+          "system_steal_ticks": 1,
+          "system_steal_fraction": 0.14285714285714285,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.31815,
+            "renderer": 0.0,
+            "driver": 0.020086
+          }
+        },
+        {
+          "index": 11,
+          "phase": "census",
+          "wall_ms": 10.349616,
+          "system_cpu_total_ticks": 6,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 1.73796,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 11,
+          "phase": "serialize_after",
+          "wall_ms": 12.771031,
+          "system_cpu_total_ticks": 6,
+          "system_steal_ticks": 1,
+          "system_steal_fraction": 0.16666666666666666,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 1.327216,
+            "renderer": 0.005834,
+            "driver": 0.029007
+          }
+        },
+        {
+          "index": 11,
+          "phase": "hash_dom",
+          "wall_ms": 0.332735,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 11,
+          "phase": "heap_counter",
+          "wall_ms": 3.998509,
+          "system_cpu_total_ticks": 2,
+          "system_steal_ticks": 1,
+          "system_steal_fraction": 0.5,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.892519,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 11,
+          "phase": "dom_counter",
+          "wall_ms": 5.051679,
+          "system_cpu_total_ticks": 3,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.508998,
+            "renderer": 0.008892,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 11,
+          "phase": "navigation_timing",
+          "wall_ms": 1.943464,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "capture_sha256": "e6eb3af2c2afb020a8fa053a7cbdf33f0ff2d3583d91060231189aa80d0db4a4",
+      "duration_ms": 3784.390694,
+      "phase_ms": {
+        "navigation": 702.1266799999999,
+        "fixed_wait": 2653.5388380000004,
+        "serialize_before": 131.493648,
+        "census": 80.675188,
+        "serialize_after": 81.584508,
+        "hash_dom": 3.247489,
+        "heap_counter": 16.120783000000003,
+        "dom_counter": 24.168404000000002,
+        "navigation_timing": 25.439313000000002
+      },
+      "telemetry_ms": 65.280268,
+      "throttle_ms": 0.0,
+      "system_steal_ticks": 20.0,
+      "system_cpu_total_ticks": 1883.0,
+      "system_steal_fraction": 0.010621348911311737,
+      "optional_counter_availability": {
+        "cgroup_pressure": {
+          "unavailable": "FileNotFoundError"
+        },
+        "host_pressure": {
+          "unavailable": "FileNotFoundError"
+        }
+      },
+      "phases": [
+        {
+          "index": 0,
+          "phase": "navigation",
+          "wall_ms": 57.551711,
+          "system_cpu_total_ticks": 27,
+          "system_steal_ticks": 1,
+          "system_steal_fraction": 0.037037037037037035,
+          "main_thread_runqueue_wait_ms": {
+            "python": 5.528582,
+            "browser": 2.134554,
+            "renderer": 4.896504,
+            "driver": 4.750132
+          },
+          "browser_navigation_ms": 51.59999999962747,
+          "host_minus_browser_ms": 5.951711000372526
+        },
+        {
+          "index": 0,
+          "phase": "fixed_wait",
+          "wall_ms": 221.755345,
+          "system_cpu_total_ticks": 112,
+          "system_steal_ticks": 1,
+          "system_steal_fraction": 0.008928571428571428,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 1.493574,
+            "renderer": 3.340767,
+            "driver": 0.006891
+          }
+        },
+        {
+          "index": 0,
+          "phase": "serialize_before",
+          "wall_ms": 11.868828,
+          "system_cpu_total_ticks": 6,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.104041,
+            "renderer": 0.149652,
+            "driver": 0.130844
+          }
+        },
+        {
+          "index": 0,
+          "phase": "census",
+          "wall_ms": 8.29389,
+          "system_cpu_total_ticks": 4,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.019794,
+            "renderer": 0.007992,
+            "driver": 0.059017
+          }
+        },
+        {
+          "index": 0,
+          "phase": "serialize_after",
+          "wall_ms": 5.393279,
+          "system_cpu_total_ticks": 2,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.286605,
+            "renderer": 0.0,
+            "driver": 0.021369
+          }
+        },
+        {
+          "index": 0,
+          "phase": "hash_dom",
+          "wall_ms": 0.264594,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 0,
+          "phase": "heap_counter",
+          "wall_ms": 1.094605,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.068774,
+            "renderer": 0.0,
+            "driver": 0.070702
+          }
+        },
+        {
+          "index": 0,
+          "phase": "dom_counter",
+          "wall_ms": 0.887866,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.031498,
+            "renderer": 0.0,
+            "driver": 0.026963
+          }
+        },
+        {
+          "index": 0,
+          "phase": "navigation_timing",
+          "wall_ms": 1.631625,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.047594,
+            "renderer": 0.0,
+            "driver": 0.039899
+          }
+        },
+        {
+          "index": 1,
+          "phase": "navigation",
+          "wall_ms": 46.987816,
+          "system_cpu_total_ticks": 24,
+          "system_steal_ticks": 1,
+          "system_steal_fraction": 0.041666666666666664,
+          "main_thread_runqueue_wait_ms": {
+            "python": 3.884637,
+            "browser": 0.488328,
+            "renderer": 0.95589,
+            "driver": 2.288456
+          },
+          "browser_navigation_ms": 39.5,
+          "host_minus_browser_ms": 7.487816000000002
+        },
+        {
+          "index": 1,
+          "phase": "fixed_wait",
+          "wall_ms": 220.869016,
+          "system_cpu_total_ticks": 112,
+          "system_steal_ticks": 1,
+          "system_steal_fraction": 0.008928571428571428,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.485212,
+            "renderer": 0.165534,
+            "driver": 1.343013
+          }
+        },
+        {
+          "index": 1,
+          "phase": "serialize_before",
+          "wall_ms": 8.548655,
+          "system_cpu_total_ticks": 4,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.087802,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 1.164039
+          }
+        },
+        {
+          "index": 1,
+          "phase": "census",
+          "wall_ms": 11.248359,
+          "system_cpu_total_ticks": 5,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 4.100444,
+            "browser": 0.0,
+            "renderer": 4.796068,
+            "driver": 0.774523
+          }
+        },
+        {
+          "index": 1,
+          "phase": "serialize_after",
+          "wall_ms": 13.887741,
+          "system_cpu_total_ticks": 6,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 1.918562,
+            "renderer": 3.870946,
+            "driver": 5.209862
+          }
+        },
+        {
+          "index": 1,
+          "phase": "hash_dom",
+          "wall_ms": 0.231358,
+          "system_cpu_total_ticks": 2,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 1,
+          "phase": "heap_counter",
+          "wall_ms": 1.834147,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.143866
+          }
+        },
+        {
+          "index": 1,
+          "phase": "dom_counter",
+          "wall_ms": 8.076038,
+          "system_cpu_total_ticks": 3,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 2.791922
+          }
+        },
+        {
+          "index": 1,
+          "phase": "navigation_timing",
+          "wall_ms": 1.889505,
+          "system_cpu_total_ticks": 2,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 2,
+          "phase": "navigation",
+          "wall_ms": 70.976926,
+          "system_cpu_total_ticks": 38,
+          "system_steal_ticks": 1,
+          "system_steal_fraction": 0.02631578947368421,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.65293,
+            "browser": 0.297742,
+            "renderer": 2.539375,
+            "driver": 1.742631
+          },
+          "browser_navigation_ms": 67.20000000111759,
+          "host_minus_browser_ms": 3.776925998882419
+        },
+        {
+          "index": 2,
+          "phase": "fixed_wait",
+          "wall_ms": 221.464327,
+          "system_cpu_total_ticks": 112,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.060301,
+            "renderer": 0.079776,
+            "driver": 0.056273
+          }
+        },
+        {
+          "index": 2,
+          "phase": "serialize_before",
+          "wall_ms": 10.035026,
+          "system_cpu_total_ticks": 5,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 2,
+          "phase": "census",
+          "wall_ms": 7.242992,
+          "system_cpu_total_ticks": 3,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.052571,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 2,
+          "phase": "serialize_after",
+          "wall_ms": 8.015728,
+          "system_cpu_total_ticks": 5,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.034146,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.014478
+          }
+        },
+        {
+          "index": 2,
+          "phase": "hash_dom",
+          "wall_ms": 0.335365,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 2,
+          "phase": "heap_counter",
+          "wall_ms": 2.129719,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.031345,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 2,
+          "phase": "dom_counter",
+          "wall_ms": 5.603535,
+          "system_cpu_total_ticks": 4,
+          "system_steal_ticks": 1,
+          "system_steal_fraction": 0.25,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 2,
+          "phase": "navigation_timing",
+          "wall_ms": 4.025011,
+          "system_cpu_total_ticks": 2,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 3,
+          "phase": "navigation",
+          "wall_ms": 82.856923,
+          "system_cpu_total_ticks": 43,
+          "system_steal_ticks": 1,
+          "system_steal_fraction": 0.023255813953488372,
+          "main_thread_runqueue_wait_ms": {
+            "python": 1.08367,
+            "browser": 0.037814,
+            "renderer": 0.322003,
+            "driver": 1.833839
+          },
+          "browser_navigation_ms": 77.80000000074506,
+          "host_minus_browser_ms": 5.056922999254937
+        },
+        {
+          "index": 3,
+          "phase": "fixed_wait",
+          "wall_ms": 220.98265,
+          "system_cpu_total_ticks": 111,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.007175,
+            "renderer": 0.063171,
+            "driver": 0.110262
+          }
+        },
+        {
+          "index": 3,
+          "phase": "serialize_before",
+          "wall_ms": 8.44023,
+          "system_cpu_total_ticks": 4,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.059763
+          }
+        },
+        {
+          "index": 3,
+          "phase": "census",
+          "wall_ms": 9.536444,
+          "system_cpu_total_ticks": 5,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 2.037281,
+            "browser": 0.0,
+            "renderer": 0.647281,
+            "driver": 0.702711
+          }
+        },
+        {
+          "index": 3,
+          "phase": "serialize_after",
+          "wall_ms": 5.730729,
+          "system_cpu_total_ticks": 3,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.083871,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.087516
+          }
+        },
+        {
+          "index": 3,
+          "phase": "hash_dom",
+          "wall_ms": 0.218445,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 3,
+          "phase": "heap_counter",
+          "wall_ms": 1.245382,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.280695,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 3,
+          "phase": "dom_counter",
+          "wall_ms": 1.093002,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.25796,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 3,
+          "phase": "navigation_timing",
+          "wall_ms": 1.839385,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.013558,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.095602
+          }
+        },
+        {
+          "index": 4,
+          "phase": "navigation",
+          "wall_ms": 33.444373,
+          "system_cpu_total_ticks": 17,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.805793,
+            "browser": 0.488977,
+            "renderer": 0.079293,
+            "driver": 2.159972
+          },
+          "browser_navigation_ms": 29.5,
+          "host_minus_browser_ms": 3.944372999999999
+        },
+        {
+          "index": 4,
+          "phase": "fixed_wait",
+          "wall_ms": 221.147904,
+          "system_cpu_total_ticks": 110,
+          "system_steal_ticks": 1,
+          "system_steal_fraction": 0.00909090909090909,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.154333,
+            "renderer": 0.102797,
+            "driver": 0.319874
+          }
+        },
+        {
+          "index": 4,
+          "phase": "serialize_before",
+          "wall_ms": 8.872906,
+          "system_cpu_total_ticks": 5,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.070826
+          }
+        },
+        {
+          "index": 4,
+          "phase": "census",
+          "wall_ms": 4.491301,
+          "system_cpu_total_ticks": 2,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.004183
+          }
+        },
+        {
+          "index": 4,
+          "phase": "serialize_after",
+          "wall_ms": 4.977237,
+          "system_cpu_total_ticks": 3,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.05093
+          }
+        },
+        {
+          "index": 4,
+          "phase": "hash_dom",
+          "wall_ms": 0.21936,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 4,
+          "phase": "heap_counter",
+          "wall_ms": 1.117492,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.009261
+          }
+        },
+        {
+          "index": 4,
+          "phase": "dom_counter",
+          "wall_ms": 1.143464,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.152221,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.009101
+          }
+        },
+        {
+          "index": 4,
+          "phase": "navigation_timing",
+          "wall_ms": 1.605643,
+          "system_cpu_total_ticks": 2,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.003885
+          }
+        },
+        {
+          "index": 5,
+          "phase": "navigation",
+          "wall_ms": 79.675249,
+          "system_cpu_total_ticks": 40,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.33795,
+            "browser": 0.435885,
+            "renderer": 0.189044,
+            "driver": 1.161689
+          },
+          "browser_navigation_ms": 75.59999999962747,
+          "host_minus_browser_ms": 4.075249000372523
+        },
+        {
+          "index": 5,
+          "phase": "fixed_wait",
+          "wall_ms": 221.01054,
+          "system_cpu_total_ticks": 109,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.452376,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 5,
+          "phase": "serialize_before",
+          "wall_ms": 12.559257,
+          "system_cpu_total_ticks": 7,
+          "system_steal_ticks": 1,
+          "system_steal_fraction": 0.14285714285714285,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.004162,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 5,
+          "phase": "census",
+          "wall_ms": 6.746278,
+          "system_cpu_total_ticks": 4,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.004946,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 5,
+          "phase": "serialize_after",
+          "wall_ms": 6.921555,
+          "system_cpu_total_ticks": 4,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.004442,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 5,
+          "phase": "hash_dom",
+          "wall_ms": 0.36779,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 5,
+          "phase": "heap_counter",
+          "wall_ms": 1.13931,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.003574,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 5,
+          "phase": "dom_counter",
+          "wall_ms": 1.078109,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.003192,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 5,
+          "phase": "navigation_timing",
+          "wall_ms": 2.518618,
+          "system_cpu_total_ticks": 2,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.002873,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 6,
+          "phase": "navigation",
+          "wall_ms": 62.021004,
+          "system_cpu_total_ticks": 31,
+          "system_steal_ticks": 2,
+          "system_steal_fraction": 0.06451612903225806,
+          "main_thread_runqueue_wait_ms": {
+            "python": 1.308995,
+            "browser": 3.451813,
+            "renderer": 6.392346,
+            "driver": 0.403024
+          },
+          "browser_navigation_ms": 57.09999999962747,
+          "host_minus_browser_ms": 4.921004000372527
+        },
+        {
+          "index": 6,
+          "phase": "fixed_wait",
+          "wall_ms": 221.701763,
+          "system_cpu_total_ticks": 110,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 4.512967,
+            "renderer": 7.350622,
+            "driver": 0.115469
+          }
+        },
+        {
+          "index": 6,
+          "phase": "serialize_before",
+          "wall_ms": 8.637643,
+          "system_cpu_total_ticks": 5,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.094665
+          }
+        },
+        {
+          "index": 6,
+          "phase": "census",
+          "wall_ms": 6.862203,
+          "system_cpu_total_ticks": 4,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.022821
+          }
+        },
+        {
+          "index": 6,
+          "phase": "serialize_after",
+          "wall_ms": 5.264168,
+          "system_cpu_total_ticks": 3,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.035499
+          }
+        },
+        {
+          "index": 6,
+          "phase": "hash_dom",
+          "wall_ms": 0.215687,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 6,
+          "phase": "heap_counter",
+          "wall_ms": 1.328701,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.031076
+          }
+        },
+        {
+          "index": 6,
+          "phase": "dom_counter",
+          "wall_ms": 1.256529,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.007297
+          }
+        },
+        {
+          "index": 6,
+          "phase": "navigation_timing",
+          "wall_ms": 1.743801,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.010402
+          }
+        },
+        {
+          "index": 7,
+          "phase": "navigation",
+          "wall_ms": 41.586601,
+          "system_cpu_total_ticks": 22,
+          "system_steal_ticks": 1,
+          "system_steal_fraction": 0.045454545454545456,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.067304,
+            "browser": 3.864667,
+            "renderer": 0.017823,
+            "driver": 1.307036
+          },
+          "browser_navigation_ms": 36.5,
+          "host_minus_browser_ms": 5.086601000000002
+        },
+        {
+          "index": 7,
+          "phase": "fixed_wait",
+          "wall_ms": 221.327148,
+          "system_cpu_total_ticks": 112,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 4.155374,
+            "renderer": 0.0,
+            "driver": 0.238031
+          }
+        },
+        {
+          "index": 7,
+          "phase": "serialize_before",
+          "wall_ms": 8.129617,
+          "system_cpu_total_ticks": 4,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.068402,
+            "renderer": 0.0,
+            "driver": 0.034329
+          }
+        },
+        {
+          "index": 7,
+          "phase": "census",
+          "wall_ms": 4.634616,
+          "system_cpu_total_ticks": 2,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.020898
+          }
+        },
+        {
+          "index": 7,
+          "phase": "serialize_after",
+          "wall_ms": 5.280931,
+          "system_cpu_total_ticks": 3,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.044273
+          }
+        },
+        {
+          "index": 7,
+          "phase": "hash_dom",
+          "wall_ms": 0.216074,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 7,
+          "phase": "heap_counter",
+          "wall_ms": 1.203855,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.009858
+          }
+        },
+        {
+          "index": 7,
+          "phase": "dom_counter",
+          "wall_ms": 0.936884,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.017505
+          }
+        },
+        {
+          "index": 7,
+          "phase": "navigation_timing",
+          "wall_ms": 2.057957,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.009289
+          }
+        },
+        {
+          "index": 8,
+          "phase": "navigation",
+          "wall_ms": 54.218809,
+          "system_cpu_total_ticks": 25,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 2.696894,
+            "browser": 3.443053,
+            "renderer": 4.151861,
+            "driver": 0.67635
+          },
+          "browser_navigation_ms": 50.09999999962747,
+          "host_minus_browser_ms": 4.118809000372529
+        },
+        {
+          "index": 8,
+          "phase": "fixed_wait",
+          "wall_ms": 220.124606,
+          "system_cpu_total_ticks": 111,
+          "system_steal_ticks": 1,
+          "system_steal_fraction": 0.009009009009009009,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.611329,
+            "renderer": 0.231078,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 8,
+          "phase": "serialize_before",
+          "wall_ms": 11.231827,
+          "system_cpu_total_ticks": 5,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 3.089148,
+            "renderer": 0.144762,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 8,
+          "phase": "census",
+          "wall_ms": 6.275189,
+          "system_cpu_total_ticks": 4,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 8,
+          "phase": "serialize_after",
+          "wall_ms": 8.004575,
+          "system_cpu_total_ticks": 4,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.089931,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 8,
+          "phase": "hash_dom",
+          "wall_ms": 0.366653,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 8,
+          "phase": "heap_counter",
+          "wall_ms": 1.155165,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 8,
+          "phase": "dom_counter",
+          "wall_ms": 1.208858,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.023628,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 8,
+          "phase": "navigation_timing",
+          "wall_ms": 1.782041,
+          "system_cpu_total_ticks": 2,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.040945,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 9,
+          "phase": "navigation",
+          "wall_ms": 38.426153,
+          "system_cpu_total_ticks": 20,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.120434,
+            "browser": 2.934434,
+            "renderer": 2.846869,
+            "driver": 0.0
+          },
+          "browser_navigation_ms": 34.40000000037253,
+          "host_minus_browser_ms": 4.02615299962747
+        },
+        {
+          "index": 9,
+          "phase": "fixed_wait",
+          "wall_ms": 220.789852,
+          "system_cpu_total_ticks": 112,
+          "system_steal_ticks": 1,
+          "system_steal_fraction": 0.008928571428571428,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.125032,
+            "renderer": 0.226397,
+            "driver": 0.176546
+          }
+        },
+        {
+          "index": 9,
+          "phase": "serialize_before",
+          "wall_ms": 7.670997,
+          "system_cpu_total_ticks": 3,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.030262
+          }
+        },
+        {
+          "index": 9,
+          "phase": "census",
+          "wall_ms": 5.623008,
+          "system_cpu_total_ticks": 3,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 9,
+          "phase": "serialize_after",
+          "wall_ms": 5.335461,
+          "system_cpu_total_ticks": 3,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 9,
+          "phase": "hash_dom",
+          "wall_ms": 0.212889,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 9,
+          "phase": "heap_counter",
+          "wall_ms": 1.576427,
+          "system_cpu_total_ticks": 2,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 9,
+          "phase": "dom_counter",
+          "wall_ms": 1.121821,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 9,
+          "phase": "navigation_timing",
+          "wall_ms": 2.971234,
+          "system_cpu_total_ticks": 2,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 10,
+          "phase": "navigation",
+          "wall_ms": 45.466339,
+          "system_cpu_total_ticks": 23,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.17557,
+            "browser": 2.893057,
+            "renderer": 1.448238,
+            "driver": 0.103629
+          },
+          "browser_navigation_ms": 41.20000000111759,
+          "host_minus_browser_ms": 4.266338998882411
+        },
+        {
+          "index": 10,
+          "phase": "fixed_wait",
+          "wall_ms": 221.051164,
+          "system_cpu_total_ticks": 110,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.07264,
+            "browser": 1.349354,
+            "renderer": 0.418584,
+            "driver": 0.046236
+          }
+        },
+        {
+          "index": 10,
+          "phase": "serialize_before",
+          "wall_ms": 25.875597,
+          "system_cpu_total_ticks": 13,
+          "system_steal_ticks": 2,
+          "system_steal_fraction": 0.15384615384615385,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 3.963825,
+            "renderer": 3.849677,
+            "driver": 6.178958
+          }
+        },
+        {
+          "index": 10,
+          "phase": "census",
+          "wall_ms": 5.171514,
+          "system_cpu_total_ticks": 3,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.073801,
+            "renderer": 0.154938,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 10,
+          "phase": "serialize_after",
+          "wall_ms": 6.071606,
+          "system_cpu_total_ticks": 4,
+          "system_steal_ticks": 1,
+          "system_steal_fraction": 0.25,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.075169,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 10,
+          "phase": "hash_dom",
+          "wall_ms": 0.215353,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 10,
+          "phase": "heap_counter",
+          "wall_ms": 1.119386,
+          "system_cpu_total_ticks": 2,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.035373,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 10,
+          "phase": "dom_counter",
+          "wall_ms": 0.916515,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.024387,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 10,
+          "phase": "navigation_timing",
+          "wall_ms": 1.633838,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.089564,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 11,
+          "phase": "navigation",
+          "wall_ms": 88.914776,
+          "system_cpu_total_ticks": 44,
+          "system_steal_ticks": 2,
+          "system_steal_fraction": 0.045454545454545456,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 1.107058,
+            "renderer": 1.075143,
+            "driver": 0.0
+          },
+          "browser_navigation_ms": 84.19999999925494,
+          "host_minus_browser_ms": 4.714776000745061
+        },
+        {
+          "index": 11,
+          "phase": "fixed_wait",
+          "wall_ms": 221.314523,
+          "system_cpu_total_ticks": 111,
+          "system_steal_ticks": 1,
+          "system_steal_fraction": 0.009009009009009009,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.173428,
+            "renderer": 0.039476,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 11,
+          "phase": "serialize_before",
+          "wall_ms": 9.623065,
+          "system_cpu_total_ticks": 4,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.020365,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 11,
+          "phase": "census",
+          "wall_ms": 4.549394,
+          "system_cpu_total_ticks": 2,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 11,
+          "phase": "serialize_after",
+          "wall_ms": 6.701498,
+          "system_cpu_total_ticks": 5,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 11,
+          "phase": "hash_dom",
+          "wall_ms": 0.383921,
+          "system_cpu_total_ticks": 0,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": null,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 11,
+          "phase": "heap_counter",
+          "wall_ms": 1.176594,
+          "system_cpu_total_ticks": 2,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.004054,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 11,
+          "phase": "dom_counter",
+          "wall_ms": 0.845783,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        },
+        {
+          "index": 11,
+          "phase": "navigation_timing",
+          "wall_ms": 1.740655,
+          "system_cpu_total_ticks": 1,
+          "system_steal_ticks": 0,
+          "system_steal_fraction": 0.0,
+          "main_thread_runqueue_wait_ms": {
+            "python": 0.0,
+            "browser": 0.0,
+            "renderer": 0.0,
+            "driver": 0.0
+          }
+        }
+      ]
+    }
+  ],
+  "limits": "CPU steal is aggregate virtual CPU context, not per-process waiting or a conversion to wall time. Main-thread waits exclude other threads and blocked I/O. Snapshot reads are not atomic. This new telemetry does not retroactively establish the cause of v12 control variation, qualify the instrument, or authorize discarding slow samples."
+}

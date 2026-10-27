@@ -1,0 +1,26 @@
+{
+  "archive_sha256": "11e18604eddafee0a7fdc44765631ed7e4101a204c6d9f2ac846c34bba588d0d",
+  "logical_files": 19,
+  "unique_blobs": 19,
+  "paths": {
+    "diagnostic-v2/0-control/capture.json.gz": "23d6b3a6d7f60099e0464003c8d44534d2afe1fa51b4e5069af419aa84740b17",
+    "diagnostic-v2/0-control/identity.json": "a4971c19aeb5c801d71a3cc18b3975e58fc43b0fb4ec7f5c18eb611fb4e1d68c",
+    "diagnostic-v2/0-control/runner.txt": "0575fb859953b478a08d95b1b8656df117462e88bc89752b2efd3ddcfebf476e",
+    "diagnostic-v2/1-control/capture.json.gz": "e6f2762930a0f7051cb4e4b9ad05c7677f397d1cc612c3daa5b7599e0e9f1d38",
+    "diagnostic-v2/1-control/identity.json": "84ccac27f567ee553d620da845b8e948ed5a5c5a679e30ae6b82a1776234bb59",
+    "diagnostic-v2/1-control/runner.txt": "dc534a2840454710c254d7b9865f2cb5632765d8f6d79e2d4859db2e31045a8b",
+    "diagnostic-v2/2-control/capture.json.gz": "6f2add966e3c7cd1f919249d23131bf767b50c3a93da07f52f0cbb910a87883e",
+    "diagnostic-v2/2-control/identity.json": "ace16befb935bfcddccdb8616ee3a705c7ee58f615a43f3dad73dc5001557045",
+    "diagnostic-v2/2-control/runner.txt": "c04a94a9a0e30d3a8c3610f4e90892457595d7b12c002d76c9ac7f3a421ab9b2",
+    "diagnostic-v2/3-control/capture.json.gz": "e6eb3af2c2afb020a8fa053a7cbdf33f0ff2d3583d91060231189aa80d0db4a4",
+    "diagnostic-v2/3-control/identity.json": "b8e832de43b556e16c266e342b3a44774c373ebf0f20e826d7943080881dbd93",
+    "diagnostic-v2/3-control/runner.txt": "7da793644e55b2d49b514aa757bdd39feb0f8e1b4f4e5fe3d5be10b30f354890",
+    "diagnostic-v2/assessment.json": "df47860c07c0f071b3557e86e594e40598ff0a54e77e42c942c1af019f5b6cb7",
+    "diagnostic-v2/experiment.json": "04a7d5adf74af5171f76c341b20e8caa678e20f271486d4b7ff4be0b05d218d7",
+    "diagnostic-v2/harness/scripts/avatar_baseline/analyze_element_membership.py": "6367df1a5516e4d23cb35ce44294a1c38a288f262605020db1e8d5738767dc33",
+    "diagnostic-v2/harness/scripts/avatar_baseline/analyze_membership_lifecycle.py": "39fa739582e42314f9be5a68df018f642e28de65ccc71c0b342ed512bf008180",
+    "diagnostic-v2/harness/scripts/avatar_baseline/control_phase_timing.py": "3ffaffcc464a08e9f276be8eee088e4baba9e97bba5370f3bc9317aeccd3e65f",
+    "diagnostic-v2/harness/scripts/avatar_baseline/element_membership_lifecycle.py": "d0616a74cea0da5e2ea6dcdb5f9792961f8988973989ac533873e0b457dac36b",
+    "diagnostic-v2/harness/scripts/avatar_baseline/mixed_membership_fixture.py": "a20f5cefbbe8b071819e0ed598f6a4718f0b55ce49f1a8b6113e6df8df0e149c"
+  }
+}

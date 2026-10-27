@@ -1,0 +1,20 @@
+[
+  {
+    "archive": "diagnostic-v1-failure-evidence.zip",
+    "logical_files": 19,
+    "identical_audit": true,
+    "status": "diagnostic_failed",
+    "files_verified": 0,
+    "source_hashes_verified": 5,
+    "harness_commit": "d867258afef6faadd97a10dbcf1c7485a5cbaa55"
+  },
+  {
+    "archive": "diagnostic-v2-evidence.zip",
+    "logical_files": 19,
+    "identical_audit": true,
+    "status": "diagnostic_complete",
+    "files_verified": 12,
+    "source_hashes_verified": 5,
+    "harness_commit": "84ce8e9df632fa6ce7465ddc807b2d598cd49909"
+  }
+]

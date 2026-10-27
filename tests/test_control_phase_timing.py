@@ -74,3 +74,10 @@ def test_failing_operation_retains_brackets_and_snapshots(monkeypatch):
 def test_driver_identity_uses_parent_pid_in_stat():
     fields=['R']+list(map(str,range(1,50)))
     assert process_stat('42 (node) '+' '.join(fields))['parent_pid']==1
+
+
+def test_cpu_steal_summary_excludes_double_counted_guest_time():
+    from scripts.avatar_baseline.summarize_control_timing import cpu_delta
+    assert cpu_delta([0]*10,[10,0,3,50,0,0,1,6,2,0])==(70,6)
+    with pytest.raises(ValueError):cpu_delta([1]*10,[0]*10)
+    with pytest.raises(ValueError):cpu_delta([0]*10,[1]*8)

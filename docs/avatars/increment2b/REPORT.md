@@ -8,10 +8,25 @@ with stable controls. Remaining milestones: a supported fix, qualified candidate
 validation, then complete original-baseline acceptance across all device/cache
 and scenario groups. No defensible percentage or ETA is established.
 
-Use the [Sol restart handoff](../../AVATAR_UPGRADE_HANDOFF.md#start-here--sol-handoff-current-after-native-recorder-v12)
+Use the [Sol restart handoff](../../AVATAR_UPGRADE_HANDOFF.md#start-here--sol-handoff-current-after-control-timing-diagnostic)
 for current source identities, evidence order, next bounded work and constraints.
-The native recorder result below is the latest completed experiment.
+The control timing diagnostic below is the latest completed experiment.
 Older next-step instructions in this report are historical where superseded.
+
+## Control timing diagnostic — host contention signal, qualification still blocked
+
+[Latest report](control-phase-timing/REPORT.md): frozen 84ce8e9 completes four uninjected controls with
+108 operation brackets each; all d867258 initialization failures are preserved.
+Navigation and before-DOM serialization dominate the slow/fast difference. The
+slowest first navigation/serialization coincide with **31.03/38.74% aggregate CPU
+steal** and no cgroup quota-throttle increments. Pressure counters are unavailable.
+This supports investigating runner contention/isolation; it does not prove the
+historical v12 failure's cause. Diagnostic variation of 16.1449% does not replace
+v12's failed **20.7568% >20%** result. Both archives re-audit identically; **97 focused
+tests pass**. Product unchanged; no application calibration or 2B advance. Next
+obtain provider/runtime scheduling evidence and a supported runner-isolation
+intervention before a newly frozen complete comparison. No quiet-window retries,
+slow-sample exclusion, timing subtraction or budget waiver.
 
 ## Native callback recorder — costs passed, control stability failed
 

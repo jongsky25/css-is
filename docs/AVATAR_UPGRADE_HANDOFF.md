@@ -2,7 +2,7 @@
 
 Last updated: **2026-10-27 UTC**. Repository: `jongsky25/css-is`.
 
-## Start here — Sol handoff, current after native recorder v12
+## Start here — Sol handoff, current after control timing diagnostic
 
 **Objective: unblock 2B only. Do not start or resume 3A or later increments.**
 This section supersedes older next-step instructions below. The chronology is
@@ -11,11 +11,11 @@ retained as evidence, not a queue of experiments to repeat.
 ### Checkout and current state
 
 - Repository: `jongsky25/css-is`; resume `codex/avatar-2b-verification`.
-- Latest completed experiment: C callback/buffer calibration, frozen harness
-  `04ca993` (lifecycle v12). Native preflight and live receiver proofs pass;
-  both probes pass cost and all-mode reclamation. Control variation fails at
-  20.7568% >20%, so no instrument/application calibration qualification.
-  Earlier mixed revisions/proofs and all native implementation failures remain.
+- Latest completed experiment: uninjected control timing diagnostic, harness
+  `84ce8e9`. Four complete controls localize variation to navigation/serialization
+  with concurrent aggregate CPU steal; no cgroup throttle increments. Earlier
+  d867258 initialization failures are retained. No qualification screen was rerun.
+  C recorder v12 (`04ca993`) still fails control variation (20.7568% >20%).
   Use latest branch HEAD for reports/evidence, not a reset to a harness commit.
 - Comparison baseline: `1c964dcba2fa19de1eab077b00e0e5748d742554`.
 - Current experimental product: `cf363bfe547d5e23619eee28cdaf68bd4b6d7753`,
@@ -72,7 +72,9 @@ verification**. No candidate currently qualifies to unblock 2B.
 
 Read these in order before changing code or launching browsers:
 
-1. [Native recorder result](avatars/increment2b/native-callback-recorder/REPORT.md),
+1. [Control timing diagnostic](avatars/increment2b/control-phase-timing/REPORT.md),
+   both frozen protocols, failed initialization and complete control/CPU evidence.
+   Then [native recorder result](avatars/increment2b/native-callback-recorder/REPORT.md),
    frozen protocols, failed implementations, passed proofs, control interval analysis
    and the failed four-slot calibration. Then [mixed getter result](avatars/increment2b/mixed-reclamation-getter/REPORT.md),
    four frozen screen protocols, type proofs, failed audits and native-period summaries.
@@ -87,22 +89,28 @@ Read these in order before changing code or launching browsers:
    [reader retention](avatars/increment2b/reader-retention/REPORT.md) and
    [native types](avatars/increment2b/native-type-ownership/REPORT.md) remain constraints.
 
-The native C recorder intervention is completed. Preflight b2bf252 proves clock,
-concurrency, immutable values and exact overflow accounting. Live proof f676f7a
-verifies 384 receiver/reference pairs across DOM/SVG/style. Frozen v12 screen
-04ca993 passes individual probe costs, native joins and measured reclamation;
-control duration variation is the sole remaining screen error. All three complete
-archives reconstruct and re-audit identically; failed v1/v2 native captures remain.
-81 focused tests pass. Do not repeat v12 unchanged for a favorable margin.
+The separate uninjected control diagnostic is completed. Initial d867258 slots all
+failed before measurement because /proc task children is unavailable; repair
+84ce8e9 validates the Playwright-owned driver PID directly. All four fresh controls
+complete 108 phase brackets each. Navigation and before-DOM serialization account
+for most slow/fast variation. Slot 2 first navigation/serialization coincide with
+31.03/38.74% aggregate CPU steal; quota counters do not advance. Host/cgroup pressure
+files are unavailable. This supports runner contention investigation, but cannot
+retroactively explain v12's unmeasured scheduling context or establish causation.
+Both archives reconstruct/re-audit identically; 97 focused tests pass.
 
-Next prepare a separate uninjected control timing diagnostic, explicitly bracketing
-navigation, fixed wait, each DOM serialization, census and counters, with bounded
-browser/host CPU scheduling context. Freeze its capture policy before measurement.
-Existing captures explain only 69.6195ms of the 768.4669ms control difference via
-observer intervals; remaining 698.8474ms mixes browser work and scheduling. This is
-an unresolved attribution question, not permission to subtract time or relax 20%.
-Establish a concrete explanation/intervention before any new qualification screen.
-No application calibration, candidate promotion, 2B acceptance or later increment.
+The diagnostic's 16.1449% range is not a passing qualification result. Telemetry and
+extra queries change the workload. V12 remains failed at 20.7568% control variation,
+though both recorder cost/reclamation probes passed. No timing subtraction,
+post-hoc load filter, quiet-window rerun or budget waiver is allowed.
+
+Next investigate runner contention/isolation: obtain provider/runtime CPU scheduling
+evidence and a concrete supported reserved-capacity/isolation intervention, keeping
+browser, fixtures and resource comparisons explicit. No resource/affinity setting
+was changed or isolation intervention demonstrated. Freeze any new condition and
+capture policy before a complete fixed comparison, retain every slot/failure, and
+require full instrument qualification before application calibration. Product
+cf363bf and unpromoted cd94bf3 remain unchanged; no 2B acceptance or later increment.
 
 ### Important traps and execution constraints
 

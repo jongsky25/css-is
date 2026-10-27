@@ -25,6 +25,21 @@ seasonal administration, and accessibility behavior.
 A phase fails if its visuals remain essentially the same except for color changes,
 or if it exceeds a performance gate. Fix or reduce complexity before expanding it.
 
+## Control timing diagnostic — host contention signal, qualification still blocked
+
+[Latest report](avatars/increment2b/control-phase-timing/REPORT.md): frozen 84ce8e9 completes four uninjected controls with
+108 operation brackets each; all d867258 initialization failures are preserved.
+Navigation and before-DOM serialization dominate the slow/fast difference. The
+slowest first navigation/serialization coincide with **31.03/38.74% aggregate CPU
+steal** and no cgroup quota-throttle increments. Pressure counters are unavailable.
+This supports investigating runner contention/isolation; it does not prove the
+historical v12 failure's cause. Diagnostic variation of 16.1449% does not replace
+v12's failed **20.7568% >20%** result. Both archives re-audit identically; **97 focused
+tests pass**. Product unchanged; no application calibration or 2B advance. Next
+obtain provider/runtime scheduling evidence and a supported runner-isolation
+intervention before a newly frozen complete comparison. No quiet-window retries,
+slow-sample exclusion, timing subtraction or budget waiver.
+
 ## Native callback recorder — costs passed, control stability failed
 
 [Latest report](avatars/increment2b/native-callback-recorder/REPORT.md): frozen native preflight b2bf252 and live receiver proof
