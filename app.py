@@ -17704,7 +17704,8 @@ if _MCP_ENABLED:
         if not pending:
             return _mcp_consent_error('This request expired. Start again in ChatGPT.', 410)
         client_id, params = pending
-        labels = {'work:comment:draft': 'Prepare private task comment drafts (each save requires browser confirmation; no posting or notices)',
+        labels = {'reports:view:save': 'Save your own named survey report selections (each save requires browser confirmation; no results or exports)',
+                  'work:comment:draft': 'Prepare private task comment drafts (each save requires browser confirmation; no posting or notices)',
                   'supplies:request:draft': 'Prepare new personal supply request drafts (each save requires browser confirmation; no submission or stock allocation)',
                   'notifications:mark_read': 'Prepare marking your own shared-work notices read (each action requires browser confirmation)',
                   'surveys:person_activities:read': 'Permitted resource-person satisfaction for one activity (no individual responses)',

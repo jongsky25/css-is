@@ -20,6 +20,8 @@ supports only the notification action. The shared browser confirmation boundary
 also serves the independent [v8.79 supply-draft pilot](MCP_SUPPLY_DRAFT_PILOT.md),
 which has its own scope, switch, storage and domain checks. The same boundary
 also serves [v8.81 private task comment drafts](MCP_COMMENT_DRAFT_PILOT.md).
+The independent [v8.82 saved report views](MCP_REPORT_VIEW_PILOT.md) pilot uses
+the same confirmation boundary for personal selection metadata only.
 Future domains need
 their own authority, revision and preview review before reusing this pattern.
 

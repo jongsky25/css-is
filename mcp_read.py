@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import asyncio
 from datetime import date, timedelta
+from typing import Literal
 import re
 import os
 
@@ -21,6 +22,7 @@ import mcp_auth
 import mcp_actions
 import mcp_supply_drafts
 import mcp_comment_drafts
+import mcp_report_views
 import supplies_storage
 import office_calendar
 import ratelimit
@@ -165,6 +167,8 @@ def build_server(get_conn, origin):
             except mcp_actions.ActionError as exc:
                 raise ValueError(exc.code + ': ' + str(exc)) from None
             except (supplies_storage.Invalid, supplies_storage.Conflict, documents.Conflict):
+                if scope == mcp_report_views.SCOPE:
+                    raise ValueError('view_unavailable: Review your saved report views, name and view limit in Office Connect.') from None
                 raise ValueError('draft_unavailable: Review the current target, draft fields and your access in Office Connect.') from None
             finally:
                 conn.close()
@@ -258,6 +262,40 @@ def build_server(get_conn, origin):
         """
         return await action(lambda conn, token: mcp_comment_drafts.recover(
             conn, token, provider.resource, origin, operation_id), mcp_comment_drafts.SCOPE)
+
+    @server.tool(title='Prepare my saved report view', annotations=ToolAnnotations(
+        readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=False))
+    async def prepare_saved_report_view(name: StrictStr, report_type: Literal['csm_month', 'activity_quarter'],
+                                        year: StrictInt, operation_id: StrictStr,
+                                        month: StrictInt | None = None, quarter: StrictInt | None = None) -> dict:
+        """Prepare a NEW own named report selection for browser confirmation.
+
+        Choose csm_month with month 1–12 (no quarter), or activity_quarter with
+        quarter 1–4 (no month), year 1900–9998, and a unique 1–60 character name.
+        Only selections are stored: no results, respondents, comments, arbitrary
+        URLs/filters, exports or publication. Show confirmation_url for the user
+        to review and confirm in Office Connect; this call does not save a view.
+        Keep the same random 16–80 character operation key across retries and
+        recover with get_saved_report_view_operation. Requires reports:view:save;
+        existing read/draft grants do not authorize this action.
+        """
+        return await action(lambda conn, token: mcp_report_views.prepare(
+            conn, token, provider.resource, origin, operation_id,
+            {'name': name, 'report_type': report_type, 'year': year, 'month': month, 'quarter': quarter}),
+            mcp_report_views.SCOPE)
+
+    @server.tool(title='Check my saved report view receipt', annotations=READ_ONLY)
+    async def get_saved_report_view_operation(operation_id: StrictStr) -> dict:
+        """Recover the original report-view preview/save without reading results.
+
+        Requires the same active connection and reports:view:save consent. A
+        completed receipt links the owner's saved selection; opening the ordinary
+        report applies current access and loads current data. An unavailable
+        receipt is not proof of failure; inspect the original operation/source
+        before preparing a replacement key.
+        """
+        return await action(lambda conn, token: mcp_report_views.recover(
+            conn, token, provider.resource, origin, operation_id), mcp_report_views.SCOPE)
 
     def supply_queue(conn, user, queue, state, query, page, limit):
         if queue not in ('requests', 'approvals', 'warnings'):

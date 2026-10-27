@@ -1,0 +1,19 @@
+{% extends "dash_layout.html" %}
+{% block title %}My saved report views — Office Connect{% endblock %}
+{% block content %}
+<div style="max-width:46rem;margin:auto;overflow-wrap:anywhere">
+{% if selected %}
+<h1>{{ selected.name }}</h1>
+<p>{{ selected.report_label }} · {{ selected.period_label }}</p>
+<p>This personal view stores the report selection. Opening it loads current data and applies your current report access.</p>
+<p><a href="{{ selected.report_url }}">Open selected report</a></p>
+<p><a href="/reports/saved">My saved report views</a></p>
+{% else %}
+<h1>My saved report views</h1>
+<p>These named report selections are private to you. They do not store report results. You can save up to ten report views.</p>
+<ul>{% for view in views %}<li><a href="/reports/saved/{{ view.id }}">{{ view.name }}</a> — {{ view.report_label }}, {{ view.period_label }}</li>
+{% else %}<li>No saved report views yet.</li>{% endfor %}</ul>
+{% endif %}
+<p><a href="/reports">Back to Reports</a></p>
+</div>
+{% endblock %}

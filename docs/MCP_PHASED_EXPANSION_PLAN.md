@@ -1,6 +1,6 @@
 # Office Connect MCP expansion plan
 
-Status: **Incremental implementation**, updated October 27, 2026. Baseline: the read-only MCP expansion in v8.35 (PR #444). M1 reads and default-off M2.1 notification, M2.2 supply-draft and M2.3 private-comment-draft pilots are implemented as recorded below. Existing OAuth grants are not widened. Hosted write acceptance remains separate from implementation.
+Status: **Incremental implementation**, updated October 27, 2026. Baseline: the read-only MCP expansion in v8.35 (PR #444). M1 reads and default-off M2.1 notification, M2.2 supply-draft, M2.3 private-comment-draft and M2.4 saved-report-view pilots are implemented as recorded below. Existing OAuth grants are not widened. Hosted write acceptance remains separate from implementation.
 
 ## Goal and boundary
 
@@ -234,3 +234,20 @@ the draft in the existing UI. No MCP posting, notices, mentions, task submission
 or workflow changes. See [pilot contract and acceptance](MCP_COMMENT_DRAFT_PILOT.md).
 Hosted acceptance remains pending; other M2 preparation and all M3/M4 MCP writes
 remain separate work.
+
+M2.3 merged in [PR #492](https://github.com/jongsky25/css-is/pull/492), commit
+`1ee20da23cd7fc84aaa278d9268f41be7440268e`. This does not activate or record
+hosted acceptance for the private-comment pilot.
+
+### M2.4 implementation — v8.82
+
+Save a new owner-private named survey report selection after explicit browser
+confirmation. New `reports:view:save` consent and default-off
+`CSS_MCP_REPORT_VIEWS_ENABLED` preserve existing read/draft grants. Restrict this
+first delivery to one Type 1 CSM month or Type 2 activity quarter; generate exact
+source links without loading survey results. Bind actor/grant/payload/expiry,
+recheck current role/name/capacity, and atomically save preference/receipt/audit.
+Owner-only Reports collection/source pages reopen current report data through
+ordinary report permissions. No report mutation, content, export, sharing,
+overwrite or delete. See [pilot contract and acceptance](MCP_REPORT_VIEW_PILOT.md).
+Hosted acceptance and other M2/M3/M4 actions remain separate work.

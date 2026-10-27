@@ -1,0 +1,29 @@
+{% extends "dash_layout.html" %}
+{% block title %}Review personal report view — Office Connect{% endblock %}
+{% block content %}
+<div style="max-width:42rem;margin:auto;overflow-wrap:anywhere">
+{% if result.status == 'completed' %}
+<h1>Personal report view saved</h1>
+<p>Saved at {{ result.completed_at }}. This is a saved selection, not a snapshot of report results.</p>
+<p><a href="{{ result.web_url }}">Open my saved report view</a></p>
+{% else %}
+<h1>Save this personal report view?</h1>
+<dl>
+<dt>Name</dt><dd>{{ result.fields.name }}</dd>
+<dt>Report</dt><dd>{{ 'Bureau-wide monthly CSM' if result.fields.report_type == 'csm_month' else 'Bureau-wide quarterly activity satisfaction' }}</dd>
+<dt>Year</dt><dd>{{ result.fields.year }}</dd>
+{% if result.fields.report_type == 'csm_month' %}<dt>Month</dt><dd>{{ result.fields.month }}</dd>
+{% else %}<dt>Quarter</dt><dd>{{ result.fields.quarter }}</dd>{% endif %}
+</dl>
+<p><a href="{{ result.report_url }}">Review the selected report</a></p>
+<p>This saves only a named selection for you. It does not store results, change surveys, generate files or publish a report. Opening it later shows current data through the normal report screen. The preview expires ten minutes after preparation.</p>
+<form method="post">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<input type="hidden" name="preview_digest" value="{{ result.preview_digest }}">
+<button type="submit" name="confirm" value="yes">Confirm: save my report view</button>
+</form>
+{% endif %}
+<p>Operation receipt: <code>{{ result.operation_id }}</code></p>
+<p><a href="/reports/saved">My saved report views</a> · <a href="/reports">Reports</a></p>
+</div>
+{% endblock %}

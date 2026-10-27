@@ -1,3 +1,9 @@
+## 8.82 — October 27, 2026
+
+- Add default-off personal saved-report-view preparation and receipt tools with separate reports:view:save consent excluded from default scopes. Limit selections to a named Type 1 CSM month or Type 2 activity quarter and generate exact local source links without loading survey results.
+- Require actor/grant/payload-bound browser confirmation, current report authority, name uniqueness and capacity rechecks. Atomically save one private selection with its receipt and body-free audit; reject revoked, expired, changed and cross-account requests and recover safely across rotation/races/replays.
+- Add owner-only Reports collection/source pages, strict period validation, runtime packaging and OAuth/MCP/browser/mobile coverage. No report content, changes, exports, sharing, overwrites or deletes; hosted acceptance remains pending.
+
 ## 8.81 — October 27, 2026
 
 - Add default-off private task comment draft preparation and receipt tools with separate work:comment:draft consent excluded from default scopes; preserve old grants and refresh scope parity.
