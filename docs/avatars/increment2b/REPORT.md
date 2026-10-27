@@ -8,10 +8,34 @@ with stable controls. Remaining milestones: a supported fix, qualified candidate
 validation, then complete original-baseline acceptance across all device/cache
 and scenario groups. No defensible percentage or ETA is established.
 
-Use the [Sol restart handoff](../../AVATAR_UPGRADE_HANDOFF.md#start-here--sol-handoff-current-after-hosted-native-calibration)
+Use the [Sol restart handoff](../../AVATAR_UPGRADE_HANDOFF.md#start-here--sol-handoff-current-after-application-observer-calibration)
 for current source identities, evidence order, next bounded work and constraints.
-The hosted native calibration below is the latest completed experiment.
+The application observer result below is the latest completed experiment.
 Older next-step instructions in this report are historical where superseded.
+
+## Application observer calibration — fresh native prerequisite blocked
+
+[Latest report](application-observer-calibration/REPORT.md) and
+[run40532187252](https://github.com/jongsky25/css-is/actions/runs/40532187252):
+frozen lossless transport 9e47c14 passes **80 cloud/local preflight and 102 expanded
+local analysis tests**, but fresh full native qualification fails source-labelled
+natural page returns in the first probe. Both probes retain 1,536 exact joins and
+pass timing/cost; the second probe passes all gates. Application proof and all four
+application slots correctly do not launch, so new transport cost is unknown.
+All **145** artifact hashes verify and independent native audit reproduces failure.
+
+Previous complete application attempt 3cdbb37 passes actual receiver proof, stable
+main-content selection, 100% coverage and natural labelled reclamation in both probes,
+but fails the unchanged 5% cost gate at **5.6545% / 5.3103%**. All four full workloads
+and 196 verified hashes are retained; independent audits agree. Every earlier failed
+attempt is archived. New transport preserves every DOM read and 128 getters/mount;
+all decoding remains charged. No favorable unchanged rerun, GC forcing or gate waiver.
+
+[PR #519](https://github.com/jongsky25/css-is/pull/519) remains unmerged and reviewable;
+superseded PRs515–518 are closed. Product cf363bf and candidate cd94bf3 remain unchanged.
+No active run, app attribution qualification, 2B acceptance, merge or deployment.
+Next inspect the failed native generation/trace evidence before freezing a supported
+change; prior successes cannot replace qualification of the current job.
 
 ## Hosted native calibration — instrument prerequisite passed
 

@@ -1,0 +1,156 @@
+[
+  {
+    "slot": 1,
+    "matched_receivers": 1536,
+    "labelled_generations": 13,
+    "labelled_returned_generations": 0,
+    "labelled_returns_by_mode": {},
+    "unknown_pool_returns": 1,
+    "major_gc_count": 1,
+    "stage_major_gc_overlaps": [
+      {
+        "index": 0,
+        "mode": "dom",
+        "major_gc_overlaps": []
+      },
+      {
+        "index": 1,
+        "mode": "svg",
+        "major_gc_overlaps": []
+      },
+      {
+        "index": 2,
+        "mode": "style",
+        "major_gc_overlaps": []
+      },
+      {
+        "index": 3,
+        "mode": "dom",
+        "major_gc_overlaps": []
+      },
+      {
+        "index": 4,
+        "mode": "svg",
+        "major_gc_overlaps": []
+      },
+      {
+        "index": 5,
+        "mode": "style",
+        "major_gc_overlaps": []
+      },
+      {
+        "index": 6,
+        "mode": "dom",
+        "major_gc_overlaps": [
+          0
+        ]
+      },
+      {
+        "index": 7,
+        "mode": "svg",
+        "major_gc_overlaps": []
+      },
+      {
+        "index": 8,
+        "mode": "style",
+        "major_gc_overlaps": []
+      },
+      {
+        "index": 9,
+        "mode": "dom",
+        "major_gc_overlaps": []
+      },
+      {
+        "index": 10,
+        "mode": "svg",
+        "major_gc_overlaps": []
+      },
+      {
+        "index": 11,
+        "mode": "style",
+        "major_gc_overlaps": []
+      }
+    ],
+    "limits": "Offline descriptive evidence only. No acceptance, changed gate or causal claim about absent natural returns."
+  },
+  {
+    "slot": 2,
+    "matched_receivers": 1536,
+    "labelled_generations": 12,
+    "labelled_returned_generations": 10,
+    "labelled_returns_by_mode": {
+      "dom": 4,
+      "svg": 3,
+      "style": 3
+    },
+    "unknown_pool_returns": 3,
+    "major_gc_count": 2,
+    "stage_major_gc_overlaps": [
+      {
+        "index": 0,
+        "mode": "dom",
+        "major_gc_overlaps": []
+      },
+      {
+        "index": 1,
+        "mode": "svg",
+        "major_gc_overlaps": []
+      },
+      {
+        "index": 2,
+        "mode": "style",
+        "major_gc_overlaps": []
+      },
+      {
+        "index": 3,
+        "mode": "dom",
+        "major_gc_overlaps": []
+      },
+      {
+        "index": 4,
+        "mode": "svg",
+        "major_gc_overlaps": []
+      },
+      {
+        "index": 5,
+        "mode": "style",
+        "major_gc_overlaps": []
+      },
+      {
+        "index": 6,
+        "mode": "dom",
+        "major_gc_overlaps": [
+          0
+        ]
+      },
+      {
+        "index": 7,
+        "mode": "svg",
+        "major_gc_overlaps": []
+      },
+      {
+        "index": 8,
+        "mode": "style",
+        "major_gc_overlaps": []
+      },
+      {
+        "index": 9,
+        "mode": "dom",
+        "major_gc_overlaps": []
+      },
+      {
+        "index": 10,
+        "mode": "svg",
+        "major_gc_overlaps": []
+      },
+      {
+        "index": 11,
+        "mode": "style",
+        "major_gc_overlaps": [
+          1
+        ]
+      }
+    ],
+    "limits": "Offline descriptive evidence only. No acceptance, changed gate or causal claim about absent natural returns."
+  }
+]

@@ -2,7 +2,7 @@
 
 Last updated: **2026-10-27 UTC**. Repository: `jongsky25/css-is`.
 
-## Start here — Sol handoff, current after hosted native calibration
+## Start here — Sol handoff, current after application observer calibration
 
 **Objective: unblock 2B only. Do not start or resume 3A or later increments.**
 This section supersedes older next-step instructions below. The chronology is
@@ -11,21 +11,29 @@ retained as evidence, not a queue of experiments to repeat.
 ### Checkout and current state
 
 - Repository: `jongsky25/css-is`; resume `codex/avatar-2b-verification`.
-- Latest completed experiment: full hosted native recorder calibration **passed**.
-  Harness 0af68b8 / workflow d7e2d31 / cloud run 40508949824. Fresh native and
-  receiver proofs pass, both probes pass all gates, controls vary only 1.8382%.
-  Instrument qualified for a separately frozen application calibration on this
-  hosted condition; application qualification and 2B acceptance remain false.
-  Separate setup PR #513 is unmerged. Controller mistakes/incidental control run
-  and all earlier failed measurements remain archived. Latest HEAD has reports.
+- Latest completed run: lossless application observer harness 9e47c14 / workflow 3563eb2,
+  [PR #519](https://github.com/jongsky25/css-is/pull/519),
+  [run40532187252](https://github.com/jongsky25/css-is/actions/runs/40532187252).
+  Fresh full native qualification fails: first probe has no source-labelled natural
+  page returns; second probe passes. All 1,536 joins/probe and timing/cost gates
+  pass. Application proof/slots correctly do not launch. Transport cost is unknown.
+  All 145 hashes verify; independent native audit matches. 80 cloud/local preflight
+  and 102 expanded local analysis tests pass. No unchanged rerun is queued.
+- Previous complete application calibration: compact v2, harness 3cdbb37 / workflow
+  aeb246b / run40527921415. Same-job native qualification, actual-app proof, all four
+  full workloads, stable selection, 100% receiver coverage and natural labelled
+  returns pass. Both probes fail the unchanged 5% cost gate: 5.6545% / 5.3103%.
+  Full archive and identical independent audit retained (196 verified hashes).
+  The new lossless encoding preserves all DOM reads/samples and charged decoding.
+  Application attribution qualification and 2B acceptance remain false.
 - Comparison baseline: `1c964dcba2fa19de1eab077b00e0e5748d742554`.
 - Current experimental product: `cf363bfe547d5e23619eee28cdaf68bd4b6d7753`,
   including the thread-owned reader candidate and avatar product `f700187`.
   It is not an accepted 2B release.
 - Latest isolated candidate: `codex/avatar-shared-cat-gradients`,
   `cd94bf35d29b796ca0d6467756221e4b545a40be`. Do not silently promote it.
-- Product sources remain unchanged; no active measurement, pending deployment
-  or merge. Verify checkout and working-tree state in the new environment.
+- Product sources remain unchanged. No active measurement, pending deployment
+  or merge. Verify checkout and working-tree state in a new environment.
 - Pinned browser: Chromium `156.0.8078.47`; exact native build
   `1c5dca8527a61d07372e489142bee26af1bcaf71`. Do not substitute another build
   for the frozen comparisons. Scratch paths may not survive a new session;
@@ -48,13 +56,14 @@ markup and improves navigation 20 in both orders, but those partial benefits
 cannot override the failed gates. This screen compares current versus candidate;
 it is not the complete original-versus-candidate acceptance matrix.
 
-Latest instrument result: [hosted native calibration](avatars/increment2b/hosted-native-calibration/REPORT.md).
-The complete native calibration now passes: observation 2.7115/2.9615% (<5%),
-controls 1.8382% (<20%), paired ratios 1.01442/1.01464 (<1.20), exact 1,536 joins per
-probe and all-mode measured source-labelled reclamation with natural MajorGC/sweeps.
-Independent proof/screen/period audits reproduce identically. This qualifies only
-the instrument for application calibration on the declared hosted condition.
-Original product memory acceptance and earlier failed samples remain unresolved.
+Latest result: [application observer calibration](avatars/increment2b/application-observer-calibration/REPORT.md).
+The new lossless transport is unmeasured because fresh same-job native qualification
+fails labelled natural reclamation in one probe. Both native probes retain exact
+1,536 joins and pass cost/timing; natural GC and unrelated pool returns alone do not
+satisfy source-labelled returns. All results remain failed where the gate fails.
+Earlier [hosted native success](avatars/increment2b/hosted-native-calibration/REPORT.md)
+and previous complete application failures remain archived, without substituting
+for the latest job. Original product memory acceptance remains unresolved.
 
 There is no defensible percentage or ETA. At least three milestones remain:
 
@@ -74,7 +83,9 @@ verification**. No candidate currently qualifies to unblock 2B.
 
 Read these in order before changing code or launching browsers:
 
-1. [Hosted native calibration](avatars/increment2b/hosted-native-calibration/REPORT.md),
+1. [Application observer calibration](avatars/increment2b/application-observer-calibration/REPORT.md),
+   all five attempts and frozen protocols. Then
+   [hosted native calibration](avatars/increment2b/hosted-native-calibration/REPORT.md),
    proof/screen archive, exact assessment and [native setup PR #513](https://github.com/jongsky25/css-is/pull/513).
    Then [mobile hosted runner](avatars/increment2b/mobile-runner/REPORT.md),
    [phone instructions](avatars/increment2b/mobile-runner/README.md), and
@@ -124,7 +135,8 @@ identically; 57 native artifact manifest entries verify. 104 local/60 cloud test
 Runner condition is standard GitHub Azure/AMD EPYC 7763, four CPUs, no container
 CPU quota, exact Python/browser/toolchain; container-only SYS_PTRACE for native
 proofs. No physical exclusivity claim or host isolation changes. Product cf363bf
-and unpromoted cd94bf3 remain unchanged. No app measurement or acceptance yet.
+and unpromoted cd94bf3 remain unchanged. That historical native success does not
+replace the latest failed same-job prerequisite or accept application memory.
 
 Initial invalid controller YAML and incidental control retrigger 40508311821 are
 retained. PR #511 now guards automatic control repeats; separate native PR #513
@@ -132,14 +144,15 @@ uses an opened-only trigger. The incidental run does not replace any sample or
 qualify the instrument. Both setup PRs remain unmerged; default-branch manual
 registration still faces existing release-version policy. No waiver or deploy.
 
-Next freeze an application-observer calibration on this hosted condition: actual
-app receiver selection/observable integrity, exact workload/source identities and
-complete control/probe schedule. Carry forward native proof/agent continuity,
-unchanged cost/stability gates and complete failure retention. Synthetic proof
-cannot establish application attribution or observer cost by itself. Only after
-that prerequisite passes may memory attribution/comparison proceed. Old native
-v12 on the managed host stays failed, earlier memory budgets stay failed, and
-full 2B original-baseline acceptance remains outstanding. No later increment.
+Application observer calibration is now implemented. Read the
+[application report](avatars/increment2b/application-observer-calibration/REPORT.md)
+and frozen protocols first; previous attempts are retained as failed prerequisites.
+Latest run and independent audit are complete. Next inspect the retained native
+generations/trace to explain missing labelled returns in the first probe before
+freezing a supported change. Do not rerun unchanged for favorable GC. Lossless
+application transport still requires measurement after fresh native qualification.
+No source attribution/product comparison, load padding or gate waiver. Full 2B
+original-baseline acceptance remains outstanding; do not resume later increments.
 
 ### Important traps and execution constraints
 
