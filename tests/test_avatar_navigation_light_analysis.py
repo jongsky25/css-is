@@ -38,6 +38,8 @@ def fixture(tmp_path, version=3):
         value = (100 if m%2 else 90)*2**20
         p['samples'].append({'begin_ns': m*10**9, 'end_ns': m*10**9+100,
             'renderers': [{'pid': 42, 'status': {'VmRSS': value, 'RssAnon': value, 'RssFile': 0, 'RssShmem': 0, 'VmSwap': 0}}]})
+    if version == 5:
+        p['transfers'] = [{'number': i, 'begin_ns': 30_000_000_000+i*100, 'end_ns': 30_000_000_000+i*100+10, 'bytes': 100} for i in range(3)]
     raw = [{'navigation_trend': [{'mount': c['mount'], **copy.deepcopy(c['snapshot'])} for c in p['checkpoints']]}]
     return p, raw
 
@@ -106,3 +108,18 @@ def test_v4_two_segments_preserve_all_samples(tmp_path):
     assert len(result['trace_segments'])==3
     assert len(result['rss_drops_at_least_5_mib'])==9
     assert result['endpoint']['allocators']['blink_gc/main']['size']==4096
+
+
+def test_v5_requires_deferred_transfers(tmp_path):
+    p,raw=fixture(tmp_path,version=5)
+    assert len(inspect_capture(tmp_path,p,raw)['trace_segments'])==3
+    p['transfers'][0]['begin_ns']=0
+    with pytest.raises(ValueError,match='transfer inside measurement'):
+        inspect_capture(tmp_path,p,raw)
+
+
+def test_v5_missing_transfer_rejected(tmp_path):
+    p,raw=fixture(tmp_path,version=5)
+    p['transfers'].pop()
+    with pytest.raises(ValueError,match='Missing deferred transfers'):
+        inspect_capture(tmp_path,p,raw)

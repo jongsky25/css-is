@@ -43,7 +43,7 @@ def clocks(events, names):
 def inspect_capture(folder, provenance, raw):
     p = provenance
     mode = p['mode']
-    if p['protocol'] not in ('navigation-light-v3', 'navigation-light-v4') or p['acceptance'] is not False or p['forced_gc'] is not False:
+    if p['protocol'] not in ('navigation-light-v3', 'navigation-light-v4', 'navigation-light-v5') or p['acceptance'] is not False or p['forced_gc'] is not False:
         raise ValueError('Invalid capture protocol')
     if p['snapshots'] != 13 or p['mount'] != 20 or [c['mount'] for c in p['checkpoints']] != [1, 5, 10, 15, 20]:
         raise ValueError('Incomplete navigation')
@@ -69,6 +69,12 @@ def inspect_capture(folder, provenance, raw):
               'max_rotation_ms': max(rotations) / 1e6, 'trace_segments': [], 'endpoint': None}
     if len(p['segments']) != (nav_segments + 1 if mode == 'trace' else 0):
         raise ValueError('Incorrect segment count')
+    if p['protocol'] == 'navigation-light-v5' and mode == 'trace':
+        transfers = p.get('transfers', [])
+        if [t['number'] for t in transfers] != list(range(nav_segments + 1)):
+            raise ValueError('Missing deferred transfers')
+        if any(not p['navigation_end_ns'] < t['begin_ns'] <= t['end_ns'] or t['bytes'] <= 0 for t in transfers):
+            raise ValueError('Trace transfer inside measurement')
     if any(s['completion'].get('dataLossOccurred') for s in p['segments']):
         raise ValueError('Trace data loss; sample retained, not replaced')
     all_events = []
@@ -201,7 +207,7 @@ def audit(root, repo, ref):
     plan = json.loads((root / 'experiment.json').read_text())
     phase = plan['phase']
     blocks = [['current'] * 4] if phase == 'calibration' else BLOCKS
-    if (phase not in ('calibration', 'comparison') or plan['protocol'] not in ('navigation-light-v3', 'navigation-light-v4') or
+    if (phase not in ('calibration', 'comparison') or plan['protocol'] not in ('navigation-light-v3', 'navigation-light-v4', 'navigation-light-v5') or
         plan['harness_commit'] != ref or plan['refs'] != REFS or plan['blocks'] != blocks or
         plan['acceptance'] is not False or plan['seconds'] != 30 or plan['samples_per_slot'] != 1 or
         plan['fixture_adapter'] != 'sample-ordinal-v1' or plan['browser'] != '156.0.8078.47' or

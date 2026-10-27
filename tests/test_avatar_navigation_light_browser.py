@@ -19,7 +19,7 @@ GC_CATEGORIES = ['devtools.timeline', 'cppgc', 'disabled-by-default-cppgc', 'dis
 def test_navigation_light(baseline_server, app_mod, monkeypatch):
     out = Path(os.environ['CSS_AVATAR_OUT'])
     traced = os.environ['CSS_AVATAR_TRACE_MODE'] == 'trace'
-    state = {'protocol': 'navigation-light-v4', 'mode': 'trace' if traced else 'control',
+    state = {'protocol': 'navigation-light-v5', 'mode': 'trace' if traced else 'control',
              'acceptance': False, 'forced_gc': False, 'snapshots': 0, 'mount': 0,
              'segments': [], 'rotations': [], 'checkpoints': [], 'samples': [], 'pids': [],
              'probe_sha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest()}
@@ -81,19 +81,27 @@ def test_navigation_light(baseline_server, app_mod, monkeypatch):
             assert time.monotonic() < deadline, 'Trace completion timeout'
             wait_original(state['page'], 10)
         completion = completions[-1]
-        path = out / f"trace-{active['number']}.json"
-        handle = completion['stream']
-        with path.open('w') as stream:
-            while True:
-                chunk = session.send('IO.read', {'handle': handle})
-                assert not chunk.get('base64Encoded')
-                stream.write(chunk['data'])
-                if chunk.get('eof'):
-                    break
-        session.send('IO.close', {'handle': handle})
-        active.update(completion=completion, end_ns=time.monotonic_ns(), trace_file=path.name + '.gz')
+        active.update(completion=completion, end_ns=time.monotonic_ns(),
+                      trace_file=f"trace-{active['number']}.json.gz")
         state['segments'].append(active)
         active = None
+
+    def drain_traces():
+        state['transfers'] = []
+        for segment in state['segments']:
+            begin = time.monotonic_ns()
+            path = out / segment['trace_file'].removesuffix('.gz')
+            handle = segment['completion']['stream']
+            with path.open('w') as stream:
+                while True:
+                    chunk = session.send('IO.read', {'handle': handle})
+                    assert not chunk.get('base64Encoded')
+                    stream.write(chunk['data'])
+                    if chunk.get('eof'):
+                        break
+            session.send('IO.close', {'handle': handle})
+            state['transfers'].append({'number': segment['number'], 'begin_ns': begin,
+                                       'end_ns': time.monotonic_ns(), 'bytes': path.stat().st_size})
 
     def wait(page, timeout):
         result = wait_original(page, timeout)
@@ -140,6 +148,7 @@ def test_navigation_light(baseline_server, app_mod, monkeypatch):
                         'levelOfDetail': 'detailed', 'determinism': 'none'})
                     state['endpoint_after'] = marker('endpoint-after')
                     finish_trace()
+                    drain_traces()
                 session.detach()
         return observed
 
