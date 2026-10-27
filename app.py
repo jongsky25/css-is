@@ -108,6 +108,8 @@ import backups as bk
 import monitoring as mon
 import name_cleanup as ncl
 import harmonize as hz
+import activity_permissions
+import activity_scheduling
 import activity_admin as aa
 import activity_messages as amsg
 import reg_questions as rq
@@ -381,14 +383,7 @@ def _today_local():
 def _event_date_bounds(today=None):
     """(min, max) ISO dates the event_date picker accepts, as 'YYYY-MM-DD'.
     Max is today + 2 years; min is a generous floor for back-dated paper entry."""
-    today = today or _today_local()
-    try:
-        lo = today.replace(year=today.year - MAX_EVENT_YEARS_BACK)
-        hi = today.replace(year=today.year + MAX_EVENT_YEARS_AHEAD)
-    except ValueError:                 # Feb 29 -> use Feb 28 in a non-leap year
-        lo = today.replace(year=today.year - MAX_EVENT_YEARS_BACK, day=28)
-        hi = today.replace(year=today.year + MAX_EVENT_YEARS_AHEAD, day=28)
-    return lo.isoformat(), hi.isoformat()
+    return activity_scheduling.date_bounds(today or _today_local(), MAX_EVENT_YEARS_BACK, MAX_EVENT_YEARS_AHEAD)
 
 
 def _norm_end_date(start, raw, today=None):
@@ -2485,18 +2480,7 @@ def _can_manage_event(user, ev, conn=None):
     activities inside it (st.event_in_team_scope). `created_by` stays a way in
     for the creator; events with no creator stay admin-or-team only. Without a
     `conn` only the creator/admin rule can be answered, the safe default."""
-    if not user or not ev:
-        return False
-    if user["role"] == "admin" or (
-            bool(ev.get("created_by")) and ev["created_by"] == user["username"]):
-        return True
-    if conn is None or not ev.get("id") or not auth.can(user["role"], "manage_event"):
-        return False
-    scope_path, kind = st.team_scope_for_user(conn, user)
-    if kind == "none":
-        return False
-    paths = st.event_scope_paths(conn, ev["id"])
-    return st.event_in_team_scope(paths, scope_path)
+    return activity_permissions.can_manage(user, ev, conn)
 
 
 def _event_feed_scope(conn, user):
@@ -17679,7 +17663,7 @@ async def _mcp_readiness_status():
     return state
 
 
-app.include_router(integration_access_routes.make_router(templates, get_conn, _mcp_readiness_status))
+app.include_router(integration_access_routes.make_router(templates, get_conn, _mcp_readiness_status, invalidate_activity_dates=lambda: invalidate_atoms()))
 app.include_router(appearance_routes.make_router(templates, get_conn))
 app.include_router(supplies_routes.make_router(templates, get_conn))
 
@@ -17732,7 +17716,7 @@ if _MCP_ENABLED:
         if not pending:
             return _mcp_consent_error('This request expired. Start again in ChatGPT.', 410)
         client_id, params = pending
-        labels = {'work_arrangements:request': 'File your own new work arrangement for approval (browser confirmation; shared schedule/approval visibility and queued approver emails; no auto-approval or changes)', 'meals:request': 'Submit your own standalone meal request (browser confirmation; visible to Administrative Section, awaiting order; no supplier order or email)', 'rooms:request': 'Request a room for a permitted existing meeting (browser confirmation; pending approval, no booking held; queues approver notices)', 'travel:filing:submit': 'Record your own Ready filing as Submitted after physically handing in papers (browser attestation; not office receipt or payment)', 'travel:review:request': 'Request review of your complete travel papers (browser confirmation; queues one email to the selected reviewer)', 'supplies:request:submit': 'Submit your own draft or returned supply request for approval (browser confirmation; no stock reservation or issuance)', 'work:task:submit': 'Submit your assigned In progress task for review (browser confirmation; saves output and note in shared-work history)', 'work:task:acknowledge': 'Acknowledge your assigned To do task as In progress (browser confirmation; records your note in shared-work history)', 'travel:filing:draft': 'Open your own unsubmitted reimbursement checklist (browser confirmation; normal travel access and deadline reminders apply)', 'calendar:entry:create': 'Create your own tentative personal calendar entry (each save requires browser confirmation; no invitations or room bookings)', 'reports:view:save': 'Save your own named survey report selections (each save requires browser confirmation; no results or exports)',
+        labels = {'activities:dates:update': 'Update the date of a permitted upcoming unused activity (browser confirmation; updates its event review too; no rescheduling email or linked-work updates)', 'work_arrangements:request': 'File your own new work arrangement for approval (browser confirmation; shared schedule/approval visibility and queued approver emails; no auto-approval or changes)', 'meals:request': 'Submit your own standalone meal request (browser confirmation; visible to Administrative Section, awaiting order; no supplier order or email)', 'rooms:request': 'Request a room for a permitted existing meeting (browser confirmation; pending approval, no booking held; queues approver notices)', 'travel:filing:submit': 'Record your own Ready filing as Submitted after physically handing in papers (browser attestation; not office receipt or payment)', 'travel:review:request': 'Request review of your complete travel papers (browser confirmation; queues one email to the selected reviewer)', 'supplies:request:submit': 'Submit your own draft or returned supply request for approval (browser confirmation; no stock reservation or issuance)', 'work:task:submit': 'Submit your assigned In progress task for review (browser confirmation; saves output and note in shared-work history)', 'work:task:acknowledge': 'Acknowledge your assigned To do task as In progress (browser confirmation; records your note in shared-work history)', 'travel:filing:draft': 'Open your own unsubmitted reimbursement checklist (browser confirmation; normal travel access and deadline reminders apply)', 'calendar:entry:create': 'Create your own tentative personal calendar entry (each save requires browser confirmation; no invitations or room bookings)', 'reports:view:save': 'Save your own named survey report selections (each save requires browser confirmation; no results or exports)',
                   'work:comment:draft': 'Prepare private task comment drafts (each save requires browser confirmation; no posting or notices)',
                   'supplies:request:draft': 'Prepare new personal supply request drafts (each save requires browser confirmation; no submission or stock allocation)',
                   'notifications:mark_read': 'Prepare marking your own shared-work notices read (each action requires browser confirmation)',

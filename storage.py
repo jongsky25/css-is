@@ -6238,13 +6238,15 @@ def set_event_respondent_target(conn, event_id, value):
     return stored
 
 
-def set_event_dates(conn, event_id, event_date, end_date):
+def set_event_dates(conn, event_id, event_date, end_date, *, commit=True):
     """Re-date a whole activity after creation: update the event row AND every
     (non-archived) form of it, so the link tree header and the reporting atoms
     never disagree. event_date is the START (and must be a real 'YYYY-MM-DD');
     end_date marks a multi-day activity (None/blank = single-day). Returns the
     number of forms updated. NOTE: changing the start date moves the reporting
     period, so the CALLER must invalidate the atoms cache afterwards."""
+    if not commit and not conn.in_transaction:
+        raise RuntimeError('Activity date changes require a caller-owned transaction.')
     end_date = end_date or None
     conn.execute("UPDATE event SET event_date=?, end_date=? WHERE id=?",
                  (event_date, end_date, event_id))
@@ -6253,7 +6255,8 @@ def set_event_dates(conn, event_id, event_date, end_date):
         WHERE COALESCE(archived, 0) = 0
           AND id IN (SELECT form_instance_id FROM event_form WHERE event_id = ?)
     """, (event_date, end_date, event_id))
-    conn.commit()
+    if commit:
+        conn.commit()
     return cur.rowcount
 
 

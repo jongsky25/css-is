@@ -322,3 +322,6 @@ steps are in [the meal request runbook](MCP_MEAL_REQUEST_PILOT.md).
 
 The default-off M3.8 work-arrangement filing contract and hosted acceptance
 steps are in [the work-arrangement runbook](MCP_WORK_ARRANGEMENT_PILOT.md).
+
+The default-off M3.9 activity date-update contract and hosted acceptance steps
+are in [the activity date runbook](MCP_ACTIVITY_DATE_PILOT.md).

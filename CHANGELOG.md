@@ -1,3 +1,9 @@
+## 8.93 — October 27, 2026
+
+- Add default-off `activities:dates:update` context, exact signed-in preview and recoverable original date-change receipts for upcoming unused single-day bureau activities with one Form 2.
+- Share ordinary creator/admin/team management authority and date-horizon policy; require a fresh full-metadata revision and reject registrations, responses, entry windows, attendance, extra/shared forms and linked calendar/room/travel records. Atomically update the event/form through the canonical date service with domain/integration audits and receipt.
+- Invalidate existing application caches after confirmed HTTP commits, preserve later ordinary edits and original event identity on recovery, and add OAuth, permission, race, rollback, cache-failure, mobile, packaging and operator acceptance coverage. No new activity, invitation, rescheduling mail, response edit, approval or cancellation is exposed.
+
 ## 8.92 — October 27, 2026
 
 - Add default-off `work_arrangements:request` preparation context, signed-in exact preview, pending-only new filing and historical receipt/current notice counts with an owner-only operation-bound source page.
