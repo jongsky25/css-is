@@ -49,6 +49,30 @@ def validate(p):
             'immutable_records':1024,'overflow_stored':32,'overflow_dropped':36,'record_size':72}
 
 
+def validate_live(history, export_interval=None):
+    if (history.get('recorder_backend')!='cmodule-buffer-v1' or history.get('address_encoding')!='native-u64-buffer-v1'
+        or history.get('record_size')!=72 or history.get('record_capacity')!=50000 or history.get('record_limit')!=50000
+        or history.get('pending_at_snapshot')!=0 or history.get('dropped')!=0
+        or history.get('clock_domain')!='CLOCK_MONOTONIC' or history.get('abi')!='linux-x64-gum-invocation-v1'
+        or history.get('toolchain')!='internal' or history.get('storage',{}).get('canary_verified') is not True
+        or history['storage'].get('check')!='two-way-owned-buffer-canary'
+        or history['storage']['state_bytes']>history['storage']['allocated_bytes']):
+        raise ValueError('Invalid live native recorder state')
+    end=history['snapshot_end_ns']
+    if export_interval is not None and not export_interval[0]<=end<=export_interval[1]:
+        raise ValueError('Native snapshot outside host export bracket')
+    groups=['avatar:0','avatar:1','other:0','other:1']
+    for e in history['events']:
+        if e['kind'] not in ['allocate','pool','receiver','shutdown','destroy','release','reference']:
+            raise ValueError('Synthetic/unknown event in live native capture')
+        if not 0<e['begin_ns']<=e['callback_ready_ns']<=e['returned_ns']<=end or e['thread']<=0:
+            raise ValueError('Invalid live native record bracket')
+        if e['kind']=='receiver':
+            group=e['receiver_group'];doc=e['phase_document']
+            if e['phase_type'] not in [1,2,3] or not 0<=group<4 or e['phase']!=f'census:{doc}:'+groups[group]:
+                raise ValueError('Native phase/cursor overflow or mismatch')
+
+
 def audit(root,repo,ref):
     p=json.load(gzip.open(root/'capture.json.gz','rt'))
     if p['harness_commit']!=ref or set(p['source_sha256'])!=set(SOURCES):raise ValueError('Wrong self-test source inventory')

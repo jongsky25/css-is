@@ -25,6 +25,9 @@ SOURCES=['scripts/avatar_baseline/mixed_getter_capability.py',
 
 def validate(capture):
     if capture.get('error'):raise ValueError(capture['error'])
+    if capture.get('recorder_backend')=='cmodule-buffer-v1':
+        from scripts.avatar_baseline.native_recorder_selftest import validate_live
+        validate_live(capture['native']['history'],capture['native_export_interval_ns'])
     if [d['mode'] for d in capture['documents']]!=MODES or [d['index'] for d in capture['documents']]!=[0,1,2]:
         raise ValueError('Incomplete mixed capability schedule')
     queries=[q for d in capture['documents'] for q in d['queries']]
@@ -48,26 +51,60 @@ def validate(capture):
             'receiver_records':384,'reference_records':384,'native_null_returns':384,'documents':checks}
 
 
+def sources_for_backend(backend):
+    sources=list(SOURCES)
+    if backend=='cmodule-buffer-v1':sources[-2]='scripts/avatar_baseline/native/callback_buffer.js'
+    elif backend!='javascript-v1':raise ValueError('Unknown receiver recorder backend')
+    return sources
+
+
 def audit(root,repo,ref):
     p=json.load(gzip.open(root/'capture.json.gz','rt'))
-    if p['harness_commit']!=ref or set(p['source_sha256'])!=set(SOURCES):raise ValueError('Capability source inventory mismatch')
+    sources=sources_for_backend(p.get('recorder_backend','javascript-v1'))
+    if p['harness_commit']!=ref or set(p['source_sha256'])!=set(sources):raise ValueError('Capability source inventory mismatch')
     for name,sha in p['source_sha256'].items():
         if hashlib.sha256(subprocess.check_output(['git','show',ref+':'+name],cwd=repo)).hexdigest()!=sha:raise ValueError('Capability source mismatch')
-    if p['native']['helper_sha256']!=p['source_sha256'][SOURCES[-1]] or p['native']['hook_sha256']!=p['source_sha256'][SOURCES[-2]]:
+    if p['native']['helper_sha256']!=p['source_sha256'][sources[-1]] or p['native']['hook_sha256']!=p['source_sha256'][sources[-2]]:
         raise ValueError('Runtime capability source mismatch')
+    if p.get('recorder_backend')=='cmodule-buffer-v1':
+        from scripts.avatar_baseline.native_recorder_selftest import audit as audit_preflight
+        proof=p['native_recorder_preflight'];proofroot=root/'native-preflight'
+        for name,key in [('capture.json.gz','capture_sha256'),('assessment.json','assessment_sha256')]:
+            if hashlib.sha256((proofroot/name).read_bytes()).hexdigest()!=proof[key]:raise ValueError('Native preflight evidence changed')
+        checked=audit_preflight(proofroot,repo,proof['harness_commit'])
+        if checked!=json.loads((proofroot/'assessment.json').read_text()) or checked['status']!='selftest_passed':raise ValueError('Native preflight failed')
+        preflight=json.load(gzip.open(proofroot/'capture.json.gz','rt'))
+        agent='scripts/avatar_baseline/native/callback_buffer.js'
+        if preflight['source_sha256'][agent]!=p['source_sha256'][agent]:raise ValueError('Native recorder changed after preflight')
     return {**validate(p),'harness_commit':ref,'source_hashes_verified':len(SOURCES),
             'capture_sha256':hashlib.sha256((root/'capture.json.gz').read_bytes()).hexdigest()}
 
 
-def run(out):
+def run(out,native_preflight=None):
     out.mkdir(parents=True,exist_ok=False);repo=Path(__file__).resolve().parents[2]
     ref=subprocess.check_output(['git','rev-parse','HEAD'],cwd=repo,text=True).strip()
+    backend='cmodule-buffer-v1' if native_preflight is not None else 'javascript-v1'
+    sources=sources_for_backend(backend)
+    hook=repo/sources[-2]
     hashes={}
-    for name in SOURCES:
+    for name in sources:
         raw=(repo/name).read_bytes()
         if raw!=subprocess.check_output(['git','show',ref+':'+name],cwd=repo):raise ValueError('Uncommitted capability source')
         hashes[name]=hashlib.sha256(raw).hexdigest()
     result={'harness_commit':ref,'selection_policy':'per-evaluate-selector-cache','acceptance':False,'source_sha256':hashes,'documents':[]}
+    if backend=='cmodule-buffer-v1':
+        from scripts.avatar_baseline.native_recorder_selftest import audit as audit_preflight
+        assessment=json.loads((native_preflight/'assessment.json').read_text())
+        checked=audit_preflight(native_preflight,repo,assessment['harness_commit'])
+        if checked!=assessment or checked['status']!='selftest_passed':raise ValueError('Native preflight failed')
+        raw=json.load(gzip.open(native_preflight/'capture.json.gz','rt'))
+        if raw['source_sha256'][sources[-2]]!=hashes[sources[-2]]:raise ValueError('Native agent changed since preflight')
+        proofroot=out/'native-preflight';proofroot.mkdir()
+        for name in ['capture.json.gz','assessment.json']:(proofroot/name).write_bytes((native_preflight/name).read_bytes())
+        result['recorder_backend']=backend
+        result['native_recorder_preflight']={'harness_commit':assessment['harness_commit'],
+          'capture_sha256':hashlib.sha256((proofroot/'capture.json.gz').read_bytes()).hexdigest(),
+          'assessment_sha256':hashlib.sha256((proofroot/'assessment.json').read_bytes()).hexdigest()}
     server=ThreadingHTTPServer(('127.0.0.1',0),Handler);server.lifecycle_events=[]
     threading.Thread(target=server.serve_forever,daemon=True).start();old_hook=helper.HOOK;probe=None
     try:
@@ -75,7 +112,7 @@ def run(out):
             browser=pw.chromium.launch(executable_path=str(BROWSER),args=['--no-sandbox'])
             if browser.version!='156.0.8078.47':raise ValueError('Wrong browser version')
             page=browser.new_page();origin=f'http://127.0.0.1:{server.server_port}'
-            page.goto(origin+'/empty');helper.HOOK=HOOK;probe=helper.PageHistory(page,True);probe.script.exports_sync.enablereference()
+            page.goto(origin+'/empty');helper.HOOK=hook;probe=helper.PageHistory(page,True);probe.script.exports_sync.enablereference()
             for index,mode in enumerate(MODES):
                 d={'index':index,'mode':mode,'queries':[]};result['documents'].append(d)
                 probe.phase(f'navigation:{index}');page.goto(origin+f'/fixture/{index}');page.wait_for_timeout(220)
@@ -94,7 +131,7 @@ def run(out):
                             probe.phase('between');q['end_ns']=time.monotonic_ns()
                 after=page.evaluate('document.documentElement.outerHTML')
                 d['dom_before_sha256']=hashlib.sha256(before.encode()).hexdigest();d['dom_after_sha256']=hashlib.sha256(after.encode()).hexdigest()
-            result['native']=probe.finish();probe=None;browser.close()
+            begin=time.monotonic_ns();result['native']=probe.finish();result['native_export_interval_ns']=[begin,time.monotonic_ns()];probe=None;browser.close()
     except Exception as e:result['error']=repr(e)
     finally:
         if probe:result['native']=probe.finish()
@@ -107,4 +144,4 @@ def run(out):
 
 
 if __name__=='__main__':
-    p=argparse.ArgumentParser();p.add_argument('--out',type=Path,required=True);a=p.parse_args();raise SystemExit(run(a.out))
+    p=argparse.ArgumentParser();p.add_argument('--out',type=Path,required=True);p.add_argument('--native-recorder-preflight',type=Path);a=p.parse_args();raise SystemExit(run(a.out,a.native_recorder_preflight))
