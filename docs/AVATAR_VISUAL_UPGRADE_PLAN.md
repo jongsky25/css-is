@@ -25,6 +25,19 @@ seasonal administration, and accessibility behavior.
 A phase fails if its visuals remain essentially the same except for color changes,
 or if it exceeds a performance gate. Fix or reduce complexity before expanding it.
 
+## Native callback recorder — costs passed, control stability failed
+
+[Latest report](avatars/increment2b/native-callback-recorder/REPORT.md): frozen native preflight b2bf252 and live receiver proof
+f676f7a pass. Calibration 04ca993 (lifecycle v12) preserves 1,536/1,536 receiver
+joins per probe and all-mode source-labelled reclamation: DOM4/SVG3/style3 each,
+all twenty labelled generations overlapping natural sweeps. Cost bounds pass at
+2.9486/3.7522%; paired durations pass. Controls vary **20.7568% >20%**, so the
+instrument remains unqualified for application calibration and 2B stays blocked.
+All three completed archives reconstruct/re-audit identically; failed native
+attempts remain. 81 focused tests pass; product unchanged. Next freeze a separate
+control timing diagnostic to distinguish navigation/wait/serialization from host
+scheduling. No unchanged favorable rerun, time subtraction or budget waiver.
+
 ## Mixed getter fixture — representative reclamation passed, one cost gate remains
 
 [Latest report](avatars/increment2b/mixed-reclamation-getter/REPORT.md): exact-type capability covers HTML div/span and SVG paths

@@ -1,0 +1,196 @@
+{
+  "acceptance": false,
+  "controls": [
+    {
+      "index": 0,
+      "capture_sha256": "3275b01794877a118ed7519d2a1944cbd56b9b47f17112985f54dfb895a5589f",
+      "duration_ms": 3702.241125,
+      "stages": [
+        {
+          "index": 0,
+          "mode": "dom",
+          "duration_ms": 302.606195,
+          "observer_ms": 11.079023,
+          "remaining_ms": 291.527172
+        },
+        {
+          "index": 1,
+          "mode": "svg",
+          "duration_ms": 317.510179,
+          "observer_ms": 10.582197,
+          "remaining_ms": 306.927982
+        },
+        {
+          "index": 2,
+          "mode": "style",
+          "duration_ms": 318.723014,
+          "observer_ms": 7.922409,
+          "remaining_ms": 310.800605
+        },
+        {
+          "index": 3,
+          "mode": "dom",
+          "duration_ms": 305.538019,
+          "observer_ms": 8.585801,
+          "remaining_ms": 296.952218
+        },
+        {
+          "index": 4,
+          "mode": "svg",
+          "duration_ms": 316.423522,
+          "observer_ms": 11.440958,
+          "remaining_ms": 304.982564
+        },
+        {
+          "index": 5,
+          "mode": "style",
+          "duration_ms": 327.689803,
+          "observer_ms": 6.919633,
+          "remaining_ms": 320.77017
+        },
+        {
+          "index": 6,
+          "mode": "dom",
+          "duration_ms": 323.856747,
+          "observer_ms": 8.73897,
+          "remaining_ms": 315.117777
+        },
+        {
+          "index": 7,
+          "mode": "svg",
+          "duration_ms": 288.409947,
+          "observer_ms": 7.693451,
+          "remaining_ms": 280.716496
+        },
+        {
+          "index": 8,
+          "mode": "style",
+          "duration_ms": 319.157432,
+          "observer_ms": 6.242901,
+          "remaining_ms": 312.914531
+        },
+        {
+          "index": 9,
+          "mode": "dom",
+          "duration_ms": 293.237778,
+          "observer_ms": 7.407955,
+          "remaining_ms": 285.829823
+        },
+        {
+          "index": 10,
+          "mode": "svg",
+          "duration_ms": 288.99841,
+          "observer_ms": 8.107745,
+          "remaining_ms": 280.890665
+        },
+        {
+          "index": 11,
+          "mode": "style",
+          "duration_ms": 300.069655,
+          "observer_ms": 7.782733,
+          "remaining_ms": 292.286922
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "capture_sha256": "35375ba39fc6c11a3cae7e26b64001cd2e2b8650d54f6e8b6289f116eae52aa1",
+      "duration_ms": 4470.708034,
+      "stages": [
+        {
+          "index": 0,
+          "mode": "dom",
+          "duration_ms": 453.707012,
+          "observer_ms": 34.547686,
+          "remaining_ms": 419.159326
+        },
+        {
+          "index": 1,
+          "mode": "svg",
+          "duration_ms": 407.404884,
+          "observer_ms": 11.915933,
+          "remaining_ms": 395.488951
+        },
+        {
+          "index": 2,
+          "mode": "style",
+          "duration_ms": 533.798323,
+          "observer_ms": 9.52078,
+          "remaining_ms": 524.277543
+        },
+        {
+          "index": 3,
+          "mode": "dom",
+          "duration_ms": 322.607097,
+          "observer_ms": 12.458659,
+          "remaining_ms": 310.148438
+        },
+        {
+          "index": 4,
+          "mode": "svg",
+          "duration_ms": 302.507146,
+          "observer_ms": 8.842888,
+          "remaining_ms": 293.664258
+        },
+        {
+          "index": 5,
+          "mode": "style",
+          "duration_ms": 331.337087,
+          "observer_ms": 7.026723,
+          "remaining_ms": 324.310364
+        },
+        {
+          "index": 6,
+          "mode": "dom",
+          "duration_ms": 419.980432,
+          "observer_ms": 27.795093,
+          "remaining_ms": 392.185339
+        },
+        {
+          "index": 7,
+          "mode": "svg",
+          "duration_ms": 321.818485,
+          "observer_ms": 7.21989,
+          "remaining_ms": 314.598595
+        },
+        {
+          "index": 8,
+          "mode": "style",
+          "duration_ms": 314.792434,
+          "observer_ms": 6.999264,
+          "remaining_ms": 307.79317
+        },
+        {
+          "index": 9,
+          "mode": "dom",
+          "duration_ms": 323.965943,
+          "observer_ms": 18.786293,
+          "remaining_ms": 305.17965
+        },
+        {
+          "index": 10,
+          "mode": "svg",
+          "duration_ms": 382.809766,
+          "observer_ms": 17.713789,
+          "remaining_ms": 365.095977
+        },
+        {
+          "index": 11,
+          "mode": "style",
+          "duration_ms": 355.956183,
+          "observer_ms": 9.296275,
+          "remaining_ms": 346.659908
+        }
+      ]
+    }
+  ],
+  "duration_delta_ms": 768.4669090000002,
+  "observer_delta_ms": 69.61949700000001,
+  "unresolved_delta_ms": 698.8474120000002,
+  "variation_percent": 20.756803326795744,
+  "paired_probe_control_ratios": [
+    1.0058573810478106,
+    0.8508204320371863
+  ],
+  "limits": "Remaining stage time combines navigation, fixed wait and serialization; these captures cannot identify browser work versus host scheduling. Neither control installs the native recorder or full trace. No adjustment to acceptance durations."
+}

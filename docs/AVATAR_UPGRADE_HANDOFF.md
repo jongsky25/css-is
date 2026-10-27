@@ -2,7 +2,7 @@
 
 Last updated: **2026-10-27 UTC**. Repository: `jongsky25/css-is`.
 
-## Start here — Sol handoff, current after mixed getter v11
+## Start here — Sol handoff, current after native recorder v12
 
 **Objective: unblock 2B only. Do not start or resume 3A or later increments.**
 This section supersedes older next-step instructions below. The chronology is
@@ -11,11 +11,12 @@ retained as evidence, not a queue of experiments to repeat.
 ### Checkout and current state
 
 - Repository: `jongsky25/css-is`; resume `codex/avatar-2b-verification`.
-- Latest completed experiment: representative mixed getter calibration, latest
-  harness `d0eeb19` (lifecycle v11). Both probes pass all-mode source-labelled
-  reclamation; one observation bound still fails 5%. No application calibration.
-  Earlier mixed revisions/proofs and all previous failures remain. Use latest
-  branch HEAD for reports/evidence, not a reset to a harness commit.
+- Latest completed experiment: C callback/buffer calibration, frozen harness
+  `04ca993` (lifecycle v12). Native preflight and live receiver proofs pass;
+  both probes pass cost and all-mode reclamation. Control variation fails at
+  20.7568% >20%, so no instrument/application calibration qualification.
+  Earlier mixed revisions/proofs and all native implementation failures remain.
+  Use latest branch HEAD for reports/evidence, not a reset to a harness commit.
 - Comparison baseline: `1c964dcba2fa19de1eab077b00e0e5748d742554`.
 - Current experimental product: `cf363bfe547d5e23619eee28cdaf68bd4b6d7753`,
   including the thread-owned reader candidate and avatar product `f700187`.
@@ -47,12 +48,11 @@ cannot override the failed gates. This screen compares current versus candidate;
 it is not the complete original-versus-candidate acceptance matrix.
 
 Latest diagnostic: [mixed getter fixture](avatars/increment2b/mixed-reclamation-getter/REPORT.md).
-Exact original DOM/SVG/style documents produce representative source-labelled
-reclamation in both latest probes, with intact receiver identities and natural GC/
-sweeps. Ten/eight labelled generations return; all 18 overlap sweeping. One cost
-gate still fails (5.2188% >5%), so instrument/application calibration stays unqualified.
-All four screen/four type-proof archives re-audit identically; product acceptance
-and earlier failures are unchanged. No application comparison or product fix follows.
+The native C recorder now passes both cost bounds (2.9486/3.7522%) and preserves
+all 1,536 receiver joins and all-mode source-labelled reclamation per probe.
+Twenty labelled generations overlap native sweeping. The complete calibration
+still fails: controls differ by 20.7568% (>20%). No application comparison or product
+fix follows. Product acceptance and every earlier failure remain unchanged.
 
 There is no defensible percentage or ETA. At least three milestones remain:
 
@@ -72,7 +72,9 @@ verification**. No candidate currently qualifies to unblock 2B.
 
 Read these in order before changing code or launching browsers:
 
-1. [Mixed getter result](avatars/increment2b/mixed-reclamation-getter/REPORT.md),
+1. [Native recorder result](avatars/increment2b/native-callback-recorder/REPORT.md),
+   frozen protocols, failed implementations, passed proofs, control interval analysis
+   and the failed four-slot calibration. Then [mixed getter result](avatars/increment2b/mixed-reclamation-getter/REPORT.md),
    four frozen screen protocols, type proofs, failed audits and native-period summaries.
 2. [Path-only getter](avatars/increment2b/absent-attribute-receiver/REPORT.md),
    [lifecycle v6](avatars/increment2b/native-membership-lifecycle/REPORT.md), and
@@ -85,25 +87,22 @@ Read these in order before changing code or launching browsers:
    [reader retention](avatars/increment2b/reader-retention/REPORT.md) and
    [native types](avatars/increment2b/native-type-ownership/REPORT.md) remain constraints.
 
-The representative fixture decision and getter type proof are now completed. New
-fixture bytes exactly match the previously qualified d732b70 DOM/SVG/style generator.
-Four distinct fixed revisions retain every failure: v8 cost, v9 cost/reclamation,
-v10 cost, v11 one cost miss. Latest v11 uses navigation-armed overflow guards,
-per-evaluate selector reuse and post-window pointer-string formatting. Both probes
-preserve all 1,536 receivers and all-mode labelled returns, with natural MajorGC/
-sweeping. One probe still exceeds the conservative 5% bound at 5.2188%. No application
-calibration is qualified. Do not repeat the latest build for a favourable margin.
+The native C recorder intervention is completed. Preflight b2bf252 proves clock,
+concurrency, immutable values and exact overflow accounting. Live proof f676f7a
+verifies 384 receiver/reference pairs across DOM/SVG/style. Frozen v12 screen
+04ca993 passes individual probe costs, native joins and measured reclamation;
+control duration variation is the sole remaining screen error. All three complete
+archives reconstruct and re-audit identically; failed v1/v2 native captures remain.
+81 focused tests pass. Do not repeat v12 unchanged for a favorable margin.
 
-Next target repeated JS/native recording work, not more artwork or a bigger fixture.
-The callback still timestamps and constructs JS events thousands of times. A
-bounded native callback/buffer implementation is a concrete next hypothesis: preserve
-wire events, clocks, thread/phase/overflow, immutable pointer values, null returns
-and page generations. First prove clock/concurrency/return-pointer and exact native
-identity/lifetime equivalence on controlled fixtures, then freeze a new fixed cost
-calibration. No C/native recorder is implemented or qualified yet. No omitted cost,
-sample reduction, forced GC, extra dwell/work or budget change. Mixed membership
-is not exclusive page-byte ownership; post-window returns never satisfy measured
-reclamation. No product correction is established.
+Next prepare a separate uninjected control timing diagnostic, explicitly bracketing
+navigation, fixed wait, each DOM serialization, census and counters, with bounded
+browser/host CPU scheduling context. Freeze its capture policy before measurement.
+Existing captures explain only 69.6195ms of the 768.4669ms control difference via
+observer intervals; remaining 698.8474ms mixes browser work and scheduling. This is
+an unresolved attribution question, not permission to subtract time or relax 20%.
+Establish a concrete explanation/intervention before any new qualification screen.
+No application calibration, candidate promotion, 2B acceptance or later increment.
 
 ### Important traps and execution constraints
 

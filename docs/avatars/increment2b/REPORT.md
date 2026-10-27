@@ -8,10 +8,23 @@ with stable controls. Remaining milestones: a supported fix, qualified candidate
 validation, then complete original-baseline acceptance across all device/cache
 and scenario groups. No defensible percentage or ETA is established.
 
-Use the [Sol restart handoff](../../AVATAR_UPGRADE_HANDOFF.md#start-here--sol-handoff-current-after-mixed-getter-v11)
+Use the [Sol restart handoff](../../AVATAR_UPGRADE_HANDOFF.md#start-here--sol-handoff-current-after-native-recorder-v12)
 for current source identities, evidence order, next bounded work and constraints.
-The mixed getter fixture below is the latest completed experiment.
+The native recorder result below is the latest completed experiment.
 Older next-step instructions in this report are historical where superseded.
+
+## Native callback recorder — costs passed, control stability failed
+
+[Latest report](native-callback-recorder/REPORT.md): frozen native preflight b2bf252 and live receiver proof
+f676f7a pass. Calibration 04ca993 (lifecycle v12) preserves 1,536/1,536 receiver
+joins per probe and all-mode source-labelled reclamation: DOM4/SVG3/style3 each,
+all twenty labelled generations overlapping natural sweeps. Cost bounds pass at
+2.9486/3.7522%; paired durations pass. Controls vary **20.7568% >20%**, so the
+instrument remains unqualified for application calibration and 2B stays blocked.
+All three completed archives reconstruct/re-audit identically; failed native
+attempts remain. 81 focused tests pass; product unchanged. Next freeze a separate
+control timing diagnostic to distinguish navigation/wait/serialization from host
+scheduling. No unchanged favorable rerun, time subtraction or budget waiver.
 
 ## Mixed getter fixture — representative reclamation passed, one cost gate remains
 

@@ -1,0 +1,11 @@
+{
+  "archive_sha256": "894347e5f096eb6bd37fb87765cd24e76ee91af30b06980bd4cc0d816d3d42e0",
+  "logical_files": 4,
+  "unique_blobs": 4,
+  "paths": {
+    "receiver-v1/assessment.json": "bffd7576be37f14eac4f6cd792f7cc768c88d411d8cd0a668f65ba78d05a3bdf",
+    "receiver-v1/capture.json.gz": "a4750aa3bcb5543a0eadd9fd924c50e8df7632ed5663e98d6aeabb95d632c4c3",
+    "receiver-v1/native-preflight/assessment.json": "521c9c1b1ee5e5ad65183f6c86c15c75e4049795e3ff79bb45a5800b853a7229",
+    "receiver-v1/native-preflight/capture.json.gz": "cce03bd056c9ff273807f5221949fcdcf2947f896eb4d7c0ab8a943090be30ed"
+  }
+}

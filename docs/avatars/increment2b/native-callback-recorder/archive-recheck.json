@@ -1,0 +1,23 @@
+[
+  {
+    "archive": "selftest-v3-evidence.zip",
+    "reconstructed_files": 2,
+    "identical_audit": true,
+    "harness_commit": "b2bf25256acf3568b937b1186484437817e33602",
+    "status": "selftest_passed"
+  },
+  {
+    "archive": "receiver-v1-evidence.zip",
+    "reconstructed_files": 4,
+    "identical_audit": true,
+    "harness_commit": "f676f7a8ec2bf6eb3315877292c1170f78116a01",
+    "status": "capability_passed"
+  },
+  {
+    "archive": "screen-v1-evidence.zip",
+    "reconstructed_files": 28,
+    "identical_audit": true,
+    "harness_commit": "04ca99348670ef4cbcd115ac588a480933bf77cd",
+    "status": "diagnostic_failed"
+  }
+]

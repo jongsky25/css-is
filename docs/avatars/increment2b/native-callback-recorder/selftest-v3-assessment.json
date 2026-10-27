@@ -1,0 +1,13 @@
+{
+  "status": "selftest_passed",
+  "acceptance": false,
+  "clock_samples": 20,
+  "native_threads": 4,
+  "immutable_records": 1024,
+  "overflow_stored": 32,
+  "overflow_dropped": 36,
+  "record_size": 72,
+  "harness_commit": "b2bf25256acf3568b937b1186484437817e33602",
+  "source_hashes_verified": 4,
+  "capture_sha256": "cce03bd056c9ff273807f5221949fcdcf2947f896eb4d7c0ab8a943090be30ed"
+}
