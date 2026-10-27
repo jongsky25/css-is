@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 import subprocess
 import sys
+from scripts.avatar_baseline.element_membership_capability import PROTOCOL
 
 SOURCES = ['scripts/avatar_baseline/run_element_membership.py',
            'scripts/avatar_baseline/element_membership_capability.py',
@@ -20,7 +21,7 @@ def main():
         if (repo / name).read_bytes() != subprocess.check_output(['git', 'show', head + ':' + name], cwd=repo):
             raise ValueError('Uncommitted harness: ' + name)
     a.out.mkdir(parents=True, exist_ok=False); out = a.out.resolve()
-    plan = {'protocol': 'native-element-membership-v1', 'acceptance': False, 'harness_commit': head,
+    plan = {'protocol': PROTOCOL, 'acceptance': False, 'harness_commit': head,
             'order': ['control', 'probe', 'probe', 'control'], 'cohorts': []}
     for name in SOURCES:
         dest = out / 'harness' / name; dest.parent.mkdir(parents=True, exist_ok=True)

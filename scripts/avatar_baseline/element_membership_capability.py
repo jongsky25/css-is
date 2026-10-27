@@ -12,7 +12,10 @@ import frida
 from playwright.sync_api import sync_playwright
 
 BUILD = '1c5dca8527a61d07372e489142bee26af1bcaf71'
-COUNT = 512
+COUNT = 512  # Retained v1 census profile.
+CENSUS = 128
+FIXTURE_COUNT = 4096
+PROTOCOL = 'native-element-membership-v2'
 STAGES = 12
 BROWSER = Path('/workspace/scratch/avatar-runtime/root/usr/lib/chromium/chromium')
 HOOK = Path(__file__).resolve().parent / 'native/element_membership.js'
@@ -26,8 +29,8 @@ class Handler(BaseHTTPRequestHandler):
         else:
             # Fixed separated blocks permit mixed-page observations without assuming segregation.
             body = '<svg width="64" height="64">'
-            body += ''.join(f'<path data-group="avatar" d="M0 0L{i%64} 64"/>' for i in range(COUNT)) + '</svg>'
-            body += '<svg width="64" height="64">' + ''.join(f'<path data-group="other" d="M0 0L{i%64} 64"/>' for i in range(COUNT)) + '</svg>'
+            body += ''.join(f'<path data-group="avatar" d="M0 0L{i%64} 64"/>' for i in range(FIXTURE_COUNT)) + '</svg>'
+            body += '<svg width="64" height="64">' + ''.join(f'<path data-group="other" d="M0 0L{i%64} 64"/>' for i in range(FIXTURE_COUNT)) + '</svg>'
         raw = ('<!doctype html><html><head><link rel="icon" href="data:,"></head><body>' + body + '</body></html>').encode()
         self.send_response(200); self.send_header('Content-Type', 'text/html; charset=utf-8')
         self.send_header('Content-Length', str(len(raw))); self.end_headers(); self.wfile.write(raw)
@@ -40,8 +43,8 @@ def digest(path):
 def run(out, mode):
     out.mkdir(parents=True, exist_ok=False)
     root = Path(__file__).resolve().parents[2]
-    result = {'protocol': 'native-element-membership-v1', 'acceptance': False, 'forced_gc': False,
-              'mode': mode, 'count_per_group': COUNT, 'stage_count': STAGES, 'stages': [], 'messages': [],
+    result = {'protocol': PROTOCOL, 'acceptance': False, 'forced_gc': False,
+              'mode': mode, 'count_per_group': CENSUS, 'fixture_count_per_group': FIXTURE_COUNT, 'stage_count': STAGES, 'stages': [], 'messages': [],
               'harness_commit': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=root, text=True).strip(),
               'runner_sha256': digest(Path(__file__)), 'hook_sha256': digest(HOOK), 'frida_version': frida.__version__}
     notes = subprocess.check_output(['readelf', '-n', str(BROWSER)], text=True)
@@ -101,11 +104,13 @@ def run(out, mode):
                         census = {'phase': label, 'begin_ns': time.monotonic_ns()}
                         stage['censuses'].append(census)
                         if script: script.exports_sync.setphase(label)
-                        census['result'] = page.evaluate('''group => {
+                        census['result'] = page.evaluate('''({group, count}) => {
                             let nodes = [...document.querySelectorAll('[data-group="'+group+'"]')];
+                            const fixture_count = nodes.length;
+                            nodes = group === 'avatar' ? nodes.slice(-count) : nodes.slice(0, count);
                             let counts = nodes.map(node => node.getClientRects().length);
-                            return {count: nodes.length, counts};
-                        }''', group)
+                            return {count: nodes.length, fixture_count, counts};
+                        }''', {'group': group, 'count': CENSUS})
                         if script: script.exports_sync.setphase('between-censuses')
                         census['end_ns'] = time.monotonic_ns()
                 after = page.evaluate('document.documentElement.outerHTML')

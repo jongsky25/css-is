@@ -56,10 +56,13 @@ def join_receivers(events, spans):
 
 
 def inspect(p):
-    if (p['status'] != 'captured' or p['protocol'] != 'native-element-membership-v1'
+    protocol = p['protocol']
+    count = COUNT if protocol == 'native-element-membership-v1' else 128
+    if (p['status'] != 'captured' or protocol not in ['native-element-membership-v1', 'native-element-membership-v2']
         or p['acceptance'] is not False or p['forced_gc'] is not False or p['build_id'] != BUILD
         or p['browser_version'] != '156.0.8078.47' or p['frida_version'] != '17.5.1'
-        or p['count_per_group'] != COUNT or p['stage_count'] != STAGES):
+        or p['count_per_group'] != count or p['stage_count'] != STAGES
+        or (protocol == 'native-element-membership-v2' and p.get('fixture_count_per_group') != 4096)):
         raise ValueError('Invalid capability identity or incomplete capture')
     if [s['index'] for s in p['stages']] != list(range(STAGES)) or p['end_ns'] <= p['begin_ns']:
         raise ValueError('Incomplete fixed schedule')
@@ -70,8 +73,10 @@ def inspect(p):
         if [c['phase'] for c in s['censuses']] != expected:
             raise ValueError('Census schedule mismatch')
         for c in s['censuses']:
-            if c['result']['count'] != COUNT or len(c['result']['counts']) != COUNT:
+            if c['result']['count'] != count or len(c['result']['counts']) != count:
                 raise ValueError('Incomplete known-element census')
+            if protocol == 'native-element-membership-v2' and c['result'].get('fixture_count') != 4096:
+                raise ValueError('Wrong fixed fixture size')
             if any(v != 1 for v in c['result']['counts']):
                 raise ValueError('Unexpected geometry result')
             if not p['begin_ns'] <= s['begin_ns'] <= c['begin_ns'] <= c['end_ns'] <= s['end_ns'] <= p['end_ns']:
@@ -98,7 +103,7 @@ def inspect(p):
         raise ValueError('Missing or extra receiver phase')
     for label, census in expected_phases.items():
         selected = by_phase[label]
-        if len(selected) != COUNT or len({e['address'] for e in selected}) != COUNT:
+        if len(selected) != count or len({e['address'] for e in selected}) != count:
             raise ValueError('Known-element/native-receiver count mismatch')
         if any(not census['begin_ns'] <= e['begin_ns'] <= e['end_ns'] <= census['end_ns'] for e in selected):
             raise ValueError('Receiver outside census')
@@ -134,7 +139,7 @@ def inspect(p):
 
 def audit(root, repo, ref):
     plan = json.loads((root / 'experiment.json').read_text())
-    if (plan['protocol'] != 'native-element-membership-v1' or plan['harness_commit'] != ref
+    if (plan['protocol'] not in ['native-element-membership-v1', 'native-element-membership-v2'] or plan['harness_commit'] != ref
         or plan['order'] != ['control', 'probe', 'probe', 'control'] or plan['acceptance'] is not False):
         raise ValueError('Invalid frozen calibration')
     result = {'acceptance': False, 'status': 'calibration_failed', 'cohorts': [], 'errors': [], 'files_verified': 0}
@@ -154,7 +159,7 @@ def audit(root, repo, ref):
                     raise ValueError('Evidence identity mismatch')
                 result['files_verified'] += 1
             p = json.load(gzip.open(folder / 'capture.json.gz', 'rt'))
-            if p['harness_commit'] != ref or p['mode'] != entry['mode']:
+            if p['harness_commit'] != ref or p['mode'] != entry['mode'] or p['protocol'] != plan['protocol']:
                 raise ValueError('Frozen source or mode mismatch')
             for name, key in [(runner, 'runner_sha256'), (hook, 'hook_sha256')]:
                 raw = subprocess.check_output(['git', 'show', ref + ':' + name], cwd=repo)
