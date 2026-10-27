@@ -10,7 +10,8 @@ import subprocess
 import sys
 import time
 
-PROTOCOL = 'control-phase-timing-v1'
+PROTOCOL = 'control-phase-timing-v2'
+SUPPORTED = {'control-phase-timing-v1', PROTOCOL}
 SOURCES = ['scripts/avatar_baseline/control_phase_timing.py',
            'scripts/avatar_baseline/element_membership_lifecycle.py',
            'scripts/avatar_baseline/mixed_membership_fixture.py',
@@ -38,7 +39,8 @@ def key_values(raw):
 class Timing:
     def __init__(self):
         self.data = {'protocol':PROTOCOL,'native_hooks_installed':False,'full_trace_enabled':False,
-                     'ticks_per_second':os.sysconf('SC_CLK_TCK'),'phases':[]}
+                     'ticks_per_second':os.sysconf('SC_CLK_TCK'),'phases':[],
+                     'fixed_wait_policy':'host-monotonic-floor-v1','wait_padding_ns':[]}
 
     def initialize(self, browser_pid, renderer_pid, driver_pid):
         self.pids = {'python':os.getpid(),'browser':browser_pid,'renderer':renderer_pid}
@@ -72,6 +74,15 @@ class Timing:
         value['end_ns'] = time.monotonic_ns()
         return value
 
+    def fixed_wait(self, page, milliseconds):
+        begin=time.monotonic_ns();deadline=begin+milliseconds*1_000_000
+        page.wait_for_timeout(milliseconds)
+        remaining=max(0,deadline-time.monotonic_ns())
+        self.data['wait_padding_ns'].append(remaining)
+        while remaining>0:
+            time.sleep(remaining/1e9)
+            remaining=max(0,deadline-time.monotonic_ns())
+
     def measure(self, index, name, operation):
         row = {'index':index,'phase':name,'before':self.snapshot()}
         self.data['phases'].append(row)
@@ -85,7 +96,7 @@ class Timing:
 def validate_capture(p):
     from scripts.avatar_baseline.mixed_membership_fixture import SCHEDULE,document
     from scripts.avatar_baseline.analyze_membership_lifecycle import lifecycle_events,validate_selector_reuse
-    if (p['protocol']!=PROTOCOL or p['mode']!='control' or p['status']!='captured'
+    if (p['protocol'] not in SUPPORTED or p['mode']!='control' or p['status']!='captured'
         or p.get('history') or p['messages'] or p['acceptance'] is not False
         or p['forced_gc'] is not False or p['back_forward_cache_disabled'] is not True
         or p['build_id']!='1c5dca8527a61d07372e489142bee26af1bcaf71'
@@ -93,8 +104,10 @@ def validate_capture(p):
         raise ValueError('Invalid uninjected diagnostic capture')
     lifecycle_events(p['lifecycle_events']);validate_selector_reuse(p)
     d=p['control_timing']
-    if d['protocol']!=PROTOCOL or d['native_hooks_installed'] is not False or d['full_trace_enabled'] is not False:
+    if d['protocol']!=p['protocol'] or d['native_hooks_installed'] is not False or d['full_trace_enabled'] is not False:
         raise ValueError('Diagnostic contains injection/trace')
+    if p['protocol']==PROTOCOL and (d.get('fixed_wait_policy')!='host-monotonic-floor-v1' or len(d.get('wait_padding_ns',[]))!=12 or any(n<0 for n in d['wait_padding_ns'])):
+        raise ValueError('Missing fixed-wait deadline policy')
     if list(d['pids'])!=['python','browser','renderer','driver'] or len(set(d['pids'].values()))!=4:
         raise ValueError('Invalid process identity')
     if len(d['phases'])!=12*len(PHASES) or len(p['stages'])!=12:raise ValueError('Incomplete phase schedule')
@@ -158,7 +171,7 @@ def validate_capture(p):
 
 def audit(root,repo):
     plan=json.loads((root/'experiment.json').read_text());ref=plan['harness_commit']
-    if plan['protocol']!=PROTOCOL or plan['order']!=['control']*4 or len(plan['cohorts'])!=4 or plan['acceptance'] is not False:
+    if plan['protocol'] not in SUPPORTED or plan['order']!=['control']*4 or len(plan['cohorts'])!=4 or plan['acceptance'] is not False:
         raise ValueError('Invalid diagnostic schedule')
     for name in SOURCES:
         if (root/'harness'/name).read_bytes()!=subprocess.check_output(['git','show',ref+':'+name],cwd=repo):raise ValueError('Frozen source mismatch')

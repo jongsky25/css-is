@@ -15,7 +15,8 @@ def capture():
                 'cgroup_cpu':{'throttled_usec':0,'nr_throttled':0,'usage_usec':0}}
     d={'protocol':PROTOCOL,'native_hooks_installed':False,'full_trace_enabled':False,
        'pids':dict(zip(['python','browser','renderer','driver'],[1,2,3,4])),
-       'ticks_per_second':100,'initial':snapshot(0),'phases':[]};p['control_timing']=d
+       'ticks_per_second':100,'initial':snapshot(0),'phases':[],
+       'fixed_wait_policy':'host-monotonic-floor-v1','wait_padding_ns':[0]*12};p['control_timing']=d
     t=10
     for i,mode in enumerate(SCHEDULE):
         s={'index':i,'fixture_mode':mode,'begin_ns':t,'dom_before_sha256':EXPECTED_DOM[mode],
@@ -81,3 +82,26 @@ def test_cpu_steal_summary_excludes_double_counted_guest_time():
     assert cpu_delta([0]*10,[10,0,3,50,0,0,1,6,2,0])==(70,6)
     with pytest.raises(ValueError):cpu_delta([1]*10,[0]*10)
     with pytest.raises(ValueError):cpu_delta([0]*10,[1]*8)
+
+
+def test_early_browser_timer_is_completed_to_host_deadline(monkeypatch):
+    import scripts.avatar_baseline.control_phase_timing as module
+    clock=iter([0,219_600_000,220_000_001]);sleeps=[];calls=[]
+    monkeypatch.setattr(module.time,'monotonic_ns',lambda:next(clock))
+    monkeypatch.setattr(module.time,'sleep',sleeps.append)
+    class Page:
+        def wait_for_timeout(self,value):calls.append(value)
+    timing=Timing();timing.fixed_wait(Page(),220)
+    assert calls==[220] and sleeps==[.0004]
+    assert timing.data['wait_padding_ns']==[400_000]
+
+
+def test_completed_browser_timer_adds_no_extra_wait(monkeypatch):
+    import scripts.avatar_baseline.control_phase_timing as module
+    clock=iter([0,221_000_000]);sleeps=[]
+    monkeypatch.setattr(module.time,'monotonic_ns',lambda:next(clock))
+    monkeypatch.setattr(module.time,'sleep',sleeps.append)
+    class Page:
+        def wait_for_timeout(self,value):pass
+    timing=Timing();timing.fixed_wait(Page(),220)
+    assert sleeps==[] and timing.data['wait_padding_ns']==[0]

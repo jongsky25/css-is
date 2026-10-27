@@ -1,0 +1,17 @@
+{
+  "run_url": "https://github.com/jongsky25/css-is/actions/runs/40503234347",
+  "artifact_id": 12733632971,
+  "artifact_sha256": "5ef4bd4779098386d89ecd48465ffc5483290e5fd1fe8f2b6ed6fe6b8aed5e4d",
+  "internal_hashes_verified": 34,
+  "status": "diagnostic_failed",
+  "errors": [
+    "Slot 1: Fixed wait shortened",
+    "Slot 2: Fixed wait shortened",
+    "Slot 3: Fixed wait shortened"
+  ],
+  "files_verified": 12,
+  "harness_commit": "c76ae40480f20af47d10f06a8288f37858154db5",
+  "identical_reaudit": true,
+  "captured_controls": 4,
+  "qualification": false
+}

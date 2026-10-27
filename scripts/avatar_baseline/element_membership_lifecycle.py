@@ -37,7 +37,7 @@ def run(out, mode, timing=None):
               'harness_commit': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=root, text=True).strip(),
               'runner_sha256': digest(Path(__file__)), 'hook_sha256': digest(HOOK), 'frida_version': frida.__version__, 'lifecycle_events': []}
     if timing is not None:
-        result['protocol'] = 'control-phase-timing-v1'
+        result['protocol'] = timing.data['protocol']
         result['control_timing'] = timing.data
     notes = subprocess.check_output(['readelf', '-n', str(BROWSER)], text=True)
     if 'Build ID: ' + BUILD not in notes:
@@ -128,7 +128,7 @@ def run(out, mode, timing=None):
                 def timed(name, operation):
                     return timing.measure(index, name, operation) if timing is not None else operation()
                 timed('navigation', lambda: page.goto(origin + f'/fixture/{index}'))
-                timed('fixed_wait', lambda: page.wait_for_timeout(220))
+                timed('fixed_wait', lambda: timing.fixed_wait(page, 220) if timing is not None else page.wait_for_timeout(220))
                 before = timed('serialize_before', lambda: page.evaluate('document.documentElement.outerHTML'))
                 start = time.monotonic_ns()
                 observed = timed('census', lambda: page.evaluate('''({count,mode}) => {'''+SELECT_JS+'''
