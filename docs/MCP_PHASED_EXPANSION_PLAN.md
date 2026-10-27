@@ -1,6 +1,6 @@
 # Office Connect MCP expansion plan
 
-Status: **Incremental implementation**, updated October 27, 2026. Baseline: the read-only MCP expansion in v8.35 (PR #444). M1 reads and default-off M2.1 through M2.6 and M3.1 acknowledgement and M3.2 task-submission pilots are implemented as recorded below. Existing OAuth grants are not widened. Hosted write acceptance remains separate from implementation.
+Status: **Incremental implementation**, updated October 27, 2026. Baseline: the read-only MCP expansion in v8.35 (PR #444). M1 reads and default-off M2.1 through M2.6 and M3.1 acknowledgement, M3.2 task-submission and M3.3 supply-submission pilots are implemented as recorded below. Existing OAuth grants are not widened. Hosted write acceptance remains separate from implementation.
 
 ## Goal and boundary
 
@@ -335,3 +335,26 @@ completion, owner/deadline changes, uploads or external relay are added.
 See [M3.2 setup and acceptance](MCP_TASK_SUBMISSION_PILOT.md). Hosted write
 acceptance remains pending and all flags remain unchanged. Other M3 actions and
 all M4 decisions are separate increments.
+
+M3.2 merged in [PR #498](https://github.com/jongsky25/css-is/pull/498), commit
+`5c09167e51882e6e4d7f4b1b50d2904ce41caafa`.
+
+### M3.3 implementation — v8.87
+
+Separate default-off `supplies:request:submit` consent prepares an existing own
+draft or returned request. Browser review shows exact lines/quantities,
+purpose/date, current requester/unit, catalog revisions and approval routing.
+The existing zero-eligible-approver behavior remains explicit: submission may
+proceed with a routing warning and awaits a configured eligible approver.
+
+The shared domain submission service now offers a caller-owned transactional
+entry point. Immutable submitted header/lines, control numbering, normal
+operation/event/audit and MCP completion/routing metadata commit together. All
+bound identity/catalog/routing/revision conditions are rechecked; independent
+previews against one revision commit once. Exact recovery preserves later
+returns/edits and old submitted versions. No approval, reservation, issuance,
+purchase, payment, withdrawal or external relay is added.
+
+See [M3.3 setup and acceptance](MCP_SUPPLY_SUBMISSION_PILOT.md). Hosted write
+acceptance remains pending and no flag is activated. Other M3 actions and all M4
+decisions remain separate increments.

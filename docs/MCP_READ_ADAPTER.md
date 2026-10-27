@@ -304,3 +304,6 @@ receipts: see [setup and acceptance](MCP_TASK_ACKNOWLEDGEMENT_PILOT.md).
 
 Own task submission for review is a separate default-off M3 pilot using canonical
 API receipts: see [setup and acceptance](MCP_TASK_SUBMISSION_PILOT.md).
+
+Own supply request submission is a separate default-off M3 pilot: see
+[setup and acceptance](MCP_SUPPLY_SUBMISSION_PILOT.md).

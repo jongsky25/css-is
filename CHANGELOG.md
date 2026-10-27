@@ -1,3 +1,9 @@
+## 8.87 — October 27, 2026
+
+- Add default-off own supply request submission preparation/recovery with separate supplies:request:submit consent excluded from default scopes. Signed-in browser review binds an existing draft/returned request, every purpose/date/item/quantity/catalog field, current requester/unit, approver routing and numbering year.
+- Extract a caller-owned transactional submission entry point while preserving the normal Supply operation contract, immutable snapshots, numbering, audit and post-commit warning reconciliation. Atomically save one submitted version, number and canonical/MCP receipts; report actual original submitted state and next-party role/count, including the normal zero-approver warning.
+- Recheck catalog, identity, unit, routing, revisions, session and grant; clear completed/expired preview copies and recover across refresh/races/replay without overwriting later return/edit decisions. Add runtime packaging, OAuth/MCP/Supplies/browser/mobile checks and the operator runbook. No approval, reservations, stock issuance, purchases, payments, withdrawals or external relay; hosted acceptance remains pending.
+
 ## 8.86 — October 27, 2026
 
 - Add default-off assigned-task submission preparation and recovery with separate work:task:submit consent excluded from default scopes. Browser confirmation binds exact output, review note, task/work-item revisions and lead/unit routing before moving In progress to For review; explain replacement of saved output and normal history visibility/effects.
