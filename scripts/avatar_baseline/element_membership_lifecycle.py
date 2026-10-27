@@ -15,7 +15,7 @@ BUILD = '1c5dca8527a61d07372e489142bee26af1bcaf71'
 COUNT = 512  # Retained v1 census profile.
 CENSUS = 128
 FIXTURE_COUNT = 4096
-PROTOCOL = 'native-membership-lifecycle-v2'
+PROTOCOL = 'native-membership-lifecycle-v3'
 STAGES = 12
 BROWSER = Path('/workspace/scratch/avatar-runtime/root/usr/lib/chromium/chromium')
 HOOK = Path(__file__).resolve().parent / 'native/element_membership_lifecycle.js'
@@ -67,15 +67,10 @@ def run(out, mode):
                     if (!match) return;
                     const data = {index: Number(match[1]), persisted: event.persisted};
                     console.timeStamp('membership-pagehide:' + data.index + ':' + data.persisted);
-                    console.debug('membership-lifecycle:' + JSON.stringify(data));
+                    globalThis.membershipLifecycle(JSON.stringify(data));
                 });
             })();''')
             page = context.new_page(); cdp = browser.new_browser_cdp_session(); completed = []
-            def console_event(message):
-                if message.text.startswith('membership-lifecycle:'):
-                    data = json.loads(message.text.removeprefix('membership-lifecycle:'))
-                    result['lifecycle_events'].append({**data, 'received_ns': time.monotonic_ns()})
-            page.on('console', console_event)
             processes = cdp.send('SystemInfo.getProcessInfo')['processInfo']
             browser_pids = [p['id'] for p in processes if p['type'] == 'browser']
             if len(browser_pids) != 1: raise ValueError('Ambiguous launched browser PID')
@@ -86,6 +81,14 @@ def run(out, mode):
             del arguments
             result['playwright_version'] = __import__('importlib.metadata', fromlist=['version']).version('playwright')
             page_cdp = context.new_cdp_session(page)
+            def binding_event(event):
+                if event['name'] == 'membershipLifecycle':
+                    data = json.loads(event['payload'])
+                    result['lifecycle_events'].append({**data, 'received_ns': time.monotonic_ns()})
+            page_cdp.on('Runtime.bindingCalled', binding_event)
+            page_cdp.send('Runtime.enable')
+            page_cdp.send('Runtime.addBinding', {'name': 'membershipLifecycle'})
+            result['lifecycle_transport'] = 'cdp-runtime-binding'
             cdp.on('Tracing.tracingComplete', lambda e: completed.append(e))
             cdp.send('Tracing.start', {'transferMode': 'ReturnAsStream', 'traceConfig': {
                 'excludedCategories': ['*'], 'includedCategories': ['devtools.timeline'], 'recordMode': 'recordUntilFull'}})

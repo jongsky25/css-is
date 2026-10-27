@@ -10,7 +10,8 @@ import subprocess
 from scripts.avatar_baseline.analyze_element_membership import inspect, validate_identity, OFFSETS
 from scripts.avatar_baseline.analyze_reader_retention import clock_bounds, mapped, selected_events, position
 
-PROTOCOL = 'native-membership-lifecycle-v2'
+PROTOCOL = 'native-membership-lifecycle-v3'
+SUPPORTED = {f'native-membership-lifecycle-v{i}' for i in [1,2,3]}
 EXTRA_OFFSETS = {'shutdown': 0x100208d0, 'destroy': 0x5aa4490, 'release': 0x5ab09d0}
 SOURCES = ['scripts/avatar_baseline/element_membership_lifecycle.py',
            'scripts/avatar_baseline/native/element_membership_lifecycle.js',
@@ -28,8 +29,10 @@ def lifecycle_events(events):
 
 
 def analyze(p, trace=None):
-    if p['protocol'] != PROTOCOL or p['back_forward_cache_disabled'] is not True:
+    if p['protocol'] not in SUPPORTED or p['back_forward_cache_disabled'] is not True:
         raise ValueError('Wrong lifecycle protocol or BFCache launch flag')
+    if p['protocol'] == PROTOCOL and p.get('lifecycle_transport') != 'cdp-runtime-binding':
+        raise ValueError('Wrong lifecycle event transport')
     lifecycle_events(p['lifecycle_events'])
     native = p.get('history'); begin, end = p['begin_ns'], p['end_ns']
     if any(not begin <= e['received_ns'] <= end for e in p['lifecycle_events']):
@@ -117,7 +120,7 @@ def analyze(p, trace=None):
 
 def audit(root, repo, ref):
     plan = json.loads((root/'experiment.json').read_text())
-    if plan['protocol'] != PROTOCOL or plan['harness_commit'] != ref or plan['acceptance'] is not False or plan['order'] != ['control','probe','probe','control'] or len(plan['cohorts']) != 4:
+    if plan['protocol'] not in SUPPORTED or plan['harness_commit'] != ref or plan['acceptance'] is not False or plan['order'] != ['control','probe','probe','control'] or len(plan['cohorts']) != 4:
         raise ValueError('Invalid frozen lifecycle schedule')
     result = {'acceptance': False, 'application_qualified': False, 'status': 'diagnostic_failed',
               'errors': [], 'cohorts': [], 'files_verified': 0, 'source_hashes_verified': 0}
@@ -138,7 +141,7 @@ def audit(root, repo, ref):
                     raise ValueError('Evidence identity mismatch')
                 result['files_verified'] += 1
             p = json.load(gzip.open(folder/'capture.json.gz','rt'))
-            if p['harness_commit'] != ref or p['mode'] != mode: raise ValueError('Capture source/mode mismatch')
+            if p['harness_commit'] != ref or p['mode'] != mode or p['protocol'] != plan['protocol']: raise ValueError('Capture source/mode mismatch')
             for name, key in [(SOURCES[0],'runner_sha256'),(SOURCES[1],'hook_sha256')]:
                 raw = subprocess.check_output(['git','show',ref+':'+name],cwd=repo)
                 if hashlib.sha256(raw).hexdigest() != p[key]: raise ValueError('Runtime probe mismatch')

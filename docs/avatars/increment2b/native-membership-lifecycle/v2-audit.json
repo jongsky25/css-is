@@ -1,0 +1,35 @@
+{
+  "acceptance": false,
+  "application_qualified": false,
+  "status": "diagnostic_failed",
+  "errors": [
+    "Slot 0: Incomplete document pagehide history",
+    "Slot 1: Incomplete document pagehide history",
+    "Slot 2: Incomplete document pagehide history",
+    "Slot 3: Incomplete document pagehide history"
+  ],
+  "cohorts": [
+    {
+      "index": 0,
+      "status": "invalid",
+      "error": "ValueError('Incomplete document pagehide history')"
+    },
+    {
+      "index": 1,
+      "status": "invalid",
+      "error": "ValueError('Incomplete document pagehide history')"
+    },
+    {
+      "index": 2,
+      "status": "invalid",
+      "error": "ValueError('Incomplete document pagehide history')"
+    },
+    {
+      "index": 3,
+      "status": "invalid",
+      "error": "ValueError('Incomplete document pagehide history')"
+    }
+  ],
+  "files_verified": 14,
+  "source_hashes_verified": 14
+}
