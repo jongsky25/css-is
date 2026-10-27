@@ -1,0 +1,23 @@
+{
+  "acceptance": false,
+  "trace_loss": false,
+  "profiles": [
+    {
+      "pid": 25483,
+      "functions": [
+        "smokeWork2",
+        "smokeWork1",
+        "smokeWork0"
+      ],
+      "samples": 4400,
+      "negative_deltas": 0
+    },
+    {
+      "pid": 25471,
+      "functions": [],
+      "samples": 4303,
+      "negative_deltas": 28
+    }
+  ],
+  "trace_sha256": "1212d390e36e3d3cd64ccf29a062cbf137ae6c3077300ca73f2ebc4484252e04"
+}

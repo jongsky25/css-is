@@ -49,16 +49,19 @@ def js_summary(profile):
             raise ValueError('Unknown JS child')
     weight = collections.Counter();counts = collections.Counter()
     for node, dt in zip(samples,deltas):
-        if node not in nodes or not math.isfinite(dt) or dt < 0:
+        if node not in nodes or not math.isfinite(dt):
             raise ValueError('Unknown JS sample or invalid delta')
         weight[node] += dt;counts[node] += 1
     if sum(deltas) > profile['endTime']-profile['startTime']+2000:
         raise ValueError('JS samples exceed profile window')
-    return {'sample_count':len(samples),'profile_ms':(profile['endTime']-profile['startTime'])/1000,
+    signed = sum(d < 0 for d in deltas)
+    ordered = counts.most_common() if signed else weight.most_common()
+    return {'negative_delta_count':signed,'elapsed_weights_available':not signed,
+            'sample_count':len(samples),'profile_ms':(profile['endTime']-profile['startTime'])/1000,
             'sampled_elapsed_ms':sum(deltas)/1000,
             'leaf_functions':[{'node':node,'callFrame':nodes[node]['callFrame'],'sample_count':counts[node],
-                               'sampled_elapsed_ms':value/1000} for node,value in weight.most_common()],
-            'limits':'V8 samples weighted by elapsed deltas, not measured per-function CPU. Idle/program/GC remain explicit. Native rendering and Python are outside V8 stacks.'}
+                               'sampled_elapsed_ms':None if signed else weight[node]/1000} for node,value in ordered],
+            'limits':'Signed deltas are retained; with nonmonotonic samples only counts, not per-function elapsed weights, are reported. V8 samples are not measured per-function CPU. Idle/program/GC remain explicit. Native rendering and Python are outside V8 stacks.'}
 
 
 def trace_cpu(events, pid, wall_window=None):
@@ -99,3 +102,45 @@ def trace_cpu(events, pid, wall_window=None):
             'inclusive_cpu_ms_not_additive':{k:v/1000 for k,v in inclusive.most_common()},
             'event_counts':dict(counts),'events_without_thread_cpu':dict(missing),
             'limits':'Renderer main-thread trace tts/tdur only. Coverage union avoids nesting double-counts; smallest recorded enclosing interval is not a complete native stack. Unrecorded CPU and other threads remain unclassified.'}
+
+
+def trace_js_profiles(segments, pid, navigation_windows):
+    groups=[];frames=collections.Counter();covered=collections.Counter();negative=0;outside=0;sample_count=0
+    for segment_index, events in enumerate(segments):
+        by_id={}
+        for event in sorted(events,key=lambda e:e.get('ts',0)):
+            if event.get('pid')!=pid or event.get('name') not in ('Profile','ProfileChunk'):
+                continue
+            data=event['args']['data'];key=event['id']
+            group=by_id.setdefault(key,{'nodes':{},'samples':[],'deltas':[],'starts':[],'start_threads':[]})
+            if event['name']=='Profile':
+                group['starts'].append(data['startTime']);group['start_threads'].append(event['tid']);continue
+            cpu=data.get('cpuProfile',{})
+            for node in cpu.get('nodes',[]):
+                if node['id'] in group['nodes'] and group['nodes'][node['id']]!=node:
+                    raise ValueError('Conflicting V8 trace node')
+                group['nodes'][node['id']]=node
+            samples=cpu.get('samples',[]);deltas=data.get('timeDeltas',[])
+            if len(samples)!=len(deltas):raise ValueError('V8 chunk sample/delta mismatch')
+            group['samples'].extend(samples);group['deltas'].extend(deltas)
+        for key,g in by_id.items():
+            if g['start_threads'] and g['start_threads'] != [pid]:continue
+            if len(g['starts'])!=1 or not g['samples']:raise ValueError('Missing/ambiguous V8 trace profile start or samples')
+            stamp=g['starts'][0];times=[];group_covered=collections.Counter()
+            for node,dt in zip(g['samples'],g['deltas']):
+                if node not in g['nodes'] or not math.isfinite(dt):raise ValueError('Unknown V8 trace sample or invalid delta')
+                negative+=dt<0;stamp+=dt;times.append(stamp);sample_count+=1
+                hits=[n['mount'] for n in navigation_windows if n['low_us']<=stamp<=n['high_us']]
+                if not hits:outside+=1;continue
+                if len(hits)!=1:raise ValueError('Overlapping navigation profile windows')
+                covered[hits[0]]+=1;group_covered[hits[0]]+=1
+                frame=g['nodes'][node]['callFrame'];identity=(frame.get('functionName',''),frame.get('url',''),frame.get('lineNumber',-1),frame.get('columnNumber',-1))
+                frames[identity]+=1
+            groups.append({'segment':segment_index,'id':key,'sample_count':len(g['samples']),
+                           'first_sample_us':min(times),'last_sample_us':max(times),'covered_mounts':dict(group_covered)})
+    if not groups:raise ValueError('No app-renderer V8 trace profiles')
+    missing=[n['mount'] for n in navigation_windows if not covered[n['mount']]]
+    return {'groups':groups,'sample_count':sample_count,'negative_deltas_retained':negative,
+            'outside_navigation_intervals':outside,'samples_by_mount':dict(covered),'missing_mounts':missing,
+            'leaf_functions':[{'function':f[0],'url':f[1],'line':f[2],'column':f[3],'samples':count} for f,count in frames.most_common()],
+            'limits':'Trace-based V8 sample counts across contexts, not per-function CPU time. Signed deltas reconstruct sample timestamps; no negative elapsed weights assigned. Idle/program/GC retained; only samples in bounded navigation intervals attributed. Default trace sampler frequency is not claimed to equal a fixed requested interval.'}

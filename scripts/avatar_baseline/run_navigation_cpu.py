@@ -33,7 +33,7 @@ def main():
     blocks=(('current','current','current','current'),)
     out=args.output.resolve();out.mkdir(parents=True,exist_ok=False)
     head=subprocess.check_output(['git','rev-parse','HEAD'],cwd=root,text=True).strip()
-    plan={'protocol':'navigation-cpu-v1','phase':'cpu-attribution','acceptance':False,'harness_commit':head,
+    plan={'protocol':'navigation-cpu-v2','phase':'cpu-attribution','acceptance':False,'harness_commit':head,
           'refs':REFS,'blocks':blocks,'samples_per_slot':1,'seconds':30,'fixture_adapter':'sample-ordinal-v1',
           'browser':'156.0.8078.47','budget_bytes':10*1024*1024,
           'session_policy':'Fresh pytest process, fixture database and browser for each slot. Existing warm-up and full workload unchanged. Diagnostic session/order change; not historical acceptance replacement.',

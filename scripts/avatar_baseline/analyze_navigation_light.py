@@ -11,7 +11,7 @@ import sys
 from scripts.avatar_baseline.analyze_paired_variance import REFS, expected_fixture, required_sources, slot_points, source
 from scripts.avatar_baseline.analyze_navigation_residency import join_dump
 from scripts.avatar_baseline.analyze_scheduler import scheduler_observation
-from scripts.avatar_baseline.analyze_cpu_profiles import python_summary, js_summary, trace_cpu
+from scripts.avatar_baseline.analyze_cpu_profiles import python_summary, js_summary, trace_cpu, trace_js_profiles
 
 PROBE = 'tests/test_avatar_navigation_light_browser.py'
 HARNESS = ['tests/test_avatar_baseline_browser.py', 'tests/avatar_browser_fixture.py', PROBE]
@@ -47,7 +47,7 @@ def clocks(events, names):
 def inspect_capture(folder, provenance, raw):
     p = provenance
     mode = p['mode']
-    if p['protocol'] not in ('navigation-light-v3', 'navigation-light-v4', 'navigation-light-v5', 'navigation-light-v6', 'navigation-cpu-v1') or p['acceptance'] is not False or p['forced_gc'] is not False:
+    if p['protocol'] not in ('navigation-light-v3', 'navigation-light-v4', 'navigation-light-v5', 'navigation-light-v6', 'navigation-cpu-v1', 'navigation-cpu-v2') or p['acceptance'] is not False or p['forced_gc'] is not False:
         raise ValueError('Invalid capture protocol')
     if p['snapshots'] != 13 or p['mount'] != 20 or [c['mount'] for c in p['checkpoints']] != [1, 5, 10, 15, 20]:
         raise ValueError('Incomplete navigation')
@@ -73,7 +73,7 @@ def inspect_capture(folder, provenance, raw):
               'max_rotation_ms': max(rotations) / 1e6, 'trace_segments': [], 'endpoint': None}
     if len(p['segments']) != (nav_segments + 1 if mode == 'trace' else 0):
         raise ValueError('Incorrect segment count')
-    if p['protocol'] in ('navigation-light-v5', 'navigation-light-v6', 'navigation-cpu-v1') and mode == 'trace':
+    if p['protocol'] in ('navigation-light-v5', 'navigation-light-v6', 'navigation-cpu-v1', 'navigation-cpu-v2') and mode == 'trace':
         transfers = p.get('transfers', [])
         if [t['number'] for t in transfers] != list(range(nav_segments + 1)):
             raise ValueError('Missing deferred transfers')
@@ -82,6 +82,7 @@ def inspect_capture(folder, provenance, raw):
     if any(s['completion'].get('dataLossOccurred') for s in p['segments']):
         raise ValueError('Trace data loss; sample retained, not replaced')
     all_events = []
+    profile_segments = []
     anchors = []
     pids = set()
     windows = []
@@ -104,6 +105,7 @@ def inspect_capture(folder, provenance, raw):
             pids.update(e['pid'] for e in events if e.get('name') == 'CommitLoad' and
                         e.get('args', {}).get('data', {}).get('url', '').startswith('http://127.0.0.1:'))
             all_events.extend(events)
+            profile_segments.append(events)
             windows.append([markers[names[0]], markers[names[1]]])
             for side in ['before', 'after']:
                 host = segment[side]
@@ -175,29 +177,34 @@ def inspect_capture(folder, provenance, raw):
                         'overlapping_gc_events': gc})
             previous = point
         result['minimum_anonymous_step_bytes'] = min(anon)
-    if p['protocol'] in ('navigation-light-v6', 'navigation-cpu-v1'):
+    if p['protocol'] in ('navigation-light-v6', 'navigation-cpu-v1', 'navigation-cpu-v2'):
         result['scheduler'] = scheduler_observation(p)
-    if p['protocol'] == 'navigation-cpu-v1':
+    if p['protocol'] in ('navigation-cpu-v1', 'navigation-cpu-v2'):
         if p['cpu_profile_enabled'] != (mode == 'trace'):
             raise ValueError('CPU profile mode mismatch')
         if mode == 'trace':
             profile = json.load(gzip.open(folder / 'cpu-profiles.json.gz','rt'))
             if not (p['navigation_begin_ns'] <= profile['start_ns'] <= profile['start_end_ns'] <= p['navigation_intervals'][0]['begin_ns'] and
-                    p['navigation_end_ns'] <= profile['stop_begin_ns'] <= profile['python_end_ns'] <= profile['js_end_ns']):
+                    p['navigation_end_ns'] <= profile['stop_begin_ns'] <= profile['python_end_ns']):
                 raise ValueError('CPU profiles do not bound navigation')
-            if profile['js_sampling_interval_us'] != 2000:
-                raise ValueError('CPU sample interval mismatch')
             def trace_bound(host_ns, inward):
                 host_us = host_ns/1000
                 anchor = min(anchors,key=lambda a:abs(a['host_us']-host_us))
                 return anchor['trace_us']+host_us-anchor['host_us']+inward*anchor['uncertainty_us']
             window = [trace_bound(p['navigation_begin_ns'],1),trace_bound(p['navigation_end_ns'],-1)]
-            result['cpu_profiles'] = {'python':python_summary(profile),'js':js_summary(profile['js']),
+            result['cpu_profiles'] = {'python':python_summary(profile),
                                       'native_trace':trace_cpu(all_events,pid,window),
-                                      'post_window_python_tail_ms':(profile['python_end_ns']-p['navigation_end_ns'])/1e6,
-                                      'post_window_js_tail_ms':(profile['js_end_ns']-p['navigation_end_ns'])/1e6,
-                                      'js_profile_window_fraction':(profile['js']['endTime']-profile['js']['startTime'])*1000/(p['navigation_end_ns']-p['navigation_begin_ns'])}
-            result['cpu_profile_issues'] = ([] if result['cpu_profiles']['js_profile_window_fraction'] >= .9 else ['V8 profile does not cover the full navigation window; partial context coverage'])
+                                      'post_window_python_tail_ms':(profile['python_end_ns']-p['navigation_end_ns'])/1e6}
+            if p['protocol'] == 'navigation-cpu-v1':
+                result['cpu_profiles'].update(js=js_summary(profile['js']),
+                    js_profile_window_fraction=(profile['js']['endTime']-profile['js']['startTime'])*1000/(p['navigation_end_ns']-p['navigation_begin_ns']))
+                result['cpu_profile_issues'] = ([] if result['cpu_profiles']['js_profile_window_fraction'] >= .9 else ['V8 profile does not cover the full navigation window; partial context coverage'])
+            else:
+                if profile.get('js_capture') != 'trace-ProfileChunk':raise ValueError('Wrong V8 capture mechanism')
+                nav_windows=[{'mount':n['mount'],'low_us':trace_bound(n['begin_ns'],1),'high_us':trace_bound(n['wait_end_ns'],-1)} for n in p['navigation_intervals']]
+                js=trace_js_profiles(profile_segments,pid,nav_windows)
+                result['cpu_profiles']['js']=js
+                result['cpu_profile_issues'] = [f'Missing V8 trace samples for mounts {js["missing_mounts"]}'] if js['missing_mounts'] else []
         elif (folder / 'cpu-profiles.json.gz').exists():
             raise ValueError('Unexpected CPU profile in control')
     return result
@@ -236,19 +243,19 @@ def audit(root, repo, ref):
     plan = json.loads((root / 'experiment.json').read_text())
     phase = plan['phase']
     blocks = [['current'] * 4] if phase != 'comparison' else BLOCKS
-    if (phase not in ('calibration', 'comparison', 'cpu-attribution') or plan['protocol'] not in ('navigation-light-v3', 'navigation-light-v4', 'navigation-light-v5', 'navigation-light-v6', 'navigation-cpu-v1') or
+    if (phase not in ('calibration', 'comparison', 'cpu-attribution') or plan['protocol'] not in ('navigation-light-v3', 'navigation-light-v4', 'navigation-light-v5', 'navigation-light-v6', 'navigation-cpu-v1', 'navigation-cpu-v2') or
         plan['harness_commit'] != ref or plan['refs'] != REFS or plan['blocks'] != blocks or
         plan['acceptance'] is not False or plan['seconds'] != 30 or plan['samples_per_slot'] != 1 or
         plan['fixture_adapter'] != 'sample-ordinal-v1' or plan['browser'] != '156.0.8078.47' or
         plan['budget_bytes'] != BUDGET or len(plan['cohorts']) != 4 * len(blocks)):
         raise ValueError('Protocol identity mismatch')
-    if (phase == 'cpu-attribution') != (plan['protocol'] == 'navigation-cpu-v1'):
+    if (phase == 'cpu-attribution') != (plan['protocol'] in ('navigation-cpu-v1', 'navigation-cpu-v2')):
         raise ValueError('CPU attribution phase/protocol mismatch')
     result['phase'] = phase
     result['protocol'] = plan['protocol']
-    probe = 'tests/test_avatar_navigation_cpu_browser.py' if plan['protocol'] == 'navigation-cpu-v1' else PROBE
-    harness = [*HARNESS[:-1], probe] + (['tests/avatar_scheduler_probe.py'] if plan['protocol'] in ('navigation-light-v6', 'navigation-cpu-v1') else [])
-    if plan['protocol'] == 'navigation-cpu-v1':
+    probe = 'tests/test_avatar_navigation_cpu_browser.py' if plan['protocol'] in ('navigation-cpu-v1', 'navigation-cpu-v2') else PROBE
+    harness = [*HARNESS[:-1], probe] + (['tests/avatar_scheduler_probe.py'] if plan['protocol'] in ('navigation-light-v6', 'navigation-cpu-v1', 'navigation-cpu-v2') else [])
+    if plan['protocol'] in ('navigation-cpu-v1', 'navigation-cpu-v2'):
         harness += ['tests/avatar_cpu_probe.py']
         if phase != 'cpu-attribution':raise ValueError('CPU attribution cannot enter acceptance comparison')
     for name in harness:
@@ -267,7 +274,7 @@ def audit(root, repo, ref):
             required = {'environment.json', 'runner.txt', 'junit.xml', 'light-provenance.json', 'False-warm.json'}
             if mode == 'trace':
                 required.update(f'trace-{n}.json.gz' for n in range(5 if plan['protocol'] == 'navigation-light-v3' else 3))
-            if plan['protocol'] == 'navigation-cpu-v1' and mode == 'trace':required.add('cpu-profiles.json.gz')
+            if plan['protocol'] in ('navigation-cpu-v1', 'navigation-cpu-v2') and mode == 'trace':required.add('cpu-profiles.json.gz')
             if not required <= entry['files_sha256'].keys():
                 raise ValueError('Missing required files')
             for name, digest in entry['files_sha256'].items():
@@ -286,11 +293,11 @@ def audit(root, repo, ref):
             if p['protocol'] != plan['protocol'] or p['mode'] != mode or p['probe_sha256'] != hashlib.sha256(source(repo, ref, probe)).hexdigest():
                 raise ValueError('Probe hash mismatch')
             result['source_hashes_verified'] += 1
-            if plan['protocol'] in ('navigation-light-v6', 'navigation-cpu-v1'):
+            if plan['protocol'] in ('navigation-light-v6', 'navigation-cpu-v1', 'navigation-cpu-v2'):
                 if p['scheduler_probe_sha256'] != hashlib.sha256(source(repo, ref, 'tests/avatar_scheduler_probe.py')).hexdigest():
                     raise ValueError('Scheduler probe hash mismatch')
                 result['source_hashes_verified'] += 1
-            if plan['protocol'] == 'navigation-cpu-v1':
+            if plan['protocol'] in ('navigation-cpu-v1', 'navigation-cpu-v2'):
                 if p['cpu_probe_sha256'] != hashlib.sha256(source(repo, ref, 'tests/avatar_cpu_probe.py')).hexdigest():
                     raise ValueError('CPU probe hash mismatch')
                 result['source_hashes_verified'] += 1

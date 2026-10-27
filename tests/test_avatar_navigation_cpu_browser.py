@@ -15,13 +15,13 @@ from tests.avatar_cpu_probe import CpuProfiles
 from tests.test_avatar_baseline_browser import baseline_server
 
 pytestmark = pytest.mark.skipif(os.getenv('CSS_AVATAR_NAVIGATION_LIGHT') != '1', reason='Opt-in diagnostic')
-GC_CATEGORIES = ['devtools.timeline', 'cppgc', 'disabled-by-default-cppgc', 'disabled-by-default-v8.gc']
+GC_CATEGORIES = ['devtools.timeline', 'cppgc', 'disabled-by-default-cppgc', 'disabled-by-default-v8.gc', 'disabled-by-default-v8.cpu_profiler']
 
 
 def test_navigation_cpu(baseline_server, app_mod, monkeypatch):
     out = Path(os.environ['CSS_AVATAR_OUT'])
     traced = os.environ['CSS_AVATAR_TRACE_MODE'] == 'trace'
-    state = {'protocol': 'navigation-cpu-v1', 'mode': 'trace' if traced else 'control',
+    state = {'protocol': 'navigation-cpu-v2', 'mode': 'trace' if traced else 'control',
              'acceptance': False, 'forced_gc': False, 'snapshots': 0, 'mount': 0,
              'segments': [], 'rotations': [], 'checkpoints': [], 'samples': [], 'pids': [],
              'probe_sha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest()}

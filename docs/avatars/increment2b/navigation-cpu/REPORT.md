@@ -25,3 +25,11 @@ as errors by the minimal fixture. No browser policy was changed.
 The existing calibration/acceptance limits remain unchanged. CPU profiles are
 forensic, not source comparison or 2B acceptance. All raw v1 data, failures, SHA
 identities and extracted-archive re-audit are preserved. Product remains f700187.
+
+Final offline repair is in v1-repaired-audit.json; assessment.json preserves the
+intermediate rejection. V8 emits signed timeDeltas, so the repaired reader retains
+all samples and reports counts without assigning negative per-function time.
+The repaired status is partial_cpu_diagnostic with 124 source/probe hashes and
+32 files verified, no identity errors. Both profiled runs exceed timing/reader
+limits; these failures remain reported. The archive's identical re-audit refers
+to the intermediate assessment, preserved with its historical auditor version.

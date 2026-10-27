@@ -40,7 +40,7 @@ def test_js_idle_and_elapsed_sample_weights_remain_explicit():
 
 @pytest.mark.parametrize('change',[
     lambda p:p['samples'].append(2),lambda p:p['samples'].__setitem__(0,99),
-    lambda p:p['timeDeltas'].__setitem__(0,-1),lambda p:p['nodes'].append(p['nodes'][0]),
+    lambda p:p['timeDeltas'].__setitem__(0,float('nan')),lambda p:p['nodes'].append(p['nodes'][0]),
     lambda p:p['timeDeltas'].__setitem__(0,50000)])
 def test_invalid_js_profile_rejected(change):
     p=js_fixture();change(p)
@@ -109,3 +109,31 @@ def test_python_frame_open_at_boundary_is_retained():
     p=python_fixture();p['functions'][0].update(nactualcall=0,ttot=0,tsub=.05)
     r=python_summary(p)
     assert r['open_call_frames']==[1] and r['self_cpu_ms']==50
+
+
+def test_signed_js_deltas_retained_without_negative_function_weights():
+    p=js_fixture();p['timeDeltas'][1]=-100
+    r=js_summary(p)
+    assert r['negative_delta_count']==1 and not r['elapsed_weights_available']
+    assert r['sample_count']==3 and all(f['sampled_elapsed_ms'] is None for f in r['leaf_functions'])
+
+
+def test_trace_v8_nodes_and_samples_survive_context_changes():
+    from scripts.avatar_baseline.analyze_cpu_profiles import trace_js_profiles
+    def e(name,data,ts=0):return {'name':name,'pid':42,'tid':42 if name=='Profile' else 99,'id':'0x1','ts':ts,'args':{'data':data}}
+    events=[e('Profile',{'startTime':0}),
+            e('ProfileChunk',{'cpuProfile':{'nodes':[{'id':1,'callFrame':{'functionName':'first'}}],'samples':[1]},'timeDeltas':[100]},1),
+            e('ProfileChunk',{'cpuProfile':{'nodes':[{'id':2,'callFrame':{'functionName':'second'}}],'samples':[2,2]},'timeDeltas':[200,-10]},2)]
+    r=trace_js_profiles([events],42,[{'mount':1,'low_us':50,'high_us':150},{'mount':2,'low_us':250,'high_us':350}])
+    assert not r['missing_mounts'] and r['samples_by_mount']=={1:1,2:2}
+    assert r['negative_deltas_retained']==1
+    assert {f['function'] for f in r['leaf_functions']}=={'first','second'}
+    missing=trace_js_profiles([events],42,[{'mount':3,'low_us':400,'high_us':500}])
+    assert missing['missing_mounts']==[3] and missing['outside_navigation_intervals']==3
+
+
+def test_trace_v8_unknown_node_fails():
+    from scripts.avatar_baseline.analyze_cpu_profiles import trace_js_profiles
+    events=[{'name':'Profile','pid':42,'tid':42,'id':'1','ts':0,'args':{'data':{'startTime':0}}},
+            {'name':'ProfileChunk','pid':42,'tid':42,'id':'1','ts':1,'args':{'data':{'cpuProfile':{'samples':[9]},'timeDeltas':[1]}}}]
+    with pytest.raises(ValueError,match='Unknown V8'):trace_js_profiles([events],42,[])
