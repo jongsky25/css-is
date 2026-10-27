@@ -1,6 +1,6 @@
 # Shared stylesheet allocation screen, v1
 
-Prepared before memory collection; collection remains blocked by the visual prerequisite. This is a candidate screen, not 2B acceptance.
+Fixed before memory collection; see visual-resolution/PROTOCOL.md for the controlled paint prerequisite. This is a candidate screen, not 2B acceptance.
 
 Current: f700187553bd555dd3a9b638d5aa8e5fb59f3142.
 Candidate: 69605628393d044f9a0426ea0be3abdf99527bc3.
@@ -11,7 +11,10 @@ reducing; it does not establish CSS as the cause of the original regression.
 
 Prerequisites: nine existing browser regressions, real HTTP stylesheet loading and
 body reuse, exact template reconstruction, and all 30 visual sheets (2,880 cells)
-matching after deterministic animation freezing. No completed comparison has passed.
+matching after deterministic animation freezing and per-avatar paint isolation.
+Require exact DOM/selected computed-style/geometry agreement too. The isolated
+unchanged-source control passed all 15 preview sheets; full candidate validation
+is required before collection. This fixture-only hint is absent from memory runs.
 The normal renderer showed small preview differences even for unchanged-source
 comparisons (six of thirty sheets). Software rendering also failed (three of thirty). Preserve
 both failures; software mode was visual-only, not a change to memory settings. Preserve setup failures and the

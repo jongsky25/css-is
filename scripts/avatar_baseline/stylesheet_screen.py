@@ -26,6 +26,7 @@ def fixture(name,data):
 def validate_visual(assessment):
     if (assessment.get('same_source_control', False)
             or assessment.get('all_pixels_identical') is not True
+            or assessment.get('all_states_identical') is not True
             or assessment.get('template_reconstructed_exactly') is not True
             or assessment.get('browser') != '156.0.8078.47'
             or assessment.get('cells') != 2880

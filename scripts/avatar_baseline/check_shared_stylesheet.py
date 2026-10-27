@@ -12,10 +12,11 @@ import subprocess
 from jinja2 import Environment, DictLoader, FileSystemLoader, StrictUndefined
 from PIL import Image, ImageChops
 from playwright.sync_api import sync_playwright
+from scripts.avatar_baseline.visual_state import SNAPSHOT, compare
 
 
 def main():
-    p=argparse.ArgumentParser();p.add_argument('--same-document',action='store_true');p.add_argument('--software-rendering',action='store_true');p.add_argument('--same-source-control',action='store_true');p.add_argument('--candidate',type=Path,required=True);p.add_argument('--out',type=Path,required=True);a=p.parse_args()
+    p=argparse.ArgumentParser();p.add_argument('--case');p.add_argument('--isolate-avatar-paint',action='store_true');p.add_argument('--raster-threads',type=int,choices=[1]);p.add_argument('--diagnose',action='store_true');p.add_argument('--previews-only',action='store_true');p.add_argument('--same-document',action='store_true');p.add_argument('--software-rendering',action='store_true');p.add_argument('--same-source-control',action='store_true');p.add_argument('--candidate',type=Path,required=True);p.add_argument('--out',type=Path,required=True);a=p.parse_args()
     if a.same_document and a.same_source_control:
         p.error('--same-document and --same-source-control are separate experiments')
     root=Path(__file__).resolve().parents[2];a.out.mkdir(parents=True,exist_ok=False)
@@ -38,6 +39,7 @@ def main():
                 svg=m.avatar_svg(c['key'],stage,month,outfit,static_preview=True) if static else m.avatar(c['key'],stage,name='',size=64,interactive=True)
                 cards.append('<div class="avcard">'+str(svg)+'</div>')
         defs=re.sub(r'<script\b[^>]*>.*?</script>','',str(m.avatar_defs()),flags=re.S)
+        if a.isolate_avatar_paint:defs += '<style>.avcard svg {will-change:transform}</style>'
         bg={'light':'#f4f6fa','dark':'#162032','contrast':'#fff'}[theme]
         return f'<html><meta charset="utf-8"><style>body{{margin:0;background:{bg};--accent:#547bb5}} main{{display:grid;grid-template-columns:repeat(12,80px)}}.avcard{{width:80px;height:96px;display:grid;place-items:center}}.avcard svg{{width:64px;height:75px}}</style>{defs}<main>'+''.join(cards)+'</main></html>'
     def freeze(page):
@@ -51,12 +53,14 @@ def main():
                                 throw new Error('Animation freeze incomplete');
                         }''')
     with sync_playwright() as pw:
-        browser=pw.chromium.launch(executable_path=shutil.which('chromium'),args=['--no-sandbox']+(['--disable-gpu'] if a.software_rendering else []))
+        browser=pw.chromium.launch(executable_path=shutil.which('chromium'),args=['--no-sandbox']+(['--disable-gpu'] if a.software_rendering else [])+(['--num-raster-threads='+str(a.raster_threads)] if a.raster_threads else []))
         assert browser.version=='156.0.8078.47'
         for theme in ['light','dark','contrast']:
             for outfit in ['default','halloween','halloween_vampire','halloween_pumpkin','christmas']:
-                for static in [False,True]:
-                    images=[];rules=[]
+                for static in ([True] if a.previews_only else [False,True]):
+                    case=f'{theme}-{outfit}-{"preview" if static else "live"}'
+                    if a.case and case!=a.case:continue
+                    images=[];rules=[];states=[];within=[];layers=[]
                     for candidate in [False,True]:
                         effective_candidate=candidate and not a.same_source_control
                         html=render(effective_candidate,theme,outfit,static)
@@ -78,12 +82,24 @@ def main():
                                 });
                                 old.before(link); await loaded; old.remove();
                             }""")
+                        cdp=context.new_cdp_session(page);layer_events=[]
+                        cdp.on('LayerTree.layerTreeDidChange',lambda e:layer_events.append(e))
+                        cdp.send('LayerTree.enable')
                         assert page.locator('svg[data-avatar-kind]').count()==96
                         if effective_candidate:assert page.locator('link[href="/static/css/avatars.css?v=1"]').evaluate('e=>e.sheet.cssRules.length')>100
                         freeze(page)
                         rules.append(page.evaluate('Array.from(document.styleSheets).flatMap(s=>Array.from(s.cssRules,r=>r.cssText))'))
+                        if a.diagnose:states.append(json.loads(page.evaluate('JSON.stringify(('+SNAPSHOT+')())')))
                         capture=page.screenshot(); repeat=page.screenshot()
+                        if a.diagnose:within.append(compare(states[-1],json.loads(page.evaluate('JSON.stringify(('+SNAPSHOT+')())'))))
                         assert capture==repeat, 'Same-document screenshot unstable'
+                        tree=layer_events[-1].get('layers',[]) if layer_events else []
+                        reasons=[]
+                        for layer in tree:
+                            if layer.get('drawsContent') and len(reasons)<3:
+                                reasons.append(cdp.send('LayerTree.compositingReasons',{'layerId':layer['layerId']}))
+                        layers.append({'count':len(tree),'draws_content':sum(bool(l.get('drawsContent')) for l in tree),'sample_reasons':reasons})
+                        cdp.detach()
                         images.append(capture)
                         if a.same_document and candidate:
                             page.evaluate("""() => { const link=document.querySelector('link[href="/static/css/avatars.css?v=1"]'); link.before(window.originalAvatarStyle); getComputedStyle(document.body).display; link.remove(); }""")
@@ -98,13 +114,18 @@ def main():
                     difference=ImageChops.difference(Image.open(BytesIO(images[0])).convert('RGB'),Image.open(BytesIO(images[1])).convert('RGB'))
                     name=f'{theme}-{outfit}-{"preview" if static else "live"}.png';(a.out/name).write_bytes(images[1])
                     identical=difference.getbbox() is None
-                    rows.append({'file':name,'cells':96,'pixel_identical':identical,'cssom_identical':True,'reference_sha256':sha256(images[0]).hexdigest(),'candidate_sha256':sha256(images[1]).hexdigest()})
+                    rows.append({'file':name,'cells':96,'pixel_identical':identical,'cssom_identical':True,'layers':layers,'reference_sha256':sha256(images[0]).hexdigest(),'candidate_sha256':sha256(images[1]).hexdigest()})
+                    if a.diagnose:
+                        rows[-1]['state_comparison']=compare(*states)
+                        rows[-1]['within_document_state_comparisons']=within
                     if not identical:(a.out/('reference-'+name)).write_bytes(images[0])
+                    (a.out/'progress.json').write_text(json.dumps(rows,indent=2)+'\n')
         browser.close()
-    result={'same_document':a.same_document,'software_rendering':a.software_rendering,'same_source_control':a.same_source_control,'acceptance':False,'browser':'156.0.8078.47','stylesheet_bytes':len(css.encode()),'stylesheet_sha256':sha256(css.encode()).hexdigest(),'template_reconstructed_exactly':True,'all_pixels_identical':all(r['pixel_identical'] for r in rows),'cells':len(rows)*96,'sheets':rows,'limits':'Routed fixture only for visual comparison; not cache or memory evidence. Animation pause readiness awaited, time zero applied, two rendering frames awaited, and repeated same-document screenshots identical in both versions. Original artwork/runtime unchanged.'}
+    result={'all_states_identical':all(r['state_comparison']['identical'] and all(c['identical'] for c in r['within_document_state_comparisons']) for r in rows) if a.diagnose else None,'isolate_avatar_paint':a.isolate_avatar_paint,'raster_threads':a.raster_threads,'same_document':a.same_document,'software_rendering':a.software_rendering,'same_source_control':a.same_source_control,'acceptance':False,'browser':'156.0.8078.47','stylesheet_bytes':len(css.encode()),'stylesheet_sha256':sha256(css.encode()).hexdigest(),'template_reconstructed_exactly':True,'all_pixels_identical':all(r['pixel_identical'] for r in rows),'cells':len(rows)*96,'sheets':rows,'limits':'Routed fixture only for visual comparison; not cache or memory evidence. Animation pause readiness awaited, time zero applied, two rendering frames awaited, and repeated same-document screenshots identical in both versions. Original artwork/runtime unchanged.'}
     (a.out/'assessment.json').write_text(json.dumps(result,indent=2)+'\n')
     print(json.dumps({k:v for k,v in result.items() if k!='sheets'}))
     assert result['all_pixels_identical']
+    if a.diagnose:assert result['all_states_identical'], 'DOM/style/geometry differs'
 
 
 if __name__=='__main__':main()
