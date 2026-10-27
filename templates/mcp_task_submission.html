@@ -1,0 +1,34 @@
+{% extends "dash_layout.html" %}
+{% block title %}Review task submission — Office Connect{% endblock %}
+{% block content %}
+<div style="max-width:44rem;margin:auto;overflow-wrap:anywhere">
+{% if result.status == 'completed' %}
+<h1>Task submitted for review</h1>
+<p>Recorded at {{ result.completed_at }}. The task moved to For review at revision {{ result.result_revision }}. The work-item lead or authorized officer reviews next. This is the original result; later changes are separate.</p>
+<p><a href="{{ result.web_url }}">Open my task</a> · <a href="{{ result.api_receipt_url }}">Canonical API receipt</a></p>
+{% else %}
+<h1>Submit this assigned task for review?</h1>
+<dl>
+<dt>Work item</dt><dd>{{ result.snapshot.case_title }} ({{ result.fields.work_item_id }})</dd>
+<dt>Task</dt><dd>{{ result.snapshot.task_title }} ({{ result.fields.task_id }})</dd>
+<dt>Expected revision</dt><dd>{{ result.fields.revision }}</dd>
+<dt>Assigned owner</dt><dd>You (account {{ result.snapshot.owner_id }})</dd>
+<dt>Due date</dt><dd>{{ result.snapshot.due_date or 'None' }}</dd>
+<dt>Change</dt><dd>In progress → For review</dd>
+<dt>Who reviews next</dt><dd>Work-item lead{% if result.snapshot.next_actor.lead_id %} (account {{ result.snapshot.next_actor.lead_id }}){% endif %} or authorized officer for unit {{ result.snapshot.next_actor.unit_id }}</dd>
+<dt>Review note</dt><dd style="white-space:pre-wrap">{{ result.fields.reason }}</dd>
+<dt>Output or evidence to save</dt><dd style="white-space:pre-wrap">{{ result.fields.submission }}</dd>
+</dl>
+<p>This saves the output above as this task's current submission, replacing any earlier saved output, and records the output and note in normal shared-work history. Earlier versions stay in that history. Permitted work-item readers can see the saved text. Existing record access rules apply.</p>
+<p>The normal workflow may invalidate work-item reviews and cancel pending legacy deadline or milestone notices. The work-item lead or authorized officer must review the exact submitted revision before accepting or returning it. This action does not accept, approve or complete the task, change ownership or due date, upload files, fetch evidence links or send an invitation.</p>
+<p>Review every part of the proposed output and note before confirming. This preview expires ten minutes after preparation. Changes to the task, work item, routing, access or blockers require a fresh check; do not silently retry against a newer revision.</p>
+<form method="post">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<input type="hidden" name="preview_digest" value="{{ result.preview_digest }}">
+<button type="submit" name="confirm" value="yes">Confirm: submit my task for review</button>
+</form>
+{% endif %}
+<p>Operation receipt: <code>{{ result.operation_id }}</code></p>
+<p><a href="{{ result.web_url }}">Review the task in Office Connect</a></p>
+</div>
+{% endblock %}

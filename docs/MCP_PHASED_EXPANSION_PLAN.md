@@ -1,6 +1,6 @@
 # Office Connect MCP expansion plan
 
-Status: **Incremental implementation**, updated October 27, 2026. Baseline: the read-only MCP expansion in v8.35 (PR #444). M1 reads and default-off M2.1 through M2.6 and M3.1 own-task acknowledgement pilots are implemented as recorded below. Existing OAuth grants are not widened. Hosted write acceptance remains separate from implementation.
+Status: **Incremental implementation**, updated October 27, 2026. Baseline: the read-only MCP expansion in v8.35 (PR #444). M1 reads and default-off M2.1 through M2.6 and M3.1 acknowledgement and M3.2 task-submission pilots are implemented as recorded below. Existing OAuth grants are not widened. Hosted write acceptance remains separate from implementation.
 
 ## Goal and boundary
 
@@ -312,3 +312,26 @@ work. No submission, approval, owner/deadline change or external relay is added.
 See [M3.1 setup, acceptance and rollback](MCP_TASK_ACKNOWLEDGEMENT_PILOT.md).
 Hosted M2/M3 acceptance remains pending and no write flag is activated. Other
 M3 actions and all M4 decisions remain separate increments.
+
+M3.1 merged in [PR #497](https://github.com/jongsky25/css-is/pull/497), commit
+`a54aea0cf584462f3a17be6bc45696fdbdd52f48`.
+
+### M3.2 implementation — v8.86
+
+Separate default-off `work:task:submit` consent prepares submission of an assigned
+In progress task. The owner reviews the complete exact output/note, current
+revision, saved-output replacement/history visibility and lead/unit review
+routing in the signed-in browser before moving it to For review. Current
+blockers, prerequisites, changed-decision reviews, ownership, linked access,
+workflow availability and snapshots are rechecked inside the writer transaction.
+
+A shared caller-owned API submission entry point preserves canonical fingerprint,
+session checks and immutable receipts. Task/output/history/audit/review/notice
+effects and API/MCP receipts commit atomically with historical next-review-party
+metadata. Stable UUID v4 keys support exact API replay; recovery does not repeat
+submission or overwrite later review decisions. No acceptance, approval,
+completion, owner/deadline changes, uploads or external relay are added.
+
+See [M3.2 setup and acceptance](MCP_TASK_SUBMISSION_PILOT.md). Hosted write
+acceptance remains pending and all flags remain unchanged. Other M3 actions and
+all M4 decisions are separate increments.

@@ -301,3 +301,6 @@ Unsubmitted reimbursement checklists are a separate default-off pilot: see
 
 Own task acknowledgement is a separate default-off M3 pilot using canonical API
 receipts: see [setup and acceptance](MCP_TASK_ACKNOWLEDGEMENT_PILOT.md).
+
+Own task submission for review is a separate default-off M3 pilot using canonical
+API receipts: see [setup and acceptance](MCP_TASK_SUBMISSION_PILOT.md).
