@@ -1,5 +1,14 @@
 # Increment 2B — acceptance withdrawn: uncovered memory failures
 
+## Offline unchanged-source residency review
+
+[Archived per-renderer accounting](shared-stylesheet/memory-screen/REPORT.md)
+localizes the 57.04 MiB repeat swing to anonymous/private residency in one stable
+renderer, not renderer replacement or JS heap alone. The lowest-memory sample
+also has slower navigation and long tasks; the responsible allocator/event is
+not captured. All 25 raw archive members verify, 40 prior navigation deltas match,
+and 17 focused tests pass. No browser rerun, sample exclusion, patch or acceptance.
+
 ## Shared stylesheet follow-up — visual resolved, memory screen failed
 
 [Visual diagnosis](shared-stylesheet/visual-resolution/REPORT.md) isolates shared-layer

@@ -28,6 +28,22 @@ trigger it as an acceptance audit of the cancelled cohort. No later increments,
 merge to main or deployment occurred. The historical handoff below is superseded by this
 correction wherever it suggests CI success establishes complete memory acceptance.
 
+## Offline residency review — unchanged-code swing localized
+
+[Per-renderer review](avatars/increment2b/shared-stylesheet/memory-screen/REPORT.md)
+verifies all 25 archived screen members and analyzes eight samples/40 navigation
+observations without new browser runs. The -57.037109 MiB current-repeat RSS swing
+at navigation 20 is dominated by -53.556641 MiB anonymous RSS in one stable dominant
+renderer; other renderers change only +1.251953 MiB, JS heap -0.426353 MiB. No swap
+or renderer replacement. The unusually low sample has a 51.605469 MiB renderer
+RSS drop from navigation 15 to 20, LCP 696 ms and 555 ms of long tasks at navigation
+20. This is correlation, not proof of a particular GC/allocator event or app owner.
+Seventeen focused tests pass; all 40 prior navigation metric deltas match. Details
+and limits are in residency-review.json and residency-review-verification.json.
+The next attribution gap is which native allocator/pages were released during
+that interval; historical captures cannot reconstruct it. No candidate patch,
+new measurement, waiver or acceptance. Product unchanged; 2B remains blocked.
+
 ## Shared stylesheet follow-up — visual resolved, memory screen failed
 
 Candidate `6960562` remains isolated on `codex/avatar-shared-stylesheet`; primary

@@ -1,0 +1,3350 @@
+{
+  "acceptance": false,
+  "new_browser_runs": 0,
+  "samples": [
+    {
+      "cohort": 0,
+      "run": 0,
+      "tracked_pid": 13301,
+      "tracking_rule": "largest VmRSS at navigation 1, same PID thereafter; not a proven page-to-PID binding",
+      "renderer_set_stable": true,
+      "points": [
+        {
+          "mount": 1,
+          "renderer_pids": [
+            13356,
+            13301,
+            13289
+          ],
+          "measured_rss": 460726272,
+          "status_totals": {
+            "VmRSS": 460746752,
+            "RssAnon": 164454400,
+            "RssFile": 268419072,
+            "RssShmem": 27873280,
+            "VmSwap": 0
+          },
+          "status_vs_measured_residual": 20480,
+          "tracked_status": {
+            "VmRSS": 248414208,
+            "RssAnon": 101060608,
+            "RssFile": 120123392,
+            "RssShmem": 27230208,
+            "VmSwap": 0
+          },
+          "other_status": {
+            "VmRSS": 212332544,
+            "RssAnon": 63393792,
+            "RssFile": 148295680,
+            "RssShmem": 643072,
+            "VmSwap": 0
+          },
+          "tracked_smaps": {
+            "Rss": 248414208,
+            "Pss": 159844352,
+            "Private_Dirty": 104341504,
+            "Private_Clean": 10715136,
+            "Shared_Dirty": 23945216,
+            "Shared_Clean": 109412352,
+            "Anonymous": 101060608
+          },
+          "total_smaps": {
+            "Rss": 460746752,
+            "Pss": 245134336,
+            "Private_Dirty": 138043392,
+            "Private_Clean": 13987840,
+            "Shared_Dirty": 54272000,
+            "Shared_Clean": 254443520,
+            "Anonymous": 164454400
+          },
+          "js_heap_bytes": 10720004,
+          "dom_counters": {
+            "documents": 10,
+            "nodes": 18954,
+            "jsEventListeners": 421
+          },
+          "lcp_ms": 172,
+          "long_task_ms": 0,
+          "long_task_count": 0
+        },
+        {
+          "mount": 5,
+          "renderer_pids": [
+            13356,
+            13301,
+            13289
+          ],
+          "measured_rss": 499052544,
+          "status_totals": {
+            "VmRSS": 499052544,
+            "RssAnon": 176685056,
+            "RssFile": 268419072,
+            "RssShmem": 53948416,
+            "VmSwap": 0
+          },
+          "status_vs_measured_residual": 0,
+          "tracked_status": {
+            "VmRSS": 286453760,
+            "RssAnon": 113025024,
+            "RssFile": 120123392,
+            "RssShmem": 53305344,
+            "VmSwap": 0
+          },
+          "other_status": {
+            "VmRSS": 212598784,
+            "RssAnon": 63660032,
+            "RssFile": 148295680,
+            "RssShmem": 643072,
+            "VmSwap": 0
+          },
+          "tracked_smaps": {
+            "Rss": 286453760,
+            "Pss": 191365120,
+            "Private_Dirty": 129343488,
+            "Private_Clean": 10715136,
+            "Shared_Dirty": 36982784,
+            "Shared_Clean": 109412352,
+            "Anonymous": 113025024
+          },
+          "total_smaps": {
+            "Rss": 499052544,
+            "Pss": 276921344,
+            "Private_Dirty": 163311616,
+            "Private_Clean": 13987840,
+            "Shared_Dirty": 67309568,
+            "Shared_Clean": 254443520,
+            "Anonymous": 176685056
+          },
+          "js_heap_bytes": 13407008,
+          "dom_counters": {
+            "documents": 18,
+            "nodes": 29330,
+            "jsEventListeners": 825
+          },
+          "lcp_ms": 144,
+          "long_task_ms": 0,
+          "long_task_count": 0
+        },
+        {
+          "mount": 10,
+          "renderer_pids": [
+            13356,
+            13301,
+            13289
+          ],
+          "measured_rss": 524718080,
+          "status_totals": {
+            "VmRSS": 524718080,
+            "RssAnon": 202743808,
+            "RssFile": 268419072,
+            "RssShmem": 53555200,
+            "VmSwap": 0
+          },
+          "status_vs_measured_residual": 0,
+          "tracked_status": {
+            "VmRSS": 311734272,
+            "RssAnon": 138698752,
+            "RssFile": 120123392,
+            "RssShmem": 52912128,
+            "VmSwap": 0
+          },
+          "other_status": {
+            "VmRSS": 212983808,
+            "RssAnon": 64045056,
+            "RssFile": 148295680,
+            "RssShmem": 643072,
+            "VmSwap": 0
+          },
+          "tracked_smaps": {
+            "Rss": 311734272,
+            "Pss": 216969216,
+            "Private_Dirty": 155271168,
+            "Private_Clean": 10715136,
+            "Shared_Dirty": 36335616,
+            "Shared_Clean": 109412352,
+            "Anonymous": 138698752
+          },
+          "total_smaps": {
+            "Rss": 524718080,
+            "Pss": 302910464,
+            "Private_Dirty": 189624320,
+            "Private_Clean": 13987840,
+            "Shared_Dirty": 66662400,
+            "Shared_Clean": 254443520,
+            "Anonymous": 202743808
+          },
+          "js_heap_bytes": 13896620,
+          "dom_counters": {
+            "documents": 28,
+            "nodes": 42300,
+            "jsEventListeners": 1330
+          },
+          "lcp_ms": 172,
+          "long_task_ms": 0,
+          "long_task_count": 0
+        },
+        {
+          "mount": 15,
+          "renderer_pids": [
+            13356,
+            13301,
+            13289
+          ],
+          "measured_rss": 533127168,
+          "status_totals": {
+            "VmRSS": 533127168,
+            "RssAnon": 211808256,
+            "RssFile": 268419072,
+            "RssShmem": 52899840,
+            "VmSwap": 0
+          },
+          "status_vs_measured_residual": 0,
+          "tracked_status": {
+            "VmRSS": 319815680,
+            "RssAnon": 147435520,
+            "RssFile": 120123392,
+            "RssShmem": 52256768,
+            "VmSwap": 0
+          },
+          "other_status": {
+            "VmRSS": 213311488,
+            "RssAnon": 64372736,
+            "RssFile": 148295680,
+            "RssShmem": 643072,
+            "VmSwap": 0
+          },
+          "tracked_smaps": {
+            "Rss": 319815680,
+            "Pss": 225265664,
+            "Private_Dirty": 163782656,
+            "Private_Clean": 10715136,
+            "Shared_Dirty": 35905536,
+            "Shared_Clean": 109412352,
+            "Anonymous": 147435520
+          },
+          "total_smaps": {
+            "Rss": 533127168,
+            "Pss": 311534592,
+            "Private_Dirty": 198463488,
+            "Private_Clean": 13987840,
+            "Shared_Dirty": 66232320,
+            "Shared_Clean": 254443520,
+            "Anonymous": 211808256
+          },
+          "js_heap_bytes": 5693708,
+          "dom_counters": {
+            "documents": 2,
+            "nodes": 2594,
+            "jsEventListeners": 101
+          },
+          "lcp_ms": 160,
+          "long_task_ms": 0,
+          "long_task_count": 0
+        },
+        {
+          "mount": 20,
+          "renderer_pids": [
+            13356,
+            13301,
+            13289
+          ],
+          "measured_rss": 530538496,
+          "status_totals": {
+            "VmRSS": 530538496,
+            "RssAnon": 208564224,
+            "RssFile": 268419072,
+            "RssShmem": 53555200,
+            "VmSwap": 0
+          },
+          "status_vs_measured_residual": 0,
+          "tracked_status": {
+            "VmRSS": 316817408,
+            "RssAnon": 143781888,
+            "RssFile": 120123392,
+            "RssShmem": 52912128,
+            "VmSwap": 0
+          },
+          "other_status": {
+            "VmRSS": 213721088,
+            "RssAnon": 64782336,
+            "RssFile": 148295680,
+            "RssShmem": 643072,
+            "VmSwap": 0
+          },
+          "tracked_smaps": {
+            "Rss": 316817408,
+            "Pss": 221949952,
+            "Private_Dirty": 160149504,
+            "Private_Clean": 10715136,
+            "Shared_Dirty": 36540416,
+            "Shared_Clean": 109412352,
+            "Anonymous": 143781888
+          },
+          "total_smaps": {
+            "Rss": 530538496,
+            "Pss": 308628480,
+            "Private_Dirty": 195239936,
+            "Private_Clean": 13987840,
+            "Shared_Dirty": 66867200,
+            "Shared_Clean": 254443520,
+            "Anonymous": 208564224
+          },
+          "js_heap_bytes": 5570860,
+          "dom_counters": {
+            "documents": 2,
+            "nodes": 2592,
+            "jsEventListeners": 96
+          },
+          "lcp_ms": 160,
+          "long_task_ms": 0,
+          "long_task_count": 0
+        }
+      ]
+    },
+    {
+      "cohort": 0,
+      "run": 1,
+      "tracked_pid": 13386,
+      "tracking_rule": "largest VmRSS at navigation 1, same PID thereafter; not a proven page-to-PID binding",
+      "renderer_set_stable": true,
+      "points": [
+        {
+          "mount": 1,
+          "renderer_pids": [
+            13427,
+            13386,
+            13367
+          ],
+          "measured_rss": 460582912,
+          "status_totals": {
+            "VmRSS": 460582912,
+            "RssAnon": 164818944,
+            "RssFile": 268226560,
+            "RssShmem": 27537408,
+            "VmSwap": 0
+          },
+          "status_vs_measured_residual": 0,
+          "tracked_status": {
+            "VmRSS": 248291328,
+            "RssAnon": 101482496,
+            "RssFile": 119926784,
+            "RssShmem": 26882048,
+            "VmSwap": 0
+          },
+          "other_status": {
+            "VmRSS": 212291584,
+            "RssAnon": 63336448,
+            "RssFile": 148299776,
+            "RssShmem": 655360,
+            "VmSwap": 0
+          },
+          "tracked_smaps": {
+            "Rss": 248291328,
+            "Pss": 159873024,
+            "Private_Dirty": 104644608,
+            "Private_Clean": 10592256,
+            "Shared_Dirty": 23715840,
+            "Shared_Clean": 109338624,
+            "Anonymous": 101482496
+          },
+          "total_smaps": {
+            "Rss": 460582912,
+            "Pss": 245112832,
+            "Private_Dirty": 138371072,
+            "Private_Clean": 13864960,
+            "Shared_Dirty": 53972992,
+            "Shared_Clean": 254373888,
+            "Anonymous": 164818944
+          },
+          "js_heap_bytes": 11191596,
+          "dom_counters": {
+            "documents": 13,
+            "nodes": 23530,
+            "jsEventListeners": 670
+          },
+          "lcp_ms": 168,
+          "long_task_ms": 0,
+          "long_task_count": 0
+        },
+        {
+          "mount": 5,
+          "renderer_pids": [
+            13427,
+            13386,
+            13367
+          ],
+          "measured_rss": 506818560,
+          "status_totals": {
+            "VmRSS": 506818560,
+            "RssAnon": 185241600,
+            "RssFile": 268226560,
+            "RssShmem": 53350400,
+            "VmSwap": 0
+          },
+          "status_vs_measured_residual": 0,
+          "tracked_status": {
+            "VmRSS": 294191104,
+            "RssAnon": 121569280,
+            "RssFile": 119926784,
+            "RssShmem": 52695040,
+            "VmSwap": 0
+          },
+          "other_status": {
+            "VmRSS": 212627456,
+            "RssAnon": 63672320,
+            "RssFile": 148299776,
+            "RssShmem": 655360,
+            "VmSwap": 0
+          },
+          "tracked_smaps": {
+            "Rss": 294191104,
+            "Pss": 199337984,
+            "Private_Dirty": 137674752,
+            "Private_Clean": 10592256,
+            "Shared_Dirty": 36585472,
+            "Shared_Clean": 109338624,
+            "Anonymous": 121569280
+          },
+          "total_smaps": {
+            "Rss": 506818560,
+            "Pss": 284913664,
+            "Private_Dirty": 171737088,
+            "Private_Clean": 13864960,
+            "Shared_Dirty": 66842624,
+            "Shared_Clean": 254373888,
+            "Anonymous": 185241600
+          },
+          "js_heap_bytes": 13875576,
+          "dom_counters": {
+            "documents": 21,
+            "nodes": 33906,
+            "jsEventListeners": 1074
+          },
+          "lcp_ms": 144,
+          "long_task_ms": 0,
+          "long_task_count": 0
+        },
+        {
+          "mount": 10,
+          "renderer_pids": [
+            13427,
+            13386,
+            13367
+          ],
+          "measured_rss": 535248896,
+          "status_totals": {
+            "VmRSS": 535248896,
+            "RssAnon": 213901312,
+            "RssFile": 268226560,
+            "RssShmem": 53121024,
+            "VmSwap": 0
+          },
+          "status_vs_measured_residual": 0,
+          "tracked_status": {
+            "VmRSS": 322293760,
+            "RssAnon": 149901312,
+            "RssFile": 119926784,
+            "RssShmem": 52465664,
+            "VmSwap": 0
+          },
+          "other_status": {
+            "VmRSS": 212955136,
+            "RssAnon": 64000000,
+            "RssFile": 148299776,
+            "RssShmem": 655360,
+            "VmSwap": 0
+          },
+          "tracked_smaps": {
+            "Rss": 322293760,
+            "Pss": 227776512,
+            "Private_Dirty": 166449152,
+            "Private_Clean": 10592256,
+            "Shared_Dirty": 35913728,
+            "Shared_Clean": 109338624,
+            "Anonymous": 149901312
+          },
+          "total_smaps": {
+            "Rss": 535248896,
+            "Pss": 313679872,
+            "Private_Dirty": 200839168,
+            "Private_Clean": 13864960,
+            "Shared_Dirty": 66170880,
+            "Shared_Clean": 254373888,
+            "Anonymous": 213901312
+          },
+          "js_heap_bytes": 14887692,
+          "dom_counters": {
+            "documents": 31,
+            "nodes": 46887,
+            "jsEventListeners": 1579
+          },
+          "lcp_ms": 156,
+          "long_task_ms": 0,
+          "long_task_count": 0
+        },
+        {
+          "mount": 15,
+          "renderer_pids": [
+            13427,
+            13386,
+            13367
+          ],
+          "measured_rss": 563617792,
+          "status_totals": {
+            "VmRSS": 563617792,
+            "RssAnon": 242040832,
+            "RssFile": 268226560,
+            "RssShmem": 53350400,
+            "VmSwap": 0
+          },
+          "status_vs_measured_residual": 0,
+          "tracked_status": {
+            "VmRSS": 350257152,
+            "RssAnon": 177635328,
+            "RssFile": 119926784,
+            "RssShmem": 52695040,
+            "VmSwap": 0
+          },
+          "other_status": {
+            "VmRSS": 213360640,
+            "RssAnon": 64405504,
+            "RssFile": 148299776,
+            "RssShmem": 655360,
+            "VmSwap": 0
+          },
+          "tracked_smaps": {
+            "Rss": 350257152,
+            "Pss": 255481856,
+            "Private_Dirty": 193896448,
+            "Private_Clean": 10592256,
+            "Shared_Dirty": 36429824,
+            "Shared_Clean": 109338624,
+            "Anonymous": 177635328
+          },
+          "total_smaps": {
+            "Rss": 563617792,
+            "Pss": 341790720,
+            "Private_Dirty": 228691968,
+            "Private_Clean": 13864960,
+            "Shared_Dirty": 66686976,
+            "Shared_Clean": 254373888,
+            "Anonymous": 242040832
+          },
+          "js_heap_bytes": 17817212,
+          "dom_counters": {
+            "documents": 41,
+            "nodes": 59857,
+            "jsEventListeners": 2084
+          },
+          "lcp_ms": 132,
+          "long_task_ms": 0,
+          "long_task_count": 0
+        },
+        {
+          "mount": 20,
+          "renderer_pids": [
+            13427,
+            13386,
+            13367
+          ],
+          "measured_rss": 554827776,
+          "status_totals": {
+            "VmRSS": 554827776,
+            "RssAnon": 233119744,
+            "RssFile": 268226560,
+            "RssShmem": 53481472,
+            "VmSwap": 0
+          },
+          "status_vs_measured_residual": 0,
+          "tracked_status": {
+            "VmRSS": 341053440,
+            "RssAnon": 168300544,
+            "RssFile": 119926784,
+            "RssShmem": 52826112,
+            "VmSwap": 0
+          },
+          "other_status": {
+            "VmRSS": 213774336,
+            "RssAnon": 64819200,
+            "RssFile": 148299776,
+            "RssShmem": 655360,
+            "VmSwap": 0
+          },
+          "tracked_smaps": {
+            "Rss": 341053440,
+            "Pss": 246263808,
+            "Private_Dirty": 184664064,
+            "Private_Clean": 10592256,
+            "Shared_Dirty": 36458496,
+            "Shared_Clean": 109338624,
+            "Anonymous": 168300544
+          },
+          "total_smaps": {
+            "Rss": 554827776,
+            "Pss": 332986368,
+            "Private_Dirty": 219873280,
+            "Private_Clean": 13864960,
+            "Shared_Dirty": 66715648,
+            "Shared_Clean": 254373888,
+            "Anonymous": 233119744
+          },
+          "js_heap_bytes": 8413804,
+          "dom_counters": {
+            "documents": 10,
+            "nodes": 16132,
+            "jsEventListeners": 406
+          },
+          "lcp_ms": 144,
+          "long_task_ms": 0,
+          "long_task_count": 0
+        }
+      ]
+    },
+    {
+      "cohort": 1,
+      "run": 0,
+      "tracked_pid": 13552,
+      "tracking_rule": "largest VmRSS at navigation 1, same PID thereafter; not a proven page-to-PID binding",
+      "renderer_set_stable": true,
+      "points": [
+        {
+          "mount": 1,
+          "renderer_pids": [
+            13602,
+            13552,
+            13539
+          ],
+          "measured_rss": 465014784,
+          "status_totals": {
+            "VmRSS": 465014784,
+            "RssAnon": 164212736,
+            "RssFile": 272044032,
+            "RssShmem": 28758016,
+            "VmSwap": 0
+          },
+          "status_vs_measured_residual": 0,
+          "tracked_status": {
+            "VmRSS": 250544128,
+            "RssAnon": 101089280,
+            "RssFile": 121282560,
+            "RssShmem": 28172288,
+            "VmSwap": 0
+          },
+          "other_status": {
+            "VmRSS": 214470656,
+            "RssAnon": 63123456,
+            "RssFile": 150761472,
+            "RssShmem": 585728,
+            "VmSwap": 0
+          },
+          "tracked_smaps": {
+            "Rss": 250556416,
+            "Pss": 160651264,
+            "Private_Dirty": 104325120,
+            "Private_Clean": 10903552,
+            "Shared_Dirty": 24944640,
+            "Shared_Clean": 110383104,
+            "Anonymous": 101101568
+          },
+          "total_smaps": {
+            "Rss": 465027072,
+            "Pss": 245822464,
+            "Private_Dirty": 137728000,
+            "Private_Clean": 13643776,
+            "Shared_Dirty": 55242752,
+            "Shared_Clean": 258412544,
+            "Anonymous": 164225024
+          },
+          "js_heap_bytes": 13107032,
+          "dom_counters": {
+            "documents": 15,
+            "nodes": 26122,
+            "jsEventListeners": 800
+          },
+          "lcp_ms": 164,
+          "long_task_ms": 0,
+          "long_task_count": 0
+        },
+        {
+          "mount": 5,
+          "renderer_pids": [
+            13602,
+            13552,
+            13539
+          ],
+          "measured_rss": 516247552,
+          "status_totals": {
+            "VmRSS": 516247552,
+            "RssAnon": 188878848,
+            "RssFile": 272044032,
+            "RssShmem": 55324672,
+            "VmSwap": 0
+          },
+          "status_vs_measured_residual": 0,
+          "tracked_status": {
+            "VmRSS": 301518848,
+            "RssAnon": 125497344,
+            "RssFile": 121282560,
+            "RssShmem": 54738944,
+            "VmSwap": 0
+          },
+          "other_status": {
+            "VmRSS": 214728704,
+            "RssAnon": 63381504,
+            "RssFile": 150761472,
+            "RssShmem": 585728,
+            "VmSwap": 0
+          },
+          "tracked_smaps": {
+            "Rss": 301518848,
+            "Pss": 205736960,
+            "Private_Dirty": 143536128,
+            "Private_Clean": 10903552,
+            "Shared_Dirty": 36696064,
+            "Shared_Clean": 110383104,
+            "Anonymous": 125497344
+          },
+          "total_smaps": {
+            "Rss": 516247552,
+            "Pss": 291166208,
+            "Private_Dirty": 177197056,
+            "Private_Clean": 13643776,
+            "Shared_Dirty": 66994176,
+            "Shared_Clean": 258412544,
+            "Anonymous": 188878848
+          },
+          "js_heap_bytes": 15797676,
+          "dom_counters": {
+            "documents": 23,
+            "nodes": 36494,
+            "jsEventListeners": 1204
+          },
+          "lcp_ms": 160,
+          "long_task_ms": 0,
+          "long_task_count": 0
+        },
+        {
+          "mount": 10,
+          "renderer_pids": [
+            13602,
+            13552,
+            13539
+          ],
+          "measured_rss": 510644224,
+          "status_totals": {
+            "VmRSS": 510644224,
+            "RssAnon": 185438208,
+            "RssFile": 272044032,
+            "RssShmem": 53161984,
+            "VmSwap": 0
+          },
+          "status_vs_measured_residual": 0,
+          "tracked_status": {
+            "VmRSS": 295522304,
+            "RssAnon": 121663488,
+            "RssFile": 121282560,
+            "RssShmem": 52576256,
+            "VmSwap": 0
+          },
+          "other_status": {
+            "VmRSS": 215121920,
+            "RssAnon": 63774720,
+            "RssFile": 150761472,
+            "RssShmem": 585728,
+            "VmSwap": 0
+          },
+          "tracked_smaps": {
+            "Rss": 295522304,
+            "Pss": 199693312,
+            "Private_Dirty": 137445376,
+            "Private_Clean": 10903552,
+            "Shared_Dirty": 36790272,
+            "Shared_Clean": 110383104,
+            "Anonymous": 121663488
+          },
+          "total_smaps": {
+            "Rss": 510644224,
+            "Pss": 285515776,
+            "Private_Dirty": 171499520,
+            "Private_Clean": 13643776,
+            "Shared_Dirty": 67088384,
+            "Shared_Clean": 258412544,
+            "Anonymous": 185438208
+          },
+          "js_heap_bytes": 8149424,
+          "dom_counters": {
+            "documents": 10,
+            "nodes": 12964,
+            "jsEventListeners": 500
+          },
+          "lcp_ms": 128,
+          "long_task_ms": 0,
+          "long_task_count": 0
+        },
+        {
+          "mount": 15,
+          "renderer_pids": [
+            13602,
+            13552,
+            13539
+          ],
+          "measured_rss": 511107072,
+          "status_totals": {
+            "VmRSS": 511107072,
+            "RssAnon": 185540608,
+            "RssFile": 272044032,
+            "RssShmem": 53522432,
+            "VmSwap": 0
+          },
+          "status_vs_measured_residual": 0,
+          "tracked_status": {
+            "VmRSS": 295612416,
+            "RssAnon": 121393152,
+            "RssFile": 121282560,
+            "RssShmem": 52936704,
+            "VmSwap": 0
+          },
+          "other_status": {
+            "VmRSS": 215494656,
+            "RssAnon": 64147456,
+            "RssFile": 150761472,
+            "RssShmem": 585728,
+            "VmSwap": 0
+          },
+          "tracked_smaps": {
+            "Rss": 295612416,
+            "Pss": 199541760,
+            "Private_Dirty": 137052160,
+            "Private_Clean": 10903552,
+            "Shared_Dirty": 37273600,
+            "Shared_Clean": 110383104,
+            "Anonymous": 121393152
+          },
+          "total_smaps": {
+            "Rss": 511107072,
+            "Pss": 285736960,
+            "Private_Dirty": 171479040,
+            "Private_Clean": 13643776,
+            "Shared_Dirty": 67571712,
+            "Shared_Clean": 258412544,
+            "Anonymous": 185540608
+          },
+          "js_heap_bytes": 8133768,
+          "dom_counters": {
+            "documents": 10,
+            "nodes": 12964,
+            "jsEventListeners": 492
+          },
+          "lcp_ms": 156,
+          "long_task_ms": 0,
+          "long_task_count": 0
+        },
+        {
+          "mount": 20,
+          "renderer_pids": [
+            13602,
+            13552,
+            13539
+          ],
+          "measured_rss": 510439424,
+          "status_totals": {
+            "VmRSS": 510439424,
+            "RssAnon": 183263232,
+            "RssFile": 272175104,
+            "RssShmem": 55001088,
+            "VmSwap": 0
+          },
+          "status_vs_measured_residual": 0,
+          "tracked_status": {
+            "VmRSS": 294739968,
+            "RssAnon": 119046144,
+            "RssFile": 121282560,
+            "RssShmem": 54411264,
+            "VmSwap": 0
+          },
+          "other_status": {
+            "VmRSS": 215699456,
+            "RssAnon": 64217088,
+            "RssFile": 150892544,
+            "RssShmem": 589824,
+            "VmSwap": 0
+          },
+          "tracked_smaps": {
+            "Rss": 294739968,
+            "Pss": 198205440,
+            "Private_Dirty": 135278592,
+            "Private_Clean": 10903552,
+            "Shared_Dirty": 38174720,
+            "Shared_Clean": 110383104,
+            "Anonymous": 119046144
+          },
+          "total_smaps": {
+            "Rss": 510439424,
+            "Pss": 284491776,
+            "Private_Dirty": 169775104,
+            "Private_Clean": 13643776,
+            "Shared_Dirty": 68476928,
+            "Shared_Clean": 258543616,
+            "Anonymous": 183263232
+          },
+          "js_heap_bytes": 5635176,
+          "dom_counters": {
+            "documents": 2,
+            "nodes": 2592,
+            "jsEventListeners": 93
+          },
+          "lcp_ms": 180,
+          "long_task_ms": 139,
+          "long_task_count": 1
+        }
+      ]
+    },
+    {
+      "cohort": 1,
+      "run": 1,
+      "tracked_pid": 13627,
+      "tracking_rule": "largest VmRSS at navigation 1, same PID thereafter; not a proven page-to-PID binding",
+      "renderer_set_stable": true,
+      "points": [
+        {
+          "mount": 1,
+          "renderer_pids": [
+            13663,
+            13627,
+            13613
+          ],
+          "measured_rss": 454455296,
+          "status_totals": {
+            "VmRSS": 454455296,
+            "RssAnon": 152449024,
+            "RssFile": 271904768,
+            "RssShmem": 30101504,
+            "VmSwap": 0
+          },
+          "status_vs_measured_residual": 0,
+          "tracked_status": {
+            "VmRSS": 239521792,
+            "RssAnon": 88793088,
+            "RssFile": 121143296,
+            "RssShmem": 29585408,
+            "VmSwap": 0
+          },
+          "other_status": {
+            "VmRSS": 214933504,
+            "RssAnon": 63655936,
+            "RssFile": 150761472,
+            "RssShmem": 516096,
+            "VmSwap": 0
+          },
+          "tracked_smaps": {
+            "Rss": 239521792,
+            "Pss": 149394432,
+            "Private_Dirty": 93040640,
+            "Private_Clean": 10797056,
+            "Shared_Dirty": 25333760,
+            "Shared_Clean": 110350336,
+            "Anonymous": 88793088
+          },
+          "total_smaps": {
+            "Rss": 454455296,
+            "Pss": 235010048,
+            "Private_Dirty": 126943232,
+            "Private_Clean": 13537280,
+            "Shared_Dirty": 55595008,
+            "Shared_Clean": 258379776,
+            "Anonymous": 152449024
+          },
+          "js_heap_bytes": 6364828,
+          "dom_counters": {
+            "documents": 4,
+            "nodes": 5184,
+            "jsEventListeners": 178
+          },
+          "lcp_ms": 180,
+          "long_task_ms": 0,
+          "long_task_count": 0
+        },
+        {
+          "mount": 5,
+          "renderer_pids": [
+            13663,
+            13627,
+            13613
+          ],
+          "measured_rss": 483233792,
+          "status_totals": {
+            "VmRSS": 483233792,
+            "RssAnon": 158527488,
+            "RssFile": 271904768,
+            "RssShmem": 52801536,
+            "VmSwap": 0
+          },
+          "status_vs_measured_residual": 0,
+          "tracked_status": {
+            "VmRSS": 268029952,
+            "RssAnon": 94601216,
+            "RssFile": 121143296,
+            "RssShmem": 52285440,
+            "VmSwap": 0
+          },
+          "other_status": {
+            "VmRSS": 215203840,
+            "RssAnon": 63926272,
+            "RssFile": 150761472,
+            "RssShmem": 516096,
+            "VmSwap": 0
+          },
+          "tracked_smaps": {
+            "Rss": 268029952,
+            "Pss": 172356608,
+            "Private_Dirty": 110456832,
+            "Private_Clean": 10797056,
+            "Shared_Dirty": 36425728,
+            "Shared_Clean": 110350336,
+            "Anonymous": 94601216
+          },
+          "total_smaps": {
+            "Rss": 483233792,
+            "Pss": 258242560,
+            "Private_Dirty": 144629760,
+            "Private_Clean": 13537280,
+            "Shared_Dirty": 66686976,
+            "Shared_Clean": 258379776,
+            "Anonymous": 158527488
+          },
+          "js_heap_bytes": 8435144,
+          "dom_counters": {
+            "documents": 12,
+            "nodes": 15567,
+            "jsEventListeners": 582
+          },
+          "lcp_ms": 152,
+          "long_task_ms": 0,
+          "long_task_count": 0
+        },
+        {
+          "mount": 10,
+          "renderer_pids": [
+            13663,
+            13627,
+            13613
+          ],
+          "measured_rss": 506769408,
+          "status_totals": {
+            "VmRSS": 506769408,
+            "RssAnon": 173527040,
+            "RssFile": 271904768,
+            "RssShmem": 61337600,
+            "VmSwap": 0
+          },
+          "status_vs_measured_residual": 0,
+          "tracked_status": {
+            "VmRSS": 291160064,
+            "RssAnon": 109195264,
+            "RssFile": 121143296,
+            "RssShmem": 60821504,
+            "VmSwap": 0
+          },
+          "other_status": {
+            "VmRSS": 215609344,
+            "RssAnon": 64331776,
+            "RssFile": 150761472,
+            "RssShmem": 516096,
+            "VmSwap": 0
+          },
+          "tracked_smaps": {
+            "Rss": 291160064,
+            "Pss": 192009216,
+            "Private_Dirty": 126631936,
+            "Private_Clean": 10797056,
+            "Shared_Dirty": 43380736,
+            "Shared_Clean": 110350336,
+            "Anonymous": 109195264
+          },
+          "total_smaps": {
+            "Rss": 506769408,
+            "Pss": 278300672,
+            "Private_Dirty": 161210368,
+            "Private_Clean": 13537280,
+            "Shared_Dirty": 73641984,
+            "Shared_Clean": 258379776,
+            "Anonymous": 173527040
+          },
+          "js_heap_bytes": 10676716,
+          "dom_counters": {
+            "documents": 22,
+            "nodes": 28532,
+            "jsEventListeners": 1087
+          },
+          "lcp_ms": 176,
+          "long_task_ms": 0,
+          "long_task_count": 0
+        },
+        {
+          "mount": 15,
+          "renderer_pids": [
+            13663,
+            13627,
+            13613
+          ],
+          "measured_rss": 498515968,
+          "status_totals": {
+            "VmRSS": 498515968,
+            "RssAnon": 173187072,
+            "RssFile": 271904768,
+            "RssShmem": 53424128,
+            "VmSwap": 0
+          },
+          "status_vs_measured_residual": 0,
+          "tracked_status": {
+            "VmRSS": 282447872,
+            "RssAnon": 108396544,
+            "RssFile": 121143296,
+            "RssShmem": 52908032,
+            "VmSwap": 0
+          },
+          "other_status": {
+            "VmRSS": 216068096,
+            "RssAnon": 64790528,
+            "RssFile": 150761472,
+            "RssShmem": 516096,
+            "VmSwap": 0
+          },
+          "tracked_smaps": {
+            "Rss": 282447872,
+            "Pss": 186481664,
+            "Private_Dirty": 124289024,
+            "Private_Clean": 10797056,
+            "Shared_Dirty": 37011456,
+            "Shared_Clean": 110350336,
+            "Anonymous": 108396544
+          },
+          "total_smaps": {
+            "Rss": 498515968,
+            "Pss": 273231872,
+            "Private_Dirty": 159326208,
+            "Private_Clean": 13537280,
+            "Shared_Dirty": 67272704,
+            "Shared_Clean": 258379776,
+            "Anonymous": 173187072
+          },
+          "js_heap_bytes": 8071036,
+          "dom_counters": {
+            "documents": 10,
+            "nodes": 12964,
+            "jsEventListeners": 500
+          },
+          "lcp_ms": 144,
+          "long_task_ms": 0,
+          "long_task_count": 0
+        },
+        {
+          "mount": 20,
+          "renderer_pids": [
+            13663,
+            13627,
+            13613
+          ],
+          "measured_rss": 502345728,
+          "status_totals": {
+            "VmRSS": 502345728,
+            "RssAnon": 177278976,
+            "RssFile": 271904768,
+            "RssShmem": 53161984,
+            "VmSwap": 0
+          },
+          "status_vs_measured_residual": 0,
+          "tracked_status": {
+            "VmRSS": 285884416,
+            "RssAnon": 112095232,
+            "RssFile": 121143296,
+            "RssShmem": 52645888,
+            "VmSwap": 0
+          },
+          "other_status": {
+            "VmRSS": 216461312,
+            "RssAnon": 65183744,
+            "RssFile": 150761472,
+            "RssShmem": 516096,
+            "VmSwap": 0
+          },
+          "tracked_smaps": {
+            "Rss": 285884416,
+            "Pss": 189975552,
+            "Private_Dirty": 127840256,
+            "Private_Clean": 10797056,
+            "Shared_Dirty": 36896768,
+            "Shared_Clean": 110350336,
+            "Anonymous": 112095232
+          },
+          "total_smaps": {
+            "Rss": 502345728,
+            "Pss": 277118976,
+            "Private_Dirty": 163270656,
+            "Private_Clean": 13537280,
+            "Shared_Dirty": 67158016,
+            "Shared_Clean": 258379776,
+            "Anonymous": 177278976
+          },
+          "js_heap_bytes": 10299588,
+          "dom_counters": {
+            "documents": 20,
+            "nodes": 25929,
+            "jsEventListeners": 1005
+          },
+          "lcp_ms": 136,
+          "long_task_ms": 0,
+          "long_task_count": 0
+        }
+      ]
+    },
+    {
+      "cohort": 2,
+      "run": 0,
+      "tracked_pid": 13790,
+      "tracking_rule": "largest VmRSS at navigation 1, same PID thereafter; not a proven page-to-PID binding",
+      "renderer_set_stable": true,
+      "points": [
+        {
+          "mount": 1,
+          "renderer_pids": [
+            13844,
+            13790,
+            13777
+          ],
+          "measured_rss": 462499840,
+          "status_totals": {
+            "VmRSS": 462499840,
+            "RssAnon": 160448512,
+            "RssFile": 273088512,
+            "RssShmem": 28962816,
+            "VmSwap": 0
+          },
+          "status_vs_measured_residual": 0,
+          "tracked_status": {
+            "VmRSS": 247308288,
+            "RssAnon": 97198080,
+            "RssFile": 121712640,
+            "RssShmem": 28397568,
+            "VmSwap": 0
+          },
+          "other_status": {
+            "VmRSS": 215191552,
+            "RssAnon": 63250432,
+            "RssFile": 151375872,
+            "RssShmem": 565248,
+            "VmSwap": 0
+          },
+          "tracked_smaps": {
+            "Rss": 247308288,
+            "Pss": 157666304,
+            "Private_Dirty": 101675008,
+            "Private_Clean": 10915840,
+            "Shared_Dirty": 23916544,
+            "Shared_Clean": 110800896,
+            "Anonymous": 97198080
+          },
+          "total_smaps": {
+            "Rss": 462499840,
+            "Pss": 243465216,
+            "Private_Dirty": 135282688,
+            "Private_Clean": 13881344,
+            "Shared_Dirty": 54116352,
+            "Shared_Clean": 259219456,
+            "Anonymous": 160448512
+          },
+          "js_heap_bytes": 8814104,
+          "dom_counters": {
+            "documents": 7,
+            "nodes": 10976,
+            "jsEventListeners": 420
+          },
+          "lcp_ms": 196,
+          "long_task_ms": 0,
+          "long_task_count": 0
+        },
+        {
+          "mount": 5,
+          "renderer_pids": [
+            13844,
+            13790,
+            13777
+          ],
+          "measured_rss": 493469696,
+          "status_totals": {
+            "VmRSS": 493469696,
+            "RssAnon": 167178240,
+            "RssFile": 273088512,
+            "RssShmem": 53202944,
+            "VmSwap": 0
+          },
+          "status_vs_measured_residual": 0,
+          "tracked_status": {
+            "VmRSS": 277966848,
+            "RssAnon": 103616512,
+            "RssFile": 121712640,
+            "RssShmem": 52637696,
+            "VmSwap": 0
+          },
+          "other_status": {
+            "VmRSS": 215502848,
+            "RssAnon": 63561728,
+            "RssFile": 151375872,
+            "RssShmem": 565248,
+            "VmSwap": 0
+          },
+          "tracked_smaps": {
+            "Rss": 277966848,
+            "Pss": 181986304,
+            "Private_Dirty": 119656448,
+            "Private_Clean": 10915840,
+            "Shared_Dirty": 36593664,
+            "Shared_Clean": 110800896,
+            "Anonymous": 103616512
+          },
+          "total_smaps": {
+            "Rss": 493469696,
+            "Pss": 268096512,
+            "Private_Dirty": 153575424,
+            "Private_Clean": 13881344,
+            "Shared_Dirty": 66793472,
+            "Shared_Clean": 259219456,
+            "Anonymous": 167178240
+          },
+          "js_heap_bytes": 11503892,
+          "dom_counters": {
+            "documents": 15,
+            "nodes": 21348,
+            "jsEventListeners": 824
+          },
+          "lcp_ms": 164,
+          "long_task_ms": 0,
+          "long_task_count": 0
+        },
+        {
+          "mount": 10,
+          "renderer_pids": [
+            13844,
+            13790,
+            13777
+          ],
+          "measured_rss": 504979456,
+          "status_totals": {
+            "VmRSS": 504979456,
+            "RssAnon": 178163712,
+            "RssFile": 273088512,
+            "RssShmem": 53727232,
+            "VmSwap": 0
+          },
+          "status_vs_measured_residual": 0,
+          "tracked_status": {
+            "VmRSS": 289013760,
+            "RssAnon": 114139136,
+            "RssFile": 121712640,
+            "RssShmem": 53161984,
+            "VmSwap": 0
+          },
+          "other_status": {
+            "VmRSS": 215965696,
+            "RssAnon": 64024576,
+            "RssFile": 151375872,
+            "RssShmem": 565248,
+            "VmSwap": 0
+          },
+          "tracked_smaps": {
+            "Rss": 289013760,
+            "Pss": 192924672,
+            "Private_Dirty": 130486272,
+            "Private_Clean": 10915840,
+            "Shared_Dirty": 36810752,
+            "Shared_Clean": 110800896,
+            "Anonymous": 114139136
+          },
+          "total_smaps": {
+            "Rss": 504979456,
+            "Pss": 279497728,
+            "Private_Dirty": 164868096,
+            "Private_Clean": 13881344,
+            "Shared_Dirty": 67010560,
+            "Shared_Clean": 259219456,
+            "Anonymous": 178163712
+          },
+          "js_heap_bytes": 6227920,
+          "dom_counters": {
+            "documents": 4,
+            "nodes": 5185,
+            "jsEventListeners": 199
+          },
+          "lcp_ms": 124,
+          "long_task_ms": 0,
+          "long_task_count": 0
+        },
+        {
+          "mount": 15,
+          "renderer_pids": [
+            13844,
+            13790,
+            13777
+          ],
+          "measured_rss": 508301312,
+          "status_totals": {
+            "VmRSS": 508301312,
+            "RssAnon": 182009856,
+            "RssFile": 273088512,
+            "RssShmem": 53202944,
+            "VmSwap": 0
+          },
+          "status_vs_measured_residual": 0,
+          "tracked_status": {
+            "VmRSS": 291926016,
+            "RssAnon": 117575680,
+            "RssFile": 121712640,
+            "RssShmem": 52637696,
+            "VmSwap": 0
+          },
+          "other_status": {
+            "VmRSS": 216375296,
+            "RssAnon": 64434176,
+            "RssFile": 151375872,
+            "RssShmem": 565248,
+            "VmSwap": 0
+          },
+          "tracked_smaps": {
+            "Rss": 291926016,
+            "Pss": 195957760,
+            "Private_Dirty": 133640192,
+            "Private_Clean": 10915840,
+            "Shared_Dirty": 36569088,
+            "Shared_Clean": 110800896,
+            "Anonymous": 117575680
+          },
+          "total_smaps": {
+            "Rss": 508301312,
+            "Pss": 282940416,
+            "Private_Dirty": 168431616,
+            "Private_Clean": 13881344,
+            "Shared_Dirty": 66768896,
+            "Shared_Clean": 259219456,
+            "Anonymous": 182009856
+          },
+          "js_heap_bytes": 9544836,
+          "dom_counters": {
+            "documents": 14,
+            "nodes": 18150,
+            "jsEventListeners": 704
+          },
+          "lcp_ms": 132,
+          "long_task_ms": 0,
+          "long_task_count": 0
+        },
+        {
+          "mount": 20,
+          "renderer_pids": [
+            13844,
+            13790,
+            13777
+          ],
+          "measured_rss": 505864192,
+          "status_totals": {
+            "VmRSS": 505864192,
+            "RssAnon": 179834880,
+            "RssFile": 273088512,
+            "RssShmem": 52940800,
+            "VmSwap": 0
+          },
+          "status_vs_measured_residual": 0,
+          "tracked_status": {
+            "VmRSS": 289128448,
+            "RssAnon": 115040256,
+            "RssFile": 121712640,
+            "RssShmem": 52375552,
+            "VmSwap": 0
+          },
+          "other_status": {
+            "VmRSS": 216735744,
+            "RssAnon": 64794624,
+            "RssFile": 151375872,
+            "RssShmem": 565248,
+            "VmSwap": 0
+          },
+          "tracked_smaps": {
+            "Rss": 289128448,
+            "Pss": 193221632,
+            "Private_Dirty": 130965504,
+            "Private_Clean": 10915840,
+            "Shared_Dirty": 36446208,
+            "Shared_Clean": 110800896,
+            "Anonymous": 115040256
+          },
+          "total_smaps": {
+            "Rss": 505864192,
+            "Pss": 280564736,
+            "Private_Dirty": 166117376,
+            "Private_Clean": 13881344,
+            "Shared_Dirty": 66646016,
+            "Shared_Clean": 259219456,
+            "Anonymous": 179834880
+          },
+          "js_heap_bytes": 6204768,
+          "dom_counters": {
+            "documents": 4,
+            "nodes": 5184,
+            "jsEventListeners": 178
+          },
+          "lcp_ms": 164,
+          "long_task_ms": 0,
+          "long_task_count": 0
+        }
+      ]
+    },
+    {
+      "cohort": 2,
+      "run": 1,
+      "tracked_pid": 13866,
+      "tracking_rule": "largest VmRSS at navigation 1, same PID thereafter; not a proven page-to-PID binding",
+      "renderer_set_stable": true,
+      "points": [
+        {
+          "mount": 1,
+          "renderer_pids": [
+            13904,
+            13866,
+            13855
+          ],
+          "measured_rss": 463286272,
+          "status_totals": {
+            "VmRSS": 463286272,
+            "RssAnon": 157986816,
+            "RssFile": 272846848,
+            "RssShmem": 32452608,
+            "VmSwap": 0
+          },
+          "status_vs_measured_residual": 0,
+          "tracked_status": {
+            "VmRSS": 248229888,
+            "RssAnon": 94838784,
+            "RssFile": 121446400,
+            "RssShmem": 31944704,
+            "VmSwap": 0
+          },
+          "other_status": {
+            "VmRSS": 215056384,
+            "RssAnon": 63148032,
+            "RssFile": 151400448,
+            "RssShmem": 507904,
+            "VmSwap": 0
+          },
+          "tracked_smaps": {
+            "Rss": 248229888,
+            "Pss": 157975552,
+            "Private_Dirty": 101625856,
+            "Private_Clean": 10739712,
+            "Shared_Dirty": 25153536,
+            "Shared_Clean": 110710784,
+            "Anonymous": 94838784
+          },
+          "total_smaps": {
+            "Rss": 463286272,
+            "Pss": 243578880,
+            "Private_Dirty": 135061504,
+            "Private_Clean": 13705216,
+            "Shared_Dirty": 55365632,
+            "Shared_Clean": 259153920,
+            "Anonymous": 157986816
+          },
+          "js_heap_bytes": 5557540,
+          "dom_counters": {
+            "documents": 2,
+            "nodes": 2591,
+            "jsEventListeners": 96
+          },
+          "lcp_ms": 204,
+          "long_task_ms": 0,
+          "long_task_count": 0
+        },
+        {
+          "mount": 5,
+          "renderer_pids": [
+            13904,
+            13866,
+            13855
+          ],
+          "measured_rss": 491110400,
+          "status_totals": {
+            "VmRSS": 491110400,
+            "RssAnon": 161570816,
+            "RssFile": 272846848,
+            "RssShmem": 56692736,
+            "VmSwap": 0
+          },
+          "status_vs_measured_residual": 0,
+          "tracked_status": {
+            "VmRSS": 275738624,
+            "RssAnon": 98107392,
+            "RssFile": 121446400,
+            "RssShmem": 56184832,
+            "VmSwap": 0
+          },
+          "other_status": {
+            "VmRSS": 215371776,
+            "RssAnon": 63463424,
+            "RssFile": 151400448,
+            "RssShmem": 507904,
+            "VmSwap": 0
+          },
+          "tracked_smaps": {
+            "Rss": 275738624,
+            "Pss": 179788800,
+            "Private_Dirty": 117743616,
+            "Private_Clean": 10739712,
+            "Shared_Dirty": 36544512,
+            "Shared_Clean": 110710784,
+            "Anonymous": 98107392
+          },
+          "total_smaps": {
+            "Rss": 491110400,
+            "Pss": 265707520,
+            "Private_Dirty": 151494656,
+            "Private_Clean": 13705216,
+            "Shared_Dirty": 66756608,
+            "Shared_Clean": 259153920,
+            "Anonymous": 161570816
+          },
+          "js_heap_bytes": 8252488,
+          "dom_counters": {
+            "documents": 10,
+            "nodes": 12963,
+            "jsEventListeners": 500
+          },
+          "lcp_ms": 156,
+          "long_task_ms": 0,
+          "long_task_count": 0
+        },
+        {
+          "mount": 10,
+          "renderer_pids": [
+            13904,
+            13866,
+            13855
+          ],
+          "measured_rss": 490774528,
+          "status_totals": {
+            "VmRSS": 490774528,
+            "RssAnon": 161234944,
+            "RssFile": 272846848,
+            "RssShmem": 56692736,
+            "VmSwap": 0
+          },
+          "status_vs_measured_residual": 0,
+          "tracked_status": {
+            "VmRSS": 274984960,
+            "RssAnon": 97353728,
+            "RssFile": 121446400,
+            "RssShmem": 56184832,
+            "VmSwap": 0
+          },
+          "other_status": {
+            "VmRSS": 215789568,
+            "RssAnon": 63881216,
+            "RssFile": 151400448,
+            "RssShmem": 507904,
+            "VmSwap": 0
+          },
+          "tracked_smaps": {
+            "Rss": 274984960,
+            "Pss": 178988032,
+            "Private_Dirty": 116895744,
+            "Private_Clean": 10739712,
+            "Shared_Dirty": 36638720,
+            "Shared_Clean": 110710784,
+            "Anonymous": 97353728
+          },
+          "total_smaps": {
+            "Rss": 490774528,
+            "Pss": 265324544,
+            "Private_Dirty": 151064576,
+            "Private_Clean": 13705216,
+            "Shared_Dirty": 66850816,
+            "Shared_Clean": 259153920,
+            "Anonymous": 161234944
+          },
+          "js_heap_bytes": 6812068,
+          "dom_counters": {
+            "documents": 6,
+            "nodes": 7777,
+            "jsEventListeners": 298
+          },
+          "lcp_ms": 152,
+          "long_task_ms": 0,
+          "long_task_count": 0
+        },
+        {
+          "mount": 15,
+          "renderer_pids": [
+            13904,
+            13866,
+            13855
+          ],
+          "measured_rss": 486207488,
+          "status_totals": {
+            "VmRSS": 486207488,
+            "RssAnon": 157552640,
+            "RssFile": 272846848,
+            "RssShmem": 55808000,
+            "VmSwap": 0
+          },
+          "status_vs_measured_residual": 0,
+          "tracked_status": {
+            "VmRSS": 270094336,
+            "RssAnon": 93347840,
+            "RssFile": 121446400,
+            "RssShmem": 55300096,
+            "VmSwap": 0
+          },
+          "other_status": {
+            "VmRSS": 216113152,
+            "RssAnon": 64204800,
+            "RssFile": 151400448,
+            "RssShmem": 507904,
+            "VmSwap": 0
+          },
+          "tracked_smaps": {
+            "Rss": 270094336,
+            "Pss": 174619648,
+            "Private_Dirty": 113049600,
+            "Private_Clean": 10739712,
+            "Shared_Dirty": 35594240,
+            "Shared_Clean": 110710784,
+            "Anonymous": 93347840
+          },
+          "total_smaps": {
+            "Rss": 486207488,
+            "Pss": 261279744,
+            "Private_Dirty": 147542016,
+            "Private_Clean": 13705216,
+            "Shared_Dirty": 65806336,
+            "Shared_Clean": 259153920,
+            "Anonymous": 157552640
+          },
+          "js_heap_bytes": 8071592,
+          "dom_counters": {
+            "documents": 10,
+            "nodes": 12964,
+            "jsEventListeners": 481
+          },
+          "lcp_ms": 156,
+          "long_task_ms": 0,
+          "long_task_count": 0
+        },
+        {
+          "mount": 20,
+          "renderer_pids": [
+            13904,
+            13866,
+            13855
+          ],
+          "measured_rss": 486862848,
+          "status_totals": {
+            "VmRSS": 486862848,
+            "RssAnon": 157356032,
+            "RssFile": 272912384,
+            "RssShmem": 56594432,
+            "VmSwap": 0
+          },
+          "status_vs_measured_residual": 0,
+          "tracked_status": {
+            "VmRSS": 270340096,
+            "RssAnon": 92741632,
+            "RssFile": 121511936,
+            "RssShmem": 56086528,
+            "VmSwap": 0
+          },
+          "other_status": {
+            "VmRSS": 216522752,
+            "RssAnon": 64614400,
+            "RssFile": 151400448,
+            "RssShmem": 507904,
+            "VmSwap": 0
+          },
+          "tracked_smaps": {
+            "Rss": 270340096,
+            "Pss": 174486528,
+            "Private_Dirty": 112472064,
+            "Private_Clean": 10805248,
+            "Shared_Dirty": 36352000,
+            "Shared_Clean": 110710784,
+            "Anonymous": 92741632
+          },
+          "total_smaps": {
+            "Rss": 486862848,
+            "Pss": 261556224,
+            "Private_Dirty": 147374080,
+            "Private_Clean": 13770752,
+            "Shared_Dirty": 66564096,
+            "Shared_Clean": 259153920,
+            "Anonymous": 157356032
+          },
+          "js_heap_bytes": 7433920,
+          "dom_counters": {
+            "documents": 8,
+            "nodes": 10370,
+            "jsEventListeners": 385
+          },
+          "lcp_ms": 196,
+          "long_task_ms": 0,
+          "long_task_count": 0
+        }
+      ]
+    },
+    {
+      "cohort": 3,
+      "run": 0,
+      "tracked_pid": 14033,
+      "tracking_rule": "largest VmRSS at navigation 1, same PID thereafter; not a proven page-to-PID binding",
+      "renderer_set_stable": true,
+      "points": [
+        {
+          "mount": 1,
+          "renderer_pids": [
+            14084,
+            14033,
+            14020
+          ],
+          "measured_rss": 460668928,
+          "status_totals": {
+            "VmRSS": 460668928,
+            "RssAnon": 161886208,
+            "RssFile": 271163392,
+            "RssShmem": 27619328,
+            "VmSwap": 0
+          },
+          "status_vs_measured_residual": 0,
+          "tracked_status": {
+            "VmRSS": 246779904,
+            "RssAnon": 98844672,
+            "RssFile": 120930304,
+            "RssShmem": 27004928,
+            "VmSwap": 0
+          },
+          "other_status": {
+            "VmRSS": 213889024,
+            "RssAnon": 63041536,
+            "RssFile": 150233088,
+            "RssShmem": 614400,
+            "VmSwap": 0
+          },
+          "tracked_smaps": {
+            "Rss": 246779904,
+            "Pss": 157978624,
+            "Private_Dirty": 101818368,
+            "Private_Clean": 11522048,
+            "Shared_Dirty": 24027136,
+            "Shared_Clean": 109412352,
+            "Anonymous": 98844672
+          },
+          "total_smaps": {
+            "Rss": 460668928,
+            "Pss": 243321856,
+            "Private_Dirty": 135204864,
+            "Private_Clean": 14725120,
+            "Shared_Dirty": 54288384,
+            "Shared_Clean": 256450560,
+            "Anonymous": 161886208
+          },
+          "js_heap_bytes": 8806980,
+          "dom_counters": {
+            "documents": 7,
+            "nodes": 10991,
+            "jsEventListeners": 420
+          },
+          "lcp_ms": 164,
+          "long_task_ms": 0,
+          "long_task_count": 0
+        },
+        {
+          "mount": 5,
+          "renderer_pids": [
+            14084,
+            14033,
+            14020
+          ],
+          "measured_rss": 488259584,
+          "status_totals": {
+            "VmRSS": 491282432,
+            "RssAnon": 169259008,
+            "RssFile": 271163392,
+            "RssShmem": 50860032,
+            "VmSwap": 0
+          },
+          "status_vs_measured_residual": 3022848,
+          "tracked_status": {
+            "VmRSS": 277135360,
+            "RssAnon": 105959424,
+            "RssFile": 120930304,
+            "RssShmem": 50245632,
+            "VmSwap": 0
+          },
+          "other_status": {
+            "VmRSS": 214147072,
+            "RssAnon": 63299584,
+            "RssFile": 150233088,
+            "RssShmem": 614400,
+            "VmSwap": 0
+          },
+          "tracked_smaps": {
+            "Rss": 279478272,
+            "Pss": 184334336,
+            "Private_Dirty": 121831424,
+            "Private_Clean": 11522048,
+            "Shared_Dirty": 36712448,
+            "Shared_Clean": 109412352,
+            "Anonymous": 105963520
+          },
+          "total_smaps": {
+            "Rss": 493625344,
+            "Pss": 269935616,
+            "Private_Dirty": 155475968,
+            "Private_Clean": 14725120,
+            "Shared_Dirty": 66973696,
+            "Shared_Clean": 256450560,
+            "Anonymous": 169263104
+          },
+          "js_heap_bytes": 11493832,
+          "dom_counters": {
+            "documents": 15,
+            "nodes": 21367,
+            "jsEventListeners": 824
+          },
+          "lcp_ms": 120,
+          "long_task_ms": 0,
+          "long_task_count": 0
+        },
+        {
+          "mount": 10,
+          "renderer_pids": [
+            14084,
+            14033,
+            14020
+          ],
+          "measured_rss": 513941504,
+          "status_totals": {
+            "VmRSS": 513904640,
+            "RssAnon": 197419008,
+            "RssFile": 271163392,
+            "RssShmem": 45322240,
+            "VmSwap": 0
+          },
+          "status_vs_measured_residual": -36864,
+          "tracked_status": {
+            "VmRSS": 299384832,
+            "RssAnon": 133746688,
+            "RssFile": 120930304,
+            "RssShmem": 44707840,
+            "VmSwap": 0
+          },
+          "other_status": {
+            "VmRSS": 214519808,
+            "RssAnon": 63672320,
+            "RssFile": 150233088,
+            "RssShmem": 614400,
+            "VmSwap": 0
+          },
+          "tracked_smaps": {
+            "Rss": 299384832,
+            "Pss": 207728640,
+            "Private_Dirty": 148713472,
+            "Private_Clean": 11522048,
+            "Shared_Dirty": 29736960,
+            "Shared_Clean": 109412352,
+            "Anonymous": 133746688
+          },
+          "total_smaps": {
+            "Rss": 513904640,
+            "Pss": 293702656,
+            "Private_Dirty": 182730752,
+            "Private_Clean": 14725120,
+            "Shared_Dirty": 59998208,
+            "Shared_Clean": 256450560,
+            "Anonymous": 197419008
+          },
+          "js_heap_bytes": 6918500,
+          "dom_counters": {
+            "documents": 20,
+            "nodes": 24706,
+            "jsEventListeners": 1329
+          },
+          "lcp_ms": 452,
+          "long_task_ms": 0,
+          "long_task_count": 0
+        },
+        {
+          "mount": 15,
+          "renderer_pids": [
+            14084,
+            14033,
+            14020
+          ],
+          "measured_rss": 494960640,
+          "status_totals": {
+            "VmRSS": 494960640,
+            "RssAnon": 178081792,
+            "RssFile": 271294464,
+            "RssShmem": 45584384,
+            "VmSwap": 0
+          },
+          "status_vs_measured_residual": 0,
+          "tracked_status": {
+            "VmRSS": 280342528,
+            "RssAnon": 114442240,
+            "RssFile": 120930304,
+            "RssShmem": 44969984,
+            "VmSwap": 0
+          },
+          "other_status": {
+            "VmRSS": 214618112,
+            "RssAnon": 63639552,
+            "RssFile": 150364160,
+            "RssShmem": 614400,
+            "VmSwap": 0
+          },
+          "tracked_smaps": {
+            "Rss": 280342528,
+            "Pss": 188713984,
+            "Private_Dirty": 129753088,
+            "Private_Clean": 11522048,
+            "Shared_Dirty": 29655040,
+            "Shared_Clean": 109412352,
+            "Anonymous": 114442240
+          },
+          "total_smaps": {
+            "Rss": 494960640,
+            "Pss": 274674688,
+            "Private_Dirty": 163737600,
+            "Private_Clean": 14725120,
+            "Shared_Dirty": 59916288,
+            "Shared_Clean": 256581632,
+            "Anonymous": 178081792
+          },
+          "js_heap_bytes": 6835900,
+          "dom_counters": {
+            "documents": 6,
+            "nodes": 7780,
+            "jsEventListeners": 279
+          },
+          "lcp_ms": 952,
+          "long_task_ms": 65,
+          "long_task_count": 1
+        },
+        {
+          "mount": 20,
+          "renderer_pids": [
+            14084,
+            14033,
+            14020
+          ],
+          "measured_rss": 440549376,
+          "status_totals": {
+            "VmRSS": 440549376,
+            "RssAnon": 123539456,
+            "RssFile": 271294464,
+            "RssShmem": 45715456,
+            "VmSwap": 0
+          },
+          "status_vs_measured_residual": 0,
+          "tracked_status": {
+            "VmRSS": 226230272,
+            "RssAnon": 60198912,
+            "RssFile": 120930304,
+            "RssShmem": 45101056,
+            "VmSwap": 0
+          },
+          "other_status": {
+            "VmRSS": 214319104,
+            "RssAnon": 63340544,
+            "RssFile": 150364160,
+            "RssShmem": 614400,
+            "VmSwap": 0
+          },
+          "tracked_smaps": {
+            "Rss": 226230272,
+            "Pss": 134355968,
+            "Private_Dirty": 75149312,
+            "Private_Clean": 11522048,
+            "Shared_Dirty": 30146560,
+            "Shared_Clean": 109412352,
+            "Anonymous": 60198912
+          },
+          "total_smaps": {
+            "Rss": 440549376,
+            "Pss": 220017664,
+            "Private_Dirty": 108834816,
+            "Private_Clean": 14725120,
+            "Shared_Dirty": 60407808,
+            "Shared_Clean": 256581632,
+            "Anonymous": 123539456
+          },
+          "js_heap_bytes": 6236180,
+          "dom_counters": {
+            "documents": 4,
+            "nodes": 5187,
+            "jsEventListeners": 202
+          },
+          "lcp_ms": 696,
+          "long_task_ms": 555,
+          "long_task_count": 4
+        }
+      ]
+    },
+    {
+      "cohort": 3,
+      "run": 1,
+      "tracked_pid": 14108,
+      "tracking_rule": "largest VmRSS at navigation 1, same PID thereafter; not a proven page-to-PID binding",
+      "renderer_set_stable": true,
+      "points": [
+        {
+          "mount": 1,
+          "renderer_pids": [
+            14158,
+            14108,
+            14096
+          ],
+          "measured_rss": 460541952,
+          "status_totals": {
+            "VmRSS": 460541952,
+            "RssAnon": 166916096,
+            "RssFile": 266072064,
+            "RssShmem": 27553792,
+            "VmSwap": 0
+          },
+          "status_vs_measured_residual": 0,
+          "tracked_status": {
+            "VmRSS": 246321152,
+            "RssAnon": 103518208,
+            "RssFile": 115814400,
+            "RssShmem": 26988544,
+            "VmSwap": 0
+          },
+          "other_status": {
+            "VmRSS": 214220800,
+            "RssAnon": 63397888,
+            "RssFile": 150257664,
+            "RssShmem": 565248,
+            "VmSwap": 0
+          },
+          "tracked_smaps": {
+            "Rss": 246321152,
+            "Pss": 157747200,
+            "Private_Dirty": 106450944,
+            "Private_Clean": 6901760,
+            "Shared_Dirty": 24051712,
+            "Shared_Clean": 108916736,
+            "Anonymous": 103518208
+          },
+          "total_smaps": {
+            "Rss": 460541952,
+            "Pss": 243363840,
+            "Private_Dirty": 140128256,
+            "Private_Clean": 10166272,
+            "Shared_Dirty": 54329344,
+            "Shared_Clean": 255918080,
+            "Anonymous": 166916096
+          },
+          "js_heap_bytes": 12194296,
+          "dom_counters": {
+            "documents": 15,
+            "nodes": 26120,
+            "jsEventListeners": 800
+          },
+          "lcp_ms": 148,
+          "long_task_ms": 0,
+          "long_task_count": 0
+        },
+        {
+          "mount": 5,
+          "renderer_pids": [
+            14158,
+            14108,
+            14096
+          ],
+          "measured_rss": 510402560,
+          "status_totals": {
+            "VmRSS": 510406656,
+            "RssAnon": 190705664,
+            "RssFile": 266072064,
+            "RssShmem": 53628928,
+            "VmSwap": 0
+          },
+          "status_vs_measured_residual": 4096,
+          "tracked_status": {
+            "VmRSS": 295837696,
+            "RssAnon": 126959616,
+            "RssFile": 115814400,
+            "RssShmem": 53063680,
+            "VmSwap": 0
+          },
+          "other_status": {
+            "VmRSS": 214568960,
+            "RssAnon": 63746048,
+            "RssFile": 150257664,
+            "RssShmem": 565248,
+            "VmSwap": 0
+          },
+          "tracked_smaps": {
+            "Rss": 295845888,
+            "Pss": 200880128,
+            "Private_Dirty": 143192064,
+            "Private_Clean": 6901760,
+            "Shared_Dirty": 36835328,
+            "Shared_Clean": 108916736,
+            "Anonymous": 126967808
+          },
+          "total_smaps": {
+            "Rss": 510414848,
+            "Pss": 286844928,
+            "Private_Dirty": 177217536,
+            "Private_Clean": 10166272,
+            "Shared_Dirty": 67112960,
+            "Shared_Clean": 255918080,
+            "Anonymous": 190713856
+          },
+          "js_heap_bytes": 14878060,
+          "dom_counters": {
+            "documents": 23,
+            "nodes": 36496,
+            "jsEventListeners": 1204
+          },
+          "lcp_ms": 152,
+          "long_task_ms": 0,
+          "long_task_count": 0
+        },
+        {
+          "mount": 10,
+          "renderer_pids": [
+            14158,
+            14108,
+            14096
+          ],
+          "measured_rss": 538984448,
+          "status_totals": {
+            "VmRSS": 538984448,
+            "RssAnon": 219676672,
+            "RssFile": 266072064,
+            "RssShmem": 53235712,
+            "VmSwap": 0
+          },
+          "status_vs_measured_residual": 0,
+          "tracked_status": {
+            "VmRSS": 323993600,
+            "RssAnon": 155508736,
+            "RssFile": 115814400,
+            "RssShmem": 52670464,
+            "VmSwap": 0
+          },
+          "other_status": {
+            "VmRSS": 214990848,
+            "RssAnon": 64167936,
+            "RssFile": 150257664,
+            "RssShmem": 565248,
+            "VmSwap": 0
+          },
+          "tracked_smaps": {
+            "Rss": 323993600,
+            "Pss": 229058560,
+            "Private_Dirty": 171401216,
+            "Private_Clean": 6901760,
+            "Shared_Dirty": 36773888,
+            "Shared_Clean": 108916736,
+            "Anonymous": 155508736
+          },
+          "total_smaps": {
+            "Rss": 538984448,
+            "Pss": 315445248,
+            "Private_Dirty": 205848576,
+            "Private_Clean": 10166272,
+            "Shared_Dirty": 67051520,
+            "Shared_Clean": 255918080,
+            "Anonymous": 219676672
+          },
+          "js_heap_bytes": 18193640,
+          "dom_counters": {
+            "documents": 33,
+            "nodes": 49466,
+            "jsEventListeners": 1709
+          },
+          "lcp_ms": 144,
+          "long_task_ms": 0,
+          "long_task_count": 0
+        },
+        {
+          "mount": 15,
+          "renderer_pids": [
+            14158,
+            14108,
+            14096
+          ],
+          "measured_rss": 529031168,
+          "status_totals": {
+            "VmRSS": 529031168,
+            "RssAnon": 208936960,
+            "RssFile": 266072064,
+            "RssShmem": 54022144,
+            "VmSwap": 0
+          },
+          "status_vs_measured_residual": 0,
+          "tracked_status": {
+            "VmRSS": 313634816,
+            "RssAnon": 144363520,
+            "RssFile": 115814400,
+            "RssShmem": 53456896,
+            "VmSwap": 0
+          },
+          "other_status": {
+            "VmRSS": 215396352,
+            "RssAnon": 64573440,
+            "RssFile": 150257664,
+            "RssShmem": 565248,
+            "VmSwap": 0
+          },
+          "tracked_smaps": {
+            "Rss": 313634816,
+            "Pss": 218699776,
+            "Private_Dirty": 161042432,
+            "Private_Clean": 6901760,
+            "Shared_Dirty": 36773888,
+            "Shared_Clean": 108916736,
+            "Anonymous": 144363520
+          },
+          "total_smaps": {
+            "Rss": 529031168,
+            "Pss": 305491968,
+            "Private_Dirty": 195895296,
+            "Private_Clean": 10166272,
+            "Shared_Dirty": 67051520,
+            "Shared_Clean": 255918080,
+            "Anonymous": 208936960
+          },
+          "js_heap_bytes": 8234476,
+          "dom_counters": {
+            "documents": 10,
+            "nodes": 12969,
+            "jsEventListeners": 505
+          },
+          "lcp_ms": 144,
+          "long_task_ms": 0,
+          "long_task_count": 0
+        },
+        {
+          "mount": 20,
+          "renderer_pids": [
+            14158,
+            14108,
+            14096
+          ],
+          "measured_rss": 525201408,
+          "status_totals": {
+            "VmRSS": 525201408,
+            "RssAnon": 205828096,
+            "RssFile": 266137600,
+            "RssShmem": 53235712,
+            "VmSwap": 0
+          },
+          "status_vs_measured_residual": 0,
+          "tracked_status": {
+            "VmRSS": 309399552,
+            "RssAnon": 140914688,
+            "RssFile": 115814400,
+            "RssShmem": 52670464,
+            "VmSwap": 0
+          },
+          "other_status": {
+            "VmRSS": 215801856,
+            "RssAnon": 64913408,
+            "RssFile": 150323200,
+            "RssShmem": 565248,
+            "VmSwap": 0
+          },
+          "tracked_smaps": {
+            "Rss": 309399552,
+            "Pss": 214437888,
+            "Private_Dirty": 156782592,
+            "Private_Clean": 6901760,
+            "Shared_Dirty": 36798464,
+            "Shared_Clean": 108916736,
+            "Anonymous": 140914688
+          },
+          "total_smaps": {
+            "Rss": 525201408,
+            "Pss": 301576192,
+            "Private_Dirty": 191975424,
+            "Private_Clean": 10166272,
+            "Shared_Dirty": 67076096,
+            "Shared_Clean": 255983616,
+            "Anonymous": 205828096
+          },
+          "js_heap_bytes": 6854356,
+          "dom_counters": {
+            "documents": 6,
+            "nodes": 7780,
+            "jsEventListeners": 279
+          },
+          "lcp_ms": 156,
+          "long_task_ms": 0,
+          "long_task_count": 0
+        }
+      ]
+    }
+  ],
+  "comparisons": [
+    {
+      "name": "forward",
+      "mount": 1,
+      "measured_rss_delta": -919552.0,
+      "js_heap_delta": -1219870.0,
+      "category_deltas": {
+        "status_totals": {
+          "VmRSS": -929792.0,
+          "RssAnon": -6305792.0,
+          "RssFile": 3651584.0,
+          "RssShmem": 1724416.0,
+          "VmSwap": 0.0
+        },
+        "tracked_status": {
+          "VmRSS": -3319808.0,
+          "RssAnon": -6330368.0,
+          "RssFile": 1187840.0,
+          "RssShmem": 1822720.0,
+          "VmSwap": 0.0
+        },
+        "other_status": {
+          "VmRSS": 2390016.0,
+          "RssAnon": 24576.0,
+          "RssFile": 2463744.0,
+          "RssShmem": -98304.0,
+          "VmSwap": 0.0
+        },
+        "tracked_smaps": {
+          "Rss": -3313664.0,
+          "Pss": -4835840.0,
+          "Private_Dirty": -5810176.0,
+          "Private_Clean": 196608.0,
+          "Shared_Dirty": 1308672.0,
+          "Shared_Clean": 991232.0,
+          "Anonymous": -6324224.0
+        },
+        "total_smaps": {
+          "Rss": -923648.0,
+          "Pss": -4707328.0,
+          "Private_Dirty": -5871616.0,
+          "Private_Clean": -335872.0,
+          "Shared_Dirty": 1296384.0,
+          "Shared_Clean": 3987456.0,
+          "Anonymous": -6299648.0
+        }
+      }
+    },
+    {
+      "name": "forward",
+      "mount": 5,
+      "measured_rss_delta": -3194880.0,
+      "js_heap_delta": -1524882.0,
+      "category_deltas": {
+        "status_totals": {
+          "VmRSS": -3194880.0,
+          "RssAnon": -7260160.0,
+          "RssFile": 3651584.0,
+          "RssShmem": 413696.0,
+          "VmSwap": 0.0
+        },
+        "tracked_status": {
+          "VmRSS": -5548032.0,
+          "RssAnon": -7247872.0,
+          "RssFile": 1187840.0,
+          "RssShmem": 512000.0,
+          "VmSwap": 0.0
+        },
+        "other_status": {
+          "VmRSS": 2353152.0,
+          "RssAnon": -12288.0,
+          "RssFile": 2463744.0,
+          "RssShmem": -98304.0,
+          "VmSwap": 0.0
+        },
+        "tracked_smaps": {
+          "Rss": -5548032.0,
+          "Pss": -6304768.0,
+          "Private_Dirty": -6512640.0,
+          "Private_Clean": 196608.0,
+          "Shared_Dirty": -223232.0,
+          "Shared_Clean": 991232.0,
+          "Anonymous": -7247872.0
+        },
+        "total_smaps": {
+          "Rss": -3194880.0,
+          "Pss": -6213120.0,
+          "Private_Dirty": -6610944.0,
+          "Private_Clean": -335872.0,
+          "Shared_Dirty": -235520.0,
+          "Shared_Clean": 3987456.0,
+          "Anonymous": -7260160.0
+        }
+      }
+    },
+    {
+      "name": "forward",
+      "mount": 10,
+      "measured_rss_delta": -21276672.0,
+      "js_heap_delta": -4979086.0,
+      "category_deltas": {
+        "status_totals": {
+          "VmRSS": -21276672.0,
+          "RssAnon": -28839936.0,
+          "RssFile": 3651584.0,
+          "RssShmem": 3911680.0,
+          "VmSwap": 0.0
+        },
+        "tracked_status": {
+          "VmRSS": -23672832.0,
+          "RssAnon": -28870656.0,
+          "RssFile": 1187840.0,
+          "RssShmem": 4009984.0,
+          "VmSwap": 0.0
+        },
+        "other_status": {
+          "VmRSS": 2396160.0,
+          "RssAnon": 30720.0,
+          "RssFile": 2463744.0,
+          "RssShmem": -98304.0,
+          "VmSwap": 0.0
+        },
+        "tracked_smaps": {
+          "Rss": -23672832.0,
+          "Pss": -26521600.0,
+          "Private_Dirty": -28821504.0,
+          "Private_Clean": 196608.0,
+          "Shared_Dirty": 3960832.0,
+          "Shared_Clean": 991232.0,
+          "Anonymous": -28870656.0
+        },
+        "total_smaps": {
+          "Rss": -21276672.0,
+          "Pss": -26386944.0,
+          "Private_Dirty": -28876800.0,
+          "Private_Clean": -335872.0,
+          "Shared_Dirty": 3948544.0,
+          "Shared_Clean": 3987456.0,
+          "Anonymous": -28839936.0
+        }
+      }
+    },
+    {
+      "name": "forward",
+      "mount": 15,
+      "measured_rss_delta": -43560960.0,
+      "js_heap_delta": -3653058.0,
+      "category_deltas": {
+        "status_totals": {
+          "VmRSS": -43560960.0,
+          "RssAnon": -47560704.0,
+          "RssFile": 3651584.0,
+          "RssShmem": 348160.0,
+          "VmSwap": 0.0
+        },
+        "tracked_status": {
+          "VmRSS": -46006272.0,
+          "RssAnon": -47640576.0,
+          "RssFile": 1187840.0,
+          "RssShmem": 446464.0,
+          "VmSwap": 0.0
+        },
+        "other_status": {
+          "VmRSS": 2445312.0,
+          "RssAnon": 79872.0,
+          "RssFile": 2463744.0,
+          "RssShmem": -98304.0,
+          "VmSwap": 0.0
+        },
+        "tracked_smaps": {
+          "Rss": -46006272.0,
+          "Pss": -47362048.0,
+          "Private_Dirty": -48168960.0,
+          "Private_Clean": 196608.0,
+          "Shared_Dirty": 974848.0,
+          "Shared_Clean": 991232.0,
+          "Anonymous": -47640576.0
+        },
+        "total_smaps": {
+          "Rss": -43560960.0,
+          "Pss": -47178240.0,
+          "Private_Dirty": -48175104.0,
+          "Private_Clean": -335872.0,
+          "Shared_Dirty": 962560.0,
+          "Shared_Clean": 3987456.0,
+          "Anonymous": -47560704.0
+        }
+      }
+    },
+    {
+      "name": "forward",
+      "mount": 20,
+      "measured_rss_delta": -36290560.0,
+      "js_heap_delta": 975050.0,
+      "category_deltas": {
+        "status_totals": {
+          "VmRSS": -36290560.0,
+          "RssAnon": -40570880.0,
+          "RssFile": 3717120.0,
+          "RssShmem": 563200.0,
+          "VmSwap": 0.0
+        },
+        "tracked_status": {
+          "VmRSS": -38623232.0,
+          "RssAnon": -40470528.0,
+          "RssFile": 1187840.0,
+          "RssShmem": 659456.0,
+          "VmSwap": 0.0
+        },
+        "other_status": {
+          "VmRSS": 2332672.0,
+          "RssAnon": -100352.0,
+          "RssFile": 2529280.0,
+          "RssShmem": -96256.0,
+          "VmSwap": 0.0
+        },
+        "tracked_smaps": {
+          "Rss": -38623232.0,
+          "Pss": -40016384.0,
+          "Private_Dirty": -40847360.0,
+          "Private_Clean": 196608.0,
+          "Shared_Dirty": 1036288.0,
+          "Shared_Clean": 991232.0,
+          "Anonymous": -40470528.0
+        },
+        "total_smaps": {
+          "Rss": -36290560.0,
+          "Pss": -40002048.0,
+          "Private_Dirty": -41033728.0,
+          "Private_Clean": -335872.0,
+          "Shared_Dirty": 1026048.0,
+          "Shared_Clean": 4052992.0,
+          "Anonymous": -40570880.0
+        }
+      }
+    },
+    {
+      "name": "reverse",
+      "mount": 1,
+      "measured_rss_delta": 2287616.0,
+      "js_heap_delta": -3314816.0,
+      "category_deltas": {
+        "status_totals": {
+          "VmRSS": 2287616.0,
+          "RssAnon": -5183488.0,
+          "RssFile": 4349952.0,
+          "RssShmem": 3121152.0,
+          "VmSwap": 0.0
+        },
+        "tracked_status": {
+          "VmRSS": 1218560.0,
+          "RssAnon": -5163008.0,
+          "RssFile": 3207168.0,
+          "RssShmem": 3174400.0,
+          "VmSwap": 0.0
+        },
+        "other_status": {
+          "VmRSS": 1069056.0,
+          "RssAnon": -20480.0,
+          "RssFile": 1142784.0,
+          "RssShmem": -53248.0,
+          "VmSwap": 0.0
+        },
+        "tracked_smaps": {
+          "Rss": 1218560.0,
+          "Pss": -41984.0,
+          "Private_Dirty": -2484224.0,
+          "Private_Clean": 1615872.0,
+          "Shared_Dirty": 495616.0,
+          "Shared_Clean": 1591296.0,
+          "Anonymous": -5163008.0
+        },
+        "total_smaps": {
+          "Rss": 2287616.0,
+          "Pss": 179200.0,
+          "Private_Dirty": -2494464.0,
+          "Private_Clean": 1347584.0,
+          "Shared_Dirty": 432128.0,
+          "Shared_Clean": 3002368.0,
+          "Anonymous": -5183488.0
+        }
+      }
+    },
+    {
+      "name": "reverse",
+      "mount": 5,
+      "measured_rss_delta": -7041024.0,
+      "js_heap_delta": -3307756.0,
+      "category_deltas": {
+        "status_totals": {
+          "VmRSS": -8554496.0,
+          "RssAnon": -15607808.0,
+          "RssFile": 4349952.0,
+          "RssShmem": 2703360.0,
+          "VmSwap": 0.0
+        },
+        "tracked_status": {
+          "VmRSS": -9633792.0,
+          "RssAnon": -15597568.0,
+          "RssFile": 3207168.0,
+          "RssShmem": 2756608.0,
+          "VmSwap": 0.0
+        },
+        "other_status": {
+          "VmRSS": 1079296.0,
+          "RssAnon": -10240.0,
+          "RssFile": 1142784.0,
+          "RssShmem": -53248.0,
+          "VmSwap": 0.0
+        },
+        "tracked_smaps": {
+          "Rss": -10809344.0,
+          "Pss": -11719680.0,
+          "Private_Dirty": -13811712.0,
+          "Private_Clean": 1615872.0,
+          "Shared_Dirty": -204800.0,
+          "Shared_Clean": 1591296.0,
+          "Anonymous": -15603712.0
+        },
+        "total_smaps": {
+          "Rss": -9730048.0,
+          "Pss": -11488256.0,
+          "Private_Dirty": -13811712.0,
+          "Private_Clean": 1347584.0,
+          "Shared_Dirty": -268288.0,
+          "Shared_Clean": 3002368.0,
+          "Anonymous": -15613952.0
+        }
+      }
+    },
+    {
+      "name": "reverse",
+      "mount": 10,
+      "measured_rss_delta": -28585984.0,
+      "js_heap_delta": -6036076.0,
+      "category_deltas": {
+        "status_totals": {
+          "VmRSS": -28567552.0,
+          "RssAnon": -38848512.0,
+          "RssFile": 4349952.0,
+          "RssShmem": 5931008.0,
+          "VmSwap": 0.0
+        },
+        "tracked_status": {
+          "VmRSS": -29689856.0,
+          "RssAnon": -38881280.0,
+          "RssFile": 3207168.0,
+          "RssShmem": 5984256.0,
+          "VmSwap": 0.0
+        },
+        "other_status": {
+          "VmRSS": 1122304.0,
+          "RssAnon": 32768.0,
+          "RssFile": 1142784.0,
+          "RssShmem": -53248.0,
+          "VmSwap": 0.0
+        },
+        "tracked_smaps": {
+          "Rss": -29689856.0,
+          "Pss": -32437248.0,
+          "Private_Dirty": -36366336.0,
+          "Private_Clean": 1615872.0,
+          "Shared_Dirty": 3469312.0,
+          "Shared_Clean": 1591296.0,
+          "Anonymous": -38881280.0
+        },
+        "total_smaps": {
+          "Rss": -28567552.0,
+          "Pss": -32162816.0,
+          "Private_Dirty": -36323328.0,
+          "Private_Clean": 1347584.0,
+          "Shared_Dirty": 3405824.0,
+          "Shared_Clean": 3002368.0,
+          "Anonymous": -38848512.0
+        }
+      }
+    },
+    {
+      "name": "reverse",
+      "mount": 15,
+      "measured_rss_delta": -14741504.0,
+      "js_heap_delta": 1273026.0,
+      "category_deltas": {
+        "status_totals": {
+          "VmRSS": -14741504.0,
+          "RssAnon": -23728128.0,
+          "RssFile": 4284416.0,
+          "RssShmem": 4702208.0,
+          "VmSwap": 0.0
+        },
+        "tracked_status": {
+          "VmRSS": -15978496.0,
+          "RssAnon": -23941120.0,
+          "RssFile": 3207168.0,
+          "RssShmem": 4755456.0,
+          "VmSwap": 0.0
+        },
+        "other_status": {
+          "VmRSS": 1236992.0,
+          "RssAnon": 212992.0,
+          "RssFile": 1077248.0,
+          "RssShmem": -53248.0,
+          "VmSwap": 0.0
+        },
+        "tracked_smaps": {
+          "Rss": -15978496.0,
+          "Pss": -18418176.0,
+          "Private_Dirty": -22052864.0,
+          "Private_Clean": 1615872.0,
+          "Shared_Dirty": 2867200.0,
+          "Shared_Clean": 1591296.0,
+          "Anonymous": -23941120.0
+        },
+        "total_smaps": {
+          "Rss": -14741504.0,
+          "Pss": -17973248.0,
+          "Private_Dirty": -21829632.0,
+          "Private_Clean": 1347584.0,
+          "Shared_Dirty": 2803712.0,
+          "Shared_Clean": 2936832.0,
+          "Anonymous": -23728128.0
+        }
+      }
+    },
+    {
+      "name": "reverse",
+      "mount": 20,
+      "measured_rss_delta": 13488128.0,
+      "js_heap_delta": 274076.0,
+      "category_deltas": {
+        "status_totals": {
+          "VmRSS": 13488128.0,
+          "RssAnon": 3911680.0,
+          "RssFile": 4284416.0,
+          "RssShmem": 5292032.0,
+          "VmSwap": 0.0
+        },
+        "tracked_status": {
+          "VmRSS": 11919360.0,
+          "RssAnon": 3334144.0,
+          "RssFile": 3239936.0,
+          "RssShmem": 5345280.0,
+          "VmSwap": 0.0
+        },
+        "other_status": {
+          "VmRSS": 1568768.0,
+          "RssAnon": 577536.0,
+          "RssFile": 1044480.0,
+          "RssShmem": -53248.0,
+          "VmSwap": 0.0
+        },
+        "tracked_smaps": {
+          "Rss": 11919360.0,
+          "Pss": 9457152.0,
+          "Private_Dirty": 5752832.0,
+          "Private_Clean": 1648640.0,
+          "Shared_Dirty": 2926592.0,
+          "Shared_Clean": 1591296.0,
+          "Anonymous": 3334144.0
+        },
+        "total_smaps": {
+          "Rss": 13488128.0,
+          "Pss": 10263552.0,
+          "Private_Dirty": 6340608.0,
+          "Private_Clean": 1380352.0,
+          "Shared_Dirty": 2863104.0,
+          "Shared_Clean": 2904064.0,
+          "Anonymous": 3911680.0
+        }
+      }
+    },
+    {
+      "name": "current-repeat",
+      "mount": 1,
+      "measured_rss_delta": -49152.0,
+      "js_heap_delta": -455162.0,
+      "category_deltas": {
+        "status_totals": {
+          "VmRSS": -59392.0,
+          "RssAnon": -235520.0,
+          "RssFile": 294912.0,
+          "RssShmem": -118784.0,
+          "VmSwap": 0.0
+        },
+        "tracked_status": {
+          "VmRSS": -1802240.0,
+          "RssAnon": -90112.0,
+          "RssFile": -1652736.0,
+          "RssShmem": -59392.0,
+          "VmSwap": 0.0
+        },
+        "other_status": {
+          "VmRSS": 1742848.0,
+          "RssAnon": -145408.0,
+          "RssFile": 1947648.0,
+          "RssShmem": -59392.0,
+          "VmSwap": 0.0
+        },
+        "tracked_smaps": {
+          "Rss": -1802240.0,
+          "Pss": -1995776.0,
+          "Private_Dirty": -358400.0,
+          "Private_Clean": -1441792.0,
+          "Shared_Dirty": 208896.0,
+          "Shared_Clean": -210944.0,
+          "Anonymous": -90112.0
+        },
+        "total_smaps": {
+          "Rss": -59392.0,
+          "Pss": -1780736.0,
+          "Private_Dirty": -540672.0,
+          "Private_Clean": -1480704.0,
+          "Shared_Dirty": 186368.0,
+          "Shared_Clean": 1775616.0,
+          "Anonymous": -235520.0
+        }
+      }
+    },
+    {
+      "name": "current-repeat",
+      "mount": 5,
+      "measured_rss_delta": -3604480.0,
+      "js_heap_delta": -455346.0,
+      "category_deltas": {
+        "status_totals": {
+          "VmRSS": -2091008.0,
+          "RssAnon": -980992.0,
+          "RssFile": 294912.0,
+          "RssShmem": -1404928.0,
+          "VmSwap": 0.0
+        },
+        "tracked_status": {
+          "VmRSS": -3835904.0,
+          "RssAnon": -837632.0,
+          "RssFile": -1652736.0,
+          "RssShmem": -1345536.0,
+          "VmSwap": 0.0
+        },
+        "other_status": {
+          "VmRSS": 1744896.0,
+          "RssAnon": -143360.0,
+          "RssFile": 1947648.0,
+          "RssShmem": -59392.0,
+          "VmSwap": 0.0
+        },
+        "tracked_smaps": {
+          "Rss": -2660352.0,
+          "Pss": -2744320.0,
+          "Private_Dirty": -997376.0,
+          "Private_Clean": -1441792.0,
+          "Shared_Dirty": -10240.0,
+          "Shared_Clean": -210944.0,
+          "Anonymous": -831488.0
+        },
+        "total_smaps": {
+          "Rss": -915456.0,
+          "Pss": -2527232.0,
+          "Private_Dirty": -1177600.0,
+          "Private_Clean": -1480704.0,
+          "Shared_Dirty": -32768.0,
+          "Shared_Clean": 1775616.0,
+          "Anonymous": -974848.0
+        }
+      }
+    },
+    {
+      "name": "current-repeat",
+      "mount": 10,
+      "measured_rss_delta": -3520512.0,
+      "js_heap_delta": -1836086.0,
+      "category_deltas": {
+        "status_totals": {
+          "VmRSS": -3538944.0,
+          "RssAnon": 225280.0,
+          "RssFile": 294912.0,
+          "RssShmem": -4059136.0,
+          "VmSwap": 0.0
+        },
+        "tracked_status": {
+          "VmRSS": -5324800.0,
+          "RssAnon": 327680.0,
+          "RssFile": -1652736.0,
+          "RssShmem": -3999744.0,
+          "VmSwap": 0.0
+        },
+        "other_status": {
+          "VmRSS": 1785856.0,
+          "RssAnon": -102400.0,
+          "RssFile": 1947648.0,
+          "RssShmem": -59392.0,
+          "VmSwap": 0.0
+        },
+        "tracked_smaps": {
+          "Rss": -5324800.0,
+          "Pss": -3979264.0,
+          "Private_Dirty": -802816.0,
+          "Private_Clean": -1441792.0,
+          "Shared_Dirty": -2869248.0,
+          "Shared_Clean": -210944.0,
+          "Anonymous": 327680.0
+        },
+        "total_smaps": {
+          "Rss": -3538944.0,
+          "Pss": -3721216.0,
+          "Private_Dirty": -942080.0,
+          "Private_Clean": -1480704.0,
+          "Shared_Dirty": -2891776.0,
+          "Shared_Clean": 1775616.0,
+          "Anonymous": 225280.0
+        }
+      }
+    },
+    {
+      "name": "current-repeat",
+      "mount": 15,
+      "measured_rss_delta": -36376576.0,
+      "js_heap_delta": -4220272.0,
+      "category_deltas": {
+        "status_totals": {
+          "VmRSS": -36376576.0,
+          "RssAnon": -33415168.0,
+          "RssFile": 360448.0,
+          "RssShmem": -3321856.0,
+          "VmSwap": 0.0
+        },
+        "tracked_status": {
+          "VmRSS": -38047744.0,
+          "RssAnon": -33132544.0,
+          "RssFile": -1652736.0,
+          "RssShmem": -3262464.0,
+          "VmSwap": 0.0
+        },
+        "other_status": {
+          "VmRSS": 1671168.0,
+          "RssAnon": -282624.0,
+          "RssFile": 2013184.0,
+          "RssShmem": -59392.0,
+          "VmSwap": 0.0
+        },
+        "tracked_smaps": {
+          "Rss": -38047744.0,
+          "Pss": -36666880.0,
+          "Private_Dirty": -33441792.0,
+          "Private_Clean": -1441792.0,
+          "Shared_Dirty": -2953216.0,
+          "Shared_Clean": -210944.0,
+          "Anonymous": -33132544.0
+        },
+        "total_smaps": {
+          "Rss": -36376576.0,
+          "Pss": -36579328.0,
+          "Private_Dirty": -33761280.0,
+          "Private_Clean": -1480704.0,
+          "Shared_Dirty": -2975744.0,
+          "Shared_Clean": 1841152.0,
+          "Anonymous": -33415168.0
+        }
+      }
+    },
+    {
+      "name": "current-repeat",
+      "mount": 20,
+      "measured_rss_delta": -59807744.0,
+      "js_heap_delta": -447064.0,
+      "category_deltas": {
+        "status_totals": {
+          "VmRSS": -59807744.0,
+          "RssAnon": -56158208.0,
+          "RssFile": 393216.0,
+          "RssShmem": -4042752.0,
+          "VmSwap": 0.0
+        },
+        "tracked_status": {
+          "VmRSS": -61120512.0,
+          "RssAnon": -55484416.0,
+          "RssFile": -1652736.0,
+          "RssShmem": -3983360.0,
+          "VmSwap": 0.0
+        },
+        "other_status": {
+          "VmRSS": 1312768.0,
+          "RssAnon": -673792.0,
+          "RssFile": 2045952.0,
+          "RssShmem": -59392.0,
+          "VmSwap": 0.0
+        },
+        "tracked_smaps": {
+          "Rss": -61120512.0,
+          "Pss": -59709952.0,
+          "Private_Dirty": -56440832.0,
+          "Private_Clean": -1441792.0,
+          "Shared_Dirty": -3026944.0,
+          "Shared_Clean": -210944.0,
+          "Anonymous": -55484416.0
+        },
+        "total_smaps": {
+          "Rss": -59807744.0,
+          "Pss": -60010496.0,
+          "Private_Dirty": -57151488.0,
+          "Private_Clean": -1480704.0,
+          "Shared_Dirty": -3049472.0,
+          "Shared_Clean": 1873920.0,
+          "Anonymous": -56158208.0
+        }
+      }
+    },
+    {
+      "name": "candidate-repeat",
+      "mount": 1,
+      "measured_rss_delta": 3158016.0,
+      "js_heap_delta": -2550108.0,
+      "category_deltas": {
+        "status_totals": {
+          "VmRSS": 3158016.0,
+          "RssAnon": 886784.0,
+          "RssFile": 993280.0,
+          "RssShmem": 1277952.0,
+          "VmSwap": 0.0
+        },
+        "tracked_status": {
+          "VmRSS": 2736128.0,
+          "RssAnon": 1077248.0,
+          "RssFile": 366592.0,
+          "RssShmem": 1292288.0,
+          "VmSwap": 0.0
+        },
+        "other_status": {
+          "VmRSS": 421888.0,
+          "RssAnon": -190464.0,
+          "RssFile": 626688.0,
+          "RssShmem": -14336.0,
+          "VmSwap": 0.0
+        },
+        "tracked_smaps": {
+          "Rss": 2729984.0,
+          "Pss": 2798080.0,
+          "Private_Dirty": 2967552.0,
+          "Private_Clean": -22528.0,
+          "Shared_Dirty": -604160.0,
+          "Shared_Clean": 389120.0,
+          "Anonymous": 1071104.0
+        },
+        "total_smaps": {
+          "Rss": 3151872.0,
+          "Pss": 3105792.0,
+          "Private_Dirty": 2836480.0,
+          "Private_Clean": 202752.0,
+          "Shared_Dirty": -677888.0,
+          "Shared_Clean": 790528.0,
+          "Anonymous": 880640.0
+        }
+      }
+    },
+    {
+      "name": "candidate-repeat",
+      "mount": 5,
+      "measured_rss_delta": -7450624.0,
+      "js_heap_delta": -2238220.0,
+      "category_deltas": {
+        "status_totals": {
+          "VmRSS": -7450624.0,
+          "RssAnon": -9328640.0,
+          "RssFile": 993280.0,
+          "RssShmem": 884736.0,
+          "VmSwap": 0.0
+        },
+        "tracked_status": {
+          "VmRSS": -7921664.0,
+          "RssAnon": -9187328.0,
+          "RssFile": 366592.0,
+          "RssShmem": 899072.0,
+          "VmSwap": 0.0
+        },
+        "other_status": {
+          "VmRSS": 471040.0,
+          "RssAnon": -141312.0,
+          "RssFile": 626688.0,
+          "RssShmem": -14336.0,
+          "VmSwap": 0.0
+        },
+        "tracked_smaps": {
+          "Rss": -7921664.0,
+          "Pss": -8159232.0,
+          "Private_Dirty": -8296448.0,
+          "Private_Clean": -22528.0,
+          "Shared_Dirty": 8192.0,
+          "Shared_Clean": 389120.0,
+          "Anonymous": -9187328.0
+        },
+        "total_smaps": {
+          "Rss": -7450624.0,
+          "Pss": -7802368.0,
+          "Private_Dirty": -8378368.0,
+          "Private_Clean": 202752.0,
+          "Shared_Dirty": -65536.0,
+          "Shared_Clean": 790528.0,
+          "Anonymous": -9328640.0
+        }
+      }
+    },
+    {
+      "name": "candidate-repeat",
+      "mount": 10,
+      "measured_rss_delta": -10829824.0,
+      "js_heap_delta": -2893076.0,
+      "category_deltas": {
+        "status_totals": {
+          "VmRSS": -10829824.0,
+          "RssAnon": -9783296.0,
+          "RssFile": 993280.0,
+          "RssShmem": -2039808.0,
+          "VmSwap": 0.0
+        },
+        "tracked_status": {
+          "VmRSS": -11341824.0,
+          "RssAnon": -9682944.0,
+          "RssFile": 366592.0,
+          "RssShmem": -2025472.0,
+          "VmSwap": 0.0
+        },
+        "other_status": {
+          "VmRSS": 512000.0,
+          "RssAnon": -100352.0,
+          "RssFile": 626688.0,
+          "RssShmem": -14336.0,
+          "VmSwap": 0.0
+        },
+        "tracked_smaps": {
+          "Rss": -11341824.0,
+          "Pss": -9894912.0,
+          "Private_Dirty": -8347648.0,
+          "Private_Clean": -22528.0,
+          "Shared_Dirty": -3360768.0,
+          "Shared_Clean": 389120.0,
+          "Anonymous": -9682944.0
+        },
+        "total_smaps": {
+          "Rss": -10829824.0,
+          "Pss": -9497088.0,
+          "Private_Dirty": -8388608.0,
+          "Private_Clean": 202752.0,
+          "Shared_Dirty": -3434496.0,
+          "Shared_Clean": 790528.0,
+          "Anonymous": -9783296.0
+        }
+      }
+    },
+    {
+      "name": "candidate-repeat",
+      "mount": 15,
+      "measured_rss_delta": -7557120.0,
+      "js_heap_delta": 705812.0,
+      "category_deltas": {
+        "status_totals": {
+          "VmRSS": -7557120.0,
+          "RssAnon": -9582592.0,
+          "RssFile": 993280.0,
+          "RssShmem": 1032192.0,
+          "VmSwap": 0.0
+        },
+        "tracked_status": {
+          "VmRSS": -8019968.0,
+          "RssAnon": -9433088.0,
+          "RssFile": 366592.0,
+          "RssShmem": 1046528.0,
+          "VmSwap": 0.0
+        },
+        "other_status": {
+          "VmRSS": 462848.0,
+          "RssAnon": -149504.0,
+          "RssFile": 626688.0,
+          "RssShmem": -14336.0,
+          "VmSwap": 0.0
+        },
+        "tracked_smaps": {
+          "Rss": -8019968.0,
+          "Pss": -7723008.0,
+          "Private_Dirty": -7325696.0,
+          "Private_Clean": -22528.0,
+          "Shared_Dirty": -1060864.0,
+          "Shared_Clean": 389120.0,
+          "Anonymous": -9433088.0
+        },
+        "total_smaps": {
+          "Rss": -7557120.0,
+          "Pss": -7374336.0,
+          "Private_Dirty": -7415808.0,
+          "Private_Clean": 202752.0,
+          "Shared_Dirty": -1134592.0,
+          "Shared_Clean": 790528.0,
+          "Anonymous": -9582592.0
+        }
+      }
+    },
+    {
+      "name": "candidate-repeat",
+      "mount": 20,
+      "measured_rss_delta": -10029056.0,
+      "js_heap_delta": -1148038.0,
+      "category_deltas": {
+        "status_totals": {
+          "VmRSS": -10029056.0,
+          "RssAnon": -11675648.0,
+          "RssFile": 960512.0,
+          "RssShmem": 686080.0,
+          "VmSwap": 0.0
+        },
+        "tracked_status": {
+          "VmRSS": -10577920.0,
+          "RssAnon": -11679744.0,
+          "RssFile": 399360.0,
+          "RssShmem": 702464.0,
+          "VmSwap": 0.0
+        },
+        "other_status": {
+          "VmRSS": 548864.0,
+          "RssAnon": 4096.0,
+          "RssFile": 561152.0,
+          "RssShmem": -16384.0,
+          "VmSwap": 0.0
+        },
+        "tracked_smaps": {
+          "Rss": -10577920.0,
+          "Pss": -10236416.0,
+          "Private_Dirty": -9840640.0,
+          "Private_Clean": 10240.0,
+          "Shared_Dirty": -1136640.0,
+          "Shared_Clean": 389120.0,
+          "Anonymous": -11679744.0
+        },
+        "total_smaps": {
+          "Rss": -10029056.0,
+          "Pss": -9744896.0,
+          "Private_Dirty": -9777152.0,
+          "Private_Clean": 235520.0,
+          "Shared_Dirty": -1212416.0,
+          "Shared_Clean": 724992.0,
+          "Anonymous": -11675648.0
+        }
+      }
+    }
+  ],
+  "limits": "RSS/status/smaps/JS observations are sequential, not atomic. Smaps and JS heap overlap status categories and must not be summed or subtracted to revise acceptance. Two-sample medians are descriptive; no exclusion or causal attribution to GC, a specific allocator, asset, or app component.",
+  "provenance": {
+    "archive_sha256": "1a38bf86f18b320c5fc9cca350264a6c9e5ecca7189c0fbb316ae79b4ca35204",
+    "members_verified": 25,
+    "harness_commit": "b5217601da9d5c70c1d046f20e43b068a37c9a8a",
+    "refs": {
+      "current": "f700187553bd555dd3a9b638d5aa8e5fb59f3142",
+      "candidate": "69605628393d044f9a0426ea0be3abdf99527bc3"
+    }
+  }
+}

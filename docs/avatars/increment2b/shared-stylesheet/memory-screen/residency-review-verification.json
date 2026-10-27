@@ -1,0 +1,16 @@
+{
+  "all_original_navigation_comparisons_match": true,
+  "records_checked": 40,
+  "all_renderer_sets_stable": true,
+  "no_swap_in_recorded_status": true,
+  "largest_absolute_status_vs_gate_rss_residual_bytes": 3022848,
+  "low_current_sample_navigation_15_to_20": {
+    "tracked_pid": 14033,
+    "rss_delta_mib": -51.60546875,
+    "anonymous_delta_mib": -51.73046875,
+    "private_dirty_delta_mib": -52.07421875,
+    "heap_delta_mib": -0.5719375610351562,
+    "navigation_20_lcp_ms": 696,
+    "navigation_20_long_task_ms": 555
+  }
+}
