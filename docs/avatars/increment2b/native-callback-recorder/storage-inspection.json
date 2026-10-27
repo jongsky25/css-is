@@ -1,0 +1,53 @@
+{
+  "acceptance": false,
+  "harness_commit": "6e7a8f1c28b3140988f264134eb433b4e784fa19",
+  "agent_sha256": "a5d072547df62c1f025ca855b5dc87d980ae8f80eb11597b0928f9400fbe3c1a",
+  "inspection_sha256": "6f90449190cee14fb9d28b701d89f51c739cb6aaabc4a2600389fd7101ea6875",
+  "messages": [
+    {
+      "type": "send",
+      "payload": {
+        "ready": false,
+        "selftest_ready": true,
+        "pid": 18071,
+        "module": "/workspace/scratch/avatar-runtime/root/usr/lib/chromium/chromium",
+        "recorder_backend": "cmodule-buffer-v1"
+      }
+    }
+  ],
+  "identity": {
+    "enabled": false,
+    "frida_version": "17.5.1",
+    "helper_sha256": "9c756640879be8676f1623a7d66e53dbe9fcfeec6d2f00a16d74b4d5e39ae5f6",
+    "hook_sha256": "8f2b788a339a8baec5ca0fc6bfd3d4bd1e5c8e507c4dc4e73f655777ca20bc9a",
+    "build_id": "1c5dca8527a61d07372e489142bee26af1bcaf71",
+    "pid": 18071,
+    "identity_markers": [
+      {
+        "args": {
+          "data": {
+            "frame": "7AF7C9E77227F29723D67E325FA32107",
+            "message": "native-page-identity",
+            "name": "native-page-identity",
+            "sampleTraceId": 4819930868258075
+          }
+        },
+        "cat": "devtools.timeline",
+        "name": "TimeStamp",
+        "ph": "I",
+        "pid": 18071,
+        "s": "t",
+        "tid": 18071,
+        "ts": 11493751445,
+        "tts": 55879
+      }
+    ],
+    "setup_begin_ns": 11493701455451,
+    "setup_end_ns": 11493830224703,
+    "agent_messages": []
+  },
+  "storage": {
+    "record_size": 72,
+    "record_storage": null
+  }
+}

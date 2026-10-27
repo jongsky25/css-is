@@ -30,6 +30,8 @@ def validate(p):
         if (history.get('recorder_backend')!='cmodule-buffer-v1' or history.get('clock_domain')!='CLOCK_MONOTONIC'
             or history.get('abi')!='linux-x64-gum-invocation-v1' or history.get('toolchain')!='internal'
             or not q['begin_ns']<=history['snapshot_end_ns']<=q['end_ns']
+            or 'w' not in history['storage']['first_protection'] or 'w' not in history['storage']['last_protection']
+            or history['storage']['state_bytes']>history['storage']['allocated_bytes']
             or history['record_size']!=72 or history['record_capacity']!=50000 or history['record_limit']!=expected_limit
             or history['pending_at_snapshot']!=0 or history['dropped']!=expected_dropped or len(history['events'])!=expected_count):
             raise ValueError('Native buffer/overflow proof failed')

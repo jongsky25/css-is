@@ -23,13 +23,18 @@ typedef struct {
   guint32 kind, phase_id, phase_type, document, group, absent;
 } Record;
 typedef struct { Record record; guint32 enabled; } Invocation;
-static Record records[MAX_RECORDS], snapshot_records[MAX_RECORDS];
-/* System GLib GMutex is zero-initialized and pointer-aligned; storage is 16 bytes. */
-static unsigned long mutex_storage[2];
-static guint32 count, dropped, inflight, limit=MAX_RECORDS;
-static guint32 phase_id, phase_type, document, phase_group=NIL_GROUP, cursor;
-static guint32 snapshot_count, snapshot_dropped, snapshot_pending, snapshot_limit;
-static guint64 snapshot_end;
+typedef struct {
+  Record records[MAX_RECORDS], snapshot_records[MAX_RECORDS];
+  unsigned long mutex_storage[2];
+  guint32 count, dropped, inflight, limit;
+  guint32 phase_id, phase_type, document, phase_group, cursor;
+  guint32 snapshot_count, snapshot_dropped, snapshot_pending, snapshot_limit;
+  guint64 snapshot_end;
+} RecorderState;
+/* CModule static data is not mutable recorder storage. Supply an owned RW block. */
+extern RecorderState recorder_state;
+guint32 state_size(void) { return sizeof(RecorderState); }
+void initialize(void) { recorder_state.limit=MAX_RECORDS; recorder_state.phase_group=NIL_GROUP; }
 static guint64 now_ns(void) {
   Stamp stamp;
   if (recorder_clock(1, &stamp) != 0) return 0;
@@ -38,10 +43,10 @@ static guint64 now_ns(void) {
 guint64 get_clock(void) { return now_ns(); }
 guint32 record_size(void) { return sizeof(Record); }
 void set_phase(guint32 id, guint32 type, guint32 doc, guint32 group) {
-  recorder_lock(mutex_storage);
-  phase_id=id; phase_type=type; document=doc; phase_group=group;
-  if (type==1 || type==3) cursor=0;
-  recorder_unlock(mutex_storage);
+  recorder_lock(recorder_state.mutex_storage);
+  recorder_state.phase_id=id; recorder_state.phase_type=type; recorder_state.document=doc; recorder_state.phase_group=group;
+  if (type==1 || type==3) recorder_state.cursor=0;
+  recorder_unlock(recorder_state.mutex_storage);
 }
 static void begin_record(Invocation *inv, guint32 kind, guint64 backend, guint64 address) {
   inv->enabled=0;
@@ -49,14 +54,14 @@ static void begin_record(Invocation *inv, guint32 kind, guint64 backend, guint64
   e->begin_ns=now_ns();
   e->backend=backend; e->address=address; e->thread=(guint64) recorder_tid();
   e->kind=kind; e->end_ns=0; e->absent=2;
-  recorder_lock(mutex_storage);
-  if (kind==3 && phase_type!=1 && phase_type!=2 && phase_type!=3) {
-    recorder_unlock(mutex_storage); return;
+  recorder_lock(recorder_state.mutex_storage);
+  if (kind==3 && recorder_state.phase_type!=1 && recorder_state.phase_type!=2 && recorder_state.phase_type!=3) {
+    recorder_unlock(recorder_state.mutex_storage); return;
   }
-  e->phase_id=phase_id; e->phase_type=phase_type; e->document=document; e->group=phase_group;
-  if (kind==3 && (phase_type==1 || phase_type==3)) e->group=(cursor++)/32;
-  inflight++; inv->enabled=1;
-  recorder_unlock(mutex_storage);
+  e->phase_id=recorder_state.phase_id; e->phase_type=recorder_state.phase_type; e->document=recorder_state.document; e->group=recorder_state.phase_group;
+  if (kind==3 && (recorder_state.phase_type==1 || recorder_state.phase_type==3)) e->group=(recorder_state.cursor++)/32;
+  recorder_state.inflight++; inv->enabled=1;
+  recorder_unlock(recorder_state.mutex_storage);
   e->ready_ns=now_ns();
 }
 static void end_record(Invocation *inv, guint64 value) {
@@ -65,10 +70,10 @@ static void end_record(Invocation *inv, guint64 value) {
   e->end_ns=now_ns();
   if (e->kind==1) e->address=value; /* Copy integer return VALUE, never a recycled wrapper. */
   if (e->kind==3) e->absent=(value==0);
-  recorder_lock(mutex_storage);
-  if (count<limit) { records[count]=*e; count++; } else dropped++;
-  inflight--;
-  recorder_unlock(mutex_storage);
+  recorder_lock(recorder_state.mutex_storage);
+  if (recorder_state.count<recorder_state.limit) { recorder_state.records[recorder_state.count]=*e; recorder_state.count++; } else recorder_state.dropped++;
+  recorder_state.inflight--;
+  recorder_unlock(recorder_state.mutex_storage);
 }
 void on_enter(GumInvocationContext *ic) {
   guint32 kind=(guint32)(guintptr) gum_invocation_context_get_listener_function_data(ic);
@@ -84,18 +89,18 @@ void on_leave(GumInvocationContext *ic) {
   end_record(inv,(guint64)(guintptr) gum_invocation_context_get_return_value(ic));
 }
 guint32 snapshot(void) {
-  recorder_lock(mutex_storage);
-  snapshot_count=count; snapshot_dropped=dropped; snapshot_pending=inflight; snapshot_limit=limit;
-  snapshot_end=now_ns();
-  for (guint32 i=0;i<count;i++) snapshot_records[i]=records[i];
-  recorder_unlock(mutex_storage);
-  return snapshot_count;
+  recorder_lock(recorder_state.mutex_storage);
+  recorder_state.snapshot_count=recorder_state.count; recorder_state.snapshot_dropped=recorder_state.dropped; recorder_state.snapshot_pending=recorder_state.inflight; recorder_state.snapshot_limit=recorder_state.limit;
+  recorder_state.snapshot_end=now_ns();
+  for (guint32 i=0;i<recorder_state.count;i++) recorder_state.snapshot_records[i]=recorder_state.records[i];
+  recorder_unlock(recorder_state.mutex_storage);
+  return recorder_state.snapshot_count;
 }
-void *snapshot_buffer(void) { return snapshot_records; }
-guint32 get_dropped(void) { return snapshot_dropped; }
-guint32 get_pending(void) { return snapshot_pending; }
-guint32 get_limit(void) { return snapshot_limit; }
-guint64 get_snapshot_end(void) { return snapshot_end; }
+void *snapshot_buffer(void) { return recorder_state.snapshot_records; }
+guint32 get_dropped(void) { return recorder_state.snapshot_dropped; }
+guint32 get_pending(void) { return recorder_state.snapshot_pending; }
+guint32 get_limit(void) { return recorder_state.snapshot_limit; }
+guint64 get_snapshot_end(void) { return recorder_state.snapshot_end; }
 typedef struct { guint32 worker, iterations; } Task;
 static void *test_worker(void *data) {
   Task *task=data;
@@ -112,10 +117,10 @@ static void *test_worker(void *data) {
 }
 int run_test(guint32 workers, guint32 iterations, guint32 test_limit) {
   if (workers!=4 || iterations==0 || iterations>10000 || test_limit==0 || test_limit>MAX_RECORDS) return -1;
-  recorder_lock(mutex_storage);
-  if (inflight) { recorder_unlock(mutex_storage); return -2; }
-  count=0; dropped=0; limit=test_limit;
-  recorder_unlock(mutex_storage);
+  recorder_lock(recorder_state.mutex_storage);
+  if (recorder_state.inflight) { recorder_unlock(recorder_state.mutex_storage); return -2; }
+  recorder_state.count=0; recorder_state.dropped=0; recorder_state.limit=test_limit;
+  recorder_unlock(recorder_state.mutex_storage);
   Task tasks[4]; void *threads[4];
   for (guint32 i=0;i<workers;i++) {
     tasks[i].worker=i+1; tasks[i].iterations=iterations;
@@ -131,7 +136,14 @@ const externalNames = {
   memcpy:'memcpy',memset:'memset'};
 const symbols = {};
 for (const [key,name] of Object.entries(externalNames)) symbols[key]=Module.getGlobalExportByName(name);
+const stateMemorySize=72*50000*2+256;
+const stateMemory=Memory.alloc(stateMemorySize);
+stateMemory.add(72*50000*2).writeByteArray(new Uint8Array(256));
+symbols.recorder_state=stateMemory;
 const module = new CModule(source,symbols,{toolchain:'internal'});
+const stateSize=new NativeFunction(module.state_size,'uint',[])();
+if (stateSize>stateMemorySize) throw new Error('Unexpected native state ABI');
+new NativeFunction(module.initialize,'void',[])();
 const snapshot = new NativeFunction(module.snapshot,'uint',[]);
 const buffer = new NativeFunction(module.snapshot_buffer,'pointer',[]);
 const size = new NativeFunction(module.record_size,'uint',[]);
@@ -167,6 +179,9 @@ function result() {
     recorder_backend:'cmodule-buffer-v1',record_size:72,record_capacity:50000,record_limit:limit(),
     snapshot_end_ns:safe(snapshotEnd()),pending_at_snapshot:pending(),dropped:dropped(),events:all,
     abi:'linux-x64-gum-invocation-v1',clock_domain:'CLOCK_MONOTONIC',toolchain:'internal',
+    storage:{allocated_bytes:stateMemorySize,state_bytes:stateSize,
+      first_protection:Process.findRangeByAddress(stateMemory).protection,
+      last_protection:Process.findRangeByAddress(stateMemory.add(stateSize-1)).protection},
     mutex_module:Process.findModuleByAddress(symbols.recorder_lock).path};
 }
 if (!selfTestOnly) {

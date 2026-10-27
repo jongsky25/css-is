@@ -1,0 +1,6 @@
+{
+  "status": "selftest_failed",
+  "acceptance": false,
+  "harness_commit": "6e7a8f1c28b3140988f264134eb433b4e784fa19",
+  "error": "ValueError(\"RPCException('access violation accessing 0x7fab586a7818', 'Error', 'Error: access violation accessing 0x7fab586a7818\\\\n    at selftest (/script1.js:196)\\\\n    at call (native)\\\\n    at handleRpcMessage (/frida/runtime/message-dispatcher.js:39)\\\\n    at handleMessage (/frida/runtime/message-dispatcher.js:25)')\")"
+}

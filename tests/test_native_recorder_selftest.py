@@ -17,7 +17,8 @@ def specimen():
         p[label]={'begin_ns':1000,'end_ns':100000,'history':{'record_size':72,'record_capacity':50000,
             'record_limit':limit,'pending_at_snapshot':0,'dropped':dropped,'events':events,
             'snapshot_end_ns':90000,'recorder_backend':'cmodule-buffer-v1','clock_domain':'CLOCK_MONOTONIC',
-            'abi':'linux-x64-gum-invocation-v1','toolchain':'internal'}}
+            'abi':'linux-x64-gum-invocation-v1','toolchain':'internal',
+            'storage':{'state_bytes':7200080,'allocated_bytes':7200256,'first_protection':'rw-','last_protection':'rw-'}}}
     return p
 
 
