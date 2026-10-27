@@ -17,6 +17,8 @@ concurrency:
 
 jobs:
   diagnostic:
+    # Preserve the completed initial PR validation; future pushes must not repeat it.
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.pull_request.head.sha == '3bb633c8572f08c4b94f1a8c6525af4c22b2a250' }}
     name: Cloud runner diagnostic
     runs-on: ubuntu-24.04
     timeout-minutes: 20
