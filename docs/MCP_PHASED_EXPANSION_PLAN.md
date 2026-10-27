@@ -1,6 +1,6 @@
 # Office Connect MCP expansion plan
 
-Status: **Incremental implementation**, updated October 27, 2026. Baseline: the read-only MCP expansion in v8.35 (PR #444). M1 reads and default-off M2.1–M2.7 and M3.1–M3.10 pilots are implemented as recorded below. Existing OAuth grants are not widened. Hosted write acceptance remains separate from implementation.
+Status: **Incremental implementation**, updated October 27, 2026. Baseline: the read-only MCP expansion in v8.35 (PR #444). M1 reads and default-off M2.1–M2.7 and M3.1–M3.11 pilots are implemented as recorded below. Existing OAuth grants are not widened. Hosted write acceptance remains separate from implementation.
 
 ## Goal and boundary
 
@@ -537,3 +537,31 @@ uncertainty. No participant invitation, calendar/room/travel record, speaker
 survey, approval, signature or cancellation is added. See [M3.10 setup and
 acceptance](MCP_ACTIVITY_CREATION_PILOT.md). Hosted acceptance remains pending and
 no flag is enabled. Invitation workflows and M4 decisions remain separate work.
+
+
+M3.10 merged in [PR #507](https://github.com/jongsky25/css-is/pull/507), commit
+`673b93111c5df53d18b0613e90b48e7079f0e527`.
+
+### M3.11 implementation — v8.96
+
+Separate default-off `activities:announcement:publish` prepares a first nonempty
+pinned update through the existing Manage feature for a current/upcoming bureau
+activity with active forms. Exact signed-in review binds the activity, full plain
+text, current registration count and existing/future participant-page visibility.
+The same current creator/admin/team-management authority as ordinary Manage is
+required; read/create/date scopes cannot publish. No registrant email is planned.
+
+The ordinary UI and MCP share a transactional pinned-update save/audit service.
+Confirmed text, permanent original publication identity, domain/integration
+audits and minimal receipt commit together. Same-key recovery preserves later
+ordinary edits/clear; a different key cannot republish an original activity after
+MCP publication, even after clearing/deletion. Exact source/authority/audience
+revision, expiry, CSRF/Origin, races, rollback and original numeric-ID reuse are
+covered. See [M3.11 setup and acceptance](MCP_ACTIVITY_ANNOUNCEMENT_PILOT.md).
+
+This is participant-page publication, not an official invitation memorandum.
+Repository invitation memoranda use the existing document workflow, whose signing
+and official dispatch remain excluded from direct MCP writes. No official
+invitation pipeline is invented by this increment. Hosted acceptance remains
+pending; no flag is enabled. Any later invitation workflow and M4 decision pilot
+remain separate bounded work with their own authority and acceptance evidence.

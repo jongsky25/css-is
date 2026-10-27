@@ -1,0 +1,31 @@
+{% extends "dash_layout.html" %}
+{% block title %}Review pinned-update publication — Office Connect{% endblock %}
+{% block content %}
+<div style="max-width:44rem;margin:auto;overflow-wrap:anywhere">
+{% if result.status == 'completed' %}
+<h1>Pinned update published</h1>
+<p>The first pinned update for activity {{ result.event_id }} was published at {{ result.published_at }}. There were {{ result.registered_count_at_publication }} registrations at publication.</p>
+<p>This is the original publication receipt; later ordinary edits or removal are separate. Recovering this key never restores or republishes text.</p>
+<p><a href="{{ result.web_url }}">Inspect the current update in Manage</a> · <a href="{{ result.participant_url }}">Open the participant activity page</a></p>
+{% else %}
+<h1>Publish this activity's first pinned update?</h1>
+<dl>
+<dt>Activity</dt><dd>{{ result.snapshot.title }} (event {{ result.snapshot.event_id }})</dd>
+<dt>Activity date</dt><dd>{{ result.snapshot.event_date }} · Asia/Manila</dd>
+<dt>Current registrations</dt><dd>{{ result.snapshot.registered_count }}</dd>
+<dt>Exact text to publish</dt><dd style="white-space:pre-wrap">{{ result.snapshot.announcement }}</dd>
+</dl>
+<p><strong>This publishes the text at the top of registered participants' activity pages under the existing consent and access rules.</strong> Existing and future participants can see it. The count above is registrations, not unique people or proof that anyone read it. This is a plain-text pinned update, not an official invitation memorandum.</p>
+<p>This first-publication pilot cannot replace or clear an existing update. It requires a current or upcoming bureau activity with 1–25 survey forms, at least one active. Current management authority, activity metadata, survey state, registration count and original publication identity are checked again at confirmation.</p>
+<p>No registrant email, internal notification, invitation, booking, approval, signature or new activity will be created. To edit/remove the text or separately email registrants, use the ordinary Manage screen and its own review. Normal future activity reminders remain separate.</p>
+<p>This preview expires ten minutes after preparation. Different keys cannot publish this original activity twice through this flow, even after the normal UI clears its text.</p>
+<p><a href="{{ result.web_url }}">Inspect the activity in Manage</a></p>
+<form method="post">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<input type="hidden" name="preview_digest" value="{{ result.preview_digest }}">
+<button type="submit" name="confirm" value="yes">Confirm: publish pinned update</button>
+</form>
+{% endif %}
+<p>No email or invitation was sent by this action. Operation receipt: <code>{{ result.operation_id }}</code>. After a lost response, recover this key before preparing a replacement.</p>
+</div>
+{% endblock %}

@@ -1,3 +1,9 @@
+## 8.96 — October 27, 2026
+
+- Add default-off `activities:announcement:publish` context/preview/recovery for first pinned-update publication on a current/upcoming bureau activity with active forms. Exact signed-in review shows activity, escaped text, registration count and current/future participant-page visibility; no registrant email, invitation or approval is added.
+- Share the ordinary Manage pinned-update save/audit service using caller-owned transactions. Commit text, retained original publication identity, audits and receipt atomically; preserve later ordinary edits/clear on recovery and prevent another key from republishing the same original activity.
+- Recheck current management, directory/team scope, event/form metadata and audience-count revision; retain bounded previews and permanent operation identities. Include OAuth, mobile, participant-page, ordinary UI/email, race, rollback, source identity, retention, packaging and operator acceptance coverage.
+
 ## 8.95 — October 27, 2026
 
 - Add default-off `activities:draft:create` context/preview/recovery for one live bureau activity plus Form 2 from an own private draft. Exact signed-in review shows public-link effects, current fields/section and creator/section-chief mail recipients; no participant invitations, bookings, approval or signature is added.

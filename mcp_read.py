@@ -22,6 +22,7 @@ import mcp_auth
 import mcp_actions
 import mcp_supply_drafts
 import mcp_comment_drafts
+import mcp_activity_announcements
 import mcp_activity_creation
 import mcp_activity_drafts
 import mcp_activity_dates
@@ -594,6 +595,51 @@ def build_server(get_conn, origin):
         """
         return await action(lambda conn, token: mcp_travel_submissions.recover(
             conn, token, provider.resource, origin, operation_id), mcp_travel_submissions.SCOPE)
+
+    @server.tool(title='Read activity pinned-update publication context', annotations=READ_ONLY)
+    async def get_activity_announcement_context(event_token: StrictStr) -> dict:
+        """Read revision/date/count for first pinned-update publication on a permitted activity.
+
+        Requires separate activities:announcement:publish and current normal Manage
+        authority. Use an activity token/slug from Monitor/Manage. Current/upcoming
+        bureau activities with active forms only; existing or previously MCP-published
+        updates are refused. Returns no title, existing private messages or roster.
+        """
+        return await action(lambda conn, token: mcp_activity_announcements.read_context(
+            conn, token, provider.resource, origin, event_token), mcp_activity_announcements.SCOPE)
+
+    @server.tool(title='Prepare publishing a first activity pinned update', annotations=ToolAnnotations(
+        readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=False))
+    async def prepare_activity_announcement(event_id: StrictInt, expected_revision: StrictStr,
+            announcement: StrictStr, operation_id: StrictStr) -> dict:
+        """Prepare ONE first pinned update on registered participants' activity pages.
+
+        Requires activities:announcement:publish, its hosting flag and current
+        management authority. Read fresh get_activity_announcement_context first.
+        Show confirmation_url for exact activity/text, current registration count
+        and existing/future participant-page visibility review. Nonempty plain text
+        only, at most 1000 characters. Explicit signed-in confirmation publishes;
+        no email, notification, invitation, approval or new activity is created.
+        This cannot replace/clear updates or publish the original activity twice
+        through this flow, even after an ordinary UI clear. Use Manage for edits.
+        Keep one random 16–80 character operation_id across retries; recover it
+        after a timeout before a replacement key. Returned receipts omit text.
+        """
+        return await action(lambda conn, token: mcp_activity_announcements.prepare(
+            conn, token, provider.resource, origin, operation_id,
+            {'event_id': event_id, 'expected_revision': expected_revision,
+             'announcement': announcement}), mcp_activity_announcements.SCOPE)
+
+    @server.tool(title='Check my pinned-update publication receipt', annotations=READ_ONLY)
+    async def get_activity_announcement_operation(operation_id: StrictStr) -> dict:
+        """Recover original publication status/count/source without returning text.
+
+        Same active connection/scope and current management of the original
+        activity are required. Later ordinary edits/removal remain separate;
+        recovery never restores text, republishes, or sends email/invitations.
+        """
+        return await action(lambda conn, token: mcp_activity_announcements.recover(
+            conn, token, provider.resource, origin, operation_id), mcp_activity_announcements.SCOPE)
 
     @server.tool(title='Read my live activity creation context', annotations=READ_ONLY)
     async def get_activity_creation_context(draft_key: StrictStr) -> dict:

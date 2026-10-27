@@ -2130,9 +2130,11 @@ def set_event_messages(conn, event_id, welcome, ending):
 ANNOUNCEMENT_MAX = 1000
 
 
-def set_event_announcement(conn, event_id, text, now_iso):
+def set_event_announcement(conn, event_id, text, now_iso, *, commit=True):
     """Post (or clear) the organizer's pinned update. Blank clears both columns.
     The posted-at stamp only moves when the text actually changes."""
+    if not commit and not conn.in_transaction:
+        raise RuntimeError('Pinned updates require a caller-owned transaction.')
     text = (text or "").strip()[:ANNOUNCEMENT_MAX]
     if not text:
         conn.execute("UPDATE event SET announcement=NULL, announcement_at=NULL WHERE id=?",
@@ -2142,7 +2144,8 @@ def set_event_announcement(conn, event_id, text, now_iso):
             "UPDATE event SET announcement_at = CASE WHEN COALESCE(announcement,'') = ? "
             "THEN announcement_at ELSE ? END, announcement = ? WHERE id = ?",
             (text, now_iso, text, event_id))
-    conn.commit()
+    if commit:
+        conn.commit()
 
 
 def last_email_send_at(conn, feature, recipient):
