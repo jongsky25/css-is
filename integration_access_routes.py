@@ -14,6 +14,8 @@ import auth
 import integration_access as access
 import mcp_auth
 import mcp_actions
+import mcp_supply_drafts
+import supplies_storage
 import documents_permissions as permissions
 from request_security import same_origin_write
 import ratelimit as rl
@@ -28,6 +30,7 @@ def csrf(request):
 
 # Explicit allowlist: never expose the hosting environment or credential material.
 MCP_PILOTS = (
+    ('New personal supply drafts (browser confirmation)', 'SUPPLY_DRAFTS', 'supplies:request:draft', ('prepare_supply_request_draft', 'get_supply_draft_operation')),
     ('Mark own work notice read (browser confirmation)', 'NOTIFICATION_WRITES', 'notifications:mark_read', ('mark_my_notification_read', 'get_mcp_operation')),
     ('Monthly CSM summaries', 'CSM', 'surveys:csm:read', ('get_csm_summary',)),
     ('Monthly CSM comparisons', 'CSM_TRENDS', 'surveys:csm_trends:read', ('compare_csm_months',)),
@@ -137,19 +140,22 @@ def make_router(templates, get_conn, mcp_readiness=None):
         host = '[' + host + ']' if ':' in host else host
         return scheme + '://' + host + (':' + str(port) if port != (443 if scheme == 'https' else 80) else '')
 
-    def action_screen(request, operation_id, confirm_digest=None):
+    def action_screen(request, operation_id, confirm_digest=None, *, supply_draft=False):
         conn = get_conn()
         try:
             origin = action_origin(request)
-            result = mcp_actions.browser(conn, payload(request), origin + '/mcp', origin,
+            service = mcp_supply_drafts if supply_draft else mcp_actions
+            result = service.browser(conn, payload(request), origin + '/mcp', origin,
                                          operation_id, confirm_digest=confirm_digest)
-            return templates.TemplateResponse(request, 'mcp_action.html',
+            return templates.TemplateResponse(request, 'mcp_supply_draft.html' if supply_draft else 'mcp_action.html',
                 {'show_scope': False, 'result': result, 'csrf': csrf(request)}, headers=private)
-        except permissions.Denied:
+        except (permissions.Denied, supplies_storage.Denied):
             return HTMLResponse('Action not found or unavailable to you. Sign in with the account that prepared it.', status_code=404, headers=private)
         except mcp_actions.ActionError as exc:
             # All action error messages are fixed server-owned text.
             return HTMLResponse(str(exc), status_code=409, headers=private)
+        except (supplies_storage.Invalid, supplies_storage.Conflict):
+            return HTMLResponse('Draft unavailable. Review the catalog, draft fields and current staff linkage in Office Connect.', status_code=409, headers=private)
         finally:
             conn.close()
 
@@ -157,8 +163,7 @@ def make_router(templates, get_conn, mcp_readiness=None):
     def action_preview(request: Request, operation_id: str):
         return action_screen(request, operation_id)
 
-    @router.post('/account/integrations/mcp/actions/{operation_id}', response_class=HTMLResponse)
-    async def action_confirm(request: Request, operation_id: str):
+    async def confirm_action(request, operation_id, *, supply_draft=False):
         canonical = action_origin(request)
         if not same_origin_write(request, canonical):
             return HTMLResponse('Request verification failed.', status_code=403, headers=private)
@@ -176,7 +181,19 @@ def make_router(templates, get_conn, mcp_readiness=None):
             return HTMLResponse('The confirmation expired or is invalid. Reload the preview.', status_code=403, headers=private)
         if not rl.allow('mcp_action', str(request.state.user['id'])):
             return HTMLResponse('Too many confirmations. Retry later with the same link.', status_code=429, headers=private)
-        return await asyncio.to_thread(action_screen, request, operation_id, str(form['preview_digest']))
+        return await asyncio.to_thread(action_screen, request, operation_id, str(form['preview_digest']), supply_draft=supply_draft)
+
+    @router.post('/account/integrations/mcp/actions/{operation_id}', response_class=HTMLResponse)
+    async def action_confirm(request: Request, operation_id: str):
+        return await confirm_action(request, operation_id)
+
+    @router.get('/account/integrations/mcp/supply-drafts/{operation_id}', response_class=HTMLResponse)
+    def supply_preview(request: Request, operation_id: str):
+        return action_screen(request, operation_id, supply_draft=True)
+
+    @router.post('/account/integrations/mcp/supply-drafts/{operation_id}', response_class=HTMLResponse)
+    async def supply_confirm(request: Request, operation_id: str):
+        return await confirm_action(request, operation_id, supply_draft=True)
 
     def create_credential(request,form):
         if not rl.allow('integration_issue',str(request.state.user['id'])):

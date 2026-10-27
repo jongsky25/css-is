@@ -1,0 +1,33 @@
+{% extends "dash_layout.html" %}
+{% block title %}Review supply draft — Office Connect{% endblock %}
+{% block content %}
+<div style="max-width:46rem;margin:auto;overflow-wrap:anywhere">
+{% if result.status == 'completed' %}
+<h1>Supply request draft saved</h1>
+<p>This draft was saved at {{ result.completed_at }}. This receipt reports the original save. Open the request to review its current status.</p>
+<p><a href="{{ result.web_url }}">Open my saved supply request</a></p>
+{% else %}
+<h1>Save this new supply request draft?</h1>
+<p>Review the exact draft prepared through ChatGPT. Confirming saves a personal draft for you to review in Office Connect.</p>
+<dl>
+<dt>Requester</dt><dd>{{ result.snapshot.requester.requester_snapshot }}</dd>
+<dt>Unit</dt><dd>{{ result.snapshot.requester.unit_snapshot }}</dd>
+<dt>Purpose</dt><dd>{{ result.fields.purpose }}</dd>
+<dt>Date needed</dt><dd>{{ result.fields.date_needed or 'Not specified' }}</dd>
+</dl>
+<ul>
+{% for line in result.fields.lines %}{% set item = result.snapshot['items'][loop.index0] %}
+<li><strong>{{ item.code }}</strong> — {{ item.description }}: {{ line.requested_quantity }} {{ item.unit }} (item {{ item.id }})</li>
+{% endfor %}
+</ul>
+<p>This saves a draft only. It does not submit a request, assign a control number, reserve stock or notify an approver. The preview expires ten minutes after preparation.</p>
+<form method="post">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<input type="hidden" name="preview_digest" value="{{ result.preview_digest }}">
+<button type="submit" name="confirm" value="yes">Confirm: save my supply draft</button>
+</form>
+{% endif %}
+<p>Operation receipt: <code>{{ result.operation_id }}</code></p>
+<p><a href="/supplies/requests">My supply requests</a> · <a href="/account/integrations">Connected tools</a></p>
+</div>
+{% endblock %}

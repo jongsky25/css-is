@@ -1,3 +1,9 @@
+## 8.79 — October 27, 2026
+
+- Add independent default-off new personal supply draft preparation and receipt tools with optional supplies:request:draft consent excluded from server defaults; preserve old grants and refresh scope parity.
+- Require exact requester/catalog/payload previews and signed-in browser confirmation. Share the UI draft service, recheck staff/unit/item authority and revisions, and atomically save the draft, receipt and audit. Do not submit, allocate stock, assign control numbers or notify approvers.
+- Preserve one draft across replay/races and later UI edits; clear completed/expired preview text while retaining operation tombstones. Add strict line validation, no-script mobile confirmation, OAuth/MCP/browser recovery tests and the activation/rollback runbook. Hosted write acceptance remains pending.
+
 ## 8.78 — October 27, 2026
 
 - Add a default-off MCP pilot to prepare marking one own shared-work notice read, with separate optional notifications:mark_read consent excluded from server default scopes; preserve existing grants and refresh scope parity.

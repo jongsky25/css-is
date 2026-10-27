@@ -20,7 +20,7 @@ import storage as st
 
 READ_SCOPES = frozenset({'surveys:person_activities:read', 'surveys:resource_person_trends:read', 'surveys:csm_trends:read', 'surveys:unit_trends:read', 'surveys:units:read', 'activities:read', 'calendar:read', 'documents:read',
                     'supplies:read', 'travel:read', 'work:read', 'notifications:read', 'surveys:csm:read', 'surveys:activities:read', 'surveys:resource_persons:read', 'surveys:activity_details:read'})
-WRITE_SCOPES = frozenset({'notifications:mark_read'})
+WRITE_SCOPES = frozenset({'notifications:mark_read', 'supplies:request:draft'})
 SCOPES = READ_SCOPES | WRITE_SCOPES
 ACCESS_SECONDS = 3600
 REFRESH_SECONDS = 30 * 86400
@@ -58,6 +58,8 @@ def install(conn):
     ''')
     import mcp_actions
     mcp_actions.install(conn)
+    import mcp_supply_drafts
+    mcp_supply_drafts.install(conn)
 
 
 def _digest(value):

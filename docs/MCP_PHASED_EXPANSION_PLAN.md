@@ -1,6 +1,6 @@
 # Office Connect MCP expansion plan
 
-Status: **Incremental implementation**, updated October 27, 2026. Baseline: the read-only MCP expansion in v8.35 (PR #444). M1 reads and the default-off M2.1 notification confirmation pilot are implemented as recorded below. Existing OAuth grants are not widened. Hosted write acceptance remains separate from implementation.
+Status: **Incremental implementation**, updated October 27, 2026. Baseline: the read-only MCP expansion in v8.35 (PR #444). M1 reads and default-off M2.1 notification and M2.2 supply-draft pilots are implemented as recorded below. Existing OAuth grants are not widened. Hosted write acceptance remains separate from implementation.
 
 ## Goal and boundary
 
@@ -194,3 +194,21 @@ receipt and audit; reject stale, revoked and cross-user requests and serialize
 duplicate confirmations. Tests include recovery, rollback and mobile no-script
 confirmation. See [operator activation and acceptance](MCP_WRITE_PILOT.md).
 Hosted write acceptance remains pending; other M2/M3/M4 actions remain future work.
+
+M2.1 merged in [PR #489](https://github.com/jongsky25/css-is/pull/489), commit
+`a44873cee6912e34563d0bb2f7be1087e0b08856`. Merge does not record hosted acceptance
+or enable the pilot.
+
+### M2.2 implementation — v8.79
+
+Prepare a new own supply-request draft with exact purpose/date and bounded
+active catalog item/quantity lines. New `supplies:request:draft` consent and
+independent default-off `CSS_MCP_SUPPLY_DRAFTS_ENABLED` do not widen existing
+read/notification grants. Recheck current staff/unit linkage and catalog
+revisions on an expiring signed-in browser preview. Atomically call the shared
+UI save-draft service with durable receipt/audit; retries cannot overwrite later
+UI edits or create duplicates. No submissions, control numbers, stock
+allocations, approval notices or edits to existing drafts. See the
+[supply-draft pilot contract and acceptance runbook](MCP_SUPPLY_DRAFT_PILOT.md).
+Hosted acceptance remains pending; additional M2 drafts and M3/M4 actions remain
+future work.
