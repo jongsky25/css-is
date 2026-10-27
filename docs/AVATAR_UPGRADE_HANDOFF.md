@@ -28,6 +28,23 @@ trigger it as an acceptance audit of the cancelled cohort. No later increments,
 merge to main or deployment occurred. The historical handoff below is superseded by this
 correction wherever it suggests CI success establishes complete memory acceptance.
 
+## Shared cat-gradient candidate tested — memory screen failed
+
+[Latest report](avatars/increment2b/shared-cat-gradients/REPORT.md): candidate cd94bf3 shares identical cat gradients through
+the existing page registry. Six-cat markup loses 41 elements / 90 attributes;
+30 visual sheets (2,880 cells), the new real-HTTP test, eight applicable browser
+regressions and 32 gate tests pass. Historical pagehide diagnostic fails identically
+on unchanged and candidate sources; both failures and the pre-measurement test
+selection correction are preserved. No lifecycle fix is claimed.
+
+All eight uninjected workloads complete under frozen harness 52ed2ea. Forward RSS
+fails at navigation 5 (+11.699MiB) and 10 (+16.301MiB); both same-source controls
+fail stability (largest absolute swing 36.379MiB). All heap checks pass; renderer
+counts match. 128 source/probe hashes and 24 files verify; extracted archive re-audit
+is identical. Candidate remains isolated on codex/avatar-shared-cat-gradients;
+product cf363bf stays unchanged. No larger validation, 2B acceptance or 3A advance.
+Earlier attribute-simplification next-step notes are superseded by this result.
+
 ## Native page history captured — focused attribute-storage hypothesis
 
 [Application history report](avatars/increment2b/page-history-application/REPORT.md) records a passed four-slot calibration and
