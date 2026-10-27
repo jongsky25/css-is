@@ -1,0 +1,6 @@
+blink::Element::getClientRects()
+element.cc:?
+cppgc::internal::PageBackend::TryAllocateNormalPageMemory()
+page-memory.cc:?
+cppgc::internal::PageBackend::FreeNormalPageMemory(unsigned char*)
+page-memory.cc:?

@@ -1,0 +1,14 @@
+{
+  "build_id": "1c5dca8527a61d07372e489142bee26af1bcaf71",
+  "debug_package_sha256": "3ceeef380f8ca3f3ca28065d0eeb1ddee58f4673973380459ad32c131618aafb",
+  "files": {
+    "api-constants.h": "89e1a1f72924384af58eec1d3a7937aaec17773490f47b135d54f2daaa8a8260",
+    "element.cc": "ca5bb2412592931db52617386e04572ce9f587dc1ca456790e0f8d6226f30fb0",
+    "resolved-hooks.txt": "5056f64bfc615653b7ee00a002d0dd6ab87d24571494b54ada2a3582d9386e23"
+  },
+  "urls": {
+    "element.cc": "https://raw.githubusercontent.com/chromium/chromium/156.0.8078.47/third_party/blink/renderer/core/dom/element.cc",
+    "api-constants.h": "https://raw.githubusercontent.com/v8/v8/392e44423f46d75904da712fadea4c7d5d97967f/include/cppgc/internal/api-constants.h"
+  },
+  "symbol_resolution_limit": "GNU addr2line resolves the exact function names but reports DWARF bad-file-number errors and unknown source line numbers. No source line claim. Exact nm function offset agrees; pinned source independently supplies method semantics."
+}
