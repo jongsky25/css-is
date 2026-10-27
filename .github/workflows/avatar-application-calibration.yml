@@ -1,0 +1,94 @@
+name: Avatar application observer calibration
+
+# The PR trigger validates initial setup before default-branch registration.
+# Once merged, Run workflow is available in GitHub's phone browser UI.
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [opened]
+    paths:
+      - .github/workflows/avatar-application-calibration.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: avatar-cloud-application-calibration
+  cancel-in-progress: false
+
+jobs:
+  diagnostic:
+    name: Application observer calibration
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    # Scope ptrace to the job container for its own synthetic renderer.
+    container:
+      image: python:3.12.14-trixie@sha256:4d1caded1f729ae443eb803f26ffde7b61e696aeaef62f099abb6dd6b14257c7
+      options: --cap-add=SYS_PTRACE
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Check out the frozen diagnostic harness
+        uses: actions/checkout@v4
+        with:
+          # Never check out product changes from the pull-request head.
+          ref: 35f0d3154d2d6b723d840344ce882baf2f9e38db
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Install exact browser and hash-locked dependencies
+        run: |
+          set -euo pipefail
+          mkdir -p application-calibration
+          exec > >(tee application-calibration/setup.log) 2>&1
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            chromium=156.0.8078.47-1~deb13u1 \
+            chromium-common=156.0.8078.47-1~deb13u1 \
+            git procps binutils util-linux
+          python -m venv .venv
+          .venv/bin/python -m pip install --require-hashes --only-binary=:all: -r requirements-test.txt
+          .venv/bin/python -m pip install --require-hashes --only-binary=:all: -r requirements-avatar-native.txt
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          mkdir -p /workspace/scratch/avatar-runtime/root/usr/lib/chromium
+          ln -s /usr/lib/chromium/chromium /workspace/scratch/avatar-runtime/root/usr/lib/chromium/chromium
+
+      - name: Check application observer accounting before measurement
+        run: |
+          set -euo pipefail
+          .venv/bin/python -m pytest -q \
+            tests/test_application_membership_analysis.py \
+            tests/test_native_recorder_selftest.py \
+            tests/test_absent_attribute_capability.py \
+            tests/test_membership_lifecycle_analysis.py \
+            2>&1 | tee application-calibration/preflight-tests.txt
+
+      - name: Verify native qualification and calibrate the unchanged real app
+        run: |
+          set -euo pipefail
+          .venv/bin/python -m scripts.avatar_baseline.hosted_application_calibration \
+            --out application-calibration/result \
+            2>&1 | tee application-calibration/run.log
+
+      - name: Explain missing results on the phone summary
+        if: always()
+        run: |
+          if [ ! -f application-calibration/result/SUMMARY.md ]; then
+            {
+              echo '# Application observer calibration'
+              echo ''
+              echo 'Setup or a prerequisite stopped before complete native calibration was available.'
+              echo 'Open the failed step and download avatar-application-calibration for retained logs.'
+              echo 'No application acceptance or deployment occurred.'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Save all results and failures for download
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: avatar-application-calibration
+          path: application-calibration/
+          if-no-files-found: warn
+          retention-days: 30
