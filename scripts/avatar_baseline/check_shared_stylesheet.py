@@ -16,7 +16,7 @@ from scripts.avatar_baseline.visual_state import SNAPSHOT, compare
 
 
 def main():
-    p=argparse.ArgumentParser();p.add_argument('--case');p.add_argument('--isolate-avatar-paint',action='store_true');p.add_argument('--raster-threads',type=int,choices=[1]);p.add_argument('--diagnose',action='store_true');p.add_argument('--previews-only',action='store_true');p.add_argument('--same-document',action='store_true');p.add_argument('--software-rendering',action='store_true');p.add_argument('--same-source-control',action='store_true');p.add_argument('--candidate',type=Path,required=True);p.add_argument('--out',type=Path,required=True);a=p.parse_args()
+    p=argparse.ArgumentParser();p.add_argument('--verify-isolation-state',action='store_true');p.add_argument('--case');p.add_argument('--isolate-avatar-paint',action='store_true');p.add_argument('--raster-threads',type=int,choices=[1]);p.add_argument('--diagnose',action='store_true');p.add_argument('--previews-only',action='store_true');p.add_argument('--same-document',action='store_true');p.add_argument('--software-rendering',action='store_true');p.add_argument('--same-source-control',action='store_true');p.add_argument('--candidate',type=Path,required=True);p.add_argument('--out',type=Path,required=True);a=p.parse_args()
     if a.same_document and a.same_source_control:
         p.error('--same-document and --same-source-control are separate experiments')
     root=Path(__file__).resolve().parents[2];a.out.mkdir(parents=True,exist_ok=False)
@@ -60,7 +60,7 @@ def main():
                 for static in ([True] if a.previews_only else [False,True]):
                     case=f'{theme}-{outfit}-{"preview" if static else "live"}'
                     if a.case and case!=a.case:continue
-                    images=[];rules=[];states=[];within=[];layers=[]
+                    images=[];rules=[];states=[];within=[];layers=[];isolation_checks=[]
                     for candidate in [False,True]:
                         effective_candidate=candidate and not a.same_source_control
                         html=render(effective_candidate,theme,outfit,static)
@@ -88,9 +88,21 @@ def main():
                         assert page.locator('svg[data-avatar-kind]').count()==96
                         if effective_candidate:assert page.locator('link[href="/static/css/avatars.css?v=1"]').evaluate('e=>e.sheet.cssRules.length')>100
                         freeze(page)
+                        if a.verify_isolation_state:
+                            assert a.isolate_avatar_paint
+                            hint=page.locator('style').last
+                            assert hint.text_content()=='.avcard svg {will-change:transform}'
+                            hint.evaluate('e=>e.disabled=true')
+                            before=json.loads(page.evaluate('JSON.stringify(('+SNAPSHOT+')())'))
+                            hint.evaluate('e=>e.disabled=false')
+                            after=json.loads(page.evaluate('JSON.stringify(('+SNAPSHOT+')())'))
+                            effect=compare(before,after)
+                            assert len(effect['differences'])==96
+                            assert all(d['field']=='style.will-change' and d['tag']=='svg' and d['before']=='auto' and d['after']=='transform' for d in effect['differences'])
+                            isolation_checks.append(effect)
                         rules.append(page.evaluate('Array.from(document.styleSheets).flatMap(s=>Array.from(s.cssRules,r=>r.cssText))'))
                         if a.diagnose:states.append(json.loads(page.evaluate('JSON.stringify(('+SNAPSHOT+')())')))
-                        capture=page.screenshot(); repeat=page.screenshot()
+                        capture=page.screenshot(caret='initial'); repeat=page.screenshot(caret='initial')
                         if a.diagnose:within.append(compare(states[-1],json.loads(page.evaluate('JSON.stringify(('+SNAPSHOT+')())'))))
                         assert capture==repeat, 'Same-document screenshot unstable'
                         tree=layer_events[-1].get('layers',[]) if layer_events else []
@@ -104,7 +116,7 @@ def main():
                         if a.same_document and candidate:
                             page.evaluate("""() => { const link=document.querySelector('link[href="/static/css/avatars.css?v=1"]'); link.before(window.originalAvatarStyle); getComputedStyle(document.body).display; link.remove(); }""")
                             freeze(page)
-                            restored=page.screenshot()
+                            restored=page.screenshot(caret='initial')
                             if restored!=images[0]:
                                 (a.out/'before-restore.png').write_bytes(images[0]);(a.out/'restored.png').write_bytes(restored)
                                 (a.out/'external.png').write_bytes(images[1])
@@ -114,14 +126,14 @@ def main():
                     difference=ImageChops.difference(Image.open(BytesIO(images[0])).convert('RGB'),Image.open(BytesIO(images[1])).convert('RGB'))
                     name=f'{theme}-{outfit}-{"preview" if static else "live"}.png';(a.out/name).write_bytes(images[1])
                     identical=difference.getbbox() is None
-                    rows.append({'file':name,'cells':96,'pixel_identical':identical,'cssom_identical':True,'layers':layers,'reference_sha256':sha256(images[0]).hexdigest(),'candidate_sha256':sha256(images[1]).hexdigest()})
+                    rows.append({'file':name,'cells':96,'pixel_identical':identical,'cssom_identical':True,'layers':layers,'isolation_checks':isolation_checks,'reference_sha256':sha256(images[0]).hexdigest(),'candidate_sha256':sha256(images[1]).hexdigest()})
                     if a.diagnose:
                         rows[-1]['state_comparison']=compare(*states)
                         rows[-1]['within_document_state_comparisons']=within
                     if not identical:(a.out/('reference-'+name)).write_bytes(images[0])
                     (a.out/'progress.json').write_text(json.dumps(rows,indent=2)+'\n')
         browser.close()
-    result={'all_states_identical':all(r['state_comparison']['identical'] and all(c['identical'] for c in r['within_document_state_comparisons']) for r in rows) if a.diagnose else None,'isolate_avatar_paint':a.isolate_avatar_paint,'raster_threads':a.raster_threads,'same_document':a.same_document,'software_rendering':a.software_rendering,'same_source_control':a.same_source_control,'acceptance':False,'browser':'156.0.8078.47','stylesheet_bytes':len(css.encode()),'stylesheet_sha256':sha256(css.encode()).hexdigest(),'template_reconstructed_exactly':True,'all_pixels_identical':all(r['pixel_identical'] for r in rows),'cells':len(rows)*96,'sheets':rows,'limits':'Routed fixture only for visual comparison; not cache or memory evidence. Animation pause readiness awaited, time zero applied, two rendering frames awaited, and repeated same-document screenshots identical in both versions. Original artwork/runtime unchanged.'}
+    result={'all_states_identical':all(r['state_comparison']['identical'] and all(c['identical'] for c in r['within_document_state_comparisons']) for r in rows) if a.diagnose else None,'screenshot_caret':'initial','isolate_avatar_paint':a.isolate_avatar_paint,'raster_threads':a.raster_threads,'same_document':a.same_document,'software_rendering':a.software_rendering,'same_source_control':a.same_source_control,'acceptance':False,'browser':'156.0.8078.47','stylesheet_bytes':len(css.encode()),'stylesheet_sha256':sha256(css.encode()).hexdigest(),'template_reconstructed_exactly':True,'all_pixels_identical':all(r['pixel_identical'] for r in rows),'cells':len(rows)*96,'sheets':rows,'limits':'Routed fixture only for visual comparison; not cache or memory evidence. Animation pause readiness awaited, time zero applied, two rendering frames awaited, and repeated same-document screenshots identical in both versions. Original artwork/runtime unchanged.'}
     (a.out/'assessment.json').write_text(json.dumps(result,indent=2)+'\n')
     print(json.dumps({k:v for k,v in result.items() if k!='sheets'}))
     assert result['all_pixels_identical']

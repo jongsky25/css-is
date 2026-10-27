@@ -49,3 +49,21 @@ def test_unchanged_source_visual_control_cannot_qualify_candidate():
     from scripts.avatar_baseline.stylesheet_screen import validate_visual
     with pytest.raises(ValueError, match='collection blocked'):
         validate_visual({'all_pixels_identical':True,'same_source_control':True})
+
+
+def passing_visual():
+    return {'all_pixels_identical':True,'all_states_identical':True,
+            'template_reconstructed_exactly':True,'browser':'156.0.8078.47',
+            'cells':2880,'stylesheet_sha256':'06601d2d375c768da0b55c75b2a4569e23a84dae4ceb687d86ae499ac3956bad',
+            'sheets':[{'pixel_identical':True,'cssom_identical':True} for _ in range(30)]}
+
+
+def test_complete_visual_allows_screen():
+    from scripts.avatar_baseline.stylesheet_screen import validate_visual
+    validate_visual(passing_visual())
+
+
+def test_equal_pixels_do_not_hide_state_difference():
+    from scripts.avatar_baseline.stylesheet_screen import validate_visual
+    evidence=passing_visual();evidence['all_states_identical']=False
+    with pytest.raises(ValueError,match='collection blocked'):validate_visual(evidence)
