@@ -1,6 +1,6 @@
 """Dormant confirmation contract with a test-only real calendar adapter."""
 from concurrent.futures import ThreadPoolExecutor
-from datetime import timedelta
+from datetime import datetime, timedelta
 import json
 
 import pytest
@@ -177,7 +177,11 @@ def test_expiry_scrubbing_and_key_tombstone(action_env):
     assert preview['fields_json'] is None and preview['summary_json'] is None and preview['state']=='cancelled'
     bot.cleanup(c,NOW+timedelta(days=2))
     assert not rows(c,'SELECT * FROM telegram_preview')
-    bot.cleanup(c,NOW+timedelta(days=181))
+    # The cancellation trigger stamps real DB time, independently of NOW.
+    cancelled_at=datetime.fromisoformat(rows(c,'SELECT * FROM telegram_operation')[0]['updated_at'].replace('Z','+00:00'))
+    bot.cleanup(c,cancelled_at+timedelta(days=179))
+    assert rows(c,'SELECT * FROM telegram_operation')[0]['result_code']=='preview_cancelled'
+    bot.cleanup(c,cancelled_at+timedelta(days=181))
     assert rows(c,'SELECT * FROM telegram_operation')[0]['result_code']=='retained_key'
     with pytest.raises(actions.Unavailable):issue(action_env)
 
