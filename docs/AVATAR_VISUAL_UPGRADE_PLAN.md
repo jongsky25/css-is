@@ -25,6 +25,20 @@ seasonal administration, and accessibility behavior.
 A phase fails if its visuals remain essentially the same except for color changes,
 or if it exceeds a performance gate. Fix or reduce complexity before expanding it.
 
+## Native page history captured — focused attribute-storage hypothesis
+
+[Application history report](avatars/increment2b/page-history-application/REPORT.md) records a passed four-slot calibration and
+all eight fixed comparison slots. All 1,160 stack offsets resolve; 80 files and
+348 source/probe hashes verify; both archives re-audit identically; 33 tests pass.
+Observed page-request histories show broad parsing/layout/style activity and many
+returns within the capture. ShareableElementData caller requests rise in all four
+source pairs (+33, +14, +20, +20), but total requests and same-source counts vary.
+No avatar-specific byte ownership or product fix is established. Injected RSS is
+not acceptance: the existing 10 source/16 control RSS failures still block 2B.
+Next inspect the rendered cat's attribute storage/sharing for one supported
+simplification, then require visual/functional and uninjected memory gates.
+No 3A or other later increment. Earlier “history missing” notes are historical.
+
 ## Latest native allocation inventory — types identified, pool history missing
 
 [All-slot raw type extraction](avatars/increment2b/native-type-ownership/REPORT.md)

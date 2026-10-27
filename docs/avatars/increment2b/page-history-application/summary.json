@@ -1,0 +1,374 @@
+{
+  "acceptance": false,
+  "harness_commit": "1f597dc0401e054928221b22fc7a77fcb2202306",
+  "symbolized_sha256": "a7322e9d50a0b172762815a237608a2bb7d103256177b65b4a72d948f2c56434",
+  "cohorts": [
+    {
+      "index": 0,
+      "arm": "original",
+      "mode": "probe",
+      "status": "valid",
+      "navigation_ms": 9401.482235,
+      "history": {
+        "allocation_requests": 162,
+        "pool_returns": 187,
+        "observed_reuses": 128,
+        "preexisting_or_unobserved_pool_returns": 96,
+        "overlapping_call_order_ambiguities": 0,
+        "explicit_preparation_fraction": 0.004316169087565159,
+        "maximum_preparation_ms": 4.302253
+      },
+      "inside_window_requests": 162,
+      "returned_within_window": 91,
+      "shareable_element_data_caller_requests": 6,
+      "svg_named_caller_requests": 26,
+      "top_four_callers": {
+        "blink::Text::Create(blink::Document&, blink::String&&)": {
+          "requests": 16,
+          "returned_within_window": 13,
+          "reused_address_requests": 15
+        },
+        "blink::Vector<blink::PaintChunk, 0u, blink::HeapAllocator>::ReallocateBuffer(unsigned int)": {
+          "requests": 15,
+          "returned_within_window": 11,
+          "reused_address_requests": 13
+        },
+        "blink::LogicalLineContainer::LogicalLineContainer()": {
+          "requests": 12,
+          "returned_within_window": 7,
+          "reused_address_requests": 8
+        },
+        "blink::ComputedStyleBuilderBase::SetTransformOrigin(blink::TransformOrigin&&)": {
+          "requests": 7,
+          "returned_within_window": 3,
+          "reused_address_requests": 4
+        }
+      }
+    },
+    {
+      "index": 1,
+      "arm": "current",
+      "mode": "probe",
+      "status": "valid",
+      "navigation_ms": 8264.649817,
+      "history": {
+        "allocation_requests": 465,
+        "pool_returns": 306,
+        "observed_reuses": 0,
+        "preexisting_or_unobserved_pool_returns": 69,
+        "overlapping_call_order_ambiguities": 0,
+        "explicit_preparation_fraction": 0.012455257667210609,
+        "maximum_preparation_ms": 8.168687
+      },
+      "inside_window_requests": 465,
+      "returned_within_window": 237,
+      "shareable_element_data_caller_requests": 39,
+      "svg_named_caller_requests": 52,
+      "top_four_callers": {
+        "blink::LogicalLineContainer::LogicalLineContainer()": {
+          "requests": 48,
+          "returned_within_window": 41,
+          "reused_address_requests": 0
+        },
+        "blink::HashTable<unsigned int, blink::KeyValuePair<unsigned int, std::__1::pair<blink::StringImpl const*, cppgc::internal::BasicMember<blink::ShareableElementData, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy, cppgc::internal::DisabledCheckingPolicy, cppgc::internal::CompressedPointer> > >, blink::KeyValuePairExtractor, blink::HashMapValueTraits<blink::AlreadyHashedTraits, blink::HashTraits<std::__1::pair<blink::StringImpl const*, cppgc::internal::BasicMember<blink::ShareableElementData, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy, cppgc::internal::DisabledCheckingPolicy, cppgc::internal::CompressedPointer> > > >, blink::AlreadyHashedTraits, blink::HeapAllocator>::Expand(blink::KeyValuePair<unsigned int, std::__1::pair<blink::StringImpl const*, cppgc::internal::BasicMember<blink::ShareableElementData, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy, cppgc::internal::DisabledCheckingPolicy, cppgc::internal::CompressedPointer> > >*)": {
+          "requests": 29,
+          "returned_within_window": 5,
+          "reused_address_requests": 0
+        },
+        "blink::Vector<blink::PaintChunk, 0u, blink::HeapAllocator>::ReallocateBuffer(unsigned int)": {
+          "requests": 20,
+          "returned_within_window": 6,
+          "reused_address_requests": 0
+        },
+        "blink::Text::Create(blink::Document&, blink::String&&)": {
+          "requests": 19,
+          "returned_within_window": 16,
+          "reused_address_requests": 0
+        }
+      }
+    },
+    {
+      "index": 2,
+      "arm": "current",
+      "mode": "probe",
+      "status": "valid",
+      "navigation_ms": 8298.771657,
+      "history": {
+        "allocation_requests": 234,
+        "pool_returns": 238,
+        "observed_reuses": 31,
+        "preexisting_or_unobserved_pool_returns": 83,
+        "overlapping_call_order_ambiguities": 0,
+        "explicit_preparation_fraction": 0.006530772895080754,
+        "maximum_preparation_ms": 3.895207
+      },
+      "inside_window_requests": 234,
+      "returned_within_window": 155,
+      "shareable_element_data_caller_requests": 27,
+      "svg_named_caller_requests": 27,
+      "top_four_callers": {
+        "blink::HashTable<unsigned int, blink::KeyValuePair<unsigned int, std::__1::pair<blink::StringImpl const*, cppgc::internal::BasicMember<blink::ShareableElementData, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy, cppgc::internal::DisabledCheckingPolicy, cppgc::internal::CompressedPointer> > >, blink::KeyValuePairExtractor, blink::HashMapValueTraits<blink::AlreadyHashedTraits, blink::HashTraits<std::__1::pair<blink::StringImpl const*, cppgc::internal::BasicMember<blink::ShareableElementData, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy, cppgc::internal::DisabledCheckingPolicy, cppgc::internal::CompressedPointer> > > >, blink::AlreadyHashedTraits, blink::HeapAllocator>::Expand(blink::KeyValuePair<unsigned int, std::__1::pair<blink::StringImpl const*, cppgc::internal::BasicMember<blink::ShareableElementData, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy, cppgc::internal::DisabledCheckingPolicy, cppgc::internal::CompressedPointer> > >*)": {
+          "requests": 18,
+          "returned_within_window": 8,
+          "reused_address_requests": 3
+        },
+        "blink::LogicalLineContainer::LogicalLineContainer()": {
+          "requests": 14,
+          "returned_within_window": 12,
+          "reused_address_requests": 0
+        },
+        "blink::Vector<blink::PaintChunk, 0u, blink::HeapAllocator>::ReallocateBuffer(unsigned int)": {
+          "requests": 13,
+          "returned_within_window": 8,
+          "reused_address_requests": 3
+        },
+        "blink::Text::Create(blink::Document&, blink::String&&)": {
+          "requests": 12,
+          "returned_within_window": 10,
+          "reused_address_requests": 5
+        }
+      }
+    },
+    {
+      "index": 3,
+      "arm": "original",
+      "mode": "probe",
+      "status": "valid",
+      "navigation_ms": 9041.42539,
+      "history": {
+        "allocation_requests": 264,
+        "pool_returns": 240,
+        "observed_reuses": 70,
+        "preexisting_or_unobserved_pool_returns": 88,
+        "overlapping_call_order_ambiguities": 0,
+        "explicit_preparation_fraction": 0.007240046361760665,
+        "maximum_preparation_ms": 3.66262
+      },
+      "inside_window_requests": 264,
+      "returned_within_window": 152,
+      "shareable_element_data_caller_requests": 13,
+      "svg_named_caller_requests": 39,
+      "top_four_callers": {
+        "blink::LogicalLineContainer::LogicalLineContainer()": {
+          "requests": 25,
+          "returned_within_window": 20,
+          "reused_address_requests": 7
+        },
+        "blink::Text::Create(blink::Document&, blink::String&&)": {
+          "requests": 17,
+          "returned_within_window": 14,
+          "reused_address_requests": 10
+        },
+        "blink::Vector<blink::PaintChunk, 0u, blink::HeapAllocator>::ReallocateBuffer(unsigned int)": {
+          "requests": 11,
+          "returned_within_window": 5,
+          "reused_address_requests": 4
+        },
+        "blink::HashTable<blink::FontDescription, blink::KeyValuePair<blink::FontDescription, cppgc::internal::BasicMember<blink::FontFallbackList, cppgc::internal::WeakMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy, cppgc::internal::DisabledCheckingPolicy, cppgc::internal::CompressedPointer> >, blink::KeyValuePairExtractor, blink::HashMapValueTraits<blink::HashTraits<blink::FontDescription>, blink::HashTraits<cppgc::internal::BasicMember<blink::FontFallbackList, cppgc::internal::WeakMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy, cppgc::internal::DisabledCheckingPolicy, cppgc::internal::CompressedPointer> > >, blink::HashTraits<blink::FontDescription>, blink::HeapAllocator>::Expand(blink::KeyValuePair<blink::FontDescription, cppgc::internal::BasicMember<blink::FontFallbackList, cppgc::internal::WeakMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy, cppgc::internal::DisabledCheckingPolicy, cppgc::internal::CompressedPointer> >*)": {
+          "requests": 10,
+          "returned_within_window": 0,
+          "reused_address_requests": 4
+        }
+      }
+    },
+    {
+      "index": 4,
+      "arm": "current",
+      "mode": "probe",
+      "status": "valid",
+      "navigation_ms": 8263.570535,
+      "history": {
+        "allocation_requests": 335,
+        "pool_returns": 368,
+        "observed_reuses": 32,
+        "preexisting_or_unobserved_pool_returns": 118,
+        "overlapping_call_order_ambiguities": 0,
+        "explicit_preparation_fraction": 0.008497319736377127,
+        "maximum_preparation_ms": 1.495686
+      },
+      "inside_window_requests": 335,
+      "returned_within_window": 250,
+      "shareable_element_data_caller_requests": 27,
+      "svg_named_caller_requests": 38,
+      "top_four_callers": {
+        "blink::LogicalLineContainer::LogicalLineContainer()": {
+          "requests": 29,
+          "returned_within_window": 26,
+          "reused_address_requests": 0
+        },
+        "blink::HashTable<unsigned int, blink::KeyValuePair<unsigned int, std::__1::pair<blink::StringImpl const*, cppgc::internal::BasicMember<blink::ShareableElementData, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy, cppgc::internal::DisabledCheckingPolicy, cppgc::internal::CompressedPointer> > >, blink::KeyValuePairExtractor, blink::HashMapValueTraits<blink::AlreadyHashedTraits, blink::HashTraits<std::__1::pair<blink::StringImpl const*, cppgc::internal::BasicMember<blink::ShareableElementData, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy, cppgc::internal::DisabledCheckingPolicy, cppgc::internal::CompressedPointer> > > >, blink::AlreadyHashedTraits, blink::HeapAllocator>::Expand(blink::KeyValuePair<unsigned int, std::__1::pair<blink::StringImpl const*, cppgc::internal::BasicMember<blink::ShareableElementData, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy, cppgc::internal::DisabledCheckingPolicy, cppgc::internal::CompressedPointer> > >*)": {
+          "requests": 18,
+          "returned_within_window": 11,
+          "reused_address_requests": 1
+        },
+        "blink::Text::Create(blink::Document&, blink::String&&)": {
+          "requests": 16,
+          "returned_within_window": 14,
+          "reused_address_requests": 5
+        },
+        "blink::Vector<blink::PaintChunk, 0u, blink::HeapAllocator>::ReallocateBuffer(unsigned int)": {
+          "requests": 13,
+          "returned_within_window": 8,
+          "reused_address_requests": 2
+        }
+      }
+    },
+    {
+      "index": 5,
+      "arm": "original",
+      "mode": "probe",
+      "status": "valid",
+      "navigation_ms": 9221.77373,
+      "history": {
+        "allocation_requests": 113,
+        "pool_returns": 83,
+        "observed_reuses": 83,
+        "preexisting_or_unobserved_pool_returns": 49,
+        "overlapping_call_order_ambiguities": 0,
+        "explicit_preparation_fraction": 0.0034340983553930683,
+        "maximum_preparation_ms": 2.36233
+      },
+      "inside_window_requests": 113,
+      "returned_within_window": 34,
+      "shareable_element_data_caller_requests": 7,
+      "svg_named_caller_requests": 26,
+      "top_four_callers": {
+        "blink::Text::Create(blink::Document&, blink::String&&)": {
+          "requests": 14,
+          "returned_within_window": 8,
+          "reused_address_requests": 11
+        },
+        "blink::LogicalLineContainer::LogicalLineContainer()": {
+          "requests": 13,
+          "returned_within_window": 5,
+          "reused_address_requests": 6
+        },
+        "blink::Vector<blink::PaintChunk, 0u, blink::HeapAllocator>::ReallocateBuffer(unsigned int)": {
+          "requests": 13,
+          "returned_within_window": 7,
+          "reused_address_requests": 8
+        },
+        "blink::HashTable<blink::FontDescription, blink::KeyValuePair<blink::FontDescription, cppgc::internal::BasicMember<blink::FontFallbackList, cppgc::internal::WeakMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy, cppgc::internal::DisabledCheckingPolicy, cppgc::internal::CompressedPointer> >, blink::KeyValuePairExtractor, blink::HashMapValueTraits<blink::HashTraits<blink::FontDescription>, blink::HashTraits<cppgc::internal::BasicMember<blink::FontFallbackList, cppgc::internal::WeakMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy, cppgc::internal::DisabledCheckingPolicy, cppgc::internal::CompressedPointer> > >, blink::HashTraits<blink::FontDescription>, blink::HeapAllocator>::Expand(blink::KeyValuePair<blink::FontDescription, cppgc::internal::BasicMember<blink::FontFallbackList, cppgc::internal::WeakMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy, cppgc::internal::DisabledCheckingPolicy, cppgc::internal::CompressedPointer> >*)": {
+          "requests": 7,
+          "returned_within_window": 1,
+          "reused_address_requests": 5
+        }
+      }
+    },
+    {
+      "index": 6,
+      "arm": "original",
+      "mode": "probe",
+      "status": "valid",
+      "navigation_ms": 9300.998585,
+      "history": {
+        "allocation_requests": 104,
+        "pool_returns": 85,
+        "observed_reuses": 80,
+        "preexisting_or_unobserved_pool_returns": 53,
+        "overlapping_call_order_ambiguities": 0,
+        "explicit_preparation_fraction": 0.0031107959791179776,
+        "maximum_preparation_ms": 1.350198
+      },
+      "inside_window_requests": 104,
+      "returned_within_window": 32,
+      "shareable_element_data_caller_requests": 5,
+      "svg_named_caller_requests": 20,
+      "top_four_callers": {
+        "blink::Text::Create(blink::Document&, blink::String&&)": {
+          "requests": 15,
+          "returned_within_window": 8,
+          "reused_address_requests": 12
+        },
+        "blink::Vector<blink::PaintChunk, 0u, blink::HeapAllocator>::ReallocateBuffer(unsigned int)": {
+          "requests": 13,
+          "returned_within_window": 7,
+          "reused_address_requests": 9
+        },
+        "blink::LogicalLineContainer::LogicalLineContainer()": {
+          "requests": 8,
+          "returned_within_window": 1,
+          "reused_address_requests": 5
+        },
+        "blink::SVGGConstructor(blink::Document&, blink::CreateElementFlags)": {
+          "requests": 7,
+          "returned_within_window": 2,
+          "reused_address_requests": 6
+        }
+      }
+    },
+    {
+      "index": 7,
+      "arm": "current",
+      "mode": "probe",
+      "status": "valid",
+      "navigation_ms": 8132.025252,
+      "history": {
+        "allocation_requests": 334,
+        "pool_returns": 227,
+        "observed_reuses": 28,
+        "preexisting_or_unobserved_pool_returns": 41,
+        "overlapping_call_order_ambiguities": 0,
+        "explicit_preparation_fraction": 0.009009377950711755,
+        "maximum_preparation_ms": 1.279012
+      },
+      "inside_window_requests": 334,
+      "returned_within_window": 186,
+      "shareable_element_data_caller_requests": 25,
+      "svg_named_caller_requests": 42,
+      "top_four_callers": {
+        "blink::LogicalLineContainer::LogicalLineContainer()": {
+          "requests": 27,
+          "returned_within_window": 24,
+          "reused_address_requests": 3
+        },
+        "blink::HashTable<unsigned int, blink::KeyValuePair<unsigned int, std::__1::pair<blink::StringImpl const*, cppgc::internal::BasicMember<blink::ShareableElementData, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy, cppgc::internal::DisabledCheckingPolicy, cppgc::internal::CompressedPointer> > >, blink::KeyValuePairExtractor, blink::HashMapValueTraits<blink::AlreadyHashedTraits, blink::HashTraits<std::__1::pair<blink::StringImpl const*, cppgc::internal::BasicMember<blink::ShareableElementData, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy, cppgc::internal::DisabledCheckingPolicy, cppgc::internal::CompressedPointer> > > >, blink::AlreadyHashedTraits, blink::HeapAllocator>::Expand(blink::KeyValuePair<unsigned int, std::__1::pair<blink::StringImpl const*, cppgc::internal::BasicMember<blink::ShareableElementData, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy, cppgc::internal::DisabledCheckingPolicy, cppgc::internal::CompressedPointer> > >*)": {
+          "requests": 21,
+          "returned_within_window": 3,
+          "reused_address_requests": 0
+        },
+        "blink::Text::Create(blink::Document&, blink::String&&)": {
+          "requests": 15,
+          "returned_within_window": 12,
+          "reused_address_requests": 1
+        },
+        "blink::Vector<blink::PaintChunk, 0u, blink::HeapAllocator>::ReallocateBuffer(unsigned int)": {
+          "requests": 15,
+          "returned_within_window": 14,
+          "reused_address_requests": 0
+        }
+      }
+    }
+  ],
+  "pairs": [
+    {
+      "original_slot": 0,
+      "current_slot": 1,
+      "request_delta": 303,
+      "shareable_caller_request_delta": 33,
+      "svg_named_caller_request_delta": 26
+    },
+    {
+      "original_slot": 3,
+      "current_slot": 2,
+      "request_delta": -30,
+      "shareable_caller_request_delta": 14,
+      "svg_named_caller_request_delta": -12
+    },
+    {
+      "original_slot": 5,
+      "current_slot": 4,
+      "request_delta": 222,
+      "shareable_caller_request_delta": 20,
+      "svg_named_caller_request_delta": 12
+    },
+    {
+      "original_slot": 6,
+      "current_slot": 7,
+      "request_delta": 230,
+      "shareable_caller_request_delta": 20,
+      "svg_named_caller_request_delta": 22
+    }
+  ],
+  "limits": "Caller is the observed normal-page request trigger, not owner of all objects in that page. Address reuse after a pool return does not prove a pool hit or continuous physical backing: release/unmap is not hooked. Unknown initial pages, unobserved/inlined entries, large pages and in-buffer allocations are outside coverage. Export/window boundaries censor unfinished calls/lifetimes. Inclusive stack counts overlap; never sum them. Injected RSS cannot qualify acceptance."
+}

@@ -1,0 +1,57 @@
+{
+  "acceptance": false,
+  "harness_commit": "1f597dc0401e054928221b22fc7a77fcb2202306",
+  "status": "calibration_passed",
+  "cohorts": [
+    {
+      "index": 0,
+      "arm": "current",
+      "mode": "control",
+      "status": "valid",
+      "navigation_ms": 7641.49851
+    },
+    {
+      "index": 1,
+      "arm": "current",
+      "mode": "probe",
+      "status": "valid",
+      "navigation_ms": 7740.783918,
+      "history": {
+        "allocation_requests": 381,
+        "pool_returns": 374,
+        "observed_reuses": 29,
+        "preexisting_or_unobserved_pool_returns": 93,
+        "overlapping_call_order_ambiguities": 0,
+        "explicit_preparation_fraction": 0.009937262661618712,
+        "maximum_preparation_ms": 2.507725
+      }
+    },
+    {
+      "index": 2,
+      "arm": "current",
+      "mode": "probe",
+      "status": "valid",
+      "navigation_ms": 7795.080258,
+      "history": {
+        "allocation_requests": 311,
+        "pool_returns": 295,
+        "observed_reuses": 58,
+        "preexisting_or_unobserved_pool_returns": 108,
+        "overlapping_call_order_ambiguities": 0,
+        "explicit_preparation_fraction": 0.007538832963225662,
+        "maximum_preparation_ms": 1.269984
+      }
+    },
+    {
+      "index": 3,
+      "arm": "current",
+      "mode": "control",
+      "status": "valid",
+      "navigation_ms": 7856.314464
+    }
+  ],
+  "errors": [],
+  "files_verified": 28,
+  "source_hashes_verified": 140,
+  "gate_errors": []
+}

@@ -39,3 +39,30 @@ def test_overhead_gate_preserves_both_orders_control_and_explicit_costs():
     changed=copy.deepcopy(rows);changed[1]['history']={'explicit_preparation_fraction':.051,'maximum_preparation_ms':1}
     assert any('5% or 250ms' in s for s in timing_gate(changed))
     assert timing_gate(rows[:3])==['Require four intact slots']
+
+
+def test_page_lifetimes_keep_unknown_initial_pages_and_boundary_censoring():
+    from scripts.avatar_baseline.symbolize_page_history import lifetimes
+    events=fixture()['events']
+    for e in events:
+        e['phase']='navigation-1'
+        if e['kind']=='allocate':e['stack']=[{'offset':'0x10'},{'offset':'0x20'}]
+    symbols={'0x10':{'function':'cppgc::allocate'},'0x20':{'function':'blink::Example'}}
+    result=lifetimes(events,symbols,15,45)
+    assert len(result['unmatched_pool_returns'])==1
+    first,last=result['lifetimes']
+    assert first['pool_return_ns']==32 and last['pool_return_ns'] is None
+    assert last['address_seen_pooled'] is True
+    assert result['exclusive_nearest_blink_callers']['blink::Example']=={
+        'requests':2,'returned_within_window':1,'reused_address_requests':1}
+    assert result['inclusive_function_request_counts']['blink::Example']==2
+
+
+def test_lifetime_boundary_and_inclusive_duplicates_are_explicit():
+    from scripts.avatar_baseline.symbolize_page_history import lifetimes
+    events=fixture()['events']
+    for e in events:
+        e['phase']='navigation-1';e['stack']=[{'offset':'0x10'},{'offset':'0x10'}]
+    result=lifetimes(events,{'0x10':{'function':'blink::Example'}},21,100)
+    assert result['lifetimes'][0]['window_relation']=='boundary_overlap'
+    assert result['inclusive_function_request_counts']['blink::Example']==1

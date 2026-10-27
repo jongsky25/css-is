@@ -1,0 +1,139 @@
+{
+  "acceptance": false,
+  "harness_commit": "1f597dc0401e054928221b22fc7a77fcb2202306",
+  "status": "complete_history_diagnostic",
+  "cohorts": [
+    {
+      "index": 0,
+      "arm": "original",
+      "mode": "probe",
+      "status": "valid",
+      "navigation_ms": 9401.482235,
+      "history": {
+        "allocation_requests": 162,
+        "pool_returns": 187,
+        "observed_reuses": 128,
+        "preexisting_or_unobserved_pool_returns": 96,
+        "overlapping_call_order_ambiguities": 0,
+        "explicit_preparation_fraction": 0.004316169087565159,
+        "maximum_preparation_ms": 4.302253
+      }
+    },
+    {
+      "index": 1,
+      "arm": "current",
+      "mode": "probe",
+      "status": "valid",
+      "navigation_ms": 8264.649817,
+      "history": {
+        "allocation_requests": 465,
+        "pool_returns": 306,
+        "observed_reuses": 0,
+        "preexisting_or_unobserved_pool_returns": 69,
+        "overlapping_call_order_ambiguities": 0,
+        "explicit_preparation_fraction": 0.012455257667210609,
+        "maximum_preparation_ms": 8.168687
+      }
+    },
+    {
+      "index": 2,
+      "arm": "current",
+      "mode": "probe",
+      "status": "valid",
+      "navigation_ms": 8298.771657,
+      "history": {
+        "allocation_requests": 234,
+        "pool_returns": 238,
+        "observed_reuses": 31,
+        "preexisting_or_unobserved_pool_returns": 83,
+        "overlapping_call_order_ambiguities": 0,
+        "explicit_preparation_fraction": 0.006530772895080754,
+        "maximum_preparation_ms": 3.895207
+      }
+    },
+    {
+      "index": 3,
+      "arm": "original",
+      "mode": "probe",
+      "status": "valid",
+      "navigation_ms": 9041.42539,
+      "history": {
+        "allocation_requests": 264,
+        "pool_returns": 240,
+        "observed_reuses": 70,
+        "preexisting_or_unobserved_pool_returns": 88,
+        "overlapping_call_order_ambiguities": 0,
+        "explicit_preparation_fraction": 0.007240046361760665,
+        "maximum_preparation_ms": 3.66262
+      }
+    },
+    {
+      "index": 4,
+      "arm": "current",
+      "mode": "probe",
+      "status": "valid",
+      "navigation_ms": 8263.570535,
+      "history": {
+        "allocation_requests": 335,
+        "pool_returns": 368,
+        "observed_reuses": 32,
+        "preexisting_or_unobserved_pool_returns": 118,
+        "overlapping_call_order_ambiguities": 0,
+        "explicit_preparation_fraction": 0.008497319736377127,
+        "maximum_preparation_ms": 1.495686
+      }
+    },
+    {
+      "index": 5,
+      "arm": "original",
+      "mode": "probe",
+      "status": "valid",
+      "navigation_ms": 9221.77373,
+      "history": {
+        "allocation_requests": 113,
+        "pool_returns": 83,
+        "observed_reuses": 83,
+        "preexisting_or_unobserved_pool_returns": 49,
+        "overlapping_call_order_ambiguities": 0,
+        "explicit_preparation_fraction": 0.0034340983553930683,
+        "maximum_preparation_ms": 2.36233
+      }
+    },
+    {
+      "index": 6,
+      "arm": "original",
+      "mode": "probe",
+      "status": "valid",
+      "navigation_ms": 9300.998585,
+      "history": {
+        "allocation_requests": 104,
+        "pool_returns": 85,
+        "observed_reuses": 80,
+        "preexisting_or_unobserved_pool_returns": 53,
+        "overlapping_call_order_ambiguities": 0,
+        "explicit_preparation_fraction": 0.0031107959791179776,
+        "maximum_preparation_ms": 1.350198
+      }
+    },
+    {
+      "index": 7,
+      "arm": "current",
+      "mode": "probe",
+      "status": "valid",
+      "navigation_ms": 8132.025252,
+      "history": {
+        "allocation_requests": 334,
+        "pool_returns": 227,
+        "observed_reuses": 28,
+        "preexisting_or_unobserved_pool_returns": 41,
+        "overlapping_call_order_ambiguities": 0,
+        "explicit_preparation_fraction": 0.009009377950711755,
+        "maximum_preparation_ms": 1.279012
+      }
+    }
+  ],
+  "errors": [],
+  "files_verified": 52,
+  "source_hashes_verified": 208,
+  "gate_errors": []
+}
