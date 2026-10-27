@@ -27,7 +27,7 @@ PHASES = ['navigation','fixed_wait','serialize_before','census','serialize_after
 def process_stat(raw):
     # comm can contain spaces and parentheses; fields after its closing paren are stable.
     fields = raw[raw.rindex(')')+2:].split()
-    return {'user_ticks':int(fields[11]),'system_ticks':int(fields[12]),
+    return {'parent_pid':int(fields[1]),'user_ticks':int(fields[11]),'system_ticks':int(fields[12]),
             'start_ticks':int(fields[19]),'minor_faults':int(fields[7]),'major_faults':int(fields[9])}
 
 
@@ -40,13 +40,14 @@ class Timing:
         self.data = {'protocol':PROTOCOL,'native_hooks_installed':False,'full_trace_enabled':False,
                      'ticks_per_second':os.sysconf('SC_CLK_TCK'),'phases':[]}
 
-    def initialize(self, browser_pid, renderer_pid):
+    def initialize(self, browser_pid, renderer_pid, driver_pid):
         self.pids = {'python':os.getpid(),'browser':browser_pid,'renderer':renderer_pid}
-        # Only direct children of this Python process; no process-wide cmdline scan.
-        children = Path(f'/proc/{os.getpid()}/task/{os.getpid()}/children').read_text().split()
-        driver = [int(p) for p in children if Path(f'/proc/{p}/comm').read_text().strip() in ['node','MainThread']]
-        if len(driver)!=1: raise ValueError('Ambiguous Playwright driver PID')
-        self.pids['driver'] = driver[0]
+        # Pinned Playwright's PipeTransport owns this asyncio subprocess handle.
+        driver = process_stat(Path(f'/proc/{driver_pid}/stat').read_text())
+        if driver['parent_pid'] != os.getpid():
+            raise ValueError('Playwright driver is not a direct Python child')
+        self.pids['driver'] = driver_pid
+        self.data['driver_identity_source'] = 'playwright-pipe-transport-process-pid'
         self.data['pids'] = self.pids
         self.data['affinity_cpus'] = sorted(os.sched_getaffinity(0))
         self.data['cgroup_membership'] = Path('/proc/self/cgroup').read_text().strip()

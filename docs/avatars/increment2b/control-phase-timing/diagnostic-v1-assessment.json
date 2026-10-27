@@ -1,0 +1,32 @@
+{
+  "status": "diagnostic_failed",
+  "acceptance": false,
+  "instrument_qualified_for_application_calibration": false,
+  "harness_commit": "d867258afef6faadd97a10dbcf1c7485a5cbaa55",
+  "cohorts": [
+    {
+      "index": 0,
+      "error": "ValueError('Failed diagnostic slot')"
+    },
+    {
+      "index": 1,
+      "error": "ValueError('Failed diagnostic slot')"
+    },
+    {
+      "index": 2,
+      "error": "ValueError('Failed diagnostic slot')"
+    },
+    {
+      "index": 3,
+      "error": "ValueError('Failed diagnostic slot')"
+    }
+  ],
+  "errors": [
+    "Slot 0: Failed diagnostic slot",
+    "Slot 1: Failed diagnostic slot",
+    "Slot 2: Failed diagnostic slot",
+    "Slot 3: Failed diagnostic slot"
+  ],
+  "source_hashes_verified": 5,
+  "files_verified": 0
+}

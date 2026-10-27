@@ -111,7 +111,7 @@ def run(out, mode, timing=None):
                 cdp.send('Tracing.recordClockSyncMarker', {'syncId': name})
                 return {'name': name, 'begin_ns': start, 'end_ns': time.monotonic_ns()}
             if timing is not None:
-                timing.initialize(browser_pids[0], pid)
+                timing.initialize(browser_pids[0], pid, pw._impl_obj._connection._transport._proc.pid)
             result['begin_ns'] = time.monotonic_ns()
             if mode == 'probe':
                 start = time.monotonic_ns()
@@ -192,6 +192,8 @@ def run(out, mode, timing=None):
             result['status'] = 'captured'
     except Exception as error:
         result.update(status='capability_failed', error=repr(error))
+        if timing is not None and isinstance(error, OSError):
+            result['error_path'] = error.filename
     finally:
         if attached:
             try: attached.detach()

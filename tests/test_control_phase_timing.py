@@ -69,3 +69,8 @@ def test_failing_operation_retains_brackets_and_snapshots(monkeypatch):
     with pytest.raises(RuntimeError):t.measure(0,'navigation',fail)
     row=t.data['phases'][0]
     assert row['before']==row['after']=={'marker':True} and row['begin_ns']<=row['end_ns']
+
+
+def test_driver_identity_uses_parent_pid_in_stat():
+    fields=['R']+list(map(str,range(1,50)))
+    assert process_stat('42 (node) '+' '.join(fields))['parent_pid']==1
