@@ -337,3 +337,9 @@ The separate default-off first pinned-update publication pilot is documented in
 [M3.11 setup and acceptance](MCP_ACTIVITY_ANNOUNCEMENT_PILOT.md). It publishes on
 registered-participant pages only after browser confirmation, without emailing
 registrants or dispatching an official invitation.
+
+
+The separate default-off confirmed-lead task acceptance decision is documented in
+[M4.1 setup and named pilot acceptance](MCP_TASK_ACCEPTANCE_PILOT.md). It requires
+exact browser review and separation from the owner/actual submitter, with a
+recorded hosted go/no-go before any staff decision pilot.

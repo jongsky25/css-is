@@ -32,6 +32,7 @@ import mcp_room_requests
 import mcp_travel_submissions
 import mcp_travel_reviews
 import mcp_supply_submissions
+import mcp_task_acceptances
 import mcp_task_submissions
 import mcp_task_acknowledgements
 import mcp_travel_drafts
@@ -595,6 +596,56 @@ def build_server(get_conn, origin):
         """
         return await action(lambda conn, token: mcp_travel_submissions.recover(
             conn, token, provider.resource, origin, operation_id), mcp_travel_submissions.SCOPE)
+
+    @server.tool(title='Read confirmed-lead task acceptance context', annotations=READ_ONLY)
+    async def get_task_acceptance_context(work_item_id: StrictInt, task_id: StrictInt) -> dict:
+        """Read exact review revision for accepting another person's submitted task.
+
+        Requires separate work:task:accept, current confirmed work-item lead and
+        ordinary current task/document visibility. Owner and submitting actor
+        cannot accept their own contribution; technical admin/officer rank alone
+        is insufficient. Only canonical For review submissions with resolved
+        blockers/prerequisites in an open enabled work item. Returns IDs/revisions
+        and source, without titles, submission/evidence text, notes or identities.
+        """
+        return await action(lambda conn, token: mcp_task_acceptances.read_context(
+            conn, token, provider.resource, origin, work_item_id, task_id), mcp_task_acceptances.SCOPE)
+
+    @server.tool(title='Prepare accepting an exact submitted contribution', annotations=ToolAnnotations(
+        readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=False))
+    async def prepare_task_acceptance(work_item_id: StrictInt, task_id: StrictInt,
+            revision: StrictInt, expected_revision: StrictStr, reason: StrictStr,
+            operation_id: StrictStr) -> dict:
+        """Prepare ONE confirmed-lead decision: For review to Done.
+
+        Requires work:task:accept, its hosting flag and the currently confirmed
+        lead, separate from the assigned owner and actual submitting actor. Read
+        fresh get_task_acceptance_context first. Show confirmation_url for full
+        saved output, expected output, original submission note, owner/submitter,
+        exact revision, proposed reason and normal downstream-effects review.
+        Explicit signed-in confirmation affirms review and accepts the task via
+        the existing Work service. No automatic evidence fetch, whole-work-item
+        completion, official document approval/signing/dispatch, financial/stock
+        posting or direct email/invitation. No return/cancel/reassign override.
+        Keep one random 16–80 character operation_id across retries. Recover it
+        after timeout before another decision; later ordinary changes are separate.
+        """
+        return await action(lambda conn, token: mcp_task_acceptances.prepare(
+            conn, token, provider.resource, origin, operation_id,
+            {'work_item_id': work_item_id, 'task_id': task_id, 'revision': revision,
+             'expected_revision': expected_revision, 'reason': reason}), mcp_task_acceptances.SCOPE)
+
+    @server.tool(title='Check my task acceptance decision receipt', annotations=READ_ONLY)
+    async def get_task_acceptance_operation(operation_id: StrictStr) -> dict:
+        """Recover original Done decision/revision/source without submission or note.
+
+        Same active connection/scope, current confirmed lead and current visibility
+        of the original task are required. Immutable acceptance history and source
+        identities are verified. Later ordinary reopening/resubmission is preserved;
+        recovery never accepts again or completes a work item/official document.
+        """
+        return await action(lambda conn, token: mcp_task_acceptances.recover(
+            conn, token, provider.resource, origin, operation_id), mcp_task_acceptances.SCOPE)
 
     @server.tool(title='Read activity pinned-update publication context', annotations=READ_ONLY)
     async def get_activity_announcement_context(event_token: StrictStr) -> dict:

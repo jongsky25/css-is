@@ -1,6 +1,6 @@
 # Office Connect MCP expansion plan
 
-Status: **Incremental implementation**, updated October 27, 2026. Baseline: the read-only MCP expansion in v8.35 (PR #444). M1 reads and default-off M2.1–M2.7 and M3.1–M3.11 pilots are implemented as recorded below. Existing OAuth grants are not widened. Hosted write acceptance remains separate from implementation.
+Status: **Incremental implementation**, updated October 27, 2026. Baseline: the read-only MCP expansion in v8.35 (PR #444). M1 reads and default-off M2.1–M2.7 and M3.1–M3.11 and M4.1 pilots are implemented as recorded below. Existing OAuth grants are not widened. Hosted write acceptance remains separate from implementation.
 
 ## Goal and boundary
 
@@ -565,3 +565,31 @@ and official dispatch remain excluded from direct MCP writes. No official
 invitation pipeline is invented by this increment. Hosted acceptance remains
 pending; no flag is enabled. Any later invitation workflow and M4 decision pilot
 remain separate bounded work with their own authority and acceptance evidence.
+
+
+M3.11 merged in [PR #508](https://github.com/jongsky25/css-is/pull/508), commit
+`061dc6f4bd2f722e9a598e0e08d7af357872ab71`.
+
+### M4.1 implementation — v8.97
+
+Separate default-off `work:task:accept` is the first bounded decision pilot.
+The current confirmed work-item lead may prepare acceptance of another person's
+exact canonical For review task as Done, with full saved/expected output,
+submission note, owner/actual submitter, proposed reason, dependent contributions
+and legacy notice effects shown in the signed-in confirmation. Owners and actual
+submitters cannot self-accept. Officer/technical-admin rank or a proposed lead
+alone never grants this MCP decision authority; ordinary Work policy is unchanged.
+
+The pilot reuses the existing transactional task service for revision/status,
+shared history/audit, review invalidation and legacy notice cancellation. Current
+lead/account, source/submission identity, linked records and dependency/notice
+revision are checked again; decision, minimal receipt and integration audit commit
+together. Old-key recovery preserves later ordinary reopening/resubmission and
+uses immutable origin/acceptance evidence. A new canonical submission cycle
+requires fresh context and a separate human confirmation.
+
+See [M4.1 setup, named acceptance and go/no-go](MCP_TASK_ACCEPTANCE_PILOT.md).
+Hosted M4 acceptance remains pending; no flag or staff decision pilot is enabled.
+This does not complete the whole work item or approve/close/sign/dispatch official
+documents, directly send mail, or post financial/stock operations. Other M4
+review/approval/posting decisions remain separate bounded increments.

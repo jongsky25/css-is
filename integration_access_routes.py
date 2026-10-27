@@ -26,6 +26,7 @@ import mcp_room_requests
 import mcp_travel_submissions
 import mcp_travel_reviews
 import mcp_supply_submissions
+import mcp_task_acceptances
 import mcp_task_submissions
 import mcp_task_acknowledgements
 import mcp_travel_drafts
@@ -49,6 +50,7 @@ def csrf(request):
 
 # Explicit allowlist: never expose the hosting environment or credential material.
 MCP_PILOTS = (
+    ('Accept submitted task as confirmed lead (exact browser review)', 'TASK_ACCEPTANCES', 'work:task:accept', ('get_task_acceptance_context', 'prepare_task_acceptance', 'get_task_acceptance_operation')),
     ('Publish first activity pinned update (browser confirmation; no email)', 'ACTIVITY_ANNOUNCEMENTS', 'activities:announcement:publish', ('get_activity_announcement_context', 'prepare_activity_announcement', 'get_activity_announcement_operation')),
     ('Create live activity from own private draft (browser confirmation)', 'ACTIVITY_CREATION', 'activities:draft:create', ('get_activity_creation_context', 'prepare_activity_from_draft', 'get_activity_creation_operation')),
     ('Save own private activity drafts (browser confirmation)', 'ACTIVITY_DRAFTS', 'activities:draft:save', ('get_activity_draft_context', 'prepare_activity_draft', 'get_activity_draft_operation')),
@@ -179,12 +181,12 @@ def make_router(templates, get_conn, mcp_readiness=None, *, invalidate_activity_
         conn = get_conn()
         try:
             origin = action_origin(request)
-            service = {'notice': mcp_actions, 'supply': mcp_supply_drafts, 'comment': mcp_comment_drafts, 'report': mcp_report_views, 'calendar': mcp_personal_calendar, 'travel': mcp_travel_drafts, 'ack': mcp_task_acknowledgements, 'submit': mcp_task_submissions, 'supply_submit': mcp_supply_submissions, 'travel_review': mcp_travel_reviews, 'travel_submit': mcp_travel_submissions, 'room': mcp_room_requests, 'meal': mcp_meal_requests, 'wa': mcp_work_arrangements, 'activity_dates': mcp_activity_dates, 'activity_draft': mcp_activity_drafts, 'activity_creation': mcp_activity_creation, 'activity_announcement': mcp_activity_announcements}[kind]
+            service = {'notice': mcp_actions, 'supply': mcp_supply_drafts, 'comment': mcp_comment_drafts, 'report': mcp_report_views, 'calendar': mcp_personal_calendar, 'travel': mcp_travel_drafts, 'ack': mcp_task_acknowledgements, 'submit': mcp_task_submissions, 'supply_submit': mcp_supply_submissions, 'travel_review': mcp_travel_reviews, 'travel_submit': mcp_travel_submissions, 'room': mcp_room_requests, 'meal': mcp_meal_requests, 'wa': mcp_work_arrangements, 'activity_dates': mcp_activity_dates, 'activity_draft': mcp_activity_drafts, 'activity_creation': mcp_activity_creation, 'activity_announcement': mcp_activity_announcements, 'accept': mcp_task_acceptances}[kind]
             result = service.browser(conn, payload(request), origin + '/mcp', origin,
                                          operation_id, confirm_digest=confirm_digest)
             if kind == 'activity_dates' and confirm_digest is not None and result['status'] == 'completed' and invalidate_activity_dates:
                 invalidate_activity_dates()
-            return templates.TemplateResponse(request, {'notice': 'mcp_action.html', 'supply': 'mcp_supply_draft.html', 'comment': 'mcp_comment_draft.html', 'report': 'mcp_report_view.html', 'calendar': 'mcp_personal_calendar.html', 'travel': 'mcp_travel_draft.html', 'ack': 'mcp_task_acknowledgement.html', 'submit': 'mcp_task_submission.html', 'supply_submit': 'mcp_supply_submission.html', 'travel_review': 'mcp_travel_review.html', 'travel_submit': 'mcp_travel_submission.html', 'room': 'mcp_room_request.html', 'meal': 'mcp_meal_request.html', 'wa': 'mcp_work_arrangement.html', 'activity_dates': 'mcp_activity_dates.html', 'activity_draft': 'mcp_activity_draft.html', 'activity_creation': 'mcp_activity_creation.html', 'activity_announcement': 'mcp_activity_announcement.html'}[kind],
+            return templates.TemplateResponse(request, {'notice': 'mcp_action.html', 'supply': 'mcp_supply_draft.html', 'comment': 'mcp_comment_draft.html', 'report': 'mcp_report_view.html', 'calendar': 'mcp_personal_calendar.html', 'travel': 'mcp_travel_draft.html', 'ack': 'mcp_task_acknowledgement.html', 'submit': 'mcp_task_submission.html', 'supply_submit': 'mcp_supply_submission.html', 'travel_review': 'mcp_travel_review.html', 'travel_submit': 'mcp_travel_submission.html', 'room': 'mcp_room_request.html', 'meal': 'mcp_meal_request.html', 'wa': 'mcp_work_arrangement.html', 'activity_dates': 'mcp_activity_dates.html', 'activity_draft': 'mcp_activity_draft.html', 'activity_creation': 'mcp_activity_creation.html', 'activity_announcement': 'mcp_activity_announcement.html', 'accept': 'mcp_task_acceptance.html'}[kind],
                 {'show_scope': False, 'result': result, 'csrf': csrf(request)}, headers=private)
         except (permissions.Denied, supplies_storage.Denied):
             return HTMLResponse('Action not found or unavailable to you. Sign in with the account that prepared it.', status_code=404, headers=private)
@@ -351,6 +353,14 @@ def make_router(templates, get_conn, mcp_readiness=None, *, invalidate_activity_
     @router.post('/account/integrations/mcp/supply-submissions/{operation_id}', response_class=HTMLResponse)
     async def supply_submission_confirm(request: Request, operation_id: str):
         return await confirm_action(request, operation_id, kind='supply_submit')
+
+    @router.get('/account/integrations/mcp/task-acceptances/{operation_id}', response_class=HTMLResponse)
+    def task_acceptance_preview(request: Request, operation_id: str):
+        return action_screen(request, operation_id, kind='accept')
+
+    @router.post('/account/integrations/mcp/task-acceptances/{operation_id}', response_class=HTMLResponse)
+    async def task_acceptance_confirm(request: Request, operation_id: str):
+        return await confirm_action(request, operation_id, kind='accept')
 
     @router.get('/account/integrations/mcp/task-submissions/{operation_id}', response_class=HTMLResponse)
     def task_submission_preview(request: Request, operation_id: str):
