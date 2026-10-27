@@ -103,3 +103,29 @@ def test_auth_revocation_is_visible_after_cached_read(app_mod, admin):
     conn.commit()
     conn.close()
     assert admin.get('/appearance/current', follow_redirects=False).status_code in (303, 401)
+
+
+def test_application_reader_lifecycle_restarts(app_mod):
+    app_mod._start_read_worker()
+    assert app_mod.read_db(lambda c: c.execute('SELECT 1').fetchone()) == (1,)
+    app_mod._read_worker.close()
+    app_mod._start_read_worker()
+    assert app_mod.read_db(lambda c: c.execute('SELECT 2').fetchone()) == (2,)
+
+
+def test_shutdown_drains_an_accepted_read_and_rejects_later_reads(reader):
+    worker, path = reader
+    started, release = threading.Event(), threading.Event()
+    def read(c):
+        started.set()
+        assert release.wait(5)
+        return c.execute('SELECT n FROM value').fetchone()[0]
+    with ThreadPoolExecutor(max_workers=2) as callers:
+        pending = callers.submit(worker.read, path, lambda: st.connect(path), read)
+        assert started.wait(5)
+        closing = callers.submit(worker.close)
+        release.set()
+        assert pending.result(timeout=5) == 1
+        closing.result(timeout=5)
+    with pytest.raises(RuntimeError, match='shutdown'):
+        worker.read(path, lambda: st.connect(path), lambda c: None)

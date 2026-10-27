@@ -15,11 +15,16 @@ class SQLiteReader:
         self._key = None
         self._owner = None
         self._closed = False
+        self._lifecycle = threading.Lock()
 
     def read(self, path, connect, operation, *, refresh=False):
         if threading.get_ident() == self._owner:
             raise RuntimeError("Nested SQLiteReader callback")
-        return self._worker.submit(self._read, path, connect, operation, refresh).result()
+        with self._lifecycle:
+            if self._closed:
+                raise RuntimeError("SQLiteReader is shutdown")
+            pending = self._worker.submit(self._read, path, connect, operation, refresh)
+        return pending.result()
 
     def _close(self):
         if self._conn is not None:
@@ -56,7 +61,12 @@ class SQLiteReader:
                 self._close()
 
     def close(self):
-        if not self._closed:
-            self._worker.submit(self._close).result()
-            self._worker.shutdown(wait=True)
-            self._closed = True
+        if threading.get_ident() == self._owner:
+            raise RuntimeError("Cannot close SQLiteReader from its callback")
+        with self._lifecycle:
+            if not self._closed:
+                self._closed = True
+                # Queue behind accepted reads; reject new submissions before the
+                # final close so no late callback can reopen a leaked handle.
+                self._worker.submit(self._close).result()
+                self._worker.shutdown(wait=True)
