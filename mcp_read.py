@@ -22,6 +22,7 @@ import mcp_auth
 import mcp_actions
 import mcp_supply_drafts
 import mcp_comment_drafts
+import mcp_supply_submissions
 import mcp_task_submissions
 import mcp_task_acknowledgements
 import mcp_travel_drafts
@@ -449,6 +450,43 @@ def build_server(get_conn, origin):
         """
         return await action(lambda conn, token: mcp_task_submissions.recover(
             conn, token, provider.resource, origin, operation_id), mcp_task_submissions.SCOPE)
+
+    @server.tool(title='Prepare submitting my supply request', annotations=ToolAnnotations(
+        readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=False))
+    async def prepare_supply_request_submission(request_id: StrictInt, revision: StrictInt,
+                                                operation_id: StrictStr) -> dict:
+        """Prepare an existing own draft/returned supply request for approval.
+
+        Requires separate supplies:request:submit consent; draft/read grants do
+        not authorize submission. Read the request's current revision first.
+        This call changes no request, allocates no control number and reserves
+        no stock. Show confirmation_url for exact signed-in browser review of
+        purpose/date, all item quantities/catalog details, current requester/unit
+        and approval-routing warning. Confirmation creates an immutable submitted
+        version and a control number if needed through the normal domain service.
+        No approval, reservation, stock issuance, purchase or payment. Zero
+        eligible approvers is shown explicitly and follows the normal workflow's
+        permitted submission with routing warning. Reuse one random 16–80
+        character operation_id across retries; recover before a replacement key.
+        """
+        return await action(lambda conn, token: mcp_supply_submissions.prepare(
+            conn, token, provider.resource, origin, operation_id,
+            {'request_id': request_id, 'revision': revision}), mcp_supply_submissions.SCOPE)
+
+    @server.tool(title='Check my supply submission receipt', annotations=READ_ONLY)
+    async def get_supply_submission_operation(operation_id: StrictStr) -> dict:
+        """Recover the original supply preview/submission through its stable key.
+
+        Requires the original active connection, supplies:request:submit consent
+        and current ownership. Returns actual original submitted state, version,
+        control number, approval-routing role/count and source link, not purpose,
+        item text or quantities. Completed means submitted for approval. Later
+        decisions or edits remain separate; recovery never repeats/overwrites
+        them. Timeout/unavailability is not proof of failure; inspect the original
+        operation/source before preparing another key.
+        """
+        return await action(lambda conn, token: mcp_supply_submissions.recover(
+            conn, token, provider.resource, origin, operation_id), mcp_supply_submissions.SCOPE)
 
     def supply_queue(conn, user, queue, state, query, page, limit):
         if queue not in ('requests', 'approvals', 'warnings'):

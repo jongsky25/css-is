@@ -128,43 +128,51 @@ def _number(conn):
 
 def submit(conn, user, request_id, *, expected_revision, operation_key):
     with transaction(conn):
-        user = permissions.require_actor(conn,user)
-        s.require_enabled(conn)
-        request = _owned(conn,user,request_id)
-        revision = s.integer(expected_revision,'Request revision',1)
-        key,digest,prior = operation(conn,user,operation_key,'request_submit',{'id':request['id'],'revision':revision})
-        if prior is not None:
-            return prior
-        _check_revision(request,revision)
-        if request['approval_status'] not in ('draft','returned'):
-            raise Conflict('Only a draft or returned request can be submitted. Reload the request to check its status.')
-        user,identity = requester(conn,user)
-        lines = rows(conn,'SELECT * FROM supply_request_draft_line WHERE request_id=? AND active=1 ORDER BY id',(request['id'],))
-        _fields({**request,'lines':lines})
-        _active_items(conn,lines)
-        for line in lines:
-            item = s._item(conn,line['item_id'])
-            if any(line[k+'_snapshot'] != item[k] for k in ('code','description','unit')):
-                raise Conflict('A catalog description or unit changed. Edit and save the draft to confirm the current item before submitting.')
-        now = tz.now_iso()
-        current_revision = request['current_revision'] + 1
-        control = request['control_number'] or _number(conn)
-        revision_id = conn.execute('''INSERT INTO supply_request_revision
-          (request_id,revision,purpose,date_needed,requester_rp_id,requester_snapshot,unit_id,unit_snapshot,submitted_at,submitted_by,operation_key)
-          VALUES (?,?,?,?,?,?,?,?,?,?,?)''', (request['id'],current_revision,request['purpose'],request['date_needed'],
-          *[identity[k] for k in ('requester_rp_id','requester_snapshot','unit_id','unit_snapshot')],now,user['id'],key)).lastrowid
-        for line in lines:
-            item = s._item(conn,line['item_id'])
-            conn.execute('''INSERT INTO supply_request_revision_line
-              (revision_id,line_id,item_id,code_snapshot,description_snapshot,unit_snapshot,item_revision,requested_quantity)
-              VALUES (?,?,?,?,?,?,?,?)''', (revision_id,line['id'],item['id'],item['code'],item['description'],item['unit'],item['revision'],line['requested_quantity']))
-        conn.execute('''UPDATE supply_request SET control_number=?,approval_status='submitted',current_revision=?,
-          revision=revision+1,requester_rp_id=?,requester_snapshot=?,unit_id=?,unit_snapshot=?,submitted_at=?,updated_at=? WHERE id=?''',
-          (control,current_revision,*[identity[k] for k in ('requester_rp_id','requester_snapshot','unit_id','unit_snapshot')],now,now,request['id']))
-        approvers = eligible_approvers(conn,user['id'],identity['unit_id'])
-        result = {'id':request['id'],'control_number':control,'revision':revision+1,'current_revision':current_revision,'approval_status':'submitted'}
-        return record(conn,user,key,digest,'request_submit','request',result,
-                      {**result, **identity,'eligible_approver_count':len(approvers)})
+        return submit_in_transaction(conn, user, request_id, expected_revision=expected_revision,
+                                     operation_key=operation_key)
+
+
+def submit_in_transaction(conn, user, request_id, *, expected_revision, operation_key):
+    """Submit through the normal domain contract in the caller's writer transaction."""
+    if not conn.in_transaction:
+        raise RuntimeError('A caller-owned supply submission transaction is required.')
+    user = permissions.require_actor(conn,user)
+    s.require_enabled(conn)
+    request = _owned(conn,user,request_id)
+    revision = s.integer(expected_revision,'Request revision',1)
+    key,digest,prior = operation(conn,user,operation_key,'request_submit',{'id':request['id'],'revision':revision})
+    if prior is not None:
+        return prior
+    _check_revision(request,revision)
+    if request['approval_status'] not in ('draft','returned'):
+        raise Conflict('Only a draft or returned request can be submitted. Reload the request to check its status.')
+    user,identity = requester(conn,user)
+    lines = rows(conn,'SELECT * FROM supply_request_draft_line WHERE request_id=? AND active=1 ORDER BY id',(request['id'],))
+    _fields({**request,'lines':lines})
+    _active_items(conn,lines)
+    for line in lines:
+        item = s._item(conn,line['item_id'])
+        if any(line[k+'_snapshot'] != item[k] for k in ('code','description','unit')):
+            raise Conflict('A catalog description or unit changed. Edit and save the draft to confirm the current item before submitting.')
+    now = tz.now_iso()
+    current_revision = request['current_revision'] + 1
+    control = request['control_number'] or _number(conn)
+    revision_id = conn.execute('''INSERT INTO supply_request_revision
+      (request_id,revision,purpose,date_needed,requester_rp_id,requester_snapshot,unit_id,unit_snapshot,submitted_at,submitted_by,operation_key)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?)''', (request['id'],current_revision,request['purpose'],request['date_needed'],
+      *[identity[k] for k in ('requester_rp_id','requester_snapshot','unit_id','unit_snapshot')],now,user['id'],key)).lastrowid
+    for line in lines:
+        item = s._item(conn,line['item_id'])
+        conn.execute('''INSERT INTO supply_request_revision_line
+          (revision_id,line_id,item_id,code_snapshot,description_snapshot,unit_snapshot,item_revision,requested_quantity)
+          VALUES (?,?,?,?,?,?,?,?)''', (revision_id,line['id'],item['id'],item['code'],item['description'],item['unit'],item['revision'],line['requested_quantity']))
+    conn.execute('''UPDATE supply_request SET control_number=?,approval_status='submitted',current_revision=?,
+      revision=revision+1,requester_rp_id=?,requester_snapshot=?,unit_id=?,unit_snapshot=?,submitted_at=?,updated_at=? WHERE id=?''',
+      (control,current_revision,*[identity[k] for k in ('requester_rp_id','requester_snapshot','unit_id','unit_snapshot')],now,now,request['id']))
+    approvers = eligible_approvers(conn,user['id'],identity['unit_id'])
+    result = {'id':request['id'],'control_number':control,'revision':revision+1,'current_revision':current_revision,'approval_status':'submitted'}
+    return record(conn,user,key,digest,'request_submit','request',result,
+                  {**result, **identity,'eligible_approver_count':len(approvers)})
 
 
 def withdraw(conn, user, request_id, *, reason, expected_revision, operation_key):

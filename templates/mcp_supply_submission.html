@@ -1,0 +1,37 @@
+{% extends "dash_layout.html" %}
+{% block title %}Review supply submission — Office Connect{% endblock %}
+{% block content %}
+<div style="max-width:46rem;margin:auto;overflow-wrap:anywhere">
+{% if result.status == 'completed' %}
+<h1>Supply request submitted for approval</h1>
+<p>Recorded at {{ result.completed_at }} as {{ result.submitted.control_number }}, submitted version {{ result.submitted.current_revision }} (request revision {{ result.submitted.revision }}). This is the original result; later decisions or edits are separate.</p>
+<p>Next: a supply request approver for unit {{ result.next_actor.unit_id }}. At submission there were {{ result.next_actor.eligible_approver_count }} eligible approvers.</p>
+{% if result.next_actor.routing_warning %}<p><strong>No eligible approver was configured at submission.</strong> Review current routing in Office Connect and ask the administrator to configure a unit-scoped approver. Submission does not constitute approval.</p>{% endif %}
+<p><a href="{{ result.web_url }}">Open my submitted supply request</a></p>
+{% else %}
+<h1>Submit this supply request for approval?</h1>
+<dl>
+<dt>Request</dt><dd>{{ result.snapshot.request_id }} · {{ result.snapshot.status }} · revision {{ result.snapshot.revision }}</dd>
+<dt>Requester</dt><dd>{{ result.snapshot.requester.requester_snapshot }}</dd>
+<dt>Submitting unit</dt><dd>{{ result.snapshot.requester.unit_snapshot }} ({{ result.snapshot.requester.unit_id }})</dd>
+<dt>Purpose</dt><dd style="white-space:pre-wrap">{{ result.snapshot.purpose }}</dd>
+<dt>Date needed</dt><dd>{{ result.snapshot.date_needed or 'Not specified' }}</dd>
+<dt>Control number</dt><dd>{% if result.snapshot.control_number %}{{ result.snapshot.control_number }} (retained){% else %}Assigned on confirmation in the {{ result.snapshot.number_year }} supply sequence; none is reserved by this preview{% endif %}</dd>
+<dt>Change</dt><dd>{{ result.snapshot.status }} → submitted for approval</dd>
+<dt>Who acts next</dt><dd>Unit-scoped supply request approver · {{ result.snapshot.next_actor.eligible_approver_count }} eligible</dd>
+</dl>
+{% if result.snapshot.next_actor.routing_warning %}<p><strong>No eligible approver is configured for this unit.</strong> The normal supply workflow permits submission with a routing warning. The request will wait for an eligible approver; ask the administrator to configure one. This confirmation does not approve the request.</p>{% endif %}
+<h2>Exact requested items</h2>
+<ul>{% for line in result.snapshot.lines %}<li>{{ line.code }} · {{ line.description }} · {{ line.requested_quantity }} {{ line.unit }} (catalog revision {{ line.item_revision }})</li>{% endfor %}</ul>
+<p>Confirmation creates an immutable submitted version and assigns a control number if needed. The request becomes visible to eligible unit approvers and the normal supply custodian/auditor roles. It submits only the request shown above; it does not approve quantities, reserve or issue stock, post inventory movements, create a purchase or make payment. No invitation or external message is sent by this action.</p>
+<p>Review every line, quantity, purpose, date and submitting unit. Changes to the request, catalog, requester, routing or numbering year require a new preview. This preview expires ten minutes after preparation.</p>
+<form method="post">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<input type="hidden" name="preview_digest" value="{{ result.preview_digest }}">
+<button type="submit" name="confirm" value="yes">Confirm: submit my supply request</button>
+</form>
+{% endif %}
+<p>Operation receipt: <code>{{ result.operation_id }}</code></p>
+<p><a href="{{ result.web_url }}">Review my supply request</a></p>
+</div>
+{% endblock %}

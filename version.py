@@ -18,10 +18,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "8.86"
+APP_VERSION = "8.87"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "8.87",
+        "date": "October 27, 2026",
+        "summary": "Review and submit your supply request for approval through ChatGPT.",
+        "changes": [
+            "With separate permission, ChatGPT can prepare an existing draft or returned supply request for submission.",
+            "Review every item, quantity, purpose, submitting unit and approval-routing warning in Office Connect before confirming.",
+            "The optional pilot stays off until enabled and returns the submitted version and control number without reserving or issuing stock."
+        ]
+    },
     {
         "version": "8.86",
         "date": "October 27, 2026",
