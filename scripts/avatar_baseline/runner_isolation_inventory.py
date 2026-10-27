@@ -31,8 +31,11 @@ def inventory():
     result['lscpu_exit_code']=command.returncode
     result['cpu_topology']={key.strip():value.strip() for line in command.stdout.splitlines() if ':' in line
                             for key,value in [line.split(':',1)] if key.strip() in CPU_FIELDS}
-    detect=subprocess.run(['systemd-detect-virt'],capture_output=True,text=True)
-    result['virtualization_detection']={'exit_code':detect.returncode,'value':detect.stdout.strip()}
+    try:
+        detect=subprocess.run(['systemd-detect-virt'],capture_output=True,text=True)
+        result['virtualization_detection']={'exit_code':detect.returncode,'value':detect.stdout.strip()}
+    except FileNotFoundError:
+        result['virtualization_detection']={'unavailable':'command not installed'}
     # Mount metadata only for this known cgroup mount; omit unrelated mount paths.
     result['cgroup_mounts']=[]
     for line in Path('/proc/self/mountinfo').read_text().splitlines():
