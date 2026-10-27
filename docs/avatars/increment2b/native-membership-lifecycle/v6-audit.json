@@ -1,0 +1,5462 @@
+{
+  "acceptance": false,
+  "application_qualified": false,
+  "status": "diagnostic_failed",
+  "errors": [
+    "Slot 1: Observation bound exceeds 5% or 250ms",
+    "Slot 2: Observation bound exceeds 5% or 250ms",
+    "Controls vary more than 20%",
+    "Probe/control exceeds 1.20: 0/1"
+  ],
+  "cohorts": [
+    {
+      "index": 0,
+      "mode": "control",
+      "duration_ms": 4055.694249,
+      "membership_status": "valid_control",
+      "membership_errors": [],
+      "membership_qualification_waived": false,
+      "errors": [],
+      "stages": [
+        {
+          "index": 0,
+          "documents": 6,
+          "nodes": 8224,
+          "used_heap_bytes": 1562944
+        },
+        {
+          "index": 1,
+          "documents": 8,
+          "nodes": 16428,
+          "used_heap_bytes": 2017652
+        },
+        {
+          "index": 2,
+          "documents": 10,
+          "nodes": 24632,
+          "used_heap_bytes": 2405616
+        },
+        {
+          "index": 3,
+          "documents": 12,
+          "nodes": 32836,
+          "used_heap_bytes": 2840504
+        },
+        {
+          "index": 4,
+          "documents": 14,
+          "nodes": 41040,
+          "used_heap_bytes": 3256720
+        },
+        {
+          "index": 5,
+          "documents": 16,
+          "nodes": 49244,
+          "used_heap_bytes": 3655572
+        },
+        {
+          "index": 6,
+          "documents": 18,
+          "nodes": 57448,
+          "used_heap_bytes": 4089528
+        },
+        {
+          "index": 7,
+          "documents": 20,
+          "nodes": 65652,
+          "used_heap_bytes": 4488180
+        },
+        {
+          "index": 8,
+          "documents": 22,
+          "nodes": 73856,
+          "used_heap_bytes": 4905212
+        },
+        {
+          "index": 9,
+          "documents": 24,
+          "nodes": 82060,
+          "used_heap_bytes": 5331740
+        },
+        {
+          "index": 10,
+          "documents": 26,
+          "nodes": 90264,
+          "used_heap_bytes": 5738100
+        },
+        {
+          "index": 11,
+          "documents": 28,
+          "nodes": 98468,
+          "used_heap_bytes": 6154976
+        }
+      ],
+      "observation_fraction_bound": 0.035446095088515636,
+      "maximum_observation_ms": 16.234611,
+      "status": "valid_control"
+    },
+    {
+      "index": 1,
+      "mode": "probe",
+      "duration_ms": 5215.486108,
+      "membership_status": "capability_passed",
+      "membership_errors": [],
+      "membership_qualification_waived": false,
+      "errors": [
+        "Observation bound exceeds 5% or 250ms"
+      ],
+      "stages": [
+        {
+          "index": 0,
+          "documents": 6,
+          "nodes": 8224,
+          "used_heap_bytes": 1562620
+        },
+        {
+          "index": 1,
+          "documents": 8,
+          "nodes": 16428,
+          "used_heap_bytes": 1989108
+        },
+        {
+          "index": 2,
+          "documents": 10,
+          "nodes": 24632,
+          "used_heap_bytes": 2416808
+        },
+        {
+          "index": 3,
+          "documents": 12,
+          "nodes": 32836,
+          "used_heap_bytes": 2833620
+        },
+        {
+          "index": 4,
+          "documents": 14,
+          "nodes": 41040,
+          "used_heap_bytes": 3239420
+        },
+        {
+          "index": 5,
+          "documents": 16,
+          "nodes": 49244,
+          "used_heap_bytes": 3662392
+        },
+        {
+          "index": 6,
+          "documents": 18,
+          "nodes": 57448,
+          "used_heap_bytes": 4072156
+        },
+        {
+          "index": 7,
+          "documents": 20,
+          "nodes": 65652,
+          "used_heap_bytes": 4485516
+        },
+        {
+          "index": 8,
+          "documents": 22,
+          "nodes": 73856,
+          "used_heap_bytes": 4902004
+        },
+        {
+          "index": 9,
+          "documents": 24,
+          "nodes": 82060,
+          "used_heap_bytes": 5322168
+        },
+        {
+          "index": 10,
+          "documents": 1,
+          "nodes": 8200,
+          "used_heap_bytes": 1574928
+        },
+        {
+          "index": 11,
+          "documents": 3,
+          "nodes": 16404,
+          "used_heap_bytes": 1240252
+        }
+      ],
+      "observation_fraction_bound": 0.06687089981220212,
+      "maximum_observation_ms": 38.145101,
+      "status": "valid_lifecycle_capture",
+      "native_event_counts": {
+        "shutdown": 36,
+        "allocate": 602,
+        "receiver": 1536,
+        "pool": 500
+      },
+      "native_events_outside_window": 0,
+      "pagehide_markers": [
+        {
+          "args": {
+            "data": {
+              "frame": "67E1BCFABEEE7EB60C6695C6EE73614F",
+              "message": "membership-pagehide:0:false",
+              "name": "membership-pagehide:0:false",
+              "sampleTraceId": 1134143704511579
+            }
+          },
+          "cat": "devtools.timeline",
+          "name": "TimeStamp",
+          "ph": "I",
+          "pid": 9718,
+          "s": "t",
+          "tid": 9718,
+          "ts": 5875139604,
+          "tts": 172003
+        },
+        {
+          "args": {
+            "data": {
+              "frame": "67E1BCFABEEE7EB60C6695C6EE73614F",
+              "message": "membership-pagehide:1:false",
+              "name": "membership-pagehide:1:false",
+              "sampleTraceId": 1134143704511642
+            }
+          },
+          "cat": "devtools.timeline",
+          "name": "TimeStamp",
+          "ph": "I",
+          "pid": 9718,
+          "s": "t",
+          "tid": 9718,
+          "ts": 5875468849,
+          "tts": 246045
+        },
+        {
+          "args": {
+            "data": {
+              "frame": "67E1BCFABEEE7EB60C6695C6EE73614F",
+              "message": "membership-pagehide:2:false",
+              "name": "membership-pagehide:2:false",
+              "sampleTraceId": 1134143704511904
+            }
+          },
+          "cat": "devtools.timeline",
+          "name": "TimeStamp",
+          "ph": "I",
+          "pid": 9718,
+          "s": "t",
+          "tid": 9718,
+          "ts": 5875839447,
+          "tts": 356037
+        },
+        {
+          "args": {
+            "data": {
+              "frame": "67E1BCFABEEE7EB60C6695C6EE73614F",
+              "message": "membership-pagehide:3:false",
+              "name": "membership-pagehide:3:false",
+              "sampleTraceId": 1134143704511210
+            }
+          },
+          "cat": "devtools.timeline",
+          "name": "TimeStamp",
+          "ph": "I",
+          "pid": 9718,
+          "s": "t",
+          "tid": 9718,
+          "ts": 5876187135,
+          "tts": 457137
+        },
+        {
+          "args": {
+            "data": {
+              "frame": "67E1BCFABEEE7EB60C6695C6EE73614F",
+              "message": "membership-pagehide:4:false",
+              "name": "membership-pagehide:4:false",
+              "sampleTraceId": 1134143704511274
+            }
+          },
+          "cat": "devtools.timeline",
+          "name": "TimeStamp",
+          "ph": "I",
+          "pid": 9718,
+          "s": "t",
+          "tid": 9718,
+          "ts": 5876512444,
+          "tts": 532927
+        },
+        {
+          "args": {
+            "data": {
+              "frame": "67E1BCFABEEE7EB60C6695C6EE73614F",
+              "message": "membership-pagehide:5:false",
+              "name": "membership-pagehide:5:false",
+              "sampleTraceId": 1134143704510577
+            }
+          },
+          "cat": "devtools.timeline",
+          "name": "TimeStamp",
+          "ph": "I",
+          "pid": 9718,
+          "s": "t",
+          "tid": 9718,
+          "ts": 5876880302,
+          "tts": 632480
+        },
+        {
+          "args": {
+            "data": {
+              "frame": "67E1BCFABEEE7EB60C6695C6EE73614F",
+              "message": "membership-pagehide:6:false",
+              "name": "membership-pagehide:6:false",
+              "sampleTraceId": 1134143704510644
+            }
+          },
+          "cat": "devtools.timeline",
+          "name": "TimeStamp",
+          "ph": "I",
+          "pid": 9718,
+          "s": "t",
+          "tid": 9718,
+          "ts": 5877228319,
+          "tts": 722959
+        },
+        {
+          "args": {
+            "data": {
+              "frame": "67E1BCFABEEE7EB60C6695C6EE73614F",
+              "message": "membership-pagehide:7:false",
+              "name": "membership-pagehide:7:false",
+              "sampleTraceId": 1134143704510964
+            }
+          },
+          "cat": "devtools.timeline",
+          "name": "TimeStamp",
+          "ph": "I",
+          "pid": 9718,
+          "s": "t",
+          "tid": 9718,
+          "ts": 5877624335,
+          "tts": 825275
+        },
+        {
+          "args": {
+            "data": {
+              "frame": "67E1BCFABEEE7EB60C6695C6EE73614F",
+              "message": "membership-pagehide:8:false",
+              "name": "membership-pagehide:8:false",
+              "sampleTraceId": 1134143704514072
+            }
+          },
+          "cat": "devtools.timeline",
+          "name": "TimeStamp",
+          "ph": "I",
+          "pid": 9718,
+          "s": "t",
+          "tid": 9718,
+          "ts": 5878095493,
+          "tts": 1033682
+        },
+        {
+          "args": {
+            "data": {
+              "frame": "67E1BCFABEEE7EB60C6695C6EE73614F",
+              "message": "membership-pagehide:9:false",
+              "name": "membership-pagehide:9:false",
+              "sampleTraceId": 1134143704514342
+            }
+          },
+          "cat": "devtools.timeline",
+          "name": "TimeStamp",
+          "ph": "I",
+          "pid": 9718,
+          "s": "t",
+          "tid": 9718,
+          "ts": 5878623673,
+          "tts": 1273649
+        },
+        {
+          "args": {
+            "data": {
+              "frame": "67E1BCFABEEE7EB60C6695C6EE73614F",
+              "message": "membership-pagehide:10:false",
+              "name": "membership-pagehide:10:false",
+              "sampleTraceId": 1134143704513737
+            }
+          },
+          "cat": "devtools.timeline",
+          "name": "TimeStamp",
+          "ph": "I",
+          "pid": 9718,
+          "s": "t",
+          "tid": 9718,
+          "ts": 5879600203,
+          "tts": 2043135
+        }
+      ],
+      "shutdown_trace_events": [
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 48,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 46,
+          "tid": 9718,
+          "ts": 5874773667,
+          "tts": 61932
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 127,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 125,
+          "tid": 9718,
+          "ts": 5874774161,
+          "tts": 62291
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 2,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 1,
+          "tid": 9718,
+          "ts": 5874775768,
+          "tts": 63668
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 46,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 44,
+          "tid": 9718,
+          "ts": 5875139369,
+          "tts": 171775
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 3218,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 2958,
+          "tid": 9718,
+          "ts": 5875140605,
+          "tts": 172988
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 1,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9718,
+          "tid": 9718,
+          "ts": 5875150742
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 52,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 50,
+          "tid": 9718,
+          "ts": 5875468548,
+          "tts": 245752
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 3932,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 3886,
+          "tid": 9718,
+          "ts": 5875469860,
+          "tts": 246898
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 2,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 1,
+          "tid": 9718,
+          "ts": 5875476148,
+          "tts": 252355
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 45,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 43,
+          "tid": 9718,
+          "ts": 5875839231,
+          "tts": 355828
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 3065,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 2872,
+          "tid": 9718,
+          "ts": 5875839994,
+          "tts": 356567
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 2,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 1,
+          "tid": 9718,
+          "ts": 5875848083,
+          "tts": 360800
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 51,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 49,
+          "tid": 9718,
+          "ts": 5876186918,
+          "tts": 456927
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 2746,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 2312,
+          "tid": 9718,
+          "ts": 5876187809,
+          "tts": 457796
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 1,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9718,
+          "tid": 9718,
+          "ts": 5876195315
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 41,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 40,
+          "tid": 9718,
+          "ts": 5876512244,
+          "tts": 532733
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 2255,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 2194,
+          "tid": 9718,
+          "ts": 5876513032,
+          "tts": 533500
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 1,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9718,
+          "tid": 9718,
+          "ts": 5876516925
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 41,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 39,
+          "tid": 9718,
+          "ts": 5876880099,
+          "tts": 632284
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 2196,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 2195,
+          "tid": 9718,
+          "ts": 5876880856,
+          "tts": 632996
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 1,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 1,
+          "tid": 9718,
+          "ts": 5876889102,
+          "tts": 636424
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 41,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 40,
+          "tid": 9718,
+          "ts": 5877228110,
+          "tts": 722756
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 2451,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 2449,
+          "tid": 9718,
+          "ts": 5877229025,
+          "tts": 723626
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 1,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 1,
+          "tid": 9718,
+          "ts": 5877236447,
+          "tts": 727287
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 47,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 45,
+          "tid": 9718,
+          "ts": 5877624102,
+          "tts": 825049
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 2106,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 2104,
+          "tid": 9718,
+          "ts": 5877625181,
+          "tts": 826071
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 1,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 1,
+          "tid": 9718,
+          "ts": 5877632169,
+          "tts": 829304
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 44,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 42,
+          "tid": 9718,
+          "ts": 5878095271,
+          "tts": 1033466
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 2761,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 2760,
+          "tid": 9718,
+          "ts": 5878096177,
+          "tts": 1034351
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 1,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9718,
+          "tid": 9718,
+          "ts": 5878104202
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 3509,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 3505,
+          "tid": 9718,
+          "ts": 5878619851,
+          "tts": 1269835
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 12056,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 12053,
+          "tid": 9718,
+          "ts": 5878627353,
+          "tts": 1277316
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 2,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 1,
+          "tid": 9718,
+          "ts": 5878649962,
+          "tts": 1297503
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 92,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 88,
+          "tid": 9718,
+          "ts": 5879599782,
+          "tts": 2042723
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 2813,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 2550,
+          "tid": 9718,
+          "ts": 5879604150,
+          "tts": 2046160
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 1,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 1,
+          "tid": 9718,
+          "ts": 5879611049,
+          "tts": 2050409
+        }
+      ],
+      "gc_events": [
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 51,
+          "name": "CppGC.IncrementalMark",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 47,
+          "tid": 9718,
+          "ts": 5878843232,
+          "tts": 1487798
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 47,
+          "name": "CppGC.MarkIncrementalStart",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 45,
+          "tid": 9718,
+          "ts": 5878843235,
+          "tts": 1487800
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 31,
+          "name": "CppGC.MarkVisitRoots",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 30,
+          "tid": 9718,
+          "ts": 5878843237,
+          "tts": 1487802
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 27,
+          "name": "CppGC.MarkVisitPersistents",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 27,
+          "tid": 9718,
+          "ts": 5878843239,
+          "tts": 1487804
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 70,
+          "name": "CppGC.ConcurrentMark",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 5,
+          "tid": 9776,
+          "ts": 5878843308,
+          "tts": 268
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 468,
+          "name": "CppGC.IncrementalMark",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 463,
+          "tid": 9718,
+          "ts": 5878843354,
+          "tts": 1487888
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false,
+            "max_bytes": 65536,
+            "max_duration_ms": 5
+          },
+          "cat": "cppgc",
+          "dur": 466,
+          "name": "CppGC.MarkTransitiveClosureWithDeadline",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 462,
+          "tid": 9718,
+          "ts": 5878843355,
+          "tts": 1487889
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 453,
+          "name": "CppGC.MarkTransitiveClosure",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 451,
+          "tid": 9718,
+          "ts": 5878843359,
+          "tts": 1487892
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 443,
+          "name": "CppGC.MarkProcessMarkingWorklist",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 444,
+          "tid": 9718,
+          "ts": 5878843365,
+          "tts": 1487897
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 3829,
+          "name": "CppGC.ConcurrentMark",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 3770,
+          "tid": 9776,
+          "ts": 5878843877,
+          "tts": 769
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 3792,
+          "name": "CppGC.ConcurrentMarkProcessMarkingWorklist",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 3738,
+          "tid": 9776,
+          "ts": 5878843896,
+          "tts": 788
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 10,
+          "name": "CppGC.ConcurrentMark",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 8,
+          "tid": 9733,
+          "ts": 5878844070,
+          "tts": 104379
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 3,
+          "name": "CppGC.ConcurrentMarkProcessMarkingWorklist",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 2,
+          "tid": 9733,
+          "ts": 5878844073,
+          "tts": 104381
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 17,
+          "name": "CppGC.IncrementalMark",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 11,
+          "tid": 9718,
+          "ts": 5878844114,
+          "tts": 1488621
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false,
+            "max_bytes": 62666,
+            "max_duration_ms": 5
+          },
+          "cat": "cppgc",
+          "dur": 14,
+          "name": "CppGC.MarkTransitiveClosureWithDeadline",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 10,
+          "tid": 9718,
+          "ts": 5878844116,
+          "tts": 1488622
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 11,
+          "name": "CppGC.MarkTransitiveClosure",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 9,
+          "tid": 9718,
+          "ts": 5878844118,
+          "tts": 1488623
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 6,
+          "name": "CppGC.MarkProcessMarkingWorklist",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 5,
+          "tid": 9718,
+          "ts": 5878844118,
+          "tts": 1488623
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 2,
+          "name": "CppGC.MarkProcessWriteBarrierWorklist",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 2,
+          "tid": 9718,
+          "ts": 5878844125,
+          "tts": 1488629
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 1,
+          "name": "CppGC.MarkProcessMarkingWorklist",
+          "ph": "X",
+          "pid": 9718,
+          "tid": 9718,
+          "ts": 5878844128
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 16,
+          "name": "CppGC.IncrementalMark",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 11,
+          "tid": 9718,
+          "ts": 5878844184,
+          "tts": 1488684
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 14,
+          "name": "CppGC.MarkOnAllocation",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 11,
+          "tid": 9718,
+          "ts": 5878844185,
+          "tts": 1488684
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false,
+            "max_bytes": 0,
+            "max_duration_ms": 2
+          },
+          "cat": "cppgc",
+          "dur": 12,
+          "name": "CppGC.MarkTransitiveClosureWithDeadline",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 10,
+          "tid": 9718,
+          "ts": 5878844187,
+          "tts": 1488685
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 1,
+          "name": "CppGC.MarkTransitiveClosure",
+          "ph": "X",
+          "pid": 9718,
+          "tid": 9718,
+          "ts": 5878844188
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 184,
+          "name": "CppGC.ConcurrentMark",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 176,
+          "tid": 9733,
+          "ts": 5878844332,
+          "tts": 104409
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 4,
+          "name": "CppGC.ConcurrentMarkProcessMarkingWorklist",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 3,
+          "tid": 9733,
+          "ts": 5878844334,
+          "tts": 104410
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 22,
+          "name": "CppGC.ConcurrentMarkProcessWriteBarrierWorklist",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 21,
+          "tid": 9733,
+          "ts": 5878844338,
+          "tts": 104413
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 132,
+          "name": "CppGC.ConcurrentMarkProcessMarkingWorklist",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 133,
+          "tid": 9733,
+          "ts": 5878844361,
+          "tts": 104434
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 11,
+          "name": "CppGC.ConcurrentMarkProcessWriteBarrierWorklist",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 10,
+          "tid": 9733,
+          "ts": 5878844495,
+          "tts": 104568
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 6,
+          "name": "CppGC.ConcurrentMarkProcessMarkingWorklist",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 5,
+          "tid": 9733,
+          "ts": 5878844506,
+          "tts": 104578
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 25,
+          "name": "CppGC.IncrementalMark",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 20,
+          "tid": 9718,
+          "ts": 5878845011,
+          "tts": 1489505
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false,
+            "max_bytes": 0,
+            "max_duration_ms": 5
+          },
+          "cat": "cppgc",
+          "dur": 24,
+          "name": "CppGC.MarkTransitiveClosureWithDeadline",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 20,
+          "tid": 9718,
+          "ts": 5878845012,
+          "tts": 1489505
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 4,
+          "name": "CppGC.MarkTransitiveClosure",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 2,
+          "tid": 9718,
+          "ts": 5878845013,
+          "tts": 1489505
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 3,
+          "name": "CppGC.MarkProcessBailOutObjects",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 2,
+          "tid": 9718,
+          "ts": 5878845014,
+          "tts": 1489505
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 111,
+          "name": "CppGC.ConcurrentMark",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 104,
+          "tid": 9733,
+          "ts": 5878845084,
+          "tts": 104622
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 45,
+          "name": "CppGC.ConcurrentMarkProcessWriteBarrierWorklist",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 45,
+          "tid": 9733,
+          "ts": 5878845089,
+          "tts": 104625
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 42,
+          "name": "CppGC.ConcurrentMarkProcessMarkingWorklist",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 41,
+          "tid": 9733,
+          "ts": 5878845139,
+          "tts": 104675
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 6,
+          "name": "CppGC.ConcurrentMarkProcessWriteBarrierWorklist",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 5,
+          "tid": 9733,
+          "ts": 5878845182,
+          "tts": 104716
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 3,
+          "name": "CppGC.ConcurrentMarkProcessMarkingWorklist",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 3,
+          "tid": 9733,
+          "ts": 5878845188,
+          "tts": 104721
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 19,
+          "name": "CppGC.IncrementalMark",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 15,
+          "tid": 9718,
+          "ts": 5878845504,
+          "tts": 1489991
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false,
+            "max_bytes": 0,
+            "max_duration_ms": 5
+          },
+          "cat": "cppgc",
+          "dur": 17,
+          "name": "CppGC.MarkTransitiveClosureWithDeadline",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 15,
+          "tid": 9718,
+          "ts": 5878845505,
+          "tts": 1489991
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "name": "CppGC.MarkTransitiveClosure",
+          "ph": "I",
+          "pid": 9718,
+          "s": "t",
+          "tid": 9718,
+          "ts": 5878845506,
+          "dur": 0,
+          "instant_event": true
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 42,
+          "name": "CppGC.IncrementalMark",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 35,
+          "tid": 9718,
+          "ts": 5878845525,
+          "tts": 1490007
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 40,
+          "name": "CppGC.MarkOnAllocation",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 35,
+          "tid": 9718,
+          "ts": 5878845526,
+          "tts": 1490007
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false,
+            "max_bytes": 65536,
+            "max_duration_ms": 2
+          },
+          "cat": "cppgc",
+          "dur": 39,
+          "name": "CppGC.MarkTransitiveClosureWithDeadline",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 35,
+          "tid": 9718,
+          "ts": 5878845527,
+          "tts": 1490007
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 36,
+          "name": "CppGC.MarkTransitiveClosure",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 34,
+          "tid": 9718,
+          "ts": 5878845528,
+          "tts": 1490007
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 19,
+          "name": "CppGC.MarkProcessWriteBarrierWorklist",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 18,
+          "tid": 9718,
+          "ts": 5878845528,
+          "tts": 1490007
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 16,
+          "name": "CppGC.MarkProcessMarkingWorklist",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 16,
+          "tid": 9718,
+          "ts": 5878845548,
+          "tts": 1490025
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 28,
+          "name": "CppGC.ConcurrentMark",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 21,
+          "tid": 9733,
+          "ts": 5878845660,
+          "tts": 104749
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 8,
+          "name": "CppGC.ConcurrentMarkProcessMarkingWorklist",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 7,
+          "tid": 9733,
+          "ts": 5878845664,
+          "tts": 104751
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 7,
+          "name": "CppGC.ConcurrentMarkProcessWriteBarrierWorklist",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 6,
+          "tid": 9733,
+          "ts": 5878845673,
+          "tts": 104759
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 4,
+          "name": "CppGC.ConcurrentMarkProcessMarkingWorklist",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 3,
+          "tid": 9733,
+          "ts": 5878845680,
+          "tts": 104765
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 80,
+          "name": "CppGC.IncrementalMark",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 76,
+          "tid": 9718,
+          "ts": 5878858124,
+          "tts": 1502588
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false,
+            "max_bytes": 0,
+            "max_duration_ms": 5
+          },
+          "cat": "cppgc",
+          "dur": 77,
+          "name": "CppGC.MarkTransitiveClosureWithDeadline",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 75,
+          "tid": 9718,
+          "ts": 5878858126,
+          "tts": 1502589
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 39,
+          "name": "CppGC.MarkTransitiveClosure",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 37,
+          "tid": 9718,
+          "ts": 5878858127,
+          "tts": 1502590
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 36,
+          "name": "CppGC.MarkProcessBailOutObjects",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 35,
+          "tid": 9718,
+          "ts": 5878858128,
+          "tts": 1502591
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 113,
+          "name": "CppGC.ConcurrentMark",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 105,
+          "tid": 9733,
+          "ts": 5878858254,
+          "tts": 104815
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 48,
+          "name": "CppGC.ConcurrentMarkProcessMarkingWorklist",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 47,
+          "tid": 9733,
+          "ts": 5878858260,
+          "tts": 104818
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 90,
+          "name": "CppGC.ConcurrentMark",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 84,
+          "tid": 9751,
+          "ts": 5878858271,
+          "tts": 12294
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 73,
+          "name": "CppGC.ConcurrentMarkProcessWriteBarrierWorklist",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 73,
+          "tid": 9751,
+          "ts": 5878858281,
+          "tts": 12301
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 85,
+          "name": "CppGC.ConcurrentMark",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 81,
+          "tid": 9776,
+          "ts": 5878858296,
+          "tts": 4575
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 67,
+          "name": "CppGC.ConcurrentMarkProcessWriteBarrierWorklist",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 67,
+          "tid": 9776,
+          "ts": 5878858300,
+          "tts": 4577
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 47,
+          "name": "CppGC.ConcurrentMarkProcessWriteBarrierWorklist",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 47,
+          "tid": 9733,
+          "ts": 5878858310,
+          "tts": 104866
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 5,
+          "name": "CppGC.ConcurrentMarkProcessMarkingWorklist",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 4,
+          "tid": 9733,
+          "ts": 5878858358,
+          "tts": 104913
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 8,
+          "name": "CppGC.ConcurrentMarkProcessMarkingWorklist",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 8,
+          "tid": 9776,
+          "ts": 5878858369,
+          "tts": 4645
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 33,
+          "name": "CppGC.IncrementalMark",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 28,
+          "tid": 9718,
+          "ts": 5878858495,
+          "tts": 1502951
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 33,
+          "name": "CppGC.MarkOnAllocation",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 28,
+          "tid": 9718,
+          "ts": 5878858495,
+          "tts": 1502951
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false,
+            "max_bytes": 0,
+            "max_duration_ms": 2
+          },
+          "cat": "cppgc",
+          "dur": 31,
+          "name": "CppGC.MarkTransitiveClosureWithDeadline",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 28,
+          "tid": 9718,
+          "ts": 5878858496,
+          "tts": 1502951
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 7,
+          "name": "CppGC.MarkTransitiveClosure",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 5,
+          "tid": 9718,
+          "ts": 5878858497,
+          "tts": 1502951
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 5,
+          "name": "CppGC.MarkProcessBailOutObjects",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 5,
+          "tid": 9718,
+          "ts": 5878858498,
+          "tts": 1502951
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 22,
+          "name": "CppGC.ConcurrentMark",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 18,
+          "tid": 9733,
+          "ts": 5878858563,
+          "tts": 104951
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 7,
+          "name": "CppGC.ConcurrentMarkProcessMarkingWorklist",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 6,
+          "tid": 9733,
+          "ts": 5878858564,
+          "tts": 104952
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 11,
+          "name": "CppGC.ConcurrentMarkProcessWriteBarrierWorklist",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 10,
+          "tid": 9733,
+          "ts": 5878858571,
+          "tts": 104958
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 2,
+          "name": "CppGC.ConcurrentMark",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 1,
+          "tid": 9751,
+          "ts": 5878858578,
+          "tts": 12396
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 64,
+          "name": "CppGC.ConcurrentMark",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 16,
+          "tid": 9729,
+          "ts": 5878858602,
+          "tts": 249591
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 10,
+          "name": "CppGC.ConcurrentMarkProcessWriteBarrierWorklist",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 9,
+          "tid": 9729,
+          "ts": 5878858649,
+          "tts": 249594
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 2,
+          "name": "CppGC.ConcurrentMarkProcessMarkingWorklist",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 1,
+          "tid": 9729,
+          "ts": 5878858661,
+          "tts": 249605
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 18,
+          "name": "CppGC.IncrementalMark",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 11,
+          "tid": 9718,
+          "ts": 5878858798,
+          "tts": 1503248
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false,
+            "max_bytes": 65536,
+            "max_duration_ms": 5
+          },
+          "cat": "cppgc",
+          "dur": 16,
+          "name": "CppGC.MarkTransitiveClosureWithDeadline",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 11,
+          "tid": 9718,
+          "ts": 5878858799,
+          "tts": 1503248
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 14,
+          "name": "CppGC.MarkTransitiveClosure",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 11,
+          "tid": 9718,
+          "ts": 5878858800,
+          "tts": 1503248
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 10,
+          "name": "CppGC.MarkProcessWriteBarrierWorklist",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 9,
+          "tid": 9718,
+          "ts": 5878858801,
+          "tts": 1503248
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 2,
+          "name": "CppGC.MarkProcessMarkingWorklist",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 2,
+          "tid": 9718,
+          "ts": 5878858812,
+          "tts": 1503257
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 40,
+          "name": "CppGC.IncrementalMark",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 35,
+          "tid": 9718,
+          "ts": 5878859271,
+          "tts": 1503712
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 38,
+          "name": "CppGC.MarkOnAllocation",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 35,
+          "tid": 9718,
+          "ts": 5878859272,
+          "tts": 1503712
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false,
+            "max_bytes": 65536,
+            "max_duration_ms": 2
+          },
+          "cat": "cppgc",
+          "dur": 38,
+          "name": "CppGC.MarkTransitiveClosureWithDeadline",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 35,
+          "tid": 9718,
+          "ts": 5878859272,
+          "tts": 1503712
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 13,
+          "name": "CppGC.MarkTransitiveClosure",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 12,
+          "tid": 9718,
+          "ts": 5878859273,
+          "tts": 1503712
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 12,
+          "name": "CppGC.MarkProcessWriteBarrierWorklist",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 12,
+          "tid": 9718,
+          "ts": 5878859274,
+          "tts": 1503712
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 26,
+          "name": "CppGC.ConcurrentMark",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 21,
+          "tid": 9733,
+          "ts": 5878859340,
+          "tts": 104991
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 4,
+          "name": "CppGC.ConcurrentMarkProcessMarkingWorklist",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 4,
+          "tid": 9733,
+          "ts": 5878859342,
+          "tts": 104992
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 14,
+          "name": "CppGC.ConcurrentMarkProcessWriteBarrierWorklist",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 14,
+          "tid": 9733,
+          "ts": 5878859347,
+          "tts": 104996
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 8,
+          "name": "CppGC.ConcurrentMark",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 5,
+          "tid": 9751,
+          "ts": 5878859354,
+          "tts": 12438
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 2,
+          "name": "CppGC.ConcurrentMarkProcessMarkingWorklist",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 1,
+          "tid": 9733,
+          "ts": 5878859362,
+          "tts": 105010
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 8,
+          "name": "CppGC.ConcurrentMark",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 4,
+          "tid": 9733,
+          "ts": 5878859368,
+          "tts": 105014
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 4,
+          "name": "CppGC.ConcurrentMarkProcessWriteBarrierWorklist",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 4,
+          "tid": 9733,
+          "ts": 5878859369,
+          "tts": 105014
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 1,
+          "name": "CppGC.ConcurrentMarkProcessMarkingWorklist",
+          "ph": "X",
+          "pid": 9718,
+          "tid": 9733,
+          "ts": 5878859374
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 35,
+          "name": "CppGC.IncrementalMark",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 33,
+          "tid": 9718,
+          "ts": 5878881926,
+          "tts": 1526352
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false,
+            "max_bytes": 0,
+            "max_duration_ms": 5
+          },
+          "cat": "cppgc",
+          "dur": 32,
+          "name": "CppGC.MarkTransitiveClosureWithDeadline",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 31,
+          "tid": 9718,
+          "ts": 5878881928,
+          "tts": 1526354
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 2,
+          "name": "CppGC.MarkTransitiveClosure",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 1,
+          "tid": 9718,
+          "ts": 5878881930,
+          "tts": 1526356
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 59,
+          "name": "CppGC.ConcurrentMark",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 52,
+          "tid": 9751,
+          "ts": 5878882019,
+          "tts": 12464
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 43,
+          "name": "CppGC.ConcurrentMarkProcessWriteBarrierWorklist",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 42,
+          "tid": 9751,
+          "ts": 5878882024,
+          "tts": 12467
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 5,
+          "name": "CppGC.ConcurrentMarkProcessMarkingWorklist",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 4,
+          "tid": 9751,
+          "ts": 5878882069,
+          "tts": 12510
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 7,
+          "name": "CppGC.ConcurrentMark",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 3,
+          "tid": 9751,
+          "ts": 5878882082,
+          "tts": 12519
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 4,
+          "name": "CppGC.ConcurrentMarkProcessWriteBarrierWorklist",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 3,
+          "tid": 9751,
+          "ts": 5878882082,
+          "tts": 12519
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 1,
+          "name": "CppGC.ConcurrentMarkProcessMarkingWorklist",
+          "ph": "X",
+          "pid": 9718,
+          "tid": 9751,
+          "ts": 5878882087
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 3,
+          "name": "CppGC.ConcurrentMark",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 1,
+          "tid": 9729,
+          "ts": 5878882111,
+          "tts": 249663
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 31,
+          "name": "CppGC.IncrementalMark",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 24,
+          "tid": 9718,
+          "ts": 5878897359,
+          "tts": 1541750
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false,
+            "max_bytes": 2133110,
+            "max_duration_ms": 2
+          },
+          "cat": "cppgc",
+          "dur": 19,
+          "name": "CppGC.MarkTransitiveClosureWithDeadline",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 14,
+          "tid": 9718,
+          "ts": 5878897370,
+          "tts": 1541760
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 15,
+          "name": "CppGC.MarkTransitiveClosure",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 12,
+          "tid": 9718,
+          "ts": 5878897372,
+          "tts": 1541761
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 10,
+          "name": "CppGC.MarkProcessWriteBarrierWorklist",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 9,
+          "tid": 9718,
+          "ts": 5878897373,
+          "tts": 1541762
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 2,
+          "name": "CppGC.MarkProcessMarkingWorklist",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 1,
+          "tid": 9718,
+          "ts": 5878897385,
+          "tts": 1541772
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 74,
+          "name": "CppGC.IncrementalMark",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 70,
+          "tid": 9718,
+          "ts": 5878900917,
+          "tts": 1545285
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false,
+            "max_bytes": 65536,
+            "max_duration_ms": 5
+          },
+          "cat": "cppgc",
+          "dur": 71,
+          "name": "CppGC.MarkTransitiveClosureWithDeadline",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 69,
+          "tid": 9718,
+          "ts": 5878900919,
+          "tts": 1545286
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 46,
+          "name": "CppGC.MarkTransitiveClosure",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 44,
+          "tid": 9718,
+          "ts": 5878900920,
+          "tts": 1545287
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 43,
+          "name": "CppGC.MarkProcessWriteBarrierWorklist",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 43,
+          "tid": 9718,
+          "ts": 5878900922,
+          "tts": 1545288
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 54,
+          "name": "CppGC.IncrementalMark",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 46,
+          "tid": 9718,
+          "ts": 5878900996,
+          "tts": 1545358
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 53,
+          "name": "CppGC.MarkOnAllocation",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 46,
+          "tid": 9718,
+          "ts": 5878900997,
+          "tts": 1545358
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false,
+            "max_bytes": 2605876,
+            "max_duration_ms": 2
+          },
+          "cat": "cppgc",
+          "dur": 52,
+          "name": "CppGC.MarkTransitiveClosureWithDeadline",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 46,
+          "tid": 9718,
+          "ts": 5878900997,
+          "tts": 1545358
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 50,
+          "name": "CppGC.MarkTransitiveClosure",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 46,
+          "tid": 9718,
+          "ts": 5878900998,
+          "tts": 1545358
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 18,
+          "name": "CppGC.MarkProcessMarkingWorklist",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 18,
+          "tid": 9718,
+          "ts": 5878900999,
+          "tts": 1545358
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 14,
+          "name": "CppGC.MarkProcessWriteBarrierWorklist",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 14,
+          "tid": 9718,
+          "ts": 5878901018,
+          "tts": 1545376
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 14,
+          "name": "CppGC.MarkProcessMarkingWorklist",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 14,
+          "tid": 9718,
+          "ts": 5878901033,
+          "tts": 1545390
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 49,
+          "name": "CppGC.IncrementalMark",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 43,
+          "tid": 9718,
+          "ts": 5878917741,
+          "tts": 1562030
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false,
+            "max_bytes": 5000634,
+            "max_duration_ms": 1
+          },
+          "cat": "cppgc",
+          "dur": 39,
+          "name": "CppGC.MarkTransitiveClosureWithDeadline",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 33,
+          "tid": 9718,
+          "ts": 5878917751,
+          "tts": 1562040
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 35,
+          "name": "CppGC.MarkTransitiveClosure",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 31,
+          "tid": 9718,
+          "ts": 5878917753,
+          "tts": 1562041
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 3,
+          "name": "CppGC.MarkProcessNotFullyconstructedWorklist",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 3,
+          "tid": 9718,
+          "ts": 5878917754,
+          "tts": 1562041
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 2,
+          "name": "CppGC.MarkProcessMarkingWorklist",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 1,
+          "tid": 9718,
+          "ts": 5878917758,
+          "tts": 1562045
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 22,
+          "name": "CppGC.MarkProcessWriteBarrierWorklist",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 22,
+          "tid": 9718,
+          "ts": 5878917760,
+          "tts": 1562046
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 5,
+          "name": "CppGC.MarkProcessMarkingWorklist",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 4,
+          "tid": 9718,
+          "ts": 5878917783,
+          "tts": 1562068
+        },
+        {
+          "args": {
+            "type": "finalize incremental marking via task",
+            "usedHeapSizeAfter": 753088,
+            "usedHeapSizeBefore": 5790980
+          },
+          "cat": "devtools.timeline,v8",
+          "dur": 9354,
+          "name": "MajorGC",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 9235,
+          "tid": 9718,
+          "ts": 5878917823,
+          "tts": 1562103
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 22,
+          "name": "CppGC.AtomicMark",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 19,
+          "tid": 9718,
+          "ts": 5878917896,
+          "tts": 1562170
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 20,
+          "name": "CppGC.MarkAtomicPrologue",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 18,
+          "tid": 9718,
+          "ts": 5878917898,
+          "tts": 1562171
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 17,
+          "name": "CppGC.MarkVisitRoots",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 15,
+          "tid": 9718,
+          "ts": 5878917899,
+          "tts": 1562172
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 14,
+          "name": "CppGC.MarkVisitPersistents",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 14,
+          "tid": 9718,
+          "ts": 5878917901,
+          "tts": 1562173
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 5,
+          "name": "CppGC.AtomicMark",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 2,
+          "tid": 9718,
+          "ts": 5878917997,
+          "tts": 1562262
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false,
+            "max_bytes": 18446744073709551615,
+            "max_duration_ms": "Infinity"
+          },
+          "cat": "cppgc",
+          "dur": 4,
+          "name": "CppGC.MarkTransitiveClosureWithDeadline",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 2,
+          "tid": 9718,
+          "ts": 5878917997,
+          "tts": 1562262
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 3,
+          "name": "CppGC.MarkTransitiveClosure",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 1,
+          "tid": 9718,
+          "ts": 5878917998,
+          "tts": 1562263
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 1,
+          "name": "CppGC.MarkFlushEphemerons",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 1,
+          "tid": 9718,
+          "ts": 5878917999,
+          "tts": 1562263
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 3,
+          "name": "CppGC.AtomicMark",
+          "ph": "X",
+          "pid": 9718,
+          "tid": 9718,
+          "ts": 5878918012
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false,
+            "max_bytes": 18446744073709551615,
+            "max_duration_ms": "Infinity"
+          },
+          "cat": "cppgc",
+          "dur": 3,
+          "name": "CppGC.MarkTransitiveClosureWithDeadline",
+          "ph": "X",
+          "pid": 9718,
+          "tid": 9718,
+          "ts": 5878918012
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 1,
+          "name": "CppGC.MarkTransitiveClosure",
+          "ph": "X",
+          "pid": 9718,
+          "tid": 9718,
+          "ts": 5878918013
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 1,
+          "name": "CppGC.MarkFlushEphemerons",
+          "ph": "X",
+          "pid": 9718,
+          "tid": 9718,
+          "ts": 5878918013
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 1,
+          "name": "CppGC.MarkVisitCrossThreadPersistents",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 1,
+          "tid": 9718,
+          "ts": 5878918028,
+          "tts": 1562275
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 4,
+          "name": "CppGC.AtomicMark",
+          "ph": "X",
+          "pid": 9718,
+          "tid": 9718,
+          "ts": 5878918031
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false,
+            "max_bytes": 18446744073709551615,
+            "max_duration_ms": "Infinity"
+          },
+          "cat": "cppgc",
+          "dur": 2,
+          "name": "CppGC.MarkTransitiveClosureWithDeadline",
+          "ph": "X",
+          "pid": 9718,
+          "tid": 9718,
+          "ts": 5878918032
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 2,
+          "name": "CppGC.MarkTransitiveClosure",
+          "ph": "X",
+          "pid": 9718,
+          "tid": 9718,
+          "ts": 5878918032
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "name": "CppGC.MarkFlushEphemerons",
+          "ph": "I",
+          "pid": 9718,
+          "s": "t",
+          "tid": 9718,
+          "ts": 5878918033,
+          "dur": 0,
+          "instant_event": true
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 4,
+          "name": "CppGC.AtomicWeak",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 4,
+          "tid": 9718,
+          "ts": 5878918043,
+          "tts": 1562281
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 5,
+          "name": "CppGC.AtomicMark",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 3,
+          "tid": 9718,
+          "ts": 5878919944,
+          "tts": 1564162
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 3,
+          "name": "CppGC.MarkAtomicEpilogue",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 2,
+          "tid": 9718,
+          "ts": 5878919945,
+          "tts": 1564163
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 130,
+          "name": "CppGC.AtomicWeak",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 127,
+          "tid": 9718,
+          "ts": 5878919949,
+          "tts": 1564165
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 80,
+          "name": "CppGC.WeakContainerCallbacksProcessing",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 80,
+          "tid": 9718,
+          "ts": 5878919974,
+          "tts": 1564189
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 17,
+          "name": "CppGC.CustomCallbacksProcessing",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 16,
+          "tid": 9718,
+          "ts": 5878920055,
+          "tts": 1564269
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 2,
+          "name": "CppGC.ConcurrentWeakCallback",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 2,
+          "tid": 9718,
+          "ts": 5878920075,
+          "tts": 1564288
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 660,
+          "name": "CppGC.AtomicSweep",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 658,
+          "tid": 9718,
+          "ts": 5878920583,
+          "tts": 1564755
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 654,
+          "name": "CppGC.SweepInvokePreFinalizers",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 655,
+          "tid": 9718,
+          "ts": 5878920585,
+          "tts": 1564756
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 74,
+          "name": "CppGC.AtomicSweep",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 73,
+          "tid": 9718,
+          "ts": 5878921245,
+          "tts": 1565415
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 83706,
+          "name": "CppGC.ConcurrentSweep",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 65673,
+          "tid": 9733,
+          "ts": 5878921336,
+          "tts": 111290
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 8076,
+          "name": "CppGC.IncrementalSweep",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 5858,
+          "tid": 9718,
+          "ts": 5878927467,
+          "tts": 1571625
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false,
+            "max_duration_ms": 5,
+            "sweeping_mode": "only-finalizers"
+          },
+          "cat": "cppgc",
+          "dur": 8073,
+          "name": "CppGC.SweepInLowPriorityTask",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 5855,
+          "tid": 9718,
+          "ts": 5878927469,
+          "tts": 1571627
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 8063,
+          "name": "CppGC.SweepFinalizeEmptyPages",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 5849,
+          "tid": 9718,
+          "ts": 5878927473,
+          "tts": 1571630
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 22982,
+          "name": "CppGC.IncrementalSweep",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 20207,
+          "tid": 9718,
+          "ts": 5878935597,
+          "tts": 1577536
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false,
+            "max_duration_ms": 5,
+            "sweeping_mode": "only-finalizers"
+          },
+          "cat": "cppgc",
+          "dur": 22979,
+          "name": "CppGC.SweepInLowPriorityTask",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 20205,
+          "tid": 9718,
+          "ts": 5878935599,
+          "tts": 1577538
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 22971,
+          "name": "CppGC.SweepFinalizeEmptyPages",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 20200,
+          "tid": 9718,
+          "ts": 5878935602,
+          "tts": 1577540
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 5419,
+          "name": "CppGC.IncrementalSweep",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 5417,
+          "tid": 9718,
+          "ts": 5878958661,
+          "tts": 1597825
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false,
+            "max_duration_ms": 5,
+            "sweeping_mode": "only-finalizers"
+          },
+          "cat": "cppgc",
+          "dur": 5415,
+          "name": "CppGC.SweepInLowPriorityTask",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 5415,
+          "tid": 9718,
+          "ts": 5878958664,
+          "tts": 1597827
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 5408,
+          "name": "CppGC.SweepFinalizeEmptyPages",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 5410,
+          "tid": 9718,
+          "ts": 5878958666,
+          "tts": 1597829
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 15351,
+          "name": "CppGC.IncrementalSweep",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 15349,
+          "tid": 9718,
+          "ts": 5878964113,
+          "tts": 1603274
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false,
+            "max_duration_ms": 5,
+            "sweeping_mode": "only-finalizers"
+          },
+          "cat": "cppgc",
+          "dur": 15348,
+          "name": "CppGC.SweepInLowPriorityTask",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 15347,
+          "tid": 9718,
+          "ts": 5878964115,
+          "tts": 1603276
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 15340,
+          "name": "CppGC.SweepFinalizeEmptyPages",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 15342,
+          "tid": 9718,
+          "ts": 5878964118,
+          "tts": 1603278
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 5172,
+          "name": "CppGC.IncrementalSweep",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 5169,
+          "tid": 9718,
+          "ts": 5878979539,
+          "tts": 1618698
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false,
+            "max_duration_ms": 5,
+            "sweeping_mode": "only-finalizers"
+          },
+          "cat": "cppgc",
+          "dur": 5170,
+          "name": "CppGC.SweepInLowPriorityTask",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 5168,
+          "tid": 9718,
+          "ts": 5878979540,
+          "tts": 1618699
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 5162,
+          "name": "CppGC.SweepFinalizeEmptyPages",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 5164,
+          "tid": 9718,
+          "ts": 5878979542,
+          "tts": 1618700
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 10027,
+          "name": "CppGC.IncrementalSweep",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 10023,
+          "tid": 9718,
+          "ts": 5878984792,
+          "tts": 1623949
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false,
+            "max_duration_ms": 5,
+            "sweeping_mode": "only-finalizers"
+          },
+          "cat": "cppgc",
+          "dur": 10023,
+          "name": "CppGC.SweepInLowPriorityTask",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 10022,
+          "tid": 9718,
+          "ts": 5878984795,
+          "tts": 1623950
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 10016,
+          "name": "CppGC.SweepFinalizeEmptyPages",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 10018,
+          "tid": 9718,
+          "ts": 5878984797,
+          "tts": 1623951
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 8488,
+          "name": "CppGC.IncrementalSweep",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 9146,
+          "tid": 9718,
+          "ts": 5878994851,
+          "tts": 1634003
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false,
+            "max_duration_ms": 5,
+            "sweeping_mode": "only-finalizers"
+          },
+          "cat": "cppgc",
+          "dur": 8486,
+          "name": "CppGC.SweepInLowPriorityTask",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 9145,
+          "tid": 9718,
+          "ts": 5878994853,
+          "tts": 1634004
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 8418,
+          "name": "CppGC.SweepFinalizeEmptyPages",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 9139,
+          "tid": 9718,
+          "ts": 5878994855,
+          "tts": 1634006
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 6342,
+          "name": "CppGC.IncrementalSweep",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 6338,
+          "tid": 9718,
+          "ts": 5879003366,
+          "tts": 1643174
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false,
+            "max_duration_ms": 5,
+            "sweeping_mode": "only-finalizers"
+          },
+          "cat": "cppgc",
+          "dur": 6338,
+          "name": "CppGC.SweepInLowPriorityTask",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 6336,
+          "tid": 9718,
+          "ts": 5879003369,
+          "tts": 1643176
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 6331,
+          "name": "CppGC.SweepFinalizeEmptyPages",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 6332,
+          "tid": 9718,
+          "ts": 5879003371,
+          "tts": 1643178
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 10511,
+          "name": "CppGC.IncrementalSweep",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 10508,
+          "tid": 9718,
+          "ts": 5879009736,
+          "tts": 1649540
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false,
+            "max_duration_ms": 5,
+            "sweeping_mode": "all"
+          },
+          "cat": "cppgc",
+          "dur": 10509,
+          "name": "CppGC.SweepInLowPriorityTask",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 10507,
+          "tid": 9718,
+          "ts": 5879009738,
+          "tts": 1649541
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 10502,
+          "name": "CppGC.SweepFinalizeEmptyPages",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 10504,
+          "tid": 9718,
+          "ts": 5879009740,
+          "tts": 1649542
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 5072,
+          "name": "CppGC.IncrementalSweep",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 5055,
+          "tid": 9718,
+          "ts": 5879020276,
+          "tts": 1660076
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false,
+            "max_duration_ms": 5,
+            "sweeping_mode": "all"
+          },
+          "cat": "cppgc",
+          "dur": 5069,
+          "name": "CppGC.SweepInLowPriorityTask",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 5054,
+          "tid": 9718,
+          "ts": 5879020278,
+          "tts": 1660077
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 5065,
+          "name": "CppGC.SweepFinalizeEmptyPages",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 5052,
+          "tid": 9718,
+          "ts": 5879020280,
+          "tts": 1660078
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 5069,
+          "name": "CppGC.IncrementalSweep",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 5066,
+          "tid": 9718,
+          "ts": 5879025413,
+          "tts": 1665195
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false,
+            "max_duration_ms": 5,
+            "sweeping_mode": "all"
+          },
+          "cat": "cppgc",
+          "dur": 5067,
+          "name": "CppGC.SweepInLowPriorityTask",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 5065,
+          "tid": 9718,
+          "ts": 5879025414,
+          "tts": 1665196
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 5059,
+          "name": "CppGC.SweepFinalizeEmptyPages",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 5061,
+          "tid": 9718,
+          "ts": 5879025416,
+          "tts": 1665197
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 5268,
+          "name": "CppGC.IncrementalSweep",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 5266,
+          "tid": 9718,
+          "ts": 5879030510,
+          "tts": 1670288
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false,
+            "max_duration_ms": 5,
+            "sweeping_mode": "all"
+          },
+          "cat": "cppgc",
+          "dur": 5267,
+          "name": "CppGC.SweepInLowPriorityTask",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 5265,
+          "tid": 9718,
+          "ts": 5879030511,
+          "tts": 1670289
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 5258,
+          "name": "CppGC.SweepFinalizeEmptyPages",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 5261,
+          "tid": 9718,
+          "ts": 5879030513,
+          "tts": 1670290
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 14122,
+          "name": "CppGC.IncrementalSweep",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 14119,
+          "tid": 9718,
+          "ts": 5879035810,
+          "tts": 1675585
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false,
+            "max_duration_ms": 5,
+            "sweeping_mode": "all"
+          },
+          "cat": "cppgc",
+          "dur": 14119,
+          "name": "CppGC.SweepInLowPriorityTask",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 14118,
+          "tid": 9718,
+          "ts": 5879035812,
+          "tts": 1675586
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 14112,
+          "name": "CppGC.SweepFinalizeEmptyPages",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 14114,
+          "tid": 9718,
+          "ts": 5879035814,
+          "tts": 1675587
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 5108,
+          "name": "CppGC.IncrementalSweep",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 5105,
+          "tid": 9718,
+          "ts": 5879049964,
+          "tts": 1689735
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false,
+            "max_duration_ms": 5,
+            "sweeping_mode": "all"
+          },
+          "cat": "cppgc",
+          "dur": 5105,
+          "name": "CppGC.SweepInLowPriorityTask",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 5104,
+          "tid": 9718,
+          "ts": 5879049966,
+          "tts": 1689736
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 5098,
+          "name": "CppGC.SweepFinalizeEmptyPages",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 5100,
+          "tid": 9718,
+          "ts": 5879049967,
+          "tts": 1689737
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 5628,
+          "name": "CppGC.IncrementalSweep",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 5614,
+          "tid": 9718,
+          "ts": 5879055104,
+          "tts": 1694872
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false,
+            "max_duration_ms": 5,
+            "sweeping_mode": "all"
+          },
+          "cat": "cppgc",
+          "dur": 5627,
+          "name": "CppGC.SweepInLowPriorityTask",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 5613,
+          "tid": 9718,
+          "ts": 5879055105,
+          "tts": 1694873
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 3798,
+          "name": "CppGC.SweepFinalizeEmptyPages",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 3800,
+          "tid": 9718,
+          "ts": 5879055106,
+          "tts": 1694874
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 99,
+          "name": "CppGC.SweepFinalizeSweptPages",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 98,
+          "tid": 9718,
+          "ts": 5879058910,
+          "tts": 1698677
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 157,
+          "name": "CppGC.SweepFinalizeSweptPages",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 157,
+          "tid": 9718,
+          "ts": 5879059010,
+          "tts": 1698775
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 351,
+          "name": "CppGC.SweepFinalizeSweptPages",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 355,
+          "tid": 9718,
+          "ts": 5879059167,
+          "tts": 1698932
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 1206,
+          "name": "CppGC.SweepFinalizeSweptPages",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 1197,
+          "tid": 9718,
+          "ts": 5879059524,
+          "tts": 1699288
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "cppgc",
+          "dur": 1076,
+          "name": "CppGC.IncrementalSweep",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 1063,
+          "tid": 9718,
+          "ts": 5879060798,
+          "tts": 1700551
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false,
+            "max_duration_ms": 5,
+            "sweeping_mode": "all"
+          },
+          "cat": "cppgc",
+          "dur": 1068,
+          "name": "CppGC.SweepInLowPriorityTask",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 1056,
+          "tid": 9718,
+          "ts": 5879060799,
+          "tts": 1700552
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 649,
+          "name": "CppGC.SweepFinalizeSweptPages",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 643,
+          "tid": 9718,
+          "ts": 5879060801,
+          "tts": 1700554
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 15,
+          "name": "CppGC.SweepFinalizeSweptPages",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 15,
+          "tid": 9718,
+          "ts": 5879061452,
+          "tts": 1701198
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 1,
+          "name": "CppGC.SweepFinalizeSweptPages",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 1,
+          "tid": 9718,
+          "ts": 5879061468,
+          "tts": 1701213
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 361,
+          "name": "CppGC.SweepFinalizeSweptPages",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 361,
+          "tid": 9718,
+          "ts": 5879061469,
+          "tts": 1701214
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 6,
+          "name": "CppGC.SweepFinalizeSweptPages",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 5,
+          "tid": 9718,
+          "ts": 5879061831,
+          "tts": 1701575
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 20,
+          "name": "CppGC.SweepFinalizeSweptPages",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 20,
+          "tid": 9718,
+          "ts": 5879061838,
+          "tts": 1701580
+        },
+        {
+          "args": {
+            "epoch": 0,
+            "forced": false
+          },
+          "cat": "disabled-by-default-cppgc",
+          "dur": 8,
+          "name": "CppGC.SweepFinalizeSweptPages",
+          "ph": "X",
+          "pid": 9718,
+          "tdur": 8,
+          "tid": 9718,
+          "ts": 5879061859,
+          "tts": 1701600
+        }
+      ],
+      "gc_event_counts": {
+        "CppGC.IncrementalMark": 16,
+        "CppGC.MarkIncrementalStart": 1,
+        "CppGC.MarkVisitRoots": 2,
+        "CppGC.MarkVisitPersistents": 2,
+        "CppGC.ConcurrentMark": 18,
+        "CppGC.MarkTransitiveClosureWithDeadline": 18,
+        "CppGC.MarkTransitiveClosure": 18,
+        "CppGC.MarkProcessMarkingWorklist": 10,
+        "CppGC.ConcurrentMarkProcessMarkingWorklist": 19,
+        "CppGC.MarkProcessWriteBarrierWorklist": 8,
+        "CppGC.MarkOnAllocation": 5,
+        "CppGC.ConcurrentMarkProcessWriteBarrierWorklist": 14,
+        "CppGC.MarkProcessBailOutObjects": 3,
+        "CppGC.MarkProcessNotFullyconstructedWorklist": 1,
+        "MajorGC": 1,
+        "CppGC.AtomicMark": 5,
+        "CppGC.MarkAtomicPrologue": 1,
+        "CppGC.MarkFlushEphemerons": 3,
+        "CppGC.MarkVisitCrossThreadPersistents": 1,
+        "CppGC.AtomicWeak": 2,
+        "CppGC.MarkAtomicEpilogue": 1,
+        "CppGC.WeakContainerCallbacksProcessing": 1,
+        "CppGC.CustomCallbacksProcessing": 1,
+        "CppGC.ConcurrentWeakCallback": 1,
+        "CppGC.AtomicSweep": 2,
+        "CppGC.SweepInvokePreFinalizers": 1,
+        "CppGC.ConcurrentSweep": 1,
+        "CppGC.IncrementalSweep": 16,
+        "CppGC.SweepInLowPriorityTask": 16,
+        "CppGC.SweepFinalizeEmptyPages": 15,
+        "CppGC.SweepFinalizeSweptPages": 11
+      },
+      "counter_order": [
+        {
+          "index": 0,
+          "components": {
+            "heap": {
+              "bounds_us": [
+                5875100950.377999,
+                5875104467.415
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            },
+            "dom": {
+              "bounds_us": [
+                5875102265.759,
+                5875105865.846
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            }
+          }
+        },
+        {
+          "index": 1,
+          "components": {
+            "heap": {
+              "bounds_us": [
+                5875447495.716,
+                5875450949.366
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            },
+            "dom": {
+              "bounds_us": [
+                5875448747.446,
+                5875451853.8689995
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            }
+          }
+        },
+        {
+          "index": 2,
+          "components": {
+            "heap": {
+              "bounds_us": [
+                5875800167.025,
+                5875803565.047
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            },
+            "dom": {
+              "bounds_us": [
+                5875801363.151,
+                5875804479.603
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            }
+          }
+        },
+        {
+          "index": 3,
+          "components": {
+            "heap": {
+              "bounds_us": [
+                5876147851.373,
+                5876151820.179
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            },
+            "dom": {
+              "bounds_us": [
+                5876149618.447,
+                5876152900.198999
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            }
+          }
+        },
+        {
+          "index": 4,
+          "components": {
+            "heap": {
+              "bounds_us": [
+                5876496622.837,
+                5876500115.094
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            },
+            "dom": {
+              "bounds_us": [
+                5876497913.183,
+                5876501256.371
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            }
+          }
+        },
+        {
+          "index": 5,
+          "components": {
+            "heap": {
+              "bounds_us": [
+                5876838766.83,
+                5876842999.436
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            },
+            "dom": {
+              "bounds_us": [
+                5876840797.757999,
+                5876844270.981999
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            }
+          }
+        },
+        {
+          "index": 6,
+          "components": {
+            "heap": {
+              "bounds_us": [
+                5877190291.578,
+                5877193895.302
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            },
+            "dom": {
+              "bounds_us": [
+                5877191693.441,
+                5877194947.342
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            }
+          }
+        },
+        {
+          "index": 7,
+          "components": {
+            "heap": {
+              "bounds_us": [
+                5877568687.549999,
+                5877572752.971
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            },
+            "dom": {
+              "bounds_us": [
+                5877570551.158,
+                5877575417.932
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            }
+          }
+        },
+        {
+          "index": 8,
+          "components": {
+            "heap": {
+              "bounds_us": [
+                5878054496.738999,
+                5878058055.811
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            },
+            "dom": {
+              "bounds_us": [
+                5878055853.757999,
+                5878059007.589
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            }
+          }
+        },
+        {
+          "index": 9,
+          "components": {
+            "heap": {
+              "bounds_us": [
+                5878467523.429,
+                5878474293.375
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            },
+            "dom": {
+              "bounds_us": [
+                5878472091.462999,
+                5878477226.805
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            }
+          }
+        },
+        {
+          "index": 10,
+          "components": {
+            "heap": {
+              "bounds_us": [
+                5879239106.158,
+                5879278327.231
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            },
+            "dom": {
+              "bounds_us": [
+                5879276125.304999,
+                5879288106.07
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            }
+          }
+        },
+        {
+          "index": 11,
+          "components": {
+            "heap": {
+              "bounds_us": [
+                5879958213.546,
+                5879962603.642
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            },
+            "dom": {
+              "bounds_us": [
+                5879960401.794,
+                5879965128.926
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            }
+          }
+        }
+      ],
+      "clock": {
+        "offset_us": [
+          -1299.5550003051758,
+          903.3179998397827
+        ],
+        "coverage_us": [
+          5874755383,
+          5879965134
+        ]
+      },
+      "matched_receivers": 1536,
+      "receiver_records": 1536,
+      "mixed_generations": 12
+    },
+    {
+      "index": 2,
+      "mode": "probe",
+      "duration_ms": 4185.409623,
+      "membership_status": "capability_failed",
+      "membership_errors": [
+        "No labelled page generation observed returning to pool"
+      ],
+      "membership_qualification_waived": false,
+      "errors": [
+        "Observation bound exceeds 5% or 250ms"
+      ],
+      "stages": [
+        {
+          "index": 0,
+          "documents": 6,
+          "nodes": 8224,
+          "used_heap_bytes": 1562236
+        },
+        {
+          "index": 1,
+          "documents": 8,
+          "nodes": 16428,
+          "used_heap_bytes": 1989380
+        },
+        {
+          "index": 2,
+          "documents": 10,
+          "nodes": 24632,
+          "used_heap_bytes": 2410248
+        },
+        {
+          "index": 3,
+          "documents": 12,
+          "nodes": 32836,
+          "used_heap_bytes": 2840248
+        },
+        {
+          "index": 4,
+          "documents": 14,
+          "nodes": 41040,
+          "used_heap_bytes": 3256988
+        },
+        {
+          "index": 5,
+          "documents": 16,
+          "nodes": 49244,
+          "used_heap_bytes": 3679748
+        },
+        {
+          "index": 6,
+          "documents": 18,
+          "nodes": 57448,
+          "used_heap_bytes": 4082644
+        },
+        {
+          "index": 7,
+          "documents": 20,
+          "nodes": 65652,
+          "used_heap_bytes": 4499440
+        },
+        {
+          "index": 8,
+          "documents": 22,
+          "nodes": 73856,
+          "used_heap_bytes": 4915612
+        },
+        {
+          "index": 9,
+          "documents": 24,
+          "nodes": 82060,
+          "used_heap_bytes": 5343248
+        },
+        {
+          "index": 10,
+          "documents": 26,
+          "nodes": 90264,
+          "used_heap_bytes": 5745040
+        },
+        {
+          "index": 11,
+          "documents": 28,
+          "nodes": 98468,
+          "used_heap_bytes": 6172588
+        }
+      ],
+      "observation_fraction_bound": 0.05322352769866511,
+      "maximum_observation_ms": 18.586005,
+      "status": "valid_lifecycle_capture",
+      "native_event_counts": {
+        "shutdown": 36,
+        "allocate": 593,
+        "receiver": 1536
+      },
+      "native_events_outside_window": 0,
+      "pagehide_markers": [
+        {
+          "args": {
+            "data": {
+              "frame": "0E5B25C901A211015632072E772BA999",
+              "message": "membership-pagehide:0:false",
+              "name": "membership-pagehide:0:false",
+              "sampleTraceId": 7579870629265129
+            }
+          },
+          "cat": "devtools.timeline",
+          "name": "TimeStamp",
+          "ph": "I",
+          "pid": 9908,
+          "s": "t",
+          "tid": 9908,
+          "ts": 5882245356,
+          "tts": 139493
+        },
+        {
+          "args": {
+            "data": {
+              "frame": "0E5B25C901A211015632072E772BA999",
+              "message": "membership-pagehide:1:false",
+              "name": "membership-pagehide:1:false",
+              "sampleTraceId": 7579870629265374
+            }
+          },
+          "cat": "devtools.timeline",
+          "name": "TimeStamp",
+          "ph": "I",
+          "pid": 9908,
+          "s": "t",
+          "tid": 9908,
+          "ts": 5882637944,
+          "tts": 253271
+        },
+        {
+          "args": {
+            "data": {
+              "frame": "0E5B25C901A211015632072E772BA999",
+              "message": "membership-pagehide:2:false",
+              "name": "membership-pagehide:2:false",
+              "sampleTraceId": 7579870629265183
+            }
+          },
+          "cat": "devtools.timeline",
+          "name": "TimeStamp",
+          "ph": "I",
+          "pid": 9908,
+          "s": "t",
+          "tid": 9908,
+          "ts": 5882968681,
+          "tts": 332020
+        },
+        {
+          "args": {
+            "data": {
+              "frame": "0E5B25C901A211015632072E772BA999",
+              "message": "membership-pagehide:3:false",
+              "name": "membership-pagehide:3:false",
+              "sampleTraceId": 7579870629263454
+            }
+          },
+          "cat": "devtools.timeline",
+          "name": "TimeStamp",
+          "ph": "I",
+          "pid": 9908,
+          "s": "t",
+          "tid": 9908,
+          "ts": 5883337048,
+          "tts": 434153
+        },
+        {
+          "args": {
+            "data": {
+              "frame": "0E5B25C901A211015632072E772BA999",
+              "message": "membership-pagehide:4:false",
+              "name": "membership-pagehide:4:false",
+              "sampleTraceId": 7579870629263762
+            }
+          },
+          "cat": "devtools.timeline",
+          "name": "TimeStamp",
+          "ph": "I",
+          "pid": 9908,
+          "s": "t",
+          "tid": 9908,
+          "ts": 5883710923,
+          "tts": 552511
+        },
+        {
+          "args": {
+            "data": {
+              "frame": "0E5B25C901A211015632072E772BA999",
+              "message": "membership-pagehide:5:false",
+              "name": "membership-pagehide:5:false",
+              "sampleTraceId": 7579870629264073
+            }
+          },
+          "cat": "devtools.timeline",
+          "name": "TimeStamp",
+          "ph": "I",
+          "pid": 9908,
+          "s": "t",
+          "tid": 9908,
+          "ts": 5884055413,
+          "tts": 647990
+        },
+        {
+          "args": {
+            "data": {
+              "frame": "0E5B25C901A211015632072E772BA999",
+              "message": "membership-pagehide:6:false",
+              "name": "membership-pagehide:6:false",
+              "sampleTraceId": 7579870629263886
+            }
+          },
+          "cat": "devtools.timeline",
+          "name": "TimeStamp",
+          "ph": "I",
+          "pid": 9908,
+          "s": "t",
+          "tid": 9908,
+          "ts": 5884387970,
+          "tts": 725960
+        },
+        {
+          "args": {
+            "data": {
+              "frame": "0E5B25C901A211015632072E772BA999",
+              "message": "membership-pagehide:7:false",
+              "name": "membership-pagehide:7:false",
+              "sampleTraceId": 7579870629264196
+            }
+          },
+          "cat": "devtools.timeline",
+          "name": "TimeStamp",
+          "ph": "I",
+          "pid": 9908,
+          "s": "t",
+          "tid": 9908,
+          "ts": 5884751116,
+          "tts": 832441
+        },
+        {
+          "args": {
+            "data": {
+              "frame": "0E5B25C901A211015632072E772BA999",
+              "message": "membership-pagehide:8:false",
+              "name": "membership-pagehide:8:false",
+              "sampleTraceId": 7579870629262475
+            }
+          },
+          "cat": "devtools.timeline",
+          "name": "TimeStamp",
+          "ph": "I",
+          "pid": 9908,
+          "s": "t",
+          "tid": 9908,
+          "ts": 5885074252,
+          "tts": 908882
+        },
+        {
+          "args": {
+            "data": {
+              "frame": "0E5B25C901A211015632072E772BA999",
+              "message": "membership-pagehide:9:false",
+              "name": "membership-pagehide:9:false",
+              "sampleTraceId": 7579870629262792
+            }
+          },
+          "cat": "devtools.timeline",
+          "name": "TimeStamp",
+          "ph": "I",
+          "pid": 9908,
+          "s": "t",
+          "tid": 9908,
+          "ts": 5885407839,
+          "tts": 982395
+        },
+        {
+          "args": {
+            "data": {
+              "frame": "0E5B25C901A211015632072E772BA999",
+              "message": "membership-pagehide:10:false",
+              "name": "membership-pagehide:10:false",
+              "sampleTraceId": 7579870629262603
+            }
+          },
+          "cat": "devtools.timeline",
+          "name": "TimeStamp",
+          "ph": "I",
+          "pid": 9908,
+          "s": "t",
+          "tid": 9908,
+          "ts": 5885750102,
+          "tts": 1066442
+        }
+      ],
+      "shutdown_trace_events": [
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 43,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9908,
+          "tdur": 40,
+          "tid": 9908,
+          "ts": 5881907720,
+          "tts": 57875
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 203,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9908,
+          "tdur": 200,
+          "tid": 9908,
+          "ts": 5881908063,
+          "tts": 58200
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 1,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9908,
+          "tid": 9908,
+          "ts": 5881909843
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 54,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9908,
+          "tdur": 52,
+          "tid": 9908,
+          "ts": 5882242532,
+          "tts": 136672
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 3722,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9908,
+          "tdur": 3720,
+          "tid": 9908,
+          "ts": 5882246539,
+          "tts": 140659
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 1,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9908,
+          "tid": 9908,
+          "ts": 5882251787
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 98,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9908,
+          "tdur": 97,
+          "tid": 9908,
+          "ts": 5882637586,
+          "tts": 252919
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 2517,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9908,
+          "tdur": 2515,
+          "tid": 9908,
+          "ts": 5882638670,
+          "tts": 253982
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 3,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9908,
+          "tdur": 2,
+          "tid": 9908,
+          "ts": 5882647072,
+          "tts": 258203
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 43,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9908,
+          "tdur": 41,
+          "tid": 9908,
+          "ts": 5882968435,
+          "tts": 331779
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 2879,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9908,
+          "tdur": 2876,
+          "tid": 9908,
+          "ts": 5882969422,
+          "tts": 332745
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 2,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9908,
+          "tdur": 1,
+          "tid": 9908,
+          "ts": 5882973660,
+          "tts": 336837
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 312,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9908,
+          "tdur": 311,
+          "tid": 9908,
+          "ts": 5883336505,
+          "tts": 433617
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 5189,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9908,
+          "tdur": 4623,
+          "tid": 9908,
+          "ts": 5883339230,
+          "tts": 435076
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 1,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9908,
+          "tdur": 1,
+          "tid": 9908,
+          "ts": 5883350806,
+          "tts": 441488
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 42,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9908,
+          "tdur": 40,
+          "tid": 9908,
+          "ts": 5883710714,
+          "tts": 552307
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 2753,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9908,
+          "tdur": 2751,
+          "tid": 9908,
+          "ts": 5883711485,
+          "tts": 553057
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 2,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9908,
+          "tdur": 1,
+          "tid": 9908,
+          "ts": 5883719003,
+          "tts": 557274
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 40,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9908,
+          "tdur": 39,
+          "tid": 9908,
+          "ts": 5884055214,
+          "tts": 647795
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 2337,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9908,
+          "tdur": 2165,
+          "tid": 9908,
+          "ts": 5884056110,
+          "tts": 648672
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 2,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9908,
+          "tdur": 1,
+          "tid": 9908,
+          "ts": 5884063013,
+          "tts": 652189
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 48,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9908,
+          "tdur": 46,
+          "tid": 9908,
+          "ts": 5884387721,
+          "tts": 725718
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 3108,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9908,
+          "tdur": 3107,
+          "tid": 9908,
+          "ts": 5884388883,
+          "tts": 726859
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 1,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9908,
+          "tdur": 1,
+          "tid": 9908,
+          "ts": 5884393911,
+          "tts": 731682
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 43,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9908,
+          "tdur": 41,
+          "tid": 9908,
+          "ts": 5884750901,
+          "tts": 832232
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 3237,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9908,
+          "tdur": 3235,
+          "tid": 9908,
+          "ts": 5884751840,
+          "tts": 833150
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 1,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9908,
+          "tdur": 1,
+          "tid": 9908,
+          "ts": 5884759683,
+          "tts": 837757
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 50,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9908,
+          "tdur": 48,
+          "tid": 9908,
+          "ts": 5885074042,
+          "tts": 908678
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 3163,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9908,
+          "tdur": 3149,
+          "tid": 9908,
+          "ts": 5885075104,
+          "tts": 909581
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 1,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9908,
+          "tdur": 1,
+          "tid": 9908,
+          "ts": 5885079739,
+          "tts": 914005
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 61,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9908,
+          "tdur": 58,
+          "tid": 9908,
+          "ts": 5885407164,
+          "tts": 981727
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 3760,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9908,
+          "tdur": 3754,
+          "tid": 9908,
+          "ts": 5885410165,
+          "tts": 984702
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 1,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9908,
+          "tdur": 1,
+          "tid": 9908,
+          "ts": 5885415781,
+          "tts": 989911
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 63,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9908,
+          "tdur": 61,
+          "tid": 9908,
+          "ts": 5885749822,
+          "tts": 1066169
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 6544,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9908,
+          "tdur": 2865,
+          "tid": 9908,
+          "ts": 5885756308,
+          "tts": 1067829
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 1,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 9908,
+          "tdur": 1,
+          "tid": 9908,
+          "ts": 5885765216,
+          "tts": 1072814
+        }
+      ],
+      "gc_events": [],
+      "gc_event_counts": {},
+      "counter_order": [
+        {
+          "index": 0,
+          "components": {
+            "heap": {
+              "bounds_us": [
+                5882226416.7699995,
+                5882228758.163
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            },
+            "dom": {
+              "bounds_us": [
+                5882227788.639,
+                5882229961.245
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            }
+          }
+        },
+        {
+          "index": 1,
+          "components": {
+            "heap": {
+              "bounds_us": [
+                5882580365.907,
+                5882582639.591001
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            },
+            "dom": {
+              "bounds_us": [
+                5882581670.342,
+                5882583572.440001
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            }
+          }
+        },
+        {
+          "index": 2,
+          "components": {
+            "heap": {
+              "bounds_us": [
+                5882952868.463,
+                5882954994.727
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            },
+            "dom": {
+              "bounds_us": [
+                5882954025.028,
+                5882955800.918
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            }
+          }
+        },
+        {
+          "index": 3,
+          "components": {
+            "heap": {
+              "bounds_us": [
+                5883294716.574,
+                5883297103.259
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            },
+            "dom": {
+              "bounds_us": [
+                5883296133.724,
+                5883298390.639
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            }
+          }
+        },
+        {
+          "index": 4,
+          "components": {
+            "heap": {
+              "bounds_us": [
+                5883667353.689,
+                5883670008.198
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            },
+            "dom": {
+              "bounds_us": [
+                5883669038.831,
+                5883670900.831
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            }
+          }
+        },
+        {
+          "index": 5,
+          "components": {
+            "heap": {
+              "bounds_us": [
+                5884019971.907,
+                5884022010.577
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            },
+            "dom": {
+              "bounds_us": [
+                5884021041.052,
+                5884022770.161
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            }
+          }
+        },
+        {
+          "index": 6,
+          "components": {
+            "heap": {
+              "bounds_us": [
+                5884370495.205,
+                5884372781.262
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            },
+            "dom": {
+              "bounds_us": [
+                5884371811.7039995,
+                5884373831.028
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            }
+          }
+        },
+        {
+          "index": 7,
+          "components": {
+            "heap": {
+              "bounds_us": [
+                5884713363.143,
+                5884715615.415
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            },
+            "dom": {
+              "bounds_us": [
+                5884714645.92,
+                5884716579.073
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            }
+          }
+        },
+        {
+          "index": 8,
+          "components": {
+            "heap": {
+              "bounds_us": [
+                5885059020.21,
+                5885061342.8880005
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            },
+            "dom": {
+              "bounds_us": [
+                5885060373.436,
+                5885062393.896
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            }
+          }
+        },
+        {
+          "index": 9,
+          "components": {
+            "heap": {
+              "bounds_us": [
+                5885387357.11,
+                5885389567.767
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            },
+            "dom": {
+              "bounds_us": [
+                5885388598.205,
+                5885390546.026
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            }
+          }
+        },
+        {
+          "index": 10,
+          "components": {
+            "heap": {
+              "bounds_us": [
+                5885725990.496,
+                5885728298.087
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            },
+            "dom": {
+              "bounds_us": [
+                5885727328.559999,
+                5885729419.543
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            }
+          }
+        },
+        {
+          "index": 11,
+          "components": {
+            "heap": {
+              "bounds_us": [
+                5886064751.414,
+                5886066923.705
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            },
+            "dom": {
+              "bounds_us": [
+                5886065954.104,
+                5886067795.295
+              ],
+              "fully_covered": false,
+              "gc_overlap": []
+            }
+          }
+        }
+      ],
+      "clock": {
+        "offset_us": [
+          -362.1630001068115,
+          608.1960000991821
+        ],
+        "coverage_us": [
+          5881890462,
+          5886067500
+        ]
+      },
+      "matched_receivers": 1536,
+      "receiver_records": 1536,
+      "mixed_generations": 12
+    },
+    {
+      "index": 3,
+      "mode": "control",
+      "duration_ms": 5226.616755,
+      "membership_status": "valid_control",
+      "membership_errors": [],
+      "membership_qualification_waived": false,
+      "errors": [],
+      "stages": [
+        {
+          "index": 0,
+          "documents": 6,
+          "nodes": 8224,
+          "used_heap_bytes": 1561632
+        },
+        {
+          "index": 1,
+          "documents": 8,
+          "nodes": 16428,
+          "used_heap_bytes": 2012204
+        },
+        {
+          "index": 2,
+          "documents": 10,
+          "nodes": 24632,
+          "used_heap_bytes": 2410504
+        },
+        {
+          "index": 3,
+          "documents": 12,
+          "nodes": 32836,
+          "used_heap_bytes": 2832284
+        },
+        {
+          "index": 4,
+          "documents": 14,
+          "nodes": 41040,
+          "used_heap_bytes": 3256720
+        },
+        {
+          "index": 5,
+          "documents": 16,
+          "nodes": 49244,
+          "used_heap_bytes": 3655240
+        },
+        {
+          "index": 6,
+          "documents": 18,
+          "nodes": 57448,
+          "used_heap_bytes": 4078732
+        },
+        {
+          "index": 7,
+          "documents": 20,
+          "nodes": 65652,
+          "used_heap_bytes": 4488180
+        },
+        {
+          "index": 8,
+          "documents": 22,
+          "nodes": 73856,
+          "used_heap_bytes": 4922416
+        },
+        {
+          "index": 9,
+          "documents": 24,
+          "nodes": 82060,
+          "used_heap_bytes": 5321960
+        },
+        {
+          "index": 10,
+          "documents": 26,
+          "nodes": 90264,
+          "used_heap_bytes": 5742028
+        },
+        {
+          "index": 11,
+          "documents": 28,
+          "nodes": 98468,
+          "used_heap_bytes": 6165300
+        }
+      ],
+      "observation_fraction_bound": 0.04865319209730349,
+      "maximum_observation_ms": 53.434669,
+      "status": "valid_control"
+    }
+  ],
+  "files_verified": 14,
+  "source_hashes_verified": 14
+}

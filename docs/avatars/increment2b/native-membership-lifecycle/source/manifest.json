@@ -8,7 +8,8 @@
     "normal-page-destroy.asm": "77ccd7e64ef7500cbbcf10e21f24750dc385784591cdbee310366c483ebb1fa6",
     "playwright-launch-excerpt.txt": "8588e7ba8f1114e114349c7adaea5ab128336719e0a3e380fb20b252e71b775c",
     "sweeper.cc": "d5d25c023458b9a382b4dcc6037c1ffbbc6079a7106eef8e3939e384a2584f6e",
-    "symbols.txt": "cf4702e7063261bb87153ae44c135ed579072f185cb315815cb036f0c41af0d2"
+    "symbols.txt": "cf4702e7063261bb87153ae44c135ed579072f185cb315815cb036f0c41af0d2",
+    "next-receiver-symbol.txt": "9ca863a81ebdcbc3e1e1696becef5e03d09cdd41ee2af3e498994b8f150d4ec0"
   },
   "urls": {
     "heap-page.cc": "https://raw.githubusercontent.com/v8/v8/392e44423f46d75904da712fadea4c7d5d97967f/src/heap/cppgc-internal/heap-page.cc",

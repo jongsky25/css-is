@@ -25,6 +25,24 @@ seasonal administration, and accessibility behavior.
 A phase fails if its visuals remain essentially the same except for color changes,
 or if it exceeds a performance gate. Fix or reduce complexity before expanding it.
 
+## Native lifecycle discrimination — labelled reclamation observed, gates still fail
+
+[Latest report](avatars/increment2b/native-membership-lifecycle/REPORT.md): pinned source/runtime show BFCache disabled and normal
+nonpersisted document departures. Latest v6 (5364334) preserves 1,536/1,536 sampled
+receiver/page joins in both probes. One records MajorGC, native sweep and 500 page
+returns inside the window, including ten generations previously containing labelled
+elements from fixture documents 0–9. All ten return brackets overlap native sweep.
+The other probe records no collection or return. This is synthetic membership and
+reclamation evidence, not exclusive ownership or a product-memory pass.
+
+V6 still fails observation bounds (6.687/5.322%), 28.871% control duration variation
+and first probe/control ratio 1.28597. No application comparison. All earlier setup,
+message-delivery, transport-test and overhead failures remain; five archives re-audit
+identically. 34 focused tests pass, and the beacon capability passes. Product cf363bf
+unchanged; 2B/later blocked. Next prove a cheaper native receiver observable (for
+example a source-verified absent-attribute getter) before new controlled qualification.
+No unchanged favorable rerun, forced collection, budget waiver or product promotion.
+
 ## Native element membership — live coverage passes, reclamation unqualified
 
 [Latest report](avatars/increment2b/native-element-membership/REPORT.md): two distinct frozen four-slot synthetic experiments complete.

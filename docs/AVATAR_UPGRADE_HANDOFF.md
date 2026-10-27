@@ -2,7 +2,7 @@
 
 Last updated: **2026-10-27 UTC**. Repository: `jongsky25/css-is`.
 
-## Start here — Sol handoff, current after native membership capability
+## Start here — Sol handoff, current after native lifecycle v6
 
 **Objective: unblock 2B only. Do not start or resume 3A or later increments.**
 This section supersedes older next-step instructions below. The chronology is
@@ -11,10 +11,11 @@ retained as evidence, not a queue of experiments to repeat.
 ### Checkout and current state
 
 - Repository: `jongsky25/css-is`; resume `codex/avatar-2b-verification`.
-- Latest completed experiments: native element-membership v1/v2, harnesses
-  `3375008` / `02f59cb`. Both fail through-reclamation capability; no application
-  collection. Use latest branch HEAD for reports, audits and evidence, not a
-  reset to a harness commit. Prior experiments remain preserved.
+- Latest completed experiment: native membership lifecycle v6, frozen harness
+  `5364334`; result remains diagnostic_failed. One probe observes labelled page
+  reclamation, but overhead/control gates fail. All earlier lifecycle revisions,
+  membership capability and snapshot-order failures remain. Use latest branch
+  HEAD for reports/evidence, not a reset to a harness commit.
 - Comparison baseline: `1c964dcba2fa19de1eab077b00e0e5748d742554`.
 - Current experimental product: `cf363bfe547d5e23619eee28cdaf68bd4b6d7753`,
   including the thread-owned reader candidate and avatar product `f700187`.
@@ -45,12 +46,14 @@ markup and improves navigation 20 in both orders, but those partial benefits
 cannot override the failed gates. This screen compares current versus candidate;
 it is not the complete original-versus-candidate acceptance matrix.
 
-Latest diagnostic: [native element membership](avatars/increment2b/native-element-membership/REPORT.md)
-completes two distinct fixed four-slot synthetic schedules. V2 maps all selected
-native receivers to observed page generations within the timing budgets, but no
-pool-return call is observed. Reclamation capability remains failed; no application
-collection or product fix follows. Both extracted archives re-audit identically.
-Earlier component-order calibration remains failed, not superseded by a pass.
+Latest diagnostic: [native lifecycle discrimination](avatars/increment2b/native-membership-lifecycle/REPORT.md).
+Runtime confirms BFCache disabled; all eleven fixture departures are persisted=false.
+V6 maps every declared receiver in both probes. One observes natural MajorGC/sweep
+and 500 normal-page returns, including ten labelled generations from documents 0–9;
+the other records no collection/return. V6 still fails overhead and control stability,
+so no application collection or product fix is qualified. All five scheduled archives
+re-audit identically, with all setup/delivery/overhead failures retained. Earlier
+failures are not superseded by a pass.
 
 There is no defensible percentage or ETA. At least three milestones remain:
 
@@ -70,37 +73,40 @@ verification**. No candidate currently qualifies to unblock 2B.
 
 Read these in order before changing code or launching browsers:
 
-1. [Native membership result](avatars/increment2b/native-element-membership/REPORT.md),
-   both frozen protocols, v1/v2 strengthened audits and retained initial v1 audit.
-2. [Component-order result](avatars/increment2b/snapshot-ordering/REPORT.md), its
-   protocol, sample review and failed calibration; do not repeat it unchanged.
+1. [Latest lifecycle report](avatars/increment2b/native-membership-lifecycle/REPORT.md),
+   versioned protocols/audits, all failed transport tests and v6 native-period summary.
+2. [Native membership capability](avatars/increment2b/native-element-membership/REPORT.md)
+   and [component ordering](avatars/increment2b/snapshot-ordering/REPORT.md).
 3. [Product candidate](avatars/increment2b/shared-cat-gradients/REPORT.md), the
-   [overall 2B report](avatars/increment2b/REPORT.md) and
+   [overall report](avatars/increment2b/REPORT.md) and
    [acceptance gates](AVATAR_VISUAL_UPGRADE_PLAN.md#performance-acceptance-gates).
 4. [Native page history](avatars/increment2b/page-history-application/REPORT.md),
    [reader retention](avatars/increment2b/reader-retention/REPORT.md),
    [native type inventory](avatars/increment2b/native-type-ownership/REPORT.md), and
    failed [lifecycle](avatars/increment2b/lifecycle-memory-fix/REPORT.md) /
-   [stylesheet](avatars/increment2b/shared-stylesheet/REPORT.md) candidates.
+   [stylesheet](avatars/increment2b/shared-stylesheet/REPORT.md) product candidates.
 
-The native membership probe now demonstrates a specific source-labelled element
-address inside a captured normal-page generation. V1 fails coverage/reclamation/
-timing; the distinct v2 corrects coverage and cost with fixed larger documents and
-a smaller fixed census. Both v2 probes map all 6,144 selected receiver observations,
-including 12 mixed-group generations, but record zero pool-return calls. No
-application run is qualified. This is live membership, not exclusive page ownership,
-retained bytes, a strong retaining path or complete allocation history. getClientRects
-can flush layout and allocates rectangle objects; injection is not acceptance RSS.
+The document/history question was investigated. Effective BFCache flag is disabled;
+known fixture departures are nonpersisted. Geometry-based native membership is
+now linked to natural page reclamation in ONE v6 probe, with ten labelled page
+generations returning during native sweeps. V6 still fails its 5% observation
+bound and control duration gates. Do not qualify application collection from one
+positive probe or replace the failing control. No product intervention follows.
 
-Next inspect the exact browser's ordinary document/history lifecycle and page
-release paths. The missing discriminator is whether the synthetic documents are
-held by navigation/history state, have not naturally collected, or were partially
-reclaimed while pages remain occupied. Existing membership captures do not record
-document-disposition or natural-GC chronology. Establish a controlled fixture's
-intended document lifetime and relevant natural release-path coverage before any
-new application probe. Do not repeat either unchanged fixture, extend it solely
-until a return appears, lower coverage gates, force collection or invent page
-ownership from a requesting stack. No next product fix is established.
+Post-window pool returns in earlier revisions are separately classified and cannot
+satisfy measured reclamation. Native shutdown does not mean GC; mixed page membership
+does not assign all bytes to one source. The outlined Destroy/Release hooks do not
+cover every compiled destruction path. No full native byte ownership is established.
+
+Next reduce native receiver observation cost before another application probe.
+The retained cost breakdown identifies geometry census work as dominant. Inspect
+a source-verified absent-attribute getter as a cheaper alternative to getClientRects;
+prove exact-build hook/ABI, no attribute creation for the absent query, count/repeat/
+disjoint identities and measured overhead on a controlled fixture first. The pinned
+Element::getAttributeNodeNS source and exact symbol are starting evidence, not a
+qualified probe or product fix. Freeze all changes/coverage/cost gates before
+collection. Do not repeat v6 unchanged for stable controls or favorable GC, relax
+budgets, add a speculative teardown handler, or expand gradients as a proven fix.
 
 ### Important traps and execution constraints
 
@@ -123,13 +129,13 @@ ownership from a requesting stack. No next product fix is established.
 ### Copy into the new Sol session
 
 > Continue jongsky25/css-is on codex/avatar-2b-verification using Sol. Read the
-> authoritative Start here section and native-element-membership report. Goal:
-> unblock 2B only. Synthetic v1/v2 (3375008 / 02f59cb) both fail reclamation coverage;
-> v2 demonstrates complete sampled receiver/page membership within timing gates,
-> but neither probe observes a pool return. No application run or product change.
-> Next establish controlled document/history lifetime and natural release-path
-> observability on the exact browser. Preserve all failed gates; no unchanged
-> favorable rerun, forced GC, waiver, 3A, merge or deployment.
+> authoritative Start here section and native-membership-lifecycle report. Goal:
+> unblock 2B only. Latest v6 (5364334) observes source-labelled natural page returns
+> in one probe, but fails overhead/control stability; no application comparison.
+> Preserve every prior failed revision and classify post-window returns separately.
+> Next prove a cheaper native receiver observable, such as a verified absent-
+> attribute getter, on the controlled fixture before any application use. No
+> unchanged favorable rerun, forced GC, waiver, 3A, merge or deployment.
 
 ## Current blocking correction
 
