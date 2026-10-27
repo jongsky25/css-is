@@ -147,7 +147,7 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
         assert metadata.json()['resource'] == 'https://office.example/mcp'
         scopes = {'surveys:person_activities:read', 'surveys:resource_person_trends:read', 'surveys:csm_trends:read', 'surveys:unit_trends:read', 'surveys:units:read', 'activities:read', 'calendar:read', 'documents:read',
                   'supplies:read', 'travel:read', 'work:read', 'notifications:read', 'surveys:csm:read', 'surveys:activities:read', 'surveys:resource_persons:read', 'surveys:activity_details:read'}
-        assert set(metadata.json()['scopes_supported']) == scopes | {'notifications:mark_read', 'supplies:request:draft', 'work:comment:draft', 'reports:view:save'}
+        assert set(metadata.json()['scopes_supported']) == scopes | {'notifications:mark_read', 'supplies:request:draft', 'work:comment:draft', 'reports:view:save', 'calendar:entry:create'}
         denied = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 1, 'method': 'initialize',
                                           'params': {'protocolVersion': '2025-06-18',
                                                      'capabilities': {}, 'clientInfo': {'name': 'probe', 'version': '1'}}},
@@ -165,7 +165,7 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
             'grant_types': ['authorization_code', 'refresh_token'],
             'response_types': ['code']})
         assert registered.status_code == 201, registered.text
-        assert set(registered.json()['scope'].split()) == scopes | {'notifications:mark_read', 'supplies:request:draft', 'work:comment:draft', 'reports:view:save'}
+        assert set(registered.json()['scope'].split()) == scopes | {'notifications:mark_read', 'supplies:request:draft', 'work:comment:draft', 'reports:view:save', 'calendar:entry:create'}
         client_id = registered.json()['client_id']
         auth_url = client.get('/authorize', params={
             'response_type': 'code', 'client_id': client_id, 'redirect_uri': callback,
@@ -228,7 +228,7 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
         assert listed.status_code == 200, listed.text
         names = {tool['name'] for tool in listed.json()['result']['tools']}
         assert {'my_work', 'find_documents', 'get_document'} <= names
-        assert names == {'prepare_saved_report_view', 'get_saved_report_view_operation', 'prepare_task_comment_draft', 'get_task_comment_draft_operation', 'prepare_supply_request_draft', 'get_supply_draft_operation', 'mark_my_notification_read', 'get_mcp_operation', 'get_resource_person_activity_survey', 'find_survey_resource_persons', 'compare_resource_person_surveys', 'compare_csm_months', 'compare_unit_activity_surveys', 'find_survey_units', 'get_unit_activity_survey_summary', 'my_work', 'find_documents', 'get_document',
+        assert names == {'prepare_personal_calendar_entry', 'get_personal_calendar_operation', 'prepare_saved_report_view', 'get_saved_report_view_operation', 'prepare_task_comment_draft', 'get_task_comment_draft_operation', 'prepare_supply_request_draft', 'get_supply_draft_operation', 'mark_my_notification_read', 'get_mcp_operation', 'get_resource_person_activity_survey', 'find_survey_resource_persons', 'compare_resource_person_surveys', 'compare_csm_months', 'compare_unit_activity_surveys', 'find_survey_units', 'get_unit_activity_survey_summary', 'my_work', 'find_documents', 'get_document',
                          'list_work_items', 'get_work_item', 'list_work_tasks', 'list_calendar_events',
                          'list_supply_queue', 'list_my_travel_filings', 'list_activity_progress',
                          'my_office_overview', 'list_my_notifications', 'get_room_availability', 'get_csm_summary', 'get_activity_survey_summary', 'get_resource_person_survey_summary', 'find_survey_activities', 'get_activity_survey_detail'}
@@ -567,10 +567,10 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
         assert stale.status_code == 401
         # Reproduce a client requesting only work, despite registering all reads.
         # Optional consent must be explicit, and token/refresh must reflect it.
-        for choose_calendar, choose_write, choose_supply, choose_comment, choose_view in (
-                (False, False, False, False, False), (True, False, False, False, False),
-                (False, True, False, False, False), (False, False, True, False, False),
-                (False, False, False, True, False), (False, False, False, False, True)):
+        for choose_calendar, choose_write, choose_supply, choose_comment, choose_view, choose_personal in (
+                (False, False, False, False, False, False), (True, False, False, False, False, False),
+                (False, True, False, False, False, False), (False, False, True, False, False, False),
+                (False, False, False, True, False, False), (False, False, False, False, True, False), (False, False, False, False, False, True)):
             # Each case tests a separate authorization choice, not rate limits.
             import ratelimit
             ratelimit.reset()
@@ -596,6 +596,8 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
                 values['scope_work:comment:draft'] = '1'
             if choose_view:
                 values['scope_reports:view:save'] = '1'
+            if choose_personal:
+                values['scope_calendar:entry:create'] = '1'
             consent = browser.post('/mcp-consent', data=values,
                 headers={'Origin': 'https://office.example'}, follow_redirects=False)
             assert consent.status_code == 303, consent.text
@@ -613,6 +615,8 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
                 expected.add('work:comment:draft')
             if choose_view:
                 expected.add('reports:view:save')
+            if choose_personal:
+                expected.add('calendar:entry:create')
             assert set(token.json()['scope'].split()) == expected
             narrow_headers = dict(headers, Authorization='Bearer ' + token.json()['access_token'])
             calendar_call = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 100, 'method': 'tools/call',
@@ -717,6 +721,29 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
                 conn = st.connect(os.environ['CSS_DB'])
                 assert conn.execute('SELECT COUNT(*) FROM report_saved_view').fetchone()[0] == before_views
                 conn.close()
+            if choose_personal:
+                os.environ['CSS_MCP_PERSONAL_CALENDAR_ENABLED'] = '1'
+                conn = st.connect(os.environ['CSS_DB'])
+                before_entries = conn.execute('SELECT COUNT(*) FROM calendar_entry').fetchone()[0]
+                before_outbox = conn.execute('SELECT COUNT(*) FROM calendar_outbox').fetchone()[0]
+                conn.close()
+                personal_args = {'title': 'Synthetic personal plan', 'start_date': '2026-11-02',
+                    'start_time': '09:00', 'end_time': '10:00', 'note': 'Private synthetic planning note',
+                    'operation_id': 'remote-personal-calendar-001'}
+                prepared = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 109, 'method': 'tools/call',
+                    'params': {'name': 'prepare_personal_calendar_entry', 'arguments': personal_args}}, headers=narrow_headers)
+                assert prepared.status_code == 200 and not prepared.json()['result'].get('isError'), prepared.text
+                personal_preview = json.loads(prepared.json()['result']['content'][0]['text'])
+                assert personal_preview['status'] == 'awaiting_confirmation'
+                assert 'Private synthetic planning note' not in prepared.text
+                confirmation = browser.get(personal_preview['confirmation_url'])
+                assert confirmation.status_code == 200 and '09:00 to 10:00' in confirmation.text, confirmation.text
+                personal_confirm_values = {name: re.search(r'name="' + name + r'" value="([^\"]+)"', confirmation.text).group(1)
+                                           for name in ('csrf', 'preview_digest')}
+                personal_confirm_values['confirm'] = 'yes'
+                conn = st.connect(os.environ['CSS_DB'])
+                assert conn.execute('SELECT COUNT(*) FROM calendar_entry').fetchone()[0] == before_entries
+                conn.close()
             rotated = client.post('/token', data={'grant_type': 'refresh_token', 'client_id': client_id,
                 'refresh_token': token.json()['refresh_token'], 'resource': 'https://office.example/mcp'})
             assert rotated.status_code == 200
@@ -808,6 +835,27 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
                 conn.close()
                 os.environ.pop('CSS_MCP_REPORT_VIEWS_ENABLED', None)
 
+            if choose_personal:
+                confirmed = browser.post(personal_preview['confirmation_url'], data=personal_confirm_values,
+                    headers={'Origin': 'https://office.example'})
+                assert confirmed.status_code == 200 and 'Personal calendar entry saved' in confirmed.text, confirmed.text
+                recovered = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 110, 'method': 'tools/call',
+                    'params': {'name': 'get_personal_calendar_operation', 'arguments': {'operation_id': personal_args['operation_id']}}},
+                    headers=dict(headers, Authorization='Bearer ' + rotated.json()['access_token']))
+                assert recovered.status_code == 200 and not recovered.json()['result'].get('isError'), recovered.text
+                receipt = json.loads(recovered.json()['result']['content'][0]['text'])
+                assert receipt['status'] == 'completed' and receipt['entry_id']
+                source = browser.get(receipt['web_url'])
+                assert source.status_code == 200 and 'Synthetic personal plan' in source.text, source.text
+                conn = st.connect(os.environ['CSS_DB'])
+                assert conn.execute('SELECT COUNT(*) FROM calendar_entry').fetchone()[0] == before_entries + 1
+                assert conn.execute('SELECT COUNT(*) FROM calendar_outbox').fetchone()[0] == before_outbox
+                entry = st.cal_get(conn, int(receipt['entry_id']))
+                assert entry['audience'] == 'people' and entry['status'] == 'tentative'
+                assert [p['user_id'] for p in entry['people']] == [owner]
+                conn.close()
+                os.environ.pop('CSS_MCP_PERSONAL_CALENDAR_ENABLED', None)
+
         # Start a new synthetic operator session after the consent matrix.
         import ratelimit
         ratelimit.reset()
@@ -817,7 +865,7 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
             'token_endpoint_auth_method': 'none', 'grant_types': ['authorization_code', 'refresh_token'],
             'response_types': ['code']})
         assert restricted.status_code == 201
-        assert set(restricted.json()['scope'].split()) == scopes | {'notifications:mark_read', 'supplies:request:draft', 'work:comment:draft', 'reports:view:save'}
+        assert set(restricted.json()['scope'].split()) == scopes | {'notifications:mark_read', 'supplies:request:draft', 'work:comment:draft', 'reports:view:save', 'calendar:entry:create'}
         restricted_id = restricted.json()['client_id']
         import json
         conn = st.connect(os.environ['CSS_DB'])

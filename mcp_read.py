@@ -22,6 +22,7 @@ import mcp_auth
 import mcp_actions
 import mcp_supply_drafts
 import mcp_comment_drafts
+import mcp_personal_calendar
 import mcp_report_views
 import supplies_storage
 import office_calendar
@@ -296,6 +297,42 @@ def build_server(get_conn, origin):
         """
         return await action(lambda conn, token: mcp_report_views.recover(
             conn, token, provider.resource, origin, operation_id), mcp_report_views.SCOPE)
+
+    @server.tool(title='Prepare my personal calendar entry', annotations=ToolAnnotations(
+        readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=False))
+    async def prepare_personal_calendar_entry(title: StrictStr, start_date: StrictStr,
+            operation_id: StrictStr, end_date: StrictStr | None = None,
+            start_time: StrictStr | None = None, end_time: StrictStr | None = None,
+            venue: StrictStr = '', note: StrictStr = '') -> dict:
+        """Prepare one NEW tentative personal meeting for browser confirmation.
+
+        Only the current user is a participant and can see it. No invitations,
+        room booking, meeting link, recurrence or travel filing. Dates use
+        YYYY-MM-DD, with the end at most 366 days after the start. Provide both
+        HH:MM times in Asia/Manila, or neither for an all-day entry. Title up to
+        200 characters, venue up to 200, note up to 2000. Show confirmation_url
+        for exact review; preparation does not create an entry. Requires separate
+        calendar:entry:create consent. Reuse the same random 16–80 character
+        operation_id across retries; recover it before creating a replacement.
+        """
+        return await action(lambda conn, token: mcp_personal_calendar.prepare(
+            conn, token, provider.resource, origin, operation_id,
+            {'title': title, 'start_date': start_date, 'end_date': end_date,
+             'start_time': start_time, 'end_time': end_time, 'venue': venue, 'note': note}),
+            mcp_personal_calendar.SCOPE)
+
+    @server.tool(title='Check my personal calendar entry receipt', annotations=READ_ONLY)
+    async def get_personal_calendar_operation(operation_id: StrictStr) -> dict:
+        """Recover the original personal calendar preview/create receipt.
+
+        Requires the same active connection and calendar:entry:create consent.
+        Returns status and the original source link, not calendar text. Completed
+        means the entry was created, not that it still has its original details;
+        ordinary Calendar edits remain separate. Unavailable or a timeout is not
+        proof of failure. Inspect the original operation before a replacement key.
+        """
+        return await action(lambda conn, token: mcp_personal_calendar.recover(
+            conn, token, provider.resource, origin, operation_id), mcp_personal_calendar.SCOPE)
 
     def supply_queue(conn, user, queue, state, query, page, limit):
         if queue not in ('requests', 'approvals', 'warnings'):

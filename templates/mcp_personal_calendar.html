@@ -1,0 +1,31 @@
+{% extends "dash_layout.html" %}
+{% block title %}Review personal calendar entry — Office Connect{% endblock %}
+{% block content %}
+<div style="max-width:42rem;margin:auto;overflow-wrap:anywhere">
+{% if result.status == 'completed' %}
+<h1>Personal calendar entry saved</h1>
+<p>Saved at {{ result.completed_at }} as a tentative personal entry. No invitations were sent. Later changes in Calendar are separate from this receipt.</p>
+<p><a href="{{ result.web_url }}">Open my calendar entry</a></p>
+{% else %}
+<h1>Save this personal calendar entry?</h1>
+<dl>
+<dt>Title</dt><dd>{{ result.fields.title }}</dd>
+<dt>First day</dt><dd>{{ result.fields.start_date }}</dd>
+<dt>Last day</dt><dd>{{ result.fields.end_date or result.fields.start_date }}</dd>
+<dt>Time (Asia/Manila)</dt><dd>{% if result.fields.start_time %}{{ result.fields.start_time }} to {{ result.fields.end_time }}{% else %}All day{% endif %}</dd>
+<dt>Venue</dt><dd>{{ result.fields.venue or 'None' }}</dd>
+<dt>Note</dt><dd style="white-space:pre-wrap">{{ result.fields.note or 'None' }}</dd>
+<dt>Visibility</dt><dd>Only you</dd>
+<dt>Status and type</dt><dd>Tentative meeting</dd>
+</dl>
+<p>This creates one personal calendar entry with you as its only participant. It sends no invitations, books no room, creates no meeting link and starts no travel filing. It does not repeat. Review these details before saving. This preview expires ten minutes after preparation.</p>
+<form method="post">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<input type="hidden" name="preview_digest" value="{{ result.preview_digest }}">
+<button type="submit" name="confirm" value="yes">Confirm: save my calendar entry</button>
+</form>
+{% endif %}
+<p>Operation receipt: <code>{{ result.operation_id }}</code></p>
+<p><a href="/calendar?scope=mine">My calendar</a></p>
+</div>
+{% endblock %}

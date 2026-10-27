@@ -1,6 +1,6 @@
 # Office Connect MCP expansion plan
 
-Status: **Incremental implementation**, updated October 27, 2026. Baseline: the read-only MCP expansion in v8.35 (PR #444). M1 reads and default-off M2.1 notification, M2.2 supply-draft, M2.3 private-comment-draft and M2.4 saved-report-view pilots are implemented as recorded below. Existing OAuth grants are not widened. Hosted write acceptance remains separate from implementation.
+Status: **Incremental implementation**, updated October 27, 2026. Baseline: the read-only MCP expansion in v8.35 (PR #444). M1 reads and default-off M2.1 notification, M2.2 supply-draft, M2.3 private-comment-draft and M2.4 saved-report-view and M2.5 personal-calendar pilots are implemented as recorded below. Existing OAuth grants are not widened. Hosted write acceptance remains separate from implementation.
 
 ## Goal and boundary
 
@@ -251,3 +251,21 @@ Owner-only Reports collection/source pages reopen current report data through
 ordinary report permissions. No report mutation, content, export, sharing,
 overwrite or delete. See [pilot contract and acceptance](MCP_REPORT_VIEW_PILOT.md).
 Hosted acceptance and other M2/M3/M4 actions remain separate work.
+
+M2.4 merged in [PR #494](https://github.com/jongsky25/css-is/pull/494), commit
+`7ed5fa5f83bc7ac0b461e45859b3fc2789bdd05c`.
+
+### M2.5 implementation — v8.83
+
+The default-off personal-calendar pilot adds a separately consented
+`calendar:entry:create` action. ChatGPT prepares bounded title/date/time/venue/note
+fields; the signed-in user confirms the exact preview before the existing domain
+service saves one tentative meeting visible only to that user. No invitations,
+rooms, recurrence, Meet links, activity links or travel filings are created.
+Current Calendar eligibility, session/grant/scope and payload integrity are
+rechecked. Original UID/operation identity, receipt and integration audit commit
+atomically with the entry; retries never overwrite later normal Calendar edits.
+
+See [setup, boundaries and acceptance](MCP_PERSONAL_CALENDAR_PILOT.md).
+Automated OAuth/MCP/browser and domain checks cover local behavior. Hosted write
+acceptance remains pending; further M2 and all M3/M4 actions remain separate work.

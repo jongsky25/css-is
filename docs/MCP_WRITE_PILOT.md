@@ -113,3 +113,6 @@ alongside unchanged read-only consent and unsupported-scope denial.
 This local evidence does not prove a deployed ChatGPT workspace has loaded the
 new tools or that the hosted write pilot passed. No later M2/M3/M4 writes are
 enabled by this implementation.
+
+Personal calendar entry preparation is a separate default-off pilot: see
+[M2.5 setup and acceptance](MCP_PERSONAL_CALENDAR_PILOT.md).

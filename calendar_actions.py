@@ -72,7 +72,8 @@ def prepare(conn,user,form):
     return clean,people,tags
 
 
-def create_in_transaction(conn,user,fields,people,tags):
+def create_in_transaction(conn,user,fields,people,tags, *, audit_it=True):
+    """Create atomically; a caller disabling the normal audit must supply its own."""
     if not conn.in_transaction:
         raise RuntimeError('Calendar creation requires a caller-owned writer transaction.')
     user=actor(conn,user)
@@ -90,7 +91,7 @@ def create_in_transaction(conn,user,fields,people,tags):
     if set(fields)-{'title','start_date','end_date','kind','status','start_time','end_time','time_note','venue','modality','meeting_url','note','owner_org_id','extra_org_ids','audience','rrule','exdates'}:
         raise ValueError('Unsupported calendar create fields.')
     values=dict(fields);title=values.pop('title');start=values.pop('start_date')
-    return st.cal_create(conn,title,start,people=people,tags=tags,by=user['username'],commit=False,**values)
+    return st.cal_create(conn,title,start,people=people,tags=tags,by=user['username'],commit=False,audit_it=audit_it,**values)
 
 
 def create(conn,user,fields,people,tags):
