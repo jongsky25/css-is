@@ -1,0 +1,62 @@
+{
+  "run_url": "https://github.com/jongsky25/css-is/actions/runs/40521460498",
+  "artifact_id": 12742487662,
+  "artifact_sha256": "f59627e17c6ee17354a8b1910aa86cac3d94c045bb84bf5aa9378b23654cd0cc",
+  "internal_hashes_verified": 196,
+  "harness_commit": "379e4e926cae5134e8665bc06221cac274d3e734",
+  "status": "application_calibration_failed",
+  "independent_application_audit_identical": true,
+  "native_qualified_in_same_job": true,
+  "application_receiver_proof_passed": true,
+  "calibration_workloads_completed": 4,
+  "errors": [
+    "Slot 0: Actual app types differ from proof",
+    "Slot 1: Actual app types differ from proof",
+    "Slot 2: Actual app types differ from proof",
+    "Slot 3: Actual app types differ from proof"
+  ],
+  "additional_offline_cost_diagnostics": [
+    {
+      "index": 0,
+      "mode": "control",
+      "snapshots": 13,
+      "mounts": 20,
+      "duration_ms": 7587.253018,
+      "diagnostic_observation_fraction": 0.060714614750178614,
+      "census_ms": 312.331405,
+      "snapshot_ms": 148.318836
+    },
+    {
+      "index": 1,
+      "mode": "probe",
+      "snapshots": 13,
+      "mounts": 20,
+      "duration_ms": 7554.510419,
+      "diagnostic_observation_fraction": 0.06244495286068385,
+      "census_ms": 299.670443,
+      "snapshot_ms": 147.607268
+    },
+    {
+      "index": 2,
+      "mode": "probe",
+      "snapshots": 13,
+      "mounts": 20,
+      "duration_ms": 7687.688349,
+      "diagnostic_observation_fraction": 0.06290173027928503,
+      "census_ms": 303.369276,
+      "snapshot_ms": 149.018622
+    },
+    {
+      "index": 3,
+      "mode": "control",
+      "snapshots": 13,
+      "mounts": 20,
+      "duration_ms": 7480.783979,
+      "diagnostic_observation_fraction": 0.054672657992548085,
+      "census_ms": 263.214578,
+      "snapshot_ms": 145.76968
+    }
+  ],
+  "qualification": false,
+  "limits": "All four remain failed by the frozen source-type gate. Offline cost components are additional diagnostics, not a replacement assessment or a budget waiver."
+}

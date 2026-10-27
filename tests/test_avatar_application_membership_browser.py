@@ -12,14 +12,14 @@ from starlette.routing import Route
 from tests import test_avatar_baseline_browser as baseline
 from tests.test_avatar_baseline_browser import baseline_server
 from tests import avatar_page_history_probe as native_helper
-from tests.avatar_application_membership import QUERY_JS, BATCH_JS
+from tests.avatar_application_membership import QUERY_JS, BATCH_JS, expand_groups
 
 pytestmark=pytest.mark.skipif(os.getenv('CSS_AVATAR_APP_MEMBERSHIP')!='1',reason='Opt-in application observer calibration')
 
 
 def test_application_membership(baseline_server,app_mod,monkeypatch):
     out=Path(os.environ['CSS_AVATAR_OUT']);mode=os.environ['CSS_AVATAR_APP_MODE']
-    state={'protocol':'application-membership-v1','acceptance':False,'forced_gc':False,'mode':mode,
+    state={'protocol':'application-membership-v2','acceptance':False,'forced_gc':False,'mode':mode,
            'harness_commit':os.environ['CSS_AVATAR_APP_HARNESS_REF'],'snapshots':0,'mount':0,
            'navigations':[],'checkpoints':[],'queries':[],'messages':[],
            'probe_sha256':hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
@@ -56,7 +56,7 @@ def test_application_membership(baseline_server,app_mod,monkeypatch):
         row={'mount':index,'begin_ns':start,'arm_end_ns':armed,'goto_end_ns':loaded}
         state['navigations'].append(row)
         if mode!='proof':
-            begin=time.monotonic_ns();rows=page.evaluate(BATCH_JS);end=time.monotonic_ns()
+            begin=time.monotonic_ns();rows=expand_groups(page.evaluate(BATCH_JS));end=time.monotonic_ns()
             row['census_interval_ns']=[begin,end];row['censuses']=rows
         row['end_ns']=time.monotonic_ns();return result
     def capture(page,session):

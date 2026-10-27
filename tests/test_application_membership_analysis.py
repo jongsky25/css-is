@@ -75,3 +75,23 @@ def test_actual_client_rect_counts_are_required_for_reference(monkeypatch,counts
     monkeypatch.setattr(module,'validate_workload',lambda p,raw:p['native'])
     p=specimen();p['queries'][0]['result']['geometry_counts']=counts
     with pytest.raises(ValueError):proof(p,[])
+
+
+def test_compact_census_retains_every_getter_and_repeat():
+    from tests.avatar_application_membership import expand_groups
+    groups=[]
+    for name in ['avatar','other']:
+        r=row(name);r.pop('values');groups.append({'group':name,**r,'repeats':[[1]*32,[1]*32]})
+    rows=expand_groups(groups)
+    assert [(r['group'],r['repeat']) for r in rows]==[('avatar',0),('avatar',1),('other',0),('other',1)]
+    assert sum(len(r['values']) for r in rows)==128
+    assert rows[0]['before_attributes']==rows[1]['before_attributes']
+    groups[0]['repeats'].pop()
+    with pytest.raises(ValueError):expand_groups(groups)
+
+
+def test_stable_main_scope_rejects_append_only_body_chrome():
+    r=row('other');r.update(selection_scope='main-card-html',scope_root_count=1,in_main=[True]*32)
+    validate_selection(r,'other',require_scope=True)
+    r['in_main'][-1]=False
+    with pytest.raises(ValueError):validate_selection(r,'other',require_scope=True)

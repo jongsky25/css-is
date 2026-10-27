@@ -13,6 +13,8 @@ from scripts.avatar_baseline.native_recorder_selftest import validate_live
 from scripts.avatar_baseline.analyze_element_membership import generations,join_receivers
 from scripts.avatar_baseline.analyze_reader_retention import clock_bounds,mapped,selected_events,position
 
+PROTOCOL='application-membership-v2'
+SUPPORTED={'application-membership-v1',PROTOCOL}
 PRODUCT='cf363bfe547d5e23619eee28cdaf68bd4b6d7753'
 HARNESS=['tests/test_avatar_baseline_browser.py','tests/avatar_browser_fixture.py',
  'tests/test_avatar_application_membership_browser.py','tests/avatar_application_membership.py',
@@ -28,11 +30,12 @@ def source(repo,ref,name):return subprocess.check_output(['git','show',ref+':'+n
 def digest(data):return hashlib.sha256(data).hexdigest()
 
 
-def validate_selection(row,group):
+def validate_selection(row,group,require_scope=False):
     if (row['count']!=32 or row['pool_count']<32 or row['root_count']!=1 or row['values']!=[1]*32
         or len(row['tags'])!=32 or row['ownership']!=[group=='avatar']*32
         or row['namespaces']!=[('http://www.w3.org/2000/svg' if group=='avatar' else 'http://www.w3.org/1999/xhtml')]*32
         or row['before_attributes']!=row['after_attributes']):raise ValueError('Application selection/observable changed')
+    if require_scope and (row.get('selection_scope')!=('live-cat-svg' if group=='avatar' else 'main-card-html') or row.get('scope_root_count')!=1 or row.get('in_main')!=[True]*32):raise ValueError('Application selection outside stable main-content scope')
     attrs=json.loads(row['before_attributes'])
     if len(attrs)!=32 or [a[0] for a in attrs]!=row['tags']:raise ValueError('Invalid selected attribute witness')
 
@@ -55,7 +58,7 @@ def native_identity(p):
 
 
 def validate_workload(p,raw):
-    if (p['status']!='captured' or p['protocol']!='application-membership-v1' or p['acceptance'] is not False
+    if (p['status']!='captured' or p['protocol'] not in SUPPORTED or p['acceptance'] is not False
         or p['forced_gc'] is not False or not p['back_forward_cache_disabled'] or p['snapshots']!=13 or p['mount']!=20
         or len(raw)!=1):raise ValueError('Incomplete application workload')
     r=raw[0]
@@ -79,7 +82,7 @@ def proof(p,raw):
     receivers=[e for e in h['events'] if e['kind'] in ['receiver','reference']]
     if {e['phase'] for e in receivers}!=set(expected):raise ValueError('Unexpected application receiver call')
     for q in queries:
-        phase=q['phase'];kind,_,group,repeat=phase.split(':');r=q['result'];validate_selection(r,group)
+        phase=q['phase'];kind,_,group,repeat=phase.split(':');r=q['result'];validate_selection(r,group,p.get('protocol')==PROTOCOL)
         if kind=='reference' and (len(r.get('geometry_counts',[]))!=32 or any(type(v) is not int or v<0 for v in r['geometry_counts'])):raise ValueError('Missing actual client-rect count witness')
         es=[e for e in receivers if e['phase']==phase]
         if len(es)!=32 or len({e['address'] for e in es})!=32 or any(not q['begin_ns']<=e['begin_ns']<=e['returned_ns']<=q['end_ns'] for e in es):raise ValueError('Proof receiver identity/bracket mismatch')
@@ -103,7 +106,7 @@ def inspect_slot(p,raw,capability,trace=None):
         rows=nav['censuses']
         if [(r['group'],r['repeat']) for r in rows]!=[('avatar',0),('avatar',1),('other',0),('other',1)]:raise ValueError('Census sample changed')
         for r in rows:
-            validate_selection(r,r['group'])
+            validate_selection(r,r['group'],p['protocol']==PROTOCOL)
             if r['tags']!=capability['groups'][r['group']]:raise ValueError('Actual app types differ from proof')
     for q in p['checkpoints']:
         lo,hi=q['interval_ns']
@@ -158,7 +161,7 @@ def inspect_slot(p,raw,capability,trace=None):
 
 def audit(root,repo):
     plan=json.loads((root/'experiment.json').read_text());ref=plan['harness_commit']
-    if plan['protocol']!='application-membership-v1' or plan['product_ref']!=PRODUCT or plan['order']!=['control','probe','probe','control'] or len(plan['cohorts'])!=4 or plan['acceptance'] is not False:raise ValueError('Invalid application calibration plan')
+    if plan['protocol'] not in SUPPORTED or plan['product_ref']!=PRODUCT or plan['order']!=['control','probe','probe','control'] or len(plan['cohorts'])!=4 or plan['acceptance'] is not False:raise ValueError('Invalid application calibration plan')
     for name in SOURCES:
         if (root/'harness'/name).read_bytes()!=source(repo,ref,name):raise ValueError('Frozen application harness mismatch')
     def read(folder,entry,mode):
@@ -220,7 +223,7 @@ def run(out):
     out.mkdir(parents=True,exist_ok=False)
     for name in SOURCES:
         path=out/'harness'/name;path.parent.mkdir(parents=True,exist_ok=True);path.write_bytes((repo/name).read_bytes())
-    plan={'protocol':'application-membership-v1','acceptance':False,'harness_commit':ref,'product_ref':PRODUCT,'order':['control','probe','probe','control'],'cohorts':[]}
+    plan={'protocol':PROTOCOL,'acceptance':False,'harness_commit':ref,'product_ref':PRODUCT,'order':['control','probe','probe','control'],'cohorts':[]}
     def save():(out/'experiment.json').write_text(json.dumps(plan,indent=2)+'\n')
     def slot(label,mode):
         dest=out/label;dest.mkdir()
