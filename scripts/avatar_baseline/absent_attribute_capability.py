@@ -19,7 +19,7 @@ NAMESPACE = 'urn:css-is:membership:absent'
 LOCAL_NAME = 'absent'
 
 
-def validate_receivers(capture):
+def validate_receivers(capture, document_index=0, fixture_count=4096):
     if capture.get('error'): raise ValueError(capture['error'])
     if capture['dom_before_sha256'] != capture['dom_after_sha256']: raise ValueError('DOM changed')
     native = capture['native']; history = native['history']
@@ -39,12 +39,12 @@ def validate_receivers(capture):
             if not 0 < e['begin_ns'] <= e['callback_ready_ns'] <= e['returned_ns']:
                 raise ValueError('Invalid native bracket')
             groups[e['phase']].append(e)
-    expected = {f'{prefix}:0:{group}:{repeat}' for prefix in ['census','reference'] for group in ['avatar','other'] for repeat in [0,1]}
+    expected = {f'{prefix}:{document_index}:{group}:{repeat}' for prefix in ['census','reference'] for group in ['avatar','other'] for repeat in [0,1]}
     if set(groups) != expected: raise ValueError('Missing or additional receiver phases')
     seen = {}
     for group in ['avatar','other']:
         for repeat in [0,1]:
-            actual = groups[f'census:0:{group}:{repeat}']; reference = groups[f'reference:0:{group}:{repeat}']
+            actual = groups[f'census:{document_index}:{group}:{repeat}']; reference = groups[f'reference:{document_index}:{group}:{repeat}']
             if len(actual)!=32 or len(reference)!=32: raise ValueError('Receiver count mismatch')
             addresses=[e['address'] for e in actual]
             if len(set(addresses))!=32 or addresses != [e['address'] for e in reference]:
@@ -55,7 +55,7 @@ def validate_receivers(capture):
     if set(seen[('avatar',0)]) & set(seen[('other',0)]): raise ValueError('Disjoint groups overlap')
     if len(capture['queries'])!=8: raise ValueError('Incomplete known query schedule')
     for q in capture['queries']:
-        if q['result']['fixture_count']!=4096 or q['result']['count']!=32 or q['result']['values'] != [1]*32:
+        if q['result']['fixture_count']!=fixture_count or q['result']['count']!=32 or q['result']['values'] != [1]*32:
             raise ValueError('Known JS query result mismatch')
         for e in groups[q['phase']]:
             if not q['begin_ns'] <= e['begin_ns'] <= e['returned_ns'] <= q['end_ns']:

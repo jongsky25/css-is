@@ -1,0 +1,91 @@
+{
+  "acceptance": false,
+  "source_hashes_verified": 6,
+  "captures": [
+    {
+      "capture": "docs/avatars/increment2b/page-history-capability/v1-capture.json.gz",
+      "sha256": "03b84d4eda3230b1401ecf8bec89d83eb34bfcf8270990d65d5192a4e0de45d5",
+      "source_commit": "3f06fd5e9eebc43be44467a7055b2ba2ca8e0e93",
+      "schedule": [
+        "dom",
+        "svg",
+        "style",
+        "dom",
+        "svg",
+        "style",
+        "dom",
+        "svg",
+        "style",
+        "dom",
+        "svg",
+        "style"
+      ],
+      "status": "captured",
+      "native_counts": {
+        "allocate": 1023,
+        "pool": 652
+      },
+      "pool_by_phase": {
+        "02-style": 154,
+        "03-dom": 96,
+        "08-style": 402
+      }
+    },
+    {
+      "capture": "docs/avatars/increment2b/page-history-capability/synthetic-1-probe.json.gz",
+      "sha256": "372d3b85d7c6619c2a2bc8b379e284c49168b023c626ea6bc750e70efda837a6",
+      "source_commit": "d732b7090af1a1f88d1cdbf199bdeb356ffb95d0",
+      "schedule": [
+        "dom",
+        "svg",
+        "style",
+        "dom",
+        "svg",
+        "style",
+        "dom",
+        "svg",
+        "style",
+        "dom",
+        "svg",
+        "style"
+      ],
+      "status": "captured",
+      "native_counts": {
+        "allocate": 1136,
+        "pool": 551
+      },
+      "pool_by_phase": {
+        "06-dom": 551
+      }
+    },
+    {
+      "capture": "docs/avatars/increment2b/page-history-capability/synthetic-2-probe.json.gz",
+      "sha256": "975fffdeb407d4e37a9217c4ac1773be503816c83f4b7efa84ebefa8a058f661",
+      "source_commit": "d732b7090af1a1f88d1cdbf199bdeb356ffb95d0",
+      "schedule": [
+        "dom",
+        "svg",
+        "style",
+        "dom",
+        "svg",
+        "style",
+        "dom",
+        "svg",
+        "style",
+        "dom",
+        "svg",
+        "style"
+      ],
+      "status": "captured",
+      "native_counts": {
+        "allocate": 1254,
+        "pool": 1052
+      },
+      "pool_by_phase": {
+        "06-dom": 666,
+        "11-style": 386
+      }
+    }
+  ],
+  "limits": "Historical allocation/return capability, not proof of new getter ownership, overhead or application acceptance."
+}
