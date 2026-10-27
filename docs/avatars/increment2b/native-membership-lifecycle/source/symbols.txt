@@ -1,0 +1,3 @@
+00000000100208d0 t blink::Document::Shutdown()
+0000000005aa4490 t cppgc::internal::NormalPage::Destroy(cppgc::internal::NormalPage*)
+0000000005ab09d0 t cppgc::internal::PageBackend::ReleasePooledPages()

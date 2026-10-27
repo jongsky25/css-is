@@ -1,0 +1,18 @@
+{
+  "chromium": "156.0.8078.47",
+  "v8": "392e44423f46d75904da712fadea4c7d5d97967f",
+  "playwright_bundle_sha256": "3258d1cf334c6afc95f22aa9c292436cb976b391e0437f1359c83b84f0cb9d66",
+  "files": {
+    "document.cc": "9f6b0a23062180fba604ebe4c73e6f03efdce2767af104605f9ffb0250466552",
+    "heap-page.cc": "c425c41c4a735e67097540ad8e7b96f1755f7fa03fbee21ffb979fe8e242919b",
+    "normal-page-destroy.asm": "77ccd7e64ef7500cbbcf10e21f24750dc385784591cdbee310366c483ebb1fa6",
+    "playwright-launch-excerpt.txt": "8588e7ba8f1114e114349c7adaea5ab128336719e0a3e380fb20b252e71b775c",
+    "sweeper.cc": "d5d25c023458b9a382b4dcc6037c1ffbbc6079a7106eef8e3939e384a2584f6e",
+    "symbols.txt": "cf4702e7063261bb87153ae44c135ed579072f185cb315815cb036f0c41af0d2"
+  },
+  "urls": {
+    "heap-page.cc": "https://raw.githubusercontent.com/v8/v8/392e44423f46d75904da712fadea4c7d5d97967f/src/heap/cppgc-internal/heap-page.cc",
+    "sweeper.cc": "https://raw.githubusercontent.com/v8/v8/392e44423f46d75904da712fadea4c7d5d97967f/src/heap/cppgc-internal/sweeper.cc",
+    "document.cc": "https://raw.githubusercontent.com/chromium/chromium/156.0.8078.47/third_party/blink/renderer/core/dom/document.cc"
+  }
+}
