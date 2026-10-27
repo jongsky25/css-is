@@ -49,7 +49,7 @@ def test_invalid_js_profile_rejected(change):
 
 def python_fixture():
     return {'yappi_version':'1.7.3','python_clock':'cpu','python_all_threads':True,'acceptance':False,
-            'functions':[{'index':1,'module':'app.py','name':'render','ncall':2,'nactualcall':2,'ttot':.1,'tsub':.05,'children':[]}],
+            'functions':[{'index':1,'module':'app.py','name':'render','lineno':10,'ncall':2,'nactualcall':2,'ttot':.1,'tsub':.05,'children':[]}],
             'threads':[{'ttot':.06},{'ttot':.04}]}
 
 
@@ -96,3 +96,16 @@ def test_native_post_workload_tail_is_not_charged_to_navigation():
     r=trace_cpu([a,b,c],42,[1000,1300])
     assert r['recorded_cpu_coverage_ms']==.1
     assert r['boundary_or_outside_events']==2
+
+
+def test_merged_python_child_is_joined_by_full_function_identity():
+    p=python_fixture();p['functions'][0]['children']=[{'index':99,'module':'app.py','name':'render','lineno':10}]
+    result=python_summary(p)
+    assert result['renumbered_child_edges']==1
+    assert result['resolved_child_edges'][0]['resolved_child_index']==1
+
+
+def test_python_frame_open_at_boundary_is_retained():
+    p=python_fixture();p['functions'][0].update(nactualcall=0,ttot=0,tsub=.05)
+    r=python_summary(p)
+    assert r['open_call_frames']==[1] and r['self_cpu_ms']==50

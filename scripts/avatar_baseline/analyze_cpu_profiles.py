@@ -11,18 +11,25 @@ def python_summary(profile):
     functions = profile['functions']
     if not functions or len({f['index'] for f in functions}) != len(functions):
         raise ValueError('Missing or duplicate Python functions')
-    ids = {f['index'] for f in functions}
+    identity = lambda f: (f.get('name'), f.get('module'), f.get('lineno'))
+    identities = {identity(f):f['index'] for f in functions}
+    if len(identities) != len(functions):raise ValueError('Ambiguous Python function identity')
+    edges = []
     for f in functions:
-        if any(not math.isfinite(f[k]) or f[k] < 0 for k in ('ttot','tsub','ncall','nactualcall')) or f['tsub'] > f['ttot'] + 1e-6:
+        if any(not math.isfinite(f[k]) or f[k] < 0 for k in ('ttot','tsub','ncall','nactualcall')) or (f['nactualcall'] > 0 and f['tsub'] > f['ttot'] + 1e-6):
             raise ValueError('Invalid Python CPU duration')
-        if any(c['index'] not in ids for c in f['children']):
-            raise ValueError('Unknown Python child')
+        for child in f['children']:
+            if identity(child) not in identities:raise ValueError('Unknown Python child identity')
+            edges.append({'parent_index':f['index'],'raw_child_index':child['index'],
+                          'resolved_child_index':identities[identity(child)]})
     if len(profile['threads']) < 2 or sum(f['tsub'] for f in functions) <= 0:
         raise ValueError('Missing all-thread CPU profile')
     module_self = collections.defaultdict(float)
     for f in functions:
         module_self[f['module']] += f['tsub'] * 1000
     return {'self_cpu_ms':sum(f['tsub'] for f in functions)*1000,
+            'open_call_frames':[f['index'] for f in functions if f['nactualcall']==0],
+            'resolved_child_edges':edges,'renumbered_child_edges':sum(e['raw_child_index']!=e['resolved_child_index'] for e in edges),
             'thread_cpu_ms':sum(t['ttot'] for t in profile['threads'])*1000,
             'threads':profile['threads'], 'function_count':len(functions),
             'functions_by_self_cpu':sorted(functions,key=lambda f:f['tsub'],reverse=True),

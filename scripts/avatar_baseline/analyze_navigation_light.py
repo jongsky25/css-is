@@ -195,7 +195,9 @@ def inspect_capture(folder, provenance, raw):
             result['cpu_profiles'] = {'python':python_summary(profile),'js':js_summary(profile['js']),
                                       'native_trace':trace_cpu(all_events,pid,window),
                                       'post_window_python_tail_ms':(profile['python_end_ns']-p['navigation_end_ns'])/1e6,
-                                      'post_window_js_tail_ms':(profile['js_end_ns']-p['navigation_end_ns'])/1e6}
+                                      'post_window_js_tail_ms':(profile['js_end_ns']-p['navigation_end_ns'])/1e6,
+                                      'js_profile_window_fraction':(profile['js']['endTime']-profile['js']['startTime'])*1000/(p['navigation_end_ns']-p['navigation_begin_ns'])}
+            result['cpu_profile_issues'] = ([] if result['cpu_profiles']['js_profile_window_fraction'] >= .9 else ['V8 profile does not cover the full navigation window; partial context coverage'])
         elif (folder / 'cpu-profiles.json.gz').exists():
             raise ValueError('Unexpected CPU profile in control')
     return result
@@ -307,7 +309,7 @@ def audit(root, repo, ref):
     if phase in ('calibration', 'cpu-attribution'):
         result['gate_errors'] = calibration_gate(result['cohorts'])
         if phase == 'cpu-attribution' and not result['errors']:
-            result['status'] = 'complete_cpu_diagnostic'
+            result['status'] = ('partial_cpu_diagnostic' if any(c.get('cpu_profile_issues') for c in result['cohorts']) else 'complete_cpu_diagnostic')
             result['calibration_qualified'] = False
         elif not result['errors'] and not result['gate_errors']:
             result['status'] = 'calibration_passed'
