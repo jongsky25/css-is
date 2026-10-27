@@ -1,6 +1,6 @@
 # Office Connect MCP expansion plan
 
-Status: **Incremental implementation**, updated October 27, 2026. Baseline: the read-only MCP expansion in v8.35 (PR #444). M1 reads and default-off M2.1 notification and M2.2 supply-draft pilots are implemented as recorded below. Existing OAuth grants are not widened. Hosted write acceptance remains separate from implementation.
+Status: **Incremental implementation**, updated October 27, 2026. Baseline: the read-only MCP expansion in v8.35 (PR #444). M1 reads and default-off M2.1 notification, M2.2 supply-draft and M2.3 private-comment-draft pilots are implemented as recorded below. Existing OAuth grants are not widened. Hosted write acceptance remains separate from implementation.
 
 ## Goal and boundary
 
@@ -212,3 +212,25 @@ allocations, approval notices or edits to existing drafts. See the
 [supply-draft pilot contract and acceptance runbook](MCP_SUPPLY_DRAFT_PILOT.md).
 Hosted acceptance remains pending; additional M2 drafts and M3/M4 actions remain
 future work.
+
+M2.2 merged in [PR #490](https://github.com/jongsky25/css-is/pull/490), commit
+`436fc7d07619d9b8b31fc134c122130c1d0fc178`. Hosted acceptance/activation remain
+separate from merge.
+
+The earlier action modules were added to the hosting allowlist in v8.80,
+[PR #491](https://github.com/jongsky25/css-is/pull/491), merge
+`de60adeb68a405da7ef597c79a6422d832d3eb8f`. Runtime import-closure tests pass;
+this packaging fix does not activate or accept a hosted pilot.
+
+### M2.3 implementation — v8.81
+
+Prepare and explicitly confirm saving an owner-private text draft for one
+currently permitted contribution. Separate `work:comment:draft` consent and
+default-off `CSS_MCP_COMMENT_DRAFTS_ENABLED` preserve existing grants. Recheck
+current case/task authority/revisions on a short-lived browser preview; save the
+private draft, receipt and body-free audit atomically with same-key recovery.
+Owner-only source/listing and exact-task compose prefill let the person review
+the draft in the existing UI. No MCP posting, notices, mentions, task submission
+or workflow changes. See [pilot contract and acceptance](MCP_COMMENT_DRAFT_PILOT.md).
+Hosted acceptance remains pending; other M2 preparation and all M3/M4 MCP writes
+remain separate work.

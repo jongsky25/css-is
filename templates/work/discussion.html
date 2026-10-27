@@ -31,6 +31,10 @@
 <div class="work-actions">{% if enabled %}<a href="{{ thread_url }}&reply={{ message.id }}#compose">Reply</a>{% endif %}<a href="/work/{{ case.id }}/messages/{{ message.id }}/actions">Create task / record decision</a><a href="{{ thread_url }}&message={{ message.id }}#message-history">{{ 'Edit / history' if enabled and message.author_id==viewer_id else 'Message history' }}</a></div>
 </article>{% else %}<p>No messages yet. Start the discussion below.</p>{% endfor %}
 <p><a href="{{ thread_url }}">Latest messages</a></p></section>
+{% if private_comment_drafts %}<section class="work-card"><h2>Your private comment drafts</h2>
+<p>Only you can open these drafts while you still have access to this contribution. Saving a draft does not post a message.</p>
+<ul>{% for draft in private_comment_drafts %}<li><a href="/account/integrations/mcp/comment-drafts/saved/{{ draft.id }}">Draft saved {{ draft.created_at }}</a></li>{% endfor %}</ul></section>{% endif %}
+{% if loaded_comment_draft %}<p class="work-note">Your private draft is loaded for review. Loading it does not post a message.{% if loaded_comment_draft.context_changed %} The work item or task changed since you saved it; review the current details before posting.{% endif %}</p>{% endif %}
 {% if enabled %}<section class="work-card" id="compose"><h2>{{ 'Reply to ' ~ reply.author if reply else 'Add a message' }}</h2>
 {% if reply %}<p class="work-outcome">{{ reply.body }}</p><p><a href="{{ thread_url }}#compose">Cancel reply</a></p>{% endif %}
 <form class="work-form" method="post" action="/work/{{ case.id }}/discussion/messages?{% if task %}task_id={{ task.id }}&{% endif %}{% if reply %}reply={{ reply.id }}{% endif %}">

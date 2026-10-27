@@ -15,6 +15,7 @@ import work_tasks
 import work_compat
 import work_inbox
 import work_discussion
+import work_comment_drafts
 import work_updates
 import work_channels
 import work_digests
@@ -148,13 +149,27 @@ def make_router(templates, get_conn):
             revision['mentions'] = work_updates.mentions(conn, selected['id'], revision['revision'])
         if selected:
             selected['mentioned_ids'] = [m['user_id'] for m in work_updates.mentions(conn, selected['id'], selected['revision'])]
-        return render(request, conn, 'discussion', status_code=status_code, error=error,
+        loaded_draft = None
+        if query.get('draft_id'):
+            if query.get('reply') or query.get('message'):
+                raise ValueError('Load a private draft as a new message.')
+            loaded_draft = work_comment_drafts.get(conn, request.state.user, int(query['draft_id']))
+            if loaded_draft['case_id'] != case_id or loaded_draft['task_id'] != task_id:
+                raise permissions.Denied('This private draft belongs to a different discussion.')
+            if submitted is None:
+                submitted = {'action': 'post', 'body': loaded_draft['body']}
+        private_drafts = work_comment_drafts.listing(conn, request.state.user, case_id, task_id)
+        response = render(request, conn, 'discussion', status_code=status_code, error=error,
+                      loaded_comment_draft=loaded_draft, private_comment_drafts=private_drafts,
                       thread_url='/work/' + str(case_id) + '/discussion' + ('?task_id=' + str(task_id) if task_id else '?'),
                       selected=selected, revisions=revisions[:30], older_history=revisions[29]['revision'] if len(revisions)>30 else None,
                       reply=reply, submitted=submitted or {}, mention_people=work_updates.candidates(conn, request.state.user, case_id),
                       following=work_updates.following(conn, request.state.user, case_id, task_id),
                       following_case=work_updates.following(conn, request.state.user, case_id) if task_id else False,
                       observed=[[m['id'],m['revision']] for m in values['messages']], **values)
+        if loaded_draft or private_drafts:
+            response.headers.update({'Cache-Control': 'private, no-store', 'Referrer-Policy': 'same-origin'})
+        return response
 
     @router.get('/work/{case_id}/discussion', response_class=HTMLResponse)
     def discussion(request: Request, case_id: int):

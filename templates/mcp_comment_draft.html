@@ -1,0 +1,25 @@
+{% extends "dash_layout.html" %}
+{% block title %}Review private task comment draft — Office Connect{% endblock %}
+{% block content %}
+<div style="max-width:46rem;margin:auto;overflow-wrap:anywhere">
+{% if result.status == 'completed' %}
+<h1>Private task comment draft saved</h1>
+<p>Saved at {{ result.completed_at }}. Saving it did not post a message or send discussion notices.</p>
+<p><a href="{{ result.web_url }}">Open my private draft</a></p>
+{% else %}
+<h1>Save this private task comment draft?</h1>
+<p>Work item: <strong>{{ result.snapshot.work_item.title }}</strong> ({{ result.fields.work_item_id }})</p>
+<p>Contribution: <strong>{{ result.snapshot.task.title }}</strong> ({{ result.fields.task_id }})</p>
+<label for="draft-text">Exact draft text</label>
+<textarea id="draft-text" rows="9" readonly style="width:100%;box-sizing:border-box">{{ result.fields.body }}</textarea>
+<p>Confirming saves a private draft for your own review. It does not post a message, mention anyone, notify followers or change task status. This preview expires ten minutes after preparation.</p>
+<form method="post">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<input type="hidden" name="preview_digest" value="{{ result.preview_digest }}">
+<button type="submit" name="confirm" value="yes">Confirm: save my private draft</button>
+</form>
+{% endif %}
+<p>Operation receipt: <code>{{ result.operation_id }}</code></p>
+<p><a href="/account/integrations">Connected tools</a></p>
+</div>
+{% endblock %}

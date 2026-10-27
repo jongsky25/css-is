@@ -1,0 +1,14 @@
+{% extends "dash_layout.html" %}
+{% block title %}My private task comment draft — Office Connect{% endblock %}
+{% block content %}
+<div style="max-width:46rem;margin:auto;overflow-wrap:anywhere">
+<h1>My private task comment draft</h1>
+<p>Only you can open this draft while you still have access to its work item and contribution. Saving it did not post a message; posting from the discussion is a separate action.</p>
+<p>Work item: <strong>{{ draft.context.work_item.title }}</strong><br>Contribution: <strong>{{ draft.context.task.title }}</strong></p>
+{% if draft.context_changed %}<p role="status">The work item or task changed since this draft was saved. Review the current details before posting.</p>{% endif %}
+<label for="saved-draft-text">Saved draft text</label>
+<textarea id="saved-draft-text" rows="10" readonly style="width:100%;box-sizing:border-box">{{ draft.body }}</textarea>
+<p><a href="/work/{{ draft.case_id }}/discussion?task_id={{ draft.task_id }}&amp;draft_id={{ draft.id }}#compose">Load into the discussion form for review</a></p>
+<p>Opening that form does not post anything. Review and edit the text there, then use the ordinary Post message button if you choose to share it.</p>
+</div>
+{% endblock %}

@@ -1,3 +1,10 @@
+## 8.81 — October 27, 2026
+
+- Add default-off private task comment draft preparation and receipt tools with separate work:comment:draft consent excluded from default scopes; preserve old grants and refresh scope parity.
+- Require an exact owner/grant/target/revision-bound preview and signed-in browser confirmation. Atomically save the private draft, receipt and body-free audit; reject stale/revoked/cross-account requests and recover one draft across races/replays.
+- Add owner-only source pages, bounded task draft links and exact-task compose prefill without posting, notices or workflow changes. Clear completed/expired preview copies, preserve source access checks, and add OAuth/MCP/browser/mobile coverage plus the pilot runbook. Hosted write acceptance remains pending.
+- Include the new private-comment modules in the hosting runtime allowlist and verify transitive import closure.
+
 ## 8.80 — October 27, 2026
 
 - Add mcp_actions.py and mcp_supply_drafts.py to the hosting runtime allowlist. They are required imports of the merged v8.78/v8.79 pilots; the deployment import-closure guard otherwise rejects the incomplete package.
