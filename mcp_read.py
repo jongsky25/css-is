@@ -22,6 +22,8 @@ import mcp_auth
 import mcp_actions
 import mcp_supply_drafts
 import mcp_comment_drafts
+import mcp_travel_drafts
+import travel_drafts
 import mcp_personal_calendar
 import mcp_report_views
 import supplies_storage
@@ -333,6 +335,45 @@ def build_server(get_conn, origin):
         """
         return await action(lambda conn, token: mcp_personal_calendar.recover(
             conn, token, provider.resource, origin, operation_id), mcp_personal_calendar.SCOPE)
+
+    @server.tool(title='Prepare my reimbursement draft', annotations=ToolAnnotations(
+        readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=False))
+    async def prepare_travel_reimbursement_draft(title: StrictStr, start_date: StrictStr,
+            end_date: StrictStr, dpo_no: StrictStr,
+            role: Literal['participant', 'secretariat', 'resource_person', 'technical_support'],
+            answers: travel_drafts.ReimbursementAnswers, operation_id: StrictStr,
+            venue: StrictStr = '', dpo_date: StrictStr | None = None) -> dict:
+        """Prepare a NEW own standalone reimbursement filing for browser review.
+
+        Opens an incomplete In progress checklist only AFTER browser confirmation;
+        not a submission, review request, financial posting or document generation.
+        Separate travel:filing:draft consent required. No linked activity/calendar,
+        cash advance/liquidation, amounts, uploads or MC 114. Dates YYYY-MM-DD,
+        years 1900–9998, range at most 366 days; title/venue up to 200, DPO up to
+        60 characters. Answers are strict booleans; omitted answers propose No.
+        Review all answers and normal deadline in confirmation_url before saving.
+        Normal Admin Unit visibility and due-date notices/reminders apply after
+        creation. Inspect existing filings/cash advances before another draft.
+        Reuse one random 16–80 character operation_id for retries and recovery.
+        """
+        return await action(lambda conn, token: mcp_travel_drafts.prepare(
+            conn, token, provider.resource, origin, operation_id,
+            {'title': title, 'start_date': start_date, 'end_date': end_date,
+             'dpo_no': dpo_no, 'dpo_date': dpo_date, 'role': role,
+             'answers': answers.model_dump(), 'venue': venue}), mcp_travel_drafts.SCOPE)
+
+    @server.tool(title='Check my reimbursement draft receipt', annotations=READ_ONLY)
+    async def get_travel_draft_operation(operation_id: StrictStr) -> dict:
+        """Recover the original reimbursement preview/create receipt.
+
+        Same active connection and travel:filing:draft consent required. Returns
+        status and original source link, not activity/DPO/checklist text or amounts.
+        Completed means the checklist was opened, not submitted or approved. Later
+        UI changes are separate and never overwritten. Unavailable or timeout is
+        not proof of failure; inspect the original operation before a new key.
+        """
+        return await action(lambda conn, token: mcp_travel_drafts.recover(
+            conn, token, provider.resource, origin, operation_id), mcp_travel_drafts.SCOPE)
 
     def supply_queue(conn, user, queue, state, query, page, limit):
         if queue not in ('requests', 'approvals', 'warnings'):

@@ -116,3 +116,6 @@ enabled by this implementation.
 
 Personal calendar entry preparation is a separate default-off pilot: see
 [M2.5 setup and acceptance](MCP_PERSONAL_CALENDAR_PILOT.md).
+
+Unsubmitted reimbursement checklists are a separate default-off pilot: see
+[M2.6 setup and acceptance](MCP_TRAVEL_DRAFT_PILOT.md).
