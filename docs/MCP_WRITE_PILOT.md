@@ -176,3 +176,14 @@ The separate default-off room approval decision is documented in
 [M4.3 setup and deferred hosted acceptance](MCP_ROOM_APPROVAL_PILOT.md). It books
 plain requested hours only after current Administrative Section browser review,
 with a durable requester notice and no automatic resend of uncertain email.
+
+
+Selected travel reviewer papers decisions use separate default-off
+`travel:review:decide`, never owner review-request or paper-handover permission.
+See [M4.4 setup and combined hosted acceptance](MCP_TRAVEL_DECISION_PILOT.md).
+Exact browser approval requires complete papers and no draft notes; returning
+notes uses existing current-round drafts only. A retained round identity and
+single-attempt result notice prevent repeated decisions or automatic resend.
+Hosted room and travel acceptance follows both implementations; no flag or hosted
+go/no-go is implied by the registered tools. Claim approval/payment, signatures,
+official dispatch and physical paper handover are separate.

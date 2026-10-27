@@ -31,6 +31,7 @@ import mcp_meal_requests
 import mcp_room_approvals
 import mcp_room_requests
 import mcp_travel_submissions
+import mcp_travel_decisions
 import mcp_travel_reviews
 import mcp_supply_approvals
 import mcp_supply_submissions
@@ -598,6 +599,52 @@ def build_server(get_conn, origin):
         """
         return await action(lambda conn, token: mcp_travel_submissions.recover(
             conn, token, provider.resource, origin, operation_id), mcp_travel_submissions.SCOPE)
+
+    @server.tool(title='Read my selected travel reviewer decision context', annotations=READ_ONLY)
+    async def get_travel_review_decision_context(filing_id: StrictInt) -> dict:
+        """Read revision, round, draft-note count and permitted papers decisions.
+
+        Requires separate travel:review:decide and current selected Administrative
+        Section reviewer authority; never self-review. No document content, notes,
+        names, recipient addresses or financial details returned. Use the exact
+        filing ID from the signed-in reviewer page; never guess an ID or revision.
+        """
+        return await action(lambda conn, token: mcp_travel_decisions.read_context(
+            conn, token, provider.resource, origin, filing_id), mcp_travel_decisions.SCOPE)
+
+    @server.tool(title='Prepare travel papers reviewer decision', annotations=ToolAnnotations(
+        readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=False))
+    async def prepare_travel_review_decision(filing_id: StrictInt, decision: Literal['approve', 'return_notes'],
+            expected_revision: StrictStr, operation_id: StrictStr) -> dict:
+        """Prepare exact browser approval of papers or return existing drafted notes.
+
+        Requires travel:review:decide, hosting flag and current selected reviewer
+        authority. Read fresh get_travel_review_decision_context first. Approve
+        requires complete checklist, resolved flags and no draft notes. Return
+        requires notes already drafted in Office Connect; no model-generated note
+        text is accepted. Show the confirmation URL and wait for exact signed-in
+        browser review. This call makes no decision or email send. Confirmation
+        keeps the filing Open and queues one normal traveller result email when
+        enabled. It never approves/pays the claim, signs/dispatches, marks Ready,
+        generates files or records physical paper handover. Keep a stable key and
+        recover after interruption before considering a fresh key.
+        """
+        return await action(lambda conn, token: mcp_travel_decisions.prepare(
+            conn, token, provider.resource, origin, operation_id,
+            {'filing_id': filing_id, 'decision': decision, 'expected_revision': expected_revision}),
+            mcp_travel_decisions.SCOPE)
+
+    @server.tool(title='Recover my original travel papers decision', annotations=READ_ONLY)
+    async def get_travel_review_decision_operation(operation_id: StrictStr) -> dict:
+        """Recover original decision/round and current single-attempt mail status.
+
+        Same active connection and selected reviewer authority required. Preserves
+        later edits, Ready/submission and later review rounds; never redecides or
+        resends. Queued is not sent; uncertain never automatically retries. Open
+        source for current state. Return notes/approval content stays in browser.
+        """
+        return await action(lambda conn, token: mcp_travel_decisions.recover(
+            conn, token, provider.resource, origin, operation_id), mcp_travel_decisions.SCOPE)
 
     @server.tool(title='Read Administrative Section room approval context', annotations=READ_ONLY)
     async def get_room_approval_context(room_request_id: StrictInt) -> dict:

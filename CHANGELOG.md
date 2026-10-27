@@ -1,3 +1,9 @@
+## 9.00 — October 27, 2026
+
+- Add default-off `travel:review:decide` context/preview/recovery for the current selected Administrative Section reviewer: approve complete papers with no draft notes, or return exact notes already drafted in Office Connect. Refuse self-review and technical-only authority; do not accept model note text or recipient overrides.
+- Bind full filing/checklist/raw document metadata/flags/notes, review round, directory/account recipient identity and mail policy to a ten-minute browser preview. Share caller-owned native decision transactions and commit decision, domain/integration audits, permanent round identity, minimal receipt and single-attempt notice together. Old receipts preserve later Ready, edits and review rounds.
+- Add a bounded current-grant/source/reviewer/recipient worker using native travel-result mail and logs. Disabled-at-confirmation notices remain skipped; expired queues cancel, ambiguous/crashed/result-write attempts become uncertain without automatic resend, and no files/attachments, Ready/submission, signing/dispatch or claim approval/payment occur. Include native, OAuth, phone without scripts, race, rollback, delivery, retention, packaging and deferred hosted acceptance coverage.
+
 ## 8.99 — October 27, 2026
 
 - Add default-off `rooms:request:approve` context/preview/recovery for current Administrative Section approval of another person's plain internal room request. Exact browser review shows requested hours, requester, reason, pending-rival count and email/preference/quiet-hour/ICS policy; self/filing-actor and technical-only approval are refused.

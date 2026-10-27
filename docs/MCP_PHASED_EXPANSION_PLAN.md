@@ -650,3 +650,31 @@ ChatGPT acceptance follows room approval and travel reviewer decision work.
 No flag is enabled and no hosted go/no-go is claimed. Travel reviewer decisions
 are the next separate implementation; all signing/dispatch/payment and broader
 stock posting remain outside this pilot.
+
+
+M4.3 merged in [PR #512](https://github.com/jongsky25/css-is/pull/512), commit
+`1ec797bff49cf06eaf55e70c3daf313b4149640d`.
+
+### M4.4 implementation — v9.00
+
+Separate default-off `travel:review:decide` prepares the selected Administrative
+Section reviewer's decision on another person's current requested papers round.
+Approval requires a complete checklist, resolved flags and no draft notes.
+Return uses only existing current-round drafts; exact text and normal traveller
+result email content/recipient are shown in the signed-in browser, never copied
+into model context. New notes are drafted in ordinary Office Connect first.
+
+Full filing, raw/saved checklist, flags, notes, current account/directory/selected
+reviewer/recipient, round and mail policy bind each preview. The native papers
+approval and feedback helpers can join a caller-owned transaction. Decision,
+audits, unique retained round identity, original minimal receipt and initial mail
+state commit together. Current-authority/source delivery claims each native result
+email once; disabled notices skip permanently and ambiguous outcomes never resend.
+Recovery preserves later ordinary edits, Ready/submission or another review round.
+
+See [M4.4 setup and combined hosted acceptance](MCP_TRAVEL_DECISION_PILOT.md).
+Automated implementation checks run now. Hosted room and travel testing comes
+last, after the implementations are reviewed/merged and a named operator enables
+only the intended flags. No hosted acceptance or enablement is claimed. Papers
+completeness is distinct from claim approval/payment, signatures, official dispatch
+and physical paper handover; those effects are not added by this increment.
