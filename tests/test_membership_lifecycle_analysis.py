@@ -17,7 +17,7 @@ def specimen(monkeypatch):
                   'errors': ['No labelled page generation observed returning to pool'],
                   'matched_receiver_records': 6144, 'receiver_records': 6144, 'mixed_group_generations': 12}
     monkeypatch.setattr(analysis, 'inspect', lambda p: membership)
-    p = {'protocol': analysis.PROTOCOL, 'back_forward_cache_disabled': True, 'lifecycle_transport': 'same-origin-beacon', 'census_transport': 'one-evaluate-four-fixed-groups',
+    p = {'protocol': analysis.PROTOCOL, 'back_forward_cache_disabled': True, 'lifecycle_transport': 'same-origin-beacon', 'census_transport': 'navigation-armed-four-fixed-groups',
          'begin_ns': 0, 'end_ns': 10000000, 'pid': 7, 'mode': 'probe',
          'lifecycle_events': [{'index': i, 'persisted': False, 'received_ns': 100000+i*500000} for i in range(11)],
          'stages': [], 'history': {'offsets': {**analysis.receiver_offsets(analysis.PROTOCOL), **analysis.EXTRA_OFFSETS}, 'events': []},
@@ -43,6 +43,7 @@ def specimen(monkeypatch):
 def test_absent_gc_can_be_observed_without_waiving_reclamation(monkeypatch):
     p, trace, _ = specimen(monkeypatch)
     p['protocol']='native-membership-lifecycle-v7'
+    p['census_transport']='one-evaluate-four-fixed-groups'
     result = analysis.analyze(p, trace)
     assert not result['errors'] and result['gc_events'] == []
     assert result['membership_status'] == 'capability_failed'

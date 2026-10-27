@@ -10,8 +10,8 @@ import subprocess
 from scripts.avatar_baseline.analyze_element_membership import inspect, validate_identity, OFFSETS
 from scripts.avatar_baseline.analyze_reader_retention import clock_bounds, mapped, selected_events, position
 
-PROTOCOL = 'native-membership-lifecycle-v8'
-SUPPORTED = {f'native-membership-lifecycle-v{i}' for i in range(1,9)}
+PROTOCOL = 'native-membership-lifecycle-v9'
+SUPPORTED = {f'native-membership-lifecycle-v{i}' for i in range(1,10)}
 EXTRA_OFFSETS = {'shutdown': 0x100208d0, 'destroy': 0x5aa4490, 'release': 0x5ab09d0}
 SOURCES = ['scripts/avatar_baseline/element_membership_lifecycle.py',
            'scripts/avatar_baseline/native/absent_attribute_membership.js',
@@ -24,13 +24,13 @@ SOURCES = ['scripts/avatar_baseline/element_membership_lifecycle.py',
 
 def sources_for(protocol):
     sources=list(SOURCES)
-    if protocol not in ['native-membership-lifecycle-v7','native-membership-lifecycle-v8']:
+    if protocol not in ['native-membership-lifecycle-v7','native-membership-lifecycle-v8','native-membership-lifecycle-v9']:
         sources[1]='scripts/avatar_baseline/native/element_membership_lifecycle.js'
-    return sources if protocol=='native-membership-lifecycle-v8' else sources[:6]
+    return sources if protocol in ['native-membership-lifecycle-v8','native-membership-lifecycle-v9'] else sources[:6]
 
 
 def receiver_offsets(protocol):
-    return {**OFFSETS, 'receiver':0x100cce80} if protocol in ['native-membership-lifecycle-v7','native-membership-lifecycle-v8'] else OFFSETS
+    return {**OFFSETS, 'receiver':0x100cce80} if protocol in ['native-membership-lifecycle-v7','native-membership-lifecycle-v8','native-membership-lifecycle-v9'] else OFFSETS
 
 
 def lifecycle_events(events):
@@ -41,9 +41,10 @@ def lifecycle_events(events):
 
 
 def census_costs(p):
-    if p['protocol'] not in ['native-membership-lifecycle-v5','native-membership-lifecycle-v6','native-membership-lifecycle-v7','native-membership-lifecycle-v8']:
+    if p['protocol'] not in ['native-membership-lifecycle-v5','native-membership-lifecycle-v6','native-membership-lifecycle-v7','native-membership-lifecycle-v8','native-membership-lifecycle-v9']:
         return [c['end_ns']-c['begin_ns'] for s in p['stages'] for c in s['censuses']]
-    if p.get('census_transport') != 'one-evaluate-four-fixed-groups':
+    expected_transport='navigation-armed-four-fixed-groups' if p['protocol']=='native-membership-lifecycle-v9' else 'one-evaluate-four-fixed-groups'
+    if p.get('census_transport') != expected_transport:
         raise ValueError('Wrong batched census transport')
     costs = []
     for s in p['stages']:
@@ -59,14 +60,14 @@ def census_costs(p):
 def analyze(p, trace=None):
     if p['protocol'] not in SUPPORTED or p['back_forward_cache_disabled'] is not True:
         raise ValueError('Wrong lifecycle protocol or BFCache launch flag')
-    expected_transport = 'same-origin-beacon' if p['protocol'] in ['native-membership-lifecycle-v4', 'native-membership-lifecycle-v5', 'native-membership-lifecycle-v6', 'native-membership-lifecycle-v7', PROTOCOL] else 'cdp-runtime-binding'
-    if p['protocol'] in ['native-membership-lifecycle-v3', 'native-membership-lifecycle-v4', 'native-membership-lifecycle-v5', 'native-membership-lifecycle-v6', 'native-membership-lifecycle-v7', PROTOCOL] and p.get('lifecycle_transport') != expected_transport:
+    expected_transport = 'same-origin-beacon' if p['protocol'] in ['native-membership-lifecycle-v4', 'native-membership-lifecycle-v5', 'native-membership-lifecycle-v6', 'native-membership-lifecycle-v7', 'native-membership-lifecycle-v8', PROTOCOL] else 'cdp-runtime-binding'
+    if p['protocol'] in ['native-membership-lifecycle-v3', 'native-membership-lifecycle-v4', 'native-membership-lifecycle-v5', 'native-membership-lifecycle-v6', 'native-membership-lifecycle-v7', 'native-membership-lifecycle-v8', PROTOCOL] and p.get('lifecycle_transport') != expected_transport:
         raise ValueError('Wrong lifecycle event transport')
     lifecycle_events(p['lifecycle_events'])
     native = p.get('history'); begin, end = p['begin_ns'], p['end_ns']
     if any(not begin <= e['received_ns'] <= end for e in p['lifecycle_events']):
         raise ValueError('Pagehide delivery outside measured window')
-    adapted = deepcopy(p); adapted['protocol'] = 'native-element-membership-v5' if p['protocol'] == 'native-membership-lifecycle-v8' else 'native-element-membership-v4' if p['protocol'] == 'native-membership-lifecycle-v7' else 'native-element-membership-v3' if p['protocol'] == 'native-membership-lifecycle-v6' else 'native-element-membership-v2'
+    adapted = deepcopy(p); adapted['protocol'] = 'native-element-membership-v5' if p['protocol'] in ['native-membership-lifecycle-v8','native-membership-lifecycle-v9'] else 'native-element-membership-v4' if p['protocol'] == 'native-membership-lifecycle-v7' else 'native-element-membership-v3' if p['protocol'] == 'native-membership-lifecycle-v6' else 'native-element-membership-v2'
     if native:
         if native['offsets'] != {**receiver_offsets(p['protocol']), **EXTRA_OFFSETS}:
             raise ValueError('Unexpected lifecycle hooks')
@@ -133,8 +134,8 @@ def analyze(p, trace=None):
             if not covered and stage['index'] != 11:
                 result['errors'].append(f'Counter trace coverage incomplete: {stage["index"]}/{name}')
         summaries.append({'index': stage['index'], 'components': components})
-    allowed_membership_errors = [] if p['protocol']=='native-membership-lifecycle-v8' else ['No labelled page generation observed returning to pool']
-    if p['protocol']=='native-membership-lifecycle-v8' and (not any(e['name']=='MajorGC' for e in gc) or not any('Sweep' in e['name'] for e in gc)):
+    allowed_membership_errors = [] if p['protocol'] in ['native-membership-lifecycle-v8','native-membership-lifecycle-v9'] else ['No labelled page generation observed returning to pool']
+    if p['protocol'] in ['native-membership-lifecycle-v8','native-membership-lifecycle-v9'] and (not any(e['name']=='MajorGC' for e in gc) or not any('Sweep' in e['name'] for e in gc)):
         result['errors'].append('Missing natural major/sweep coverage in mixed fixture')
     if any(e not in allowed_membership_errors for e in membership['errors']):
         result['errors'].append('Live membership coverage failed independently of reclamation')
@@ -150,7 +151,7 @@ def analyze(p, trace=None):
 
 
 def validate_capability_fixture(p, capability):
-    if p['protocol']=='native-membership-lifecycle-v8':
+    if p['protocol'] in ['native-membership-lifecycle-v8','native-membership-lifecycle-v9']:
         from scripts.avatar_baseline.mixed_membership_fixture import SCHEDULE, MODES
         if [d['mode'] for d in capability['documents']]!=MODES: raise ValueError('Incomplete mixed capability fixtures')
         hashes={d['mode']:d['dom_before_sha256'] for d in capability['documents']}
@@ -171,8 +172,8 @@ def audit(root, repo, ref):
     result = {'acceptance': False, 'application_qualified': False, 'status': 'diagnostic_failed',
               'errors': [], 'cohorts': [], 'files_verified': 0, 'source_hashes_verified': 0}
     sources=sources_for(plan['protocol'])
-    if plan['protocol'] in ['native-membership-lifecycle-v7','native-membership-lifecycle-v8']:
-        if plan['protocol']=='native-membership-lifecycle-v8':
+    if plan['protocol'] in ['native-membership-lifecycle-v7','native-membership-lifecycle-v8','native-membership-lifecycle-v9']:
+        if plan['protocol'] in ['native-membership-lifecycle-v8','native-membership-lifecycle-v9']:
             from scripts.avatar_baseline.mixed_getter_capability import audit as audit_capability
         else:
             from scripts.avatar_baseline.absent_attribute_capability import audit as audit_capability
@@ -211,7 +212,7 @@ def audit(root, repo, ref):
                 raw = subprocess.check_output(['git','show',ref+':'+name],cwd=repo)
                 if hashlib.sha256(raw).hexdigest() != p[key]: raise ValueError('Runtime probe mismatch')
                 result['source_hashes_verified'] += 1
-            if plan['protocol'] in ['native-membership-lifecycle-v7','native-membership-lifecycle-v8']: validate_capability_fixture(p,captured)
+            if plan['protocol'] in ['native-membership-lifecycle-v7','native-membership-lifecycle-v8','native-membership-lifecycle-v9']: validate_capability_fixture(p,captured)
             validate_identity(json.loads((folder/'identity.json').read_text()),p)
             row.update(analyze(p, json.load(gzip.open(folder/'trace.json.gz','rt')) if mode == 'probe' else None))
             result['errors'].extend(f'Slot {index}: {e}' for e in row['errors'])
@@ -223,7 +224,7 @@ def audit(root, repo, ref):
         for a,b in [(0,1),(3,2)]:
             if times[b] > times[a]*1.2: result['errors'].append(f'Probe/control exceeds 1.20: {a}/{b}')
     if not result['errors']: result['status'] = 'complete_lifecycle_diagnostic'
-    if plan['protocol']=='native-membership-lifecycle-v8':
+    if plan['protocol'] in ['native-membership-lifecycle-v8','native-membership-lifecycle-v9']:
         result['instrument_qualified_for_application_calibration']=not result['errors'] and all(c.get('membership_status')=='capability_passed' for c in result['cohorts'] if c.get('mode')=='probe')
     return result
 

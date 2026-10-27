@@ -56,3 +56,12 @@ def test_mixed_identity_and_shape_contract_fails_closed(bad):
     if bad=='size':p['fixture_count_per_group']=4096
     if bad=='null':next(e for e in p['history']['events'] if e['kind']=='receiver')['attribute_absent']=False
     with pytest.raises(ValueError):inspect(p)
+
+
+def test_navigation_armed_overflow_and_outside_query_cannot_be_silently_ignored():
+    p=specimen();extra=deepcopy(next(e for e in p['history']['events'] if e['kind']=='receiver'))
+    extra['phase']='census:0:overflow';p['history']['events'].append(extra)
+    with pytest.raises(ValueError,match='phase'):inspect(p)
+    p=specimen();entry=next(e for e in p['history']['events'] if e['kind']=='receiver')
+    entry.update(begin_ns=2000,callback_ready_ns=2001,returned_ns=2002)
+    with pytest.raises(ValueError,match='outside'):inspect(p)

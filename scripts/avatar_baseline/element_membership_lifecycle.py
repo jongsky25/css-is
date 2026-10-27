@@ -16,7 +16,7 @@ BUILD = '1c5dca8527a61d07372e489142bee26af1bcaf71'
 COUNT = 512  # Retained v1 census profile.
 CENSUS = 32
 FIXTURE_COUNT = 3000
-PROTOCOL = 'native-membership-lifecycle-v8'
+PROTOCOL = 'native-membership-lifecycle-v9'
 STAGES = 12
 BROWSER = Path('/workspace/scratch/avatar-runtime/root/usr/lib/chromium/chromium')
 HOOK = Path(__file__).resolve().parent / 'native/absent_attribute_membership.js'
@@ -70,7 +70,7 @@ def run(out, mode):
             result['playwright_version'] = __import__('importlib.metadata', fromlist=['version']).version('playwright')
             page_cdp = context.new_cdp_session(page)
             result['lifecycle_transport'] = 'same-origin-beacon'
-            result['census_transport'] = 'one-evaluate-four-fixed-groups'
+            result['census_transport'] = 'navigation-armed-four-fixed-groups'
             cdp.on('Tracing.tracingComplete', lambda e: completed.append(e))
             cdp.send('Tracing.start', {'transferMode': 'ReturnAsStream', 'traceConfig': {
                 'excludedCategories': ['*'], 'includedCategories': ['devtools.timeline'], 'recordMode': 'recordUntilFull'}})
@@ -121,7 +121,6 @@ def run(out, mode):
                 page.goto(origin + f'/fixture/{index}'); page.wait_for_timeout(220)
                 before = page.evaluate('document.documentElement.outerHTML')
                 start = time.monotonic_ns()
-                if script: script.exports_sync.setphase(f'batch:{index}')
                 observed = page.evaluate('''({count,mode}) => {'''+SELECT_JS+'''
                     const result = [];
                     for (const group of ['avatar', 'other']) {
@@ -133,7 +132,6 @@ def run(out, mode):
                     }
                     return result;
                 }''', {'count':CENSUS,'mode':SCHEDULE[index]})
-                if script: script.exports_sync.setphase('between-censuses')
                 stop = time.monotonic_ns()
                 stage['batch_census_interval_ns'] = [start, stop]
                 for row in observed:

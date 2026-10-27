@@ -6,7 +6,7 @@ import hashlib
 import json
 from pathlib import Path
 import subprocess
-from scripts.avatar_baseline.analyze_membership_lifecycle import audit
+from scripts.avatar_baseline.analyze_membership_lifecycle import audit, sources_for
 from scripts.avatar_baseline.analyze_element_membership import generations, join_receivers
 from scripts.avatar_baseline.analyze_reader_retention import clock_bounds, mapped, selected_events, position
 
@@ -35,6 +35,9 @@ def native_periods(p, trace):
             'in_measured_window': begin <= e['begin_ns'] <= e['returned_ns'] <= end,
             'trace_covered': covered, 'trace_bounds_us': bounds,
             'sweep_overlap': [g for g in gc if 'Sweep' in g['name'] and position(g,bounds) == 'overlap_or_uncertain'] if covered else None})
+    mode_by_doc={s['index']:s['fixture_mode'] for s in p.get('stages',[]) if 'fixture_mode' in s}
+    for record in returns:
+        if mode_by_doc: record['fixture_modes_observed']=sorted({mode_by_doc[d] for d in record['documents_observed']})
     return {'native_counts_by_period': {k: dict(Counter(e['kind'] for e in es)) for k,es in periods.items()},
         'unknown_returns': unknown, 'receiver_records': len(receivers),
         'labelled_returned_generations_inside': sum(r['in_measured_window'] for r in returns),
@@ -46,7 +49,8 @@ def native_periods(p, trace):
 
 def summarize(root, repo, ref):
     checked = audit(root,repo,ref)
-    if checked['files_verified'] != 14 or checked['source_hashes_verified'] != 14:
+    plan=json.loads((root/'experiment.json').read_text())
+    if checked['files_verified'] != 14 or checked['source_hashes_verified'] != len(sources_for(plan['protocol']))+8:
         raise ValueError('Incomplete archive/source audit')
     result = {'acceptance': False, 'application_qualified': False, 'audit_status': checked['status'],
               'audit_errors': checked['errors'], 'harness_commit': ref, 'cohorts': []}
@@ -63,7 +67,7 @@ def summarize(root, repo, ref):
         item['cost_ms']['native_preparation'] = sum(e['callback_ready_ns']-e['begin_ns'] for e in p.get('history',{}).get('events',[]) if p['begin_ns']<=e['begin_ns']<=e['returned_ns']<=p['end_ns'])/1e6
         for s in p['stages']:
             item['stages'].append({'index':s['index'],'documents':s['dom']['value']['documents'],
-                'nodes':s['dom']['value']['nodes'],'js_heap_bytes':s['heap']['value']['usedSize']})
+                'nodes':s['dom']['value']['nodes'],'js_heap_bytes':s['heap']['value']['usedSize'],**({'fixture_mode':s['fixture_mode']} if 'fixture_mode' in s else {})})
         if mode=='probe': item.update(native_periods(p,json.load(gzip.open(folder/'trace.json.gz','rt'))))
         result['cohorts'].append(item)
     return result

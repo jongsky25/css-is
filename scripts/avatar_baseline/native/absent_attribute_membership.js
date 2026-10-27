@@ -13,10 +13,10 @@ function store(e) { if (events.length < 50000) events.push(e); else dropped++; }
 for (const [kind, offset] of Object.entries(offsets)) {
   Interceptor.attach(image.base.add(offset), {
     onEnter(args) {
-      this.enabled = kind !== 'receiver' || (phase.startsWith('census:') || phase.startsWith('batch:'));
+      this.enabled = kind !== 'receiver' || (phase.startsWith('census:') || phase.startsWith('batch:') || phase.startsWith('navigation:'));
       if (!this.enabled) return;
       this.begin = now(); this.phase = phase;
-      if (kind === 'receiver' && phase.startsWith('batch:')) {
+      if (kind === 'receiver' && (phase.startsWith('batch:') || phase.startsWith('navigation:'))) {
         const groups = ['avatar:0', 'avatar:1', 'other:0', 'other:1'];
         const group = groups[Math.floor(censusCursor / 32)] || 'overflow';
         this.phase = 'census:' + phase.split(':')[1] + ':' + group;
@@ -53,7 +53,7 @@ rpc.exports = {
       }
     });
   },
-  setphase(value) { phase = value; if (phase.startsWith('batch:')) censusCursor = 0; },
+  setphase(value) { phase = value; if (phase.startsWith('batch:') || phase.startsWith('navigation:')) censusCursor = 0; },
   result() { return {module: image.path, offsets, page_size: 131072, events, dropped}; }
 };
 send({ready: true, pid: Process.id, module: image.path});
