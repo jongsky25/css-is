@@ -102,3 +102,19 @@ def test_local_selector_reuse_counts_are_verified():
     with pytest.raises(ValueError,match='query count'):analysis.validate_selector_reuse(bad)
     bad=deepcopy(p);bad['selection_policy']='persistent-global-cache'
     with pytest.raises(ValueError,match='policy'):analysis.validate_selector_reuse(bad)
+
+
+def test_deferred_pointer_descriptor_is_required_for_its_version(monkeypatch):
+    from scripts.avatar_baseline.mixed_membership_fixture import SCHEDULE
+    p,trace,membership=specimen(monkeypatch)
+    p['protocol']='native-membership-lifecycle-v11';p['selection_policy']='per-evaluate-selector-cache'
+    for stage,mode in zip(p['stages'],SCHEDULE):
+        stage['fixture_mode']=mode
+        for c,n in zip(stage['censuses'],[1,1,2,2] if mode=='dom' else [1,1,1,1]):c['result']={'selector_queries':n}
+    with pytest.raises(ValueError,match='encoding'):analysis.analyze(p,trace)
+    p['history']['address_encoding']='deferred-native-pointer-v1'
+    membership.update(status='capability_passed',errors=[])
+    trace['traceEvents'] += [
+        {'pid':7,'tid':7,'name':'MajorGC','ts':100,'dur':5,'ph':'X','args':{}},
+        {'pid':7,'tid':7,'name':'CppGC.IncrementalSweep','ts':106,'dur':5,'ph':'X','args':{}}]
+    assert not analysis.analyze(p,trace)['errors']

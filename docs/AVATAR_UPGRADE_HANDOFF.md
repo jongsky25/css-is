@@ -2,7 +2,7 @@
 
 Last updated: **2026-10-27 UTC**. Repository: `jongsky25/css-is`.
 
-## Start here — Sol handoff, current after absent-attribute screen
+## Start here — Sol handoff, current after mixed getter v11
 
 **Objective: unblock 2B only. Do not start or resume 3A or later increments.**
 This section supersedes older next-step instructions below. The chronology is
@@ -11,10 +11,11 @@ retained as evidence, not a queue of experiments to repeat.
 ### Checkout and current state
 
 - Repository: `jongsky25/css-is`; resume `codex/avatar-2b-verification`.
-- Latest completed experiment: absent-attribute receiver screen, harness `3190099`,
-  following exact receiver capability `f4ed9d9`. Cost/integrity screen passes;
-  through-reclamation remains failed in both probes. No application collection.
-  Use latest branch HEAD for all reports/evidence, not a reset to a harness commit.
+- Latest completed experiment: representative mixed getter calibration, latest
+  harness `d0eeb19` (lifecycle v11). Both probes pass all-mode source-labelled
+  reclamation; one observation bound still fails 5%. No application calibration.
+  Earlier mixed revisions/proofs and all previous failures remain. Use latest
+  branch HEAD for reports/evidence, not a reset to a harness commit.
 - Comparison baseline: `1c964dcba2fa19de1eab077b00e0e5748d742554`.
 - Current experimental product: `cf363bfe547d5e23619eee28cdaf68bd4b6d7753`,
   including the thread-owned reader candidate and avatar product `f700187`.
@@ -45,13 +46,13 @@ markup and improves navigation 20 in both orders, but those partial benefits
 cannot override the failed gates. This screen compares current versus candidate;
 it is not the complete original-versus-candidate acceptance matrix.
 
-Latest diagnostic: [absent-attribute receiver](avatars/increment2b/absent-attribute-receiver/REPORT.md).
-The exact native receiver capability passes, and all four getter cost-screen slots
-pass declared cost/integrity gates (4.9961/4.9588% probe bounds; first margin is very
-small). Both preserve every declared receiver/page join. Neither records collection
-or a labelled return, so independent reclamation qualification remains failed and
-no application comparison follows. Archives re-audit identically; prior failures
-are not retroactively passed, and no product-memory acceptance is established.
+Latest diagnostic: [mixed getter fixture](avatars/increment2b/mixed-reclamation-getter/REPORT.md).
+Exact original DOM/SVG/style documents produce representative source-labelled
+reclamation in both latest probes, with intact receiver identities and natural GC/
+sweeps. Ten/eight labelled generations return; all 18 overlap sweeping. One cost
+gate still fails (5.2188% >5%), so instrument/application calibration stays unqualified.
+All four screen/four type-proof archives re-audit identically; product acceptance
+and earlier failures are unchanged. No application comparison or product fix follows.
 
 There is no defensible percentage or ETA. At least three milestones remain:
 
@@ -71,37 +72,38 @@ verification**. No candidate currently qualifies to unblock 2B.
 
 Read these in order before changing code or launching browsers:
 
-1. [Latest getter result](avatars/increment2b/absent-attribute-receiver/REPORT.md),
-   capability and screen protocols, exact native/fixture proof and screen audit.
-2. [Lifecycle v6](avatars/increment2b/native-membership-lifecycle/REPORT.md),
-   [earlier membership](avatars/increment2b/native-element-membership/REPORT.md),
-   and [component ordering](avatars/increment2b/snapshot-ordering/REPORT.md).
+1. [Mixed getter result](avatars/increment2b/mixed-reclamation-getter/REPORT.md),
+   four frozen screen protocols, type proofs, failed audits and native-period summaries.
+2. [Path-only getter](avatars/increment2b/absent-attribute-receiver/REPORT.md),
+   [lifecycle v6](avatars/increment2b/native-membership-lifecycle/REPORT.md), and
+   [earlier membership](avatars/increment2b/native-element-membership/REPORT.md).
 3. [Product candidate](avatars/increment2b/shared-cat-gradients/REPORT.md), the
    [overall report](avatars/increment2b/REPORT.md) and
    [acceptance gates](AVATAR_VISUAL_UPGRADE_PLAN.md#performance-acceptance-gates).
-4. [Previously qualified native-page fixture](avatars/increment2b/page-history-capability/REPORT.md),
-   [application page history](avatars/increment2b/page-history-application/REPORT.md),
-   [reader retention](avatars/increment2b/reader-retention/REPORT.md), and
-   [type inventory](avatars/increment2b/native-type-ownership/REPORT.md).
-   Failed product lifecycle/stylesheet candidates remain historical constraints.
+4. Historical [page capability](avatars/increment2b/page-history-capability/REPORT.md),
+   [application history](avatars/increment2b/page-history-application/REPORT.md),
+   [reader retention](avatars/increment2b/reader-retention/REPORT.md) and
+   [native types](avatars/increment2b/native-type-ownership/REPORT.md) remain constraints.
 
-The absent-attribute alternative is now implemented and capability-checked. At
-0x100cce80, native getAttributeNodeNS receivers match the geometry reference exactly;
-the absent namespace/name returns null without EnsureAttr. Four new slots keep the
-same 32-element sample and full path-only fixture. Every receiver/null result/DOM
-hash verifies; geometry reference is disabled in measured slots. Cost screen passes
-with almost no first-probe margin. Neither probe records collection or page return,
-so this is not a through-reclamation or application-qualified instrument. Never
-reinterpret complete_lifecycle_diagnostic as 2B acceptance.
+The representative fixture decision and getter type proof are now completed. New
+fixture bytes exactly match the previously qualified d732b70 DOM/SVG/style generator.
+Four distinct fixed revisions retain every failure: v8 cost, v9 cost/reclamation,
+v10 cost, v11 one cost miss. Latest v11 uses navigation-armed overflow guards,
+per-evaluate selector reuse and post-window pointer-string formatting. Both probes
+preserve all 1,536 receivers and all-mode labelled returns, with natural MajorGC/
+sweeping. One probe still exceeds the conservative 5% bound at 5.2188%. No application
+calibration is qualified. Do not repeat the latest build for a favourable margin.
 
-Next inspect the retained, previously qualified DOM/SVG/style capability fixture
-(3f06fd5 / d732b70) before choosing a mixed natural-reclamation fixture for this
-getter. Freeze any representative fixture change and exact element-type identity/
-coverage/cost gates before collection. No forced GC, extra dwell until an event
-appears, favorable slot replacement or unchanged screen rerun. Every selected
-native identity and page generation must remain explicit; mixed pages do not
-attribute all bytes to one source. Existing original/current RSS failures remain.
-No product correction is established yet.
+Next target repeated JS/native recording work, not more artwork or a bigger fixture.
+The callback still timestamps and constructs JS events thousands of times. A
+bounded native callback/buffer implementation is a concrete next hypothesis: preserve
+wire events, clocks, thread/phase/overflow, immutable pointer values, null returns
+and page generations. First prove clock/concurrency/return-pointer and exact native
+identity/lifetime equivalence on controlled fixtures, then freeze a new fixed cost
+calibration. No C/native recorder is implemented or qualified yet. No omitted cost,
+sample reduction, forced GC, extra dwell/work or budget change. Mixed membership
+is not exclusive page-byte ownership; post-window returns never satisfy measured
+reclamation. No product correction is established.
 
 ### Important traps and execution constraints
 
@@ -124,13 +126,13 @@ No product correction is established yet.
 ### Copy into the new Sol session
 
 > Continue jongsky25/css-is on codex/avatar-2b-verification using Sol. Read the
-> authoritative Start here section and absent-attribute-receiver report. Goal:
-> unblock 2B only. Getter capability f4ed9d9 and cost screen 3190099 pass, with
-> narrow cost margin; both probes still fail through-reclamation coverage. No
-> application comparison or product change. Next inspect the previously qualified
-> DOM/SVG/style capability fixture before freezing a representative natural-
-> reclamation test for the getter. Preserve all failures; no unchanged favorable
-> rerun, forced GC, waiver, 3A, merge or deployment.
+> authoritative Start here section and mixed-reclamation-getter report. Goal:
+> unblock 2B only. Latest d0eeb19/v11 passes representative labelled reclamation
+> in both probes but fails one 5% cost gate (5.2188%). No application calibration.
+> Next prove a cheaper native callback/buffer recorder with exact clock/concurrency/
+> pointer/phase/overflow equivalence before a new fixed cost screen. Preserve all
+> prior failures; no unchanged favourable rerun, forced GC, sample/threshold waiver,
+> 3A, merge or deployment. No product fix is established.
 
 ## Current blocking correction
 

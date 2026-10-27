@@ -1,0 +1,32 @@
+{
+  "archive_sha256": "cc8d15f30c2d4d8ecf4cc27bad12c5bc263fb0d42efb350af2f8942021ff827d",
+  "logical_files": 24,
+  "unique_blobs": 24,
+  "paths": {
+    "screen/0-control/capture.json.gz": "0aa7376e2dfb396e83a9c21513bf1881e167d6eb9c4c9efbf7cb61bca9159b74",
+    "screen/0-control/identity.json": "43d9240c37b6deb6bf3a85d86928d9c7f2f5928a046efe0148295317508021f5",
+    "screen/0-control/runner.txt": "8e2c0cc78e36357c60eb66e1a9515a908328bd268dcbe08e358359c296f12e9f",
+    "screen/1-probe/capture.json.gz": "6838b6e9c25a7004c6c89b6f78263da155560a1f86bb6ec04dfa8722d9514c2a",
+    "screen/1-probe/identity.json": "d0041c14bceefec7b61072a9f9156e709d9ee8c84f6141d6840114ffe2cdef26",
+    "screen/1-probe/runner.txt": "cb5dcac599089a3b0734cfd891fe7e996e7da8226528e53aff9312e472455b38",
+    "screen/1-probe/trace.json.gz": "7cbb0cf4457718db45be4a6970a516f59add6f11a86481342300ee7b31a4b731",
+    "screen/2-probe/capture.json.gz": "2c7219c28d4bb0ed2dbf536f1d98453e02bcfaa8f90f57467574a552920576b7",
+    "screen/2-probe/identity.json": "1351b9f6af10cf4c4cd7980cd83c9c4ceb2c8a950cefb5b03abc15214a3b82ef",
+    "screen/2-probe/runner.txt": "902147315a1907f71fd0180877fa30394f1162ee023d27d2f1d38e04de5f140a",
+    "screen/2-probe/trace.json.gz": "bd3c2ffdb97fd72fde808b3f7a3ed5fe025db33af3ca73d48ff9ccb863a90882",
+    "screen/3-control/capture.json.gz": "98a1b163a9b995bb8867496d769a560e20472a47a2b28db7a39e1be54e609dc9",
+    "screen/3-control/identity.json": "7a03629f03e51ebfc7cc807cb24bbd9a39c1aacf50753f6e2f4aebb748890a81",
+    "screen/3-control/runner.txt": "97c332a3852f5847f29166b6e2393900580a97fb5961c8faa59861d84191f11c",
+    "screen/experiment.json": "637e49134b2797f0ddb8a083c3c4c8ef759366cdc4535ef0b0b44ed0c5624dbd",
+    "screen/harness/scripts/avatar_baseline/analyze_element_membership.py": "6367df1a5516e4d23cb35ce44294a1c38a288f262605020db1e8d5738767dc33",
+    "screen/harness/scripts/avatar_baseline/analyze_membership_lifecycle.py": "aa3bee13da398c7a39fa9bc5a1b9911988a56502c6a0bf9b2b7cb9864288e59f",
+    "screen/harness/scripts/avatar_baseline/analyze_reader_retention.py": "9483d75ec691c9acc64cbe93e8dafbbbe4a9a4d5a598e74837c112bccb8fa635",
+    "screen/harness/scripts/avatar_baseline/element_membership_lifecycle.py": "e58bf45923b58f21bf6bb7c2816f5524ca5d2c6dc262d3391599a5592ffccd66",
+    "screen/harness/scripts/avatar_baseline/mixed_membership_fixture.py": "a20f5cefbbe8b071819e0ed598f6a4718f0b55ce49f1a8b6113e6df8df0e149c",
+    "screen/harness/scripts/avatar_baseline/native/absent_attribute_membership.js": "7d7945fcc9794802a4077a5188a78b60721fe8924191204a9a601cc757d03954",
+    "screen/harness/scripts/avatar_baseline/run_membership_lifecycle.py": "8ac0b1d0adf807ff51d176388601f41abb2e704e932f6fb12ac66c05d13f1c91",
+    "screen/receiver-capability/assessment.json": "857f43131213df861136599ee3ae7c664bb6056e811d9b40ff7ff26c20ec99e4",
+    "screen/receiver-capability/capture.json.gz": "e7ac33eb99ae565da6bc99192aa3d3bb2ff2df6a3ff1770c8284703958a66ae1"
+  },
+  "reconstructed_audit_identical": true
+}

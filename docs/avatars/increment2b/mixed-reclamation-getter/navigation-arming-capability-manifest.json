@@ -5,5 +5,6 @@
   "paths": {
     "capability/assessment.json": "2f7699d8253265fd28d87513cf55ca8cb89ee35fc2829753dde48922083dd65a",
     "capability/capture.json.gz": "5f8afbe064e4178e8800ee921a9f0dd2059932a5e26a6de1fbde412d60a20aeb"
-  }
+  },
+  "reconstructed_audit_identical": true
 }

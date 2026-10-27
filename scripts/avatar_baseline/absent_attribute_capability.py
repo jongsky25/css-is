@@ -53,7 +53,8 @@ def validate_receivers(capture, document_index=0, fixture_count=4096):
             seen[(group,repeat)] = addresses
         if seen[(group,0)] != seen[(group,1)]: raise ValueError('Repeat identities differ')
     if set(seen[('avatar',0)]) & set(seen[('other',0)]): raise ValueError('Disjoint groups overlap')
-    if len(capture['queries'])!=8: raise ValueError('Incomplete known query schedule')
+    if len(capture['queries'])!=8 or {q['phase'] for q in capture['queries']}!=expected: raise ValueError('Incomplete known query schedule')
+    if any(a['end_ns']>b['begin_ns'] for a,b in zip(capture['queries'],capture['queries'][1:])): raise ValueError('Overlapping known query brackets')
     for q in capture['queries']:
         if q['result']['fixture_count']!=fixture_count or q['result']['count']!=32 or q['result']['values'] != [1]*32:
             raise ValueError('Known JS query result mismatch')

@@ -27,6 +27,8 @@ def validate(capture):
     if capture.get('error'):raise ValueError(capture['error'])
     if [d['mode'] for d in capture['documents']]!=MODES or [d['index'] for d in capture['documents']]!=[0,1,2]:
         raise ValueError('Incomplete mixed capability schedule')
+    queries=[q for d in capture['documents'] for q in d['queries']]
+    if any(a['end_ns']>b['begin_ns'] for a,b in zip(queries,queries[1:])): raise ValueError('Mixed document query order overlaps')
     expected={f'{prefix}:{i}:{group}:{repeat}' for prefix in ['reference','census'] for i in range(3) for group in ['avatar','other'] for repeat in [0,1]}
     actual={e['phase'] for e in capture['native']['history']['events'] if e['kind'] in ['receiver','reference']}
     if actual!=expected:raise ValueError('Extra/missing mixed capability receiver phase')

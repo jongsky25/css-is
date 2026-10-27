@@ -8,10 +8,25 @@ with stable controls. Remaining milestones: a supported fix, qualified candidate
 validation, then complete original-baseline acceptance across all device/cache
 and scenario groups. No defensible percentage or ETA is established.
 
-Use the [Sol restart handoff](../../AVATAR_UPGRADE_HANDOFF.md#start-here--sol-handoff-current-after-absent-attribute-screen)
+Use the [Sol restart handoff](../../AVATAR_UPGRADE_HANDOFF.md#start-here--sol-handoff-current-after-mixed-getter-v11)
 for current source identities, evidence order, next bounded work and constraints.
-The absent-attribute receiver screen below is the latest completed experiment.
+The mixed getter fixture below is the latest completed experiment.
 Older next-step instructions in this report are historical where superseded.
+
+## Mixed getter fixture — representative reclamation passed, one cost gate remains
+
+[Latest report](mixed-reclamation-getter/REPORT.md): exact-type capability covers HTML div/span and SVG paths
+against 384 geometry references. The fixture reproduces qualified d732b70 DOM/SVG/
+style document bytes. Four distinct fixed calibration revisions retain all failures.
+Latest d0eeb19 (lifecycle v11) preserves 1,536/1,536 receivers in both probes and
+observes labelled page returns for all three modes, with natural MajorGC/sweeps.
+Ten/eight labelled generations return inside measurement; all 18 overlap sweeping.
+Cost still fails one probe: 5.2188% versus 5%; other probe 4.2179%. Controls vary
+18.1054% (<20%); paired durations pass. Instrument/application calibration remains
+unqualified; no 2B advance. All four screen and four proof archives re-audit
+identically; 67 focused tests pass. Product unchanged. Next prove a cheaper native
+callback/buffer recorder before another fixed calibration; no unchanged favourable
+rerun, omitted observer work, forced GC, sample reduction or budget waiver.
 
 ## Absent-attribute receiver — capability and cost screen passed; reclamation still missing
 

@@ -1,0 +1,77 @@
+{
+  "acceptance": false,
+  "checks": [
+    {
+      "kind": "screen",
+      "version": "v1",
+      "harness_commit": "010d0895a2468e7d66b243545f857f0b776ba1fa",
+      "status": "diagnostic_failed",
+      "audit_identical": true,
+      "source_hashes_verified": 15,
+      "proof_hashes_verified": 5,
+      "cohort_files_verified": 14
+    },
+    {
+      "kind": "screen",
+      "version": "v2",
+      "harness_commit": "c78a6c537b2bf471602f513b881158a85b51eee8",
+      "status": "diagnostic_failed",
+      "audit_identical": true,
+      "source_hashes_verified": 15,
+      "proof_hashes_verified": 5,
+      "cohort_files_verified": 14
+    },
+    {
+      "kind": "screen",
+      "version": "v3",
+      "harness_commit": "9188ac1fb9508d0386d50e063dbdce26b79b00c8",
+      "status": "diagnostic_failed",
+      "audit_identical": true,
+      "source_hashes_verified": 15,
+      "proof_hashes_verified": 5,
+      "cohort_files_verified": 14
+    },
+    {
+      "kind": "screen",
+      "version": "v4",
+      "harness_commit": "d0eeb19c1d8b6debbd6b1c5f7a429e13afb2230e",
+      "status": "diagnostic_failed",
+      "audit_identical": true,
+      "source_hashes_verified": 15,
+      "proof_hashes_verified": 5,
+      "cohort_files_verified": 14
+    },
+    {
+      "kind": "exact_type_capability",
+      "name": "capability",
+      "harness_commit": "7cfa0751ef44c17d1f89a3f67cbb634705280679",
+      "status": "capability_passed",
+      "audit_identical": true,
+      "source_hashes_verified": 5
+    },
+    {
+      "kind": "exact_type_capability",
+      "name": "navigation-arming-capability",
+      "harness_commit": "c78a6c537b2bf471602f513b881158a85b51eee8",
+      "status": "capability_passed",
+      "audit_identical": true,
+      "source_hashes_verified": 5
+    },
+    {
+      "kind": "exact_type_capability",
+      "name": "selector-reuse-capability",
+      "harness_commit": "9188ac1fb9508d0386d50e063dbdce26b79b00c8",
+      "status": "capability_passed",
+      "audit_identical": true,
+      "source_hashes_verified": 5
+    },
+    {
+      "kind": "exact_type_capability",
+      "name": "deferred-formatting-capability",
+      "harness_commit": "d0eeb19c1d8b6debbd6b1c5f7a429e13afb2230e",
+      "status": "capability_passed",
+      "audit_identical": true,
+      "source_hashes_verified": 5
+    }
+  ]
+}
