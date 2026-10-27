@@ -297,3 +297,25 @@ def test_failure_recording_transport_result_never_sends_twice(pilot,monkeypatch)
     conn.execute('UPDATE mcp_travel_review_mail SET attempted_at=1');conn.commit()
     assert delivery.run(conn,send=send)==0 and len(calls)==1
     assert conn.execute('SELECT state,payload_json FROM mcp_travel_review_mail').fetchone()==('uncertain',None)
+
+
+def test_preparation_context_has_current_stamp_bounded_ids_and_no_private_content(pilot,monkeypatch):
+    conn,users,clients,app,filing,token=pilot
+    join_admin_section(conn,users[2]['id'])
+    value=pilot_service.read_context(conn,token.access_token,RESOURCE,ORIGIN,filing['id'],limit=1)
+    assert value['expected_updated_at']==filing['updated_at'] and value['ready_to_request']
+    assert len(value['reviewers'])==1 and value['next_before']
+    older=pilot_service.read_context(conn,token.access_token,RESOURCE,ORIGIN,filing['id'],before=value['next_before'],limit=1)
+    assert len(older['reviewers'])==1 and not older['next_before']
+    assert value['reviewers'][0]['id']!=older['reviewers'][0]['id']
+    current_reviewers=review.reviewers
+    monkeypatch.setattr(review,'reviewers',lambda *a,**kw:[{**r,'name':r['username']} for r in current_reviewers(*a,**kw)])
+    redacted=pilot_service.read_context(conn,token.access_token,RESOURCE,ORIGIN,filing['id'])
+    assert all(r['name'].startswith('Reviewer account ') for r in redacted['reviewers'])
+    encoded=json.dumps(value)
+    assert DOC not in encoded and users[1]['username'] not in encoded and 'DPO-SYNTHETIC' not in encoded
+    assert 'PRIVATE_REVIEW' not in encoded
+    conn.execute('UPDATE travel_item SET doc_url=NULL,drive_url=NULL');conn.commit()
+    assert not pilot_service.read_context(conn,token.access_token,RESOURCE,ORIGIN,filing['id'])['ready_to_request']
+    foreign=mcp_auth.Provider._tokens(conn,'review-test',users[2]['id'],[pilot_service.SCOPE],RESOURCE);conn.commit()
+    with pytest.raises(permissions.Denied):pilot_service.read_context(conn,foreign.access_token,RESOURCE,ORIGIN,filing['id'])

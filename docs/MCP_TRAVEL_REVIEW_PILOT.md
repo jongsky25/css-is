@@ -1,6 +1,6 @@
 # Travel papers review-request pilot (v8.88)
 
-M3.4 adds `prepare_travel_review_request` and
+M3.4 adds `get_my_travel_review_context`, `prepare_travel_review_request` and
 `get_travel_review_request_operation`, disabled by default. Hosted write
 acceptance remains pending. It follows supply submission merged in
 [PR #499](https://github.com/jongsky25/css-is/pull/499), commit
@@ -20,6 +20,13 @@ Inputs are positive 64-bit filing/reviewer IDs, the source's exact current
 16–80 character operation key. Unknown financial, document, email-address and
 decision fields are rejected. The selected recipient is resolved from the
 current eligible account, never a model-supplied address.
+
+Call `get_my_travel_review_context(filing_id, before=0, limit=10)` first. Under
+this same explicit scope it returns the exact current update stamp, readiness
+booleans and a page of eligible reviewer account IDs/display names (maximum 25,
+seek cursor `next_before`). It does not return emails, document links, notes or
+financial fields. Existing travel reads remain unchanged. Resource-person IDs
+are not reviewer account IDs; use the context result rather than guessing.
 
 The signed-in browser shows exact filing reference/title/dates, update stamp,
 current document checklist, reviewer name/account/email, prior sent-note count,

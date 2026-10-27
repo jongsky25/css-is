@@ -41,7 +41,7 @@ def csrf(request):
 
 # Explicit allowlist: never expose the hosting environment or credential material.
 MCP_PILOTS = (
-    ('Request review of own travel papers (browser confirmation)', 'TRAVEL_REVIEW_REQUESTS', 'travel:review:request', ('prepare_travel_review_request', 'get_travel_review_request_operation')),
+    ('Request review of own travel papers (browser confirmation)', 'TRAVEL_REVIEW_REQUESTS', 'travel:review:request', ('get_my_travel_review_context', 'prepare_travel_review_request', 'get_travel_review_request_operation')),
     ('Submit own supply requests (browser confirmation)', 'SUPPLY_SUBMISSIONS', 'supplies:request:submit', ('prepare_supply_request_submission', 'get_supply_submission_operation')),
     ('Submit own assigned tasks for review (browser confirmation)', 'TASK_SUBMISSIONS', 'work:task:submit', ('prepare_task_submission', 'get_task_submission_operation')),
     ('Acknowledge own assigned tasks (browser confirmation)', 'TASK_ACKNOWLEDGEMENTS', 'work:task:acknowledge', ('prepare_task_acknowledgement', 'get_task_acknowledgement_operation')),

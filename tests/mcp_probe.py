@@ -228,7 +228,7 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
         assert listed.status_code == 200, listed.text
         names = {tool['name'] for tool in listed.json()['result']['tools']}
         assert {'my_work', 'find_documents', 'get_document'} <= names
-        assert names == {'prepare_travel_review_request', 'get_travel_review_request_operation', 'prepare_supply_request_submission', 'get_supply_submission_operation', 'prepare_task_submission', 'get_task_submission_operation', 'prepare_task_acknowledgement', 'get_task_acknowledgement_operation', 'prepare_travel_reimbursement_draft', 'get_travel_draft_operation', 'prepare_personal_calendar_entry', 'get_personal_calendar_operation', 'prepare_saved_report_view', 'get_saved_report_view_operation', 'prepare_task_comment_draft', 'get_task_comment_draft_operation', 'prepare_supply_request_draft', 'get_supply_draft_operation', 'mark_my_notification_read', 'get_mcp_operation', 'get_resource_person_activity_survey', 'find_survey_resource_persons', 'compare_resource_person_surveys', 'compare_csm_months', 'compare_unit_activity_surveys', 'find_survey_units', 'get_unit_activity_survey_summary', 'my_work', 'find_documents', 'get_document',
+        assert names == {'get_my_travel_review_context', 'prepare_travel_review_request', 'get_travel_review_request_operation', 'prepare_supply_request_submission', 'get_supply_submission_operation', 'prepare_task_submission', 'get_task_submission_operation', 'prepare_task_acknowledgement', 'get_task_acknowledgement_operation', 'prepare_travel_reimbursement_draft', 'get_travel_draft_operation', 'prepare_personal_calendar_entry', 'get_personal_calendar_operation', 'prepare_saved_report_view', 'get_saved_report_view_operation', 'prepare_task_comment_draft', 'get_task_comment_draft_operation', 'prepare_supply_request_draft', 'get_supply_draft_operation', 'mark_my_notification_read', 'get_mcp_operation', 'get_resource_person_activity_survey', 'find_survey_resource_persons', 'compare_resource_person_surveys', 'compare_csm_months', 'compare_unit_activity_surveys', 'find_survey_units', 'get_unit_activity_survey_summary', 'my_work', 'find_documents', 'get_document',
                          'list_work_items', 'get_work_item', 'list_work_tasks', 'list_calendar_events',
                          'list_supply_queue', 'list_my_travel_filings', 'list_activity_progress',
                          'my_office_overview', 'list_my_notifications', 'get_room_availability', 'get_csm_summary', 'get_activity_survey_summary', 'get_resource_person_survey_summary', 'find_survey_activities', 'get_activity_survey_detail'}
@@ -897,8 +897,14 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
                     conn.execute("UPDATE travel_item SET drive_url=?,doc_url=?,state='present' WHERE filing_id=? AND item_code=?",
                         ('https://docs.google.com/document/d/private/edit', 'https://docs.google.com/document/d/private/edit', review_filing['id'], review_item['code']))
                 conn.commit(); conn.close()
+                current = client.post('/mcp', json={'jsonrpc':'2.0','id':121,'method':'tools/call',
+                    'params':{'name':'get_my_travel_review_context','arguments':{'filing_id':review_filing['id']}}}, headers=narrow_headers)
+                assert current.status_code==200 and not current.json()['result'].get('isError'),current.text
+                review_context=json.loads(current.json()['result']['content'][0]['text'])
+                assert review_context['ready_to_request'] and 'reviewer@example.invalid' not in current.text
+                assert str(reviewer_uid) in {r['id'] for r in review_context['reviewers']}
                 review_args = {'filing_id':review_filing['id'], 'reviewer_id':reviewer_uid,
-                    'expected_updated_at':review_filing['updated_at'], 'operation_id':'remote-travel-review-001'}
+                    'expected_updated_at':review_context['expected_updated_at'], 'operation_id':'remote-travel-review-001'}
                 prepared = client.post('/mcp', json={'jsonrpc':'2.0','id':119,'method':'tools/call',
                     'params':{'name':'prepare_travel_review_request','arguments':review_args}}, headers=narrow_headers)
                 assert prepared.status_code == 200 and not prepared.json()['result'].get('isError'), prepared.text

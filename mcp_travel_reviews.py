@@ -228,3 +228,23 @@ def browser(conn, payload, resource, origin, operation_id, *, confirm_digest=Non
         return dict(_result(conn, op, origin), preview_digest=_preview_digest(op),
                     fields=json.loads(op['payload_json']) if op['payload_json'] else None,
                     snapshot=json.loads(op['snapshot_json']) if op['snapshot_json'] else None)
+
+
+def read_context(conn, token, resource, origin, filing_id, before=0, limit=10):
+    if type(filing_id) is not int or not 1 <= filing_id <= 2**63-1 or type(before) is not int or not 0 <= before <= 2**63-1 or type(limit) is not int or not 1 <= limit <= 25:
+        raise ValueError('Use a positive filing ID, a nonnegative reviewer cursor and limit 1–25.')
+    with transaction(conn):
+        _enabled(conn)
+        user, _ = actions.token_actor(conn, token, resource, SCOPE)
+        filing = _filing(conn, user, filing_id)
+        selected = sorted((r for r in review.reviewers(conn, exclude_user_id=user['id']) if not before or r['id'] < before),
+                          key=lambda r: r['id'], reverse=True)[:limit+1]
+        ready = not rules.readiness(filing, travel.view_items(conn, filing), travel.flags_of(conn, filing_id))
+        st.audit(conn, user['username'], 'integration_read', target_type='mcp_travel_review', target_id=filing_id,
+                 summary='MCP own travel review preparation context', commit=False)
+        return {'filing_id': str(filing_id), 'reference': filing['ref_code'], 'status': filing['status'],
+                'review_status': filing['review_state'], 'expected_updated_at': filing['updated_at'],
+                'checklist_ready': ready, 'ready_to_request': ready and filing['status']=='open' and filing['review_state'] in ('','changes'),
+                'reviewers': [{'id': str(r['id']), 'name': r['name'] if r['name'] and '@' not in r['name'] else 'Reviewer account '+str(r['id'])} for r in selected[:limit]],
+                'next_before': selected[limit-1]['id'] if len(selected)>limit else None,
+                'web_url': origin+'/travel/f/'+filing['ref_code']}

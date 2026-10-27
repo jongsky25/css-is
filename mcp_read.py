@@ -489,13 +489,29 @@ def build_server(get_conn, origin):
         return await action(lambda conn, token: mcp_supply_submissions.recover(
             conn, token, provider.resource, origin, operation_id), mcp_supply_submissions.SCOPE)
 
+    @server.tool(title='Read my travel review preparation context', annotations=READ_ONLY)
+    async def get_my_travel_review_context(filing_id: StrictInt, before: StrictInt = 0, limit: StrictInt = 10) -> dict:
+        """Read the current source stamp and eligible reviewer IDs before preparation.
+
+        Requires travel:review:request consent and current filing ownership. Returns
+        current filing/review status, readiness booleans, exact update stamp and a
+        bounded page of eligible Administrative Section reviewer IDs/display names
+        excluding you. No email addresses, document links, notes or financial data.
+        Use returned reviewer ID and stamp in prepare_travel_review_request; never
+        substitute resource-person IDs or guess a timestamp. Limit 1–25, before
+        is the returned reviewer cursor (0 initially).
+        """
+        return await action(lambda conn, token: mcp_travel_reviews.read_context(
+            conn, token, provider.resource, origin, filing_id, before, limit), mcp_travel_reviews.SCOPE)
+
     @server.tool(title='Prepare requesting review of my travel papers', annotations=ToolAnnotations(
         readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=False))
     async def prepare_travel_review_request(filing_id: StrictInt, reviewer_id: StrictInt,
             expected_updated_at: StrictStr, operation_id: StrictStr) -> dict:
         """Prepare review of an own open filing with a complete document checklist.
 
-        Requires separate travel:review:request consent and current source update
+        Call get_my_travel_review_context first for reviewer account IDs and the
+        exact stamp. Requires separate travel:review:request consent and current source update
         stamp. Choose an eligible Administrative Section reviewer other than you.
         Show confirmation_url for signed-in review of filing, papers, reviewer and
         email recipient. Confirmation resolves prior sent notes, increments the
