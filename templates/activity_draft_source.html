@@ -4,6 +4,7 @@
 <div style="max-width:44rem;margin:auto;overflow-wrap:anywhere">
 <h1>My private activity draft</h1>
 <p>Only you can open this preparation copy while you retain Create activity access. Saving it created no live activity, survey, public link or email. Later manual creation is separate and is not tracked here.</p>
+{% if created %}<p role="status">A live activity was already created from this draft through confirmed creation. {% if created_url %}<a href="{{ created_url }}">Open the existing activity</a>.{% else %}The original activity source is unavailable with your current access.{% endif %} This flow will not create another activity, even if the source is later removed. Ordinary manual Create remains independent; check existing records before using it.</p>{% endif %}
 <dl>
 <dt>Activity title</dt><dd>{{ draft.fields.activity_name }}</dd>
 <dt>Date and timezone</dt><dd>{{ draft.fields.event_date }} · Asia/Manila</dd>

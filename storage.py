@@ -1730,7 +1730,7 @@ def create_form_instance(conn, survey_type, form, event_date, *, end_date=None,
                          serving_staff=None, serving_staff_org_id=None, service=None,
                          lead_org_id=None, rp_id=None, topic=None,
                          organizer_external_id=None, venue=None, modality=None,
-                         created_by=None):
+                         created_by=None, commit=True):
     """
     The section manager creates this; it bakes in the context. The returned
     qr_token is what the QR code points to -- each scan inherits this context,
@@ -1740,6 +1740,8 @@ def create_form_instance(conn, survey_type, form, event_date, *, end_date=None,
     end_date (optional) marks the last day of a multi-day activity; NULL means a
     single-day activity. The reporting period always keys off event_date (start).
     """
+    if not commit and not conn.in_transaction:
+        raise RuntimeError('Form creation requires a caller-owned transaction.')
     token = uuid.uuid4().hex[:12]
     cur = conn.execute("""
         INSERT INTO form_instance(survey_type, form, qr_token, event_date, end_date, venue, modality,
@@ -1750,7 +1752,8 @@ def create_form_instance(conn, survey_type, form, event_date, *, end_date=None,
          serving_staff, serving_staff_org_id,
          service, lead_org_id, rp_id, topic, organizer_external_id,
          tz.now_iso(), created_by))
-    conn.commit()
+    if commit:
+        conn.commit()
     return cur.lastrowid
 
 
@@ -1960,7 +1963,7 @@ def purge_stale_email_log(conn, cutoff_iso):
 
 def create_event(conn, title, event_date, *, end_date=None, venue=None, organizer=None,
                  lead_org_id=None, form_instance_ids=None, created_by=None,
-                 modality=None, event_kind="bureau"):
+                 modality=None, event_kind="bureau", commit=True):
     """Persist an event that groups the forms created together, and return
     {id, event_token}. The token is the public /e/<token> link-tree slug.
     form_instance_ids are linked in the order given (the F2 event review first,
@@ -1969,6 +1972,8 @@ def create_event(conn, title, event_date, *, end_date=None, venue=None, organize
     manage the activity's curated links).
     event_kind = 'bureau' (default, public link tree + registration) or 'outside'
     (an invited activity: grouping + name only, no link tree, no registration)."""
+    if not commit and not conn.in_transaction:
+        raise RuntimeError('Event creation requires a caller-owned transaction.')
     token = uuid.uuid4().hex[:12]
     cur = conn.execute(
         """INSERT INTO event(event_token, title, event_date, end_date, venue, modality, organizer,
@@ -1980,7 +1985,8 @@ def create_event(conn, title, event_date, *, end_date=None, venue=None, organize
         conn.execute(
             "INSERT OR IGNORE INTO event_form(event_id, form_instance_id, ordinal) VALUES (?,?,?)",
             (event_id, fid, i))
-    conn.commit()
+    if commit:
+        conn.commit()
     return {"id": event_id, "event_token": token}
 
 

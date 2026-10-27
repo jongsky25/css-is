@@ -1,0 +1,39 @@
+{% extends "dash_layout.html" %}
+{% block title %}Review live activity creation — Office Connect{% endblock %}
+{% block content %}
+<div style="max-width:44rem;margin:auto;overflow-wrap:anywhere">
+{% if result.status == 'completed' %}
+<h1>Live activity created</h1>
+<p>Activity {{ result.event_id }} and one event-review form were created at {{ result.completed_at }} for {{ result.event_date }}. This is the original creation result; inspect the source for current settings.</p>
+<p><a href="{{ result.web_url }}">Manage the created activity</a> · <a href="{{ result.public_url }}">Open its public registration and feedback link</a></p>
+<p>Next: you manage and share the activity through the normal channels. No participant invitations, room/calendar/travel records, approval or signature were made.</p>
+<p>Initial internal notice recipients: {{ result.next_actor.initial_notice_recipient_count }}. Current states: {% for state,count in result.notification_status_counts.items() %}{{ state }}: {{ count }}{% if not loop.last %}; {% endif %}{% else %}None{% endfor %}. Queued is not sent. Sent means transport acceptance, not reading. Uncertain attempts never automatically retry.</p>
+{% else %}
+<h1>Create this live activity from my draft?</h1>
+<dl>
+<dt>Activity title</dt><dd>{{ result.snapshot.fields.activity_name }}</dd>
+<dt>Date and timezone</dt><dd>{{ result.snapshot.fields.event_date }} · Asia/Manila</dd>
+<dt>Current organizing section</dt><dd>{{ result.snapshot.current.section.name }}</dd>
+<dt>Venue</dt><dd>{{ result.snapshot.fields.venue or 'Not set' }}</dd>
+<dt>Creator</dt><dd>{{ result.snapshot.current.requester.name }} (you)</dd>
+<dt>Live records</dt><dd>One bureau-organized single-day face-to-face activity and one Form 2 event review, with no speakers</dd>
+</dl>
+{% if result.snapshot.section_at_save != result.snapshot.current.section %}<p role="status">The organizing section changed since the private copy was saved. The live activity will use the current section shown above.</p>{% endif %}
+<p><strong>This creates a live activity, not another private save or a request awaiting approval.</strong> The new public registration/feedback links expose the activity title, date, section and venue under the normal page and consent rules. No entry window is configured. Review these fields as public activity details before confirming.</p>
+<p>Registration/feedback settings, default public pages and normal future reminder jobs follow the existing Create workflow. This does not email participants or send invitations. No room booking, calendar item, travel filing, resource-person survey, approval, document or signature is created.</p>
+{% if result.snapshot.weak_duplicate_count %}<p role="status">The normal duplicate finder found {{ result.snapshot.weak_duplicate_count }} weak hint(s). Inspect existing activities before continuing. No other activity's title or private details are copied here; strong matches always block this pilot.</p>{% endif %}
+<h2>Initial internal email recipients</h2>
+<ul>{% for recipient in result.snapshot.recipients %}<li>{{ recipient.name }} · {{ recipient.email }} · {{ 'creator confirmation' if recipient.feature == 'event_created' else 'section-chief notification' }} · {{ 'feature enabled' if result.snapshot.email_enabled[recipient.feature] else 'feature disabled; will skip sending' }}</li>{% else %}<li>No current internal recipients.</li>{% endfor %}</ul>
+<p>The normal internal messages include the creator/activity names, date and signed-in Monitor link; they do not invite or register participants. Normal mail feature/pause/configuration and delivery policy apply. Queued is not delivered; false, crashed or uncertain attempts never automatically resend. Normal future reminders and later activity emails remain separate.</p>
+<p>The event, event review, retained draft-to-activity identity, audits, original receipt and initial notice queue commit together. This draft can create at most once through this flow across retries and different keys, including if the event is later edited, archived or removed. The private preparation copy remains; ordinary manual Create is still independent.</p>
+<p>This preview expires ten minutes after preparation. Current owner/Create access, date, section, original draft, duplicate hints and recipient routing are checked again at confirmation.</p>
+<p><a href="{{ result.web_url }}">Inspect my private draft</a></p>
+<form method="post">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<input type="hidden" name="preview_digest" value="{{ result.preview_digest }}">
+<button type="submit" name="confirm" value="yes">Confirm: create live activity</button>
+</form>
+{% endif %}
+<p>Operation receipt: <code>{{ result.operation_id }}</code>. After a lost response, recover this key and inspect its source before a new key or another activity.</p>
+</div>
+{% endblock %}

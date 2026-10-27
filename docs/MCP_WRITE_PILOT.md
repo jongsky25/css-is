@@ -149,3 +149,6 @@ are in [the activity date runbook](MCP_ACTIVITY_DATE_PILOT.md).
 
 The default-off M2.7 private activity draft foundation and hosted acceptance
 steps are in [the activity draft runbook](MCP_ACTIVITY_DRAFT_PILOT.md).
+
+The default-off M3.10 live creation from an own private activity draft is covered
+in [the activity creation runbook](MCP_ACTIVITY_CREATION_PILOT.md).

@@ -6,6 +6,7 @@ from uuid import uuid4
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 
+import activity_creation
 import activity_drafts as drafts
 import auth
 import documents_permissions as permissions
@@ -91,8 +92,16 @@ def make_router(templates,get_conn):
             saved=drafts.get(conn,actor(conn,request),draft_key)
             try:current=drafts.context(conn,actor(conn,request),saved['fields']);loadable=True
             except ValueError:current=None;loadable=False
+            created=activity_creation.lookup(conn,actor(conn,request),draft_key)
+            created_url=None
+            if created:
+                try:
+                    activity_creation.live_source(conn,actor(conn,request),created)
+                    created_url='/activities/'+created['event_token']+'/manage'
+                except ValueError:
+                    pass
             return templates.TemplateResponse(request,'activity_draft_source.html',
-                {'show_scope':False,'draft':saved,'loadable':loadable,
+                {'show_scope':False,'draft':saved,'loadable':loadable,'created':created,'created_url':created_url,
                  'section_changed':bool(current and current['section']!=saved['section'])},headers=private)
         except (permissions.Denied,ValueError):return HTMLResponse('Private activity draft unavailable.',status_code=404,headers=private)
         finally:conn.close()
