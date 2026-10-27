@@ -1,0 +1,21 @@
+{
+  "acceptance": false,
+  "python": "3.12.14",
+  "dependencies": "requirements-test.txt installed with --require-hashes --only-binary=:all:",
+  "chromium_version": "156.0.8078.47",
+  "chromium_build_id": "1c5dca8527a61d07372e489142bee26af1bcaf71",
+  "source": "https://deb.debian.org/debian-security/pool/updates/main/c/chromium/",
+  "packages": [
+    "chromium_156.0.8078.47-1~deb13u1_amd64.deb",
+    "chromium-common_156.0.8078.47-1~deb13u1_amd64.deb"
+  ],
+  "host_chromium_excluded": "154.0.8037.57; wrong build",
+  "preflight_limitations": [
+    "Initial pytest selection referenced nonexistent test_avatar_cat_gradients_analysis.py; no tests ran. Corrected to test_cat_gradient_screen.py; results retained separately.",
+    "Pinned browser launches and reports correct version. Standalone data-URL smoke navigation was blocked by browser administrator policy; no policy change or bypass attempted. The actual fixture uses localhost HTTP."
+  ],
+  "package_sha256": {
+    "chromium": "ab42a4ede37726fa7b9be7327492d2518efa785dad5fe91f8309bd7e10c1183a",
+    "chromium-common": "c49cb205bf269463a8aae8f99d7ed380e3a432fad6b6fc63a8423dc843deb2cf"
+  }
+}
