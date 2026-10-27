@@ -1,0 +1,42 @@
+{% extends "dash_layout.html" %}
+{% block title %}Review supply request approval — Office Connect{% endblock %}
+{% block content %}
+<div style="max-width:44rem;margin:auto;overflow-wrap:anywhere">
+{% if result.status == 'completed' %}
+<h1>Supply request approved</h1>
+<p>Recorded at {{ result.completed_at }}. Submitted revision {{ result.submitted_revision }} was approved at full requested quantities; the request reached revision {{ result.result_revision }}. Initial allocation was recorded for {{ result.line_count }} line(s).</p>
+<p>This is the original decision. Later handover, stock changes, corrections or cancellation remain separate. Inspect the source for current reservations and fulfillment. The supply custodian issues available reserved quantities or awaits stock.</p>
+{% else %}
+<h1>Approve this exact supply request?</h1>
+<dl>
+<dt>Request</dt><dd>{{ result.snapshot.control_number }} ({{ result.snapshot.request_id }})</dd>
+<dt>Current / submitted revision</dt><dd>{{ result.snapshot.revision }} / {{ result.snapshot.submitted_revision }}</dd>
+<dt>Submitted requester and unit</dt><dd>{{ result.snapshot.requester_snapshot }} (account {{ result.snapshot.requester_id }}) · {{ result.snapshot.unit_snapshot }}</dd>
+<dt>Current scoped approver</dt><dd>{{ result.snapshot.approver.name }} (account {{ result.snapshot.approver.id }}, you)</dd>
+<dt>Purpose</dt><dd style="white-space:pre-wrap">{{ result.snapshot.purpose }}</dd>
+<dt>Date needed</dt><dd>{{ result.snapshot.date_needed or 'Not set' }}</dd>
+<dt>Your approval reason</dt><dd style="white-space:pre-wrap">{{ result.fields.reason }}</dd>
+</dl>
+<h2>Exact full-quantity decision and initial reservations</h2>
+{% for line in result.snapshot.lines %}
+<dl>
+<dt>Item</dt><dd>{{ line.code_snapshot }} · {{ line.description_snapshot }}</dd>
+<dt>Requested / approved</dt><dd>{{ line.requested_quantity }} / {{ line.approved_quantity }} {{ line.unit_snapshot }}</dd>
+<dt>Reserved immediately</dt><dd>{{ line.reserved_quantity }} {{ line.unit_snapshot }}</dd>
+<dt>Approved but awaiting stock</dt><dd>{{ line.awaiting_stock_quantity }} {{ line.unit_snapshot }}</dd>
+</dl>
+{% endfor %}
+<p><strong>By confirming, you approve every submitted line at its exact requested quantity and authorize the initial reservations shown above.</strong> This changes Submitted → Approved and records your reason in Supplies history. Approved demand can exceed currently available stock; approval does not guarantee immediate fulfillment.</p>
+<p>The normal oldest-first allocator is used. This pilot refuses a plan that would change another request's existing reservation. Other requests' identities, contents and allocation details are not shown here. Current stock, queue, catalog, submitted revision and scoped authority are checked again; changed effects require a fresh review.</p>
+<p>Physical on-hand and stock movements stay unchanged. Nothing is issued, handed over, purchased or paid, and no stock receipt/adjustment, supplier order, official signature/dispatch or direct email is created. The supply custodian performs a separate handover/issue action. Normal durable stock-warning snapshots and custodian in-app reconciliation apply; a queued warning is not proof anyone read it.</p>
+<p>The requester cannot approve their own request. Technical administration or custodian access alone is insufficient. This pilot supports 1–20 lines, bounded allocation queues and requests without an earlier reservation cycle. Use ordinary Supplies for reductions, return/rejection, displacement, corrections or a different decision. This preview expires ten minutes after preparation.</p>
+<form method="post">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<input type="hidden" name="preview_digest" value="{{ result.preview_digest }}">
+<button type="submit" name="confirm" value="yes">Confirm: approve full quantities and reserve</button>
+</form>
+{% endif %}
+<p>Operation receipt: <code>{{ result.operation_id }}</code>. Recover this key after a lost response before another decision.</p>
+<p><a href="{{ result.web_url }}">Inspect the request in Supplies</a></p>
+</div>
+{% endblock %}

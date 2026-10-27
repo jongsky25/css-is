@@ -14,22 +14,51 @@ def availability(conn, item_id):
     return {'on_hand': on_hand, 'reserved_quantity': reserved, 'available': on_hand-reserved}
 
 
+def projected_quantities(lines, on_hand):
+    """Pure oldest-first arithmetic shared by the writer and exact previews."""
+    if on_hand<0:raise Conflict('Physical stock needs reconciliation before allocation.')
+    remaining=on_hand;result=[]
+    for line in lines:
+        outstanding=line['approved_quantity']-line['effective_issued_quantity']-line['cancelled_quantity']
+        if not 0 <= outstanding <= line['approved_quantity']:
+            raise Conflict('Approved demand needs reconciliation before allocation.')
+        quantity=min(outstanding,remaining);remaining-=quantity;result.append(quantity)
+    return result
+
+
+def allocation_projection(conn,item_ids,*,proposed=(),max_existing=None):
+    """Internal stock/effect metadata; callers must not expose other requests."""
+    result=[]
+    for item_id in sorted(set(item_ids)):
+        sql='''SELECT r.*,d.approved_quantity FROM supply_reservation r
+          JOIN supply_request_decision_line d ON d.revision_line_id=r.revision_line_id
+          JOIN supply_request q ON q.id=r.request_id WHERE r.item_id=? AND q.approval_status='approved'
+          ORDER BY r.approved_at,r.request_id,r.line_id'''
+        existing=rows(conn,sql+(' LIMIT ?' if max_existing is not None else ''),
+                      (item_id,max_existing+1) if max_existing is not None else (item_id,))
+        if max_existing is not None and len(existing)>max_existing:
+            raise Conflict('Use the ordinary approval screen for this allocation queue size.')
+        queue=existing+[dict(line) for line in proposed if line['item_id']==item_id]
+        queue.sort(key=lambda line:(line['approved_at'],line['request_id'],line['line_id']))
+        on_hand=stock._totals(conn,item_id)['on_hand']
+        quantities=projected_quantities(queue,on_hand)
+        result.append({'item_id':item_id,'on_hand':on_hand,'lines':[
+            {**{k:line[k] for k in ('request_id','line_id','approved_quantity','effective_issued_quantity','cancelled_quantity','reserved_quantity')},
+             'projected_reserved_quantity':quantity} for line,quantity in zip(queue,quantities)]})
+    return result
+
+
 def allocate_outstanding(conn, user, item_ids, operation_key):
     """Caller owns the write transaction and its recorded operation; no hidden commit."""
     if not conn.in_transaction:
         raise RuntimeError('Allocation requires the caller write transaction.')
     for item_id in sorted(set(item_ids)):
-        remaining = stock._totals(conn, item_id)['on_hand']
+        on_hand = stock._totals(conn, item_id)['on_hand']
         lines = rows(conn, '''SELECT r.*,d.approved_quantity FROM supply_reservation r
           JOIN supply_request_decision_line d ON d.revision_line_id=r.revision_line_id
           JOIN supply_request q ON q.id=r.request_id WHERE r.item_id=? AND q.approval_status='approved'
           ORDER BY r.approved_at,r.request_id,r.line_id''', (item_id,))
-        for line in lines:
-            outstanding = line['approved_quantity']-line['effective_issued_quantity']-line['cancelled_quantity']
-            if not 0 <= outstanding <= line['approved_quantity']:
-                raise Conflict('Approved demand needs reconciliation before allocation.')
-            quantity = min(outstanding, remaining)
-            remaining -= quantity
+        for line,quantity in zip(lines,projected_quantities(lines,on_hand)):
             if quantity == line['reserved_quantity']:
                 continue
             conn.execute('UPDATE supply_reservation SET reserved_quantity=?,version=version+1 WHERE id=?', (quantity,line['id']))

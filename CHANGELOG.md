@@ -1,3 +1,9 @@
+## 8.98 — October 27, 2026
+
+- Add default-off `supplies:request:approve` context/preview/recovery for scoped non-requester approval at exact submitted quantities. Exact browser review shows submitted requester/unit/purpose/date, every full approved quantity, initial reserved/awaiting-stock effects and decision reason; reductions, displacement and earlier reservation cycles use ordinary Supplies.
+- Share a caller-owned native decision transaction and oldest-first allocation arithmetic. Recompute actual post-insert allocation against the reviewed plan before applying it; atomically commit decision, initial reservations, domain events/audit, durable warning snapshots and minimal MCP receipt. Refuse changed existing reservations, stale stock/catalog/queues and self/technical-only authority.
+- Verify original immutable submission/decision/domain receipts, preserve later ordinary issuance/stock changes on recovery, and retain normal post-commit custodian warning reconciliation. Include OAuth, mobile, separation, stock equations, older-demand fairness, races, rollback, warning failure, cleanup, packaging and named pilot go/no-go coverage. No physical movement, issuance, purchase/payment, signature/dispatch or direct email is exposed.
+
 ## 8.97 — October 27, 2026
 
 - Add default-off `work:task:accept` context/preview/recovery for a first M4 decision pilot: the current confirmed work-item lead accepts another person's exact canonical For review contribution as Done. Separate consent and exact signed-in output/reason review are required; owner, actual submitting actor, proposed lead and technical/officer authority alone cannot accept through the pilot.
