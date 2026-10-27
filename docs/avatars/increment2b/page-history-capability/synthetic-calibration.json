@@ -1,0 +1,53 @@
+{
+  "acceptance": false,
+  "status": "calibration_passed",
+  "cohorts": [
+    {
+      "index": 0,
+      "mode": "control",
+      "status": "valid",
+      "navigation_ms": 3373.190833,
+      "capture_sha256": "27b5705ea338f0e42c6472e04d9da9c43cb94f90d9073a72e34257d0011cdce8"
+    },
+    {
+      "index": 1,
+      "mode": "probe",
+      "status": "valid",
+      "navigation_ms": 3507.675495,
+      "capture_sha256": "372d3b85d7c6619c2a2bc8b379e284c49168b023c626ea6bc750e70efda837a6",
+      "history": {
+        "allocation_requests": 1136,
+        "pool_returns": 551,
+        "observed_reuses": 363,
+        "preexisting_or_unobserved_pool_returns": 1,
+        "overlapping_call_order_ambiguities": 0,
+        "explicit_preparation_fraction": 0.03396503501245345,
+        "maximum_preparation_ms": 2.557967
+      }
+    },
+    {
+      "index": 2,
+      "mode": "probe",
+      "status": "valid",
+      "navigation_ms": 3517.668827,
+      "capture_sha256": "975fffdeb407d4e37a9217c4ac1773be503816c83f4b7efa84ebefa8a058f661",
+      "history": {
+        "allocation_requests": 1254,
+        "pool_returns": 1052,
+        "observed_reuses": 475,
+        "preexisting_or_unobserved_pool_returns": 3,
+        "overlapping_call_order_ambiguities": 0,
+        "explicit_preparation_fraction": 0.03689034851830297,
+        "maximum_preparation_ms": 1.164872
+      }
+    },
+    {
+      "index": 3,
+      "mode": "control",
+      "status": "valid",
+      "navigation_ms": 3563.572871,
+      "capture_sha256": "60ebe988223fafb1bb166625bf905ef2d5666ba0a9b98853803b7706b0282d0f"
+    }
+  ],
+  "gate_errors": []
+}
