@@ -5,21 +5,23 @@ import pytest
 from scripts.avatar_baseline.analyze_navigation_light import calibration_gate, inspect_capture
 
 
-def fixture(tmp_path):
+def fixture(tmp_path, version=3):
     snap = {'renderer_memory_detail': [{'pid': 42, 'status': {'VmRSS': 100}}]}
-    p = {'protocol': 'navigation-light-v3', 'acceptance': False, 'forced_gc': False, 'mode': 'trace',
+    p = {'protocol': f'navigation-light-v{version}', 'acceptance': False, 'forced_gc': False, 'mode': 'trace',
          'snapshots': 13, 'mount': 20, 'navigation_begin_ns': 0, 'navigation_end_ns': 20_000_000_000,
          'checkpoints': [{'mount': m, 'snapshot': copy.deepcopy(snap), 'interval_ns': [m*10**8, m*10**8+10]} for m in [1,5,10,15,20]],
-         'rotations': [{'mount': m, 'begin_ns': m*10**9, 'end_ns': m*10**9+100} for m in [0,5,10,15]],
+         'rotations': [{'mount': m, 'begin_ns': m*10**9, 'end_ns': m*10**9+100} for m in ([0,5,10,15] if version == 3 else [0,10])],
          'segments': [], 'samples': [], 'endpoint_request': {'success': True}}
-    for i in range(5):
-        start = i*5_000_000 + (1_000_000 if i == 4 else 10)
-        end = start+4_900_000
+    segments = 4 if version == 3 else 2
+    span = 20_000_000 // segments
+    for i in range(segments+1):
+        start = i*span + (1_000_000 if i == segments else 10)
+        end = start+span-100_000
         markers = [(f'segment-{i}-before', start), (f'segment-{i}-after', end)]
-        if i == 4:
+        if i == segments:
             markers += [('endpoint-before', start+10), ('endpoint-after', end-10)]
         events = [{'name': 'clock_sync', 'ts': t, 'args': {'sync_id': n}} for n,t in markers]
-        if i < 4:
+        if i < segments:
             events.append({'name': 'CommitLoad', 'pid': 42, 'args': {'data': {'url': 'http://127.0.0.1:123/'}}})
         else:
             events.append({'ph': 'v', 'pid': 42, 'ts': start+20, 'id': 'renumbered', 'args': {'dumps': {'allocators': {'blink_gc/main': {'attrs': {'size': {'units': 'bytes', 'value': '1000'}}}}}}})
@@ -29,7 +31,7 @@ def fixture(tmp_path):
         for side,t in [('before',start),('after',end)]:
             segment[side] = {'name': f'segment-{i}-{side}', 'begin_ns': t*1000-1, 'end_ns': t*1000+1}
         p['segments'].append(segment)
-        if i == 4:
+        if i == segments:
             p['endpoint_before'] = {'begin_ns': (start+10)*1000-1, 'end_ns': (start+10)*1000+1}
             p['endpoint_after'] = {'begin_ns': (end-10)*1000-1, 'end_ns': (end-10)*1000+1}
     for m in range(1,20):
@@ -96,3 +98,11 @@ def test_explicit_probe_overhead_limit(key,value):
 def test_control_variance_cannot_be_ignored():
     c=cohorts();c[3]['navigation_ms']=12_001
     assert 'Control navigation duration varies more than 20%' in calibration_gate(c)
+
+
+def test_v4_two_segments_preserve_all_samples(tmp_path):
+    p,raw=fixture(tmp_path,version=4)
+    result=inspect_capture(tmp_path,p,raw)
+    assert len(result['trace_segments'])==3
+    assert len(result['rss_drops_at_least_5_mib'])==9
+    assert result['endpoint']['allocators']['blink_gc/main']['size']==4096

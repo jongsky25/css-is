@@ -43,7 +43,7 @@ def clocks(events, names):
 def inspect_capture(folder, provenance, raw):
     p = provenance
     mode = p['mode']
-    if p['protocol'] != 'navigation-light-v3' or p['acceptance'] is not False or p['forced_gc'] is not False:
+    if p['protocol'] not in ('navigation-light-v3', 'navigation-light-v4') or p['acceptance'] is not False or p['forced_gc'] is not False:
         raise ValueError('Invalid capture protocol')
     if p['snapshots'] != 13 or p['mount'] != 20 or [c['mount'] for c in p['checkpoints']] != [1, 5, 10, 15, 20]:
         raise ValueError('Incomplete navigation')
@@ -54,7 +54,9 @@ def inspect_capture(folder, provenance, raw):
             raise ValueError('Measured snapshot rewritten')
         if sealed['interval_ns'][1] > p['navigation_end_ns']:
             raise ValueError('Checkpoint outside measurement')
-    if [r['mount'] for r in p['rotations']] != [0, 5, 10, 15]:
+    nav_segments = 4 if p['protocol'] == 'navigation-light-v3' else 2
+    expected_rotations = [0, 5, 10, 15] if nav_segments == 4 else [0, 10]
+    if [r['mount'] for r in p['rotations']] != expected_rotations:
         raise ValueError('Invalid rotation schedule')
     for r in p['rotations']:
         if not p['navigation_begin_ns'] <= r['begin_ns'] <= r['end_ns'] <= p['navigation_end_ns']:
@@ -65,7 +67,7 @@ def inspect_capture(folder, provenance, raw):
     rotations = [r['end_ns'] - r['begin_ns'] for r in p['rotations']]
     result = {'navigation_ms': total / 1e6, 'overhead_fraction': sum(rotations) / total,
               'max_rotation_ms': max(rotations) / 1e6, 'trace_segments': [], 'endpoint': None}
-    if len(p['segments']) != (5 if mode == 'trace' else 0):
+    if len(p['segments']) != (nav_segments + 1 if mode == 'trace' else 0):
         raise ValueError('Incorrect segment count')
     if any(s['completion'].get('dataLossOccurred') for s in p['segments']):
         raise ValueError('Trace data loss; sample retained, not replaced')
@@ -81,12 +83,12 @@ def inspect_capture(folder, provenance, raw):
         if any(e.get('args', {}).get('forced') for e in events):
             raise ValueError('Forced collection flag')
         names = [f'segment-{index}-{side}' for side in ['before', 'after']]
-        if index == 4:
+        if index == nav_segments:
             names += ['endpoint-before', 'endpoint-after']
         markers = clocks(events, names)
         if markers[names[1]] <= markers[names[0]]:
             raise ValueError('Nonchronological trace')
-        if index < 4:
+        if index < nav_segments:
             if any(e.get('args', {}).get('dumps') for e in events):
                 raise ValueError('Allocator dump inside measured workload')
             pids.update(e['pid'] for e in events if e.get('name') == 'CommitLoad' and
@@ -199,13 +201,14 @@ def audit(root, repo, ref):
     plan = json.loads((root / 'experiment.json').read_text())
     phase = plan['phase']
     blocks = [['current'] * 4] if phase == 'calibration' else BLOCKS
-    if (phase not in ('calibration', 'comparison') or plan['protocol'] != 'navigation-light-v3' or
+    if (phase not in ('calibration', 'comparison') or plan['protocol'] not in ('navigation-light-v3', 'navigation-light-v4') or
         plan['harness_commit'] != ref or plan['refs'] != REFS or plan['blocks'] != blocks or
         plan['acceptance'] is not False or plan['seconds'] != 30 or plan['samples_per_slot'] != 1 or
         plan['fixture_adapter'] != 'sample-ordinal-v1' or plan['browser'] != '156.0.8078.47' or
         plan['budget_bytes'] != BUDGET or len(plan['cohorts']) != 4 * len(blocks)):
         raise ValueError('Protocol identity mismatch')
     result['phase'] = phase
+    result['protocol'] = plan['protocol']
     for name in HARNESS:
         if (root / 'harness' / name).read_bytes() != expected_fixture(repo, ref, name):
             raise ValueError('Harness identity mismatch')
@@ -221,7 +224,7 @@ def audit(root, repo, ref):
             folder = root / f'{i:02d}-{arm}'
             required = {'environment.json', 'runner.txt', 'junit.xml', 'light-provenance.json', 'False-warm.json'}
             if mode == 'trace':
-                required.update(f'trace-{n}.json.gz' for n in range(5))
+                required.update(f'trace-{n}.json.gz' for n in range(5 if plan['protocol'] == 'navigation-light-v3' else 3))
             if not required <= entry['files_sha256'].keys():
                 raise ValueError('Missing required files')
             for name, digest in entry['files_sha256'].items():
@@ -237,7 +240,7 @@ def audit(root, repo, ref):
                     raise ValueError('Source hash mismatch')
                 result['source_hashes_verified'] += 1
             p = json.loads((folder / 'light-provenance.json').read_text())
-            if p['mode'] != mode or p['probe_sha256'] != hashlib.sha256(source(repo, ref, PROBE)).hexdigest():
+            if p['protocol'] != plan['protocol'] or p['mode'] != mode or p['probe_sha256'] != hashlib.sha256(source(repo, ref, PROBE)).hexdigest():
                 raise ValueError('Probe hash mismatch')
             result['source_hashes_verified'] += 1
             raw_path = folder / 'False-warm.json'

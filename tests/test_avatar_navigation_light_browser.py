@@ -19,7 +19,7 @@ GC_CATEGORIES = ['devtools.timeline', 'cppgc', 'disabled-by-default-cppgc', 'dis
 def test_navigation_light(baseline_server, app_mod, monkeypatch):
     out = Path(os.environ['CSS_AVATAR_OUT'])
     traced = os.environ['CSS_AVATAR_TRACE_MODE'] == 'trace'
-    state = {'protocol': 'navigation-light-v3', 'mode': 'trace' if traced else 'control',
+    state = {'protocol': 'navigation-light-v4', 'mode': 'trace' if traced else 'control',
              'acceptance': False, 'forced_gc': False, 'snapshots': 0, 'mount': 0,
              'segments': [], 'rotations': [], 'checkpoints': [], 'samples': [], 'pids': [],
              'probe_sha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest()}
@@ -120,11 +120,11 @@ def test_navigation_light(baseline_server, app_mod, monkeypatch):
             mount = state['mount']
             state['checkpoints'].append({'mount': mount, 'snapshot': observed,
                                          'interval_ns': [begin, end]})
-            if mount in (5, 10, 15):
+            if mount == 10:
                 start = time.monotonic_ns()
                 if traced:
                     finish_trace()
-                    start_trace(mount // 5, GC_CATEGORIES)
+                    start_trace(1, GC_CATEGORIES)
                 state['rotations'].append({'mount': mount, 'begin_ns': start, 'end_ns': time.monotonic_ns()})
             if mount == 20:
                 # Everything below is outside the measured navigation window.
@@ -134,7 +134,7 @@ def test_navigation_light(baseline_server, app_mod, monkeypatch):
                 assert not worker.is_alive()
                 if traced:
                     finish_trace()
-                    start_trace(4, ['disabled-by-default-memory-infra'])
+                    start_trace(2, ['disabled-by-default-memory-infra'])
                     state['endpoint_before'] = marker('endpoint-before')
                     state['endpoint_request'] = session.send('Tracing.requestMemoryDump', {
                         'levelOfDetail': 'detailed', 'determinism': 'none'})
@@ -162,7 +162,7 @@ def test_navigation_light(baseline_server, app_mod, monkeypatch):
             path.unlink()
     assert state['snapshots'] == 13 and state['mount'] == 20
     assert [c['mount'] for c in state['checkpoints']] == [1, 5, 10, 15, 20]
-    assert len(state['segments']) == (5 if traced else 0)
+    assert len(state['segments']) == (3 if traced else 0)
     assert not any(s['completion'].get('dataLossOccurred') for s in state['segments']), 'Trace loss (all traces retained)'
     if traced:
         assert state['endpoint_request']['success']
