@@ -85,15 +85,15 @@ def _series_note(conn, res):
     return f" (+{ss['total'] - 1} more dates in this repeating request)" if ss else ""
 
 
-def _to_requester(conn, res, kind, text, by=None, bell=True):
+def _to_requester(conn, res, kind, text, by=None, bell=True, *, commit=True):
     """Notice to whoever the reservation belongs to: an account (bell + email) or a guest (email)."""
     uid = res.get("requester_user_id")
     if uid is not None:
         u = st.get_admin_user_by_id(conn, uid)
         if u and by and u["username"] == by:           # you don't need telling what you just did
             return False
-        return _add(conn, kind=kind, reservation_id=res["id"], user_id=uid, text=text, url="/rooms/mine", bell=bell)
-    return _add(conn, kind=kind, reservation_id=res["id"], email=res.get("ext_email"), text=text)
+        return _add(conn, kind=kind, reservation_id=res["id"], user_id=uid, text=text, url="/rooms/mine", bell=bell,commit=commit)
+    return _add(conn, kind=kind, reservation_id=res["id"], email=res.get("ext_email"), text=text,commit=commit)
 
 
 # ----------------------------------------------------------- hooks ---
@@ -129,7 +129,9 @@ def on_meal(conn, kind, form, text=None):
              url="/rooms/meals", text=f"{heading}: {line}")
 
 
-def on_decided(conn, res, by=None):
+def on_decided(conn, res, by=None, *, commit=True):
+    if not commit and not conn.in_transaction:
+        raise RuntimeError('Room notices require a caller-owned transaction.')
     verb = {"approved": "approved", "declined": "declined"}.get(res["status"])
     if not verb:
         return
@@ -137,10 +139,11 @@ def on_decided(conn, res, by=None):
         import rooms_meals
         f = rooms_meals.get_form(conn, res["id"])
         if f and f["wanted"]:
+            if not commit:raise RuntimeError('Meal decisions use the ordinary room workflow.')
             on_meal(conn, "meal_form", f)
     extra = f" Reason: {res['decide_note']}" if res["status"] == "declined" and res.get("decide_note") else ""
     _to_requester(conn, res, res["status"], f"Your conference room request was {verb}: {res['title']}, "
-                  f"{_when(conn, res)}{_series_note(conn, res)}.{extra}", by=by)
+                  f"{_when(conn, res)}{_series_note(conn, res)}.{extra}", by=by,commit=commit)
 
 
 def on_encoded(conn, res, by=None):
@@ -359,6 +362,9 @@ def flush(conn, base_url, now=None, send=None):
     # an unprotected MCP message, including while its pilot is disabled.
     protected = conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='mcp_room_notice'").fetchone()
     exclude = ' AND NOT EXISTS (SELECT 1 FROM mcp_room_notice m WHERE m.notice_id=room_notice.id)' if protected else ''
+    approval_protected=conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='mcp_room_approval_notice'").fetchone()
+    if approval_protected:
+        exclude+=' AND NOT EXISTS (SELECT 1 FROM mcp_room_approval_notice m WHERE m.notice_id=room_notice.id)'
     rows = conn.execute(
         "SELECT id, user_id, email, kind, reservation_id, version, text, attempts, created_at FROM room_notice "
         "WHERE (email_status IS NULL OR (email_status='failed' AND attempts<? AND emailed_at<=?))" + exclude + " ORDER BY id",

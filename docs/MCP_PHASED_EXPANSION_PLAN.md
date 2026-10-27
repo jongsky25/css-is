@@ -1,6 +1,6 @@
 # Office Connect MCP expansion plan
 
-Status: **Incremental implementation**, updated October 27, 2026. Baseline: the read-only MCP expansion in v8.35 (PR #444). M1 reads and default-off M2.1–M2.7 and M3.1–M3.11 and M4.1–M4.2 pilots are implemented as recorded below. Existing OAuth grants are not widened. Hosted write acceptance remains separate from implementation.
+Status: **Incremental implementation**, updated October 27, 2026. Baseline: the read-only MCP expansion in v8.35 (PR #444). M1 reads and default-off M2.1–M2.7 and M3.1–M3.11 and M4.1–M4.3 pilots are implemented as recorded below. Existing OAuth grants are not widened. Hosted write acceptance remains separate from implementation.
 
 ## Goal and boundary
 
@@ -622,3 +622,31 @@ correction cycles and larger/displacing queues stay in ordinary Supplies. Other
 room/travel decisions, stock/financial posting, purchase/payment and official
 signing/dispatch remain separate work. Old receipt recovery preserves later
 ordinary fulfillment and stock changes and never approves/reserves a second time.
+
+
+M4.2 merged in [PR #510](https://github.com/jongsky25/css-is/pull/510), commit
+`dd0e4e83e8839a8cade0356fb298692f997e6284`.
+
+### M4.3 implementation — v8.99
+
+Separate default-off `rooms:request:approve` prepares one plain internal room
+approval under current Administrative Section authority. Exact signed-in review
+binds request/hour/source identity, linked meeting, pending rivals and requester
+email/preference/quiet-hour/ICS policy. Requester/filing-actor and technical-admin
+rank alone cannot approve. The first pilot excludes meals, standby/override,
+series, moves, guests and activity links; other pending requests are not declined.
+
+A shared caller-owned native booking/audit core keeps unique held slots, requester
+bell/notice, retained identity, MCP receipt and integration audit atomic. Recovery
+preserves later ordinary cancellation/withdrawal/edits. The native retry mail loop
+excludes the new protected notices; a separate current-authority/source/recipient
+worker claims each requester email once, respects quiet hours/ICS and leaves
+ambiguous attempts uncertain without automatic resend. No calendar status/content,
+meal, rival, bot subscription or external calendar event is changed by the pilot.
+
+See [M4.3 setup, delivery and deferred acceptance](MCP_ROOM_APPROVAL_PILOT.md).
+Automated checks run with implementation; per the agreed work order, hosted
+ChatGPT acceptance follows room approval and travel reviewer decision work.
+No flag is enabled and no hosted go/no-go is claimed. Travel reviewer decisions
+are the next separate implementation; all signing/dispatch/payment and broader
+stock posting remain outside this pilot.

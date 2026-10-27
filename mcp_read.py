@@ -28,6 +28,7 @@ import mcp_activity_drafts
 import mcp_activity_dates
 import mcp_work_arrangements
 import mcp_meal_requests
+import mcp_room_approvals
 import mcp_room_requests
 import mcp_travel_submissions
 import mcp_travel_reviews
@@ -597,6 +598,54 @@ def build_server(get_conn, origin):
         """
         return await action(lambda conn, token: mcp_travel_submissions.recover(
             conn, token, provider.resource, origin, operation_id), mcp_travel_submissions.SCOPE)
+
+    @server.tool(title='Read Administrative Section room approval context', annotations=READ_ONLY)
+    async def get_room_approval_context(room_request_id: StrictInt) -> dict:
+        """Read exact revision/date/count for approving another person's plain room request.
+
+        Requires separate rooms:request:approve, its flag and current internal
+        Administrative Section membership. Technical admin status alone is not
+        authority. Self/filing-actor approval is refused. Current or upcoming,
+        unstarted continuous slots only, with an active internal requester and
+        no meals/standby/move/series/activity link. Returns IDs/revision/date/counts
+        and source, without title/purpose/contact or competing-request contents.
+        """
+        return await action(lambda conn, token: mcp_room_approvals.read_context(
+            conn, token, provider.resource, origin, room_request_id), mcp_room_approvals.SCOPE)
+
+    @server.tool(title='Prepare approval and booking of requested room hours', annotations=ToolAnnotations(
+        readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=False))
+    async def prepare_room_request_approval(room_request_id: StrictInt, expected_revision: StrictStr,
+            reason: StrictStr, operation_id: StrictStr) -> dict:
+        """Prepare ONE room approval that holds the exact requested hours.
+
+        Requires rooms:request:approve and current non-requester Administrative
+        Section authority. Read fresh get_room_approval_context first. Show
+        confirmation_url for exact request/hours, decision reason, pending rival
+        count and requester email/preference/quiet-hour/ICS policy review. Explicit
+        signed-in confirmation atomically books slots, audits, requester bell/
+        durable single-attempt email marker and receipt. Other requests stay
+        pending; no conflict override, decline, move, series, meal, activity link
+        or calendar-content/status change. Queued email is not delivery; ambiguous
+        sends never automatically resend. Normal reminders/Telegram jobs remain
+        separate. Keep one random 16–80 character operation_id across retries and
+        recover it after timeout before another key. Receipts omit private text.
+        """
+        return await action(lambda conn, token: mcp_room_approvals.prepare(
+            conn, token, provider.resource, origin, operation_id,
+            {'room_request_id': room_request_id, 'expected_revision': expected_revision,
+             'reason': reason}), mcp_room_approvals.SCOPE)
+
+    @server.tool(title='Check my room approval decision receipt', annotations=READ_ONLY)
+    async def get_room_approval_operation(operation_id: StrictStr) -> dict:
+        """Recover original approval/source and current requester email states.
+
+        Same active connection/scope and current Administrative Section authority
+        over the original non-self request are required. Later ordinary withdrawal,
+        cancellation or edits remain separate; recovery never books or emails again.
+        """
+        return await action(lambda conn, token: mcp_room_approvals.recover(
+            conn, token, provider.resource, origin, operation_id), mcp_room_approvals.SCOPE)
 
     @server.tool(title='Read scoped supply approval context', annotations=READ_ONLY)
     async def get_supply_approval_context(request_id: StrictInt) -> dict:

@@ -376,10 +376,23 @@ def _must_be_open(res, want):
 
 
 def approve(conn, rid, by, note=None, today=None, decline_rivals=False, notify=True):
-    """First to act wins. Raises AlreadyDecided if someone already decided, or
-    SlotTaken if another reservation holds one of the hours. With decline_rivals the
-    other open requests for the same hours are declined in the same transaction (they
-    are shown alternatives on My reservations)."""
+    """First to act wins; normal rival/move/meal notices run after commit."""
+    from documents_storage import transaction
+    with transaction(conn):
+        out,res,rivals=approve_in_transaction(conn,rid,by,note,today,decline_rivals)
+    for o in rivals:
+        _meals_over(conn, o["id"], "The room request was declined.")
+        _emit("decided", conn, get_reservation(conn, o["id"]), by)
+    if res["source"] == "move" and res["moves_reservation_id"]:
+        _meals_over(conn, res["moves_reservation_id"], f"The booking moved to {res['ref_code']} ({res['day']}); the new form needs ordering.")
+    if notify:
+        _emit("decided", conn, out, by)
+    return out
+
+
+def approve_in_transaction(conn,rid,by,note=None,today=None,decline_rivals=False):
+    """Caller owns booking/audits; callers arrange post-commit normal notices."""
+    if not conn.in_transaction:raise RuntimeError('Room approval requires a caller-owned transaction.')
     res = get_reservation(conn, rid)
     _must_be_open(res, ("requested",))
     if _d(res["day"]) < (today or tz.today_local()):
@@ -408,9 +421,7 @@ def approve(conn, rid, by, note=None, today=None, decline_rivals=False, notify=T
             conn.execute("UPDATE room_reservation SET status='withdrawn', decide_note=?, updated_at=? "
                          "WHERE id=? AND status IN ('requested','approved')",
                          (f"Moved to {res['ref_code']} ({res['day']}).", _stamp(), old_id))
-        conn.commit()
     except sqlite3.IntegrityError:
-        conn.rollback()
         other = conn.execute(
             "SELECT r.id, r.title, r.ref_code FROM room_reservation_slot mine "
             "JOIN room_reservation_slot o ON o.day=mine.day AND o.slot_id=mine.slot_id "
@@ -420,23 +431,13 @@ def approve(conn, rid, by, note=None, today=None, decline_rivals=False, notify=T
         raise SlotTaken("Another reservation is already approved for one of those hours"
                         + (f" ({other[1]}, {other[2]})." if other else "."),
                         other={"id": other[0], "title": other[1], "ref_code": other[2]} if other else None)
-    except Exception:
-        conn.rollback()
-        raise
     st.audit(conn, by, "room_approve", target_type="room_reservation", target_id=rid,
-             summary=f"{res['title']} on {res['day']}", before="requested", after="approved")
+             summary=f"{res['title']} on {res['day']}", before="requested", after="approved",commit=False)
     for o in rivals:
         st.audit(conn, by, "room_decline", target_type="room_reservation", target_id=o["id"],
                  summary=f"{o['title']} on {o['day']}: another request approved", before="requested",
-                 after="declined")
-        _meals_over(conn, o["id"], "The room request was declined.")
-        _emit("decided", conn, get_reservation(conn, o["id"]), by)
-    if res["source"] == "move" and res["moves_reservation_id"]:
-        _meals_over(conn, res["moves_reservation_id"], f"The booking moved to {res['ref_code']} ({res['day']}); the new form needs ordering.")
-    out = get_reservation(conn, rid)
-    if notify:
-        _emit("decided", conn, out, by)
-    return out
+                 after="declined",commit=False)
+    return get_reservation(conn,rid),res,rivals
 
 
 def decline(conn, rid, by, note, notify=True):

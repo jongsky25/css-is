@@ -170,3 +170,9 @@ The separate default-off scoped full supply approval decision is documented in
 [M4.2 setup and named pilot acceptance](MCP_SUPPLY_APPROVAL_PILOT.md). It requires
 exact browser review of initial reservations/shortage, preserves stock on-hand,
 and needs a recorded hosted go/no-go before any staff decision pilot.
+
+
+The separate default-off room approval decision is documented in
+[M4.3 setup and deferred hosted acceptance](MCP_ROOM_APPROVAL_PILOT.md). It books
+plain requested hours only after current Administrative Section browser review,
+with a durable requester notice and no automatic resend of uncertain email.
