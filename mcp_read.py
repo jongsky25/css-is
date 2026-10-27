@@ -22,6 +22,7 @@ import mcp_auth
 import mcp_actions
 import mcp_supply_drafts
 import mcp_comment_drafts
+import mcp_task_acknowledgements
 import mcp_travel_drafts
 import travel_drafts
 import mcp_personal_calendar
@@ -374,6 +375,41 @@ def build_server(get_conn, origin):
         """
         return await action(lambda conn, token: mcp_travel_drafts.recover(
             conn, token, provider.resource, origin, operation_id), mcp_travel_drafts.SCOPE)
+
+    @server.tool(title='Prepare acknowledging my assigned task', annotations=ToolAnnotations(
+        readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=False))
+    async def prepare_task_acknowledgement(work_item_id: StrictInt, task_id: StrictInt,
+            revision: StrictInt, reason: StrictStr, operation_id: StrictStr) -> dict:
+        """Prepare To do -> In progress for a task currently assigned to you.
+
+        Requires separate work:task:acknowledge consent. Read the current task
+        revision first; this never guesses a revision or acts on another owner's
+        task. Include a 1–2000 character progress note. Show confirmation_url so
+        the user reviews the exact task, note, revision and normal shared-work
+        history/review effects in the signed-in browser. Preparation changes no
+        task. Confirmation rechecks current authority and revisions and uses the
+        canonical API operation receipt. No output submission or approval. Reuse
+        one random 16–80 character operation_id across retries and recover before
+        making a replacement after a timeout or unavailable result.
+        """
+        return await action(lambda conn, token: mcp_task_acknowledgements.prepare(
+            conn, token, provider.resource, origin, operation_id,
+            {'work_item_id': work_item_id, 'task_id': task_id, 'revision': revision, 'reason': reason}),
+            mcp_task_acknowledgements.SCOPE)
+
+    @server.tool(title='Check my task acknowledgement receipt', annotations=READ_ONLY)
+    async def get_task_acknowledgement_operation(operation_id: StrictStr) -> dict:
+        """Recover the original task preview or canonical acknowledgement receipt.
+
+        Requires the original active connection and work:task:acknowledge consent
+        plus current source access. Returns original result revision/status, next
+        actor and source/API receipt links, never progress-note/submission text.
+        Later UI/API changes remain separate; retries do not repeat or overwrite
+        them. Unavailability/timeout is not proof of failure: inspect the original
+        receipt/source before using another key.
+        """
+        return await action(lambda conn, token: mcp_task_acknowledgements.recover(
+            conn, token, provider.resource, origin, operation_id), mcp_task_acknowledgements.SCOPE)
 
     def supply_queue(conn, user, queue, state, query, page, limit):
         if queue not in ('requests', 'approvals', 'warnings'):
