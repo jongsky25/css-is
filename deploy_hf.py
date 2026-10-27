@@ -30,6 +30,9 @@ What it does:
 Auth: HF token cached at ~/.cache/huggingface/token (user equityinhealth).
 """
 import os, sys, time, glob, shutil, sqlite3, subprocess, json, urllib.error, urllib.request
+import re
+from html.parser import HTMLParser
+from pathlib import Path
 
 # Silence huggingface_hub's tqdm progress bars. When stdout is a pipe/file (every
 # backgrounded deploy), the upload bars don't get a carriage-return TTY — each
@@ -64,6 +67,103 @@ if os.environ.get("HF_DEPLOY_DEBUG"):
 REPO_ID = "equityinhealth/office-connect"
 LIVE_BASE = f"https://{REPO_ID.replace('/', '-')}.hf.space"
 LOCAL_DB = "css_is.db"
+
+
+def telegram_snapshot_summary(path):
+    """Read only queue-state totals from the already verified pre-deploy backup."""
+    conn = None
+    try:
+        conn = sqlite3.connect(Path(path).resolve().as_uri() + '?mode=ro', uri=True)
+        result = {}
+        for table, states in (
+            ('telegram_update', {'queued', 'processing', 'processed', 'ignored', 'cancelled'}),
+            ('telegram_delivery', {'queued', 'claimed', 'sending', 'retry_wait', 'accepted', 'failed', 'uncertain', 'cancelled'}),
+            ('telegram_link_challenge', {'issued', 'claimed', 'confirmed', 'cancelled'}),
+        ):
+            result[table] = {state: count for state, count in conn.execute('SELECT state,count(*) FROM ' + table + ' GROUP BY state')
+                             if state in states}
+        return result
+    except (OSError, sqlite3.Error):
+        return {'available': False}
+    finally:
+        if conn is not None:
+            conn.close()
+
+
+def telegram_ops_summary(html):
+    """Extract only typed operational fields; never print an admin page or raw JSON."""
+    class Parser(HTMLParser):
+        def __init__(self):
+            super().__init__()
+            self.active = False
+            self.parts = []
+        def handle_starttag(self, tag, attrs):
+            if tag == 'script' and dict(attrs).get('id') == 'telegram-diagnostics':
+                self.active = True
+        def handle_endtag(self, tag):
+            if tag == 'script':
+                self.active = False
+        def handle_data(self, data):
+            if self.active:
+                self.parts.append(data)
+    parser = Parser()
+    parser.feed(html)
+    value = json.loads(''.join(parser.parts))
+    worker = value['worker']
+    result = {}
+    for key, pattern in (('version', r'\d+\.\d{2}'), ('commit', r'[a-f0-9]{7,40}')):
+        item = value.get(key)
+        if isinstance(item, str) and re.fullmatch(pattern, item):
+            result[key] = item
+    for key in ('scheduler_disabled', 'stale', 'bot_configured', 'webhook_configured',
+                'link_origin_configured', 'queue_available'):
+        if type(worker.get(key)) is bool:
+            result[key] = worker[key]
+    for key in ('processed', 'sent'):
+        if type(worker.get(key)) is int and 0 <= worker[key] < 2**63:
+            result[key] = worker[key]
+    if isinstance(worker.get('location'), str) and re.fullmatch(r'[a-z_]+\.py:[0-9]{1,6}', worker['location']):
+        result['location'] = worker['location']
+    for key, allowed in (
+        ('state', {'not_started', 'running', 'finished', 'failed'}),
+        ('stage', {'connect', 'updates', 'change_routes', 'change_notices', 'reminders', 'delivery', 'cleanup'}),
+        ('error', {'database_error', 'configuration_error', 'worker_error'}),
+    ):
+        if isinstance(worker.get(key), str) and worker[key] in allowed:
+            result[key] = worker[key]
+    result['switches'] = {key: worker.get('switches', {}).get(key) for key in ('inbound', 'delivery', 'link')
+                          if type(worker.get('switches', {}).get(key)) is bool}
+    for key, states in (
+        ('updates', {'queued', 'processing', 'processed', 'ignored', 'cancelled'}),
+        ('deliveries', {'queued', 'claimed', 'sending', 'retry_wait', 'accepted', 'failed', 'uncertain', 'cancelled'}),
+    ):
+        result[key] = {state: count for state, count in worker.get(key, {}).items()
+                       if state in states and type(count) is int and 0 <= count < 2**63}
+    return result
+
+
+def report_live_telegram_status():
+    """Use the existing deployment admin identity for read-only, sanitized health."""
+    if not os.environ.get('CSS_ADMIN_USER') or not os.environ.get('CSS_ADMIN_PASS'):
+        print('Telegram diagnostics: unavailable (deployment admin credentials not configured).')
+        return
+    try:
+        import pull_backup as pb
+        opener, _ = pb._opener()
+        pb.login(opener, LIVE_BASE, os.environ['CSS_ADMIN_USER'], os.environ['CSS_ADMIN_PASS'])
+        for attempt in range(3):
+            request = urllib.request.Request(LIVE_BASE + '/ops', headers={'User-Agent': 'deploy-hf-telegram-health'})
+            with opener.open(request, timeout=30) as response:
+                body = response.read(2 * 1024 * 1024 + 1)
+            if len(body) > 2 * 1024 * 1024:
+                raise ValueError('Oversized page')
+            summary = telegram_ops_summary(body.decode('utf-8'))
+            print('Telegram diagnostics: ' + json.dumps(summary, sort_keys=True), flush=True)
+            if attempt < 2:
+                time.sleep(35)  # Three observations cover the one-minute worker cadence.
+    except (Exception, SystemExit):
+        # Login/network exceptions and HTML can contain secrets, cookies or staff data.
+        print('Telegram diagnostics: unavailable (login, response or network check failed).')
 
 RUNTIME_PY = [
     "app.py", "css_is_engine.py", "storage.py", "tzutil.py", "fix_timezone_history.py",
@@ -238,6 +338,7 @@ def secure_predeploy_backup():
         info = pb.verify(dst)   # raises SystemExit if the file is corrupt
         print(f"  ✅ fresh live snapshot secured + verified: {name} ({info})")
         print(f"     local copy: {dst}\n")
+        print('Telegram pre-deploy queue totals: ' + json.dumps(telegram_snapshot_summary(dst), sort_keys=True))
     except SystemExit:
         raise
     except Exception as e:
@@ -423,6 +524,7 @@ def main():
         return
 
     print(f"\n✅ Deployed v{want} → {LIVE_BASE}")
+    report_live_telegram_status()
 
 
 if __name__ == "__main__":

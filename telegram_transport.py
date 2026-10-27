@@ -1,5 +1,6 @@
 """One bounded Bot API attempt. Never log provider exceptions or token URLs."""
 import hashlib
+import logging
 import os
 import time
 
@@ -53,6 +54,7 @@ def send(token, chat_id, text, topic_id=None):
                     seconds = seconds if type(seconds) is int and 1 <= seconds <= 86400 else 60
                     return 'retry_wait', None, seconds
                 if 400 <= response.status_code < 500 and value.get('ok') is False:
+                    logging.getLogger(__name__).warning('Telegram delivery rejected: HTTP %s', response.status_code)
                     return 'failed', None, None
                 result = value.get('result')
                 if response.status_code == 200 and value.get('ok') is True and isinstance(result, dict):
@@ -64,7 +66,7 @@ def send(token, chat_id, text, topic_id=None):
                         return 'accepted', message_id, None
     except Exception:
         # Errors can contain the secret-bearing URL or provider body. Persist neither.
-        pass
+        logging.getLogger(__name__).warning('Telegram delivery uncertain: transport failure; automatic resend suppressed')
     return 'uncertain', None, None
 
 

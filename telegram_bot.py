@@ -2,10 +2,12 @@
 import hashlib
 import hmac
 import json
+import logging
 import os
 import re
 import sqlite3
 import time
+from threading import Lock
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
@@ -33,6 +35,48 @@ MAX_TICK = 20
 HELP = ('Office Connect Telegram help: /start and /help are available in this private chat. '
         'Account linking, calendar access and actions are not available yet. '
         'Use your usual signed-in Office Connect page for office work.')
+
+_WORKER_LOCK = Lock()
+_WORKER = {'state': 'not_started', 'started_at': None, 'finished_at': None,
+           'stage': None, 'error': None, 'location': None, 'processed': 0, 'sent': 0}
+_WORKER_STARTED = None
+
+
+def worker_failed(stage, error):
+    """Expose a fixed failure category, never exception text, SQL or a traceback."""
+    category = ('database_error' if isinstance(error, sqlite3.Error) else
+                'configuration_error' if isinstance(error, ValueError) else 'worker_error')
+    location = None
+    frame = error.__traceback__
+    while frame is not None:
+        filename = os.path.abspath(frame.tb_frame.f_code.co_filename)
+        if os.path.dirname(filename) == os.path.dirname(os.path.abspath(__file__)):
+            name = os.path.basename(filename)
+            if re.fullmatch(r'[a-z_]+\.py', name):
+                location = name + ':' + str(frame.tb_lineno)
+        frame = frame.tb_next
+    with _WORKER_LOCK:
+        _WORKER.update(state='failed', stage=stage, error=category, location=location, finished_at=stamp(now_utc()))
+    logging.getLogger(__name__).warning('Telegram worker failed: stage=%s category=%s location=%s', stage, category, location)
+
+
+def worker_status(conn):
+    """Read-only operations summary; no identities, descriptors or credentials."""
+    with _WORKER_LOCK:
+        status = dict(_WORKER)
+        status['stale'] = _WORKER_STARTED is not None and time.monotonic() - _WORKER_STARTED > 180
+    status.update(scheduler_disabled=os.environ.get('CSS_NO_SCHEDULER') == '1',
+                  switches={name: storage.enabled(name) for name in storage.SWITCHES},
+                  bot_configured=transport.config() is not None,
+                  webhook_configured=webhook_secret() is not None,
+                  link_origin_configured=links.origin() is not None)
+    try:
+        status['updates'] = dict(conn.execute('SELECT state,count(*) FROM telegram_update GROUP BY state'))
+        status['deliveries'] = dict(conn.execute('SELECT state,count(*) FROM telegram_delivery GROUP BY state'))
+        status['queue_available'] = True
+    except sqlite3.Error:
+        status.update(updates={}, deliveries={}, queue_available=False)
+    return status
 
 
 def now_utc():
@@ -548,11 +592,42 @@ def cleanup(conn, now):
 
 
 def tick(conn, now=None):
-    processed = process_updates(conn, now or now_utc())
-    import telegram_changes
-    telegram_changes.prepare_routes(conn,now or now_utc())
-    notices.enqueue(conn,now or now_utc())
-    reminders.enqueue(conn,now or now_utc())
-    sent = deliver(conn, now)
-    cleanup(conn, now or now_utc())
+    global _WORKER_STARTED
+    processed = sent = 0
+    with _WORKER_LOCK:
+        _WORKER_STARTED = time.monotonic()
+        _WORKER.update(state='running', started_at=stamp(now_utc()), finished_at=None,
+                       stage='updates', error=None, location=None, processed=0, sent=0)
+    def prepare_changes():
+        import telegram_changes
+        return telegram_changes.prepare_routes(conn, now or now_utc())
+
+    stages = (
+        ('updates', lambda: process_updates(conn, now or now_utc())),
+        ('change_routes', prepare_changes),
+        ('change_notices', lambda: notices.enqueue(conn, now or now_utc())),
+        ('reminders', lambda: reminders.enqueue(conn, now or now_utc())),
+        ('delivery', lambda: deliver(conn, now)),
+        ('cleanup', lambda: cleanup(conn, now or now_utc())),
+    )
+    for stage, action in stages:
+        with _WORKER_LOCK:
+            _WORKER['stage'] = stage
+        try:
+            result = action()
+        except Exception as error:
+            worker_failed(stage, error)
+            raise  # Preserve transaction/retry semantics; the scheduler isolates jobs.
+        if stage in ('updates', 'delivery'):
+            if stage == 'updates':
+                processed = result
+            else:
+                sent = result
+            with _WORKER_LOCK:
+                _WORKER['processed' if stage == 'updates' else 'sent'] = result
+    with _WORKER_LOCK:
+        _WORKER.update(state='finished', stage=None, finished_at=stamp(now_utc()),
+                       processed=processed, sent=sent)
+    if processed or sent:
+        logging.getLogger(__name__).info('Telegram worker completed: processed=%s attempted=%s', processed, sent)
     return processed, sent
