@@ -1,3 +1,9 @@
+## 8.94 — October 27, 2026
+
+- Add owner-private single-day bureau activity drafts with a shared strict save service, ordinary new/list/source screens and guarded Create prefill. Saving/loading creates no event, survey, public registration/link, calendar/room/travel record or notification; later manual Create submission stays separate and is not tracked as draft consumption.
+- Add default-off `activities:draft:save` section-choice/preparation/recovery tools and exact signed-in confirmation under current Create capability. Bind requester/section/date policy, commit source/tombstone/audits/receipt atomically, retain stable save-key identities and clear completed/expired preview copies.
+- Enforce owner-only access even for other managers/admins, current role/section checks on loading, CSRF/Origin/bounded forms, replay/race/rollback protection and bounded source/preview collections. Include OAuth refresh, real UI save/load/creation parity, mobile, runtime packaging and operator acceptance coverage.
+
 ## 8.93 — October 27, 2026
 
 - Add default-off `activities:dates:update` context, exact signed-in preview and recoverable original date-change receipts for upcoming unused single-day bureau activities with one Form 2.

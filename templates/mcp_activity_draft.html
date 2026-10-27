@@ -1,0 +1,30 @@
+{% extends "dash_layout.html" %}
+{% block title %}Review private activity draft — Office Connect{% endblock %}
+{% block content %}
+<div style="max-width:44rem;margin:auto;overflow-wrap:anywhere">
+{% if result.status == 'completed' %}
+<h1>Private activity draft saved</h1>
+<p>Draft {{ result.draft_id }} was saved at {{ result.completed_at }}. Saving created no live activity, survey, public link, invitation or email.</p>
+<p><a href="{{ result.web_url }}">Open my private draft</a>. Next: you can load the ordinary Create form for a separate review and submission. Later manual creation is not tracked by this receipt.</p>
+{% else %}
+<h1>Save this private activity draft?</h1>
+<dl>
+<dt>Activity title</dt><dd>{{ result.fields.activity_name }}</dd>
+<dt>Date and timezone</dt><dd>{{ result.fields.event_date }} · Asia/Manila</dd>
+<dt>Organizing section</dt><dd>{{ result.snapshot.section.name }}</dd>
+<dt>Venue</dt><dd>{{ result.fields.venue or 'Not set' }}</dd>
+<dt>Owner</dt><dd>{{ result.snapshot.requester.name }} (you)</dd>
+<dt>Type</dt><dd>Bureau-organized · single-day · face-to-face · no speakers</dd>
+</dl>
+<p>This saves a new private preparation copy, visible only to you while you retain current Create activity access. It creates no live event, survey, public registration/link, invitation, email, calendar item, booking or travel filing.</p>
+<p>The saved source can load the existing Create form for a separate review. Opening that form does not submit or consume the draft. Its ordinary Create button can later create live surveys/public links and send normal emails; that is a separate action and is not tracked by this save receipt.</p>
+<p>The preview expires ten minutes after preparation. A changed requester, role, organizing section or invalid date requires a fresh check. Review every field before saving.</p>
+<form method="post">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<input type="hidden" name="preview_digest" value="{{ result.preview_digest }}">
+<button type="submit" name="confirm" value="yes">Confirm: save my private activity draft</button>
+</form>
+{% endif %}
+<p>Operation receipt: <code>{{ result.operation_id }}</code>. Recover this key after a lost response before preparing a replacement.</p>
+</div>
+{% endblock %}

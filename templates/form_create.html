@@ -37,6 +37,9 @@
   <p class="lede">Bind the event's context once, generate the QR codes, and raters only have to rate.
     Walk-in service instead? <a href="/arta">Get the standing walk-in (ARTA) QR</a>.</p>
 
+  <p><a href="/activity-drafts">My private activity drafts</a> · <a href="/activity-drafts/new">Save a private activity draft</a></p>
+  {% if activity_draft_loaded %}<p role="status">Loaded a private draft for review. Submitting this Create form makes live surveys/public links and may send normal creator/section emails. The saved draft stays independent and can be loaded again.</p>{% endif %}
+
   {% if errors %}
   <div class="errors" role="alert"><strong>Please fix:</strong>
     <ul>{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul>

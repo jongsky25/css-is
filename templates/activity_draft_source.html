@@ -1,0 +1,20 @@
+{% extends "dash_layout.html" %}
+{% block title %}My private activity draft — Office Connect{% endblock %}
+{% block content %}
+<div style="max-width:44rem;margin:auto;overflow-wrap:anywhere">
+<h1>My private activity draft</h1>
+<p>Only you can open this preparation copy while you retain Create activity access. Saving it created no live activity, survey, public link or email. Later manual creation is separate and is not tracked here.</p>
+<dl>
+<dt>Activity title</dt><dd>{{ draft.fields.activity_name }}</dd>
+<dt>Date and timezone</dt><dd>{{ draft.fields.event_date }} · Asia/Manila</dd>
+<dt>Organizing section at save</dt><dd>{{ draft.section.name }}</dd>
+<dt>Venue</dt><dd>{{ draft.fields.venue or 'Not set' }}</dd>
+<dt>Type</dt><dd>Bureau-organized · single-day · face-to-face · no speakers</dd>
+<dt>Saved at</dt><dd>{{ draft.created_at }}</dd>
+</dl>
+{% if section_changed %}<p role="status">The organizing section changed since this copy was saved. The Create form will show the section's current name; review it before submitting.</p>{% endif %}
+{% if loadable %}<p><a href="/create?activity_draft={{ draft.operation_key }}">Load into Create for separate review</a></p>{% else %}<p role="status">The date or organizing section is outside the current Create rules. This saved copy remains private; start a new draft or review the ordinary Create screen.</p>{% endif %}
+<p>Opening Create does not submit or consume this draft. Review and edit that form before pressing its ordinary Create button, which creates live surveys/public links and may send normal emails. Loading again can create another activity; check your existing records first.</p>
+<p><a href="/activity-drafts">My private activity drafts</a></p>
+</div>
+{% endblock %}

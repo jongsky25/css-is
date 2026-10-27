@@ -22,6 +22,7 @@ import mcp_auth
 import mcp_actions
 import mcp_supply_drafts
 import mcp_comment_drafts
+import mcp_activity_drafts
 import mcp_activity_dates
 import mcp_work_arrangements
 import mcp_meal_requests
@@ -592,6 +593,52 @@ def build_server(get_conn, origin):
         """
         return await action(lambda conn, token: mcp_travel_submissions.recover(
             conn, token, provider.resource, origin, operation_id), mcp_travel_submissions.SCOPE)
+
+    @server.tool(title='Read my private activity draft choices', annotations=READ_ONLY)
+    async def get_activity_draft_context(limit: StrictInt = 25, offset: StrictInt = 0) -> dict:
+        """Read bounded section choices/date limits with activities:draft:save consent.
+
+        Requires current ordinary Create activity capability. Returns a page of
+        current organizing section IDs/names (limit 1–25, offset 0–500),
+        date bounds and fixed bureau/face-to-face draft defaults. No private
+        drafts, activity results, attendee/person details or live activity is read.
+        """
+        return await action(lambda conn, token: mcp_activity_drafts.read_context(
+            conn, token, provider.resource, origin, limit=limit, offset=offset), mcp_activity_drafts.SCOPE)
+
+    @server.tool(title='Prepare saving my private activity draft', annotations=ToolAnnotations(
+        readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=False))
+    async def prepare_activity_draft(activity_name: StrictStr, event_date: StrictStr,
+            section_id: StrictInt, operation_id: StrictStr, venue: StrictStr = '') -> dict:
+        """Prepare ONE new owner-private bureau activity draft for browser review.
+
+        Separate activities:draft:save and current ordinary Create capability are
+        required. Title max 200 characters, optional venue max 240, exact YYYY-MM-DD
+        within the normal Create date range, current section ID from draft context.
+        Show confirmation_url for exact title/date/section/venue/requester review.
+        Only the signed-in owner can confirm saving the private preparation copy.
+        It is single-day face-to-face with no speakers; extra/end-date/online/window/
+        calendar/room fields are rejected. Saving creates no event, survey, public
+        registration/link, email, booking or invitation. The owner may load the
+        existing Create form for a separate explicit review/submission; GET never
+        submits or consumes the draft, and later manual creation is not tracked.
+        Keep one random 16–80 character operation_id across retries/recovery.
+        """
+        return await action(lambda conn, token: mcp_activity_drafts.prepare(
+            conn, token, provider.resource, origin, operation_id,
+            {'activity_name': activity_name, 'event_date': event_date, 'section_id': section_id, 'venue': venue}), mcp_activity_drafts.SCOPE)
+
+    @server.tool(title='Check my private activity draft save', annotations=READ_ONLY)
+    async def get_activity_draft_operation(operation_id: StrictStr) -> dict:
+        """Recover original private-draft save without activity title or venue.
+
+        Same active connection/scope, current Create capability and source owner
+        required. Returns original draft ID, owner-only source and next step;
+        it does not claim a live activity was submitted or a draft never used
+        manually. Recovery creates no draft, public event, survey or email.
+        """
+        return await action(lambda conn, token: mcp_activity_drafts.recover(
+            conn, token, provider.resource, origin, operation_id), mcp_activity_drafts.SCOPE)
 
     @server.tool(title='Read permitted activity date context', annotations=READ_ONLY)
     async def get_activity_date_context(event_token: StrictStr) -> dict:
