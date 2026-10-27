@@ -8,10 +8,24 @@ with stable controls. Remaining milestones: a supported fix, qualified candidate
 validation, then complete original-baseline acceptance across all device/cache
 and scenario groups. No defensible percentage or ETA is established.
 
-Use the [Sol restart handoff](../../AVATAR_UPGRADE_HANDOFF.md#start-here--sol-handoff-current-after-native-lifecycle-v6)
+Use the [Sol restart handoff](../../AVATAR_UPGRADE_HANDOFF.md#start-here--sol-handoff-current-after-absent-attribute-screen)
 for current source identities, evidence order, next bounded work and constraints.
-The native lifecycle discrimination below is the latest completed experiment.
+The absent-attribute receiver screen below is the latest completed experiment.
 Older next-step instructions in this report are historical where superseded.
+
+## Absent-attribute receiver — capability and cost screen passed; reclamation still missing
+
+[Latest report](absent-attribute-receiver/REPORT.md): exact native getter/geometry cross-check (f4ed9d9) passes
+128/128 identities and null returns with unchanged DOM. Frozen screen 3190099
+completes four fixed slots; both probes preserve 1,536/1,536 selected native page
+joins and pass cost/integrity gates. Observation bounds 4.9961/4.9588% are below 5%
+(first margin only 0.00394 percentage points); controls vary 0.5199%, paired ratios
+1.06259/0.95624. No collection or page return is observed in either probe, so the
+independent through-reclamation capability still fails. No application comparison
+or 2B acceptance. All 23 archive files reconstruct/re-audit identically; 46 focused
+tests pass. Product cf363bf unchanged. Next inspect the previously qualified fixed
+DOM/SVG/style fixture as a source-supported natural-reclamation capability test;
+do not repeat this screen for favorable GC or waive its missing prerequisite.
 
 ## Native lifecycle discrimination — labelled reclamation observed, gates still fail
 

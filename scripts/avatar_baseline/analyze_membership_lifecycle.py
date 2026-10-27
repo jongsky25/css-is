@@ -146,6 +146,13 @@ def analyze(p, trace=None):
     return result
 
 
+def validate_capability_fixture(p, capability):
+    expected=capability['dom_before_sha256']
+    if expected!=capability['dom_after_sha256'] or any(
+        stage['dom_before_sha256']!=expected or stage['dom_after_sha256']!=expected for stage in p['stages']):
+        raise ValueError('Screen fixture differs from exact-receiver capability')
+
+
 def audit(root, repo, ref):
     plan = json.loads((root/'experiment.json').read_text())
     if plan['protocol'] not in SUPPORTED or plan['harness_commit'] != ref or plan['acceptance'] is not False or plan['order'] != ['control','probe','probe','control'] or len(plan['cohorts']) != 4:
@@ -190,6 +197,7 @@ def audit(root, repo, ref):
                 raw = subprocess.check_output(['git','show',ref+':'+name],cwd=repo)
                 if hashlib.sha256(raw).hexdigest() != p[key]: raise ValueError('Runtime probe mismatch')
                 result['source_hashes_verified'] += 1
+            if plan['protocol']=='native-membership-lifecycle-v7': validate_capability_fixture(p,captured)
             validate_identity(json.loads((folder/'identity.json').read_text()),p)
             row.update(analyze(p, json.load(gzip.open(folder/'trace.json.gz','rt')) if mode == 'probe' else None))
             result['errors'].extend(f'Slot {index}: {e}' for e in row['errors'])

@@ -25,6 +25,20 @@ seasonal administration, and accessibility behavior.
 A phase fails if its visuals remain essentially the same except for color changes,
 or if it exceeds a performance gate. Fix or reduce complexity before expanding it.
 
+## Absent-attribute receiver — capability and cost screen passed; reclamation still missing
+
+[Latest report](avatars/increment2b/absent-attribute-receiver/REPORT.md): exact native getter/geometry cross-check (f4ed9d9) passes
+128/128 identities and null returns with unchanged DOM. Frozen screen 3190099
+completes four fixed slots; both probes preserve 1,536/1,536 selected native page
+joins and pass cost/integrity gates. Observation bounds 4.9961/4.9588% are below 5%
+(first margin only 0.00394 percentage points); controls vary 0.5199%, paired ratios
+1.06259/0.95624. No collection or page return is observed in either probe, so the
+independent through-reclamation capability still fails. No application comparison
+or 2B acceptance. All 23 archive files reconstruct/re-audit identically; 46 focused
+tests pass. Product cf363bf unchanged. Next inspect the previously qualified fixed
+DOM/SVG/style fixture as a source-supported natural-reclamation capability test;
+do not repeat this screen for favorable GC or waive its missing prerequisite.
+
 ## Native lifecycle discrimination — labelled reclamation observed, gates still fail
 
 [Latest report](avatars/increment2b/native-membership-lifecycle/REPORT.md): pinned source/runtime show BFCache disabled and normal

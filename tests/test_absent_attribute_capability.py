@@ -52,3 +52,13 @@ def test_versioned_getter_observable_requires_the_absent_query_and_null_returns(
     with pytest.raises(ValueError):validate_absent_query(p,[{'kind':'receiver'}])
     bad=dict(p,attribute_namespace='wrong')
     with pytest.raises(ValueError):validate_absent_query(bad)
+
+
+def test_screen_fixture_must_match_the_exact_receiver_capability():
+    from scripts.avatar_baseline.analyze_membership_lifecycle import validate_capability_fixture
+    capability={'dom_before_sha256':'same','dom_after_sha256':'same'}
+    p={'stages':[{'dom_before_sha256':'same','dom_after_sha256':'same'}]}
+    validate_capability_fixture(p,capability)
+    for field in ['dom_before_sha256','dom_after_sha256']:
+        bad=deepcopy(p);bad['stages'][0][field]='different'
+        with pytest.raises(ValueError):validate_capability_fixture(bad,capability)
