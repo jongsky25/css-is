@@ -152,3 +152,9 @@ steps are in [the activity draft runbook](MCP_ACTIVITY_DRAFT_PILOT.md).
 
 The default-off M3.10 live creation from an own private activity draft is covered
 in [the activity creation runbook](MCP_ACTIVITY_CREATION_PILOT.md).
+
+
+The separate default-off first pinned-update publication pilot is documented in
+[M3.11 setup and acceptance](MCP_ACTIVITY_ANNOUNCEMENT_PILOT.md). It publishes on
+registered-participant pages only after browser confirmation, without emailing
+registrants or dispatching an official invitation.

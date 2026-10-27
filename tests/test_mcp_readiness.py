@@ -32,7 +32,7 @@ def test_running_catalog_owner_isolation_and_read_only_status(api, monkeypatch):
     response = clients[0].get('/account/integrations/mcp')
     assert response.status_code == 200, response.text[:1000]
     html = response.text
-    assert '67 registered tools' in html
+    assert '70 registered tools' in html
     assert 'find_survey_activities' in html and 'get_activity_survey_detail' in html
     assert 'My phone connection' in html and 'Other private connection' not in html
     assert 'Individual activity scorecards: <strong>Granted</strong>' in html
