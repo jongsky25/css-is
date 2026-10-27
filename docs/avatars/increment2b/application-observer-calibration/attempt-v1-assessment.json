@@ -1,0 +1,12 @@
+{
+  "run_url": "https://github.com/jongsky25/css-is/actions/runs/40516585623",
+  "artifact_id": 12740361011,
+  "artifact_sha256": "556a1f61455e0f7e0ff6527443e00840fd06baa322596ad0986982f273df5a91",
+  "internal_hashes_verified": 78,
+  "harness_commit": "35f0d3154d2d6b723d840344ce882baf2f9e38db",
+  "status": "application_calibration_failed",
+  "error": "ValueError('Hosted CPU condition changed: Model name')",
+  "application_workloads_started": 0,
+  "native_refresh_started": false,
+  "limitation": "The original helper rejected CPU model before writing its new inventory, so the failed allocation model name was not retained. No host model is inferred."
+}

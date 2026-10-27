@@ -1,0 +1,8 @@
+........................................................................ [ 59%]
+.................................................                        [100%]
+=============================== warnings summary ===============================
+tests/test_element_membership_analysis.py::test_receiver_join_respects_pool_return_and_address_reuse
+  /workspace/css-is/tests/conftest.py:88: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html

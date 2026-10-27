@@ -12,12 +12,12 @@ import sys
 import zipfile
 from scripts.avatar_baseline.application_membership import run as calibrate,audit,SOURCES as APP_SOURCES
 from scripts.avatar_baseline.analyze_membership_lifecycle import audit as native_audit
-from scripts.avatar_baseline.native_recorder_selftest import audit as selftest_audit
+from scripts.avatar_baseline.hosted_native_calibration import SOURCES as NATIVE_SOURCES
 from scripts.avatar_baseline.runner_isolation_inventory import inventory
 
 QUALIFIED='docs/avatars/increment2b/hosted-native-calibration/calibration-v1-evidence.zip'
 QUALIFIED_SHA='2c1de48749d1eefeb04782e2034879bf7392ce137bddb1b3a16f734159b25a0d'
-SOURCES=list(dict.fromkeys([*APP_SOURCES,'scripts/avatar_baseline/hosted_application_calibration.py',
+SOURCES=list(dict.fromkeys([*APP_SOURCES,*NATIVE_SOURCES,'scripts/avatar_baseline/hosted_application_calibration.py',
  'scripts/avatar_baseline/runner_isolation_inventory.py','scripts/avatar_baseline/analyze_membership_lifecycle.py',
  'requirements-test.txt','requirements-avatar-native.txt']))
 
@@ -68,19 +68,29 @@ def run(out):
         if qualified!=previous['calibration_audit'] or not qualified['instrument_qualified_for_application_calibration'] or qualified['errors']:raise ValueError('Native instrument is unqualified')
         agent='scripts/avatar_baseline/native/callback_buffer.js'
         if (repo/agent).read_bytes()!=subprocess.check_output(['git','show',previous['harness_commit']+':'+agent],cwd=repo):raise ValueError('Native agent changed after qualification')
-        current=inventory();old=json.loads((prior/'result/runner-inventory.json').read_text())
+        current=inventory()
+        (out/'runner-inventory.json').write_text(json.dumps(current,indent=2)+'\n')
+        result['qualified_native_manifest_entries']=len(manifest)
+        # Standard hosted allocations can change CPU model. Qualify this very job
+        # afresh instead of retrying until a previous model happens to be allocated.
+        fresh=out/'native-qualification'
+        with (out/'native-qualification.txt').open('w') as stream:
+            code=subprocess.run([sys.executable,'-m','scripts.avatar_baseline.hosted_native_calibration',
+                '--out',str(fresh)],cwd=repo,stdout=stream,stderr=subprocess.STDOUT).returncode
+        result['native_qualification_exit_code']=code
+        native_result=json.loads((fresh/'result.json').read_text())
+        result['fresh_native_qualification']={'status':native_result['status'],
+            'instrument_qualified_for_application_calibration':native_result['instrument_qualified_for_application_calibration']}
+        if code or not native_result['instrument_qualified_for_application_calibration']:
+            raise ValueError('Fresh same-job native qualification failed; application not launched')
+        qualified_here=native_audit(fresh/'calibration',repo,ref)
+        if qualified_here!=native_result['calibration_audit'] or not qualified_here['instrument_qualified_for_application_calibration'] or qualified_here['errors']:
+            raise ValueError('Same-job native qualification audit failed')
+        fresh_inventory=json.loads((fresh/'runner-inventory.json').read_text())
         for key in ['machine','affinity_cpus']:
-            if current[key]!=old[key]:raise ValueError('Hosted resource condition changed: '+key)
-        for key in ['Model name','CPU(s)','Hypervisor vendor']:
-            if current['cpu_topology'][key]!=old['cpu_topology'][key]:raise ValueError('Hosted CPU condition changed: '+key)
-        if current['cgroup_files']['cpu.max']['raw']!=old['cgroup_files']['cpu.max']['raw']:raise ValueError('Hosted CPU quota changed')
-        (out/'runner-inventory.json').write_text(json.dumps(current,indent=2)+'\n');result['qualified_native_manifest_entries']=len(manifest)
-        native=out/'native-preflight'
-        with (out/'native-preflight.txt').open('w') as stream:
-            code=subprocess.run([sys.executable,'-m','scripts.avatar_baseline.native_recorder_selftest','--out',str(native)],cwd=repo,stdout=stream,stderr=subprocess.STDOUT).returncode
-        if code:raise ValueError('Fresh native preflight failed; application not launched')
-        result['native_preflight']=selftest_audit(native,repo,ref)
-        if result['native_preflight']!=json.loads((native/'assessment.json').read_text()) or result['native_preflight']['status']!='selftest_passed':raise ValueError('Fresh native preflight audit failed')
+            if current[key]!=fresh_inventory[key]:raise ValueError('Resource condition changed inside job')
+        if current['cpu_topology']!=fresh_inventory['cpu_topology'] or current['cgroup_files']['cpu.max']['raw']!=fresh_inventory['cgroup_files']['cpu.max']['raw']:
+            raise ValueError('CPU condition changed inside job')
         with (out/'application-runner.txt').open('w') as stream:
             code=subprocess.run([sys.executable,'-m','scripts.avatar_baseline.application_membership','--out',str(out/'application')],cwd=repo,stdout=stream,stderr=subprocess.STDOUT).returncode
         result['application_exit_code']=code
