@@ -16,10 +16,10 @@ BUILD = '1c5dca8527a61d07372e489142bee26af1bcaf71'
 COUNT = 512  # Retained v1 census profile.
 CENSUS = 32
 FIXTURE_COUNT = 3000
-PROTOCOL = 'native-membership-lifecycle-v11'
+PROTOCOL = 'native-membership-lifecycle-v12'
 STAGES = 12
 BROWSER = Path('/workspace/scratch/avatar-runtime/root/usr/lib/chromium/chromium')
-HOOK = Path(__file__).resolve().parent / 'native/absent_attribute_membership.js'
+HOOK = Path(__file__).resolve().parent / 'native/callback_buffer.js'
 
 
 
@@ -166,7 +166,9 @@ def run(out, mode):
                 result['transfer_end_ns'] = time.monotonic_ns()
                 (out / 'trace.json').write_text(''.join(parts))
             if script:
+                export_begin = time.monotonic_ns()
                 result['history'] = script.exports_sync.result()
+                result['native_export_interval_ns'] = [export_begin, time.monotonic_ns()]
                 script.unload(); attached.detach(); attached = None
             cdp.detach(); page_cdp.detach(); browser.close()
             result['status'] = 'captured'

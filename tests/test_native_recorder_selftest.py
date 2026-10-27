@@ -46,3 +46,40 @@ def test_native_proof_failures_cannot_be_ignored(bad):
     if bad=='abi':history['record_size']=64
     if bad=='canary':history['storage']['canary_verified']=False
     with pytest.raises(ValueError):validate(p)
+
+
+def live_specimen():
+    p=specimen()['concurrency']['history']
+    p['address_encoding']='native-u64-buffer-v1'
+    p['events']=[{'kind':'receiver','thread':101,'begin_ns':1000,'callback_ready_ns':1001,
+                  'returned_ns':1002,'phase_type':1,'phase_document':0,'receiver_group':0,
+                  'phase':'census:0:avatar:0'}]
+    return p
+
+
+def test_live_buffer_accepts_only_completed_native_snapshot():
+    from scripts.avatar_baseline.native_recorder_selftest import validate_live
+    validate_live(live_specimen(),[89999,90001])
+
+
+@pytest.mark.parametrize('bad',['fake','phase','group','clock','snapshot','pending','drop','encoding'])
+def test_live_buffer_rejects_invalid_measurement(bad):
+    from scripts.avatar_baseline.native_recorder_selftest import validate_live
+    p=live_specimen();e=p['events'][0]
+    if bad=='fake':e['kind']='__selftest'
+    if bad=='phase':e['phase']='navigation:0'
+    if bad=='group':e['receiver_group']=4
+    if bad=='clock':e['returned_ns']=90001
+    if bad=='snapshot':p['snapshot_end_ns']=90002
+    if bad=='pending':p['pending_at_snapshot']=1
+    if bad=='drop':p['dropped']=1
+    if bad=='encoding':p['address_encoding']='deferred-native-pointer-v1'
+    with pytest.raises(ValueError):validate_live(p,[89999,90001])
+
+
+def test_versioned_lifecycle_sources_preserve_old_agents():
+    from scripts.avatar_baseline.analyze_membership_lifecycle import sources_for
+    assert sources_for('native-membership-lifecycle-v6')[1].endswith('/element_membership_lifecycle.js')
+    assert sources_for('native-membership-lifecycle-v11')[1].endswith('/absent_attribute_membership.js')
+    assert sources_for('native-membership-lifecycle-v12')[1].endswith('/callback_buffer.js')
+    assert [len(sources_for(f'native-membership-lifecycle-v{i}')) for i in [6,11,12]]==[6,7,8]
