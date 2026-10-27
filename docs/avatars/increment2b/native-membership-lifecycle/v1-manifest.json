@@ -1,0 +1,23 @@
+{
+  "archive_sha256": "96e8c3d8df27377de43659c7105e964f7ba6420d6701d69ec15e7bed4200298a",
+  "logical_files": 15,
+  "unique_blobs": 12,
+  "paths": {
+    "calibration/0-control/capture.json.gz": "129d0342929d24f48367ab489e4f085bc446f915d7b8721a88b1a2623a52d2a7",
+    "calibration/0-control/runner.txt": "b3428e665e520ff0dd8291a9a38b96f1422cc3511c37238767c67599498d57a8",
+    "calibration/1-probe/capture.json.gz": "19ab01087754ba37edee079f59423825eaaec2cf030d841ff25c5599bc806751",
+    "calibration/1-probe/runner.txt": "b3428e665e520ff0dd8291a9a38b96f1422cc3511c37238767c67599498d57a8",
+    "calibration/2-probe/capture.json.gz": "1a90ee8dce9439ed782e382920275bb06e0f1db309cbfd588a93544e6b97577e",
+    "calibration/2-probe/runner.txt": "b3428e665e520ff0dd8291a9a38b96f1422cc3511c37238767c67599498d57a8",
+    "calibration/3-control/capture.json.gz": "ca9f76ae20b09858f96e5032f30915055540499efd805e7421aa1075dd5043fe",
+    "calibration/3-control/runner.txt": "b3428e665e520ff0dd8291a9a38b96f1422cc3511c37238767c67599498d57a8",
+    "calibration/experiment.json": "c31b432a46847252aed61419da10b5e0786cc3749b6c91312457cc1a1f260610",
+    "calibration/harness/scripts/avatar_baseline/analyze_element_membership.py": "2c759f163978586052e48ff16de11808cc723651c8928e61aff757c54317bbb7",
+    "calibration/harness/scripts/avatar_baseline/analyze_membership_lifecycle.py": "76ef92bbe9689529a4f48df7f36fe9d8ce6aa763008ba400d7b1bcc303806f25",
+    "calibration/harness/scripts/avatar_baseline/analyze_reader_retention.py": "9483d75ec691c9acc64cbe93e8dafbbbe4a9a4d5a598e74837c112bccb8fa635",
+    "calibration/harness/scripts/avatar_baseline/element_membership_lifecycle.py": "148640a29e63ed4ac8051cbdaa3b9ce82d59481a34b3e9eb504bb2f3f6f4c98a",
+    "calibration/harness/scripts/avatar_baseline/native/element_membership_lifecycle.js": "94062cc70c0bc6b1bb5d826bf3ad5ab5026f25db841783427035ed29cf045ce9",
+    "calibration/harness/scripts/avatar_baseline/run_membership_lifecycle.py": "29407182af2550609053fc253c6c3289883829c4d2ecbb8489c38ce9819ec0b9"
+  },
+  "reconstruction_verified": true
+}

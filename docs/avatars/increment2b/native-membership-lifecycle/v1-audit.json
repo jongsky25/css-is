@@ -1,0 +1,35 @@
+{
+  "acceptance": false,
+  "application_qualified": false,
+  "status": "diagnostic_failed",
+  "errors": [
+    "Slot 0: Failed/mismatched cohort",
+    "Slot 1: Failed/mismatched cohort",
+    "Slot 2: Failed/mismatched cohort",
+    "Slot 3: Failed/mismatched cohort"
+  ],
+  "cohorts": [
+    {
+      "index": 0,
+      "status": "invalid",
+      "error": "ValueError('Failed/mismatched cohort')"
+    },
+    {
+      "index": 1,
+      "status": "invalid",
+      "error": "ValueError('Failed/mismatched cohort')"
+    },
+    {
+      "index": 2,
+      "status": "invalid",
+      "error": "ValueError('Failed/mismatched cohort')"
+    },
+    {
+      "index": 3,
+      "status": "invalid",
+      "error": "ValueError('Failed/mismatched cohort')"
+    }
+  ],
+  "files_verified": 0,
+  "source_hashes_verified": 6
+}

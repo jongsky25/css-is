@@ -10,7 +10,7 @@ import subprocess
 from scripts.avatar_baseline.analyze_element_membership import inspect, validate_identity, OFFSETS
 from scripts.avatar_baseline.analyze_reader_retention import clock_bounds, mapped, selected_events, position
 
-PROTOCOL = 'native-membership-lifecycle-v1'
+PROTOCOL = 'native-membership-lifecycle-v2'
 EXTRA_OFFSETS = {'shutdown': 0x100208d0, 'destroy': 0x5aa4490, 'release': 0x5ab09d0}
 SOURCES = ['scripts/avatar_baseline/element_membership_lifecycle.py',
            'scripts/avatar_baseline/native/element_membership_lifecycle.js',

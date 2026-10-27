@@ -15,7 +15,7 @@ BUILD = '1c5dca8527a61d07372e489142bee26af1bcaf71'
 COUNT = 512  # Retained v1 census profile.
 CENSUS = 128
 FIXTURE_COUNT = 4096
-PROTOCOL = 'native-membership-lifecycle-v1'
+PROTOCOL = 'native-membership-lifecycle-v2'
 STAGES = 12
 BROWSER = Path('/workspace/scratch/avatar-runtime/root/usr/lib/chromium/chromium')
 HOOK = Path(__file__).resolve().parent / 'native/element_membership_lifecycle.js'
@@ -76,8 +76,14 @@ def run(out, mode):
                     data = json.loads(message.text.removeprefix('membership-lifecycle:'))
                     result['lifecycle_events'].append({**data, 'received_ns': time.monotonic_ns()})
             page.on('console', console_event)
-            arguments = cdp.send('Browser.getBrowserCommandLine')['arguments']
-            result['back_forward_cache_disabled'] = '--disable-back-forward-cache' in arguments
+            processes = cdp.send('SystemInfo.getProcessInfo')['processInfo']
+            browser_pids = [p['id'] for p in processes if p['type'] == 'browser']
+            if len(browser_pids) != 1: raise ValueError('Ambiguous launched browser PID')
+            arguments = Path(f'/proc/{browser_pids[0]}/cmdline').read_bytes().split(b'\0')
+            result['back_forward_cache_disabled'] = b'--disable-back-forward-cache' in arguments
+            result['launch_flag_verification'] = 'proc-cmdline-known-browser-pid'
+            # Persist only the boolean, never unrelated argument or credential values.
+            del arguments
             result['playwright_version'] = __import__('importlib.metadata', fromlist=['version']).version('playwright')
             page_cdp = context.new_cdp_session(page)
             cdp.on('Tracing.tracingComplete', lambda e: completed.append(e))
