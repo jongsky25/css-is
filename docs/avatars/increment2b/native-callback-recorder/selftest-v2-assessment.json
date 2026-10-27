@@ -1,0 +1,6 @@
+{
+  "status": "selftest_failed",
+  "acceptance": false,
+  "harness_commit": "51a1b3be6738465630cd9c15a718c6b1bab0b84d",
+  "error": "ValueError('RPCException(\"cannot read property \\'protection\\' of null\", \\'TypeError\\', \"TypeError: cannot read property \\'protection\\' of null\\\\n    at result (/script1.js:184)\\\\n    at selftest (/script1.js:211)\\\\n    at call (native)\\\\n    at handleRpcMessage (/frida/runtime/message-dispatcher.js:39)\\\\n    at handleMessage (/frida/runtime/message-dispatcher.js:25)\")')"
+}

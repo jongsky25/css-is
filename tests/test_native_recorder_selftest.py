@@ -18,7 +18,7 @@ def specimen():
             'record_limit':limit,'pending_at_snapshot':0,'dropped':dropped,'events':events,
             'snapshot_end_ns':90000,'recorder_backend':'cmodule-buffer-v1','clock_domain':'CLOCK_MONOTONIC',
             'abi':'linux-x64-gum-invocation-v1','toolchain':'internal',
-            'storage':{'state_bytes':7200080,'allocated_bytes':7200256,'first_protection':'rw-','last_protection':'rw-'}}}
+            'storage':{'state_bytes':7200088,'allocated_bytes':7200256,'first_protection':None,'last_protection':None,'canary_verified':True,'check':'two-way-owned-buffer-canary'}}}
     return p
 
 
@@ -29,7 +29,7 @@ def test_complete_clock_concurrency_and_overflow_proof():
     assert result['acceptance'] is False
 
 
-@pytest.mark.parametrize('bad',['clock','records','threads','duplicate','pointer','phase','pending','overflow','limit','snapshot','abi'])
+@pytest.mark.parametrize('bad',['clock','records','threads','duplicate','pointer','phase','pending','overflow','limit','snapshot','abi','canary'])
 def test_native_proof_failures_cannot_be_ignored(bad):
     p=specimen();history=p['concurrency']['history']
     if bad=='clock':p['clock_samples'][0]['native_ns']=0
@@ -44,4 +44,5 @@ def test_native_proof_failures_cannot_be_ignored(bad):
     if bad=='limit':p['overflow']['history']['record_limit']=50000
     if bad=='snapshot':history['snapshot_end_ns']=200000
     if bad=='abi':history['record_size']=64
+    if bad=='canary':history['storage']['canary_verified']=False
     with pytest.raises(ValueError):validate(p)

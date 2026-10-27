@@ -1,0 +1,10 @@
+{
+  "archive_sha256": "40a16b8fb0d6008b59b18638287daa5350dcdd82e847a7cee3c383ed28990c22",
+  "logical_files": 2,
+  "unique_blobs": 2,
+  "paths": {
+    "selftest/assessment.json": "a12b74d6a65d676d9f3298b4c4df23f8db618734178a5ddfd6ecc4dd988e7354",
+    "selftest/capture.json.gz": "65d19f353582b84f19941596c77782cc0d203352b1f20791d70e60f4f4548b5a"
+  },
+  "reconstruction_verified": true
+}

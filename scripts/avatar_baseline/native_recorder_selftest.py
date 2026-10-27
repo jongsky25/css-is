@@ -30,7 +30,7 @@ def validate(p):
         if (history.get('recorder_backend')!='cmodule-buffer-v1' or history.get('clock_domain')!='CLOCK_MONOTONIC'
             or history.get('abi')!='linux-x64-gum-invocation-v1' or history.get('toolchain')!='internal'
             or not q['begin_ns']<=history['snapshot_end_ns']<=q['end_ns']
-            or 'w' not in history['storage']['first_protection'] or 'w' not in history['storage']['last_protection']
+            or history['storage'].get('canary_verified') is not True or history['storage'].get('check')!='two-way-owned-buffer-canary'
             or history['storage']['state_bytes']>history['storage']['allocated_bytes']
             or history['record_size']!=72 or history['record_capacity']!=50000 or history['record_limit']!=expected_limit
             or history['pending_at_snapshot']!=0 or history['dropped']!=expected_dropped or len(history['events'])!=expected_count):
@@ -55,7 +55,11 @@ def audit(root,repo,ref):
     for name,digest in p['source_sha256'].items():
         if hashlib.sha256(subprocess.check_output(['git','show',ref+':'+name],cwd=repo)).hexdigest()!=digest:raise ValueError('Self-test source changed')
     if p['identity']['build_id']!='1c5dca8527a61d07372e489142bee26af1bcaf71' or p['frida_version']!='17.5.1':raise ValueError('Wrong native environment')
+    if p['prefix_sha256']!=hashlib.sha256(PREFIX.encode()).hexdigest():raise ValueError('Wrong preflight mode prefix')
     if any(m.get('type')=='error' for m in p['messages']):raise ValueError('Native agent error')
+    ready=[m['payload'] for m in p['messages'] if m.get('payload',{}).get('selftest_ready')]
+    if len(ready)!=1 or ready[0].get('ready') is not False or ready[0]['pid']!=p['identity']['pid']:
+        raise ValueError('Wrong preflight renderer/mode')
     return {**validate(p),'harness_commit':ref,'source_hashes_verified':len(SOURCES),
             'capture_sha256':hashlib.sha256((root/'capture.json.gz').read_bytes()).hexdigest()}
 

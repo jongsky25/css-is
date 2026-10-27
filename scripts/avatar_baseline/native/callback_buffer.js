@@ -29,11 +29,13 @@ typedef struct {
   guint32 count, dropped, inflight, limit;
   guint32 phase_id, phase_type, document, phase_group, cursor;
   guint32 snapshot_count, snapshot_dropped, snapshot_pending, snapshot_limit;
-  guint64 snapshot_end;
+  guint64 snapshot_end, storage_probe;
 } RecorderState;
 /* CModule static data is not mutable recorder storage. Supply an owned RW block. */
 extern RecorderState recorder_state;
 guint32 state_size(void) { return sizeof(RecorderState); }
+guint64 probe_read(void) { return recorder_state.storage_probe; }
+void probe_write(guint64 value) { recorder_state.storage_probe=value; }
 void initialize(void) { recorder_state.limit=MAX_RECORDS; recorder_state.phase_group=NIL_GROUP; }
 static guint64 now_ns(void) {
   Stamp stamp;
@@ -144,6 +146,13 @@ const module = new CModule(source,symbols,{toolchain:'internal'});
 const stateSize=new NativeFunction(module.state_size,'uint',[])();
 if (stateSize>stateMemorySize) throw new Error('Unexpected native state ABI');
 new NativeFunction(module.initialize,'void',[])();
+const probeRead=new NativeFunction(module.probe_read,'uint64',[]);
+const probeWrite=new NativeFunction(module.probe_write,'void',['uint64']);
+const probeCell=stateMemory.add(stateSize-8);
+probeCell.writeU64(uint64('0x123456789abcdef'));
+if(probeRead().toString(16)!=='123456789abcdef')throw new Error('JS-to-C owned-state probe failed');
+probeWrite(uint64('0x1122334455667788'));
+if(probeCell.readU64().toString(16)!=='1122334455667788')throw new Error('C-to-JS owned-state probe failed');
 const snapshot = new NativeFunction(module.snapshot,'uint',[]);
 const buffer = new NativeFunction(module.snapshot_buffer,'pointer',[]);
 const size = new NativeFunction(module.record_size,'uint',[]);
@@ -180,9 +189,10 @@ function result() {
     snapshot_end_ns:safe(snapshotEnd()),pending_at_snapshot:pending(),dropped:dropped(),events:all,
     abi:'linux-x64-gum-invocation-v1',clock_domain:'CLOCK_MONOTONIC',toolchain:'internal',
     storage:{allocated_bytes:stateMemorySize,state_bytes:stateSize,
-      first_protection:Process.findRangeByAddress(stateMemory).protection,
-      last_protection:Process.findRangeByAddress(stateMemory.add(stateSize-1)).protection},
-    mutex_module:Process.findModuleByAddress(symbols.recorder_lock).path};
+      canary_verified:true,check:'two-way-owned-buffer-canary',
+      first_protection:Process.findRangeByAddress(stateMemory)?.protection||null,
+      last_protection:Process.findRangeByAddress(stateMemory.add(stateSize-1))?.protection||null},
+    mutex_module:Process.findModuleByAddress(symbols.recorder_lock)?.path||'not-enumerated'};
 }
 if (!selfTestOnly) {
   for (const [kind,offset] of Object.entries(offsets))
