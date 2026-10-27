@@ -13,9 +13,9 @@ from playwright.sync_api import sync_playwright
 
 BUILD = '1c5dca8527a61d07372e489142bee26af1bcaf71'
 COUNT = 512  # Retained v1 census profile.
-CENSUS = 128
+CENSUS = 32
 FIXTURE_COUNT = 4096
-PROTOCOL = 'native-membership-lifecycle-v5'
+PROTOCOL = 'native-membership-lifecycle-v6'
 STAGES = 12
 BROWSER = Path('/workspace/scratch/avatar-runtime/root/usr/lib/chromium/chromium')
 HOOK = Path(__file__).resolve().parent / 'native/element_membership_lifecycle.js'

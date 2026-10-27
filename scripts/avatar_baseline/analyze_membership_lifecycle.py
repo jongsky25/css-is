@@ -10,8 +10,8 @@ import subprocess
 from scripts.avatar_baseline.analyze_element_membership import inspect, validate_identity, OFFSETS
 from scripts.avatar_baseline.analyze_reader_retention import clock_bounds, mapped, selected_events, position
 
-PROTOCOL = 'native-membership-lifecycle-v5'
-SUPPORTED = {f'native-membership-lifecycle-v{i}' for i in [1,2,3,4,5]}
+PROTOCOL = 'native-membership-lifecycle-v6'
+SUPPORTED = {f'native-membership-lifecycle-v{i}' for i in [1,2,3,4,5,6]}
 EXTRA_OFFSETS = {'shutdown': 0x100208d0, 'destroy': 0x5aa4490, 'release': 0x5ab09d0}
 SOURCES = ['scripts/avatar_baseline/element_membership_lifecycle.py',
            'scripts/avatar_baseline/native/element_membership_lifecycle.js',
@@ -29,7 +29,7 @@ def lifecycle_events(events):
 
 
 def census_costs(p):
-    if p['protocol'] != 'native-membership-lifecycle-v5':
+    if p['protocol'] not in ['native-membership-lifecycle-v5','native-membership-lifecycle-v6']:
         return [c['end_ns']-c['begin_ns'] for s in p['stages'] for c in s['censuses']]
     if p.get('census_transport') != 'one-evaluate-four-fixed-groups':
         raise ValueError('Wrong batched census transport')
@@ -47,14 +47,14 @@ def census_costs(p):
 def analyze(p, trace=None):
     if p['protocol'] not in SUPPORTED or p['back_forward_cache_disabled'] is not True:
         raise ValueError('Wrong lifecycle protocol or BFCache launch flag')
-    expected_transport = 'same-origin-beacon' if p['protocol'] in ['native-membership-lifecycle-v4', PROTOCOL] else 'cdp-runtime-binding'
-    if p['protocol'] in ['native-membership-lifecycle-v3', 'native-membership-lifecycle-v4', PROTOCOL] and p.get('lifecycle_transport') != expected_transport:
+    expected_transport = 'same-origin-beacon' if p['protocol'] in ['native-membership-lifecycle-v4', 'native-membership-lifecycle-v5', PROTOCOL] else 'cdp-runtime-binding'
+    if p['protocol'] in ['native-membership-lifecycle-v3', 'native-membership-lifecycle-v4', 'native-membership-lifecycle-v5', PROTOCOL] and p.get('lifecycle_transport') != expected_transport:
         raise ValueError('Wrong lifecycle event transport')
     lifecycle_events(p['lifecycle_events'])
     native = p.get('history'); begin, end = p['begin_ns'], p['end_ns']
     if any(not begin <= e['received_ns'] <= end for e in p['lifecycle_events']):
         raise ValueError('Pagehide delivery outside measured window')
-    adapted = deepcopy(p); adapted['protocol'] = 'native-element-membership-v2'
+    adapted = deepcopy(p); adapted['protocol'] = 'native-element-membership-v3' if p['protocol'] == 'native-membership-lifecycle-v6' else 'native-element-membership-v2'
     if native:
         if native['offsets'] != {**OFFSETS, **EXTRA_OFFSETS}:
             raise ValueError('Unexpected lifecycle hooks')

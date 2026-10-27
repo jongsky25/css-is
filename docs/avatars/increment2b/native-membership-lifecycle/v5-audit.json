@@ -1,0 +1,2176 @@
+{
+  "acceptance": false,
+  "application_qualified": false,
+  "status": "diagnostic_failed",
+  "errors": [
+    "Slot 1: Observation bound exceeds 5% or 250ms",
+    "Slot 2: Observation bound exceeds 5% or 250ms",
+    "Slot 3: Observation bound exceeds 5% or 250ms",
+    "Controls vary more than 20%",
+    "Probe/control exceeds 1.20: 0/1"
+  ],
+  "cohorts": [
+    {
+      "index": 0,
+      "mode": "control",
+      "duration_ms": 4090.891634,
+      "membership_status": "valid_control",
+      "membership_errors": [],
+      "membership_qualification_waived": false,
+      "errors": [],
+      "stages": [
+        {
+          "index": 0,
+          "documents": 6,
+          "nodes": 8224,
+          "used_heap_bytes": 1560776
+        },
+        {
+          "index": 1,
+          "documents": 8,
+          "nodes": 16428,
+          "used_heap_bytes": 1993852
+        },
+        {
+          "index": 2,
+          "documents": 10,
+          "nodes": 24632,
+          "used_heap_bytes": 2431948
+        },
+        {
+          "index": 3,
+          "documents": 12,
+          "nodes": 32836,
+          "used_heap_bytes": 2835604
+        },
+        {
+          "index": 4,
+          "documents": 14,
+          "nodes": 41040,
+          "used_heap_bytes": 3261108
+        },
+        {
+          "index": 5,
+          "documents": 16,
+          "nodes": 49244,
+          "used_heap_bytes": 3674868
+        },
+        {
+          "index": 6,
+          "documents": 18,
+          "nodes": 57448,
+          "used_heap_bytes": 4100680
+        },
+        {
+          "index": 7,
+          "documents": 20,
+          "nodes": 65652,
+          "used_heap_bytes": 4534052
+        },
+        {
+          "index": 8,
+          "documents": 22,
+          "nodes": 73856,
+          "used_heap_bytes": 4946064
+        },
+        {
+          "index": 9,
+          "documents": 24,
+          "nodes": 82060,
+          "used_heap_bytes": 5376412
+        },
+        {
+          "index": 10,
+          "documents": 26,
+          "nodes": 90264,
+          "used_heap_bytes": 5800484
+        },
+        {
+          "index": 11,
+          "documents": 1,
+          "nodes": 8200,
+          "used_heap_bytes": 1603804
+        }
+      ],
+      "observation_fraction_bound": 0.03988085180356552,
+      "maximum_observation_ms": 14.614285,
+      "status": "valid_control"
+    },
+    {
+      "index": 1,
+      "mode": "probe",
+      "duration_ms": 4940.469083,
+      "membership_status": "capability_failed",
+      "membership_errors": [
+        "No labelled page generation observed returning to pool"
+      ],
+      "membership_qualification_waived": false,
+      "errors": [
+        "Observation bound exceeds 5% or 250ms"
+      ],
+      "stages": [
+        {
+          "index": 0,
+          "documents": 6,
+          "nodes": 8224,
+          "used_heap_bytes": 1564228
+        },
+        {
+          "index": 1,
+          "documents": 8,
+          "nodes": 16428,
+          "used_heap_bytes": 1994276
+        },
+        {
+          "index": 2,
+          "documents": 10,
+          "nodes": 24632,
+          "used_heap_bytes": 2438800
+        },
+        {
+          "index": 3,
+          "documents": 12,
+          "nodes": 32836,
+          "used_heap_bytes": 2834648
+        },
+        {
+          "index": 4,
+          "documents": 14,
+          "nodes": 41040,
+          "used_heap_bytes": 3265452
+        },
+        {
+          "index": 5,
+          "documents": 16,
+          "nodes": 49244,
+          "used_heap_bytes": 3685244
+        },
+        {
+          "index": 6,
+          "documents": 18,
+          "nodes": 57448,
+          "used_heap_bytes": 4105808
+        },
+        {
+          "index": 7,
+          "documents": 20,
+          "nodes": 65652,
+          "used_heap_bytes": 4533516
+        },
+        {
+          "index": 8,
+          "documents": 22,
+          "nodes": 73856,
+          "used_heap_bytes": 4935752
+        },
+        {
+          "index": 9,
+          "documents": 24,
+          "nodes": 82060,
+          "used_heap_bytes": 5352908
+        },
+        {
+          "index": 10,
+          "documents": 26,
+          "nodes": 90264,
+          "used_heap_bytes": 5775752
+        },
+        {
+          "index": 11,
+          "documents": 28,
+          "nodes": 98468,
+          "used_heap_bytes": 6203308
+        }
+      ],
+      "observation_fraction_bound": 0.1264570812010079,
+      "maximum_observation_ms": 107.390324,
+      "status": "valid_lifecycle_capture",
+      "native_event_counts": {
+        "shutdown": 36,
+        "allocate": 602,
+        "receiver": 6144
+      },
+      "native_events_outside_window": 0,
+      "pagehide_markers": [
+        {
+          "args": {
+            "data": {
+              "frame": "B68F6AE2A85C70425B28D8D6C7F8B997",
+              "message": "membership-pagehide:0:false",
+              "name": "membership-pagehide:0:false",
+              "sampleTraceId": 3297002923669258
+            }
+          },
+          "cat": "devtools.timeline",
+          "name": "TimeStamp",
+          "ph": "I",
+          "pid": 8766,
+          "s": "t",
+          "tid": 8766,
+          "ts": 5707450072,
+          "tts": 202321
+        },
+        {
+          "args": {
+            "data": {
+              "frame": "B68F6AE2A85C70425B28D8D6C7F8B997",
+              "message": "membership-pagehide:1:false",
+              "name": "membership-pagehide:1:false",
+              "sampleTraceId": 3297002923669449
+            }
+          },
+          "cat": "devtools.timeline",
+          "name": "TimeStamp",
+          "ph": "I",
+          "pid": 8766,
+          "s": "t",
+          "tid": 8766,
+          "ts": 5707789915,
+          "tts": 291535
+        },
+        {
+          "args": {
+            "data": {
+              "frame": "B68F6AE2A85C70425B28D8D6C7F8B997",
+              "message": "membership-pagehide:2:false",
+              "name": "membership-pagehide:2:false",
+              "sampleTraceId": 3297002923669130
+            }
+          },
+          "cat": "devtools.timeline",
+          "name": "TimeStamp",
+          "ph": "I",
+          "pid": 8766,
+          "s": "t",
+          "tid": 8766,
+          "ts": 5708142875,
+          "tts": 385467
+        },
+        {
+          "args": {
+            "data": {
+              "frame": "B68F6AE2A85C70425B28D8D6C7F8B997",
+              "message": "membership-pagehide:3:false",
+              "name": "membership-pagehide:3:false",
+              "sampleTraceId": 3297002923667889
+            }
+          },
+          "cat": "devtools.timeline",
+          "name": "TimeStamp",
+          "ph": "I",
+          "pid": 8766,
+          "s": "t",
+          "tid": 8766,
+          "ts": 5708521596,
+          "tts": 509392
+        },
+        {
+          "args": {
+            "data": {
+              "frame": "B68F6AE2A85C70425B28D8D6C7F8B997",
+              "message": "membership-pagehide:4:false",
+              "name": "membership-pagehide:4:false",
+              "sampleTraceId": 3297002923667575
+            }
+          },
+          "cat": "devtools.timeline",
+          "name": "TimeStamp",
+          "ph": "I",
+          "pid": 8766,
+          "s": "t",
+          "tid": 8766,
+          "ts": 5708856453,
+          "tts": 594718
+        },
+        {
+          "args": {
+            "data": {
+              "frame": "B68F6AE2A85C70425B28D8D6C7F8B997",
+              "message": "membership-pagehide:5:false",
+              "name": "membership-pagehide:5:false",
+              "sampleTraceId": 3297002923668279
+            }
+          },
+          "cat": "devtools.timeline",
+          "name": "TimeStamp",
+          "ph": "I",
+          "pid": 8766,
+          "s": "t",
+          "tid": 8766,
+          "ts": 5709204347,
+          "tts": 688094
+        },
+        {
+          "args": {
+            "data": {
+              "frame": "B68F6AE2A85C70425B28D8D6C7F8B997",
+              "message": "membership-pagehide:6:false",
+              "name": "membership-pagehide:6:false",
+              "sampleTraceId": 3297002923668451
+            }
+          },
+          "cat": "devtools.timeline",
+          "name": "TimeStamp",
+          "ph": "I",
+          "pid": 8766,
+          "s": "t",
+          "tid": 8766,
+          "ts": 5709636096,
+          "tts": 837808
+        },
+        {
+          "args": {
+            "data": {
+              "frame": "B68F6AE2A85C70425B28D8D6C7F8B997",
+              "message": "membership-pagehide:7:false",
+              "name": "membership-pagehide:7:false",
+              "sampleTraceId": 3297002923668130
+            }
+          },
+          "cat": "devtools.timeline",
+          "name": "TimeStamp",
+          "ph": "I",
+          "pid": 8766,
+          "s": "t",
+          "tid": 8766,
+          "ts": 5710083729,
+          "tts": 949210
+        },
+        {
+          "args": {
+            "data": {
+              "frame": "B68F6AE2A85C70425B28D8D6C7F8B997",
+              "message": "membership-pagehide:8:false",
+              "name": "membership-pagehide:8:false",
+              "sampleTraceId": 3297002923670966
+            }
+          },
+          "cat": "devtools.timeline",
+          "name": "TimeStamp",
+          "ph": "I",
+          "pid": 8766,
+          "s": "t",
+          "tid": 8766,
+          "ts": 5710640288,
+          "tts": 1236024
+        },
+        {
+          "args": {
+            "data": {
+              "frame": "B68F6AE2A85C70425B28D8D6C7F8B997",
+              "message": "membership-pagehide:9:false",
+              "name": "membership-pagehide:9:false",
+              "sampleTraceId": 3297002923670645
+            }
+          },
+          "cat": "devtools.timeline",
+          "name": "TimeStamp",
+          "ph": "I",
+          "pid": 8766,
+          "s": "t",
+          "tid": 8766,
+          "ts": 5711157560,
+          "tts": 1340841
+        },
+        {
+          "args": {
+            "data": {
+              "frame": "B68F6AE2A85C70425B28D8D6C7F8B997",
+              "message": "membership-pagehide:10:false",
+              "name": "membership-pagehide:10:false",
+              "sampleTraceId": 3297002923671359
+            }
+          },
+          "cat": "devtools.timeline",
+          "name": "TimeStamp",
+          "ph": "I",
+          "pid": 8766,
+          "s": "t",
+          "tid": 8766,
+          "ts": 5711597217,
+          "tts": 1463262
+        }
+      ],
+      "shutdown_trace_events": [
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 48,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8766,
+          "tdur": 46,
+          "tid": 8766,
+          "ts": 5707031324,
+          "tts": 58957
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 431,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8766,
+          "tdur": 146,
+          "tid": 8766,
+          "ts": 5707031744,
+          "tts": 59359
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 2,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8766,
+          "tid": 8766,
+          "ts": 5707033439
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 43,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8766,
+          "tdur": 41,
+          "tid": 8766,
+          "ts": 5707449830,
+          "tts": 202085
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 2488,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8766,
+          "tdur": 2442,
+          "tid": 8766,
+          "ts": 5707451117,
+          "tts": 203351
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 2,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8766,
+          "tdur": 1,
+          "tid": 8766,
+          "ts": 5707459220,
+          "tts": 207703
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 46,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8766,
+          "tdur": 44,
+          "tid": 8766,
+          "ts": 5707789662,
+          "tts": 291288
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 2555,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8766,
+          "tdur": 2552,
+          "tid": 8766,
+          "ts": 5707790584,
+          "tts": 292187
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 2,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8766,
+          "tdur": 1,
+          "tid": 8766,
+          "ts": 5707794674,
+          "tts": 296113
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 83,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8766,
+          "tdur": 82,
+          "tid": 8766,
+          "ts": 5708142577,
+          "tts": 385177
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 2262,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8766,
+          "tdur": 2234,
+          "tid": 8766,
+          "ts": 5708143555,
+          "tts": 386132
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 1,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8766,
+          "tdur": 1,
+          "tid": 8766,
+          "ts": 5708147575,
+          "tts": 389862
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 39,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8766,
+          "tdur": 37,
+          "tid": 8766,
+          "ts": 5708521394,
+          "tts": 509196
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 2523,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8766,
+          "tdur": 2421,
+          "tid": 8766,
+          "ts": 5708522234,
+          "tts": 510018
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 2,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8766,
+          "tdur": 1,
+          "tid": 8766,
+          "ts": 5708529778,
+          "tts": 514035
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 42,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8766,
+          "tdur": 40,
+          "tid": 8766,
+          "ts": 5708855668,
+          "tts": 593936
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 3467,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8766,
+          "tdur": 3467,
+          "tid": 8766,
+          "ts": 5708859343,
+          "tts": 597590
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 1,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8766,
+          "tdur": 1,
+          "tid": 8766,
+          "ts": 5708864412,
+          "tts": 602482
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 49,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8766,
+          "tdur": 49,
+          "tid": 8766,
+          "ts": 5709204096,
+          "tts": 687849
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 3940,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8766,
+          "tdur": 3521,
+          "tid": 8766,
+          "ts": 5709206717,
+          "tts": 689057
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 1,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8766,
+          "tdur": 1,
+          "tid": 8766,
+          "ts": 5709212908,
+          "tts": 694263
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 49,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8766,
+          "tdur": 47,
+          "tid": 8766,
+          "ts": 5709635846,
+          "tts": 837563
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 2181,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8766,
+          "tdur": 2128,
+          "tid": 8766,
+          "ts": 5709636682,
+          "tts": 838381
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 1,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8766,
+          "tid": 8766,
+          "ts": 5709644538
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 43,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8766,
+          "tdur": 42,
+          "tid": 8766,
+          "ts": 5710079870,
+          "tts": 945357
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 6668,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8766,
+          "tdur": 6660,
+          "tid": 8766,
+          "ts": 5710084418,
+          "tts": 949879
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 2,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8766,
+          "tdur": 1,
+          "tid": 8766,
+          "ts": 5710098021,
+          "tts": 963170
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 45,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8766,
+          "tdur": 43,
+          "tid": 8766,
+          "ts": 5710640064,
+          "tts": 1235806
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 2513,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8766,
+          "tdur": 2327,
+          "tid": 8766,
+          "ts": 5710640890,
+          "tts": 1236608
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 1,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8766,
+          "tid": 8766,
+          "ts": 5710647819
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 49,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8766,
+          "tdur": 47,
+          "tid": 8766,
+          "ts": 5711157258,
+          "tts": 1340545
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 3903,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8766,
+          "tdur": 3863,
+          "tid": 8766,
+          "ts": 5711158385,
+          "tts": 1341623
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 1,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8766,
+          "tid": 8766,
+          "ts": 5711166299
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 45,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8766,
+          "tdur": 43,
+          "tid": 8766,
+          "ts": 5711596971,
+          "tts": 1463024
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 2116,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8766,
+          "tdur": 2114,
+          "tid": 8766,
+          "ts": 5711597863,
+          "tts": 1463790
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 1,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8766,
+          "tdur": 1,
+          "tid": 8766,
+          "ts": 5711606455,
+          "tts": 1467705
+        }
+      ],
+      "gc_events": [],
+      "gc_event_counts": {},
+      "counter_order": [
+        {
+          "index": 0,
+          "components": {
+            "heap": {
+              "bounds_us": [
+                5707409045.6970005,
+                5707412125.76
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            },
+            "dom": {
+              "bounds_us": [
+                5707410417.38,
+                5707413295.621
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            }
+          }
+        },
+        {
+          "index": 1,
+          "components": {
+            "heap": {
+              "bounds_us": [
+                5707773150.547,
+                5707776106.702001
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            },
+            "dom": {
+              "bounds_us": [
+                5707774398.042,
+                5707776936.839001
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            }
+          }
+        },
+        {
+          "index": 2,
+          "components": {
+            "heap": {
+              "bounds_us": [
+                5708125275.251,
+                5708128075.225
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            },
+            "dom": {
+              "bounds_us": [
+                5708126366.636001,
+                5708128875.762
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            }
+          }
+        },
+        {
+          "index": 3,
+          "components": {
+            "heap": {
+              "bounds_us": [
+                5708477995.776,
+                5708480942.16
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            },
+            "dom": {
+              "bounds_us": [
+                5708479233.67,
+                5708482215.799001
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            }
+          }
+        },
+        {
+          "index": 4,
+          "components": {
+            "heap": {
+              "bounds_us": [
+                5708839389.722,
+                5708842169.194
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            },
+            "dom": {
+              "bounds_us": [
+                5708840460.455,
+                5708842977.427
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            }
+          }
+        },
+        {
+          "index": 5,
+          "components": {
+            "heap": {
+              "bounds_us": [
+                5709181003.937,
+                5709183996.926001
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            },
+            "dom": {
+              "bounds_us": [
+                5709182288.179,
+                5709184883.765
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            }
+          }
+        },
+        {
+          "index": 6,
+          "components": {
+            "heap": {
+              "bounds_us": [
+                5709589041.831,
+                5709596201.483001
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            },
+            "dom": {
+              "bounds_us": [
+                5709594492.935,
+                5709597170.422
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            }
+          }
+        },
+        {
+          "index": 7,
+          "components": {
+            "heap": {
+              "bounds_us": [
+                5710051557.12,
+                5710057758.092
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            },
+            "dom": {
+              "bounds_us": [
+                5710056049.59,
+                5710058602.487
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            }
+          }
+        },
+        {
+          "index": 8,
+          "components": {
+            "heap": {
+              "bounds_us": [
+                5710592505.571,
+                5710596093.884
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            },
+            "dom": {
+              "bounds_us": [
+                5710594385.674001,
+                5710597176.468
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            }
+          }
+        },
+        {
+          "index": 9,
+          "components": {
+            "heap": {
+              "bounds_us": [
+                5711071769.950001,
+                5711075118.306001
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            },
+            "dom": {
+              "bounds_us": [
+                5711073410.191,
+                5711138872.033
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            }
+          }
+        },
+        {
+          "index": 10,
+          "components": {
+            "heap": {
+              "bounds_us": [
+                5711529714.349,
+                5711532841.482
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            },
+            "dom": {
+              "bounds_us": [
+                5711531133.127,
+                5711536559.623
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            }
+          }
+        },
+        {
+          "index": 11,
+          "components": {
+            "heap": {
+              "bounds_us": [
+                5711938179.946,
+                5711941350.206
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            },
+            "dom": {
+              "bounds_us": [
+                5711939641.753,
+                5711944682.16
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            }
+          }
+        }
+      ],
+      "clock": {
+        "offset_us": [
+          -758.003999710083,
+          951.371000289917
+        ],
+        "coverage_us": [
+          5707016666,
+          5711944686
+        ]
+      },
+      "matched_receivers": 6144,
+      "receiver_records": 6144,
+      "mixed_generations": 12
+    },
+    {
+      "index": 2,
+      "mode": "probe",
+      "duration_ms": 4326.536552,
+      "membership_status": "capability_failed",
+      "membership_errors": [
+        "No labelled page generation observed returning to pool"
+      ],
+      "membership_qualification_waived": false,
+      "errors": [
+        "Observation bound exceeds 5% or 250ms"
+      ],
+      "stages": [
+        {
+          "index": 0,
+          "documents": 6,
+          "nodes": 8224,
+          "used_heap_bytes": 1574940
+        },
+        {
+          "index": 1,
+          "documents": 8,
+          "nodes": 16428,
+          "used_heap_bytes": 1999456
+        },
+        {
+          "index": 2,
+          "documents": 10,
+          "nodes": 24632,
+          "used_heap_bytes": 2381484
+        },
+        {
+          "index": 3,
+          "documents": 12,
+          "nodes": 32836,
+          "used_heap_bytes": 2834300
+        },
+        {
+          "index": 4,
+          "documents": 14,
+          "nodes": 41040,
+          "used_heap_bytes": 3251504
+        },
+        {
+          "index": 5,
+          "documents": 16,
+          "nodes": 49244,
+          "used_heap_bytes": 3674920
+        },
+        {
+          "index": 6,
+          "documents": 18,
+          "nodes": 57448,
+          "used_heap_bytes": 4124096
+        },
+        {
+          "index": 7,
+          "documents": 20,
+          "nodes": 65652,
+          "used_heap_bytes": 4525976
+        },
+        {
+          "index": 8,
+          "documents": 22,
+          "nodes": 73856,
+          "used_heap_bytes": 4942448
+        },
+        {
+          "index": 9,
+          "documents": 24,
+          "nodes": 82060,
+          "used_heap_bytes": 5374160
+        },
+        {
+          "index": 10,
+          "documents": 26,
+          "nodes": 90264,
+          "used_heap_bytes": 5800488
+        },
+        {
+          "index": 11,
+          "documents": 28,
+          "nodes": 98468,
+          "used_heap_bytes": 6214268
+        }
+      ],
+      "observation_fraction_bound": 0.09222703962030458,
+      "maximum_observation_ms": 41.787995,
+      "status": "valid_lifecycle_capture",
+      "native_event_counts": {
+        "shutdown": 36,
+        "allocate": 605,
+        "receiver": 6144
+      },
+      "native_events_outside_window": 544,
+      "pagehide_markers": [
+        {
+          "args": {
+            "data": {
+              "frame": "47DE6F5AD03076CC63895D015D3D223D",
+              "message": "membership-pagehide:0:false",
+              "name": "membership-pagehide:0:false",
+              "sampleTraceId": 1959253290679575
+            }
+          },
+          "cat": "devtools.timeline",
+          "name": "TimeStamp",
+          "ph": "I",
+          "pid": 8954,
+          "s": "t",
+          "tid": 8954,
+          "ts": 5714968435,
+          "tts": 198378
+        },
+        {
+          "args": {
+            "data": {
+              "frame": "47DE6F5AD03076CC63895D015D3D223D",
+              "message": "membership-pagehide:1:false",
+              "name": "membership-pagehide:1:false",
+              "sampleTraceId": 1959253290679339
+            }
+          },
+          "cat": "devtools.timeline",
+          "name": "TimeStamp",
+          "ph": "I",
+          "pid": 8954,
+          "s": "t",
+          "tid": 8954,
+          "ts": 5715338581,
+          "tts": 318153
+        },
+        {
+          "args": {
+            "data": {
+              "frame": "47DE6F5AD03076CC63895D015D3D223D",
+              "message": "membership-pagehide:2:false",
+              "name": "membership-pagehide:2:false",
+              "sampleTraceId": 1959253290679524
+            }
+          },
+          "cat": "devtools.timeline",
+          "name": "TimeStamp",
+          "ph": "I",
+          "pid": 8954,
+          "s": "t",
+          "tid": 8954,
+          "ts": 5715699166,
+          "tts": 426652
+        },
+        {
+          "args": {
+            "data": {
+              "frame": "47DE6F5AD03076CC63895D015D3D223D",
+              "message": "membership-pagehide:3:false",
+              "name": "membership-pagehide:3:false",
+              "sampleTraceId": 1959253290679231
+            }
+          },
+          "cat": "devtools.timeline",
+          "name": "TimeStamp",
+          "ph": "I",
+          "pid": 8954,
+          "s": "t",
+          "tid": 8954,
+          "ts": 5716058421,
+          "tts": 538045
+        },
+        {
+          "args": {
+            "data": {
+              "frame": "47DE6F5AD03076CC63895D015D3D223D",
+              "message": "membership-pagehide:4:false",
+              "name": "membership-pagehide:4:false",
+              "sampleTraceId": 1959253290678904
+            }
+          },
+          "cat": "devtools.timeline",
+          "name": "TimeStamp",
+          "ph": "I",
+          "pid": 8954,
+          "s": "t",
+          "tid": 8954,
+          "ts": 5716416581,
+          "tts": 644605
+        },
+        {
+          "args": {
+            "data": {
+              "frame": "47DE6F5AD03076CC63895D015D3D223D",
+              "message": "membership-pagehide:5:false",
+              "name": "membership-pagehide:5:false",
+              "sampleTraceId": 1959253290678586
+            }
+          },
+          "cat": "devtools.timeline",
+          "name": "TimeStamp",
+          "ph": "I",
+          "pid": 8954,
+          "s": "t",
+          "tid": 8954,
+          "ts": 5716769609,
+          "tts": 740480
+        },
+        {
+          "args": {
+            "data": {
+              "frame": "47DE6F5AD03076CC63895D015D3D223D",
+              "message": "membership-pagehide:6:false",
+              "name": "membership-pagehide:6:false",
+              "sampleTraceId": 1959253290678769
+            }
+          },
+          "cat": "devtools.timeline",
+          "name": "TimeStamp",
+          "ph": "I",
+          "pid": 8954,
+          "s": "t",
+          "tid": 8954,
+          "ts": 5717114716,
+          "tts": 829464
+        },
+        {
+          "args": {
+            "data": {
+              "frame": "47DE6F5AD03076CC63895D015D3D223D",
+              "message": "membership-pagehide:7:false",
+              "name": "membership-pagehide:7:false",
+              "sampleTraceId": 1959253290678414
+            }
+          },
+          "cat": "devtools.timeline",
+          "name": "TimeStamp",
+          "ph": "I",
+          "pid": 8954,
+          "s": "t",
+          "tid": 8954,
+          "ts": 5717478749,
+          "tts": 929445
+        },
+        {
+          "args": {
+            "data": {
+              "frame": "47DE6F5AD03076CC63895D015D3D223D",
+              "message": "membership-pagehide:8:false",
+              "name": "membership-pagehide:8:false",
+              "sampleTraceId": 1959253290678095
+            }
+          },
+          "cat": "devtools.timeline",
+          "name": "TimeStamp",
+          "ph": "I",
+          "pid": 8954,
+          "s": "t",
+          "tid": 8954,
+          "ts": 5717810324,
+          "tts": 1012218
+        },
+        {
+          "args": {
+            "data": {
+              "frame": "47DE6F5AD03076CC63895D015D3D223D",
+              "message": "membership-pagehide:9:false",
+              "name": "membership-pagehide:9:false",
+              "sampleTraceId": 1959253290677817
+            }
+          },
+          "cat": "devtools.timeline",
+          "name": "TimeStamp",
+          "ph": "I",
+          "pid": 8954,
+          "s": "t",
+          "tid": 8954,
+          "ts": 5718163161,
+          "tts": 1092857
+        },
+        {
+          "args": {
+            "data": {
+              "frame": "47DE6F5AD03076CC63895D015D3D223D",
+              "message": "membership-pagehide:10:false",
+              "name": "membership-pagehide:10:false",
+              "sampleTraceId": 1959253290678012
+            }
+          },
+          "cat": "devtools.timeline",
+          "name": "TimeStamp",
+          "ph": "I",
+          "pid": 8954,
+          "s": "t",
+          "tid": 8954,
+          "ts": 5718524495,
+          "tts": 1176974
+        }
+      ],
+      "shutdown_trace_events": [
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 42,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8954,
+          "tdur": 41,
+          "tid": 8954,
+          "ts": 5714547912,
+          "tts": 61127
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 145,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8954,
+          "tdur": 143,
+          "tid": 8954,
+          "ts": 5714548253,
+          "tts": 61453
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 1,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8954,
+          "tdur": 1,
+          "tid": 8954,
+          "ts": 5714550141,
+          "tts": 63051
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 53,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8954,
+          "tdur": 52,
+          "tid": 8954,
+          "ts": 5714968106,
+          "tts": 198053
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 3379,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8954,
+          "tdur": 3096,
+          "tid": 8954,
+          "ts": 5714969493,
+          "tts": 199420
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 2,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8954,
+          "tdur": 1,
+          "tid": 8954,
+          "ts": 5714978109,
+          "tts": 204143
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 53,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8954,
+          "tdur": 52,
+          "tid": 8954,
+          "ts": 5715338307,
+          "tts": 317884
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 2728,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8954,
+          "tdur": 2570,
+          "tid": 8954,
+          "ts": 5715339560,
+          "tts": 319030
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 2,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8954,
+          "tdur": 1,
+          "tid": 8954,
+          "ts": 5715347710,
+          "tts": 322980
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 51,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8954,
+          "tdur": 49,
+          "tid": 8954,
+          "ts": 5715698907,
+          "tts": 426400
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 4796,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8954,
+          "tdur": 4595,
+          "tid": 8954,
+          "ts": 5715700074,
+          "tts": 427547
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 1,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8954,
+          "tdur": 1,
+          "tid": 8954,
+          "ts": 5715709705,
+          "tts": 433810
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 40,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8954,
+          "tdur": 38,
+          "tid": 8954,
+          "ts": 5716058227,
+          "tts": 537858
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 2335,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8954,
+          "tdur": 2159,
+          "tid": 8954,
+          "ts": 5716058931,
+          "tts": 538542
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 1,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8954,
+          "tid": 8954,
+          "ts": 5716066132
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 42,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8954,
+          "tdur": 41,
+          "tid": 8954,
+          "ts": 5716416373,
+          "tts": 644401
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 2152,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8954,
+          "tdur": 2151,
+          "tid": 8954,
+          "ts": 5716417363,
+          "tts": 645372
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 2,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8954,
+          "tdur": 1,
+          "tid": 8954,
+          "ts": 5716423683,
+          "tts": 649022
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 43,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8954,
+          "tdur": 42,
+          "tid": 8954,
+          "ts": 5716768528,
+          "tts": 740229
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 2214,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8954,
+          "tdur": 2065,
+          "tid": 8954,
+          "ts": 5716770465,
+          "tts": 741218
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 2,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8954,
+          "tdur": 1,
+          "tid": 8954,
+          "ts": 5716774034,
+          "tts": 744377
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 38,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8954,
+          "tdur": 36,
+          "tid": 8954,
+          "ts": 5717114477,
+          "tts": 829233
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 2434,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8954,
+          "tdur": 2432,
+          "tid": 8954,
+          "ts": 5717115278,
+          "tts": 830012
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 1,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8954,
+          "tdur": 1,
+          "tid": 8954,
+          "ts": 5717119232,
+          "tts": 833668
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 37,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8954,
+          "tdur": 34,
+          "tid": 8954,
+          "ts": 5717478516,
+          "tts": 929219
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 2297,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8954,
+          "tdur": 2295,
+          "tid": 8954,
+          "ts": 5717479292,
+          "tts": 929975
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 1,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8954,
+          "tdur": 1,
+          "tid": 8954,
+          "ts": 5717486242,
+          "tts": 933438
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 47,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8954,
+          "tdur": 45,
+          "tid": 8954,
+          "ts": 5717810115,
+          "tts": 1012015
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 2131,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8954,
+          "tdur": 2130,
+          "tid": 8954,
+          "ts": 5717810953,
+          "tts": 1012830
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 1,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8954,
+          "tdur": 1,
+          "tid": 8954,
+          "ts": 5717814638,
+          "tts": 1016322
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 49,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8954,
+          "tdur": 48,
+          "tid": 8954,
+          "ts": 5718162939,
+          "tts": 1092642
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 2131,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8954,
+          "tdur": 2129,
+          "tid": 8954,
+          "ts": 5718163775,
+          "tts": 1093457
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 1,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8954,
+          "tdur": 1,
+          "tid": 8954,
+          "ts": 5718167232,
+          "tts": 1096725
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 65,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8954,
+          "tdur": 63,
+          "tid": 8954,
+          "ts": 5718524259,
+          "tts": 1176744
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 2229,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8954,
+          "tdur": 2228,
+          "tid": 8954,
+          "ts": 5718525150,
+          "tts": 1177575
+        },
+        {
+          "args": {},
+          "cat": "blink",
+          "dur": 1,
+          "name": "Document::shutdown",
+          "ph": "X",
+          "pid": 8954,
+          "tid": 8954,
+          "ts": 5718528924
+        }
+      ],
+      "gc_events": [],
+      "gc_event_counts": {},
+      "counter_order": [
+        {
+          "index": 0,
+          "components": {
+            "heap": {
+              "bounds_us": [
+                5714921758.314,
+                5714926475.007
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            },
+            "dom": {
+              "bounds_us": [
+                5714925498.453,
+                5714929531.1050005
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            }
+          }
+        },
+        {
+          "index": 1,
+          "components": {
+            "heap": {
+              "bounds_us": [
+                5715295695.951,
+                5715298643.181
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            },
+            "dom": {
+              "bounds_us": [
+                5715297666.517,
+                5715299703.145
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            }
+          }
+        },
+        {
+          "index": 2,
+          "components": {
+            "heap": {
+              "bounds_us": [
+                5715662666.195,
+                5715664759.425
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            },
+            "dom": {
+              "bounds_us": [
+                5715663782.482,
+                5715665591.301001
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            }
+          }
+        },
+        {
+          "index": 3,
+          "components": {
+            "heap": {
+              "bounds_us": [
+                5716021313.823,
+                5716023533.141
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            },
+            "dom": {
+              "bounds_us": [
+                5716022556.247,
+                5716024419.41
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            }
+          }
+        },
+        {
+          "index": 4,
+          "components": {
+            "heap": {
+              "bounds_us": [
+                5716376958.995,
+                5716379095.743
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            },
+            "dom": {
+              "bounds_us": [
+                5716378119.042,
+                5716380068.514
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            }
+          }
+        },
+        {
+          "index": 5,
+          "components": {
+            "heap": {
+              "bounds_us": [
+                5716744253.38,
+                5716746659.222
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            },
+            "dom": {
+              "bounds_us": [
+                5716745682.22,
+                5716747589.083
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            }
+          }
+        },
+        {
+          "index": 6,
+          "components": {
+            "heap": {
+              "bounds_us": [
+                5717099093.676,
+                5717101393.988
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            },
+            "dom": {
+              "bounds_us": [
+                5717100417.1640005,
+                5717102265.154
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            }
+          }
+        },
+        {
+          "index": 7,
+          "components": {
+            "heap": {
+              "bounds_us": [
+                5717434402.327,
+                5717436430.229
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            },
+            "dom": {
+              "bounds_us": [
+                5717435453.2890005,
+                5717437400.026
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            }
+          }
+        },
+        {
+          "index": 8,
+          "components": {
+            "heap": {
+              "bounds_us": [
+                5717793877.84,
+                5717796117.422
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            },
+            "dom": {
+              "bounds_us": [
+                5717795140.724,
+                5717797467.8810005
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            }
+          }
+        },
+        {
+          "index": 9,
+          "components": {
+            "heap": {
+              "bounds_us": [
+                5718134574.358,
+                5718149200.564
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            },
+            "dom": {
+              "bounds_us": [
+                5718148223.937,
+                5718150739.201
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            }
+          }
+        },
+        {
+          "index": 10,
+          "components": {
+            "heap": {
+              "bounds_us": [
+                5718492167.147,
+                5718495618.099
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            },
+            "dom": {
+              "bounds_us": [
+                5718494641.189,
+                5718497089.935
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            }
+          }
+        },
+        {
+          "index": 11,
+          "components": {
+            "heap": {
+              "bounds_us": [
+                5718845754.825,
+                5718848594.303
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            },
+            "dom": {
+              "bounds_us": [
+                5718847617.603,
+                5718849866.612
+              ],
+              "fully_covered": true,
+              "gc_overlap": []
+            }
+          }
+        }
+      ],
+      "clock": {
+        "offset_us": [
+          -358.60599994659424,
+          619.0430002212524
+        ],
+        "coverage_us": [
+          5714530943,
+          5718849871
+        ]
+      },
+      "matched_receivers": 6144,
+      "receiver_records": 6144,
+      "mixed_generations": 12
+    },
+    {
+      "index": 3,
+      "mode": "control",
+      "duration_ms": 5095.561461,
+      "membership_status": "valid_control",
+      "membership_errors": [],
+      "membership_qualification_waived": false,
+      "errors": [
+        "Observation bound exceeds 5% or 250ms"
+      ],
+      "stages": [
+        {
+          "index": 0,
+          "documents": 6,
+          "nodes": 8224,
+          "used_heap_bytes": 1553752
+        },
+        {
+          "index": 1,
+          "documents": 8,
+          "nodes": 16428,
+          "used_heap_bytes": 1999380
+        },
+        {
+          "index": 2,
+          "documents": 10,
+          "nodes": 24632,
+          "used_heap_bytes": 2414092
+        },
+        {
+          "index": 3,
+          "documents": 12,
+          "nodes": 32836,
+          "used_heap_bytes": 2845552
+        },
+        {
+          "index": 4,
+          "documents": 14,
+          "nodes": 41040,
+          "used_heap_bytes": 3272260
+        },
+        {
+          "index": 5,
+          "documents": 16,
+          "nodes": 49244,
+          "used_heap_bytes": 3699416
+        },
+        {
+          "index": 6,
+          "documents": 18,
+          "nodes": 57448,
+          "used_heap_bytes": 4113160
+        },
+        {
+          "index": 7,
+          "documents": 20,
+          "nodes": 65652,
+          "used_heap_bytes": 4533512
+        },
+        {
+          "index": 8,
+          "documents": 22,
+          "nodes": 73856,
+          "used_heap_bytes": 4964404
+        },
+        {
+          "index": 9,
+          "documents": 24,
+          "nodes": 82060,
+          "used_heap_bytes": 5376392
+        },
+        {
+          "index": 10,
+          "documents": 26,
+          "nodes": 90264,
+          "used_heap_bytes": 5780532
+        },
+        {
+          "index": 11,
+          "documents": 28,
+          "nodes": 98468,
+          "used_heap_bytes": 6196380
+        }
+      ],
+      "observation_fraction_bound": 0.05358645148132774,
+      "maximum_observation_ms": 25.025364,
+      "status": "valid_control"
+    }
+  ],
+  "files_verified": 14,
+  "source_hashes_verified": 14
+}

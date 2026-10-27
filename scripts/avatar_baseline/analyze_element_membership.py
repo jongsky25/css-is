@@ -58,12 +58,12 @@ def join_receivers(events, spans):
 
 def inspect(p):
     protocol = p['protocol']
-    count = COUNT if protocol == 'native-element-membership-v1' else 128
-    if (p['status'] != 'captured' or protocol not in ['native-element-membership-v1', 'native-element-membership-v2']
+    count = COUNT if protocol == 'native-element-membership-v1' else 32 if protocol == 'native-element-membership-v3' else 128
+    if (p['status'] != 'captured' or protocol not in ['native-element-membership-v1', 'native-element-membership-v2', 'native-element-membership-v3']
         or p['acceptance'] is not False or p['forced_gc'] is not False or p['build_id'] != BUILD
         or p['browser_version'] != '156.0.8078.47' or p['frida_version'] != '17.5.1'
         or p['count_per_group'] != count or p['stage_count'] != STAGES
-        or (protocol == 'native-element-membership-v2' and p.get('fixture_count_per_group') != 4096)):
+        or (protocol in ['native-element-membership-v2', 'native-element-membership-v3'] and p.get('fixture_count_per_group') != 4096)):
         raise ValueError('Invalid capability identity or incomplete capture')
     if [s['index'] for s in p['stages']] != list(range(STAGES)) or p['end_ns'] <= p['begin_ns']:
         raise ValueError('Incomplete fixed schedule')
@@ -76,7 +76,7 @@ def inspect(p):
         for c in s['censuses']:
             if c['result']['count'] != count or len(c['result']['counts']) != count:
                 raise ValueError('Incomplete known-element census')
-            if protocol == 'native-element-membership-v2' and c['result'].get('fixture_count') != 4096:
+            if protocol in ['native-element-membership-v2', 'native-element-membership-v3'] and c['result'].get('fixture_count') != 4096:
                 raise ValueError('Wrong fixed fixture size')
             if any(v != 1 for v in c['result']['counts']):
                 raise ValueError('Unexpected geometry result')
@@ -152,7 +152,7 @@ def validate_identity(trace, capture):
 
 def audit(root, repo, ref):
     plan = json.loads((root / 'experiment.json').read_text())
-    if (plan['protocol'] not in ['native-element-membership-v1', 'native-element-membership-v2'] or plan['harness_commit'] != ref
+    if (plan['protocol'] not in ['native-element-membership-v1', 'native-element-membership-v2', 'native-element-membership-v3'] or plan['harness_commit'] != ref
         or plan['order'] != ['control', 'probe', 'probe', 'control'] or plan['acceptance'] is not False):
         raise ValueError('Invalid frozen calibration')
     result = {'acceptance': False, 'status': 'calibration_failed', 'cohorts': [], 'errors': [], 'files_verified': 0, 'source_hashes_verified': 0}
