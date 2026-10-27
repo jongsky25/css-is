@@ -25,6 +25,16 @@ seasonal administration, and accessibility behavior.
 A phase fails if its visuals remain essentially the same except for color changes,
 or if it exceeds a performance gate. Fix or reduce complexity before expanding it.
 
+## Latest offline analysis — GC/sweep ordering, still no 2B acceptance
+
+[Reader-retention report](avatars/increment2b/reader-retention/REPORT.md) covers all
+eight archived slots, re-audits the evidence and passes 30 focused tests. Major GC
+occurs inside the largest-gap snapshot, with native sweeping observed afterward;
+endpoint pooled native capacity differs materially. No new browser run, product
+change or waiver. Next evidence must identify native allocation ownership and
+separate component observation timing; existing 10 source and 16 repeat-control
+RSS failures stand. Do not select another cleanup fix from GC timing alone.
+
 ## Latest 2B verification — reader candidate does not clear memory
 
 Candidate `cf363bf`, harness `586f81c`: thread-owned session/appearance connection

@@ -1,0 +1,266 @@
+{
+  "acceptance": false,
+  "new_measurements": 0,
+  "members_verified": 82,
+  "slots": [
+    {
+      "index": 0,
+      "arm": "original",
+      "majors": 3,
+      "live_nodes": [
+        1038
+      ],
+      "documents": [
+        4,
+        6,
+        8,
+        4,
+        14
+      ],
+      "major_overlapping_mounts": [],
+      "bounds_crossing_trace_edge": [
+        10
+      ],
+      "anonymous_drops_at_least_5_mib": 0,
+      "drops_with_sweep_overlap": 0,
+      "uncovered_status_intervals": 4,
+      "status_intervals": 82,
+      "endpoint_blink_heap_mib": {
+        "allocated_objects_size": 22.610679626464844,
+        "committed_size": 30.125,
+        "effective_size": 7.514245986938477,
+        "pooled_size": 1.5,
+        "size": 30.125
+      }
+    },
+    {
+      "index": 1,
+      "arm": "current",
+      "majors": 2,
+      "live_nodes": [
+        1075
+      ],
+      "documents": [
+        15,
+        23,
+        25,
+        12,
+        6
+      ],
+      "major_overlapping_mounts": [
+        10
+      ],
+      "bounds_crossing_trace_edge": [
+        10
+      ],
+      "anonymous_drops_at_least_5_mib": 3,
+      "drops_with_sweep_overlap": 2,
+      "uncovered_status_intervals": 4,
+      "status_intervals": 78,
+      "endpoint_blink_heap_mib": {
+        "allocated_objects_size": 9.932037353515625,
+        "committed_size": 69.125,
+        "effective_size": 59.19289684295654,
+        "pooled_size": 38.25,
+        "size": 69.125
+      }
+    },
+    {
+      "index": 2,
+      "arm": "current",
+      "majors": 3,
+      "live_nodes": [
+        1075
+      ],
+      "documents": [
+        7,
+        15,
+        25,
+        2,
+        4
+      ],
+      "major_overlapping_mounts": [],
+      "bounds_crossing_trace_edge": [
+        10
+      ],
+      "anonymous_drops_at_least_5_mib": 1,
+      "drops_with_sweep_overlap": 1,
+      "uncovered_status_intervals": 4,
+      "status_intervals": 84,
+      "endpoint_blink_heap_mib": {
+        "allocated_objects_size": 7.283271789550781,
+        "committed_size": 56.25,
+        "effective_size": 48.96659564971924,
+        "pooled_size": 33.0,
+        "size": 56.25
+      }
+    },
+    {
+      "index": 3,
+      "arm": "original",
+      "majors": 3,
+      "live_nodes": [
+        1038
+      ],
+      "documents": [
+        16,
+        7,
+        6,
+        16,
+        4
+      ],
+      "major_overlapping_mounts": [],
+      "bounds_crossing_trace_edge": [],
+      "anonymous_drops_at_least_5_mib": 2,
+      "drops_with_sweep_overlap": 2,
+      "uncovered_status_intervals": 3,
+      "status_intervals": 80,
+      "endpoint_blink_heap_mib": {
+        "allocated_objects_size": 6.710960388183594,
+        "committed_size": 43.875,
+        "effective_size": 37.163883209228516,
+        "pooled_size": 14.875,
+        "size": 43.875
+      }
+    },
+    {
+      "index": 4,
+      "arm": "current",
+      "majors": 1,
+      "live_nodes": [
+        1075
+      ],
+      "documents": [
+        16,
+        24,
+        34,
+        44,
+        12
+      ],
+      "major_overlapping_mounts": [
+        15
+      ],
+      "bounds_crossing_trace_edge": [
+        10
+      ],
+      "anonymous_drops_at_least_5_mib": 2,
+      "drops_with_sweep_overlap": 2,
+      "uncovered_status_intervals": 4,
+      "status_intervals": 80,
+      "endpoint_blink_heap_mib": {
+        "allocated_objects_size": 20.51696014404297,
+        "committed_size": 85.375,
+        "effective_size": 64.8579273223877,
+        "pooled_size": 40.875,
+        "size": 85.375
+      }
+    },
+    {
+      "index": 5,
+      "arm": "original",
+      "majors": 1,
+      "live_nodes": [
+        1038
+      ],
+      "documents": [
+        16,
+        24,
+        12,
+        22,
+        32
+      ],
+      "major_overlapping_mounts": [],
+      "bounds_crossing_trace_edge": [],
+      "anonymous_drops_at_least_5_mib": 1,
+      "drops_with_sweep_overlap": 1,
+      "uncovered_status_intervals": 4,
+      "status_intervals": 83,
+      "endpoint_blink_heap_mib": {
+        "allocated_objects_size": 50.01532745361328,
+        "committed_size": 56.875,
+        "effective_size": 6.85943603515625,
+        "pooled_size": 0.0,
+        "size": 56.875
+      }
+    },
+    {
+      "index": 6,
+      "arm": "original",
+      "majors": 1,
+      "live_nodes": [
+        1038
+      ],
+      "documents": [
+        16,
+        24,
+        4,
+        14,
+        24
+      ],
+      "major_overlapping_mounts": [],
+      "bounds_crossing_trace_edge": [
+        10
+      ],
+      "anonymous_drops_at_least_5_mib": 1,
+      "drops_with_sweep_overlap": 1,
+      "uncovered_status_intervals": 4,
+      "status_intervals": 80,
+      "endpoint_blink_heap_mib": {
+        "allocated_objects_size": 38.943809509277344,
+        "committed_size": 63.375,
+        "effective_size": 24.43100357055664,
+        "pooled_size": 16.5,
+        "size": 63.375
+      }
+    },
+    {
+      "index": 7,
+      "arm": "current",
+      "majors": 2,
+      "live_nodes": [
+        1075
+      ],
+      "documents": [
+        15,
+        4,
+        14,
+        24,
+        6
+      ],
+      "major_overlapping_mounts": [],
+      "bounds_crossing_trace_edge": [
+        10
+      ],
+      "anonymous_drops_at_least_5_mib": 2,
+      "drops_with_sweep_overlap": 2,
+      "uncovered_status_intervals": 4,
+      "status_intervals": 81,
+      "endpoint_blink_heap_mib": {
+        "allocated_objects_size": 11.386116027832031,
+        "committed_size": 52.75,
+        "effective_size": 41.36387348175049,
+        "pooled_size": 17.25,
+        "size": 52.75
+      }
+    }
+  ],
+  "slot4_navigation15": {
+    "snapshot_trace_bounds_us": [
+      18793863430.488,
+      18793938752.673
+    ],
+    "major_start_us": 18793880635,
+    "major_end_us": 18793895247,
+    "last_observed_sweep_end_us": 18793996066,
+    "sweep_after_snapshot_upper_bound_ms": 57.313326999664305,
+    "major_heap_before_mib": 18.162479400634766,
+    "major_heap_after_mib": 5.1497039794921875,
+    "snapshot_js_heap_mib": 5.150272369384766
+  },
+  "slot4_minus7_navigation15_app_status_mib": {
+    "VmRSS": 60.3515625,
+    "RssAnon": 60.01171875,
+    "RssFile": -0.04296875,
+    "RssShmem": 0.3828125
+  }
+}

@@ -28,6 +28,27 @@ trigger it as an acceptance audit of the cancelled cohort. No later increments,
 merge to main or deployment occurred. The historical handoff below is superseded by this
 correction wherever it suggests CI success establishes complete memory acceptance.
 
+## Offline reader-trace analysis — native sweeping overlaps snapshots
+
+[Latest analysis](avatars/increment2b/reader-retention/REPORT.md) independently
+re-audits the 82-member comparison archive and analyzes all eight slots without
+new browser measurements. Thirty focused tests pass. At the largest same-source
+gap (slot 4, navigation 15), MajorGC occurs inside the snapshot bracket and native
+sweeping continues at least 57.313ms beyond its upper bound. Snapshot components
+are sequential, so low JS heap and high document/RSS counts are not an atomic
+state. Eleven of twelve >=5MiB anonymous drops overlap native sweeping. Trace gaps
+and six boundary-straddling checkpoint envelopes remain explicit, not excluded.
+
+Endpoint Blink heap: slots 4/7 committed 85.375/52.750MiB, allocated objects
+20.517/11.386MiB, pooled 40.875/17.250MiB. These are not additive RSS or nav-15
+allocations. Natural cleanup and retained capacity are supported; avatar reference
+ownership is still not established. No speculative product cleanup or acceptance
+rerun is justified. Next evidence must identify DOM/style/SVG native allocation
+ownership in the transient state; per-component snapshot timing must distinguish
+the exposed ordering ambiguity. Prior native samples/post-GC snapshots did not
+answer this; do not repeat them unchanged. Existing memory failures stand, no
+active process, 2B and all later increments remain blocked.
+
 ## Reader candidate tested — calibration passes, memory still blocks 2B
 
 [Latest report](avatars/increment2b/sqlite-reader/REPORT.md): candidate `cf363bf`

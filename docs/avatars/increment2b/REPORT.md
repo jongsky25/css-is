@@ -1,5 +1,15 @@
 # Increment 2B — acceptance withdrawn: uncovered memory failures
 
+## Reader retention analyzed offline — no supported product fix yet
+
+[All-slot analysis](reader-retention/REPORT.md) re-verifies the 82-member archive;
+30 tests pass. The largest gap's snapshot overlaps major GC, with native sweeping
+continuing 57.313ms beyond the snapshot bound. Eleven of twelve >=5MiB anonymous
+releases overlap native sweeping; later dumps retain different pooled capacity.
+No byte ownership, persistent leak or new product fix is established. This adds
+ordering evidence without replacing failures or running new samples. Allocation
+ownership and component-level observation timing remain the next gaps. 2B blocked.
+
 ## Reader candidate: calibration passed; fixed memory screen failed
 
 [Latest evidence](sqlite-reader/REPORT.md): `cf363bf` implements thread-owned
