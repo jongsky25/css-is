@@ -92,3 +92,22 @@ def test_missing_reclamation_or_request_coverage_is_failure_not_extrapolated(mon
     result = analysis.inspect(p)
     assert result['matched_fraction'] == 0
     assert any('below 90%' in e for e in result['errors'])
+
+
+def test_identity_trace_and_hook_process_must_agree():
+    trace = {'traceEvents': [{'name': 'CommitLoad', 'pid': 7,
+             'args': {'data': {'url': 'http://127.0.0.1:123/empty'}}}]}
+    p = {'pid': 7, 'mode': 'probe', 'messages': [{'payload': {'ready': True, 'pid': 7}}]}
+    analysis.validate_identity(trace, p)
+    bad = deepcopy(p); bad['messages'][0]['payload']['pid'] = 8
+    with pytest.raises(ValueError, match='process mismatch'): analysis.validate_identity(trace, bad)
+    bad = deepcopy(p); bad['pid'] = 8
+    with pytest.raises(ValueError, match='identity mismatch'): analysis.validate_identity(trace, bad)
+    with pytest.raises(ValueError): analysis.validate_identity({'traceEvents': []}, p)
+
+
+def test_v2_profile_rejects_wrong_fixed_body_or_selected_count(monkeypatch):
+    p = specimen(monkeypatch); p['protocol'] = 'native-element-membership-v2'
+    with pytest.raises(ValueError, match='identity'): analysis.inspect(p)
+    p['count_per_group'] = 128; p['fixture_count_per_group'] = 4096
+    with pytest.raises(ValueError, match='census'): analysis.inspect(p)

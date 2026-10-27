@@ -2,7 +2,7 @@
 
 Last updated: **2026-10-27 UTC**. Repository: `jongsky25/css-is`.
 
-## Start here — Sol handoff, current after component-order calibration
+## Start here — Sol handoff, current after native membership capability
 
 **Objective: unblock 2B only. Do not start or resume 3A or later increments.**
 This section supersedes older next-step instructions below. The chronology is
@@ -11,9 +11,10 @@ retained as evidence, not a queue of experiments to repeat.
 ### Checkout and current state
 
 - Repository: `jongsky25/css-is`; resume `codex/avatar-2b-verification`.
-- Latest completed experiment: component-order calibration, harness `f84ef99`.
-  Its evidence/report follow on this branch; use latest HEAD, not a reset to the
-  harness commit. Prior gradient experiment remains preserved in `dc06be8`.
+- Latest completed experiments: native element-membership v1/v2, harnesses
+  `3375008` / `02f59cb`. Both fail through-reclamation capability; no application
+  collection. Use latest branch HEAD for reports, audits and evidence, not a
+  reset to a harness commit. Prior experiments remain preserved.
 - Comparison baseline: `1c964dcba2fa19de1eab077b00e0e5748d742554`.
 - Current experimental product: `cf363bfe547d5e23619eee28cdaf68bd4b6d7753`,
   including the thread-owned reader candidate and avatar product `f700187`.
@@ -44,11 +45,12 @@ markup and improves navigation 20 in both orders, but those partial benefits
 cannot override the failed gates. This screen compares current versus candidate;
 it is not the complete original-versus-candidate acceptance matrix.
 
-Latest diagnostic: [component-order calibration](avatars/increment2b/snapshot-ordering/REPORT.md)
-completed all four current-only workloads, but fails natural-GC/sweep coverage in
-slot 1. Timing/control-duration gates pass; 128 source hashes and 30 files verify,
-and the reconstructed archive re-audits identically. No source comparison ran.
-This result does not qualify a product fix or override any memory failure.
+Latest diagnostic: [native element membership](avatars/increment2b/native-element-membership/REPORT.md)
+completes two distinct fixed four-slot synthetic schedules. V2 maps all selected
+native receivers to observed page generations within the timing budgets, but no
+pool-return call is observed. Reclamation capability remains failed; no application
+collection or product fix follows. Both extracted archives re-audit identically.
+Earlier component-order calibration remains failed, not superseded by a pass.
 
 There is no defensible percentage or ETA. At least three milestones remain:
 
@@ -68,39 +70,37 @@ verification**. No candidate currently qualifies to unblock 2B.
 
 Read these in order before changing code or launching browsers:
 
-1. [Component-order result](avatars/increment2b/snapshot-ordering/REPORT.md), its
-   frozen protocol, retained-samples review and corrected/initial calibration audits.
-2. [Latest product candidate](avatars/increment2b/shared-cat-gradients/REPORT.md),
-   its protocol, preconditions and memory assessment.
-3. [Corrected overall 2B report](avatars/increment2b/REPORT.md) and the
-   [plan's acceptance gates](AVATAR_VISUAL_UPGRADE_PLAN.md#performance-acceptance-gates).
+1. [Native membership result](avatars/increment2b/native-element-membership/REPORT.md),
+   both frozen protocols, v1/v2 strengthened audits and retained initial v1 audit.
+2. [Component-order result](avatars/increment2b/snapshot-ordering/REPORT.md), its
+   protocol, sample review and failed calibration; do not repeat it unchanged.
+3. [Product candidate](avatars/increment2b/shared-cat-gradients/REPORT.md), the
+   [overall 2B report](avatars/increment2b/REPORT.md) and
+   [acceptance gates](AVATAR_VISUAL_UPGRADE_PLAN.md#performance-acceptance-gates).
 4. [Native page history](avatars/increment2b/page-history-application/REPORT.md),
-   [reader retention](avatars/increment2b/reader-retention/REPORT.md), and
-   [native type inventory](avatars/increment2b/native-type-ownership/REPORT.md).
-5. Before teardown or stylesheet changes, read the failed
-   [lifecycle candidate](avatars/increment2b/lifecycle-memory-fix/REPORT.md) and
-   [shared stylesheet candidate](avatars/increment2b/shared-stylesheet/REPORT.md).
+   [reader retention](avatars/increment2b/reader-retention/REPORT.md),
+   [native type inventory](avatars/increment2b/native-type-ownership/REPORT.md), and
+   failed [lifecycle](avatars/increment2b/lifecycle-memory-fix/REPORT.md) /
+   [stylesheet](avatars/increment2b/shared-stylesheet/REPORT.md) candidates.
 
-The retained gradient archive has now been reconstructed and re-audited identically;
-all 40 navigation samples and 32 adjacent intervals were reviewed. That decision
-step must not be repeated as though unfinished. The new component-order harness
-preserves exact original calls and timestamps them, but its fixed current-only
-calibration fails: one probe has no recorded navigation collection/sweeping. No
-slot replacement or source comparison is authorized by that result. Both traces
-cover every component at navigation 5/10; the other probe has no recorded GC
-interval overlapping those component brackets. This does not establish historical
-ordering or identify owners of pooled capacity. The navigation-20 conservative
-clock-boundary limitation and initial auditor reporting failure remain explicit.
+The native membership probe now demonstrates a specific source-labelled element
+address inside a captured normal-page generation. V1 fails coverage/reclamation/
+timing; the distinct v2 corrects coverage and cost with fixed larger documents and
+a smaller fixed census. Both v2 probes map all 6,144 selected receiver observations,
+including 12 mixed-group generations, but record zero pool-return calls. No
+application run is qualified. This is live membership, not exclusive page ownership,
+retained bytes, a strong retaining path or complete allocation history. getClientRects
+can flush layout and allocates rectangle objects; injection is not acceptance RSS.
 
-Next identify a concrete source-ownership discriminant for native allocations
-carried from earlier scenarios into navigation. Prove coverage on a controlled
-fixture before a new application probe, and freeze revised capture-window,
-coverage and overhead gates before collection. Do not simply repeat this
-calibration for collection events, extend tracing solely until an event appears,
-or run another post-GC dump. Component timing is implemented; source-linked
-allocation/reclamation ownership is still missing. The next product fix is
-**not established**. Preserve all failures; no speculative teardown, gradient
-expansion, unchanged acceptance rerun or budget waiver.
+Next inspect the exact browser's ordinary document/history lifecycle and page
+release paths. The missing discriminator is whether the synthetic documents are
+held by navigation/history state, have not naturally collected, or were partially
+reclaimed while pages remain occupied. Existing membership captures do not record
+document-disposition or natural-GC chronology. Establish a controlled fixture's
+intended document lifetime and relevant natural release-path coverage before any
+new application probe. Do not repeat either unchanged fixture, extend it solely
+until a return appears, lower coverage gates, force collection or invent page
+ownership from a requesting stack. No next product fix is established.
 
 ### Important traps and execution constraints
 
@@ -123,13 +123,13 @@ expansion, unchanged acceptance rerun or budget waiver.
 ### Copy into the new Sol session
 
 > Continue jongsky25/css-is on codex/avatar-2b-verification using Sol. Read the
-> authoritative “Start here — Sol handoff” section in docs/AVATAR_UPGRADE_HANDOFF.md
-> and the snapshot-ordering report. Goal: unblock 2B only, not 3A. Harness f84ef99
-> completed four current-only slots but failed natural-GC/sweep coverage in slot 1;
-> no source comparison ran. Gradient candidate cd94bf3 still fails its memory screen.
-> Next establish a concrete native-allocation source-ownership discriminant and
-> controlled-fixture coverage before freezing a revised diagnostic. Do not replace
-> the failed slot, repeat unchanged runs for favorable collection, or waive budgets.
+> authoritative Start here section and native-element-membership report. Goal:
+> unblock 2B only. Synthetic v1/v2 (3375008 / 02f59cb) both fail reclamation coverage;
+> v2 demonstrates complete sampled receiver/page membership within timing gates,
+> but neither probe observes a pool return. No application run or product change.
+> Next establish controlled document/history lifetime and natural release-path
+> observability on the exact browser. Preserve all failed gates; no unchanged
+> favorable rerun, forced GC, waiver, 3A, merge or deployment.
 
 ## Current blocking correction
 

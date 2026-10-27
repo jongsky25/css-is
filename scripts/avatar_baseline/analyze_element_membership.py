@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 import subprocess
 from scripts.avatar_baseline.element_membership_capability import BUILD, COUNT, STAGES
+from scripts.avatar_baseline.run_element_membership import SOURCES
 
 OFFSETS = {'allocate': 0x5ab0350, 'pool': 0x5ab0550, 'receiver': 0x100b1880}
 PAGE_SIZE = 131072
@@ -137,13 +138,29 @@ def inspect(p):
     return result
 
 
+def validate_identity(trace, capture):
+    pids = {e['pid'] for e in trace['traceEvents'] if e.get('name') == 'CommitLoad'
+            and e.get('args', {}).get('data', {}).get('url', '').startswith('http://127.0.0.1:')
+            and e['args']['data']['url'].endswith('/empty')}
+    if pids != {capture['pid']}:
+        raise ValueError('Independent renderer identity mismatch')
+    if capture['mode'] == 'probe':
+        ready = [m['payload'] for m in capture['messages'] if m.get('payload', {}).get('ready')]
+        if len(ready) != 1 or ready[0]['pid'] != capture['pid']:
+            raise ValueError('Native receiver process mismatch')
+
+
 def audit(root, repo, ref):
     plan = json.loads((root / 'experiment.json').read_text())
     if (plan['protocol'] not in ['native-element-membership-v1', 'native-element-membership-v2'] or plan['harness_commit'] != ref
         or plan['order'] != ['control', 'probe', 'probe', 'control'] or plan['acceptance'] is not False):
         raise ValueError('Invalid frozen calibration')
-    result = {'acceptance': False, 'status': 'calibration_failed', 'cohorts': [], 'errors': [], 'files_verified': 0}
+    result = {'acceptance': False, 'status': 'calibration_failed', 'cohorts': [], 'errors': [], 'files_verified': 0, 'source_hashes_verified': 0}
     if len(plan['cohorts']) != 4: raise ValueError('Incomplete calibration schedule')
+    for name in SOURCES:
+        raw = subprocess.check_output(['git', 'show', ref + ':' + name], cwd=repo)
+        if (root / 'harness' / name).read_bytes() != raw: raise ValueError('Archived harness mismatch')
+        result['source_hashes_verified'] += 1
     runner = 'scripts/avatar_baseline/element_membership_capability.py'
     hook = 'scripts/avatar_baseline/native/element_membership.js'
     for index, entry in enumerate(plan['cohorts']):
@@ -164,6 +181,9 @@ def audit(root, repo, ref):
             for name, key in [(runner, 'runner_sha256'), (hook, 'hook_sha256')]:
                 raw = subprocess.check_output(['git', 'show', ref + ':' + name], cwd=repo)
                 if hashlib.sha256(raw).hexdigest() != p[key]: raise ValueError('Runtime probe identity mismatch')
+                result['source_hashes_verified'] += 1
+            trace = json.loads((folder / 'identity.json').read_text())
+            validate_identity(trace, p)
             row.update(inspect(p))
             if row['errors']: result['errors'].extend(f'Slot {index}: {e}' for e in row['errors'])
         except (ValueError, OSError, KeyError, TypeError) as e:

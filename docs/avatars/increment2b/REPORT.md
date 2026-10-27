@@ -8,10 +8,23 @@ with stable controls. Remaining milestones: a supported fix, qualified candidate
 validation, then complete original-baseline acceptance across all device/cache
 and scenario groups. No defensible percentage or ETA is established.
 
-Use the [Sol restart handoff](../../AVATAR_UPGRADE_HANDOFF.md#start-here--sol-handoff-current-after-component-order-calibration)
+Use the [Sol restart handoff](../../AVATAR_UPGRADE_HANDOFF.md#start-here--sol-handoff-current-after-native-membership-capability)
 for current source identities, evidence order, next bounded work and constraints.
-The component-order diagnostic below is the latest completed experiment.
+The native element-membership diagnostic below is the latest completed experiment.
 Older next-step instructions in this report are historical where superseded.
+
+## Native element membership — live coverage passes, reclamation unqualified
+
+[Latest report](native-element-membership/REPORT.md): two distinct frozen four-slot synthetic experiments complete.
+V1 (3375008) fails first-document page coverage, pool-return coverage and paired timing.
+V2 (02f59cb) uses larger fixed documents and a smaller predetermined census: both
+probes map all 6,144 receiver observations to captured page generations, demonstrate
+12 mixed-group generations, and pass unchanged timing gates. Neither records a
+pool-return call, so reclamation capability fails and no application collection
+runs. Both 17-file archives re-audit identically; 12 source identities / 12 cohort
+files verify per experiment; 28 focused tests pass. No production source change,
+fix, acceptance or 3A advance. Next establish document/history lifetime and natural
+release-path observability on the controlled fixture before application use.
 
 ## Component-order diagnostic — calibration failed coverage
 

@@ -1,0 +1,25 @@
+{
+  "archive_sha256": "e59097ed663417fe9b57a3cd00174cb873ef200165b71335db08fcf426e35bdf",
+  "logical_files": 17,
+  "unique_blobs": 17,
+  "paths": {
+    "calibration/0-control/capture.json.gz": "670b13560890d349d940f9223813e655dffdd0b9299531217a7acc7e8cfd00da",
+    "calibration/0-control/identity.json": "4a2d1469c6f6cad2ff32f0743fa88f20685def04bfb970626371b54a9f678e8d",
+    "calibration/0-control/runner.txt": "650d46fefb2c0235ee1aba8b8beea6961e76c5426383322541b816ca9d00f64b",
+    "calibration/1-probe/capture.json.gz": "6489bdf0af8e5c96625154e2e83d2e16fc153f8d5c8e0c589a0c4efad9641b75",
+    "calibration/1-probe/identity.json": "51f6dcb845e6966dbe80795381a02aaf3170e42410b18663aa84495f8f63ff14",
+    "calibration/1-probe/runner.txt": "a9a19ecf834023767e00e6972234d51030d0fcc759522816ead0637a1af339c7",
+    "calibration/2-probe/capture.json.gz": "32ec3686d0e0f36a05fe2984207017c43a532779c65b3d8e7cb3c9f53ac3da6b",
+    "calibration/2-probe/identity.json": "a06d9b591dc4ef6252959cb1e4e2d18876f68c63df1dd39f5b9225a0f2de05c7",
+    "calibration/2-probe/runner.txt": "899b7aff4126c1bbf072c2ff42689623645263939d59b84d93fef515ae61d8a9",
+    "calibration/3-control/capture.json.gz": "248c8ef462c09e95a14a05456ca605eb34725a629a21e032970ef66bc4cc0409",
+    "calibration/3-control/identity.json": "b5b7a6bdc01e2b32d51a5d522d186b03fbd42507fd84f5b7123a17232c2dbd90",
+    "calibration/3-control/runner.txt": "c9ee3fe94ed6e6db233b252df1b3864b5b59f0fbe0ec7c99eaf3d010003c393d",
+    "calibration/experiment.json": "c08c7650a26b7bb948e27e32aea7e9528abde3bee25fd4f78be9ca800609bc81",
+    "calibration/harness/scripts/avatar_baseline/analyze_element_membership.py": "d14b5648482d08c73e2dc3812d7c05c8f30407a68115d0f327a51697c7f787bf",
+    "calibration/harness/scripts/avatar_baseline/element_membership_capability.py": "22068a950dd0d65293dfe660f6d5202bb30a7e44e81bb4f335e5daba37fd91be",
+    "calibration/harness/scripts/avatar_baseline/native/element_membership.js": "dfb828649ed3821d70f604856f4ab4cf799ee3a3a74b8ecbafa76cc20085c35e",
+    "calibration/harness/scripts/avatar_baseline/run_element_membership.py": "c1caa1eda99182a572394f870861555f2a1305841d42b6bdce50ceaf1b394b0e"
+  },
+  "hardened_reconstructed_audit_identical": true
+}

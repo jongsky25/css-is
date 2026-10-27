@@ -21,5 +21,6 @@
     "calibration/harness/scripts/avatar_baseline/native/element_membership.js": "dfb828649ed3821d70f604856f4ab4cf799ee3a3a74b8ecbafa76cc20085c35e",
     "calibration/harness/scripts/avatar_baseline/run_element_membership.py": "534eef2f20e12291a4513b81d701d9be7ef0e115aba75f02c936ab7f1a8d6724"
   },
-  "reconstructed_audit_identical": true
+  "reconstructed_audit_identical": true,
+  "hardened_reconstructed_audit_identical": true
 }
