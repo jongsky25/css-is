@@ -11,6 +11,7 @@ import sys
 from scripts.avatar_baseline.analyze_paired_variance import REFS, expected_fixture, required_sources, slot_points, source
 from scripts.avatar_baseline.analyze_navigation_residency import join_dump
 from scripts.avatar_baseline.analyze_scheduler import scheduler_observation
+from scripts.avatar_baseline.analyze_cpu_profiles import python_summary, js_summary, trace_cpu
 
 PROBE = 'tests/test_avatar_navigation_light_browser.py'
 HARNESS = ['tests/test_avatar_baseline_browser.py', 'tests/avatar_browser_fixture.py', PROBE]
@@ -46,7 +47,7 @@ def clocks(events, names):
 def inspect_capture(folder, provenance, raw):
     p = provenance
     mode = p['mode']
-    if p['protocol'] not in ('navigation-light-v3', 'navigation-light-v4', 'navigation-light-v5', 'navigation-light-v6') or p['acceptance'] is not False or p['forced_gc'] is not False:
+    if p['protocol'] not in ('navigation-light-v3', 'navigation-light-v4', 'navigation-light-v5', 'navigation-light-v6', 'navigation-cpu-v1') or p['acceptance'] is not False or p['forced_gc'] is not False:
         raise ValueError('Invalid capture protocol')
     if p['snapshots'] != 13 or p['mount'] != 20 or [c['mount'] for c in p['checkpoints']] != [1, 5, 10, 15, 20]:
         raise ValueError('Incomplete navigation')
@@ -72,7 +73,7 @@ def inspect_capture(folder, provenance, raw):
               'max_rotation_ms': max(rotations) / 1e6, 'trace_segments': [], 'endpoint': None}
     if len(p['segments']) != (nav_segments + 1 if mode == 'trace' else 0):
         raise ValueError('Incorrect segment count')
-    if p['protocol'] in ('navigation-light-v5', 'navigation-light-v6') and mode == 'trace':
+    if p['protocol'] in ('navigation-light-v5', 'navigation-light-v6', 'navigation-cpu-v1') and mode == 'trace':
         transfers = p.get('transfers', [])
         if [t['number'] for t in transfers] != list(range(nav_segments + 1)):
             raise ValueError('Missing deferred transfers')
@@ -174,14 +175,35 @@ def inspect_capture(folder, provenance, raw):
                         'overlapping_gc_events': gc})
             previous = point
         result['minimum_anonymous_step_bytes'] = min(anon)
-    if p['protocol'] == 'navigation-light-v6':
+    if p['protocol'] in ('navigation-light-v6', 'navigation-cpu-v1'):
         result['scheduler'] = scheduler_observation(p)
+    if p['protocol'] == 'navigation-cpu-v1':
+        if p['cpu_profile_enabled'] != (mode == 'trace'):
+            raise ValueError('CPU profile mode mismatch')
+        if mode == 'trace':
+            profile = json.load(gzip.open(folder / 'cpu-profiles.json.gz','rt'))
+            if not (p['navigation_begin_ns'] <= profile['start_ns'] <= profile['start_end_ns'] <= p['navigation_intervals'][0]['begin_ns'] and
+                    p['navigation_end_ns'] <= profile['stop_begin_ns'] <= profile['python_end_ns'] <= profile['js_end_ns']):
+                raise ValueError('CPU profiles do not bound navigation')
+            if profile['js_sampling_interval_us'] != 2000:
+                raise ValueError('CPU sample interval mismatch')
+            def trace_bound(host_ns, inward):
+                host_us = host_ns/1000
+                anchor = min(anchors,key=lambda a:abs(a['host_us']-host_us))
+                return anchor['trace_us']+host_us-anchor['host_us']+inward*anchor['uncertainty_us']
+            window = [trace_bound(p['navigation_begin_ns'],1),trace_bound(p['navigation_end_ns'],-1)]
+            result['cpu_profiles'] = {'python':python_summary(profile),'js':js_summary(profile['js']),
+                                      'native_trace':trace_cpu(all_events,pid,window),
+                                      'post_window_python_tail_ms':(profile['python_end_ns']-p['navigation_end_ns'])/1e6,
+                                      'post_window_js_tail_ms':(profile['js_end_ns']-p['navigation_end_ns'])/1e6}
+        elif (folder / 'cpu-profiles.json.gz').exists():
+            raise ValueError('Unexpected CPU profile in control')
     return result
 
 
 def comparisons(cohorts, phase):
     pairs = [('calibration-forward', 0, 1), ('calibration-reverse', 3, 2),
-             ('calibration-control', 0, 3), ('calibration-trace-repeat', 1, 2)] if phase == 'calibration' else [
+             ('calibration-control', 0, 3), ('calibration-trace-repeat', 1, 2)] if phase != 'comparison' else [
              ('source-forward-0', 0, 1), ('source-reverse-0', 3, 2),
              ('original-control-0', 0, 3), ('current-control-0', 1, 2),
              ('source-reverse-1', 5, 4), ('source-forward-1', 6, 7),
@@ -211,23 +233,29 @@ def audit(root, repo, ref):
               'errors': [], 'cohorts': [], 'files_verified': 0, 'source_hashes_verified': 0}
     plan = json.loads((root / 'experiment.json').read_text())
     phase = plan['phase']
-    blocks = [['current'] * 4] if phase == 'calibration' else BLOCKS
-    if (phase not in ('calibration', 'comparison') or plan['protocol'] not in ('navigation-light-v3', 'navigation-light-v4', 'navigation-light-v5', 'navigation-light-v6') or
+    blocks = [['current'] * 4] if phase != 'comparison' else BLOCKS
+    if (phase not in ('calibration', 'comparison', 'cpu-attribution') or plan['protocol'] not in ('navigation-light-v3', 'navigation-light-v4', 'navigation-light-v5', 'navigation-light-v6', 'navigation-cpu-v1') or
         plan['harness_commit'] != ref or plan['refs'] != REFS or plan['blocks'] != blocks or
         plan['acceptance'] is not False or plan['seconds'] != 30 or plan['samples_per_slot'] != 1 or
         plan['fixture_adapter'] != 'sample-ordinal-v1' or plan['browser'] != '156.0.8078.47' or
         plan['budget_bytes'] != BUDGET or len(plan['cohorts']) != 4 * len(blocks)):
         raise ValueError('Protocol identity mismatch')
+    if (phase == 'cpu-attribution') != (plan['protocol'] == 'navigation-cpu-v1'):
+        raise ValueError('CPU attribution phase/protocol mismatch')
     result['phase'] = phase
     result['protocol'] = plan['protocol']
-    harness = HARNESS + (['tests/avatar_scheduler_probe.py'] if plan['protocol'] == 'navigation-light-v6' else [])
+    probe = 'tests/test_avatar_navigation_cpu_browser.py' if plan['protocol'] == 'navigation-cpu-v1' else PROBE
+    harness = [*HARNESS[:-1], probe] + (['tests/avatar_scheduler_probe.py'] if plan['protocol'] in ('navigation-light-v6', 'navigation-cpu-v1') else [])
+    if plan['protocol'] == 'navigation-cpu-v1':
+        harness += ['tests/avatar_cpu_probe.py']
+        if phase != 'cpu-attribution':raise ValueError('CPU attribution cannot enter acceptance comparison')
     for name in harness:
         if (root / 'harness' / name).read_bytes() != expected_fixture(repo, ref, name):
             raise ValueError('Harness identity mismatch')
     for i, entry in enumerate(plan['cohorts']):
         block, pos = divmod(i, 4)
         arm = blocks[block][pos]
-        mode = 'control' if phase == 'calibration' and pos in (0, 3) else 'trace'
+        mode = 'control' if phase != 'comparison' and pos in (0, 3) else 'trace'
         row = {'index': i, 'arm': arm, 'mode': mode, 'status': 'invalid_capture'}
         result['cohorts'].append(row)
         try:
@@ -237,6 +265,7 @@ def audit(root, repo, ref):
             required = {'environment.json', 'runner.txt', 'junit.xml', 'light-provenance.json', 'False-warm.json'}
             if mode == 'trace':
                 required.update(f'trace-{n}.json.gz' for n in range(5 if plan['protocol'] == 'navigation-light-v3' else 3))
+            if plan['protocol'] == 'navigation-cpu-v1' and mode == 'trace':required.add('cpu-profiles.json.gz')
             if not required <= entry['files_sha256'].keys():
                 raise ValueError('Missing required files')
             for name, digest in entry['files_sha256'].items():
@@ -252,12 +281,16 @@ def audit(root, repo, ref):
                     raise ValueError('Source hash mismatch')
                 result['source_hashes_verified'] += 1
             p = json.loads((folder / 'light-provenance.json').read_text())
-            if p['protocol'] != plan['protocol'] or p['mode'] != mode or p['probe_sha256'] != hashlib.sha256(source(repo, ref, PROBE)).hexdigest():
+            if p['protocol'] != plan['protocol'] or p['mode'] != mode or p['probe_sha256'] != hashlib.sha256(source(repo, ref, probe)).hexdigest():
                 raise ValueError('Probe hash mismatch')
             result['source_hashes_verified'] += 1
-            if plan['protocol'] == 'navigation-light-v6':
+            if plan['protocol'] in ('navigation-light-v6', 'navigation-cpu-v1'):
                 if p['scheduler_probe_sha256'] != hashlib.sha256(source(repo, ref, 'tests/avatar_scheduler_probe.py')).hexdigest():
                     raise ValueError('Scheduler probe hash mismatch')
+                result['source_hashes_verified'] += 1
+            if plan['protocol'] == 'navigation-cpu-v1':
+                if p['cpu_probe_sha256'] != hashlib.sha256(source(repo, ref, 'tests/avatar_cpu_probe.py')).hexdigest():
+                    raise ValueError('CPU probe hash mismatch')
                 result['source_hashes_verified'] += 1
             raw_path = folder / 'False-warm.json'
             if hashlib.sha256(raw_path.read_bytes()).hexdigest() != entry['raw_sha256']:
@@ -271,9 +304,12 @@ def audit(root, repo, ref):
             row['reason'] = str(error)
             result['errors'].append(f'Slot {i}: {error}')
     result['comparisons'] = comparisons(result['cohorts'], phase)
-    if phase == 'calibration':
+    if phase in ('calibration', 'cpu-attribution'):
         result['gate_errors'] = calibration_gate(result['cohorts'])
-        if not result['errors'] and not result['gate_errors']:
+        if phase == 'cpu-attribution' and not result['errors']:
+            result['status'] = 'complete_cpu_diagnostic'
+            result['calibration_qualified'] = False
+        elif not result['errors'] and not result['gate_errors']:
             result['status'] = 'calibration_passed'
     elif not result['errors']:
         # Instrumentation limits remain checked for every comparison slot.
@@ -294,4 +330,4 @@ if __name__ == '__main__':
     result = audit(args.root, repo, ref)
     args.out.write_text(json.dumps(result, indent=2) + '\n')
     print(json.dumps({k: result.get(k) for k in ['status', 'errors', 'gate_errors', 'files_verified', 'source_hashes_verified']}))
-    sys.exit(result['status'] not in ('calibration_passed', 'complete_diagnostic'))
+    sys.exit(result['status'] not in ('calibration_passed', 'complete_diagnostic', 'complete_cpu_diagnostic'))
