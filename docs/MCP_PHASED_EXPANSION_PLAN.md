@@ -1,6 +1,6 @@
 # Office Connect MCP expansion plan
 
-Status: **Incremental implementation**, updated October 27, 2026. Baseline: the read-only MCP expansion in v8.35 (PR #444). M1 reads and default-off M2.1 through M2.6 and M3.1 acknowledgement, M3.2 task-submission and M3.3 supply-submission and M3.4 travel-review-request pilots are implemented as recorded below. Existing OAuth grants are not widened. Hosted write acceptance remains separate from implementation.
+Status: **Incremental implementation**, updated October 27, 2026. Baseline: the read-only MCP expansion in v8.35 (PR #444). M1 reads and default-off M2.1 through M2.6 and M3.1 acknowledgement, M3.2 task-submission and M3.3 supply-submission and M3.4 travel-review-request and M3.5 paper-submission-record pilots are implemented as recorded below. Existing OAuth grants are not widened. Hosted write acceptance remains separate from implementation.
 
 ## Goal and boundary
 
@@ -381,3 +381,22 @@ See [M3.4 setup, delivery semantics and acceptance](MCP_TRAVEL_REVIEW_PILOT.md).
 Hosted write acceptance remains pending; no switch is enabled. Paper approval,
 ready/submitted status, generation, payment and other M3/M4 actions remain
 outside this increment.
+
+M3.4 merged in [PR #500](https://github.com/jongsky25/css-is/pull/500), commit
+`0ae91f1e8960512ae87c93cff91f1fb42295a846`.
+
+### M3.5 implementation — v8.89
+
+Separate default-off `travel:filing:submit` consent reads current eligibility/stamp
+and prepares recording a physical paper handover that the owner confirms already
+happened. Browser review shows the Ready source and print checklist; the action
+rechecks current completeness/review policy and full source snapshot before the
+existing domain service records Submitted under a caller-owned transaction.
+Status/timestamps, handover/audits and durable receipt commit atomically.
+
+Recovery reports the original owner attestation, Submitted time and traveller
+follow-up role, without claiming office receipt, approval or payment. Exact
+retries and independent keys do not duplicate the record. No Ready transition,
+signing, dispatch/upload, review decision, email, stock or financial effect is
+added. See [M3.5 setup and acceptance](MCP_TRAVEL_SUBMISSION_PILOT.md). Hosted
+acceptance remains pending; no switch is enabled. Other M3/M4 work remains separate.

@@ -1,0 +1,33 @@
+{% extends "dash_layout.html" %}
+{% block title %}Review travel paper submission — Office Connect{% endblock %}
+{% block content %}
+<div style="max-width:44rem;margin:auto;overflow-wrap:anywhere">
+{% if result.status == 'completed' %}
+<h1>Paper submission recorded</h1>
+<p>Recorded at {{ result.completed_at }} from your confirmation that the papers were already handed in. Filing status became Submitted at {{ result.submitted_at }}. This is the original record; later source changes are separate.</p>
+<p>Keep your copies and follow up with the receiving office. This records your handover; it does not confirm office receipt, claim approval or payment.</p>
+<p><a href="{{ result.web_url }}">Open my submitted filing</a></p>
+{% else %}
+<h1>Record this paper submission?</h1>
+<dl>
+<dt>Filing</dt><dd>{{ result.snapshot.reference }} · {{ result.snapshot.title }}</dd>
+<dt>Activity dates</dt><dd>{{ result.snapshot.start }} to {{ result.snapshot.end }}</dd>
+<dt>Expected update stamp</dt><dd>{{ result.fields.expected_updated_at }}</dd>
+<dt>Change</dt><dd>Ready → Submitted</dd>
+<dt>Paper review</dt><dd>{{ 'Required' if result.snapshot.review_required else 'Not required by current setting' }} · {{ result.snapshot.review_state or 'Not requested' }}</dd>
+<dt>Who acts next</dt><dd>You: keep your copies and follow up with the receiving office.</dd>
+</dl>
+<h2>Required paper checklist</h2>
+<ul>{% for item in result.snapshot.documents %}<li>{{ item.label }} · {{ item.copies }} {{ 'copy' if item.copies == 1 else 'copies' }}{% if item.wet_sign %} · sign where required{% endif %}</li>{% endfor %}</ul>
+<p><a href="/travel/f/{{ result.snapshot.reference }}/ready">Inspect the filing's print list and saved papers</a></p>
+<p><strong>Confirm only after you have physically handed in the required papers.</strong> By confirming, you attest that the handover already happened. This app does not print, sign, send, deliver or upload the papers for you. It records your report of submission; it does not establish receipt by an office, approval or payment.</p>
+<p>The filing must already be Ready, its checklist complete, and any currently required paper review approved. This action does not mark it Ready or perform a review. The preview expires ten minutes after preparation; any change to the filing, papers, flags or review requires a new check.</p>
+<form method="post">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<input type="hidden" name="preview_digest" value="{{ result.preview_digest }}">
+<button type="submit" name="confirm" value="yes">Confirm: record my paper submission</button>
+</form>
+{% endif %}
+<p>Operation receipt: <code>{{ result.operation_id }}</code></p>
+</div>
+{% endblock %}
