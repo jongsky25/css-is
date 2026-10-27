@@ -38,7 +38,8 @@ def list_requests(conn, *, user_id=None, start=None, end=None):
     return [get(conn, r[0]) for r in conn.execute(sql + " ORDER BY day DESC, id DESC", args).fetchall()]
 
 
-def create(conn, user, *, title, day, venue, pax, special_request, wanted, times, today=None):
+def validate(*, title, day, venue, pax, special_request, wanted, times, today=None):
+    """Normalize the same standalone meal fields for the UI and exact previews."""
     title, venue = (title or "").strip(), (venue or "").strip()
     if not title or len(title) > 240:
         raise MealError("Give an activity title (240 characters at most).")
@@ -66,6 +67,17 @@ def create(conn, user, *, title, day, venue, pax, special_request, wanted, times
         clean = {m: rm._clean_time(times.get(m), rm.LABEL[m]) for m in wanted}
     except rm.MealError as e:
         raise MealError(str(e)) from e
+    return dict(title=title, day=day, venue=venue, pax=pax, special_request=special,
+                wanted=sorted(clean), times=clean)
+
+
+def create(conn, user, *, title, day, venue, pax, special_request, wanted, times, today=None, commit=True):
+    if not commit and not conn.in_transaction:
+        raise RuntimeError('Meal creation requires a caller-owned transaction.')
+    fields = validate(title=title, day=day, venue=venue, pax=pax, special_request=special_request,
+                      wanted=wanted, times=times, today=today)
+    title, day, venue, pax, special, clean = (fields[k] for k in ('title','day','venue','pax','special_request','times'))
+    activity_day = date.fromisoformat(day)
     now = tz.now_iso()
     try:
         rid = conn.execute(
@@ -74,12 +86,14 @@ def create(conn, user, *, title, day, venue, pax, special_request, wanted, times
         conn.execute("UPDATE meal_request SET ref_code=? WHERE id=?", (f"MR-{activity_day:%y%m}-{rid:04d}", rid))
         conn.executemany("INSERT INTO meal_request_item(request_id,meal,deliver_at) VALUES (?,?,?)",
                          [(rid, m, clean[m]) for m in clean])
-        conn.commit()
+        if commit:
+            conn.commit()
     except Exception:
-        conn.rollback()
+        if commit:
+            conn.rollback()
         raise
     st.audit(conn, user["username"], "meal_request", target_type="meal_request", target_id=rid,
-             summary=f"{title} on {day}: {pax} pax at {venue}")
+             summary=f"{title} on {day}: {pax} pax at {venue}", commit=commit)
     return get(conn, rid)
 
 

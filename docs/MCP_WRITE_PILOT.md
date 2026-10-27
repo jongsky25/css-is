@@ -137,3 +137,6 @@ pilot: see [setup and acceptance](MCP_TRAVEL_SUBMISSION_PILOT.md).
 
 A linked room request is a separate default-off M3 pilot with pending/no-booking
 semantics: see [setup and acceptance](MCP_ROOM_REQUEST_PILOT.md).
+
+The default-off M3.7 standalone meal submission contract and hosted acceptance
+steps are in [the meal request runbook](MCP_MEAL_REQUEST_PILOT.md).

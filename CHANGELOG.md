@@ -1,3 +1,9 @@
+## 8.91 — October 27, 2026
+
+- Add default-off `meals:request` consent with preparation context, browser-confirmed standalone meal submission and owner-only original receipt recovery.
+- Reuse the normal meal validation/creation service under a caller-owned transaction so request, lines, audit, source identity and receipt commit atomically; bind current requester, queue membership, policy and exact fields.
+- Preserve two-calendar-day notice, Administrative Section queue visibility and Awaiting order semantics; no room, calendar, supplier order, email, delivery or payment. Add strict input, security, rollback, concurrency, OAuth and mobile confirmation coverage and an operator runbook.
+
 ## 8.90 — October 27, 2026
 
 - Add default-off rooms:request context/preparation/recovery for one self-owned pending room request linked to a permitted plain one-day calendar meeting. Browser review binds exact meeting revision, continuous configured hours, current requester and initial Administrative Section recipients; Requested holds no booking and changes no calendar schedule.

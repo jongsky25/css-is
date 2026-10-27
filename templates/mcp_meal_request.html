@@ -1,0 +1,35 @@
+{% extends "dash_layout.html" %}
+{% block title %}Review meal request — Office Connect{% endblock %}
+{% block content %}
+<div style="max-width:44rem;margin:auto;overflow-wrap:anywhere">
+{% if result.status == 'completed' %}
+<h1>Meal request submitted</h1>
+<p>{{ result.reference }} was submitted at {{ result.completed_at }}. Meals were Awaiting order at creation. This is the original result; later ordering and delivery are separate.</p>
+<p>Next: the Administrative Section orders the meals ({{ result.next_actor.queue_staff_count }} queue staff at confirmation). No supplier order, delivery, email or payment was performed by this operation.</p>
+<p><a href="{{ result.web_url }}">Open my meal request and current status</a></p>
+{% else %}
+<h1>Submit this meal request?</h1>
+<dl>
+<dt>Activity</dt><dd>{{ result.fields.title }}</dd>
+<dt>Activity day and timezone</dt><dd>{{ result.fields.day }} · Asia/Manila</dd>
+<dt>Delivery location</dt><dd>{{ result.fields.venue }}</dd>
+<dt>Number of pax</dt><dd>{{ result.fields.pax }}</dd>
+<dt>Requester</dt><dd>{{ result.snapshot.requester.name }} (you)</dd>
+<dt>Special request (shared with the Administrative Section)</dt><dd style="white-space:pre-wrap">{{ result.fields.special_request or 'None' }}</dd>
+</dl>
+<h2>Exact meals and delivery times</h2>
+<ul>{% for line in result.fields.meals %}<li>{{ {'breakfast':'Breakfast','am_snack':'AM snack','lunch':'Lunch','pm_snack':'PM snack'}[line.meal] }} · {{ line.deliver_at }} Asia/Manila · Awaiting order</li>{% endfor %}</ul>
+<h2>Who can see the request</h2>
+<p>You and current Administrative Section queue staff can read these details, including the special request. Review any sensitive dietary details before submitting. Normal section membership changes can change queue access later.</p>
+<ul>{% for person in result.snapshot.queue_staff %}<li>{{ person.name }}</li>{% else %}<li>No active Administrative Section queue staff are currently configured. The request can still be submitted; contact the section to arrange follow-up.</li>{% endfor %}</ul>
+<p>This saves one standalone Submitted request with selected meals Awaiting order. It creates no room reservation or calendar entry, orders nothing from a supplier and sends no email or other notification. The Administrative Section must separately place and record the order. No delivery, approval or payment is recorded.</p>
+<p>The activity must remain at least {{ result.snapshot.lead_days }} calendar days ahead when confirmed. Delivery times must be between {{ result.snapshot.delivery_earliest }} and {{ result.snapshot.delivery_latest }}. This preview expires ten minutes after preparation.</p>
+<form method="post">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<input type="hidden" name="preview_digest" value="{{ result.preview_digest }}">
+<button type="submit" name="confirm" value="yes">Confirm: submit meal request</button>
+</form>
+{% endif %}
+<p>Operation receipt: <code>{{ result.operation_id }}</code>. Reuse this key after a lost response; different keys create separate requests.</p>
+</div>
+{% endblock %}
