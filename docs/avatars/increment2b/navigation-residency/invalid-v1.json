@@ -1,0 +1,32 @@
+{
+  "status": "aborted_instrumentation_failure",
+  "acceptance": false,
+  "harness_commit": "cd71d3a",
+  "reason": "Both first slots completed navigation captures but Tracing.tracingComplete reported dataLossOccurred=true. Stopped during slot 2 on instrumentation integrity, not memory values. Slots 3-7 not run. Protocol deviation retained; no v1 observation may enter v2 or acceptance.",
+  "archive_sha256": "53ef75f491e4b312d841664b0bc11c9b15e5e7d184c5637d080df0bb819fbcfe",
+  "members_sha256": {
+    "experiment.json": "f81f82fc20f53a630e124fd42114543af646cf88c8773a5af54876448ee05d08",
+    "00-original/junit.xml": "bc2f9c91c43f462421b6115b2d48cc0b07eac6eddccf45091e49995d369aa3ad",
+    "00-original/navigation-residency.json": "db52560779f57aed3672b6d45c1bcf58fe31ce6d620d3ed7ca1216c70afab2e3",
+    "00-original/renderer-status.json": "e3ccd33f34b107f63fdbb4114d47017b5e1650eeeb1f6373662ea4bd781a7a8c",
+    "00-original/profile-False-warm.png": "21d6d3d86a68af66d9d8d89e39148553c78668898fc3462a38438925aa929dbc",
+    "00-original/runner.txt": "77b681d22a881c84320b604c0b05d402735cb3a9879da411174948972f8b449c",
+    "00-original/environment.json": "9c486276f856b8c3c96d0d3b12716f7bc3bab39fbe0ee4133b424789af980bd6",
+    "02-current/renderer-status.json": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+    "02-current/runner.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "02-current/environment.json": "85e2474e53a39765b63e8a6dfc96f0dbb5ca4cfc02f420b607cb11acfe663f59",
+    "01-current/junit.xml": "033ad313b446f33399e125b99d6302b5441ae2576a1d6516d6a9ebe45f44dffc",
+    "01-current/navigation-residency.json": "bf827cb1eca921d51f5e7595d84632f03c55a1f197b639e69a1a3bf871c16747",
+    "01-current/residency-provenance.json": "7042168a56b015d4baac94ea50f3a0362b2f7b263d9200fd8eabdcf46c18b9bd",
+    "01-current/renderer-status.json": "db66352340879f6ac4f3a91b33d052f60cf6d43b15a68280535e09e7a3563300",
+    "01-current/profile-False-warm.png": "e1facd70cf41b66f1a2d044a41b4149f159aeeb9979ffb69a0f1dcfb508667ac",
+    "01-current/False-warm.json": "a3c59c6c3d74a4d604d7ee7a142f1c5fa439d23a42b95d66b759dfa013211ecd",
+    "01-current/runner.txt": "89511d0699ecee95dfb67e014c39e57751eba32af13c15154023ce3f74ac45e7",
+    "01-current/environment.json": "85e2474e53a39765b63e8a6dfc96f0dbb5ca4cfc02f420b607cb11acfe663f59",
+    "01-current/navigation-residency-trace.json.gz": "9ab7c1bf521da2196314346a272f279bb41ebe90a3f9256f0ef6e828628ddf71",
+    "harness/tests/test_avatar_navigation_residency_browser.py": "b28b57bb5cc86f83425804d66df3d2ff64cb4963865d9e843c2169f148aa95c8",
+    "harness/tests/avatar_browser_fixture.py": "208d41f1ab18b72052f25844a9cee54e7a3d516769bf4741de759fdd4db3399b",
+    "harness/tests/test_avatar_baseline_browser.py": "3e8786dd6efddba434a0213e77713e3e15c3df2c56aae9a5f77b6a43254640a5",
+    "runner.txt": "a19f9275a0f45d5dc53a934caa87265f4f492864cd107b02336f61d4b951cc33"
+  }
+}

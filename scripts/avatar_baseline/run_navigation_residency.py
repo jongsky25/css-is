@@ -32,7 +32,7 @@ def main():
     root=Path(__file__).resolve().parents[2]
     out=args.output.resolve();out.mkdir(parents=True,exist_ok=False)
     head=subprocess.check_output(['git','rev-parse','HEAD'],cwd=root,text=True).strip()
-    plan={'protocol':'navigation-residency-v1','acceptance':False,'harness_commit':head,
+    plan={'protocol':'navigation-residency-v2','acceptance':False,'harness_commit':head,
           'refs':REFS,'blocks':BLOCKS,'samples_per_slot':1,'seconds':30,'fixture_adapter':'sample-ordinal-v1',
           'browser':'156.0.8078.47','budget_bytes':10*1024*1024,
           'session_policy':'Fresh pytest process, fixture database and browser for each slot. Existing warm-up and full workload unchanged. Diagnostic session/order change; not historical acceptance replacement.',

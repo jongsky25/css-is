@@ -60,3 +60,8 @@ def test_missing_sampled_app_rejected():
 def test_nonchronological_host_probe_rejected():
     e,r,s=fixture();r[0]['before_marker']['begin_ns']=999999999
     with pytest.raises(ValueError,match='host'):observation(e,r,s)
+
+
+def test_no_gc_events_is_retained_as_no_observed_collection():
+    e,r,s=fixture();e=[x for x in e if x.get('cat')!='cppgc']
+    assert observation(e,r,s)['cpp_gc_event_count']==0

@@ -36,3 +36,21 @@ Compare original/current and same-source repeats descriptively in both blocks;
 no post-hoc source-effect classification or sample exclusion. A coincident GC
 marker does not prove which allocator released memory. Preserve full traces,
 raw allocator attributes, failures, archive hashes and independent re-audit.
+
+## v2 instrumentation correction, frozen before the new schedule
+
+V1 tracing overflowed in its first two completed slots. The attempt was stopped
+while slot 2 was running; slots 3–7 did not run. This deviates from the initial
+complete-schedule rule because the instrument was invalid, not because of any RSS
+outcome. All partial data, failed logs and source fixtures remain in invalid-v1.zip;
+none is reused as a v2 sample or accepted measurement.
+
+V2 starts tracing after the background checkpoint, immediately before repeated
+navigation, rather than during the preceding interaction/preview workload. It
+uses V8, CppGC, devtools.timeline and memory-infra categories, omitting broad Blink
+and loading categories. The same full workload, eight-slot order, dump schedule,
+100ms sampling, and source refs remain. No forced collection. A failed completion
+now preserves the trace stream/provenance before rejecting data loss. Absence of
+GC events is reported as an observation, not manufactured into a collection event.
+All eight v2 slots are newly scheduled; failures remain in v2 and no replacements
+are permitted. If trace integrity still fails, no source-effect claim is made.

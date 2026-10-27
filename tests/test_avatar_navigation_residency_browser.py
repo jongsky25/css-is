@@ -37,11 +37,6 @@ def test_navigation_residency(baseline_server,app_mod,monkeypatch):
         cdp=attach_original(context,page);session=context.browser.new_browser_cdp_session()
         state.update(cdp=cdp,session=session,page=page)
         session.on('Tracing.tracingComplete',lambda e:state['complete'].append(e))
-        session.send('Tracing.start',{'transferMode':'ReturnAsStream','traceConfig':{
-            'recordMode':'recordUntilFull','traceBufferSizeInKb':262144,'includedCategories':['v8','blink','blink_gc','v8.gc','cppgc',
-            'disabled-by-default-cppgc','disabled-by-default-v8.gc','disabled-by-default-blink_gc',
-            'devtools.timeline','blink.user_timing','loading','disabled-by-default-memory-infra'],
-            'memoryDumpConfig':{}}})
         return cdp
 
     def marker(name):
@@ -69,6 +64,12 @@ def test_navigation_residency(baseline_server,app_mod,monkeypatch):
 
     def snapshot(page,cdp):
         observed=snapshot_original(page,cdp);state['snapshots']+=1
+        if state['snapshots']==8:
+            state['session'].send('Tracing.start',{'transferMode':'ReturnAsStream','traceConfig':{
+                'recordMode':'recordUntilFull','traceBufferSizeInKb':262144,
+                'includedCategories':['v8','devtools.timeline','cppgc','disabled-by-default-cppgc',
+                                      'disabled-by-default-v8.gc','disabled-by-default-memory-infra'],
+                'memoryDumpConfig':{}}})
         if state['snapshots']==13:
             assert len(state['records'])==20
             stop.set()
@@ -78,7 +79,7 @@ def test_navigation_residency(baseline_server,app_mod,monkeypatch):
             while not state['complete']:
                 assert time.monotonic()<deadline,'Trace completion timeout'
                 wait_original(page,100)
-            completion=state['complete'][0];assert not completion.get('dataLossOccurred'),'Trace data loss'
+            completion=state['complete'][0]
             handle=completion['stream']
             with gzip.open(out/'navigation-residency-trace.json.gz','wt') as f:
                 while True:
@@ -87,8 +88,9 @@ def test_navigation_residency(baseline_server,app_mod,monkeypatch):
                     if chunk.get('eof'):break
             session.send('IO.close',{'handle':handle});session.detach()
             (out/'residency-provenance.json').write_text(json.dumps({'acceptance':False,'forced_gc':False,
-                'snapshots':13,'navigation_observations':20,'native_sampling':False,'allocator_dumps':20,'dump_determinism':'none','status_interval_seconds':.1,
+                'trace_scope':'navigation-only-v2','snapshots':13,'navigation_observations':20,'native_sampling':False,'allocator_dumps':20,'dump_determinism':'none','status_interval_seconds':.1,
                 'trace_completion':completion,'probe_sha256':hashlib.sha256(Path(__file__).read_bytes()).hexdigest()},indent=2)+'\n')
+            assert not completion.get('dataLossOccurred'),'Trace data loss (raw trace retained)'
         return observed
 
     monkeypatch.setattr(BrowserContext,'new_cdp_session',attach);monkeypatch.setattr(Page,'wait_for_timeout',wait)

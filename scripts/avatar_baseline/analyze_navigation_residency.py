@@ -40,7 +40,6 @@ def observation(events,records,status):
     if [r['mount'] for r in records]!=list(range(1,21)):raise ValueError('Incomplete navigations')
     if not status:raise ValueError('Missing continuous status samples')
     output=[];previous=None;used=set();cpp=[e for e in events if e.get('pid')==pid and 'cppgc' in e.get('cat','').lower()]
-    if not cpp:raise ValueError('No natural C++ collection events')
     anchors=[]
     for r in records:
         m=r['mount'];before=markers[f'nav-{m}-before'];after=markers[f'nav-{m}-after']
@@ -96,7 +95,7 @@ def audit(root, repo, ref):
             'files_verified':0,'cohorts':[]}
     try:
         plan=json.loads((root/'experiment.json').read_text())
-        if (plan['protocol']!='navigation-residency-v1' or plan['acceptance'] is not False or
+        if (plan['protocol']!='navigation-residency-v2' or plan['acceptance'] is not False or
             plan['harness_commit']!=ref or plan['refs']!=REFS or plan['blocks']!=BLOCKS or
             plan['samples_per_slot']!=1 or plan['seconds']!=30 or plan['browser']!='156.0.8078.47' or
             plan['budget_bytes']!=BUDGET or plan['fixture_adapter']!='sample-ordinal-v1' or len(plan['cohorts'])!=8):
@@ -124,7 +123,7 @@ def audit(root, repo, ref):
                 if hashlib.sha256(data).hexdigest()!=digest:raise ValueError('Product source mismatch')
                 result['source_hashes_verified']+=1
             provenance=json.loads((folder/'residency-provenance.json').read_text())
-            if (provenance['acceptance'] is not False or provenance['native_sampling'] is not False or
+            if (provenance.get('trace_scope')!='navigation-only-v2' or provenance['acceptance'] is not False or provenance['native_sampling'] is not False or
                 provenance['allocator_dumps']!=20 or provenance.get('forced_gc') is not False or provenance.get('dump_determinism')!='none' or provenance['snapshots']!=13 or
                 provenance['navigation_observations']!=20 or provenance['trace_completion'].get('dataLossOccurred') or
                 provenance['probe_sha256']!=hashlib.sha256(source(repo,ref,PROBE)).hexdigest()):
