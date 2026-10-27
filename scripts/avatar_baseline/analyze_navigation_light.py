@@ -237,14 +237,28 @@ def comparisons(cohorts, phase):
     return output
 
 
-def audit(root, repo, ref):
+def verify_backend(folder, repo, product_ref):
+    names = ('app.py', 'appearance_routes.py', 'storage.py', 'sqlite_reader.py')
+    tracked = set(subprocess.check_output(['git', 'ls-tree', '-r', '--name-only', product_ref], cwd=repo, text=True).splitlines())
+    expected = {name: hashlib.sha256(source(repo, product_ref, name)).hexdigest()
+                for name in names if name in tracked}
+    actual = json.loads((folder / 'backend-source.json').read_text())
+    if actual != expected:
+        raise ValueError('Backend source hash mismatch')
+    return len(expected)
+
+
+def audit(root, repo, ref, *, expected_refs=None):
+    refs = REFS if expected_refs is None else expected_refs
     result = {'status': 'inconclusive', 'acceptance': False, 'harness_commit': ref,
               'errors': [], 'cohorts': [], 'files_verified': 0, 'source_hashes_verified': 0}
+    if expected_refs is not None:
+        result['candidate_refs'] = refs
     plan = json.loads((root / 'experiment.json').read_text())
     phase = plan['phase']
     blocks = [['current'] * 4] if phase != 'comparison' else BLOCKS
     if (phase not in ('calibration', 'comparison', 'cpu-attribution') or plan['protocol'] not in ('navigation-light-v3', 'navigation-light-v4', 'navigation-light-v5', 'navigation-light-v6', 'navigation-cpu-v1', 'navigation-cpu-v2') or
-        plan['harness_commit'] != ref or plan['refs'] != REFS or plan['blocks'] != blocks or
+        plan['harness_commit'] != ref or plan['refs'] != refs or plan['blocks'] != blocks or
         plan['acceptance'] is not False or plan['seconds'] != 30 or plan['samples_per_slot'] != 1 or
         plan['fixture_adapter'] != 'sample-ordinal-v1' or plan['browser'] != '156.0.8078.47' or
         plan['budget_bytes'] != BUDGET or len(plan['cohorts']) != 4 * len(blocks)):
@@ -271,6 +285,10 @@ def audit(root, repo, ref):
             if any(entry[k] != v for k, v in dict(index=i, block=block, position=pos, arm=arm, mode=mode).items()):
                 raise ValueError('Slot identity mismatch')
             folder = root / f'{i:02d}-{arm}'
+            if expected_refs is not None:
+                if 'backend-source.json' not in entry['files_sha256']:
+                    raise ValueError('Missing backend source manifest')
+                result['source_hashes_verified'] += verify_backend(folder, repo, refs[arm])
             required = {'environment.json', 'runner.txt', 'junit.xml', 'light-provenance.json', 'False-warm.json'}
             if mode == 'trace':
                 required.update(f'trace-{n}.json.gz' for n in range(5 if plan['protocol'] == 'navigation-light-v3' else 3))
@@ -282,10 +300,10 @@ def audit(root, repo, ref):
                     raise ValueError('Artifact hash mismatch')
                 result['files_verified'] += 1
             env = json.loads((folder / 'environment.json').read_text())
-            if env['source_commit'] != REFS[arm] or env['chromium'] != '156.0.8078.47' or set(env['source_sha256']) != required_sources(repo, REFS[arm]):
+            if env['source_commit'] != refs[arm] or env['chromium'] != '156.0.8078.47' or set(env['source_sha256']) != required_sources(repo, refs[arm]):
                 raise ValueError('Source environment mismatch')
             for name, digest in env['source_sha256'].items():
-                data = expected_fixture(repo, ref, name) if name in HARNESS else source(repo, REFS[arm], name)
+                data = expected_fixture(repo, ref, name) if name in HARNESS else source(repo, refs[arm], name)
                 if hashlib.sha256(data).hexdigest() != digest:
                     raise ValueError('Source hash mismatch')
                 result['source_hashes_verified'] += 1
@@ -331,12 +349,16 @@ def audit(root, repo, ref):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('root', type=Path)
+    parser.add_argument('--candidate-ref')
     parser.add_argument('--harness-ref', required=True)
     parser.add_argument('--out', type=Path, required=True)
     args = parser.parse_args()
     repo = Path(__file__).resolve().parents[2]
     ref = subprocess.check_output(['git', 'rev-parse', args.harness_ref], cwd=repo, text=True).strip()
-    result = audit(args.root, repo, ref)
+    refs = dict(REFS) if args.candidate_ref else None
+    if refs is not None:
+        refs['current'] = subprocess.check_output(['git', 'rev-parse', args.candidate_ref+'^{commit}'], cwd=repo, text=True).strip()
+    result = audit(args.root, repo, ref, expected_refs=refs)
     args.out.write_text(json.dumps(result, indent=2) + '\n')
     print(json.dumps({k: result.get(k) for k in ['status', 'errors', 'gate_errors', 'files_verified', 'source_hashes_verified']}))
     sys.exit(result['status'] not in ('calibration_passed', 'complete_diagnostic', 'complete_cpu_diagnostic'))

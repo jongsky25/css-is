@@ -1,0 +1,8 @@
+.......................                                                  [100%]
+=============================== warnings summary ===============================
+tests/test_sqlite_reader.py::test_reuses_one_owned_connection_across_calling_threads
+  /workspace/css-is/tests/conftest.py:88: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+23 passed, 1 warning in 3.16s

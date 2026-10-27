@@ -123,3 +123,21 @@ def test_v5_missing_transfer_rejected(tmp_path):
     p['transfers'].pop()
     with pytest.raises(ValueError,match='Missing deferred transfers'):
         inspect_capture(tmp_path,p,raw)
+
+
+def test_backend_manifest_verifies_candidate_and_rejects_changed_or_omitted_source(tmp_path, monkeypatch):
+    import hashlib
+    from scripts.avatar_baseline import analyze_navigation_light as analyzer
+    names = ['app.py', 'appearance_routes.py', 'storage.py', 'sqlite_reader.py']
+    monkeypatch.setattr(analyzer.subprocess, 'check_output', lambda *a, **kw: '\n'.join(names))
+    monkeypatch.setattr(analyzer, 'source', lambda repo, ref, name: (ref + name).encode())
+    expected = {n: hashlib.sha256(('candidate' + n).encode()).hexdigest() for n in names}
+    path = tmp_path / 'backend-source.json'
+    path.write_text(json.dumps(expected))
+    assert analyzer.verify_backend(tmp_path, tmp_path, 'candidate') == 4
+    with pytest.raises(ValueError, match='Backend source'):
+        analyzer.verify_backend(tmp_path, tmp_path, 'original')
+    expected.pop('sqlite_reader.py')
+    path.write_text(json.dumps(expected))
+    with pytest.raises(ValueError, match='Backend source'):
+        analyzer.verify_backend(tmp_path, tmp_path, 'candidate')
