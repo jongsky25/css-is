@@ -1,0 +1,41 @@
+{% extends "dash_layout.html" %}
+{% block title %}Review task acceptance — Office Connect{% endblock %}
+{% block content %}
+<div style="max-width:44rem;margin:auto;overflow-wrap:anywhere">
+{% if result.status == 'completed' %}
+<h1>Submitted task accepted</h1>
+<p>Recorded at {{ result.completed_at }}. The submitted contribution moved to Done at revision {{ result.result_revision }}. This is the original decision; later ordinary returns, reopening or submissions are separate.</p>
+<p>The work-item lead coordinates remaining contributions and any separate formal review. This decision did not complete the work item or approve, close, sign or dispatch an official document.</p>
+{% else %}
+<h1>Accept this exact submitted contribution?</h1>
+<dl>
+<dt>Work item</dt><dd>{{ result.snapshot.case_title }} ({{ result.fields.work_item_id }})</dd>
+<dt>Task</dt><dd>{{ result.snapshot.task_title }} ({{ result.fields.task_id }})</dd>
+<dt>Exact submitted revision</dt><dd>{{ result.fields.revision }}</dd>
+<dt>Confirmed lead making this decision</dt><dd>{{ result.snapshot.reviewer.name }} (account {{ result.snapshot.reviewer.id }}, you)</dd>
+<dt>Assigned owner</dt><dd>{{ result.snapshot.owner.name }} (account {{ result.snapshot.owner.id }})</dd>
+<dt>Submitting actor</dt><dd>{{ result.snapshot.submitter.name }} (account {{ result.snapshot.submitter.id }})</dd>
+<dt>Expected output</dt><dd style="white-space:pre-wrap">{{ result.snapshot.expected_output }}</dd>
+<dt>Saved submission to review</dt><dd style="white-space:pre-wrap">{{ result.snapshot.submission }}</dd>
+<dt>Original submission note</dt><dd style="white-space:pre-wrap">{{ result.snapshot.submission_note }}</dd>
+<dt>Your acceptance reason</dt><dd style="white-space:pre-wrap">{{ result.fields.reason }}</dd>
+<dt>Change</dt><dd>For review → Done</dd>
+<dt>Linked official records</dt><dd>{{ result.snapshot.linked_record_count }}</dd>
+<dt>Active contributions depending on this task</dt><dd>{% for task in result.snapshot.dependent_tasks %}{{ task.title }} ({{ task.id }}, {{ task.status }}){% if not loop.last %}; {% endif %}{% else %}None{% endfor %}</dd>
+<dt>Pending legacy deadline/milestone notices to cancel</dt><dd>{{ result.snapshot.pending_legacy_notice_count }}</dd>
+</dl>
+<p><strong>By confirming, you affirm that you reviewed the saved output above and accept this exact contribution as the currently confirmed work-item lead.</strong> The owner and submitting actor cannot accept their own contribution through this pilot. Technical administration or officer rank alone does not authorize it.</p>
+<p>This records your decision reason and the existing submission in normal shared-work history, visible to permitted work-item readers. It preserves the submitted text, owner and due date. Resolved prerequisites may allow dependent work to proceed. The work-item lead coordinates remaining work next.</p>
+<p>The normal task workflow may invalidate dependent formal review packets and cancel pending legacy deadline/milestone notices. This action does not finish the whole work item, approve/close an official record, sign or dispatch a document, make a financial/stock posting, upload/fetch evidence links, or directly send email or invitations. Existing future notification preferences/jobs remain separate.</p>
+<p>Review the actual evidence through trusted normal channels as needed; an evidence link in saved text is not fetched or verified here. Use ordinary Work for a return, correction, or a different decision. This pilot only accepts a fresh canonical submission with no unresolved blockers or prerequisite/changed-decision reviews.</p>
+<p>The preview expires ten minutes after preparation. Current lead, active owner/submitter, linked access, source metadata and exact submission history are checked again in the commit. Any change requires a fresh review.</p>
+<form method="post">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<input type="hidden" name="preview_digest" value="{{ result.preview_digest }}">
+<button type="submit" name="confirm" value="yes">Confirm: accept reviewed contribution</button>
+</form>
+{% endif %}
+<p>Operation receipt: <code>{{ result.operation_id }}</code>. Recover this key after a lost response before preparing a replacement.</p>
+<p><a href="{{ result.web_url }}">Review the current task in Office Connect</a></p>
+</div>
+{% endblock %}

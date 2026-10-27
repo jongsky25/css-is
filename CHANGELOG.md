@@ -1,3 +1,9 @@
+## 8.97 — October 27, 2026
+
+- Add default-off `work:task:accept` context/preview/recovery for a first M4 decision pilot: the current confirmed work-item lead accepts another person's exact canonical For review contribution as Done. Separate consent and exact signed-in output/reason review are required; owner, actual submitting actor, proposed lead and technical/officer authority alone cannot accept through the pilot.
+- Reuse the native transactional Work task service for status/revision, preserved output/owner/due date, immutable history/audit, review invalidation and legacy notice cancellation. Bind current source/submission/identities/linked access/dependents/notices; commit the decision, minimal MCP receipt and integration audit atomically.
+- Preserve later ordinary reopen/resubmit flows on recovery, verify original source/history identities, clear preview copies, and cover OAuth, separation of duties, rollback/races, dependent effects, access withdrawal, mobile, packaging and operator go/no-go. No whole-work-item completion, official approval/signature/dispatch, direct email or financial/stock posting is exposed.
+
 ## 8.96 — October 27, 2026
 
 - Add default-off `activities:announcement:publish` context/preview/recovery for first pinned-update publication on a current/upcoming bureau activity with active forms. Exact signed-in review shows activity, escaped text, registration count and current/future participant-page visibility; no registrant email, invitation or approval is added.
