@@ -28,16 +28,24 @@ trigger it as an acceptance audit of the cancelled cohort. No later increments,
 merge to main or deployment occurred. The historical handoff below is superseded by this
 correction wherever it suggests CI success establishes complete memory acceptance.
 
-## Shared stylesheet candidate — visual prerequisite unresolved
+## Shared stylesheet follow-up — visual resolved, memory screen failed
 
-Candidate `6960562` on `codex/avatar-shared-stylesheet` externalizes identical CSS.
-Nine browser regressions and strict HTTP body-reuse check pass. Fresh-context
-visual comparisons fail exact pixels, including unchanged-source controls;
-software rendering and same-document restoration did not resolve the variation.
-Read [the report](avatars/increment2b/shared-stylesheet/REPORT.md). All diagnostics
-are retained. The memory screen is prepared but **not run**; its runner rejects
-failed visual evidence. 34 focused tests pass. Primary product remains f700187;
-2B and later increments remain blocked. No measurement active.
+Candidate `6960562` remains isolated on `codex/avatar-shared-stylesheet`; primary
+product stays f700187. [Visual diagnosis](avatars/increment2b/shared-stylesheet/visual-resolution/REPORT.md)
+finds identical DOM/selected styles/geometry despite shared-layer pixel variation.
+Fixture-only paint isolation and avoiding Playwright caret mutations yield all
+30 sheets (2,880 cells) pixel/state identical. Forty focused tests and one dedicated
+browser regression pass. No production paint hint or screenshot change.
+
+[Fixed memory screen](avatars/increment2b/shared-stylesheet/memory-screen/REPORT.md)
+completed all eight workloads from `b521760`, no replacements. Audit/re-audit verify
+114 source hashes, 20 files and 104 direct arithmetic comparisons. Forward RSS
+improves, but reverse navigation 20 worsens 12.863281 MiB (>10 MiB). Both controls
+fail absolute stability (current repeat navigation 20: -57.037109 MiB).
+Status screen_failed, not qualified for larger validation; no promotion or new
+memory acceptance. All raw evidence is archived. No measurement active. Next use
+archived repeat controls to understand the late-navigation RSS variation; do not
+rerun the unchanged candidate for favorable data. 2B and all later gates remain.
 
 ## Authorized forensic captures complete — transient documents gone before snapshot
 

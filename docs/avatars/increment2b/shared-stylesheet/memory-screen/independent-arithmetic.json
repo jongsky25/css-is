@@ -1,0 +1,33 @@
+{
+  "status": "verified",
+  "comparison_records_recomputed": 104,
+  "method": "Direct raw-sample median subtraction; no imported checker or comparison functions",
+  "control_failures": [
+    {
+      "comparison": "current-control",
+      "checkpoint": "navigation_15",
+      "metric": "renderer_rss_sum_bytes",
+      "delta_mib": -34.69140625
+    },
+    {
+      "comparison": "current-control",
+      "checkpoint": "navigation_20",
+      "metric": "renderer_rss_sum_bytes",
+      "delta_mib": -57.037109375
+    },
+    {
+      "comparison": "candidate-control",
+      "checkpoint": "home_idle",
+      "metric": "renderer_rss_sum_bytes",
+      "delta_mib": 10.60546875
+    },
+    {
+      "comparison": "candidate-control",
+      "checkpoint": "navigation_10",
+      "metric": "renderer_rss_sum_bytes",
+      "delta_mib": -10.328125
+    }
+  ],
+  "screen_status": "screen_failed",
+  "acceptance": false
+}

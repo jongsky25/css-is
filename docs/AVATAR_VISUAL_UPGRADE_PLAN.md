@@ -857,3 +857,15 @@ controls; software rendering and same-document restoration do not resolve it.
 All diagnostics retained in [report](avatars/increment2b/shared-stylesheet/REPORT.md).
 34 focused tests pass. Prepared memory screen enforces the visual prerequisite;
 no memory run, promotion, 2B acceptance or later increment. Primary unchanged.
+
+### Visual fixture resolved; fixed memory screen failed — 2026-10-27
+
+[Visual evidence](avatars/increment2b/shared-stylesheet/visual-resolution/REPORT.md):
+shared-layer painting varies despite unchanged DOM/styles/geometry; isolated
+fixture painting plus nonmutating caret capture passes 30 sheets/2,880 cells.
+Forty focused tests and one dedicated browser regression pass. Product unchanged.
+[Fixed screen](avatars/increment2b/shared-stylesheet/memory-screen/REPORT.md), harness
+b521760: all eight workloads complete, 114 source hashes/20 files verified, 104
+comparisons independently recomputed. Reverse navigation 20 +12.863281 MiB and
+both unstable repeat controls block qualification. Candidate 6960562 preserved;
+no promotion, larger validation, 2B acceptance or later increments. No active run.

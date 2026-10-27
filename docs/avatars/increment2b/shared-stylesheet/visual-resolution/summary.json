@@ -1,0 +1,43 @@
+{
+  "normal_control": {
+    "sheets": 15,
+    "cells": 1440,
+    "pixel_failures": 6,
+    "cross_source_state_failures": 0,
+    "within_document_state_failures": 0,
+    "image_hashes_verified": true
+  },
+  "single_raster_control": {
+    "sheets": 15,
+    "cells": 1440,
+    "pixel_failures": 9,
+    "cross_source_state_failures": 0,
+    "within_document_state_failures": 0,
+    "image_hashes_verified": true
+  },
+  "isolated_control": {
+    "sheets": 15,
+    "cells": 1440,
+    "pixel_failures": 0,
+    "cross_source_state_failures": 0,
+    "within_document_state_failures": 0,
+    "image_hashes_verified": true
+  },
+  "first_candidate": {
+    "sheets": 30,
+    "cells": 2880,
+    "pixel_failures": 0,
+    "cross_source_state_failures": 0,
+    "within_document_state_failures": 30,
+    "image_hashes_verified": true
+  },
+  "corrected_candidate": {
+    "sheets": 30,
+    "cells": 2880,
+    "pixel_failures": 0,
+    "cross_source_state_failures": 0,
+    "within_document_state_failures": 0,
+    "image_hashes_verified": true
+  },
+  "limits": "Matching state hashes cover the selected properties in visual_state.py, not every computed CSS property. Normal painting remains variable; isolation is fixture-only."
+}

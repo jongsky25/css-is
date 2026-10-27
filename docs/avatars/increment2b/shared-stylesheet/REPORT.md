@@ -1,4 +1,21 @@
-# Shared stylesheet candidate — visual gate unresolved
+# Shared stylesheet candidate — visual gate resolved, memory screen failed
+
+## Completed follow-up
+
+[Visual resolution](visual-resolution/REPORT.md): unchanged DOM/paint styles/geometry
+localized pixel variation to shared-layer painting. Per-avatar fixture isolation
+passes 15 unchanged-source sheets. Playwright caret hiding separately left empty
+style attributes; disabling that screenshot behavior yields all 30 current/candidate
+sheets (2,880 cells) pixel/state identical. Forty focused tests and the dedicated
+browser regression pass. These are fixture-only changes.
+
+[Fixed memory screen](memory-screen/REPORT.md): all eight workloads completed;
+114 source hashes, 20 cohort files and 104 arithmetic records verified. Forward
+RSS improves, but reverse navigation 20 is +12.863281 MiB (10 MiB limit). Both
+same-source controls fail stability, including a 57.037109 MiB current repeat swing.
+The candidate does not qualify for larger validation or promotion. Primary product
+unchanged; 2B/later blocked, no active measurement. The historical preparation and
+initial visual failures below remain evidence and are superseded by this follow-up.
 
 Candidate `69605628393d044f9a0426ea0be3abdf99527bc3` on
 `codex/avatar-shared-stylesheet` extracts the existing 15,883-byte avatar CSS into

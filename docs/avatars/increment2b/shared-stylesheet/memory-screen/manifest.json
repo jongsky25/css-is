@@ -1,0 +1,32 @@
+{
+  "acceptance": false,
+  "archive_sha256": "1a38bf86f18b320c5fc9cca350264a6c9e5ecca7189c0fbb316ae79b4ca35204",
+  "bytes": 1535402,
+  "members_sha256": {
+    "runner.txt": "3135391a48f2f945f5a2753c0885e813602d5bb59099cecb7eea3d0f0449d64f",
+    "screen/0-current/False-warm.json": "97f4030d05e2db665b00e58c4a227c62cdd9692af82edc24748e736e8797d192",
+    "screen/0-current/environment.json": "ba44f1ea058249a8c736f5099e148b04d15b8175116eb8e02b7d684af3d251c0",
+    "screen/0-current/junit.xml": "f47685fb64dadf14c2eb862b940fff75fd1977d4fa1c4c7c30264c3d50b7d3b8",
+    "screen/0-current/profile-False-warm.png": "e1facd70cf41b66f1a2d044a41b4149f159aeeb9979ffb69a0f1dcfb508667ac",
+    "screen/0-current/runner.txt": "96406f9537834ff00d772cd2df93681769f3cc70e81a32d5d56f2b76d519a664",
+    "screen/1-candidate/False-warm.json": "5cc09571be82ee8bbd84890a1b6f3869938136fec59ff54e3d5b9f1ee9766915",
+    "screen/1-candidate/environment.json": "a8883f439012f591ffbf39fbf205694e82410eaaaf0c4d32c33c805d198c80a1",
+    "screen/1-candidate/junit.xml": "d522d7ba8b60b506bac5412fcc163361cb74018540bfef2932cc691e90faefe1",
+    "screen/1-candidate/profile-False-warm.png": "e1facd70cf41b66f1a2d044a41b4149f159aeeb9979ffb69a0f1dcfb508667ac",
+    "screen/1-candidate/runner.txt": "597aabc55bac1ff5f24f96a3544864a1db9d96bf11f4a76062be6886b74496ea",
+    "screen/2-candidate/False-warm.json": "a4bcf705ae577f1014f27ce4c5b12496ca5e196e9d750dfa36a61349e33ad315",
+    "screen/2-candidate/environment.json": "a8883f439012f591ffbf39fbf205694e82410eaaaf0c4d32c33c805d198c80a1",
+    "screen/2-candidate/junit.xml": "384d6b6b382593399f1de474be280d403733c63b55f341b793f9a3962290d414",
+    "screen/2-candidate/profile-False-warm.png": "e1facd70cf41b66f1a2d044a41b4149f159aeeb9979ffb69a0f1dcfb508667ac",
+    "screen/2-candidate/runner.txt": "9ad9d4de6e6313b810944ef6fb2f15f1fe40a55cdf389a53bb3be3654bf94c69",
+    "screen/3-current/False-warm.json": "75d12fa606d299ec7392cdb8da314191664b022a9a4af678f81f625195bebef9",
+    "screen/3-current/environment.json": "ba44f1ea058249a8c736f5099e148b04d15b8175116eb8e02b7d684af3d251c0",
+    "screen/3-current/junit.xml": "a9b7f7f2bb6c8289f78a882abb905cf00bf221c80f21a5cd4a7d03e3d090338c",
+    "screen/3-current/profile-False-warm.png": "e1facd70cf41b66f1a2d044a41b4149f159aeeb9979ffb69a0f1dcfb508667ac",
+    "screen/3-current/runner.txt": "1cc9eb9ec1bff9a96f22e49a61aee629282493b1c8a4423e5370d309071b39e1",
+    "screen/experiment.json": "7ca2f3e40af678a336672434f0afcc8188369c27cb80a5dcb891e2ff091923f2",
+    "screen/harness/tests/avatar_browser_fixture.py": "208d41f1ab18b72052f25844a9cee54e7a3d516769bf4741de759fdd4db3399b",
+    "screen/harness/tests/test_avatar_baseline_browser.py": "3c2e2ce2156c6bf0cdf29f238c9bc2e35288d431ab83902d2d7ad7757cf435fa",
+    "screen/visual-assessment.json": "4493d270c0794a3df13c89e8f1f7c97b2e6c5a0aadf86d86bb350a53333456dc"
+  }
+}

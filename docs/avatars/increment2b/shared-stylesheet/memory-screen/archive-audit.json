@@ -1,0 +1,10 @@
+{
+  "status": "all_member_hashes_verified_after_extraction",
+  "members_verified": 25,
+  "archive_sha256": "1a38bf86f18b320c5fc9cca350264a6c9e5ecca7189c0fbb316ae79b4ca35204",
+  "acceptance": false,
+  "independent_reaudit_identical": true,
+  "source_hashes_verified": 114,
+  "cohort_files_verified": 20,
+  "screen_status": "screen_failed"
+}

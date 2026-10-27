@@ -1,11 +1,14 @@
 # Increment 2B — acceptance withdrawn: uncovered memory failures
 
-## Shared stylesheet candidate — prerequisite blocked
+## Shared stylesheet follow-up — visual resolved, memory screen failed
 
-[Candidate and evidence](shared-stylesheet/REPORT.md): nine browser regressions
-and HTTP reuse pass, but exact visual comparison is unstable even for unchanged
-source. Software rendering and same-document restoration also fail. No memory
-screen was run, no product promotion. 34 focused tests pass; 2B remains blocked.
+[Visual diagnosis](shared-stylesheet/visual-resolution/REPORT.md) isolates shared-layer
+paint variation and removes a Playwright caret-induced DOM mutation. All 30 sheets
+(2,880 cells) now match pixels/state; forty focused tests and one browser regression
+pass. [Eight fixed memory workloads](shared-stylesheet/memory-screen/REPORT.md)
+complete with 114 source hashes/20 files verified and 104 records independently
+recomputed. Reverse navigation 20 is +12.863281 MiB; both same-source controls fail
+stability. No promotion or larger validation; product unchanged, 2B blocked.
 
 ## Authorized forensic snapshot experiment completed
 
