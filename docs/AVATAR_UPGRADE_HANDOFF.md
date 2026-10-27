@@ -28,6 +28,25 @@ trigger it as an acceptance audit of the cancelled cohort. No later increments,
 merge to main or deployment occurred. The historical handoff below is superseded by this
 correction wherever it suggests CI success establishes complete memory acceptance.
 
+## Lightweight capture implemented — calibration control variance blocks comparison
+
+[Latest report](avatars/increment2b/navigation-residency-v5/REPORT.md): v3/v4/v5
+completed three distinct fixed four-slot current-only calibrations, all evidence
+retained. V3 fails 5% total pause gate; v4 fails 250ms individual pause gate. V5
+(`08daa22`) defers trace transfer until after sealed navigation 20. Both traced
+runs have intact traces, no in-workload dumps/transfers, 2.288%/2.581% explicit
+pauses and 180/199ms maxima. 116 source/probe hashes and 30 files verify; extracted
+archive re-audit matches. Fifty-three focused tests pass.
+
+V5 still FAILS calibration: first/final control navigation durations are
+16.757/8.474 seconds (49.43% change; 20% limit). Slowdown is concentrated in early
+navigation with page long tasks and delayed status reads; no scheduler/throttling
+history exists to establish cause. Do not discard that control or rerun unchanged
+for favorable data. No eight-slot comparison was launched. Next attribution gap:
+timestamped scheduler/CPU-throttling evidence for the control stall, under a new
+frozen diagnostic. Product remains f700187; no waiver, 2B acceptance, later increment
+or active measurement. Historical v2 capture below remains preserved.
+
 ## Targeted navigation allocator capture — partial, no fix
 
 [Capture report](avatars/increment2b/navigation-residency/REPORT.md): v1 aborted

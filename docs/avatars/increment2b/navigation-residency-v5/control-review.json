@@ -1,0 +1,330 @@
+{
+  "acceptance": false,
+  "interpretation": "All calibration slots retained. Slow control is not traced, so no GC/event attribution or host-cause claim. Post-run cgroup quota cannot establish historical throttling.",
+  "slots": [
+    {
+      "index": 0,
+      "mode": "control",
+      "checkpoints": [
+        {
+          "mount": 1,
+          "checkpoint_ms": 225.009797,
+          "elapsed_navigation_ms": 1778.949743,
+          "lcp_ms": 628,
+          "long_tasks": [
+            {
+              "start": 375.80000000074506,
+              "duration": 228,
+              "name": "self"
+            },
+            {
+              "start": 662.8000000007451,
+              "duration": 138,
+              "name": "self"
+            },
+            {
+              "start": 817.7000000011176,
+              "duration": 224,
+              "name": "self"
+            }
+          ],
+          "dom": {
+            "documents": 15,
+            "nodes": 21583,
+            "jsEventListeners": 886
+          },
+          "rss_bytes": 464056320,
+          "js_heap_bytes": 11058664
+        },
+        {
+          "mount": 5,
+          "checkpoint_ms": 228.927395,
+          "elapsed_navigation_ms": 9497.782033,
+          "lcp_ms": 968,
+          "long_tasks": [],
+          "dom": {
+            "documents": 10,
+            "nodes": 21457,
+            "jsEventListeners": 208
+          },
+          "rss_bytes": 476803072,
+          "js_heap_bytes": 9387452
+        },
+        {
+          "mount": 10,
+          "checkpoint_ms": 35.490322,
+          "elapsed_navigation_ms": 12237.121112,
+          "lcp_ms": 372,
+          "long_tasks": [],
+          "dom": {
+            "documents": 2,
+            "nodes": 2593,
+            "jsEventListeners": 101
+          },
+          "rss_bytes": 494153728,
+          "js_heap_bytes": 5607432
+        },
+        {
+          "mount": 15,
+          "checkpoint_ms": 51.943089,
+          "elapsed_navigation_ms": 14353.659015,
+          "lcp_ms": 180,
+          "long_tasks": [],
+          "dom": {
+            "documents": 12,
+            "nodes": 15574,
+            "jsEventListeners": 606
+          },
+          "rss_bytes": 499421184,
+          "js_heap_bytes": 8304844
+        },
+        {
+          "mount": 20,
+          "checkpoint_ms": 56.194213,
+          "elapsed_navigation_ms": 16756.578937,
+          "lcp_ms": 148,
+          "long_tasks": [],
+          "dom": {
+            "documents": 10,
+            "nodes": 12969,
+            "jsEventListeners": 502
+          },
+          "rss_bytes": 498356224,
+          "js_heap_bytes": 7588432
+        }
+      ],
+      "max_status_read_ms": 304.032221
+    },
+    {
+      "index": 1,
+      "mode": "trace",
+      "checkpoints": [
+        {
+          "mount": 1,
+          "checkpoint_ms": 54.451621,
+          "elapsed_navigation_ms": 509.70534,
+          "lcp_ms": 176,
+          "long_tasks": [],
+          "dom": {
+            "documents": 7,
+            "nodes": 10980,
+            "jsEventListeners": 402
+          },
+          "rss_bytes": 462327808,
+          "js_heap_bytes": 8798380
+        },
+        {
+          "mount": 5,
+          "checkpoint_ms": 36.172193,
+          "elapsed_navigation_ms": 2206.890092,
+          "lcp_ms": 156,
+          "long_tasks": [],
+          "dom": {
+            "documents": 15,
+            "nodes": 21367,
+            "jsEventListeners": 806
+          },
+          "rss_bytes": 497885184,
+          "js_heap_bytes": 11484776
+        },
+        {
+          "mount": 10,
+          "checkpoint_ms": 44.388164,
+          "elapsed_navigation_ms": 4294.980963,
+          "lcp_ms": 188,
+          "long_tasks": [],
+          "dom": {
+            "documents": 8,
+            "nodes": 9130,
+            "jsEventListeners": 1076
+          },
+          "rss_bytes": 525901824,
+          "js_heap_bytes": 5429280
+        },
+        {
+          "mount": 15,
+          "checkpoint_ms": 29.179246,
+          "elapsed_navigation_ms": 6538.365667,
+          "lcp_ms": 180,
+          "long_tasks": [],
+          "dom": {
+            "documents": 12,
+            "nodes": 15562,
+            "jsEventListeners": 582
+          },
+          "rss_bytes": 518680576,
+          "js_heap_bytes": 8744500
+        },
+        {
+          "mount": 20,
+          "checkpoint_ms": 154.578434,
+          "elapsed_navigation_ms": 8765.426906,
+          "lcp_ms": 176,
+          "long_tasks": [],
+          "dom": {
+            "documents": 8,
+            "nodes": 10375,
+            "jsEventListeners": 404
+          },
+          "rss_bytes": 514740224,
+          "js_heap_bytes": 7482208
+        }
+      ],
+      "max_status_read_ms": 23.100871
+    },
+    {
+      "index": 2,
+      "mode": "trace",
+      "checkpoints": [
+        {
+          "mount": 1,
+          "checkpoint_ms": 34.11761,
+          "elapsed_navigation_ms": 489.814789,
+          "lcp_ms": 168,
+          "long_tasks": [],
+          "dom": {
+            "documents": 10,
+            "nodes": 18954,
+            "jsEventListeners": 421
+          },
+          "rss_bytes": 463032320,
+          "js_heap_bytes": 10683076
+        },
+        {
+          "mount": 5,
+          "checkpoint_ms": 40.17707,
+          "elapsed_navigation_ms": 2203.179359,
+          "lcp_ms": 164,
+          "long_tasks": [],
+          "dom": {
+            "documents": 18,
+            "nodes": 29330,
+            "jsEventListeners": 825
+          },
+          "rss_bytes": 501059584,
+          "js_heap_bytes": 13367720
+        },
+        {
+          "mount": 10,
+          "checkpoint_ms": 37.121648,
+          "elapsed_navigation_ms": 4300.953461,
+          "lcp_ms": 172,
+          "long_tasks": [],
+          "dom": {
+            "documents": 28,
+            "nodes": 42300,
+            "jsEventListeners": 1330
+          },
+          "rss_bytes": 529465344,
+          "js_heap_bytes": 13864116
+        },
+        {
+          "mount": 15,
+          "checkpoint_ms": 30.758705,
+          "elapsed_navigation_ms": 6590.720812,
+          "lcp_ms": 204,
+          "long_tasks": [],
+          "dom": {
+            "documents": 8,
+            "nodes": 10376,
+            "jsEventListeners": 404
+          },
+          "rss_bytes": 533180416,
+          "js_heap_bytes": 7583524
+        },
+        {
+          "mount": 20,
+          "checkpoint_ms": 31.953135,
+          "elapsed_navigation_ms": 8642.371987,
+          "lcp_ms": 176,
+          "long_tasks": [],
+          "dom": {
+            "documents": 13,
+            "nodes": 23280,
+            "jsEventListeners": 409
+          },
+          "rss_bytes": 525279232,
+          "js_heap_bytes": 8907652
+        }
+      ],
+      "max_status_read_ms": 26.113631
+    },
+    {
+      "index": 3,
+      "mode": "control",
+      "checkpoints": [
+        {
+          "mount": 1,
+          "checkpoint_ms": 29.153372,
+          "elapsed_navigation_ms": 501.139092,
+          "lcp_ms": 200,
+          "long_tasks": [],
+          "dom": {
+            "documents": 15,
+            "nodes": 26142,
+            "jsEventListeners": 800
+          },
+          "rss_bytes": 466419712,
+          "js_heap_bytes": 11040044
+        },
+        {
+          "mount": 5,
+          "checkpoint_ms": 22.548256,
+          "elapsed_navigation_ms": 2175.146779,
+          "lcp_ms": 172,
+          "long_tasks": [],
+          "dom": {
+            "documents": 3,
+            "nodes": 5174,
+            "jsEventListeners": 102
+          },
+          "rss_bytes": 503377920,
+          "js_heap_bytes": 5952936
+        },
+        {
+          "mount": 10,
+          "checkpoint_ms": 34.082446,
+          "elapsed_navigation_ms": 4203.827517,
+          "lcp_ms": 168,
+          "long_tasks": [],
+          "dom": {
+            "documents": 13,
+            "nodes": 18144,
+            "jsEventListeners": 607
+          },
+          "rss_bytes": 507138048,
+          "js_heap_bytes": 9267964
+        },
+        {
+          "mount": 15,
+          "checkpoint_ms": 50.66392,
+          "elapsed_navigation_ms": 6413.227463,
+          "lcp_ms": 156,
+          "long_tasks": [],
+          "dom": {
+            "documents": 23,
+            "nodes": 31125,
+            "jsEventListeners": 1112
+          },
+          "rss_bytes": 512958464,
+          "js_heap_bytes": 12580868
+        },
+        {
+          "mount": 20,
+          "checkpoint_ms": 33.977146,
+          "elapsed_navigation_ms": 8474.304005,
+          "lcp_ms": 152,
+          "long_tasks": [],
+          "dom": {
+            "documents": 8,
+            "nodes": 10374,
+            "jsEventListeners": 380
+          },
+          "rss_bytes": 503148544,
+          "js_heap_bytes": 7446668
+        }
+      ],
+      "max_status_read_ms": 22.321447
+    }
+  ]
+}

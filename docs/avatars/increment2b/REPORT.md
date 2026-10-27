@@ -1,5 +1,15 @@
 # Increment 2B — acceptance withdrawn: uncovered memory failures
 
+## Lighter capture — comparison blocked by control stability
+
+[Latest calibration](navigation-residency-v5/REPORT.md) removes in-workload dumps
+and defers trace transfer beyond sealed navigation. Both traced runs pass trace
+integrity and pause limits (2.288%/2.581%; maxima 180/199ms), but controls vary
+16.757→8.474 seconds, failing 20% duration stability. All four slots remain in the
+result; no source comparison was launched. V3/v4 failures also remain archived.
+116 source hashes/30 files verify, archive re-audit matches, 53 focused tests pass.
+No product fix or acceptance; next gap is the cause of the early control stall.
+
 ## Per-navigation allocator capture — inconclusive
 
 [Eight-slot v2 capture](navigation-residency/REPORT.md) ran after preserving an

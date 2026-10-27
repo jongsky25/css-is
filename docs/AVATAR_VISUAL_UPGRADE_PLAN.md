@@ -878,3 +878,14 @@ loss failure. 164 source hashes/67 files verified, 140 allocator dumps retained,
 38 focused tests pass. Probe overhead and missing memory maps limit attribution;
 no reproduction of prior 52MiB anonymous release or validated product correction.
 No waiver, replacement sample, 2B acceptance or later increment. No active run.
+
+### Deferred trace transfer — 2026-10-27 — control stability still blocks comparison
+
+[Latest report](avatars/increment2b/navigation-residency-v5/REPORT.md): three fixed
+four-slot calibrations preserved. V3/v4 fail pause gates; v5 (`08daa22`) defers
+trace I/O beyond sealed navigation and both traced runs pass integrity/pause checks.
+V5 controls vary 16.757/8.474 seconds, failing the unchanged 20% duration gate.
+116 source/probe hashes and 30 files verify; extracted archive audit identical;
+53 focused tests pass. No source comparison, replacement, waiver or product fix.
+Next evidence gap is scheduling/throttling attribution for the early control stall.
+2B and later increments remain blocked; no measurement active.
