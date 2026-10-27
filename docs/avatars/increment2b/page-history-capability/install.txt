@@ -1,0 +1,9 @@
+Collecting frida==17.5.1
+  Downloading frida-17.5.1-cp37-abi3-manylinux_2_5_x86_64.whl.metadata (2.3 kB)
+Downloading frida-17.5.1-cp37-abi3-manylinux_2_5_x86_64.whl (32.5 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 32.5/32.5 MB 8.0 MB/s  0:00:04
+Installing collected packages: frida
+Successfully installed frida-17.5.1
+
+[notice] A new release of pip is available: 26.2.1 -> 26.2.2
+[notice] To update, run: /workspace/css-is/.venv/bin/python -m pip install --upgrade pip

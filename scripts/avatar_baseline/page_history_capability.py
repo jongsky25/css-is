@@ -35,7 +35,7 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def main():
-    p=argparse.ArgumentParser();p.add_argument('--out',type=Path,required=True);args=p.parse_args()
+    p=argparse.ArgumentParser();p.add_argument('--out',type=Path,required=True);p.add_argument('--mode',choices=['control','probe'],default='probe');args=p.parse_args()
     args.out.mkdir(parents=True,exist_ok=False)
     root=Path(__file__).resolve().parents[2]
     hook=root/'scripts/avatar_baseline/native/page_history.js'
@@ -44,7 +44,7 @@ def main():
         'hook_sha256':hashlib.sha256(hook.read_bytes()).hexdigest(),
         'runner_sha256':hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
         'source_commit':subprocess.check_output(['git','rev-parse','HEAD'],cwd=root,text=True).strip(),
-        'stages':[],'agent_messages':[]}
+        'stages':[],'agent_messages':[],'mode':args.mode}
     notes=subprocess.check_output(['readelf','-n',str(BROWSER)],text=True)
     if 'Build ID: '+BUILD not in notes: raise ValueError('Unexpected browser ELF')
     result['browser_build_id']=BUILD
@@ -75,16 +75,20 @@ def main():
             if len(pids)!=1 or done[0].get('dataLossOccurred'):raise ValueError('Renderer identity ambiguity')
             pid=pids.pop();result['renderer_pid']=pid
             result['identity_events']=[e for e in events if e.get('name')=='CommitLoad']
-            session=frida.attach(pid)
-            script=session.create_script(hook.read_text());script.on('message',lambda m,d:result['agent_messages'].append(m));script.load()
-            if not any(m.get('payload',{}).get('ready') for m in result['agent_messages']):raise ValueError('Hook did not become ready')
+            script=None
+            if args.mode=='probe':
+                session=frida.attach(pid)
+                script=session.create_script(hook.read_text());script.on('message',lambda m,d:result['agent_messages'].append(m));script.load()
+                if not any(m.get('payload',{}).get('ready') for m in result['agent_messages']):raise ValueError('Hook did not become ready')
             for i,mode in enumerate(result['schedule']):
-                label=f'{i:02d}-{mode}';script.exports_sync.setphase(label)
+                label=f'{i:02d}-{mode}'
+                if script: script.exports_sync.setphase(label)
                 start=time.monotonic_ns();page.goto(origin+'/'+mode);page.wait_for_timeout(220)
                 result['stages'].append({'index':i,'mode':mode,'phase':label,'begin_ns':start,'end_ns':time.monotonic_ns(),
                     'live_nodes':page.evaluate('document.querySelectorAll("*").length')})
-            result['history']=script.exports_sync.result();script.unload();session.detach();session=None
-            result['status']='captured' if result['history']['dropped']==0 else 'overflow'
+            if script:
+                result['history']=script.exports_sync.result();script.unload();session.detach();session=None
+            result['status']='captured' if not result.get('history',{}).get('dropped',0) else 'overflow'
             browser.close()
     except Exception as exc:
         result['status']='capability_failed';result['error']=repr(exc)

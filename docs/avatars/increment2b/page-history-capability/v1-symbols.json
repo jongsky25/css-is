@@ -1,0 +1,1306 @@
+{
+  "build_id": "1c5dca8527a61d07372e489142bee26af1bcaf71",
+  "debug_sha256": "3cc0a23a46948354fc39d4e3e124e23120916f661ecac533ae9dd45d4d3c6057",
+  "symbols": {
+    "0x4f4833e": {
+      "function": "content::mojom::AgentSchedulingGroupStubDispatch::Accept(content::mojom::AgentSchedulingGroup*, mojo::Message*)",
+      "location": "agent_scheduling_group.mojom.cc:?"
+    },
+    "0x4f6f6ab": {
+      "function": "content::mojom::NavigationClientStubDispatch::AcceptWithResponder(content::mojom::NavigationClient*, mojo::Message*, std::__1::unique_ptr<mojo::internal::ResponderThunk, std::__1::default_delete<mojo::internal::ResponderThunk> >)",
+      "location": "navigation_client.mojom.cc:?"
+    },
+    "0x5aaf5d1": {
+      "function": "cppgc::internal::ObjectAllocator::OutOfLineAllocateGCSafePoint(cppgc::internal::NormalPageSpace&, unsigned long, std::align_val_t, unsigned short, cppgc::internal::ObjectAllocator::MayContainMixins, void**)",
+      "location": "object-allocator.cc:?"
+    },
+    "0x5aafcfe": {
+      "function": "cppgc::internal::ObjectAllocator::TryRefillLinearAllocationBuffer(cppgc::internal::NormalPageSpace&, unsigned long)",
+      "location": "object-allocator.cc:?"
+    },
+    "0x7b55873": {
+      "function": "blink::mojom::blink::DevToolsAgentStubDispatch::Accept(blink::mojom::blink::DevToolsAgent*, mojo::Message*)",
+      "location": "devtools_agent.mojom-blink.cc:?"
+    },
+    "0x7c18ec0": {
+      "function": "blink::FrameOrWorkerScheduler::RegisterStickyFeature(blink::mojom::WebSchedulerTrackedFeature, blink::SchedulingPolicy)",
+      "location": "frame_or_worker_scheduler.cc:?"
+    },
+    "0x99c584e": {
+      "function": "content::ContentMain(content::ContentMainParams)",
+      "location": "content_main.cc:?"
+    },
+    "0x99c6d17": {
+      "function": "content::RunOtherNamedProcessTypeMain(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, content::MainFunctionParams, content::ContentMainDelegate*)",
+      "location": "content_main_runner_impl.cc:?"
+    },
+    "0x99c8e32": {
+      "function": "content::ContentMainRunnerImpl::Run()",
+      "location": "content_main_runner_impl.cc:?"
+    },
+    "0xade052d": {
+      "function": "base::MessagePumpDefault::Run(base::MessagePump::Delegate*)",
+      "location": "message_pump_default.cc:?"
+    },
+    "0xae11dd0": {
+      "function": "base::RunLoop::Run(base::Location const&)",
+      "location": "run_loop.cc:?"
+    },
+    "0xae325c4": {
+      "function": "base::TaskAnnotator::RunTaskImpl(base::PendingTask&)",
+      "location": "task_annotator.cc:?"
+    },
+    "0xae555f1": {
+      "function": "base::sequence_manager::internal::ThreadControllerWithMessagePumpImpl::DoWork()",
+      "location": "thread_controller_with_message_pump_impl.cc:?"
+    },
+    "0xae561e7": {
+      "function": "base::sequence_manager::internal::ThreadControllerWithMessagePumpImpl::Run(bool, base::TimeDelta)",
+      "location": "thread_controller_with_message_pump_impl.cc:?"
+    },
+    "0xb33a48e": {
+      "function": "mojo::InterfaceEndpointClient::HandleIncomingMessageThunk::Accept(mojo::Message*)",
+      "location": "interface_endpoint_client.cc:?"
+    },
+    "0xb33a4e2": {
+      "function": "mojo::InterfaceEndpointClient::HandleIncomingMessageThunk::Accept(mojo::Message*)",
+      "location": "interface_endpoint_client.cc:?"
+    },
+    "0xb33c512": {
+      "function": "mojo::InterfaceEndpointClient::HandleIncomingMessage(mojo::Message*)",
+      "location": "interface_endpoint_client.cc:?"
+    },
+    "0xb3413ff": {
+      "function": "mojo::MessageDispatcher::Accept(mojo::Message*)",
+      "location": "message_dispatcher.cc:?"
+    },
+    "0xbf77f94": {
+      "function": "IPC::ChannelAssociatedGroupController::AcceptOnEndpointThread(mojo::Message, IPC::(anonymous namespace)::ScopedUrgentMessageNotification) [clone .9e1349778593118307bb305d0cef2429]",
+      "location": "ipc_mojo_bootstrap.cc:?"
+    },
+    "0xbf7853c": {
+      "function": "base::internal::Invoker<base::internal::FunctorTraits<void (IPC::ChannelAssociatedGroupController::*&&)(mojo::Message, IPC::(anonymous namespace)::ScopedUrgentMessageNotification), IPC::ChannelAssociatedGroupController*&&, mojo::Message&&, IPC::(anonymous namespace)::ScopedUrgentMessageNotification&&>, base::internal::BindState<true, true, false, void (IPC::ChannelAssociatedGroupController::*)(mojo::Message, IPC::(anonymous namespace)::ScopedUrgentMessageNotification), scoped_refptr<IPC::ChannelAssociatedGroupController>, mojo::Message, IPC::(anonymous namespace)::ScopedUrgentMessageNotification>, void ()>::RunOnce(base::internal::BindStateBase*)",
+      "location": "ipc_mojo_bootstrap.cc:?"
+    },
+    "0xe8ce0f9": {
+      "function": "content::RenderFrameImpl::CreateFrame(content::AgentSchedulingGroup&, base::TokenType<blink::LocalFrameTokenTypeMarker> const&, int, mojo::PendingAssociatedReceiver<content::mojom::Frame>, mojo::PendingRemote<blink::mojom::BrowserInterfaceBroker>, mojo::PendingAssociatedRemote<blink::mojom::AssociatedInterfaceProvider>, blink::WebView*, base::optional_ref<blink::MultiToken<base::TokenType<blink::LocalFrameTokenTypeMarker>, base::TokenType<blink::RemoteFrameTokenTypeMarker> > const, (partition_alloc::internal::RawPtrTraits)0>, base::optional_ref<blink::MultiToken<base::TokenType<blink::LocalFrameTokenTypeMarker>, base::TokenType<blink::RemoteFrameTokenTypeMarker> > const, (partition_alloc::internal::RawPtrTraits)0>, base::optional_ref<blink::MultiToken<base::TokenType<blink::LocalFrameTokenTypeMarker>, base::TokenType<blink::RemoteFrameTokenTypeMarker> > const, (partition_alloc::internal::RawPtrTraits)0>, base::optional_ref<blink::MultiToken<base::TokenType<blink::LocalFrameTokenTypeMarker>, base::TokenType<blink::RemoteFrameTokenTypeMarker> > const, (partition_alloc::internal::RawPtrTraits)0>, base::UnguessableToken const&, std::__1::optional<base::UnguessableToken> const&, blink::mojom::TreeScopeType, mojo::StructPtr<blink::mojom::FrameReplicationState>, mojo::StructPtr<content::mojom::CreateFrameWidgetParams>, mojo::StructPtr<blink::mojom::FrameOwnerProperties>, bool, base::TokenType<blink::DocumentTokenTypeMarker> const&, base::TokenType<blink::InitiatorStateTokenTypeMarker> const&, mojo::StructPtr<blink::mojom::PolicyContainer>, bool)",
+      "location": "render_frame_impl.cc:?"
+    },
+    "0xe8d3ea9": {
+      "function": "content::RenderFrameImpl::DidMeaningfulLayout(blink::WebMeaningfulLayout)",
+      "location": "render_frame_impl.cc:?"
+    },
+    "0xe8d8a4d": {
+      "function": "_ZN7content15RenderFrameImpl16CommitNavigationEN4mojo9StructPtrIN5blink5mojom22CommonNavigationParamsEEENS2_INS4_22CommitNavigationParamsEEENS2_IN7network5mojom15URLResponseHeadEEENS1_16ScopedHandleBaseINS1_22DataPipeConsumerHandleEEENS2_INSA_24URLLoaderClientEndpointsEEENSt3__110unique_ptrINS3_29PendingURLLoaderFactoryBundleENSI_14default_deleteISK_EEEENSI_8optionalINSI_6vectorINS2_INS4_22TransferrableURLLoaderEEENSI_9allocatorISR_EEEEEENS2_INS4_27ControllerServiceWorkerInfoEEENS2_INS4_35ServiceWorkerContainerInfoForClientEEENS1_13PendingRemoteINSA_16URLLoaderFactoryEEES12_NS1_23PendingAssociatedRemoteINS4_23FetchLaterLoaderFactoryEEERKN4base9TokenTypeINS3_23DocumentTokenTypeMarkerEEERKNS16_16UnguessableTokenERKNS17_INS3_29InitiatorStateTokenTypeMarkerEEERKNS16_4UuidENS2_INS4_15PolicyContainerEEENS10_INS4_13CodeCacheHostEEES1P_NS2_INS_5mojom17CookieManagerInfoEEENS2_INS1Q_11StorageInfoEEENS16_12OnceCallbackIFvNS2_INS1Q_30DidCommitProvisionalLoadParamsEEENS2_INS1Q_39DidCommitProvisionalLoadInterfaceParamsEEEEEE",
+      "location": "render_frame_impl.cc:?"
+    },
+    "0xe8dbcc4": {
+      "function": "content::RenderFrameImpl::CommitNavigationWithParams(mojo::StructPtr<blink::mojom::CommonNavigationParams>, mojo::StructPtr<blink::mojom::CommitNavigationParams>, std::__1::unique_ptr<blink::PendingURLLoaderFactoryBundle, std::__1::default_delete<blink::PendingURLLoaderFactoryBundle> >, std::__1::optional<std::__1::vector<mojo::StructPtr<blink::mojom::TransferrableURLLoader>, std::__1::allocator<mojo::StructPtr<blink::mojom::TransferrableURLLoader> > > >, mojo::StructPtr<blink::mojom::ControllerServiceWorkerInfo>, mojo::StructPtr<blink::mojom::ServiceWorkerContainerInfoForClient>, mojo::PendingRemote<network::mojom::URLLoaderFactory>, mojo::PendingRemote<network::mojom::URLLoaderFactory>, mojo::PendingAssociatedRemote<blink::mojom::FetchLaterLoaderFactory>, mojo::PendingRemote<blink::mojom::CodeCacheHost>, mojo::PendingRemote<blink::mojom::CodeCacheHost>, mojo::StructPtr<content::mojom::CookieManagerInfo>, mojo::StructPtr<content::mojom::StorageInfo>, std::__1::unique_ptr<content::DocumentState, std::__1::default_delete<content::DocumentState> >, std::__1::unique_ptr<blink::WebNavigationParams, std::__1::default_delete<blink::WebNavigationParams> >)",
+      "location": "render_frame_impl.cc:?"
+    },
+    "0xe9011de": {
+      "function": "base::internal::Invoker<base::internal::FunctorTraits<void (content::RenderFrameImpl::*&&)(mojo::StructPtr<blink::mojom::CommonNavigationParams>, mojo::StructPtr<blink::mojom::CommitNavigationParams>, std::__1::unique_ptr<blink::PendingURLLoaderFactoryBundle, std::__1::default_delete<blink::PendingURLLoaderFactoryBundle> >, std::__1::optional<std::__1::vector<mojo::StructPtr<blink::mojom::TransferrableURLLoader>, std::__1::allocator<mojo::StructPtr<blink::mojom::TransferrableURLLoader> > > >, mojo::StructPtr<blink::mojom::ControllerServiceWorkerInfo>, mojo::StructPtr<blink::mojom::ServiceWorkerContainerInfoForClient>, mojo::PendingRemote<network::mojom::URLLoaderFactory>, mojo::PendingRemote<network::mojom::URLLoaderFactory>, mojo::PendingAssociatedRemote<blink::mojom::FetchLaterLoaderFactory>, mojo::PendingRemote<blink::mojom::CodeCacheHost>, mojo::PendingRemote<blink::mojom::CodeCacheHost>, mojo::StructPtr<content::mojom::CookieManagerInfo>, mojo::StructPtr<content::mojom::StorageInfo>, std::__1::unique_ptr<content::DocumentState, std::__1::default_delete<content::DocumentState> >, std::__1::unique_ptr<blink::WebNavigationParams, std::__1::default_delete<blink::WebNavigationParams> >), base::WeakPtr<content::RenderFrameImpl>&&, mojo::StructPtr<blink::mojom::CommonNavigationParams>&&, mojo::StructPtr<blink::mojom::CommitNavigationParams>&&, std::__1::unique_ptr<blink::PendingURLLoaderFactoryBundle, std::__1::default_delete<blink::PendingURLLoaderFactoryBundle> >&&, std::__1::optional<std::__1::vector<mojo::StructPtr<blink::mojom::TransferrableURLLoader>, std::__1::allocator<mojo::StructPtr<blink::mojom::TransferrableURLLoader> > > >&&, mojo::StructPtr<blink::mojom::ControllerServiceWorkerInfo>&&, mojo::StructPtr<blink::mojom::ServiceWorkerContainerInfoForClient>&&, mojo::PendingRemote<network::mojom::URLLoaderFactory>&&, mojo::PendingRemote<network::mojom::URLLoaderFactory>&&, mojo::PendingAssociatedRemote<blink::mojom::FetchLaterLoaderFactory>&&, mojo::PendingRemote<blink::mojom::CodeCacheHost>&&, mojo::PendingRemote<blink::mojom::CodeCacheHost>&&, mojo::StructPtr<content::mojom::CookieManagerInfo>&&, mojo::StructPtr<content::mojom::StorageInfo>&&, std::__1::unique_ptr<content::DocumentState, std::__1::default_delete<content::DocumentState> >&&>, base::internal::BindState<true, true, false, void (content::RenderFrameImpl::*)(mojo::StructPtr<blink::mojom::CommonNavigationParams>, mojo::StructPtr<blink::mojom::CommitNavigationParams>, std::__1::unique_ptr<blink::PendingURLLoaderFactoryBundle, std::__1::default_delete<blink::PendingURLLoaderFactoryBundle> >, std::__1::optional<std::__1::vector<mojo::StructPtr<blink::mojom::TransferrableURLLoader>, std::__1::allocator<mojo::StructPtr<blink::mojom::TransferrableURLLoader> > > >, mojo::StructPtr<blink::mojom::ControllerServiceWorkerInfo>, mojo::StructPtr<blink::mojom::ServiceWorkerContainerInfoForClient>, mojo::PendingRemote<network::mojom::URLLoaderFactory>, mojo::PendingRemote<network::mojom::URLLoaderFactory>, mojo::PendingAssociatedRemote<blink::mojom::FetchLaterLoaderFactory>, mojo::PendingRemote<blink::mojom::CodeCacheHost>, mojo::PendingRemote<blink::mojom::CodeCacheHost>, mojo::StructPtr<content::mojom::CookieManagerInfo>, mojo::StructPtr<content::mojom::StorageInfo>, std::__1::unique_ptr<content::DocumentState, std::__1::default_delete<content::DocumentState> >, std::__1::unique_ptr<blink::WebNavigationParams, std::__1::default_delete<blink::WebNavigationParams> >), base::WeakPtr<content::RenderFrameImpl>, mojo::StructPtr<blink::mojom::CommonNavigationParams>, mojo::StructPtr<blink::mojom::CommitNavigationParams>, std::__1::unique_ptr<blink::PendingURLLoaderFactoryBundle, std::__1::default_delete<blink::PendingURLLoaderFactoryBundle> >, std::__1::optional<std::__1::vector<mojo::StructPtr<blink::mojom::TransferrableURLLoader>, std::__1::allocator<mojo::StructPtr<blink::mojom::TransferrableURLLoader> > > >, mojo::StructPtr<blink::mojom::ControllerServiceWorkerInfo>, mojo::StructPtr<blink::mojom::ServiceWorkerContainerInfoForClient>, mojo::PendingRemote<network::mojom::URLLoaderFactory>, mojo::PendingRemote<network::mojom::URLLoaderFactory>, mojo::PendingAssociatedRemote<blink::mojom::FetchLaterLoaderFactory>, mojo::PendingRemote<blink::mojom::CodeCacheHost>, mojo::PendingRemote<blink::mojom::CodeCacheHost>, mojo::StructPtr<content::mojom::CookieManagerInfo>, mojo::StructPtr<content::mojom::StorageInfo>, std::__1::unique_ptr<content::DocumentState, std::__1::default_delete<content::DocumentState> > >, void (std::__1::unique_ptr<blink::WebNavigationParams, std::__1::default_delete<blink::WebNavigationParams> >)>::RunOnce(base::internal::BindStateBase*, std::__1::unique_ptr<blink::WebNavigationParams, std::__1::default_delete<blink::WebNavigationParams> >&&)",
+      "location": "render_frame_impl.cc:?"
+    },
+    "0xe917be0": {
+      "function": "content::AgentSchedulingGroup::CreateView(mojo::StructPtr<content::mojom::CreateViewParams>)",
+      "location": "agent_scheduling_group.cc:?"
+    },
+    "0xe9180a4": {
+      "function": "content::AgentSchedulingGroup::CreateWebView(mojo::StructPtr<content::mojom::CreateViewParams>, bool, blink::WebURL const&)",
+      "location": "agent_scheduling_group.cc:?"
+    },
+    "0xe918aa5": {
+      "function": "content::AgentSchedulingGroup::CreateWebView(mojo::StructPtr<content::mojom::CreateViewParams>, bool, blink::WebURL const&)",
+      "location": "agent_scheduling_group.cc:?"
+    },
+    "0xe91b3d5": {
+      "function": "_ZN7content16NavigationClient16CommitNavigationEN4mojo9StructPtrIN5blink5mojom22CommonNavigationParamsEEENS2_INS4_22CommitNavigationParamsEEENS2_IN7network5mojom15URLResponseHeadEEENS1_16ScopedHandleBaseINS1_22DataPipeConsumerHandleEEENS2_INSA_24URLLoaderClientEndpointsEEENSt3__110unique_ptrINS3_29PendingURLLoaderFactoryBundleENSI_14default_deleteISK_EEEENSI_8optionalINSI_6vectorINS2_INS4_22TransferrableURLLoaderEEENSI_9allocatorISR_EEEEEENS2_INS4_27ControllerServiceWorkerInfoEEENS2_INS4_35ServiceWorkerContainerInfoForClientEEENS1_13PendingRemoteINSA_16URLLoaderFactoryEEES12_NS1_23PendingAssociatedRemoteINS4_23FetchLaterLoaderFactoryEEERKN4base9TokenTypeINS3_23DocumentTokenTypeMarkerEEERKNS16_16UnguessableTokenERKNS17_INS3_29InitiatorStateTokenTypeMarkerEEERKNS16_4UuidENS2_INS4_15PolicyContainerEEENS10_INS4_13CodeCacheHostEEES1P_NS2_INS_5mojom17CookieManagerInfoEEENS2_INS1Q_11StorageInfoEEENS16_12OnceCallbackIFvNS2_INS1Q_30DidCommitProvisionalLoadParamsEEENS2_INS1Q_39DidCommitProvisionalLoadInterfaceParamsEEEEEE",
+      "location": "navigation_client.cc:?"
+    },
+    "0xe91c49c": {
+      "function": "content::mojom::NavigationClientStub<mojo::RawPtrImplRefTraits<content::mojom::NavigationClient> >::AcceptWithResponder(mojo::Message*, std::__1::unique_ptr<mojo::internal::ResponderThunk, std::__1::default_delete<mojo::internal::ResponderThunk> >)",
+      "location": "navigation_client.cc:?"
+    },
+    "0xe9863ea": {
+      "function": "content::RendererMain(content::MainFunctionParams)",
+      "location": "renderer_main.cc:?"
+    },
+    "0xeaa4770": {
+      "function": "blink::ImmutableCSSPropertyValueSet::Create(base::span<blink::CSSPropertyValue const, 18446744073709551615ul, blink::CSSPropertyValue const*>, blink::CSSParserMode, bool)",
+      "location": "css_property_value_set.cc:?"
+    },
+    "0xeb14cf0": {
+      "function": "blink::CreateCSSPropertyValueSet(blink::BasicHeapVector<(blink::internal::HeapCollectionType)1, blink::CSSPropertyValue, 64u>&, blink::CSSParserMode, blink::Document const*)",
+      "location": "css_parser_impl.cc:?"
+    },
+    "0xeb15f2a": {
+      "function": "blink::CSSParserImpl::ConsumeQualifiedRule(blink::CSSParserTokenStream&, blink::AllowedRules, blink::CSSNestingType, blink::StyleRule*)",
+      "location": "css_parser_impl.cc:?"
+    },
+    "0xeb167dc": {
+      "function": "blink::CSSParserImpl::ParseStyleSheet(blink::String const&, blink::CSSParserContext const*, blink::StyleSheetContents*, blink::CSSDeferPropertyParsing, bool)",
+      "location": "css_parser_impl.cc:?"
+    },
+    "0xeb1698a": {
+      "function": "blink::CSSParserImpl::ParseStyleSheet(blink::String const&, blink::CSSParserContext const*, blink::StyleSheetContents*, blink::CSSDeferPropertyParsing, bool)",
+      "location": "css_parser_impl.cc:?"
+    },
+    "0xeb25d78": {
+      "function": "blink::CSSParserImpl::ConsumeStyleRule(blink::CSSParserTokenStream&, blink::CSSNestingType, blink::StyleRule*, bool, bool&)",
+      "location": "css_parser_impl.cc:?"
+    },
+    "0xeb26449": {
+      "function": "blink::CSSParserImpl::ConsumeStyleRule(blink::CSSParserTokenStream&, blink::CSSNestingType, blink::StyleRule*, bool, bool&)",
+      "location": "css_parser_impl.cc:?"
+    },
+    "0xeb2afbf": {
+      "function": "void blink::Vector<cppgc::internal::BasicMember<blink::StyleRuleBase, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy, cppgc::internal::DisabledCheckingPolicy, cppgc::internal::CompressedPointer>, 0u, blink::HeapAllocator>::AppendSlowCase<blink::StyleRuleBase*&>(blink::StyleRuleBase*&)",
+      "location": "css_parser_impl.cc:?"
+    },
+    "0xeb2b50b": {
+      "function": "blink::Vector<cppgc::internal::BasicMember<blink::StyleRuleBase, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy, cppgc::internal::DisabledCheckingPolicy, cppgc::internal::CompressedPointer>, 0u, blink::HeapAllocator>::ReallocateBuffer(unsigned int)",
+      "location": "css_parser_impl.cc:?"
+    },
+    "0xebf02e2": {
+      "function": "blink::StyleCascade::Apply(blink::CascadeFilter)",
+      "location": "style_cascade.cc:?"
+    },
+    "0xebf0a4e": {
+      "function": "blink::StyleCascade::Apply(blink::CascadeFilter)",
+      "location": "style_cascade.cc:?"
+    },
+    "0xebf1cac": {
+      "function": "blink::StyleCascade::LookupAndApply(blink::CSSProperty const&, blink::CascadeResolver&)",
+      "location": "style_cascade.cc:?"
+    },
+    "0xebf8ca2": {
+      "function": "blink::StyleCascade::LookupAndApplyDeclaration(blink::CSSProperty const&, blink::CascadePriority*, blink::CascadeResolver&)",
+      "location": "style_cascade.cc:?"
+    },
+    "0xec128b7": {
+      "function": "blink::RuleSet::AddToBucket(blink::AtomicString const&, blink::RuleMap&, blink::RuleData const&)",
+      "location": "rule_set.cc:?"
+    },
+    "0xec131f4": {
+      "function": "blink::RuleMap::Add(blink::AtomicString const&, blink::RuleData const&)",
+      "location": "rule_set.cc:?"
+    },
+    "0xec13a3d": {
+      "function": "blink::RuleSet::AddChildRules(blink::StyleRule*, base::span<cppgc::internal::BasicMember<blink::StyleRuleBase, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy, cppgc::internal::DisabledCheckingPolicy, cppgc::internal::CompressedPointer> const, 18446744073709551615ul, cppgc::internal::BasicMember<blink::StyleRuleBase, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy, cppgc::internal::DisabledCheckingPolicy, cppgc::internal::CompressedPointer> const*>, blink::MediaQueryEvaluator const&, blink::MixinMap const&, unsigned int, blink::ContainerQuerySet const*, blink::CascadeLayer*, blink::StyleScope const*, blink::BasicHeapVector<(blink::internal::HeapCollectionType)1, blink::RuleSet::ApplyingMixin, 4u>&)",
+      "location": "rule_set.cc:?"
+    },
+    "0xec15bea": {
+      "function": "blink::RuleSet::AddStyleRule(blink::StyleRule*, blink::StyleRule*, blink::MediaQueryEvaluator const&, blink::MixinMap const&, unsigned int, blink::BasicHeapVector<(blink::internal::HeapCollectionType)1, blink::RuleSet::ApplyingMixin, 4u>&, blink::ContainerQuerySet const*, blink::CascadeLayer*, blink::StyleScope const*)",
+      "location": "rule_set.cc:?"
+    },
+    "0xec17792": {
+      "function": "blink::RuleSet::AddRulesFromSheet(blink::StyleSheetContents const*, blink::MediaQueryEvaluator const&, blink::MixinMap const&, blink::CascadeLayer*, blink::StyleScope const*)",
+      "location": "rule_set.cc:?"
+    },
+    "0xec18a1e": {
+      "function": "blink::RuleMap::Compact()",
+      "location": "rule_set.cc:?"
+    },
+    "0xec191b9": {
+      "function": "blink::RuleSet::CompactRules()",
+      "location": "rule_set.cc:?"
+    },
+    "0xec25526": {
+      "function": "void blink::Vector<blink::RuleData, 4u, blink::HeapAllocator>::AppendSlowCase<blink::RuleData>(blink::RuleData&&)",
+      "location": "rule_set.cc:?"
+    },
+    "0xec25a16": {
+      "function": "blink::Vector<blink::RuleData, 4u, blink::HeapAllocator>::ReallocateBuffer(unsigned int)",
+      "location": "rule_set.cc:?"
+    },
+    "0xec2cff5": {
+      "function": "blink::StyleEngine::StyleEngine(blink::Document&)",
+      "location": "style_engine.cc:?"
+    },
+    "0xec2fa69": {
+      "function": "blink::StyleEngine::UpdateActiveStyle()",
+      "location": "style_engine.cc:?"
+    },
+    "0xec34491": {
+      "function": "blink::StyleEngine::CreateSheet(blink::Element&, blink::String const&, blink::TextPosition, blink::PendingSheetType, blink::RenderBlockingBehavior)",
+      "location": "style_engine.cc:?"
+    },
+    "0xec3eb6b": {
+      "function": "blink::StyleEngine::RebuildLayoutTree(blink::Element*)",
+      "location": "style_engine.cc:?"
+    },
+    "0xec3fa41": {
+      "function": "blink::StyleEngine::UpdateStyleAndLayoutTree()",
+      "location": "style_engine.cc:?"
+    },
+    "0xece6527": {
+      "function": "blink::css_longhand::Stroke::ApplyValue(blink::StyleResolverState&, blink::CSSValue const&, unsigned char) const",
+      "location": "longhands_custom.cc:?"
+    },
+    "0xece67e9": {
+      "function": "blink::ComputedStyleBuilderBase::SetStrokePaint(blink::SVGPaint&&)",
+      "location": "longhands_custom.cc:?"
+    },
+    "0xecfab04": {
+      "function": "blink::ComputedStyleBuilderBase::SetTransformOrigin(blink::TransformOrigin&&)",
+      "location": "longhands_custom.cc:?"
+    },
+    "0xed24ab8": {
+      "function": "blink::StyleSheetCollection::FinishUpdateActiveStyleSheets(blink::MixinMap const&)",
+      "location": "style_sheet_collection.cc:?"
+    },
+    "0xed296b2": {
+      "function": "blink::StyleSheetContents::ParserAppendRule(blink::StyleRuleBase*)",
+      "location": "style_sheet_contents.cc:?"
+    },
+    "0xed2cce0": {
+      "function": "blink::StyleSheetContents::EnsureRuleSet(blink::MediaQueryEvaluator const&, blink::MixinMap const&)",
+      "location": "style_sheet_contents.cc:?"
+    },
+    "0xed2cd31": {
+      "function": "blink::StyleSheetContents::EnsureRuleSet(blink::MediaQueryEvaluator const&, blink::MixinMap const&)",
+      "location": "style_sheet_contents.cc:?"
+    },
+    "0xed7355c": {
+      "function": "blink::Event::InitEventPath(blink::Node&)",
+      "location": "event.cc:?"
+    },
+    "0xee0aefb": {
+      "function": "blink::Text::Create(blink::Document&, blink::String&&)",
+      "location": "text.cc:?"
+    },
+    "0xee0cb14": {
+      "function": "blink::Text::CreateTextLayoutObject()",
+      "location": "text.cc:?"
+    },
+    "0xee0cc59": {
+      "function": "blink::Text::CreateTextLayoutObject()",
+      "location": "text.cc:?"
+    },
+    "0xee0cd68": {
+      "function": "blink::Text::AttachLayoutTree(blink::Node::AttachContext&)",
+      "location": "text.cc:?"
+    },
+    "0xee0d7fc": {
+      "function": "blink::LayoutTreeBuilderForElement::CreateLayoutObject()",
+      "location": "layout_tree_builder.cc:?"
+    },
+    "0xee0dbba": {
+      "function": "blink::LayoutTreeBuilderForText::CreateLayoutObject()",
+      "location": "layout_tree_builder.cc:?"
+    },
+    "0xee5c99b": {
+      "function": "blink::HTMLSpanElement* blink::MakeGarbageCollected<blink::HTMLSpanElement, blink::Document&>(blink::Document&)",
+      "location": "apply_style_command.cc:?"
+    },
+    "0xee8e3cd": {
+      "function": "blink::Element::GetInnerTextWithoutUpdate(blink::TextVisitor*)",
+      "location": "element_inner_text.cc:?"
+    },
+    "0xee8e92b": {
+      "function": "blink::(anonymous namespace)::ElementInnerTextCollector::ProcessChildren(blink::Node const&)",
+      "location": "element_inner_text.cc:?"
+    },
+    "0xee8ebc6": {
+      "function": "blink::(anonymous namespace)::ElementInnerTextCollector::ProcessChildren(blink::Node const&)",
+      "location": "element_inner_text.cc:?"
+    },
+    "0xee8ebfc": {
+      "function": "blink::(anonymous namespace)::ElementInnerTextCollector::ProcessChildren(blink::Node const&)",
+      "location": "element_inner_text.cc:?"
+    },
+    "0xee8edc0": {
+      "function": "blink::(anonymous namespace)::ElementInnerTextCollector::ProcessChildrenWithRequiredLineBreaks(blink::Node const&, unsigned int)",
+      "location": "element_inner_text.cc:?"
+    },
+    "0xee8f07a": {
+      "function": "blink::(anonymous namespace)::ElementInnerTextCollector::ProcessLayoutText(blink::LayoutText const&, unsigned int)",
+      "location": "element_inner_text.cc:?"
+    },
+    "0xef1d26b": {
+      "function": "blink::DocumentInit::CreateDocument() const",
+      "location": "document_init.cc:?"
+    },
+    "0xef1dc12": {
+      "function": "blink::DocumentInit::CreateDocument() const",
+      "location": "document_init.cc:?"
+    },
+    "0xefc101d": {
+      "function": "blink::LocalDOMWindow::InstallNewDocument(blink::DocumentInit const&)",
+      "location": "local_dom_window.cc:?"
+    },
+    "0xefc1059": {
+      "function": "blink::LocalDOMWindow::InstallNewDocument(blink::DocumentInit const&)",
+      "location": "local_dom_window.cc:?"
+    },
+    "0xefc1202": {
+      "function": "blink::LocalDOMWindow::InstallNewDocument(blink::DocumentInit const&)",
+      "location": "local_dom_window.cc:?"
+    },
+    "0xefe2574": {
+      "function": "blink::LocalFrame::Init(blink::Frame*, base::TokenType<blink::DocumentTokenTypeMarker> const&, base::TokenType<blink::InitiatorStateTokenTypeMarker> const&, std::__1::unique_ptr<blink::PolicyContainer, std::__1::default_delete<blink::PolicyContainer> >, blink::StorageKey const&, long, blink::KURL const&, std::__1::unique_ptr<base::UnguessableToken, std::__1::default_delete<base::UnguessableToken> >)",
+      "location": "local_frame.cc:?"
+    },
+    "0xefeac3e": {
+      "function": "blink::LocalFrame::LocalFrame(blink::LocalFrameClient*, blink::Page&, blink::FrameOwner*, blink::Frame*, blink::Frame*, blink::FrameInsertType, base::TokenType<blink::LocalFrameTokenTypeMarker> const&, blink::WindowAgentFactory*, blink::InterfaceRegistry*, mojo::PendingRemote<blink::mojom::blink::BrowserInterfaceBroker>, base::TickClock const*)",
+      "location": "local_frame.cc:?"
+    },
+    "0xefeb75b": {
+      "function": "blink::LocalFrame::LocalFrame(blink::LocalFrameClient*, blink::Page&, blink::FrameOwner*, blink::Frame*, blink::Frame*, blink::FrameInsertType, base::TokenType<blink::LocalFrameTokenTypeMarker> const&, blink::WindowAgentFactory*, blink::InterfaceRegistry*, mojo::PendingRemote<blink::mojom::blink::BrowserInterfaceBroker>, base::TickClock const*)",
+      "location": "local_frame.cc:?"
+    },
+    "0xf033c61": {
+      "function": "blink::LocalFrameView::UpdateStyleAndLayout()",
+      "location": "local_frame_view.cc:?"
+    },
+    "0xf0364b6": {
+      "function": "blink::LocalFrameView::UpdateAllLifecyclePhases(blink::DocumentUpdateReason)",
+      "location": "local_frame_view.cc:?"
+    },
+    "0xf0369d0": {
+      "function": "blink::LocalFrameView::UpdateLifecyclePhases(blink::DocumentLifecycle::LifecycleState, blink::DocumentUpdateReason)",
+      "location": "local_frame_view.cc:?"
+    },
+    "0xf039cb7": {
+      "function": "blink::LocalFrameView::UpdateStyleAndLayoutIfNeededRecursive()",
+      "location": "local_frame_view.cc:?"
+    },
+    "0xf03c2f9": {
+      "function": "blink::LocalFrameView::UpdateStyleAndLayoutInternal()",
+      "location": "local_frame_view.cc:?"
+    },
+    "0xf0a7bc6": {
+      "function": "blink::WebFrameWidgetImpl::UpdateLifecycle(blink::WebLifecycleUpdate, blink::DocumentUpdateReason)",
+      "location": "web_frame_widget_impl.cc:?"
+    },
+    "0xf0d1d09": {
+      "function": "blink::PointerEventFactory::Clear()",
+      "location": "pointer_event_factory.cc:?"
+    },
+    "0xf0d490a": {
+      "function": "blink::KeyValuePair<long, cppgc::internal::BasicMember<blink::PointerEventFactory::PointerAttributes, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy, cppgc::internal::DisabledCheckingPolicy, cppgc::internal::CompressedPointer> >* blink::HashTableBucketInitializer<blink::HashMapValueTraits<blink::IntWithZeroKeyHashTraits<long>, blink::HashTraits<cppgc::internal::BasicMember<blink::PointerEventFactory::PointerAttributes, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy, cppgc::internal::DisabledCheckingPolicy, cppgc::internal::CompressedPointer> > >, blink::HeapAllocator, blink::KeyValuePair<long, cppgc::internal::BasicMember<blink::PointerEventFactory::PointerAttributes, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy, cppgc::internal::DisabledCheckingPolicy, cppgc::internal::CompressedPointer> >, false>::AllocateTable<blink::HashTable<long, blink::KeyValuePair<long, cppgc::internal::BasicMember<blink::PointerEventFactory::PointerAttributes, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy, cppgc::internal::DisabledCheckingPolicy, cppgc::internal::CompressedPointer> >, blink::KeyValuePairExtractor, blink::HashMapValueTraits<blink::IntWithZeroKeyHashTraits<long>, blink::HashTraits<cppgc::internal::BasicMember<blink::PointerEventFactory::PointerAttributes, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy, cppgc::internal::DisabledCheckingPolicy, cppgc::internal::CompressedPointer> > >, blink::IntWithZeroKeyHashTraits<long>, blink::HeapAllocator> >(unsigned int, unsigned long)",
+      "location": "pointer_event_factory.cc:?"
+    },
+    "0xf0df666": {
+      "function": "blink::WebLocalFrame::CreateProvisional(blink::WebLocalFrameClient*, blink::InterfaceRegistry*, blink::CrossVariantMojoRemote<blink::mojom::BrowserInterfaceBrokerInterfaceBase>, base::TokenType<blink::LocalFrameTokenTypeMarker> const&, blink::WebFrame*, blink::FramePolicy const&, blink::WebString const&, blink::WebView*)",
+      "location": "web_local_frame_impl.cc:?"
+    },
+    "0xf0dfb4f": {
+      "function": "blink::WebLocalFrameImpl::CreateProvisional(blink::WebLocalFrameClient*, blink::InterfaceRegistry*, mojo::PendingRemote<blink::mojom::blink::BrowserInterfaceBroker>, base::TokenType<blink::LocalFrameTokenTypeMarker> const&, blink::WebFrame*, blink::FramePolicy const&, blink::WebString const&, blink::WebView*)",
+      "location": "web_local_frame_impl.cc:?"
+    },
+    "0xf0e005d": {
+      "function": "blink::WebLocalFrameImpl::InitializeCoreFrame(blink::Page&, blink::FrameOwner*, blink::WebFrame*, blink::WebFrame*, blink::FrameInsertType, blink::AtomicString const&, blink::WindowAgentFactory*, blink::WebFrame*, base::TokenType<blink::DocumentTokenTypeMarker> const&, base::TokenType<blink::InitiatorStateTokenTypeMarker> const&, mojo::PendingRemote<blink::mojom::blink::BrowserInterfaceBroker>, std::__1::unique_ptr<blink::WebPolicyContainer, std::__1::default_delete<blink::WebPolicyContainer> >, blink::StorageKey const&, blink::KURL const&, network::mojom::WebSandboxFlags, std::__1::unique_ptr<base::UnguessableToken, std::__1::default_delete<base::UnguessableToken> >)",
+      "location": "web_local_frame_impl.cc:?"
+    },
+    "0xf0e0d23": {
+      "function": "blink::WebLocalFrameImpl::InitializeCoreFrameInternal(blink::Page&, blink::FrameOwner*, blink::WebFrame*, blink::WebFrame*, blink::FrameInsertType, blink::AtomicString const&, blink::WindowAgentFactory*, blink::WebFrame*, base::TokenType<blink::DocumentTokenTypeMarker> const&, base::TokenType<blink::InitiatorStateTokenTypeMarker> const&, mojo::PendingRemote<blink::mojom::blink::BrowserInterfaceBroker>, std::__1::unique_ptr<blink::PolicyContainer, std::__1::default_delete<blink::PolicyContainer> >, blink::StorageKey const&, long, blink::KURL const&, network::mojom::WebSandboxFlags, std::__1::unique_ptr<base::UnguessableToken, std::__1::default_delete<base::UnguessableToken> >)",
+      "location": "web_local_frame_impl.cc:?"
+    },
+    "0xf0e0e88": {
+      "function": "blink::WebLocalFrameImpl::InitializeCoreFrameInternal(blink::Page&, blink::FrameOwner*, blink::WebFrame*, blink::WebFrame*, blink::FrameInsertType, blink::AtomicString const&, blink::WindowAgentFactory*, blink::WebFrame*, base::TokenType<blink::DocumentTokenTypeMarker> const&, base::TokenType<blink::InitiatorStateTokenTypeMarker> const&, mojo::PendingRemote<blink::mojom::blink::BrowserInterfaceBroker>, std::__1::unique_ptr<blink::PolicyContainer, std::__1::default_delete<blink::PolicyContainer> >, blink::StorageKey const&, long, blink::KURL const&, network::mojom::WebSandboxFlags, std::__1::unique_ptr<base::UnguessableToken, std::__1::default_delete<base::UnguessableToken> >)",
+      "location": "web_local_frame_impl.cc:?"
+    },
+    "0xf0e2748": {
+      "function": "blink::WebLocalFrameImpl::CommitNavigation(std::__1::unique_ptr<blink::WebNavigationParams, std::__1::default_delete<blink::WebNavigationParams> >, std::__1::unique_ptr<blink::WebDocumentLoader::ExtraData, std::__1::default_delete<blink::WebDocumentLoader::ExtraData> >)",
+      "location": "web_local_frame_impl.cc:?"
+    },
+    "0xf1c8815": {
+      "function": "blink::ComputedStyleBuilder::SetPaddingBottom(blink::Length const&)",
+      "location": "menu_list_inner_element.cc:?"
+    },
+    "0xf1de6b8": {
+      "function": "blink::HTMLDocument::HTMLDocument(blink::DocumentInit const&, base::EnumSet<blink::DocumentClass, (blink::DocumentClass)0, (blink::DocumentClass)7>)",
+      "location": "html_document.cc:?"
+    },
+    "0xf1ea6a3": {
+      "function": "blink::HTMLElement::AttachLayoutTree(blink::Node::AttachContext&)",
+      "location": "html_element.cc:?"
+    },
+    "0xf217aa6": {
+      "function": "blink::HTMLHtmlElement::AttachLayoutTree(blink::Node::AttachContext&)",
+      "location": "html_html_element.cc:?"
+    },
+    "0xf24861a": {
+      "function": "blink::HTMLStyleElement::FinishParsingChildren()",
+      "location": "html_style_element.cc:?"
+    },
+    "0xf2495b8": {
+      "function": "blink::StyleElement::FinishParsingChildren(blink::Element&)",
+      "location": "style_element.cc:?"
+    },
+    "0xf249f5e": {
+      "function": "blink::StyleElement::CreateSheetOrModule(blink::Element&, blink::String const&)",
+      "location": "style_element.cc:?"
+    },
+    "0xf2f1584": {
+      "function": "blink::EventHandler::EventHandler(blink::LocalFrame&)",
+      "location": "event_handler.cc:?"
+    },
+    "0xf30b69e": {
+      "function": "blink::PointerEventManager::PointerEventManager(blink::LocalFrame&, blink::MouseEventManager&)",
+      "location": "pointer_event_manager.cc:?"
+    },
+    "0xf44e309": {
+      "function": "blink::DevToolsAgent::AttachDevToolsSessionImpl(mojo::PendingAssociatedRemote<blink::mojom::blink::DevToolsSessionHost>, mojo::PendingAssociatedReceiver<blink::mojom::blink::DevToolsSession>, mojo::PendingReceiver<blink::mojom::blink::DevToolsSession>, mojo::StructPtr<blink::mojom::blink::DevToolsSessionState>, bool, bool, blink::String const&, bool)",
+      "location": "devtools_agent.cc:?"
+    },
+    "0xf44ec09": {
+      "function": "blink::DevToolsAgent::AttachDevToolsSession(mojo::PendingAssociatedRemote<blink::mojom::blink::DevToolsSessionHost>, mojo::PendingAssociatedReceiver<blink::mojom::blink::DevToolsSession>, mojo::PendingReceiver<blink::mojom::blink::DevToolsSession>, mojo::StructPtr<blink::mojom::blink::DevToolsSessionState>, bool, bool, blink::String const&, bool)",
+      "location": "devtools_agent.cc:?"
+    },
+    "0xf453dbb": {
+      "function": "blink::DevToolsSession::DevToolsSession(blink::DevToolsAgent*, mojo::PendingAssociatedRemote<blink::mojom::blink::DevToolsSessionHost>, mojo::PendingAssociatedReceiver<blink::mojom::blink::DevToolsSession>, mojo::PendingReceiver<blink::mojom::blink::DevToolsSession>, mojo::StructPtr<blink::mojom::blink::DevToolsSessionState>, bool, bool, blink::String const&, bool, scoped_refptr<base::SequencedTaskRunner>)",
+      "location": "devtools_session.cc:?"
+    },
+    "0xf491080": {
+      "function": "blink::BlockNode::Layout(blink::ConstraintSpace const&, blink::BlockBreakToken const*, blink::EarlyBreak const*, blink::ColumnSpannerPath const*) const",
+      "location": "block_node.cc:?"
+    },
+    "0xf494cb3": {
+      "function": "blink::BlockNode::FirstChild() const",
+      "location": "block_node.cc:?"
+    },
+    "0xf494cbb": {
+      "function": "blink::BlockNode::FirstChild() const",
+      "location": "block_node.cc:?"
+    },
+    "0xf4950cc": {
+      "function": "blink::BlockNode::IsInlineFormattingContextRoot(blink::InlineNode*) const",
+      "location": "block_node.cc:?"
+    },
+    "0xf49737c": {
+      "function": "void blink::(anonymous namespace)::CreateAlgorithmAndRun<blink::BlockLayoutAlgorithm, blink::(anonymous namespace)::LayoutWithAlgorithm(blink::LayoutAlgorithmParams const&)::{lambda<typename $T0>($T0*)#1}>(blink::LayoutAlgorithmParams const&, blink::(anonymous namespace)::LayoutWithAlgorithm(blink::LayoutAlgorithmParams const&)::{lambda<typename $T0>($T0*)#1} const&)",
+      "location": "block_node.cc:?"
+    },
+    "0xf49c46e": {
+      "function": "blink::BlockLayoutAlgorithm::Layout()",
+      "location": "block_layout_algorithm.cc:?"
+    },
+    "0xf49c47e": {
+      "function": "blink::BlockLayoutAlgorithm::Layout()",
+      "location": "block_layout_algorithm.cc:?"
+    },
+    "0xf49c490": {
+      "function": "blink::BlockLayoutAlgorithm::Layout()",
+      "location": "block_layout_algorithm.cc:?"
+    },
+    "0xf49c9c6": {
+      "function": "blink::BlockLayoutAlgorithm::LayoutInlineChild(blink::InlineNode const&)",
+      "location": "block_layout_algorithm.cc:?"
+    },
+    "0xf49df25": {
+      "function": "blink::BlockLayoutAlgorithm::Layout(blink::InlineChildLayoutContext*)",
+      "location": "block_layout_algorithm.cc:?"
+    },
+    "0xf49dfb0": {
+      "function": "blink::BlockLayoutAlgorithm::Layout(blink::InlineChildLayoutContext*)",
+      "location": "block_layout_algorithm.cc:?"
+    },
+    "0xf49e020": {
+      "function": "blink::BlockLayoutAlgorithm::Layout(blink::InlineChildLayoutContext*)",
+      "location": "block_layout_algorithm.cc:?"
+    },
+    "0xf49ebe5": {
+      "function": "blink::BlockLayoutAlgorithm::Layout(blink::InlineChildLayoutContext*)",
+      "location": "block_layout_algorithm.cc:?"
+    },
+    "0xf4a08c3": {
+      "function": "blink::BlockLayoutAlgorithm::Layout(blink::InlineChildLayoutContext*)",
+      "location": "block_layout_algorithm.cc:?"
+    },
+    "0xf4a239a": {
+      "function": "blink::BlockLayoutAlgorithm::Layout(blink::InlineChildLayoutContext*)",
+      "location": "block_layout_algorithm.cc:?"
+    },
+    "0xf4a2f8e": {
+      "function": "blink::BlockLayoutAlgorithm::LayoutInlineChild(blink::InlineNode const&, blink::ParagraphScale const*)",
+      "location": "block_layout_algorithm.cc:?"
+    },
+    "0xf4a3028": {
+      "function": "blink::BlockLayoutAlgorithm::LayoutInlineChild(blink::InlineNode const&, blink::ParagraphScale const*)",
+      "location": "block_layout_algorithm.cc:?"
+    },
+    "0xf4a6316": {
+      "function": "blink::BlockLayoutAlgorithm::LayoutNewFormattingContext(blink::LayoutInputNode, blink::BlockBreakToken const*, blink::InflowChildData const&, blink::BfcOffset, bool, blink::BfcOffset*, blink::BoxStrut*)",
+      "location": "block_layout_algorithm.cc:?"
+    },
+    "0xf4aacca": {
+      "function": "blink::BlockLayoutAlgorithm::CreateConstraintSpaceForChild(blink::LayoutInputNode, blink::BreakToken const*, blink::InflowChildData const&, blink::LogicalSize, bool, std::__1::optional<blink::FixedPoint<6u, int> >, bool, blink::FixedPoint<6u, int>, blink::FixedPoint<6u, int>)",
+      "location": "block_layout_algorithm.cc:?"
+    },
+    "0xf4aaf8d": {
+      "function": "blink::BlockLayoutAlgorithm::CreateConstraintSpaceForChild(blink::LayoutInputNode, blink::BreakToken const*, blink::InflowChildData const&, blink::LogicalSize, bool, std::__1::optional<blink::FixedPoint<6u, int> >, bool, blink::FixedPoint<6u, int>, blink::FixedPoint<6u, int>)",
+      "location": "block_layout_algorithm.cc:?"
+    },
+    "0xf4addbd": {
+      "function": "blink::BoxFragmentBuilder::AddResult(blink::LayoutResult const&, blink::LogicalOffset, std::__1::optional<blink::BoxStrut const>, std::__1::optional<blink::LogicalOffset>, blink::OofInlineContainer<blink::LogicalOffset> const*)",
+      "location": "box_fragment_builder.cc:?"
+    },
+    "0xf4ae9b9": {
+      "function": "blink::BoxFragmentBuilder::AddChild(blink::PhysicalFragment const&, blink::LogicalOffset const&, blink::MarginStrut const*, bool, std::__1::optional<blink::LogicalOffset>, blink::OofInlineContainer<blink::LogicalOffset> const*)",
+      "location": "box_fragment_builder.cc:?"
+    },
+    "0xf4afbc4": {
+      "function": "blink::BoxFragmentBuilder::ToBoxFragment(blink::WritingMode)",
+      "location": "box_fragment_builder.cc:?"
+    },
+    "0xf4afcaf": {
+      "function": "blink::BoxFragmentBuilder::ToBoxFragment(blink::WritingMode)",
+      "location": "box_fragment_builder.cc:?"
+    },
+    "0xf4bfb95": {
+      "function": "blink::Vector<blink::LogicalFragmentLink, 4u, blink::HeapAllocator>::ReallocateBuffer(unsigned int)",
+      "location": "column_layout_algorithm.cc:?"
+    },
+    "0xf4c00ba": {
+      "function": "void blink::Vector<blink::LogicalFragmentLink, 4u, blink::HeapAllocator>::AppendSlowCase<blink::LogicalFragmentLink>(blink::LogicalFragmentLink&&)",
+      "location": "column_layout_algorithm.cc:?"
+    },
+    "0xf5077fb": {
+      "function": "blink::FragmentBuilder::AddChildInternal(blink::PhysicalFragment const*, blink::LogicalOffset const&)",
+      "location": "fragment_builder.cc:?"
+    },
+    "0xf592365": {
+      "function": "blink::FragmentItems::FragmentItems(blink::FragmentItemsBuilder*)",
+      "location": "fragment_items.cc:?"
+    },
+    "0xf593ef5": {
+      "function": "blink::VectorBufferBase<blink::FragmentItem, blink::HeapAllocator>::AllocateBuffer(unsigned int, blink::VectorOperationOrigin)",
+      "location": "fragment_items.cc:?"
+    },
+    "0xf594a29": {
+      "function": "blink::FragmentItemsBuilder::FragmentItemsBuilder(blink::InlineNode const&, blink::WritingDirectionMode, bool)",
+      "location": "fragment_items_builder.cc:?"
+    },
+    "0xf594c02": {
+      "function": "blink::FragmentItemsBuilder::FragmentItemsBuilder(blink::InlineNode const&, blink::WritingDirectionMode, bool)",
+      "location": "fragment_items_builder.cc:?"
+    },
+    "0xf596cfe": {
+      "function": "blink::FragmentItemsBuilder::ToFragmentItems(blink::PhysicalSize const&, void*)",
+      "location": "fragment_items_builder.cc:?"
+    },
+    "0xf5a58a4": {
+      "function": "blink::InlineChildLayoutContext::InlineChildLayoutContext(blink::InlineNode const&, blink::BoxFragmentBuilder*, blink::LineInfo*)",
+      "location": "inline_child_layout_context.cc:?"
+    },
+    "0xf5af34b": {
+      "function": "blink::InlineNode::InlineNode(blink::LayoutBlockFlow*)",
+      "location": "inline_node.cc:?"
+    },
+    "0xf5affe4": {
+      "function": "blink::InlineNode::PrepareLayout(blink::InlineNodeData*) const",
+      "location": "inline_node.cc:?"
+    },
+    "0xf5b01c0": {
+      "function": "blink::InlineNode::PrepareLayout(blink::InlineNodeData*) const",
+      "location": "inline_node.cc:?"
+    },
+    "0xf5b050f": {
+      "function": "blink::InlineNode::ShapeTextIncludingFirstLine(blink::InlineNodeData*, blink::String const*, blink::BasicHeapVector<(blink::internal::HeapCollectionType)1, cppgc::internal::BasicMember<blink::InlineItem, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy, cppgc::internal::DisabledCheckingPolicy, cppgc::internal::CompressedPointer>, 0u> const*) const",
+      "location": "inline_node.cc:?"
+    },
+    "0xf5b3e5e": {
+      "function": "void blink::(anonymous namespace)::CollectInlinesInternal<blink::InlineItemsBuilderTemplate<blink::EmptyOffsetMappingBuilder> >(blink::InlineItemsBuilderTemplate<blink::EmptyOffsetMappingBuilder>*, blink::InlineNodeData const*)",
+      "location": "inline_node.cc:?"
+    },
+    "0xf5b4106": {
+      "function": "void blink::(anonymous namespace)::CollectInlinesInternal<blink::InlineItemsBuilderTemplate<blink::EmptyOffsetMappingBuilder> >(blink::InlineItemsBuilderTemplate<blink::EmptyOffsetMappingBuilder>*, blink::InlineNodeData const*)",
+      "location": "inline_node.cc:?"
+    },
+    "0xf5b442b": {
+      "function": "void blink::(anonymous namespace)::CollectInlinesInternal<blink::InlineItemsBuilderTemplate<blink::EmptyOffsetMappingBuilder> >(blink::InlineItemsBuilderTemplate<blink::EmptyOffsetMappingBuilder>*, blink::InlineNodeData const*)",
+      "location": "inline_node.cc:?"
+    },
+    "0xf5b45cd": {
+      "function": "void blink::(anonymous namespace)::CollectInlinesInternal<blink::InlineItemsBuilderTemplate<blink::OffsetMappingBuilder> >(blink::InlineItemsBuilderTemplate<blink::OffsetMappingBuilder>*, blink::InlineNodeData const*)",
+      "location": "inline_node.cc:?"
+    },
+    "0xf5b4820": {
+      "function": "void blink::(anonymous namespace)::CollectInlinesInternal<blink::InlineItemsBuilderTemplate<blink::OffsetMappingBuilder> >(blink::InlineItemsBuilderTemplate<blink::OffsetMappingBuilder>*, blink::InlineNodeData const*)",
+      "location": "inline_node.cc:?"
+    },
+    "0xf5b4b4b": {
+      "function": "void blink::(anonymous namespace)::CollectInlinesInternal<blink::InlineItemsBuilderTemplate<blink::OffsetMappingBuilder> >(blink::InlineItemsBuilderTemplate<blink::OffsetMappingBuilder>*, blink::InlineNodeData const*)",
+      "location": "inline_node.cc:?"
+    },
+    "0xf5b4e32": {
+      "function": "blink::InlineNode::GetOffsetMapping(blink::LayoutBlockFlow*)",
+      "location": "inline_node.cc:?"
+    },
+    "0xf5b4e3e": {
+      "function": "blink::InlineNode::GetOffsetMapping(blink::LayoutBlockFlow*)",
+      "location": "inline_node.cc:?"
+    },
+    "0xf5b4e5d": {
+      "function": "blink::InlineNode::GetOffsetMapping(blink::LayoutBlockFlow*)",
+      "location": "inline_node.cc:?"
+    },
+    "0xf5b71b1": {
+      "function": "blink::InlineNode::ShapeText(blink::InlineItemsData*, blink::String const*, blink::BasicHeapVector<(blink::internal::HeapCollectionType)1, cppgc::internal::BasicMember<blink::InlineItem, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy, cppgc::internal::DisabledCheckingPolicy, cppgc::internal::CompressedPointer>, 0u> const*, blink::Font const*) const",
+      "location": "inline_node.cc:?"
+    },
+    "0xf5b78e3": {
+      "function": "blink::InlineNode::ShapeText(blink::InlineItemsData*, blink::String const*, blink::BasicHeapVector<(blink::internal::HeapCollectionType)1, cppgc::internal::BasicMember<blink::InlineItem, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy, cppgc::internal::DisabledCheckingPolicy, cppgc::internal::CompressedPointer>, 0u> const*, blink::Font const*) const",
+      "location": "inline_node.cc:?"
+    },
+    "0xf5b792d": {
+      "function": "blink::InlineNode::ShapeText(blink::InlineItemsData*, blink::String const*, blink::BasicHeapVector<(blink::internal::HeapCollectionType)1, cppgc::internal::BasicMember<blink::InlineItem, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy, cppgc::internal::DisabledCheckingPolicy, cppgc::internal::CompressedPointer>, 0u> const*, blink::Font const*) const",
+      "location": "inline_node.cc:?"
+    },
+    "0xf5b82ad": {
+      "function": "blink::InlineNode::ShapeText(blink::InlineItemsData*, blink::String const*, blink::BasicHeapVector<(blink::internal::HeapCollectionType)1, cppgc::internal::BasicMember<blink::InlineItem, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy, cppgc::internal::DisabledCheckingPolicy, cppgc::internal::CompressedPointer>, 0u> const*, blink::Font const*) const",
+      "location": "inline_node.cc:?"
+    },
+    "0xf5bae97": {
+      "function": "blink::(anonymous namespace)::ReusingTextShaper::Shape(blink::InlineItem const&, blink::Font const&, unsigned int)::{lambda()#1}::operator()() const",
+      "location": "inline_node.cc:?"
+    },
+    "0xf5bcc7e": {
+      "function": "blink::HashTable<blink::ShapeCacheKey, blink::KeyValuePair<blink::ShapeCacheKey, cppgc::internal::BasicMember<blink::ShapeResult const, cppgc::internal::WeakMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy, cppgc::internal::DisabledCheckingPolicy, cppgc::internal::CompressedPointer> >, blink::KeyValuePairExtractor, blink::HashMapValueTraits<blink::HashTraits<blink::ShapeCacheKey>, blink::HashTraits<cppgc::internal::BasicMember<blink::ShapeResult const, cppgc::internal::WeakMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy, cppgc::internal::DisabledCheckingPolicy, cppgc::internal::CompressedPointer> > >, blink::HashTraits<blink::ShapeCacheKey>, blink::HeapAllocator>::Expand(blink::KeyValuePair<blink::ShapeCacheKey, cppgc::internal::BasicMember<blink::ShapeResult const, cppgc::internal::WeakMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy, cppgc::internal::DisabledCheckingPolicy, cppgc::internal::CompressedPointer> >*)",
+      "location": "inline_node.cc:?"
+    },
+    "0xf5bfc2a": {
+      "function": "blink::InlineItemsBuilderTemplate<blink::EmptyOffsetMappingBuilder>::AppendText(blink::LayoutText*, blink::InlineNodeData const*)",
+      "location": "inline_items_builder.cc:?"
+    },
+    "0xf5c1c72": {
+      "function": "blink::(anonymous namespace)::AppendItem(blink::BasicHeapVector<(blink::internal::HeapCollectionType)1, cppgc::internal::BasicMember<blink::InlineItem, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy, cppgc::internal::DisabledCheckingPolicy, cppgc::internal::CompressedPointer>, 0u>*, blink::InlineItem::InlineItemType, unsigned int, unsigned int, blink::LayoutObject*) [clone .llvm.15585242671765045890]",
+      "location": "inline_items_builder.cc:?"
+    },
+    "0xf5c2559": {
+      "function": "blink::InlineItemsBuilderTemplate<blink::EmptyOffsetMappingBuilder>::EnterInline(blink::LayoutInline*)",
+      "location": "inline_items_builder.cc:?"
+    },
+    "0xf5c28a2": {
+      "function": "blink::InlineItemsBuilderTemplate<blink::EmptyOffsetMappingBuilder>::EnterInline(blink::LayoutInline*)",
+      "location": "inline_items_builder.cc:?"
+    },
+    "0xf5c2ccd": {
+      "function": "blink::InlineItemsBuilderTemplate<blink::EmptyOffsetMappingBuilder>::ExitInline(blink::LayoutObject*)",
+      "location": "inline_items_builder.cc:?"
+    },
+    "0xf5c4325": {
+      "function": "blink::InlineItemsBuilderTemplate<blink::EmptyOffsetMappingBuilder>::AppendCollapseWhitespace(blink::TransformedString const&, blink::ComputedStyle const*, blink::LayoutText*)",
+      "location": "inline_items_builder.cc:?"
+    },
+    "0xf5c4ecc": {
+      "function": "blink::InlineItemsBuilderTemplate<blink::OffsetMappingBuilder>::AppendText(blink::LayoutText*, blink::InlineNodeData const*)",
+      "location": "inline_items_builder.cc:?"
+    },
+    "0xf5c5980": {
+      "function": "blink::InlineItemsBuilderTemplate<blink::OffsetMappingBuilder>::AppendText(blink::TransformedString const&, blink::LayoutText&)",
+      "location": "inline_items_builder.cc:?"
+    },
+    "0xf5c66ca": {
+      "function": "blink::InlineItemsBuilderTemplate<blink::OffsetMappingBuilder>::EnterInline(blink::LayoutInline*)",
+      "location": "inline_items_builder.cc:?"
+    },
+    "0xf5c6ad6": {
+      "function": "blink::InlineItemsBuilderTemplate<blink::OffsetMappingBuilder>::ExitInline(blink::LayoutObject*)",
+      "location": "inline_items_builder.cc:?"
+    },
+    "0xf5c7ed9": {
+      "function": "blink::InlineItemsBuilderTemplate<blink::OffsetMappingBuilder>::AppendCollapseWhitespace(blink::TransformedString const&, blink::ComputedStyle const*, blink::LayoutText*)",
+      "location": "inline_items_builder.cc:?"
+    },
+    "0xf5c97b0": {
+      "function": "blink::Vector<blink::InlineItemsBuilderTemplate<blink::EmptyOffsetMappingBuilder>::BoxInfo, 0u, blink::HeapAllocator>::reserve(unsigned int)",
+      "location": "inline_items_builder.cc:?"
+    },
+    "0xf5cc366": {
+      "function": "blink::InlineLayoutAlgorithm::Layout()",
+      "location": "inline_layout_algorithm.cc:?"
+    },
+    "0xf5cf369": {
+      "function": "blink::InlineLayoutAlgorithm::Layout()",
+      "location": "inline_layout_algorithm.cc:?"
+    },
+    "0xf5d38ed": {
+      "function": "blink::LineBoxFragmentBuilder::ToLineBoxFragment()",
+      "location": "line_box_fragment_builder.cc:?"
+    },
+    "0xf5d39b5": {
+      "function": "blink::LineBoxFragmentBuilder::ToLineBoxFragment()",
+      "location": "line_box_fragment_builder.cc:?"
+    },
+    "0xf5d58a1": {
+      "function": "blink::LineBreaker::NextLine(blink::LineInfo*)",
+      "location": "line_breaker.cc:?"
+    },
+    "0xf5da2d5": {
+      "function": "blink::LineBreaker::HandleText(blink::InlineItem const&, blink::ShapeResult const&, blink::LineInfo*)",
+      "location": "line_breaker.cc:?"
+    },
+    "0xf5dd61e": {
+      "function": "blink::LineBreaker::BreakText(blink::InlineItemResult*, blink::InlineItem const&, blink::ShapeResult const&, blink::FixedPoint<6u, int>, blink::FixedPoint<6u, int>, blink::LineInfo*)",
+      "location": "line_breaker.cc:?"
+    },
+    "0xf5f347b": {
+      "function": "blink::LogicalLineContainer::LogicalLineContainer()",
+      "location": "logical_line_container.cc:?"
+    },
+    "0xf5f6a7b": {
+      "function": "blink::OffsetMappingBuilder::ReserveCapacity(unsigned int)",
+      "location": "offset_mapping_builder.cc:?"
+    },
+    "0xf5f8479": {
+      "function": "blink::OffsetMappingBuilder::Build()",
+      "location": "offset_mapping_builder.cc:?"
+    },
+    "0xf5f9ca7": {
+      "function": "blink::PhysicalLineBoxFragment* cppgc::MakeGarbageCollectedTrait<blink::PhysicalLineBoxFragment>::Call<base::PassKey<blink::PhysicalLineBoxFragment>, blink::LineBoxFragmentBuilder*&>(cppgc::AllocationHandle&, base::PassKey<blink::PhysicalLineBoxFragment>&&, blink::LineBoxFragmentBuilder*&)",
+      "location": "physical_line_box_fragment.cc:?"
+    },
+    "0xf63c5be": {
+      "function": "blink::LayoutObject::CreateObject(blink::Element*, blink::ComputedStyle const&)",
+      "location": "layout_object.cc:?"
+    },
+    "0xf63d26e": {
+      "function": "blink::LayoutInline* blink::MakeGarbageCollected<blink::LayoutInline, blink::Element*&>(blink::Element*&)",
+      "location": "layout_object.cc:?"
+    },
+    "0xf63d2d8": {
+      "function": "blink::LayoutInline* blink::MakeGarbageCollected<blink::LayoutInline, blink::Element*&>(blink::Element*&)",
+      "location": "layout_object.cc:?"
+    },
+    "0xf63d528": {
+      "function": "blink::LayoutObject::CreateBlockFlowOrListItem(blink::Element*, blink::ComputedStyle const&)",
+      "location": "layout_object.cc:?"
+    },
+    "0xf63d6b4": {
+      "function": "blink::LayoutObject::CreateBlockFlowOrListItem(blink::Element*, blink::ComputedStyle const&)",
+      "location": "layout_object.cc:?"
+    },
+    "0xf63ddd3": {
+      "function": "blink::LayoutObject::LayoutObject(blink::Node*)",
+      "location": "layout_object.cc:?"
+    },
+    "0xf66412c": {
+      "function": "blink::LayoutText::LayoutText(blink::Node*, blink::String)",
+      "location": "layout_text.cc:?"
+    },
+    "0xf66532b": {
+      "function": "blink::LayoutText::PlainText() const",
+      "location": "layout_text.cc:?"
+    },
+    "0xf6c6165": {
+      "function": "blink::PhysicalBoxFragment::Create(blink::BoxFragmentBuilder*, blink::WritingMode)",
+      "location": "physical_box_fragment.cc:?"
+    },
+    "0xf6c6345": {
+      "function": "blink::PhysicalBoxFragment::Create(blink::BoxFragmentBuilder*, blink::WritingMode)",
+      "location": "physical_box_fragment.cc:?"
+    },
+    "0xf6c67d6": {
+      "function": "blink::PhysicalBoxFragment::Create(blink::BoxFragmentBuilder*, blink::WritingMode)",
+      "location": "physical_box_fragment.cc:?"
+    },
+    "0xf6c680b": {
+      "function": "blink::PhysicalBoxFragment::Create(blink::BoxFragmentBuilder*, blink::WritingMode)",
+      "location": "physical_box_fragment.cc:?"
+    },
+    "0xf6ce23c": {
+      "function": "blink::VectorBufferBase<blink::PhysicalFragmentLink, blink::HeapAllocator>::AllocateBuffer(unsigned int, blink::VectorOperationOrigin)",
+      "location": "physical_box_fragment.cc:?"
+    },
+    "0xf73fa8b": {
+      "function": "blink::DocumentLoader::FinishedLoading(base::TimeTicks)",
+      "location": "document_loader.cc:?"
+    },
+    "0xf7469a0": {
+      "function": "blink::DocumentLoader::CommitNavigation()",
+      "location": "document_loader.cc:?"
+    },
+    "0xf749ac1": {
+      "function": "blink::DocumentLoader::CommitNavigation()",
+      "location": "document_loader.cc:?"
+    },
+    "0xf74a697": {
+      "function": "blink::DocumentLoader::CommitNavigation()",
+      "location": "document_loader.cc:?"
+    },
+    "0xf76784c": {
+      "function": "blink::FrameLoader::Init(base::TokenType<blink::DocumentTokenTypeMarker> const&, base::TokenType<blink::InitiatorStateTokenTypeMarker> const&, std::__1::unique_ptr<blink::PolicyContainer, std::__1::default_delete<blink::PolicyContainer> >, blink::StorageKey const&, long, blink::KURL const&, std::__1::unique_ptr<base::UnguessableToken, std::__1::default_delete<base::UnguessableToken> >)",
+      "location": "frame_loader.cc:?"
+    },
+    "0xf767964": {
+      "function": "blink::FrameLoader::Init(base::TokenType<blink::DocumentTokenTypeMarker> const&, base::TokenType<blink::InitiatorStateTokenTypeMarker> const&, std::__1::unique_ptr<blink::PolicyContainer, std::__1::default_delete<blink::PolicyContainer> >, blink::StorageKey const&, long, blink::KURL const&, std::__1::unique_ptr<base::UnguessableToken, std::__1::default_delete<base::UnguessableToken> >)",
+      "location": "frame_loader.cc:?"
+    },
+    "0xf767be5": {
+      "function": "blink::FrameLoader::CommitDocumentLoader(blink::DocumentLoader*, blink::HistoryItem*, blink::CommitReason)",
+      "location": "frame_loader.cc:?"
+    },
+    "0xf768bdc": {
+      "function": "blink::FrameLoader::FinishedParsing()",
+      "location": "frame_loader.cc:?"
+    },
+    "0xf76c085": {
+      "function": "blink::FrameLoader::CommitNavigation(std::__1::unique_ptr<blink::WebNavigationParams, std::__1::default_delete<blink::WebNavigationParams> >, std::__1::unique_ptr<blink::WebDocumentLoader::ExtraData, std::__1::default_delete<blink::WebDocumentLoader::ExtraData> >, blink::CommitReason)",
+      "location": "frame_loader.cc:?"
+    },
+    "0xf874153": {
+      "function": "blink::Page::CreateOrdinary(blink::ChromeClient&, blink::Page*, blink::AgentGroupScheduler&, base::UnguessableToken const&, blink::ColorProviderColorMaps const*)",
+      "location": "page.cc:?"
+    },
+    "0xf874474": {
+      "function": "blink::Page::CreateOrdinary(blink::ChromeClient&, blink::Page*, blink::AgentGroupScheduler&, base::UnguessableToken const&, blink::ColorProviderColorMaps const*)",
+      "location": "page.cc:?"
+    },
+    "0xf875aa8": {
+      "function": "blink::Page::Page(base::PassKey<blink::Page>, blink::ChromeClient&, blink::AgentGroupScheduler&, base::UnguessableToken const&, blink::ColorProviderColorMaps const*, bool)",
+      "location": "page.cc:?"
+    },
+    "0xf875c58": {
+      "function": "blink::Page::Page(base::PassKey<blink::Page>, blink::ChromeClient&, blink::AgentGroupScheduler&, base::UnguessableToken const&, blink::ColorProviderColorMaps const*, bool)",
+      "location": "page.cc:?"
+    },
+    "0xf87fd21": {
+      "function": "blink::PageAnimator::UpdateAllLifecyclePhases(blink::LocalFrame&, blink::DocumentUpdateReason)",
+      "location": "page_animator.cc:?"
+    },
+    "0xf980d5d": {
+      "function": "blink::PaintTiming::From(blink::Document&)",
+      "location": "paint_timing.cc:?"
+    },
+    "0xfa78c42": {
+      "function": "blink::ComputedStyleBuilder::TakeStyle()",
+      "location": "computed_style.cc:?"
+    },
+    "0xfa78d5b": {
+      "function": "blink::ComputedStyleBuilder::CloneStyle() const",
+      "location": "computed_style.cc:?"
+    },
+    "0xfacf377": {
+      "function": "blink::SVGElement::AttributeChanged(blink::Element::AttributeModificationParams const&)",
+      "location": "svg_element.cc:?"
+    },
+    "0xfacfc69": {
+      "function": "blink::SVGElement::UpdatePresentationAttributeStyle(blink::SVGAnimatedPropertyBase const&)",
+      "location": "svg_element.cc:?"
+    },
+    "0xfad06d9": {
+      "function": "blink::SVGElement::AttachLayoutTree(blink::Node::AttachContext&)",
+      "location": "svg_element.cc:?"
+    },
+    "0xfad9d78": {
+      "function": "blink::SVGGeometryElement::CreateLayoutObject(blink::ComputedStyle const&)",
+      "location": "svg_geometry_element.cc:?"
+    },
+    "0xfad9e21": {
+      "function": "blink::SVGGeometryElement::CreateLayoutObject(blink::ComputedStyle const&)",
+      "location": "svg_geometry_element.cc:?"
+    },
+    "0xfaf6cb3": {
+      "function": "blink::SVGPathElement::SVGPathElement(blink::Document&)",
+      "location": "svg_path_element.cc:?"
+    },
+    "0xfaf6d86": {
+      "function": "blink::SVGPathElement::SVGPathElement(blink::Document&)",
+      "location": "svg_path_element.cc:?"
+    },
+    "0xfaf6dd0": {
+      "function": "blink::SVGPathElement::SVGPathElement(blink::Document&)",
+      "location": "svg_path_element.cc:?"
+    },
+    "0xfaf7931": {
+      "function": "blink::SVGPathElement::SvgAttributeChanged(blink::SVGElement::SvgAttributeChangedParams const&)",
+      "location": "svg_path_element.cc:?"
+    },
+    "0xfafa32f": {
+      "function": "blink::SVGAnimatedPath::SVGAnimatedPath(blink::SVGElement*, blink::QualifiedName const&, blink::CSSPropertyID)",
+      "location": "svg_animated_path.cc:?"
+    },
+    "0xfb0a072": {
+      "function": "blink::SVGSVGElement::AttachLayoutTree(blink::Node::AttachContext&)",
+      "location": "svg_svg_element.cc:?"
+    },
+    "0xfb0d68e": {
+      "function": "blink::SVGTransformableElement::SVGTransformableElement(blink::QualifiedName const&, blink::Document&, blink::Node::ConstructionType)",
+      "location": "svg_transformable_element.cc:?"
+    },
+    "0xfb1f69c": {
+      "function": "blink::GlobalPerformance::performance(blink::LocalDOMWindow&)",
+      "location": "global_performance.cc:?"
+    },
+    "0xfb56783": {
+      "function": "blink::SoftNavigationHeuristics::CreateIfNeeded(blink::LocalDOMWindow*)",
+      "location": "soft_navigation_heuristics.cc:?"
+    },
+    "0xfc78b8e": {
+      "function": "blink::css_longhand::PaddingBottom::ApplyValue(blink::StyleResolverState&, blink::CSSValue const&, unsigned char) const",
+      "location": "longhands.cc:?"
+    },
+    "0xfca00e0": {
+      "function": "blink::css_longhand::TransformOrigin::ApplyValue(blink::StyleResolverState&, blink::CSSValue const&, unsigned char) const",
+      "location": "longhands.cc:?"
+    },
+    "0xfce581b": {
+      "function": "blink::HTMLDivConstructor(blink::Document&, blink::CreateElementFlags)",
+      "location": "html_element_factory.cc:?"
+    },
+    "0xfd480e2": {
+      "function": "blink::CaptureSourceLocation()",
+      "location": "source_location.cc:?"
+    },
+    "0xfd8a5f5": {
+      "function": "blink::HarfBuzzShaper::CommitGlyphs(blink::RangeContext*, blink::SimpleFontData const*, UScriptCode, blink::CanvasRotationInVertical, blink::HarfBuzzShaper::FallbackFontStage, blink::BufferSlice const&, blink::ShapeResult*) const",
+      "location": "harfbuzz_shaper.cc:?"
+    },
+    "0xfd8a623": {
+      "function": "blink::HarfBuzzShaper::CommitGlyphs(blink::RangeContext*, blink::SimpleFontData const*, UScriptCode, blink::CanvasRotationInVertical, blink::HarfBuzzShaper::FallbackFontStage, blink::BufferSlice const&, blink::ShapeResult*) const",
+      "location": "harfbuzz_shaper.cc:?"
+    },
+    "0xfd8aaa6": {
+      "function": "blink::HarfBuzzShaper::ExtractShapeResults(blink::RangeContext*, bool&, blink::ReshapeQueueItem const&, blink::SimpleFontData const*, UScriptCode, blink::CanvasRotationInVertical, blink::HarfBuzzShaper::FallbackFontStage&, blink::ShapeResult*) const",
+      "location": "harfbuzz_shaper.cc:?"
+    },
+    "0xfd8b9dd": {
+      "function": "blink::HarfBuzzShaper::ShapeSegment(blink::RangeContext*, blink::RunSegmenter::RunSegmenterRange const&, blink::ShapeResult*) const",
+      "location": "harfbuzz_shaper.cc:?"
+    },
+    "0xfd8c156": {
+      "function": "blink::HarfBuzzShaper::ShapeSegment(blink::RangeContext*, blink::RunSegmenter::RunSegmenterRange const&, blink::ShapeResult*) const",
+      "location": "harfbuzz_shaper.cc:?"
+    },
+    "0xfd8d866": {
+      "function": "blink::HarfBuzzShaper::Shape(blink::Font const*, blink::TextDirection, unsigned int, unsigned int, blink::RunSegmenter::RunSegmenterRange, blink::ShapeOptions) const",
+      "location": "harfbuzz_shaper.cc:?"
+    },
+    "0xfd8f30a": {
+      "function": "blink::FontFallbackIterator::Next(blink::Vector<int, 16u, blink::PartitionAllocator> const&)",
+      "location": "font_fallback_iterator.cc:?"
+    },
+    "0xfda743c": {
+      "function": "blink::ShapeResultView::Create(blink::ShapeResult const*)",
+      "location": "shape_result_view.cc:?"
+    },
+    "0xffaae64": {
+      "function": "blink::CoreProbeSink::AddPerformanceMonitor(blink::PerformanceMonitor*)",
+      "location": "core_probes_impl.cc:?"
+    },
+    "0xffc823b": {
+      "function": "void blink::Vector<cppgc::internal::BasicMember<blink::PerformanceMonitor, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy, cppgc::internal::DisabledCheckingPolicy, cppgc::internal::CompressedPointer>, 0u, blink::HeapAllocator>::AppendSlowCase<blink::PerformanceMonitor*&>(blink::PerformanceMonitor*&)",
+      "location": "core_probes_impl.cc:?"
+    },
+    "0x1000b14c": {
+      "function": "blink::ContainerNode::RebuildChildrenLayoutTrees(blink::WhitespaceAttacher&)",
+      "location": "container_node.cc:?"
+    },
+    "0x10011fd5": {
+      "function": "blink::Document::Document(blink::DocumentInit const&, base::EnumSet<blink::DocumentClass, (blink::DocumentClass)0, (blink::DocumentClass)7>)",
+      "location": "document.cc:?"
+    },
+    "0x100137fd": {
+      "function": "blink::Document::Document(blink::DocumentInit const&, base::EnumSet<blink::DocumentClass, (blink::DocumentClass)0, (blink::DocumentClass)7>)",
+      "location": "document.cc:?"
+    },
+    "0x100142e2": {
+      "function": "blink::Document::LoadEventDelayTimerFired(blink::TimerBase*)",
+      "location": "document.cc:?"
+    },
+    "0x10015d7e": {
+      "function": "blink::Document::CreateRawElement(blink::QualifiedName const&, blink::CreateElementFlags)",
+      "location": "document.cc:?"
+    },
+    "0x10015e93": {
+      "function": "blink::Document::CreateRawElement(blink::QualifiedName const&, blink::CreateElementFlags)",
+      "location": "document.cc:?"
+    },
+    "0x1001888c": {
+      "function": "blink::Document::SetReadyState(blink::Document::DocumentReadyState)",
+      "location": "document.cc:?"
+    },
+    "0x1001cd98": {
+      "function": "blink::Document::UpdateStyleAndLayoutTree(blink::LayoutUpgrade&)",
+      "location": "document.cc:?"
+    },
+    "0x1001d4dd": {
+      "function": "blink::Document::UpdateStyleAndLayoutTreeForThisDocument()",
+      "location": "document.cc:?"
+    },
+    "0x1001d521": {
+      "function": "blink::Document::UpdateStyleAndLayoutTreeForThisDocument()",
+      "location": "document.cc:?"
+    },
+    "0x1001e96f": {
+      "function": "blink::Document::UpdateStyle()",
+      "location": "document.cc:?"
+    },
+    "0x1002086e": {
+      "function": "blink::Document::Initialize()",
+      "location": "document.cc:?"
+    },
+    "0x10022dc3": {
+      "function": "blink::Document::CreateParser()",
+      "location": "document.cc:?"
+    },
+    "0x10023d60": {
+      "function": "blink::Document::ImplicitOpen(blink::ParserSynchronizationPolicy)",
+      "location": "document.cc:?"
+    },
+    "0x10024262": {
+      "function": "blink::Document::OpenForNavigation(blink::ParserSynchronizationPolicy, blink::AtomicString const&, blink::AtomicString const&)",
+      "location": "document.cc:?"
+    },
+    "0x10025079": {
+      "function": "blink::Document::CheckCompletedInternal()",
+      "location": "document.cc:?"
+    },
+    "0x10025975": {
+      "function": "blink::Document::CheckCompletedInternal()",
+      "location": "document.cc:?"
+    },
+    "0x10036aed": {
+      "function": "blink::Document::FinishedParsing()",
+      "location": "document.cc:?"
+    },
+    "0x10036c85": {
+      "function": "blink::Document::FinishedParsing()",
+      "location": "document.cc:?"
+    },
+    "0x10051c44": {
+      "function": "blink::DocumentTiming::DocumentTiming(blink::Document&)",
+      "location": "document_timing.cc:?"
+    },
+    "0x10056948": {
+      "function": "blink::SVGPathConstructor(blink::Document&, blink::CreateElementFlags)",
+      "location": "svg_element_factory.cc:?"
+    },
+    "0x10056987": {
+      "function": "blink::SVGPathConstructor(blink::Document&, blink::CreateElementFlags)",
+      "location": "svg_element_factory.cc:?"
+    },
+    "0x100b5e45": {
+      "function": "blink::Element::ParserSetAttributes(blink::Vector<blink::Attribute, 10u, blink::PartitionAllocator> const&)",
+      "location": "element.cc:?"
+    },
+    "0x100b5f16": {
+      "function": "blink::Element::ParserSetAttributes(blink::Vector<blink::Attribute, 10u, blink::PartitionAllocator> const&)",
+      "location": "element.cc:?"
+    },
+    "0x100ba9e5": {
+      "function": "blink::Element::AttachLayoutTree(blink::Node::AttachContext&)",
+      "location": "element.cc:?"
+    },
+    "0x100bad00": {
+      "function": "blink::Element::AttachLayoutTree(blink::Node::AttachContext&)",
+      "location": "element.cc:?"
+    },
+    "0x100c4933": {
+      "function": "blink::Element::RebuildLayoutTree(blink::WhitespaceAttacher&)",
+      "location": "element.cc:?"
+    },
+    "0x100c4dfb": {
+      "function": "blink::Element::RebuildLayoutTree(blink::WhitespaceAttacher&)",
+      "location": "element.cc:?"
+    },
+    "0x100d95d8": {
+      "function": "blink::Element::CreateUniqueElementData()",
+      "location": "element.cc:?"
+    },
+    "0x100da0e0": {
+      "function": "blink::Element::UpdatePresentationAttributeStyle()",
+      "location": "element.cc:?"
+    },
+    "0x100da236": {
+      "function": "blink::Element::CreatePresentationAttributeStyle()",
+      "location": "element.cc:?"
+    },
+    "0x100e395d": {
+      "function": "blink::ElementData::MakeUniqueCopy() const",
+      "location": "element_data.cc:?"
+    },
+    "0x100e3ff3": {
+      "function": "blink::ShareableElementData* cppgc::MakeGarbageCollectedTrait<blink::ShareableElementData>::Call<blink::Vector<blink::Attribute, 10u, blink::PartitionAllocator> const&>(cppgc::AllocationHandle&, cppgc::AdditionalBytes, blink::Vector<blink::Attribute, 10u, blink::PartitionAllocator> const&)",
+      "location": "element_data.cc:?"
+    },
+    "0x100e43d7": {
+      "function": "blink::ComputePresentationAttributeStyle(blink::Element&)",
+      "location": "presentation_attribute_style.cc:?"
+    },
+    "0x100e7f0b": {
+      "function": "blink::ElementDataCache::CachedElementData(blink::StringImpl const*, blink::Vector<blink::Attribute, 10u, blink::PartitionAllocator> const&, unsigned int)",
+      "location": "element_data_cache.cc:?"
+    },
+    "0x100e7f98": {
+      "function": "blink::ElementDataCache::CachedElementData(blink::StringImpl const*, blink::Vector<blink::Attribute, 10u, blink::PartitionAllocator> const&, unsigned int)",
+      "location": "element_data_cache.cc:?"
+    },
+    "0x100e84d1": {
+      "function": "blink::HashTable<unsigned int, blink::KeyValuePair<unsigned int, std::__1::pair<blink::StringImpl const*, cppgc::internal::BasicMember<blink::ShareableElementData, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy, cppgc::internal::DisabledCheckingPolicy, cppgc::internal::CompressedPointer> > >, blink::KeyValuePairExtractor, blink::HashMapValueTraits<blink::AlreadyHashedTraits, blink::HashTraits<std::__1::pair<blink::StringImpl const*, cppgc::internal::BasicMember<blink::ShareableElementData, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy, cppgc::internal::DisabledCheckingPolicy, cppgc::internal::CompressedPointer> > > >, blink::AlreadyHashedTraits, blink::HeapAllocator>::Expand(blink::KeyValuePair<unsigned int, std::__1::pair<blink::StringImpl const*, cppgc::internal::BasicMember<blink::ShareableElementData, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy, cppgc::internal::DisabledCheckingPolicy, cppgc::internal::CompressedPointer> > >*)",
+      "location": "element_data_cache.cc:?"
+    },
+    "0x100e8506": {
+      "function": "blink::HashTable<unsigned int, blink::KeyValuePair<unsigned int, std::__1::pair<blink::StringImpl const*, cppgc::internal::BasicMember<blink::ShareableElementData, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy, cppgc::internal::DisabledCheckingPolicy, cppgc::internal::CompressedPointer> > >, blink::KeyValuePairExtractor, blink::HashMapValueTraits<blink::AlreadyHashedTraits, blink::HashTraits<std::__1::pair<blink::StringImpl const*, cppgc::internal::BasicMember<blink::ShareableElementData, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy, cppgc::internal::DisabledCheckingPolicy, cppgc::internal::CompressedPointer> > > >, blink::AlreadyHashedTraits, blink::HeapAllocator>::Expand(blink::KeyValuePair<unsigned int, std::__1::pair<blink::StringImpl const*, cppgc::internal::BasicMember<blink::ShareableElementData, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy, cppgc::internal::DisabledCheckingPolicy, cppgc::internal::CompressedPointer> > >*)",
+      "location": "element_data_cache.cc:?"
+    },
+    "0x100e8854": {
+      "function": "blink::EventDispatcher::DispatchEvent(blink::Node&, blink::Event&)",
+      "location": "event_dispatcher.cc:?"
+    },
+    "0x100eb8f9": {
+      "function": "blink::EventPath::Initialize()",
+      "location": "event_path.cc:?"
+    },
+    "0x100ec0d0": {
+      "function": "blink::EventPath::EnsureTreeScopeEventContext(blink::Node*, blink::TreeScope*)",
+      "location": "event_path.cc:?"
+    },
+    "0x101169cc": {
+      "function": "blink::HTMLConstructionSite::FlushPendingText()",
+      "location": "html_construction_site.cc:?"
+    },
+    "0x10117c34": {
+      "function": "blink::HTMLConstructionSite::InsertHTMLHtmlStartTagBeforeHTML(blink::AtomicHTMLToken*)",
+      "location": "html_construction_site.cc:?"
+    },
+    "0x1011abe4": {
+      "function": "blink::HTMLConstructionSite::CreateElement(blink::AtomicHTMLToken*, blink::AtomicString const&)",
+      "location": "html_construction_site.cc:?"
+    },
+    "0x1011ac83": {
+      "function": "blink::HTMLConstructionSite::CreateElement(blink::AtomicHTMLToken*, blink::AtomicString const&)",
+      "location": "html_construction_site.cc:?"
+    },
+    "0x1011c6a0": {
+      "function": "blink::HTMLConstructionSite::InsertHTMLElement(blink::AtomicHTMLToken*)",
+      "location": "html_construction_site.cc:?"
+    },
+    "0x1011c7d3": {
+      "function": "blink::HTMLConstructionSite::InsertHTMLElement(blink::AtomicHTMLToken*)",
+      "location": "html_construction_site.cc:?"
+    },
+    "0x1011d090": {
+      "function": "blink::HTMLConstructionSite::InsertForeignElement(blink::AtomicHTMLToken*, blink::AtomicString const&)",
+      "location": "html_construction_site.cc:?"
+    },
+    "0x101209d0": {
+      "function": "blink::HTMLDocumentParser::PrepareToStopParsing()",
+      "location": "html_document_parser.cc:?"
+    },
+    "0x10120b5b": {
+      "function": "blink::HTMLDocumentParser::PrepareToStopParsing()",
+      "location": "html_document_parser.cc:?"
+    },
+    "0x10122c14": {
+      "function": "blink::HTMLDocumentParser::PumpTokenizerIfPossible()",
+      "location": "html_document_parser.cc:?"
+    },
+    "0x10123387": {
+      "function": "blink::HTMLDocumentParser::PumpTokenizerIfPossible()",
+      "location": "html_document_parser.cc:?"
+    },
+    "0x1012366c": {
+      "function": "blink::HTMLDocumentParser::DeferredPumpTokenizerIfPossible(bool, base::TimeTicks)",
+      "location": "html_document_parser.cc:?"
+    },
+    "0x10123b53": {
+      "function": "blink::HTMLDocumentParser::AttemptToEnd()",
+      "location": "html_document_parser.cc:?"
+    },
+    "0x10126cdb": {
+      "function": "blink::HTMLDocumentParser::Finish()",
+      "location": "html_document_parser.cc:?"
+    },
+    "0x1014e98a": {
+      "function": "blink::HTMLElementStack::Pop()",
+      "location": "html_element_stack.cc:?"
+    },
+    "0x10173ef4": {
+      "function": "blink::HTMLTreeBuilder::ConstructTree(blink::AtomicHTMLToken*)",
+      "location": "html_tree_builder.cc:?"
+    },
+    "0x10174001": {
+      "function": "blink::HTMLTreeBuilder::ConstructTree(blink::AtomicHTMLToken*)",
+      "location": "html_tree_builder.cc:?"
+    },
+    "0x101748aa": {
+      "function": "blink::HTMLTreeBuilder::ProcessToken(blink::AtomicHTMLToken*)",
+      "location": "html_tree_builder.cc:?"
+    },
+    "0x10176446": {
+      "function": "blink::HTMLTreeBuilder::ProcessStartTag(blink::AtomicHTMLToken*)",
+      "location": "html_tree_builder.cc:?"
+    },
+    "0x10176a8a": {
+      "function": "blink::HTMLTreeBuilder::ProcessEndTag(blink::AtomicHTMLToken*)",
+      "location": "html_tree_builder.cc:?"
+    },
+    "0x101773bd": {
+      "function": "blink::HTMLTreeBuilder::ProcessEndOfFile(blink::AtomicHTMLToken*)",
+      "location": "html_tree_builder.cc:?"
+    },
+    "0x1017ab98": {
+      "function": "blink::HTMLTreeBuilder::DefaultForBeforeHTML()",
+      "location": "html_tree_builder.cc:?"
+    },
+    "0x101a2eb9": {
+      "function": "blink::StyleResolver::MatchAllRules(blink::StyleResolverState&, blink::ElementRuleCollector&, bool)",
+      "location": "style_resolver.cc:?"
+    },
+    "0x101a3e7c": {
+      "function": "blink::StyleResolver::ResolveStyle(blink::Element*, blink::StyleRecalcContext const&, blink::StyleRequest const&)",
+      "location": "style_resolver.cc:?"
+    },
+    "0x101a563c": {
+      "function": "blink::StyleResolver::ResolveStyle(blink::Element*, blink::StyleRecalcContext const&, blink::StyleRequest const&)",
+      "location": "style_resolver.cc:?"
+    },
+    "0x101a731d": {
+      "function": "blink::StyleResolver::ApplyBaseStyleNoCache(blink::Element*, blink::StyleRecalcContext const&, blink::StyleRequest const&, blink::StyleResolverState&, blink::StyleCascade&)",
+      "location": "style_resolver.cc:?"
+    },
+    "0x101a7c46": {
+      "function": "blink::StyleResolver::ApplyBaseStyleNoCache(blink::Element*, blink::StyleRecalcContext const&, blink::StyleRequest const&, blink::StyleResolverState&, blink::StyleCascade&)",
+      "location": "style_resolver.cc:?"
+    },
+    "0x101a82ce": {
+      "function": "blink::StyleResolver::ApplyBaseStyleNoCache(blink::Element*, blink::StyleRecalcContext const&, blink::StyleRequest const&, blink::StyleResolverState&, blink::StyleCascade&)",
+      "location": "style_resolver.cc:?"
+    },
+    "0x101aa2ed": {
+      "function": "blink::StyleResolver::MaybeAddToMatchedPropertiesCache(blink::StyleResolverState&, blink::MatchedPropertiesCache::Key const&, blink::StyleAdjuster::ElementTypeForCache)",
+      "location": "style_resolver.cc:?"
+    },
+    "0x102fb015": {
+      "function": "blink::WebDevToolsAgentImpl::AttachSession(blink::DevToolsSession*, bool)",
+      "location": "web_dev_tools_agent_impl.cc:?"
+    },
+    "0x1033fc6e": {
+      "function": "blink::WebView::Create(blink::WebViewClient*, bool, mojo::InlinedStructPtr<blink::mojom::PrerenderParam>, std::__1::optional<blink::FencedFrame::DeprecatedFencedFrameMode>, bool, bool, blink::WebView*, blink::CrossVariantMojoAssociatedReceiver<blink::mojom::PageBroadcastInterfaceBase>, blink::scheduler::WebAgentGroupScheduler&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, std::__1::optional<unsigned int>, base::UnguessableToken const&, blink::ColorProviderColorMaps const*, int, int)",
+      "location": "web_view_impl.cc:?"
+    },
+    "0x10340214": {
+      "function": "blink::WebView::Create(blink::WebViewClient*, bool, mojo::InlinedStructPtr<blink::mojom::PrerenderParam>, std::__1::optional<blink::FencedFrame::DeprecatedFencedFrameMode>, bool, bool, blink::WebView*, blink::CrossVariantMojoAssociatedReceiver<blink::mojom::PageBroadcastInterfaceBase>, blink::scheduler::WebAgentGroupScheduler&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, std::__1::optional<unsigned int>, base::UnguessableToken const&, blink::ColorProviderColorMaps const*, int, int)",
+      "location": "web_view_impl.cc:?"
+    },
+    "0x10340956": {
+      "function": "blink::WebView::Create(blink::WebViewClient*, bool, mojo::InlinedStructPtr<blink::mojom::PrerenderParam>, std::__1::optional<blink::FencedFrame::DeprecatedFencedFrameMode>, bool, bool, blink::WebView*, blink::CrossVariantMojoAssociatedReceiver<blink::mojom::PageBroadcastInterfaceBase>, blink::scheduler::WebAgentGroupScheduler&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, std::__1::optional<unsigned int>, base::UnguessableToken const&, blink::ColorProviderColorMaps const*, int, int)",
+      "location": "web_view_impl.cc:?"
+    },
+    "0x10353cbc": {
+      "function": "blink::FullscreenController::FullscreenController(blink::WebViewImpl*)",
+      "location": "fullscreen_controller.cc:?"
+    },
+    "0x105f9b5f": {
+      "function": "blink::ModulesInitializer::InitInspectorAgentSession(blink::DevToolsSession*, blink::InspectorDOMAgent*, blink::InspectedFrames*, blink::Page*) const",
+      "location": "modules_initializer.cc:?"
+    },
+    "0x126d88bb": {
+      "function": "ChromeRenderFrameObserver::DidMeaningfulLayout(blink::WebMeaningfulLayout)",
+      "location": "chrome_render_frame_observer.cc:?"
+    },
+    "0x126dc7e7": {
+      "function": "blink::WebFrameContentDumper::DumpFrameTreeAsText(blink::WebLocalFrame*, unsigned long)",
+      "location": "web_frame_content_dumper.cc:?"
+    },
+    "0x126dc969": {
+      "function": "blink::FrameContentAsText(unsigned int, blink::LocalFrame*, blink::StringBuilder&)",
+      "location": "frame_content_as_text.cc:?"
+    }
+  }
+}

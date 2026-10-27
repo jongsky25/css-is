@@ -24,3 +24,16 @@ If capable, a distinct fixed control/probe/probe/control calibration must pass
 unchanged timing/reader gates before applying the instrument to CSS-IS. Slow-path
 page requests omit object allocations that fit existing buffers; coverage limits
 must remain explicit. No process permission/kernel setting changes if attach fails.
+
+## Synthetic overhead gate following v1 capability
+
+Freeze the added control arm, then four NEW slots control/probe/probe/control,
+identical synthetic schedule/browser/identity setup, fresh process/browser per slot.
+All 12 stage durations sum to workload time. Require <=20% control duration change,
+<=20% probe/control duration increase in both orders, <=5% summed explicit hook-entry
+preparation duration/workload, <=250ms individual preparation, no agent error,
+no overflow, all 12 stages, nonempty allocation/free records. These callback costs
+are a lower bound on observer work, not exact total overhead; paired durations test
+broader overhead. Setup/teardown are outside workload in every arm. Do not claim
+RSS calibration: the injected agent itself uses renderer memory. Stop before app
+instrumentation if this prerequisite fails. Retain every slot without replacement.
