@@ -1,0 +1,13 @@
+{
+  "run_url": "https://github.com/jongsky25/css-is/actions/runs/40502688708",
+  "artifact_id": 12733976306,
+  "artifact_sha256": "ebe03d96d72c92b6e618fffa1a6923c90301cf850767c81e4393620be0eb5202",
+  "artifact_files": 16,
+  "internal_hashes_verified": 12,
+  "python": "3.12.15",
+  "error": "ValueError('Wrong machine/Python')",
+  "status": "diagnostic_failed",
+  "measured_controls": 0,
+  "qualification": false,
+  "harness_commit": "c76ae40480f20af47d10f06a8288f37858154db5"
+}
