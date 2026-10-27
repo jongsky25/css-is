@@ -1,0 +1,9 @@
+{
+  "archive_sha256": "283a58db54d9275643cc467179dd3760e933428d50d3e229fe420062b67c019f",
+  "logical_files": 2,
+  "unique_blobs": 2,
+  "paths": {
+    "capability/assessment.json": "b3ecd592645ec9fe97a56b138a0cda2cee2ef07b7cf5b5c14a6c861a0f8f934b",
+    "capability/capture.json.gz": "54d2401367c19d3c03cee5760b2477319b27917a4c923090aa4d46d2a31646dd"
+  }
+}

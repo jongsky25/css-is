@@ -16,8 +16,8 @@ def main():
     for name in SOURCES:
         if (repo / name).read_bytes() != subprocess.check_output(['git', 'show', head + ':' + name], cwd=repo):
             raise ValueError('Uncommitted harness: ' + name)
-    if PROTOCOL in ['native-membership-lifecycle-v7','native-membership-lifecycle-v8','native-membership-lifecycle-v9','native-membership-lifecycle-v10']:
-        if PROTOCOL in ['native-membership-lifecycle-v8','native-membership-lifecycle-v9','native-membership-lifecycle-v10']:
+    if PROTOCOL in ['native-membership-lifecycle-v7','native-membership-lifecycle-v8','native-membership-lifecycle-v9','native-membership-lifecycle-v10','native-membership-lifecycle-v11']:
+        if PROTOCOL in ['native-membership-lifecycle-v8','native-membership-lifecycle-v9','native-membership-lifecycle-v10','native-membership-lifecycle-v11']:
             from scripts.avatar_baseline.mixed_getter_capability import audit as audit_capability
         else:
             from scripts.avatar_baseline.absent_attribute_capability import audit as audit_capability
@@ -31,7 +31,7 @@ def main():
     a.out.mkdir(parents=True, exist_ok=False); out = a.out.resolve()
     plan = {'protocol': PROTOCOL, 'acceptance': False, 'harness_commit': head,
             'order': ['control', 'probe', 'probe', 'control'], 'cohorts': []}
-    if PROTOCOL in ['native-membership-lifecycle-v7','native-membership-lifecycle-v8','native-membership-lifecycle-v9','native-membership-lifecycle-v10']:
+    if PROTOCOL in ['native-membership-lifecycle-v7','native-membership-lifecycle-v8','native-membership-lifecycle-v9','native-membership-lifecycle-v10','native-membership-lifecycle-v11']:
         caproot=out/'receiver-capability'; caproot.mkdir()
         for name in ['capture.json.gz','assessment.json']:
             (caproot/name).write_bytes((a.receiver_capability/name).read_bytes())

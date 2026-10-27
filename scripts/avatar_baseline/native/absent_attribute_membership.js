@@ -22,15 +22,16 @@ for (const [kind, offset] of Object.entries(offsets)) {
         this.phase = 'census:' + phase.split(':')[1] + ':' + group;
         censusCursor++;
       }
-      this.backend = kind === 'receiver' ? null : args[0].toString();
-      this.address = kind === 'pool' ? args[1].toString() : ['receiver', 'shutdown', 'destroy'].includes(kind) ? args[0].toString() : null;
+      this.backend = kind === 'receiver' ? null : args[0];
+      this.address = kind === 'pool' ? args[1] : ['receiver', 'shutdown', 'destroy'].includes(kind) ? args[0] : null;
       this.ready = now();
     },
     onLeave(retval) {
       if (!this.enabled) return;
       store({kind, phase: this.phase, begin_ns: this.begin, callback_ready_ns: this.ready,
         returned_ns: now(), thread: Process.getCurrentThreadId(), backend: this.backend,
-        address: kind === 'allocate' ? retval.toString() : this.address,
+        // Invocation return values are recycled: copy its VALUE before leaving the callback.
+        address: kind === 'allocate' ? retval.add(0) : this.address,
         attribute_absent: kind === 'receiver' ? retval.isNull() : null});
     }
   });
@@ -54,6 +55,13 @@ rpc.exports = {
     });
   },
   setphase(value) { phase = value; if (phase.startsWith('batch:') || phase.startsWith('navigation:')) censusCursor = 0; },
-  result() { return {module: image.path, offsets, page_size: 131072, events, dropped}; }
+  result() {
+    // Formatting is deferred until AFTER the host has sealed measurement.
+    const exported = events.map(e => ({...e,
+      backend: e.backend === null ? null : e.backend.toString(),
+      address: e.address === null ? null : e.address.toString()}));
+    return {module: image.path, offsets, page_size: 131072,
+      address_encoding: 'deferred-native-pointer-v1', events: exported, dropped};
+  }
 };
 send({ready: true, pid: Process.id, module: image.path});

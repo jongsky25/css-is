@@ -1,0 +1,52 @@
+{
+  "status": "capability_passed",
+  "acceptance": false,
+  "performance_qualified": false,
+  "receiver_records": 384,
+  "reference_records": 384,
+  "native_null_returns": 384,
+  "documents": [
+    {
+      "index": 0,
+      "mode": "dom",
+      "dom_sha256": "f53f09aa4f59c5ca7e627f4d44aa8f6801833196040a75d66e735ce5434e5089",
+      "status": "capability_passed",
+      "receiver_records": 128,
+      "reference_records": 128,
+      "receiver_identities_match": true,
+      "null_native_returns": 128,
+      "dom_unchanged": true,
+      "acceptance": false,
+      "performance_qualified": false
+    },
+    {
+      "index": 1,
+      "mode": "svg",
+      "dom_sha256": "0fd29e8f942dc078e8e7d166ebd03ca133be7ed0207c5a260d1292b72683f89a",
+      "status": "capability_passed",
+      "receiver_records": 128,
+      "reference_records": 128,
+      "receiver_identities_match": true,
+      "null_native_returns": 128,
+      "dom_unchanged": true,
+      "acceptance": false,
+      "performance_qualified": false
+    },
+    {
+      "index": 2,
+      "mode": "style",
+      "dom_sha256": "e16ec8fdc1e3c2b3ede83c9a95c6b2ed900582ff5b1237e592a72afa4351d58f",
+      "status": "capability_passed",
+      "receiver_records": 128,
+      "reference_records": 128,
+      "receiver_identities_match": true,
+      "null_native_returns": 128,
+      "dom_unchanged": true,
+      "acceptance": false,
+      "performance_qualified": false
+    }
+  ],
+  "harness_commit": "9188ac1fb9508d0386d50e063dbdce26b79b00c8",
+  "source_hashes_verified": 5,
+  "capture_sha256": "54d2401367c19d3c03cee5760b2477319b27917a4c923090aa4d46d2a31646dd"
+}
