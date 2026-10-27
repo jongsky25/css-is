@@ -62,6 +62,7 @@ import integration_access
 import integration_access_routes
 import appearance
 import appearance_routes
+from sqlite_reader import SQLiteReader
 
 import qrcode
 from fastapi import FastAPI, Request, HTTPException
@@ -1541,6 +1542,7 @@ _document_job_task = None
 
 @app.on_event("shutdown")
 async def _stop_short_links():
+    _read_worker.close()
     if _short_link_task:
         _short_link_task.cancel()
         try:
@@ -1553,6 +1555,21 @@ async def _stop_short_links():
             await _document_job_task
         except asyncio.CancelledError:
             pass
+
+
+_read_worker = SQLiteReader()
+
+
+@app.on_event("startup")
+def _start_read_worker():
+    global _read_worker
+    _read_worker.close()
+    _read_worker = SQLiteReader()
+
+
+def read_db(operation):
+    """Fresh results on one thread-owned read connection; no identity cache."""
+    return _read_worker.read(DB, get_conn, operation, refresh=DB not in _schema_ready_for)
 
 
 def get_conn():
@@ -1987,11 +2004,7 @@ def _user_from_request(request):
     payload = auth.parse_token(request.cookies.get(auth.COOKIE_NAME))
     if not payload:
         return None
-    conn = get_conn()
-    try:
-        return st.session_actor(conn, payload)
-    finally:
-        conn.close()
+    return read_db(lambda conn: st.session_actor(conn, payload))
 
 
 def _api_identity(request):
@@ -2145,7 +2158,7 @@ def _notification_items(conn, user, feedback_unread, *, reads=None):
     return items
 
 
-appearance_routes.install_context(app, get_conn)
+appearance_routes.install_context(app, get_conn, read_db)
 
 
 @app.middleware("http")
@@ -17613,7 +17626,7 @@ import telegram_bot
 app.include_router(telegram_bot.make_router(get_conn))
 app.include_router(work_routes.make_router(templates, get_conn))
 app.include_router(integration_access_routes.make_router(templates, get_conn))
-app.include_router(appearance_routes.make_router(templates, get_conn))
+app.include_router(appearance_routes.make_router(templates, get_conn, read_db))
 app.include_router(supplies_routes.make_router(templates, get_conn))
 
 # Isolated generated contract: legacy browser actions are not part of API v1.

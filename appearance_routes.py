@@ -20,7 +20,7 @@ def csrf(request):
     return hmac.new(auth._secret(), ("appearance:" + request.cookies.get(auth.COOKIE_NAME, "")).encode(), hashlib.sha256).hexdigest()
 
 
-def install_context(app, get_conn):
+def install_context(app, get_conn, read_db):
     # Install before the authentication middleware, so auth runs first and the
     # registered session has already established the actor on request.state.
     @app.middleware("http")
@@ -29,11 +29,7 @@ def install_context(app, get_conn):
             return await call_next(request)
 
         def read():
-            conn = get_conn()
-            try:
-                return rules.resolve(store.load(conn))
-            finally:
-                conn.close()
+            return read_db(lambda conn: rules.resolve(store.load(conn)))
 
         active = await asyncio.to_thread(read)
         if request.query_params.get("appearance_preview") == "1" and auth.can(request.state.user["role"], "manage_users"):
@@ -54,7 +50,7 @@ def install_context(app, get_conn):
             rules.current.reset(token)
 
 
-def make_router(templates, get_conn):
+def make_router(templates, get_conn, read_db):
     router = APIRouter()
 
     def screen(request, *, error="", status=200, submitted=None):
@@ -131,11 +127,7 @@ def make_router(templates, get_conn):
     @router.get("/appearance/current")
     def active(request: Request):
         # Preview query parameters cannot affect the public resolver response.
-        conn = get_conn()
-        try:
-            return JSONResponse(rules.resolve(store.load(conn)), headers=PRIVATE)
-        finally:
-            conn.close()
+        return JSONResponse(read_db(lambda conn: rules.resolve(store.load(conn))), headers=PRIVATE)
 
     @router.get("/appearance/avatar/{kind}/{stage}", response_class=HTMLResponse)
     def avatar(request: Request, kind: str, stage: int):
