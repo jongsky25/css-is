@@ -25,6 +25,18 @@ seasonal administration, and accessibility behavior.
 A phase fails if its visuals remain essentially the same except for color changes,
 or if it exceeds a performance gate. Fix or reduce complexity before expanding it.
 
+## Runner isolation capability — external infrastructure required
+
+[Latest report](avatars/increment2b/runner-isolation/REPORT.md) confirms a hard runner-access blocker. Frozen inventory
+ccb4365 reports KVM, five visible CPUs/four-CPU quota, no exclusive cpuset and CPU
+controls not writable by this user. Connected runtime tools have no reservation,
+migration or capacity-change action. GitHub runner inventory was denied; alternate
+runner availability remains unknown. No environment changes or performance runs.
+A [concrete runner handoff](avatars/increment2b/runner-isolation/RUNNER_REQUIREMENTS.md) specifies required access, provider isolation
+evidence, exact toolchain and resume order. No unchanged local experiment is
+queued: supply a documented reserved runner/new host condition before freezing
+another comparison. Prior v12 control failure and 2B block remain unchanged.
+
 ## Control timing diagnostic — host contention signal, qualification still blocked
 
 [Latest report](avatars/increment2b/control-phase-timing/REPORT.md): frozen 84ce8e9 completes four uninjected controls with

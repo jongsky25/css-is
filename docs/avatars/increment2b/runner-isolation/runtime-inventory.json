@@ -1,0 +1,83 @@
+{
+  "protocol": "runner-isolation-inventory-v1",
+  "acceptance": false,
+  "isolation_established": false,
+  "configuration_changed": false,
+  "begin_ns": 13658013793423,
+  "uid": 1000,
+  "affinity_cpus": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "machine": "x86_64",
+  "kernel_release": "6.18.55",
+  "script_sha256": "a05aef19363f37423b333520ebd95f1efec766f9588bd854397e995441321ed0",
+  "cgroup_membership": "0::/",
+  "cgroup_files": {
+    "cgroup.controllers": {
+      "raw": "cpuset cpu io memory hugetlb pids",
+      "writable_by_current_user": false
+    },
+    "cgroup.type": {
+      "raw": "domain",
+      "writable_by_current_user": false
+    },
+    "cpu.max": {
+      "raw": "400000 100000",
+      "writable_by_current_user": false
+    },
+    "cpu.weight": {
+      "raw": "100",
+      "writable_by_current_user": false
+    },
+    "cpuset.cpus": {
+      "raw": "",
+      "writable_by_current_user": false
+    },
+    "cpuset.cpus.effective": {
+      "raw": "0-4",
+      "writable_by_current_user": false
+    },
+    "cpuset.cpus.exclusive": {
+      "raw": "",
+      "writable_by_current_user": false
+    },
+    "cpuset.cpus.exclusive.effective": {
+      "raw": "",
+      "writable_by_current_user": false
+    },
+    "cpuset.cpus.partition": {
+      "raw": "member",
+      "writable_by_current_user": false
+    }
+  },
+  "lscpu_exit_code": 0,
+  "cpu_topology": {
+    "Architecture": "x86_64",
+    "CPU(s)": "5",
+    "On-line CPU(s) list": "0-4",
+    "Vendor ID": "GenuineIntel",
+    "Model name": "INTEL(R) XEON(R) PLATINUM 8573C",
+    "Thread(s) per core": "1",
+    "Core(s) per socket": "5",
+    "Socket(s)": "1",
+    "Hypervisor vendor": "KVM",
+    "Virtualization type": "full"
+  },
+  "virtualization_detection": {
+    "exit_code": 0,
+    "value": "container-other"
+  },
+  "cgroup_mounts": [
+    {
+      "options": "rw,nosuid,nodev,noexec,relatime",
+      "filesystem": "cgroup2",
+      "super_options": "rw,nsdelegate"
+    }
+  ],
+  "end_ns": 13658023155661,
+  "limits": "Guest cpusets and affinity do not prove host CPU reservation. Writability is observed permission, not a successful write test. No provider reservation, capacity change, privilege change, benchmark, quiet-window retry, or CPU-affinity intervention was performed."
+}

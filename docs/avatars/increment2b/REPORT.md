@@ -8,10 +8,22 @@ with stable controls. Remaining milestones: a supported fix, qualified candidate
 validation, then complete original-baseline acceptance across all device/cache
 and scenario groups. No defensible percentage or ETA is established.
 
-Use the [Sol restart handoff](../../AVATAR_UPGRADE_HANDOFF.md#start-here--sol-handoff-current-after-control-timing-diagnostic)
+Use the [Sol restart handoff](../../AVATAR_UPGRADE_HANDOFF.md#start-here--sol-handoff-current-after-runner-isolation-capability-check)
 for current source identities, evidence order, next bounded work and constraints.
-The control timing diagnostic below is the latest completed experiment.
+The runner isolation capability check below is the latest completed work.
 Older next-step instructions in this report are historical where superseded.
+
+## Runner isolation capability — external infrastructure required
+
+[Latest report](runner-isolation/REPORT.md) confirms a hard runner-access blocker. Frozen inventory
+ccb4365 reports KVM, five visible CPUs/four-CPU quota, no exclusive cpuset and CPU
+controls not writable by this user. Connected runtime tools have no reservation,
+migration or capacity-change action. GitHub runner inventory was denied; alternate
+runner availability remains unknown. No environment changes or performance runs.
+A [concrete runner handoff](runner-isolation/RUNNER_REQUIREMENTS.md) specifies required access, provider isolation
+evidence, exact toolchain and resume order. No unchanged local experiment is
+queued: supply a documented reserved runner/new host condition before freezing
+another comparison. Prior v12 control failure and 2B block remain unchanged.
 
 ## Control timing diagnostic — host contention signal, qualification still blocked
 

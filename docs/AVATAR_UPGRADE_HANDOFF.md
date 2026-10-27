@@ -2,7 +2,7 @@
 
 Last updated: **2026-10-27 UTC**. Repository: `jongsky25/css-is`.
 
-## Start here — Sol handoff, current after control timing diagnostic
+## Start here — Sol handoff, current after runner isolation capability check
 
 **Objective: unblock 2B only. Do not start or resume 3A or later increments.**
 This section supersedes older next-step instructions below. The chronology is
@@ -11,11 +11,12 @@ retained as evidence, not a queue of experiments to repeat.
 ### Checkout and current state
 
 - Repository: `jongsky25/css-is`; resume `codex/avatar-2b-verification`.
-- Latest completed experiment: uninjected control timing diagnostic, harness
-  `84ce8e9`. Four complete controls localize variation to navigation/serialization
-  with concurrent aggregate CPU steal; no cgroup throttle increments. Earlier
-  d867258 initialization failures are retained. No qualification screen was rerun.
-  C recorder v12 (`04ca993`) still fails control variation (20.7568% >20%).
+- Latest completed work: runner isolation capability inventory, frozen script
+  `ccb4365`. KVM/five guest CPUs/four-CPU quota; no exclusive cpuset and CPU
+  controls not writable. Runtime tools expose no capacity/isolation action;
+  GitHub runner discovery was denied. **Externally configured isolated runner
+  access is now required. No further unchanged local experiment is queued.**
+  Prior control diagnostic 84ce8e9 and failed C recorder v12 remain evidence.
   Use latest branch HEAD for reports/evidence, not a reset to a harness commit.
 - Comparison baseline: `1c964dcba2fa19de1eab077b00e0e5748d742554`.
 - Current experimental product: `cf363bfe547d5e23619eee28cdaf68bd4b6d7753`,
@@ -47,7 +48,8 @@ markup and improves navigation 20 in both orders, but those partial benefits
 cannot override the failed gates. This screen compares current versus candidate;
 it is not the complete original-versus-candidate acceptance matrix.
 
-Latest diagnostic: [mixed getter fixture](avatars/increment2b/mixed-reclamation-getter/REPORT.md).
+Latest capability check: [runner isolation blocker](avatars/increment2b/runner-isolation/REPORT.md).
+Latest measured diagnostic: [control phase timing](avatars/increment2b/control-phase-timing/REPORT.md).
 The native C recorder now passes both cost bounds (2.9486/3.7522%) and preserves
 all 1,536 receiver joins and all-mode source-labelled reclamation per probe.
 Twenty labelled generations overlap native sweeping. The complete calibration
@@ -72,7 +74,9 @@ verification**. No candidate currently qualifies to unblock 2B.
 
 Read these in order before changing code or launching browsers:
 
-1. [Control timing diagnostic](avatars/increment2b/control-phase-timing/REPORT.md),
+1. [Runner isolation blocker](avatars/increment2b/runner-isolation/REPORT.md) and
+   [concrete runner requirements](avatars/increment2b/runner-isolation/RUNNER_REQUIREMENTS.md).
+   Then [control timing diagnostic](avatars/increment2b/control-phase-timing/REPORT.md),
    both frozen protocols, failed initialization and complete control/CPU evidence.
    Then [native recorder result](avatars/increment2b/native-callback-recorder/REPORT.md),
    frozen protocols, failed implementations, passed proofs, control interval analysis
@@ -104,13 +108,21 @@ extra queries change the workload. V12 remains failed at 20.7568% control variat
 though both recorder cost/reclamation probes passed. No timing subtraction,
 post-hoc load filter, quiet-window rerun or budget waiver is allowed.
 
-Next investigate runner contention/isolation: obtain provider/runtime CPU scheduling
-evidence and a concrete supported reserved-capacity/isolation intervention, keeping
-browser, fixtures and resource comparisons explicit. No resource/affinity setting
-was changed or isolation intervention demonstrated. Freeze any new condition and
-capture policy before a complete fixed comparison, retain every slot/failure, and
-require full instrument qualification before application calibration. Product
-cf363bf and unpromoted cd94bf3 remain unchanged; no 2B acceptance or later increment.
+Runner isolation capability check ccb4365 is complete: no exclusive cpuset is
+reported, CPU controls are not writable, and connected runtime tools have no
+resource reservation/migration/configuration action. Read-only GitHub runner
+inventory was denied, so alternate runner availability is unknown. No environment
+mutation or new performance run occurred. Do not repeat this inventory, v12, or the
+same control diagnostic as if it could establish a supported intervention.
+
+**Hard external prerequisite:** supply an existing reserved Linux x64 runner or
+configure this task's host through its supported environment configuration UI.
+Retain provider/operator evidence of the isolation scope and resource differences;
+guest affinity/cpuset or an ubuntu runner label cannot establish host reservation.
+Follow RUNNER_REQUIREMENTS.md for exact toolchain/browser/paths and permissions.
+Only after a concrete new runner condition exists may a new diagnostic/calibration
+policy be frozen. Retain all slots and gates. Product cf363bf and unpromoted cd94bf3
+remain unchanged; no application calibration, 2B acceptance or later increment.
 
 ### Important traps and execution constraints
 

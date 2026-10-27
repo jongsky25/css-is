@@ -1,0 +1,12 @@
+{
+  "harness_commit": "ccb4365c4d2b5fefe98c8ae4e678e1e6a7124df7",
+  "files_sha256": {
+    "scripts/avatar_baseline/runner_isolation_inventory.py": "a05aef19363f37423b333520ebd95f1efec766f9588bd854397e995441321ed0",
+    "docs/avatars/increment2b/runner-isolation/runtime-inventory.json": "007b11f9d209a56bfaf25c09ebffcbb250ab029203d77ba6babf029b15d67f0d",
+    "docs/avatars/increment2b/runner-isolation/provider-capabilities.json": "7d1546bd1f1aca9758d03827a60d87a337e3ff7c62d648689e51d30f21d90a8b",
+    "docs/avatars/increment2b/runner-isolation/capability-assessment.json": "58b32cf01f720b2e68753c3548fcb0883366827067fb5ea25eccea8cf2477213",
+    "docs/avatars/increment2b/runner-isolation/PROTOCOL.md": "199394b11a11a2dbb01b209a5ffb58a2dd3af61f2c5c5a3a0db0fa3aa3077b84"
+  },
+  "acceptance": false,
+  "isolation_established": false
+}

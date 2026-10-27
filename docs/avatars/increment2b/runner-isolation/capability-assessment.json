@@ -1,0 +1,69 @@
+{
+  "harness_commit": "ccb4365c4d2b5fefe98c8ae4e678e1e6a7124df7",
+  "inventory_script_sha256": "a05aef19363f37423b333520ebd95f1efec766f9588bd854397e995441321ed0",
+  "python": "3.12.14",
+  "dependencies": {
+    "playwright": "1.62.0",
+    "frida": "17.5.1"
+  },
+  "github_runner_discovery": {
+    "method": "GET https://api.github.com/repos/jongsky25/css-is/actions/runners via gh api",
+    "exit_code": 1,
+    "error": "Forbidden",
+    "inventory_established": false,
+    "limits": "Denial prevents discovery; this does not establish absent runners or identify whether account authorization or egress policy caused the denial. No bypass attempted."
+  },
+  "workflow_runner_labels": [
+    {
+      "path": ".github/workflows/avatar-2b-memory.yml",
+      "sha256": "003260cb35e6c267071728d8e3aed764266240904c13133c3b4c6a7ccfbf12dc",
+      "runs_on_lines": [
+        "runs-on: ubuntu-24.04"
+      ],
+      "disabled_job_conditions": [
+        "if: ${{ false }}"
+      ]
+    },
+    {
+      "path": ".github/workflows/avatar-2b-verification.yml",
+      "sha256": "4cfd20bf90aaea7c943389d2756591885a671221d07ef346f7305a3307cdf675",
+      "runs_on_lines": [
+        "runs-on: ubuntu-24.04"
+      ],
+      "disabled_job_conditions": []
+    },
+    {
+      "path": ".github/workflows/avatar-observer-validation.yml",
+      "sha256": "6b0e975015d0893ad3732d15cb11c7208669a385db50fd0279d1ef393f1a7172",
+      "runs_on_lines": [
+        "runs-on: ubuntu-24.04"
+      ],
+      "disabled_job_conditions": [
+        "if: ${{ false }}"
+      ]
+    },
+    {
+      "path": ".github/workflows/avatar-paired-variance.yml",
+      "sha256": "d30f186698fa567b3a4d6677ffe12b3949f4ec6bc56def0affa35d15402ec361",
+      "runs_on_lines": [
+        "runs-on: ubuntu-24.04"
+      ],
+      "disabled_job_conditions": [
+        "if: ${{ false }}"
+      ]
+    },
+    {
+      "path": ".github/workflows/avatar-svg-validation.yml",
+      "sha256": "8c90119dc1f1c8656438c379c874e6166b2fb6a47d0e4c36dbebaa7803ada37e",
+      "runs_on_lines": [
+        "runs-on: ubuntu-24.04"
+      ],
+      "disabled_job_conditions": [
+        "if: ${{ false }}"
+      ]
+    }
+  ],
+  "acceptance": false,
+  "isolation_established": false,
+  "performance_runs_started": 0
+}
