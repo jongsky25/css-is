@@ -147,7 +147,7 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
         assert metadata.json()['resource'] == 'https://office.example/mcp'
         scopes = {'surveys:person_activities:read', 'surveys:resource_person_trends:read', 'surveys:csm_trends:read', 'surveys:unit_trends:read', 'surveys:units:read', 'activities:read', 'calendar:read', 'documents:read',
                   'supplies:read', 'travel:read', 'work:read', 'notifications:read', 'surveys:csm:read', 'surveys:activities:read', 'surveys:resource_persons:read', 'surveys:activity_details:read'}
-        assert set(metadata.json()['scopes_supported']) == scopes | {'notifications:mark_read', 'supplies:request:draft', 'work:comment:draft', 'reports:view:save', 'calendar:entry:create', 'travel:filing:draft', 'work:task:acknowledge', 'work:task:submit', 'supplies:request:submit', 'travel:review:request', 'travel:filing:submit', 'rooms:request', 'meals:request', 'work_arrangements:request', 'activities:dates:update', 'activities:draft:save', 'activities:draft:create', 'activities:announcement:publish', 'work:task:accept', 'supplies:request:approve'}
+        assert set(metadata.json()['scopes_supported']) == scopes | {'notifications:mark_read', 'supplies:request:draft', 'work:comment:draft', 'reports:view:save', 'calendar:entry:create', 'travel:filing:draft', 'work:task:acknowledge', 'work:task:submit', 'supplies:request:submit', 'travel:review:request', 'travel:filing:submit', 'rooms:request', 'meals:request', 'work_arrangements:request', 'activities:dates:update', 'activities:draft:save', 'activities:draft:create', 'activities:announcement:publish', 'work:task:accept', 'supplies:request:approve', 'rooms:request:approve'}
         denied = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 1, 'method': 'initialize',
                                           'params': {'protocolVersion': '2025-06-18',
                                                      'capabilities': {}, 'clientInfo': {'name': 'probe', 'version': '1'}}},
@@ -165,7 +165,7 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
             'grant_types': ['authorization_code', 'refresh_token'],
             'response_types': ['code']})
         assert registered.status_code == 201, registered.text
-        assert set(registered.json()['scope'].split()) == scopes | {'notifications:mark_read', 'supplies:request:draft', 'work:comment:draft', 'reports:view:save', 'calendar:entry:create', 'travel:filing:draft', 'work:task:acknowledge', 'work:task:submit', 'supplies:request:submit', 'travel:review:request', 'travel:filing:submit', 'rooms:request', 'meals:request', 'work_arrangements:request', 'activities:dates:update', 'activities:draft:save', 'activities:draft:create', 'activities:announcement:publish', 'work:task:accept', 'supplies:request:approve'}
+        assert set(registered.json()['scope'].split()) == scopes | {'notifications:mark_read', 'supplies:request:draft', 'work:comment:draft', 'reports:view:save', 'calendar:entry:create', 'travel:filing:draft', 'work:task:acknowledge', 'work:task:submit', 'supplies:request:submit', 'travel:review:request', 'travel:filing:submit', 'rooms:request', 'meals:request', 'work_arrangements:request', 'activities:dates:update', 'activities:draft:save', 'activities:draft:create', 'activities:announcement:publish', 'work:task:accept', 'supplies:request:approve', 'rooms:request:approve'}
         client_id = registered.json()['client_id']
         auth_url = client.get('/authorize', params={
             'response_type': 'code', 'client_id': client_id, 'redirect_uri': callback,
@@ -228,7 +228,7 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
         assert listed.status_code == 200, listed.text
         names = {tool['name'] for tool in listed.json()['result']['tools']}
         assert {'my_work', 'find_documents', 'get_document'} <= names
-        assert names == {'get_supply_approval_context', 'prepare_supply_request_approval', 'get_supply_approval_operation', 'get_task_acceptance_context', 'prepare_task_acceptance', 'get_task_acceptance_operation', 'get_activity_announcement_context', 'prepare_activity_announcement', 'get_activity_announcement_operation', 'get_activity_creation_context', 'prepare_activity_from_draft', 'get_activity_creation_operation', 'get_activity_draft_context', 'prepare_activity_draft', 'get_activity_draft_operation', 'get_activity_date_context', 'prepare_activity_date_update', 'get_activity_date_operation', 'get_my_work_arrangement_context', 'prepare_work_arrangement_request', 'get_work_arrangement_operation', 'get_my_meal_request_context', 'prepare_meal_request', 'get_meal_request_operation', 'get_my_room_request_context', 'prepare_room_request', 'get_room_request_operation', 'get_my_travel_submission_context', 'prepare_travel_filing_submission', 'get_travel_submission_operation', 'get_my_travel_review_context', 'prepare_travel_review_request', 'get_travel_review_request_operation', 'prepare_supply_request_submission', 'get_supply_submission_operation', 'prepare_task_submission', 'get_task_submission_operation', 'prepare_task_acknowledgement', 'get_task_acknowledgement_operation', 'prepare_travel_reimbursement_draft', 'get_travel_draft_operation', 'prepare_personal_calendar_entry', 'get_personal_calendar_operation', 'prepare_saved_report_view', 'get_saved_report_view_operation', 'prepare_task_comment_draft', 'get_task_comment_draft_operation', 'prepare_supply_request_draft', 'get_supply_draft_operation', 'mark_my_notification_read', 'get_mcp_operation', 'get_resource_person_activity_survey', 'find_survey_resource_persons', 'compare_resource_person_surveys', 'compare_csm_months', 'compare_unit_activity_surveys', 'find_survey_units', 'get_unit_activity_survey_summary', 'my_work', 'find_documents', 'get_document',
+        assert names == {'get_room_approval_context', 'prepare_room_request_approval', 'get_room_approval_operation', 'get_supply_approval_context', 'prepare_supply_request_approval', 'get_supply_approval_operation', 'get_task_acceptance_context', 'prepare_task_acceptance', 'get_task_acceptance_operation', 'get_activity_announcement_context', 'prepare_activity_announcement', 'get_activity_announcement_operation', 'get_activity_creation_context', 'prepare_activity_from_draft', 'get_activity_creation_operation', 'get_activity_draft_context', 'prepare_activity_draft', 'get_activity_draft_operation', 'get_activity_date_context', 'prepare_activity_date_update', 'get_activity_date_operation', 'get_my_work_arrangement_context', 'prepare_work_arrangement_request', 'get_work_arrangement_operation', 'get_my_meal_request_context', 'prepare_meal_request', 'get_meal_request_operation', 'get_my_room_request_context', 'prepare_room_request', 'get_room_request_operation', 'get_my_travel_submission_context', 'prepare_travel_filing_submission', 'get_travel_submission_operation', 'get_my_travel_review_context', 'prepare_travel_review_request', 'get_travel_review_request_operation', 'prepare_supply_request_submission', 'get_supply_submission_operation', 'prepare_task_submission', 'get_task_submission_operation', 'prepare_task_acknowledgement', 'get_task_acknowledgement_operation', 'prepare_travel_reimbursement_draft', 'get_travel_draft_operation', 'prepare_personal_calendar_entry', 'get_personal_calendar_operation', 'prepare_saved_report_view', 'get_saved_report_view_operation', 'prepare_task_comment_draft', 'get_task_comment_draft_operation', 'prepare_supply_request_draft', 'get_supply_draft_operation', 'mark_my_notification_read', 'get_mcp_operation', 'get_resource_person_activity_survey', 'find_survey_resource_persons', 'compare_resource_person_surveys', 'compare_csm_months', 'compare_unit_activity_surveys', 'find_survey_units', 'get_unit_activity_survey_summary', 'my_work', 'find_documents', 'get_document',
                          'list_work_items', 'get_work_item', 'list_work_tasks', 'list_calendar_events',
                          'list_supply_queue', 'list_my_travel_filings', 'list_activity_progress',
                          'my_office_overview', 'list_my_notifications', 'get_room_availability', 'get_csm_summary', 'get_activity_survey_summary', 'get_resource_person_survey_summary', 'find_survey_activities', 'get_activity_survey_detail'}
@@ -568,10 +568,10 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
         # Reproduce a client requesting only work, despite registering all reads.
         # Optional consent must be explicit, and token/refresh must reflect it.
         # No optional grant, then each optional permission independently.
-        for choice in range(22):
+        for choice in range(23):
             (choose_calendar, choose_write, choose_supply, choose_comment, choose_view,
              choose_personal, choose_travel, choose_ack, choose_submit, choose_supply_submit,
-             choose_review, choose_paper, choose_room, choose_meal, choose_wa, choose_dates, choose_activity_draft, choose_creation, choose_announcement, choose_accept, choose_supply_approval) = [choice == i for i in range(1, 22)]
+             choose_review, choose_paper, choose_room, choose_meal, choose_wa, choose_dates, choose_activity_draft, choose_creation, choose_announcement, choose_accept, choose_supply_approval, choose_room_approval) = [choice == i for i in range(1, 23)]
             if choose_activity_draft or choose_creation:
                 # A role change revokes sessions/grants: issue a current fixture
                 # session BEFORE starting this case's fresh OAuth authorization.
@@ -579,6 +579,17 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
                 conn.execute("UPDATE admin_user SET role='section_manager' WHERE id=?",(owner,));conn.commit()
                 draft_actor=st.get_admin_user_by_id(conn,owner);conn.close()
                 browser.cookies.set(auth.COOKIE_NAME,app._issue_session(draft_actor))
+            if choose_room_approval:
+                # Directory relinking revokes old credentials. Set up authority
+                # before this case obtains fresh OAuth consent and a session.
+                conn=st.connect(os.environ['CSS_DB'])
+                admin_unit=conn.execute("SELECT id FROM org_unit WHERE path='BLHSD/ADMIN'").fetchone()
+                if not admin_unit:
+                    admin_unit=(st.add_org_unit(conn,'Administrative Section','section','BLHSD/ADMIN'),)
+                approver_rp=st.add_rp(conn,'Synthetic room approval operator',True,admin_unit[0])
+                conn.execute('UPDATE admin_user SET rp_id=? WHERE id=?',(approver_rp,owner));conn.commit()
+                room_approval_actor=st.get_admin_user_by_id(conn,owner);conn.close()
+                browser.cookies.set(auth.COOKIE_NAME,app._issue_session(room_approval_actor))
             # Each case tests a separate authorization choice, not rate limits.
             import ratelimit
             ratelimit.reset()
@@ -636,6 +647,8 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
                 values['scope_work:task:accept'] = '1'
             if choose_supply_approval:
                 values['scope_supplies:request:approve'] = '1'
+            if choose_room_approval:
+                values['scope_rooms:request:approve'] = '1'
             consent = browser.post('/mcp-consent', data=values,
                 headers={'Origin': 'https://office.example'}, follow_redirects=False)
             assert consent.status_code == 303, consent.text
@@ -685,6 +698,8 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
                 expected.add('work:task:accept')
             if choose_supply_approval:
                 expected.add('supplies:request:approve')
+            if choose_room_approval:
+                expected.add('rooms:request:approve')
             assert set(token.json()['scope'].split()) == expected
             narrow_headers = dict(headers, Authorization='Bearer ' + token.json()['access_token'])
             calendar_call = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 100, 'method': 'tools/call',
@@ -1224,6 +1239,34 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
                 assert conn.execute('SELECT approval_status FROM supply_request WHERE id=?',(approval_request['id'],)).fetchone()[0]=='submitted'
                 approval_movements=conn.execute('SELECT * FROM supply_stock_movement').fetchall()
                 conn.close()
+            if choose_room_approval:
+                import rooms
+                os.environ['CSS_MCP_ROOM_APPROVALS_ENABLED']='1'
+                conn=st.connect(os.environ['CSS_DB'])
+                rooms.ensure_slots(conn)
+                approval_slot=next(s['id'] for s in rooms.list_slots(conn) if s['start_time']=='10:00')
+                room_target=rooms.request(conn,title='Synthetic exact room approval',day='2026-11-10',slot_ids=[approval_slot],
+                    requester_user_id=other,actor=st.get_admin_user_by_id(conn,other)['username'],quiet=True)
+                conn.close()
+                current=client.post('/mcp',json={'jsonrpc':'2.0','id':180,'method':'tools/call',
+                    'params':{'name':'get_room_approval_context','arguments':{'room_request_id':room_target['id']}}},headers=narrow_headers)
+                assert current.status_code==200 and not current.json()['result'].get('isError'),current.text
+                room_approval_context=json.loads(current.json()['result']['content'][0]['text'])
+                assert room_approval_context['slot_count']==1 and 'Synthetic exact room approval' not in current.text
+                room_approval_args={'room_request_id':room_target['id'],'expected_revision':room_approval_context['expected_revision'],
+                                    'reason':'Synthetic reviewed room decision','operation_id':'remote-room-approval-001'}
+                prepared=client.post('/mcp',json={'jsonrpc':'2.0','id':181,'method':'tools/call',
+                    'params':{'name':'prepare_room_request_approval','arguments':room_approval_args}},headers=narrow_headers)
+                assert prepared.status_code==200 and not prepared.json()['result'].get('isError'),prepared.text
+                room_approval_preview=json.loads(prepared.json()['result']['content'][0]['text'])
+                assert room_approval_preview['status']=='awaiting_confirmation' and 'Synthetic reviewed room decision' not in prepared.text
+                confirmation=browser.get(room_approval_preview['confirmation_url'])
+                assert confirmation.status_code==200 and 'Synthetic exact room approval' in confirmation.text and '10:00' in confirmation.text,confirmation.text
+                room_approval_values={name:re.search(r'name="'+name+r'" value="([^\"]+)"',confirmation.text).group(1) for name in ('csrf','preview_digest')}
+                room_approval_values['confirm']='yes'
+                conn=st.connect(os.environ['CSS_DB'])
+                assert rooms.get_reservation(conn,room_target['id'])['status']=='requested'
+                conn.close()
             rotated = client.post('/token', data={'grant_type': 'refresh_token', 'client_id': client_id,
                 'refresh_token': token.json()['refresh_token'], 'resource': 'https://office.example/mcp'})
             assert rotated.status_code == 200
@@ -1617,6 +1660,23 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
                 assert conn.execute('SELECT * FROM supply_stock_movement').fetchall()==approval_movements
                 conn.close();os.environ.pop('CSS_MCP_SUPPLY_APPROVALS_ENABLED',None)
 
+            if choose_room_approval:
+                confirmed=browser.post(room_approval_preview['confirmation_url'],data=room_approval_values,headers={'Origin':'https://office.example'})
+                assert confirmed.status_code==200 and 'Room request approved' in confirmed.text,confirmed.text
+                recovered=client.post('/mcp',json={'jsonrpc':'2.0','id':182,'method':'tools/call',
+                    'params':{'name':'get_room_approval_operation','arguments':{'operation_id':room_approval_args['operation_id']}}},
+                    headers=dict(headers,Authorization='Bearer '+rotated.json()['access_token']))
+                assert recovered.status_code==200 and not recovered.json()['result'].get('isError'),recovered.text
+                receipt=json.loads(recovered.json()['result']['content'][0]['text'])
+                assert receipt['approval_status']=='approved' and receipt['booking_held_at_approval'] is True
+                assert 'Synthetic exact room approval' not in recovered.text and 'Synthetic reviewed room decision' not in recovered.text
+                assert browser.post(room_approval_preview['confirmation_url'],data=room_approval_values,headers={'Origin':'https://office.example'}).status_code==200
+                conn=st.connect(os.environ['CSS_DB'])
+                assert rooms.get_reservation(conn,room_target['id'])['status']=='approved'
+                assert conn.execute('SELECT COUNT(*) FROM mcp_room_approval_identity').fetchone()[0]==1
+                assert conn.execute('SELECT COUNT(*) FROM mcp_room_approval_notice').fetchone()[0]==1
+                conn.close();os.environ.pop('CSS_MCP_ROOM_APPROVALS_ENABLED',None)
+
         # Start a new synthetic operator session after the consent matrix.
         import ratelimit
         ratelimit.reset()
@@ -1626,7 +1686,7 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
             'token_endpoint_auth_method': 'none', 'grant_types': ['authorization_code', 'refresh_token'],
             'response_types': ['code']})
         assert restricted.status_code == 201
-        assert set(restricted.json()['scope'].split()) == scopes | {'notifications:mark_read', 'supplies:request:draft', 'work:comment:draft', 'reports:view:save', 'calendar:entry:create', 'travel:filing:draft', 'work:task:acknowledge', 'work:task:submit', 'supplies:request:submit', 'travel:review:request', 'travel:filing:submit', 'rooms:request', 'meals:request', 'work_arrangements:request', 'activities:dates:update', 'activities:draft:save', 'activities:draft:create', 'activities:announcement:publish', 'work:task:accept', 'supplies:request:approve'}
+        assert set(restricted.json()['scope'].split()) == scopes | {'notifications:mark_read', 'supplies:request:draft', 'work:comment:draft', 'reports:view:save', 'calendar:entry:create', 'travel:filing:draft', 'work:task:acknowledge', 'work:task:submit', 'supplies:request:submit', 'travel:review:request', 'travel:filing:submit', 'rooms:request', 'meals:request', 'work_arrangements:request', 'activities:dates:update', 'activities:draft:save', 'activities:draft:create', 'activities:announcement:publish', 'work:task:accept', 'supplies:request:approve', 'rooms:request:approve'}
         restricted_id = restricted.json()['client_id']
         import json
         conn = st.connect(os.environ['CSS_DB'])

@@ -1,3 +1,9 @@
+## 8.99 — October 27, 2026
+
+- Add default-off `rooms:request:approve` context/preview/recovery for current Administrative Section approval of another person's plain internal room request. Exact browser review shows requested hours, requester, reason, pending-rival count and email/preference/quiet-hour/ICS policy; self/filing-actor and technical-only approval are refused.
+- Share a caller-owned native booking/audit transaction, preserving ordinary Rooms rival/move/series/meal behavior outside the pilot. Commit held slots, decision/domain audit, requester bell/notice, retained identity, delivery marker and MCP receipt together; reject stale/conflicting/unsupported sources and preserve later ordinary withdrawal or edits on recovery.
+- Add gated single-attempt requester email with current source/authority/recipient/preferences, quiet-hour waiting, reviewed ICS settings and native mail-loop exclusion. Disabled-at-confirmation skips remain terminal; ambiguous/crashed/result-write failures never resend. Include native/OAuth/mobile, booking/worker races, rollback, stale policy, cleanup, packaging and deferred hosted acceptance coverage. Travel reviewer decisions remain the next separate increment.
+
 ## 8.98 — October 27, 2026
 
 - Add default-off `supplies:request:approve` context/preview/recovery for scoped non-requester approval at exact submitted quantities. Exact browser review shows submitted requester/unit/purpose/date, every full approved quantity, initial reserved/awaiting-stock effects and decision reason; reductions, displacement and earlier reservation cycles use ordinary Supplies.

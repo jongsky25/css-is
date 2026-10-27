@@ -1,0 +1,39 @@
+{% extends "dash_layout.html" %}
+{% block title %}Review room request approval — Office Connect{% endblock %}
+{% block content %}
+<div style="max-width:44rem;margin:auto;overflow-wrap:anywhere">
+{% if result.status == 'completed' %}
+<h1>Room request approved</h1>
+<p>{{ result.reference }} was approved at {{ result.completed_at }} for {{ result.day }} with {{ result.slot_count }} requested hour(s) booked. This is the original decision; inspect Rooms for current booking state.</p>
+<p>The requester uses the approved room next. Initial notice recipients: 1. Current email states: {% for state,count in result.notification_status_counts.items() %}{{ state }}: {{ count }}{% if not loop.last %}; {% endif %}{% else %}No retained delivery marker{% endfor %}. Queued is not delivered. Uncertain attempts never automatically resend.</p>
+{% else %}
+<h1>Approve this exact room request?</h1>
+<dl>
+<dt>Request</dt><dd>{{ result.snapshot.reference }} ({{ result.snapshot.room_id }}) · {{ result.snapshot.title }}</dd>
+<dt>Requester / notice recipient</dt><dd>{{ result.snapshot.recipient.name }} (account {{ result.snapshot.recipient.id }}) · {{ result.snapshot.recipient.email }}</dd>
+<dt>Current Administrative Section approver</dt><dd>{{ result.snapshot.approver.name }} (account {{ result.snapshot.approver.id }}, you)</dd>
+<dt>Requested date and hours</dt><dd>{{ result.snapshot.day }} · Asia/Manila · {% for slot in result.snapshot.slots %}{{ slot.start_time }}–{{ slot.end_time }}{% if not loop.last %}, {% endif %}{% endfor %}</dd>
+<dt>Purpose</dt><dd style="white-space:pre-wrap">{{ result.snapshot.purpose or 'Not provided' }}</dd>
+<dt>Attendees / format</dt><dd>{{ result.snapshot.attendees or 'Not provided' }} · {{ result.snapshot.modality }}</dd>
+<dt>Linked calendar meeting</dt><dd>{{ result.snapshot.calendar_entry_id or 'None' }}</dd>
+<dt>Your decision reason</dt><dd style="white-space:pre-wrap">{{ result.fields.reason }}</dd>
+<dt>Competing pending requests</dt><dd>{{ result.snapshot.competing_request_count }}. They will remain pending and their fields will not change. These hours will be held by this approved booking.</dd>
+<dt>Requester email feature</dt><dd>{{ 'Enabled' if result.snapshot.policy.feature_enabled else 'Disabled/paused: skip this email permanently' }}</dd>
+<dt>Requester email preference</dt><dd>{{ 'Enabled' if result.snapshot.policy.room_email else 'Disabled: skip this email permanently' }}</dd>
+<dt>Quiet hours</dt><dd>{% if result.snapshot.policy.quiet_start %}{{ result.snapshot.policy.quiet_start }}–{{ result.snapshot.policy.quiet_end }} Asia/Manila; email waits while quiet{% else %}None configured{% endif %}</dd>
+<dt>Calendar file</dt><dd>{{ 'The normal room ICS attachment is enabled' if result.snapshot.policy.room_ics else 'No ICS attachment' }}. This does not create or update an external calendar event.</dd>
+</dl>
+<p><strong>By confirming, you approve this single request and hold exactly the requested room hours above.</strong> A requester or filing actor cannot approve their own request through this pilot. Technical administrator status alone does not grant room approval authority.</p>
+<p>The normal requester approval notice and bell entry are recorded with the decision. Email includes normal room details, reference and the My reservations link, with the calendar file only when enabled above. Disabled email remains skipped if settings are later enabled. Enabled mail follows current feature/pause, preference, quiet-hour and transport policy. Queued is not sent; false, crashed or uncertain attempts never automatically retry.</p>
+<p>This approves no rival request, declines nobody, overrides no occupied hour or closure, and performs no move, series, meal order or cancellation. A linked meeting's dates, people, status and contents remain unchanged. Normal future reminders and existing Telegram notification preferences/jobs remain separate.</p>
+<p>This pilot covers plain internal requests with one continuous active slot block, within the normal 90-day horizon and before the first hour starts. Use ordinary Rooms for guests, meals, standby/override, moves, series, activity links or another decision. Current authority, requester, request, meeting, slots, competition and notice routing are checked again. The preview expires ten minutes after preparation.</p>
+<form method="post">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<input type="hidden" name="preview_digest" value="{{ result.preview_digest }}">
+<button type="submit" name="confirm" value="yes">Confirm: approve and book requested hours</button>
+</form>
+{% endif %}
+<p>Operation receipt: <code>{{ result.operation_id }}</code>. Recover this key after a lost response before a replacement.</p>
+<p><a href="{{ result.web_url }}">Inspect the current room source</a></p>
+</div>
+{% endblock %}
