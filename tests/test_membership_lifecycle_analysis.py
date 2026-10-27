@@ -17,7 +17,7 @@ def specimen(monkeypatch):
                   'errors': ['No labelled page generation observed returning to pool'],
                   'matched_receiver_records': 6144, 'receiver_records': 6144, 'mixed_group_generations': 12}
     monkeypatch.setattr(analysis, 'inspect', lambda p: membership)
-    p = {'protocol': analysis.PROTOCOL, 'back_forward_cache_disabled': True, 'lifecycle_transport': 'same-origin-beacon', 'census_transport': 'navigation-armed-four-fixed-groups',
+    p = {'protocol': 'native-membership-lifecycle-v9', 'back_forward_cache_disabled': True, 'lifecycle_transport': 'same-origin-beacon', 'census_transport': 'navigation-armed-four-fixed-groups',
          'begin_ns': 0, 'end_ns': 10000000, 'pid': 7, 'mode': 'probe',
          'lifecycle_events': [{'index': i, 'persisted': False, 'received_ns': 100000+i*500000} for i in range(11)],
          'stages': [], 'history': {'offsets': {**analysis.receiver_offsets(analysis.PROTOCOL), **analysis.EXTRA_OFFSETS}, 'events': []},
@@ -91,3 +91,14 @@ def test_mixed_protocol_requires_natural_collection_even_with_returning_pages(mo
         {'pid':7,'tid':7,'name':'MajorGC','ts':100,'dur':5,'ph':'X','args':{}},
         {'pid':7,'tid':7,'name':'CppGC.IncrementalSweep','ts':106,'dur':5,'ph':'X','args':{}}]
     assert not analysis.analyze(p,trace)['errors']
+
+
+def test_local_selector_reuse_counts_are_verified():
+    p={'selection_policy':'per-evaluate-selector-cache','stages':[
+      {'fixture_mode':'dom','censuses':[{'result':{'selector_queries':n}} for n in [1,1,2,2]]},
+      {'fixture_mode':'svg','censuses':[{'result':{'selector_queries':1}} for _ in range(4)]}]}
+    analysis.validate_selector_reuse(p)
+    bad=deepcopy(p);bad['stages'][1]['censuses'][-1]['result']['selector_queries']=4
+    with pytest.raises(ValueError,match='query count'):analysis.validate_selector_reuse(bad)
+    bad=deepcopy(p);bad['selection_policy']='persistent-global-cache'
+    with pytest.raises(ValueError,match='policy'):analysis.validate_selector_reuse(bad)

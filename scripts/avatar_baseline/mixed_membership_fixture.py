@@ -42,10 +42,13 @@ class Handler(BaseHTTPRequestHandler):
 
 
 # Group names remain diagnostic labels, not claims about production components.
-SELECT_JS = '''const selectMembership = (mode, group, count) => {
+SELECT_JS = '''const membershipPools = new Map();
+let membershipSelectorQueries = 0;
+const selectMembership = (mode, group, count) => {
     const selector = mode === 'dom' ? (group === 'avatar' ? 'main > div' : 'main > div > span')
                    : mode === 'svg' ? 'svg > path' : 'body > div';
-    const pool = [...document.querySelectorAll(selector)];
+    let pool = membershipPools.get(selector);
+    if (!pool) { pool = [...document.querySelectorAll(selector)]; membershipPools.set(selector, pool); membershipSelectorQueries++; }
     const nodes = mode === 'dom' || group === 'other' ? pool.slice(-count) : pool.slice(-2*count, -count);
     return {nodes, fixture_count: pool.length};
 };'''

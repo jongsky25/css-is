@@ -16,7 +16,7 @@ BUILD = '1c5dca8527a61d07372e489142bee26af1bcaf71'
 COUNT = 512  # Retained v1 census profile.
 CENSUS = 32
 FIXTURE_COUNT = 3000
-PROTOCOL = 'native-membership-lifecycle-v9'
+PROTOCOL = 'native-membership-lifecycle-v10'
 STAGES = 12
 BROWSER = Path('/workspace/scratch/avatar-runtime/root/usr/lib/chromium/chromium')
 HOOK = Path(__file__).resolve().parent / 'native/absent_attribute_membership.js'
@@ -31,7 +31,7 @@ def run(out, mode):
     out.mkdir(parents=True, exist_ok=False)
     root = Path(__file__).resolve().parents[2]
     result = {'protocol': PROTOCOL, 'acceptance': False, 'forced_gc': False,
-              'mode': mode, 'fixture_profile': 'legacy-dom-svg-style-3000-v1', 'fixture_schedule': SCHEDULE, 'observable': 'absent-attribute-node-ns', 'attribute_namespace': 'urn:css-is:membership:absent', 'attribute_local_name': 'absent', 'count_per_group': CENSUS, 'fixture_count_per_group': FIXTURE_COUNT, 'stage_count': STAGES, 'stages': [], 'messages': [],
+              'mode': mode, 'selection_policy': 'per-evaluate-selector-cache', 'fixture_profile': 'legacy-dom-svg-style-3000-v1', 'fixture_schedule': SCHEDULE, 'observable': 'absent-attribute-node-ns', 'attribute_namespace': 'urn:css-is:membership:absent', 'attribute_local_name': 'absent', 'count_per_group': CENSUS, 'fixture_count_per_group': FIXTURE_COUNT, 'stage_count': STAGES, 'stages': [], 'messages': [],
               'harness_commit': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=root, text=True).strip(),
               'runner_sha256': digest(Path(__file__)), 'hook_sha256': digest(HOOK), 'frida_version': frida.__version__, 'lifecycle_events': []}
     notes = subprocess.check_output(['readelf', '-n', str(BROWSER)], text=True)
@@ -126,7 +126,7 @@ def run(out, mode):
                     for (const group of ['avatar', 'other']) {
                         for (const repeat of [0, 1]) {
                             const {nodes,fixture_count}=selectMembership(mode,group,count);
-                            result.push({group, repeat, count: nodes.length, fixture_count, tags:nodes.map(n=>n.localName),
+                            result.push({group, repeat, count: nodes.length, fixture_count, selector_queries:membershipSelectorQueries, tags:nodes.map(n=>n.localName),
                                          counts: nodes.map(node => Number(node.getAttributeNodeNS('urn:css-is:membership:absent','absent') === null))});
                         }
                     }

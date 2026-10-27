@@ -30,6 +30,8 @@ def validate(capture):
     expected={f'{prefix}:{i}:{group}:{repeat}' for prefix in ['reference','census'] for i in range(3) for group in ['avatar','other'] for repeat in [0,1]}
     actual={e['phase'] for e in capture['native']['history']['events'] if e['kind'] in ['receiver','reference']}
     if actual!=expected:raise ValueError('Extra/missing mixed capability receiver phase')
+    selection_policy=capture.get('selection_policy','uncached-selection-v1')
+    if selection_policy not in ['uncached-selection-v1','per-evaluate-selector-cache']: raise ValueError('Unknown capability selection policy')
     checks=[]
     for d in capture['documents']:
         i=d['index'];native=deepcopy(capture['native'])
@@ -37,6 +39,7 @@ def validate(capture):
         result=validate_receivers({**d,'native':native},document_index=i,fixture_count=3000)
         for q in d['queries']:
             group=q['phase'].split(':')[2]
+            if selection_policy=='per-evaluate-selector-cache' and q['result'].get('selector_queries')!=1: raise ValueError('Capability selection did not use one local query')
             if q['result']['tags']!=[tag(d['mode'],group)]*32:raise ValueError('Wrong selected element types')
         checks.append({'index':i,'mode':d['mode'],'dom_sha256':d['dom_before_sha256'],**result})
     return {'status':'capability_passed','acceptance':False,'performance_qualified':False,
@@ -62,7 +65,7 @@ def run(out):
         raw=(repo/name).read_bytes()
         if raw!=subprocess.check_output(['git','show',ref+':'+name],cwd=repo):raise ValueError('Uncommitted capability source')
         hashes[name]=hashlib.sha256(raw).hexdigest()
-    result={'harness_commit':ref,'acceptance':False,'source_sha256':hashes,'documents':[]}
+    result={'harness_commit':ref,'selection_policy':'per-evaluate-selector-cache','acceptance':False,'source_sha256':hashes,'documents':[]}
     server=ThreadingHTTPServer(('127.0.0.1',0),Handler);server.lifecycle_events=[]
     threading.Thread(target=server.serve_forever,daemon=True).start();old_hook=helper.HOOK;probe=None
     try:
@@ -82,7 +85,7 @@ def run(out):
                             probe.phase(phase)
                             q['result']=page.evaluate('''({mode,group,kind}) => {'''+SELECT_JS+'''
                                 const {nodes,fixture_count}=selectMembership(mode,group,32);
-                                return {fixture_count,count:nodes.length,tags:nodes.map(n=>n.localName),
+                                return {fixture_count,count:nodes.length,selector_queries:membershipSelectorQueries,tags:nodes.map(n=>n.localName),
                                   values:nodes.map(n=>kind==='reference'?Number(n.getClientRects().length===1):
                                    Number(n.getAttributeNodeNS('urn:css-is:membership:absent','absent')===null))};
                             }''',{'mode':mode,'group':group,'kind':kind})
