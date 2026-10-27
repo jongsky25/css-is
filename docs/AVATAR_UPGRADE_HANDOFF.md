@@ -28,6 +28,26 @@ trigger it as an acceptance audit of the cancelled cohort. No later increments,
 merge to main or deployment occurred. The historical handoff below is superseded by this
 correction wherever it suggests CI success establishes complete memory acceptance.
 
+## Native type inventory recovered — pooled capacity has no current type owner
+
+[Latest report](avatars/increment2b/native-type-ownership/REPORT.md) recovers the
+raw dumps' blink_objects type inventory omitted by earlier family summaries.
+All eight page/global type counts/bytes reconcile exactly to heap object totals;
+82 archive members and frozen comparison re-audit verify; 33 tests pass. No new
+browser measurements or product changes. Slot 4 minus 7 endpoint: +32.625MiB
+Blink heap size, including +23.625MiB pooled capacity; allocated objects +9.131MiB,
+SVG-name subset +1.243MiB. Layout, computed styles, text and CSS dominate individual
+increases, alongside 11 versus 5 HTML documents. Type names are not app owners.
+
+Pinned source confirms detailed statistics finish pending native sweeping before
+counting; determinism:none does NOT preserve the unswept state. Pooled pages have
+no current object type to enumerate. DOM.getDetachedDomNodes also forces GC and
+was NOT invoked. Do not use either as a natural-state retaining-path shortcut.
+The next missing evidence is page/source-linked allocation history before pages
+enter the pool, with coverage demonstrated on a controlled fixture first. No new
+probe is launched. Existing 10 source and 16 control RSS failures stand; 2B/later
+remain blocked. Earlier claims that raw dumps lack type inventories are superseded.
+
 ## Offline reader-trace analysis — native sweeping overlaps snapshots
 
 [Latest analysis](avatars/increment2b/reader-retention/REPORT.md) independently

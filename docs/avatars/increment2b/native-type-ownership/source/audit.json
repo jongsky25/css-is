@@ -1,0 +1,36 @@
+{
+  "files_verified": 13,
+  "names": [
+    "inspector_dom_agent.cc",
+    "heap-statistics.h",
+    "heap-profiling.pdl",
+    "blink-heap-BUILD.gn",
+    "v8-DEPS",
+    "v8-heap-profiler.cc",
+    "blink_gc_memory_dump_provider.cc",
+    "v8-BUILD.gn",
+    "object-allocator.cc",
+    "page-memory.cc",
+    "heap-statistics-collector.cc",
+    "heap-base.cc",
+    "cpp-heap.cc"
+  ],
+  "discovery_404s_retained": [
+    {
+      "name": "object-allocator.cc",
+      "url": "https://raw.githubusercontent.com/v8/v8/392e44423f46d75904da712fadea4c7d5d97967f/src/heap/cppgc/object-allocator.cc",
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "name": "page-memory.cc",
+      "url": "https://raw.githubusercontent.com/v8/v8/392e44423f46d75904da712fadea4c7d5d97967f/src/heap/cppgc/page-memory.cc",
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "name": "heap-statistics-collector.cc",
+      "url": "https://raw.githubusercontent.com/v8/v8/392e44423f46d75904da712fadea4c7d5d97967f/src/heap/cppgc/heap-statistics-collector.cc",
+      "error": "HTTP Error 404: Not Found"
+    }
+  ],
+  "note": "Three initial cppgc paths moved to cppgc-internal; corrected pinned files are retained and verified. No browser API invoked."
+}

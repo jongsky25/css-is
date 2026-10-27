@@ -1,0 +1,1501 @@
+{
+  "acceptance": false,
+  "new_browser_measurements": 0,
+  "archive_members_verified": 82,
+  "all_eight_type_page_heap_reconciliations_pass": true,
+  "cohorts": [
+    {
+      "index": 0,
+      "arm": "original",
+      "named_types": 1200,
+      "allocated_mib": 22.610679626464844,
+      "heap_size_mib": 30.125,
+      "pooled_mib": 1.5,
+      "svg_named_mib": 2.6581802368164062,
+      "html_documents": 13,
+      "xml_documents": 1,
+      "largest_types": [
+        {
+          "type": "blink::LogicalLineItems",
+          "allocated_bytes": 1940736,
+          "object_count": 1064,
+          "labels": [
+            "blink::LogicalLineItems (0x26b)"
+          ]
+        },
+        {
+          "type": "blink::ComputedStyle",
+          "allocated_bytes": 1221624,
+          "object_count": 16967,
+          "labels": [
+            "blink::ComputedStyle (0x193)"
+          ]
+        },
+        {
+          "type": "blink::GeometryMapperTransformCache::PlaneRootTransform",
+          "allocated_bytes": 1075968,
+          "object_count": 3736,
+          "labels": [
+            "blink::GeometryMapperTransformCache::PlaneRootTransform (0x266)"
+          ]
+        },
+        {
+          "type": "Text",
+          "allocated_bytes": 833520,
+          "object_count": 10419,
+          "labels": [
+            "Text (0x453)"
+          ]
+        },
+        {
+          "type": "blink::CachedMatchedProperties",
+          "allocated_bytes": 638792,
+          "object_count": 4697,
+          "labels": [
+            "blink::CachedMatchedProperties (0x2c8)"
+          ]
+        },
+        {
+          "type": "blink::ImmutableCSSPropertyValueSet",
+          "allocated_bytes": 571360,
+          "object_count": 6717,
+          "labels": [
+            "blink::ImmutableCSSPropertyValueSet (0x70)"
+          ]
+        },
+        {
+          "type": "blink::LayoutResult",
+          "allocated_bytes": 534160,
+          "object_count": 6677,
+          "labels": [
+            "blink::LayoutResult (0x18c)"
+          ]
+        },
+        {
+          "type": "blink::PhysicalBoxFragment",
+          "allocated_bytes": 498440,
+          "object_count": 5525,
+          "labels": [
+            "blink::PhysicalBoxFragment (0x18d)"
+          ]
+        },
+        {
+          "type": "blink::UniqueElementData",
+          "allocated_bytes": 426832,
+          "object_count": 3811,
+          "labels": [
+            "blink::UniqueElementData (0x1a6)"
+          ]
+        },
+        {
+          "type": "blink::GridSizingTrackCollection",
+          "allocated_bytes": 366240,
+          "object_count": 210,
+          "labels": [
+            "blink::GridSizingTrackCollection (0x2ae)"
+          ]
+        },
+        {
+          "type": "SVGAnimatedLength",
+          "allocated_bytes": 342080,
+          "object_count": 5345,
+          "labels": [
+            "SVGAnimatedLength (0x1af)"
+          ]
+        },
+        {
+          "type": "blink::ComputedStyleBase::StyleSVGData",
+          "allocated_bytes": 336800,
+          "object_count": 4210,
+          "labels": [
+            "blink::ComputedStyleBase::StyleSVGData (0x191)"
+          ]
+        },
+        {
+          "type": "blink::HTMLStackItem",
+          "allocated_bytes": 328128,
+          "object_count": 3816,
+          "labels": [
+            "blink::HTMLStackItem (0x83)"
+          ]
+        },
+        {
+          "type": "blink::CSSNumericLiteralValue",
+          "allocated_bytes": 322104,
+          "object_count": 13421,
+          "labels": [
+            "blink::CSSNumericLiteralValue (0x459)"
+          ]
+        },
+        {
+          "type": "blink::HeapHashTableBacking<blink::HashTable<blink::FontDescription, blink::KeyValuePair<blink::FontDescription, cppgc::internal::BasicMember<blink::FontFallbackList, cppgc::internal::WeakMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>>, blink::KeyValuePairExtractor, blink::HashMapValueTraits<blink::HashTraits<FontDescription>, blink::HashTraits<cppgc::internal::BasicMember<blink::FontFallbackList, cppgc::internal::WeakMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>>>, blink::HashTraits<FontDescription>, blink::HeapAllocator>>",
+          "allocated_bytes": 295848,
+          "object_count": 21,
+          "labels": [
+            "blink::HeapHashTableBacking<blink::HashTable<blink::FontDescription, blink::KeyValuePair<blink::FontDescription, cppgc::internal::BasicMember<blink::FontFallbackList, cppgc::internal::WeakMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>>, blink::KeyValuePairExtractor, blink::HashMapValueTraits<blink::HashTraits<FontDescription>, blink::HashTraits<cppgc::internal::BasicMember<blink::FontFallbackList, cppgc::internal::WeakMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>>>, blink::HashTraits<FontDescription>, blink::HeapAllocator>> (0x29f)"
+          ]
+        },
+        {
+          "type": "blink::ComputedStyleBase::StyleSurroundData",
+          "allocated_bytes": 292968,
+          "object_count": 939,
+          "labels": [
+            "blink::ComputedStyleBase::StyleSurroundData (0x2cb)"
+          ]
+        },
+        {
+          "type": "blink::NinePieceImageData",
+          "allocated_bytes": 288480,
+          "object_count": 1202,
+          "labels": [
+            "blink::NinePieceImageData (0x2cc)"
+          ]
+        },
+        {
+          "type": "blink::CSSValueList",
+          "allocated_bytes": 276816,
+          "object_count": 5767,
+          "labels": [
+            "blink::CSSValueList (0x45a)"
+          ]
+        },
+        {
+          "type": "blink::NodeRareData",
+          "allocated_bytes": 265896,
+          "object_count": 8285,
+          "labels": [
+            "blink::NodeRareData (0x88)"
+          ]
+        },
+        {
+          "type": "blink::StyleRule",
+          "allocated_bytes": 259792,
+          "object_count": 3729,
+          "labels": [
+            "blink::StyleRule (0x96)"
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "arm": "current",
+      "named_types": 1193,
+      "allocated_mib": 9.932037353515625,
+      "heap_size_mib": 69.125,
+      "pooled_mib": 38.25,
+      "svg_named_mib": 1.226043701171875,
+      "html_documents": 5,
+      "xml_documents": 1,
+      "largest_types": [
+        {
+          "type": "blink::LogicalLineItems",
+          "allocated_bytes": 640224,
+          "object_count": 351,
+          "labels": [
+            "blink::LogicalLineItems (0x2f3)"
+          ]
+        },
+        {
+          "type": "blink::ComputedStyle",
+          "allocated_bytes": 530136,
+          "object_count": 7363,
+          "labels": [
+            "blink::ComputedStyle (0x194)"
+          ]
+        },
+        {
+          "type": "Text",
+          "allocated_bytes": 336080,
+          "object_count": 4201,
+          "labels": [
+            "Text (0x44c)"
+          ]
+        },
+        {
+          "type": "blink::CachedMatchedProperties",
+          "allocated_bytes": 302328,
+          "object_count": 2223,
+          "labels": [
+            "blink::CachedMatchedProperties (0x2ea)"
+          ]
+        },
+        {
+          "type": "blink::ImmutableCSSPropertyValueSet",
+          "allocated_bytes": 294032,
+          "object_count": 3304,
+          "labels": [
+            "blink::ImmutableCSSPropertyValueSet (0x6e)"
+          ]
+        },
+        {
+          "type": "blink::GeometryMapperTransformCache::PlaneRootTransform",
+          "allocated_bytes": 246528,
+          "object_count": 856,
+          "labels": [
+            "blink::GeometryMapperTransformCache::PlaneRootTransform (0x26b)"
+          ]
+        },
+        {
+          "type": "blink::HeapHashTableBacking<blink::HashTable<blink::FontDescription, blink::KeyValuePair<blink::FontDescription, cppgc::internal::BasicMember<blink::FontFallbackList, cppgc::internal::WeakMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>>, blink::KeyValuePairExtractor, blink::HashMapValueTraits<blink::HashTraits<FontDescription>, blink::HashTraits<cppgc::internal::BasicMember<blink::FontFallbackList, cppgc::internal::WeakMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>>>, blink::HashTraits<FontDescription>, blink::HeapAllocator>>",
+          "allocated_bytes": 229232,
+          "object_count": 14,
+          "labels": [
+            "blink::HeapHashTableBacking<blink::HashTable<blink::FontDescription, blink::KeyValuePair<blink::FontDescription, cppgc::internal::BasicMember<blink::FontFallbackList, cppgc::internal::WeakMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>>, blink::KeyValuePairExtractor, blink::HashMapValueTraits<blink::HashTraits<FontDescription>, blink::HashTraits<cppgc::internal::BasicMember<blink::FontFallbackList, cppgc::internal::WeakMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>>>, blink::HashTraits<FontDescription>, blink::HeapAllocator>> (0x2a1)"
+          ]
+        },
+        {
+          "type": "blink::LayoutResult",
+          "allocated_bytes": 216480,
+          "object_count": 2706,
+          "labels": [
+            "blink::LayoutResult (0x197)"
+          ]
+        },
+        {
+          "type": "blink::PhysicalBoxFragment",
+          "allocated_bytes": 209640,
+          "object_count": 2323,
+          "labels": [
+            "blink::PhysicalBoxFragment (0x195)"
+          ]
+        },
+        {
+          "type": "blink::UniqueElementData",
+          "allocated_bytes": 191856,
+          "object_count": 1713,
+          "labels": [
+            "blink::UniqueElementData (0x20c)"
+          ]
+        },
+        {
+          "type": "blink::StyleRule",
+          "allocated_bytes": 183136,
+          "object_count": 2549,
+          "labels": [
+            "blink::StyleRule (0xf1)"
+          ]
+        },
+        {
+          "type": "blink::ComputedStyleBase::StyleSVGData",
+          "allocated_bytes": 170160,
+          "object_count": 2127,
+          "labels": [
+            "blink::ComputedStyleBase::StyleSVGData (0x192)"
+          ]
+        },
+        {
+          "type": "blink::HeapHashTableBacking<blink::HashTable<unsigned int, blink::KeyValuePair<unsigned int, std::pair<const blink::StringImpl *, cppgc::internal::BasicMember<blink::ShareableElementData, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>>>, blink::KeyValuePairExtractor, blink::HashMapValueTraits<blink::AlreadyHashedTraits, blink::HashTraits<std::pair<const blink::StringImpl *, cppgc::internal::BasicMember<blink::ShareableElementData, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>>>>, blink::AlreadyHashedTraits, blink::HeapAllocator>>",
+          "allocated_bytes": 147480,
+          "object_count": 3,
+          "labels": [
+            "blink::HeapHashTableBacking<blink::HashTable<unsigned int, blink::KeyValuePair<unsigned int, std::pair<const blink::StringImpl *, cppgc::internal::BasicMember<blink::ShareableElementData, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>>>, blink::KeyValuePairExtractor, blink::HashMapValueTraits<blink::AlreadyHashedTraits, blink::HashTraits<std::pair<const blink::StringImpl *, cppgc::internal::BasicMember<blink::ShareableElementData, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>>>>, blink::AlreadyHashedTraits, blink::HeapAllocator>> (0x33d)"
+          ]
+        },
+        {
+          "type": "blink::GridSizingTrackCollection",
+          "allocated_bytes": 146496,
+          "object_count": 84,
+          "labels": [
+            "blink::GridSizingTrackCollection (0x2e6)"
+          ]
+        },
+        {
+          "type": "SVGAnimatedLength",
+          "allocated_bytes": 138112,
+          "object_count": 2158,
+          "labels": [
+            "SVGAnimatedLength (0x24f)"
+          ]
+        },
+        {
+          "type": "blink::CSSNumericLiteralValue",
+          "allocated_bytes": 131256,
+          "object_count": 5469,
+          "labels": [
+            "blink::CSSNumericLiteralValue (0x452)"
+          ]
+        },
+        {
+          "type": "blink::ComputedStyleBase::StyleSurroundData",
+          "allocated_bytes": 130416,
+          "object_count": 418,
+          "labels": [
+            "blink::ComputedStyleBase::StyleSurroundData (0x2d6)"
+          ]
+        },
+        {
+          "type": "blink::ShareableElementData",
+          "allocated_bytes": 124752,
+          "object_count": 1617,
+          "labels": [
+            "blink::ShareableElementData (0xd8)"
+          ]
+        },
+        {
+          "type": "blink::CSSValueList",
+          "allocated_bytes": 124080,
+          "object_count": 2585,
+          "labels": [
+            "blink::CSSValueList (0x458)"
+          ]
+        },
+        {
+          "type": "blink::NodeRareData",
+          "allocated_bytes": 117160,
+          "object_count": 3651,
+          "labels": [
+            "blink::NodeRareData (0xdd)"
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "arm": "current",
+      "named_types": 1194,
+      "allocated_mib": 7.283271789550781,
+      "heap_size_mib": 56.25,
+      "pooled_mib": 33.0,
+      "svg_named_mib": 0.8260650634765625,
+      "html_documents": 3,
+      "xml_documents": 1,
+      "largest_types": [
+        {
+          "type": "blink::LogicalLineItems",
+          "allocated_bytes": 638400,
+          "object_count": 350,
+          "labels": [
+            "blink::LogicalLineItems (0x27a)"
+          ]
+        },
+        {
+          "type": "blink::ComputedStyle",
+          "allocated_bytes": 391752,
+          "object_count": 5441,
+          "labels": [
+            "blink::ComputedStyle (0x195)"
+          ]
+        },
+        {
+          "type": "Text",
+          "allocated_bytes": 224160,
+          "object_count": 2802,
+          "labels": [
+            "Text (0x44d)"
+          ]
+        },
+        {
+          "type": "blink::ImmutableCSSPropertyValueSet",
+          "allocated_bytes": 220672,
+          "object_count": 2401,
+          "labels": [
+            "blink::ImmutableCSSPropertyValueSet (0x31)"
+          ]
+        },
+        {
+          "type": "blink::CachedMatchedProperties",
+          "allocated_bytes": 201552,
+          "object_count": 1482,
+          "labels": [
+            "blink::CachedMatchedProperties (0x277)"
+          ]
+        },
+        {
+          "type": "blink::GeometryMapperTransformCache::PlaneRootTransform",
+          "allocated_bytes": 186336,
+          "object_count": 647,
+          "labels": [
+            "blink::GeometryMapperTransformCache::PlaneRootTransform (0x26b)"
+          ]
+        },
+        {
+          "type": "blink::LayoutResult",
+          "allocated_bytes": 165520,
+          "object_count": 2069,
+          "labels": [
+            "blink::LayoutResult (0x196)"
+          ]
+        },
+        {
+          "type": "blink::StyleRule",
+          "allocated_bytes": 162880,
+          "object_count": 2247,
+          "labels": [
+            "blink::StyleRule (0x10f)"
+          ]
+        },
+        {
+          "type": "blink::PhysicalBoxFragment",
+          "allocated_bytes": 151880,
+          "object_count": 1687,
+          "labels": [
+            "blink::PhysicalBoxFragment (0x197)"
+          ]
+        },
+        {
+          "type": "blink::UniqueElementData",
+          "allocated_bytes": 128016,
+          "object_count": 1143,
+          "labels": [
+            "blink::UniqueElementData (0x1ad)"
+          ]
+        },
+        {
+          "type": "blink::GridSizingTrackCollection",
+          "allocated_bytes": 125568,
+          "object_count": 72,
+          "labels": [
+            "blink::GridSizingTrackCollection (0x2c4)"
+          ]
+        },
+        {
+          "type": "blink::HeapHashTableBacking<blink::HashTable<blink::FontDescription, blink::KeyValuePair<blink::FontDescription, cppgc::internal::BasicMember<blink::FontFallbackList, cppgc::internal::WeakMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>>, blink::KeyValuePairExtractor, blink::HashMapValueTraits<blink::HashTraits<FontDescription>, blink::HashTraits<cppgc::internal::BasicMember<blink::FontFallbackList, cppgc::internal::WeakMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>>>, blink::HashTraits<FontDescription>, blink::HeapAllocator>>",
+          "allocated_bytes": 125504,
+          "object_count": 8,
+          "labels": [
+            "blink::HeapHashTableBacking<blink::HashTable<blink::FontDescription, blink::KeyValuePair<blink::FontDescription, cppgc::internal::BasicMember<blink::FontFallbackList, cppgc::internal::WeakMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>>, blink::KeyValuePairExtractor, blink::HashMapValueTraits<blink::HashTraits<FontDescription>, blink::HashTraits<cppgc::internal::BasicMember<blink::FontFallbackList, cppgc::internal::WeakMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>>>, blink::HashTraits<FontDescription>, blink::HeapAllocator>> (0x2d2)"
+          ]
+        },
+        {
+          "type": "blink::ComputedStyleBase::StyleSVGData",
+          "allocated_bytes": 117680,
+          "object_count": 1471,
+          "labels": [
+            "blink::ComputedStyleBase::StyleSVGData (0x19b)"
+          ]
+        },
+        {
+          "type": "blink::HeapHashTableBacking<blink::HashTable<unsigned int, blink::KeyValuePair<unsigned int, std::pair<const blink::StringImpl *, cppgc::internal::BasicMember<blink::ShareableElementData, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>>>, blink::KeyValuePairExtractor, blink::HashMapValueTraits<blink::AlreadyHashedTraits, blink::HashTraits<std::pair<const blink::StringImpl *, cppgc::internal::BasicMember<blink::ShareableElementData, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>>>>, blink::AlreadyHashedTraits, blink::HeapAllocator>>",
+          "allocated_bytes": 98320,
+          "object_count": 2,
+          "labels": [
+            "blink::HeapHashTableBacking<blink::HashTable<unsigned int, blink::KeyValuePair<unsigned int, std::pair<const blink::StringImpl *, cppgc::internal::BasicMember<blink::ShareableElementData, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>>>, blink::KeyValuePairExtractor, blink::HashMapValueTraits<blink::AlreadyHashedTraits, blink::HashTraits<std::pair<const blink::StringImpl *, cppgc::internal::BasicMember<blink::ShareableElementData, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>>>>, blink::AlreadyHashedTraits, blink::HeapAllocator>> (0x2d9)"
+          ]
+        },
+        {
+          "type": "blink::NinePieceImageData",
+          "allocated_bytes": 96480,
+          "object_count": 402,
+          "labels": [
+            "blink::NinePieceImageData (0x274)"
+          ]
+        },
+        {
+          "type": "SVGAnimatedLength",
+          "allocated_bytes": 92160,
+          "object_count": 1440,
+          "labels": [
+            "SVGAnimatedLength (0x1e5)"
+          ]
+        },
+        {
+          "type": "blink::CSSNumericLiteralValue",
+          "allocated_bytes": 89424,
+          "object_count": 3726,
+          "labels": [
+            "blink::CSSNumericLiteralValue (0x455)"
+          ]
+        },
+        {
+          "type": "blink::CSSValueList",
+          "allocated_bytes": 85824,
+          "object_count": 1788,
+          "labels": [
+            "blink::CSSValueList (0x454)"
+          ]
+        },
+        {
+          "type": "blink::ComputedStyleBase::StyleSurroundData",
+          "allocated_bytes": 85800,
+          "object_count": 275,
+          "labels": [
+            "blink::ComputedStyleBase::StyleSurroundData (0x273)"
+          ]
+        },
+        {
+          "type": "blink::ShareableElementData",
+          "allocated_bytes": 83168,
+          "object_count": 1078,
+          "labels": [
+            "blink::ShareableElementData (0xfc)"
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "arm": "original",
+      "named_types": 1190,
+      "allocated_mib": 6.710960388183594,
+      "heap_size_mib": 43.875,
+      "pooled_mib": 14.875,
+      "svg_named_mib": 0.7572402954101562,
+      "html_documents": 3,
+      "xml_documents": 1,
+      "largest_types": [
+        {
+          "type": "blink::LogicalLineItems",
+          "allocated_bytes": 341088,
+          "object_count": 187,
+          "labels": [
+            "blink::LogicalLineItems (0x26b)"
+          ]
+        },
+        {
+          "type": "blink::ComputedStyle",
+          "allocated_bytes": 314208,
+          "object_count": 4364,
+          "labels": [
+            "blink::ComputedStyle (0x196)"
+          ]
+        },
+        {
+          "type": "blink::GeometryMapperTransformCache::PlaneRootTransform",
+          "allocated_bytes": 303264,
+          "object_count": 1053,
+          "labels": [
+            "blink::GeometryMapperTransformCache::PlaneRootTransform (0x265)"
+          ]
+        },
+        {
+          "type": "blink::HeapHashTableBacking<blink::HashTable<blink::FontDescription, blink::KeyValuePair<blink::FontDescription, cppgc::internal::BasicMember<blink::FontFallbackList, cppgc::internal::WeakMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>>, blink::KeyValuePairExtractor, blink::HashMapValueTraits<blink::HashTraits<FontDescription>, blink::HashTraits<cppgc::internal::BasicMember<blink::FontFallbackList, cppgc::internal::WeakMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>>>, blink::HashTraits<FontDescription>, blink::HeapAllocator>>",
+          "allocated_bytes": 268920,
+          "object_count": 15,
+          "labels": [
+            "blink::HeapHashTableBacking<blink::HashTable<blink::FontDescription, blink::KeyValuePair<blink::FontDescription, cppgc::internal::BasicMember<blink::FontFallbackList, cppgc::internal::WeakMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>>, blink::KeyValuePairExtractor, blink::HashMapValueTraits<blink::HashTraits<FontDescription>, blink::HashTraits<cppgc::internal::BasicMember<blink::FontFallbackList, cppgc::internal::WeakMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>>>, blink::HashTraits<FontDescription>, blink::HeapAllocator>> (0x29f)"
+          ]
+        },
+        {
+          "type": "Text",
+          "allocated_bytes": 238000,
+          "object_count": 2975,
+          "labels": [
+            "Text (0x449)"
+          ]
+        },
+        {
+          "type": "blink::ImmutableCSSPropertyValueSet",
+          "allocated_bytes": 216000,
+          "object_count": 2342,
+          "labels": [
+            "blink::ImmutableCSSPropertyValueSet (0x70)"
+          ]
+        },
+        {
+          "type": "blink::CachedMatchedProperties",
+          "allocated_bytes": 182376,
+          "object_count": 1341,
+          "labels": [
+            "blink::CachedMatchedProperties (0x2ce)"
+          ]
+        },
+        {
+          "type": "blink::StyleRule",
+          "allocated_bytes": 161632,
+          "object_count": 2239,
+          "labels": [
+            "blink::StyleRule (0x104)"
+          ]
+        },
+        {
+          "type": "blink::LayoutResult",
+          "allocated_bytes": 135520,
+          "object_count": 1694,
+          "labels": [
+            "blink::LayoutResult (0x19c)"
+          ]
+        },
+        {
+          "type": "blink::PhysicalBoxFragment",
+          "allocated_bytes": 134240,
+          "object_count": 1491,
+          "labels": [
+            "blink::PhysicalBoxFragment (0x19a)"
+          ]
+        },
+        {
+          "type": "blink::UniqueElementData",
+          "allocated_bytes": 122192,
+          "object_count": 1091,
+          "labels": [
+            "blink::UniqueElementData (0x1ec)"
+          ]
+        },
+        {
+          "type": "SVGAnimatedLength",
+          "allocated_bytes": 97920,
+          "object_count": 1530,
+          "labels": [
+            "SVGAnimatedLength (0x216)"
+          ]
+        },
+        {
+          "type": "blink::ComputedStyleBase::StyleSVGData",
+          "allocated_bytes": 92560,
+          "object_count": 1157,
+          "labels": [
+            "blink::ComputedStyleBase::StyleSVGData (0x199)"
+          ]
+        },
+        {
+          "type": "blink::ComputedStyleBase::StyleSurroundData",
+          "allocated_bytes": 92352,
+          "object_count": 296,
+          "labels": [
+            "blink::ComputedStyleBase::StyleSurroundData (0x2bd)"
+          ]
+        },
+        {
+          "type": "blink::CSSNumericLiteralValue",
+          "allocated_bytes": 90144,
+          "object_count": 3756,
+          "labels": [
+            "blink::CSSNumericLiteralValue (0x44e)"
+          ]
+        },
+        {
+          "type": "blink::HeapVectorBacking<blink::PaintChunk>",
+          "allocated_bytes": 85544,
+          "object_count": 5,
+          "labels": [
+            "blink::HeapVectorBacking<blink::PaintChunk> (0x380)"
+          ]
+        },
+        {
+          "type": "blink::GridSizingTrackCollection",
+          "allocated_bytes": 83712,
+          "object_count": 48,
+          "labels": [
+            "blink::GridSizingTrackCollection (0x301)"
+          ]
+        },
+        {
+          "type": "blink::CSSValueList",
+          "allocated_bytes": 80208,
+          "object_count": 1671,
+          "labels": [
+            "blink::CSSValueList (0x452)"
+          ]
+        },
+        {
+          "type": "blink::NodeRareData",
+          "allocated_bytes": 75736,
+          "object_count": 2360,
+          "labels": [
+            "blink::NodeRareData (0x90)"
+          ]
+        },
+        {
+          "type": "blink::GeometryMapperTransformCache",
+          "allocated_bytes": 70560,
+          "object_count": 210,
+          "labels": [
+            "blink::GeometryMapperTransformCache (0x2cd)"
+          ]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "arm": "current",
+      "named_types": 1213,
+      "allocated_mib": 20.51696014404297,
+      "heap_size_mib": 85.375,
+      "pooled_mib": 40.875,
+      "svg_named_mib": 2.4837188720703125,
+      "html_documents": 11,
+      "xml_documents": 1,
+      "largest_types": [
+        {
+          "type": "blink::LogicalLineItems",
+          "allocated_bytes": 1617888,
+          "object_count": 887,
+          "labels": [
+            "blink::LogicalLineItems (0x2ff)"
+          ]
+        },
+        {
+          "type": "blink::ComputedStyle",
+          "allocated_bytes": 1211256,
+          "object_count": 16823,
+          "labels": [
+            "blink::ComputedStyle (0x194)"
+          ]
+        },
+        {
+          "type": "Text",
+          "allocated_bytes": 672320,
+          "object_count": 8404,
+          "labels": [
+            "Text (0x462)"
+          ]
+        },
+        {
+          "type": "blink::CachedMatchedProperties",
+          "allocated_bytes": 656608,
+          "object_count": 4828,
+          "labels": [
+            "blink::CachedMatchedProperties (0x2f8)"
+          ]
+        },
+        {
+          "type": "blink::HeapHashTableBacking<blink::HashTable<blink::FontDescription, blink::KeyValuePair<blink::FontDescription, cppgc::internal::BasicMember<blink::FontFallbackList, cppgc::internal::WeakMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>>, blink::KeyValuePairExtractor, blink::HashMapValueTraits<blink::HashTraits<FontDescription>, blink::HashTraits<cppgc::internal::BasicMember<blink::FontFallbackList, cppgc::internal::WeakMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>>>, blink::HashTraits<FontDescription>, blink::HeapAllocator>>",
+          "allocated_bytes": 571136,
+          "object_count": 32,
+          "labels": [
+            "blink::HeapHashTableBacking<blink::HashTable<blink::FontDescription, blink::KeyValuePair<blink::FontDescription, cppgc::internal::BasicMember<blink::FontFallbackList, cppgc::internal::WeakMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>>, blink::KeyValuePairExtractor, blink::HashMapValueTraits<blink::HashTraits<FontDescription>, blink::HashTraits<cppgc::internal::BasicMember<blink::FontFallbackList, cppgc::internal::WeakMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>>>, blink::HashTraits<FontDescription>, blink::HeapAllocator>> (0x2a7)"
+          ]
+        },
+        {
+          "type": "blink::ImmutableCSSPropertyValueSet",
+          "allocated_bytes": 513808,
+          "object_count": 6009,
+          "labels": [
+            "blink::ImmutableCSSPropertyValueSet (0x70)"
+          ]
+        },
+        {
+          "type": "blink::GeometryMapperTransformCache::PlaneRootTransform",
+          "allocated_bytes": 489888,
+          "object_count": 1701,
+          "labels": [
+            "blink::GeometryMapperTransformCache::PlaneRootTransform (0x270)"
+          ]
+        },
+        {
+          "type": "blink::LayoutResult",
+          "allocated_bytes": 436800,
+          "object_count": 5460,
+          "labels": [
+            "blink::LayoutResult (0x197)"
+          ]
+        },
+        {
+          "type": "blink::PhysicalBoxFragment",
+          "allocated_bytes": 407560,
+          "object_count": 4493,
+          "labels": [
+            "blink::PhysicalBoxFragment (0x195)"
+          ]
+        },
+        {
+          "type": "blink::UniqueElementData",
+          "allocated_bytes": 383376,
+          "object_count": 3423,
+          "labels": [
+            "blink::UniqueElementData (0x20a)"
+          ]
+        },
+        {
+          "type": "blink::ComputedStyleBase::StyleSVGData",
+          "allocated_bytes": 370800,
+          "object_count": 4635,
+          "labels": [
+            "blink::ComputedStyleBase::StyleSVGData (0x192)"
+          ]
+        },
+        {
+          "type": "blink::GridSizingTrackCollection",
+          "allocated_bytes": 334848,
+          "object_count": 192,
+          "labels": [
+            "blink::GridSizingTrackCollection (0x33f)"
+          ]
+        },
+        {
+          "type": "blink::HeapHashTableBacking<blink::HashTable<unsigned int, blink::KeyValuePair<unsigned int, std::pair<const blink::StringImpl *, cppgc::internal::BasicMember<blink::ShareableElementData, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>>>, blink::KeyValuePairExtractor, blink::HashMapValueTraits<blink::AlreadyHashedTraits, blink::HashTraits<std::pair<const blink::StringImpl *, cppgc::internal::BasicMember<blink::ShareableElementData, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>>>>, blink::AlreadyHashedTraits, blink::HeapAllocator>>",
+          "allocated_bytes": 294960,
+          "object_count": 6,
+          "labels": [
+            "blink::HeapHashTableBacking<blink::HashTable<unsigned int, blink::KeyValuePair<unsigned int, std::pair<const blink::StringImpl *, cppgc::internal::BasicMember<blink::ShareableElementData, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>>>, blink::KeyValuePairExtractor, blink::HashMapValueTraits<blink::AlreadyHashedTraits, blink::HashTraits<std::pair<const blink::StringImpl *, cppgc::internal::BasicMember<blink::ShareableElementData, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>>>>, blink::AlreadyHashedTraits, blink::HeapAllocator>> (0x34e)"
+          ]
+        },
+        {
+          "type": "blink::HTMLStackItem",
+          "allocated_bytes": 287920,
+          "object_count": 3280,
+          "labels": [
+            "blink::HTMLStackItem (0xbb)"
+          ]
+        },
+        {
+          "type": "blink::HashTrieNode<blink::CSSVariableData>",
+          "allocated_bytes": 287232,
+          "object_count": 1056,
+          "labels": [
+            "blink::HashTrieNode<blink::CSSVariableData> (0x319)"
+          ]
+        },
+        {
+          "type": "blink::ComputedStyleBase::StyleSurroundData",
+          "allocated_bytes": 285792,
+          "object_count": 916,
+          "labels": [
+            "blink::ComputedStyleBase::StyleSurroundData (0x2f9)"
+          ]
+        },
+        {
+          "type": "SVGAnimatedLength",
+          "allocated_bytes": 275968,
+          "object_count": 4312,
+          "labels": [
+            "SVGAnimatedLength (0x216)"
+          ]
+        },
+        {
+          "type": "blink::NinePieceImageData",
+          "allocated_bytes": 264480,
+          "object_count": 1102,
+          "labels": [
+            "blink::NinePieceImageData (0x2fc)"
+          ]
+        },
+        {
+          "type": "blink::CSSNumericLiteralValue",
+          "allocated_bytes": 263568,
+          "object_count": 10982,
+          "labels": [
+            "blink::CSSNumericLiteralValue (0x467)"
+          ]
+        },
+        {
+          "type": "blink::ShareableElementData",
+          "allocated_bytes": 249504,
+          "object_count": 3234,
+          "labels": [
+            "blink::ShareableElementData (0xd6)"
+          ]
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "arm": "original",
+      "named_types": 1258,
+      "allocated_mib": 50.01532745361328,
+      "heap_size_mib": 56.875,
+      "pooled_mib": 0.0,
+      "svg_named_mib": 6.3449554443359375,
+      "html_documents": 31,
+      "xml_documents": 1,
+      "largest_types": [
+        {
+          "type": "blink::LogicalLineItems",
+          "allocated_bytes": 4295520,
+          "object_count": 2355,
+          "labels": [
+            "blink::LogicalLineItems (0x2a3)"
+          ]
+        },
+        {
+          "type": "blink::ComputedStyle",
+          "allocated_bytes": 2547720,
+          "object_count": 35385,
+          "labels": [
+            "blink::ComputedStyle (0x1a0)"
+          ]
+        },
+        {
+          "type": "blink::GeometryMapperTransformCache::PlaneRootTransform",
+          "allocated_bytes": 2244384,
+          "object_count": 7793,
+          "labels": [
+            "blink::GeometryMapperTransformCache::PlaneRootTransform (0x284)"
+          ]
+        },
+        {
+          "type": "Text",
+          "allocated_bytes": 2154480,
+          "object_count": 26931,
+          "labels": [
+            "Text (0x484)"
+          ]
+        },
+        {
+          "type": "blink::ImmutableCSSPropertyValueSet",
+          "allocated_bytes": 1334512,
+          "object_count": 16279,
+          "labels": [
+            "blink::ImmutableCSSPropertyValueSet (0x6e)"
+          ]
+        },
+        {
+          "type": "blink::CachedMatchedProperties",
+          "allocated_bytes": 1277448,
+          "object_count": 9393,
+          "labels": [
+            "blink::CachedMatchedProperties (0x2a0)"
+          ]
+        },
+        {
+          "type": "blink::LayoutResult",
+          "allocated_bytes": 1128400,
+          "object_count": 14105,
+          "labels": [
+            "blink::LayoutResult (0x1a2)"
+          ]
+        },
+        {
+          "type": "blink::UniqueElementData",
+          "allocated_bytes": 1124816,
+          "object_count": 10043,
+          "labels": [
+            "blink::UniqueElementData (0x1b8)"
+          ]
+        },
+        {
+          "type": "blink::PhysicalBoxFragment",
+          "allocated_bytes": 1042120,
+          "object_count": 11550,
+          "labels": [
+            "blink::PhysicalBoxFragment (0x1a1)"
+          ]
+        },
+        {
+          "type": "SVGAnimatedLength",
+          "allocated_bytes": 884160,
+          "object_count": 13815,
+          "labels": [
+            "SVGAnimatedLength (0x22c)"
+          ]
+        },
+        {
+          "type": "blink::GridSizingTrackCollection",
+          "allocated_bytes": 816192,
+          "object_count": 468,
+          "labels": [
+            "blink::GridSizingTrackCollection (0x2a8)"
+          ]
+        },
+        {
+          "type": "blink::CSSNumericLiteralValue",
+          "allocated_bytes": 779976,
+          "object_count": 32499,
+          "labels": [
+            "blink::CSSNumericLiteralValue (0x48b)"
+          ]
+        },
+        {
+          "type": "blink::HTMLStackItem",
+          "allocated_bytes": 732272,
+          "object_count": 8520,
+          "labels": [
+            "blink::HTMLStackItem (0xf1)"
+          ]
+        },
+        {
+          "type": "blink::CSSValueList",
+          "allocated_bytes": 691104,
+          "object_count": 14398,
+          "labels": [
+            "blink::CSSValueList (0x48c)"
+          ]
+        },
+        {
+          "type": "blink::NodeRareData",
+          "allocated_bytes": 688688,
+          "object_count": 21461,
+          "labels": [
+            "blink::NodeRareData (0x8e)"
+          ]
+        },
+        {
+          "type": "blink::ComputedStyleBase::StyleSVGData",
+          "allocated_bytes": 684880,
+          "object_count": 8561,
+          "labels": [
+            "blink::ComputedStyleBase::StyleSVGData (0x19e)"
+          ]
+        },
+        {
+          "type": "blink::NinePieceImageData",
+          "allocated_bytes": 624480,
+          "object_count": 2602,
+          "labels": [
+            "blink::NinePieceImageData (0x2ae)"
+          ]
+        },
+        {
+          "type": "blink::ShareableElementData",
+          "allocated_bytes": 611296,
+          "object_count": 8280,
+          "labels": [
+            "blink::ShareableElementData (0x10a)"
+          ]
+        },
+        {
+          "type": "blink::ComputedStyleBase::StyleSurroundData",
+          "allocated_bytes": 584064,
+          "object_count": 1872,
+          "labels": [
+            "blink::ComputedStyleBase::StyleSurroundData (0x29d)"
+          ]
+        },
+        {
+          "type": "SVGAnimatedTransformList",
+          "allocated_bytes": 557056,
+          "object_count": 8704,
+          "labels": [
+            "SVGAnimatedTransformList (0x22b)"
+          ]
+        }
+      ]
+    },
+    {
+      "index": 6,
+      "arm": "original",
+      "named_types": 1202,
+      "allocated_mib": 38.943809509277344,
+      "heap_size_mib": 63.375,
+      "pooled_mib": 16.5,
+      "svg_named_mib": 4.5595855712890625,
+      "html_documents": 23,
+      "xml_documents": 1,
+      "largest_types": [
+        {
+          "type": "blink::LogicalLineItems",
+          "allocated_bytes": 3587808,
+          "object_count": 1967,
+          "labels": [
+            "blink::LogicalLineItems (0x26c)"
+          ]
+        },
+        {
+          "type": "blink::ComputedStyle",
+          "allocated_bytes": 2134440,
+          "object_count": 29645,
+          "labels": [
+            "blink::ComputedStyle (0x18e)"
+          ]
+        },
+        {
+          "type": "blink::GeometryMapperTransformCache::PlaneRootTransform",
+          "allocated_bytes": 1814112,
+          "object_count": 6299,
+          "labels": [
+            "blink::GeometryMapperTransformCache::PlaneRootTransform (0x267)"
+          ]
+        },
+        {
+          "type": "Text",
+          "allocated_bytes": 1429200,
+          "object_count": 17865,
+          "labels": [
+            "Text (0x455)"
+          ]
+        },
+        {
+          "type": "blink::CachedMatchedProperties",
+          "allocated_bytes": 1094936,
+          "object_count": 8051,
+          "labels": [
+            "blink::CachedMatchedProperties (0x2b8)"
+          ]
+        },
+        {
+          "type": "blink::LayoutResult",
+          "allocated_bytes": 944560,
+          "object_count": 11807,
+          "labels": [
+            "blink::LayoutResult (0x191)"
+          ]
+        },
+        {
+          "type": "blink::ImmutableCSSPropertyValueSet",
+          "allocated_bytes": 926288,
+          "object_count": 11084,
+          "labels": [
+            "blink::ImmutableCSSPropertyValueSet (0x70)"
+          ]
+        },
+        {
+          "type": "blink::PhysicalBoxFragment",
+          "allocated_bytes": 873600,
+          "object_count": 9673,
+          "labels": [
+            "blink::PhysicalBoxFragment (0x18f)"
+          ]
+        },
+        {
+          "type": "blink::UniqueElementData",
+          "allocated_bytes": 731472,
+          "object_count": 6531,
+          "labels": [
+            "blink::UniqueElementData (0x20c)"
+          ]
+        },
+        {
+          "type": "blink::GridSizingTrackCollection",
+          "allocated_bytes": 676672,
+          "object_count": 388,
+          "labels": [
+            "blink::GridSizingTrackCollection (0x2ba)"
+          ]
+        },
+        {
+          "type": "blink::HTMLStackItem",
+          "allocated_bytes": 601568,
+          "object_count": 6996,
+          "labels": [
+            "blink::HTMLStackItem (0xcd)"
+          ]
+        },
+        {
+          "type": "SVGAnimatedLength",
+          "allocated_bytes": 586240,
+          "object_count": 9160,
+          "labels": [
+            "SVGAnimatedLength (0x22d)"
+          ]
+        },
+        {
+          "type": "blink::ComputedStyleBase::StyleSVGData",
+          "allocated_bytes": 580640,
+          "object_count": 7258,
+          "labels": [
+            "blink::ComputedStyleBase::StyleSVGData (0x18c)"
+          ]
+        },
+        {
+          "type": "blink::HeapHashTableBacking<blink::HashTable<blink::FontDescription, blink::KeyValuePair<blink::FontDescription, cppgc::internal::BasicMember<blink::FontFallbackList, cppgc::internal::WeakMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>>, blink::KeyValuePairExtractor, blink::HashMapValueTraits<blink::HashTraits<FontDescription>, blink::HashTraits<cppgc::internal::BasicMember<blink::FontFallbackList, cppgc::internal::WeakMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>>>, blink::HashTraits<FontDescription>, blink::HeapAllocator>>",
+          "allocated_bytes": 558392,
+          "object_count": 39,
+          "labels": [
+            "blink::HeapHashTableBacking<blink::HashTable<blink::FontDescription, blink::KeyValuePair<blink::FontDescription, cppgc::internal::BasicMember<blink::FontFallbackList, cppgc::internal::WeakMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>>, blink::KeyValuePairExtractor, blink::HashMapValueTraits<blink::HashTraits<FontDescription>, blink::HashTraits<cppgc::internal::BasicMember<blink::FontFallbackList, cppgc::internal::WeakMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>>>, blink::HashTraits<FontDescription>, blink::HeapAllocator>> (0x2a0)"
+          ]
+        },
+        {
+          "type": "blink::CSSNumericLiteralValue",
+          "allocated_bytes": 553920,
+          "object_count": 23080,
+          "labels": [
+            "blink::CSSNumericLiteralValue (0x45a)"
+          ]
+        },
+        {
+          "type": "blink::NinePieceImageData",
+          "allocated_bytes": 528480,
+          "object_count": 2202,
+          "labels": [
+            "blink::NinePieceImageData (0x2b5)"
+          ]
+        },
+        {
+          "type": "blink::ComputedStyleBase::StyleSurroundData",
+          "allocated_bytes": 503256,
+          "object_count": 1613,
+          "labels": [
+            "blink::ComputedStyleBase::StyleSurroundData (0x2c0)"
+          ]
+        },
+        {
+          "type": "blink::CSSValueList",
+          "allocated_bytes": 473328,
+          "object_count": 9861,
+          "labels": [
+            "blink::CSSValueList (0x45b)"
+          ]
+        },
+        {
+          "type": "blink::NodeRareData",
+          "allocated_bytes": 456016,
+          "object_count": 14209,
+          "labels": [
+            "blink::NodeRareData (0x85)"
+          ]
+        },
+        {
+          "type": "blink::ShareableElementData",
+          "allocated_bytes": 404384,
+          "object_count": 5487,
+          "labels": [
+            "blink::ShareableElementData (0xe8)"
+          ]
+        }
+      ]
+    },
+    {
+      "index": 7,
+      "arm": "current",
+      "named_types": 1219,
+      "allocated_mib": 11.386116027832031,
+      "heap_size_mib": 52.75,
+      "pooled_mib": 17.25,
+      "svg_named_mib": 1.2411956787109375,
+      "html_documents": 5,
+      "xml_documents": 1,
+      "largest_types": [
+        {
+          "type": "blink::LogicalLineItems",
+          "allocated_bytes": 961248,
+          "object_count": 527,
+          "labels": [
+            "blink::LogicalLineItems (0x2b8)"
+          ]
+        },
+        {
+          "type": "blink::ComputedStyle",
+          "allocated_bytes": 591840,
+          "object_count": 8220,
+          "labels": [
+            "blink::ComputedStyle (0x1a5)"
+          ]
+        },
+        {
+          "type": "blink::HeapHashTableBacking<blink::HashTable<blink::FontDescription, blink::KeyValuePair<blink::FontDescription, cppgc::internal::BasicMember<blink::FontFallbackList, cppgc::internal::WeakMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>>, blink::KeyValuePairExtractor, blink::HashMapValueTraits<blink::HashTraits<FontDescription>, blink::HashTraits<cppgc::internal::BasicMember<blink::FontFallbackList, cppgc::internal::WeakMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>>>, blink::HashTraits<FontDescription>, blink::HeapAllocator>>",
+          "allocated_bytes": 371392,
+          "object_count": 24,
+          "labels": [
+            "blink::HeapHashTableBacking<blink::HashTable<blink::FontDescription, blink::KeyValuePair<blink::FontDescription, cppgc::internal::BasicMember<blink::FontFallbackList, cppgc::internal::WeakMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>>, blink::KeyValuePairExtractor, blink::HashMapValueTraits<blink::HashTraits<FontDescription>, blink::HashTraits<cppgc::internal::BasicMember<blink::FontFallbackList, cppgc::internal::WeakMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>>>, blink::HashTraits<FontDescription>, blink::HeapAllocator>> (0x28f)"
+          ]
+        },
+        {
+          "type": "Text",
+          "allocated_bytes": 336240,
+          "object_count": 4203,
+          "labels": [
+            "Text (0x466)"
+          ]
+        },
+        {
+          "type": "blink::GeometryMapperTransformCache::PlaneRootTransform",
+          "allocated_bytes": 302688,
+          "object_count": 1051,
+          "labels": [
+            "blink::GeometryMapperTransformCache::PlaneRootTransform (0x2c9)"
+          ]
+        },
+        {
+          "type": "blink::CachedMatchedProperties",
+          "allocated_bytes": 302328,
+          "object_count": 2223,
+          "labels": [
+            "blink::CachedMatchedProperties (0x28e)"
+          ]
+        },
+        {
+          "type": "blink::ImmutableCSSPropertyValueSet",
+          "allocated_bytes": 293728,
+          "object_count": 3300,
+          "labels": [
+            "blink::ImmutableCSSPropertyValueSet (0x71)"
+          ]
+        },
+        {
+          "type": "blink::LayoutResult",
+          "allocated_bytes": 245520,
+          "object_count": 3069,
+          "labels": [
+            "blink::LayoutResult (0x1bd)"
+          ]
+        },
+        {
+          "type": "blink::PhysicalBoxFragment",
+          "allocated_bytes": 224800,
+          "object_count": 2494,
+          "labels": [
+            "blink::PhysicalBoxFragment (0x1bb)"
+          ]
+        },
+        {
+          "type": "blink::HeapHashTableBacking<blink::HashTable<unsigned int, blink::KeyValuePair<unsigned int, std::pair<const blink::StringImpl *, cppgc::internal::BasicMember<blink::ShareableElementData, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>>>, blink::KeyValuePairExtractor, blink::HashMapValueTraits<blink::AlreadyHashedTraits, blink::HashTraits<std::pair<const blink::StringImpl *, cppgc::internal::BasicMember<blink::ShareableElementData, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>>>>, blink::AlreadyHashedTraits, blink::HeapAllocator>>",
+          "allocated_bytes": 196504,
+          "object_count": 11,
+          "labels": [
+            "blink::HeapHashTableBacking<blink::HashTable<unsigned int, blink::KeyValuePair<unsigned int, std::pair<const blink::StringImpl *, cppgc::internal::BasicMember<blink::ShareableElementData, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>>>, blink::KeyValuePairExtractor, blink::HashMapValueTraits<blink::AlreadyHashedTraits, blink::HashTraits<std::pair<const blink::StringImpl *, cppgc::internal::BasicMember<blink::ShareableElementData, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>>>>, blink::AlreadyHashedTraits, blink::HeapAllocator>> (0x2fb)"
+          ]
+        },
+        {
+          "type": "blink::UniqueElementData",
+          "allocated_bytes": 191856,
+          "object_count": 1713,
+          "labels": [
+            "blink::UniqueElementData (0x1a3)"
+          ]
+        },
+        {
+          "type": "blink::GridSizingTrackCollection",
+          "allocated_bytes": 188352,
+          "object_count": 108,
+          "labels": [
+            "blink::GridSizingTrackCollection (0x2bc)"
+          ]
+        },
+        {
+          "type": "blink::StyleRule",
+          "allocated_bytes": 183136,
+          "object_count": 2549,
+          "labels": [
+            "blink::StyleRule (0x110)"
+          ]
+        },
+        {
+          "type": "blink::ComputedStyleBase::StyleSVGData",
+          "allocated_bytes": 176160,
+          "object_count": 2202,
+          "labels": [
+            "blink::ComputedStyleBase::StyleSVGData (0x1ab)"
+          ]
+        },
+        {
+          "type": "blink::HTMLStackItem",
+          "allocated_bytes": 172584,
+          "object_count": 1965,
+          "labels": [
+            "blink::HTMLStackItem (0x81)"
+          ]
+        },
+        {
+          "type": "blink::HashTrieNode<blink::CSSVariableData>",
+          "allocated_bytes": 167280,
+          "object_count": 615,
+          "labels": [
+            "blink::HashTrieNode<blink::CSSVariableData> (0x28d)"
+          ]
+        },
+        {
+          "type": "blink::HeapVectorBacking<blink::PaintChunk>",
+          "allocated_bytes": 160160,
+          "object_count": 20,
+          "labels": [
+            "blink::HeapVectorBacking<blink::PaintChunk> (0x3b4)"
+          ]
+        },
+        {
+          "type": "blink::NinePieceImageData",
+          "allocated_bytes": 144480,
+          "object_count": 602,
+          "labels": [
+            "blink::NinePieceImageData (0x29c)"
+          ]
+        },
+        {
+          "type": "SVGAnimatedLength",
+          "allocated_bytes": 138112,
+          "object_count": 2158,
+          "labels": [
+            "SVGAnimatedLength (0x1fa)"
+          ]
+        },
+        {
+          "type": "blink::ComputedStyleBase::StyleSurroundData",
+          "allocated_bytes": 136032,
+          "object_count": 436,
+          "labels": [
+            "blink::ComputedStyleBase::StyleSurroundData (0x291)"
+          ]
+        }
+      ]
+    }
+  ],
+  "slot4_minus7": {
+    "allocated_mib": 9.130844116210938,
+    "heap_size_mib": 32.625,
+    "pooled_mib": 23.625,
+    "svg_named_mib": 1.242523193359375,
+    "largest_type_increases": [
+      {
+        "type": "blink::LogicalLineItems",
+        "allocated_bytes": 656640,
+        "object_count": 360
+      },
+      {
+        "type": "blink::ComputedStyle",
+        "allocated_bytes": 619416,
+        "object_count": 8603
+      },
+      {
+        "type": "blink::CachedMatchedProperties",
+        "allocated_bytes": 354280,
+        "object_count": 2605
+      },
+      {
+        "type": "Text",
+        "allocated_bytes": 336080,
+        "object_count": 4201
+      },
+      {
+        "type": "blink::ImmutableCSSPropertyValueSet",
+        "allocated_bytes": 220080,
+        "object_count": 2709
+      },
+      {
+        "type": "blink::HeapHashTableBacking<blink::HashTable<blink::FontDescription, blink::KeyValuePair<blink::FontDescription, cppgc::internal::BasicMember<blink::FontFallbackList, cppgc::internal::WeakMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>>, blink::KeyValuePairExtractor, blink::HashMapValueTraits<blink::HashTraits<FontDescription>, blink::HashTraits<cppgc::internal::BasicMember<blink::FontFallbackList, cppgc::internal::WeakMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy>>>, blink::HashTraits<FontDescription>, blink::HeapAllocator>>",
+        "allocated_bytes": 199744,
+        "object_count": 8
+      },
+      {
+        "type": "blink::ComputedStyleBase::StyleSVGData",
+        "allocated_bytes": 194640,
+        "object_count": 2433
+      },
+      {
+        "type": "blink::UniqueElementData",
+        "allocated_bytes": 191520,
+        "object_count": 1710
+      },
+      {
+        "type": "blink::LayoutResult",
+        "allocated_bytes": 191280,
+        "object_count": 2391
+      },
+      {
+        "type": "blink::GeometryMapperTransformCache::PlaneRootTransform",
+        "allocated_bytes": 187200,
+        "object_count": 650
+      },
+      {
+        "type": "blink::PhysicalBoxFragment",
+        "allocated_bytes": 182760,
+        "object_count": 1999
+      },
+      {
+        "type": "blink::ComputedStyleBase::StyleSurroundData",
+        "allocated_bytes": 149760,
+        "object_count": 480
+      },
+      {
+        "type": "blink::GridSizingTrackCollection",
+        "allocated_bytes": 146496,
+        "object_count": 84
+      },
+      {
+        "type": "SVGAnimatedLength",
+        "allocated_bytes": 137856,
+        "object_count": 2154
+      },
+      {
+        "type": "blink::CSSNumericLiteralValue",
+        "allocated_bytes": 130464,
+        "object_count": 5436
+      },
+      {
+        "type": "blink::ShareableElementData",
+        "allocated_bytes": 124752,
+        "object_count": 1617
+      },
+      {
+        "type": "blink::CSSValueList",
+        "allocated_bytes": 120000,
+        "object_count": 2500
+      },
+      {
+        "type": "blink::NinePieceImageData",
+        "allocated_bytes": 120000,
+        "object_count": 500
+      },
+      {
+        "type": "blink::HashTrieNode<blink::CSSVariableData>",
+        "allocated_bytes": 119952,
+        "object_count": 441
+      },
+      {
+        "type": "blink::NodeRareData",
+        "allocated_bytes": 117128,
+        "object_count": 3650
+      }
+    ]
+  },
+  "limits": "Detailed endpoint dumps finish pending sweeping. Types are allocated objects, possibly garbage, not reachable owners or RSS. Page/type/global views overlap; only global type rows are summed. Pooled pages have no current object-type assignment. Type IDs vary across processes; identical names are merged, raw labels retained. No source effect inferred from unstable controls."
+}

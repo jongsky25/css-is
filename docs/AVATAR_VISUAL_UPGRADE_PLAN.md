@@ -25,6 +25,17 @@ seasonal administration, and accessibility behavior.
 A phase fails if its visuals remain essentially the same except for color changes,
 or if it exceeds a performance gate. Fix or reduce complexity before expanding it.
 
+## Latest native allocation inventory — types identified, pool history missing
+
+[All-slot raw type extraction](avatars/increment2b/native-type-ownership/REPORT.md)
+reconciles per-page/global type bytes and counts to heap totals; 33 tests pass.
+Large repeat variation spans layout/style/text/DOM, with pooled capacity larger
+than the allocated-object difference. The raw type inventory existed but was
+omitted from earlier summaries. Detailed dumps finish pending sweeps, so the next
+causal gap is allocation history before pages enter the pool, not another endpoint
+snapshot. No new measurements/product edits; 2B memory failures and later-phase
+pause remain unchanged.
+
 ## Latest offline analysis — GC/sweep ordering, still no 2B acceptance
 
 [Reader-retention report](avatars/increment2b/reader-retention/REPORT.md) covers all

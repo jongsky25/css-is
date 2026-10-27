@@ -1,5 +1,16 @@
 # Increment 2B — acceptance withdrawn: uncovered memory failures
 
+## Raw native types recovered — no new measurement or acceptance
+
+[Native-type report](native-type-ownership/REPORT.md) recovers the omitted global
+Blink object view from all eight raw dumps. Page/global/heap totals reconcile;
+82-member archive re-audit matches; 33 tests pass. The largest repeat endpoint has
++23.625MiB pooled capacity and +9.131MiB allocated objects, including +1.243MiB in
+SVG-named types. Broader layout/style/text objects track extra documents. Detailed
+dumps finish pending sweeping; they cannot preserve or identify the former owners
+of pooled pages. Next evidence must track allocation history before reclamation.
+All prior RSS failures remain; no new product fix or 2B acceptance is established.
+
 ## Reader retention analyzed offline — no supported product fix yet
 
 [All-slot analysis](reader-retention/REPORT.md) re-verifies the 82-member archive;
