@@ -848,3 +848,12 @@ and artifact remain archived. Future writer freezes rows. 86 source/probe hashes
 40 files and 80 natural observations verify; 139 selected tests pass. See
 [report](avatars/increment2b/retaining-paths/REPORT.md). Forensic GC exception does
 not alter acceptance. Product unchanged, 2B/later blocked, no active run.
+
+### Shared stylesheet candidate — 2026-10-27 — visual gate unresolved
+
+Candidate 6960562 extracts byte-identical CSS. Nine browser regressions and strict
+HTTP body reuse pass. Visual comparison fails exact pixels, including same-source
+controls; software rendering and same-document restoration do not resolve it.
+All diagnostics retained in [report](avatars/increment2b/shared-stylesheet/REPORT.md).
+34 focused tests pass. Prepared memory screen enforces the visual prerequisite;
+no memory run, promotion, 2B acceptance or later increment. Primary unchanged.

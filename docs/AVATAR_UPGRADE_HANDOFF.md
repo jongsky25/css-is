@@ -1,6 +1,6 @@
 # Avatar upgrade: new-chat handoff
 
-Last updated: **2026-10-26 23:20 UTC**. Repository: `jongsky25/css-is`.
+Last updated: **2026-10-27 UTC**. Repository: `jongsky25/css-is`.
 
 ## Current blocking correction
 
@@ -27,6 +27,17 @@ The prepared audit branch `codex/avatar-3a-artifact-audit` is explicitly paused 
 trigger it as an acceptance audit of the cancelled cohort. No later increments,
 merge to main or deployment occurred. The historical handoff below is superseded by this
 correction wherever it suggests CI success establishes complete memory acceptance.
+
+## Shared stylesheet candidate — visual prerequisite unresolved
+
+Candidate `6960562` on `codex/avatar-shared-stylesheet` externalizes identical CSS.
+Nine browser regressions and strict HTTP body-reuse check pass. Fresh-context
+visual comparisons fail exact pixels, including unchanged-source controls;
+software rendering and same-document restoration did not resolve the variation.
+Read [the report](avatars/increment2b/shared-stylesheet/REPORT.md). All diagnostics
+are retained. The memory screen is prepared but **not run**; its runner rejects
+failed visual evidence. 34 focused tests pass. Primary product remains f700187;
+2B and later increments remain blocked. No measurement active.
 
 ## Authorized forensic captures complete — transient documents gone before snapshot
 

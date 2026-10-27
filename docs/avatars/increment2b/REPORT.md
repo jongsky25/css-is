@@ -1,5 +1,12 @@
 # Increment 2B — acceptance withdrawn: uncovered memory failures
 
+## Shared stylesheet candidate — prerequisite blocked
+
+[Candidate and evidence](shared-stylesheet/REPORT.md): nine browser regressions
+and HTTP reuse pass, but exact visual comparison is unstable even for unchanged
+source. Software rendering and same-document restoration also fail. No memory
+screen was run, no product promotion. 34 focused tests pass; 2B remains blocked.
+
 ## Authorized forensic snapshot experiment completed
 
 [Four captures](retaining-paths/REPORT.md) completed. One current slot reproduced
