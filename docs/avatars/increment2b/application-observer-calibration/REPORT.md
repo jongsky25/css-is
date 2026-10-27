@@ -82,12 +82,22 @@ universal second-GC requirement explains the evidence. All 42 graph-result hashe
 verify; independent analyses agree. This perturbed diagnostic cannot replace
 fresh native qualification or measure the application transport.
 
+## Snapshot-free lifecycle follow-up
+
+[Context handle journal](../context-handle-journal/REPORT.md) completes four fixed
+captures without snapshots. At both GC checkpoints, no known context-owner handle
+from an older navigation remains strong. All four show the low-retention profile,
+so cleanup is confirmed only in those observed captures; the earlier retaining root
+is still unknown. All 39 hashes and four independent analyses match; 47 local/cloud
+preflight tests pass. No qualification or supported product correction follows.
+
 ## Next bounded work
 
-Next record context creation/disposal and persistent-handle ownership around
-natural GC with source-audited instrumentation, without snapshots or forced GC.
-The missing evidence is the owner of the extra surviving contexts in a retained
-capture; no supported correction follows from the low-retention graphs. Any new measurement
+The context-owner journal is complete. Next read its report and investigate other
+root owners using separately frozen native-buffer handle/caller-site tracing to
+reduce callback/subscription effects. A retaining root in a high-retention capture
+remains missing; the low-retention captures justify no cleanup patch.
+Any new measurement
 requires a concrete supported change and separately frozen protocol preserving
 all gates. Do not rerun this unchanged build for a favorable GC outcome, force GC,
 flush caches, add waits to pad the budget, relax coverage, or substitute prior native

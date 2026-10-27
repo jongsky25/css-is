@@ -78,16 +78,24 @@ result manifest. [Assessment](assessment.json), [frozen protocol](PROTOCOL.md),
 [reviewed workflow](workflow-reviewed.yml) and pinned upstream excerpts/manifest
 are committed. No source/sample substitution, forced GC, cache flush or added wait.
 
+## Snapshot-free lifecycle follow-up
+
+[Context handle journal](../context-handle-journal/REPORT.md) completes four fixed
+captures without snapshots. At both GC checkpoints, no known context-owner handle
+from an older navigation remains strong. All four show the low-retention profile,
+so cleanup is confirmed only in those observed captures; the earlier retaining root
+is still unknown. All 39 hashes and four independent analyses match; 47 local/cloud
+preflight tests pass. No qualification or supported product correction follows.
+
 ## Next bounded work
 
-Record context creation/disposal and persistent-handle ownership before/during
-natural GC, with source-audited instrumentation that does not request a snapshot
-or collection. The needed evidence is an owner/path for the extra surviving
-contexts in a retained-document capture, not another passing reclamation sample.
-Freeze a separate bounded diagnostic before capture and preserve every slot.
-Only a supported correction followed by fresh native qualification can unblock
-the already-frozen application transport calibration. All original cost, coverage,
-reclamation and memory gates remain unchanged.
+The snapshot-free owner journal is complete; read its report first. The next
+missing evidence is a retaining root in a high-retention capture. Broader handle
+birth/release plus native caller-site recording with a native buffer could cover
+other root owners while reducing callback/subscription effects. Freeze a distinct
+bounded diagnostic before any capture. No unchanged rerun, forced collection or
+prerequisite waiver. Original native/application qualification and 2B acceptance
+remain unresolved.
 
 No measurement remains active. PR #520 is reviewable and unmerged; PR #519 remains the
 separate blocked application controller. Product cf363bf and unpromoted candidate

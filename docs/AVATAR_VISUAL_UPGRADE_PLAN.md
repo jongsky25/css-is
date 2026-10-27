@@ -25,6 +25,24 @@ seasonal administration, and accessibility behavior.
 A phase fails if its visuals remain essentially the same except for color changes,
 or if it exceeds a performance gate. Fix or reduce complexity before expanding it.
 
+## Snapshot-free context journal — cleanup observed, failed root still unknown
+
+[Latest report](avatars/increment2b/context-handle-journal/REPORT.md) and
+[run40599450345](https://github.com/jongsky25/css-is/actions/runs/40599450345):
+frozen 2c898c6 completes four journal-only/journal+membership captures. At natural
+GC stages 6/11, zero known older context-owner handles remain strong; all eight known
+strong handles belong to the current navigation. All four show the low-retention
+profile, so this confirms cleanup only in those captures and does not explain the
+previous failure. Other/pre-attach roots are unobserved; weak is not collectable.
+
+**47 local/cloud preflight tests pass**; all **39** result hashes verify and all four
+independent journal analyses plus native preflight audit match. No snapshot, GC
+request or extra wait. Callback/subscription overhead remains unqualified; no
+native/application qualification, supported correction or 2B acceptance follows.
+Next cover other handle owners/native caller sites with a separately frozen native
+buffer diagnostic to reduce per-event JS/subscription effects. No unchanged rerun,
+product change, candidate promotion, merge or deployment. PR #521 remains reviewable.
+
 ## Native root diagnostic — complete, retaining root not identified
 
 [Latest report](avatars/increment2b/native-root-retention/REPORT.md) and
