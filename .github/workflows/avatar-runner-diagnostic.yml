@@ -29,7 +29,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           # Never check out product changes from the pull-request head.
-          ref: c76ae40480f20af47d10f06a8288f37858154db5
+          ref: 92b842826b60b8741e3032f252c09b6e350af66d
           fetch-depth: 0
           persist-credentials: false
 
