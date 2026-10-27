@@ -8,9 +8,25 @@ with stable controls. Remaining milestones: a supported fix, qualified candidate
 validation, then complete original-baseline acceptance across all device/cache
 and scenario groups. No defensible percentage or ETA is established.
 
-Use the [Sol restart handoff](../../AVATAR_UPGRADE_HANDOFF.md#start-here--sol-handoff-current-as-of-dc06be8)
+Use the [Sol restart handoff](../../AVATAR_UPGRADE_HANDOFF.md#start-here--sol-handoff-current-after-component-order-calibration)
 for current source identities, evidence order, next bounded work and constraints.
+The component-order diagnostic below is the latest completed experiment.
 Older next-step instructions in this report are historical where superseded.
+
+## Component-order diagnostic — calibration failed coverage
+
+[Latest diagnostic](snapshot-ordering/REPORT.md): frozen harness f84ef99 completes four current-only
+control/probe/probe/control workloads on the exact Chromium build. All timing and
+control-duration gates pass, but slot 1 has no recorded navigation major collection
+or native sweeping, failing its predeclared coverage gate. No replacement or source
+comparison. All 128 source hashes / 30 cohort files verify; reconstructed 36-file
+archive re-audits identically. Initial auditor reporting failure is retained; the
+correction preserves missing-coverage failure and every slot's timing. 27 focused
+tests pass after that correction. All 40 prior gradient navigation samples and
+32 adjacent intervals were reviewed offline. No product fix or memory acceptance
+follows. Next prove a concrete source-ownership discriminant on a controlled
+fixture, including allocations carried from earlier scenarios; do not rerun the
+unchanged calibration for collection events. 2B/later remain blocked.
 
 ## Shared cat-gradient candidate tested — memory screen failed
 

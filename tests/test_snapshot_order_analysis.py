@@ -78,3 +78,12 @@ def test_wrapper_preserves_result_arguments_exceptions_and_call_count(monkeypatc
     with pytest.raises(ValueError):
         timing.capture(lambda: (_ for _ in ()).throw(ValueError('same')))
     assert timing.active is None
+
+
+def test_coverage_failure_preserves_timing_gate_failures():
+    rows = [{'navigation_ms': 1000, 'observation_fraction_bound': .01, 'max_observation_ms': 10} for _ in range(4)]
+    rows[1]['coverage_errors'] = ['Natural collection/sweeping coverage absent']
+    rows[2]['max_observation_ms'] = 251
+    errors = gate(rows)
+    assert any('coverage absent' in e for e in errors)
+    assert any('250ms' in e for e in errors)

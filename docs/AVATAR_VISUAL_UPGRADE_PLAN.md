@@ -25,6 +25,21 @@ seasonal administration, and accessibility behavior.
 A phase fails if its visuals remain essentially the same except for color changes,
 or if it exceeds a performance gate. Fix or reduce complexity before expanding it.
 
+## Component-order diagnostic — calibration failed coverage
+
+[Latest diagnostic](avatars/increment2b/snapshot-ordering/REPORT.md): frozen harness f84ef99 completes four current-only
+control/probe/probe/control workloads on the exact Chromium build. All timing and
+control-duration gates pass, but slot 1 has no recorded navigation major collection
+or native sweeping, failing its predeclared coverage gate. No replacement or source
+comparison. All 128 source hashes / 30 cohort files verify; reconstructed 36-file
+archive re-audits identically. Initial auditor reporting failure is retained; the
+correction preserves missing-coverage failure and every slot's timing. 27 focused
+tests pass after that correction. All 40 prior gradient navigation samples and
+32 adjacent intervals were reviewed offline. No product fix or memory acceptance
+follows. Next prove a concrete source-ownership discriminant on a controlled
+fixture, including allocations carried from earlier scenarios; do not rerun the
+unchanged calibration for collection events. 2B/later remain blocked.
+
 ## Shared cat-gradient candidate tested — memory screen failed
 
 [Latest report](avatars/increment2b/shared-cat-gradients/REPORT.md): candidate cd94bf3 shares identical cat gradients through
@@ -364,7 +379,7 @@ browser tests ran.
 ## New-chat invocation
 
 Use Sol. Continue `jongsky25/css-is` on `codex/avatar-2b-verification` and read
-[the authoritative restart handoff](AVATAR_UPGRADE_HANDOFF.md#start-here--sol-handoff-current-as-of-dc06be8)
+[the authoritative restart handoff](AVATAR_UPGRADE_HANDOFF.md#start-here--sol-handoff-current-after-component-order-calibration)
 before the historical ledger. **Unblock 2B only; do not advance to 3A or later
 increments.** Latest shared-cat-gradient candidate `cd94bf3` passed visual checks
 but failed its memory screen; completed evidence is recorded in `dc06be8`.

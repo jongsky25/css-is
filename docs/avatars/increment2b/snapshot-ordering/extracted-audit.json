@@ -1,0 +1,1665 @@
+{
+  "acceptance": false,
+  "status": "calibration_failed",
+  "errors": [
+    "Slot 1: Natural collection/sweeping coverage absent"
+  ],
+  "cohorts": [
+    {
+      "index": 0,
+      "mode": "control",
+      "navigation_ms": 7021.727979,
+      "observation_fraction_bound": 0.014365527730734668,
+      "max_observation_ms": 23.120988,
+      "checkpoints": []
+    },
+    {
+      "index": 1,
+      "mode": "probe",
+      "navigation_ms": 7772.796382,
+      "observation_fraction_bound": 0.019146032609914827,
+      "max_observation_ms": 43.498128,
+      "checkpoints": [
+        {
+          "mount": 1,
+          "components": [
+            {
+              "call": "page.evaluate",
+              "begin_ns": 721437068475,
+              "end_ns": 721444174677,
+              "trace_bounds_us": [
+                721436776.505,
+                721447359.447
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "cdp:SystemInfo.getProcessInfo",
+              "begin_ns": 721445278974,
+              "end_ns": 721446162712,
+              "trace_bounds_us": [
+                721444987.004,
+                721449347.482
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1854/status",
+              "begin_ns": 721447292823,
+              "end_ns": 721447360606,
+              "trace_bounds_us": [
+                721447000.8529999,
+                721450545.3759999
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1801/status",
+              "begin_ns": 721447393929,
+              "end_ns": 721447414245,
+              "trace_bounds_us": [
+                721447101.959,
+                721450599.015
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1789/status",
+              "begin_ns": 721447440037,
+              "end_ns": 721447455216,
+              "trace_bounds_us": [
+                721447148.0669999,
+                721450639.986
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1854/status",
+              "begin_ns": 721447485241,
+              "end_ns": 721447498729,
+              "trace_bounds_us": [
+                721447193.271,
+                721450683.499
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1854/smaps_rollup",
+              "begin_ns": 721447526928,
+              "end_ns": 721448350887,
+              "trace_bounds_us": [
+                721447234.958,
+                721451535.657
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1801/status",
+              "begin_ns": 721448408743,
+              "end_ns": 721448445067,
+              "trace_bounds_us": [
+                721448116.773,
+                721451629.837
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1801/smaps_rollup",
+              "begin_ns": 721448474341,
+              "end_ns": 721450328756,
+              "trace_bounds_us": [
+                721448182.3709999,
+                721453513.526
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1789/status",
+              "begin_ns": 721450378680,
+              "end_ns": 721450412881,
+              "trace_bounds_us": [
+                721450086.7099999,
+                721453597.651
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1789/smaps_rollup",
+              "begin_ns": 721450439234,
+              "end_ns": 721451437794,
+              "trace_bounds_us": [
+                721450147.2639999,
+                721454622.564
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "cdp:Runtime.getHeapUsage",
+              "begin_ns": 721451464223,
+              "end_ns": 721452616406,
+              "trace_bounds_us": [
+                721451172.253,
+                721455801.176
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "cdp:Memory.getDOMCounters",
+              "begin_ns": 721452641278,
+              "end_ns": 721453445130,
+              "trace_bounds_us": [
+                721452349.308,
+                721456629.9
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "cdp:Runtime.evaluate",
+              "begin_ns": 721453447513,
+              "end_ns": 721455141445,
+              "trace_bounds_us": [
+                721453155.543,
+                721458326.215
+              ],
+              "covered": true,
+              "gc_overlap": []
+            }
+          ]
+        },
+        {
+          "mount": 5,
+          "components": [
+            {
+              "call": "page.evaluate",
+              "begin_ns": 722818268264,
+              "end_ns": 722824092885,
+              "trace_bounds_us": [
+                722817976.294,
+                722827277.655
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "cdp:SystemInfo.getProcessInfo",
+              "begin_ns": 722825196270,
+              "end_ns": 722826074375,
+              "trace_bounds_us": [
+                722824904.3,
+                722829259.145
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1854/status",
+              "begin_ns": 722827099554,
+              "end_ns": 722827168825,
+              "trace_bounds_us": [
+                722826807.584,
+                722830353.595
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1801/status",
+              "begin_ns": 722827201260,
+              "end_ns": 722827220651,
+              "trace_bounds_us": [
+                722826909.29,
+                722830405.421
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1789/status",
+              "begin_ns": 722827240315,
+              "end_ns": 722827253882,
+              "trace_bounds_us": [
+                722826948.345,
+                722830438.652
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1854/status",
+              "begin_ns": 722827283781,
+              "end_ns": 722827296412,
+              "trace_bounds_us": [
+                722826991.811,
+                722830481.1819999
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1854/smaps_rollup",
+              "begin_ns": 722827324233,
+              "end_ns": 722828197147,
+              "trace_bounds_us": [
+                722827032.263,
+                722831381.9169999
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1801/status",
+              "begin_ns": 722828251878,
+              "end_ns": 722828288066,
+              "trace_bounds_us": [
+                722827959.908,
+                722831472.836
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1801/smaps_rollup",
+              "begin_ns": 722828317420,
+              "end_ns": 722830596824,
+              "trace_bounds_us": [
+                722828025.4499999,
+                722833781.594
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1789/status",
+              "begin_ns": 722830675317,
+              "end_ns": 722830710731,
+              "trace_bounds_us": [
+                722830383.347,
+                722833895.5009999
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1789/smaps_rollup",
+              "begin_ns": 722830734926,
+              "end_ns": 722831909006,
+              "trace_bounds_us": [
+                722830442.956,
+                722835093.776
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "cdp:Runtime.getHeapUsage",
+              "begin_ns": 722831934549,
+              "end_ns": 722834787689,
+              "trace_bounds_us": [
+                722831642.579,
+                722837972.459
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "cdp:Memory.getDOMCounters",
+              "begin_ns": 722834974752,
+              "end_ns": 722836133515,
+              "trace_bounds_us": [
+                722834682.782,
+                722839318.285
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "cdp:Runtime.evaluate",
+              "begin_ns": 722836136636,
+              "end_ns": 722837456312,
+              "trace_bounds_us": [
+                722835844.666,
+                722840641.082
+              ],
+              "covered": true,
+              "gc_overlap": []
+            }
+          ]
+        },
+        {
+          "mount": 10,
+          "components": [
+            {
+              "call": "page.evaluate",
+              "begin_ns": 725288278819,
+              "end_ns": 725295571232,
+              "trace_bounds_us": [
+                725287986.849,
+                725298756.002
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "cdp:SystemInfo.getProcessInfo",
+              "begin_ns": 725296952545,
+              "end_ns": 725298071570,
+              "trace_bounds_us": [
+                725296660.5749999,
+                725301256.34
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1854/status",
+              "begin_ns": 725299985633,
+              "end_ns": 725300097346,
+              "trace_bounds_us": [
+                725299693.663,
+                725303282.1159999
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1801/status",
+              "begin_ns": 725300132146,
+              "end_ns": 725300152756,
+              "trace_bounds_us": [
+                725299840.176,
+                725303337.526
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1789/status",
+              "begin_ns": 725300176348,
+              "end_ns": 725300190732,
+              "trace_bounds_us": [
+                725299884.378,
+                725303375.502
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1854/status",
+              "begin_ns": 725300221912,
+              "end_ns": 725300235557,
+              "trace_bounds_us": [
+                725299929.9419999,
+                725303420.327
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1854/smaps_rollup",
+              "begin_ns": 725300263490,
+              "end_ns": 725301134645,
+              "trace_bounds_us": [
+                725299971.52,
+                725304319.415
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1801/status",
+              "begin_ns": 725301200868,
+              "end_ns": 725301248412,
+              "trace_bounds_us": [
+                725300908.898,
+                725304433.1819999
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1801/smaps_rollup",
+              "begin_ns": 725301276332,
+              "end_ns": 725305037693,
+              "trace_bounds_us": [
+                725300984.362,
+                725308222.4629999
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1789/status",
+              "begin_ns": 725305107819,
+              "end_ns": 725305158316,
+              "trace_bounds_us": [
+                725304815.849,
+                725308343.086
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1789/smaps_rollup",
+              "begin_ns": 725305190422,
+              "end_ns": 725308449595,
+              "trace_bounds_us": [
+                725304898.452,
+                725311634.365
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "cdp:Runtime.getHeapUsage",
+              "begin_ns": 725308480973,
+              "end_ns": 725314903629,
+              "trace_bounds_us": [
+                725308189.003,
+                725318088.3989999
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "cdp:Memory.getDOMCounters",
+              "begin_ns": 725314906744,
+              "end_ns": 725318149696,
+              "trace_bounds_us": [
+                725314614.7739999,
+                725321334.466
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "cdp:Runtime.evaluate",
+              "begin_ns": 725318153229,
+              "end_ns": 725322980758,
+              "trace_bounds_us": [
+                725317861.259,
+                725326165.528
+              ],
+              "covered": true,
+              "gc_overlap": []
+            }
+          ]
+        },
+        {
+          "mount": 15,
+          "components": [
+            {
+              "call": "page.evaluate",
+              "begin_ns": 727103913785,
+              "end_ns": 727109823592,
+              "trace_bounds_us": [
+                727103621.8149999,
+                727113008.362
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "cdp:SystemInfo.getProcessInfo",
+              "begin_ns": 727110810055,
+              "end_ns": 727111720973,
+              "trace_bounds_us": [
+                727110518.0849999,
+                727114905.743
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1854/status",
+              "begin_ns": 727112913668,
+              "end_ns": 727112992743,
+              "trace_bounds_us": [
+                727112621.698,
+                727116177.513
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1801/status",
+              "begin_ns": 727113031020,
+              "end_ns": 727113054769,
+              "trace_bounds_us": [
+                727112739.05,
+                727116239.539
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1789/status",
+              "begin_ns": 727113082375,
+              "end_ns": 727113100168,
+              "trace_bounds_us": [
+                727112790.405,
+                727116284.938
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1854/status",
+              "begin_ns": 727113137921,
+              "end_ns": 727113155235,
+              "trace_bounds_us": [
+                727112845.951,
+                727116340.005
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1854/smaps_rollup",
+              "begin_ns": 727113194915,
+              "end_ns": 727114021528,
+              "trace_bounds_us": [
+                727112902.9449999,
+                727117206.298
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1801/status",
+              "begin_ns": 727114076671,
+              "end_ns": 727114113978,
+              "trace_bounds_us": [
+                727113784.701,
+                727117298.748
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1801/smaps_rollup",
+              "begin_ns": 727114139981,
+              "end_ns": 727116869615,
+              "trace_bounds_us": [
+                727113848.0109999,
+                727120054.385
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1789/status",
+              "begin_ns": 727116923343,
+              "end_ns": 727116960056,
+              "trace_bounds_us": [
+                727116631.373,
+                727120144.826
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1789/smaps_rollup",
+              "begin_ns": 727116983487,
+              "end_ns": 727118024357,
+              "trace_bounds_us": [
+                727116691.517,
+                727121209.127
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "cdp:Runtime.getHeapUsage",
+              "begin_ns": 727118048993,
+              "end_ns": 727119141158,
+              "trace_bounds_us": [
+                727117757.023,
+                727122325.928
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "cdp:Memory.getDOMCounters",
+              "begin_ns": 727119143458,
+              "end_ns": 727119887945,
+              "trace_bounds_us": [
+                727118851.4879999,
+                727123072.715
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "cdp:Runtime.evaluate",
+              "begin_ns": 727119890334,
+              "end_ns": 727121150798,
+              "trace_bounds_us": [
+                727119598.364,
+                727124335.568
+              ],
+              "covered": true,
+              "gc_overlap": []
+            }
+          ]
+        },
+        {
+          "mount": 20,
+          "components": [
+            {
+              "call": "page.evaluate",
+              "begin_ns": 728796547563,
+              "end_ns": 728802915421,
+              "trace_bounds_us": [
+                728796255.5929999,
+                728806100.191
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "cdp:SystemInfo.getProcessInfo",
+              "begin_ns": 728808286892,
+              "end_ns": 728812423830,
+              "trace_bounds_us": [
+                728807994.9219999,
+                728815608.6
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1854/status",
+              "begin_ns": 728816951748,
+              "end_ns": 728817024658,
+              "trace_bounds_us": [
+                728816659.778,
+                728820209.428
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1801/status",
+              "begin_ns": 728817055077,
+              "end_ns": 728817073000,
+              "trace_bounds_us": [
+                728816763.107,
+                728820257.77
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1789/status",
+              "begin_ns": 728817093490,
+              "end_ns": 728817107574,
+              "trace_bounds_us": [
+                728816801.52,
+                728820292.344
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1854/status",
+              "begin_ns": 728817138232,
+              "end_ns": 728817151104,
+              "trace_bounds_us": [
+                728816846.262,
+                728820335.874
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1854/smaps_rollup",
+              "begin_ns": 728817177581,
+              "end_ns": 728817973031,
+              "trace_bounds_us": [
+                728816885.611,
+                728821157.801
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1801/status",
+              "begin_ns": 728818028149,
+              "end_ns": 728818061786,
+              "trace_bounds_us": [
+                728817736.179,
+                728821246.556
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1801/smaps_rollup",
+              "begin_ns": 728818084747,
+              "end_ns": 728824828220,
+              "trace_bounds_us": [
+                728817792.777,
+                728828012.99
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1789/status",
+              "begin_ns": 728824902212,
+              "end_ns": 728824952859,
+              "trace_bounds_us": [
+                728824610.242,
+                728828137.629
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1789/smaps_rollup",
+              "begin_ns": 728824982253,
+              "end_ns": 728826027095,
+              "trace_bounds_us": [
+                728824690.283,
+                728829211.865
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "cdp:Runtime.getHeapUsage",
+              "begin_ns": 728826052008,
+              "end_ns": 728832764193,
+              "trace_bounds_us": [
+                728825760.038,
+                728835948.9629999
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "cdp:Memory.getDOMCounters",
+              "begin_ns": 728832767274,
+              "end_ns": 728836760589,
+              "trace_bounds_us": [
+                728832475.304,
+                728839945.359
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "cdp:Runtime.evaluate",
+              "begin_ns": 728836765346,
+              "end_ns": 728839992347,
+              "trace_bounds_us": [
+                728836473.3759999,
+                728843177.117
+              ],
+              "covered": true,
+              "gc_overlap": []
+            }
+          ]
+        }
+      ],
+      "coverage_errors": [
+        "Natural collection/sweeping coverage absent"
+      ],
+      "app_pid": 1801,
+      "event_count": 12880,
+      "gc_event_count": 0,
+      "clock": {
+        "offset_us": [
+          -291.97000002861023,
+          3184.7699999809265
+        ],
+        "coverage_us": [
+          721083021,
+          728843236
+        ]
+      }
+    },
+    {
+      "index": 2,
+      "mode": "probe",
+      "navigation_ms": 6877.749804,
+      "observation_fraction_bound": 0.01796627218514621,
+      "max_observation_ms": 24.039273,
+      "checkpoints": [
+        {
+          "mount": 1,
+          "components": [
+            {
+              "call": "page.evaluate",
+              "begin_ns": 809821209767,
+              "end_ns": 809827611747,
+              "trace_bounds_us": [
+                809820789.582,
+                809828373.8249999
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "cdp:SystemInfo.getProcessInfo",
+              "begin_ns": 809829051434,
+              "end_ns": 809829977001,
+              "trace_bounds_us": [
+                809828631.2490001,
+                809830739.079
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/2042/status",
+              "begin_ns": 809831013182,
+              "end_ns": 809831082645,
+              "trace_bounds_us": [
+                809830592.9970001,
+                809831844.7229999
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1988/status",
+              "begin_ns": 809831114195,
+              "end_ns": 809831132221,
+              "trace_bounds_us": [
+                809830694.0100001,
+                809831894.2989999
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1976/status",
+              "begin_ns": 809831153666,
+              "end_ns": 809831167734,
+              "trace_bounds_us": [
+                809830733.4810001,
+                809831929.8119999
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/2042/status",
+              "begin_ns": 809831195229,
+              "end_ns": 809831207636,
+              "trace_bounds_us": [
+                809830775.044,
+                809831969.714
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/2042/smaps_rollup",
+              "begin_ns": 809831234667,
+              "end_ns": 809832180809,
+              "trace_bounds_us": [
+                809830814.4820001,
+                809832942.887
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1988/status",
+              "begin_ns": 809832240421,
+              "end_ns": 809832278635,
+              "trace_bounds_us": [
+                809831820.2360001,
+                809833040.7129999
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1988/smaps_rollup",
+              "begin_ns": 809832303544,
+              "end_ns": 809834788926,
+              "trace_bounds_us": [
+                809831883.3590001,
+                809835551.004
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1976/status",
+              "begin_ns": 809834855276,
+              "end_ns": 809834907837,
+              "trace_bounds_us": [
+                809834435.0910001,
+                809835669.915
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1976/smaps_rollup",
+              "begin_ns": 809834935120,
+              "end_ns": 809836669261,
+              "trace_bounds_us": [
+                809834514.9350001,
+                809837431.339
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "cdp:Runtime.getHeapUsage",
+              "begin_ns": 809836698058,
+              "end_ns": 809840505142,
+              "trace_bounds_us": [
+                809836277.873,
+                809841267.2199999
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "cdp:Memory.getDOMCounters",
+              "begin_ns": 809840508897,
+              "end_ns": 809842518712,
+              "trace_bounds_us": [
+                809840088.712,
+                809843280.79
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "cdp:Runtime.evaluate",
+              "begin_ns": 809842522242,
+              "end_ns": 809845099847,
+              "trace_bounds_us": [
+                809842102.057,
+                809845861.925
+              ],
+              "covered": true,
+              "gc_overlap": []
+            }
+          ]
+        },
+        {
+          "mount": 5,
+          "components": [
+            {
+              "call": "page.evaluate",
+              "begin_ns": 811176946789,
+              "end_ns": 811182888046,
+              "trace_bounds_us": [
+                811176526.6040001,
+                811183650.124
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "cdp:SystemInfo.getProcessInfo",
+              "begin_ns": 811184234816,
+              "end_ns": 811185854253,
+              "trace_bounds_us": [
+                811183814.631,
+                811186616.331
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/2042/status",
+              "begin_ns": 811187363550,
+              "end_ns": 811187435651,
+              "trace_bounds_us": [
+                811186943.365,
+                811188197.729
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1988/status",
+              "begin_ns": 811187467308,
+              "end_ns": 811187488646,
+              "trace_bounds_us": [
+                811187047.123,
+                811188250.724
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1976/status",
+              "begin_ns": 811187510339,
+              "end_ns": 811187525929,
+              "trace_bounds_us": [
+                811187090.154,
+                811188288.007
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/2042/status",
+              "begin_ns": 811187556893,
+              "end_ns": 811187571485,
+              "trace_bounds_us": [
+                811187136.7080001,
+                811188333.563
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/2042/smaps_rollup",
+              "begin_ns": 811187599389,
+              "end_ns": 811188551327,
+              "trace_bounds_us": [
+                811187179.2040001,
+                811189313.405
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1988/status",
+              "begin_ns": 811188609517,
+              "end_ns": 811188736816,
+              "trace_bounds_us": [
+                811188189.332,
+                811189498.8939999
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1988/smaps_rollup",
+              "begin_ns": 811188767223,
+              "end_ns": 811191609865,
+              "trace_bounds_us": [
+                811188347.0380001,
+                811192371.943
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1976/status",
+              "begin_ns": 811191692889,
+              "end_ns": 811191740349,
+              "trace_bounds_us": [
+                811191272.7040001,
+                811192502.4269999
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1976/smaps_rollup",
+              "begin_ns": 811191765812,
+              "end_ns": 811192842323,
+              "trace_bounds_us": [
+                811191345.6270001,
+                811193604.4009999
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "cdp:Runtime.getHeapUsage",
+              "begin_ns": 811192866518,
+              "end_ns": 811193973261,
+              "trace_bounds_us": [
+                811192446.3330001,
+                811194735.339
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "cdp:Memory.getDOMCounters",
+              "begin_ns": 811193976701,
+              "end_ns": 811194877927,
+              "trace_bounds_us": [
+                811193556.516,
+                811195640.005
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "cdp:Runtime.evaluate",
+              "begin_ns": 811194881774,
+              "end_ns": 811196506546,
+              "trace_bounds_us": [
+                811194461.5890001,
+                811197268.624
+              ],
+              "covered": true,
+              "gc_overlap": []
+            }
+          ]
+        },
+        {
+          "mount": 10,
+          "components": [
+            {
+              "call": "page.evaluate",
+              "begin_ns": 812893297305,
+              "end_ns": 812900079343,
+              "trace_bounds_us": [
+                812892877.12,
+                812900841.421
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "cdp:SystemInfo.getProcessInfo",
+              "begin_ns": 812901399561,
+              "end_ns": 812902328452,
+              "trace_bounds_us": [
+                812900979.376,
+                812903090.53
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/2042/status",
+              "begin_ns": 812903348231,
+              "end_ns": 812903437522,
+              "trace_bounds_us": [
+                812902928.046,
+                812904199.5999999
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1988/status",
+              "begin_ns": 812903484944,
+              "end_ns": 812903518751,
+              "trace_bounds_us": [
+                812903064.7590001,
+                812904280.829
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1976/status",
+              "begin_ns": 812903550988,
+              "end_ns": 812903575557,
+              "trace_bounds_us": [
+                812903130.8030001,
+                812904337.635
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/2042/status",
+              "begin_ns": 812903669062,
+              "end_ns": 812903700336,
+              "trace_bounds_us": [
+                812903248.8770001,
+                812904462.4139999
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/2042/smaps_rollup",
+              "begin_ns": 812903745745,
+              "end_ns": 812904846256,
+              "trace_bounds_us": [
+                812903325.5600001,
+                812905608.334
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1988/status",
+              "begin_ns": 812904910952,
+              "end_ns": 812904957565,
+              "trace_bounds_us": [
+                812904490.7670001,
+                812905719.643
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1988/smaps_rollup",
+              "begin_ns": 812904985597,
+              "end_ns": 812907941868,
+              "trace_bounds_us": [
+                812904565.4120001,
+                812908703.946
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1976/status",
+              "begin_ns": 812908043042,
+              "end_ns": 812908094604,
+              "trace_bounds_us": [
+                812907622.8570001,
+                812908856.6819999
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1976/smaps_rollup",
+              "begin_ns": 812908123634,
+              "end_ns": 812909186784,
+              "trace_bounds_us": [
+                812907703.449,
+                812909948.862
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "cdp:Runtime.getHeapUsage",
+              "begin_ns": 812909212568,
+              "end_ns": 812910446125,
+              "trace_bounds_us": [
+                812908792.383,
+                812911208.203
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "cdp:Memory.getDOMCounters",
+              "begin_ns": 812910449220,
+              "end_ns": 812911391908,
+              "trace_bounds_us": [
+                812910029.0350001,
+                812912153.986
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "cdp:Runtime.evaluate",
+              "begin_ns": 812911395139,
+              "end_ns": 812912825437,
+              "trace_bounds_us": [
+                812910974.9540001,
+                812913587.515
+              ],
+              "covered": true,
+              "gc_overlap": []
+            }
+          ]
+        },
+        {
+          "mount": 15,
+          "components": [
+            {
+              "call": "page.evaluate",
+              "begin_ns": 814611395029,
+              "end_ns": 814618221987,
+              "trace_bounds_us": [
+                814610974.8440001,
+                814618984.0649999
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "cdp:SystemInfo.getProcessInfo",
+              "begin_ns": 814619442488,
+              "end_ns": 814620550006,
+              "trace_bounds_us": [
+                814619022.3030001,
+                814621312.084
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/2042/status",
+              "begin_ns": 814621559654,
+              "end_ns": 814621661709,
+              "trace_bounds_us": [
+                814621139.4690001,
+                814622423.787
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1988/status",
+              "begin_ns": 814621695120,
+              "end_ns": 814621717988,
+              "trace_bounds_us": [
+                814621274.9350001,
+                814622480.066
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1976/status",
+              "begin_ns": 814621738751,
+              "end_ns": 814621753431,
+              "trace_bounds_us": [
+                814621318.5660001,
+                814622515.509
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/2042/status",
+              "begin_ns": 814621783866,
+              "end_ns": 814621797074,
+              "trace_bounds_us": [
+                814621363.6810001,
+                814622559.152
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/2042/smaps_rollup",
+              "begin_ns": 814621823444,
+              "end_ns": 814622606646,
+              "trace_bounds_us": [
+                814621403.2590001,
+                814623368.724
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1988/status",
+              "begin_ns": 814622694722,
+              "end_ns": 814622731339,
+              "trace_bounds_us": [
+                814622274.5370001,
+                814623493.4169999
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1988/smaps_rollup",
+              "begin_ns": 814622754489,
+              "end_ns": 814625599192,
+              "trace_bounds_us": [
+                814622334.304,
+                814626361.27
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1976/status",
+              "begin_ns": 814625695267,
+              "end_ns": 814625743033,
+              "trace_bounds_us": [
+                814625275.082,
+                814626505.111
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1976/smaps_rollup",
+              "begin_ns": 814625770524,
+              "end_ns": 814626837136,
+              "trace_bounds_us": [
+                814625350.3390001,
+                814627599.214
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "cdp:Runtime.getHeapUsage",
+              "begin_ns": 814626864920,
+              "end_ns": 814627906207,
+              "trace_bounds_us": [
+                814626444.735,
+                814628668.285
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "cdp:Memory.getDOMCounters",
+              "begin_ns": 814627909296,
+              "end_ns": 814628771195,
+              "trace_bounds_us": [
+                814627489.1110001,
+                814629533.273
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "cdp:Runtime.evaluate",
+              "begin_ns": 814628774077,
+              "end_ns": 814629878277,
+              "trace_bounds_us": [
+                814628353.8920001,
+                814630640.3549999
+              ],
+              "covered": true,
+              "gc_overlap": []
+            }
+          ]
+        },
+        {
+          "mount": 20,
+          "components": [
+            {
+              "call": "page.evaluate",
+              "begin_ns": 816304435219,
+              "end_ns": 816309796376,
+              "trace_bounds_us": [
+                816304015.034,
+                816310558.454
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "cdp:SystemInfo.getProcessInfo",
+              "begin_ns": 816310651542,
+              "end_ns": 816311351781,
+              "trace_bounds_us": [
+                816310231.3570001,
+                816312113.859
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/2042/status",
+              "begin_ns": 816312136223,
+              "end_ns": 816312231583,
+              "trace_bounds_us": [
+                816311716.0380001,
+                816312993.6609999
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1988/status",
+              "begin_ns": 816312261140,
+              "end_ns": 816312280661,
+              "trace_bounds_us": [
+                816311840.955,
+                816313042.739
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1976/status",
+              "begin_ns": 816312299954,
+              "end_ns": 816312313434,
+              "trace_bounds_us": [
+                816311879.769,
+                816313075.512
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/2042/status",
+              "begin_ns": 816312342554,
+              "end_ns": 816312356365,
+              "trace_bounds_us": [
+                816311922.3690001,
+                816313118.443
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/2042/smaps_rollup",
+              "begin_ns": 816312384321,
+              "end_ns": 816313175132,
+              "trace_bounds_us": [
+                816311964.136,
+                816313937.2099999
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1988/status",
+              "begin_ns": 816313225864,
+              "end_ns": 816313256276,
+              "trace_bounds_us": [
+                816312805.679,
+                816314018.354
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1988/smaps_rollup",
+              "begin_ns": 816313281302,
+              "end_ns": 816315949852,
+              "trace_bounds_us": [
+                816312861.1170001,
+                816316711.93
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1976/status",
+              "begin_ns": 816316039031,
+              "end_ns": 816316072065,
+              "trace_bounds_us": [
+                816315618.8460001,
+                816316834.143
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "/proc/1976/smaps_rollup",
+              "begin_ns": 816316097604,
+              "end_ns": 816317104952,
+              "trace_bounds_us": [
+                816315677.419,
+                816317867.03
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "cdp:Runtime.getHeapUsage",
+              "begin_ns": 816317130894,
+              "end_ns": 816321479028,
+              "trace_bounds_us": [
+                816316710.7090001,
+                816322241.106
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "cdp:Memory.getDOMCounters",
+              "begin_ns": 816321481584,
+              "end_ns": 816324673010,
+              "trace_bounds_us": [
+                816321061.399,
+                816325435.0879999
+              ],
+              "covered": true,
+              "gc_overlap": []
+            },
+            {
+              "call": "cdp:Runtime.evaluate",
+              "begin_ns": 816324675204,
+              "end_ns": 816328460750,
+              "trace_bounds_us": [
+                816324255.019,
+                816329222.828
+              ],
+              "covered": false,
+              "gc_overlap": []
+            }
+          ]
+        }
+      ],
+      "coverage_errors": [],
+      "app_pid": 1988,
+      "event_count": 12704,
+      "gc_event_count": 261,
+      "clock": {
+        "offset_us": [
+          -420.18499994277954,
+          762.0779999494553
+        ],
+        "coverage_us": [
+          809468316,
+          816328896
+        ]
+      }
+    },
+    {
+      "index": 3,
+      "mode": "control",
+      "navigation_ms": 7800.920583,
+      "observation_fraction_bound": 0.014425376056927357,
+      "max_observation_ms": 26.629799,
+      "checkpoints": []
+    }
+  ],
+  "source_hashes_verified": 128,
+  "files_verified": 30
+}

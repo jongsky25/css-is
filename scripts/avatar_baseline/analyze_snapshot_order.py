@@ -81,8 +81,9 @@ def inspect(folder, p, rows):
     if len(pids) != 1:
         raise ValueError('Ambiguous app renderer')
     pid = next(iter(pids)); clock = clock_bounds(p, events); gc = selected_events(events, pid)
+    result['coverage_errors'] = []
     if not any(e['name'] == 'MajorGC' for e in gc) or not any('Sweep' in e['name'] for e in gc):
-        raise ValueError('Natural collection/sweeping coverage absent')
+        result['coverage_errors'].append('Natural collection/sweeping coverage absent')
     result.update(app_pid=pid, event_count=len(events), gc_event_count=len(gc), clock=clock)
     for s in snapshots[8:]:
         if sum(d['pid'] == pid for d in s['snapshot']['renderer_memory_detail']) != 1:
@@ -95,7 +96,7 @@ def inspect(folder, p, rows):
                                'gc_overlap': [e for e in gc if position(e, bounds) == 'overlap_or_uncertain']})
         result['checkpoints'].append({'mount': s['mount'], 'components': components})
     if any(not c['covered'] for s in result['checkpoints'] if s['mount'] in (5, 10) for c in s['components']):
-        raise ValueError('Failing-checkpoint trace coverage incomplete')
+        result['coverage_errors'].append('Failing-checkpoint trace coverage incomplete')
     return result
 
 
@@ -104,6 +105,7 @@ def gate(cohorts):
     if len(cohorts) != 4 or any(c.get('error') for c in cohorts):
         return ['Four intact calibration slots required']
     for i, c in enumerate(cohorts):
+        errors.extend(f'Slot {i}: {error}' for error in c.get('coverage_errors', []))
         if c['observation_fraction_bound'] > .05 or c['max_observation_ms'] > 250:
             errors.append(f'Slot {i}: observation bound exceeds 5% or 250ms')
     durations = [c['navigation_ms'] for c in cohorts]

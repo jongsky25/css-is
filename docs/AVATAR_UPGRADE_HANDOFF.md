@@ -2,7 +2,7 @@
 
 Last updated: **2026-10-27 UTC**. Repository: `jongsky25/css-is`.
 
-## Start here — Sol handoff, current as of dc06be8
+## Start here — Sol handoff, current after component-order calibration
 
 **Objective: unblock 2B only. Do not start or resume 3A or later increments.**
 This section supersedes older next-step instructions below. The chronology is
@@ -11,16 +11,17 @@ retained as evidence, not a queue of experiments to repeat.
 ### Checkout and current state
 
 - Repository: `jongsky25/css-is`; resume `codex/avatar-2b-verification`.
-- Latest completed experiment/evidence commit: `dc06be8` (pushed). This handoff
-  update follows it; use the latest branch HEAD, not a reset to that commit.
+- Latest completed experiment: component-order calibration, harness `f84ef99`.
+  Its evidence/report follow on this branch; use latest HEAD, not a reset to the
+  harness commit. Prior gradient experiment remains preserved in `dc06be8`.
 - Comparison baseline: `1c964dcba2fa19de1eab077b00e0e5748d742554`.
 - Current experimental product: `cf363bfe547d5e23619eee28cdaf68bd4b6d7753`,
   including the thread-owned reader candidate and avatar product `f700187`.
   It is not an accepted 2B release.
 - Latest isolated candidate: `codex/avatar-shared-cat-gradients`,
   `cd94bf35d29b796ca0d6467756221e4b545a40be`. Do not silently promote it.
-- Both working trees were clean at the completed experiment handoff. No active
-  measurement, pending deployment or merge. Verify state in the new environment.
+- Product sources remain unchanged; no active measurement, pending deployment
+  or merge. Verify checkout and working-tree state in the new environment.
 - Pinned browser: Chromium `156.0.8078.47`; exact native build
   `1c5dca8527a61d07372e489142bee26af1bcaf71`. Do not substitute another build
   for the frozen comparisons. Scratch paths may not survive a new session;
@@ -43,6 +44,12 @@ markup and improves navigation 20 in both orders, but those partial benefits
 cannot override the failed gates. This screen compares current versus candidate;
 it is not the complete original-versus-candidate acceptance matrix.
 
+Latest diagnostic: [component-order calibration](avatars/increment2b/snapshot-ordering/REPORT.md)
+completed all four current-only workloads, but fails natural-GC/sweep coverage in
+slot 1. Timing/control-duration gates pass; 128 source hashes and 30 files verify,
+and the reconstructed archive re-audits identically. No source comparison ran.
+This result does not qualify a product fix or override any memory failure.
+
 There is no defensible percentage or ETA. At least three milestones remain:
 
 1. Establish and implement a supported correction that produces a repeatable
@@ -61,32 +68,39 @@ verification**. No candidate currently qualifies to unblock 2B.
 
 Read these in order before changing code or launching browsers:
 
-1. [Latest candidate report](avatars/increment2b/shared-cat-gradients/REPORT.md),
-   its protocol, preconditions and `memory-assessment.json`.
-2. [Corrected overall 2B report](avatars/increment2b/REPORT.md) and the
+1. [Component-order result](avatars/increment2b/snapshot-ordering/REPORT.md), its
+   frozen protocol, retained-samples review and corrected/initial calibration audits.
+2. [Latest product candidate](avatars/increment2b/shared-cat-gradients/REPORT.md),
+   its protocol, preconditions and memory assessment.
+3. [Corrected overall 2B report](avatars/increment2b/REPORT.md) and the
    [plan's acceptance gates](AVATAR_VISUAL_UPGRADE_PLAN.md#performance-acceptance-gates).
-3. [Native page history](avatars/increment2b/page-history-application/REPORT.md),
+4. [Native page history](avatars/increment2b/page-history-application/REPORT.md),
    [reader retention](avatars/increment2b/reader-retention/REPORT.md), and
    [native type inventory](avatars/increment2b/native-type-ownership/REPORT.md).
-4. Before proposing teardown or stylesheet changes, read the already-failed
+5. Before teardown or stylesheet changes, read the failed
    [lifecycle candidate](avatars/increment2b/lifecycle-memory-fix/REPORT.md) and
    [shared stylesheet candidate](avatars/increment2b/shared-stylesheet/REPORT.md).
 
-Start with the retained evidence, not another unchanged browser run. Reconstruct
-and re-audit the latest memory archive using the commands in its report. Compare
-individual samples at the failing navigation 5/10 checkpoints with the same-source
-controls and the existing reclamation evidence. Identify what a new intervention
-would change and what observation would falsify its hypothesis. If existing
-captures cannot answer the question, state the exact missing observation and
-freeze one bounded diagnostic with appropriate overhead/coverage gates before
-collection. Do not launch a generic profiling sequence merely because a tool exists.
+The retained gradient archive has now been reconstructed and re-audited identically;
+all 40 navigation samples and 32 adjacent intervals were reviewed. That decision
+step must not be repeated as though unfinished. The new component-order harness
+preserves exact original calls and timestamps them, but its fixed current-only
+calibration fails: one probe has no recorded navigation collection/sweeping. No
+slot replacement or source comparison is authorized by that result. Both traces
+cover every component at navigation 5/10; the other probe has no recorded GC
+interval overlapping those component brackets. This does not establish historical
+ordering or identify owners of pooled capacity. The navigation-20 conservative
+clock-boundary limitation and initial auditor reporting failure remain explicit.
 
-Choose one supported product intervention, keep it isolated, and validate appearance
-and behavior before measuring memory. If it fails, retain the complete result and
-revise the hypothesis; do not repeat it unchanged or expand shared gradients across
-species as though their RSS benefit had been proven. The next specific fix is
-**not yet established**; the evidence review is a decision step, not a promise
-that another small SVG change will solve the blocker.
+Next identify a concrete source-ownership discriminant for native allocations
+carried from earlier scenarios into navigation. Prove coverage on a controlled
+fixture before a new application probe, and freeze revised capture-window,
+coverage and overhead gates before collection. Do not simply repeat this
+calibration for collection events, extend tracing solely until an event appears,
+or run another post-GC dump. Component timing is implemented; source-linked
+allocation/reclamation ownership is still missing. The next product fix is
+**not established**. Preserve all failures; no speculative teardown, gradient
+expansion, unchanged acceptance rerun or budget waiver.
 
 ### Important traps and execution constraints
 
@@ -110,12 +124,12 @@ that another small SVG change will solve the blocker.
 
 > Continue jongsky25/css-is on codex/avatar-2b-verification using Sol. Read the
 > authoritative “Start here — Sol handoff” section in docs/AVATAR_UPGRADE_HANDOFF.md
-> and its linked latest report. Goal: unblock 2B only, not 3A. Latest shared-cat-
-> gradient candidate cd94bf3 passed visual checks but failed the uninjected memory
-> screen; evidence is in dc06be8. Begin with the archived failing checkpoints and
-> same-source controls, choose one evidence-supported next intervention or bounded
-> missing-observation experiment, and execute its validation gates. Preserve all
-> failures; do not waive budgets or rerun unchanged candidates for a favorable result.
+> and the snapshot-ordering report. Goal: unblock 2B only, not 3A. Harness f84ef99
+> completed four current-only slots but failed natural-GC/sweep coverage in slot 1;
+> no source comparison ran. Gradient candidate cd94bf3 still fails its memory screen.
+> Next establish a concrete native-allocation source-ownership discriminant and
+> controlled-fixture coverage before freezing a revised diagnostic. Do not replace
+> the failed slot, repeat unchanged runs for favorable collection, or waive budgets.
 
 ## Current blocking correction
 
