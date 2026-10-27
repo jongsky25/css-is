@@ -4159,6 +4159,7 @@ def audit_insights(conn):
 # is never blank — it just isn't categorised until added here.
 _AUDIT_ACTIONS = {
     "integration_issue": ("Connected an external tool", "Accounts"),
+    "work_comment_draft_save": ("Saved a private task comment draft", "Shared work"),
     "integration_action_prepare": ("Prepared a connected-tool action", "Accounts"),
     "integration_action_complete": ("Confirmed a connected-tool action", "Accounts"),
     "integration_revoke": ("Revoked a tool credential", "Accounts"),

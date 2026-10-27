@@ -20,6 +20,7 @@ import integration_api as api
 import mcp_auth
 import mcp_actions
 import mcp_supply_drafts
+import mcp_comment_drafts
 import supplies_storage
 import office_calendar
 import ratelimit
@@ -163,8 +164,8 @@ def build_server(get_conn, origin):
                 raise LookupError('Record or operation not found or unavailable to you.') from None
             except mcp_actions.ActionError as exc:
                 raise ValueError(exc.code + ': ' + str(exc)) from None
-            except (supplies_storage.Invalid, supplies_storage.Conflict):
-                raise ValueError('draft_unavailable: Review the draft fields, current catalog and your staff linkage in Office Connect.') from None
+            except (supplies_storage.Invalid, supplies_storage.Conflict, documents.Conflict):
+                raise ValueError('draft_unavailable: Review the current target, draft fields and your access in Office Connect.') from None
             finally:
                 conn.close()
         return await asyncio.to_thread(run)
@@ -226,6 +227,37 @@ def build_server(get_conn, origin):
         """
         return await action(lambda conn, token: mcp_supply_drafts.recover(
             conn, token, provider.resource, origin, operation_id), mcp_supply_drafts.SCOPE)
+
+    @server.tool(title='Prepare my private task comment draft', annotations=ToolAnnotations(
+        readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=False))
+    async def prepare_task_comment_draft(work_item_id: StrictInt, task_id: StrictInt, body: StrictStr,
+                                         operation_id: StrictStr) -> dict:
+        """Prepare a NEW owner-private text draft for one currently permitted task.
+
+        Use exact work/task IDs from Office Connect. Supply your proposed text
+        (1–4000 characters), not scraped private discussion/submission content.
+        Show the returned confirmation link: only the user can review and confirm
+        saving this private draft in the browser. It does not post a message,
+        mention anybody, notify followers, or change task/workflow state.
+        Keep the same random 16–80 character operation key for retries and recover
+        with get_task_comment_draft_operation. Do not invent a new key after a
+        timeout. Requires separate work:comment:draft consent.
+        """
+        return await action(lambda conn, token: mcp_comment_drafts.prepare(
+            conn, token, provider.resource, origin, operation_id,
+            {'work_item_id': work_item_id, 'task_id': task_id, 'body': body}), mcp_comment_drafts.SCOPE)
+
+    @server.tool(title='Check my task comment draft receipt', annotations=READ_ONLY)
+    async def get_task_comment_draft_operation(operation_id: StrictStr) -> dict:
+        """Recover a private comment draft preview/save through its original key.
+
+        Same active connection and work:comment:draft consent are required. Returns
+        a receipt and private source link, not draft/discussion text. A saved draft
+        is not a posted comment. Unavailable is not proof of failure; inspect the
+        original operation/source before preparing a replacement key.
+        """
+        return await action(lambda conn, token: mcp_comment_drafts.recover(
+            conn, token, provider.resource, origin, operation_id), mcp_comment_drafts.SCOPE)
 
     def supply_queue(conn, user, queue, state, query, page, limit):
         if queue not in ('requests', 'approvals', 'warnings'):

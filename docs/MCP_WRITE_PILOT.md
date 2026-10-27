@@ -18,7 +18,9 @@ provided in this chat and must not be invented or treated as measured evidence.
 This first action establishes the pattern for later M2 writes. Its storage
 supports only the notification action. The shared browser confirmation boundary
 also serves the independent [v8.79 supply-draft pilot](MCP_SUPPLY_DRAFT_PILOT.md),
-which has its own scope, switch, storage and domain checks. Future domains need
+which has its own scope, switch, storage and domain checks. The same boundary
+also serves [v8.81 private task comment drafts](MCP_COMMENT_DRAFT_PILOT.md).
+Future domains need
 their own authority, revision and preview review before reusing this pattern.
 
 1. A new granular OAuth permission, `notifications:mark_read`, is eligible at
