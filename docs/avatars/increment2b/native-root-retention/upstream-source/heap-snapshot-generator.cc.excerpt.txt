@@ -1,0 +1,37 @@
+Lines 3908 onward:
+3908: bool HeapSnapshotGenerator::GenerateSnapshotAfterGC() {
+3909:   // Same as above, but no allocations, no GC run, and no progress report.
+3910:   SafepointScope scope(heap_->isolate(), kGlobalSafepointForSharedSpaceIsolate);
+3911: 
+3912: #ifdef DEBUG
+3913:   heap_object_map_->CheckEntriesNotAccessed();
+3914: #endif
+3915: 
+3916:   // There is short gap between leaving the GC's safepoint and entering the
+3917:   // snapshot's safepoint above. It is necessary to not only complete sweeping,
+3918:   // but also ensure that linear allocation areas are iterable.
+3919:   heap_->MakeHeapIterable(CompleteSweepingReason::kHeapSnapshot);
+3920:   auto temporary_native_context_tags =
+3921:       v8_heap_explorer_.CollectTemporaryNativeContextTags();
+3922:   NullContextForSnapshotScope null_context_scope(heap_->isolate());
+3923:   v8_heap_explorer_.MakeNativeContextTagMap(
+3924:       std::move(temporary_native_context_tags));
+3925:   snapshot_->AddSyntheticRootEntries();
+3926:   v8_heap_explorer_.PopulateLineEnds();
+3927:   v8_heap_explorer_.RecordScriptSources();
+3928:   if (!FillReferences()) return false;
+3929:   snapshot_->FillChildren();
+3930:   snapshot_->RememberLastJSObjectId();
+3931:   return true;
+3932: }
+3933: 
+3934: void HeapSnapshotGenerator::ProgressStep() {
+3935:   // Only increment the progress_counter_ until
+3936:   // equal to progress_total -1 == progress_counter.
+3937:   // This ensures that intermediate ProgressReport calls will never signal
+3938:   // that the work is finished (i.e. progress_counter_ == progress_total_).
+3939:   // Only the forced ProgressReport() at the end of GenerateSnapshot() should,
+3940:   // after setting progress_counter_ = progress_total_, signal that the
+3941:   // work is finished because signalling finished twice
+3942:   // breaks the DevTools frontend.
+3943:   if (control_ != nullptr && progress_total_ > progress_counter_ + 1) {

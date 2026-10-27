@@ -1,0 +1,74 @@
+Lines 1626 onward:
+1626:     if (v8_flags.heap_snapshot_on_gc >= 0) [[unlikely]] {
+1627:       const size_t gc_counter_filter =
+1628:           static_cast<size_t>(v8_flags.heap_snapshot_on_gc);
+1629:       if (!isolate()->has_active_deserializer() &&
+1630:           (gc_counter_filter == 0 || gc_counter_filter == ms_count_)) {
+1631:         heap_profiler()->WriteSnapshotToDiskAfterGC();
+1632:       }
+1633:     }
+1634:   } else {
+1635:     // Start incremental marking for the next cycle. We do this only for
+1636:     // minor GCs to avoid a loop where mark-compact causes another mark-compact.
+1637:     StartIncrementalMarkingIfAllocationLimitIsReached(
+1638:         main_thread_local_heap(), GCFlagsForIncrementalMarking(),
+1639:         kGCCallbackScheduleIdleGarbageCollection);
+1640:     if (v8_flags.minor_ms &&
+1641:         (gc_reason != GarbageCollectionReason::kFinalizeMinorMSForMajorGC)) {
+1642:       StartMinorMSConcurrentMarkingIfNeeded();
+1643:     }
+1644:   }
+1645: 
+1646:   if (perform_heap_limit_check) {
+1647:     CheckHeapLimitReached();
+1648:   }
+1649: 
+1650:   if (collector == GarbageCollector::MARK_COMPACTOR) {
+1651:     if (check_ineffective_mark_compact) {
+1652:       CheckIneffectiveMarkCompact(
+1653:           OldGenerationConsumedBytes(), GlobalConsumedBytes(),
+1654:           tracer()->AverageMarkCompactMutatorUtilization());
+1655:     }
+1656:     current_gc_flags_ = GCFlag::kNoFlags;
+1657:   }
+1658: }
+1659: 
+1660: bool Heap::ReachedHeapLimit() {
+1661:   return !CanExpandOldGeneration(0) ||
+Lines 3373 onward:
+3373: void Heap::MakeHeapIterable(CompleteSweepingReason reason) {
+3374:   EnsureSweepingCompleted(SweepingForcedFinalizationMode::kV8Only, reason);
+3375: 
+3376:   MakeLinearAllocationAreasIterable();
+3377: }
+3378: 
+3379: void Heap::MakeLinearAllocationAreasIterable() {
+3380:   allocator()->MakeLinearAllocationAreasIterable();
+3381: 
+3382:   safepoint()->IterateLocalHeaps([](LocalHeap* local_heap) {
+3383:     local_heap->MakeLinearAllocationAreasIterable();
+3384:   });
+3385: 
+3386:   if (isolate()->is_shared_space_isolate()) {
+3387:     isolate()->global_safepoint()->IterateClientIsolates([](Isolate* client) {
+3388:       client->heap()->MakeLinearAllocationAreasIterable();
+3389:     });
+3390:   }
+3391: }
+3392: 
+3393: void Heap::FreeLinearAllocationAreas() {
+3394:   FreeMainThreadLinearAllocationAreas();
+3395: 
+3396:   safepoint()->IterateLocalHeaps(
+3397:       [](LocalHeap* local_heap) { local_heap->FreeLinearAllocationAreas(); });
+3398: 
+3399:   if (isolate()->is_shared_space_isolate()) {
+3400:     isolate()->global_safepoint()->IterateClientIsolates(
+3401:         [](Isolate* client) { client->heap()->FreeLinearAllocationAreas(); });
+3402:   }
+3403: }
+3404: 
+3405: void Heap::FreeMainThreadLinearAllocationAreas() {
+3406:   allocator()->FreeLinearAllocationAreas();
+3407: }
+3408: 

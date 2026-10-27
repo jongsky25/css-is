@@ -1,0 +1,26 @@
+{
+  "DEPS": {
+    "sha256_full_source": "3535b3175635f9984c82a3f0c2a8e70f0ed2cfdb2a352f40446c9fddf2490703",
+    "upstream_url": "https://raw.githubusercontent.com/chromium/chromium/156.0.8078.47/DEPS"
+  },
+  "heap.cc": {
+    "sha256_full_source": "f929cde0c8198c6b4350fb373688198608a1619e61de4ba7b6a4f761a9d0ebd6",
+    "upstream_url": "https://raw.githubusercontent.com/v8/v8/392e44423f46d75904da712fadea4c7d5d97967f/src/heap/heap.cc"
+  },
+  "heap-profiler.cc": {
+    "sha256_full_source": "df48a3719adb985cd58fa001d6bd7cb989456a9569673254623bc6c6fc19cbd4",
+    "upstream_url": "https://raw.githubusercontent.com/v8/v8/392e44423f46d75904da712fadea4c7d5d97967f/src/profiler/heap-profiler.cc"
+  },
+  "heap-snapshot-generator.cc": {
+    "sha256_full_source": "749efe2aec9c547c50af7ad997d23a26709ce13b32c9e0dafddb0e0b7a5013fa",
+    "upstream_url": "https://raw.githubusercontent.com/v8/v8/392e44423f46d75904da712fadea4c7d5d97967f/src/profiler/heap-snapshot-generator.cc"
+  },
+  "marking-visitor-inl.h": {
+    "sha256_full_source": "d7f228d8b4c84800df5d9aa07f461dcd310b6c3014ed92ae0e9ca138acca921a",
+    "upstream_url": "https://raw.githubusercontent.com/v8/v8/392e44423f46d75904da712fadea4c7d5d97967f/src/heap/marking-visitor-inl.h"
+  },
+  "flag-definitions.h": {
+    "sha256_full_source": "dc3d9a60f424540ec1658ef823dc095456e006dfb64ce56ff41fbb2945cf01c4",
+    "upstream_url": "https://raw.githubusercontent.com/v8/v8/392e44423f46d75904da712fadea4c7d5d97967f/src/flags/flag-definitions.h"
+  }
+}

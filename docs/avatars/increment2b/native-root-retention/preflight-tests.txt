@@ -1,0 +1,7 @@
+...........................................                              [100%]
+=============================== warnings summary ===============================
+tests/test_native_root_retention.py::test_strong_root_path_uses_metadata_and_handles_cycles
+  /workspace/css-is/tests/conftest.py:88: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html

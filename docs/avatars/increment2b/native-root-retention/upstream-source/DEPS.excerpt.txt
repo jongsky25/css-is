@@ -1,0 +1,37 @@
+Lines 344 onward:
+344:   'v8_revision': '392e44423f46d75904da712fadea4c7d5d97967f',
+345:   # Three lines of non-changing comments so that
+346:   # the commit queue can handle CLs rolling ANGLE
+347:   # and whatever else without interference from each other.
+348:   'angle_revision': '3b89d84e9d59f75675ac4e2bef58fc068a9f0577',
+349:   # Three lines of non-changing comments so that
+350:   # the commit queue can handle CLs rolling SwiftShader
+351:   # and whatever else without interference from each other.
+352:   'swiftshader_revision': '1e80438d2b93ef36a7c05f8d2b81233bac0e3d16',
+353:   # Three lines of non-changing comments so that
+354:   # the commit queue can handle CLs rolling PDFium
+355:   # and whatever else without interference from each other.
+356:   'pdfium_revision': '2f22dfe030ded6a7666aeea4899d400bd2e338a4',
+357:   # Three lines of non-changing comments so that
+358:   # the commit queue can handle CLs rolling BoringSSL
+359:   # and whatever else without interference from each other.
+360:   'boringssl_revision': '2ea3200c3a3ec176613ab7a0b9a4ffc6db846120',
+361:   # Three lines of non-changing comments so that
+362:   # the commit queue can handle CLs rolling Fuchsia sdk
+363:   # and whatever else without interference from each other.
+364:   'fuchsia_version': 'version:33.20260922.5.1',
+365:   # Three lines of non-changing comments so that
+366:   # the commit queue can handle CLs rolling googletest
+367:   # and whatever else without interference from each other.
+368:   'googletest_revision': '4fe3307fb2d9f86d19777c7eb0e4809e9694dde7',
+369:   # Three lines of non-changing comments so that
+370:   # the commit queue can handle CLs rolling lss
+371:   # and whatever else without interference from each other.
+372:   'lss_revision': '29164a80da4d41134950d76d55199ea33fbb9613',
+373:   # Three lines of non-changing comments so that
+374:   # the commit queue can handle CLs rolling breakpad
+375:   # and whatever else without interference from each other.
+376:   'breakpad_revision': '868abe6f016cfeabfb7208681e89031ae667c336',
+377:   # Three lines of non-changing comments so that
+378:   # the commit queue can handle CLs rolling freetype
+379:   # and whatever else without interference from each other.

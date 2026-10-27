@@ -1,0 +1,37 @@
+Lines 462 onward:
+462: size_t MarkingVisitorBase<ConcreteVisitor>::VisitJSGlobalProxy(
+463:     Tagged<Map> map, Tagged<JSGlobalProxy> object,
+464:     MaybeObjectSize maybe_object_size) {
+465:   this->heap_->tracer()->IncrementJSGlobalProxyCount();
+466:   return Base::VisitJSGlobalProxy(map, object, maybe_object_size);
+467: }
+468: 
+469: template <typename ConcreteVisitor>
+470: size_t MarkingVisitorBase<ConcreteVisitor>::VisitSharedFunctionInfo(
+471:     Tagged<Map> map, Tagged<SharedFunctionInfo> shared_info,
+472:     MaybeObjectSize maybe_object_size) {
+473:   const bool can_flush_bytecode = HasBytecodeArrayForFlushing(shared_info);
+474: 
+475:   // We found a BytecodeArray that can be flushed. Increment the age of the SFI.
+476:   if (can_flush_bytecode && !should_keep_ages_unchanged_) {
+477:     MakeOlder(shared_info);
+478:   }
+479: 
+480:   if (!can_flush_bytecode || !ShouldFlushCode(shared_info)) {
+481:     // If the SharedFunctionInfo doesn't have old bytecode visit the function
+482:     // data strongly.
+483: #ifdef V8_ENABLE_SANDBOX
+484:     VisitIndirectPointer(
+485:         shared_info,
+486:         shared_info->RawIndirectPointerField(
+487:             offsetof(SharedFunctionInfo, trusted_function_data_),
+488:             SharedFunctionInfo::kTrustedDataIndirectPointerRange),
+489:         IndirectPointerMode::kStrong);
+490: #else
+491:     VisitPointer(shared_info, shared_info->RawField(offsetof(
+492:                                   SharedFunctionInfo, trusted_function_data_)));
+493: #endif
+494:     VisitPointer(shared_info,
+495:                  shared_info->RawField(
+496:                      offsetof(SharedFunctionInfo, untrusted_function_data_)));
+497:   } else if (!IsByteCodeFlushingEnabled(code_flush_mode_)) {
