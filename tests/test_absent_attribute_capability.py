@@ -42,3 +42,13 @@ def test_receiver_and_absence_checks_fail_closed(failure):
     if failure=='query':p['queries'][0]['result']['values'][0]=0
     if failure=='outside':events[0]['begin_ns']=1
     with pytest.raises(ValueError):validate_receivers(p)
+
+
+def test_versioned_getter_observable_requires_the_absent_query_and_null_returns():
+    from scripts.avatar_baseline.analyze_element_membership import validate_absent_query
+    p={'observable':'absent-attribute-node-ns','attribute_namespace':'urn:css-is:membership:absent','attribute_local_name':'absent'}
+    validate_absent_query(p,[{'kind':'receiver','attribute_absent':True}])
+    with pytest.raises(ValueError):validate_absent_query(p,[{'kind':'receiver','attribute_absent':False}])
+    with pytest.raises(ValueError):validate_absent_query(p,[{'kind':'receiver'}])
+    bad=dict(p,attribute_namespace='wrong')
+    with pytest.raises(ValueError):validate_absent_query(bad)

@@ -20,7 +20,7 @@ def specimen(monkeypatch):
     p = {'protocol': analysis.PROTOCOL, 'back_forward_cache_disabled': True, 'lifecycle_transport': 'same-origin-beacon', 'census_transport': 'one-evaluate-four-fixed-groups',
          'begin_ns': 0, 'end_ns': 10000000, 'pid': 7, 'mode': 'probe',
          'lifecycle_events': [{'index': i, 'persisted': False, 'received_ns': 100000+i*500000} for i in range(11)],
-         'stages': [], 'history': {'offsets': {**analysis.OFFSETS, **analysis.EXTRA_OFFSETS}, 'events': []},
+         'stages': [], 'history': {'offsets': {**analysis.receiver_offsets(analysis.PROTOCOL), **analysis.EXTRA_OFFSETS}, 'events': []},
          'before': {'name': 'before', 'begin_ns': 1000, 'end_ns': 2000},
          'after': {'name': 'after', 'begin_ns': 10001000, 'end_ns': 10002000},
          'trace_completion': {'dataLossOccurred': False}, 'transfer_begin_ns': 10003000, 'transfer_end_ns': 10004000}

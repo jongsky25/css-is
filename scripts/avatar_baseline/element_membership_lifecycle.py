@@ -15,10 +15,10 @@ BUILD = '1c5dca8527a61d07372e489142bee26af1bcaf71'
 COUNT = 512  # Retained v1 census profile.
 CENSUS = 32
 FIXTURE_COUNT = 4096
-PROTOCOL = 'native-membership-lifecycle-v6'
+PROTOCOL = 'native-membership-lifecycle-v7'
 STAGES = 12
 BROWSER = Path('/workspace/scratch/avatar-runtime/root/usr/lib/chromium/chromium')
-HOOK = Path(__file__).resolve().parent / 'native/element_membership_lifecycle.js'
+HOOK = Path(__file__).resolve().parent / 'native/absent_attribute_membership.js'
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -56,7 +56,7 @@ def run(out, mode):
     out.mkdir(parents=True, exist_ok=False)
     root = Path(__file__).resolve().parents[2]
     result = {'protocol': PROTOCOL, 'acceptance': False, 'forced_gc': False,
-              'mode': mode, 'count_per_group': CENSUS, 'fixture_count_per_group': FIXTURE_COUNT, 'stage_count': STAGES, 'stages': [], 'messages': [],
+              'mode': mode, 'observable': 'absent-attribute-node-ns', 'attribute_namespace': 'urn:css-is:membership:absent', 'attribute_local_name': 'absent', 'count_per_group': CENSUS, 'fixture_count_per_group': FIXTURE_COUNT, 'stage_count': STAGES, 'stages': [], 'messages': [],
               'harness_commit': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=root, text=True).strip(),
               'runner_sha256': digest(Path(__file__)), 'hook_sha256': digest(HOOK), 'frida_version': frida.__version__, 'lifecycle_events': []}
     notes = subprocess.check_output(['readelf', '-n', str(BROWSER)], text=True)
@@ -155,7 +155,7 @@ def run(out, mode):
                             const fixture_count = nodes.length;
                             nodes = group === 'avatar' ? nodes.slice(-count) : nodes.slice(0, count);
                             result.push({group, repeat, count: nodes.length, fixture_count,
-                                         counts: nodes.map(node => node.getClientRects().length)});
+                                         counts: nodes.map(node => Number(node.getAttributeNodeNS('urn:css-is:membership:absent','absent') === null))});
                         }
                     }
                     return result;

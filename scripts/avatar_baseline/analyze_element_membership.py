@@ -56,15 +56,25 @@ def join_receivers(events, spans):
     return rows
 
 
+def validate_absent_query(p, events=()):
+    if (p.get('observable') != 'absent-attribute-node-ns' or
+        p.get('attribute_namespace') != 'urn:css-is:membership:absent' or
+        p.get('attribute_local_name') != 'absent'):
+        raise ValueError('Wrong absent-attribute observable')
+    if any(e.get('attribute_absent') is not True for e in events if e['kind']=='receiver'):
+        raise ValueError('Native attribute getter did not return null')
+
+
 def inspect(p):
     protocol = p['protocol']
-    count = COUNT if protocol == 'native-element-membership-v1' else 32 if protocol == 'native-element-membership-v3' else 128
-    if (p['status'] != 'captured' or protocol not in ['native-element-membership-v1', 'native-element-membership-v2', 'native-element-membership-v3']
+    count = COUNT if protocol == 'native-element-membership-v1' else 32 if protocol in ['native-element-membership-v3','native-element-membership-v4'] else 128
+    if (p['status'] != 'captured' or protocol not in ['native-element-membership-v1', 'native-element-membership-v2', 'native-element-membership-v3', 'native-element-membership-v4']
         or p['acceptance'] is not False or p['forced_gc'] is not False or p['build_id'] != BUILD
         or p['browser_version'] != '156.0.8078.47' or p['frida_version'] != '17.5.1'
         or p['count_per_group'] != count or p['stage_count'] != STAGES
-        or (protocol in ['native-element-membership-v2', 'native-element-membership-v3'] and p.get('fixture_count_per_group') != 4096)):
+        or (protocol in ['native-element-membership-v2', 'native-element-membership-v3', 'native-element-membership-v4'] and p.get('fixture_count_per_group') != 4096)):
         raise ValueError('Invalid capability identity or incomplete capture')
+    if protocol == 'native-element-membership-v4': validate_absent_query(p)
     if [s['index'] for s in p['stages']] != list(range(STAGES)) or p['end_ns'] <= p['begin_ns']:
         raise ValueError('Incomplete fixed schedule')
     for s in p['stages']:
@@ -76,7 +86,7 @@ def inspect(p):
         for c in s['censuses']:
             if c['result']['count'] != count or len(c['result']['counts']) != count:
                 raise ValueError('Incomplete known-element census')
-            if protocol in ['native-element-membership-v2', 'native-element-membership-v3'] and c['result'].get('fixture_count') != 4096:
+            if protocol in ['native-element-membership-v2', 'native-element-membership-v3', 'native-element-membership-v4'] and c['result'].get('fixture_count') != 4096:
                 raise ValueError('Wrong fixed fixture size')
             if any(v != 1 for v in c['result']['counts']):
                 raise ValueError('Unexpected geometry result')
@@ -89,13 +99,15 @@ def inspect(p):
         return result
     if p['mode'] != 'probe': raise ValueError('Invalid mode')
     h = p['history']; events = h['events']
-    if h['offsets'] != OFFSETS or h['page_size'] != PAGE_SIZE or h['dropped']:
+    expected_offsets = {**OFFSETS, 'receiver': 0x100cce80} if protocol == 'native-element-membership-v4' else OFFSETS
+    if h['offsets'] != expected_offsets or h['page_size'] != PAGE_SIZE or h['dropped']:
         raise ValueError('Wrong native hook or dropped events')
     if any(m.get('type') == 'error' for m in p['messages']):
         raise ValueError('Native agent error')
     for e in events:
         if e['kind'] not in OFFSETS or not 0 < e['begin_ns'] <= e['callback_ready_ns'] <= e['returned_ns']:
             raise ValueError('Malformed native event')
+    if protocol == 'native-element-membership-v4': validate_absent_query(p, events)
     spans, unknown = generations(events); rows = join_receivers(events, spans)
     by_phase = defaultdict(list)
     for e in rows: by_phase[e['phase']].append(e)
@@ -152,7 +164,7 @@ def validate_identity(trace, capture):
 
 def audit(root, repo, ref):
     plan = json.loads((root / 'experiment.json').read_text())
-    if (plan['protocol'] not in ['native-element-membership-v1', 'native-element-membership-v2', 'native-element-membership-v3'] or plan['harness_commit'] != ref
+    if (plan['protocol'] not in ['native-element-membership-v1', 'native-element-membership-v2', 'native-element-membership-v3', 'native-element-membership-v4'] or plan['harness_commit'] != ref
         or plan['order'] != ['control', 'probe', 'probe', 'control'] or plan['acceptance'] is not False):
         raise ValueError('Invalid frozen calibration')
     result = {'acceptance': False, 'status': 'calibration_failed', 'cohorts': [], 'errors': [], 'files_verified': 0, 'source_hashes_verified': 0}

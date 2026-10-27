@@ -10,15 +10,26 @@ import subprocess
 from scripts.avatar_baseline.analyze_element_membership import inspect, validate_identity, OFFSETS
 from scripts.avatar_baseline.analyze_reader_retention import clock_bounds, mapped, selected_events, position
 
-PROTOCOL = 'native-membership-lifecycle-v6'
-SUPPORTED = {f'native-membership-lifecycle-v{i}' for i in [1,2,3,4,5,6]}
+PROTOCOL = 'native-membership-lifecycle-v7'
+SUPPORTED = {f'native-membership-lifecycle-v{i}' for i in range(1,8)}
 EXTRA_OFFSETS = {'shutdown': 0x100208d0, 'destroy': 0x5aa4490, 'release': 0x5ab09d0}
 SOURCES = ['scripts/avatar_baseline/element_membership_lifecycle.py',
-           'scripts/avatar_baseline/native/element_membership_lifecycle.js',
+           'scripts/avatar_baseline/native/absent_attribute_membership.js',
            'scripts/avatar_baseline/analyze_membership_lifecycle.py',
            'scripts/avatar_baseline/run_membership_lifecycle.py',
            'scripts/avatar_baseline/analyze_element_membership.py',
            'scripts/avatar_baseline/analyze_reader_retention.py']
+
+
+def sources_for(protocol):
+    sources=list(SOURCES)
+    if protocol != 'native-membership-lifecycle-v7':
+        sources[1]='scripts/avatar_baseline/native/element_membership_lifecycle.js'
+    return sources
+
+
+def receiver_offsets(protocol):
+    return {**OFFSETS, 'receiver':0x100cce80} if protocol=='native-membership-lifecycle-v7' else OFFSETS
 
 
 def lifecycle_events(events):
@@ -29,7 +40,7 @@ def lifecycle_events(events):
 
 
 def census_costs(p):
-    if p['protocol'] not in ['native-membership-lifecycle-v5','native-membership-lifecycle-v6']:
+    if p['protocol'] not in ['native-membership-lifecycle-v5','native-membership-lifecycle-v6','native-membership-lifecycle-v7']:
         return [c['end_ns']-c['begin_ns'] for s in p['stages'] for c in s['censuses']]
     if p.get('census_transport') != 'one-evaluate-four-fixed-groups':
         raise ValueError('Wrong batched census transport')
@@ -47,21 +58,21 @@ def census_costs(p):
 def analyze(p, trace=None):
     if p['protocol'] not in SUPPORTED or p['back_forward_cache_disabled'] is not True:
         raise ValueError('Wrong lifecycle protocol or BFCache launch flag')
-    expected_transport = 'same-origin-beacon' if p['protocol'] in ['native-membership-lifecycle-v4', 'native-membership-lifecycle-v5', PROTOCOL] else 'cdp-runtime-binding'
-    if p['protocol'] in ['native-membership-lifecycle-v3', 'native-membership-lifecycle-v4', 'native-membership-lifecycle-v5', PROTOCOL] and p.get('lifecycle_transport') != expected_transport:
+    expected_transport = 'same-origin-beacon' if p['protocol'] in ['native-membership-lifecycle-v4', 'native-membership-lifecycle-v5', 'native-membership-lifecycle-v6', PROTOCOL] else 'cdp-runtime-binding'
+    if p['protocol'] in ['native-membership-lifecycle-v3', 'native-membership-lifecycle-v4', 'native-membership-lifecycle-v5', 'native-membership-lifecycle-v6', PROTOCOL] and p.get('lifecycle_transport') != expected_transport:
         raise ValueError('Wrong lifecycle event transport')
     lifecycle_events(p['lifecycle_events'])
     native = p.get('history'); begin, end = p['begin_ns'], p['end_ns']
     if any(not begin <= e['received_ns'] <= end for e in p['lifecycle_events']):
         raise ValueError('Pagehide delivery outside measured window')
-    adapted = deepcopy(p); adapted['protocol'] = 'native-element-membership-v3' if p['protocol'] == 'native-membership-lifecycle-v6' else 'native-element-membership-v2'
+    adapted = deepcopy(p); adapted['protocol'] = 'native-element-membership-v4' if p['protocol'] == 'native-membership-lifecycle-v7' else 'native-element-membership-v3' if p['protocol'] == 'native-membership-lifecycle-v6' else 'native-element-membership-v2'
     if native:
-        if native['offsets'] != {**OFFSETS, **EXTRA_OFFSETS}:
+        if native['offsets'] != {**receiver_offsets(p['protocol']), **EXTRA_OFFSETS}:
             raise ValueError('Unexpected lifecycle hooks')
         for e in native['events']:
             if e['kind'] not in native['offsets'] or not 0 < e['begin_ns'] <= e['callback_ready_ns'] <= e['returned_ns']:
                 raise ValueError('Malformed lifecycle native event')
-        adapted['history']['offsets'] = OFFSETS
+        adapted['history']['offsets'] = receiver_offsets(p['protocol'])
         adapted['history']['events'] = [e for e in native['events'] if e['kind'] in OFFSETS
             and begin <= e['begin_ns'] <= e['returned_ns'] <= end]
     membership = inspect(adapted)
@@ -141,7 +152,23 @@ def audit(root, repo, ref):
         raise ValueError('Invalid frozen lifecycle schedule')
     result = {'acceptance': False, 'application_qualified': False, 'status': 'diagnostic_failed',
               'errors': [], 'cohorts': [], 'files_verified': 0, 'source_hashes_verified': 0}
-    for name in SOURCES:
+    sources=sources_for(plan['protocol'])
+    if plan['protocol']=='native-membership-lifecycle-v7':
+        from scripts.avatar_baseline.absent_attribute_capability import audit as audit_capability
+        capability=plan['receiver_capability']
+        caproot=root/'receiver-capability'
+        for name,key in [('capture.json.gz','capture_sha256'),('assessment.json','assessment_sha256')]:
+            if hashlib.sha256((caproot/name).read_bytes()).hexdigest()!=capability[key]: raise ValueError('Capability evidence changed')
+        assessment=audit_capability(caproot,repo,capability['harness_commit'])
+        if assessment!=json.loads((caproot/'assessment.json').read_text()) or assessment['status']!='capability_passed':
+            raise ValueError('Native receiver capability failed')
+        captured=json.load(gzip.open(caproot/'capture.json.gz','rt'))
+        for name,sha in captured['source_sha256'].items():
+            if hashlib.sha256(subprocess.check_output(['git','show',ref+':'+name],cwd=repo)).hexdigest()!=sha:
+                raise ValueError('Getter changed after capability proof')
+        result['receiver_capability_source_hashes_verified']=3
+        result['receiver_capability_files_verified']=2
+    for name in sources:
         if (root/'harness'/name).read_bytes() != subprocess.check_output(['git','show',ref+':'+name],cwd=repo):
             raise ValueError('Archived harness mismatch')
         result['source_hashes_verified'] += 1
@@ -159,7 +186,7 @@ def audit(root, repo, ref):
                 result['files_verified'] += 1
             p = json.load(gzip.open(folder/'capture.json.gz','rt'))
             if p['harness_commit'] != ref or p['mode'] != mode or p['protocol'] != plan['protocol']: raise ValueError('Capture source/mode mismatch')
-            for name, key in [(SOURCES[0],'runner_sha256'),(SOURCES[1],'hook_sha256')]:
+            for name, key in [(sources[0],'runner_sha256'),(sources[1],'hook_sha256')]:
                 raw = subprocess.check_output(['git','show',ref+':'+name],cwd=repo)
                 if hashlib.sha256(raw).hexdigest() != p[key]: raise ValueError('Runtime probe mismatch')
                 result['source_hashes_verified'] += 1

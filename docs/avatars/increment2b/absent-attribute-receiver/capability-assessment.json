@@ -1,0 +1,13 @@
+{
+  "status": "capability_passed",
+  "receiver_records": 128,
+  "reference_records": 128,
+  "receiver_identities_match": true,
+  "null_native_returns": 128,
+  "dom_unchanged": true,
+  "acceptance": false,
+  "performance_qualified": false,
+  "harness_commit": "f4ed9d9b15a15597692d73a05e9cdb5e41684de5",
+  "source_hashes_verified": 3,
+  "capture_sha256": "ef3d77fd3d543e7080ae899ed486e2f9972e081c9bf34e5fd8adaf3312508b72"
+}

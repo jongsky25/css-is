@@ -1,0 +1,10 @@
+{
+  "archive_sha256": "db288dfade68666ce4a763af680760eb008104f0f08b526216b4191720c20213",
+  "logical_files": 2,
+  "unique_blobs": 2,
+  "paths": {
+    "capability/assessment.json": "98d35db2650ed799f0d5badb1a3ea69a5ac9f0a138ad2b99824efd6075486067",
+    "capability/capture.json.gz": "ef3d77fd3d543e7080ae899ed486e2f9972e081c9bf34e5fd8adaf3312508b72"
+  },
+  "reconstructed_audit_identical": true
+}
