@@ -1,3 +1,8 @@
+## 8.80 — October 27, 2026
+
+- Add mcp_actions.py and mcp_supply_drafts.py to the hosting runtime allowlist. They are required imports of the merged v8.78/v8.79 pilots; the deployment import-closure guard otherwise rejects the incomplete package.
+- Preserve default-off switches, grants, business behavior and pending hosted acceptance. Verify the actual deployment import-closure tests alongside release metadata.
+
 ## 8.79 — October 27, 2026
 
 - Add independent default-off new personal supply draft preparation and receipt tools with optional supplies:request:draft consent excluded from server defaults; preserve old grants and refresh scope parity.
