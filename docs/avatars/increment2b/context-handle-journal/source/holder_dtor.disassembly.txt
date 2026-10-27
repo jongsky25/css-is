@@ -1,0 +1,61 @@
+
+/workspace/scratch/avatar-runtime/root/usr/lib/chromium/chromium:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+000000000d32f660 <getaddrinfo@@Base+0x389c70>:
+     d32f660:	f3 0f 1e fa          	endbr64
+     d32f664:	55                   	push   %rbp
+     d32f665:	48 89 e5             	mov    %rsp,%rbp
+     d32f668:	53                   	push   %rbx
+     d32f669:	50                   	push   %rax
+     d32f66a:	48 89 fb             	mov    %rdi,%rbx
+     d32f66d:	48 8b 7f 10          	mov    0x10(%rdi),%rdi
+     d32f671:	48 85 ff             	test   %rdi,%rdi
+     d32f674:	74 46                	je     d32f6bc <getaddrinfo@@Base+0x389ccc>
+     d32f676:	e8 35 1b 00 00       	call   d3311b0 <getaddrinfo@@Base+0x38b7c0>
+     d32f67b:	48 8b 43 10          	mov    0x10(%rbx),%rax
+     d32f67f:	48 a9 f7 ff ff ff    	test   $0xfffffffffffffff7,%rax
+     d32f685:	74 35                	je     d32f6bc <getaddrinfo@@Base+0x389ccc>
+     d32f687:	48 25 00 00 fe ff    	and    $0xfffffffffffe0000,%rax
+     d32f68d:	48 8b 00             	mov    (%rax),%rax
+     d32f690:	48 8b 4b 18          	mov    0x18(%rbx),%rcx
+     d32f694:	48 8b 90 f8 00 00 00 	mov    0xf8(%rax),%rdx
+     d32f69b:	48 89 11             	mov    %rdx,(%rcx)
+     d32f69e:	48 c7 41 08 00 00 00 	movq   $0x0,0x8(%rcx)
+     d32f6a5:	00 
+     d32f6a6:	48 89 88 f8 00 00 00 	mov    %rcx,0xf8(%rax)
+     d32f6ad:	48 ff 88 00 01 00 00 	decq   0x100(%rax)
+     d32f6b4:	48 c7 43 18 00 00 00 	movq   $0x0,0x18(%rbx)
+     d32f6bb:	00 
+     d32f6bc:	48 c7 43 10 00 00 00 	movq   $0x0,0x10(%rbx)
+     d32f6c3:	00 
+     d32f6c4:	48 8b 7b 08          	mov    0x8(%rbx),%rdi
+     d32f6c8:	48 85 ff             	test   %rdi,%rdi
+     d32f6cb:	74 0d                	je     d32f6da <getaddrinfo@@Base+0x389cea>
+     d32f6cd:	e8 8e 39 e1 f7       	call   5143060 <ChromeMain@@Base+0x1fb7570>
+     d32f6d2:	48 c7 43 08 00 00 00 	movq   $0x0,0x8(%rbx)
+     d32f6d9:	00 
+     d32f6da:	48 8b 3b             	mov    (%rbx),%rdi
+     d32f6dd:	48 b8 00 00 00 00 fc 	movabs $0xfffffffc00000000,%rax
+     d32f6e4:	ff ff ff 
+     d32f6e7:	48 21 f8             	and    %rdi,%rax
+     d32f6ea:	48 3b 05 17 49 7f 06 	cmp    0x67f4917(%rip),%rax        # 13b24008 <__data_start@@Base+0x34008>
+     d32f6f1:	75 05                	jne    d32f6f8 <getaddrinfo@@Base+0x389d08>
+     d32f6f3:	e8 48 e6 bc fd       	call   aefdd40 <localtime@@Base+0x268c780>
+     d32f6f8:	48 c7 03 00 00 00 00 	movq   $0x0,(%rbx)
+     d32f6ff:	48 83 c4 08          	add    $0x8,%rsp
+     d32f703:	5b                   	pop    %rbx
+     d32f704:	5d                   	pop    %rbp
+     d32f705:	c3                   	ret
+     d32f706:	cc                   	int3
+     d32f707:	cc                   	int3
+     d32f708:	cc                   	int3
+     d32f709:	cc                   	int3
+     d32f70a:	cc                   	int3
+     d32f70b:	cc                   	int3
+     d32f70c:	cc                   	int3
+     d32f70d:	cc                   	int3
+     d32f70e:	cc                   	int3
+     d32f70f:	cc                   	int3

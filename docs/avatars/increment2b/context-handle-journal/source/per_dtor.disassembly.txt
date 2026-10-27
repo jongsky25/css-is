@@ -1,0 +1,60 @@
+
+/workspace/scratch/avatar-runtime/root/usr/lib/chromium/chromium:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+000000000fd4bc10 <getaddrinfo@@Base+0x2da6220>:
+     fd4bc10:	f3 0f 1e fa          	endbr64
+     fd4bc14:	55                   	push   %rbp
+     fd4bc15:	48 89 e5             	mov    %rsp,%rbp
+     fd4bc18:	41 57                	push   %r15
+     fd4bc1a:	41 56                	push   %r14
+     fd4bc1c:	53                   	push   %rbx
+     fd4bc1d:	50                   	push   %rax
+     fd4bc1e:	48 89 fb             	mov    %rdi,%rbx
+     fd4bc21:	66 66 66 64 48 8b 04 	data16 data16 data16 mov %fs:0x0,%rax
+     fd4bc28:	25 00 00 00 00 
+     fd4bc2d:	80 b8 e5 fe ff ff 01 	cmpb   $0x1,-0x11b(%rax)
+     fd4bc34:	75 07                	jne    fd4bc3d <getaddrinfo@@Base+0x2da624d>
+     fd4bc36:	f0 ff 0d e7 ff ed 03 	lock decl 0x3edffe7(%rip)        # 13c2bc24 <__bss_start@@Base+0x47c24>
+     fd4bc3d:	49 bf 00 00 00 00 fc 	movabs $0xfffffffc00000000,%r15
+     fd4bc44:	ff ff ff 
+     fd4bc47:	48 8b 7b 68          	mov    0x68(%rbx),%rdi
+     fd4bc4b:	48 89 f8             	mov    %rdi,%rax
+     fd4bc4e:	4c 21 f8             	and    %r15,%rax
+     fd4bc51:	48 3b 05 b0 83 dd 03 	cmp    0x3dd83b0(%rip),%rax        # 13b24008 <__data_start@@Base+0x34008>
+     fd4bc58:	75 05                	jne    fd4bc5f <getaddrinfo@@Base+0x2da626f>
+     fd4bc5a:	e8 e1 20 1b fb       	call   aefdd40 <localtime@@Base+0x268c780>
+     fd4bc5f:	48 c7 43 68 00 00 00 	movq   $0x0,0x68(%rbx)
+     fd4bc66:	00 
+     fd4bc67:	48 8b 7b 48          	mov    0x48(%rbx),%rdi
+     fd4bc6b:	48 89 f8             	mov    %rdi,%rax
+     fd4bc6e:	4c 21 f8             	and    %r15,%rax
+     fd4bc71:	48 3b 05 90 83 dd 03 	cmp    0x3dd8390(%rip),%rax        # 13b24008 <__data_start@@Base+0x34008>
+     fd4bc78:	75 05                	jne    fd4bc7f <getaddrinfo@@Base+0x2da628f>
+     fd4bc7a:	e8 c1 20 1b fb       	call   aefdd40 <localtime@@Base+0x268c780>
+     fd4bc7f:	48 c7 43 48 00 00 00 	movq   $0x0,0x48(%rbx)
+     fd4bc86:	00 
+     fd4bc87:	48 8b 7b 40          	mov    0x40(%rbx),%rdi
+     fd4bc8b:	48 85 ff             	test   %rdi,%rdi
+     fd4bc8e:	74 0d                	je     fd4bc9d <getaddrinfo@@Base+0x2da62ad>
+     fd4bc90:	e8 cb 73 3f f5       	call   5143060 <ChromeMain@@Base+0x1fb7570>
+     fd4bc95:	48 c7 43 40 00 00 00 	movq   $0x0,0x40(%rbx)
+     fd4bc9c:	00 
+     fd4bc9d:	4c 8b 73 38          	mov    0x38(%rbx),%r14
+     fd4bca1:	48 c7 43 38 00 00 00 	movq   $0x0,0x38(%rbx)
+     fd4bca8:	00 
+     fd4bca9:	4d 85 f6             	test   %r14,%r14
+     fd4bcac:	74 15                	je     fd4bcc3 <getaddrinfo@@Base+0x2da62d3>
+     fd4bcae:	4c 89 f7             	mov    %r14,%rdi
+     fd4bcb1:	e8 aa 39 5e fd       	call   d32f660 <getaddrinfo@@Base+0x389c70>
+     fd4bcb6:	be 28 00 00 00       	mov    $0x28,%esi
+     fd4bcbb:	4c 89 f7             	mov    %r14,%rdi
+     fd4bcbe:	e8 fd 84 1d fb       	call   af241c0 <_ZdaPvm@@Base>
+     fd4bcc3:	48 8b 3b             	mov    (%rbx),%rdi
+     fd4bcc6:	49 21 ff             	and    %rdi,%r15
+     fd4bcc9:	4c 3b 3d 38 83 dd 03 	cmp    0x3dd8338(%rip),%r15        # 13b24008 <__data_start@@Base+0x34008>
+     fd4bcd0:	75 05                	jne    fd4bcd7 <getaddrinfo@@Base+0x2da62e7>
+     fd4bcd2:	e8 69 20 1b fb       	call   aefdd40 <localtime@@Base+0x268c780>
+     fd4bcd7:	48                   	rex.W

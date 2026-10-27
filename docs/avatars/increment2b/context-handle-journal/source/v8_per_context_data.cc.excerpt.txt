@@ -1,0 +1,86 @@
+From line 57:
+57: V8PerContextData::V8PerContextData(v8::Local<v8::Context> context,
+58:                                    scheduler::EventLoop* event_loop)
+59:     : isolate_(v8::Isolate::GetCurrent()),
+60:       context_holder_(std::make_unique<gin::ContextHolder>(isolate_)),
+61:       context_(isolate_, context),
+62:       activity_logger_(nullptr),
+63:       event_loop_(event_loop) {
+64:   context_holder_->SetContext(context);
+65:   context_.Get().AnnotateStrongRetainer(kContextLabel);
+66: 
+67:   if (IsMainThread()) {
+68:     InstanceCounters::IncrementCounter(
+69:         InstanceCounters::kV8PerContextDataCounter);
+70:   }
+71: }
+72: 
+73: V8PerContextData::~V8PerContextData() {
+74:   if (IsMainThread()) {
+75:     InstanceCounters::DecrementCounter(
+76:         InstanceCounters::kV8PerContextDataCounter);
+77:   }
+78: }
+79: 
+80: void V8PerContextData::Dispose() {
+81:   // These fields are not traced by the garbage collector and could contain
+82:   // strong GC roots that prevent `this` from otherwise being collected, so
+83:   // explicitly break any potential cycles in the ownership graph now.
+84:   context_holder_ = nullptr;
+85:   event_loop_ = nullptr;
+86:   if (!context_.IsEmpty())
+87:     context_.SetPhantom();
+88: }
+89: 
+90: void V8PerContextData::Trace(Visitor* visitor) const {
+91:   visitor->Trace(wrapper_boilerplates_);
+92:   visitor->Trace(constructor_map_);
+93:   visitor->Trace(data_map_);
+94: }
+95: 
+96: v8::Local<v8::Object> V8PerContextData::CreateWrapperFromCacheSlowCase(
+97:     v8::Isolate* isolate,
+98:     const WrapperTypeInfo* type) {
+From line 80:
+80: void V8PerContextData::Dispose() {
+81:   // These fields are not traced by the garbage collector and could contain
+82:   // strong GC roots that prevent `this` from otherwise being collected, so
+83:   // explicitly break any potential cycles in the ownership graph now.
+84:   context_holder_ = nullptr;
+85:   event_loop_ = nullptr;
+86:   if (!context_.IsEmpty())
+87:     context_.SetPhantom();
+88: }
+89: 
+90: void V8PerContextData::Trace(Visitor* visitor) const {
+91:   visitor->Trace(wrapper_boilerplates_);
+92:   visitor->Trace(constructor_map_);
+93:   visitor->Trace(data_map_);
+94: }
+95: 
+96: v8::Local<v8::Object> V8PerContextData::CreateWrapperFromCacheSlowCase(
+97:     v8::Isolate* isolate,
+98:     const WrapperTypeInfo* type) {
+99:   DCHECK(!wrapper_boilerplates_.Contains(type));
+100:   v8::Context::Scope scope(GetContext());
+101:   v8::Local<v8::Function> interface_object = ConstructorForType(type);
+102:   if (interface_object.IsEmpty()) [[unlikely]] {
+103:     // For investigation of crbug.com/1199223
+104:     static crash_reporter::CrashKeyString<64> crash_key(
+105:         "blink__create_interface_object");
+106:     crash_key.Set(type->interface_name);
+107:     CHECK(!interface_object.IsEmpty());
+108:   }
+109:   v8::Local<v8::Object> instance_template =
+110:       V8ObjectConstructor::NewInstance(isolate_, interface_object)
+111:           .ToLocalChecked();
+112: 
+113:   wrapper_boilerplates_.insert(
+114:       type, TraceWrapperV8Reference<v8::Object>(isolate_, instance_template));
+115: 
+116:   return instance_template->Clone(isolate);
+117: }
+118: 
+119: v8::Local<v8::Function> V8PerContextData::ConstructorForTypeSlowCase(
+120:     const WrapperTypeInfo* type) {
+121:   DCHECK(!constructor_map_.Contains(type));

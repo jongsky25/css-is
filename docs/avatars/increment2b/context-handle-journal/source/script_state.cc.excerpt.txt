@@ -1,0 +1,72 @@
+From line 18:
+18: ScriptState::ScriptState(v8::Local<v8::Context> context,
+19:                          DOMWrapperWorld* world,
+20:                          scheduler::EventLoop* event_loop)
+21:     : isolate_(world->GetIsolate()),
+22:       context_(isolate_, context),
+23:       world_(world),
+24:       per_context_data_(
+25:           MakeGarbageCollected<V8PerContextData>(context, event_loop)) {
+26:   CHECK(isolate_);
+27:   DCHECK(world_);
+28:   context_.SetPhantom();
+29:   context->SetAlignedPointerInEmbedderData(kV8ContextPerContextDataIndex, this,
+30:                                            kTypeTag);
+31: }
+32: 
+33: void ScriptState::EnqueueMicrotask(
+34:     base::OnceCallback<void(ScriptState*)> callback) {
+35:   if (!ContextIsValid()) {
+36:     return;
+37:   }
+38:   CHECK(per_context_data_);
+39:   // Certain type of contexts would not have an event loop, but caller
+40:   // should know better and not schedule a microtask on such contexts.
+41:   scheduler::EventLoop& event_loop =
+42:       CHECK_DEREF(per_context_data_->GetEventLoop());
+43:   event_loop.EnqueueMicrotask(blink::BindOnce(
+44:       [](ScriptState* script_state,
+45:          base::OnceCallback<void(ScriptState*)> callback) {
+46:         if (!script_state->ContextIsValid()) {
+47:           return;
+48:         }
+49:         ScriptState::Scope scope(script_state);
+50:         std::move(callback).Run(script_state);
+51:       },
+52:       WrapPersistent(this), std::move(callback)));
+53: }
+54: 
+55: ScriptState::~ScriptState() {
+56:   DCHECK(!per_context_data_);
+57:   InstanceCounters::DecrementCounter(
+58:       InstanceCounters::kDetachedScriptStateCounter);
+59:   RendererResourceCoordinator::Get()->OnScriptStateDestroyed(this);
+From line 72:
+72: void ScriptState::DisposePerContextData() {
+73:   v8::HandleScope scope(GetIsolate());
+74:   per_context_data_->Dispose();
+75:   per_context_data_ = nullptr;
+76:   InstanceCounters::IncrementCounter(
+77:       InstanceCounters::kDetachedScriptStateCounter);
+78:   RendererResourceCoordinator::Get()->OnScriptStateDetached(this);
+79: }
+80: 
+81: void ScriptState::DissociateContext() {
+82:   DCHECK(!per_context_data_);
+83: 
+84:   // On a worker thread we tear down V8's isolate without running a GC.
+85:   // Alternately we manually clear all references between V8 and Blink, and run
+86:   // operations that should have been invoked by weak callbacks if a GC were
+87:   // run.
+88: 
+89:   v8::HandleScope scope(GetIsolate());
+90:   // Cut the reference from V8 context to ScriptState.
+91:   GetContext()->SetAlignedPointerInEmbedderData(
+92:       kV8ContextPerContextDataIndex, static_cast<ScriptState*>(nullptr),
+93:       kTypeTag);
+94: 
+95:   // Cut the reference from ScriptState to V8 context.
+96:   context_.Clear();
+97: }
+98: 
+99: }  // namespace blink

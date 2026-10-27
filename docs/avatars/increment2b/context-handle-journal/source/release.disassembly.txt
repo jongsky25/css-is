@@ -1,0 +1,80 @@
+
+/workspace/scratch/avatar-runtime/root/usr/lib/chromium/chromium:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000005143060 <ChromeMain@@Base+0x1fb7570>:
+     5143060:	f3 0f 1e fa          	endbr64
+     5143064:	0f b6 47 0b          	movzbl 0xb(%rdi),%eax
+     5143068:	a8 03                	test   $0x3,%al
+     514306a:	0f 84 bd 00 00 00    	je     514312d <ChromeMain@@Base+0x1fb763d>
+     5143070:	55                   	push   %rbp
+     5143071:	48 89 e5             	mov    %rsp,%rbp
+     5143074:	53                   	push   %rbx
+     5143075:	50                   	push   %rax
+     5143076:	0f b6 4f 0a          	movzbl 0xa(%rdi),%ecx
+     514307a:	c1 e1 05             	shl    $0x5,%ecx
+     514307d:	48 89 fa             	mov    %rdi,%rdx
+     5143080:	48 29 ca             	sub    %rcx,%rdx
+     5143083:	48 8b 9a 10 20 00 00 	mov    0x2010(%rdx),%rbx
+     514308a:	48 8b 4b 18          	mov    0x18(%rbx),%rcx
+     514308e:	48 ba df fe af 0b d0 	movabs $0x1baffed00baffedf,%rdx
+     5143095:	fe af 1b 
+     5143098:	48 89 17             	mov    %rdx,(%rdi)
+     514309b:	66 c7 47 08 00 00    	movw   $0x0,0x8(%rdi)
+     51430a1:	48 c7 47 18 00 00 00 	movq   $0x0,0x18(%rdi)
+     51430a8:	00 
+     51430a9:	24 fc                	and    $0xfc,%al
+     51430ab:	88 47 0b             	mov    %al,0xb(%rdi)
+     51430ae:	48 89 4f 10          	mov    %rcx,0x10(%rdi)
+     51430b2:	48 89 7b 18          	mov    %rdi,0x18(%rbx)
+     51430b6:	0f b6 47 0a          	movzbl 0xa(%rdi),%eax
+     51430ba:	c1 e0 05             	shl    $0x5,%eax
+     51430bd:	48 29 c7             	sub    %rax,%rdi
+     51430c0:	ff 8f 28 20 00 00    	decl   0x2028(%rdi)
+     51430c6:	75 3e                	jne    5143106 <ChromeMain@@Base+0x1fb7616>
+     51430c8:	48 8b 8f 18 20 00 00 	mov    0x2018(%rdi),%rcx
+     51430cf:	48 8b 87 20 20 00 00 	mov    0x2020(%rdi),%rax
+     51430d6:	48 85 c9             	test   %rcx,%rcx
+     51430d9:	74 07                	je     51430e2 <ChromeMain@@Base+0x1fb75f2>
+     51430db:	48 89 81 20 20 00 00 	mov    %rax,0x2020(%rcx)
+     51430e2:	48 85 c0             	test   %rax,%rax
+     51430e5:	74 0e                	je     51430f5 <ChromeMain@@Base+0x1fb7605>
+     51430e7:	48 8b 8f 18 20 00 00 	mov    0x2018(%rdi),%rcx
+     51430ee:	48 89 88 18 20 00 00 	mov    %rcx,0x2018(%rax)
+     51430f5:	48 3b 7b 10          	cmp    0x10(%rbx),%rdi
+     51430f9:	75 0b                	jne    5143106 <ChromeMain@@Base+0x1fb7616>
+     51430fb:	48 8b 87 18 20 00 00 	mov    0x2018(%rdi),%rax
+     5143102:	48 89 43 10          	mov    %rax,0x10(%rbx)
+     5143106:	48 8b 03             	mov    (%rbx),%rax
+     5143109:	48 8b 00             	mov    (%rax),%rax
+     514310c:	48 8b b8 b0 0b 01 00 	mov    0x10bb0(%rax),%rdi
+     5143113:	48 8b 87 a0 1b 00 00 	mov    0x1ba0(%rdi),%rax
+     514311a:	48 85 c0             	test   %rax,%rax
+     514311d:	74 16                	je     5143135 <ChromeMain@@Base+0x1fb7645>
+     514311f:	f0 ff 08             	lock decl (%rax)
+     5143122:	48 ff 4b 28          	decq   0x28(%rbx)
+     5143126:	48 83 c4 08          	add    $0x8,%rsp
+     514312a:	5b                   	pop    %rbx
+     514312b:	5d                   	pop    %rbp
+     514312c:	c3                   	ret
+     514312d:	cc                   	int3
+     514312e:	0f 0b                	ud2
+     5143130:	67 0f b9 40 01       	ud1    0x1(%eax),%eax
+     5143135:	48 81 c7 90 1b 00 00 	add    $0x1b90,%rdi
+     514313c:	e8 ff b0 21 00       	call   535e240 <ChromeMain@@Base+0x21d2750>
+     5143141:	eb dc                	jmp    514311f <ChromeMain@@Base+0x1fb762f>
+     5143143:	cc                   	int3
+     5143144:	cc                   	int3
+     5143145:	cc                   	int3
+     5143146:	cc                   	int3
+     5143147:	cc                   	int3
+     5143148:	cc                   	int3
+     5143149:	cc                   	int3
+     514314a:	cc                   	int3
+     514314b:	cc                   	int3
+     514314c:	cc                   	int3
+     514314d:	cc                   	int3
+     514314e:	cc                   	int3
+     514314f:	cc                   	int3

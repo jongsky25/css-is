@@ -1,0 +1,27 @@
+{
+  "script_state.cc": {
+    "sha256_full_source": "02e968da343460588760a5a4a81ac807ed80390a2d25597b2f42981bf18192cc",
+    "repository": "chromium/chromium",
+    "ref": "156.0.8078.47"
+  },
+  "v8_per_context_data.cc": {
+    "sha256_full_source": "2fa3f2b2f0c6a804c72522aa3d88e16f9e41a2a363b2a92369b95cdd5a5ec6b1",
+    "repository": "chromium/chromium",
+    "ref": "156.0.8078.47"
+  },
+  "script_context.cc": {
+    "sha256_full_source": "25c0c94c8e16b41c198e9a5877ae768573d22aacb2e96900b5c8b5cb1fd77380",
+    "repository": "chromium/chromium",
+    "ref": "156.0.8078.47"
+  },
+  "context_holder.cc": {
+    "sha256_full_source": "854bc147b1cfe5f85c357af41deaf9ad5fc92ea72463cdd4abf936ae176f30e4",
+    "repository": "chromium/chromium",
+    "ref": "156.0.8078.47"
+  },
+  "global-handles.cc": {
+    "sha256_full_source": "386a232656f3acf03a0993c53998a4b54717edf6b4dff48b5f8feb36cd7ba127",
+    "repository": "v8/v8",
+    "ref": "392e44423f46d75904da712fadea4c7d5d97967f"
+  }
+}

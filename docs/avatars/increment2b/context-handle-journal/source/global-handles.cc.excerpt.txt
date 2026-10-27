@@ -1,0 +1,172 @@
+From line 293:
+293:   static const Child* FromLocation(const Address* location) {
+294:     return reinterpret_cast<const Child*>(location);
+295:   }
+296: 
+297:   static Child* FromLocation(Address* location) {
+298:     return reinterpret_cast<Child*>(location);
+299:   }
+300: 
+301:   NodeBase() {
+302:     DCHECK_EQ(offsetof(NodeBase, object_), 0);
+303:     DCHECK_EQ(offsetof(NodeBase, class_id_), Internals::kNodeClassIdOffset);
+304:     DCHECK_EQ(offsetof(NodeBase, flags_), Internals::kNodeFlagsOffset);
+305:   }
+306: 
+307: #ifdef ENABLE_GLOBAL_HANDLE_ZAPPING
+308:   ~NodeBase() {
+309:     ClearFields();
+310:     data_.next_free = nullptr;
+311:     index_ = 0;
+312:   }
+313: #endif
+314: 
+315:   void Free(Child* free_list) {
+316:     ClearFields();
+317:     AsChild()->MarkAsFree();
+318:     data_.next_free = free_list;
+319:   }
+320: 
+321:   // Publishes all internal state to be consumed by other threads.
+322:   IndirectHandle<Object> Publish(Tagged<Object> object) {
+323:     DCHECK(!AsChild()->IsInUse());
+324:     data_.parameter = nullptr;
+325:     AsChild()->MarkAsUsed();
+326:     reinterpret_cast<std::atomic<Address>*>(&object_)->store(
+327:         object.ptr(), std::memory_order_release);
+328:     DCHECK(AsChild()->IsInUse());
+329:     return handle();
+330:   }
+331: 
+332:   void Release(Child* free_list) {
+333:     DCHECK(AsChild()->IsInUse());
+334:     Free(free_list);
+From line 624:
+624: IndirectHandle<Object> GlobalHandles::Create(Tagged<Object> value) {
+625:   GlobalHandles::Node* node = regular_nodes_->Allocate();
+626:   if (NeedsTrackingInYoungNodes(value, node)) {
+627:     young_nodes_.push_back(node);
+628:     node->set_in_young_list(true);
+629:   }
+630:   return node->Publish(value);
+631: }
+632: 
+633: IndirectHandle<Object> GlobalHandles::Create(Address value) {
+634:   return Create(Tagged<Object>(value));
+635: }
+636: 
+637: IndirectHandle<Object> GlobalHandles::CopyGlobal(Address* location) {
+638:   DCHECK_NOT_NULL(location);
+639:   GlobalHandles* global_handles =
+640:       Node::FromLocation(location)->global_handles();
+641: #ifdef VERIFY_HEAP
+642:   if (v8_flags.verify_heap) {
+643:     Object::ObjectVerify(Tagged<Object>(*location), global_handles->isolate());
+644:   }
+645: #endif  // VERIFY_HEAP
+646:   return global_handles->Create(*location);
+647: }
+648: 
+649: // static
+650: void GlobalHandles::MoveGlobal(Address** from, Address** to) {
+651:   DCHECK_NOT_NULL(*from);
+652:   DCHECK_NOT_NULL(*to);
+653:   DCHECK_EQ(*from, *to);
+654:   Node* node = Node::FromLocation(*from);
+655:   if (node->IsWeak() && node->IsPhantomResetHandle()) {
+656:     node->set_parameter(to);
+657:   }
+658:   // Strong handles do not require fixups.
+659: }
+660: 
+661: void GlobalHandles::Destroy(Address* location) {
+662:   if (location != nullptr) {
+663:     NodeSpace<Node>::Release(Node::FromLocation(location));
+664:   }
+665: }
+From line 675:
+675: void GlobalHandles::MakeWeak(Address** location_addr) {
+676:   Node::FromLocation(*location_addr)->MakeWeak(location_addr);
+677: }
+678: 
+679: void* GlobalHandles::ClearWeakness(Address* location) {
+680:   return Node::FromLocation(location)->ClearWeakness();
+681: }
+682: 
+683: void GlobalHandles::AnnotateStrongRetainer(Address* location,
+684:                                            const char* label) {
+685:   Node::FromLocation(location)->AnnotateStrongRetainer(label);
+686: }
+687: 
+688: bool GlobalHandles::IsWeak(Address* location) {
+689:   return Node::FromLocation(location)->IsWeak();
+690: }
+691: 
+692: V8_INLINE bool GlobalHandles::ResetWeakNodeIfDead(
+693:     Node* node, WeakSlotCallbackWithHeap should_reset_handle) {
+694:   DCHECK(node->IsWeakRetainer());
+695: 
+696:   if (!should_reset_handle(isolate()->heap(), node->location())) return false;
+697: 
+698:   switch (node->weakness_type()) {
+699:     case WeaknessType::kNoCallback:
+700:       node->ResetPhantomHandle();
+701:       break;
+702:     case WeaknessType::kCallback:
+703:       [[fallthrough]];
+704:     case WeaknessType::kCallbackWithTwoEmbedderFields:
+705:       node->CollectPhantomCallbackData(&pending_phantom_callbacks_);
+706:       break;
+707:   }
+708:   return true;
+709: }
+710: 
+711: DISABLE_CFI_PERF
+712: void GlobalHandles::IterateWeakRootsForPhantomHandles(
+713:     WeakSlotCallbackWithHeap should_reset_handle) {
+714:   for (Node* node : *regular_nodes_) {
+715:     if (node->IsWeakRetainer()) ResetWeakNodeIfDead(node, should_reset_handle);
+716:   }
+From line 272:
+272: void GlobalHandles::NodeSpace<NodeType>::Release(NodeType* node) {
+273:   BlockType* block = BlockType::From(node);
+274:   block->space()->Free(node);
+275: }
+276: 
+277: template <class NodeType>
+278: void GlobalHandles::NodeSpace<NodeType>::Free(NodeType* node) {
+279:   CHECK(node->IsInUse());
+280:   node->Release(first_free_);
+281:   first_free_ = node;
+282:   BlockType* block = BlockType::From(node);
+283:   if (block->DecreaseUsage()) {
+284:     block->ListRemove(&first_used_block_);
+285:   }
+286:   global_handles_->isolate()->counters()->global_handles()->Decrement();
+287:   handles_count_--;
+288: }
+289: 
+290: template <class Child>
+291: class NodeBase {
+292:  public:
+293:   static const Child* FromLocation(const Address* location) {
+294:     return reinterpret_cast<const Child*>(location);
+295:   }
+296: 
+297:   static Child* FromLocation(Address* location) {
+298:     return reinterpret_cast<Child*>(location);
+299:   }
+300: 
+301:   NodeBase() {
+302:     DCHECK_EQ(offsetof(NodeBase, object_), 0);
+303:     DCHECK_EQ(offsetof(NodeBase, class_id_), Internals::kNodeClassIdOffset);
+304:     DCHECK_EQ(offsetof(NodeBase, flags_), Internals::kNodeFlagsOffset);
+305:   }
+306: 
+307: #ifdef ENABLE_GLOBAL_HANDLE_ZAPPING
+308:   ~NodeBase() {
+309:     ClearFields();
+310:     data_.next_free = nullptr;
+311:     index_ = 0;
+312:   }
+313: #endif

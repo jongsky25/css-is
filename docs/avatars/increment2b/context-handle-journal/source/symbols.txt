@@ -1,0 +1,18 @@
+0000000004fde210 t v8::Isolate::ContextDisposedNotification(bool)
+00000000051184b0 t v8::internal::Isolate::CheckDetachedContextsAfterGC()
+0000000005142d10 t v8::internal::GlobalHandles::Create(v8::internal::Tagged<v8::internal::Object>)
+0000000005143150 t v8::internal::GlobalHandles::MakeWeak(unsigned long*, void*, void (*)(v8::WeakCallbackInfo<void> const&), v8::WeakCallbackType)
+00000000051431a0 t v8::internal::GlobalHandles::MakeWeak(unsigned long**)
+000000000ad479b0 t extensions::ScriptContext::ScriptContext(v8::Local<v8::Context> const&, blink::WebLocalFrame*, extensions::mojom::HostID const&, extensions::Extension const*, std::__1::optional<int>, extensions::mojom::ContextType, extensions::Extension const*, extensions::mojom::ContextType)
+000000000ad48610 t extensions::ScriptContext::~ScriptContext()
+000000000ad48db0 t extensions::ScriptContext::Invalidate()
+000000000fd46290 t blink::ScriptState::ScriptState(v8::Local<v8::Context>, blink::DOMWrapperWorld*, blink::scheduler::EventLoop*)
+000000000fd46800 t blink::ScriptState::DisposePerContextData()
+000000000fd46990 t blink::ScriptState::DissociateContext()
+000000000fd4bac0 t blink::V8PerContextData::V8PerContextData(v8::Local<v8::Context>, blink::scheduler::EventLoop*)
+000000000fd4bc10 t blink::V8PerContextData::~V8PerContextData()
+
+Additional source-audited symbols:
+0000000005143060 GlobalHandles::NodeSpace<Node>::Release(Node*) [static]
+000000000d32f660 gin::ContextHolder::~ContextHolder()
+000000000d32f710 gin::ContextHolder::SetContext(v8::Local<v8::Context>)

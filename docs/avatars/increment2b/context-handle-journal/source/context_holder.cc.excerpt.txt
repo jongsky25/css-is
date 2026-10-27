@@ -1,0 +1,10 @@
+From line 23:
+23: void ContextHolder::SetContext(v8::Local<v8::Context> context) {
+24:   DCHECK(context_.IsEmpty());
+25:   context_.Reset(isolate_, context);
+26:   context_.AnnotateStrongRetainer("gin::ContextHolder::context_");
+27:   data_ = cppgc::MakeGarbageCollected<PerContextData>(
+28:       isolate_->GetCppHeap()->GetAllocationHandle(), this, context);
+29: }
+30: 
+31: }  // namespace gin

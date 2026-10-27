@@ -1,0 +1,86 @@
+From line 129:
+129: ScriptContext::ScriptContext(const v8::Local<v8::Context>& v8_context,
+130:                              blink::WebLocalFrame* web_frame,
+131:                              const mojom::HostID& host_id,
+132:                              const Extension* extension,
+133:                              std::optional<int> blink_isolated_world_id,
+134:                              mojom::ContextType context_type,
+135:                              const Extension* effective_extension,
+136:                              mojom::ContextType effective_context_type)
+137:     : is_valid_(true),
+138:       v8_context_(v8::Isolate::GetCurrent(), v8_context),
+139:       web_frame_(web_frame),
+140:       host_id_(host_id),
+141:       extension_(extension),
+142:       blink_isolated_world_id_(std::move(blink_isolated_world_id)),
+143:       context_type_(context_type),
+144:       effective_extension_(effective_extension),
+145:       effective_context_type_(effective_context_type),
+146:       context_id_(base::UnguessableToken::Create()),
+147:       isolate_(v8::Isolate::GetCurrent()),
+148:       safe_builtins_(this),
+149:       service_worker_version_id_(blink::mojom::kInvalidServiceWorkerVersionId) {
+150:   VLOG(1) << "Created context:\n" << GetDebugString();
+151:   v8_context_.AnnotateStrongRetainer("extensions::ScriptContext::v8_context_");
+152:   if (web_frame_)
+153:     url_ = GetAccessCheckedFrameURL(web_frame_);
+154:   // Enforce the invariant that an extension should have a HostID that's set to
+155:   // the extension id.
+156:   if (extension_) {
+157:     CHECK_EQ(host_id_.type, mojom::HostID::HostType::kExtensions);
+158:     CHECK_EQ(host_id_.id, extension_->id());
+159:   }
+160: }
+161: 
+162: ScriptContext::~ScriptContext() {
+163:   VLOG(1) << "Destroyed context for extension\n"
+164:           << "  extension id: " << GetExtensionID() << "\n"
+165:           << "  effective extension id: "
+166:           << (effective_extension_.get() ? effective_extension_->id() : "");
+167:   CHECK(!is_valid_) << "ScriptContexts must be invalidated before destruction";
+168: }
+169: 
+170: // static
+From line 190:
+190: void ScriptContext::Invalidate() {
+191:   DCHECK(thread_checker_.CalledOnValidThread());
+192:   CHECK(is_valid_);
+193:   is_valid_ = false;
+194: 
+195:   // TODO(kalman): Make ModuleSystem use AddInvalidationObserver.
+196:   // Ownership graph is a bit weird here.
+197:   if (module_system_)
+198:     module_system_->Invalidate();
+199: 
+200:   // Swap |invalidate_observers_| to a local variable to clear it, and to make
+201:   // sure it's not mutated as we iterate.
+202:   std::vector<base::OnceClosure> observers;
+203:   observers.swap(invalidate_observers_);
+204:   for (base::OnceClosure& observer : observers) {
+205:     std::move(observer).Run();
+206:   }
+207:   DCHECK(invalidate_observers_.empty())
+208:       << "Invalidation observers cannot be added during invalidation";
+209: 
+210:   safe_builtins_.Reset();
+211:   v8_context_.Reset();
+212: }
+213: 
+214: void ScriptContext::AddInvalidationObserver(base::OnceClosure observer) {
+215:   DCHECK(thread_checker_.CalledOnValidThread());
+216:   // `Invalidate()` assumes that an `observer` is not added while it's notifying
+217:   // observers so let's be sure of that.
+218:   DCHECK(is_valid_);
+219:   invalidate_observers_.push_back(std::move(observer));
+220: }
+221: 
+222: const std::string& ScriptContext::GetExtensionID() const {
+223:   DCHECK(thread_checker_.CalledOnValidThread());
+224:   return extension_.get() ? extension_->id() : base::EmptyString();
+225: }
+226: 
+227: content::RenderFrame* ScriptContext::GetRenderFrame() const {
+228:   DCHECK(thread_checker_.CalledOnValidThread());
+229:   if (web_frame_)
+230:     return content::RenderFrame::FromWebFrame(web_frame_);
+231:   return nullptr;

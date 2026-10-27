@@ -1,0 +1,105 @@
+
+/workspace/scratch/avatar-runtime/root/usr/lib/chromium/chromium:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+000000000fd4bac0 <getaddrinfo@@Base+0x2da60d0>:
+     fd4bac0:	f3 0f 1e fa          	endbr64
+     fd4bac4:	55                   	push   %rbp
+     fd4bac5:	48 89 e5             	mov    %rsp,%rbp
+     fd4bac8:	41 57                	push   %r15
+     fd4baca:	41 56                	push   %r14
+     fd4bacc:	41 55                	push   %r13
+     fd4bace:	41 54                	push   %r12
+     fd4bad0:	53                   	push   %rbx
+     fd4bad1:	48 83 ec 18          	sub    $0x18,%rsp
+     fd4bad5:	48 89 55 d0          	mov    %rdx,-0x30(%rbp)
+     fd4bad9:	48 89 75 c8          	mov    %rsi,-0x38(%rbp)
+     fd4badd:	48 89 fb             	mov    %rdi,%rbx
+     fd4bae0:	49 bf 00 00 00 00 fc 	movabs $0xfffffffc00000000,%r15
+     fd4bae7:	ff ff ff 
+     fd4baea:	64 4c 8b 34 25 a0 fb 	mov    %fs:0xfffffffffffffba0,%r14
+     fd4baf1:	ff ff 
+     fd4baf3:	4d 89 f4             	mov    %r14,%r12
+     fd4baf6:	4d 21 fc             	and    %r15,%r12
+     fd4baf9:	4c 3b 25 08 85 dd 03 	cmp    0x3dd8508(%rip),%r12        # 13b24008 <__data_start@@Base+0x34008>
+     fd4bb00:	75 08                	jne    fd4bb0a <getaddrinfo@@Base+0x2da611a>
+     fd4bb02:	4c 89 f7             	mov    %r14,%rdi
+     fd4bb05:	e8 b6 21 1b fb       	call   aefdcc0 <localtime@@Base+0x268c700>
+     fd4bb0a:	4c 89 33             	mov    %r14,(%rbx)
+     fd4bb0d:	0f 57 c0             	xorps  %xmm0,%xmm0
+     fd4bb10:	0f 11 43 08          	movups %xmm0,0x8(%rbx)
+     fd4bb14:	81 63 18 00 00 00 80 	andl   $0x80000000,0x18(%rbx)
+     fd4bb1b:	0f 11 43 20          	movups %xmm0,0x20(%rbx)
+     fd4bb1f:	81 63 30 00 00 00 80 	andl   $0x80000000,0x30(%rbx)
+     fd4bb26:	bf 28 00 00 00       	mov    $0x28,%edi
+     fd4bb2b:	e8 10 86 1d fb       	call   af24140 <_Znam@@Base>
+     fd4bb30:	49 89 c5             	mov    %rax,%r13
+     fd4bb33:	4c 3b 25 ce 84 dd 03 	cmp    0x3dd84ce(%rip),%r12        # 13b24008 <__data_start@@Base+0x34008>
+     fd4bb3a:	75 08                	jne    fd4bb44 <getaddrinfo@@Base+0x2da6154>
+     fd4bb3c:	4c 89 f7             	mov    %r14,%rdi
+     fd4bb3f:	e8 7c 21 1b fb       	call   aefdcc0 <localtime@@Base+0x268c700>
+     fd4bb44:	4d 89 75 00          	mov    %r14,0x0(%r13)
+     fd4bb48:	0f 57 c0             	xorps  %xmm0,%xmm0
+     fd4bb4b:	41 0f 11 45 08       	movups %xmm0,0x8(%r13)
+     fd4bb50:	49 c7 45 18 00 00 00 	movq   $0x0,0x18(%r13)
+     fd4bb57:	00 
+     fd4bb58:	48 8d 05 89 41 bb 03 	lea    0x3bb4189(%rip),%rax        # 138ffce8 <__register_atfork@plt+0x987718>
+     fd4bb5f:	49 89 45 20          	mov    %rax,0x20(%r13)
+     fd4bb63:	4c 89 6b 38          	mov    %r13,0x38(%rbx)
+     fd4bb67:	4c 8b 75 c8          	mov    -0x38(%rbp),%r14
+     fd4bb6b:	4d 85 f6             	test   %r14,%r14
+     fd4bb6e:	4c 8b 65 d0          	mov    -0x30(%rbp),%r12
+     fd4bb72:	74 14                	je     fd4bb88 <getaddrinfo@@Base+0x2da6198>
+     fd4bb74:	48 8b 03             	mov    (%rbx),%rax
+     fd4bb77:	49 8b 36             	mov    (%r14),%rsi
+     fd4bb7a:	48 8b b8 68 0c 01 00 	mov    0x10c68(%rax),%rdi
+     fd4bb81:	e8 8a 71 3f f5       	call   5142d10 <ChromeMain@@Base+0x1fb7220>
+     fd4bb86:	eb 02                	jmp    fd4bb8a <getaddrinfo@@Base+0x2da619a>
+     fd4bb88:	31 c0                	xor    %eax,%eax
+     fd4bb8a:	48 89 43 40          	mov    %rax,0x40(%rbx)
+     fd4bb8e:	0f 57 c0             	xorps  %xmm0,%xmm0
+     fd4bb91:	0f 11 43 48          	movups %xmm0,0x48(%rbx)
+     fd4bb95:	48 c7 43 58 00 00 00 	movq   $0x0,0x58(%rbx)
+     fd4bb9c:	00 
+     fd4bb9d:	81 63 60 00 00 00 80 	andl   $0x80000000,0x60(%rbx)
+     fd4bba4:	4d 21 e7             	and    %r12,%r15
+     fd4bba7:	4c 3b 3d 5a 84 dd 03 	cmp    0x3dd845a(%rip),%r15        # 13b24008 <__data_start@@Base+0x34008>
+     fd4bbae:	75 08                	jne    fd4bbb8 <getaddrinfo@@Base+0x2da61c8>
+     fd4bbb0:	4c 89 e7             	mov    %r12,%rdi
+     fd4bbb3:	e8 08 21 1b fb       	call   aefdcc0 <localtime@@Base+0x268c700>
+     fd4bbb8:	4c 89 63 68          	mov    %r12,0x68(%rbx)
+     fd4bbbc:	48 8b 7b 38          	mov    0x38(%rbx),%rdi
+     fd4bbc0:	4c 89 f6             	mov    %r14,%rsi
+     fd4bbc3:	e8 48 3b 5e fd       	call   d32f710 <getaddrinfo@@Base+0x389d20>
+     fd4bbc8:	48 8b 43 40          	mov    0x40(%rbx),%rax
+     fd4bbcc:	48 8d 0d 3d 32 d4 f2 	lea    -0xd2bcdc3(%rip),%rcx        # 2a8ee10 <_IO_stdin_used@@Base+0x114ccf0>
+     fd4bbd3:	48 89 48 10          	mov    %rcx,0x10(%rax)
+     fd4bbd7:	66 66 66 64 48 8b 04 	data16 data16 data16 mov %fs:0x0,%rax
+     fd4bbde:	25 00 00 00 00 
+     fd4bbe3:	80 b8 e5 fe ff ff 01 	cmpb   $0x1,-0x11b(%rax)
+     fd4bbea:	75 07                	jne    fd4bbf3 <getaddrinfo@@Base+0x2da6203>
+     fd4bbec:	f0 ff 05 31 00 ee 03 	lock incl 0x3ee0031(%rip)        # 13c2bc24 <__bss_start@@Base+0x47c24>
+     fd4bbf3:	48 83 c4 18          	add    $0x18,%rsp
+     fd4bbf7:	5b                   	pop    %rbx
+     fd4bbf8:	41 5c                	pop    %r12
+     fd4bbfa:	41 5d                	pop    %r13
+     fd4bbfc:	41 5e                	pop    %r14
+     fd4bbfe:	41 5f                	pop    %r15
+     fd4bc00:	5d                   	pop    %rbp
+     fd4bc01:	c3                   	ret
+     fd4bc02:	cc                   	int3
+     fd4bc03:	cc                   	int3
+     fd4bc04:	cc                   	int3
+     fd4bc05:	cc                   	int3
+     fd4bc06:	cc                   	int3
+     fd4bc07:	cc                   	int3
+     fd4bc08:	cc                   	int3
+     fd4bc09:	cc                   	int3
+     fd4bc0a:	cc                   	int3
+     fd4bc0b:	cc                   	int3
+     fd4bc0c:	cc                   	int3
+     fd4bc0d:	cc                   	int3
+     fd4bc0e:	cc                   	int3
+     fd4bc0f:	cc                   	int3
