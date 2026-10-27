@@ -17,7 +17,7 @@ def specimen(monkeypatch):
                   'errors': ['No labelled page generation observed returning to pool'],
                   'matched_receiver_records': 6144, 'receiver_records': 6144, 'mixed_group_generations': 12}
     monkeypatch.setattr(analysis, 'inspect', lambda p: membership)
-    p = {'protocol': analysis.PROTOCOL, 'back_forward_cache_disabled': True, 'lifecycle_transport': 'same-origin-beacon',
+    p = {'protocol': analysis.PROTOCOL, 'back_forward_cache_disabled': True, 'lifecycle_transport': 'same-origin-beacon', 'census_transport': 'one-evaluate-four-fixed-groups',
          'begin_ns': 0, 'end_ns': 10000000, 'pid': 7, 'mode': 'probe',
          'lifecycle_events': [{'index': i, 'persisted': False, 'received_ns': 100000+i*500000} for i in range(11)],
          'stages': [], 'history': {'offsets': {**analysis.OFFSETS, **analysis.EXTRA_OFFSETS}, 'events': []},
@@ -28,7 +28,7 @@ def specimen(monkeypatch):
                              {'name': 'clock_sync', 'ts': 10001, 'args': {'sync_id': 'after'}}]}
     for i in range(12):
         offset = i*500000
-        p['stages'].append({'index': i, 'begin_ns': offset+2000, 'end_ns': offset+5000, 'censuses': [],
+        p['stages'].append({'index': i, 'begin_ns': offset+2000, 'end_ns': offset+5000, 'censuses': [{'begin_ns': offset+2100, 'end_ns': offset+2200} for _ in range(4)], 'batch_census_interval_ns': [offset+2100,offset+2200],
             'heap': {'value': {'usedSize': 1000}, 'interval_ns': [offset+3000, offset+3500]},
             'dom': {'value': {'documents': i+1, 'nodes': 100}, 'interval_ns': [offset+3600, offset+4000]}})
         p['history']['events'].append({'kind': 'shutdown', 'begin_ns': offset+4000,
@@ -67,3 +67,14 @@ def test_other_membership_failure_is_not_excused(monkeypatch):
     p, trace, membership = specimen(monkeypatch)
     membership['errors'].append('Observed-request receiver coverage below 90%')
     assert 'Live membership coverage failed independently of reclamation' in analysis.analyze(p, trace)['errors']
+
+
+def test_batch_is_counted_once_and_mismatch_cannot_reduce_cost(monkeypatch):
+    p, _, _ = specimen(monkeypatch)
+    assert analysis.census_costs(p) == [100]*12
+    bad = deepcopy(p); bad['stages'][0]['censuses'][0]['end_ns'] -= 1
+    with pytest.raises(ValueError, match='mismatch'): analysis.census_costs(bad)
+    bad = deepcopy(p); bad['stages'][0]['batch_census_interval_ns'][1] += 50000
+    with pytest.raises(ValueError): analysis.census_costs(bad)
+    old = deepcopy(p); old['protocol'] = 'native-membership-lifecycle-v4'
+    assert len(analysis.census_costs(old)) == 48

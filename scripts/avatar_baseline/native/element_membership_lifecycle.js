@@ -7,15 +7,21 @@ function now() {
   return Number(stamp.readU64()) * 1e9 + Number(stamp.add(8).readU64());
 }
 const offsets = {allocate: 0x5ab0350, pool: 0x5ab0550, receiver: 0x100b1880, shutdown: 0x100208d0, destroy: 0x5aa4490, release: 0x5ab09d0};
-let phase = 'attached', dropped = 0;
+let phase = 'attached', dropped = 0, censusCursor = 0;
 const events = [];
 function store(e) { if (events.length < 50000) events.push(e); else dropped++; }
 for (const [kind, offset] of Object.entries(offsets)) {
   Interceptor.attach(image.base.add(offset), {
     onEnter(args) {
-      this.enabled = kind !== 'receiver' || phase.startsWith('census:');
+      this.enabled = kind !== 'receiver' || (phase.startsWith('census:') || phase.startsWith('batch:'));
       if (!this.enabled) return;
       this.begin = now(); this.phase = phase;
+      if (kind === 'receiver' && phase.startsWith('batch:')) {
+        const groups = ['avatar:0', 'avatar:1', 'other:0', 'other:1'];
+        const group = groups[Math.floor(censusCursor / 128)] || 'overflow';
+        this.phase = 'census:' + phase.split(':')[1] + ':' + group;
+        censusCursor++;
+      }
       this.backend = kind === 'receiver' ? null : args[0].toString();
       this.address = kind === 'pool' ? args[1].toString() : ['receiver', 'shutdown', 'destroy'].includes(kind) ? args[0].toString() : null;
       this.ready = now();
@@ -29,7 +35,7 @@ for (const [kind, offset] of Object.entries(offsets)) {
   });
 }
 rpc.exports = {
-  setphase(value) { phase = value; },
+  setphase(value) { phase = value; if (phase.startsWith('batch:')) censusCursor = 0; },
   result() { return {module: image.path, offsets, page_size: 131072, events, dropped}; }
 };
 send({ready: true, pid: Process.id, module: image.path});

@@ -15,7 +15,7 @@ BUILD = '1c5dca8527a61d07372e489142bee26af1bcaf71'
 COUNT = 512  # Retained v1 census profile.
 CENSUS = 128
 FIXTURE_COUNT = 4096
-PROTOCOL = 'native-membership-lifecycle-v4'
+PROTOCOL = 'native-membership-lifecycle-v5'
 STAGES = 12
 BROWSER = Path('/workspace/scratch/avatar-runtime/root/usr/lib/chromium/chromium')
 HOOK = Path(__file__).resolve().parent / 'native/element_membership_lifecycle.js'
@@ -95,6 +95,7 @@ def run(out, mode):
             result['playwright_version'] = __import__('importlib.metadata', fromlist=['version']).version('playwright')
             page_cdp = context.new_cdp_session(page)
             result['lifecycle_transport'] = 'same-origin-beacon'
+            result['census_transport'] = 'one-evaluate-four-fixed-groups'
             cdp.on('Tracing.tracingComplete', lambda e: completed.append(e))
             cdp.send('Tracing.start', {'transferMode': 'ReturnAsStream', 'traceConfig': {
                 'excludedCategories': ['*'], 'includedCategories': ['devtools.timeline'], 'recordMode': 'recordUntilFull'}})
@@ -144,21 +145,28 @@ def run(out, mode):
                 if script: script.exports_sync.setphase(f'navigation:{index}')
                 page.goto(origin + f'/fixture/{index}'); page.wait_for_timeout(220)
                 before = page.evaluate('document.documentElement.outerHTML')
-                for group in ['avatar', 'other']:
-                    for repeat in [0, 1]:
-                        label = f'census:{index}:{group}:{repeat}'
-                        census = {'phase': label, 'begin_ns': time.monotonic_ns()}
-                        stage['censuses'].append(census)
-                        if script: script.exports_sync.setphase(label)
-                        census['result'] = page.evaluate('''({group, count}) => {
+                start = time.monotonic_ns()
+                if script: script.exports_sync.setphase(f'batch:{index}')
+                observed = page.evaluate('''count => {
+                    const result = [];
+                    for (const group of ['avatar', 'other']) {
+                        for (const repeat of [0, 1]) {
                             let nodes = [...document.querySelectorAll('[data-group="'+group+'"]')];
                             const fixture_count = nodes.length;
                             nodes = group === 'avatar' ? nodes.slice(-count) : nodes.slice(0, count);
-                            let counts = nodes.map(node => node.getClientRects().length);
-                            return {count: nodes.length, fixture_count, counts};
-                        }''', {'group': group, 'count': CENSUS})
-                        if script: script.exports_sync.setphase('between-censuses')
-                        census['end_ns'] = time.monotonic_ns()
+                            result.push({group, repeat, count: nodes.length, fixture_count,
+                                         counts: nodes.map(node => node.getClientRects().length)});
+                        }
+                    }
+                    return result;
+                }''', CENSUS)
+                if script: script.exports_sync.setphase('between-censuses')
+                stop = time.monotonic_ns()
+                stage['batch_census_interval_ns'] = [start, stop]
+                for row in observed:
+                    group, repeat = row.pop('group'), row.pop('repeat')
+                    stage['censuses'].append({'phase': f'census:{index}:{group}:{repeat}',
+                        'begin_ns': start, 'end_ns': stop, 'result': row})
                 after = page.evaluate('document.documentElement.outerHTML')
                 stage['dom_before_sha256'] = hashlib.sha256(before.encode()).hexdigest()
                 stage['dom_after_sha256'] = hashlib.sha256(after.encode()).hexdigest()

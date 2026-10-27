@@ -1,0 +1,7 @@
+.                                                                        [100%]
+=============================== warnings summary ===============================
+tests/test_membership_lifecycle_transport_browser.py::test_beacon_survives_departing_document
+  /workspace/css-is/tests/conftest.py:88: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html

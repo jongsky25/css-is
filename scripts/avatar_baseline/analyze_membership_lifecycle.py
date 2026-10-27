@@ -10,8 +10,8 @@ import subprocess
 from scripts.avatar_baseline.analyze_element_membership import inspect, validate_identity, OFFSETS
 from scripts.avatar_baseline.analyze_reader_retention import clock_bounds, mapped, selected_events, position
 
-PROTOCOL = 'native-membership-lifecycle-v4'
-SUPPORTED = {f'native-membership-lifecycle-v{i}' for i in [1,2,3,4]}
+PROTOCOL = 'native-membership-lifecycle-v5'
+SUPPORTED = {f'native-membership-lifecycle-v{i}' for i in [1,2,3,4,5]}
 EXTRA_OFFSETS = {'shutdown': 0x100208d0, 'destroy': 0x5aa4490, 'release': 0x5ab09d0}
 SOURCES = ['scripts/avatar_baseline/element_membership_lifecycle.py',
            'scripts/avatar_baseline/native/element_membership_lifecycle.js',
@@ -28,11 +28,27 @@ def lifecycle_events(events):
         raise ValueError('Document persisted in history cache')
 
 
+def census_costs(p):
+    if p['protocol'] != 'native-membership-lifecycle-v5':
+        return [c['end_ns']-c['begin_ns'] for s in p['stages'] for c in s['censuses']]
+    if p.get('census_transport') != 'one-evaluate-four-fixed-groups':
+        raise ValueError('Wrong batched census transport')
+    costs = []
+    for s in p['stages']:
+        lo, hi = s['batch_census_interval_ns']
+        if len(s['censuses']) != 4 or any([c['begin_ns'],c['end_ns']] != [lo,hi] for c in s['censuses']):
+            raise ValueError('Batched census interval mismatch')
+        if not s['begin_ns'] <= lo <= hi <= s['end_ns']:
+            raise ValueError('Batch outside measured stage')
+        costs.append(hi-lo)
+    return costs
+
+
 def analyze(p, trace=None):
     if p['protocol'] not in SUPPORTED or p['back_forward_cache_disabled'] is not True:
         raise ValueError('Wrong lifecycle protocol or BFCache launch flag')
-    expected_transport = 'same-origin-beacon' if p['protocol'] == PROTOCOL else 'cdp-runtime-binding'
-    if p['protocol'] in ['native-membership-lifecycle-v3', PROTOCOL] and p.get('lifecycle_transport') != expected_transport:
+    expected_transport = 'same-origin-beacon' if p['protocol'] in ['native-membership-lifecycle-v4', PROTOCOL] else 'cdp-runtime-binding'
+    if p['protocol'] in ['native-membership-lifecycle-v3', 'native-membership-lifecycle-v4', PROTOCOL] and p.get('lifecycle_transport') != expected_transport:
         raise ValueError('Wrong lifecycle event transport')
     lifecycle_events(p['lifecycle_events'])
     native = p.get('history'); begin, end = p['begin_ns'], p['end_ns']
@@ -60,7 +76,7 @@ def analyze(p, trace=None):
                 raise ValueError('Counter interval outside stage')
         result['stages'].append({'index': stage['index'], 'documents': stage['dom']['value']['documents'],
             'nodes': stage['dom']['value']['nodes'], 'used_heap_bytes': stage['heap']['value']['usedSize']})
-    costs = [c['end_ns']-c['begin_ns'] for s in p['stages'] for c in s['censuses']]
+    costs = census_costs(p)
     costs += [s[k]['interval_ns'][1]-s[k]['interval_ns'][0] for s in p['stages'] for k in ['heap', 'dom']]
     costs += [p.get('trace_setup_ns', 0)]
     if native:
