@@ -1,0 +1,12 @@
+{
+  "playwright_version": "1.62.0",
+  "source_path": "playwright/driver/package/lib/coreBundle.js",
+  "source_sha256": "3258d1cf334c6afc95f22aa9c292436cb976b391e0437f1359c83b84f0cb9d66",
+  "excerpt_lines": [
+    21110,
+    21135
+  ],
+  "observed_mutation": "default caret hiding adds then clears caret-color, leaving style=\"\" on hidden range inputs",
+  "fix": "page.screenshot(caret=\"initial\")",
+  "production_change": false
+}

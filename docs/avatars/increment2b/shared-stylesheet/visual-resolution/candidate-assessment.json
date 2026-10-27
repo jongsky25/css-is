@@ -1,0 +1,3169 @@
+{
+  "all_states_identical": true,
+  "screenshot_caret": "initial",
+  "isolate_avatar_paint": true,
+  "raster_threads": null,
+  "same_document": false,
+  "software_rendering": false,
+  "same_source_control": false,
+  "acceptance": false,
+  "browser": "156.0.8078.47",
+  "stylesheet_bytes": 15883,
+  "stylesheet_sha256": "06601d2d375c768da0b55c75b2a4569e23a84dae4ceb687d86ae499ac3956bad",
+  "template_reconstructed_exactly": true,
+  "all_pixels_identical": true,
+  "cells": 2880,
+  "sheets": [
+    {
+      "file": "light-default-live.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "cssom_identical": true,
+      "layers": [
+        {
+          "count": 340,
+          "draws_content": 193,
+          "sample_reasons": [
+            {
+              "compositingReasons": [],
+              "compositingReasonIds": []
+            },
+            {
+              "compositingReasons": [
+                "Is the document.rootScroller.",
+                "Is a scrollable overflow element using accelerated scrolling."
+              ],
+              "compositingReasonIds": [
+                "RootScroller",
+                "OverflowScrolling"
+              ]
+            },
+            {
+              "compositingReasons": [
+                "Overlaps other composited content."
+              ],
+              "compositingReasonIds": [
+                "Overlap"
+              ]
+            }
+          ]
+        },
+        {
+          "count": 340,
+          "draws_content": 193,
+          "sample_reasons": [
+            {
+              "compositingReasons": [],
+              "compositingReasonIds": []
+            },
+            {
+              "compositingReasons": [
+                "Is the document.rootScroller.",
+                "Is a scrollable overflow element using accelerated scrolling."
+              ],
+              "compositingReasonIds": [
+                "RootScroller",
+                "OverflowScrolling"
+              ]
+            },
+            {
+              "compositingReasons": [
+                "Overlaps other composited content."
+              ],
+              "compositingReasonIds": [
+                "Overlap"
+              ]
+            }
+          ]
+        }
+      ],
+      "isolation_checks": [],
+      "reference_sha256": "7facb42a81781752308bc28ba4fed858cdeb1c49e2e4aecdff221a584ffca820",
+      "candidate_sha256": "7facb42a81781752308bc28ba4fed858cdeb1c49e2e4aecdff221a584ffca820",
+      "state_comparison": {
+        "identical": true,
+        "nodes": [
+          6358,
+          6358
+        ],
+        "differences": [],
+        "sha256": [
+          "0175375fa7d1141e3760e1cc314d7f205a2790c65f8f6efdb0e453ad9b618954",
+          "0175375fa7d1141e3760e1cc314d7f205a2790c65f8f6efdb0e453ad9b618954"
+        ]
+      },
+      "within_document_state_comparisons": [
+        {
+          "identical": true,
+          "nodes": [
+            6358,
+            6358
+          ],
+          "differences": [],
+          "sha256": [
+            "0175375fa7d1141e3760e1cc314d7f205a2790c65f8f6efdb0e453ad9b618954",
+            "0175375fa7d1141e3760e1cc314d7f205a2790c65f8f6efdb0e453ad9b618954"
+          ]
+        },
+        {
+          "identical": true,
+          "nodes": [
+            6358,
+            6358
+          ],
+          "differences": [],
+          "sha256": [
+            "0175375fa7d1141e3760e1cc314d7f205a2790c65f8f6efdb0e453ad9b618954",
+            "0175375fa7d1141e3760e1cc314d7f205a2790c65f8f6efdb0e453ad9b618954"
+          ]
+        }
+      ]
+    },
+    {
+      "file": "light-default-preview.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "cssom_identical": true,
+      "layers": [
+        {
+          "count": 101,
+          "draws_content": 98,
+          "sample_reasons": [
+            {
+              "compositingReasons": [],
+              "compositingReasonIds": []
+            },
+            {
+              "compositingReasons": [
+                "Is the document.rootScroller.",
+                "Is a scrollable overflow element using accelerated scrolling."
+              ],
+              "compositingReasonIds": [
+                "RootScroller",
+                "OverflowScrolling"
+              ]
+            },
+            {
+              "compositingReasons": [
+                "Has a will-change: transform compositing hint."
+              ],
+              "compositingReasonIds": [
+                "WillChangeTransform"
+              ]
+            }
+          ]
+        },
+        {
+          "count": 101,
+          "draws_content": 98,
+          "sample_reasons": [
+            {
+              "compositingReasons": [],
+              "compositingReasonIds": []
+            },
+            {
+              "compositingReasons": [
+                "Is the document.rootScroller.",
+                "Is a scrollable overflow element using accelerated scrolling."
+              ],
+              "compositingReasonIds": [
+                "RootScroller",
+                "OverflowScrolling"
+              ]
+            },
+            {
+              "compositingReasons": [
+                "Has a will-change: transform compositing hint."
+              ],
+              "compositingReasonIds": [
+                "WillChangeTransform"
+              ]
+            }
+          ]
+        }
+      ],
+      "isolation_checks": [],
+      "reference_sha256": "3d416cdba4f0ba2e5b937e335cacaf1288cafdd8356afabbf4508330d7e803cb",
+      "candidate_sha256": "3d416cdba4f0ba2e5b937e335cacaf1288cafdd8356afabbf4508330d7e803cb",
+      "state_comparison": {
+        "identical": true,
+        "nodes": [
+          4648,
+          4648
+        ],
+        "differences": [],
+        "sha256": [
+          "f6505f2fc89dc5b47f7d9ba29940de14e854a6c353809059e9af540f2a239b3c",
+          "f6505f2fc89dc5b47f7d9ba29940de14e854a6c353809059e9af540f2a239b3c"
+        ]
+      },
+      "within_document_state_comparisons": [
+        {
+          "identical": true,
+          "nodes": [
+            4648,
+            4648
+          ],
+          "differences": [],
+          "sha256": [
+            "f6505f2fc89dc5b47f7d9ba29940de14e854a6c353809059e9af540f2a239b3c",
+            "f6505f2fc89dc5b47f7d9ba29940de14e854a6c353809059e9af540f2a239b3c"
+          ]
+        },
+        {
+          "identical": true,
+          "nodes": [
+            4648,
+            4648
+          ],
+          "differences": [],
+          "sha256": [
+            "f6505f2fc89dc5b47f7d9ba29940de14e854a6c353809059e9af540f2a239b3c",
+            "f6505f2fc89dc5b47f7d9ba29940de14e854a6c353809059e9af540f2a239b3c"
+          ]
+        }
+      ]
+    },
+    {
+      "file": "light-halloween-live.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "cssom_identical": true,
+      "layers": [
+        {
+          "count": 340,
+          "draws_content": 193,
+          "sample_reasons": [
+            {
+              "compositingReasons": [],
+              "compositingReasonIds": []
+            },
+            {
+              "compositingReasons": [
+                "Is the document.rootScroller.",
+                "Is a scrollable overflow element using accelerated scrolling."
+              ],
+              "compositingReasonIds": [
+                "RootScroller",
+                "OverflowScrolling"
+              ]
+            },
+            {
+              "compositingReasons": [
+                "Has a will-change: transform compositing hint."
+              ],
+              "compositingReasonIds": [
+                "WillChangeTransform"
+              ]
+            }
+          ]
+        },
+        {
+          "count": 340,
+          "draws_content": 193,
+          "sample_reasons": [
+            {
+              "compositingReasons": [],
+              "compositingReasonIds": []
+            },
+            {
+              "compositingReasons": [
+                "Is the document.rootScroller.",
+                "Is a scrollable overflow element using accelerated scrolling."
+              ],
+              "compositingReasonIds": [
+                "RootScroller",
+                "OverflowScrolling"
+              ]
+            },
+            {
+              "compositingReasons": [
+                "Has a will-change: transform compositing hint."
+              ],
+              "compositingReasonIds": [
+                "WillChangeTransform"
+              ]
+            }
+          ]
+        }
+      ],
+      "isolation_checks": [],
+      "reference_sha256": "132367c5fdcde86cc7a4fd740b885e2b4053f34568b7b05279b97e83c6cfb616",
+      "candidate_sha256": "132367c5fdcde86cc7a4fd740b885e2b4053f34568b7b05279b97e83c6cfb616",
+      "state_comparison": {
+        "identical": true,
+        "nodes": [
+          7176,
+          7176
+        ],
+        "differences": [],
+        "sha256": [
+          "52d9e7e54dd4c6953256dd930fa342a7d91982105407fbe863e9db0b17310d5c",
+          "52d9e7e54dd4c6953256dd930fa342a7d91982105407fbe863e9db0b17310d5c"
+        ]
+      },
+      "within_document_state_comparisons": [
+        {
+          "identical": true,
+          "nodes": [
+            7176,
+            7176
+          ],
+          "differences": [],
+          "sha256": [
+            "52d9e7e54dd4c6953256dd930fa342a7d91982105407fbe863e9db0b17310d5c",
+            "52d9e7e54dd4c6953256dd930fa342a7d91982105407fbe863e9db0b17310d5c"
+          ]
+        },
+        {
+          "identical": true,
+          "nodes": [
+            7176,
+            7176
+          ],
+          "differences": [],
+          "sha256": [
+            "52d9e7e54dd4c6953256dd930fa342a7d91982105407fbe863e9db0b17310d5c",
+            "52d9e7e54dd4c6953256dd930fa342a7d91982105407fbe863e9db0b17310d5c"
+          ]
+        }
+      ]
+    },
+    {
+      "file": "light-halloween-preview.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "cssom_identical": true,
+      "layers": [
+        {
+          "count": 101,
+          "draws_content": 98,
+          "sample_reasons": [
+            {
+              "compositingReasons": [],
+              "compositingReasonIds": []
+            },
+            {
+              "compositingReasons": [
+                "Is the document.rootScroller.",
+                "Is a scrollable overflow element using accelerated scrolling."
+              ],
+              "compositingReasonIds": [
+                "RootScroller",
+                "OverflowScrolling"
+              ]
+            },
+            {
+              "compositingReasons": [
+                "Has a will-change: transform compositing hint."
+              ],
+              "compositingReasonIds": [
+                "WillChangeTransform"
+              ]
+            }
+          ]
+        },
+        {
+          "count": 101,
+          "draws_content": 98,
+          "sample_reasons": [
+            {
+              "compositingReasons": [],
+              "compositingReasonIds": []
+            },
+            {
+              "compositingReasons": [
+                "Is the document.rootScroller.",
+                "Is a scrollable overflow element using accelerated scrolling."
+              ],
+              "compositingReasonIds": [
+                "RootScroller",
+                "OverflowScrolling"
+              ]
+            },
+            {
+              "compositingReasons": [
+                "Has a will-change: transform compositing hint."
+              ],
+              "compositingReasonIds": [
+                "WillChangeTransform"
+              ]
+            }
+          ]
+        }
+      ],
+      "isolation_checks": [],
+      "reference_sha256": "ecd60fe39be0ae144bf5238d771e9ecb3c81d590e38b848cc58892d4cd2bfe75",
+      "candidate_sha256": "ecd60fe39be0ae144bf5238d771e9ecb3c81d590e38b848cc58892d4cd2bfe75",
+      "state_comparison": {
+        "identical": true,
+        "nodes": [
+          5466,
+          5466
+        ],
+        "differences": [],
+        "sha256": [
+          "0ebdebc0ea92e4755264210010c45671062132d145caed1cd89e431f67c5f148",
+          "0ebdebc0ea92e4755264210010c45671062132d145caed1cd89e431f67c5f148"
+        ]
+      },
+      "within_document_state_comparisons": [
+        {
+          "identical": true,
+          "nodes": [
+            5466,
+            5466
+          ],
+          "differences": [],
+          "sha256": [
+            "0ebdebc0ea92e4755264210010c45671062132d145caed1cd89e431f67c5f148",
+            "0ebdebc0ea92e4755264210010c45671062132d145caed1cd89e431f67c5f148"
+          ]
+        },
+        {
+          "identical": true,
+          "nodes": [
+            5466,
+            5466
+          ],
+          "differences": [],
+          "sha256": [
+            "0ebdebc0ea92e4755264210010c45671062132d145caed1cd89e431f67c5f148",
+            "0ebdebc0ea92e4755264210010c45671062132d145caed1cd89e431f67c5f148"
+          ]
+        }
+      ]
+    },
+    {
+      "file": "light-halloween_vampire-live.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "cssom_identical": true,
+      "layers": [
+        {
+          "count": 340,
+          "draws_content": 193,
+          "sample_reasons": [
+            {
+              "compositingReasons": [],
+              "compositingReasonIds": []
+            },
+            {
+              "compositingReasons": [
+                "Is the document.rootScroller.",
+                "Is a scrollable overflow element using accelerated scrolling."
+              ],
+              "compositingReasonIds": [
+                "RootScroller",
+                "OverflowScrolling"
+              ]
+            },
+            {
+              "compositingReasons": [
+                "Has a will-change: transform compositing hint."
+              ],
+              "compositingReasonIds": [
+                "WillChangeTransform"
+              ]
+            }
+          ]
+        },
+        {
+          "count": 340,
+          "draws_content": 193,
+          "sample_reasons": [
+            {
+              "compositingReasons": [],
+              "compositingReasonIds": []
+            },
+            {
+              "compositingReasons": [
+                "Is the document.rootScroller.",
+                "Is a scrollable overflow element using accelerated scrolling."
+              ],
+              "compositingReasonIds": [
+                "RootScroller",
+                "OverflowScrolling"
+              ]
+            },
+            {
+              "compositingReasons": [
+                "Has a will-change: transform compositing hint."
+              ],
+              "compositingReasonIds": [
+                "WillChangeTransform"
+              ]
+            }
+          ]
+        }
+      ],
+      "isolation_checks": [],
+      "reference_sha256": "5f2148e64ceef1777631b1742ed2090174afc67cdb053abe87d1e6405aaf7ab9",
+      "candidate_sha256": "5f2148e64ceef1777631b1742ed2090174afc67cdb053abe87d1e6405aaf7ab9",
+      "state_comparison": {
+        "identical": true,
+        "nodes": [
+          7086,
+          7086
+        ],
+        "differences": [],
+        "sha256": [
+          "c4c804922ca542971b62c9e6b821c9e1779e2d37254df4cf29a6e438ca77c8b6",
+          "c4c804922ca542971b62c9e6b821c9e1779e2d37254df4cf29a6e438ca77c8b6"
+        ]
+      },
+      "within_document_state_comparisons": [
+        {
+          "identical": true,
+          "nodes": [
+            7086,
+            7086
+          ],
+          "differences": [],
+          "sha256": [
+            "c4c804922ca542971b62c9e6b821c9e1779e2d37254df4cf29a6e438ca77c8b6",
+            "c4c804922ca542971b62c9e6b821c9e1779e2d37254df4cf29a6e438ca77c8b6"
+          ]
+        },
+        {
+          "identical": true,
+          "nodes": [
+            7086,
+            7086
+          ],
+          "differences": [],
+          "sha256": [
+            "c4c804922ca542971b62c9e6b821c9e1779e2d37254df4cf29a6e438ca77c8b6",
+            "c4c804922ca542971b62c9e6b821c9e1779e2d37254df4cf29a6e438ca77c8b6"
+          ]
+        }
+      ]
+    },
+    {
+      "file": "light-halloween_vampire-preview.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "cssom_identical": true,
+      "layers": [
+        {
+          "count": 101,
+          "draws_content": 98,
+          "sample_reasons": [
+            {
+              "compositingReasons": [],
+              "compositingReasonIds": []
+            },
+            {
+              "compositingReasons": [
+                "Is the document.rootScroller.",
+                "Is a scrollable overflow element using accelerated scrolling."
+              ],
+              "compositingReasonIds": [
+                "RootScroller",
+                "OverflowScrolling"
+              ]
+            },
+            {
+              "compositingReasons": [
+                "Has a will-change: transform compositing hint."
+              ],
+              "compositingReasonIds": [
+                "WillChangeTransform"
+              ]
+            }
+          ]
+        },
+        {
+          "count": 101,
+          "draws_content": 98,
+          "sample_reasons": [
+            {
+              "compositingReasons": [],
+              "compositingReasonIds": []
+            },
+            {
+              "compositingReasons": [
+                "Is the document.rootScroller.",
+                "Is a scrollable overflow element using accelerated scrolling."
+              ],
+              "compositingReasonIds": [
+                "RootScroller",
+                "OverflowScrolling"
+              ]
+            },
+            {
+              "compositingReasons": [
+                "Has a will-change: transform compositing hint."
+              ],
+              "compositingReasonIds": [
+                "WillChangeTransform"
+              ]
+            }
+          ]
+        }
+      ],
+      "isolation_checks": [],
+      "reference_sha256": "73ae8010766e53d5ae85430b72380111b2b7a0576ca165bf1ac3353b718aa761",
+      "candidate_sha256": "73ae8010766e53d5ae85430b72380111b2b7a0576ca165bf1ac3353b718aa761",
+      "state_comparison": {
+        "identical": true,
+        "nodes": [
+          5376,
+          5376
+        ],
+        "differences": [],
+        "sha256": [
+          "0e18ba06c50b598c0e781a1305b0e82fc614ed14ea2522bdb6324c966b2ae429",
+          "0e18ba06c50b598c0e781a1305b0e82fc614ed14ea2522bdb6324c966b2ae429"
+        ]
+      },
+      "within_document_state_comparisons": [
+        {
+          "identical": true,
+          "nodes": [
+            5376,
+            5376
+          ],
+          "differences": [],
+          "sha256": [
+            "0e18ba06c50b598c0e781a1305b0e82fc614ed14ea2522bdb6324c966b2ae429",
+            "0e18ba06c50b598c0e781a1305b0e82fc614ed14ea2522bdb6324c966b2ae429"
+          ]
+        },
+        {
+          "identical": true,
+          "nodes": [
+            5376,
+            5376
+          ],
+          "differences": [],
+          "sha256": [
+            "0e18ba06c50b598c0e781a1305b0e82fc614ed14ea2522bdb6324c966b2ae429",
+            "0e18ba06c50b598c0e781a1305b0e82fc614ed14ea2522bdb6324c966b2ae429"
+          ]
+        }
+      ]
+    },
+    {
+      "file": "light-halloween_pumpkin-live.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "cssom_identical": true,
+      "layers": [
+        {
+          "count": 340,
+          "draws_content": 193,
+          "sample_reasons": [
+            {
+              "compositingReasons": [],
+              "compositingReasonIds": []
+            },
+            {
+              "compositingReasons": [
+                "Is the document.rootScroller.",
+                "Is a scrollable overflow element using accelerated scrolling."
+              ],
+              "compositingReasonIds": [
+                "RootScroller",
+                "OverflowScrolling"
+              ]
+            },
+            {
+              "compositingReasons": [
+                "Has a will-change: transform compositing hint."
+              ],
+              "compositingReasonIds": [
+                "WillChangeTransform"
+              ]
+            }
+          ]
+        },
+        {
+          "count": 340,
+          "draws_content": 193,
+          "sample_reasons": [
+            {
+              "compositingReasons": [],
+              "compositingReasonIds": []
+            },
+            {
+              "compositingReasons": [
+                "Is the document.rootScroller.",
+                "Is a scrollable overflow element using accelerated scrolling."
+              ],
+              "compositingReasonIds": [
+                "RootScroller",
+                "OverflowScrolling"
+              ]
+            },
+            {
+              "compositingReasons": [
+                "Has a will-change: transform compositing hint."
+              ],
+              "compositingReasonIds": [
+                "WillChangeTransform"
+              ]
+            }
+          ]
+        }
+      ],
+      "isolation_checks": [],
+      "reference_sha256": "787657cd509143d303817c31df2f1078adc333856cd6791c31d63fc1becf2480",
+      "candidate_sha256": "787657cd509143d303817c31df2f1078adc333856cd6791c31d63fc1becf2480",
+      "state_comparison": {
+        "identical": true,
+        "nodes": [
+          7098,
+          7098
+        ],
+        "differences": [],
+        "sha256": [
+          "40d2dbd4c8dc02128d50b56c14b9461d89121f9ba0425edacd9b7bc72f14d9c5",
+          "40d2dbd4c8dc02128d50b56c14b9461d89121f9ba0425edacd9b7bc72f14d9c5"
+        ]
+      },
+      "within_document_state_comparisons": [
+        {
+          "identical": true,
+          "nodes": [
+            7098,
+            7098
+          ],
+          "differences": [],
+          "sha256": [
+            "40d2dbd4c8dc02128d50b56c14b9461d89121f9ba0425edacd9b7bc72f14d9c5",
+            "40d2dbd4c8dc02128d50b56c14b9461d89121f9ba0425edacd9b7bc72f14d9c5"
+          ]
+        },
+        {
+          "identical": true,
+          "nodes": [
+            7098,
+            7098
+          ],
+          "differences": [],
+          "sha256": [
+            "40d2dbd4c8dc02128d50b56c14b9461d89121f9ba0425edacd9b7bc72f14d9c5",
+            "40d2dbd4c8dc02128d50b56c14b9461d89121f9ba0425edacd9b7bc72f14d9c5"
+          ]
+        }
+      ]
+    },
+    {
+      "file": "light-halloween_pumpkin-preview.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "cssom_identical": true,
+      "layers": [
+        {
+          "count": 101,
+          "draws_content": 98,
+          "sample_reasons": [
+            {
+              "compositingReasons": [],
+              "compositingReasonIds": []
+            },
+            {
+              "compositingReasons": [
+                "Is the document.rootScroller.",
+                "Is a scrollable overflow element using accelerated scrolling."
+              ],
+              "compositingReasonIds": [
+                "RootScroller",
+                "OverflowScrolling"
+              ]
+            },
+            {
+              "compositingReasons": [
+                "Has a will-change: transform compositing hint."
+              ],
+              "compositingReasonIds": [
+                "WillChangeTransform"
+              ]
+            }
+          ]
+        },
+        {
+          "count": 101,
+          "draws_content": 98,
+          "sample_reasons": [
+            {
+              "compositingReasons": [],
+              "compositingReasonIds": []
+            },
+            {
+              "compositingReasons": [
+                "Is the document.rootScroller.",
+                "Is a scrollable overflow element using accelerated scrolling."
+              ],
+              "compositingReasonIds": [
+                "RootScroller",
+                "OverflowScrolling"
+              ]
+            },
+            {
+              "compositingReasons": [
+                "Has a will-change: transform compositing hint."
+              ],
+              "compositingReasonIds": [
+                "WillChangeTransform"
+              ]
+            }
+          ]
+        }
+      ],
+      "isolation_checks": [],
+      "reference_sha256": "8baf9ae36e50ba89eb9bb441068f9045da3ac6fa18e630e741d7bf1cf10b6d33",
+      "candidate_sha256": "8baf9ae36e50ba89eb9bb441068f9045da3ac6fa18e630e741d7bf1cf10b6d33",
+      "state_comparison": {
+        "identical": true,
+        "nodes": [
+          5388,
+          5388
+        ],
+        "differences": [],
+        "sha256": [
+          "7d718eea73a298905fc4ae865941e841caa5b919730cac3c63ea1f8a4f154fc7",
+          "7d718eea73a298905fc4ae865941e841caa5b919730cac3c63ea1f8a4f154fc7"
+        ]
+      },
+      "within_document_state_comparisons": [
+        {
+          "identical": true,
+          "nodes": [
+            5388,
+            5388
+          ],
+          "differences": [],
+          "sha256": [
+            "7d718eea73a298905fc4ae865941e841caa5b919730cac3c63ea1f8a4f154fc7",
+            "7d718eea73a298905fc4ae865941e841caa5b919730cac3c63ea1f8a4f154fc7"
+          ]
+        },
+        {
+          "identical": true,
+          "nodes": [
+            5388,
+            5388
+          ],
+          "differences": [],
+          "sha256": [
+            "7d718eea73a298905fc4ae865941e841caa5b919730cac3c63ea1f8a4f154fc7",
+            "7d718eea73a298905fc4ae865941e841caa5b919730cac3c63ea1f8a4f154fc7"
+          ]
+        }
+      ]
+    },
+    {
+      "file": "light-christmas-live.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "cssom_identical": true,
+      "layers": [
+        {
+          "count": 340,
+          "draws_content": 193,
+          "sample_reasons": [
+            {
+              "compositingReasons": [],
+              "compositingReasonIds": []
+            },
+            {
+              "compositingReasons": [
+                "Is the document.rootScroller.",
+                "Is a scrollable overflow element using accelerated scrolling."
+              ],
+              "compositingReasonIds": [
+                "RootScroller",
+                "OverflowScrolling"
+              ]
+            },
+            {
+              "compositingReasons": [
+                "Overlaps other composited content."
+              ],
+              "compositingReasonIds": [
+                "Overlap"
+              ]
+            }
+          ]
+        },
+        {
+          "count": 340,
+          "draws_content": 193,
+          "sample_reasons": [
+            {
+              "compositingReasons": [],
+              "compositingReasonIds": []
+            },
+            {
+              "compositingReasons": [
+                "Is the document.rootScroller.",
+                "Is a scrollable overflow element using accelerated scrolling."
+              ],
+              "compositingReasonIds": [
+                "RootScroller",
+                "OverflowScrolling"
+              ]
+            },
+            {
+              "compositingReasons": [
+                "Overlaps other composited content."
+              ],
+              "compositingReasonIds": [
+                "Overlap"
+              ]
+            }
+          ]
+        }
+      ],
+      "isolation_checks": [],
+      "reference_sha256": "30a739d1fc917376fd0f6a9179c8078c72b32e8bba219a3f88be44e998bb83fd",
+      "candidate_sha256": "30a739d1fc917376fd0f6a9179c8078c72b32e8bba219a3f88be44e998bb83fd",
+      "state_comparison": {
+        "identical": true,
+        "nodes": [
+          6714,
+          6714
+        ],
+        "differences": [],
+        "sha256": [
+          "4e5006ab8fef9382698c4110d66c4469d2246b0afa538161141ffd2f50b522c8",
+          "4e5006ab8fef9382698c4110d66c4469d2246b0afa538161141ffd2f50b522c8"
+        ]
+      },
+      "within_document_state_comparisons": [
+        {
+          "identical": true,
+          "nodes": [
+            6714,
+            6714
+          ],
+          "differences": [],
+          "sha256": [
+            "4e5006ab8fef9382698c4110d66c4469d2246b0afa538161141ffd2f50b522c8",
+            "4e5006ab8fef9382698c4110d66c4469d2246b0afa538161141ffd2f50b522c8"
+          ]
+        },
+        {
+          "identical": true,
+          "nodes": [
+            6714,
+            6714
+          ],
+          "differences": [],
+          "sha256": [
+            "4e5006ab8fef9382698c4110d66c4469d2246b0afa538161141ffd2f50b522c8",
+            "4e5006ab8fef9382698c4110d66c4469d2246b0afa538161141ffd2f50b522c8"
+          ]
+        }
+      ]
+    },
+    {
+      "file": "light-christmas-preview.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "cssom_identical": true,
+      "layers": [
+        {
+          "count": 101,
+          "draws_content": 98,
+          "sample_reasons": [
+            {
+              "compositingReasons": [],
+              "compositingReasonIds": []
+            },
+            {
+              "compositingReasons": [
+                "Is the document.rootScroller.",
+                "Is a scrollable overflow element using accelerated scrolling."
+              ],
+              "compositingReasonIds": [
+                "RootScroller",
+                "OverflowScrolling"
+              ]
+            },
+            {
+              "compositingReasons": [
+                "Has a will-change: transform compositing hint."
+              ],
+              "compositingReasonIds": [
+                "WillChangeTransform"
+              ]
+            }
+          ]
+        },
+        {
+          "count": 101,
+          "draws_content": 98,
+          "sample_reasons": [
+            {
+              "compositingReasons": [],
+              "compositingReasonIds": []
+            },
+            {
+              "compositingReasons": [
+                "Is the document.rootScroller.",
+                "Is a scrollable overflow element using accelerated scrolling."
+              ],
+              "compositingReasonIds": [
+                "RootScroller",
+                "OverflowScrolling"
+              ]
+            },
+            {
+              "compositingReasons": [
+                "Has a will-change: transform compositing hint."
+              ],
+              "compositingReasonIds": [
+                "WillChangeTransform"
+              ]
+            }
+          ]
+        }
+      ],
+      "isolation_checks": [],
+      "reference_sha256": "f6442f3479e446b9c1ecac5ba6ad758e3e35d8031680ca145d2556d214f69538",
+      "candidate_sha256": "f6442f3479e446b9c1ecac5ba6ad758e3e35d8031680ca145d2556d214f69538",
+      "state_comparison": {
+        "identical": true,
+        "nodes": [
+          5004,
+          5004
+        ],
+        "differences": [],
+        "sha256": [
+          "ed07b4989055874f4e7094ad9421027229c0f42dd8fdf482eb29f53440028066",
+          "ed07b4989055874f4e7094ad9421027229c0f42dd8fdf482eb29f53440028066"
+        ]
+      },
+      "within_document_state_comparisons": [
+        {
+          "identical": true,
+          "nodes": [
+            5004,
+            5004
+          ],
+          "differences": [],
+          "sha256": [
+            "ed07b4989055874f4e7094ad9421027229c0f42dd8fdf482eb29f53440028066",
+            "ed07b4989055874f4e7094ad9421027229c0f42dd8fdf482eb29f53440028066"
+          ]
+        },
+        {
+          "identical": true,
+          "nodes": [
+            5004,
+            5004
+          ],
+          "differences": [],
+          "sha256": [
+            "ed07b4989055874f4e7094ad9421027229c0f42dd8fdf482eb29f53440028066",
+            "ed07b4989055874f4e7094ad9421027229c0f42dd8fdf482eb29f53440028066"
+          ]
+        }
+      ]
+    },
+    {
+      "file": "dark-default-live.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "cssom_identical": true,
+      "layers": [
+        {
+          "count": 340,
+          "draws_content": 193,
+          "sample_reasons": [
+            {
+              "compositingReasons": [],
+              "compositingReasonIds": []
+            },
+            {
+              "compositingReasons": [
+                "Is the document.rootScroller.",
+                "Is a scrollable overflow element using accelerated scrolling."
+              ],
+              "compositingReasonIds": [
+                "RootScroller",
+                "OverflowScrolling"
+              ]
+            },
+            {
+              "compositingReasons": [
+                "Overlaps other composited content."
+              ],
+              "compositingReasonIds": [
+                "Overlap"
+              ]
+            }
+          ]
+        },
+        {
+          "count": 340,
+          "draws_content": 193,
+          "sample_reasons": [
+            {
+              "compositingReasons": [],
+              "compositingReasonIds": []
+            },
+            {
+              "compositingReasons": [
+                "Is the document.rootScroller.",
+                "Is a scrollable overflow element using accelerated scrolling."
+              ],
+              "compositingReasonIds": [
+                "RootScroller",
+                "OverflowScrolling"
+              ]
+            },
+            {
+              "compositingReasons": [
+                "Overlaps other composited content."
+              ],
+              "compositingReasonIds": [
+                "Overlap"
+              ]
+            }
+          ]
+        }
+      ],
+      "isolation_checks": [],
+      "reference_sha256": "87df1e08d7e26a3faba09b5c0929648fddf4861482a1a56bb38db144d60e9354",
+      "candidate_sha256": "87df1e08d7e26a3faba09b5c0929648fddf4861482a1a56bb38db144d60e9354",
+      "state_comparison": {
+        "identical": true,
+        "nodes": [
+          6358,
+          6358
+        ],
+        "differences": [],
+        "sha256": [
+          "0175375fa7d1141e3760e1cc314d7f205a2790c65f8f6efdb0e453ad9b618954",
+          "0175375fa7d1141e3760e1cc314d7f205a2790c65f8f6efdb0e453ad9b618954"
+        ]
+      },
+      "within_document_state_comparisons": [
+        {
+          "identical": true,
+          "nodes": [
+            6358,
+            6358
+          ],
+          "differences": [],
+          "sha256": [
+            "0175375fa7d1141e3760e1cc314d7f205a2790c65f8f6efdb0e453ad9b618954",
+            "0175375fa7d1141e3760e1cc314d7f205a2790c65f8f6efdb0e453ad9b618954"
+          ]
+        },
+        {
+          "identical": true,
+          "nodes": [
+            6358,
+            6358
+          ],
+          "differences": [],
+          "sha256": [
+            "0175375fa7d1141e3760e1cc314d7f205a2790c65f8f6efdb0e453ad9b618954",
+            "0175375fa7d1141e3760e1cc314d7f205a2790c65f8f6efdb0e453ad9b618954"
+          ]
+        }
+      ]
+    },
+    {
+      "file": "dark-default-preview.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "cssom_identical": true,
+      "layers": [
+        {
+          "count": 101,
+          "draws_content": 98,
+          "sample_reasons": [
+            {
+              "compositingReasons": [],
+              "compositingReasonIds": []
+            },
+            {
+              "compositingReasons": [
+                "Is the document.rootScroller.",
+                "Is a scrollable overflow element using accelerated scrolling."
+              ],
+              "compositingReasonIds": [
+                "RootScroller",
+                "OverflowScrolling"
+              ]
+            },
+            {
+              "compositingReasons": [
+                "Has a will-change: transform compositing hint."
+              ],
+              "compositingReasonIds": [
+                "WillChangeTransform"
+              ]
+            }
+          ]
+        },
+        {
+          "count": 101,
+          "draws_content": 98,
+          "sample_reasons": [
+            {
+              "compositingReasons": [],
+              "compositingReasonIds": []
+            },
+            {
+              "compositingReasons": [
+                "Is the document.rootScroller.",
+                "Is a scrollable overflow element using accelerated scrolling."
+              ],
+              "compositingReasonIds": [
+                "RootScroller",
+                "OverflowScrolling"
+              ]
+            },
+            {
+              "compositingReasons": [
+                "Has a will-change: transform compositing hint."
+              ],
+              "compositingReasonIds": [
+                "WillChangeTransform"
+              ]
+            }
+          ]
+        }
+      ],
+      "isolation_checks": [],
+      "reference_sha256": "29b77ad95b5c2ac2e217ebb0eeb6e88ec6dc5c5bc8bb44c18b030aa324d87971",
+      "candidate_sha256": "29b77ad95b5c2ac2e217ebb0eeb6e88ec6dc5c5bc8bb44c18b030aa324d87971",
+      "state_comparison": {
+        "identical": true,
+        "nodes": [
+          4648,
+          4648
+        ],
+        "differences": [],
+        "sha256": [
+          "f6505f2fc89dc5b47f7d9ba29940de14e854a6c353809059e9af540f2a239b3c",
+          "f6505f2fc89dc5b47f7d9ba29940de14e854a6c353809059e9af540f2a239b3c"
+        ]
+      },
+      "within_document_state_comparisons": [
+        {
+          "identical": true,
+          "nodes": [
+            4648,
+            4648
+          ],
+          "differences": [],
+          "sha256": [
+            "f6505f2fc89dc5b47f7d9ba29940de14e854a6c353809059e9af540f2a239b3c",
+            "f6505f2fc89dc5b47f7d9ba29940de14e854a6c353809059e9af540f2a239b3c"
+          ]
+        },
+        {
+          "identical": true,
+          "nodes": [
+            4648,
+            4648
+          ],
+          "differences": [],
+          "sha256": [
+            "f6505f2fc89dc5b47f7d9ba29940de14e854a6c353809059e9af540f2a239b3c",
+            "f6505f2fc89dc5b47f7d9ba29940de14e854a6c353809059e9af540f2a239b3c"
+          ]
+        }
+      ]
+    },
+    {
+      "file": "dark-halloween-live.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "cssom_identical": true,
+      "layers": [
+        {
+          "count": 340,
+          "draws_content": 193,
+          "sample_reasons": [
+            {
+              "compositingReasons": [],
+              "compositingReasonIds": []
+            },
+            {
+              "compositingReasons": [
+                "Is the document.rootScroller.",
+                "Is a scrollable overflow element using accelerated scrolling."
+              ],
+              "compositingReasonIds": [
+                "RootScroller",
+                "OverflowScrolling"
+              ]
+            },
+            {
+              "compositingReasons": [
+                "Has a will-change: transform compositing hint."
+              ],
+              "compositingReasonIds": [
+                "WillChangeTransform"
+              ]
+            }
+          ]
+        },
+        {
+          "count": 340,
+          "draws_content": 193,
+          "sample_reasons": [
+            {
+              "compositingReasons": [],
+              "compositingReasonIds": []
+            },
+            {
+              "compositingReasons": [
+                "Is the document.rootScroller.",
+                "Is a scrollable overflow element using accelerated scrolling."
+              ],
+              "compositingReasonIds": [
+                "RootScroller",
+                "OverflowScrolling"
+              ]
+            },
+            {
+              "compositingReasons": [
+                "Has a will-change: transform compositing hint."
+              ],
+              "compositingReasonIds": [
+                "WillChangeTransform"
+              ]
+            }
+          ]
+        }
+      ],
+      "isolation_checks": [],
+      "reference_sha256": "673e5dc1a6f856e1c05e9d12fb999b532a078ebbadbccc484964c15f21fbc8ce",
+      "candidate_sha256": "673e5dc1a6f856e1c05e9d12fb999b532a078ebbadbccc484964c15f21fbc8ce",
+      "state_comparison": {
+        "identical": true,
+        "nodes": [
+          7176,
+          7176
+        ],
+        "differences": [],
+        "sha256": [
+          "52d9e7e54dd4c6953256dd930fa342a7d91982105407fbe863e9db0b17310d5c",
+          "52d9e7e54dd4c6953256dd930fa342a7d91982105407fbe863e9db0b17310d5c"
+        ]
+      },
+      "within_document_state_comparisons": [
+        {
+          "identical": true,
+          "nodes": [
+            7176,
+            7176
+          ],
+          "differences": [],
+          "sha256": [
+            "52d9e7e54dd4c6953256dd930fa342a7d91982105407fbe863e9db0b17310d5c",
+            "52d9e7e54dd4c6953256dd930fa342a7d91982105407fbe863e9db0b17310d5c"
+          ]
+        },
+        {
+          "identical": true,
+          "nodes": [
+            7176,
+            7176
+          ],
+          "differences": [],
+          "sha256": [
+            "52d9e7e54dd4c6953256dd930fa342a7d91982105407fbe863e9db0b17310d5c",
+            "52d9e7e54dd4c6953256dd930fa342a7d91982105407fbe863e9db0b17310d5c"
+          ]
+        }
+      ]
+    },
+    {
+      "file": "dark-halloween-preview.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "cssom_identical": true,
+      "layers": [
+        {
+          "count": 101,
+          "draws_content": 98,
+          "sample_reasons": [
+            {
+              "compositingReasons": [],
+              "compositingReasonIds": []
+            },
+            {
+              "compositingReasons": [
+                "Is the document.rootScroller.",
+                "Is a scrollable overflow element using accelerated scrolling."
+              ],
+              "compositingReasonIds": [
+                "RootScroller",
+                "OverflowScrolling"
+              ]
+            },
+            {
+              "compositingReasons": [
+                "Has a will-change: transform compositing hint."
+              ],
+              "compositingReasonIds": [
+                "WillChangeTransform"
+              ]
+            }
+          ]
+        },
+        {
+          "count": 101,
+          "draws_content": 98,
+          "sample_reasons": [
+            {
+              "compositingReasons": [],
+              "compositingReasonIds": []
+            },
+            {
+              "compositingReasons": [
+                "Is the document.rootScroller.",
+                "Is a scrollable overflow element using accelerated scrolling."
+              ],
+              "compositingReasonIds": [
+                "RootScroller",
+                "OverflowScrolling"
+              ]
+            },
+            {
+              "compositingReasons": [
+                "Has a will-change: transform compositing hint."
+              ],
+              "compositingReasonIds": [
+                "WillChangeTransform"
+              ]
+            }
+          ]
+        }
+      ],
+      "isolation_checks": [],
+      "reference_sha256": "cfd57e8277d44ccbce580a7f0aa8eb498628efa4755b08ff091d8657519f5053",
+      "candidate_sha256": "cfd57e8277d44ccbce580a7f0aa8eb498628efa4755b08ff091d8657519f5053",
+      "state_comparison": {
+        "identical": true,
+        "nodes": [
+          5466,
+          5466
+        ],
+        "differences": [],
+        "sha256": [
+          "0ebdebc0ea92e4755264210010c45671062132d145caed1cd89e431f67c5f148",
+          "0ebdebc0ea92e4755264210010c45671062132d145caed1cd89e431f67c5f148"
+        ]
+      },
+      "within_document_state_comparisons": [
+        {
+          "identical": true,
+          "nodes": [
+            5466,
+            5466
+          ],
+          "differences": [],
+          "sha256": [
+            "0ebdebc0ea92e4755264210010c45671062132d145caed1cd89e431f67c5f148",
+            "0ebdebc0ea92e4755264210010c45671062132d145caed1cd89e431f67c5f148"
+          ]
+        },
+        {
+          "identical": true,
+          "nodes": [
+            5466,
+            5466
+          ],
+          "differences": [],
+          "sha256": [
+            "0ebdebc0ea92e4755264210010c45671062132d145caed1cd89e431f67c5f148",
+            "0ebdebc0ea92e4755264210010c45671062132d145caed1cd89e431f67c5f148"
+          ]
+        }
+      ]
+    },
+    {
+      "file": "dark-halloween_vampire-live.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "cssom_identical": true,
+      "layers": [
+        {
+          "count": 340,
+          "draws_content": 193,
+          "sample_reasons": [
+            {
+              "compositingReasons": [],
+              "compositingReasonIds": []
+            },
+            {
+              "compositingReasons": [
+                "Is the document.rootScroller.",
+                "Is a scrollable overflow element using accelerated scrolling."
+              ],
+              "compositingReasonIds": [
+                "RootScroller",
+                "OverflowScrolling"
+              ]
+            },
+            {
+              "compositingReasons": [
+                "Has a will-change: transform compositing hint."
+              ],
+              "compositingReasonIds": [
+                "WillChangeTransform"
+              ]
+            }
+          ]
+        },
+        {
+          "count": 340,
+          "draws_content": 193,
+          "sample_reasons": [
+            {
+              "compositingReasons": [],
+              "compositingReasonIds": []
+            },
+            {
+              "compositingReasons": [
+                "Is the document.rootScroller.",
+                "Is a scrollable overflow element using accelerated scrolling."
+              ],
+              "compositingReasonIds": [
+                "RootScroller",
+                "OverflowScrolling"
+              ]
+            },
+            {
+              "compositingReasons": [
+                "Has a will-change: transform compositing hint."
+              ],
+              "compositingReasonIds": [
+                "WillChangeTransform"
+              ]
+            }
+          ]
+        }
+      ],
+      "isolation_checks": [],
+      "reference_sha256": "65d72b725e566e9a7f9bb41b978bdec283eeccfa273ab00d61c7746b1c83a3c2",
+      "candidate_sha256": "65d72b725e566e9a7f9bb41b978bdec283eeccfa273ab00d61c7746b1c83a3c2",
+      "state_comparison": {
+        "identical": true,
+        "nodes": [
+          7086,
+          7086
+        ],
+        "differences": [],
+        "sha256": [
+          "c4c804922ca542971b62c9e6b821c9e1779e2d37254df4cf29a6e438ca77c8b6",
+          "c4c804922ca542971b62c9e6b821c9e1779e2d37254df4cf29a6e438ca77c8b6"
+        ]
+      },
+      "within_document_state_comparisons": [
+        {
+          "identical": true,
+          "nodes": [
+            7086,
+            7086
+          ],
+          "differences": [],
+          "sha256": [
+            "c4c804922ca542971b62c9e6b821c9e1779e2d37254df4cf29a6e438ca77c8b6",
+            "c4c804922ca542971b62c9e6b821c9e1779e2d37254df4cf29a6e438ca77c8b6"
+          ]
+        },
+        {
+          "identical": true,
+          "nodes": [
+            7086,
+            7086
+          ],
+          "differences": [],
+          "sha256": [
+            "c4c804922ca542971b62c9e6b821c9e1779e2d37254df4cf29a6e438ca77c8b6",
+            "c4c804922ca542971b62c9e6b821c9e1779e2d37254df4cf29a6e438ca77c8b6"
+          ]
+        }
+      ]
+    },
+    {
+      "file": "dark-halloween_vampire-preview.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "cssom_identical": true,
+      "layers": [
+        {
+          "count": 101,
+          "draws_content": 98,
+          "sample_reasons": [
+            {
+              "compositingReasons": [],
+              "compositingReasonIds": []
+            },
+            {
+              "compositingReasons": [
+                "Is the document.rootScroller.",
+                "Is a scrollable overflow element using accelerated scrolling."
+              ],
+              "compositingReasonIds": [
+                "RootScroller",
+                "OverflowScrolling"
+              ]
+            },
+            {
+              "compositingReasons": [
+                "Has a will-change: transform compositing hint."
+              ],
+              "compositingReasonIds": [
+                "WillChangeTransform"
+              ]
+            }
+          ]
+        },
+        {
+          "count": 101,
+          "draws_content": 98,
+          "sample_reasons": [
+            {
+              "compositingReasons": [],
+              "compositingReasonIds": []
+            },
+            {
+              "compositingReasons": [
+                "Is the document.rootScroller.",
+                "Is a scrollable overflow element using accelerated scrolling."
+              ],
+              "compositingReasonIds": [
+                "RootScroller",
+                "OverflowScrolling"
+              ]
+            },
+            {
+              "compositingReasons": [
+                "Has a will-change: transform compositing hint."
+              ],
+              "compositingReasonIds": [
+                "WillChangeTransform"
+              ]
+            }
+          ]
+        }
+      ],
+      "isolation_checks": [],
+      "reference_sha256": "923e36873d1fe1351dcf4ba9c31dd9d66ef9a534eeb5d603620c06c6437cf6ed",
+      "candidate_sha256": "923e36873d1fe1351dcf4ba9c31dd9d66ef9a534eeb5d603620c06c6437cf6ed",
+      "state_comparison": {
+        "identical": true,
+        "nodes": [
+          5376,
+          5376
+        ],
+        "differences": [],
+        "sha256": [
+          "0e18ba06c50b598c0e781a1305b0e82fc614ed14ea2522bdb6324c966b2ae429",
+          "0e18ba06c50b598c0e781a1305b0e82fc614ed14ea2522bdb6324c966b2ae429"
+        ]
+      },
+      "within_document_state_comparisons": [
+        {
+          "identical": true,
+          "nodes": [
+            5376,
+            5376
+          ],
+          "differences": [],
+          "sha256": [
+            "0e18ba06c50b598c0e781a1305b0e82fc614ed14ea2522bdb6324c966b2ae429",
+            "0e18ba06c50b598c0e781a1305b0e82fc614ed14ea2522bdb6324c966b2ae429"
+          ]
+        },
+        {
+          "identical": true,
+          "nodes": [
+            5376,
+            5376
+          ],
+          "differences": [],
+          "sha256": [
+            "0e18ba06c50b598c0e781a1305b0e82fc614ed14ea2522bdb6324c966b2ae429",
+            "0e18ba06c50b598c0e781a1305b0e82fc614ed14ea2522bdb6324c966b2ae429"
+          ]
+        }
+      ]
+    },
+    {
+      "file": "dark-halloween_pumpkin-live.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "cssom_identical": true,
+      "layers": [
+        {
+          "count": 340,
+          "draws_content": 193,
+          "sample_reasons": [
+            {
+              "compositingReasons": [],
+              "compositingReasonIds": []
+            },
+            {
+              "compositingReasons": [
+                "Is the document.rootScroller.",
+                "Is a scrollable overflow element using accelerated scrolling."
+              ],
+              "compositingReasonIds": [
+                "RootScroller",
+                "OverflowScrolling"
+              ]
+            },
+            {
+              "compositingReasons": [
+                "Has a will-change: transform compositing hint."
+              ],
+              "compositingReasonIds": [
+                "WillChangeTransform"
+              ]
+            }
+          ]
+        },
+        {
+          "count": 340,
+          "draws_content": 193,
+          "sample_reasons": [
+            {
+              "compositingReasons": [],
+              "compositingReasonIds": []
+            },
+            {
+              "compositingReasons": [
+                "Is the document.rootScroller.",
+                "Is a scrollable overflow element using accelerated scrolling."
+              ],
+              "compositingReasonIds": [
+                "RootScroller",
+                "OverflowScrolling"
+              ]
+            },
+            {
+              "compositingReasons": [
+                "Has a will-change: transform compositing hint."
+              ],
+              "compositingReasonIds": [
+                "WillChangeTransform"
+              ]
+            }
+          ]
+        }
+      ],
+      "isolation_checks": [],
+      "reference_sha256": "ae7e9f305c46351a0cacaf07ad57be7ecda03b16e8b8ba25c7a8c65f9146b3e4",
+      "candidate_sha256": "ae7e9f305c46351a0cacaf07ad57be7ecda03b16e8b8ba25c7a8c65f9146b3e4",
+      "state_comparison": {
+        "identical": true,
+        "nodes": [
+          7098,
+          7098
+        ],
+        "differences": [],
+        "sha256": [
+          "40d2dbd4c8dc02128d50b56c14b9461d89121f9ba0425edacd9b7bc72f14d9c5",
+          "40d2dbd4c8dc02128d50b56c14b9461d89121f9ba0425edacd9b7bc72f14d9c5"
+        ]
+      },
+      "within_document_state_comparisons": [
+        {
+          "identical": true,
+          "nodes": [
+            7098,
+            7098
+          ],
+          "differences": [],
+          "sha256": [
+            "40d2dbd4c8dc02128d50b56c14b9461d89121f9ba0425edacd9b7bc72f14d9c5",
+            "40d2dbd4c8dc02128d50b56c14b9461d89121f9ba0425edacd9b7bc72f14d9c5"
+          ]
+        },
+        {
+          "identical": true,
+          "nodes": [
+            7098,
+            7098
+          ],
+          "differences": [],
+          "sha256": [
+            "40d2dbd4c8dc02128d50b56c14b9461d89121f9ba0425edacd9b7bc72f14d9c5",
+            "40d2dbd4c8dc02128d50b56c14b9461d89121f9ba0425edacd9b7bc72f14d9c5"
+          ]
+        }
+      ]
+    },
+    {
+      "file": "dark-halloween_pumpkin-preview.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "cssom_identical": true,
+      "layers": [
+        {
+          "count": 101,
+          "draws_content": 98,
+          "sample_reasons": [
+            {
+              "compositingReasons": [],
+              "compositingReasonIds": []
+            },
+            {
+              "compositingReasons": [
+                "Is the document.rootScroller.",
+                "Is a scrollable overflow element using accelerated scrolling."
+              ],
+              "compositingReasonIds": [
+                "RootScroller",
+                "OverflowScrolling"
+              ]
+            },
+            {
+              "compositingReasons": [
+                "Has a will-change: transform compositing hint."
+              ],
+              "compositingReasonIds": [
+                "WillChangeTransform"
+              ]
+            }
+          ]
+        },
+        {
+          "count": 101,
+          "draws_content": 98,
+          "sample_reasons": [
+            {
+              "compositingReasons": [],
+              "compositingReasonIds": []
+            },
+            {
+              "compositingReasons": [
+                "Is the document.rootScroller.",
+                "Is a scrollable overflow element using accelerated scrolling."
+              ],
+              "compositingReasonIds": [
+                "RootScroller",
+                "OverflowScrolling"
+              ]
+            },
+            {
+              "compositingReasons": [
+                "Has a will-change: transform compositing hint."
+              ],
+              "compositingReasonIds": [
+                "WillChangeTransform"
+              ]
+            }
+          ]
+        }
+      ],
+      "isolation_checks": [],
+      "reference_sha256": "2fb8ed04c24f97e402473f6da0db0a784b8a8a5594a472323d1985bcdeccb6f9",
+      "candidate_sha256": "2fb8ed04c24f97e402473f6da0db0a784b8a8a5594a472323d1985bcdeccb6f9",
+      "state_comparison": {
+        "identical": true,
+        "nodes": [
+          5388,
+          5388
+        ],
+        "differences": [],
+        "sha256": [
+          "7d718eea73a298905fc4ae865941e841caa5b919730cac3c63ea1f8a4f154fc7",
+          "7d718eea73a298905fc4ae865941e841caa5b919730cac3c63ea1f8a4f154fc7"
+        ]
+      },
+      "within_document_state_comparisons": [
+        {
+          "identical": true,
+          "nodes": [
+            5388,
+            5388
+          ],
+          "differences": [],
+          "sha256": [
+            "7d718eea73a298905fc4ae865941e841caa5b919730cac3c63ea1f8a4f154fc7",
+            "7d718eea73a298905fc4ae865941e841caa5b919730cac3c63ea1f8a4f154fc7"
+          ]
+        },
+        {
+          "identical": true,
+          "nodes": [
+            5388,
+            5388
+          ],
+          "differences": [],
+          "sha256": [
+            "7d718eea73a298905fc4ae865941e841caa5b919730cac3c63ea1f8a4f154fc7",
+            "7d718eea73a298905fc4ae865941e841caa5b919730cac3c63ea1f8a4f154fc7"
+          ]
+        }
+      ]
+    },
+    {
+      "file": "dark-christmas-live.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "cssom_identical": true,
+      "layers": [
+        {
+          "count": 340,
+          "draws_content": 193,
+          "sample_reasons": [
+            {
+              "compositingReasons": [],
+              "compositingReasonIds": []
+            },
+            {
+              "compositingReasons": [
+                "Is the document.rootScroller.",
+                "Is a scrollable overflow element using accelerated scrolling."
+              ],
+              "compositingReasonIds": [
+                "RootScroller",
+                "OverflowScrolling"
+              ]
+            },
+            {
+              "compositingReasons": [
+                "Overlaps other composited content."
+              ],
+              "compositingReasonIds": [
+                "Overlap"
+              ]
+            }
+          ]
+        },
+        {
+          "count": 340,
+          "draws_content": 193,
+          "sample_reasons": [
+            {
+              "compositingReasons": [],
+              "compositingReasonIds": []
+            },
+            {
+              "compositingReasons": [
+                "Is the document.rootScroller.",
+                "Is a scrollable overflow element using accelerated scrolling."
+              ],
+              "compositingReasonIds": [
+                "RootScroller",
+                "OverflowScrolling"
+              ]
+            },
+            {
+              "compositingReasons": [
+                "Overlaps other composited content."
+              ],
+              "compositingReasonIds": [
+                "Overlap"
+              ]
+            }
+          ]
+        }
+      ],
+      "isolation_checks": [],
+      "reference_sha256": "30ec1d42a13b2426af62b07f5bffbf852eea4f7ac7ec7ab9eb177a58b20f39b8",
+      "candidate_sha256": "30ec1d42a13b2426af62b07f5bffbf852eea4f7ac7ec7ab9eb177a58b20f39b8",
+      "state_comparison": {
+        "identical": true,
+        "nodes": [
+          6714,
+          6714
+        ],
+        "differences": [],
+        "sha256": [
+          "4e5006ab8fef9382698c4110d66c4469d2246b0afa538161141ffd2f50b522c8",
+          "4e5006ab8fef9382698c4110d66c4469d2246b0afa538161141ffd2f50b522c8"
+        ]
+      },
+      "within_document_state_comparisons": [
+        {
+          "identical": true,
+          "nodes": [
+            6714,
+            6714
+          ],
+          "differences": [],
+          "sha256": [
+            "4e5006ab8fef9382698c4110d66c4469d2246b0afa538161141ffd2f50b522c8",
+            "4e5006ab8fef9382698c4110d66c4469d2246b0afa538161141ffd2f50b522c8"
+          ]
+        },
+        {
+          "identical": true,
+          "nodes": [
+            6714,
+            6714
+          ],
+          "differences": [],
+          "sha256": [
+            "4e5006ab8fef9382698c4110d66c4469d2246b0afa538161141ffd2f50b522c8",
+            "4e5006ab8fef9382698c4110d66c4469d2246b0afa538161141ffd2f50b522c8"
+          ]
+        }
+      ]
+    },
+    {
+      "file": "dark-christmas-preview.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "cssom_identical": true,
+      "layers": [
+        {
+          "count": 101,
+          "draws_content": 98,
+          "sample_reasons": [
+            {
+              "compositingReasons": [],
+              "compositingReasonIds": []
+            },
+            {
+              "compositingReasons": [
+                "Is the document.rootScroller.",
+                "Is a scrollable overflow element using accelerated scrolling."
+              ],
+              "compositingReasonIds": [
+                "RootScroller",
+                "OverflowScrolling"
+              ]
+            },
+            {
+              "compositingReasons": [
+                "Has a will-change: transform compositing hint."
+              ],
+              "compositingReasonIds": [
+                "WillChangeTransform"
+              ]
+            }
+          ]
+        },
+        {
+          "count": 101,
+          "draws_content": 98,
+          "sample_reasons": [
+            {
+              "compositingReasons": [],
+              "compositingReasonIds": []
+            },
+            {
+              "compositingReasons": [
+                "Is the document.rootScroller.",
+                "Is a scrollable overflow element using accelerated scrolling."
+              ],
+              "compositingReasonIds": [
+                "RootScroller",
+                "OverflowScrolling"
+              ]
+            },
+            {
+              "compositingReasons": [
+                "Has a will-change: transform compositing hint."
+              ],
+              "compositingReasonIds": [
+                "WillChangeTransform"
+              ]
+            }
+          ]
+        }
+      ],
+      "isolation_checks": [],
+      "reference_sha256": "d7e270763d8d798fdc5c771bee92ab42c8c010e3a662d057c527dcc741f449e0",
+      "candidate_sha256": "d7e270763d8d798fdc5c771bee92ab42c8c010e3a662d057c527dcc741f449e0",
+      "state_comparison": {
+        "identical": true,
+        "nodes": [
+          5004,
+          5004
+        ],
+        "differences": [],
+        "sha256": [
+          "ed07b4989055874f4e7094ad9421027229c0f42dd8fdf482eb29f53440028066",
+          "ed07b4989055874f4e7094ad9421027229c0f42dd8fdf482eb29f53440028066"
+        ]
+      },
+      "within_document_state_comparisons": [
+        {
+          "identical": true,
+          "nodes": [
+            5004,
+            5004
+          ],
+          "differences": [],
+          "sha256": [
+            "ed07b4989055874f4e7094ad9421027229c0f42dd8fdf482eb29f53440028066",
+            "ed07b4989055874f4e7094ad9421027229c0f42dd8fdf482eb29f53440028066"
+          ]
+        },
+        {
+          "identical": true,
+          "nodes": [
+            5004,
+            5004
+          ],
+          "differences": [],
+          "sha256": [
+            "ed07b4989055874f4e7094ad9421027229c0f42dd8fdf482eb29f53440028066",
+            "ed07b4989055874f4e7094ad9421027229c0f42dd8fdf482eb29f53440028066"
+          ]
+        }
+      ]
+    },
+    {
+      "file": "contrast-default-live.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "cssom_identical": true,
+      "layers": [
+        {
+          "count": 340,
+          "draws_content": 193,
+          "sample_reasons": [
+            {
+              "compositingReasons": [],
+              "compositingReasonIds": []
+            },
+            {
+              "compositingReasons": [
+                "Is the document.rootScroller.",
+                "Is a scrollable overflow element using accelerated scrolling."
+              ],
+              "compositingReasonIds": [
+                "RootScroller",
+                "OverflowScrolling"
+              ]
+            },
+            {
+              "compositingReasons": [
+                "Overlaps other composited content."
+              ],
+              "compositingReasonIds": [
+                "Overlap"
+              ]
+            }
+          ]
+        },
+        {
+          "count": 340,
+          "draws_content": 193,
+          "sample_reasons": [
+            {
+              "compositingReasons": [],
+              "compositingReasonIds": []
+            },
+            {
+              "compositingReasons": [
+                "Is the document.rootScroller.",
+                "Is a scrollable overflow element using accelerated scrolling."
+              ],
+              "compositingReasonIds": [
+                "RootScroller",
+                "OverflowScrolling"
+              ]
+            },
+            {
+              "compositingReasons": [
+                "Overlaps other composited content."
+              ],
+              "compositingReasonIds": [
+                "Overlap"
+              ]
+            }
+          ]
+        }
+      ],
+      "isolation_checks": [],
+      "reference_sha256": "a9124276b9c023756d1d5e95a889eca888be7c8497e415b4c248b21d7fe45eaa",
+      "candidate_sha256": "a9124276b9c023756d1d5e95a889eca888be7c8497e415b4c248b21d7fe45eaa",
+      "state_comparison": {
+        "identical": true,
+        "nodes": [
+          6358,
+          6358
+        ],
+        "differences": [],
+        "sha256": [
+          "0175375fa7d1141e3760e1cc314d7f205a2790c65f8f6efdb0e453ad9b618954",
+          "0175375fa7d1141e3760e1cc314d7f205a2790c65f8f6efdb0e453ad9b618954"
+        ]
+      },
+      "within_document_state_comparisons": [
+        {
+          "identical": true,
+          "nodes": [
+            6358,
+            6358
+          ],
+          "differences": [],
+          "sha256": [
+            "0175375fa7d1141e3760e1cc314d7f205a2790c65f8f6efdb0e453ad9b618954",
+            "0175375fa7d1141e3760e1cc314d7f205a2790c65f8f6efdb0e453ad9b618954"
+          ]
+        },
+        {
+          "identical": true,
+          "nodes": [
+            6358,
+            6358
+          ],
+          "differences": [],
+          "sha256": [
+            "0175375fa7d1141e3760e1cc314d7f205a2790c65f8f6efdb0e453ad9b618954",
+            "0175375fa7d1141e3760e1cc314d7f205a2790c65f8f6efdb0e453ad9b618954"
+          ]
+        }
+      ]
+    },
+    {
+      "file": "contrast-default-preview.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "cssom_identical": true,
+      "layers": [
+        {
+          "count": 101,
+          "draws_content": 98,
+          "sample_reasons": [
+            {
+              "compositingReasons": [],
+              "compositingReasonIds": []
+            },
+            {
+              "compositingReasons": [
+                "Is the document.rootScroller.",
+                "Is a scrollable overflow element using accelerated scrolling."
+              ],
+              "compositingReasonIds": [
+                "RootScroller",
+                "OverflowScrolling"
+              ]
+            },
+            {
+              "compositingReasons": [
+                "Has a will-change: transform compositing hint."
+              ],
+              "compositingReasonIds": [
+                "WillChangeTransform"
+              ]
+            }
+          ]
+        },
+        {
+          "count": 101,
+          "draws_content": 98,
+          "sample_reasons": [
+            {
+              "compositingReasons": [],
+              "compositingReasonIds": []
+            },
+            {
+              "compositingReasons": [
+                "Is the document.rootScroller.",
+                "Is a scrollable overflow element using accelerated scrolling."
+              ],
+              "compositingReasonIds": [
+                "RootScroller",
+                "OverflowScrolling"
+              ]
+            },
+            {
+              "compositingReasons": [
+                "Has a will-change: transform compositing hint."
+              ],
+              "compositingReasonIds": [
+                "WillChangeTransform"
+              ]
+            }
+          ]
+        }
+      ],
+      "isolation_checks": [],
+      "reference_sha256": "1847a3db0140005b37db099701877146a57b37de85f8331cf62aaae32caed50b",
+      "candidate_sha256": "1847a3db0140005b37db099701877146a57b37de85f8331cf62aaae32caed50b",
+      "state_comparison": {
+        "identical": true,
+        "nodes": [
+          4648,
+          4648
+        ],
+        "differences": [],
+        "sha256": [
+          "f6505f2fc89dc5b47f7d9ba29940de14e854a6c353809059e9af540f2a239b3c",
+          "f6505f2fc89dc5b47f7d9ba29940de14e854a6c353809059e9af540f2a239b3c"
+        ]
+      },
+      "within_document_state_comparisons": [
+        {
+          "identical": true,
+          "nodes": [
+            4648,
+            4648
+          ],
+          "differences": [],
+          "sha256": [
+            "f6505f2fc89dc5b47f7d9ba29940de14e854a6c353809059e9af540f2a239b3c",
+            "f6505f2fc89dc5b47f7d9ba29940de14e854a6c353809059e9af540f2a239b3c"
+          ]
+        },
+        {
+          "identical": true,
+          "nodes": [
+            4648,
+            4648
+          ],
+          "differences": [],
+          "sha256": [
+            "f6505f2fc89dc5b47f7d9ba29940de14e854a6c353809059e9af540f2a239b3c",
+            "f6505f2fc89dc5b47f7d9ba29940de14e854a6c353809059e9af540f2a239b3c"
+          ]
+        }
+      ]
+    },
+    {
+      "file": "contrast-halloween-live.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "cssom_identical": true,
+      "layers": [
+        {
+          "count": 340,
+          "draws_content": 193,
+          "sample_reasons": [
+            {
+              "compositingReasons": [],
+              "compositingReasonIds": []
+            },
+            {
+              "compositingReasons": [
+                "Is the document.rootScroller.",
+                "Is a scrollable overflow element using accelerated scrolling."
+              ],
+              "compositingReasonIds": [
+                "RootScroller",
+                "OverflowScrolling"
+              ]
+            },
+            {
+              "compositingReasons": [
+                "Has a will-change: transform compositing hint."
+              ],
+              "compositingReasonIds": [
+                "WillChangeTransform"
+              ]
+            }
+          ]
+        },
+        {
+          "count": 340,
+          "draws_content": 193,
+          "sample_reasons": [
+            {
+              "compositingReasons": [],
+              "compositingReasonIds": []
+            },
+            {
+              "compositingReasons": [
+                "Is the document.rootScroller.",
+                "Is a scrollable overflow element using accelerated scrolling."
+              ],
+              "compositingReasonIds": [
+                "RootScroller",
+                "OverflowScrolling"
+              ]
+            },
+            {
+              "compositingReasons": [
+                "Has a will-change: transform compositing hint."
+              ],
+              "compositingReasonIds": [
+                "WillChangeTransform"
+              ]
+            }
+          ]
+        }
+      ],
+      "isolation_checks": [],
+      "reference_sha256": "8aff1730fb4f52d796564d7766fe441650aa835ff5f96fae52ed302f25be931e",
+      "candidate_sha256": "8aff1730fb4f52d796564d7766fe441650aa835ff5f96fae52ed302f25be931e",
+      "state_comparison": {
+        "identical": true,
+        "nodes": [
+          7176,
+          7176
+        ],
+        "differences": [],
+        "sha256": [
+          "52d9e7e54dd4c6953256dd930fa342a7d91982105407fbe863e9db0b17310d5c",
+          "52d9e7e54dd4c6953256dd930fa342a7d91982105407fbe863e9db0b17310d5c"
+        ]
+      },
+      "within_document_state_comparisons": [
+        {
+          "identical": true,
+          "nodes": [
+            7176,
+            7176
+          ],
+          "differences": [],
+          "sha256": [
+            "52d9e7e54dd4c6953256dd930fa342a7d91982105407fbe863e9db0b17310d5c",
+            "52d9e7e54dd4c6953256dd930fa342a7d91982105407fbe863e9db0b17310d5c"
+          ]
+        },
+        {
+          "identical": true,
+          "nodes": [
+            7176,
+            7176
+          ],
+          "differences": [],
+          "sha256": [
+            "52d9e7e54dd4c6953256dd930fa342a7d91982105407fbe863e9db0b17310d5c",
+            "52d9e7e54dd4c6953256dd930fa342a7d91982105407fbe863e9db0b17310d5c"
+          ]
+        }
+      ]
+    },
+    {
+      "file": "contrast-halloween-preview.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "cssom_identical": true,
+      "layers": [
+        {
+          "count": 101,
+          "draws_content": 98,
+          "sample_reasons": [
+            {
+              "compositingReasons": [],
+              "compositingReasonIds": []
+            },
+            {
+              "compositingReasons": [
+                "Is the document.rootScroller.",
+                "Is a scrollable overflow element using accelerated scrolling."
+              ],
+              "compositingReasonIds": [
+                "RootScroller",
+                "OverflowScrolling"
+              ]
+            },
+            {
+              "compositingReasons": [
+                "Has a will-change: transform compositing hint."
+              ],
+              "compositingReasonIds": [
+                "WillChangeTransform"
+              ]
+            }
+          ]
+        },
+        {
+          "count": 101,
+          "draws_content": 98,
+          "sample_reasons": [
+            {
+              "compositingReasons": [],
+              "compositingReasonIds": []
+            },
+            {
+              "compositingReasons": [
+                "Is the document.rootScroller.",
+                "Is a scrollable overflow element using accelerated scrolling."
+              ],
+              "compositingReasonIds": [
+                "RootScroller",
+                "OverflowScrolling"
+              ]
+            },
+            {
+              "compositingReasons": [
+                "Has a will-change: transform compositing hint."
+              ],
+              "compositingReasonIds": [
+                "WillChangeTransform"
+              ]
+            }
+          ]
+        }
+      ],
+      "isolation_checks": [],
+      "reference_sha256": "2acc786abc052b6a7e6ab5417e48d7918e4d26bd494e0997442f8cc15791d5e3",
+      "candidate_sha256": "2acc786abc052b6a7e6ab5417e48d7918e4d26bd494e0997442f8cc15791d5e3",
+      "state_comparison": {
+        "identical": true,
+        "nodes": [
+          5466,
+          5466
+        ],
+        "differences": [],
+        "sha256": [
+          "0ebdebc0ea92e4755264210010c45671062132d145caed1cd89e431f67c5f148",
+          "0ebdebc0ea92e4755264210010c45671062132d145caed1cd89e431f67c5f148"
+        ]
+      },
+      "within_document_state_comparisons": [
+        {
+          "identical": true,
+          "nodes": [
+            5466,
+            5466
+          ],
+          "differences": [],
+          "sha256": [
+            "0ebdebc0ea92e4755264210010c45671062132d145caed1cd89e431f67c5f148",
+            "0ebdebc0ea92e4755264210010c45671062132d145caed1cd89e431f67c5f148"
+          ]
+        },
+        {
+          "identical": true,
+          "nodes": [
+            5466,
+            5466
+          ],
+          "differences": [],
+          "sha256": [
+            "0ebdebc0ea92e4755264210010c45671062132d145caed1cd89e431f67c5f148",
+            "0ebdebc0ea92e4755264210010c45671062132d145caed1cd89e431f67c5f148"
+          ]
+        }
+      ]
+    },
+    {
+      "file": "contrast-halloween_vampire-live.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "cssom_identical": true,
+      "layers": [
+        {
+          "count": 340,
+          "draws_content": 193,
+          "sample_reasons": [
+            {
+              "compositingReasons": [],
+              "compositingReasonIds": []
+            },
+            {
+              "compositingReasons": [
+                "Is the document.rootScroller.",
+                "Is a scrollable overflow element using accelerated scrolling."
+              ],
+              "compositingReasonIds": [
+                "RootScroller",
+                "OverflowScrolling"
+              ]
+            },
+            {
+              "compositingReasons": [
+                "Has a will-change: transform compositing hint."
+              ],
+              "compositingReasonIds": [
+                "WillChangeTransform"
+              ]
+            }
+          ]
+        },
+        {
+          "count": 340,
+          "draws_content": 193,
+          "sample_reasons": [
+            {
+              "compositingReasons": [],
+              "compositingReasonIds": []
+            },
+            {
+              "compositingReasons": [
+                "Is the document.rootScroller.",
+                "Is a scrollable overflow element using accelerated scrolling."
+              ],
+              "compositingReasonIds": [
+                "RootScroller",
+                "OverflowScrolling"
+              ]
+            },
+            {
+              "compositingReasons": [
+                "Has a will-change: transform compositing hint."
+              ],
+              "compositingReasonIds": [
+                "WillChangeTransform"
+              ]
+            }
+          ]
+        }
+      ],
+      "isolation_checks": [],
+      "reference_sha256": "095906640fa064f30025ec32ba867a359102f3fd9313be0aa03e32fa4abe2625",
+      "candidate_sha256": "095906640fa064f30025ec32ba867a359102f3fd9313be0aa03e32fa4abe2625",
+      "state_comparison": {
+        "identical": true,
+        "nodes": [
+          7086,
+          7086
+        ],
+        "differences": [],
+        "sha256": [
+          "c4c804922ca542971b62c9e6b821c9e1779e2d37254df4cf29a6e438ca77c8b6",
+          "c4c804922ca542971b62c9e6b821c9e1779e2d37254df4cf29a6e438ca77c8b6"
+        ]
+      },
+      "within_document_state_comparisons": [
+        {
+          "identical": true,
+          "nodes": [
+            7086,
+            7086
+          ],
+          "differences": [],
+          "sha256": [
+            "c4c804922ca542971b62c9e6b821c9e1779e2d37254df4cf29a6e438ca77c8b6",
+            "c4c804922ca542971b62c9e6b821c9e1779e2d37254df4cf29a6e438ca77c8b6"
+          ]
+        },
+        {
+          "identical": true,
+          "nodes": [
+            7086,
+            7086
+          ],
+          "differences": [],
+          "sha256": [
+            "c4c804922ca542971b62c9e6b821c9e1779e2d37254df4cf29a6e438ca77c8b6",
+            "c4c804922ca542971b62c9e6b821c9e1779e2d37254df4cf29a6e438ca77c8b6"
+          ]
+        }
+      ]
+    },
+    {
+      "file": "contrast-halloween_vampire-preview.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "cssom_identical": true,
+      "layers": [
+        {
+          "count": 101,
+          "draws_content": 98,
+          "sample_reasons": [
+            {
+              "compositingReasons": [],
+              "compositingReasonIds": []
+            },
+            {
+              "compositingReasons": [
+                "Is the document.rootScroller.",
+                "Is a scrollable overflow element using accelerated scrolling."
+              ],
+              "compositingReasonIds": [
+                "RootScroller",
+                "OverflowScrolling"
+              ]
+            },
+            {
+              "compositingReasons": [
+                "Has a will-change: transform compositing hint."
+              ],
+              "compositingReasonIds": [
+                "WillChangeTransform"
+              ]
+            }
+          ]
+        },
+        {
+          "count": 101,
+          "draws_content": 98,
+          "sample_reasons": [
+            {
+              "compositingReasons": [],
+              "compositingReasonIds": []
+            },
+            {
+              "compositingReasons": [
+                "Is the document.rootScroller.",
+                "Is a scrollable overflow element using accelerated scrolling."
+              ],
+              "compositingReasonIds": [
+                "RootScroller",
+                "OverflowScrolling"
+              ]
+            },
+            {
+              "compositingReasons": [
+                "Has a will-change: transform compositing hint."
+              ],
+              "compositingReasonIds": [
+                "WillChangeTransform"
+              ]
+            }
+          ]
+        }
+      ],
+      "isolation_checks": [],
+      "reference_sha256": "51bf3135a4d036c69c9a827b7cd7eb762acbb7fd6796f29dd6813c459496283d",
+      "candidate_sha256": "51bf3135a4d036c69c9a827b7cd7eb762acbb7fd6796f29dd6813c459496283d",
+      "state_comparison": {
+        "identical": true,
+        "nodes": [
+          5376,
+          5376
+        ],
+        "differences": [],
+        "sha256": [
+          "0e18ba06c50b598c0e781a1305b0e82fc614ed14ea2522bdb6324c966b2ae429",
+          "0e18ba06c50b598c0e781a1305b0e82fc614ed14ea2522bdb6324c966b2ae429"
+        ]
+      },
+      "within_document_state_comparisons": [
+        {
+          "identical": true,
+          "nodes": [
+            5376,
+            5376
+          ],
+          "differences": [],
+          "sha256": [
+            "0e18ba06c50b598c0e781a1305b0e82fc614ed14ea2522bdb6324c966b2ae429",
+            "0e18ba06c50b598c0e781a1305b0e82fc614ed14ea2522bdb6324c966b2ae429"
+          ]
+        },
+        {
+          "identical": true,
+          "nodes": [
+            5376,
+            5376
+          ],
+          "differences": [],
+          "sha256": [
+            "0e18ba06c50b598c0e781a1305b0e82fc614ed14ea2522bdb6324c966b2ae429",
+            "0e18ba06c50b598c0e781a1305b0e82fc614ed14ea2522bdb6324c966b2ae429"
+          ]
+        }
+      ]
+    },
+    {
+      "file": "contrast-halloween_pumpkin-live.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "cssom_identical": true,
+      "layers": [
+        {
+          "count": 340,
+          "draws_content": 193,
+          "sample_reasons": [
+            {
+              "compositingReasons": [],
+              "compositingReasonIds": []
+            },
+            {
+              "compositingReasons": [
+                "Is the document.rootScroller.",
+                "Is a scrollable overflow element using accelerated scrolling."
+              ],
+              "compositingReasonIds": [
+                "RootScroller",
+                "OverflowScrolling"
+              ]
+            },
+            {
+              "compositingReasons": [
+                "Has a will-change: transform compositing hint."
+              ],
+              "compositingReasonIds": [
+                "WillChangeTransform"
+              ]
+            }
+          ]
+        },
+        {
+          "count": 340,
+          "draws_content": 193,
+          "sample_reasons": [
+            {
+              "compositingReasons": [],
+              "compositingReasonIds": []
+            },
+            {
+              "compositingReasons": [
+                "Is the document.rootScroller.",
+                "Is a scrollable overflow element using accelerated scrolling."
+              ],
+              "compositingReasonIds": [
+                "RootScroller",
+                "OverflowScrolling"
+              ]
+            },
+            {
+              "compositingReasons": [
+                "Has a will-change: transform compositing hint."
+              ],
+              "compositingReasonIds": [
+                "WillChangeTransform"
+              ]
+            }
+          ]
+        }
+      ],
+      "isolation_checks": [],
+      "reference_sha256": "674ee24388c73cfe17c298201fb421cde66e5c5453807aee058f9184b38ba4c0",
+      "candidate_sha256": "674ee24388c73cfe17c298201fb421cde66e5c5453807aee058f9184b38ba4c0",
+      "state_comparison": {
+        "identical": true,
+        "nodes": [
+          7098,
+          7098
+        ],
+        "differences": [],
+        "sha256": [
+          "40d2dbd4c8dc02128d50b56c14b9461d89121f9ba0425edacd9b7bc72f14d9c5",
+          "40d2dbd4c8dc02128d50b56c14b9461d89121f9ba0425edacd9b7bc72f14d9c5"
+        ]
+      },
+      "within_document_state_comparisons": [
+        {
+          "identical": true,
+          "nodes": [
+            7098,
+            7098
+          ],
+          "differences": [],
+          "sha256": [
+            "40d2dbd4c8dc02128d50b56c14b9461d89121f9ba0425edacd9b7bc72f14d9c5",
+            "40d2dbd4c8dc02128d50b56c14b9461d89121f9ba0425edacd9b7bc72f14d9c5"
+          ]
+        },
+        {
+          "identical": true,
+          "nodes": [
+            7098,
+            7098
+          ],
+          "differences": [],
+          "sha256": [
+            "40d2dbd4c8dc02128d50b56c14b9461d89121f9ba0425edacd9b7bc72f14d9c5",
+            "40d2dbd4c8dc02128d50b56c14b9461d89121f9ba0425edacd9b7bc72f14d9c5"
+          ]
+        }
+      ]
+    },
+    {
+      "file": "contrast-halloween_pumpkin-preview.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "cssom_identical": true,
+      "layers": [
+        {
+          "count": 101,
+          "draws_content": 98,
+          "sample_reasons": [
+            {
+              "compositingReasons": [],
+              "compositingReasonIds": []
+            },
+            {
+              "compositingReasons": [
+                "Is the document.rootScroller.",
+                "Is a scrollable overflow element using accelerated scrolling."
+              ],
+              "compositingReasonIds": [
+                "RootScroller",
+                "OverflowScrolling"
+              ]
+            },
+            {
+              "compositingReasons": [
+                "Has a will-change: transform compositing hint."
+              ],
+              "compositingReasonIds": [
+                "WillChangeTransform"
+              ]
+            }
+          ]
+        },
+        {
+          "count": 101,
+          "draws_content": 98,
+          "sample_reasons": [
+            {
+              "compositingReasons": [],
+              "compositingReasonIds": []
+            },
+            {
+              "compositingReasons": [
+                "Is the document.rootScroller.",
+                "Is a scrollable overflow element using accelerated scrolling."
+              ],
+              "compositingReasonIds": [
+                "RootScroller",
+                "OverflowScrolling"
+              ]
+            },
+            {
+              "compositingReasons": [
+                "Has a will-change: transform compositing hint."
+              ],
+              "compositingReasonIds": [
+                "WillChangeTransform"
+              ]
+            }
+          ]
+        }
+      ],
+      "isolation_checks": [],
+      "reference_sha256": "dba82ba00d44faf3501831284db390ad6fe1111fdca95e7ba278ffe97b68eeda",
+      "candidate_sha256": "dba82ba00d44faf3501831284db390ad6fe1111fdca95e7ba278ffe97b68eeda",
+      "state_comparison": {
+        "identical": true,
+        "nodes": [
+          5388,
+          5388
+        ],
+        "differences": [],
+        "sha256": [
+          "7d718eea73a298905fc4ae865941e841caa5b919730cac3c63ea1f8a4f154fc7",
+          "7d718eea73a298905fc4ae865941e841caa5b919730cac3c63ea1f8a4f154fc7"
+        ]
+      },
+      "within_document_state_comparisons": [
+        {
+          "identical": true,
+          "nodes": [
+            5388,
+            5388
+          ],
+          "differences": [],
+          "sha256": [
+            "7d718eea73a298905fc4ae865941e841caa5b919730cac3c63ea1f8a4f154fc7",
+            "7d718eea73a298905fc4ae865941e841caa5b919730cac3c63ea1f8a4f154fc7"
+          ]
+        },
+        {
+          "identical": true,
+          "nodes": [
+            5388,
+            5388
+          ],
+          "differences": [],
+          "sha256": [
+            "7d718eea73a298905fc4ae865941e841caa5b919730cac3c63ea1f8a4f154fc7",
+            "7d718eea73a298905fc4ae865941e841caa5b919730cac3c63ea1f8a4f154fc7"
+          ]
+        }
+      ]
+    },
+    {
+      "file": "contrast-christmas-live.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "cssom_identical": true,
+      "layers": [
+        {
+          "count": 340,
+          "draws_content": 193,
+          "sample_reasons": [
+            {
+              "compositingReasons": [],
+              "compositingReasonIds": []
+            },
+            {
+              "compositingReasons": [
+                "Is the document.rootScroller.",
+                "Is a scrollable overflow element using accelerated scrolling."
+              ],
+              "compositingReasonIds": [
+                "RootScroller",
+                "OverflowScrolling"
+              ]
+            },
+            {
+              "compositingReasons": [
+                "Overlaps other composited content."
+              ],
+              "compositingReasonIds": [
+                "Overlap"
+              ]
+            }
+          ]
+        },
+        {
+          "count": 340,
+          "draws_content": 193,
+          "sample_reasons": [
+            {
+              "compositingReasons": [],
+              "compositingReasonIds": []
+            },
+            {
+              "compositingReasons": [
+                "Is the document.rootScroller.",
+                "Is a scrollable overflow element using accelerated scrolling."
+              ],
+              "compositingReasonIds": [
+                "RootScroller",
+                "OverflowScrolling"
+              ]
+            },
+            {
+              "compositingReasons": [
+                "Overlaps other composited content."
+              ],
+              "compositingReasonIds": [
+                "Overlap"
+              ]
+            }
+          ]
+        }
+      ],
+      "isolation_checks": [],
+      "reference_sha256": "136f9438be15f941c1b6d3dceb9d49aae30d0973f4cad6e96ffcbf02d4ff8352",
+      "candidate_sha256": "136f9438be15f941c1b6d3dceb9d49aae30d0973f4cad6e96ffcbf02d4ff8352",
+      "state_comparison": {
+        "identical": true,
+        "nodes": [
+          6714,
+          6714
+        ],
+        "differences": [],
+        "sha256": [
+          "4e5006ab8fef9382698c4110d66c4469d2246b0afa538161141ffd2f50b522c8",
+          "4e5006ab8fef9382698c4110d66c4469d2246b0afa538161141ffd2f50b522c8"
+        ]
+      },
+      "within_document_state_comparisons": [
+        {
+          "identical": true,
+          "nodes": [
+            6714,
+            6714
+          ],
+          "differences": [],
+          "sha256": [
+            "4e5006ab8fef9382698c4110d66c4469d2246b0afa538161141ffd2f50b522c8",
+            "4e5006ab8fef9382698c4110d66c4469d2246b0afa538161141ffd2f50b522c8"
+          ]
+        },
+        {
+          "identical": true,
+          "nodes": [
+            6714,
+            6714
+          ],
+          "differences": [],
+          "sha256": [
+            "4e5006ab8fef9382698c4110d66c4469d2246b0afa538161141ffd2f50b522c8",
+            "4e5006ab8fef9382698c4110d66c4469d2246b0afa538161141ffd2f50b522c8"
+          ]
+        }
+      ]
+    },
+    {
+      "file": "contrast-christmas-preview.png",
+      "cells": 96,
+      "pixel_identical": true,
+      "cssom_identical": true,
+      "layers": [
+        {
+          "count": 101,
+          "draws_content": 98,
+          "sample_reasons": [
+            {
+              "compositingReasons": [],
+              "compositingReasonIds": []
+            },
+            {
+              "compositingReasons": [
+                "Is the document.rootScroller.",
+                "Is a scrollable overflow element using accelerated scrolling."
+              ],
+              "compositingReasonIds": [
+                "RootScroller",
+                "OverflowScrolling"
+              ]
+            },
+            {
+              "compositingReasons": [
+                "Has a will-change: transform compositing hint."
+              ],
+              "compositingReasonIds": [
+                "WillChangeTransform"
+              ]
+            }
+          ]
+        },
+        {
+          "count": 101,
+          "draws_content": 98,
+          "sample_reasons": [
+            {
+              "compositingReasons": [],
+              "compositingReasonIds": []
+            },
+            {
+              "compositingReasons": [
+                "Is the document.rootScroller.",
+                "Is a scrollable overflow element using accelerated scrolling."
+              ],
+              "compositingReasonIds": [
+                "RootScroller",
+                "OverflowScrolling"
+              ]
+            },
+            {
+              "compositingReasons": [
+                "Has a will-change: transform compositing hint."
+              ],
+              "compositingReasonIds": [
+                "WillChangeTransform"
+              ]
+            }
+          ]
+        }
+      ],
+      "isolation_checks": [],
+      "reference_sha256": "bb4971739c60e6a4db741b83bb19a57755464e16ced227a04439367eb7820c6b",
+      "candidate_sha256": "bb4971739c60e6a4db741b83bb19a57755464e16ced227a04439367eb7820c6b",
+      "state_comparison": {
+        "identical": true,
+        "nodes": [
+          5004,
+          5004
+        ],
+        "differences": [],
+        "sha256": [
+          "ed07b4989055874f4e7094ad9421027229c0f42dd8fdf482eb29f53440028066",
+          "ed07b4989055874f4e7094ad9421027229c0f42dd8fdf482eb29f53440028066"
+        ]
+      },
+      "within_document_state_comparisons": [
+        {
+          "identical": true,
+          "nodes": [
+            5004,
+            5004
+          ],
+          "differences": [],
+          "sha256": [
+            "ed07b4989055874f4e7094ad9421027229c0f42dd8fdf482eb29f53440028066",
+            "ed07b4989055874f4e7094ad9421027229c0f42dd8fdf482eb29f53440028066"
+          ]
+        },
+        {
+          "identical": true,
+          "nodes": [
+            5004,
+            5004
+          ],
+          "differences": [],
+          "sha256": [
+            "ed07b4989055874f4e7094ad9421027229c0f42dd8fdf482eb29f53440028066",
+            "ed07b4989055874f4e7094ad9421027229c0f42dd8fdf482eb29f53440028066"
+          ]
+        }
+      ]
+    }
+  ],
+  "limits": "Routed fixture only for visual comparison; not cache or memory evidence. Animation pause readiness awaited, time zero applied, two rendering frames awaited, and repeated same-document screenshots identical in both versions. Original artwork/runtime unchanged."
+}

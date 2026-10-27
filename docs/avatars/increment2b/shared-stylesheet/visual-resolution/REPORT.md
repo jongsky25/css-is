@@ -30,9 +30,17 @@ The replacement captures relevant paint/layout properties. Later serialization
 uses JSON strings to avoid the transport overhead without changing the state data.
 The full normal control completed; it was not replaced by favorable samples.
 
-The complete current/candidate comparison uses the frozen `d84cf76` visual harness
-and unchanged product references f700187/6960562. Its assessment is archived with
-all diagnostic outputs. Exact pixels, CSSOM, and measured state must all pass for
+The first complete current/candidate comparison (`d84cf76`) passed all thirty
+pixel and cross-source state comparisons, but the new within-document check
+caught 2,880 empty style attributes appearing on hidden volume inputs across the
+thirty live-document captures. Playwright's default caret hiding sets and clears
+`caret-color`, leaving `style=""`. Its source excerpt/hash and the failed result
+are preserved. `caret='initial'` avoids that test-induced mutation; a dedicated
+browser regression verifies both stable pixels and unchanged input markup.
+
+The corrected full comparison is run from `1a3844a`, still against unchanged
+product references f700187/6960562. Its assessment is archived with all diagnostic
+outputs. Exact pixels, CSSOM, and measured state must all pass for
 all thirty sheets (2,880 cells); the memory runner enforces that prerequisite.
 Forty focused tests pass, including subpixel geometry changes, missing nodes,
 paint-style differences, and rejection of equal pixels with unequal state.
@@ -40,3 +48,7 @@ paint-style differences, and rejection of equal pixels with unequal state.
 **The paint hint and read-only state/layer probes are fixture-only.** They are
 absent from the candidate product and the fixed memory screen. Passing this
 controlled comparison permits the allocation screen, not 2B acceptance.
+
+Corrected full run: all 30 sheets (2,880 cells) pass exact pixels, CSSOM,
+selected DOM/style/geometry equality and within-document stability. The fixed
+memory screen may now run; no product or memory-rendering settings changed.
