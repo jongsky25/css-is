@@ -42,3 +42,18 @@ def request_in_transaction(conn,user,entry_id,slots,expected):
                          requester_user_id=user['id'],actor=user['username'],today=tz.today_local(),
                          modality='f2f',purpose='Requested for linked calendar meeting.',commit=False)
     return rooms.link_entry(conn,record['id'],entry_id,user,commit=False)
+
+
+def slot_block(conn, from_time, to_time):
+    """One continuous block of configured room hours for UI/MCP preparation."""
+    import re
+    if any(not isinstance(v, str) or not re.fullmatch(r'(?:[01][0-9]|2[0-3]):[0-5][0-9]', v) for v in (from_time, to_time)) or to_time <= from_time:
+        raise rooms.RoomError('Choose valid configured start/end hours, with the end after the start.')
+    slots = rooms.list_slots(conn)
+    first = next((s['id'] for s in slots if s['start_time'] == from_time), None)
+    last = next((s['id'] for s in slots if s['end_time'] == to_time), None)
+    ids = rooms.slot_range(conn, first, last)
+    selected = [next(s for s in slots if s['id'] == sid) for sid in ids]
+    if any(a['end_time'] != b['start_time'] for a, b in zip(selected, selected[1:])):
+        raise rooms.RoomError('Choose one continuous block of configured room hours.')
+    return selected

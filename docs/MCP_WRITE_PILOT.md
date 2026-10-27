@@ -134,3 +134,6 @@ notification status: see [setup and acceptance](MCP_TRAVEL_REVIEW_PILOT.md).
 
 Recording an owner-attested travel paper handover is a separate default-off M3
 pilot: see [setup and acceptance](MCP_TRAVEL_SUBMISSION_PILOT.md).
+
+A linked room request is a separate default-off M3 pilot with pending/no-booking
+semantics: see [setup and acceptance](MCP_ROOM_REQUEST_PILOT.md).

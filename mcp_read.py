@@ -22,6 +22,7 @@ import mcp_auth
 import mcp_actions
 import mcp_supply_drafts
 import mcp_comment_drafts
+import mcp_room_requests
 import mcp_travel_submissions
 import mcp_travel_reviews
 import mcp_supply_submissions
@@ -588,6 +589,56 @@ def build_server(get_conn, origin):
         """
         return await action(lambda conn, token: mcp_travel_submissions.recover(
             conn, token, provider.resource, origin, operation_id), mcp_travel_submissions.SCOPE)
+
+    @server.tool(title='Read my linked room request context', annotations=READ_ONLY)
+    async def get_my_room_request_context(entry_id: StrictInt) -> dict:
+        """Read exact meeting revision and configured room hours before preparation.
+
+        Requires rooms:request consent. Use an existing one-day plain meeting you
+        created or participate in; no recurring or CSS-linked activities. Returns
+        a revision digest, meeting day/time/status, safe room availability, current
+        approver count and whether it already has a live room request. No meeting
+        notes, meeting URLs, attendee names, rival titles or recipient emails.
+        """
+        return await action(lambda conn, token: mcp_room_requests.read_context(
+            conn, token, provider.resource, origin, entry_id), mcp_room_requests.SCOPE)
+
+    @server.tool(title='Prepare requesting a room for my meeting', annotations=ToolAnnotations(
+        readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=False))
+    async def prepare_room_request(entry_id: StrictInt, expected_revision: StrictStr,
+            from_time: StrictStr, to_time: StrictStr, operation_id: StrictStr) -> dict:
+        """Prepare ONE pending self-owned request linked to an existing meeting.
+
+        Requires separate rooms:request; calendar/read scopes do not authorize it.
+        Call get_my_room_request_context for exact revision/configured hours.
+        Use one continuous block of configured HH:MM Asia/Manila hours. Show
+        confirmation_url for signed-in review of meeting, day, room hours, requester
+        and notification recipients. Confirmation rechecks access, revision,
+        availability/closures and duplicate live links; atomically records Requested
+        and queued notices. Requested holds no booking. No approval, calendar edit,
+        invitations, meals, standby, repeats, external requester or stock/payment.
+        Initial notice attempts are durable and never automatically repeated after
+        ambiguity; normal room summaries/reminders remain separate. Keep one random
+        16–80 character operation_id for retries and inspect its receipt/source
+        before preparing a replacement after a timeout or unavailable response.
+        """
+        return await action(lambda conn, token: mcp_room_requests.prepare(
+            conn, token, provider.resource, origin, operation_id,
+            {'entry_id': entry_id, 'expected_revision': expected_revision, 'from_time': from_time, 'to_time': to_time}), mcp_room_requests.SCOPE)
+
+    @server.tool(title='Check my linked room request receipt', annotations=READ_ONLY)
+    async def get_room_request_operation(operation_id: StrictStr) -> dict:
+        """Recover the original Requested result and current initial-notice counts.
+
+        Same active connection/rooms:request consent and current source authority
+        required. Returns original reference, pending request state, next-party role,
+        source links and mail-state counts; not title, attendee details or emails.
+        Later decisions are separate; original booking_held=false is historical.
+        Recovery creates no request, booking or repeated notice. Timeout/unavailable
+        is not proof of failure: inspect this operation/source before another key.
+        """
+        return await action(lambda conn, token: mcp_room_requests.recover(
+            conn, token, provider.resource, origin, operation_id), mcp_room_requests.SCOPE)
 
     def supply_queue(conn, user, queue, state, query, page, limit):
         if queue not in ('requests', 'approvals', 'warnings'):

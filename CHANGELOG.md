@@ -1,3 +1,9 @@
+## 8.90 — October 27, 2026
+
+- Add default-off rooms:request context/preparation/recovery for one self-owned pending room request linked to a permitted plain one-day calendar meeting. Browser review binds exact meeting revision, continuous configured hours, current requester and initial Administrative Section recipients; Requested holds no booking and changes no calendar schedule.
+- Reuse the existing transactional room/link/notice services to atomically create request, unapproved slots, initial notices, original identity mapping and receipt. Recheck visibility/participation, duplicate live links, closures/horizon/availability, slot configuration and routing; recover across refresh/replay/races without repeating creation or later approval.
+- Protect mapped MCP initial notices from the legacy retry loop and deliver through a bounded single-attempt worker with committed claims, current recipient/authority/feature checks, explicit uncertainty and normal logging. Preserve ordinary non-MCP and separate summary/reminder behavior. Include runtime packaging, OAuth/MCP/room/mail/mobile checks and the operator runbook; no approval, meals, standby, repeats, calendar edits or financial action. Hosted acceptance remains pending.
+
 ## 8.89 — October 27, 2026
 
 - Add default-off own travel paper-submission context/preparation/recovery with separate travel:filing:submit consent excluded from default scopes. Browser review requires the owner to attest an already completed physical handover before changing an existing Ready filing to Submitted; it does not establish office receipt, claim approval or payment.
