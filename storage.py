@@ -9545,11 +9545,11 @@ def work_arrangement_week_override_note(conn, row, owner=None):
 
 # ---- writes ---------------------------------------------------------------
 
-def create_work_arrangement(conn, user_id, period_start, arrangement,
-                            weekday=None, note=None):
-    """File this person's work arrangement for one half-month period. Validates
-    ANNEX C's rules and raises ValueError with a human-readable reason; returns
-    the new row id.
+def work_arrangement_new_fields(conn, user_id, period_start, arrangement,
+                                weekday=None, note=None):
+    """Validate a new half-month filing and return normalized fields/effectivity.
+
+    Does not insert, commit, approve or send a notification.
 
     Section coverage is deliberately NOT checked here. A thin day is a warning
     both the employee and the approving chief see, never a block — see
@@ -9581,6 +9581,26 @@ def create_work_arrangement(conn, user_id, period_start, arrangement,
     # _wa_resolve_week for when it still has to refuse.
     effective_from, _week_note = _wa_resolve_week(conn, user_id, ps,
                                                    arrangement, weekday)
+    return {"period_start": ps, "arrangement": arrangement, "weekday": weekday,
+            "note": (note or "").strip() or None, "effective_from": effective_from,
+            "week_override_note": _week_note}
+
+
+def create_work_arrangement(conn, user_id, period_start, arrangement,
+                            weekday=None, note=None, *, commit=True):
+    """File through the shared rules, optionally joining a pending-only transaction.
+
+    Ordinary callers keep Director auto-approval. Caller-owned transactions
+    are restricted to filings that need another person's decision.
+    """
+    if not commit:
+        if not conn.in_transaction:
+            raise RuntimeError('Work arrangement creation requires a caller-owned transaction.')
+        if _is_director(conn, user_id):
+            raise ValueError('Auto-approved filings require the ordinary work arrangement screen.')
+    fields = work_arrangement_new_fields(conn, user_id, period_start, arrangement, weekday, note)
+    ps, arrangement, weekday, note, effective_from = (fields[k] for k in
+        ('period_start', 'arrangement', 'weekday', 'note', 'effective_from'))
     cur = conn.execute(
         """INSERT INTO work_arrangement(user_id, period_start, arrangement,
                                         weekday, note, status, created_at,
@@ -9588,7 +9608,8 @@ def create_work_arrangement(conn, user_id, period_start, arrangement,
            VALUES (?,?,?,?,?,'pending',?,?)""",
         (user_id, ps, arrangement, weekday, (note or "").strip() or None,
          tz.now_iso(), effective_from if effective_from != ps else None))
-    conn.commit()
+    if commit:
+        conn.commit()
     wa_id = cur.lastrowid
     # The Director has nobody above them to decide their own filing (see
     # get_approvers_for) — rather than leave it pending on the admin fallback,
