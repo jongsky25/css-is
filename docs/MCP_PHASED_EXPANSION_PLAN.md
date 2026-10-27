@@ -1,6 +1,6 @@
 # Office Connect MCP expansion plan
 
-Status: **Incremental implementation**, updated October 27, 2026. Baseline: the read-only MCP expansion in v8.35 (PR #444). M1 reads and default-off M2.1–M2.6 and M3.1–M3.6 pilots are implemented as recorded below. Existing OAuth grants are not widened. Hosted write acceptance remains separate from implementation.
+Status: **Incremental implementation**, updated October 27, 2026. Baseline: the read-only MCP expansion in v8.35 (PR #444). M1 reads and default-off M2.1–M2.6 and M3.1–M3.7 pilots are implemented as recorded below. Existing OAuth grants are not widened. Hosted write acceptance remains separate from implementation.
 
 ## Goal and boundary
 
@@ -421,3 +421,25 @@ No meals, standby, repeats, calendar edits or financial action are added. See
 [M3.6 setup, notification semantics and acceptance](MCP_ROOM_REQUEST_PILOT.md).
 Hosted write acceptance remains pending and no flag is activated. Other M3/M4
 work remains separate.
+
+M3.6 merged in [PR #502](https://github.com/jongsky25/css-is/pull/502), commit
+`2eae19c9567bf2056d7ae5ee14dc5ff0428c8ba2`.
+
+### M3.7 implementation — v8.91
+
+Separate default-off `meals:request` consent prepares one own standalone meal
+request. Context exposes current notice/time/pax rules and queue staff count;
+signed-in browser review shows exact activity/date/location/headcount, unique
+meal lines/times, special instructions and Administrative Section visibility.
+Current requester, queue membership, policy and the two-calendar-day deadline
+are rechecked inside the writer transaction.
+
+The shared UI meal creation service joins the transaction so Submitted request,
+pending meal lines, normal audit, source identity and receipt commit together.
+Same-key retries/concurrent confirmations create at most one request; distinct
+keys intentionally identify separate requests. Recovery reports the original
+Submitted/Awaiting order result without replacing later normal ordering,
+delivery or withdrawal. No room/calendar record, supplier order, notification,
+approval or payment is created. See [M3.7 setup and acceptance](MCP_MEAL_REQUEST_PILOT.md).
+Hosted acceptance remains pending and no flag is enabled. Work-arrangement,
+activity/invitation and M4 decisions remain separate work.

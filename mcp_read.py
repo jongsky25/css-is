@@ -22,6 +22,7 @@ import mcp_auth
 import mcp_actions
 import mcp_supply_drafts
 import mcp_comment_drafts
+import mcp_meal_requests
 import mcp_room_requests
 import mcp_travel_submissions
 import mcp_travel_reviews
@@ -589,6 +590,53 @@ def build_server(get_conn, origin):
         """
         return await action(lambda conn, token: mcp_travel_submissions.recover(
             conn, token, provider.resource, origin, operation_id), mcp_travel_submissions.SCOPE)
+
+    @server.tool(title='Read my meal request preparation context', annotations=READ_ONLY)
+    async def get_my_meal_request_context() -> dict:
+        """Read current standalone meal rules with separate meals:request consent.
+
+        Returns earliest activity day (two calendar days notice), supported meal
+        keys, allowed delivery hours, pax limit and current Administrative Section
+        queue staff count. No other person's requests, names or contact details.
+        """
+        return await action(lambda conn, token: mcp_meal_requests.read_context(
+            conn, token, provider.resource, origin), mcp_meal_requests.SCOPE)
+
+    @server.tool(title='Prepare submitting my standalone meal request', annotations=ToolAnnotations(
+        readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=False))
+    async def prepare_meal_request(title: StrictStr, day: StrictStr, venue: StrictStr,
+            pax: StrictInt, meals: list[mcp_meal_requests.MealLine], operation_id: StrictStr,
+            special_request: StrictStr = '') -> dict:
+        """Prepare one own standalone meal request for signed-in browser confirmation.
+
+        Requires meals:request consent; rooms/calendar/read scopes do not grant it.
+        Title/venue max 240 characters, pax 1–1000, date YYYY-MM-DD Asia/Manila at
+        least two calendar days ahead. Choose 1–4 unique meal lines with exact
+        deliver_at HH:MM from 06:00 to 19:00. Optional special_request max 800
+        characters is shared with Administrative Section queue staff; review any
+        sensitive details before confirming in Office Connect. Show confirmation_url
+        for exact activity/location/headcount/meal/time/requester/visibility review.
+        Only confirmation creates Submitted with meals Awaiting order. No room,
+        calendar edit, supplier order, delivery, email, approval or payment. Keep
+        one random 16–80 character operation_id for retries and recovery; different
+        keys create separate requests, so inspect the receipt/source after timeout.
+        """
+        return await action(lambda conn, token: mcp_meal_requests.prepare(
+            conn, token, provider.resource, origin, operation_id,
+            {'title': title, 'day': day, 'venue': venue, 'pax': pax,
+             'meals': [line.model_dump() for line in meals], 'special_request': special_request}), mcp_meal_requests.SCOPE)
+
+    @server.tool(title='Check my meal request receipt', annotations=READ_ONLY)
+    async def get_meal_request_operation(operation_id: StrictStr) -> dict:
+        """Recover original Submitted/Awaiting order result and its source link.
+
+        Requires the same active meals:request connection and current source
+        ownership. No title, headcount, delivery location or special-request text
+        is returned. Later ordering/delivery/withdrawal stays separate; inspect
+        the source for current state. Recovery never creates a second request.
+        """
+        return await action(lambda conn, token: mcp_meal_requests.recover(
+            conn, token, provider.resource, origin, operation_id), mcp_meal_requests.SCOPE)
 
     @server.tool(title='Read my linked room request context', annotations=READ_ONLY)
     async def get_my_room_request_context(entry_id: StrictInt) -> dict:
