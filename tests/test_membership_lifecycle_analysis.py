@@ -42,6 +42,7 @@ def specimen(monkeypatch):
 
 def test_absent_gc_can_be_observed_without_waiving_reclamation(monkeypatch):
     p, trace, _ = specimen(monkeypatch)
+    p['protocol']='native-membership-lifecycle-v7'
     result = analysis.analyze(p, trace)
     assert not result['errors'] and result['gc_events'] == []
     assert result['membership_status'] == 'capability_failed'
@@ -78,3 +79,14 @@ def test_batch_is_counted_once_and_mismatch_cannot_reduce_cost(monkeypatch):
     with pytest.raises(ValueError): analysis.census_costs(bad)
     old = deepcopy(p); old['protocol'] = 'native-membership-lifecycle-v4'
     assert len(analysis.census_costs(old)) == 48
+
+
+def test_mixed_protocol_requires_natural_collection_even_with_returning_pages(monkeypatch):
+    p, trace, membership=specimen(monkeypatch)
+    membership.update(status='capability_passed',errors=[])
+    result=analysis.analyze(p,trace)
+    assert 'Missing natural major/sweep coverage in mixed fixture' in result['errors']
+    trace['traceEvents'] += [
+        {'pid':7,'tid':7,'name':'MajorGC','ts':100,'dur':5,'ph':'X','args':{}},
+        {'pid':7,'tid':7,'name':'CppGC.IncrementalSweep','ts':106,'dur':5,'ph':'X','args':{}}]
+    assert not analysis.analyze(p,trace)['errors']

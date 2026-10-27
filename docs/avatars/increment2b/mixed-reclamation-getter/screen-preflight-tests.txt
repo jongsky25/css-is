@@ -1,0 +1,7 @@
+.........................................................                [100%]
+=============================== warnings summary ===============================
+tests/test_mixed_membership_fixture.py::test_documents_match_independent_previously_qualified_source_bytes
+  /workspace/css-is/tests/conftest.py:88: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html

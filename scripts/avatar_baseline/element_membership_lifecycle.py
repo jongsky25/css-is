@@ -10,42 +10,17 @@ import threading
 import time
 import frida
 from playwright.sync_api import sync_playwright
+from scripts.avatar_baseline.mixed_membership_fixture import Handler, SELECT_JS, SCHEDULE
 
 BUILD = '1c5dca8527a61d07372e489142bee26af1bcaf71'
 COUNT = 512  # Retained v1 census profile.
 CENSUS = 32
-FIXTURE_COUNT = 4096
-PROTOCOL = 'native-membership-lifecycle-v7'
+FIXTURE_COUNT = 3000
+PROTOCOL = 'native-membership-lifecycle-v8'
 STAGES = 12
 BROWSER = Path('/workspace/scratch/avatar-runtime/root/usr/lib/chromium/chromium')
 HOOK = Path(__file__).resolve().parent / 'native/absent_attribute_membership.js'
 
-
-class Handler(BaseHTTPRequestHandler):
-    def log_message(self, *args): pass
-    def do_GET(self):
-        if self.path == '/empty':
-            body = '<p>Identity fixture</p>'
-        else:
-            # Fixed separated blocks permit mixed-page observations without assuming segregation.
-            body = '<svg width="64" height="64">'
-            body += ''.join(f'<path data-group="avatar" d="M0 0L{i%64} 64"/>' for i in range(FIXTURE_COUNT)) + '</svg>'
-            body += '<svg width="64" height="64">' + ''.join(f'<path data-group="other" d="M0 0L{i%64} 64"/>' for i in range(FIXTURE_COUNT)) + '</svg>'
-        raw = ('<!doctype html><html><head><link rel="icon" href="data:,"></head><body>' + body + '</body></html>').encode()
-        self.send_response(200); self.send_header('Content-Type', 'text/html; charset=utf-8')
-        self.send_header('Content-Length', str(len(raw))); self.end_headers(); self.wfile.write(raw)
-
-    def do_POST(self):
-        if self.path != '/lifecycle':
-            self.send_error(404); return
-        length = int(self.headers.get('Content-Length', '0'))
-        if not 0 < length <= 256:
-            self.send_error(400); return
-        data = json.loads(self.rfile.read(length))
-        if set(data) != {'index', 'persisted'} or type(data['index']) is not int or type(data['persisted']) is not bool:
-            self.send_error(400); return
-        self.server.lifecycle_events.append({**data, 'received_ns': time.monotonic_ns()})
-        self.send_response(204); self.send_header('Content-Length', '0'); self.end_headers()
 
 
 def digest(path):
@@ -56,7 +31,7 @@ def run(out, mode):
     out.mkdir(parents=True, exist_ok=False)
     root = Path(__file__).resolve().parents[2]
     result = {'protocol': PROTOCOL, 'acceptance': False, 'forced_gc': False,
-              'mode': mode, 'observable': 'absent-attribute-node-ns', 'attribute_namespace': 'urn:css-is:membership:absent', 'attribute_local_name': 'absent', 'count_per_group': CENSUS, 'fixture_count_per_group': FIXTURE_COUNT, 'stage_count': STAGES, 'stages': [], 'messages': [],
+              'mode': mode, 'fixture_profile': 'legacy-dom-svg-style-3000-v1', 'fixture_schedule': SCHEDULE, 'observable': 'absent-attribute-node-ns', 'attribute_namespace': 'urn:css-is:membership:absent', 'attribute_local_name': 'absent', 'count_per_group': CENSUS, 'fixture_count_per_group': FIXTURE_COUNT, 'stage_count': STAGES, 'stages': [], 'messages': [],
               'harness_commit': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=root, text=True).strip(),
               'runner_sha256': digest(Path(__file__)), 'hook_sha256': digest(HOOK), 'frida_version': frida.__version__, 'lifecycle_events': []}
     notes = subprocess.check_output(['readelf', '-n', str(BROWSER)], text=True)
@@ -140,26 +115,24 @@ def run(out, mode):
                 result['before'] = marker('membership-before')
                 result['trace_setup_ns'] = time.monotonic_ns() - start
             for index in range(STAGES):
-                stage = {'index': index, 'begin_ns': time.monotonic_ns(), 'censuses': []}
+                stage = {'index': index, 'fixture_mode': SCHEDULE[index], 'begin_ns': time.monotonic_ns(), 'censuses': []}
                 result['stages'].append(stage)
                 if script: script.exports_sync.setphase(f'navigation:{index}')
                 page.goto(origin + f'/fixture/{index}'); page.wait_for_timeout(220)
                 before = page.evaluate('document.documentElement.outerHTML')
                 start = time.monotonic_ns()
                 if script: script.exports_sync.setphase(f'batch:{index}')
-                observed = page.evaluate('''count => {
+                observed = page.evaluate('''({count,mode}) => {'''+SELECT_JS+'''
                     const result = [];
                     for (const group of ['avatar', 'other']) {
                         for (const repeat of [0, 1]) {
-                            let nodes = [...document.querySelectorAll('[data-group="'+group+'"]')];
-                            const fixture_count = nodes.length;
-                            nodes = group === 'avatar' ? nodes.slice(-count) : nodes.slice(0, count);
-                            result.push({group, repeat, count: nodes.length, fixture_count,
+                            const {nodes,fixture_count}=selectMembership(mode,group,count);
+                            result.push({group, repeat, count: nodes.length, fixture_count, tags:nodes.map(n=>n.localName),
                                          counts: nodes.map(node => Number(node.getAttributeNodeNS('urn:css-is:membership:absent','absent') === null))});
                         }
                     }
                     return result;
-                }''', CENSUS)
+                }''', {'count':CENSUS,'mode':SCHEDULE[index]})
                 if script: script.exports_sync.setphase('between-censuses')
                 stop = time.monotonic_ns()
                 stage['batch_census_interval_ns'] = [start, stop]

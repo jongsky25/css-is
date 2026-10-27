@@ -1,0 +1,42 @@
+.............F.F....................                                     [100%]
+=================================== FAILURES ===================================
+_________ test_screen_fixture_must_match_the_exact_receiver_capability _________
+
+    def test_screen_fixture_must_match_the_exact_receiver_capability():
+        from scripts.avatar_baseline.analyze_membership_lifecycle import validate_capability_fixture
+        capability={'dom_before_sha256':'same','dom_after_sha256':'same'}
+        p={'stages':[{'dom_before_sha256':'same','dom_after_sha256':'same'}]}
+>       validate_capability_fixture(p,capability)
+
+tests/test_absent_attribute_capability.py:61: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+p = {'stages': [{'dom_before_sha256': 'same', 'dom_after_sha256': 'same'}]}
+capability = {'dom_before_sha256': 'same', 'dom_after_sha256': 'same'}
+
+    def validate_capability_fixture(p, capability):
+>       if p['protocol']=='native-membership-lifecycle-v8':
+           ^^^^^^^^^^^^^
+E       KeyError: 'protocol'
+
+scripts/avatar_baseline/analyze_membership_lifecycle.py:153: KeyError
+__________ test_absent_gc_can_be_observed_without_waiving_reclamation __________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f0aec6a1490>
+
+    def test_absent_gc_can_be_observed_without_waiving_reclamation(monkeypatch):
+        p, trace, _ = specimen(monkeypatch)
+        result = analysis.analyze(p, trace)
+>       assert not result['errors'] and result['gc_events'] == []
+E       AssertionError: assert (not ['Missing natural major/sweep coverage in mixed fixture', 'Live membership coverage failed independently of reclamation'])
+
+tests/test_membership_lifecycle_analysis.py:46: AssertionError
+=============================== warnings summary ===============================
+tests/test_mixed_membership_fixture.py::test_documents_match_independent_previously_qualified_source_bytes
+  /workspace/css-is/tests/conftest.py:88: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_absent_attribute_capability.py::test_screen_fixture_must_match_the_exact_receiver_capability
+FAILED tests/test_membership_lifecycle_analysis.py::test_absent_gc_can_be_observed_without_waiving_reclamation
