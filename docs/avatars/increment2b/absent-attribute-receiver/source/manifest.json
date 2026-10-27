@@ -1,0 +1,12 @@
+{
+  "build_id": "1c5dca8527a61d07372e489142bee26af1bcaf71",
+  "symbol": "blink::Element::getAttributeNodeNS(blink::AtomicString const&, blink::AtomicString const&)",
+  "offset": "0x100cce80",
+  "full_retained_source": "docs/avatars/increment2b/native-element-membership/source/element.cc",
+  "full_source_sha256": "ca5bb2412592931db52617386e04572ce9f587dc1ca456790e0f8d6226f30fb0",
+  "url": "https://raw.githubusercontent.com/chromium/chromium/156.0.8078.47/third_party/blink/renderer/core/dom/element.cc",
+  "files": {
+    "get-attribute-node-ns.asm": "dbf4cdad766f861797b2c00ed67f1c53352da0ce1f35c6a2ba4897fd58f055e1",
+    "method-source-excerpt.cc": "706edfa87d0cba89713e6af694537c8aa60f55952219b109ab9b8b8f14e6e9d6"
+  }
+}
