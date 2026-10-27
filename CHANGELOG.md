@@ -1,3 +1,10 @@
+## 8.83 — October 27, 2026
+
+- Add default-off personal calendar preparation and receipt tools with separate calendar:entry:create consent excluded from default scopes. Constrain creation to one tentative meeting, current owner as sole participant, people-only visibility and bounded exact text/date/time inputs.
+- Require actor/grant/payload-bound signed-in browser confirmation and current Calendar eligibility. Reuse the existing transactional creation service and atomically store original entry identity, receipt and content-free integration audit; recover safely across rotation/races/replays without overwriting later UI changes.
+- Make the existing Telegram retention test advance from the actual database cancellation timestamp, avoiding fixed-date failures as the real clock advances.
+- Add explicit review, source links, runtime packaging, OAuth/MCP/mobile/browser checks and the pilot runbook. No invitations, room booking, Meet links, recurrence, travel, sharing or MCP edit/delete actions. Hosted acceptance remains pending.
+
 ## 8.82 — October 27, 2026
 
 - Add default-off personal saved-report-view preparation and receipt tools with separate reports:view:save consent excluded from default scopes. Limit selections to a named Type 1 CSM month or Type 2 activity quarter and generate exact local source links without loading survey results.

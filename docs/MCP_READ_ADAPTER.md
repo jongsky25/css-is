@@ -292,3 +292,6 @@ cover source scoring, combined sessions, Type 2/other-person/other-activity and
 archived/pooled exclusions, rare-cell suppression, current visibility, source
 cutoff, capacity, representative/member resolution, scope/flag independence and
 revocation. Existing annual and Type 2 reads retain their own behavior.
+
+Personal calendar entry preparation is a separate default-off pilot: see
+[M2.5 setup and acceptance](MCP_PERSONAL_CALENDAR_PILOT.md).
