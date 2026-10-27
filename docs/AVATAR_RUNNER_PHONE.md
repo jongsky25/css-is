@@ -30,3 +30,11 @@ for 30 days; download them if you need a durable copy.
 This setup PR only adds the workflow and these instructions. It does not merge
 the avatar verification branch. Existing repository release checks still apply
 to merging; this setup does not bypass them or modify the auto-deploy workflow.
+
+## Native-recorder calibration
+
+The separate **Avatar native recorder calibration** workflow runs fresh native
+proofs, then exactly four control/probe/probe/control measurements. Its artifact
+is **avatar-native-calibration**. A passing calibration permits only a separately
+planned application measurement; it is not 2B acceptance. Keep both failed and
+successful runs. The setup PR validates this workflow once before registration.
