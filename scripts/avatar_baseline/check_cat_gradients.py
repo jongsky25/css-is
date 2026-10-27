@@ -85,12 +85,12 @@ def main():
                         page.evaluate('''async()=>{const aa=document.getAnimations();aa.forEach(a=>a.pause());await Promise.all(aa.map(a=>a.ready));aa.forEach(a=>a.currentTime=0);await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));if(aa.some(a=>a.currentTime!==0||a.playState!=='paused'))throw Error('freeze');}''')
                         check=page.evaluate('''()=>{const ids=[...document.querySelectorAll('[id]')].map(e=>e.id);const missing=[...document.querySelectorAll('[fill]')].map(e=>e.getAttribute('fill')).filter(v=>v.startsWith('url(#')).filter(v=>!document.getElementById(v.slice(5,-1)));return {ids_unique:new Set(ids).size===ids.length,missing,avatars:document.querySelectorAll('svg[data-avatar-kind]').length,cat_v2:document.querySelectorAll('svg[data-avatar-kind="cat"][data-avatar-art="v2"]').length}}''')
                         assert check=={'ids_unique':True,'missing':[],'avatars':96,'cat_v2':6};checks.append(check)
-                        raw=page.evaluate('('+SNAPSHOT+')()')
+                        raw=json.loads(page.evaluate('JSON.stringify(('+SNAPSHOT+')())'))
                         # Strip only nonpainting cat defs from the state comparison.
                         indices=page.evaluate('''()=>[...document.querySelectorAll('main,main *')].map((e,i)=>[e,i]).filter(([e])=>e.closest('svg[data-avatar-kind="cat"] defs')).map(([,i])=>i)''')
                         state=normalize([s for i,s in enumerate(raw) if i not in indices]);states.append(state)
                         shot=page.screenshot(caret='initial');repeat=page.screenshot(caret='initial');assert shot==repeat,'Unstable same-document pixels'
-                        assert raw==page.evaluate('('+SNAPSHOT+')()'),'Screenshot mutated state'
+                        assert raw==json.loads(page.evaluate('JSON.stringify(('+SNAPSHOT+')())')),'Screenshot mutated state'
                         pictures.append(shot);(a.out/f'{case}-{arm}.png').write_bytes(shot)
                         with gzip.open(a.out/f'{case}-{arm}.json.gz','wt') as f:json.dump(raw,f)
                         context.close()
