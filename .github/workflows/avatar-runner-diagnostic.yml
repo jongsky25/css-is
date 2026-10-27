@@ -20,7 +20,7 @@ jobs:
     name: Cloud runner diagnostic
     runs-on: ubuntu-24.04
     timeout-minutes: 20
-    container: python:3.12-trixie@sha256:0d0db5b17f11b1b7d1aafa74ceadaa64ba0944b267ff6fc22008a197acd6b9ad
+    container: python:3.12.14-trixie@sha256:4d1caded1f729ae443eb803f26ffde7b61e696aeaef62f099abb6dd6b14257c7
     defaults:
       run:
         shell: bash
