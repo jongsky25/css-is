@@ -17704,7 +17704,8 @@ if _MCP_ENABLED:
         if not pending:
             return _mcp_consent_error('This request expired. Start again in ChatGPT.', 410)
         client_id, params = pending
-        labels = {'notifications:mark_read': 'Prepare marking your own shared-work notices read (each action requires browser confirmation)',
+        labels = {'supplies:request:draft': 'Prepare new personal supply request drafts (each save requires browser confirmation; no submission or stock allocation)',
+                  'notifications:mark_read': 'Prepare marking your own shared-work notices read (each action requires browser confirmation)',
                   'surveys:person_activities:read': 'Permitted resource-person satisfaction for one activity (no individual responses)',
                   'surveys:resource_person_trends:read': 'Permitted resource-person discovery and year-to-year satisfaction comparisons (no individual responses or peer rankings)',
                   'surveys:csm_trends:read': 'Bureau-wide CSM satisfaction comparisons between consecutive months (no individual responses)',
@@ -17734,14 +17735,14 @@ if _MCP_ENABLED:
                  'Unchecked permissions are not added.</p>' + read_choices + '</fieldset>') if read_choices else ''
         if write_choices:
             extra += ('<fieldset><legend>Optional action permission</legend>'
-                      '<p>Allow preparing an action for your own work notices. Every action still '
+                      '<p>Allow preparing the actions you select below. Every action still '
                       'requires your confirmation on a signed-in Office Connect page. Unchecked permissions are not added.</p>'
                       + write_choices + '</fieldset>')
         has_actions = bool(set(params['scopes']) & mcp_auth.WRITE_SCOPES)
         consent_intro = ('This lets ChatGPT use the following permissions as ' if has_actions
                          else 'This lets ChatGPT read the following information as ')
-        consent_boundary = ('No files or private task submissions are included. The optional notice action '
-                            'requires separate permission and confirmation on Office Connect. You can disconnect this access later.')
+        consent_boundary = ('No files or private task submissions are included. Optional actions '
+                            'require separate permission and confirmation on Office Connect. You can disconnect this access later.')
         page = ('<!doctype html><html lang="en"><meta charset="utf-8">'
                 '<meta name="viewport" content="width=device-width,initial-scale=1">'
                 '<title>Connect Office Connect to ChatGPT</title>'

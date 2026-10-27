@@ -4,6 +4,11 @@ This optional MCP endpoint lets an authorized Office Connect user ask ChatGPT ab
 
 ## Supported questions
 
+For separately consented, default-off action pilots, see the
+[notification confirmation](MCP_WRITE_PILOT.md) and
+[new personal supply draft](MCP_SUPPLY_DRAFT_PILOT.md) runbooks. Ordinary read
+grants do not gain action permissions.
+
 - “What work needs my attention?” and “What am I waiting on?”
 - “Find the document about the budget review and show its status.”
 - “Which contribution tasks are attached to work item 123?”

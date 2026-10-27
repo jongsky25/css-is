@@ -57,21 +57,21 @@ def _enabled(conn):
         raise ActionError('not_available', 'Marking work notices read through ChatGPT is disabled.')
 
 
-def _grant(conn, grant_id, owner_id, resource):
+def _grant(conn, grant_id, owner_id, resource, scope=SCOPE):
     row = conn.execute('SELECT scopes_json FROM mcp_oauth_grant WHERE id=? AND owner_id=? '
                        'AND resource=? AND revoked_at IS NULL AND refresh_expires>?',
                        (grant_id, owner_id, resource, int(time.time()))).fetchone()
     user = mcp_auth._active(conn, owner_id)
-    if not row or SCOPE not in json.loads(row[0]) or not user:
-        raise ActionError('authorization_required', 'Reconnect Office Connect and explicitly allow marking your own work notices read.')
+    if not row or scope not in json.loads(row[0]) or not user:
+        raise ActionError('authorization_required', 'Reconnect Office Connect and explicitly allow ' + scope + '.')
     return user
 
 
-def token_actor(conn, token, resource):
+def token_actor(conn, token, resource, scope=SCOPE):
     # Called under the same writer lock as prepare/recovery.
-    user = mcp_auth.current_grant(conn, token, resource, SCOPE)
+    user = mcp_auth.current_grant(conn, token, resource, scope)
     if not user:
-        raise ActionError('authorization_required', 'Reconnect Office Connect and explicitly allow marking your own work notices read.')
+        raise ActionError('authorization_required', 'Reconnect Office Connect and explicitly allow ' + scope + '.')
     grant_id = conn.execute('SELECT id FROM mcp_oauth_grant WHERE access_hash=?',
                             (mcp_auth._digest(token),)).fetchone()[0]
     return user, grant_id

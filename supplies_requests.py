@@ -74,32 +74,40 @@ def _write_lines(conn, request_id, lines):
 
 def save_draft(conn, user, fields, *, operation_key, request_id=None, expected_revision=None):
     with transaction(conn):
-        user = permissions.require_actor(conn, user)
-        s.require_enabled(conn)
-        values = _fields(fields)
-        payload = {'request_id': request_id, 'revision': expected_revision, **values}
-        key,digest,prior = operation(conn,user,operation_key,'request_save',payload)
-        if prior is not None:
-            return prior
-        user, identity = requester(conn,user)
-        _active_items(conn,values['lines'])
-        now = tz.now_iso()
-        if request_id is None:
-            request_id = conn.execute('''INSERT INTO supply_request
-              (requester_id,requester_rp_id,requester_snapshot,unit_id,unit_snapshot,purpose,date_needed,created_at,updated_at)
-              VALUES (?,?,?,?,?,?,?,?,?)''', (user['id'], *[identity[k] for k in ('requester_rp_id','requester_snapshot','unit_id','unit_snapshot')],
-                       values['purpose'],values['date_needed'],now,now)).lastrowid
-        else:
-            request = _owned(conn,user,request_id)
-            _check_revision(request,expected_revision)
-            if request['approval_status'] not in ('draft','returned'):
-                raise Conflict('Only a draft or returned request can be edited.')
-            conn.execute('''UPDATE supply_request SET purpose=?,date_needed=?,requester_rp_id=?,requester_snapshot=?,
-              unit_id=?,unit_snapshot=?,revision=revision+1,updated_at=? WHERE id=?''',
-              (values['purpose'],values['date_needed'],*[identity[k] for k in ('requester_rp_id','requester_snapshot','unit_id','unit_snapshot')],now,request_id))
-        _write_lines(conn,request_id,values['lines'])
-        result = {'id': request_id, 'revision': _owned(conn,user,request_id)['revision']}
-        return record(conn,user,key,digest,'request_save','request',result,values)
+        return save_draft_in_transaction(conn, user, fields, operation_key=operation_key,
+                                         request_id=request_id, expected_revision=expected_revision)
+
+
+def save_draft_in_transaction(conn, user, fields, *, operation_key, request_id=None, expected_revision=None):
+    """Shared UI/MCP service; caller commits the draft and its outer receipt."""
+    if not conn.in_transaction:
+        raise RuntimeError('An active transaction is required.')
+    user = permissions.require_actor(conn, user)
+    s.require_enabled(conn)
+    values = _fields(fields)
+    payload = {'request_id': request_id, 'revision': expected_revision, **values}
+    key,digest,prior = operation(conn,user,operation_key,'request_save',payload)
+    if prior is not None:
+        return prior
+    user, identity = requester(conn,user)
+    _active_items(conn,values['lines'])
+    now = tz.now_iso()
+    if request_id is None:
+        request_id = conn.execute('''INSERT INTO supply_request
+          (requester_id,requester_rp_id,requester_snapshot,unit_id,unit_snapshot,purpose,date_needed,created_at,updated_at)
+          VALUES (?,?,?,?,?,?,?,?,?)''', (user['id'], *[identity[k] for k in ('requester_rp_id','requester_snapshot','unit_id','unit_snapshot')],
+                   values['purpose'],values['date_needed'],now,now)).lastrowid
+    else:
+        request = _owned(conn,user,request_id)
+        _check_revision(request,expected_revision)
+        if request['approval_status'] not in ('draft','returned'):
+            raise Conflict('Only a draft or returned request can be edited.')
+        conn.execute('''UPDATE supply_request SET purpose=?,date_needed=?,requester_rp_id=?,requester_snapshot=?,
+          unit_id=?,unit_snapshot=?,revision=revision+1,updated_at=? WHERE id=?''',
+          (values['purpose'],values['date_needed'],*[identity[k] for k in ('requester_rp_id','requester_snapshot','unit_id','unit_snapshot')],now,request_id))
+    _write_lines(conn,request_id,values['lines'])
+    result = {'id': request_id, 'revision': _owned(conn,user,request_id)['revision']}
+    return record(conn,user,key,digest,'request_save','request',result,values)
 
 
 def eligible_approvers(conn, owner_id, unit_id):
