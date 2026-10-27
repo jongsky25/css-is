@@ -108,6 +108,8 @@ import backups as bk
 import monitoring as mon
 import name_cleanup as ncl
 import harmonize as hz
+import activity_drafts
+import activity_draft_routes
 import activity_permissions
 import activity_scheduling
 import activity_admin as aa
@@ -6573,9 +6575,17 @@ async def api_ai_feedback(request: Request):
 
 
 @app.get("/create", response_class=HTMLResponse)
-def create_screen(request: Request, from_entry: str = "", from_room: str = ""):
+def create_screen(request: Request, from_entry: str = "", from_room: str = "", activity_draft: str = ""):
     conn = get_conn()
     try:
+        if activity_draft and (from_entry or from_room):
+            return HTMLResponse('Load one source at a time.', status_code=400)
+        draft_prefill = None
+        if activity_draft:
+            try:
+                draft_prefill = activity_drafts.prefill(conn, request.state.user, activity_draft)
+            except ValueError:
+                return HTMLResponse('Private draft unavailable or outside the current Create date/section rules.', status_code=404, headers={'Cache-Control':'private, no-store'})
         _, blhsd_name, _ = st.get_or_create_blhsd(conn)
         rps = st.list_resource_persons(conn)
         sections = st.list_org_units(conn, level="section")
@@ -6590,11 +6600,15 @@ def create_screen(request: Request, from_entry: str = "", from_room: str = ""):
     ctx = {"blhsd_name": blhsd_name,
            "resource_persons": rps, "sections": sections, "room_slots": room_slots,
            "date_min": dmin, "date_max": dmax}
-    if prefill:
+    ctx['activity_draft_loaded'] = bool(draft_prefill)
+    if draft_prefill:
+        ctx['form'] = draft_prefill
+    elif prefill:
         ctx["form"] = prefill
     elif room_prefill:
         ctx["form"] = room_prefill
-    return templates.TemplateResponse(request, "form_create.html", ctx)
+    return templates.TemplateResponse(request, "form_create.html", ctx,
+        headers={"Cache-Control":"private, no-store", "Referrer-Policy":"same-origin"} if activity_draft else None)
 
 
 def _rooms_after_create(conn, user, ev, *, from_room, reserve, slot_from, slot_to, meals, modality,
@@ -17664,6 +17678,7 @@ async def _mcp_readiness_status():
 
 
 app.include_router(integration_access_routes.make_router(templates, get_conn, _mcp_readiness_status, invalidate_activity_dates=lambda: invalidate_atoms()))
+app.include_router(activity_draft_routes.make_router(templates, get_conn))
 app.include_router(appearance_routes.make_router(templates, get_conn))
 app.include_router(supplies_routes.make_router(templates, get_conn))
 
@@ -17716,7 +17731,7 @@ if _MCP_ENABLED:
         if not pending:
             return _mcp_consent_error('This request expired. Start again in ChatGPT.', 410)
         client_id, params = pending
-        labels = {'activities:dates:update': 'Update the date of a permitted upcoming unused activity (browser confirmation; updates its event review too; no rescheduling email or linked-work updates)', 'work_arrangements:request': 'File your own new work arrangement for approval (browser confirmation; shared schedule/approval visibility and queued approver emails; no auto-approval or changes)', 'meals:request': 'Submit your own standalone meal request (browser confirmation; visible to Administrative Section, awaiting order; no supplier order or email)', 'rooms:request': 'Request a room for a permitted existing meeting (browser confirmation; pending approval, no booking held; queues approver notices)', 'travel:filing:submit': 'Record your own Ready filing as Submitted after physically handing in papers (browser attestation; not office receipt or payment)', 'travel:review:request': 'Request review of your complete travel papers (browser confirmation; queues one email to the selected reviewer)', 'supplies:request:submit': 'Submit your own draft or returned supply request for approval (browser confirmation; no stock reservation or issuance)', 'work:task:submit': 'Submit your assigned In progress task for review (browser confirmation; saves output and note in shared-work history)', 'work:task:acknowledge': 'Acknowledge your assigned To do task as In progress (browser confirmation; records your note in shared-work history)', 'travel:filing:draft': 'Open your own unsubmitted reimbursement checklist (browser confirmation; normal travel access and deadline reminders apply)', 'calendar:entry:create': 'Create your own tentative personal calendar entry (each save requires browser confirmation; no invitations or room bookings)', 'reports:view:save': 'Save your own named survey report selections (each save requires browser confirmation; no results or exports)',
+        labels = {'activities:draft:save': 'Save your own private activity preparation draft (browser confirmation; no event, survey, public link or email; separate Create review)', 'activities:dates:update': 'Update the date of a permitted upcoming unused activity (browser confirmation; updates its event review too; no rescheduling email or linked-work updates)', 'work_arrangements:request': 'File your own new work arrangement for approval (browser confirmation; shared schedule/approval visibility and queued approver emails; no auto-approval or changes)', 'meals:request': 'Submit your own standalone meal request (browser confirmation; visible to Administrative Section, awaiting order; no supplier order or email)', 'rooms:request': 'Request a room for a permitted existing meeting (browser confirmation; pending approval, no booking held; queues approver notices)', 'travel:filing:submit': 'Record your own Ready filing as Submitted after physically handing in papers (browser attestation; not office receipt or payment)', 'travel:review:request': 'Request review of your complete travel papers (browser confirmation; queues one email to the selected reviewer)', 'supplies:request:submit': 'Submit your own draft or returned supply request for approval (browser confirmation; no stock reservation or issuance)', 'work:task:submit': 'Submit your assigned In progress task for review (browser confirmation; saves output and note in shared-work history)', 'work:task:acknowledge': 'Acknowledge your assigned To do task as In progress (browser confirmation; records your note in shared-work history)', 'travel:filing:draft': 'Open your own unsubmitted reimbursement checklist (browser confirmation; normal travel access and deadline reminders apply)', 'calendar:entry:create': 'Create your own tentative personal calendar entry (each save requires browser confirmation; no invitations or room bookings)', 'reports:view:save': 'Save your own named survey report selections (each save requires browser confirmation; no results or exports)',
                   'work:comment:draft': 'Prepare private task comment drafts (each save requires browser confirmation; no posting or notices)',
                   'supplies:request:draft': 'Prepare new personal supply request drafts (each save requires browser confirmation; no submission or stock allocation)',
                   'notifications:mark_read': 'Prepare marking your own shared-work notices read (each action requires browser confirmation)',

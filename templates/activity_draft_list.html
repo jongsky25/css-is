@@ -1,0 +1,11 @@
+{% extends "dash_layout.html" %}
+{% block title %}My private activity drafts — Office Connect{% endblock %}
+{% block content %}
+<div style="max-width:44rem;margin:auto;overflow-wrap:anywhere">
+<h1>My private activity drafts</h1>
+<p>These are your saved preparation copies. Saving creates no live activity or survey. Later manual creation is separate and is not tracked here; a draft can be loaded again.</p>
+<p><a href="/activity-drafts/new">Save a new private draft</a> · <a href="/create">Create a live activity</a></p>
+<ul>{% for draft in page.data %}<li><a href="/activity-drafts/{{ draft.operation_key }}">{{ draft.fields.activity_name }}</a> · {{ draft.fields.event_date }} · {{ draft.section.name }} · saved {{ draft.created_at }}</li>{% else %}<li>No private activity drafts saved.</li>{% endfor %}</ul>
+{% if page.next_before %}<p><a href="/activity-drafts?before={{ page.next_before }}">Earlier drafts</a></p>{% endif %}
+</div>
+{% endblock %}

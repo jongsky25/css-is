@@ -18,10 +18,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "8.93"
+APP_VERSION = "8.94"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "8.94",
+        "date": "October 27, 2026",
+        "summary": "Save a private activity draft before creating live surveys.",
+        "changes": [
+            "Activity creators can save their own title, date, organizing section and venue as a private preparation copy.",
+            "Open a saved draft in the ordinary Create screen for a separate review; saving or loading it creates no surveys, public links or emails.",
+            "A separately permitted ChatGPT pilot can prepare the same private save for browser confirmation and stays off until enabled."
+        ]
+    },
     {
         "version": "8.93",
         "date": "October 27, 2026",

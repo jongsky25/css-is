@@ -20,7 +20,7 @@ import storage as st
 
 READ_SCOPES = frozenset({'surveys:person_activities:read', 'surveys:resource_person_trends:read', 'surveys:csm_trends:read', 'surveys:unit_trends:read', 'surveys:units:read', 'activities:read', 'calendar:read', 'documents:read',
                     'supplies:read', 'travel:read', 'work:read', 'notifications:read', 'surveys:csm:read', 'surveys:activities:read', 'surveys:resource_persons:read', 'surveys:activity_details:read'})
-WRITE_SCOPES = frozenset({'notifications:mark_read', 'supplies:request:draft', 'work:comment:draft', 'reports:view:save', 'calendar:entry:create', 'travel:filing:draft', 'work:task:acknowledge', 'work:task:submit', 'supplies:request:submit', 'travel:review:request', 'travel:filing:submit', 'rooms:request', 'meals:request', 'work_arrangements:request', 'activities:dates:update'})
+WRITE_SCOPES = frozenset({'notifications:mark_read', 'supplies:request:draft', 'work:comment:draft', 'reports:view:save', 'calendar:entry:create', 'travel:filing:draft', 'work:task:acknowledge', 'work:task:submit', 'supplies:request:submit', 'travel:review:request', 'travel:filing:submit', 'rooms:request', 'meals:request', 'work_arrangements:request', 'activities:dates:update', 'activities:draft:save'})
 SCOPES = READ_SCOPES | WRITE_SCOPES
 ACCESS_SECONDS = 3600
 REFRESH_SECONDS = 30 * 86400
@@ -86,6 +86,8 @@ def install(conn):
     mcp_work_arrangements.install(conn)
     import mcp_activity_dates
     mcp_activity_dates.install(conn)
+    import mcp_activity_drafts
+    mcp_activity_drafts.install(conn)
 
 
 def _digest(value):

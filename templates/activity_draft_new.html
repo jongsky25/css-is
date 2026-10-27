@@ -1,0 +1,20 @@
+{% extends "dash_layout.html" %}
+{% block title %}Save private activity draft — Office Connect{% endblock %}
+{% block content %}
+<div style="max-width:44rem;margin:auto;overflow-wrap:anywhere">
+<h1>Save a private activity draft</h1>
+<p>This saves a preparation copy visible only to you while you retain Create activity access. It creates no live activity, survey, public registration/link, calendar item, room request, invitation or email.</p>
+<p>First delivery: one bureau-organized, single-day, face-to-face activity with an organizing section and no speakers. Later live creation uses the ordinary Create form and a separate submission.</p>
+{% if error %}<p role="alert">{{ error }}</p>{% endif %}
+<form method="post" action="/activity-drafts">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<input type="hidden" name="operation_key" value="{{ draft_key }}">
+<p><label for="draft-title">Activity title</label><input id="draft-title" name="activity_name" maxlength="200" required value="{{ f.activity_name or '' }}" style="width:100%;box-sizing:border-box"></p>
+<p><label for="draft-date">Activity date · Asia/Manila</label><input id="draft-date" name="event_date" type="date" min="{{ date_min }}" max="{{ date_max }}" required value="{{ f.event_date or '' }}"></p>
+<p><label for="draft-section">Organizing section</label><select id="draft-section" name="section_id" required style="width:100%"><option value="">Choose a section</option>{% for section in sections %}<option value="{{ section.id }}" {{ 'selected' if f.section_id|default('')|string == section.id|string else '' }}>{{ section.name }}</option>{% endfor %}</select></p>
+<p><label for="draft-venue">Venue (optional)</label><input id="draft-venue" name="venue" maxlength="240" value="{{ f.venue or '' }}" style="width:100%;box-sizing:border-box"></p>
+<button type="submit">Save my private draft</button>
+</form>
+<p><a href="/activity-drafts/new">Start a new private draft</a> · <a href="/activity-drafts">My private drafts</a> · <a href="/create">Open the ordinary Create activity screen</a></p>
+</div>
+{% endblock %}

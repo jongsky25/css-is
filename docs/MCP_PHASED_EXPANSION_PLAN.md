@@ -1,6 +1,6 @@
 # Office Connect MCP expansion plan
 
-Status: **Incremental implementation**, updated October 27, 2026. Baseline: the read-only MCP expansion in v8.35 (PR #444). M1 reads and default-off M2.1–M2.6 and M3.1–M3.9 pilots are implemented as recorded below. Existing OAuth grants are not widened. Hosted write acceptance remains separate from implementation.
+Status: **Incremental implementation**, updated October 27, 2026. Baseline: the read-only MCP expansion in v8.35 (PR #444). M1 reads and default-off M2.1–M2.7 and M3.1–M3.9 pilots are implemented as recorded below. Existing OAuth grants are not widened. Hosted write acceptance remains separate from implementation.
 
 ## Goal and boundary
 
@@ -487,3 +487,26 @@ recovery. No new activity, invitation, email, response edit, linked-work update,
 approval or cancellation is added. See [M3.9 setup and acceptance](MCP_ACTIVITY_DATE_PILOT.md).
 Hosted acceptance remains pending and no flag is enabled. Remaining M3 activity
 creation/invitation workflows and M4 decisions remain separate increments.
+
+M3.9 merged in [PR #505](https://github.com/jongsky25/css-is/pull/505), commit
+`f06424dbfa71668de598f9d0dac5129783348497`.
+
+### M2.7 implementation — v8.94 (activity draft foundation)
+
+The earlier Create screen creates live activities; this increment supplies a
+real separate private preparation record before any future draft-submission or
+invitation pilot. The ordinary owner-only form and separately consented,
+default-off `activities:draft:save` MCP path share one strict transactional save
+service for title/date/current organizing section/venue, fixed to a single-day
+bureau face-to-face activity without speakers.
+
+Explicit browser review binds requester/section/date validity; private source,
+save-key tombstone, audits and receipt commit together. Owner-only collection and
+stable source links can load the ordinary Create form for a separate review,
+without submitting or consuming the draft. Later manual creation is independent
+and not tracked; no event, survey, public link, invitation, email, calendar/room/
+travel record, approval or deletion is added by saving/loading. Existing normal
+Create capability is required; other managers/admins cannot inspect someone's
+draft. See [M2.7 setup and acceptance](MCP_ACTIVITY_DRAFT_PILOT.md). Hosted MCP
+acceptance remains pending and no flag is enabled. Live draft submission,
+invitation and M4 decisions remain separate increments.

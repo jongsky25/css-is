@@ -325,3 +325,6 @@ steps are in [the work-arrangement runbook](MCP_WORK_ARRANGEMENT_PILOT.md).
 
 The default-off M3.9 activity date-update contract and hosted acceptance steps
 are in [the activity date runbook](MCP_ACTIVITY_DATE_PILOT.md).
+
+The default-off M2.7 private activity draft foundation and hosted acceptance
+steps are in [the activity draft runbook](MCP_ACTIVITY_DRAFT_PILOT.md).
