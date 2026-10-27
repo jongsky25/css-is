@@ -22,6 +22,7 @@ import mcp_auth
 import mcp_actions
 import mcp_supply_drafts
 import mcp_comment_drafts
+import mcp_travel_reviews
 import mcp_supply_submissions
 import mcp_task_submissions
 import mcp_task_acknowledgements
@@ -487,6 +488,41 @@ def build_server(get_conn, origin):
         """
         return await action(lambda conn, token: mcp_supply_submissions.recover(
             conn, token, provider.resource, origin, operation_id), mcp_supply_submissions.SCOPE)
+
+    @server.tool(title='Prepare requesting review of my travel papers', annotations=ToolAnnotations(
+        readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=False))
+    async def prepare_travel_review_request(filing_id: StrictInt, reviewer_id: StrictInt,
+            expected_updated_at: StrictStr, operation_id: StrictStr) -> dict:
+        """Prepare review of an own open filing with a complete document checklist.
+
+        Requires separate travel:review:request consent and current source update
+        stamp. Choose an eligible Administrative Section reviewer other than you.
+        Show confirmation_url for signed-in review of filing, papers, reviewer and
+        email recipient. Confirmation resolves prior sent notes, increments the
+        review round, assigns the reviewer and queues one notification atomically.
+        No file generation, ready/submitted transition, approval or payment.
+        Email is asynchronous: queued is not sent. Uncertain transport attempts
+        never retry automatically. Reuse one random 16–80 character operation_id;
+        recover the original before making a replacement after timeout/unavailability.
+        """
+        return await action(lambda conn, token: mcp_travel_reviews.prepare(
+            conn, token, provider.resource, origin, operation_id,
+            {'filing_id': filing_id, 'reviewer_id': reviewer_id, 'expected_updated_at': expected_updated_at}),
+            mcp_travel_reviews.SCOPE)
+
+    @server.tool(title='Check my travel review request receipt', annotations=READ_ONLY)
+    async def get_travel_review_request_operation(operation_id: StrictStr) -> dict:
+        """Recover the original review request and current notification status.
+
+        Same active connection, travel:review:request consent and current ownership
+        required. Returns original requested state/round, selected reviewer ID and
+        source, with current mail state; never document URLs, notes or financial
+        fields. Completed means review requested, not approved or email delivered.
+        Later decisions are separate. Timeouts/unavailable results do not prove
+        failure; recovery never sends another email or repeats the review round.
+        """
+        return await action(lambda conn, token: mcp_travel_reviews.recover(
+            conn, token, provider.resource, origin, operation_id), mcp_travel_reviews.SCOPE)
 
     def supply_queue(conn, user, queue, state, query, page, limit):
         if queue not in ('requests', 'approvals', 'warnings'):

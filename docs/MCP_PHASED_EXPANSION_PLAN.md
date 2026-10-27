@@ -1,6 +1,6 @@
 # Office Connect MCP expansion plan
 
-Status: **Incremental implementation**, updated October 27, 2026. Baseline: the read-only MCP expansion in v8.35 (PR #444). M1 reads and default-off M2.1 through M2.6 and M3.1 acknowledgement, M3.2 task-submission and M3.3 supply-submission pilots are implemented as recorded below. Existing OAuth grants are not widened. Hosted write acceptance remains separate from implementation.
+Status: **Incremental implementation**, updated October 27, 2026. Baseline: the read-only MCP expansion in v8.35 (PR #444). M1 reads and default-off M2.1 through M2.6 and M3.1 acknowledgement, M3.2 task-submission and M3.3 supply-submission and M3.4 travel-review-request pilots are implemented as recorded below. Existing OAuth grants are not widened. Hosted write acceptance remains separate from implementation.
 
 ## Goal and boundary
 
@@ -358,3 +358,26 @@ purchase, payment, withdrawal or external relay is added.
 See [M3.3 setup and acceptance](MCP_SUPPLY_SUBMISSION_PILOT.md). Hosted write
 acceptance remains pending and no flag is activated. Other M3 actions and all M4
 decisions remain separate increments.
+
+M3.3 merged in [PR #499](https://github.com/jongsky25/css-is/pull/499), commit
+`1b6fe7fa7f759ed37486e3dbfa312776699915dc`.
+
+### M3.4 implementation — v8.88
+
+Separate default-off `travel:review:request` consent prepares review of an own
+open filing with a complete checklist. Signed-in browser confirmation binds the
+full paper/note snapshot, source update stamp, current Administrative Section
+reviewer and email recipient. The normal review service joins the writer
+transaction to atomically commit reviewer assignment, next round, prior-note
+resolution, audits, receipt and a unique queued notice.
+
+A bounded scheduler worker commits a single transport-attempt claim before I/O,
+rechecks current authority/recipient/mail settings and never automatically retries
+uncertain or crashed attempts. Queued/attempting/sent/uncertain/skipped/unconfigured/
+cancelled states are distinct from the review-request result. Preview and mail
+copies clear with bounded retention; later reviewer decisions remain separate.
+
+See [M3.4 setup, delivery semantics and acceptance](MCP_TRAVEL_REVIEW_PILOT.md).
+Hosted write acceptance remains pending; no switch is enabled. Paper approval,
+ready/submitted status, generation, payment and other M3/M4 actions remain
+outside this increment.

@@ -147,7 +147,7 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
         assert metadata.json()['resource'] == 'https://office.example/mcp'
         scopes = {'surveys:person_activities:read', 'surveys:resource_person_trends:read', 'surveys:csm_trends:read', 'surveys:unit_trends:read', 'surveys:units:read', 'activities:read', 'calendar:read', 'documents:read',
                   'supplies:read', 'travel:read', 'work:read', 'notifications:read', 'surveys:csm:read', 'surveys:activities:read', 'surveys:resource_persons:read', 'surveys:activity_details:read'}
-        assert set(metadata.json()['scopes_supported']) == scopes | {'notifications:mark_read', 'supplies:request:draft', 'work:comment:draft', 'reports:view:save', 'calendar:entry:create', 'travel:filing:draft', 'work:task:acknowledge', 'work:task:submit', 'supplies:request:submit'}
+        assert set(metadata.json()['scopes_supported']) == scopes | {'notifications:mark_read', 'supplies:request:draft', 'work:comment:draft', 'reports:view:save', 'calendar:entry:create', 'travel:filing:draft', 'work:task:acknowledge', 'work:task:submit', 'supplies:request:submit', 'travel:review:request'}
         denied = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 1, 'method': 'initialize',
                                           'params': {'protocolVersion': '2025-06-18',
                                                      'capabilities': {}, 'clientInfo': {'name': 'probe', 'version': '1'}}},
@@ -165,7 +165,7 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
             'grant_types': ['authorization_code', 'refresh_token'],
             'response_types': ['code']})
         assert registered.status_code == 201, registered.text
-        assert set(registered.json()['scope'].split()) == scopes | {'notifications:mark_read', 'supplies:request:draft', 'work:comment:draft', 'reports:view:save', 'calendar:entry:create', 'travel:filing:draft', 'work:task:acknowledge', 'work:task:submit', 'supplies:request:submit'}
+        assert set(registered.json()['scope'].split()) == scopes | {'notifications:mark_read', 'supplies:request:draft', 'work:comment:draft', 'reports:view:save', 'calendar:entry:create', 'travel:filing:draft', 'work:task:acknowledge', 'work:task:submit', 'supplies:request:submit', 'travel:review:request'}
         client_id = registered.json()['client_id']
         auth_url = client.get('/authorize', params={
             'response_type': 'code', 'client_id': client_id, 'redirect_uri': callback,
@@ -228,7 +228,7 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
         assert listed.status_code == 200, listed.text
         names = {tool['name'] for tool in listed.json()['result']['tools']}
         assert {'my_work', 'find_documents', 'get_document'} <= names
-        assert names == {'prepare_supply_request_submission', 'get_supply_submission_operation', 'prepare_task_submission', 'get_task_submission_operation', 'prepare_task_acknowledgement', 'get_task_acknowledgement_operation', 'prepare_travel_reimbursement_draft', 'get_travel_draft_operation', 'prepare_personal_calendar_entry', 'get_personal_calendar_operation', 'prepare_saved_report_view', 'get_saved_report_view_operation', 'prepare_task_comment_draft', 'get_task_comment_draft_operation', 'prepare_supply_request_draft', 'get_supply_draft_operation', 'mark_my_notification_read', 'get_mcp_operation', 'get_resource_person_activity_survey', 'find_survey_resource_persons', 'compare_resource_person_surveys', 'compare_csm_months', 'compare_unit_activity_surveys', 'find_survey_units', 'get_unit_activity_survey_summary', 'my_work', 'find_documents', 'get_document',
+        assert names == {'prepare_travel_review_request', 'get_travel_review_request_operation', 'prepare_supply_request_submission', 'get_supply_submission_operation', 'prepare_task_submission', 'get_task_submission_operation', 'prepare_task_acknowledgement', 'get_task_acknowledgement_operation', 'prepare_travel_reimbursement_draft', 'get_travel_draft_operation', 'prepare_personal_calendar_entry', 'get_personal_calendar_operation', 'prepare_saved_report_view', 'get_saved_report_view_operation', 'prepare_task_comment_draft', 'get_task_comment_draft_operation', 'prepare_supply_request_draft', 'get_supply_draft_operation', 'mark_my_notification_read', 'get_mcp_operation', 'get_resource_person_activity_survey', 'find_survey_resource_persons', 'compare_resource_person_surveys', 'compare_csm_months', 'compare_unit_activity_surveys', 'find_survey_units', 'get_unit_activity_survey_summary', 'my_work', 'find_documents', 'get_document',
                          'list_work_items', 'get_work_item', 'list_work_tasks', 'list_calendar_events',
                          'list_supply_queue', 'list_my_travel_filings', 'list_activity_progress',
                          'my_office_overview', 'list_my_notifications', 'get_room_availability', 'get_csm_summary', 'get_activity_survey_summary', 'get_resource_person_survey_summary', 'find_survey_activities', 'get_activity_survey_detail'}
@@ -567,18 +567,19 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
         assert stale.status_code == 401
         # Reproduce a client requesting only work, despite registering all reads.
         # Optional consent must be explicit, and token/refresh must reflect it.
-        for choose_calendar, choose_write, choose_supply, choose_comment, choose_view, choose_personal, choose_travel, choose_ack, choose_submit, choose_supply_submit in (
-                (False, False, False, False, False, False, False, False, False, False),
-                (True, False, False, False, False, False, False, False, False, False),
-                (False, True, False, False, False, False, False, False, False, False),
-                (False, False, True, False, False, False, False, False, False, False),
-                (False, False, False, True, False, False, False, False, False, False),
-                (False, False, False, False, True, False, False, False, False, False),
-                (False, False, False, False, False, True, False, False, False, False),
-                (False, False, False, False, False, False, True, False, False, False),
-                (False, False, False, False, False, False, False, True, False, False),
-                (False, False, False, False, False, False, False, False, True, False),
-                (False, False, False, False, False, False, False, False, False, True)):
+        for choose_calendar, choose_write, choose_supply, choose_comment, choose_view, choose_personal, choose_travel, choose_ack, choose_submit, choose_supply_submit, choose_review in (
+                (False, False, False, False, False, False, False, False, False, False, False),
+                (True, False, False, False, False, False, False, False, False, False, False),
+                (False, True, False, False, False, False, False, False, False, False, False),
+                (False, False, True, False, False, False, False, False, False, False, False),
+                (False, False, False, True, False, False, False, False, False, False, False),
+                (False, False, False, False, True, False, False, False, False, False, False),
+                (False, False, False, False, False, True, False, False, False, False, False),
+                (False, False, False, False, False, False, True, False, False, False, False),
+                (False, False, False, False, False, False, False, True, False, False, False),
+                (False, False, False, False, False, False, False, False, True, False, False),
+                (False, False, False, False, False, False, False, False, False, True, False),
+                (False, False, False, False, False, False, False, False, False, False, True)):
             # Each case tests a separate authorization choice, not rate limits.
             import ratelimit
             ratelimit.reset()
@@ -614,6 +615,8 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
                 values['scope_work:task:submit'] = '1'
             if choose_supply_submit:
                 values['scope_supplies:request:submit'] = '1'
+            if choose_review:
+                values['scope_travel:review:request'] = '1'
             consent = browser.post('/mcp-consent', data=values,
                 headers={'Origin': 'https://office.example'}, follow_redirects=False)
             assert consent.status_code == 303, consent.text
@@ -641,6 +644,8 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
                 expected.add('work:task:submit')
             if choose_supply_submit:
                 expected.add('supplies:request:submit')
+            if choose_review:
+                expected.add('travel:review:request')
             assert set(token.json()['scope'].split()) == expected
             narrow_headers = dict(headers, Authorization='Bearer ' + token.json()['access_token'])
             calendar_call = client.post('/mcp', json={'jsonrpc': '2.0', 'id': 100, 'method': 'tools/call',
@@ -876,6 +881,33 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
                 assert conn.execute('SELECT approval_status,control_number FROM supply_request WHERE id=?', (supply_target[0],)).fetchone() == ('draft', None)
                 assert conn.execute('SELECT * FROM supply_sequence').fetchall() == control_before
                 conn.close()
+            if choose_review:
+                os.environ['CSS_MCP_TRAVEL_REVIEW_REQUESTS_ENABLED'] = '1'
+                conn = st.connect(os.environ['CSS_DB'])
+                import travel
+                reviewer_uid = st.create_admin_user(conn, 'reviewer@example.invalid', hashed, salt, 'viewer', active=True)
+                st.mark_onboarded(conn, reviewer_uid)
+                admin_unit = st.add_org_unit(conn, 'Administrative Section', 'section', 'BLHSD/ADMIN')
+                reviewer_rp = st.add_rp(conn, 'Synthetic reviewer', True, admin_unit)
+                conn.execute('UPDATE admin_user SET rp_id=? WHERE id=?', (reviewer_rp, reviewer_uid)); conn.commit()
+                review_filing = travel.create_filing(conn, st.get_admin_user_by_id(conn, owner), kind='reimbursement',
+                    source={'source_kind':'blank','title':'Synthetic papers to review','start':'2026-10-14','end':'2026-10-16','venue':'Palo'},
+                    answers={}, role='participant', dpo_no='DPO-SYNTHETIC', today='2026-10-27')
+                for review_item in travel.view_items(conn, review_filing):
+                    conn.execute("UPDATE travel_item SET drive_url=?,doc_url=?,state='present' WHERE filing_id=? AND item_code=?",
+                        ('https://docs.google.com/document/d/private/edit', 'https://docs.google.com/document/d/private/edit', review_filing['id'], review_item['code']))
+                conn.commit(); conn.close()
+                review_args = {'filing_id':review_filing['id'], 'reviewer_id':reviewer_uid,
+                    'expected_updated_at':review_filing['updated_at'], 'operation_id':'remote-travel-review-001'}
+                prepared = client.post('/mcp', json={'jsonrpc':'2.0','id':119,'method':'tools/call',
+                    'params':{'name':'prepare_travel_review_request','arguments':review_args}}, headers=narrow_headers)
+                assert prepared.status_code == 200 and not prepared.json()['result'].get('isError'), prepared.text
+                review_preview = json.loads(prepared.json()['result']['content'][0]['text'])
+                assert review_preview['status'] == 'awaiting_confirmation' and 'Synthetic papers to review' not in prepared.text
+                confirmation = browser.get(review_preview['confirmation_url'])
+                assert confirmation.status_code == 200 and 'reviewer@example.invalid' in confirmation.text, confirmation.text
+                review_values = {name:re.search(r'name="'+name+r'" value="([^\"]+)"',confirmation.text).group(1) for name in ('csrf','preview_digest')}
+                review_values['confirm']='yes'
             rotated = client.post('/token', data={'grant_type': 'refresh_token', 'client_id': client_id,
                 'refresh_token': token.json()['refresh_token'], 'resource': 'https://office.example/mcp'})
             assert rotated.status_code == 200
@@ -1072,6 +1104,24 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
                 conn.close()
                 os.environ.pop('CSS_MCP_SUPPLY_SUBMISSIONS_ENABLED', None)
 
+            if choose_review:
+                confirmed=browser.post(review_preview['confirmation_url'],data=review_values,headers={'Origin':'https://office.example'})
+                assert confirmed.status_code==200 and 'Travel review requested' in confirmed.text,confirmed.text
+                recovered=client.post('/mcp',json={'jsonrpc':'2.0','id':120,'method':'tools/call',
+                    'params':{'name':'get_travel_review_request_operation','arguments':{'operation_id':review_args['operation_id']}}},
+                    headers=dict(headers,Authorization='Bearer '+rotated.json()['access_token']))
+                assert recovered.status_code==200 and not recovered.json()['result'].get('isError'),recovered.text
+                receipt=json.loads(recovered.json()['result']['content'][0]['text'])
+                assert receipt['status']=='completed' and receipt['review_state']=='requested' and receipt['review_round']==1
+                assert receipt['next_actor']['user_id']==str(reviewer_uid) and receipt['notification_status']=='queued'
+                assert 'private/edit' not in recovered.text
+                source=browser.get(receipt['web_url']);assert source.status_code==200,source.text
+                conn=st.connect(os.environ['CSS_DB'])
+                assert conn.execute('SELECT COUNT(*) FROM mcp_travel_review_mail').fetchone()[0]==1
+                assert conn.execute('SELECT review_state,reviewer_id,review_round,status FROM travel_filing WHERE id=?',
+                    (review_filing['id'],)).fetchone()==('requested',reviewer_uid,1,'open')
+                conn.close();os.environ.pop('CSS_MCP_TRAVEL_REVIEW_REQUESTS_ENABLED',None)
+
         # Start a new synthetic operator session after the consent matrix.
         import ratelimit
         ratelimit.reset()
@@ -1081,7 +1131,7 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
             'token_endpoint_auth_method': 'none', 'grant_types': ['authorization_code', 'refresh_token'],
             'response_types': ['code']})
         assert restricted.status_code == 201
-        assert set(restricted.json()['scope'].split()) == scopes | {'notifications:mark_read', 'supplies:request:draft', 'work:comment:draft', 'reports:view:save', 'calendar:entry:create', 'travel:filing:draft', 'work:task:acknowledge', 'work:task:submit', 'supplies:request:submit'}
+        assert set(restricted.json()['scope'].split()) == scopes | {'notifications:mark_read', 'supplies:request:draft', 'work:comment:draft', 'reports:view:save', 'calendar:entry:create', 'travel:filing:draft', 'work:task:acknowledge', 'work:task:submit', 'supplies:request:submit', 'travel:review:request'}
         restricted_id = restricted.json()['client_id']
         import json
         conn = st.connect(os.environ['CSS_DB'])

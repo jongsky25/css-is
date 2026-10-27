@@ -79,8 +79,10 @@ def notes_of(conn, filing_id, states=None) -> list:
     return travel._rows(conn, sql + " ORDER BY id", tuple(args))
 
 
-def request_review(conn, filing, reviewer_id, by):
+def request_review(conn, filing, reviewer_id, by, *, commit=True):
     """The traveller asks (or asks again after fixing notes). Needs a complete claim and a reviewer from the section."""
+    if not commit and not conn.in_transaction:
+        raise RuntimeError("A caller-owned travel review transaction is required.")
     filing = _get(conn, filing["id"])
     _need_state(filing, "", "changes", why="This claim cannot be sent for review right now.")
     missing = tr.readiness(filing, travel.view_items(conn, filing), travel.flags_of(conn, filing["id"]))
@@ -99,7 +101,8 @@ def request_review(conn, filing, reviewer_id, by):
     conn.execute("UPDATE travel_filing SET review_state='requested', reviewer_id=?, review_round=review_round+1, "
                  "review_requested_at=?, review_decided_at=NULL, updated_at=? WHERE id=?",
                  (reviewer_id, now, now, filing["id"]))
-    conn.commit()
+    if commit:
+        conn.commit()
     return _get(conn, filing["id"])
 
 
