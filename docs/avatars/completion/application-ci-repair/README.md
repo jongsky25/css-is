@@ -59,3 +59,23 @@ reproducer timed out (exit 124). The test now starts its reader before replacing
 thread creation. All 24 document-job integration cases pass; production scheduler
 and reader code remain unchanged. This is a fixture compatibility correction,
 not a new reader product candidate or memory investigation.
+
+The local remaining-module run from test_documents_ocr.py onward completed with
+exit 0 and no failures. It is supplemental segmented evidence, not a full-suite
+pass: explicit module arguments included two disabled browser/transport cases,
+which remain skipped in that local log. Normal application CI uses its documented
+collection selection, and the full hosted normal/shuffled gate is authoritative.
+
+## Legacy clients outside app_mod
+
+Run 40627293042 shuffled order stopped after 3,237 passes at the supplies-report
+HTTP test: its custom DB/client fixture bypasses app_mod, so a global reader closed
+by a prior lifespan could still leak into that test. The app_mod-only repair was
+insufficient. Reader isolation now lives in one autouse test fixture for the loaded
+application, covering both shared and legacy custom clients. It does not import
+an application that the suite has not loaded. Each test owns and closes its reader
+and any lifespan replacement. Production sources are unchanged.
+
+All 61 shuffled reader/security/supplies-report/document-job/bulk/wardrobe cases
+pass with the shared fixture. The original 3,237-pass/one-failure result remains
+recorded; it is not full-suite acceptance. Both full test orders are retried.
