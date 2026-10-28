@@ -18,12 +18,12 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "9.04"
+APP_VERSION = "9.05"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
-        "version": "9.04",
+        "version": "9.05",
         "date": "October 28, 2026",
         "summary": "Supplies now sends email, so nobody has to keep checking the page.",
         "changes": [
@@ -32,6 +32,15 @@ CHANGELOG = [
             "People are asked to confirm receipt when supplies are released to them, and requesters are told when stock is set aside for an approved request, including after a delivery fills a shortage.",
             "Each Monday, supply custodians get one summary of open stock warnings and approved requests still to hand over or waiting for stock. Nothing is sent when there is nothing to chase.",
             "Administrators can switch each of these emails on or off, and change the summary weekday, on the Email page."
+        ]
+    },
+    {
+        "version": "9.04",
+        "date": "October 28, 2026",
+        "summary": "The notice-of-meeting template can now be created in Google Docs.",
+        "changes": [
+            "Building the document templates no longer fails while saving the letterhead.",
+            "Nothing changes in the app itself; an administrator re-runs the template setup once to create the notice of meeting."
         ]
     },
     {
