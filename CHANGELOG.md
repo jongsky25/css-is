@@ -1,3 +1,7 @@
+## 9.10 — October 28, 2026
+
+- Home page leaderboard card: still the top 5 by default, now with period (month, quarter, all time), group (section, division, bureau) and show-more (top 10, everyone) links, kept in the URL as `lb_period`, `lb_scope` and `lb_top` and anchored to the card; unknown values fall back to the defaults. The viewer's own row is always shown (spot feedback #196).
+
 ## 9.09 — October 28, 2026
 
 - Add `docs/plans/supplies-requester-ux.md`, a phased plan to simplify Supplies for requesters (requester-only navigation, status tracker, one-step send, picture-based catalog). Docs only; no behaviour change.

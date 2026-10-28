@@ -5559,7 +5559,10 @@ def choose(request: Request, msg: str = "", view: str = "team"):
             except Exception:
                 wstats = None
             try:                                   # the companion leaderboard card (spot feedback #196)
-                lb = companion_leaderboard.home_card(conn, request.state.user)
+                qp = request.query_params
+                lb = companion_leaderboard.home_card(
+                    conn, request.state.user, top=companion_leaderboard.clean_top(qp.get("lb_top", "")),
+                    period=qp.get("lb_period", ""), scope=qp.get("lb_scope", ""))
             except Exception:
                 traceback.print_exc()
                 lb = None
