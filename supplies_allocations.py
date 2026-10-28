@@ -14,6 +14,25 @@ def availability(conn, item_id):
     return {'on_hand': on_hand, 'reserved_quantity': reserved, 'available': on_hand-reserved}
 
 
+def requestable(conn, item_id, exclude_request_id=None):
+    """Most a requester may ask for now: on hand, less approved reservations and other people's pending requests."""
+    on_hand = stock._totals(conn, item_id)['on_hand']
+    reserved = conn.execute('SELECT COALESCE(SUM(reserved_quantity),0) FROM supply_reservation WHERE item_id=?', (item_id,)).fetchone()[0]
+    pending = conn.execute('''SELECT COALESCE(SUM(l.requested_quantity),0) FROM supply_request_revision_line l
+      JOIN supply_request_revision v ON v.id=l.revision_id
+      JOIN supply_request q ON q.id=v.request_id AND q.current_revision=v.revision
+      WHERE l.item_id=? AND q.approval_status='submitted' AND q.id<>?''', (item_id, exclude_request_id or 0)).fetchone()[0]
+    return max(0, on_hand - reserved - pending)
+
+
+def badge(requestable_quantity, item):
+    """Out of stock / Limited / Available label shown instead of quantities."""
+    if requestable_quantity <= 0:
+        return 'Out of stock'
+    low = item['critical_level'] or (item['target_level'] or 0) // 5
+    return 'Limited' if requestable_quantity <= low else 'Available'
+
+
 def projected_quantities(lines, on_hand):
     """Pure oldest-first arithmetic shared by the writer and exact previews."""
     if on_hand<0:raise Conflict('Physical stock needs reconciliation before allocation.')
