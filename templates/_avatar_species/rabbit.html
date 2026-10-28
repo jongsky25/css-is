@@ -1,0 +1,32 @@
+{% from "_avatar_wardrobe.html" import wear as _wear %}
+{# Original authored illustrated artwork; placement and motion groups stay separate. #}
+{% from "_avatars_shared.html" import costume_front, eye as _eye, shadow as _shadow, accessory as _accessory, regalia as _regalia %}
+{% macro art(s, m=0, costume="", scope="", preferences=none) %}
+{% set sc = 0.64 + (s-1)*0.072 %}
+{% set ear = [19,24,29,32,35,38][s-1] %}
+{% set hy = 75 if s<3 else 71 %}
+{{ _shadow(28) }}
+<g class="av-v2 av-body" transform="translate(60 98) scale({{ sc }}) translate(-60 -98)" stroke-linejoin="round"><g transform="translate(60 94)">{{ _wear(preferences,'back') }}</g>
+ <g class="av-tail"><circle cx="84" cy="108" r="{{ 6+s/2 }}" fill="#fff6e9" stroke="#ae9f94" stroke-width="1.3"/></g>
+ <path d="M41 119 Q{{ 32 if s>=3 else 39 }} 98 49 88 Q60 82 72 89 Q{{ 88 if s>=3 else 81 }} 99 79 119Z" fill="url(#avg-rabbit)" stroke="#9c8b80" stroke-width="1.5"/>
+ <ellipse cx="60" cy="108" rx="13" ry="16" fill="#fff6e9"/>
+ {% if s>=3 %}<path d="M40 104Q29 113 41 121M80 104Q91 113 79 121" fill="url(#avg-rabbit)" stroke="#9c8b80" stroke-width="1.3"/>{% endif %}
+ <g fill="#fff6e9" stroke="#9c8b80" stroke-width="1.2"><ellipse cx="46" cy="121" rx="11" ry="5"/><ellipse cx="74" cy="121" rx="11" ry="5"/>{% if s>=2 %}<path d="M51 103L50 117Q54 121 57 117L58 104M62 104L63 117Q67 121 70 117L69 103"/>{% endif %}</g>
+ <g class="av-head">
+  <g class="av-ear-l"><path d="M43 {{ hy-13 }}Q{{ 27 if s>=5 else 33 }} {{ hy-ear-30 }} 44 {{ hy-ear-25 }}Q56 {{ hy-ear-29 }} 55 {{ hy-12 }}Z" fill="url(#avg-rabbit)" stroke="#9c8b80" stroke-width="1.5"/><path d="M46 {{ hy-19 }}Q38 {{ hy-ear-16 }} 44 {{ hy-ear-18 }}Q49 {{ hy-ear-20 }} 49 {{ hy-19 }}Z" fill="#e8b3bd"/></g>
+  <g class="av-ear-r"><path d="M65 {{ hy-12 }}Q64 {{ hy-ear-26 }} 76 {{ hy-ear-25 }}Q{{ 92 if s>=4 else 87 }} {{ hy-ear-22 }} 77 {{ hy-13 }}Z" fill="url(#avg-rabbit)" stroke="#9c8b80" stroke-width="1.5"/><path d="M70 {{ hy-19 }}Q70 {{ hy-ear-18 }} 76 {{ hy-ear-18 }}Q82 {{ hy-ear-16 }} 74 {{ hy-19 }}Z" fill="#e8b3bd"/></g>
+  <path d="M38 {{ hy-4 }}Q38 {{ hy-25 }} 60 {{ hy-24 }}Q82 {{ hy-25 }} 82 {{ hy-4 }}Q91 {{ hy+12 }} 76 {{ hy+19 }}Q60 {{ hy+28 }} 44 {{ hy+19 }}Q29 {{ hy+12 }} 38 {{ hy-4 }}Z" fill="url(#avg-rabbit)" stroke="#9c8b80" stroke-width="1.5"/>
+  <path d="M44 {{ hy-14 }}Q49 {{ hy-20 }} 55 {{ hy-18 }}" fill="none" stroke="#fff9ee" stroke-width="3" stroke-linecap="round"/>
+  {{ _eye(48,hy,4.8 if s<3 else 4.2,"#6b5553","#efe5d7") }}{{ _eye(72,hy,4.8 if s<3 else 4.2,"#6b5553","#efe5d7") }}
+  <ellipse cx="49" cy="{{ hy+12 }}" rx="10" ry="7" fill="#fff8ee"/><ellipse cx="71" cy="{{ hy+12 }}" rx="10" ry="7" fill="#fff8ee"/>
+  <path d="M56 {{ hy+8 }}Q60 {{ hy+5 }} 64 {{ hy+8 }}L60 {{ hy+12 }}Z" fill="#cd8998"/><path d="M60 {{ hy+12 }}v3q-4 4-8 0m8 0q4 4 8 0" stroke="#8c7168" stroke-width="1.2" fill="none"/>
+  {% if s>=3 %}<path d="M57 {{ hy+18 }}h6v5h-6Z" fill="#fff" stroke="#c5b4a4" stroke-width=".8"/><path d="M60 {{ hy+18 }}v4" stroke="#c5b4a4" stroke-width=".8"/>{% endif %}
+  {% if s>=4 %}<path d="M40 {{ hy+9 }}l-10-2m10 7-10 2m50-7 10-2m-10 7 10 2" stroke="#a98c7d" stroke-width="1"/>{% endif %}
+  <g class="av-anchor-head" data-anchor="head" transform="translate(60 {{ hy-23 }})">{{ _wear(preferences,'head') }}</g>{{ _accessory(m,60,hy-23,0.85,costume=costume) }}
+ </g>
+ {{ costume_front("rabbit",s,costume,scaled=true) }}{{ _regalia(s,60,99,0.8) }}
+ <g class="av-anchor-neck" data-anchor="neck" transform="translate(60 99)">{{ _wear(preferences,'neck') }}</g>
+ {% if s>=6 %}<path d="M48 96l5 5 7-4 7 4 5-5" fill="#fff6e9"/>{% endif %}
+ <g class="av-food"><path d="M88 30l8 17 6-19Z" fill="#ed9c50"/><path d="M94 30l-3-9m6 8 2-10" stroke="#689568" stroke-width="2"/></g>
+</g>
+{% endmacro %}

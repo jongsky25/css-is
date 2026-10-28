@@ -1,0 +1,15 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+____________________________ test_pagehide_cleanup _____________________________
+tests/test_avatar_pagehide_browser.py:26: in test_pagehide_cleanup
+    assert preserved==before, 'Cached-page animations must survive'
+E   AssertionError: Cached-page animations must survive
+E   assert 0 == 1
+=============================== warnings summary ===============================
+tests/test_avatar_pagehide_browser.py::test_pagehide_cleanup
+  /workspace/css-is/tests/conftest.py:116: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_avatar_pagehide_browser.py::test_pagehide_cleanup - Asserti...

@@ -1,0 +1,29 @@
+{% from "_avatar_wardrobe.html" import wear as _wear %}
+{# Original authored illustrated artwork; placement and motion groups stay separate. #}
+{% from "_avatars_shared.html" import costume_front, eye as _eye, shadow as _shadow, accessory as _accessory, regalia as _regalia %}
+{% macro art(s, m=0, costume="", scope="", preferences=none) %}
+{% set sc = 0.64 + (s-1)*0.072 %}
+{% set wing = [10,14,20,24,28,31][s-1] %}
+{{ _shadow(26) }}
+<g class="av-v2 av-body" transform="translate(60 98) scale({{ sc }}) translate(-60 -98)" stroke-linejoin="round"><g transform="translate(60 94)">{{ _wear(preferences,'back') }}</g>
+ <g class="av-tail"><path d="M47 105Q{{ 39-s*2 }} 111 {{ 34-s }} 119Q47 124 57 111Z" fill="url(#avg-bird3)" stroke="#477d7b" stroke-width="1.3"/>{% if s>=4 %}<path d="M45 111l-9 7m14-4-7 7" stroke="#9bc9be" stroke-width="1.3"/>{% endif %}</g>
+ <path d="M50 114l-2 8m0-1-5 2m5-2 5 2m17-9 2 8m0-1-5 2m5-2 5 2" stroke="#bb813e" stroke-width="2" stroke-linecap="round"/>
+ <path d="M36 96Q33 {{ 68 if s<3 else 61 }} 59 {{ 65 if s<3 else 60 }}Q84 63 85 89Q91 115 65 119Q42 122 36 96Z" fill="url(#avg-bird)" stroke="#477d7b" stroke-width="1.5"/>
+ <path d="M49 86Q62 80 75 92Q84 114 65 116Q44 117 45 100Z" fill="url(#avg-bird2)"/>
+ <g class="av-wing-l"><path d="M43 88Q{{ 38-wing }} {{ 89-wing/2 }} {{ 39-wing }} {{ 81-wing/3 }}Q39 77 50 94Q50 104 43 101Z" fill="url(#avg-bird3)" stroke="#477d7b" stroke-width="1.3"/>{% if s>=3 %}<path d="M40 94L{{ 38-wing }} {{ 84-wing/3 }}M42 90L{{ 43-wing }} {{ 81-wing/3 }}" stroke="#a6d5cd" stroke-width="1.2"/>{% endif %}</g>
+ <g class="av-wing-r"><path d="M78 87Q{{ 83+wing }} {{ 87-wing/2 }} {{ 81+wing }} {{ 79-wing/3 }}Q80 77 72 95Q73 104 80 100Z" fill="url(#avg-bird3)" stroke="#477d7b" stroke-width="1.3"/>{% if s>=3 %}<path d="M80 94L{{ 82+wing }} {{ 82-wing/3 }}M78 89L{{ 77+wing }} {{ 79-wing/3 }}" stroke="#a6d5cd" stroke-width="1.2"/>{% endif %}</g>
+ <g class="av-head">
+  <path d="M39 76Q34 51 58 49Q79 45 82 69Q87 88 68 92Q46 95 39 76Z" fill="url(#avg-bird)" stroke="#477d7b" stroke-width="1.5"/>
+  {% if s>=2 %}<path d="M53 51Q48 {{ 42-s }} 56 {{ 40-s }}L61 50{% if s>=5 %}Q60 36 68 38L66 50{% endif %}" fill="url(#avg-bird3)" stroke="#477d7b" stroke-width="1.2"/>{% endif %}
+  <path d="M44 64Q47 55 56 55" stroke="#cfebe3" stroke-width="3" fill="none" stroke-linecap="round"/>
+  {{ _eye(52,71,5 if s<3 else 4.5,"#446b69","#a5d3c9") }}{{ _eye(70,70,4 if s<3 else 3.6,"#446b69","#a5d3c9") }}
+  <path d="M61 78Q68 72 75 78L67 86Z" fill="url(#avg-beak)" stroke="#b98143" stroke-width="1"/><path d="M62 79l10 0" stroke="#c08b4c" stroke-width=".8"/>
+  <ellipse cx="46" cy="81" rx="4" ry="2.5" fill="#e7b3a1"/>
+  <g class="av-anchor-head" data-anchor="head" transform="translate(60 49)">{{ _wear(preferences,'head') }}</g>{{ _accessory(m,60,49,0.8,costume=costume) }}
+ </g>
+ {{ costume_front("bird",s,costume,scaled=true) }}{{ _regalia(s,60,96,0.7) }}
+ <g class="av-anchor-neck" data-anchor="neck" transform="translate(60 96)">{{ _wear(preferences,'neck') }}</g>
+ {% if s>=6 %}<path d="M52 103q8 7 16 0m-13 6q5 4 10 0" fill="none" stroke="#78b5ae" stroke-width="1.5"/>{% endif %}
+ <g class="av-food" fill="#96744f"><ellipse cx="94" cy="32" rx="3" ry="5"/><ellipse cx="101" cy="37" rx="3" ry="4"/></g>
+</g>
+{% endmacro %}

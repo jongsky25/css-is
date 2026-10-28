@@ -354,12 +354,10 @@
   {% endif %}
 
   {% if view != "calendar" %}
-  <div class="oc-search">
+  <div class="oc-search" data-search-mobile-placeholder="Search or ask a question…">
     {{ search_box("Search people, pages, your calendar — or ask a question…", scope="all", tour="search") }}
     <a class="try-assistant" href="/start">✨ Ask the assistant</a>
   </div>
-  {#-- Phones: the long placeholder is cut off mid-word, so show a short one. --#}
-  <script>(function(){try{if(window.matchMedia("(max-width:640px)").matches){var i=document.querySelector(".oc-search .gsearch-input");if(i)i.placeholder="Search or ask a question…";}}catch(e){}})();</script>
   {% endif %}
 
   {#-- ---------------- your to-do ----------------

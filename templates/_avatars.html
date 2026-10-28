@@ -1,7 +1,7 @@
 {#
   Avatar companions — the frame around the inline-SVG art in _avatars_art.html
   (16 catalogue species × 6 growth stages, storage.AVATAR_CATALOG). Everything
-  is inline SVG + one first-party script, so the set stays PWA/offline-safe.
+  is inline SVG + first-party behavior/audio scripts, so the set stays PWA/offline-safe.
 
   Usage: import avatar + avatar_defs (and avatar_svg for pickers), call
   avatar_defs() ONCE per page for the shared CSS + gradient defs + behavior JS,
@@ -26,13 +26,17 @@
 
 {% macro avatar_defs() %}
 <style>
+  .av-v2 { --av-outline:#815b43; --av-leaf-outline:#41664c; --av-rose-outline:#b46883; }
+  svg[data-avatar-mode="personal"] .av-regalia, svg[data-avatar-mode="none"] .av-regalia { display:none; }
   .avwrap { display:inline-block; text-align:center; position:relative;
-            --av-sway:5s; --av-breathe:3.6s; perspective:700px; }
+            --av-sway:7s; --av-breathe:6.4s; perspective:700px; }
   .av-play-btn { display:block; border:0; padding:0; width:100%; background:transparent;
                  color:inherit; cursor:pointer; border-radius:1rem; }
   .av-care-btn, .av-sound-btn, .av-explore-btn { min-width:44px; min-height:44px; }
   .avwrap svg { display:block; overflow:visible;
                 filter:drop-shadow(0 8px 6px rgba(20,30,50,.16)); }
+  /* Illustrated companions supply drawn shadows: avoid repainting a filtered SVG. */
+  .avwrap svg[data-avatar-art="v2"] { filter:none; }
   /* Whole-body 3D lean toward the cursor (avatars.js "curiosity" loop sets the
      rotateX/rotateY inline; perspective above is what makes them read as depth
      rather than a flat skew). Species.js clears the transition while actively
@@ -46,7 +50,7 @@
   /* the succulent's whole personality is that it does not bother moving */
   .avwrap[data-kind="succulent"] .avstage { animation:none; }
   @keyframes av-sway   { 0%,100%{ transform:rotate(-2deg);} 50%{ transform:rotate(2deg);} }
-  @keyframes av-breathe{ 0%,100%{ transform:scale(1);} 50%{ transform:scale(1.045);} }
+  @keyframes av-breathe{ 0%,35%,100%{ transform:scale(1);} 65%{ transform:scale(1.025);} }
   .avwrap.happy .avstage { animation:av-bounce .6s ease; }
   @keyframes av-bounce { 0%,100%{ transform:translateY(0) scale(1);} 30%{ transform:translateY(-9px) scale(1.06);} 60%{ transform:translateY(0) scale(.97);} }
   .av-spark { opacity:0; }
@@ -59,6 +63,14 @@
   .avwrap[data-interactive]:focus-within .av-bubble { opacity:1; }
   .av-bubble.show { opacity:1; }
 
+  .avwrap[data-kind="dog"] { --av-breathe:5.7s; }
+  .avwrap[data-kind="owl"] { --av-breathe:8.2s; }
+  .avwrap[data-kind="bonsai"] { --av-sway:9.1s; }
+  .avwrap[data-motion-paused="1"] *, .avwrap[data-motion-paused="1"] {
+    animation-play-state:paused !important; transition:none !important;
+  }
+  .av-caring-water .av-leaf > path { animation:av-leaf-settle 1.8s ease .8s; transform-box:fill-box; transform-origin:50% 95%; }
+  @keyframes av-leaf-settle { 0%,100%{transform:rotate(0);} 35%{transform:rotate(3deg);} 70%{transform:rotate(-1.5deg);} }
   /* ---- eyes / part groups (art in _avatars_art.html) -------------------- */
   .av-lid  { transform:scaleY(0); transform-box:fill-box; transform-origin:50% 0; transition:transform .25s; }
   .av-head, .av-tail, .av-ear-l, .av-ear-r, .av-wing-l, .av-wing-r, .av-cap,
@@ -100,7 +112,8 @@
   .av-do-peek .avstage       { animation:av-crouch 1.5s ease; }
   @keyframes av-crouch { 0%,100%{ transform:scale(1,1);} 25%,60%{ transform:scale(1.05,.84);} }
   .av-do-hide .av-head       { animation:av-retract 1.8s ease; }
-  @keyframes av-retract{ 0%,100%{ transform:translateX(0);} 30%,65%{ transform:translateX(-8px) scale(.92);} }
+  .av-turtle-head { --av-retract-x:-26px; --av-retract-y:7px; --av-retract-scale:.55; }
+  @keyframes av-retract{ 0%,100%{ transform:translateX(0);} 30%,65%{ transform:translate(var(--av-retract-x,-8px),var(--av-retract-y,0px)) scale(var(--av-retract-scale,.92));} }
   .av-do-turn .av-head       { animation:av-headturn 2.4s ease-in-out; }
   @keyframes av-headturn { 0%,100%{ transform:rotate(0);} 30%{ transform:rotate(-11deg);} 65%{ transform:rotate(11deg);} }
   .av-do-bubbles .av-bubbles { animation:av-rise 1.6s ease-out; }
@@ -117,7 +130,8 @@
   .av-do-wobble .av-cap      { animation:av-wobble .9s ease; }
   @keyframes av-wobble { 0%,100%{ transform:rotate(0);} 25%{ transform:rotate(-7deg);} 55%{ transform:rotate(5deg);} 80%{ transform:rotate(-2deg);} }
   .av-do-spore .av-spore     { animation:av-rise 1.4s ease-out; }
-  .av-do-plump .avstage      { animation:av-plump 1s ease; }
+  .av-do-plump .avstage,
+  .avwrap[data-kind="succulent"].av-do-plump .avstage { animation:av-plump 1s ease; }
   @keyframes av-plump  { 0%,100%{ transform:scale(1);} 45%{ transform:scale(1.07);} }
   .av-do-bloom .av-bloom     { animation:av-bloomturn 3s ease-in-out; }
   @keyframes av-bloomturn { 0%,100%{ transform:rotate(0);} 35%{ transform:rotate(9deg);} 75%{ transform:rotate(-6deg);} }
@@ -196,6 +210,7 @@
   .avwrap[data-mood="happy"]  { --av-sway:3.6s; --av-breathe:2.7s; }
   .avwrap[data-mood="droopy"] { --av-sway:8s; --av-breathe:6s; }
   .avwrap[data-mood="droopy"] svg { filter:saturate(.55) brightness(.97); }
+  .avwrap[data-mood="droopy"] svg[data-avatar-art="v2"] { filter:none; opacity:.86; }
   .avwrap[data-mood="droopy"] .av-lid { transform:scaleY(.45); }
   .avwrap[data-mood="droopy"] .avstage { transform-origin:50% 92%; }
 
@@ -206,7 +221,7 @@
   .av-explore-layer { position:fixed; inset:0; z-index:14; pointer-events:none; }
   .av-explore-pet   { position:fixed; left:0; top:0; display:inline-block; text-align:center;
                       will-change:transform; pointer-events:auto; cursor:pointer;
-                      --av-sway:5s; --av-breathe:3.6s; }
+                      --av-sway:7s; --av-breathe:6.4s; }
   .avwrap.av-away .av-bubble { opacity:0; }
 
   /* ---- drag (wellness hub play area) ------------------------------------- */
@@ -220,10 +235,18 @@
 
   @media (prefers-reduced-motion: reduce) {
     .avwrap .avstage, .avwrap.happy .avstage, .av-sway-c,
-    .avwrap [class*="av-"], .avwrap[class*="av-do-"] * { animation:none !important; }
+    .avwrap [class*="av-"], .avwrap .av-drops path,
+    .avwrap[class*="av-do-"] * { animation:none !important; }
     .avwrap.happy .av-spark { animation:none; opacity:0; }
     .avwrap[data-drag]:not(.av-dragging) { transition:none; }
   }
+  /* Static preview policy: only a live companion runs reactions. */
+  .avwrap[data-kind]:not([data-interactive]) *,
+  .avwrap[data-kind]:not([data-interactive]) [class],
+  .avcard > span, .avcard svg *, .avcard svg [class] {
+    animation:none !important; transition:none !important;
+  }
+  /* End static preview policy. */
 </style>
 {#-- shared gradient defs, ONCE per page. Zero-size (not display:none — that
      breaks gradient references) with ids prefixed avg- so 16 picker cards
@@ -316,17 +339,30 @@
       <stop offset="0" stop-color="#eaf4fa"/><stop offset="1" stop-color="#c2dced"/></linearGradient>
   </defs>
 </svg>
-<script src="/static/js/avatar-audio.js?v=8.11" defer></script>
-<script src="/static/js/avatars.js?v=8.11" defer></script>
+<script src="/static/js/avatar-audio.js?v=9.05" defer></script>
+<script src="/static/js/avatars.js?v=9.05" defer></script>
 {% endmacro %}
 
 
 {#-- one species at a stage; returns just the <svg> so pickers/heroes can size it --#}
-{% macro avatar_svg(kind, stage, outfit_month=none, outfit=none) %}
+{% macro avatar_svg(kind, stage, outfit_month=none, outfit=none, static_preview=false, preferences=none) %}
 {% set s = [[stage|int, 6]|min, 1]|max %}
+{% set scope = avatar_uid() if kind in ["cat","plant","cactus","bonsai","sunflower","fern","mushroom","succulent"] else "" %}
+{% set preferences = preferences if preferences is not none else (avatar_preferences(kind) if avatar_preferences is defined and outfit is none and outfit_month is none else {'mode':'seasonal','items':[]}) %}
+{% if not preferences %}{% set preferences = {'mode':'seasonal','items':[]} %}{% endif %}
 {% set accessory = avatar_month() if outfit_month is none else outfit_month %}
 {% set costume = outfit if outfit is not none else (avatar_outfit() if outfit_month is none else ('halloween' if accessory == 10 else ('christmas' if accessory == 12 else 'default'))) %}
-<svg viewBox="0 0 120 140" role="img" width="100%" height="100%" aria-hidden="true" focusable="false" data-avatar-kind="{{ kind }}" data-avatar-stage="{{ s }}" data-avatar-month="{{ accessory }}" data-avatar-outfit="{{ costume }}">
+{% if preferences.mode != 'seasonal' %}{% set accessory=0 %}{% set costume='default' %}{% endif %}
+<svg{% if scope or kind in ["dog","rabbit","bird","turtle","fish","dolphin","owl","bat"] %} data-avatar-art="v2"{% endif %} viewBox="0 0 120 140" role="img" width="100%" height="100%" aria-hidden="true" focusable="false" data-avatar-mode="{{ preferences.mode }}" data-avatar-kind="{{ kind }}" data-avatar-stage="{{ s }}" data-avatar-month="{{ accessory }}" data-avatar-outfit="{{ costume }}">
+  {% if scope %}
+  <defs>
+    {% if kind == "cat" %}<linearGradient id="{{ scope }}-fur" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#ffd699"/><stop offset=".55" stop-color="#efb26e"/><stop offset="1" stop-color="#d68a50"/></linearGradient>
+    <linearGradient id="{{ scope }}-cream" x1="0" y1="0" x2=".7" y2="1"><stop stop-color="#fff7e7"/><stop offset="1" stop-color="#edcfaa"/></linearGradient>
+    {% elif kind == "mushroom" %}<linearGradient id="{{ scope }}-cap" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#f6c09e"/><stop offset=".5" stop-color="#e7937f"/><stop offset="1" stop-color="#bc6267"/></linearGradient>
+    {% else %}<linearGradient id="{{ scope }}-leaf" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#b4cf7b"/><stop offset=".5" stop-color="#72a66b"/><stop offset="1" stop-color="#437b62"/></linearGradient>
+    {% endif %}
+  </defs>
+  {% endif %}
   {#-- swimmers glide (the JS moves .avmove), so their home water is drawn
        HERE, behind and OUTSIDE the moving layer, and stays put while the
        creature swims around it (avatars.js/_avatars_art rely on this split). --#}
@@ -336,8 +372,10 @@
     <path d="M34 114 q6 -3 12 0 q6 3 12 0 q6 -3 12 0 q6 3 12 0" stroke="#ffffff55" stroke-width="1.6" fill="none" stroke-linecap="round"/>
   </g>
   {% endif %}
-  <g class="avmove">
-    <g class="avstage">{{ costume_back(kind, s, costume) }}{{ species_art(kind, s, accessory, costume) }}</g>
+  {# Decorative previews never run movement or care reactions. Avoid allocating
+     their movement wrappers and permanently invisible reaction layers. #}
+  {% if not static_preview %}<g class="avmove">
+    <g class="avstage">{{ costume_back(kind, s, costume) }}{{ species_art(kind, s, accessory, costume, scope, preferences) }}</g>
     {% if avatar_family(kind) == "plant" %}
     <g class="av-drops" fill="#5fa8d8">
       <path d="M46 18 c3.2 5 3.2 8.4 0 9.6 c-3.2 -1.2 -3.2 -4.6 0 -9.6 Z"/>
@@ -355,7 +393,9 @@
       <path d="M84 32 h7 l-7 7 h7" stroke-width="2.2"/>
       <path d="M95 22 h5 l-5 5 h5" stroke-width="1.8"/>
     </g>
-  </g>
+  </g>{% else %}
+  {{ costume_back(kind, s, costume) }}{{ species_art(kind, s, accessory, costume, scope, preferences) }}
+  {% endif %}
 </svg>
 {% endmacro %}
 
@@ -365,7 +405,7 @@
      care=true adds the water/feed button; drag=true lets it be moved around
      its .av-play container (wellness hub). --#}
 {% macro avatar(kind, stage, name="", size=170, interactive=false, mood="", care=false, drag=false,
-                person="", care_streak=0, last_care="", drag_key="", chase=false) %}
+                person="", care_streak=0, last_care="", drag_key="", chase=false, preferences=none) %}
 {% set fam = "fam-animal" if avatar_family(kind) == "animal" else "fam-plant" %}
 {% set verb = avatar_care_verb(kind) %}
 <span class="avwrap {{ fam }}" data-kind="{{ kind }}" data-stage="{{ [[stage|int, 6]|min, 1]|max }}"
@@ -378,7 +418,7 @@
       style="width:{{ size }}px;">
   {% if interactive %}<button type="button" class="av-play-btn" aria-label="Play with {{ name or 'your companion' }}">{% endif %}
   <span class="av-tiltstage" style="display:block;width:{{ size }}px;height:{{ (size * 1.16)|round|int }}px;">
-    {{ avatar_svg(kind, stage) }}
+    {{ avatar_svg(kind, stage, preferences=preferences) }}
   </span>
   {% if interactive %}</button>{% endif %}
   {% if name or interactive %}<span class="av-bubble"{% if interactive %} aria-live="polite" aria-atomic="true"{% endif %}>{{ name }}</span>{% endif %}

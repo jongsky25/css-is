@@ -1,0 +1,62 @@
+{
+  "status": "passed",
+  "branch_source": "bb91698",
+  "run": 40635843512,
+  "artifact_id": 12793897001,
+  "archive_sha256": "a5413ab38f9b3ab7d8ae32c8f0e590351d20e974c8ec7161f3b5797cce96b733",
+  "functional_cases": 131,
+  "failures": 0,
+  "skips": 0,
+  "rig_cases": 432,
+  "contact_sheets": 6,
+  "sheet_cards": 1170,
+  "frame_samples": [
+    {
+      "kind": "cat",
+      "seconds": 30.498340643000006,
+      "cpu": 4,
+      "frame_count": 1826,
+      "frame_p95_ms": 16.700000000004366,
+      "actions": 26,
+      "errors": [],
+      "browser": "156.0.8078.47"
+    },
+    {
+      "kind": "fish",
+      "seconds": 30.270074390000048,
+      "cpu": 4,
+      "frame_count": 1815,
+      "frame_p95_ms": 16.700000000000728,
+      "actions": 33,
+      "errors": [],
+      "browser": "156.0.8078.47"
+    },
+    {
+      "kind": "fern",
+      "seconds": 30.600770033999993,
+      "cpu": 4,
+      "frame_count": 1833,
+      "frame_p95_ms": 16.799999999999272,
+      "actions": 31,
+      "errors": [],
+      "browser": "156.0.8078.47"
+    },
+    {
+      "kind": "bat",
+      "seconds": 30.705138024999997,
+      "cpu": 4,
+      "frame_count": 1838,
+      "frame_p95_ms": 16.700000000004366,
+      "actions": 31,
+      "errors": [],
+      "browser": "156.0.8078.47"
+    }
+  ],
+  "limits": [
+    "Four bounded 30-second CPU4 mobile frame samples, not a repeat of the historical memory matrix",
+    "No physical-phone testing",
+    "No GC/native-hook/observer-calibration research"
+  ],
+  "ci_checkout": "0eae87edb718ba76a067bbe0e2f2ef488ca72bb3",
+  "source_hashes_verified": 27
+}

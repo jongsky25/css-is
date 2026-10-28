@@ -1,0 +1,25 @@
+{% from "_avatar_wardrobe.html" import wear as _wear %}
+{# Original illustrated fruit bat; independent wing/ear hooks retained. #}
+{% from "_avatars_shared.html" import costume_front, eye as _eye, shadow as _shadow, accessory as _accessory, regalia as _regalia %}
+{% macro art(s,m=0,costume="", scope="", preferences=none) %}
+{% set sc=0.66+(s-1)*0.065 %}{% set edge=30-s*4 %}{% set hy=74 if s<3 else 68 %}
+{{ _shadow(24) }}<g class="av-v2 av-body" transform="translate(60 97) scale({{ sc }}) translate(-60 -97)" stroke-linejoin="round" stroke-linecap="round"><g transform="translate(60 94)">{{ _wear(preferences,'back') }}</g>
+ <g class="av-wing-l"><path d="M48 83Q{{ edge+6 }} 74 {{ edge }} 53L{{ edge+4 }} 79Q{{ edge+14 }} 75 {{ edge+16 }} 93Q35 88 45 108L51 96Z" fill="url(#avg-batwing)" stroke="#57506e" stroke-width="1.5"/><path d="M47 88L{{ edge }} 53M47 88L{{ edge+4 }} 79M47 88L{{ edge+16 }} 93" fill="none" stroke="#a79bbd" stroke-width="1.2"/></g>
+ <g class="av-wing-r"><path d="M72 83Q{{ 114-edge }} 74 {{ 120-edge }} 53L{{ 116-edge }} 79Q{{ 106-edge }} 75 {{ 104-edge }} 93Q85 88 75 108L69 96Z" fill="url(#avg-batwing)" stroke="#57506e" stroke-width="1.5"/><path d="M73 88L{{ 120-edge }} 53M73 88L{{ 116-edge }} 79M73 88L{{ 104-edge }} 93" fill="none" stroke="#a79bbd" stroke-width="1.2"/></g>
+ <ellipse cx="60" cy="96" rx="15" ry="20" fill="url(#avg-bat)" stroke="#57506e" stroke-width="1.5"/>
+ <ellipse cx="60" cy="101" rx="9" ry="12" fill="url(#avg-bat2)"/>
+ {% if s>=4 %}<path d="M54 94l3 3 3-3 3 3 3-3" fill="none" stroke="#d0bcd2" stroke-width="1.3"/>{% endif %}
+ <path d="M54 114l-3 5m3-5v5m12-5 3 5m-3-5v5" stroke="#57506e" stroke-width="2"/>
+ {{ costume_front('bat',s,costume,scaled=true) }}{{ _regalia(s,60,96,0.7) }}
+ <g class="av-head"><g class="av-ear-l"><path d="M45 {{ hy-7 }}L39 {{ hy-35 }}Q53 {{ hy-34 }} 55 {{ hy-12 }}" fill="url(#avg-bat)" stroke="#57506e" stroke-width="1.5"/><path d="M46 {{ hy-13 }}l-3-15 8 13" fill="#d3afc5"/></g>
+ <g class="av-ear-r"><path d="M75 {{ hy-7 }}L81 {{ hy-35 }}Q67 {{ hy-34 }} 65 {{ hy-12 }}" fill="url(#avg-bat)" stroke="#57506e" stroke-width="1.5"/><path d="M74 {{ hy-13 }}l3-15-8 13" fill="#d3afc5"/></g>
+ <path d="M40 {{ hy }}Q39 {{ hy-20 }} 60 {{ hy-20 }}Q81 {{ hy-20 }} 80 {{ hy }}Q79 {{ hy+17 }} 60 {{ hy+19 }}Q41 {{ hy+17 }} 40 {{ hy }}Z" fill="url(#avg-bat)" stroke="#57506e" stroke-width="1.5"/>
+ <path d="M46 {{ hy+4 }}Q60 {{ hy-3 }} 74 {{ hy+4 }}Q72 {{ hy+17 }} 60 {{ hy+17 }}Q48 {{ hy+17 }} 46 {{ hy+4 }}Z" fill="url(#avg-bat2)"/>
+ {{ _eye(50,hy-1,5 if s<3 else 4.5,'#b89450','#8e86ab') }}{{ _eye(70,hy-1,5 if s<3 else 4.5,'#b89450','#8e86ab') }}
+ <path d="M56 {{ hy+5 }}Q60 {{ hy+2 }} 64 {{ hy+5 }}L60 {{ hy+9 }}Z" fill="#af788d"/><path d="M54 {{ hy+11 }}q6 5 12 0" fill="none" stroke="#57506e" stroke-width="1.2"/>
+ {% if s>=2 %}<path d="M55 {{ hy+12 }}l2 4 1-3m4 0 1 3 2-4" fill="#fff6e7"/>{% endif %}
+ <g class="av-anchor-head" data-anchor="head" transform="translate(60 {{ hy-20 }}) scale(.85)">{{ _wear(preferences,'head') }}</g>{{ _accessory(m,60,hy-20,0.85,costume=costume) }}</g>
+ <g class="av-anchor-neck" data-anchor="neck" transform="translate(60 99) scale(.8)">{{ _wear(preferences,'neck') }}</g>
+ <g class="av-food"><path d="M88 32Q96 26 102 32Q98 40 90 38Z" fill="#f0c46a"/><path d="M89 33q6-4 11 0" fill="none" stroke="#ca9c4e" stroke-width="1.2"/></g>
+</g>
+{% endmacro %}

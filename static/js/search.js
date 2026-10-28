@@ -507,6 +507,12 @@
         var input = form.querySelector(".gsearch-input");
         var results = form.querySelector(".gsearch-results");
         if (!input || !results) return;
+        // Viewport queries may force layout. Run this after parsing, rather
+        // than pausing Home halfway through its content for an inline script.
+        var mobileHint = form.closest("[data-search-mobile-placeholder]");
+        if (mobileHint && window.matchMedia && window.matchMedia("(max-width:640px)").matches) {
+          input.placeholder = mobileHint.dataset.searchMobilePlaceholder;
+        }
         var ctrl = attach({ input: input, results: results, showAllOnEmpty: false,
                            scope: form.dataset.scope || "all" });
         form.classList.add("js");                   // lets CSS reveal the live list

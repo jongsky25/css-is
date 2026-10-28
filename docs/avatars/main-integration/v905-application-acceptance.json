@@ -1,0 +1,72 @@
+{
+  "version": "9.05",
+  "status": "passed",
+  "source": "405bcd28a0092693d421c5f62544d72d3a2afdca",
+  "ci_checkout": "ddc765a0f3b3d3bb14141fa970c6c61f6e61edfb",
+  "run": 40639625929,
+  "verification_method": "Hosted strict JUnit and AI acceptance gates, job conclusions and logs; archive digests provided by GitHub. The execution workspace was unavailable for an additional local archive audit.",
+  "results": {
+    "normal": {
+      "tests": 8028,
+      "failures": 0,
+      "skips": 0,
+      "ai_cases": 447
+    },
+    "shuffled": {
+      "tests": 8028,
+      "failures": 0,
+      "skips": 0,
+      "ai_cases": 447
+    }
+  },
+  "jobs": [
+    {
+      "id": 122654474637,
+      "name": "verification / Python 3.11 (shuffled)",
+      "conclusion": "success"
+    },
+    {
+      "id": 122654474974,
+      "name": "verification / Python 3.11 (normal)",
+      "conclusion": "success"
+    },
+    {
+      "id": 122654474996,
+      "name": "verification / Dependency audit",
+      "conclusion": "success"
+    },
+    {
+      "id": 122654475187,
+      "name": "verification / Release metadata",
+      "conclusion": "success"
+    },
+    {
+      "id": 122665510037,
+      "name": "verification / Required checks",
+      "conclusion": "success"
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 12796421601,
+      "name": "python311-shuffled-40639625929-1",
+      "bytes": 230707,
+      "sha256": "sha256:9de94ce1836146a40f7496c7727b342d727a101079adf2a14e21ce1ac7029ed6",
+      "expires_at": "2026-11-11T06:18:42Z"
+    },
+    {
+      "id": 12796356115,
+      "name": "python311-normal-40639625929-1",
+      "bytes": 160378,
+      "sha256": "sha256:8308ee693bcd1b41ff863b2e054b31cd3f5a930ed79fddaf02abaf36151087e9",
+      "expires_at": "2026-11-11T06:14:20Z"
+    },
+    {
+      "id": 12795305542,
+      "name": "dependency-audit-40639625929-1",
+      "bytes": 24648,
+      "sha256": "sha256:0a9afd4e2dc3d61c6a25caa05caf8961339439af63110abf8d0a36f43cb2fda5",
+      "expires_at": "2026-11-11T05:45:15Z"
+    }
+  ]
+}

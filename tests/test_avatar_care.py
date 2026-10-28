@@ -455,3 +455,116 @@ def test_the_space_around_the_companion_taps_it(app_mod):
     assert 'closest("[data-pet-area]")' in js
     tel = open(os.path.join(root, "static", "js", "telemetry.js")).read()
     assert "[data-pet-area]" in tel
+
+
+def test_slice_svg_ids_are_local_and_behavior_anchors_survive(app_mod):
+    import re
+    import xml.etree.ElementTree as ET
+    module = app_mod.templates.env.get_template('_avatars.html').module
+    seen = set()
+    for kind in ['cat', 'plant', 'cactus', 'bonsai', 'sunflower', 'fern', 'mushroom', 'succulent']:
+        for stage in range(1, 7):
+            for copy in range(2):
+                svg = ET.fromstring(str(module.avatar_svg(kind, stage, 0, 'default')))
+                local = {node.attrib['id'] for node in svg.iter() if 'id' in node.attrib}
+                assert local and not (seen & local)
+                seen.update(local)
+                for node in svg.iter():
+                    for value in node.attrib.values():
+                        for ref in re.findall(r'url\(#(av-[^)]+)\)', value):
+                            assert ref in local
+                classes = {c for node in svg.iter() for c in node.attrib.get('class', '').split()}
+                assert {'avmove', 'avstage', 'av-body'} <= classes
+                assert ({'av-head', 'av-tail', 'av-ear-l', 'av-ear-r', 'av-eye', 'av-lid', 'av-food'}
+                        if kind == 'cat' else {'av-soil', 'av-soilwet'}) <= classes
+                anchors = [node for node in svg.iter() if 'data-anchor' in node.attrib]
+                assert anchors and all(len(node) == 0 for node in anchors)
+
+
+def test_blossom_art_preserves_seedling_budding_and_bloom_labels(app_mod):
+    import xml.etree.ElementTree as ET
+    module = app_mod.templates.env.get_template('_avatars.html').module
+    seedling = ET.fromstring(str(module.avatar_svg('plant', 3, 0, 'default')))
+    budding = ET.fromstring(str(module.avatar_svg('plant', 4, 0, 'default')))
+    blooming = ET.fromstring(str(module.avatar_svg('plant', 5, 0, 'default')))
+    assert not seedling.findall('.//g[@class="av-bloom"]')
+    assert budding.findall('.//g[@data-bloom-state="bud"]')
+    assert blooming.findall('.//g[@class="av-bloom"]')
+    assert not blooming.findall('.//g[@data-bloom-state="bud"]')
+
+
+def test_illustrated_plant_blooms_separate_position_from_motion(app_mod):
+    import xml.etree.ElementTree as ET
+    module = app_mod.templates.env.get_template('_avatars.html').module
+    for kind in ['cactus', 'bonsai', 'sunflower']:
+        for stage in range(1, 7):
+            svg = ET.fromstring(str(module.avatar_svg(kind, stage, 0, 'default')))
+            for bloom in svg.findall('.//g[@class="av-bloom"]'):
+                assert 'transform' not in bloom.attrib, (kind, stage)
+            assert svg.find('.//ellipse[@class="av-soilwet"]') is not None
+
+
+def test_sunflower_seedling_bud_and_open_flower_match_stage_names(app_mod):
+    import xml.etree.ElementTree as ET
+    module = app_mod.templates.env.get_template('_avatars.html').module
+    for stage in [3, 4, 5]:
+        svg = ET.fromstring(str(module.avatar_svg('sunflower', stage, 0, 'default')))
+        blooms = svg.findall('.//g[@class="av-bloom"]')
+        if stage == 3:
+            assert not blooms
+        elif stage == 4:
+            assert blooms and all(b.attrib.get('data-bloom-state') == 'bud' for b in blooms)
+        else:
+            assert blooms and all('data-bloom-state' not in b.attrib for b in blooms)
+
+
+def test_remaining_plant_rigs_keep_motion_separate_from_placement(app_mod):
+    import xml.etree.ElementTree as ET
+    module = app_mod.templates.env.get_template('_avatars.html').module
+    for kind in ['fern', 'mushroom', 'succulent']:
+        for stage in range(1, 7):
+            svg = ET.fromstring(str(module.avatar_svg(kind, stage, 0, 'default')))
+            groups = list(svg.iter('g'))
+            for group in groups:
+                classes = group.attrib.get('class', '').split()
+                if any(c.startswith('av-frond-') or c in ['av-cap', 'av-spore', 'av-bloom', 'av-head'] for c in classes):
+                    assert 'transform' not in group.attrib, (kind, stage, classes)
+            if kind == 'fern':
+                assert sum('av-frond-top' in g.attrib.get('class', '').split() for g in groups) == 1
+                assert sum(f'av-frond-{stage}' in g.attrib.get('class', '').split() for g in groups) == 1
+            if kind == 'mushroom':
+                assert svg.findall('.//g[@class="av-cap"]') and svg.findall('.//g[@class="av-spore"]')
+                if stage >= 2:
+                    assert len(svg.findall('.//g[@class="av-eye"]')) == 2
+            if kind == 'succulent' and stage in [3, 4, 5]:
+                buds = [n for n in svg.iter() if n.attrib.get('data-bloom-state') == 'bud']
+                blooms = svg.findall('.//g[@class="av-bloom"]')
+                assert (not blooms if stage == 3 else bool(buds) if stage == 4 else bool(blooms) and not buds)
+
+
+def test_remaining_plant_seasonal_slots_keep_live_update_order(app_mod):
+    import xml.etree.ElementTree as ET
+    module = app_mod.templates.env.get_template('_avatars.html').module
+    for kind in ['fern', 'mushroom', 'succulent']:
+        for stage in range(1, 7):
+            for month, outfit in [(m, 'default') for m in range(13)] + [(10, 'halloween'), (10, 'halloween_vampire'), (10, 'halloween_pumpkin'), (12, 'christmas')]:
+                svg = ET.fromstring(str(module.avatar_svg(kind, stage, month, outfit)))
+                slots = [g.attrib['class'] for g in svg.iter('g') if g.attrib.get('class') in ['av-acc', 'av-costume-back', 'av-costume-front']]
+                assert slots == ['av-costume-back', 'av-acc', 'av-costume-front'], (kind, stage, month, outfit)
+
+
+def test_single_companion_compiles_only_its_species(app_mod):
+    """Artwork growth in other species must not add to one companion's startup."""
+    from jinja2 import Environment
+    env = Environment(loader=app_mod.templates.env.loader, autoescape=True)
+    env.globals.update(app_mod.templates.env.globals)
+    svg = str(env.get_template('_avatars.html').module.avatar_svg('cat', 1, 0, 'default'))
+    assert 'data-avatar-kind="cat"' in svg
+    species = sorted(t.name for t in env.cache.values() if t.name.startswith('_avatar_species/'))
+    assert species == ['_avatar_species/cat.html']
+    # The original dispatcher's unknown-kind fallback is retained without using
+    # a caller-controlled string as a filesystem path.
+    svg = str(env.get_template('_avatars.html').module.avatar_svg('../../unknown', 1, 0, 'default'))
+    assert 'av-soil' in svg
+    species = sorted(t.name for t in env.cache.values() if t.name.startswith('_avatar_species/'))
+    assert species == ['_avatar_species/cat.html', '_avatar_species/plant.html']

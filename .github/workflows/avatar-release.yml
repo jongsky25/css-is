@@ -1,0 +1,62 @@
+name: Avatar release acceptance
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'app.py'
+      - 'storage.py'
+      - 'companion_wardrobe.py'
+      - 'appearance_routes.py'
+      - 'static/js/*avatar*'
+      - 'static/js/appearance.js'
+      - 'templates/_avatar*'
+      - 'templates/_companion_customizer.html'
+      - 'templates/me.html'
+      - 'tests/*avatar*'
+      - 'tests/*companion*'
+      - 'scripts/avatar_release/**'
+      - '.github/workflows/avatar-release.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: avatar-release-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  functional:
+    runs-on: ubuntu-24.04
+    container: python:3.12-trixie@sha256:0d0db5b17f11b1b7d1aafa74ceadaa64ba0944b267ff6fc22008a197acd6b9ad
+    timeout-minutes: 25
+    env:
+      CSS_AVATAR_BASELINE: '1'
+      CSS_AVATAR_MATURE: '1'
+      CSS_AVATAR_BATCH_KINDS: dog,rabbit,bird,turtle,fish,dolphin,owl,bat
+      CSS_TEST_NOW: '2026-07-15T12:00:00'
+      CSS_AVATAR_OUT: /tmp/avatar-release/application
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pinned browser and locked requirements
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends chromium=156.0.8078.47-1~deb13u1 chromium-common=156.0.8078.47-1~deb13u1 git procps
+          python -m venv .venv
+          .venv/bin/python -m pip install --require-hashes --only-binary=:all: -r requirements-test.txt
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - name: Verify current-main companion interactions and frames
+        run: |
+          mkdir -p avatar-release-evidence
+          .venv/bin/python -m pytest --maxfail=1 --tb=short --junitxml=avatar-release-evidence/functional.xml tests/test_companion_wardrobe.py tests/test_companion_customizer_browser.py tests/test_avatar_care.py tests/test_avatar_audio.py tests/test_onboarding_storage.py tests/test_avatar_geometry_browser.py tests/test_avatar_pointer_browser.py tests/test_avatar_motion_preference_browser.py tests/test_avatar_animal_batch_browser.py tests/test_avatar_static_preview_browser.py tests/test_avatar_container_resize_browser.py tests/test_avatar_chase_writes_browser.py tests/test_avatar_pagehide_browser.py tests/test_home_search_boot_browser.py tests/test_avatar_visibility_browser.py tests/test_avatar_frame_budget_browser.py tests/test_appearance_browser.py::test_publish_private_preview_mobile_and_live_outfit_without_form_reload
+          .venv/bin/python scripts/check_release.py junit avatar-release-evidence/functional.xml
+      - name: Verify animal rigs and actual themed contact sheets
+        run: |
+          .venv/bin/python scripts/avatar_release/animal_motion.py --out avatar-release-evidence/rigs
+          .venv/bin/python scripts/avatar_release/completion_visuals.py --out avatar-release-evidence/sheets
+      - name: Preserve every result and failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: avatar-release-acceptance
+          path: |
+            avatar-release-evidence/
+            /tmp/avatar-release/
+          retention-days: 30

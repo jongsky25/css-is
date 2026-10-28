@@ -1,0 +1,30 @@
+{
+  "source": "Original authored inline SVG; existing repository palette and helpers",
+  "files": [
+    "templates/_avatar_species/bat.html",
+    "templates/_avatar_species/bird.html",
+    "templates/_avatar_species/bonsai.html",
+    "templates/_avatar_species/cactus.html",
+    "templates/_avatar_species/cat.html",
+    "templates/_avatar_species/dog.html",
+    "templates/_avatar_species/dolphin.html",
+    "templates/_avatar_species/fern.html",
+    "templates/_avatar_species/fish.html",
+    "templates/_avatar_species/mushroom.html",
+    "templates/_avatar_species/owl.html",
+    "templates/_avatar_species/plant.html",
+    "templates/_avatar_species/rabbit.html",
+    "templates/_avatar_species/succulent.html",
+    "templates/_avatar_species/sunflower.html",
+    "templates/_avatar_species/turtle.html",
+    "templates/_avatar_wardrobe.html"
+  ],
+  "upstream_url": null,
+  "upstream_revision": null,
+  "license": "Existing repository terms; no third-party artwork added",
+  "modifications": "Structural six-stage growth, preserved motion hooks and per-stage equipment anchors; thirteen optional accessories",
+  "added_runtime_dependencies": 0,
+  "external_asset_requests": 0,
+  "audio": "Existing audio and notices unchanged",
+  "source_review": "https://github.com/jongsky25/css-is/pull/526"
+}

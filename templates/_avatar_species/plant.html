@@ -1,0 +1,58 @@
+{% from "_avatar_wardrobe.html" import wear as _wear %}
+{# plant artwork. Keep placement groups separate from animated groups. #}
+{% from "_avatars_shared.html" import costume_front, pot_bow as _pot_bow, pot_regalia as _pot_regalia %}
+
+{% macro art(s, m=0, costume="", scope="", preferences=none) %}
+{% set leaf = 'url(#' ~ scope ~ '-leaf)' if scope else 'url(#avg-leaf)' %}
+<g class="av-v2 av-body" stroke-linejoin="round"><g transform="translate(60 108) scale({{ 0.6+s*0.06 }})">{{ _wear(preferences,'back') }}</g>
+  <ellipse cx="60" cy="133" rx="25" ry="3" fill="#302f3c" opacity=".12"/>
+  <path d="M37 109 Q60 116 83 109 L78 130 Q60 139 42 130Z" fill="url(#avg-pot)" stroke="#885b48" stroke-width="1.4"/>
+  <path d="M43 116 Q47 119 49 130" stroke="#ffdfb3" stroke-width="3" opacity=".5" fill="none"/>
+  <ellipse cx="60" cy="108" rx="26" ry="8" fill="#e8ad87" stroke="#885b48" stroke-width="1.4"/>
+  <ellipse class="av-soil" cx="60" cy="107" rx="21" ry="5" fill="#67483b"/>
+  <ellipse class="av-soilwet" cx="60" cy="107" rx="21" ry="5" fill="#3c302b"/>
+  <path d="M44 106 Q53 102 69 105" fill="none" stroke="#a77f60" stroke-width="1.8" stroke-linecap="round"/>
+  {% if s == 1 %}
+  <path d="M53 106 Q49 96 58 92 Q68 92 68 102 Q63 110 53 106" fill="#eac494" stroke="#8c6948" stroke-width="1.3"/>
+  <path d="M58 94 Q61 99 57 105" stroke="#ae855c" fill="none"/>
+  <path d="M61 96 Q69 87 65 80" stroke="#58894d" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <path d="M65 88 Q53 87 53 78 Q64 76 65 88" fill="{{ leaf }}" stroke="var(--av-leaf-outline,#41664c)" stroke-width="1"/>
+  {% else %}
+  {% set top = [0,0,78,62,51,45,37][s] %}
+  <g class="av-stem">
+    <path d="M60 106 Q55 87 60 {{ top }}" stroke="var(--av-leaf-outline,#41664c)" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <path d="M59 104 Q56 85 60 {{ top }}" stroke="#8cba68" stroke-width="2" fill="none"/>
+    {% for x,y,side in [(59,96,-1),(58,88,1),(59,77,-1),(60,69,1),(60,59,-1)] %}
+    {% if loop.index <= s %}
+    <g class="av-leaf" transform="translate({{ x }} {{ y }}) scale({{ side }} 1)">
+      <path d="M0 0 C-12 3-25-7-23-18 C-10-20 1-12 0 0Z" fill="{{ leaf }}" stroke="var(--av-leaf-outline,#41664c)" stroke-width="1.1"/>
+      <path d="M-20-15Q-11-6 0 0" stroke="#d8e6a1" stroke-width="1.2" fill="none"/>
+    </g>
+    {% endif %}{% endfor %}
+    {% if s >= 4 %}
+    <path d="M60 81 Q79 77 82 61 {% if s >= 6 %} M59 70 Q36 66 35 49{% endif %}" fill="none" stroke="#58894d" stroke-width="3" stroke-linecap="round"/>
+    {% endif %}
+    {% if s == 3 %}
+    <path d="M60 66Q48 59 53 50Q65 49 64 60Z" fill="{{ leaf }}" stroke="var(--av-leaf-outline,#41664c)" stroke-width="1.1"/><path d="M60 65L55 54" stroke="#d8e6a1" fill="none"/>
+    {% elif s == 4 %}
+    {% for x,y,k in [(60,50,1),(82,60,0.7)] %}
+    <g class="av-bloom" data-bloom-state="bud" transform="translate({{ x }} {{ y }}) scale({{ k }})"><path d="M0 8Q-14-2 0-12Q14-2 0 8Z" fill="#e48b9e" stroke="#a95877" stroke-width="1.3"/><path d="M0 6Q-7-1 0-9" fill="none" stroke="#ffd2c8" stroke-width="2"/></g>
+    {% endfor %}
+    {% elif s >= 5 %}
+    {% set flowers = [(60,49,12)] if s == 4 else ([(60,43,14),(82,59,9)] if s == 5 else [(60,35,15),(82,59,11),(35,48,10)]) %}
+    {% for x,y,r in flowers %}
+    <g class="av-bloom" transform="translate({{ x }} {{ y }})">
+      {% for angle in [0,72,144,216,288] %}
+      <path d="M0 1 C-{{ r }} -3-{{ r }} -{{ r+9 }} 0 -{{ r+5 }} C{{ r }} -{{ r+9 }} {{ r }} -3 0 1Z" transform="rotate({{ angle }})" fill="{{ '#f6b5b8' if loop.index is even else '#e88c9f' }}" stroke="var(--av-rose-outline,#b46883)" stroke-width=".8"/>
+      {% endfor %}
+      <circle r="{{ r*0.38 }}" fill="#f5cf75" stroke="#c79649" stroke-width="1"/>
+      <circle cx="-1.5" cy="-1.5" r="1.8" fill="#fff3c4"/>
+    </g>
+    {% endfor %}{% endif %}
+  </g>
+  {% endif %}
+  <g class="av-anchor-pot" data-anchor="pot" transform="translate(60 119)">{{ _wear(preferences,'pot') }}</g>
+  <g transform="translate(60 108)">{{ _wear(preferences,'ornament') }}</g>{{ _pot_bow(m, 40, 113) }}{{ _pot_regalia(s,60,115) }}
+  {{ costume_front("plant", s, costume, scaled=true) }}
+</g>
+{% endmacro %}

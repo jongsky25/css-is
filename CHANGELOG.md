@@ -1,3 +1,10 @@
+## 9.05 — October 28, 2026
+
+- Bring the complete sixteen-species illustrated companion catalog onto current main, preserving six-stage growth, care, saved identities and opt-in sounds.
+- Add thirteen compatible accessories, seasonal/personal/none modes and read-only preview with explicit Save/Cancel/reset at `/me#companion`.
+- Share motion visibility/reduced-motion handling and action priority; update service-worker caching and include the wardrobe module in the release payload.
+- Preserve the newer v9.03 application changes and the existing production database reader. Historical avatar performance evidence remains scoped to its recorded source; archived GC/native diagnostics are not imported or resumed.
+
 ## 9.04 — October 28, 2026
 
 - Apps Script `activity_templates.gs`: `at_dropLeadingBlank_` shrinks the header's blank first line instead of deleting it. Docs accepted the deletion but refused to save the document afterwards, which made `makeActivityTemplates()` fail for any newly built template ("Service Documents failed while accessing document"). Templates already built are unaffected.
