@@ -1,3 +1,7 @@
+## 9.09 — October 28, 2026
+
+- Add `docs/plans/supplies-requester-ux.md`, a phased plan to simplify Supplies for requesters (requester-only navigation, status tracker, one-step send, picture-based catalog). Docs only; no behaviour change.
+
 ## 9.08 — October 28, 2026
 
 - Add the companion leaderboard (spot feedback #196): `companion_leaderboard.py`, the full page `/wellness/leaderboard` (period: month, quarter, all time; compare: section, division, bureau; full list, ranks shared on ties) and a home-page card with the top five plus the viewer's own row. People appear by pet name only. Points use the pet's own formula (break +10, reflection +5, full week +5); all time adds the current streak bonus so it matches the hub. Ties go to the care streak, then badges. Read-only; nothing new is stored.
