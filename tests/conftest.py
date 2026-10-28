@@ -52,6 +52,16 @@ def pytest_ignore_collect(collection_path, config):
 
 
 def pytest_collection_modifyitems(config, items):
+    if config.getoption("--application-suite"):
+        from tests.avatar_opt_in_suites import AVATAR_OPT_IN_CASES
+        excluded = []
+        for item in items[:]:
+            opt_in = AVATAR_OPT_IN_CASES.get(item.nodeid)
+            if opt_in and os.getenv(opt_in[0]) != opt_in[1]:
+                excluded.append(item)
+                items.remove(item)
+        if excluded:
+            config.hook.pytest_deselected(items=excluded)
     seed = config.getoption("--shuffle-seed")
     if seed is not None:
         import hashlib

@@ -47,3 +47,10 @@ AVATAR_OPT_IN_SUITES = {'test_avatar_animal_batch_browser.py': ('CSS_AVATAR_BASE
  'test_companion_customizer_browser.py': ('CSS_AVATAR_BASELINE', '1'),
  'test_home_search_boot_browser.py': ('CSS_AVATAR_BASELINE', '1'),
  'test_membership_lifecycle_transport_browser.py': ('CSS_MEMBERSHIP_TRANSPORT', '1')}
+
+# This mixed module otherwise tests analysis of inert fixture data. Its one
+# executable profiler probe belongs to the same opt-in as the archived CPU run.
+AVATAR_OPT_IN_CASES = {
+ 'tests/test_avatar_cpu_profiles.py::test_python_profiles_thread_started_before_profiler':
+     ('CSS_AVATAR_CPU_DIAGNOSTIC', '1'),
+}
