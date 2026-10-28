@@ -22,7 +22,22 @@ acceptance evidence. Browser interactions, all eight animal care flows, native
 visibility/touch/keyboard, pointer arbitration, seasonal refresh and four bounded
 30-second CPU4 mobile frame checks run on this integration. Dedicated hosted
 acceptance also checks all 432 animal rigs and actual themed contact sheets.
-Full normal/shuffled application CI is required before merge. Results are pending.
+[Hosted avatar acceptance 40635843512](https://github.com/jongsky25/css-is/actions/runs/40635843512)
+passes 131 tests with zero failures/skips, all 432 rig cases, and six actual themed
+sheets (1,170 cards). All four 30-second CPU4 mobile frame samples meet 33 ms;
+reported p95 values are 16.7–16.8 ms. The archive digest, 27 source-file hashes,
+case counts and sample protocol were independently verified in
+[hosted-avatar-audit.json](hosted-avatar-audit.json). The original ZIP is retained.
+This is bounded current-application frame acceptance, not a new full memory matrix.
+[Full application CI 40635843471](https://github.com/jongsky25/css-is/actions/runs/40635843471)
+passes both normal and shuffled orders: **8,028 tests per order, zero failures,
+errors or skips**, plus all 447 offline AI cases per report. Metadata, dependency
+and aggregate Required checks pass. [application/audit.json](application/audit.json)
+records independent archive hashes, all JUnit cases and strict AI checks against
+GitHub's exact temporary checkout 0eae87ed (same tree as branch bb91698).
+Later report-only changes do not change the accepted production or test sources.
+All pre-merge automated acceptance is complete. Current deployment status is
+tracked by the existing [main deployment workflow](https://github.com/jongsky25/css-is/actions/workflows/deploy-hf.yml).
 
 Historical full matrix evidence remains available in
 [PR #526](https://github.com/jongsky25/css-is/pull/526) and its source-specific
@@ -50,4 +65,25 @@ page-hide pauses and retains the same animation objects, persisted page-show
 resumes those objects, and real navigation stops only avatar motion while leaving
 an unrelated animation alone. The corrected local case passes. Production JS is
 unchanged by this test correction; the original failure is retained under
-development/. Hosted acceptance is rerun and remains required.
+development/. Hosted acceptance was rerun and passes all 131 cases, including this corrected check.
+
+## Supplemental local full-suite attempt
+
+The local shuffled application attempt reached 84% before SQLite could not
+create another fixture DB because the separate 8.8 GiB /tmp volume filled with
+retained synthetic pytest fixtures. Its original error log is retained under
+development/. Completed fixture directories were moved intact to the larger
+workspace volume, freeing /tmp; no user data or historical archive was deleted.
+The affected MCP meal-request case passes on replay after freeing space. This partial
+local run is not accepted as a full-suite pass; isolated hosted normal/shuffled
+results remain authoritative.
+
+## Rechecking retained evidence
+
+The original avatar and application ZIPs are retained beside their audit JSONs.
+Verify their recorded SHA-256 values before extracting. JUnit acceptance uses
+scripts/check_release.py junit; strict AI reports must be checked from exact
+checkout 0eae87edb718ba76a067bbe0e2f2ef488ca72bb3 because their provenance binds
+the Git commit as well as source hashes. The GitHub checkout is temporary and
+does not represent an earlier main merge. No report or acceptance gate was
+modified to accept another source.

@@ -1,0 +1,76 @@
+{
+  "run": 40635843471,
+  "branch_source": "bb91698c7c738bc7be505859e5c6a502846e5922",
+  "ci_checkout": "0eae87edb718ba76a067bbe0e2f2ef488ca72bb3",
+  "jobs": [
+    {
+      "id": 122642795342,
+      "name": "verification / Dependency audit",
+      "conclusion": "success"
+    },
+    {
+      "id": 122642795553,
+      "name": "verification / Release metadata",
+      "conclusion": "success"
+    },
+    {
+      "id": 122642795566,
+      "name": "verification / Python 3.11 (normal)",
+      "conclusion": "success"
+    },
+    {
+      "id": 122642795753,
+      "name": "verification / Python 3.11 (shuffled)",
+      "conclusion": "success"
+    },
+    {
+      "id": 122652902776,
+      "name": "verification / Required checks",
+      "conclusion": "success"
+    }
+  ],
+  "status": "passed",
+  "results": {
+    "normal": {
+      "tests": 8028,
+      "failures": 0,
+      "errors": 0,
+      "skips": 0,
+      "ai_cases": 447,
+      "ai_gate": "AI evaluation gate OK: 447 cases, all categories passed; offline fixtures only"
+    },
+    "shuffled": {
+      "tests": 8028,
+      "failures": 0,
+      "errors": 0,
+      "skips": 0,
+      "ai_cases": 447,
+      "ai_gate": "AI evaluation gate OK: 447 cases, all categories passed; offline fixtures only"
+    }
+  },
+  "artifacts": [
+    {
+      "label": "normal",
+      "id": 12794977140,
+      "sha256": "b47a44b0bba91052f377be5056ca38f23f4e4a6f99af7a9b73ce8b9f4cbbbbc8",
+      "bytes": 157782
+    },
+    {
+      "label": "shuffled",
+      "id": 12794967215,
+      "sha256": "5649a48c727466105638142a2b30dd7c493bba1fb12b07a0b5d7392a0aadaae2",
+      "bytes": 231228
+    },
+    {
+      "label": "dependencies",
+      "id": 12793577712,
+      "sha256": "b90c40360fcf1117e686f310e2cee566a273631952a14bf3237674500a111ed2",
+      "bytes": 24646
+    }
+  ],
+  "notes": [
+    "AI evidence checked in the exact GitHub temporary PR checkout; its tree equals branch bb91698.",
+    "Subsequent report-only commits do not change the accepted production or test sources.",
+    "Local /tmp exhaustion was not counted as acceptance; both complete hosted orders passed."
+  ]
+}
