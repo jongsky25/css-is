@@ -15,3 +15,11 @@ all eight animal rigs/care cases, customizer/seasonal behavior, visibility/touch
 and performance checks execute explicitly in the dedicated avatar workflow.
 No failed result is relabelled or dropped; prior Frida collection failures and
 superseded hosted artifacts remain recorded. No performance gate is waived.
+
+The mixed CPU-profile unit module contains one executable Yappi probe as well as
+17 inert analysis tests. Application-suite mode explicitly deselects only
+`test_python_profiles_thread_started_before_profiler` unless the existing
+`CSS_AVATAR_CPU_DIAGNOSTIC=1` opt-in is set. This is reported as a deselection,
+not a skipped or passing test. The 17 offline cases still run and pass without
+profiling; default pytest behavior remains unchanged. Application collection is
+now 7,060 selected tests across 393 modules (one diagnostic case deselected).

@@ -36,3 +36,10 @@ are retained here. Full normal/shuffled integration checks remain required.
 All 49 browser-security, bulk-actions and wardrobe integration cases pass with
 the isolated fixture. Commit b370f86 changes only that fixture; this documentation
 commit launches fresh standard CI without restarting frozen product measurements.
+
+The full-history normal job confirmed the same reader failure (1,556 passed,
+1 failed, 1 skipped). Its skipped case is an executable archived Yappi probe in
+a mixed analysis module. Application-suite selection now deselects that exact
+case unless CSS_AVATAR_CPU_DIAGNOSTIC=1. All 17 inert analysis cases remain selected
+and pass; no profiler was installed or started. Default pytest is unchanged.
+The zero-skip gate still applies to all selected application cases.

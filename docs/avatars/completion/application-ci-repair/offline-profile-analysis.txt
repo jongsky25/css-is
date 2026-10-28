@@ -1,0 +1,7 @@
+.................                                                        [100%]
+=============================== warnings summary ===============================
+tests/test_avatar_cpu_profiles.py::test_native_nested_cpu_is_not_double_counted
+  /workspace/css-is/tests/conftest.py:108: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
