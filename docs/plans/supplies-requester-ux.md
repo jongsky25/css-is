@@ -16,6 +16,9 @@ Approvers, custodians, auditors and admins keep today's screens unchanged.
   replenishment approver, not admin. Defined once in increment 1.1 and reused.
 - Before pushing: `python3 -m pytest tests/test_supplies*.py -q`, then `bash run_tests.sh`.
 - Bump `APP_VERSION` and prepend a plain-language entry, following the header of `version.py`.
+  The CI release gate (`python scripts/check_release.py release --base <main sha>`) also requires
+  the first `CHANGELOG.md` heading and `CACHE_VERSION` in `static/js/sw.js` (`v<version>-a`) to match.
+  Merge the latest `main` first so the bump is above whatever version main is on.
 - Add or extend tests in the matching `tests/test_supplies_*.py`; reuse the fixtures in
   `tests/test_supplies.py` (`supplies_db`, `setup_catalog`, `create`) and `tests/test_supplies_requests.py`
   (`request_db`, `draft`).
