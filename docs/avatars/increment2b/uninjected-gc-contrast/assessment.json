@@ -1,0 +1,203 @@
+{
+  "status": "diagnostic_complete",
+  "run_url": "https://github.com/jongsky25/css-is/actions/runs/40609043507",
+  "artifact_id": 12781893879,
+  "artifact_sha256": "955062f534f69936fd4b0e4daae59d3e400b6ead0d458c186ff4651e1e74b881",
+  "internal_hashes_verified": 39,
+  "harness_commit": "8f7b7d4c7970ef09cfa3c71b2ce6b40b720ffd85",
+  "workflow_commit": "0ab5c339192b709427a7e10e7f2fa4df7527fcbb",
+  "all_four_independent_analyses_identical": true,
+  "frozen_sources_verified": true,
+  "preflight_tests": 32,
+  "sys_ptrace_effective": false,
+  "browser_injection_observed": false,
+  "acceptance": false,
+  "instrument_qualified": false,
+  "application_qualified": false,
+  "high_retention_profile_observed": false,
+  "cohorts": [
+    {
+      "index": 0,
+      "mode": "counter-only",
+      "duration_ms": 3506.747137,
+      "stage_6": {
+        "index": 6,
+        "documents": 1,
+        "nodes": 9007,
+        "jsEventListeners": 1,
+        "heap": 1204344
+      },
+      "stage_11": {
+        "index": 11,
+        "documents": 1,
+        "nodes": 6008,
+        "jsEventListeners": 1,
+        "heap": 1035792
+      },
+      "frida_attempts": [],
+      "command_counts": {
+        "browser:SystemInfo.getProcessInfo": 1,
+        "browser:Tracing.start": 1,
+        "browser:Tracing.end": 1,
+        "browser:IO.read": 2,
+        "browser:IO.close": 1,
+        "page:Runtime.getHeapUsage": 12,
+        "page:Memory.getDOMCounters": 12
+      },
+      "recorded_natural_major_gc_count": null,
+      "major_statistics": null,
+      "counters_with_uncertain_trace_coverage": []
+    },
+    {
+      "index": 1,
+      "mode": "trace-only",
+      "duration_ms": 3614.133998,
+      "stage_6": {
+        "index": 6,
+        "documents": 1,
+        "nodes": 9007,
+        "jsEventListeners": 1,
+        "heap": 1204420
+      },
+      "stage_11": {
+        "index": 11,
+        "documents": 1,
+        "nodes": 6008,
+        "jsEventListeners": 1,
+        "heap": 1035868
+      },
+      "frida_attempts": [],
+      "command_counts": {
+        "browser:SystemInfo.getProcessInfo": 1,
+        "browser:Tracing.start": 2,
+        "browser:Tracing.end": 2,
+        "browser:IO.read": 4,
+        "browser:IO.close": 2,
+        "browser:Tracing.recordClockSyncMarker": 2,
+        "page:Runtime.getHeapUsage": 12,
+        "page:Memory.getDOMCounters": 12
+      },
+      "recorded_natural_major_gc_count": 2,
+      "major_statistics": [
+        {
+          "trace_ts_us": 127574903,
+          "reason": "finalize incremental marking via task",
+          "collector_reason": "GC in old space requested",
+          "stack": false,
+          "mark.js_global_proxies": 3,
+          "end_object_size": 756936,
+          "start_global_consumed_size": 112181952,
+          "end_global_consumed_size": 9749586
+        },
+        {
+          "trace_ts_us": 129000630,
+          "reason": "finalize incremental marking via task",
+          "collector_reason": "GC in old space requested",
+          "stack": false,
+          "mark.js_global_proxies": 3,
+          "end_object_size": 756936,
+          "start_global_consumed_size": 81209624,
+          "end_global_consumed_size": 9736722
+        }
+      ],
+      "counters_with_uncertain_trace_coverage": [
+        {
+          "stage": 11,
+          "component": "dom"
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "mode": "trace-only",
+      "duration_ms": 3551.350467,
+      "stage_6": {
+        "index": 6,
+        "documents": 1,
+        "nodes": 9007,
+        "jsEventListeners": 1,
+        "heap": 1204420
+      },
+      "stage_11": {
+        "index": 11,
+        "documents": 1,
+        "nodes": 6008,
+        "jsEventListeners": 1,
+        "heap": 1035868
+      },
+      "frida_attempts": [],
+      "command_counts": {
+        "browser:SystemInfo.getProcessInfo": 1,
+        "browser:Tracing.start": 2,
+        "browser:Tracing.end": 2,
+        "browser:IO.read": 4,
+        "browser:IO.close": 2,
+        "browser:Tracing.recordClockSyncMarker": 2,
+        "page:Runtime.getHeapUsage": 12,
+        "page:Memory.getDOMCounters": 12
+      },
+      "recorded_natural_major_gc_count": 2,
+      "major_statistics": [
+        {
+          "trace_ts_us": 133378681,
+          "reason": "finalize incremental marking via task",
+          "collector_reason": "GC in old space requested",
+          "stack": false,
+          "mark.js_global_proxies": 3,
+          "end_object_size": 756936,
+          "start_global_consumed_size": 115217960,
+          "end_global_consumed_size": 9775018
+        },
+        {
+          "trace_ts_us": 134826784,
+          "reason": "finalize incremental marking via task",
+          "collector_reason": "GC in old space requested",
+          "stack": false,
+          "mark.js_global_proxies": 3,
+          "end_object_size": 756936,
+          "start_global_consumed_size": 80156712,
+          "end_global_consumed_size": 9002850
+        }
+      ],
+      "counters_with_uncertain_trace_coverage": [
+        {
+          "stage": 11,
+          "component": "dom"
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "mode": "counter-only",
+      "duration_ms": 3562.790168,
+      "stage_6": {
+        "index": 6,
+        "documents": 1,
+        "nodes": 9007,
+        "jsEventListeners": 1,
+        "heap": 1204344
+      },
+      "stage_11": {
+        "index": 11,
+        "documents": 1,
+        "nodes": 6008,
+        "jsEventListeners": 1,
+        "heap": 1035792
+      },
+      "frida_attempts": [],
+      "command_counts": {
+        "browser:SystemInfo.getProcessInfo": 1,
+        "browser:Tracing.start": 1,
+        "browser:Tracing.end": 1,
+        "browser:IO.read": 2,
+        "browser:IO.close": 1,
+        "page:Runtime.getHeapUsage": 12,
+        "page:Memory.getDOMCounters": 12
+      },
+      "recorded_natural_major_gc_count": null,
+      "major_statistics": null,
+      "counters_with_uncertain_trace_coverage": []
+    }
+  ],
+  "limits": "Two slots per factor are descriptive only. Both counter-only captures also have low retention; no causal observer effect or correction is established. Final DOM-counter clock coverage is uncertain in both trace slots. Counter-only GC counts are unobserved, not zero."
+}

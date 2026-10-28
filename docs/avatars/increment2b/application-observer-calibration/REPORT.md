@@ -100,7 +100,19 @@ older unreleased candidate resolves to V8's WeakFixedArray compilation queue,
 not evidence of a strong document-retention path. All four again have low retention;
 no supported correction or qualification follows. Read that report for next work.
 
+## Uninjected comparison follow-up
+
+[Uninjected GC comparison](../uninjected-gc-contrast/REPORT.md) completes all four
+slots without Frida attachment or ptrace. Both counter-only and both trace-only
+slots show low retention; traced slots record two natural majors with three marked
+global proxies. No causal observer effect or correction is established. All 39
+hashes and independent analyses match; 32 local/cloud tests pass. Read that report
+for the remaining evidence gap and next bounded work.
+
 ## Next bounded work
+
+The uninjected comparison above supersedes this historical next-step text.
+Read its latest report before another capture.
 
 The native-buffer follow-up above supersedes this historical next-step text.
 Read its latest report before another capture.

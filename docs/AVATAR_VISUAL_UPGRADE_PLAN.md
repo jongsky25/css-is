@@ -25,6 +25,29 @@ seasonal administration, and accessibility behavior.
 A phase fails if its visuals remain essentially the same except for color changes,
 or if it exceeds a performance gate. Fix or reduce complexity before expanding it.
 
+## Uninjected GC comparison — low retention in both factors
+
+[Latest report](avatars/increment2b/uninjected-gc-contrast/REPORT.md) and
+[run40609043507](https://github.com/jongsky25/css-is/actions/runs/40609043507):
+frozen 8f7b7d4 completes counter/trace/trace/counter without Frida attachment or
+SYS_PTRACE. All four have one document, 9,007 nodes at stage 6 and 6,008 at stage 11.
+Both trace slots record two natural major collections, three marked global proxies
+and 756,936 bytes after each collection. Counter-only GC counts are unobserved.
+Low retention therefore does not require native observation or measurement tracing;
+two slots/factor establish no causal effect, correction or population failure rate.
+
+**32 local/cloud tests pass**; all **39** hashes and independent analyses match.
+The final DOM-counter trace bounds are uncertain in both traced slots and remain
+flagged. Retained setup logs have the same 103 downloaded package versions as the
+failed job, but CPU model differs (old AMD 7763/current Intel 8573C). Earlier AMD
+captures also had low retention; no environment explanation is established.
+
+No supported correction or qualification. Next audit the retained failed sample's
+GC/weak-reference/disposal chronology against pinned source, identify missing root
+evidence and a specific reproduction condition/change before more measurements.
+No unchanged retry, product change, candidate promotion, acceptance or deployment.
+PR #523 remains unmerged; no active measurement. Original 2B gates remain blocked.
+
 ## Native-buffer caller diagnostic — weak queue identified, failure still absent
 
 [Latest report](avatars/increment2b/native-handle-buffer/REPORT.md) and
@@ -579,7 +602,7 @@ browser tests ran.
 
 | Increment | Status | Commit | Visual evidence | Performance evidence / notes |
 |---|---|---|---|---|
-| 0 Baseline | Complete — baseline established; release gates remain unmet | `94269dd` + evidence/ledger revision | [51 sheets](avatars/sheets/index.json), [monthly overview](avatars/sheets/monthly-stage6-overview.png), [hero/moods](avatars/smoke/) | [Report](avatars/BASELINE_REPORT.md), [20 full samples + summary](avatars/application/summary.json), native hidden/touch check; existing frame, picker, timer and remount failures retained. |
+| 0 Baseline | Complete — baseline established; release gates remain unmet | `94269dd` + evidence/ledger revision | [51 sheets](avatars/sheets/index.json), [monthly overview](avatars/sheets/monthly-stage 6-overview.png), [hero/moods](avatars/smoke/) | [Report](avatars/BASELINE_REPORT.md), [20 full samples + summary](avatars/application/summary.json), native hidden/touch check; existing frame, picker, timer and remount failures retained. |
 | 1 Cat + plant slice | Complete — measured relative gates passed | `58cf98f`, `0be7fc3`, `ad4e7ad`, `d464461` + evidence revision | [Bare comparison](avatars/increment1/before-after-bare-light.png), [motion](avatars/increment1/before-after-motion.webm), [51 seasonal sheets](avatars/increment1/sheets/index.json) | [Report](avatars/increment1/REPORT.md), [20-sample comparison](avatars/increment1/comparison.json); 102 tests, native touch/keyboard/filter checks, sampled callback trace passed; baseline lifecycle/picker blockers retained. |
 | 2A Cactus/bonsai/sunflower | Complete — measured relative gates passed | `6064a82`, `1b453e0`, `28fbb7b` + evidence revision | [Six-stage comparison](avatars/increment2a/before-after-bare-light.png), [51 sheets](avatars/increment2a/sheets/index.json), [motion](avatars/increment2a/before-after-motion.webm) | [Report](avatars/increment2a/REPORT.md), [fresh 20 comparison](avatars/increment2a/comparison.json); 105 tests, 324 visual reaction cases, mature care/traces and native checks passed. Pre-fix failures retained; audio-sync feedback fixed. Remaining lifecycle/picker blockers persist. |
 | 2B Fern/mushroom/succulent | Blocked — prior acceptance withdrawn | Product `f700187`; final source `e909de1` | Existing visual/functional passes retained | [Corrected report](avatars/increment2b/REPORT.md): warm desktop offscreen +11.336, reduced motion +11.098, background +18.836 MiB; 10 MiB limit. Prior checker omitted these scenarios. [Exact source validation](avatars/increment2b/svg-validation/REPORT.md): all 40 observer/SVG samples complete, neither intervention qualifies in both orders; same-source repeat also fails +11.895 MiB. [Paired variance](avatars/increment2b/paired-variance/REPORT.md): 20 valid slots, 10 unstable control metric sets; late-navigation current RSS higher in all source pairs, but no qualified effect. No correction promoted. |
@@ -786,7 +809,7 @@ search-result navigation pass three browser checks.
 
 Validation:260 tests,1,734 exact SVG comparisons,486 reaction cases and21
 reduced-motion transitions pass. All51 fresh sheets/4,896cells are pixel-identical
-to original2B. Static picker thumbnails are now resolved; selected offscreen
+to original 2B. Static picker thumbnails are now resolved; selected offscreen
 motion, chase/idle/roam timers and same-document listener retention remain separate
 release blockers.
 

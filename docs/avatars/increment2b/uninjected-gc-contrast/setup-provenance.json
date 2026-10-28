@@ -1,0 +1,20 @@
+{
+  "pr": "https://github.com/jongsky25/css-is/pull/523",
+  "harness_commit": "8f7b7d4c7970ef09cfa3c71b2ce6b40b720ffd85",
+  "workflow_commit": "0ab5c339192b709427a7e10e7f2fa4df7527fcbb",
+  "workflow_sha256": "f8a37424ab2bcb14a01947f285724f3f3da3a54e3211d993afc39c25006c5d96",
+  "preflight_tests": 32,
+  "browser_injection_allowed": false,
+  "sys_ptrace_declared": false,
+  "acceptance": false,
+  "instrument_qualified": false,
+  "application_qualified": false,
+  "merge": false,
+  "deployment": false,
+  "run_url": "https://github.com/jongsky25/css-is/actions/runs/40609043507",
+  "status": "diagnostic_complete",
+  "artifact_id": 12781893879,
+  "internal_hashes_verified": 39,
+  "independent_analyses_identical": true,
+  "high_retention_profile_observed": false
+}

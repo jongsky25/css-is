@@ -81,7 +81,19 @@ preserved. Setup/original preflight logs outside the 42-file result manifest rem
 covered by the full ZIP hash. Runner is standard hosted AMD EPYC 7763, four affinity
 CPUs, no container CPU quota. No physical exclusivity claim or resource changes.
 
+## Uninjected comparison follow-up
+
+[Uninjected GC comparison](../uninjected-gc-contrast/REPORT.md) completes all four
+slots without Frida attachment or ptrace. Both counter-only and both trace-only
+slots show low retention; traced slots record two natural majors with three marked
+global proxies. No causal observer effect or correction is established. All 39
+hashes and independent analyses match; 32 local/cloud tests pass. Read that report
+for the remaining evidence gap and next bounded work.
+
 ## Next bounded work
+
+The uninjected comparison above supersedes this historical next-step text.
+Read its latest report before another capture.
 
 Do not keep expanding handle-birth hooks or repeat this build unchanged. The gap
 is reproduction of the high-retention state with enough GC evidence, including

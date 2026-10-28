@@ -2,7 +2,7 @@
 
 Last updated: **2026-10-28 UTC**. Repository: `jongsky25/css-is`.
 
-## Start here — Sol handoff, current after native handle buffer
+## Start here — Sol handoff, current after uninjected GC comparison
 
 **Objective: unblock 2B only. Do not start or resume 3A or later increments.**
 This section supersedes older next-step instructions below. The chronology is
@@ -11,7 +11,17 @@ retained as evidence, not a queue of experiments to repeat.
 ### Checkout and current state
 
 - Repository: `jongsky25/css-is`; resume `codex/avatar-2b-verification`.
-- Latest completed work: native-buffer handle/caller diagnostic, harness 76baed0 /
+- Latest completed work: uninjected counter/GC-trace comparison, harness 8f7b7d4 /
+  workflow 0ab5c33, [PR #523](https://github.com/jongsky25/css-is/pull/523),
+  [run40609043507](https://github.com/jongsky25/css-is/actions/runs/40609043507).
+  Counter/trace/trace/counter completes without injection/ptrace. All four show low
+  retention, 9,007/6,008 nodes at stages 6/11. Traced slots record two natural majors,
+  three marked proxies and 756,936 bytes after each GC. No causal correction follows.
+  All 39 hashes and independent analyses match; 32 local/cloud tests pass. Final
+  DOM-counter clock coverage is uncertain in both traces and preserved as such.
+  Same 103 downloaded package versions as the failed job; CPU differs, not a cause
+  claim. No qualification, supported fix, acceptance or unchanged retry queued.
+- Previous diagnostic: native-buffer handle/caller diagnostic, harness 76baed0 /
   workflow e4ea574, [PR #522](https://github.com/jongsky25/css-is/pull/522),
   [run40605880095](https://github.com/jongsky25/css-is/actions/runs/40605880095).
   Four captures, 9,543 native records each; no per-event JS callbacks or extra
@@ -85,13 +95,14 @@ markup and improves navigation 20 in both orders, but those partial benefits
 cannot override the failed gates. This screen compares current versus candidate;
 it is not the complete original-versus-candidate acceptance matrix.
 
-Latest result: [native-buffer caller diagnostic](avatars/increment2b/native-handle-buffer/REPORT.md).
-Broader handle births and native caller recording again show only low retention.
-The sole older candidate resolves to a weak compilation queue, so it does not
-support a document cleanup patch. Pre-attach roots and heap edges remain unobserved;
-no strong-root census or causal correction is established. Next isolate tracing/
-attachment conditions with a minimally instrumented uninjected contrast. Application
-transport is still unmeasured; original qualification and memory failures remain.
+Latest result: [uninjected GC comparison](avatars/increment2b/uninjected-gc-contrast/REPORT.md).
+Both counter-only and GC-traced captures show low retention without any browser
+injection. This identifies no causal observer effect or correction. Prior failed
+GC/root state remains the missing evidence. Environment/package audit establishes
+no correcting change; CPU model varies and earlier AMD captures were also clean.
+No new measurement is justified without a specific reproduction condition or
+source-supported diagnostic change. Native/application qualification and original
+memory acceptance remain blocked; all prior failures are retained.
 
 There is no defensible percentage or ETA. At least three milestones remain:
 
@@ -111,7 +122,9 @@ verification**. No candidate currently qualifies to unblock 2B.
 
 Read these in order before changing code or launching browsers:
 
-1. [Native-buffer caller diagnostic](avatars/increment2b/native-handle-buffer/REPORT.md),
+1. [Uninjected GC comparison](avatars/increment2b/uninjected-gc-contrast/REPORT.md),
+   protocol, raw captures/traces, independent assessment and environment audit. Then
+   [native-buffer caller diagnostic](avatars/increment2b/native-handle-buffer/REPORT.md),
    raw buffers/proof, independent assessment and weak-queue caller evidence. Then
    [context handle journal](avatars/increment2b/context-handle-journal/REPORT.md),
    protocol, raw journals, ABI evidence and independent assessment. Then
@@ -178,16 +191,17 @@ uses an opened-only trigger. The incidental run does not replace any sample or
 qualify the instrument. Both setup PRs remain unmerged; default-branch manual
 registration still faces existing release-version policy. No waiver or deploy.
 
-Application calibration remains blocked. Root graphs, snapshot-free owner journals
-and the native-buffer broader-handle trace are complete; all show low retention.
-Do not add another layer of handle-birth hooks or repeat these builds unchanged.
-The gap is a high-retention capture with minimal observer interference and evidence
-about pre-existing roots/heap edges. Next freeze a distinct uninjected comparison
-with counter-only baseline slots and GC-trace-only slots in a fixed order. No Frida,
-snapshots, collection requests, extra waits, selected replacements or qualification
-claims. Use it to separate tracing/attachment conditions before another intrusive
-graph. After a supported correction, fresh native qualification must precede the
-frozen lossless application calibration. Full 2B acceptance remains outstanding.
+Application calibration remains blocked. The native-buffer trace and the distinct
+uninjected counter/GC-trace comparison are complete. Both counter-only and traced
+slots remain clean; no causal root or correction has been established. Do not
+repeat these builds unchanged, fish for a desired GC outcome, or add another broad
+handle-birth probe. Next audit the failed sample's incremental-marking, weak-reference
+and disposal chronology against pinned engine source. Document which root data is
+missing and establish a specific reproduction condition or distinct source-supported
+diagnostic change before another capture. No threshold waiver, substituted sample,
+forced collection, cache flush or later increment. After a supported correction,
+fresh native qualification must precede the frozen lossless application calibration;
+original 2B acceptance remains outstanding.
 
 ### Important traps and execution constraints
 

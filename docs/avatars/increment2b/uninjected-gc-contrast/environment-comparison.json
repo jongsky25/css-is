@@ -1,0 +1,13 @@
+{
+  "reference_failed_run": 40532187252,
+  "current_run": 40609043507,
+  "reference_cpu_model": "AMD EPYC 7763 64-Core Processor",
+  "current_cpu_model": "INTEL(R) XEON(R) PLATINUM 8573C",
+  "same_affinity": true,
+  "same_kernel_release": true,
+  "same_cgroup_file_inventory": true,
+  "reference_downloaded_apt_packages": 103,
+  "current_downloaded_apt_packages": 103,
+  "apt_version_differences": [],
+  "limits": "Checks retained inventories and downloaded-package versions, not all runtime binary hashes. CPU model differs; earlier AMD root/buffer captures also showed low retention, so CPU model alone is not an explanation. No identified environment correction or causal claim."
+}

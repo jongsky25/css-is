@@ -8,10 +8,33 @@ with stable controls. Remaining milestones: a supported fix, qualified candidate
 validation, then complete original-baseline acceptance across all device/cache
 and scenario groups. No defensible percentage or ETA is established.
 
-Use the [Sol restart handoff](../../AVATAR_UPGRADE_HANDOFF.md#start-here--sol-handoff-current-after-native-handle-buffer)
+Use the [Sol restart handoff](../../AVATAR_UPGRADE_HANDOFF.md#start-here--sol-handoff-current-after-uninjected-gc-comparison)
 for current source identities, evidence order, next bounded work and constraints.
-The native-buffer caller diagnostic below is the latest completed experiment.
+The uninjected GC comparison below is the latest completed experiment.
 Older next-step instructions in this report are historical where superseded.
+
+## Uninjected GC comparison — low retention in both factors
+
+[Latest report](uninjected-gc-contrast/REPORT.md) and
+[run40609043507](https://github.com/jongsky25/css-is/actions/runs/40609043507):
+frozen 8f7b7d4 completes counter/trace/trace/counter without Frida attachment or
+SYS_PTRACE. All four have one document, 9,007 nodes at stage 6 and 6,008 at stage 11.
+Both trace slots record two natural major collections, three marked global proxies
+and 756,936 bytes after each collection. Counter-only GC counts are unobserved.
+Low retention therefore does not require native observation or measurement tracing;
+two slots/factor establish no causal effect, correction or population failure rate.
+
+**32 local/cloud tests pass**; all **39** hashes and independent analyses match.
+The final DOM-counter trace bounds are uncertain in both traced slots and remain
+flagged. Retained setup logs have the same 103 downloaded package versions as the
+failed job, but CPU model differs (old AMD 7763/current Intel 8573C). Earlier AMD
+captures also had low retention; no environment explanation is established.
+
+No supported correction or qualification. Next audit the retained failed sample's
+GC/weak-reference/disposal chronology against pinned source, identify missing root
+evidence and a specific reproduction condition/change before more measurements.
+No unchanged retry, product change, candidate promotion, acceptance or deployment.
+PR #523 remains unmerged; no active measurement. Original 2B gates remain blocked.
 
 ## Native-buffer caller diagnostic — weak queue identified, failure still absent
 
