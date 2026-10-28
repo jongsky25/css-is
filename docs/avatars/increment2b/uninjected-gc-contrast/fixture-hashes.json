@@ -1,0 +1,14 @@
+{
+  "dom": {
+    "raw_document_sha256": "9b4bcf65bc7d3f25b5c1e9df6ac1676abddd670f07cba9e2c876595155dc7ac0",
+    "outer_html_sha256": "f53f09aa4f59c5ca7e627f4d44aa8f6801833196040a75d66e735ce5434e5089"
+  },
+  "svg": {
+    "raw_document_sha256": "0534e69150baf0c0c26b9e08f1b4aad1c3c65c6ef0e21a17f3a68a175583d815",
+    "outer_html_sha256": "0fd29e8f942dc078e8e7d166ebd03ca133be7ed0207c5a260d1292b72683f89a"
+  },
+  "style": {
+    "raw_document_sha256": "332b9f684a80229f7c4205fbf3d39b800e4c22382a182c7629fd87a8ae28fc23",
+    "outer_html_sha256": "e16ec8fdc1e3c2b3ede83c9a95c6b2ed900582ff5b1237e592a72afa4351d58f"
+  }
+}
