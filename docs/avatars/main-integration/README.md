@@ -1,7 +1,8 @@
-# Companion upgrade on current main — v9.04
+# Companion upgrade on current main — v9.05
 
-This integration is based on current main d01f417 (v9.03), not the earlier
-v8.57 verification branch. It ports the complete sixteen-species illustrated
+This integration started from main d01f417 (v9.03), then incorporated
+9c77133 (v9.04 letterhead-template fix) before merging. It does not merge the
+outdated v8.57 verification branch. It ports the complete sixteen-species illustrated
 catalog, optional wardrobe and shared motion from reviewed source 48133d4.
 It preserves newer main application, search, scheduler, dependency and release
 checks. The unrelated thread-owned reader and archived diagnostic tree are not
@@ -10,9 +11,9 @@ imported. Appearance preferences use main's existing connection lifecycle.
 The two preference columns are additive and default existing users to seasonal
 appearance. Identity, care, growth, cooldowns, account roles and opt-in audio remain.
 The deployment allowlist includes companion_wardrobe.py. APP_VERSION, changelog,
-changed avatar asset URLs and service-worker cache identify this release as 9.04.
+changed avatar asset URLs and service-worker cache identify this release as 9.05.
 
-## Validation status
+## Prior accepted integration snapshot (bb91698)
 
 127 local core/wardrobe/appearance/onboarding/packaging cases pass; qa_preflight
 is GREEN (only the existing missing-backup-directory warning). The initial local
@@ -36,7 +37,8 @@ and aggregate Required checks pass. [application/audit.json](application/audit.j
 records independent archive hashes, all JUnit cases and strict AI checks against
 GitHub's exact temporary checkout 0eae87ed (same tree as branch bb91698).
 Later report-only changes do not change the accepted production or test sources.
-All pre-merge automated acceptance is complete. Current deployment status is
+Those checks passed the prior v9.04 candidate. The final v9.05 integration
+requires fresh checks before merge; prior evidence is not relabelled. Deployment status is
 tracked by the existing [main deployment workflow](https://github.com/jongsky25/css-is/actions/workflows/deploy-hf.yml).
 
 Historical full matrix evidence remains available in
@@ -87,3 +89,13 @@ checkout 0eae87edb718ba76a067bbe0e2f2ef488ca72bb3 because their provenance binds
 the Git commit as well as source hashes. The GitHub checkout is temporary and
 does not represent an earlier main merge. No report or acceptance gate was
 modified to accept another source.
+
+## Concurrent main update and final v9.05 integration
+
+The final merge guard detected main advancing from d01f417 to 9c77133 while the
+full suites ran. PR #529 used v9.04 for a Google Docs letterhead-template fix.
+That fix is preserved intact; the companion release is therefore v9.05. Only the
+release version/changelog/cache asset URLs and the unrelated upstream Apps Script
+fix differ from the already accepted integration code. Current full application
+and avatar acceptance workflows are rerun on the final combined source before
+merge. No production reader, scheduler or archived diagnostic was imported.

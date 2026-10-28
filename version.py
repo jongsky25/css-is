@@ -18,12 +18,12 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "9.04"
+APP_VERSION = "9.05"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
-        "version": "9.04",
+        "version": "9.05",
         "date": "October 28, 2026",
         "summary": "Illustrated growing companions, optional accessories and livelier movement.",
         "changes": [
@@ -31,6 +31,15 @@ CHANGELOG = [
             "Choose up to two compatible accessories on your profile, or follow seasonal outfits or show no accessories.",
             "Preview companion changes before saving, cancel them, remove an item or return to seasonal outfits.",
             "Companions move and react more naturally, rest when offscreen and respect reduced-motion settings."
+        ]
+    },
+    {
+        "version": "9.04",
+        "date": "October 28, 2026",
+        "summary": "The notice-of-meeting template can now be created in Google Docs.",
+        "changes": [
+            "Building the document templates no longer fails while saving the letterhead.",
+            "Nothing changes in the app itself; an administrator re-runs the template setup once to create the notice of meeting."
         ]
     },
     {
