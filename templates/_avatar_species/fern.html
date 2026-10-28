@@ -1,0 +1,35 @@
+{% from "_avatar_wardrobe.html" import wear as _wear %}
+{# fern artwork. Keep placement groups separate from animated groups. #}
+{% from "_avatars_shared.html" import illustrated_pot as _illustrated_pot, plant_finish as _plant_finish %}
+
+{% macro art(s, m=0, costume="", scope="", preferences=none) %}
+{% set leaf='url(#' ~ scope ~ '-leaf)' if scope else 'url(#avg-leaf)' %}
+{% set lengths=[[24],[36,28],[42,38,50],[46,43,57,30],[50,47,64,43,46],[55,52,72,47,51,64]][s-1] %}
+<g class="av-v2 av-body" stroke-linecap="round" stroke-linejoin="round"><g transform="translate(60 108) scale({{ 0.6+s*0.06 }})">{{ _wear(preferences,'back') }}</g>
+  {{ _illustrated_pot() }}
+  <path d="M44 108Q59 103 76 108" fill="none" stroke="#78935f" stroke-width="4"/>
+  {% for n in range(1,s+1) %}
+  {% set angle=[-32,30,-8,-60,58,12][n-1] %}{% set length=lengths[n-1] %}
+  <g transform="translate(60 107) rotate({{ angle }})">
+    <g class="av-frond-{{ n }}{{ ' av-frond-top' if n==s }}">
+    {% if s==1 or (s in [2,4] and n==s) %}
+      <path d="M0 0Q-4-10 0-{{ length-8 }}C8-{{ length+8 }} 23-{{ length-2 }} 13-{{ length-1 }}C7-{{ length-1 }} 7-{{ length-10 }} 12-{{ length-10 }}" fill="none" stroke="#41664c" stroke-width="5"/>
+      <path d="M0-1Q-3-10 1-{{ length-8 }}C9-{{ length+6 }} 21-{{ length-3 }} 13-{{ length-2 }}" fill="none" stroke="#a8c87b" stroke-width="2.5"/>
+      <path d="M0-8Q-12-10-9-19Q1-18 0-8Z" fill="{{ leaf }}" stroke="#41664c" stroke-width="1"/>
+    {% else %}
+      <path d="M0 0C-3-{{ length*0.35 }} 3-{{ length*0.7 }} 0-{{ length }}" fill="none" stroke="#41664c" stroke-width="2.6"/>
+      {% for fraction,width in [(0.24,9),(0.44,11),(0.64,9),(0.83,6)] %}
+      {% set y=-length*fraction %}
+      <path d="M0 {{ y }}Q-{{ width+3 }} {{ y+2 }}-{{ width+4 }} {{ y-8 }}Q-4 {{ y-10 }} 0 {{ y }}Q4 {{ y-10 }} {{ width+4 }} {{ y-8 }}Q{{ width+3 }} {{ y+2 }} 0 {{ y }}Z" fill="{{ leaf }}" stroke="#41664c" stroke-width=".9"/>
+      <path d="M-{{ width+1 }} {{ y-6 }}L0 {{ y }}L{{ width+1 }} {{ y-6 }}" fill="none" stroke="#d4e1aa" stroke-width=".8"/>
+      {% if s>=5 and n<=2 and loop.index==2 %}<circle cx="-5" cy="{{ y-3 }}" r="1.1" fill="#d0a564"/><circle cx="5" cy="{{ y-3 }}" r="1.1" fill="#d0a564"/>{% endif %}
+      {% endfor %}
+      <path d="M0-{{ length-5 }}Q-7-{{ length+1 }} 0-{{ length+7 }}Q7-{{ length+1 }} 0-{{ length-5 }}Z" fill="{{ leaf }}" stroke="#41664c" stroke-width=".9"/>
+    {% endif %}
+    </g>
+  </g>
+  {% endfor %}
+  <path d="M43 110l3-1m28 1 3-1" stroke="#d0b58b" stroke-width="2"/>
+  {{ _plant_finish('fern',s,m,costume,preferences) }}
+</g>
+{% endmacro %}

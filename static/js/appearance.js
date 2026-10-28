@@ -34,7 +34,7 @@
       var overrideNote=document.querySelector('[data-appearance-override-note]');
       if(overrideNote)overrideNote.hidden=active.source!=='manual';
       var avatars=Array.from(document.querySelectorAll('svg[data-avatar-kind]')).filter(function(svg){
-        return !svg.closest('[data-appearance-sample]') && (Number(svg.dataset.avatarMonth)!==active.month || svg.dataset.avatarOutfit!==active.outfit);
+        return (!svg.dataset.avatarMode || svg.dataset.avatarMode==='seasonal') && !svg.closest('[data-appearance-sample]') && (Number(svg.dataset.avatarMonth)!==active.month || svg.dataset.avatarOutfit!==active.outfit);
       });
       var pairs=new Map();
       avatars.forEach(function(svg){pairs.set(svg.dataset.avatarKind+'/'+svg.dataset.avatarStage,null);});

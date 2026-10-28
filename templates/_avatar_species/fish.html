@@ -1,0 +1,22 @@
+{% from "_avatar_wardrobe.html" import wear as _wear %}
+{# Original illustrated goldfish. Water remains outside .avmove in avatar_svg. #}
+{% from "_avatars_shared.html" import costume_front, eye as _eye, accessory as _accessory, regalia as _regalia %}
+{% macro art(s,m=0,costume="", scope="", preferences=none) %}
+{% set sc=0.65+(s-1)*0.066 %}{% set rx=20+s %}{% set ry=16 if s<3 else 14 %}
+<g class="av-v2 av-body" transform="translate(60 92) scale({{ sc }}) translate(-60 -92)" stroke-linejoin="round" stroke-linecap="round"><g transform="translate(60 94)">{{ _wear(preferences,'back') }}</g>
+ <g class="av-fin-t"><path d="M42 87Q{{ 20-s }} {{ 66-s }} {{ 21-s }} 76Q28 91 19 111Q{{ 29-s }} 111 43 97Z" fill="url(#avg-fish2)" stroke="#b66130" stroke-width="1.5"/>{% if s>=3 %}<path d="M40 91L24 79M40 94L23 106" stroke="#ffd08c" stroke-width="1.2"/>{% endif %}</g>
+ <path d="M49 79Q{{ 55-s }} {{ 60-s }} 72 76L68 84" fill="url(#avg-fish2)" stroke="#b66130" stroke-width="1.3"/>
+ <ellipse cx="64" cy="92" rx="{{ rx }}" ry="{{ ry }}" fill="url(#avg-fish)" stroke="#b66130" stroke-width="1.5"/>
+ <path d="M47 96Q63 110 83 97Q67 114 47 100Z" fill="#ffe1b0"/>
+ <path d="M49 83Q57 78 65 80" stroke="#ffe3ad" stroke-width="3" fill="none"/>
+ {% if s>=2 %}<path d="M57 80Q63 92 57 105" stroke="#ffeac6" stroke-width="4" fill="none"/>{% endif %}
+ {% if s>=4 %}<path d="M64 86q5 4 0 8m7-7q5 4 0 8m-9 0q4 3 0 6" stroke="#c57938" stroke-width="1.1" fill="none"/>{% endif %}
+ <g class="av-fin-b"><path d="M60 98Q48 {{ 116+s }} 70 110L73 100" fill="url(#avg-fish2)" stroke="#b66130" stroke-width="1.2"/><path d="M64 102L60 110" stroke="#ffd08c" stroke-width="1.2"/></g>
+ {{ costume_front('fish',s,costume,scaled=true) }}{{ _regalia(s,61,87,0.5) }}
+ <g class="av-head">{{ _eye(77,87,4.8 if s<3 else 4.2,'#77543b','#efa04b') }}<path d="M86 95q4 3 6-1" fill="none" stroke="#965434" stroke-width="1.4"/><ellipse cx="82" cy="96" rx="3" ry="1.8" fill="#e99b8a"/>
+ <g class="av-anchor-head" data-anchor="head" transform="translate(76 74) scale(.65)">{{ _wear(preferences,'head') }}</g>{{ _accessory(m,76,74,0.65,costume=costume) }}</g>
+ <g class="av-anchor-neck" data-anchor="neck" transform="translate(68 100) scale(.6)">{{ _wear(preferences,'neck') }}</g>
+ <g class="av-bubbles" stroke="#8ebbd0" fill="none" stroke-width="1.2"><circle cx="94" cy="76" r="2.5"/><circle cx="99" cy="64" r="1.7"/><circle cx="95" cy="54" r="1.1"/></g>
+ <g class="av-food" fill="#e8b04a"><path d="M88 28l4 1-2 3ZM96 32l3 2-3 2ZM92 38l3 1-2 3Z"/></g>
+</g>
+{% endmacro %}

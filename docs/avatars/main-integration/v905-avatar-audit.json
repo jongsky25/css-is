@@ -1,0 +1,64 @@
+{
+  "status": "passed",
+  "version": "9.05",
+  "branch_source": "405bcd28a0092693d421c5f62544d72d3a2afdca",
+  "ci_checkout": "ddc765a0f3b3d3bb14141fa970c6c61f6e61edfb",
+  "run": 40639625919,
+  "artifact_id": 12794904258,
+  "archive_sha256": "7e33758e88b7f719e11109f1b40461f8c79860bdaf4af0312474894c94a963fc",
+  "source_hashes_verified": 27,
+  "functional_cases": 131,
+  "failures": 0,
+  "skips": 0,
+  "rig_cases": 432,
+  "contact_sheets": 6,
+  "sheet_cards": 1170,
+  "frame_samples": [
+    {
+      "kind": "cat",
+      "seconds": 30.60892965900001,
+      "cpu": 4,
+      "frame_count": 1836,
+      "frame_p95_ms": 16.700000000000728,
+      "actions": 29,
+      "errors": [],
+      "browser": "156.0.8078.47"
+    },
+    {
+      "kind": "fish",
+      "seconds": 30.511302751000017,
+      "cpu": 4,
+      "frame_count": 1830,
+      "frame_p95_ms": 16.799999999999272,
+      "actions": 29,
+      "errors": [],
+      "browser": "156.0.8078.47"
+    },
+    {
+      "kind": "fern",
+      "seconds": 30.244856569000007,
+      "cpu": 4,
+      "frame_count": 1814,
+      "frame_p95_ms": 16.799999999999272,
+      "actions": 31,
+      "errors": [],
+      "browser": "156.0.8078.47"
+    },
+    {
+      "kind": "bat",
+      "seconds": 32.28864091699995,
+      "cpu": 4,
+      "frame_count": 1937,
+      "frame_p95_ms": 16.799999999995634,
+      "actions": 31,
+      "errors": [],
+      "browser": "156.0.8078.47"
+    }
+  ],
+  "limits": [
+    "Four bounded 30-second CPU4 mobile frame samples, not a repeat of the historical memory matrix",
+    "No physical-phone testing",
+    "No GC/native-hook/observer-calibration research"
+  ],
+  "audit_note": "Archive bytes and 27 source hashes were checked locally before the execution environment became unavailable."
+}

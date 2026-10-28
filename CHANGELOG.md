@@ -1,8 +1,15 @@
-## 9.05 — October 28, 2026
+## 9.06 — October 28, 2026
 
 - Add Supplies email through a durable `supply_mail` outbox queued inside each business transaction from `supplies_storage.record()` (and the allocator for stock set aside). A worker in the scheduler loop composes from current data at send time, rechecks the recipient's active account and current role, and cancels anything no longer relevant (decided, withdrawn, acknowledged, cancelled). Delivery is at-most-once: attempts are committed before network I/O, ambiguous sends become `uncertain` and are never resent, only definite failures are retried up to the existing send-retry setting, and messages unsent after three days are cancelled. Mail failure cannot undo stock or approval work.
 - New switchable email features on /admin/email: `supplies_request_pending`, `supplies_request_decided`, `supplies_replenishment_pending`, `supplies_replenishment_decided`, `supplies_issue_recorded`, `supplies_stock_ready`, and the scheduled `job_supplies_digest` with a weekday setting (default Monday). Switch-offs and the global pause are logged as `skipped_off`; every attempt appears in the send log. The console explains when Supplies itself is switched off.
 - Stock-warning notices stay in-app; custodians get the one weekly digest of open warnings and approved requests to hand over or awaiting stock, nothing when there is nothing to chase. Add `tests/test_supplies_mail.py`.
+
+## 9.05 — October 28, 2026
+
+- Bring the complete sixteen-species illustrated companion catalog onto current main, preserving six-stage growth, care, saved identities and opt-in sounds.
+- Add thirteen compatible accessories, seasonal/personal/none modes and read-only preview with explicit Save/Cancel/reset at `/me#companion`.
+- Share motion visibility/reduced-motion handling and action priority; update service-worker caching and include the wardrobe module in the release payload.
+- Preserve the newer v9.03 application changes and the existing production database reader. Historical avatar performance evidence remains scoped to its recorded source; archived GC/native diagnostics are not imported or resumed.
 
 ## 9.04 — October 28, 2026
 

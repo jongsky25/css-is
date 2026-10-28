@@ -18,12 +18,12 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "9.05"
+APP_VERSION = "9.06"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
-        "version": "9.05",
+        "version": "9.06",
         "date": "October 28, 2026",
         "summary": "Supplies now sends email, so nobody has to keep checking the page.",
         "changes": [
@@ -32,6 +32,17 @@ CHANGELOG = [
             "People are asked to confirm receipt when supplies are released to them, and requesters are told when stock is set aside for an approved request, including after a delivery fills a shortage.",
             "Each Monday, supply custodians get one summary of open stock warnings and approved requests still to hand over or waiting for stock. Nothing is sent when there is nothing to chase.",
             "Administrators can switch each of these emails on or off, and change the summary weekday, on the Email page."
+        ]
+    },
+    {
+        "version": "9.05",
+        "date": "October 28, 2026",
+        "summary": "Illustrated growing companions, optional accessories and livelier movement.",
+        "changes": [
+            "All sixteen companions now have illustrated artwork and six distinct growth stages.",
+            "Choose up to two compatible accessories on your profile, or follow seasonal outfits or show no accessories.",
+            "Preview companion changes before saving, cancel them, remove an item or return to seasonal outfits.",
+            "Companions move and react more naturally, rest when offscreen and respect reduced-motion settings."
         ]
     },
     {

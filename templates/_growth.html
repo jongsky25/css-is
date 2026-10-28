@@ -61,7 +61,7 @@
              {%- if s.current %} where you are now
              {%- elif s.reached %} already reached
              {%- else %} unlocks at {{ s.points_at }} points{% endif %}.">
-        {{ avatar_svg(kind, s.stage) }}
+        {{ avatar_svg(kind, s.stage, static_preview=true) }}
       </div>
       <div class="gl-name">{{ s.name }}</div>
       {% if s.current %}<div class="gl-now">You are here</div>

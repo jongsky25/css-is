@@ -1,0 +1,31 @@
+<fieldset id="companion-customizer" data-stage="{{ wstats.stage if wstats else 1 }}" style="margin-top:1rem;border:1px solid var(--line);border-radius:12px;padding:1rem">
+  <legend>Customize companion</legend>
+  <p class="hint">Try an appearance, then save your profile to keep it. Changing species removes incompatible accessories.</p>
+  <div class="field">
+    <label for="avatar-appearance-mode">Appearance</label>
+    <select id="avatar-appearance-mode" name="avatar_appearance_mode">
+      {% for key,label in wardrobe_modes.items() %}<option value="{{ key }}" {{ 'selected' if wardrobe_preferences.mode == key }}>{{ label }}</option>{% endfor %}
+    </select>
+  </div>
+  {% for slot,label in [('primary','Head or body / pot finish'),('secondary','Secondary accessory / plant ornament')] %}
+  <div class="field" data-personal-accessories>
+    <label for="avatar-{{ slot }}">{{ label }}</label>
+    <select id="avatar-{{ slot }}" name="avatar_{{ slot }}">
+      <option value="">No item</option>
+      {% for key,item in wardrobe_catalog.items() %}{% if item.slot == slot %}
+      <option value="{{ key }}" data-species="{{ item.species|sort|join(' ') }}" {{ 'selected' if key in wardrobe_preferences['items'] }}>{{ item.name }}</option>
+      {% endif %}{% endfor %}
+    </select>
+  </div>
+  {% endfor %}
+  <div aria-label="Companion appearance preview" role="img" style="width:170px;height:198px;max-width:100%;margin:auto" id="companion-customizer-preview">
+    {{ avatar_svg(profile.avatar_kind, wstats.stage if wstats else 1, static_preview=true, preferences=wardrobe_preferences) }}
+  </div>
+  <p id="companion-customizer-status" role="status" aria-live="polite">Preview only. Your saved companion has not changed.</p>
+  <div class="feed-actions">
+    <button type="submit" class="btn">Save companion</button>
+    <button type="button" class="btn" id="companion-customizer-cancel">Cancel changes</button>
+    <button type="button" class="btn" id="companion-customizer-reset">Reset to seasonal</button>
+    <button type="button" class="btn" id="companion-customizer-remove">Remove accessories</button>
+  </div>
+</fieldset>
