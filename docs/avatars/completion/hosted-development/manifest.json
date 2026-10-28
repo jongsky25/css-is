@@ -1,0 +1,9 @@
+{
+  "run": 40617197612,
+  "source": "9f28f9f",
+  "status": "cancelled; no performance acceptance",
+  "artifact_id": 12786156966,
+  "archive_sha256": "9cda744655c4105e564d6d9501df2f6e63656dcfe5f63dc186554b960d181b49",
+  "functional_failure": "Leaf-placement test used stage 1, which has no av-leaf groups. Mature fixture is now explicit. Other functional gates passed.",
+  "remaining_phases": "cancelled partial cohorts; no claimed pass"
+}

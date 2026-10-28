@@ -37,8 +37,18 @@ def pytest_unconfigure(config):
 
 
 def pytest_addoption(parser):
+    parser.addoption("--application-suite", action="store_true", default=False,
+                     help="Run application tests; leave explicitly disabled avatar experiment modules uncollected")
     parser.addoption("--shuffle-seed", type=int, default=None,
                      help="Deterministically shuffle test cases with this seed")
+
+
+def pytest_ignore_collect(collection_path, config):
+    if not config.getoption("--application-suite"):
+        return None
+    from tests.avatar_opt_in_suites import AVATAR_OPT_IN_SUITES
+    opt_in = AVATAR_OPT_IN_SUITES.get(collection_path.name)
+    return bool(opt_in and os.getenv(opt_in[0]) != opt_in[1])
 
 
 def pytest_collection_modifyitems(config, items):

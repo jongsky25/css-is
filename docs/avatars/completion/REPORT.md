@@ -76,7 +76,7 @@ or numerical finding was changed, and no instrumentation was launched. The
 previously blocked offline/collection regression set passes without Frida; its
 opt-in browser calibrations remain skipped. Standard application CI is rerun.
 
-Exact compressed CSS/JS deltas are +5,642 bytes against increment 0 and +2,448
+Exact compressed CSS/JS deltas are +5,683 bytes against increment 0 and +2,489
 bytes against accepted 2B, both below 15 KiB; see payload-budget.json. This source
 budget does not establish HTTP document-transfer, timing or memory acceptance.
 
@@ -92,3 +92,21 @@ browser and filesystem; distinct phases use independent runners and their own
 controls. A functional failure can therefore be inspected immediately without
 waiting for the longer performance phases. Earlier cancelled/partial runs are
 retained as such and do not establish final acceptance.
+
+### Final integrated seasonal and collection checks
+
+The global /appearance/avatar renderer explicitly uses seasonal preferences, so
+shared seasonal illustrations cannot pick up the viewer's personal equipment.
+Unsaved seasonal customizer previews follow real global outfit updates, while
+saved personal mode and equipment remain unchanged. All 24 wardrobe/customizer/
+appearance checks pass, including this flow. All 432 current animal stage/mood/
+theme rigs pass. Sheets and recordings were regenerated on the final product.
+
+The corrected leaf fixture establishes its own mature growth state instead of
+relying on a caller environment variable. This closes the hosted functional
+failure recorded under hosted-development/; its original archive/hash is retained.
+
+Normal CI uses the explicitly scoped [application suite](application-suite-selection.md).
+The existing zero-failure/zero-skip gate remains intact. Dedicated avatar CI still
+executes current functional/browser and full performance checks; disabled archived
+experiments are not launched. Full integrated performance acceptance is pending.

@@ -72,6 +72,9 @@ try:
         results.check('native_visibility_touch_keyboard',lambda: pytest('native-behavior',['tests/test_avatar_baseline_browser.py','-k','native_visibility_and_touch'],{'CSS_AVATAR_OUT':str(out/'native/application')},expected=1)==0)
         results.check('persisted_plant_care',lambda: pytest('care',['tests/test_avatar_baseline_browser.py','-k','plant_care_live_surfaces'],{'CSS_AVATAR_OUT':str(out/'care/application'),'CSS_AVATAR_MATURE':'1','CSS_AVATAR_PLANTS':'fern,mushroom,succulent'},expected=1)==0)
     elif a.phase=='completion-functional':
+        browser_files=['tests/test_avatar_motion_preference_browser.py','tests/test_avatar_chase_writes_browser.py','tests/test_avatar_geometry_browser.py','tests/test_avatar_container_resize_browser.py','tests/test_avatar_pointer_browser.py','tests/test_avatar_static_preview_browser.py','tests/test_home_search_boot_browser.py']
+        results.check('browser_regressions',lambda: pytest('browser-regressions',browser_files,{'CSS_AVATAR_OUT':str(out/'browser/application')},expected=9)==0)
+        results.check('all_animal_motion_rigs',lambda: run('motion-rigs',[python,'scripts/avatar_baseline/animal_motion.py','--out',str(out/'motion')],extra={'CSS_AVATAR_BATCH_KINDS':'dog,rabbit,bird,turtle,fish,dolphin,owl,bat'})==0)
         results.check('wardrobe_and_core',lambda: pytest('wardrobe-and-core',['tests/test_companion_wardrobe.py','tests/test_avatar_care.py','tests/test_avatar_audio.py','tests/test_onboarding_storage.py'],expected=104)==0)
         results.check('customizer_browser',lambda: pytest('customizer',['tests/test_companion_customizer_browser.py'],{'CSS_AVATAR_OUT':str(out/'browser/application')},expected=3)==0)
         results.check('animal_care',lambda: pytest('animal-care',['tests/test_avatar_animal_batch_browser.py'],{'CSS_AVATAR_OUT':str(out/'care/application'),'CSS_AVATAR_MATURE':'1','CSS_AVATAR_BATCH_KINDS':'dog,rabbit,bird,turtle,fish,dolphin,owl,bat'},expected=8)==0)

@@ -1,0 +1,3030 @@
+{
+  "cases": 432,
+  "reduced_motion_themes": 3,
+  "rows": [
+    {
+      "theme": "light",
+      "kind": "dog",
+      "stage": "1",
+      "mood": "happy",
+      "animation": "av-wag"
+    },
+    {
+      "theme": "light",
+      "kind": "dog",
+      "stage": "1",
+      "mood": "okay",
+      "animation": "av-wag"
+    },
+    {
+      "theme": "light",
+      "kind": "dog",
+      "stage": "1",
+      "mood": "droopy",
+      "animation": "av-wag"
+    },
+    {
+      "theme": "light",
+      "kind": "dog",
+      "stage": "2",
+      "mood": "happy",
+      "animation": "av-wag"
+    },
+    {
+      "theme": "light",
+      "kind": "dog",
+      "stage": "2",
+      "mood": "okay",
+      "animation": "av-wag"
+    },
+    {
+      "theme": "light",
+      "kind": "dog",
+      "stage": "2",
+      "mood": "droopy",
+      "animation": "av-wag"
+    },
+    {
+      "theme": "light",
+      "kind": "dog",
+      "stage": "3",
+      "mood": "happy",
+      "animation": "av-wag"
+    },
+    {
+      "theme": "light",
+      "kind": "dog",
+      "stage": "3",
+      "mood": "okay",
+      "animation": "av-wag"
+    },
+    {
+      "theme": "light",
+      "kind": "dog",
+      "stage": "3",
+      "mood": "droopy",
+      "animation": "av-wag"
+    },
+    {
+      "theme": "light",
+      "kind": "dog",
+      "stage": "4",
+      "mood": "happy",
+      "animation": "av-wag"
+    },
+    {
+      "theme": "light",
+      "kind": "dog",
+      "stage": "4",
+      "mood": "okay",
+      "animation": "av-wag"
+    },
+    {
+      "theme": "light",
+      "kind": "dog",
+      "stage": "4",
+      "mood": "droopy",
+      "animation": "av-wag"
+    },
+    {
+      "theme": "light",
+      "kind": "dog",
+      "stage": "5",
+      "mood": "happy",
+      "animation": "av-wag"
+    },
+    {
+      "theme": "light",
+      "kind": "dog",
+      "stage": "5",
+      "mood": "okay",
+      "animation": "av-wag"
+    },
+    {
+      "theme": "light",
+      "kind": "dog",
+      "stage": "5",
+      "mood": "droopy",
+      "animation": "av-wag"
+    },
+    {
+      "theme": "light",
+      "kind": "dog",
+      "stage": "6",
+      "mood": "happy",
+      "animation": "av-wag"
+    },
+    {
+      "theme": "light",
+      "kind": "dog",
+      "stage": "6",
+      "mood": "okay",
+      "animation": "av-wag"
+    },
+    {
+      "theme": "light",
+      "kind": "dog",
+      "stage": "6",
+      "mood": "droopy",
+      "animation": "av-wag"
+    },
+    {
+      "theme": "light",
+      "kind": "rabbit",
+      "stage": "1",
+      "mood": "happy",
+      "animation": "av-earflick"
+    },
+    {
+      "theme": "light",
+      "kind": "rabbit",
+      "stage": "1",
+      "mood": "okay",
+      "animation": "av-earflick"
+    },
+    {
+      "theme": "light",
+      "kind": "rabbit",
+      "stage": "1",
+      "mood": "droopy",
+      "animation": "av-earflick"
+    },
+    {
+      "theme": "light",
+      "kind": "rabbit",
+      "stage": "2",
+      "mood": "happy",
+      "animation": "av-earflick"
+    },
+    {
+      "theme": "light",
+      "kind": "rabbit",
+      "stage": "2",
+      "mood": "okay",
+      "animation": "av-earflick"
+    },
+    {
+      "theme": "light",
+      "kind": "rabbit",
+      "stage": "2",
+      "mood": "droopy",
+      "animation": "av-earflick"
+    },
+    {
+      "theme": "light",
+      "kind": "rabbit",
+      "stage": "3",
+      "mood": "happy",
+      "animation": "av-earflick"
+    },
+    {
+      "theme": "light",
+      "kind": "rabbit",
+      "stage": "3",
+      "mood": "okay",
+      "animation": "av-earflick"
+    },
+    {
+      "theme": "light",
+      "kind": "rabbit",
+      "stage": "3",
+      "mood": "droopy",
+      "animation": "av-earflick"
+    },
+    {
+      "theme": "light",
+      "kind": "rabbit",
+      "stage": "4",
+      "mood": "happy",
+      "animation": "av-earflick"
+    },
+    {
+      "theme": "light",
+      "kind": "rabbit",
+      "stage": "4",
+      "mood": "okay",
+      "animation": "av-earflick"
+    },
+    {
+      "theme": "light",
+      "kind": "rabbit",
+      "stage": "4",
+      "mood": "droopy",
+      "animation": "av-earflick"
+    },
+    {
+      "theme": "light",
+      "kind": "rabbit",
+      "stage": "5",
+      "mood": "happy",
+      "animation": "av-earflick"
+    },
+    {
+      "theme": "light",
+      "kind": "rabbit",
+      "stage": "5",
+      "mood": "okay",
+      "animation": "av-earflick"
+    },
+    {
+      "theme": "light",
+      "kind": "rabbit",
+      "stage": "5",
+      "mood": "droopy",
+      "animation": "av-earflick"
+    },
+    {
+      "theme": "light",
+      "kind": "rabbit",
+      "stage": "6",
+      "mood": "happy",
+      "animation": "av-earflick"
+    },
+    {
+      "theme": "light",
+      "kind": "rabbit",
+      "stage": "6",
+      "mood": "okay",
+      "animation": "av-earflick"
+    },
+    {
+      "theme": "light",
+      "kind": "rabbit",
+      "stage": "6",
+      "mood": "droopy",
+      "animation": "av-earflick"
+    },
+    {
+      "theme": "light",
+      "kind": "bird",
+      "stage": "1",
+      "mood": "happy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "light",
+      "kind": "bird",
+      "stage": "1",
+      "mood": "okay",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "light",
+      "kind": "bird",
+      "stage": "1",
+      "mood": "droopy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "light",
+      "kind": "bird",
+      "stage": "2",
+      "mood": "happy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "light",
+      "kind": "bird",
+      "stage": "2",
+      "mood": "okay",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "light",
+      "kind": "bird",
+      "stage": "2",
+      "mood": "droopy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "light",
+      "kind": "bird",
+      "stage": "3",
+      "mood": "happy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "light",
+      "kind": "bird",
+      "stage": "3",
+      "mood": "okay",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "light",
+      "kind": "bird",
+      "stage": "3",
+      "mood": "droopy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "light",
+      "kind": "bird",
+      "stage": "4",
+      "mood": "happy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "light",
+      "kind": "bird",
+      "stage": "4",
+      "mood": "okay",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "light",
+      "kind": "bird",
+      "stage": "4",
+      "mood": "droopy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "light",
+      "kind": "bird",
+      "stage": "5",
+      "mood": "happy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "light",
+      "kind": "bird",
+      "stage": "5",
+      "mood": "okay",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "light",
+      "kind": "bird",
+      "stage": "5",
+      "mood": "droopy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "light",
+      "kind": "bird",
+      "stage": "6",
+      "mood": "happy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "light",
+      "kind": "bird",
+      "stage": "6",
+      "mood": "okay",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "light",
+      "kind": "bird",
+      "stage": "6",
+      "mood": "droopy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "light",
+      "kind": "turtle",
+      "stage": "1",
+      "mood": "happy",
+      "animation": "av-retract"
+    },
+    {
+      "theme": "light",
+      "kind": "turtle",
+      "stage": "1",
+      "mood": "okay",
+      "animation": "av-retract"
+    },
+    {
+      "theme": "light",
+      "kind": "turtle",
+      "stage": "1",
+      "mood": "droopy",
+      "animation": "av-retract"
+    },
+    {
+      "theme": "light",
+      "kind": "turtle",
+      "stage": "2",
+      "mood": "happy",
+      "animation": "av-retract"
+    },
+    {
+      "theme": "light",
+      "kind": "turtle",
+      "stage": "2",
+      "mood": "okay",
+      "animation": "av-retract"
+    },
+    {
+      "theme": "light",
+      "kind": "turtle",
+      "stage": "2",
+      "mood": "droopy",
+      "animation": "av-retract"
+    },
+    {
+      "theme": "light",
+      "kind": "turtle",
+      "stage": "3",
+      "mood": "happy",
+      "animation": "av-retract"
+    },
+    {
+      "theme": "light",
+      "kind": "turtle",
+      "stage": "3",
+      "mood": "okay",
+      "animation": "av-retract"
+    },
+    {
+      "theme": "light",
+      "kind": "turtle",
+      "stage": "3",
+      "mood": "droopy",
+      "animation": "av-retract"
+    },
+    {
+      "theme": "light",
+      "kind": "turtle",
+      "stage": "4",
+      "mood": "happy",
+      "animation": "av-retract"
+    },
+    {
+      "theme": "light",
+      "kind": "turtle",
+      "stage": "4",
+      "mood": "okay",
+      "animation": "av-retract"
+    },
+    {
+      "theme": "light",
+      "kind": "turtle",
+      "stage": "4",
+      "mood": "droopy",
+      "animation": "av-retract"
+    },
+    {
+      "theme": "light",
+      "kind": "turtle",
+      "stage": "5",
+      "mood": "happy",
+      "animation": "av-retract"
+    },
+    {
+      "theme": "light",
+      "kind": "turtle",
+      "stage": "5",
+      "mood": "okay",
+      "animation": "av-retract"
+    },
+    {
+      "theme": "light",
+      "kind": "turtle",
+      "stage": "5",
+      "mood": "droopy",
+      "animation": "av-retract"
+    },
+    {
+      "theme": "light",
+      "kind": "turtle",
+      "stage": "6",
+      "mood": "happy",
+      "animation": "av-retract"
+    },
+    {
+      "theme": "light",
+      "kind": "turtle",
+      "stage": "6",
+      "mood": "okay",
+      "animation": "av-retract"
+    },
+    {
+      "theme": "light",
+      "kind": "turtle",
+      "stage": "6",
+      "mood": "droopy",
+      "animation": "av-retract"
+    },
+    {
+      "theme": "light",
+      "kind": "fish",
+      "stage": "1",
+      "mood": "happy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "light",
+      "kind": "fish",
+      "stage": "1",
+      "mood": "okay",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "light",
+      "kind": "fish",
+      "stage": "1",
+      "mood": "droopy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "light",
+      "kind": "fish",
+      "stage": "2",
+      "mood": "happy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "light",
+      "kind": "fish",
+      "stage": "2",
+      "mood": "okay",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "light",
+      "kind": "fish",
+      "stage": "2",
+      "mood": "droopy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "light",
+      "kind": "fish",
+      "stage": "3",
+      "mood": "happy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "light",
+      "kind": "fish",
+      "stage": "3",
+      "mood": "okay",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "light",
+      "kind": "fish",
+      "stage": "3",
+      "mood": "droopy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "light",
+      "kind": "fish",
+      "stage": "4",
+      "mood": "happy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "light",
+      "kind": "fish",
+      "stage": "4",
+      "mood": "okay",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "light",
+      "kind": "fish",
+      "stage": "4",
+      "mood": "droopy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "light",
+      "kind": "fish",
+      "stage": "5",
+      "mood": "happy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "light",
+      "kind": "fish",
+      "stage": "5",
+      "mood": "okay",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "light",
+      "kind": "fish",
+      "stage": "5",
+      "mood": "droopy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "light",
+      "kind": "fish",
+      "stage": "6",
+      "mood": "happy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "light",
+      "kind": "fish",
+      "stage": "6",
+      "mood": "okay",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "light",
+      "kind": "fish",
+      "stage": "6",
+      "mood": "droopy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "light",
+      "kind": "dolphin",
+      "stage": "1",
+      "mood": "happy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "light",
+      "kind": "dolphin",
+      "stage": "1",
+      "mood": "okay",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "light",
+      "kind": "dolphin",
+      "stage": "1",
+      "mood": "droopy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "light",
+      "kind": "dolphin",
+      "stage": "2",
+      "mood": "happy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "light",
+      "kind": "dolphin",
+      "stage": "2",
+      "mood": "okay",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "light",
+      "kind": "dolphin",
+      "stage": "2",
+      "mood": "droopy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "light",
+      "kind": "dolphin",
+      "stage": "3",
+      "mood": "happy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "light",
+      "kind": "dolphin",
+      "stage": "3",
+      "mood": "okay",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "light",
+      "kind": "dolphin",
+      "stage": "3",
+      "mood": "droopy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "light",
+      "kind": "dolphin",
+      "stage": "4",
+      "mood": "happy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "light",
+      "kind": "dolphin",
+      "stage": "4",
+      "mood": "okay",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "light",
+      "kind": "dolphin",
+      "stage": "4",
+      "mood": "droopy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "light",
+      "kind": "dolphin",
+      "stage": "5",
+      "mood": "happy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "light",
+      "kind": "dolphin",
+      "stage": "5",
+      "mood": "okay",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "light",
+      "kind": "dolphin",
+      "stage": "5",
+      "mood": "droopy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "light",
+      "kind": "dolphin",
+      "stage": "6",
+      "mood": "happy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "light",
+      "kind": "dolphin",
+      "stage": "6",
+      "mood": "okay",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "light",
+      "kind": "dolphin",
+      "stage": "6",
+      "mood": "droopy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "light",
+      "kind": "owl",
+      "stage": "1",
+      "mood": "happy",
+      "animation": "av-headturn"
+    },
+    {
+      "theme": "light",
+      "kind": "owl",
+      "stage": "1",
+      "mood": "okay",
+      "animation": "av-headturn"
+    },
+    {
+      "theme": "light",
+      "kind": "owl",
+      "stage": "1",
+      "mood": "droopy",
+      "animation": "av-headturn"
+    },
+    {
+      "theme": "light",
+      "kind": "owl",
+      "stage": "2",
+      "mood": "happy",
+      "animation": "av-headturn"
+    },
+    {
+      "theme": "light",
+      "kind": "owl",
+      "stage": "2",
+      "mood": "okay",
+      "animation": "av-headturn"
+    },
+    {
+      "theme": "light",
+      "kind": "owl",
+      "stage": "2",
+      "mood": "droopy",
+      "animation": "av-headturn"
+    },
+    {
+      "theme": "light",
+      "kind": "owl",
+      "stage": "3",
+      "mood": "happy",
+      "animation": "av-headturn"
+    },
+    {
+      "theme": "light",
+      "kind": "owl",
+      "stage": "3",
+      "mood": "okay",
+      "animation": "av-headturn"
+    },
+    {
+      "theme": "light",
+      "kind": "owl",
+      "stage": "3",
+      "mood": "droopy",
+      "animation": "av-headturn"
+    },
+    {
+      "theme": "light",
+      "kind": "owl",
+      "stage": "4",
+      "mood": "happy",
+      "animation": "av-headturn"
+    },
+    {
+      "theme": "light",
+      "kind": "owl",
+      "stage": "4",
+      "mood": "okay",
+      "animation": "av-headturn"
+    },
+    {
+      "theme": "light",
+      "kind": "owl",
+      "stage": "4",
+      "mood": "droopy",
+      "animation": "av-headturn"
+    },
+    {
+      "theme": "light",
+      "kind": "owl",
+      "stage": "5",
+      "mood": "happy",
+      "animation": "av-headturn"
+    },
+    {
+      "theme": "light",
+      "kind": "owl",
+      "stage": "5",
+      "mood": "okay",
+      "animation": "av-headturn"
+    },
+    {
+      "theme": "light",
+      "kind": "owl",
+      "stage": "5",
+      "mood": "droopy",
+      "animation": "av-headturn"
+    },
+    {
+      "theme": "light",
+      "kind": "owl",
+      "stage": "6",
+      "mood": "happy",
+      "animation": "av-headturn"
+    },
+    {
+      "theme": "light",
+      "kind": "owl",
+      "stage": "6",
+      "mood": "okay",
+      "animation": "av-headturn"
+    },
+    {
+      "theme": "light",
+      "kind": "owl",
+      "stage": "6",
+      "mood": "droopy",
+      "animation": "av-headturn"
+    },
+    {
+      "theme": "light",
+      "kind": "bat",
+      "stage": "1",
+      "mood": "happy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "light",
+      "kind": "bat",
+      "stage": "1",
+      "mood": "okay",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "light",
+      "kind": "bat",
+      "stage": "1",
+      "mood": "droopy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "light",
+      "kind": "bat",
+      "stage": "2",
+      "mood": "happy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "light",
+      "kind": "bat",
+      "stage": "2",
+      "mood": "okay",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "light",
+      "kind": "bat",
+      "stage": "2",
+      "mood": "droopy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "light",
+      "kind": "bat",
+      "stage": "3",
+      "mood": "happy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "light",
+      "kind": "bat",
+      "stage": "3",
+      "mood": "okay",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "light",
+      "kind": "bat",
+      "stage": "3",
+      "mood": "droopy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "light",
+      "kind": "bat",
+      "stage": "4",
+      "mood": "happy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "light",
+      "kind": "bat",
+      "stage": "4",
+      "mood": "okay",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "light",
+      "kind": "bat",
+      "stage": "4",
+      "mood": "droopy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "light",
+      "kind": "bat",
+      "stage": "5",
+      "mood": "happy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "light",
+      "kind": "bat",
+      "stage": "5",
+      "mood": "okay",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "light",
+      "kind": "bat",
+      "stage": "5",
+      "mood": "droopy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "light",
+      "kind": "bat",
+      "stage": "6",
+      "mood": "happy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "light",
+      "kind": "bat",
+      "stage": "6",
+      "mood": "okay",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "light",
+      "kind": "bat",
+      "stage": "6",
+      "mood": "droopy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "dark",
+      "kind": "dog",
+      "stage": "1",
+      "mood": "happy",
+      "animation": "av-wag"
+    },
+    {
+      "theme": "dark",
+      "kind": "dog",
+      "stage": "1",
+      "mood": "okay",
+      "animation": "av-wag"
+    },
+    {
+      "theme": "dark",
+      "kind": "dog",
+      "stage": "1",
+      "mood": "droopy",
+      "animation": "av-wag"
+    },
+    {
+      "theme": "dark",
+      "kind": "dog",
+      "stage": "2",
+      "mood": "happy",
+      "animation": "av-wag"
+    },
+    {
+      "theme": "dark",
+      "kind": "dog",
+      "stage": "2",
+      "mood": "okay",
+      "animation": "av-wag"
+    },
+    {
+      "theme": "dark",
+      "kind": "dog",
+      "stage": "2",
+      "mood": "droopy",
+      "animation": "av-wag"
+    },
+    {
+      "theme": "dark",
+      "kind": "dog",
+      "stage": "3",
+      "mood": "happy",
+      "animation": "av-wag"
+    },
+    {
+      "theme": "dark",
+      "kind": "dog",
+      "stage": "3",
+      "mood": "okay",
+      "animation": "av-wag"
+    },
+    {
+      "theme": "dark",
+      "kind": "dog",
+      "stage": "3",
+      "mood": "droopy",
+      "animation": "av-wag"
+    },
+    {
+      "theme": "dark",
+      "kind": "dog",
+      "stage": "4",
+      "mood": "happy",
+      "animation": "av-wag"
+    },
+    {
+      "theme": "dark",
+      "kind": "dog",
+      "stage": "4",
+      "mood": "okay",
+      "animation": "av-wag"
+    },
+    {
+      "theme": "dark",
+      "kind": "dog",
+      "stage": "4",
+      "mood": "droopy",
+      "animation": "av-wag"
+    },
+    {
+      "theme": "dark",
+      "kind": "dog",
+      "stage": "5",
+      "mood": "happy",
+      "animation": "av-wag"
+    },
+    {
+      "theme": "dark",
+      "kind": "dog",
+      "stage": "5",
+      "mood": "okay",
+      "animation": "av-wag"
+    },
+    {
+      "theme": "dark",
+      "kind": "dog",
+      "stage": "5",
+      "mood": "droopy",
+      "animation": "av-wag"
+    },
+    {
+      "theme": "dark",
+      "kind": "dog",
+      "stage": "6",
+      "mood": "happy",
+      "animation": "av-wag"
+    },
+    {
+      "theme": "dark",
+      "kind": "dog",
+      "stage": "6",
+      "mood": "okay",
+      "animation": "av-wag"
+    },
+    {
+      "theme": "dark",
+      "kind": "dog",
+      "stage": "6",
+      "mood": "droopy",
+      "animation": "av-wag"
+    },
+    {
+      "theme": "dark",
+      "kind": "rabbit",
+      "stage": "1",
+      "mood": "happy",
+      "animation": "av-earflick"
+    },
+    {
+      "theme": "dark",
+      "kind": "rabbit",
+      "stage": "1",
+      "mood": "okay",
+      "animation": "av-earflick"
+    },
+    {
+      "theme": "dark",
+      "kind": "rabbit",
+      "stage": "1",
+      "mood": "droopy",
+      "animation": "av-earflick"
+    },
+    {
+      "theme": "dark",
+      "kind": "rabbit",
+      "stage": "2",
+      "mood": "happy",
+      "animation": "av-earflick"
+    },
+    {
+      "theme": "dark",
+      "kind": "rabbit",
+      "stage": "2",
+      "mood": "okay",
+      "animation": "av-earflick"
+    },
+    {
+      "theme": "dark",
+      "kind": "rabbit",
+      "stage": "2",
+      "mood": "droopy",
+      "animation": "av-earflick"
+    },
+    {
+      "theme": "dark",
+      "kind": "rabbit",
+      "stage": "3",
+      "mood": "happy",
+      "animation": "av-earflick"
+    },
+    {
+      "theme": "dark",
+      "kind": "rabbit",
+      "stage": "3",
+      "mood": "okay",
+      "animation": "av-earflick"
+    },
+    {
+      "theme": "dark",
+      "kind": "rabbit",
+      "stage": "3",
+      "mood": "droopy",
+      "animation": "av-earflick"
+    },
+    {
+      "theme": "dark",
+      "kind": "rabbit",
+      "stage": "4",
+      "mood": "happy",
+      "animation": "av-earflick"
+    },
+    {
+      "theme": "dark",
+      "kind": "rabbit",
+      "stage": "4",
+      "mood": "okay",
+      "animation": "av-earflick"
+    },
+    {
+      "theme": "dark",
+      "kind": "rabbit",
+      "stage": "4",
+      "mood": "droopy",
+      "animation": "av-earflick"
+    },
+    {
+      "theme": "dark",
+      "kind": "rabbit",
+      "stage": "5",
+      "mood": "happy",
+      "animation": "av-earflick"
+    },
+    {
+      "theme": "dark",
+      "kind": "rabbit",
+      "stage": "5",
+      "mood": "okay",
+      "animation": "av-earflick"
+    },
+    {
+      "theme": "dark",
+      "kind": "rabbit",
+      "stage": "5",
+      "mood": "droopy",
+      "animation": "av-earflick"
+    },
+    {
+      "theme": "dark",
+      "kind": "rabbit",
+      "stage": "6",
+      "mood": "happy",
+      "animation": "av-earflick"
+    },
+    {
+      "theme": "dark",
+      "kind": "rabbit",
+      "stage": "6",
+      "mood": "okay",
+      "animation": "av-earflick"
+    },
+    {
+      "theme": "dark",
+      "kind": "rabbit",
+      "stage": "6",
+      "mood": "droopy",
+      "animation": "av-earflick"
+    },
+    {
+      "theme": "dark",
+      "kind": "bird",
+      "stage": "1",
+      "mood": "happy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "dark",
+      "kind": "bird",
+      "stage": "1",
+      "mood": "okay",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "dark",
+      "kind": "bird",
+      "stage": "1",
+      "mood": "droopy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "dark",
+      "kind": "bird",
+      "stage": "2",
+      "mood": "happy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "dark",
+      "kind": "bird",
+      "stage": "2",
+      "mood": "okay",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "dark",
+      "kind": "bird",
+      "stage": "2",
+      "mood": "droopy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "dark",
+      "kind": "bird",
+      "stage": "3",
+      "mood": "happy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "dark",
+      "kind": "bird",
+      "stage": "3",
+      "mood": "okay",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "dark",
+      "kind": "bird",
+      "stage": "3",
+      "mood": "droopy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "dark",
+      "kind": "bird",
+      "stage": "4",
+      "mood": "happy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "dark",
+      "kind": "bird",
+      "stage": "4",
+      "mood": "okay",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "dark",
+      "kind": "bird",
+      "stage": "4",
+      "mood": "droopy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "dark",
+      "kind": "bird",
+      "stage": "5",
+      "mood": "happy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "dark",
+      "kind": "bird",
+      "stage": "5",
+      "mood": "okay",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "dark",
+      "kind": "bird",
+      "stage": "5",
+      "mood": "droopy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "dark",
+      "kind": "bird",
+      "stage": "6",
+      "mood": "happy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "dark",
+      "kind": "bird",
+      "stage": "6",
+      "mood": "okay",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "dark",
+      "kind": "bird",
+      "stage": "6",
+      "mood": "droopy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "dark",
+      "kind": "turtle",
+      "stage": "1",
+      "mood": "happy",
+      "animation": "av-retract"
+    },
+    {
+      "theme": "dark",
+      "kind": "turtle",
+      "stage": "1",
+      "mood": "okay",
+      "animation": "av-retract"
+    },
+    {
+      "theme": "dark",
+      "kind": "turtle",
+      "stage": "1",
+      "mood": "droopy",
+      "animation": "av-retract"
+    },
+    {
+      "theme": "dark",
+      "kind": "turtle",
+      "stage": "2",
+      "mood": "happy",
+      "animation": "av-retract"
+    },
+    {
+      "theme": "dark",
+      "kind": "turtle",
+      "stage": "2",
+      "mood": "okay",
+      "animation": "av-retract"
+    },
+    {
+      "theme": "dark",
+      "kind": "turtle",
+      "stage": "2",
+      "mood": "droopy",
+      "animation": "av-retract"
+    },
+    {
+      "theme": "dark",
+      "kind": "turtle",
+      "stage": "3",
+      "mood": "happy",
+      "animation": "av-retract"
+    },
+    {
+      "theme": "dark",
+      "kind": "turtle",
+      "stage": "3",
+      "mood": "okay",
+      "animation": "av-retract"
+    },
+    {
+      "theme": "dark",
+      "kind": "turtle",
+      "stage": "3",
+      "mood": "droopy",
+      "animation": "av-retract"
+    },
+    {
+      "theme": "dark",
+      "kind": "turtle",
+      "stage": "4",
+      "mood": "happy",
+      "animation": "av-retract"
+    },
+    {
+      "theme": "dark",
+      "kind": "turtle",
+      "stage": "4",
+      "mood": "okay",
+      "animation": "av-retract"
+    },
+    {
+      "theme": "dark",
+      "kind": "turtle",
+      "stage": "4",
+      "mood": "droopy",
+      "animation": "av-retract"
+    },
+    {
+      "theme": "dark",
+      "kind": "turtle",
+      "stage": "5",
+      "mood": "happy",
+      "animation": "av-retract"
+    },
+    {
+      "theme": "dark",
+      "kind": "turtle",
+      "stage": "5",
+      "mood": "okay",
+      "animation": "av-retract"
+    },
+    {
+      "theme": "dark",
+      "kind": "turtle",
+      "stage": "5",
+      "mood": "droopy",
+      "animation": "av-retract"
+    },
+    {
+      "theme": "dark",
+      "kind": "turtle",
+      "stage": "6",
+      "mood": "happy",
+      "animation": "av-retract"
+    },
+    {
+      "theme": "dark",
+      "kind": "turtle",
+      "stage": "6",
+      "mood": "okay",
+      "animation": "av-retract"
+    },
+    {
+      "theme": "dark",
+      "kind": "turtle",
+      "stage": "6",
+      "mood": "droopy",
+      "animation": "av-retract"
+    },
+    {
+      "theme": "dark",
+      "kind": "fish",
+      "stage": "1",
+      "mood": "happy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "dark",
+      "kind": "fish",
+      "stage": "1",
+      "mood": "okay",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "dark",
+      "kind": "fish",
+      "stage": "1",
+      "mood": "droopy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "dark",
+      "kind": "fish",
+      "stage": "2",
+      "mood": "happy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "dark",
+      "kind": "fish",
+      "stage": "2",
+      "mood": "okay",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "dark",
+      "kind": "fish",
+      "stage": "2",
+      "mood": "droopy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "dark",
+      "kind": "fish",
+      "stage": "3",
+      "mood": "happy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "dark",
+      "kind": "fish",
+      "stage": "3",
+      "mood": "okay",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "dark",
+      "kind": "fish",
+      "stage": "3",
+      "mood": "droopy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "dark",
+      "kind": "fish",
+      "stage": "4",
+      "mood": "happy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "dark",
+      "kind": "fish",
+      "stage": "4",
+      "mood": "okay",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "dark",
+      "kind": "fish",
+      "stage": "4",
+      "mood": "droopy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "dark",
+      "kind": "fish",
+      "stage": "5",
+      "mood": "happy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "dark",
+      "kind": "fish",
+      "stage": "5",
+      "mood": "okay",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "dark",
+      "kind": "fish",
+      "stage": "5",
+      "mood": "droopy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "dark",
+      "kind": "fish",
+      "stage": "6",
+      "mood": "happy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "dark",
+      "kind": "fish",
+      "stage": "6",
+      "mood": "okay",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "dark",
+      "kind": "fish",
+      "stage": "6",
+      "mood": "droopy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "dark",
+      "kind": "dolphin",
+      "stage": "1",
+      "mood": "happy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "dark",
+      "kind": "dolphin",
+      "stage": "1",
+      "mood": "okay",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "dark",
+      "kind": "dolphin",
+      "stage": "1",
+      "mood": "droopy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "dark",
+      "kind": "dolphin",
+      "stage": "2",
+      "mood": "happy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "dark",
+      "kind": "dolphin",
+      "stage": "2",
+      "mood": "okay",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "dark",
+      "kind": "dolphin",
+      "stage": "2",
+      "mood": "droopy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "dark",
+      "kind": "dolphin",
+      "stage": "3",
+      "mood": "happy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "dark",
+      "kind": "dolphin",
+      "stage": "3",
+      "mood": "okay",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "dark",
+      "kind": "dolphin",
+      "stage": "3",
+      "mood": "droopy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "dark",
+      "kind": "dolphin",
+      "stage": "4",
+      "mood": "happy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "dark",
+      "kind": "dolphin",
+      "stage": "4",
+      "mood": "okay",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "dark",
+      "kind": "dolphin",
+      "stage": "4",
+      "mood": "droopy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "dark",
+      "kind": "dolphin",
+      "stage": "5",
+      "mood": "happy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "dark",
+      "kind": "dolphin",
+      "stage": "5",
+      "mood": "okay",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "dark",
+      "kind": "dolphin",
+      "stage": "5",
+      "mood": "droopy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "dark",
+      "kind": "dolphin",
+      "stage": "6",
+      "mood": "happy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "dark",
+      "kind": "dolphin",
+      "stage": "6",
+      "mood": "okay",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "dark",
+      "kind": "dolphin",
+      "stage": "6",
+      "mood": "droopy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "dark",
+      "kind": "owl",
+      "stage": "1",
+      "mood": "happy",
+      "animation": "av-headturn"
+    },
+    {
+      "theme": "dark",
+      "kind": "owl",
+      "stage": "1",
+      "mood": "okay",
+      "animation": "av-headturn"
+    },
+    {
+      "theme": "dark",
+      "kind": "owl",
+      "stage": "1",
+      "mood": "droopy",
+      "animation": "av-headturn"
+    },
+    {
+      "theme": "dark",
+      "kind": "owl",
+      "stage": "2",
+      "mood": "happy",
+      "animation": "av-headturn"
+    },
+    {
+      "theme": "dark",
+      "kind": "owl",
+      "stage": "2",
+      "mood": "okay",
+      "animation": "av-headturn"
+    },
+    {
+      "theme": "dark",
+      "kind": "owl",
+      "stage": "2",
+      "mood": "droopy",
+      "animation": "av-headturn"
+    },
+    {
+      "theme": "dark",
+      "kind": "owl",
+      "stage": "3",
+      "mood": "happy",
+      "animation": "av-headturn"
+    },
+    {
+      "theme": "dark",
+      "kind": "owl",
+      "stage": "3",
+      "mood": "okay",
+      "animation": "av-headturn"
+    },
+    {
+      "theme": "dark",
+      "kind": "owl",
+      "stage": "3",
+      "mood": "droopy",
+      "animation": "av-headturn"
+    },
+    {
+      "theme": "dark",
+      "kind": "owl",
+      "stage": "4",
+      "mood": "happy",
+      "animation": "av-headturn"
+    },
+    {
+      "theme": "dark",
+      "kind": "owl",
+      "stage": "4",
+      "mood": "okay",
+      "animation": "av-headturn"
+    },
+    {
+      "theme": "dark",
+      "kind": "owl",
+      "stage": "4",
+      "mood": "droopy",
+      "animation": "av-headturn"
+    },
+    {
+      "theme": "dark",
+      "kind": "owl",
+      "stage": "5",
+      "mood": "happy",
+      "animation": "av-headturn"
+    },
+    {
+      "theme": "dark",
+      "kind": "owl",
+      "stage": "5",
+      "mood": "okay",
+      "animation": "av-headturn"
+    },
+    {
+      "theme": "dark",
+      "kind": "owl",
+      "stage": "5",
+      "mood": "droopy",
+      "animation": "av-headturn"
+    },
+    {
+      "theme": "dark",
+      "kind": "owl",
+      "stage": "6",
+      "mood": "happy",
+      "animation": "av-headturn"
+    },
+    {
+      "theme": "dark",
+      "kind": "owl",
+      "stage": "6",
+      "mood": "okay",
+      "animation": "av-headturn"
+    },
+    {
+      "theme": "dark",
+      "kind": "owl",
+      "stage": "6",
+      "mood": "droopy",
+      "animation": "av-headturn"
+    },
+    {
+      "theme": "dark",
+      "kind": "bat",
+      "stage": "1",
+      "mood": "happy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "dark",
+      "kind": "bat",
+      "stage": "1",
+      "mood": "okay",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "dark",
+      "kind": "bat",
+      "stage": "1",
+      "mood": "droopy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "dark",
+      "kind": "bat",
+      "stage": "2",
+      "mood": "happy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "dark",
+      "kind": "bat",
+      "stage": "2",
+      "mood": "okay",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "dark",
+      "kind": "bat",
+      "stage": "2",
+      "mood": "droopy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "dark",
+      "kind": "bat",
+      "stage": "3",
+      "mood": "happy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "dark",
+      "kind": "bat",
+      "stage": "3",
+      "mood": "okay",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "dark",
+      "kind": "bat",
+      "stage": "3",
+      "mood": "droopy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "dark",
+      "kind": "bat",
+      "stage": "4",
+      "mood": "happy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "dark",
+      "kind": "bat",
+      "stage": "4",
+      "mood": "okay",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "dark",
+      "kind": "bat",
+      "stage": "4",
+      "mood": "droopy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "dark",
+      "kind": "bat",
+      "stage": "5",
+      "mood": "happy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "dark",
+      "kind": "bat",
+      "stage": "5",
+      "mood": "okay",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "dark",
+      "kind": "bat",
+      "stage": "5",
+      "mood": "droopy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "dark",
+      "kind": "bat",
+      "stage": "6",
+      "mood": "happy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "dark",
+      "kind": "bat",
+      "stage": "6",
+      "mood": "okay",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "dark",
+      "kind": "bat",
+      "stage": "6",
+      "mood": "droopy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "contrast",
+      "kind": "dog",
+      "stage": "1",
+      "mood": "happy",
+      "animation": "av-wag"
+    },
+    {
+      "theme": "contrast",
+      "kind": "dog",
+      "stage": "1",
+      "mood": "okay",
+      "animation": "av-wag"
+    },
+    {
+      "theme": "contrast",
+      "kind": "dog",
+      "stage": "1",
+      "mood": "droopy",
+      "animation": "av-wag"
+    },
+    {
+      "theme": "contrast",
+      "kind": "dog",
+      "stage": "2",
+      "mood": "happy",
+      "animation": "av-wag"
+    },
+    {
+      "theme": "contrast",
+      "kind": "dog",
+      "stage": "2",
+      "mood": "okay",
+      "animation": "av-wag"
+    },
+    {
+      "theme": "contrast",
+      "kind": "dog",
+      "stage": "2",
+      "mood": "droopy",
+      "animation": "av-wag"
+    },
+    {
+      "theme": "contrast",
+      "kind": "dog",
+      "stage": "3",
+      "mood": "happy",
+      "animation": "av-wag"
+    },
+    {
+      "theme": "contrast",
+      "kind": "dog",
+      "stage": "3",
+      "mood": "okay",
+      "animation": "av-wag"
+    },
+    {
+      "theme": "contrast",
+      "kind": "dog",
+      "stage": "3",
+      "mood": "droopy",
+      "animation": "av-wag"
+    },
+    {
+      "theme": "contrast",
+      "kind": "dog",
+      "stage": "4",
+      "mood": "happy",
+      "animation": "av-wag"
+    },
+    {
+      "theme": "contrast",
+      "kind": "dog",
+      "stage": "4",
+      "mood": "okay",
+      "animation": "av-wag"
+    },
+    {
+      "theme": "contrast",
+      "kind": "dog",
+      "stage": "4",
+      "mood": "droopy",
+      "animation": "av-wag"
+    },
+    {
+      "theme": "contrast",
+      "kind": "dog",
+      "stage": "5",
+      "mood": "happy",
+      "animation": "av-wag"
+    },
+    {
+      "theme": "contrast",
+      "kind": "dog",
+      "stage": "5",
+      "mood": "okay",
+      "animation": "av-wag"
+    },
+    {
+      "theme": "contrast",
+      "kind": "dog",
+      "stage": "5",
+      "mood": "droopy",
+      "animation": "av-wag"
+    },
+    {
+      "theme": "contrast",
+      "kind": "dog",
+      "stage": "6",
+      "mood": "happy",
+      "animation": "av-wag"
+    },
+    {
+      "theme": "contrast",
+      "kind": "dog",
+      "stage": "6",
+      "mood": "okay",
+      "animation": "av-wag"
+    },
+    {
+      "theme": "contrast",
+      "kind": "dog",
+      "stage": "6",
+      "mood": "droopy",
+      "animation": "av-wag"
+    },
+    {
+      "theme": "contrast",
+      "kind": "rabbit",
+      "stage": "1",
+      "mood": "happy",
+      "animation": "av-earflick"
+    },
+    {
+      "theme": "contrast",
+      "kind": "rabbit",
+      "stage": "1",
+      "mood": "okay",
+      "animation": "av-earflick"
+    },
+    {
+      "theme": "contrast",
+      "kind": "rabbit",
+      "stage": "1",
+      "mood": "droopy",
+      "animation": "av-earflick"
+    },
+    {
+      "theme": "contrast",
+      "kind": "rabbit",
+      "stage": "2",
+      "mood": "happy",
+      "animation": "av-earflick"
+    },
+    {
+      "theme": "contrast",
+      "kind": "rabbit",
+      "stage": "2",
+      "mood": "okay",
+      "animation": "av-earflick"
+    },
+    {
+      "theme": "contrast",
+      "kind": "rabbit",
+      "stage": "2",
+      "mood": "droopy",
+      "animation": "av-earflick"
+    },
+    {
+      "theme": "contrast",
+      "kind": "rabbit",
+      "stage": "3",
+      "mood": "happy",
+      "animation": "av-earflick"
+    },
+    {
+      "theme": "contrast",
+      "kind": "rabbit",
+      "stage": "3",
+      "mood": "okay",
+      "animation": "av-earflick"
+    },
+    {
+      "theme": "contrast",
+      "kind": "rabbit",
+      "stage": "3",
+      "mood": "droopy",
+      "animation": "av-earflick"
+    },
+    {
+      "theme": "contrast",
+      "kind": "rabbit",
+      "stage": "4",
+      "mood": "happy",
+      "animation": "av-earflick"
+    },
+    {
+      "theme": "contrast",
+      "kind": "rabbit",
+      "stage": "4",
+      "mood": "okay",
+      "animation": "av-earflick"
+    },
+    {
+      "theme": "contrast",
+      "kind": "rabbit",
+      "stage": "4",
+      "mood": "droopy",
+      "animation": "av-earflick"
+    },
+    {
+      "theme": "contrast",
+      "kind": "rabbit",
+      "stage": "5",
+      "mood": "happy",
+      "animation": "av-earflick"
+    },
+    {
+      "theme": "contrast",
+      "kind": "rabbit",
+      "stage": "5",
+      "mood": "okay",
+      "animation": "av-earflick"
+    },
+    {
+      "theme": "contrast",
+      "kind": "rabbit",
+      "stage": "5",
+      "mood": "droopy",
+      "animation": "av-earflick"
+    },
+    {
+      "theme": "contrast",
+      "kind": "rabbit",
+      "stage": "6",
+      "mood": "happy",
+      "animation": "av-earflick"
+    },
+    {
+      "theme": "contrast",
+      "kind": "rabbit",
+      "stage": "6",
+      "mood": "okay",
+      "animation": "av-earflick"
+    },
+    {
+      "theme": "contrast",
+      "kind": "rabbit",
+      "stage": "6",
+      "mood": "droopy",
+      "animation": "av-earflick"
+    },
+    {
+      "theme": "contrast",
+      "kind": "bird",
+      "stage": "1",
+      "mood": "happy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "contrast",
+      "kind": "bird",
+      "stage": "1",
+      "mood": "okay",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "contrast",
+      "kind": "bird",
+      "stage": "1",
+      "mood": "droopy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "contrast",
+      "kind": "bird",
+      "stage": "2",
+      "mood": "happy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "contrast",
+      "kind": "bird",
+      "stage": "2",
+      "mood": "okay",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "contrast",
+      "kind": "bird",
+      "stage": "2",
+      "mood": "droopy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "contrast",
+      "kind": "bird",
+      "stage": "3",
+      "mood": "happy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "contrast",
+      "kind": "bird",
+      "stage": "3",
+      "mood": "okay",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "contrast",
+      "kind": "bird",
+      "stage": "3",
+      "mood": "droopy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "contrast",
+      "kind": "bird",
+      "stage": "4",
+      "mood": "happy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "contrast",
+      "kind": "bird",
+      "stage": "4",
+      "mood": "okay",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "contrast",
+      "kind": "bird",
+      "stage": "4",
+      "mood": "droopy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "contrast",
+      "kind": "bird",
+      "stage": "5",
+      "mood": "happy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "contrast",
+      "kind": "bird",
+      "stage": "5",
+      "mood": "okay",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "contrast",
+      "kind": "bird",
+      "stage": "5",
+      "mood": "droopy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "contrast",
+      "kind": "bird",
+      "stage": "6",
+      "mood": "happy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "contrast",
+      "kind": "bird",
+      "stage": "6",
+      "mood": "okay",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "contrast",
+      "kind": "bird",
+      "stage": "6",
+      "mood": "droopy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "contrast",
+      "kind": "turtle",
+      "stage": "1",
+      "mood": "happy",
+      "animation": "av-retract"
+    },
+    {
+      "theme": "contrast",
+      "kind": "turtle",
+      "stage": "1",
+      "mood": "okay",
+      "animation": "av-retract"
+    },
+    {
+      "theme": "contrast",
+      "kind": "turtle",
+      "stage": "1",
+      "mood": "droopy",
+      "animation": "av-retract"
+    },
+    {
+      "theme": "contrast",
+      "kind": "turtle",
+      "stage": "2",
+      "mood": "happy",
+      "animation": "av-retract"
+    },
+    {
+      "theme": "contrast",
+      "kind": "turtle",
+      "stage": "2",
+      "mood": "okay",
+      "animation": "av-retract"
+    },
+    {
+      "theme": "contrast",
+      "kind": "turtle",
+      "stage": "2",
+      "mood": "droopy",
+      "animation": "av-retract"
+    },
+    {
+      "theme": "contrast",
+      "kind": "turtle",
+      "stage": "3",
+      "mood": "happy",
+      "animation": "av-retract"
+    },
+    {
+      "theme": "contrast",
+      "kind": "turtle",
+      "stage": "3",
+      "mood": "okay",
+      "animation": "av-retract"
+    },
+    {
+      "theme": "contrast",
+      "kind": "turtle",
+      "stage": "3",
+      "mood": "droopy",
+      "animation": "av-retract"
+    },
+    {
+      "theme": "contrast",
+      "kind": "turtle",
+      "stage": "4",
+      "mood": "happy",
+      "animation": "av-retract"
+    },
+    {
+      "theme": "contrast",
+      "kind": "turtle",
+      "stage": "4",
+      "mood": "okay",
+      "animation": "av-retract"
+    },
+    {
+      "theme": "contrast",
+      "kind": "turtle",
+      "stage": "4",
+      "mood": "droopy",
+      "animation": "av-retract"
+    },
+    {
+      "theme": "contrast",
+      "kind": "turtle",
+      "stage": "5",
+      "mood": "happy",
+      "animation": "av-retract"
+    },
+    {
+      "theme": "contrast",
+      "kind": "turtle",
+      "stage": "5",
+      "mood": "okay",
+      "animation": "av-retract"
+    },
+    {
+      "theme": "contrast",
+      "kind": "turtle",
+      "stage": "5",
+      "mood": "droopy",
+      "animation": "av-retract"
+    },
+    {
+      "theme": "contrast",
+      "kind": "turtle",
+      "stage": "6",
+      "mood": "happy",
+      "animation": "av-retract"
+    },
+    {
+      "theme": "contrast",
+      "kind": "turtle",
+      "stage": "6",
+      "mood": "okay",
+      "animation": "av-retract"
+    },
+    {
+      "theme": "contrast",
+      "kind": "turtle",
+      "stage": "6",
+      "mood": "droopy",
+      "animation": "av-retract"
+    },
+    {
+      "theme": "contrast",
+      "kind": "fish",
+      "stage": "1",
+      "mood": "happy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "contrast",
+      "kind": "fish",
+      "stage": "1",
+      "mood": "okay",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "contrast",
+      "kind": "fish",
+      "stage": "1",
+      "mood": "droopy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "contrast",
+      "kind": "fish",
+      "stage": "2",
+      "mood": "happy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "contrast",
+      "kind": "fish",
+      "stage": "2",
+      "mood": "okay",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "contrast",
+      "kind": "fish",
+      "stage": "2",
+      "mood": "droopy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "contrast",
+      "kind": "fish",
+      "stage": "3",
+      "mood": "happy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "contrast",
+      "kind": "fish",
+      "stage": "3",
+      "mood": "okay",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "contrast",
+      "kind": "fish",
+      "stage": "3",
+      "mood": "droopy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "contrast",
+      "kind": "fish",
+      "stage": "4",
+      "mood": "happy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "contrast",
+      "kind": "fish",
+      "stage": "4",
+      "mood": "okay",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "contrast",
+      "kind": "fish",
+      "stage": "4",
+      "mood": "droopy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "contrast",
+      "kind": "fish",
+      "stage": "5",
+      "mood": "happy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "contrast",
+      "kind": "fish",
+      "stage": "5",
+      "mood": "okay",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "contrast",
+      "kind": "fish",
+      "stage": "5",
+      "mood": "droopy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "contrast",
+      "kind": "fish",
+      "stage": "6",
+      "mood": "happy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "contrast",
+      "kind": "fish",
+      "stage": "6",
+      "mood": "okay",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "contrast",
+      "kind": "fish",
+      "stage": "6",
+      "mood": "droopy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "contrast",
+      "kind": "dolphin",
+      "stage": "1",
+      "mood": "happy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "contrast",
+      "kind": "dolphin",
+      "stage": "1",
+      "mood": "okay",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "contrast",
+      "kind": "dolphin",
+      "stage": "1",
+      "mood": "droopy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "contrast",
+      "kind": "dolphin",
+      "stage": "2",
+      "mood": "happy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "contrast",
+      "kind": "dolphin",
+      "stage": "2",
+      "mood": "okay",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "contrast",
+      "kind": "dolphin",
+      "stage": "2",
+      "mood": "droopy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "contrast",
+      "kind": "dolphin",
+      "stage": "3",
+      "mood": "happy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "contrast",
+      "kind": "dolphin",
+      "stage": "3",
+      "mood": "okay",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "contrast",
+      "kind": "dolphin",
+      "stage": "3",
+      "mood": "droopy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "contrast",
+      "kind": "dolphin",
+      "stage": "4",
+      "mood": "happy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "contrast",
+      "kind": "dolphin",
+      "stage": "4",
+      "mood": "okay",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "contrast",
+      "kind": "dolphin",
+      "stage": "4",
+      "mood": "droopy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "contrast",
+      "kind": "dolphin",
+      "stage": "5",
+      "mood": "happy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "contrast",
+      "kind": "dolphin",
+      "stage": "5",
+      "mood": "okay",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "contrast",
+      "kind": "dolphin",
+      "stage": "5",
+      "mood": "droopy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "contrast",
+      "kind": "dolphin",
+      "stage": "6",
+      "mood": "happy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "contrast",
+      "kind": "dolphin",
+      "stage": "6",
+      "mood": "okay",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "contrast",
+      "kind": "dolphin",
+      "stage": "6",
+      "mood": "droopy",
+      "animation": "av-finflick"
+    },
+    {
+      "theme": "contrast",
+      "kind": "owl",
+      "stage": "1",
+      "mood": "happy",
+      "animation": "av-headturn"
+    },
+    {
+      "theme": "contrast",
+      "kind": "owl",
+      "stage": "1",
+      "mood": "okay",
+      "animation": "av-headturn"
+    },
+    {
+      "theme": "contrast",
+      "kind": "owl",
+      "stage": "1",
+      "mood": "droopy",
+      "animation": "av-headturn"
+    },
+    {
+      "theme": "contrast",
+      "kind": "owl",
+      "stage": "2",
+      "mood": "happy",
+      "animation": "av-headturn"
+    },
+    {
+      "theme": "contrast",
+      "kind": "owl",
+      "stage": "2",
+      "mood": "okay",
+      "animation": "av-headturn"
+    },
+    {
+      "theme": "contrast",
+      "kind": "owl",
+      "stage": "2",
+      "mood": "droopy",
+      "animation": "av-headturn"
+    },
+    {
+      "theme": "contrast",
+      "kind": "owl",
+      "stage": "3",
+      "mood": "happy",
+      "animation": "av-headturn"
+    },
+    {
+      "theme": "contrast",
+      "kind": "owl",
+      "stage": "3",
+      "mood": "okay",
+      "animation": "av-headturn"
+    },
+    {
+      "theme": "contrast",
+      "kind": "owl",
+      "stage": "3",
+      "mood": "droopy",
+      "animation": "av-headturn"
+    },
+    {
+      "theme": "contrast",
+      "kind": "owl",
+      "stage": "4",
+      "mood": "happy",
+      "animation": "av-headturn"
+    },
+    {
+      "theme": "contrast",
+      "kind": "owl",
+      "stage": "4",
+      "mood": "okay",
+      "animation": "av-headturn"
+    },
+    {
+      "theme": "contrast",
+      "kind": "owl",
+      "stage": "4",
+      "mood": "droopy",
+      "animation": "av-headturn"
+    },
+    {
+      "theme": "contrast",
+      "kind": "owl",
+      "stage": "5",
+      "mood": "happy",
+      "animation": "av-headturn"
+    },
+    {
+      "theme": "contrast",
+      "kind": "owl",
+      "stage": "5",
+      "mood": "okay",
+      "animation": "av-headturn"
+    },
+    {
+      "theme": "contrast",
+      "kind": "owl",
+      "stage": "5",
+      "mood": "droopy",
+      "animation": "av-headturn"
+    },
+    {
+      "theme": "contrast",
+      "kind": "owl",
+      "stage": "6",
+      "mood": "happy",
+      "animation": "av-headturn"
+    },
+    {
+      "theme": "contrast",
+      "kind": "owl",
+      "stage": "6",
+      "mood": "okay",
+      "animation": "av-headturn"
+    },
+    {
+      "theme": "contrast",
+      "kind": "owl",
+      "stage": "6",
+      "mood": "droopy",
+      "animation": "av-headturn"
+    },
+    {
+      "theme": "contrast",
+      "kind": "bat",
+      "stage": "1",
+      "mood": "happy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "contrast",
+      "kind": "bat",
+      "stage": "1",
+      "mood": "okay",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "contrast",
+      "kind": "bat",
+      "stage": "1",
+      "mood": "droopy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "contrast",
+      "kind": "bat",
+      "stage": "2",
+      "mood": "happy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "contrast",
+      "kind": "bat",
+      "stage": "2",
+      "mood": "okay",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "contrast",
+      "kind": "bat",
+      "stage": "2",
+      "mood": "droopy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "contrast",
+      "kind": "bat",
+      "stage": "3",
+      "mood": "happy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "contrast",
+      "kind": "bat",
+      "stage": "3",
+      "mood": "okay",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "contrast",
+      "kind": "bat",
+      "stage": "3",
+      "mood": "droopy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "contrast",
+      "kind": "bat",
+      "stage": "4",
+      "mood": "happy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "contrast",
+      "kind": "bat",
+      "stage": "4",
+      "mood": "okay",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "contrast",
+      "kind": "bat",
+      "stage": "4",
+      "mood": "droopy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "contrast",
+      "kind": "bat",
+      "stage": "5",
+      "mood": "happy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "contrast",
+      "kind": "bat",
+      "stage": "5",
+      "mood": "okay",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "contrast",
+      "kind": "bat",
+      "stage": "5",
+      "mood": "droopy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "contrast",
+      "kind": "bat",
+      "stage": "6",
+      "mood": "happy",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "contrast",
+      "kind": "bat",
+      "stage": "6",
+      "mood": "okay",
+      "animation": "av-flap-l"
+    },
+    {
+      "theme": "contrast",
+      "kind": "bat",
+      "stage": "6",
+      "mood": "droopy",
+      "animation": "av-flap-l"
+    }
+  ]
+}

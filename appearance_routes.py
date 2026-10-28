@@ -145,6 +145,6 @@ def make_router(templates, get_conn, read_db):
         if not st.valid_avatar_kind(kind) or not 1 <= stage <= 6:
             return HTMLResponse("Unknown avatar.", status_code=404, headers=PRIVATE)
         module = templates.env.get_template("_avatars.html").module
-        return HTMLResponse(str(module.avatar_svg(kind, stage)), headers=PRIVATE)
+        return HTMLResponse(str(module.avatar_svg(kind, stage, preferences=False)), headers=PRIVATE)
 
     return router

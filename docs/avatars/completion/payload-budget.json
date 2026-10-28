@@ -1,33 +1,40 @@
 {
-  "source_commit": "190d084005e75078d71a121383a1f136dc7d631d",
+  "source_commit": "3572ac9aa24e3e1058e59d94206ee981442e7a77",
   "working_tree_css_sha256": "868a527420e0c8db9296513a85f98295d55427a40f5ec0f926ee6be493db7e0d",
   "rows": [
     {
       "baseline": "1c964dc",
       "css_gzip_delta_bytes": 440,
       "scripts": {
-        "avatars.js": 3657,
+        "avatars.js": 3698,
         "avatar-audio.js": 54,
         "appearance.js": 15,
         "companion-customizer.js": 1306,
         "search.js": 170
       },
-      "total_gzip_delta_bytes": 5642,
+      "total_gzip_delta_bytes": 5683,
       "within_15kib": true
     },
     {
       "baseline": "0a91f73",
       "css_gzip_delta_bytes": 220,
       "scripts": {
-        "avatars.js": 907,
+        "avatars.js": 948,
         "avatar-audio.js": 0,
         "appearance.js": 15,
         "companion-customizer.js": 1306,
         "search.js": 0
       },
-      "total_gzip_delta_bytes": 2448,
+      "total_gzip_delta_bytes": 2489,
       "within_15kib": true
     }
   ],
-  "notes": "Exact compressed CSS/JS source deltas, including new customizer and changed appearance refresh. Actual document transfer, timing and memory require hosted matrix; this does not accept those gates."
+  "notes": "Exact compressed CSS/JS source deltas, including new customizer and changed appearance refresh. Actual document transfer, timing and memory require hosted matrix; this does not accept those gates.",
+  "script_sha256": {
+    "avatars.js": "c6535cf92bc806558281d1742c1f550ee24545ca4125d143f5177bc8ed00fb14",
+    "avatar-audio.js": "0434c719d23e149eb4e5b8471c06fdf439d8c1b3f1983192e5ce9e3ffa9fbf32",
+    "appearance.js": "2d526047b2cba628474639b3e4c09c1d1be6e93502c552747ee2c7e3644cfe2e",
+    "companion-customizer.js": "75ec49c45bf6c6f40335a2302672f97741bb83cac1406382a2879b745db059fb",
+    "search.js": "5027eebe29b7170610d114834f85128da4afaef9393313b36f80946765cea3e7"
+  }
 }

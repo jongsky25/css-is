@@ -57,6 +57,8 @@ def test_preview_is_read_only_and_save_cross_surface(admin, app_mod):
         assert response.status_code==200, response.text[:300]
         assert 'data-avatar-mode="personal"' in response.text
         assert 'data-equipment="small_cap"' in response.text and 'data-equipment="bandana"' in response.text
+    global_art=admin.get("/appearance/avatar/cat/3").text
+    assert 'data-avatar-mode="seasonal"' in global_art and 'data-equipment=' not in global_art
     # Explicit administrator samples ignore personal preferences.
     response=admin.get('/admin/appearance')
     assert 'data-equipment=' not in response.text

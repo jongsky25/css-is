@@ -18,7 +18,7 @@
     </select>
   </div>
   {% endfor %}
-  <div data-appearance-sample aria-label="Companion appearance preview" role="img" style="width:170px;height:198px;max-width:100%;margin:auto" id="companion-customizer-preview">
+  <div aria-label="Companion appearance preview" role="img" style="width:170px;height:198px;max-width:100%;margin:auto" id="companion-customizer-preview">
     {{ avatar_svg(profile.avatar_kind, wstats.stage if wstats else 1, static_preview=true, preferences=wardrobe_preferences) }}
   </div>
   <p id="companion-customizer-status" role="status" aria-live="polite">Preview only. Your saved companion has not changed.</p>

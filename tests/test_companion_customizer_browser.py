@@ -10,6 +10,7 @@ pytestmark=pytest.mark.skipif(os.getenv('CSS_AVATAR_BASELINE')!='1',reason='Opt-
 
 def test_mobile_preview_cancel_save_and_seasonal_update(baseline_server,app_mod):
     import storage as st
+    import appearance_storage as appearances
     from playwright.sync_api import sync_playwright, expect
     origin,cookie,uid=baseline_server
     conn=st.connect(app_mod.DB);st.set_user_avatar(conn,uid,'cat','Miso');conn.close()
@@ -34,11 +35,23 @@ def test_mobile_preview_cancel_save_and_seasonal_update(baseline_server,app_mod)
         expect(page.locator('.avwrap[data-interactive] svg[data-avatar-kind="cat"] [data-equipment]')).to_have_count(2)
         page.goto(origin+'/wellness')
         expect(page.locator('.avwrap[data-interactive] svg[data-avatar-kind="cat"] [data-equipment]')).to_have_count(2)
-        # Existing refresh runs after focus; personal equipment must survive it.
+        # Publish a real global change: personal equipment stays, page theme updates.
+        conn=st.connect(app_mod.DB)
+        appearances.mutate(conn,'admin@test.local',str(appearances.load(conn)['revision']),'defaults',{'theme':'halloween','outfit':'halloween'})
+        conn.close()
         page.evaluate("window.dispatchEvent(new Event('focus'))")
-        page.wait_for_timeout(350)
+        expect(page.locator('html')).to_have_attribute('data-season','halloween')
         expect(page.locator('.avwrap[data-interactive] svg[data-avatar-kind="cat"][data-avatar-mode="personal"] [data-equipment]')).to_have_count(2)
-        page.goto(origin+'/me#companion');page.locator('[name=avatar_kind][value=fern]').check(force=True)
+        page.goto(origin+'/me#companion')
+        page.locator('#avatar-appearance-mode').select_option('seasonal')
+        expect(page.locator('#companion-customizer-preview svg')).to_have_attribute('data-avatar-outfit','halloween')
+        conn=st.connect(app_mod.DB)
+        appearances.mutate(conn,'admin@test.local',str(appearances.load(conn)['revision']),'defaults',{'theme':'christmas','outfit':'christmas'})
+        conn.close()
+        page.evaluate("window.dispatchEvent(new Event('focus'))")
+        expect(page.locator('#companion-customizer-preview svg')).to_have_attribute('data-avatar-outfit','christmas')
+        conn=st.connect(app_mod.DB);assert st.get_user_profile(conn,uid)['avatar_wardrobe']['mode']=='personal';conn.close()
+        page.locator('[name=avatar_kind][value=fern]').check(force=True)
         expect(page.locator('#avatar-primary')).to_have_value('')
         expect(page.locator('#avatar-secondary')).to_have_value('')
         expect(page.locator('#companion-customizer-preview svg[data-avatar-kind="fern"]')).to_have_count(1)
@@ -76,10 +89,16 @@ def test_motion_suspends_resumes_and_releases_removed_companions(baseline_server
         context.close();browser.close()
 
 
-def test_water_followthrough_preserves_leaf_placement(baseline_server,app_mod):
+@pytest.fixture
+def mature_baseline_server(monkeypatch,request):
+    monkeypatch.setenv('CSS_AVATAR_MATURE','1')
+    return request.getfixturevalue('baseline_server')
+
+
+def test_water_followthrough_preserves_leaf_placement(mature_baseline_server,app_mod):
     import storage as st
     from playwright.sync_api import sync_playwright
-    origin,cookie,uid=baseline_server
+    origin,cookie,uid=mature_baseline_server
     conn=st.connect(app_mod.DB);st.set_user_avatar(conn,uid,'plant','Sprout');conn.close()
     with sync_playwright() as pw:
         browser=pw.chromium.launch(executable_path=shutil.which('chromium'),args=['--no-sandbox'])

@@ -10,7 +10,9 @@ The user authorized remaining avatar implementation and review preparation on
 This supersedes older prohibitions on starting later increments.
 
 All remaining product increments are implemented as separate commits on
-`codex/avatar-remaining-implementation` (worktree `/workspace/css-is-completion`).
+`codex/avatar-upgrade-completion` in `/workspace/css-is`. The temporary implementation
+worktree was removed after its changes were preserved; do not resume from its older
+branch. Draft review: [PR #526](https://github.com/jongsky25/css-is/pull/526).
 3A was selectively recovered from cb2220f; 3B is original authored art. Wardrobe,
 profile customization and shared motion are implemented. Current status and test
 limits are in [the completion report](avatars/completion/REPORT.md).

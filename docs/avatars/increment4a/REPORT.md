@@ -14,3 +14,14 @@ and no-accessory companions while keeping page themes current.
 
 Profile Save/Cancel and the nonpersistent preview are delivered in 4B. Tests and
 render sweeps follow integration. No acceptance, merge or deployment is claimed.
+
+## Integrated validation update — 2026-10-28
+
+Implementation and focused checks are complete. The combined source passes 432
+actual animal stage/mood/theme rig cases; 1,584 compatible equipment/stage and
+1,632 seasonal render cases; 24 wardrobe/customizer/appearance checks, including
+real global updates while previewing an unsaved seasonal mode; and 32 motion,
+pointer/customizer/audio regressions. All eight animal care interactions persist.
+The leaf test now establishes maturity itself. See the completion report for
+exact snapshots, retained failures and all evidence. Full hosted performance
+acceptance remains pending; this is a review candidate, not a deployed release.
