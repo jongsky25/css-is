@@ -16222,6 +16222,11 @@ def wellness_hub(request: Request, cheer: str = "", badges: str = "", err: str =
         "err": err,
         "check_in_ready": {c["id"]: st.wellness_check_in_ready(c) for c in claims
                            if c["status"] == "approved"},
+        # Still undecided although the break has already ended: say so on the
+        # row, so the requester chases the approver instead of reading "pending"
+        # as "approved but not showing".
+        "pending_past": {c["id"] for c in claims
+                         if c["status"] == "pending" and st.wellness_check_in_ready(c)},
     })
 
 

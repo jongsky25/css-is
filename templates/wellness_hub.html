@@ -168,6 +168,7 @@
         <td>{{ c.hours }} h</td>
         <td>{{ c.activity_label }}</td>
         <td><span class="pill s-{{ c.status }}">{{ c.status }}</span>
+            {% if c.id in pending_past %}<div style="color:var(--soft); font-size:.78rem;">Break time has passed and your approver hasn't decided yet — please follow up with them.</div>{% endif %}
             {% if c.status == 'denied' and c.decide_note %}<span style="color:var(--soft); font-size:.78rem;"> — {{ c.decide_note }}</span>{% endif %}
             {% if c.status == 'cancelled' and c.cancel_reason %}<span style="color:var(--soft); font-size:.78rem;"> — {{ c.cancel_reason }}</span>{% endif %}</td>
         <td class="row-act">
