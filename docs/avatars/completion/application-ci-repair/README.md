@@ -43,3 +43,12 @@ a mixed analysis module. Application-suite selection now deselects that exact
 case unless CSS_AVATAR_CPU_DIAGNOSTIC=1. All 17 inert analysis cases remain selected
 and pass; no profiler was installed or started. Default pytest is unchanged.
 The zero-skip gate still applies to all selected application cases.
+
+## Release payload import closure
+
+The local broad suite next found deploy_hf.RUNTIME_PY omitted the new
+companion_wardrobe.py module and the baseline's existing sqlite_reader.py module.
+Both imports are required by shipped application code. Commit b700e85 adds those
+two filenames; all four deploy-manifest tests pass. No deployment ran. Production
+Python/JS/CSS/template bytes and the frozen performance source remain unchanged.
+qa_preflight remains GREEN (only missing backup-directory warning).
