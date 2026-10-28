@@ -1318,6 +1318,106 @@ def feedback_update_message(submitter_name, status, reply, link):
     return subject, body, html
 
 
+def _supply_email(name, subject, heading, intro, link, cta, *, note=None, rows=None, footnote=""):
+    """Shared shape for the Supplies emails: plain text, plus the standard HTML shell."""
+    lines = [f"Hello {name or 'there'},", "", intro]
+    if rows:
+        lines += [""] + [f"  • {r}" for r in rows]
+    if note:
+        lines += ["", f"{note[0]}: {note[1]}"]
+    lines += ["", f"{cta}:", f"  {link}"]
+    if footnote:
+        lines += ["", footnote]
+    extra = (_note_box_html(*note) if note else "") + (_list_html(rows) if rows else "")
+    html = _email_html(greeting=f"Hi {name or 'there'},", heading=heading, intro=_e(intro),
+                       cta_label=cta, link=link, footnote=footnote, extra_html=extra)
+    return subject, "\n".join(lines) + "\n", html
+
+
+def supply_request_pending_message(approver_name, requester_name, control_number, unit, purpose, link):
+    """To a request approver: a supply request in their unit is waiting for a decision."""
+    return _supply_email(
+        approver_name, f"Supply request to decide: {control_number}", "Supply request to decide",
+        f"{requester_name or 'A staff member'} ({unit}) submitted supply request {control_number} and it is waiting for your decision.",
+        link, "Review the request", note=("Purpose", purpose),
+        footnote="You get this because you are a supply request approver for this unit.")
+
+
+_SUPPLY_DECISION = {"approved": "approved", "returned": "returned for correction", "rejected": "rejected"}
+
+
+def supply_request_decided_message(name, control_number, decision, reason, link):
+    """To the requester: their supply request was approved, returned for correction, or rejected."""
+    verdict = _SUPPLY_DECISION.get(decision, decision)
+    intro = f"Your supply request {control_number} was {verdict}."
+    if decision == "approved":
+        intro += " The custodian will tell you when the supplies are ready to collect."
+    elif decision == "returned":
+        intro += " Fix the points below, then submit it again."
+    return _supply_email(
+        name, f"Supply request {verdict}: {control_number}", f"Supply request {verdict}", intro, link,
+        "Open the request", note=("Approver's note", reason) if reason else None)
+
+
+def supply_replenishment_pending_message(approver_name, preparer_name, control_number, purpose, link):
+    """To a replenishment approver: a custodian submitted a purchase request for decision."""
+    return _supply_email(
+        approver_name, f"Replenishment to decide: {control_number}", "Replenishment to decide",
+        f"{preparer_name or 'A custodian'} submitted replenishment {control_number} and it is waiting for your decision.",
+        link, "Review the replenishment", note=("Purpose", purpose),
+        footnote="You get this because you are a replenishment approver.")
+
+
+def supply_replenishment_decided_message(name, control_number, decision, reason, link):
+    """To the custodian who prepared it: approved, returned for correction, or rejected."""
+    verdict = _SUPPLY_DECISION.get(decision, decision)
+    intro = f"Replenishment {control_number} was {verdict}."
+    if decision == "approved":
+        intro += " You can now record the order."
+    elif decision == "returned":
+        intro += " Fix the points below, then submit it again."
+    return _supply_email(
+        name, f"Replenishment {verdict}: {control_number}", f"Replenishment {verdict}", intro, link,
+        "Open the replenishment", note=("Approver's note", reason) if reason else None)
+
+
+def supply_issue_recorded_message(name, release_number, control_number, lines, link):
+    """To the recipient: the custodian recorded a handover of supplies to them and they should confirm it."""
+    return _supply_email(
+        name, f"Supplies released to you: {release_number}", "Please confirm you received your supplies",
+        f"The custodian recorded release {release_number} for your supply request {control_number}. "
+        "Please confirm you received it, or report a problem.",
+        link, "Confirm receipt", rows=lines,
+        footnote="You get this because supplies were released to you in Office Connect.")
+
+
+def supply_stock_ready_message(name, control_number, lines, link):
+    """To the requester: stock is now set aside for an approved request (first time, or more after a delivery)."""
+    return _supply_email(
+        name, f"Supplies ready for your request {control_number}", "Your supplies are ready",
+        f"Stock is now set aside for your approved supply request {control_number}. "
+        "Please arrange to collect it with the custodian.",
+        link, "Open the request", rows=lines,
+        footnote="Any part still short will follow when more stock arrives.")
+
+
+def supply_digest_message(name, week_label, digest, link):
+    """Monday to each custodian: unresolved stock warnings and approved requests still to hand over."""
+    parts = []
+    if digest["to_issue"]:
+        parts.append(f"{digest['to_issue']} approved request(s) ready to hand over")
+    if digest["awaiting_stock"]:
+        parts.append(f"{digest['awaiting_stock']} approved request(s) waiting for stock")
+    rows = list(digest["warnings"])
+    intro = ("This is your Supplies summary for the week of " + week_label + ". "
+             + ("; ".join(parts).capitalize() + ". " if parts else "")
+             + (f"{digest['warning_count']} item(s) have an open stock warning." if digest["warning_count"] else ""))
+    subject, body, html = _supply_email(
+        name, f"Supplies summary: week of {week_label}", "Supplies summary", intro.strip(), link, "Open Supplies",
+        rows=rows, footnote="You get this on Mondays because you are a supply custodian and something needs your attention.")
+    return subject, body, html
+
+
 def travel_review_request_message(reviewer_name, traveller_name, ref, title, link, again=False):
     """To the chosen reviewer: a travel claim's papers are waiting for their check (spot feedback #174)."""
     subject = f"{'Travel papers ready to check again' if again else 'Travel papers to review'}: {ref}"
@@ -1546,6 +1646,30 @@ FEATURES = {
         "Filing reopened",
         "Staff who missed a deadline are told an admin reopened it.",
         "transactional"),
+    "supplies_request_pending": (
+        "Supply request to decide",
+        "A request approver is told a supply request from their unit was submitted and is waiting for a decision.",
+        "transactional"),
+    "supplies_request_decided": (
+        "Supply request decision result",
+        "The requester is told their supply request was approved, returned for correction, or rejected.",
+        "transactional"),
+    "supplies_replenishment_pending": (
+        "Replenishment to decide",
+        "A replenishment approver is told a custodian submitted a purchase request that needs a decision.",
+        "transactional"),
+    "supplies_replenishment_decided": (
+        "Replenishment decision result",
+        "The custodian who prepared a replenishment is told it was approved, returned for correction, or rejected.",
+        "transactional"),
+    "supplies_issue_recorded": (
+        "Supplies released — confirm receipt",
+        "The person supplies were handed to is asked to confirm they received them, or report a problem.",
+        "transactional"),
+    "supplies_stock_ready": (
+        "Supplies ready for an approved request",
+        "A requester is told stock is set aside for their approved request, including when a delivery fills a shortage.",
+        "transactional"),
     "travel_review_request": (
         "Travel papers to review",
         "The chosen reviewer is told a traveller asked them to check a claim's papers (or asked again after fixing notes).",
@@ -1636,6 +1760,11 @@ FEATURES = {
         "scheduled"),
     "job_work_updates": ("Shared work — discussion digests", "Optional daily or Monday digests chosen by each user; required workflow alerts stay separate.", "scheduled"),
     "job_documents": ("Documents — workflow notices", "Access-checked document workflow notices and deadline reminders.", "scheduled"),
+    "job_supplies_digest": (
+        "Supplies — weekly custodian summary",
+        "Each supply custodian gets one email on Mondays listing open stock warnings and approved requests still to "
+        "hand over or waiting for stock. Nothing is sent when there is nothing to chase.",
+        "scheduled"),
     "job_travel_filing_due": (
         "Travel claims — due soon or overdue",
         "Each person gets one email a day while a travel claim of theirs is due within the lead time "
@@ -1756,6 +1885,18 @@ _PREVIEWS = {
         "Juan Reyes", "approved", "October 1-15, 2026", None, _SAMPLE_LINK),
     "awa_reopened": lambda: work_arrangement_reopened_message(
         "Juan Reyes", "October 1-15, 2026", _SAMPLE_LINK),
+    "supplies_request_pending": lambda: supply_request_pending_message(
+        "Maria Santos", "Juan Reyes", "SUP-2026-00012", "Planning Unit", "Bond paper for the section report", _SAMPLE_LINK),
+    "supplies_request_decided": lambda: supply_request_decided_message(
+        "Juan Reyes", "SUP-2026-00012", "returned", "Please reduce the quantity of folders.", _SAMPLE_LINK),
+    "supplies_replenishment_pending": lambda: supply_replenishment_pending_message(
+        "Maria Santos", "Gilbert Cruz", "REP-2026-00003", "Restock bond paper and folders", _SAMPLE_LINK),
+    "supplies_replenishment_decided": lambda: supply_replenishment_decided_message(
+        "Gilbert Cruz", "REP-2026-00003", "approved", "", _SAMPLE_LINK),
+    "supplies_issue_recorded": lambda: supply_issue_recorded_message(
+        "Juan Reyes", "ISS-2026-00007", "SUP-2026-00012", ["3 ream Bond paper A4", "2 box Folders"], _SAMPLE_LINK),
+    "supplies_stock_ready": lambda: supply_stock_ready_message(
+        "Juan Reyes", "SUP-2026-00012", ["3 of 5 ream Bond paper A4"], _SAMPLE_LINK),
     "travel_review_request": lambda: travel_review_request_message(
         "Gilbert", "Ana Reyes", "TF-2610-0007", "Regional Planning Workshop", _SAMPLE_LINK),
     "travel_review_result": lambda: travel_review_result_message(
@@ -1807,6 +1948,9 @@ _PREVIEWS = {
         _SAMPLE_LINK),
     "job_work_updates": lambda: work_digest_message(_SAMPLE_LINK),
     "job_documents": lambda: document_notice_message(_SAMPLE_LINK),
+    "job_supplies_digest": lambda: supply_digest_message(
+        "Gilbert Cruz", "October 26", {"warnings": ["PPR-A4 Bond paper A4: out of stock (0 ream available, 0 on hand)"],
+                                       "warning_count": 1, "to_issue": 2, "awaiting_stock": 1}, _SAMPLE_LINK),
     "job_travel_filing_due": lambda: travel_filing_due_message(
         "Juan Reyes",
         [{"title": "Basic Life Support Training", "kind": "reimbursement", "when": "Due in 2 days", "url": _SAMPLE_LINK}],

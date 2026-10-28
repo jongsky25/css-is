@@ -594,6 +594,16 @@ def install(conn):
     CREATE TRIGGER IF NOT EXISTS supply_delivery_line_no_delete BEFORE DELETE ON supply_delivery_line BEGIN SELECT RAISE(ABORT,'Delivery evidence is immutable'); END;
     CREATE TRIGGER IF NOT EXISTS supply_rep_receipt_reversal_no_update BEFORE UPDATE ON supply_replenishment_receipt_reversal BEGIN SELECT RAISE(ABORT,'Delivery correction evidence is immutable'); END;
     CREATE TRIGGER IF NOT EXISTS supply_rep_receipt_reversal_no_delete BEFORE DELETE ON supply_replenishment_receipt_reversal BEGIN SELECT RAISE(ABORT,'Delivery correction evidence is immutable'); END;
+    -- Email outbox: one row per message owed. Rows carry no message text; supplies_mail composes from current data at send time.
+    CREATE TABLE IF NOT EXISTS supply_mail (
+      id INTEGER PRIMARY KEY, kind TEXT NOT NULL, recipient_id INTEGER NOT NULL REFERENCES admin_user(id),
+      ref_key TEXT NOT NULL, operation_key TEXT NOT NULL,
+      state TEXT NOT NULL DEFAULT 'queued'
+        CHECK(state IN ('queued','attempting','sent','failed','uncertain','skipped_off','not_configured','cancelled')),
+      attempts INTEGER NOT NULL DEFAULT 0, attempt_id TEXT, attempted_at INTEGER,
+      created_at INTEGER NOT NULL, finished_at INTEGER,
+      UNIQUE(kind,ref_key,recipient_id));
+    CREATE INDEX IF NOT EXISTS supply_mail_state ON supply_mail(state,id);
     """)
     if 'delivery_id' not in {r[1] for r in conn.execute('PRAGMA table_info(supply_receipt)')}:
         conn.execute('ALTER TABLE supply_receipt ADD COLUMN delivery_id INTEGER REFERENCES supply_delivery(id)')
@@ -657,6 +667,8 @@ def record(conn, user, key, digest, action, entity_type, result, detail):
                  (entity_type, result['id'], action, user['id'], payload, now, key))
     st.audit(conn, user['username'], 'supply_' + action, target_type='supply_' + entity_type,
              target_id=result['id'], after=payload, commit=False)
+    from supplies_mail import on_record
+    on_record(conn, user, key, action, result, detail)
     if entity_type == 'item' and action in ('item_create','item_update','item_deactivate'):
         from supplies_notify import enqueue
         enqueue(conn,[result['id']],key)

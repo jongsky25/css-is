@@ -151,7 +151,8 @@ _ALL_JOBS = {"events", "wellness_expiry", "digest", "csm_rp", "csm_activity",
             "wellness_file", "awa_file", "whereabouts",
             "whereabouts_nudge", "whereabouts_rollup", "calendar_css_nudge",
             "birthday_coordinators", "birthday_month", "birthday_greeting",
-            "calendar_day_before", "travel_filing_due", "documents", "work_updates"}
+            "calendar_day_before", "travel_filing_due", "documents", "work_updates",
+            "supplies_digest"}
 
 # job name -> the admin toggle that can switch it off (see /admin/email).
 JOB_FEATURE = {
@@ -173,6 +174,7 @@ JOB_FEATURE = {
     "birthday_greeting": "job_birthday_greeting",
     "calendar_day_before": "job_calendar_day_before",
     "travel_filing_due": "job_travel_filing_due",
+    "supplies_digest": "job_supplies_digest",
 }
 
 import email_params
@@ -574,6 +576,37 @@ def send_travel_filing_due(conn, base, dry_run=False):
     return sent
 
 
+def send_supplies_digest(conn, base, dry_run=False):
+    """A weekly summary to each supply custodian: open stock warnings and approved requests still to hand
+    over or waiting for stock. Stock warnings stay in-app all week; this is the one email about them.
+    Nothing is sent when there is nothing to chase."""
+    import supplies as supplies_mod
+    import supplies_mail
+    if not supplies_mod.enabled(conn) or tz.today_local().weekday() != _param(conn, "supplies_digest_weekday"):
+        return 0
+    digest = supplies_mail.digest_for(conn)
+    if not digest:
+        return 0
+    today = tz.today_local()
+    week_label = f"{today.strftime('%B')} {today.day}"
+    sent = 0
+    for custodian in supplies_mail.custodians(conn):
+        to = custodian.get("username")
+        if not to or "@" not in to:
+            continue
+        subj, body, html = mailer.supply_digest_message(
+            _person_name(conn, custodian["id"]), week_label, digest, f"{base}/supplies/warnings")
+        if _already_sent(conn, JOB_FEATURE["supplies_digest"], to, subj):
+            continue
+        if dry_run:
+            print(f"[dry-run] supplies digest -> {to} ({digest['warning_count']} warnings, "
+                  f"{digest['to_issue']} to hand over, {digest['awaiting_stock']} waiting)")
+        else:
+            _send(conn, JOB_FEATURE["supplies_digest"], to, subj, body, html=html)
+        sent += 1
+    return sent
+
+
 def send_birthday_greetings(conn, base, dry_run=False):
     """Greet each celebrant on their birthday -- or on the last working day before it when it falls
     on a weekend or holiday. Mandatory for everyone with a birthday on file (no opt-out; removing the
@@ -842,6 +875,8 @@ def run(db_path="css_is.db", dry_run=False, jobs=None):
             report["documents"] = documents_notify.deliver(conn, base, dry_run=dry_run)
         if "travel_filing_due" in jobs:
             report["travel_filing_due"] = send_travel_filing_due(conn, base, dry_run=dry_run)
+        if "supplies_digest" in jobs:
+            report["supplies_digest"] = send_supplies_digest(conn, base, dry_run=dry_run)
         if "birthday_greeting" in jobs:
             report["birthday_greeting"] = send_birthday_greetings(conn, base, dry_run=dry_run)
         if "birthday_coordinators" in jobs:
@@ -885,6 +920,8 @@ def main():
                     help="Remind people on a calendar entry that starts tomorrow.")
     ap.add_argument("--travel-filing-due", action="store_true",
                     help="Remind people of travel claims that are due soon or overdue.")
+    ap.add_argument("--supplies-digest", action="store_true",
+                    help="Email each supply custodian the weekly summary of warnings and requests to hand over.")
     ap.add_argument("--birthday-greeting", action="store_true",
                     help="Greet people on their birthday (or the working day before a weekend one).")
     ap.add_argument("--birthday-coordinators", action="store_true",
@@ -907,6 +944,7 @@ def main():
                               ("calendar_css_nudge", args.calendar_css_nudge),
                               ("calendar_day_before", args.calendar_day_before),
                               ("travel_filing_due", args.travel_filing_due),
+                              ("supplies_digest", args.supplies_digest),
                               ("birthday_greeting", args.birthday_greeting),
                               ("birthday_coordinators", args.birthday_coordinators),
                               ("birthday_month", args.birthday_month)) if flag}
