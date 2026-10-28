@@ -5,6 +5,7 @@
 {% block content %}
 {{ page_header("Manage meal requests" if managing else "My meal requests", "Track each meal from request through ordering and delivery.") }}
 {% include "_meals_tabs.html" %}
+{% if not managing %}{% include "_meals_status_help.html" %}{% endif %}
 {% if managing %}<p>Requests can be ordered without conference room approval. Open a request to update each meal. Withdrawals remain visible so any supplier order can be cancelled.</p>{% endif %}
 {% if records %}
 <div class="table-wrap"><table class="list resp-table">
@@ -15,7 +16,7 @@
     <td data-label="Date">{{ r.day }}{% if r.day < today.isoformat() %} <span class="muted">(past)</span>{% endif %}</td>
     {% if managing %}<td data-label="Requested by">{{ r.requester_name }}</td>{% endif %}
     <td data-label="Pax">{{ r.pax }}</td><td data-label="Status"><strong>{{ r.overall }}</strong><br>
-      {% for i in r["items"] %}{{ meal_labels[i.meal] }}: {{ status_labels[i.status] }}{% if not loop.last %}<br>{% endif %}{% endfor %}
+      {% for i in r["items"] %}{{ meal_labels[i.meal] }}: {{ status_labels[i.status] }}{% if i.status_at %} <span class="muted">({{ i.status_at[:10] }})</span>{% endif %}{% if not loop.last %}<br>{% endif %}{% endfor %}
       {% if r.status == 'withdrawn' %}{% for i in r["items"] %}{% if i.status_note and 'supplier' in i.status_note %}<p class="rm-hint">Cancel the {{ meal_labels[i.meal] }} order with the supplier.</p>{% endif %}{% endfor %}{% endif %}
     </td>
   </tr>{% endfor %}</tbody>

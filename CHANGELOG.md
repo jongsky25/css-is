@@ -1,3 +1,11 @@
+## 9.14 — October 28, 2026
+
+- My meal requests and the meal request page now carry a short explanation for the requester: meal requests are not approved, the Administrative Section orders them, and "Ordered" is the confirmation; each status is defined, and the date each meal was marked is shown beside it (spot feedback #197). The Administrative Section's own pages do not show it. Requesters are still not notified when a meal is ordered.
+
+## 9.13 — October 28, 2026
+
+- Home page leaderboard card: still the top 5 by default, now with period (month, quarter, all time), group (section, division, bureau) and show-more (top 10, everyone) links, kept in the URL as `lb_period`, `lb_scope` and `lb_top` and anchored to the card; unknown values fall back to the defaults. The viewer's own row is always shown (spot feedback #196).
+
 ## 9.12 — October 28, 2026
 
 - Supplies increment 1.3, rule R1 (business-rule change): `supplies_allocations.requestable()` = on hand − reserved − quantities in other requests that are `submitted` (never below 0), plus `badge()` (Out of stock / Limited / Available). `supplies_requests.save_draft` and `submit` (and so the web form and the MCP draft/submit paths) refuse quantities above it with "Only N <units> of <item> can be requested right now.", including on resubmitting a returned request. Items with no stock recorded are requestable 0. Approval, reservations and backorders are unchanged. Tests: `request_db` now stocks 10 units; shortage/backorder tests use the new `unlimited_requests` fixture to build demand above stock.

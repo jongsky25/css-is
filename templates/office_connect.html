@@ -895,10 +895,18 @@
 
   {# ---------------- the companion leaderboard (spot feedback #196) ---------------- #}
   {% if lb and lb.total %}
-  <section class="oc-card" style="margin-top:1.4rem;" data-tour="oc-leaderboard">
-    <h2>Companion leaderboard <span class="meta">· {{ lb.period_label|lower }}</span></h2>
+  {% macro lb_link(period, scope, top) %}/?view={{ view }}&lb_period={{ period }}&lb_scope={{ scope }}&lb_top={{ top }}#leaderboard{% endmacro %}
+  <section class="oc-card" id="leaderboard" style="margin-top:1.4rem;" data-tour="oc-leaderboard">
+    <h2>Companion leaderboard <span class="meta">· {{ lb.period_label|lower }} · {{ lb.scope_label|lower }}</span></h2>
     <p class="sub">Take your wellness break and care for your companion to climb.
       {% if lb.me %}You are <strong>#{{ lb.me.rank }}</strong> of {{ lb.total }}.{% endif %}</p>
+    <p class="lb-filters" style="display:flex;gap:.4rem;flex-wrap:wrap;align-items:center;margin:.2rem 0 .6rem">
+      {% for k, label in [("month", "This month"), ("quarter", "This quarter"), ("all", "All time")] %}
+      <a class="btn ghost" style="padding:.15rem .7rem;font-size:.8rem" href="{{ lb_link(k, lb.scope, lb.top) }}" {% if k == lb.period %}aria-current="true"{% endif %}>{{ label }}</a>{% endfor %}
+      <span aria-hidden="true" style="color:var(--soft)">·</span>
+      {% for k, label in lb.scope_options %}
+      <a class="btn ghost" style="padding:.15rem .7rem;font-size:.8rem" href="{{ lb_link(lb.period, k, lb.top) }}" {% if k == lb.scope %}aria-current="true"{% endif %}>{{ label }}</a>{% endfor %}
+    </p>
     <ol class="lb-home" style="list-style:none;padding:0;margin:.4rem 0 .8rem">
       {% for r in lb.shown %}
       <li style="display:flex;gap:.7rem;padding:.3rem 0;border-bottom:1px solid var(--line);{{ 'font-weight:700' if r.is_me }}">
@@ -907,7 +915,10 @@
         <span>{{ r.points }} pts</span></li>
       {% endfor %}
     </ol>
-    <a class="btn ghost" href="/wellness/leaderboard">See everyone · all periods and groups</a>
+    <p style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:center">
+      {% if lb.more %}<a class="btn ghost" href="{{ lb_link(lb.period, lb.scope, '10' if lb.top == '5' else 'all') }}">{{ 'Show top 10' if lb.top == '5' else 'Show everyone' }}</a>{% endif %}
+      {% if lb.top != '5' %}<a class="btn ghost" href="{{ lb_link(lb.period, lb.scope, '5') }}">Show top 5</a>{% endif %}
+      <a href="/wellness/leaderboard?period={{ lb.period }}&scope={{ lb.scope }}">Full page with every column</a></p>
   </section>
   {% endif %}
 

@@ -140,3 +140,29 @@ def test_the_home_page_carries_the_leaderboard_card_and_its_link(app_mod):
         full = c.get("/wellness/leaderboard?scope=section&period=all")
         assert full.status_code == 200 and "My section" in full.text and "You are #" in full.text
         assert 'data-tour="oc-leaderboard"' not in c.get("/?view=calendar").text      # the calendar tab draws only the calendar
+
+
+def test_the_home_card_shows_five_by_default_and_more_on_request(world):
+    for who in ("s1b", "d1", "s3", "dir"):
+        breaks(world, who, "2030-03-12")
+    c = lambda **kw: lb.home_card(world["conn"], world["s1"], TODAY, **kw)
+    assert (len(c()["shown"]), c()["total"], c()["more"], c()["top"]) == (5, 5, False, "5")      # five people: nothing more to show
+    assert [len(c(top=n)["shown"]) for n in (2, "2")] == [3, 3] and c(top=2)["more"] is True       # two, plus the viewer's own row
+    allr = c(top="all")
+    assert len(allr["shown"]) == allr["total"] == 5 and allr["more"] is False and allr["top"] == "all"
+    assert c(top="banana")["top"] == "5" and c(top=-3)["top"] == "5"
+    q = lb.home_card(world["conn"], world["s1"], TODAY, period="quarter", scope="division")
+    assert (q["period"], q["scope"], q["total"]) == ("quarter", "division", 3)                   # s1, s1b and d1 sit under T/D1
+    assert [k for k, _ in lb.TOP_CHOICES] == ["5", "10", "all"] and lb.clean_top("x") == "5"
+
+
+def test_the_home_card_filters_are_links_that_keep_the_choice(app_mod):
+    from tests.conftest import _auth_client, in_the_directory
+    with in_the_directory(app_mod, "viewer@test.local", path="LBFX/D1/S1"):
+        c = _auth_client(app_mod, "viewer")
+        page = c.get("/?lb_period=quarter&lb_scope=section&lb_top=all").text
+        assert 'id="leaderboard"' in page and "this quarter" in page and "my section" in page
+        assert "lb_period=month&amp;lb_scope=section&amp;lb_top=all#leaderboard" in page.replace("&lb_", "&amp;lb_")
+        assert "Show top 5" in page                                                              # it can go back to the default
+        assert c.get("/?lb_period=%27&lb_scope=zzz&lb_top=%27").status_code == 200               # junk is just the defaults
+        assert "this month" in c.get("/").text.lower()

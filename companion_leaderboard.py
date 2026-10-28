@@ -141,10 +141,23 @@ def board(conn, viewer, period=DEFAULT_PERIOD, scope=DEFAULT_SCOPE, today=None):
             "scope_options": [(k, v) for k, v in SCOPES if k == "bureau" or scope_prefix(me.get("org_path"), k)]}
 
 
-def home_card(conn, viewer, today=None, top=5):
-    """What the home page shows: the top few of this month across the bureau, and the viewer's own row (even if outside them)."""
-    b = board(conn, viewer, "month", "bureau", today)
-    shown = b["rows"][:top]
+TOP_CHOICES = (("5", "Top 5"), ("10", "Top 10"), ("all", "Everyone"))
+DEFAULT_TOP = "5"
+
+
+def clean_top(value):
+    """How many rows the home card shows: '5', '10' or 'all' (anything else is the default)."""
+    return value if value in {k for k, _ in TOP_CHOICES} else DEFAULT_TOP
+
+
+def home_card(conn, viewer, today=None, top=5, period=DEFAULT_PERIOD, scope=DEFAULT_SCOPE):
+    """What the home page shows: the top few (5 by default, or 10 or everyone), and the viewer's own row even if outside them.
+    The period and group can be changed from the card (spot feedback #196); the full page has the same choices."""
+    b = board(conn, viewer, period, scope, today)
+    top = str(top)
+    n = None if top == "all" else (int(top) if top.isdigit() and 0 < int(top) <= 500 else int(DEFAULT_TOP))
+    shown = b["rows"] if n is None else b["rows"][:n]
     if b["me"] and b["me"] not in shown:
         shown = shown + [b["me"]]
-    return {**b, "shown": shown, "total": len(b["rows"])}
+    return {**b, "shown": shown, "total": len(b["rows"]), "top": "all" if n is None else str(n),
+            "top_options": TOP_CHOICES, "more": n is not None and len(b["rows"]) > n}

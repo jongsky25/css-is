@@ -18,10 +18,29 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "9.12"
+APP_VERSION = "9.14"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "9.14",
+        "date": "October 28, 2026",
+        "summary": "My meal requests now explain what each status means.",
+        "changes": [
+            "My meal requests and each meal request page now say that meal requests are not approved, and what Awaiting order, Ordered, Delivered and Not delivered mean.",
+            "Ordered is your confirmation that the Administrative Section has placed the order.",
+            "Each meal now shows the date it was last marked."
+        ]
+    },
+    {
+        "version": "9.13",
+        "date": "October 28, 2026",
+        "summary": "Choose what the home page leaderboard shows.",
+        "changes": [
+            "The leaderboard on the home page still starts with the top 5, and now has buttons to show the top 10 or everyone.",
+            "You can switch it between this month, this quarter and all time, and between your section, your division and the whole bureau, without leaving the home page."
+        ]
+    },
     {
         "version": "9.12",
         "date": "October 28, 2026",
