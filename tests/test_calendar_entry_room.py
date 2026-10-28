@@ -227,3 +227,28 @@ def test_the_entry_page_will_not_clear_the_list_once_meals_are_requested(manager
                         visitors="None"))
     r = manager.post(f"/calendar/entries/{eid}/visitors", content=urlencode({"visitors": " "}), headers=FORM, follow_redirects=False)
     assert "err=" in r.headers["location"] and activity_docs.get_visitors(conn, eid) == "None"
+
+
+# ---- quick status and people shortcut on the item page (spot feedback #194) ---
+
+def test_the_item_page_switches_status_without_the_edit_form(manager, conn):
+    eid = entry_id(post(manager, "/calendar/new", day(conn), status="tentative"))
+    page = manager.get(f"/calendar/entries/{eid}").text
+    assert "cal-quick-status" in page and f"/calendar/entries/{eid}/edit#people" in page
+    e = st.cal_get(conn, eid)
+    r = manager.post(f"/calendar/entries/{eid}/status", content=urlencode({"status": "confirmed", "updated_at": e["updated_at"] or ""}),
+                     headers=FORM, follow_redirects=False)
+    assert r.status_code == 303 and "ok=" in r.headers["location"]
+    assert st.cal_get(conn, eid)["status"] == "confirmed"
+    # only the three working statuses, and nothing changes when the page is stale or the status is unknown
+    for bad in ("cancelled", "nonsense", ""):
+        r = manager.post(f"/calendar/entries/{eid}/status", content=urlencode({"status": bad}), headers=FORM, follow_redirects=False)
+        assert "err=" in r.headers["location"] and st.cal_get(conn, eid)["status"] == "confirmed"
+    r = manager.post(f"/calendar/entries/{eid}/status", content=urlencode({"status": "tentative", "updated_at": "1999-01-01T00:00:00"}),
+                     headers=FORM, follow_redirects=False)
+    assert "err=" in r.headers["location"] and st.cal_get(conn, eid)["status"] == "confirmed"
+
+
+def test_the_edit_form_has_the_people_anchor(manager, conn):
+    eid = entry_id(post(manager, "/calendar/new", day(conn)))
+    assert 'id="people"' in manager.get(f"/calendar/entries/{eid}/edit").text

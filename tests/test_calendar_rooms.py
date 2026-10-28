@@ -204,3 +204,14 @@ def test_the_feed_keeps_a_linked_room_that_sits_on_another_day(w):
     rooms.link_event(w["conn"], r2["id"], ev2["id"], w["s1"])
     feed = oc.build_feed(w["conn"], w["s1"], "https://x.test", today=MON)
     assert f"UID:room-{r2['id']}@office-connect" not in feed                 # same day: the activity carries it
+
+
+def test_a_booking_tied_to_the_requesters_own_item_opens_that_item_not_the_room_board(w):
+    # spot feedback #195: the click went to the room page; the item is where its notice and minutes are drafted
+    w["conn"].execute("INSERT INTO calendar_entry(id, uid, title, start_date) VALUES (9001, 'u9001', 'Planning', '2030-03-07')")
+    w["conn"].commit()
+    r = rooms.request(w["conn"], title="Planning", day=THU, slot_ids=S(w["conn"], 9, 10), requester_user_id=w["s1"]["id"],
+                      today=MON, calendar_entry_id=9001)
+    rooms.approve(w["conn"], r["id"], "boss@test.local", today=MON)
+    assert [i["url"] for i in items(w, "s1")] == ["/calendar/entries/9001"]
+    assert [i["url"] for i in items(w, "s3")] == ["/rooms?week=2030-03-07"]           # another person cannot open the item

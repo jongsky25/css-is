@@ -88,6 +88,7 @@ import birthdays
 import calendar_answers
 import office_answers
 import calendar_routes
+import companion_leaderboard
 import rooms
 import rooms_notify
 import meals_routes
@@ -545,6 +546,10 @@ NAV_GROUPS = [
          "hint": "Apply for your 2-hour weekly wellness break",
          "kw": "wellness break rest two hours weekly avatar plant points streak badges "
                "exercise meditation mental health hobby dm 2025-0135", "cap": None},
+        {"key": "wellness_leaderboard", "url": "/wellness/leaderboard", "label": "Companion leaderboard",
+         "hint": "See how every companion is growing, by month, quarter or all time",
+         "kw": "companion leaderboard ranking rank pets points streak badges wellness compare section division bureau",
+         "cap": None},
         {"key": "wellness_apply", "url": "/wellness/apply", "label": "Apply for a break",
          "hint": "Book your hours for this week or the next few",
          "kw": "apply request book wellness break hours slot schedule claim file", "cap": None},
@@ -5502,7 +5507,7 @@ def choose(request: Request, msg: str = "", view: str = "team"):
         # The Calendar tab draws only the calendar, so the team panels, the to-do list, "Coming up",
         # the wellness teaser and the work-arrangement hint are not built for it at all.
         on_calendar = view == "calendar"
-        data, tasks, cal_week, wstats = None, [], None, None
+        data, tasks, cal_week, wstats, lb = None, [], None, None, None
         wa_now, wa_label, wa_file_label, wa_file_filed = None, "", "", False
         # Other tabs already use data.scope.kind; only Calendar needs this flag.
         team_linked = on_calendar and st.team_scope_for_user(conn, request.state.user)[1] != "none"
@@ -5553,6 +5558,11 @@ def choose(request: Request, msg: str = "", view: str = "team"):
                 wstats = st.wellness_stats(conn, request.state.user["id"])
             except Exception:
                 wstats = None
+            try:                                   # the companion leaderboard card (spot feedback #196)
+                lb = companion_leaderboard.home_card(conn, request.state.user)
+            except Exception:
+                traceback.print_exc()
+                lb = None
             # ...and the same for the work arrangement door. What's IN FORCE right
             # now leads — that is the schedule someone is actually working today —
             # with whatever's open for filing next as a secondary hint, only when
@@ -5582,7 +5592,7 @@ def choose(request: Request, msg: str = "", view: str = "team"):
         "first_name": first_name, "profile": profile,
         "bday_greet": bday_greet,
         "initials": _initials(profile.get("person_name") if profile else ""),
-        "css_url": css_url, "wstats": wstats,
+        "css_url": css_url, "wstats": wstats, "lb": lb,
         "wa_now": wa_now, "wa_label": wa_label,
         "wa_file_label": wa_file_label, "wa_file_filed": wa_file_filed,
         "role_label": auth.ROLE_LABELS.get(role, role),
@@ -16325,6 +16335,19 @@ def _wellness_apply_page(request, err="", form=None):
         "slots_by_date": slots_by_date,
         "err": err, "form": form or {},
     }, status_code=400 if err else 200)
+
+
+@app.get("/wellness/leaderboard", response_class=HTMLResponse)
+def wellness_leaderboard(request: Request, period: str = "", scope: str = ""):
+    """Every companion, ranked, by pet name (spot feedback #196). Anyone signed in can see it; they choose who is compared
+    (section, division, bureau) and the period (month, quarter, all time)."""
+    conn = get_conn()
+    try:
+        b = companion_leaderboard.board(conn, request.state.user, period, scope)
+    finally:
+        conn.close()
+    return templates.TemplateResponse(request, "wellness_leaderboard.html", {
+        "nav_active": "wellness", "b": b, "periods": companion_leaderboard.PERIODS})
 
 
 @app.get("/wellness/apply", response_class=HTMLResponse)

@@ -62,6 +62,7 @@ KIND_LABELS = {**FORM_KIND_LABELS, "activity": "CSS activity", "leave": "On leav
                "room": "Conference room"}
 STATUS_LABELS = {"confirmed": "Confirmed", "tentative": "Tentative",
                  "postponed": "Postponed", "cancelled": "Cancelled"}
+QUICK_STATUSES = ("confirmed", "tentative", "postponed")          # what the item page can switch between
 MODALITY_LABELS = {"": "Not set", "f2f": "Face to face", "online": "Online", "hybrid": "Hybrid"}
 AUDIENCE_LABELS = {"unit": "Everyone in the owning unit",
                    "bureau": "Everyone in the bureau",
@@ -1198,6 +1199,34 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
         finally:
             conn.close()
         return RedirectResponse(f"/calendar/entries/{entry_id}?{note}#documents", status_code=303)
+
+    @router.post("/calendar/entries/{entry_id}/status")
+    async def calendar_quick_status(request: Request, entry_id: int):
+        """Change only the status (tentative, confirmed, postponed) from the item page (spot feedback #194)."""
+        raw = parse_qs((await request.body()).decode("utf-8"), keep_blank_values=True)
+        user = request.state.user
+        status = (raw.get("status") or [""])[0].strip()
+        conn = get_conn()
+        try:
+            e = oc.viewable_entry(conn, user, entry_id)
+            if e is None:
+                return _not_found(request)
+            if e["status"] == "cancelled" or e.get("event_id") or status not in QUICK_STATUSES:
+                note = f"err={quote('That status cannot be changed here. Use Edit.')}"
+            elif status == e["status"]:
+                note = f"ok={quote('It is already ' + STATUS_LABELS[status].lower() + '.')}"
+            else:
+                try:
+                    st.cal_update(conn, entry_id, by=user["username"], expected_updated_at=(raw.get("updated_at") or [""])[0] or None,
+                                  status=status)
+                    note = f"ok={quote('Marked ' + STATUS_LABELS[status].lower() + '.' + meet_relay.sync(conn, entry_id, by=user['username']))}"
+                except st.CalendarConflict:
+                    note = f"err={quote('Someone changed this item while you were looking. Reload it and try again.')}"
+                except ValueError as ex:
+                    note = f"err={quote(str(ex))}"
+        finally:
+            conn.close()
+        return RedirectResponse(f"/calendar/entries/{entry_id}?{note}", status_code=303)
 
     @router.post("/calendar/entries/{entry_id}/visitors")
     async def calendar_visitors(request: Request, entry_id: int):

@@ -1,3 +1,12 @@
+## 9.08 — October 28, 2026
+
+- Add the companion leaderboard (spot feedback #196): `companion_leaderboard.py`, the full page `/wellness/leaderboard` (period: month, quarter, all time; compare: section, division, bureau; full list, ranks shared on ties) and a home-page card with the top five plus the viewer's own row. People appear by pet name only. Points use the pet's own formula (break +10, reflection +5, full week +5); all time adds the current streak bonus so it matches the hub. Ties go to the care streak, then badges. Read-only; nothing new is stored.
+
+## 9.07 — October 28, 2026
+
+- Calendar: a room booking tied to the requester's own calendar item now links to that item, not the room board, so its notice of meeting and minutes are one click away (spot feedback #195). Other viewers still go to the room board.
+- Calendar item page: quick Confirmed / Tentative / Postponed buttons (`POST /calendar/entries/{id}/status`, stale-page and activity-linked items refused) and an "Add or remove people" shortcut to the edit form's people list (#194).
+
 ## 9.06 — October 28, 2026
 
 - Add Supplies email through a durable `supply_mail` outbox queued inside each business transaction from `supplies_storage.record()` (and the allocator for stock set aside). A worker in the scheduler loop composes from current data at send time, rechecks the recipient's active account and current role, and cancels anything no longer relevant (decided, withdrawn, acknowledged, cancelled). Delivery is at-most-once: attempts are committed before network I/O, ambiguous sends become `uncertain` and are never resent, only definite failures are retried up to the existing send-retry setting, and messages unsent after three days are cancelled. Mail failure cannot undo stock or approval work.
