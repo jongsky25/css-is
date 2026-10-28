@@ -1,56 +1,34 @@
-{# dog artwork. Keep placement groups separate from animated groups. #}
+{% from "_avatar_wardrobe.html" import wear as _wear %}
+{# Original authored illustrated artwork; placement and motion groups stay separate. #}
 {% from "_avatars_shared.html" import costume_front, eye as _eye, shadow as _shadow, accessory as _accessory, regalia as _regalia %}
-
-{% macro art(s, m=0, costume="") %}
-  {% set sc = 0.62 + (s - 1) * 0.076 %}
-  {{ _shadow(27) }}
-  <g transform="translate(60 96) scale({{ '%.3f'|format(sc) }}) translate(-60 -96)">
-    <g class="av-tail">
-      <path d="M79 110 Q94 104 92 88" stroke="url(#avg-dogfur)" stroke-width="8" fill="none" stroke-linecap="round"/>
-      <path d="M90 94 Q92 90 92 88" stroke="#f0e2c8" stroke-width="8" fill="none" stroke-linecap="round"/>
-    </g>
-    <path d="M40 118 Q34 92 48 84 L72 84 Q86 92 80 118 Z" fill="url(#avg-dogfur)"/>
-    <path d="M52 118 Q52 98 60 96 Q68 98 68 118 Z" fill="url(#avg-dogfur2)"/>
-    <ellipse cx="52" cy="117" rx="6.4" ry="4.2" fill="url(#avg-dogfur2)"/>
-    <ellipse cx="68" cy="117" rx="6.4" ry="4.2" fill="url(#avg-dogfur2)"/>
-    <path d="M50 116 l0 3 M54 116 l0 3 M66 116 l0 3 M70 116 l0 3" stroke="#a5763a" stroke-width=".9"/>
-    {{ costume_front("dog", s, costume, scaled=true) }}
-    {{ _regalia(s, 60, 90) }}
-    <g class="av-head">
-      <g class="av-ear-l">
-        <path d="M45 58 Q34 62 37 82 Q46 80 48 66 Z" fill="url(#avg-dogfur3)"/>
-      </g>
-      <g class="av-ear-r">
-        <path d="M75 58 Q86 62 83 82 Q74 80 72 66 Z" fill="url(#avg-dogfur3)"/>
-      </g>
-      <circle cx="60" cy="72" r="18.5" fill="url(#avg-dogfur)"/>
-      <path d="M47 62 Q52 57 58 59" stroke="#ffffff38" stroke-width="2.6" fill="none" stroke-linecap="round"/>
-      <ellipse cx="60" cy="79" rx="10" ry="8" fill="url(#avg-dogfur2)"/>
-      {{ _eye(52, 68, 3.6, "#6a4426", "#d3a561") }}
-      {{ _eye(68, 68, 3.6, "#6a4426", "#d3a561") }}
-      {% if s >= 3 %}
-      <path d="M47 60.5 q3 -2 5.6 -1 M67.4 59.5 q3 -1 5.6 1" stroke="#a5763a" stroke-width="1.4" fill="none" stroke-linecap="round"/>
-      {% endif %}
-      <path d="M60 74.5 q-3.4 -1.4 -3.4 1.6 q0 2.4 3.4 2.4 q3.4 0 3.4 -2.4 q0 -3 -3.4 -1.6 Z" fill="#2c2018"/>
-      <circle cx="58.6" cy="75.6" r=".8" fill="#fff" opacity=".7"/>
-      <path d="M60 78.5 l0 2.6 M60 81.1 q-3 2.6 -6.4 1.6 M60 81.1 q3 2.6 6.4 1.6" stroke="#3a2a1a" stroke-width="1.1" fill="none" stroke-linecap="round"/>
-      {% if s >= 2 %}
-      <path d="M60 83 q1.4 4.4 4.6 4 q-1 -3 -1.6 -4.6" fill="#e0788e"/>
-      {% endif %}
-      {{ _accessory(m, 60, 54, 1, costume=costume) }}
-    </g>
-    {% if s >= 5 %}
-    <ellipse cx="44" cy="70" rx="2.6" ry="1.4" fill="#f2b8a0" opacity=".6" transform="rotate(-12 44 70)"/>
-    <ellipse cx="76" cy="70" rx="2.6" ry="1.4" fill="#f2b8a0" opacity=".6" transform="rotate(12 76 70)"/>
-    {% endif %}
-    {% if s >= 6 %}
-    <path d="M88 54 l2 4.4 4.8 .7 -3.5 3.4 .9 4.8 -4.2 -2.3 -4.2 2.3 .9 -4.8 -3.5 -3.4 4.8 -.7 Z" fill="url(#avg-sun)"/>
-    {% endif %}
-    {# hidden treat: a bone #}
-    <g class="av-food">
-      <rect x="86" y="32" width="16" height="4.6" rx="2.3" fill="#f4ecda"/>
-      <circle cx="86" cy="32.6" r="2.6" fill="#f4ecda"/><circle cx="86" cy="36.6" r="2.6" fill="#f4ecda"/>
-      <circle cx="102" cy="32.6" r="2.6" fill="#f4ecda"/><circle cx="102" cy="36.6" r="2.6" fill="#f4ecda"/>
-    </g>
-  </g>
+{% macro art(s, m=0, costume="", scope="", preferences=none) %}
+{% set sc = 0.64 + (s-1)*0.072 %}
+{% set hy = 74 if s<3 else (70 if s<5 else 67) %}
+{{ _shadow(30) }}
+<g class="av-v2 av-body" transform="translate(60 98) scale({{ sc }}) translate(-60 -98)" stroke-linejoin="round"><g transform="translate(60 94)">{{ _wear(preferences,'back') }}</g>
+ <g class="av-tail"><path d="M78 111 Q{{ 97 if s<3 else 111 }} 111 {{ 87 if s<3 else 96 }} {{ 95 if s<3 else 78 }}" fill="none" stroke="#946339" stroke-width="10" stroke-linecap="round"/><path d="M79 109 Q{{ 94 if s<3 else 107 }} 109 {{ 87 if s<3 else 96 }} {{ 95 if s<3 else 78 }}" fill="none" stroke="#e5bd83" stroke-width="6" stroke-linecap="round"/></g>
+ <path d="M39 116 Q32 98 47 {{ 87 if s<3 else 80 }} Q60 75 74 {{ 87 if s<3 else 80 }} Q89 98 82 118 Q61 129 39 116Z" fill="url(#avg-dogfur)" stroke="#88613f" stroke-width="1.5"/>
+ <path d="M49 94 Q60 88 72 94 L72 119 Q60 126 49 119Z" fill="url(#avg-dogfur2)"/>
+ {% if s>=3 %}<path d="M48 101L47 117M73 101L74 117" stroke="#ab7d4d" stroke-width="1.5"/>{% endif %}
+ {% if s>=4 %}<path d="M41 104Q32 110 39 119M80 104Q89 110 82 119" fill="none" stroke="#ab7d4d" stroke-width="2"/>{% endif %}
+ <g fill="url(#avg-dogfur2)" stroke="#88613f" stroke-width="1.2"><ellipse cx="47" cy="120" rx="9" ry="5.5"/><ellipse cx="74" cy="120" rx="9" ry="5.5"/><path d="M44 120v3m5-3v3m22-3v3m5-3v3"/></g>
+ <g class="av-head">
+  <g class="av-ear-l"><path d="M42 {{ hy-19 }} Q22 {{ hy-21 }} 28 {{ hy+13 }} Q37 {{ hy+25 }} 44 {{ hy+8 }}L50 {{ hy-12 }}Z" fill="url(#avg-dogfur3)" stroke="#88613f" stroke-width="1.5"/><path d="M34 {{ hy-8 }}Q30 {{ hy+5 }} 35 {{ hy+12 }}" fill="none" stroke="#d2a573" stroke-width="3" stroke-linecap="round"/></g>
+  <g class="av-ear-r"><path d="M78 {{ hy-19 }} Q98 {{ hy-21 }} 92 {{ hy+13 }} Q83 {{ hy+25 }} 76 {{ hy+8 }}L70 {{ hy-12 }}Z" fill="url(#avg-dogfur3)" stroke="#88613f" stroke-width="1.5"/></g>
+  <path d="M37 {{ hy-7 }} Q37 {{ hy-25 }} 60 {{ hy-25 }} Q83 {{ hy-25 }} 83 {{ hy-7 }}L85 {{ hy+9 }}Q80 {{ hy+24 }} 60 {{ hy+25 }}Q40 {{ hy+24 }} 35 {{ hy+9 }}Z" fill="url(#avg-dogfur)" stroke="#88613f" stroke-width="1.5"/>
+  <path d="M57 {{ hy-23 }}Q51 {{ hy-8 }} 56 {{ hy+5 }}L65 {{ hy+5 }}Q62 {{ hy-10 }} 65 {{ hy-23 }}" fill="url(#avg-dogfur2)"/>
+  <path d="M43 {{ hy-14 }}Q47 {{ hy-19 }} 52 {{ hy-18 }}" stroke="#ffe1a5" stroke-width="3" fill="none" stroke-linecap="round"/>
+  {{ _eye(48,hy,5 if s<3 else 4.4,"#77543b","#e5bd83") }}{{ _eye(72,hy,5 if s<3 else 4.4,"#77543b","#e5bd83") }}
+  <ellipse cx="51" cy="{{ hy+13 }}" rx="10" ry="8" fill="url(#avg-dogfur2)"/><ellipse cx="69" cy="{{ hy+13 }}" rx="10" ry="8" fill="url(#avg-dogfur2)"/>
+  <path d="M55 {{ hy+7 }}Q60 {{ hy+4 }} 65 {{ hy+7 }}Q65 {{ hy+13 }} 60 {{ hy+14 }}Q55 {{ hy+13 }} 55 {{ hy+7 }}Z" fill="#493b35"/><path d="M57 {{ hy+8 }}h4" stroke="#c7b4a1" stroke-width="1.4" stroke-linecap="round"/>
+  <path d="M60 {{ hy+14 }}v3q-5 5-9 0m9 0q5 5 9 0" stroke="#72513e" stroke-width="1.3" fill="none"/>
+  {% if s>=2 %}<path d="M60 {{ hy+18 }}Q62 {{ hy+30 }} 68 {{ hy+21 }}L68 {{ hy+18 }}" fill="#dc8e99"/>{% endif %}
+  {% if s>=5 %}<path d="M42 {{ hy-8 }}q5-4 10-2m16 0q5-2 10 2" fill="none" stroke="#946339" stroke-width="1.5"/>{% endif %}
+  <g class="av-anchor-head" data-anchor="head" transform="translate(60 {{ hy-25 }})">{{ _wear(preferences,'head') }}</g>{{ _accessory(m,60,hy-25,1,costume=costume) }}
+ </g>
+ {{ costume_front("dog",s,costume,scaled=true) }}{{ _regalia(s,60,99,0.85) }}
+ <g class="av-anchor-neck" data-anchor="neck" transform="translate(60 99)">{{ _wear(preferences,'neck') }}</g>
+ {% if s>=6 %}<path d="M49 96l4 8 7-5 7 5 5-8" fill="url(#avg-dogfur2)"/>{% endif %}
+ <g class="av-food" fill="#f4ecda"><path d="M88 32h14v5H88Z"/><circle cx="88" cy="32" r="3"/><circle cx="88" cy="37" r="3"/><circle cx="102" cy="32" r="3"/><circle cx="102" cy="37" r="3"/></g>
+</g>
 {% endmacro %}

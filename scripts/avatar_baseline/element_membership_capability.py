@@ -8,7 +8,6 @@ from pathlib import Path
 import subprocess
 import threading
 import time
-import frida
 from playwright.sync_api import sync_playwright
 
 BUILD = '1c5dca8527a61d07372e489142bee26af1bcaf71'
@@ -41,6 +40,7 @@ def digest(path):
 
 
 def run(out, mode):
+    import frida  # Optional: required only when explicitly running this diagnostic.
     out.mkdir(parents=True, exist_ok=False)
     root = Path(__file__).resolve().parents[2]
     result = {'protocol': PROTOCOL, 'acceptance': False, 'forced_gc': False,

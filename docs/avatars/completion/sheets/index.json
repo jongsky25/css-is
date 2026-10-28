@@ -1,0 +1,44 @@
+[
+  {
+    "file": "base-light.png",
+    "theme": "light",
+    "cards": 96,
+    "art_size_px": 96,
+    "forced_colors": false
+  },
+  {
+    "file": "equipment-light.png",
+    "theme": "light",
+    "cards": 294,
+    "art_size_px": 96,
+    "forced_colors": false
+  },
+  {
+    "file": "base-dark.png",
+    "theme": "dark",
+    "cards": 96,
+    "art_size_px": 96,
+    "forced_colors": false
+  },
+  {
+    "file": "equipment-dark.png",
+    "theme": "dark",
+    "cards": 294,
+    "art_size_px": 96,
+    "forced_colors": false
+  },
+  {
+    "file": "base-contrast.png",
+    "theme": "contrast",
+    "cards": 96,
+    "art_size_px": 96,
+    "forced_colors": true
+  },
+  {
+    "file": "equipment-contrast.png",
+    "theme": "contrast",
+    "cards": 294,
+    "art_size_px": 96,
+    "forced_colors": true
+  }
+]

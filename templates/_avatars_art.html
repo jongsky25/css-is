@@ -30,8 +30,8 @@
 {% from "_avatars_shared.html" import costume_back as _costume_back %}
 {% macro costume_back(kind, s, costume) %}{{ _costume_back(kind, s, costume) }}{% endmacro %}
 {% set species = ['plant', 'cactus', 'bonsai', 'sunflower', 'fern', 'mushroom', 'succulent', 'cat', 'bird', 'turtle', 'dog', 'rabbit', 'fish', 'dolphin', 'owl', 'bat'] %}
-{% macro species_art(kind, s, m=0, costume="", scope="") %}
+{% macro species_art(kind, s, m=0, costume="", scope="", preferences=none) %}
 {%- set selected = kind if kind in species else 'plant' -%}
 {%- from "_avatar_species/" ~ selected ~ ".html" import art -%}
-{{- art(s, m, costume, scope) if selected in ['plant','cactus','bonsai','sunflower','fern','mushroom','succulent','cat'] else art(s, m, costume) -}}
+{{- art(s, m, costume, scope, preferences) -}}
 {% endmacro %}

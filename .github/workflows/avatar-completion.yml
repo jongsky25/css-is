@@ -1,0 +1,154 @@
+name: Avatar completion review
+on:
+  workflow_dispatch:
+  push:
+    branches: [codex/avatar-upgrade-completion]
+    # CI/report-only edits do not repeat a frozen product measurement.
+    paths-ignore: ['docs/**', 'CHANGELOG.md', '.github/workflows/**']
+permissions:
+  contents: read
+concurrency:
+  group: avatar-completion-review
+  cancel-in-progress: true
+jobs:
+  functional:
+    name: completion-functional
+    runs-on: ubuntu-24.04
+    container: python:3.12-trixie@sha256:0d0db5b17f11b1b7d1aafa74ceadaa64ba0944b267ff6fc22008a197acd6b9ad
+    timeout-minutes: 30
+    env:
+      CSS_AVATAR_CHROMIUM: 156.0.8078.47
+      CSS_AVATAR_COMPARE_BASE: 0a91f73cf2ef2a72af70a149dc2deca2fb9c8b9a
+      CSS_AVATAR_BATCH_KINDS: cat,fern,fish,bat
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install exact browser and locked dependencies
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends chromium=156.0.8078.47-1~deb13u1 chromium-common=156.0.8078.47-1~deb13u1 git procps
+          python -m venv .venv
+          .venv/bin/python -m pip install --require-hashes --only-binary=:all: -r requirements-test.txt
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - name: Run functional acceptance before long performance cohorts
+        run: .venv/bin/python scripts/avatar_baseline/ci_verify.py completion-functional
+      - name: Preserve every functional result and failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: avatar-completion-completion-functional
+          path: avatar-verification/
+          retention-days: 30
+  performance:
+    name: ${{ matrix.phase }}
+    needs: functional
+    strategy:
+      fail-fast: false
+      matrix:
+        phase: [runtime, matrix]
+    runs-on: ubuntu-24.04
+    container: python:3.12-trixie@sha256:0d0db5b17f11b1b7d1aafa74ceadaa64ba0944b267ff6fc22008a197acd6b9ad
+    timeout-minutes: 150
+    env:
+      CSS_AVATAR_CHROMIUM: 156.0.8078.47
+      CSS_AVATAR_COMPARE_BASE: 0a91f73cf2ef2a72af70a149dc2deca2fb9c8b9a
+      CSS_AVATAR_BATCH_KINDS: cat,fern,fish,bat
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install exact browser and locked dependencies
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends chromium=156.0.8078.47-1~deb13u1 chromium-common=156.0.8078.47-1~deb13u1 git procps
+          python -m venv .venv
+          .venv/bin/python -m pip install --require-hashes --only-binary=:all: -r requirements-test.txt
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - name: Run bounded phase with matching before-after host and filesystem
+        run: .venv/bin/python scripts/avatar_baseline/ci_verify.py ${{ matrix.phase }}
+      - name: Package portable numeric and visual review parts
+        if: always()
+        run: |
+          if test -d avatar-verification; then
+            .venv/bin/python scripts/avatar_baseline/package_review.py avatar-verification --output avatar-review-${{ matrix.phase }}
+          fi
+      - name: Preserve every result and failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: avatar-completion-${{ matrix.phase }}
+          path: avatar-verification/
+          retention-days: 30
+      - name: Preserve portable review index
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: avatar-review-${{ matrix.phase }}-index
+          path: avatar-review-${{ matrix.phase }}-parts.json
+          if-no-files-found: ignore
+          retention-days: 30
+      - name: Preserve portable review part 1
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: avatar-review-${{ matrix.phase }}-1
+          path: avatar-review-${{ matrix.phase }}-1.tar.gz
+          if-no-files-found: ignore
+          retention-days: 30
+      - name: Preserve portable review part 2
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: avatar-review-${{ matrix.phase }}-2
+          path: avatar-review-${{ matrix.phase }}-2.tar.gz
+          if-no-files-found: ignore
+          retention-days: 30
+      - name: Preserve portable review part 3
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: avatar-review-${{ matrix.phase }}-3
+          path: avatar-review-${{ matrix.phase }}-3.tar.gz
+          if-no-files-found: ignore
+          retention-days: 30
+      - name: Preserve portable review part 4
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: avatar-review-${{ matrix.phase }}-4
+          path: avatar-review-${{ matrix.phase }}-4.tar.gz
+          if-no-files-found: ignore
+          retention-days: 30
+      - name: Preserve portable review part 5
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: avatar-review-${{ matrix.phase }}-5
+          path: avatar-review-${{ matrix.phase }}-5.tar.gz
+          if-no-files-found: ignore
+          retention-days: 30
+      - name: Preserve portable review part 6
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: avatar-review-${{ matrix.phase }}-6
+          path: avatar-review-${{ matrix.phase }}-6.tar.gz
+          if-no-files-found: ignore
+          retention-days: 30
+      - name: Preserve portable review part 7
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: avatar-review-${{ matrix.phase }}-7
+          path: avatar-review-${{ matrix.phase }}-7.tar.gz
+          if-no-files-found: ignore
+          retention-days: 30
+      - name: Preserve portable review part 8
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: avatar-review-${{ matrix.phase }}-8
+          path: avatar-review-${{ matrix.phase }}-8.tar.gz
+          if-no-files-found: ignore
+          retention-days: 30

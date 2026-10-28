@@ -1,0 +1,2410 @@
+<html><meta charset="utf-8">
+<style>
+  .av-v2 { --av-outline:#815b43; --av-leaf-outline:#41664c; --av-rose-outline:#b46883; }
+  svg[data-avatar-mode="personal"] .av-regalia, svg[data-avatar-mode="none"] .av-regalia { display:none; }
+  .avwrap { display:inline-block; text-align:center; position:relative;
+            --av-sway:7s; --av-breathe:6.4s; perspective:700px; }
+  .av-play-btn { display:block; border:0; padding:0; width:100%; background:transparent;
+                 color:inherit; cursor:pointer; border-radius:1rem; }
+  .av-care-btn, .av-sound-btn, .av-explore-btn { min-width:44px; min-height:44px; }
+  .avwrap svg { display:block; overflow:visible;
+                filter:drop-shadow(0 8px 6px rgba(20,30,50,.16)); }
+  /* Illustrated companions supply drawn shadows: avoid repainting a filtered SVG. */
+  .avwrap svg[data-avatar-art="v2"] { filter:none; }
+  /* Whole-body 3D lean toward the cursor (avatars.js "curiosity" loop sets the
+     rotateX/rotateY inline; perspective above is what makes them read as depth
+     rather than a flat skew). Species.js clears the transition while actively
+     tracking so the lean stays snappy, and turns it back on only to settle
+     flat again once the pointer leaves — see the pointermove handler. */
+  .av-tiltstage { transform-style:preserve-3d; will-change:transform; }
+  .avmove  { transform-box:fill-box; will-change:transform; }
+  .avstage { transform-box:fill-box; transform-origin:50% 92%; }
+  .fam-plant  .avstage { animation:av-sway var(--av-sway) ease-in-out infinite; }
+  .fam-animal .avstage { animation:av-breathe var(--av-breathe) ease-in-out infinite; transform-origin:50% 80%; }
+  /* the succulent's whole personality is that it does not bother moving */
+  .avwrap[data-kind="succulent"] .avstage { animation:none; }
+  @keyframes av-sway   { 0%,100%{ transform:rotate(-2deg);} 50%{ transform:rotate(2deg);} }
+  @keyframes av-breathe{ 0%,35%,100%{ transform:scale(1);} 65%{ transform:scale(1.025);} }
+  .avwrap.happy .avstage { animation:av-bounce .6s ease; }
+  @keyframes av-bounce { 0%,100%{ transform:translateY(0) scale(1);} 30%{ transform:translateY(-9px) scale(1.06);} 60%{ transform:translateY(0) scale(.97);} }
+  .av-spark { opacity:0; }
+  .avwrap.happy .av-spark { animation:av-spark .6s ease; }
+  @keyframes av-spark { 0%{ opacity:0; transform:scale(.4);} 40%{ opacity:1;} 100%{ opacity:0; transform:scale(1.3);} }
+  .avwrap[data-interactive] { cursor:pointer; }
+  .av-bubble { display:inline-block; margin-top:.35rem; font-size:.82rem; font-weight:800;
+               color:var(--accent); opacity:0; transition:opacity .15s; min-height:1.1em; }
+  .avwrap[data-interactive]:hover .av-bubble,
+  .avwrap[data-interactive]:focus-within .av-bubble { opacity:1; }
+  .av-bubble.show { opacity:1; }
+
+  .avwrap[data-kind="dog"] { --av-breathe:5.7s; }
+  .avwrap[data-kind="owl"] { --av-breathe:8.2s; }
+  .avwrap[data-kind="bonsai"] { --av-sway:9.1s; }
+  .avwrap[data-motion-paused="1"] *, .avwrap[data-motion-paused="1"] {
+    animation-play-state:paused !important; transition:none !important;
+  }
+  .av-caring-water .av-leaf > path { animation:av-leaf-settle 1.8s ease .8s; transform-box:fill-box; transform-origin:50% 95%; }
+  @keyframes av-leaf-settle { 0%,100%{transform:rotate(0);} 35%{transform:rotate(3deg);} 70%{transform:rotate(-1.5deg);} }
+  /* ---- eyes / part groups (art in _avatars_art.html) -------------------- */
+  .av-lid  { transform:scaleY(0); transform-box:fill-box; transform-origin:50% 0; transition:transform .25s; }
+  .av-head, .av-tail, .av-ear-l, .av-ear-r, .av-wing-l, .av-wing-r, .av-cap,
+  .av-fin-t, .av-fin-b, .av-bloom, [class*="av-frond"] { transform-box:fill-box; }
+  .av-head   { transform-origin:50% 85%; }
+  .av-tail   { transform-origin:15% 90%; }
+  .av-ear-l, .av-ear-r { transform-origin:50% 95%; }
+  .av-wing-l { transform-origin:92% 25%; }
+  .av-wing-r { transform-origin:8% 25%; }
+  .av-cap    { transform-origin:50% 88%; }
+  .av-fin-t  { transform-origin:90% 50%; }
+  .av-fin-b  { transform-origin:50% 10%; }
+  .av-bloom  { transform-origin:50% 55%; }
+  [class*="av-frond"] { transform-origin:50% 100%; }
+  /* hide the drop PATHS, not the group: the av-drop keyframes animate each
+     path's own opacity, and a child can never out-opacity an opacity:0 parent */
+  .av-bubbles, .av-spore, .av-food, .av-drops path { opacity:0; }
+  .av-soilwet { opacity:0; }
+
+  /* ---- idle behaviors: avatars.js toggles av-do-* per species ------------ */
+  .av-do-blink .av-lid       { animation:av-blink .28s ease; }
+  .av-do-slowblink .av-lid   { animation:av-blink 1.1s ease; }
+  @keyframes av-blink  { 0%,100%{ transform:scaleY(0);} 35%,65%{ transform:scaleY(1);} }
+  .av-do-ear .av-ear-l       { animation:av-earflick .5s ease; }
+  .av-do-ear2 .av-ear-r      { animation:av-earflick .5s ease .12s; }
+  @keyframes av-earflick { 0%,100%{ transform:rotate(0);} 40%{ transform:rotate(-13deg);} }
+  .av-do-wag .av-tail        { animation:av-wag .9s ease-in-out; }
+  @keyframes av-wag    { 0%,100%{ transform:rotate(0);} 20%{ transform:rotate(14deg);} 45%{ transform:rotate(-10deg);} 70%{ transform:rotate(12deg);} }
+  .av-do-hop .avstage        { animation:av-hop .7s ease; }
+  @keyframes av-hop    { 0%,100%{ transform:translateY(0);} 30%{ transform:translateY(-11px);} 55%{ transform:translateY(0);} 75%{ transform:translateY(-5px);} }
+  .av-do-tilt .av-head       { animation:av-tilt 1.6s ease; }
+  @keyframes av-tilt   { 0%,100%{ transform:rotate(0);} 30%,70%{ transform:rotate(9deg);} }
+  .av-do-stretch .avstage    { animation:av-stretch 1.2s ease; }
+  @keyframes av-stretch{ 0%,100%{ transform:scale(1,1);} 35%{ transform:scale(1.04,.93);} 70%{ transform:scale(.97,1.06);} }
+  .av-do-flap .av-wing-l     { animation:av-flap-l .5s ease-in-out 2; }
+  .av-do-flap .av-wing-r     { animation:av-flap-r .5s ease-in-out 2; }
+  @keyframes av-flap-l { 0%,100%{ transform:rotate(0);} 50%{ transform:rotate(-24deg);} }
+  @keyframes av-flap-r { 0%,100%{ transform:rotate(0);} 50%{ transform:rotate(24deg);} }
+  .av-do-peek .avstage       { animation:av-crouch 1.5s ease; }
+  @keyframes av-crouch { 0%,100%{ transform:scale(1,1);} 25%,60%{ transform:scale(1.05,.84);} }
+  .av-do-hide .av-head       { animation:av-retract 1.8s ease; }
+  .av-turtle-head { --av-retract-x:-26px; --av-retract-y:7px; --av-retract-scale:.55; }
+  @keyframes av-retract{ 0%,100%{ transform:translateX(0);} 30%,65%{ transform:translate(var(--av-retract-x,-8px),var(--av-retract-y,0px)) scale(var(--av-retract-scale,.92));} }
+  .av-do-turn .av-head       { animation:av-headturn 2.4s ease-in-out; }
+  @keyframes av-headturn { 0%,100%{ transform:rotate(0);} 30%{ transform:rotate(-11deg);} 65%{ transform:rotate(11deg);} }
+  .av-do-bubbles .av-bubbles { animation:av-rise 1.6s ease-out; }
+  @keyframes av-rise   { 0%{ opacity:0; transform:translateY(4px);} 30%{ opacity:1;} 100%{ opacity:0; transform:translateY(-12px);} }
+  .av-do-fin .av-fin-t       { animation:av-finflick .7s ease-in-out; }
+  @keyframes av-finflick { 0%,100%{ transform:rotate(0);} 35%{ transform:rotate(-11deg);} 70%{ transform:rotate(7deg);} }
+  .av-do-ripple [class*="av-frond"] { animation:av-frondsway 1.1s ease-in-out; }
+  .av-do-ripple .av-frond-2  { animation-delay:.1s; }
+  .av-do-ripple .av-frond-3  { animation-delay:.2s; }
+  .av-do-ripple .av-frond-4  { animation-delay:.3s; }
+  .av-do-ripple .av-frond-5  { animation-delay:.4s; }
+  .av-do-ripple .av-frond-6  { animation-delay:.5s; }
+  @keyframes av-frondsway { 0%,100%{ transform:rotate(0);} 35%{ transform:rotate(-5deg);} 70%{ transform:rotate(4deg);} }
+  .av-do-wobble .av-cap      { animation:av-wobble .9s ease; }
+  @keyframes av-wobble { 0%,100%{ transform:rotate(0);} 25%{ transform:rotate(-7deg);} 55%{ transform:rotate(5deg);} 80%{ transform:rotate(-2deg);} }
+  .av-do-spore .av-spore     { animation:av-rise 1.4s ease-out; }
+  .av-do-plump .avstage,
+  .avwrap[data-kind="succulent"].av-do-plump .avstage { animation:av-plump 1s ease; }
+  @keyframes av-plump  { 0%,100%{ transform:scale(1);} 45%{ transform:scale(1.07);} }
+  .av-do-bloom .av-bloom     { animation:av-bloomturn 3s ease-in-out; }
+  @keyframes av-bloomturn { 0%,100%{ transform:rotate(0);} 35%{ transform:rotate(9deg);} 75%{ transform:rotate(-6deg);} }
+
+  /* ---- ground-roam gaits: avatars.js toggles these while a walker travels
+          a leg (dog trots/zooms, rabbit+bird bound, turtle plods) ----------- */
+  .av-do-trot .avstage, .av-do-zoom .avstage { animation:av-trot .5s ease-in-out infinite; }
+  .av-do-zoom .avstage       { animation-duration:.26s; }
+  @keyframes av-trot   { 0%,100%{ transform:translateY(0) rotate(0);} 50%{ transform:translateY(-3px) rotate(1.4deg);} }
+  .av-do-bound .avstage      { animation:av-bound .45s ease-in-out infinite; }
+  @keyframes av-bound  { 0%,100%{ transform:translateY(0) scale(1,1);} 40%{ transform:translateY(-10px) scale(.96,1.05);} 80%{ transform:translateY(0) scale(1.04,.94);} }
+  /* chase: a faster, much springier run, and a big pounce when it catches up */
+  .av-chasing .avstage       { animation:av-chase-leap .34s ease-in-out infinite !important; }
+  @keyframes av-chase-leap { 0%,100%{ transform:translateY(0) scale(1.05,.93);} 45%{ transform:translateY(-26px) scale(.95,1.08);} }
+  .av-pounce .avstage        { animation:av-pounce .8s cubic-bezier(.3,.7,.4,1) !important; }
+  @keyframes av-pounce { 0%{ transform:translateY(0) scale(1.08,.9);} 35%{ transform:translateY(-48px) scale(.94,1.1) rotate(-6deg);} 65%{ transform:translateY(0) scale(1.1,.88);} 82%{ transform:translateY(-12px);} 100%{ transform:translateY(0);} }
+  .av-do-plod .avstage       { animation:av-plod 1.6s ease-in-out infinite; }
+  @keyframes av-plod   { 0%,100%{ transform:rotate(-1.3deg);} 50%{ transform:rotate(1.3deg);} }
+
+  /* ---- care: watering / feeding (button sets av-caring-* on the wrap) ---- */
+  .av-care-btn, .av-sound-btn, .av-explore-btn { display:inline-block; font:inherit; font-size:.78rem; font-weight:800; cursor:pointer;
+                 margin-top:.3rem; border:1px solid var(--line); border-radius:999px;
+                 background:var(--surface); color:var(--ink-soft); padding:.24rem .8rem;
+                 transition:transform .1s, border-color .15s; }
+  .av-care-btn:hover, .av-care-btn:focus-visible,
+  .av-sound-btn:hover, .av-sound-btn:focus-visible,
+  .av-explore-btn:hover, .av-explore-btn:focus-visible { border-color:var(--accent); color:var(--accent); transform:translateY(-1px); }
+  .av-sound-btn, .av-explore-btn { padding:.24rem .55rem; }
+  .av-sound-controls { display:inline-flex; flex-wrap:wrap; justify-content:center; align-items:center; gap:.3rem; max-width:100%; }
+  .av-volume { width:72px; max-width:100%; min-height:44px; margin:0; accent-color:var(--accent); }
+  .av-volume[hidden] { display:none; }
+  .av-audio-credits { font-size:.75rem; flex-basis:100%; }
+  .av-sound-btn[aria-pressed="true"], .av-explore-btn[aria-pressed="true"] { border-color:var(--accent); color:var(--accent); background:var(--accent-bg); }
+  .av-caring-water .av-drops path { animation:av-drop 1.2s ease-in; }
+  .av-caring-water .av-drops path:nth-child(2) { animation-delay:.18s; }
+  .av-caring-water .av-drops path:nth-child(3) { animation-delay:.36s; }
+  @keyframes av-drop   { 0%{ opacity:0; transform:translateY(0);} 15%{ opacity:1;} 80%{ opacity:1; transform:translateY(66px);} 100%{ opacity:0; transform:translateY(72px);} }
+  .av-caring-water .av-soilwet { animation:av-soak 3.5s ease; }
+  @keyframes av-soak   { 0%{ opacity:0;} 30%,75%{ opacity:.8;} 100%{ opacity:0;} }
+  .av-caring-water .avstage { animation:av-perk 1.6s ease .9s; }
+  @keyframes av-perk   { 0%,100%{ transform:scale(1,1);} 40%{ transform:scale(1.02,1.06);} 70%{ transform:scale(1,1.02);} }
+  .av-caring-water .av-frond-top { animation:av-unfurl 1.4s ease .9s; }
+  @keyframes av-unfurl { 0%{ transform:rotate(0) scale(1);} 40%{ transform:rotate(-8deg) scale(1.06);} 100%{ transform:rotate(0) scale(1);} }
+  /* the succulent's animation:none kill rule outranks av-perk, so it gets its
+     own (species-true) watered response: a satisfied plump */
+  .avwrap[data-kind="succulent"].av-caring-water .avstage { animation:av-plump 1s ease .9s; }
+  .av-caring-feed .av-food  { animation:av-feed 1.5s ease-in forwards; }
+  @keyframes av-feed   { 0%{ opacity:0; transform:translate(0,0);} 15%{ opacity:1;} 55%{ opacity:1; transform:translate(-18px,26px);} 75%{ opacity:1; transform:translate(-30px,44px) scale(.7);} 100%{ opacity:0; transform:translate(-32px,46px) scale(.3);} }
+  .av-caring-feed .av-head  { animation:av-chew .5s ease 1.2s 3; }
+  @keyframes av-chew   { 0%,100%{ transform:translateY(0) rotate(0);} 50%{ transform:translateY(1.6px) rotate(1.6deg);} }
+
+  /* ---- night-time sleep (avatars.js toggles av-asleep 9pm-6am; the bat is
+          nocturnal and never gets the class) ------------------------------- */
+  .av-zzz { opacity:0; }
+  .avwrap.av-asleep .av-zzz { opacity:1; animation:av-zfloat 2.6s ease-in-out infinite; }
+  @keyframes av-zfloat { 0%,100%{ opacity:.35; transform:translateY(0);} 50%{ opacity:1; transform:translateY(-5px);} }
+  .avwrap.av-asleep .av-lid { transform:scaleY(1); }
+  .avwrap.av-asleep { --av-sway:10s; --av-breathe:7s; }
+
+  /* ---- petting (press & hold; avatars.js sets av-petting + spawns hearts) - */
+  .av-petting .avstage { animation:av-nuzzle .8s ease-in-out infinite; }
+  @keyframes av-nuzzle { 0%,100%{ transform:rotate(-1.6deg);} 50%{ transform:rotate(1.6deg);} }
+  .av-heart { position:absolute; top:30%; opacity:0; font-size:.9rem; color:#e0607e;
+              pointer-events:none; animation:av-heartfloat 1.5s ease-out forwards; }
+  @keyframes av-heartfloat { 0%{ opacity:0; transform:translateY(0) scale(.7);} 25%{ opacity:1;} 100%{ opacity:0; transform:translateY(-34px) scale(1.15);} }
+
+  /* ---- fresh-badge toast (avatars.js shows it when /avatar/care awards) --- */
+  .av-badge-toast { position:absolute; left:50%; top:-1.6rem; transform:translateX(-50%);
+                    white-space:nowrap; font-size:.8rem; font-weight:800; color:var(--accent);
+                    background:var(--surface); border:1px solid var(--accent);
+                    border-radius:999px; padding:.25rem .8rem; pointer-events:none;
+                    animation:av-toast 4s ease forwards; z-index:5; }
+  @keyframes av-toast { 0%{ opacity:0; transform:translate(-50%, 8px);} 12%,80%{ opacity:1; transform:translate(-50%, 0);} 100%{ opacity:0; transform:translate(-50%, -8px);} }
+
+  /* ---- mood (data-mood from storage.avatar_mood) ------------------------- */
+  .avwrap[data-mood="happy"]  { --av-sway:3.6s; --av-breathe:2.7s; }
+  .avwrap[data-mood="droopy"] { --av-sway:8s; --av-breathe:6s; }
+  .avwrap[data-mood="droopy"] svg { filter:saturate(.55) brightness(.97); }
+  .avwrap[data-mood="droopy"] svg[data-avatar-art="v2"] { filter:none; opacity:.86; }
+  .avwrap[data-mood="droopy"] .av-lid { transform:scaleY(.45); }
+  .avwrap[data-mood="droopy"] .avstage { transform-origin:50% 92%; }
+
+  /* ---- explore: the swimmer leaves its card and swims the whole page.
+          z-index 14 glides UNDER the sticky chrome (scopebar 15, topnav 20)
+          and over unpositioned content; the layer never blocks clicks — only
+          the pet itself is tappable (tap = come home). ---------------------- */
+  .av-explore-layer { position:fixed; inset:0; z-index:14; pointer-events:none; }
+  .av-explore-pet   { position:fixed; left:0; top:0; display:inline-block; text-align:center;
+                      will-change:transform; pointer-events:auto; cursor:pointer;
+                      --av-sway:7s; --av-breathe:6.4s; }
+  .avwrap.av-away .av-bubble { opacity:0; }
+
+  /* ---- drag (wellness hub play area) ------------------------------------- */
+  .av-play { position:relative; }
+  .avwrap[data-drag] { touch-action:none; }
+  .avwrap[data-drag].av-dragging { transition:none; cursor:grabbing; }
+  .avwrap[data-drag]:not(.av-dragging) { transition:transform .3s ease; }
+
+  /* picker thumbnails reuse the plant sway */
+  .av-sway-c { transform-origin:50% 90%; animation:av-sway 5s ease-in-out infinite; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .avwrap .avstage, .avwrap.happy .avstage, .av-sway-c,
+    .avwrap [class*="av-"], .avwrap .av-drops path,
+    .avwrap[class*="av-do-"] * { animation:none !important; }
+    .avwrap.happy .av-spark { animation:none; opacity:0; }
+    .avwrap[data-drag]:not(.av-dragging) { transition:none; }
+  }
+  /* Static preview policy: only a live companion runs reactions. */
+  .avwrap[data-kind]:not([data-interactive]) *,
+  .avwrap[data-kind]:not([data-interactive]) [class],
+  .avcard > span, .avcard svg *, .avcard svg [class] {
+    animation:none !important; transition:none !important;
+  }
+  /* End static preview policy. */
+</style><svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <linearGradient id="avg-pot" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#d8916a"/><stop offset="1" stop-color="#a55c3b"/></linearGradient>
+    <linearGradient id="avg-pot2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#a08db5"/><stop offset="1" stop-color="#6c5a85"/></linearGradient>
+    <linearGradient id="avg-stem" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5aa04a"/><stop offset="1" stop-color="#3f7a33"/></linearGradient>
+    <linearGradient id="avg-leaf" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#8fce7c"/><stop offset="1" stop-color="#4c8c3f"/></linearGradient>
+    <linearGradient id="avg-leaf2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#5ea54e"/><stop offset="1" stop-color="#35702c"/></linearGradient>
+    <linearGradient id="avg-trunk" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#8a5f38"/><stop offset="1" stop-color="#6b4426"/></linearGradient>
+    <linearGradient id="avg-petal" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f7b7cd"/><stop offset="1" stop-color="#e07a9f"/></linearGradient>
+    <linearGradient id="avg-petal2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f2a9c4"/><stop offset="1" stop-color="#d3618c"/></linearGradient>
+    <linearGradient id="avg-sun" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffd75e"/><stop offset="1" stop-color="#f0a92d"/></linearGradient>
+    <linearGradient id="avg-sun2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f0a92d"/><stop offset="1" stop-color="#d98a1a"/></linearGradient>
+    <radialGradient id="avg-disc" cx=".4" cy=".35" r=".9">
+      <stop offset="0" stop-color="#8a5a2c"/><stop offset="1" stop-color="#5a3a1a"/></radialGradient>
+    <linearGradient id="avg-cactus" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#6fbf72"/><stop offset="1" stop-color="#3f8a44"/></linearGradient>
+    <linearGradient id="avg-mush" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ef8171"/><stop offset="1" stop-color="#c23f35"/></linearGradient>
+    <linearGradient id="avg-mush-stem" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f7efdb"/><stop offset="1" stop-color="#e0cfa8"/></linearGradient>
+    <linearGradient id="avg-succ" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#a8dcb0"/><stop offset="1" stop-color="#5fa96f"/></linearGradient>
+    <linearGradient id="avg-succ2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8cc898"/><stop offset="1" stop-color="#4c9159"/></linearGradient>
+    <linearGradient id="avg-succ3" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#c4ecc8"/><stop offset="1" stop-color="#7cbc8a"/></linearGradient>
+    <linearGradient id="avg-catfur" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f6b76b"/><stop offset="1" stop-color="#e08c34"/></linearGradient>
+    <linearGradient id="avg-catfur2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffe9c9"/><stop offset="1" stop-color="#f6cf9d"/></linearGradient>
+    <linearGradient id="avg-bird" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#a8e0dd"/><stop offset="1" stop-color="#5fb3af"/></linearGradient>
+    <linearGradient id="avg-bird2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e2f5f4"/><stop offset="1" stop-color="#b7e6e4"/></linearGradient>
+    <linearGradient id="avg-bird3" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7fc7c3"/><stop offset="1" stop-color="#4d9a97"/></linearGradient>
+    <linearGradient id="avg-beak" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f7bc55"/><stop offset="1" stop-color="#e8952a"/></linearGradient>
+    <linearGradient id="avg-shell" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7cc487"/><stop offset="1" stop-color="#4c8f60"/></linearGradient>
+    <linearGradient id="avg-shell2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4f9d6b"/><stop offset="1" stop-color="#35704a"/></linearGradient>
+    <linearGradient id="avg-turtleskin" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#a5d3a0"/><stop offset="1" stop-color="#6fa86b"/></linearGradient>
+    <linearGradient id="avg-dogfur" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#d4a96e"/><stop offset="1" stop-color="#a5763a"/></linearGradient>
+    <linearGradient id="avg-dogfur2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f6ead0"/><stop offset="1" stop-color="#e2c99c"/></linearGradient>
+    <linearGradient id="avg-dogfur3" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#b0824a"/><stop offset="1" stop-color="#8a5f2e"/></linearGradient>
+    <linearGradient id="avg-rabbit" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f2ece2"/><stop offset="1" stop-color="#cfc3b2"/></linearGradient>
+    <linearGradient id="avg-rabbit2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fdf9f2"/><stop offset="1" stop-color="#ece2d2"/></linearGradient>
+    <linearGradient id="avg-fish" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffb26b"/><stop offset="1" stop-color="#e5731f"/></linearGradient>
+    <linearGradient id="avg-fish2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffc98f"/><stop offset="1" stop-color="#f08c3a"/></linearGradient>
+    <linearGradient id="avg-water" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#bfe4f7"/><stop offset="1" stop-color="#7fc4e8"/></linearGradient>
+    <linearGradient id="avg-owl" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#b98d5f"/><stop offset="1" stop-color="#7d5732"/></linearGradient>
+    <linearGradient id="avg-owl2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f7ecd6"/><stop offset="1" stop-color="#e2ceaa"/></linearGradient>
+    <linearGradient id="avg-owl3" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#96693c"/><stop offset="1" stop-color="#6b4a28"/></linearGradient>
+    <linearGradient id="avg-bat" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8d86c9"/><stop offset="1" stop-color="#5a5482"/></linearGradient>
+    <linearGradient id="avg-bat2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#b3aede"/><stop offset="1" stop-color="#8d86c9"/></linearGradient>
+    <linearGradient id="avg-batwing" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#6b6494"/><stop offset="1" stop-color="#474168"/></linearGradient>
+    <linearGradient id="avg-dolphin" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7fb6d4"/><stop offset="1" stop-color="#4a7fa6"/></linearGradient>
+    <linearGradient id="avg-dolphin2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#eaf4fa"/><stop offset="1" stop-color="#c2dced"/></linearGradient>
+  </defs>
+</svg>
+
+
+<style>body{background:#f4f6fa;color:#304353;font:16px system-ui;margin:20px}h1{font-size:24px}main{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}article{background:white;border:1px solid #dce3e9;border-radius:18px;text-align:center;padding:10px}.art{width:160px;height:187px;margin:auto}p{margin:6px}</style><h1>Your growing companions</h1><main><article><div class="art">
+
+
+
+
+
+
+
+<svg data-avatar-art="v2" viewBox="0 0 120 140" role="img" width="100%" height="100%" aria-hidden="true" focusable="false" data-avatar-mode="personal" data-avatar-kind="plant" data-avatar-stage="6" data-avatar-month="0" data-avatar-outfit="default">
+  
+  <defs>
+    <linearGradient id="overview-1-leaf" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#b4cf7b"/><stop offset=".5" stop-color="#72a66b"/><stop offset="1" stop-color="#437b62"/></linearGradient>
+    
+  </defs>
+  
+  
+  
+  
+
+
+<g class="av-costume-back" transform="translate(60 96) scale(1) translate(-60 -96)">
+
+</g>
+
+
+<g class="av-v2 av-body" stroke-linejoin="round"><g transform="translate(60 108) scale(0.96)">
+
+
+
+
+
+
+
+</g>
+  <ellipse cx="60" cy="133" rx="25" ry="3" fill="#302f3c" opacity=".12"/>
+  <path d="M37 109 Q60 116 83 109 L78 130 Q60 139 42 130Z" fill="url(#avg-pot)" stroke="#885b48" stroke-width="1.4"/>
+  <path d="M43 116 Q47 119 49 130" stroke="#ffdfb3" stroke-width="3" opacity=".5" fill="none"/>
+  <ellipse cx="60" cy="108" rx="26" ry="8" fill="#e8ad87" stroke="#885b48" stroke-width="1.4"/>
+  <ellipse class="av-soil" cx="60" cy="107" rx="21" ry="5" fill="#67483b"/>
+  <ellipse class="av-soilwet" cx="60" cy="107" rx="21" ry="5" fill="#3c302b"/>
+  <path d="M44 106 Q53 102 69 105" fill="none" stroke="#a77f60" stroke-width="1.8" stroke-linecap="round"/>
+  
+  
+  <g class="av-stem">
+    <path d="M60 106 Q55 87 60 37" stroke="var(--av-leaf-outline,#41664c)" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <path d="M59 104 Q56 85 60 37" stroke="#8cba68" stroke-width="2" fill="none"/>
+    
+    
+    <g class="av-leaf" transform="translate(59 96) scale(-1 1)">
+      <path d="M0 0 C-12 3-25-7-23-18 C-10-20 1-12 0 0Z" fill="url(#overview-1-leaf)" stroke="var(--av-leaf-outline,#41664c)" stroke-width="1.1"/>
+      <path d="M-20-15Q-11-6 0 0" stroke="#d8e6a1" stroke-width="1.2" fill="none"/>
+    </g>
+    
+    
+    <g class="av-leaf" transform="translate(58 88) scale(1 1)">
+      <path d="M0 0 C-12 3-25-7-23-18 C-10-20 1-12 0 0Z" fill="url(#overview-1-leaf)" stroke="var(--av-leaf-outline,#41664c)" stroke-width="1.1"/>
+      <path d="M-20-15Q-11-6 0 0" stroke="#d8e6a1" stroke-width="1.2" fill="none"/>
+    </g>
+    
+    
+    <g class="av-leaf" transform="translate(59 77) scale(-1 1)">
+      <path d="M0 0 C-12 3-25-7-23-18 C-10-20 1-12 0 0Z" fill="url(#overview-1-leaf)" stroke="var(--av-leaf-outline,#41664c)" stroke-width="1.1"/>
+      <path d="M-20-15Q-11-6 0 0" stroke="#d8e6a1" stroke-width="1.2" fill="none"/>
+    </g>
+    
+    
+    <g class="av-leaf" transform="translate(60 69) scale(1 1)">
+      <path d="M0 0 C-12 3-25-7-23-18 C-10-20 1-12 0 0Z" fill="url(#overview-1-leaf)" stroke="var(--av-leaf-outline,#41664c)" stroke-width="1.1"/>
+      <path d="M-20-15Q-11-6 0 0" stroke="#d8e6a1" stroke-width="1.2" fill="none"/>
+    </g>
+    
+    
+    <g class="av-leaf" transform="translate(60 59) scale(-1 1)">
+      <path d="M0 0 C-12 3-25-7-23-18 C-10-20 1-12 0 0Z" fill="url(#overview-1-leaf)" stroke="var(--av-leaf-outline,#41664c)" stroke-width="1.1"/>
+      <path d="M-20-15Q-11-6 0 0" stroke="#d8e6a1" stroke-width="1.2" fill="none"/>
+    </g>
+    
+    
+    <path d="M60 81 Q79 77 82 61  M59 70 Q36 66 35 49" fill="none" stroke="#58894d" stroke-width="3" stroke-linecap="round"/>
+    
+    
+    
+    
+    <g class="av-bloom" transform="translate(60 35)">
+      
+      <path d="M0 1 C-15 -3-15 -24 0 -20 C15 -24 15 -3 0 1Z" transform="rotate(0)" fill="#e88c9f" stroke="var(--av-rose-outline,#b46883)" stroke-width=".8"/>
+      
+      <path d="M0 1 C-15 -3-15 -24 0 -20 C15 -24 15 -3 0 1Z" transform="rotate(72)" fill="#f6b5b8" stroke="var(--av-rose-outline,#b46883)" stroke-width=".8"/>
+      
+      <path d="M0 1 C-15 -3-15 -24 0 -20 C15 -24 15 -3 0 1Z" transform="rotate(144)" fill="#e88c9f" stroke="var(--av-rose-outline,#b46883)" stroke-width=".8"/>
+      
+      <path d="M0 1 C-15 -3-15 -24 0 -20 C15 -24 15 -3 0 1Z" transform="rotate(216)" fill="#f6b5b8" stroke="var(--av-rose-outline,#b46883)" stroke-width=".8"/>
+      
+      <path d="M0 1 C-15 -3-15 -24 0 -20 C15 -24 15 -3 0 1Z" transform="rotate(288)" fill="#e88c9f" stroke="var(--av-rose-outline,#b46883)" stroke-width=".8"/>
+      
+      <circle r="5.7" fill="#f5cf75" stroke="#c79649" stroke-width="1"/>
+      <circle cx="-1.5" cy="-1.5" r="1.8" fill="#fff3c4"/>
+    </g>
+    
+    <g class="av-bloom" transform="translate(82 59)">
+      
+      <path d="M0 1 C-11 -3-11 -20 0 -16 C11 -20 11 -3 0 1Z" transform="rotate(0)" fill="#e88c9f" stroke="var(--av-rose-outline,#b46883)" stroke-width=".8"/>
+      
+      <path d="M0 1 C-11 -3-11 -20 0 -16 C11 -20 11 -3 0 1Z" transform="rotate(72)" fill="#f6b5b8" stroke="var(--av-rose-outline,#b46883)" stroke-width=".8"/>
+      
+      <path d="M0 1 C-11 -3-11 -20 0 -16 C11 -20 11 -3 0 1Z" transform="rotate(144)" fill="#e88c9f" stroke="var(--av-rose-outline,#b46883)" stroke-width=".8"/>
+      
+      <path d="M0 1 C-11 -3-11 -20 0 -16 C11 -20 11 -3 0 1Z" transform="rotate(216)" fill="#f6b5b8" stroke="var(--av-rose-outline,#b46883)" stroke-width=".8"/>
+      
+      <path d="M0 1 C-11 -3-11 -20 0 -16 C11 -20 11 -3 0 1Z" transform="rotate(288)" fill="#e88c9f" stroke="var(--av-rose-outline,#b46883)" stroke-width=".8"/>
+      
+      <circle r="4.18" fill="#f5cf75" stroke="#c79649" stroke-width="1"/>
+      <circle cx="-1.5" cy="-1.5" r="1.8" fill="#fff3c4"/>
+    </g>
+    
+    <g class="av-bloom" transform="translate(35 48)">
+      
+      <path d="M0 1 C-10 -3-10 -19 0 -15 C10 -19 10 -3 0 1Z" transform="rotate(0)" fill="#e88c9f" stroke="var(--av-rose-outline,#b46883)" stroke-width=".8"/>
+      
+      <path d="M0 1 C-10 -3-10 -19 0 -15 C10 -19 10 -3 0 1Z" transform="rotate(72)" fill="#f6b5b8" stroke="var(--av-rose-outline,#b46883)" stroke-width=".8"/>
+      
+      <path d="M0 1 C-10 -3-10 -19 0 -15 C10 -19 10 -3 0 1Z" transform="rotate(144)" fill="#e88c9f" stroke="var(--av-rose-outline,#b46883)" stroke-width=".8"/>
+      
+      <path d="M0 1 C-10 -3-10 -19 0 -15 C10 -19 10 -3 0 1Z" transform="rotate(216)" fill="#f6b5b8" stroke="var(--av-rose-outline,#b46883)" stroke-width=".8"/>
+      
+      <path d="M0 1 C-10 -3-10 -19 0 -15 C10 -19 10 -3 0 1Z" transform="rotate(288)" fill="#e88c9f" stroke="var(--av-rose-outline,#b46883)" stroke-width=".8"/>
+      
+      <circle r="3.8" fill="#f5cf75" stroke="#c79649" stroke-width="1"/>
+      <circle cx="-1.5" cy="-1.5" r="1.8" fill="#fff3c4"/>
+    </g>
+    
+  </g>
+  
+  <g class="av-anchor-pot" data-anchor="pot" transform="translate(60 119)">
+
+
+<g class="av-equipment" data-equipment="ceramic">
+<path d="M-23-5Q0 1 23-5L19 10Q0 16-19 10Z" fill="#8faeb1" stroke="#526c79" stroke-width="1.2"/><path d="M-16 2Q0 7 16 2" fill="none" stroke="#e3cfaa" stroke-width="2"/>
+
+</g>
+
+<g class="av-equipment" data-equipment="ribbon">
+<path d="M-2 0Q-16-9-13 3Q-8 7-2 2M2 0Q16-9 13 3Q8 7 2 2M-2 2l-3 10m7-10 3 10" fill="#bd8294" stroke="#805470" stroke-width="1.4"/><circle r="2.5" fill="#e4bdb8"/>
+
+</g>
+
+
+</g>
+  <g transform="translate(60 108)">
+
+
+
+
+
+
+
+</g>
+<g class="av-acc" transform="translate(40 113)">
+
+</g>
+
+
+<g class="av-regalia" transform="translate(60 115)">
+  
+  
+  <path d="M-16 0 q-6 5 -4 11" stroke="#4a3a8a" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+  <path d="M16 0 q6 5 4 11" stroke="#4a3a8a" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+  <path d="M-16 0 Q0 4.4 16 0" stroke="#6a56b8" stroke-width="1.6" fill="none" stroke-linecap="round" opacity=".85"/>
+  
+  
+  <path d="M0 6.8 l1.3 3.1 3.3 .4 -2.4 2.3 .6 3.3 -2.8 -1.6 -2.8 1.6 .6 -3.3 -2.4 -2.3 3.3 -.4 Z" fill="url(#avg-sun)"/>
+  <circle cy="9.4" r="1" fill="#fff2c9"/>
+  
+  
+</g>
+
+
+  
+
+
+<g class="av-costume-front" transform="translate(60 96) scale(1) translate(-60 -96)">
+
+</g>
+
+</g>
+
+  
+</svg>
+</div><p>Blossom plant</p></article><article><div class="art">
+
+
+
+
+
+
+
+<svg data-avatar-art="v2" viewBox="0 0 120 140" role="img" width="100%" height="100%" aria-hidden="true" focusable="false" data-avatar-mode="personal" data-avatar-kind="cactus" data-avatar-stage="6" data-avatar-month="0" data-avatar-outfit="default">
+  
+  <defs>
+    <linearGradient id="overview-2-leaf" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#b4cf7b"/><stop offset=".5" stop-color="#72a66b"/><stop offset="1" stop-color="#437b62"/></linearGradient>
+    
+  </defs>
+  
+  
+  
+  
+
+
+<g class="av-costume-back" transform="translate(60 96) scale(1) translate(-60 -96)">
+
+</g>
+
+
+
+<g class="av-v2 av-body" stroke-linejoin="round" stroke-linecap="round"><g transform="translate(60 108) scale(0.96)">
+
+
+
+</g>
+
+<ellipse cx="60" cy="135" rx="29" ry="3" fill="#302f3c" opacity=".12"/>
+
+<path d="M36 109Q60 116 84 109L78 131Q60 139 42 131Z" fill="url(#avg-pot)" stroke="#885b48" stroke-width="1.4"/>
+<path d="M43 117L47 130" stroke="#ffdfb3" stroke-width="3" opacity=".5" stroke-linecap="round"/>
+<ellipse cx="60" cy="108" rx="27" ry="8" fill="#e8ad87" stroke="#885b48" stroke-width="1.4"/>
+
+<ellipse class="av-soil" cx="60" cy="107" rx="23" ry="5" fill="#67483b"/>
+<ellipse class="av-soilwet" cx="60" cy="107" rx="23" ry="5" fill="#3c302b"/>
+
+
+<g class="av-stem">
+<path d="M49 95Q34 96 34 82L34 70" fill="none" stroke="#41664c" stroke-width="13"/><path d="M49 95Q34 96 34 82L34 70" fill="none" stroke="url(#overview-2-leaf)" stroke-width="10"/>
+<path d="M71 86Q86 88 86 73L86 58" fill="none" stroke="#41664c" stroke-width="13"/><path d="M71 86Q86 88 86 73L86 58" fill="none" stroke="url(#overview-2-leaf)" stroke-width="10"/>
+<path d="M48 105V51Q48 38 60 38Q73 38 73 51V105Q60 112 48 105Z" fill="url(#overview-2-leaf)" stroke="#41664c" stroke-width="1.5"/>
+<path d="M57 103V46" fill="none" stroke="#d1df9a" stroke-width="3"/><path d="M66 102V47" fill="none" stroke="#487c55" stroke-width="1.2"/>
+<path d="M46 51l3 2-2 3M49 53h3" stroke="#f5e7b6" stroke-width="1.2" fill="none"/><path d="M69 60l3 2-2 3M72 62h3" stroke="#f5e7b6" stroke-width="1.2" fill="none"/><path d="M46 73l3 2-2 3M49 75h3" stroke="#f5e7b6" stroke-width="1.2" fill="none"/>
+<g transform="translate(60 38)"><g class="av-bloom">
+
+<path d="M0 0Q-14-7-5-15Q5-18 0 0Z" transform="rotate(0)" fill="#efabb6" stroke="#ad6883" stroke-width=".8"/><path d="M0 0Q-14-7-5-15Q5-18 0 0Z" transform="rotate(72)" fill="#efabb6" stroke="#ad6883" stroke-width=".8"/><path d="M0 0Q-14-7-5-15Q5-18 0 0Z" transform="rotate(144)" fill="#efabb6" stroke="#ad6883" stroke-width=".8"/><path d="M0 0Q-14-7-5-15Q5-18 0 0Z" transform="rotate(216)" fill="#efabb6" stroke="#ad6883" stroke-width=".8"/><path d="M0 0Q-14-7-5-15Q5-18 0 0Z" transform="rotate(288)" fill="#efabb6" stroke="#ad6883" stroke-width=".8"/><circle r="4" fill="#f6d489"/></g></g>
+<g transform="translate(86 56)"><g class="av-bloom"><path d="M0 3Q-13-3-8-9Q-2-14 0-5Q7-16 11-8Q15 0 0 3Z" fill="#efabb6" stroke="#ad6883"/><circle r="2.5" fill="#f6d489"/></g></g><path d="M39 105Q25 102 29 94Q39 90 43 104" fill="url(#overview-2-leaf)" stroke="#41664c"/>
+</g><path d="M42 109l4-2m29 3 3-2" stroke="#c8ad7b" stroke-width="3"/>
+
+<g class="av-anchor-pot" data-anchor="pot" transform="translate(60 121)">
+
+
+
+</g><g transform="translate(60 108)">
+
+
+
+</g>
+
+<g class="av-acc" transform="translate(39 115)">
+
+</g>
+
+
+<g class="av-regalia" transform="translate(60 116)">
+  
+  
+  <path d="M-16 0 q-6 5 -4 11" stroke="#4a3a8a" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+  <path d="M16 0 q6 5 4 11" stroke="#4a3a8a" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+  <path d="M-16 0 Q0 4.4 16 0" stroke="#6a56b8" stroke-width="1.6" fill="none" stroke-linecap="round" opacity=".85"/>
+  
+  
+  <path d="M0 6.8 l1.3 3.1 3.3 .4 -2.4 2.3 .6 3.3 -2.8 -1.6 -2.8 1.6 .6 -3.3 -2.4 -2.3 3.3 -.4 Z" fill="url(#avg-sun)"/>
+  <circle cy="9.4" r="1" fill="#fff2c9"/>
+  
+  
+</g>
+
+
+
+
+<g class="av-costume-front" transform="translate(60 96) scale(1) translate(-60 -96)">
+
+</g>
+
+</g>
+
+  
+</svg>
+</div><p>Cactus</p></article><article><div class="art">
+
+
+
+
+
+
+
+<svg data-avatar-art="v2" viewBox="0 0 120 140" role="img" width="100%" height="100%" aria-hidden="true" focusable="false" data-avatar-mode="personal" data-avatar-kind="bonsai" data-avatar-stage="6" data-avatar-month="0" data-avatar-outfit="default">
+  
+  <defs>
+    <linearGradient id="overview-3-leaf" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#b4cf7b"/><stop offset=".5" stop-color="#72a66b"/><stop offset="1" stop-color="#437b62"/></linearGradient>
+    
+  </defs>
+  
+  
+  
+  
+
+
+<g class="av-costume-back" transform="translate(60 96) scale(1) translate(-60 -96)">
+
+</g>
+
+
+
+<g class="av-v2 av-body" stroke-linejoin="round" stroke-linecap="round"><g transform="translate(60 108) scale(0.96)">
+
+
+
+</g>
+
+<ellipse cx="60" cy="135" rx="29" ry="3" fill="#302f3c" opacity=".12"/>
+
+<path d="M29 112L91 112L83 130Q60 137 37 130Z" fill="url(#avg-pot2)" stroke="#66556e" stroke-width="1.5"/>
+<path d="M38 118L43 128M77 131L80 123" stroke="#cab8c9" stroke-width="3" stroke-linecap="round"/>
+<ellipse cx="60" cy="111" rx="33" ry="7" fill="#b7a3b5" stroke="#66556e" stroke-width="1.4"/>
+
+<ellipse class="av-soil" cx="60" cy="110" rx="23" ry="5" fill="#67483b"/>
+<ellipse class="av-soilwet" cx="60" cy="110" rx="23" ry="5" fill="#3c302b"/>
+
+
+<path d="M45 108Q58 105 76 108" stroke="#719665" stroke-width="5" fill="none"/>
+<g class="av-stem">
+<path d="M53 109Q68 98 59 88Q51 78 64 37" fill="none" stroke="#745140" stroke-width="11"/>
+<path d="M56 106Q64 97 57 88Q53 79 63 39" fill="none" stroke="#c7a078" stroke-width="2.4"/>
+<path d="M61 94Q77 92 82 83" fill="none" stroke="#805b43" stroke-width="4"/>
+<path d="M59 83Q41 81 37 72" fill="none" stroke="#805b43" stroke-width="4"/>
+<path d="M59 66Q80 67 85 58" fill="none" stroke="#805b43" stroke-width="4"/>
+<path d="M61 55Q48 56 43 46" fill="none" stroke="#805b43" stroke-width="4"/>
+
+<g class="av-leaf" transform="translate(64 32)"><path d="M-13 4Q-19-4-9-8Q-7-17 0-12Q9-16 13-7Q20-2 13 5Q0 13-13 4Z" fill="url(#overview-3-leaf)" stroke="#41664c" stroke-width="1.2"/><path d="M-9-4Q-2-10 4-6" fill="none" stroke="#cfdea1" stroke-width="2"/></g>
+
+<g class="av-leaf" transform="translate(82 81)"><path d="M-14 4Q-20-4-10-8Q-7-17 0-12Q9-16 13-7Q21-2 14 5Q0 13-14 4Z" fill="url(#overview-3-leaf)" stroke="#41664c" stroke-width="1.2"/><path d="M-9-4Q-2-10 4-6" fill="none" stroke="#cfdea1" stroke-width="2"/></g>
+
+<g class="av-leaf" transform="translate(36 71)"><path d="M-15 4Q-21-4-11-8Q-7-17 0-12Q9-16 13-7Q22-2 15 5Q0 13-15 4Z" fill="url(#overview-3-leaf)" stroke="#41664c" stroke-width="1.2"/><path d="M-9-4Q-2-10 4-6" fill="none" stroke="#cfdea1" stroke-width="2"/></g>
+
+<g class="av-leaf" transform="translate(84 56)"><path d="M-13 4Q-19-4-9-8Q-7-17 0-12Q9-16 13-7Q20-2 13 5Q0 13-13 4Z" fill="url(#overview-3-leaf)" stroke="#41664c" stroke-width="1.2"/><path d="M-9-4Q-2-10 4-6" fill="none" stroke="#cfdea1" stroke-width="2"/></g>
+
+<g class="av-leaf" transform="translate(43 46)"><path d="M-12 4Q-18-4-8-8Q-7-17 0-12Q9-16 13-7Q19-2 12 5Q0 13-12 4Z" fill="url(#overview-3-leaf)" stroke="#41664c" stroke-width="1.2"/><path d="M-9-4Q-2-10 4-6" fill="none" stroke="#cfdea1" stroke-width="2"/></g>
+
+<g class="av-leaf" transform="translate(61 27)"><path d="M-13 4Q-19-4-9-8Q-7-17 0-12Q9-16 13-7Q20-2 13 5Q0 13-13 4Z" fill="url(#overview-3-leaf)" stroke="#41664c" stroke-width="1.2"/><path d="M-9-4Q-2-10 4-6" fill="none" stroke="#cfdea1" stroke-width="2"/></g>
+
+<g class="av-bloom"><circle cx="45" cy="46" r="3" fill="#efb1b6" stroke="#b46883" stroke-width=".7"/><circle cx="45" cy="46" r="1" fill="#fff0c4"/></g><g class="av-bloom"><circle cx="78" cy="79" r="3" fill="#efb1b6" stroke="#b46883" stroke-width=".7"/><circle cx="78" cy="79" r="1" fill="#fff0c4"/></g><g class="av-bloom"><circle cx="34" cy="68" r="3" fill="#efb1b6" stroke="#b46883" stroke-width=".7"/><circle cx="34" cy="68" r="1" fill="#fff0c4"/></g>
+</g><path d="M52 109l-7 1m14-3 9 3" stroke="#805b43" stroke-width="2"/>
+
+<g class="av-anchor-pot" data-anchor="pot" transform="translate(60 121) scale(1.3 .65)">
+
+
+
+</g><g transform="translate(60 108)">
+
+
+
+</g>
+
+<g class="av-acc" transform="translate(39 115)">
+
+</g>
+
+
+<g class="av-regalia" transform="translate(60 116)">
+  
+  
+  <path d="M-16 0 q-6 5 -4 11" stroke="#4a3a8a" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+  <path d="M16 0 q6 5 4 11" stroke="#4a3a8a" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+  <path d="M-16 0 Q0 4.4 16 0" stroke="#6a56b8" stroke-width="1.6" fill="none" stroke-linecap="round" opacity=".85"/>
+  
+  
+  <path d="M0 6.8 l1.3 3.1 3.3 .4 -2.4 2.3 .6 3.3 -2.8 -1.6 -2.8 1.6 .6 -3.3 -2.4 -2.3 3.3 -.4 Z" fill="url(#avg-sun)"/>
+  <circle cy="9.4" r="1" fill="#fff2c9"/>
+  
+  
+</g>
+
+
+
+
+<g class="av-costume-front" transform="translate(60 96) scale(1) translate(-60 -96)">
+
+</g>
+
+</g>
+
+  
+</svg>
+</div><p>Bonsai</p></article><article><div class="art">
+
+
+
+
+
+
+
+<svg data-avatar-art="v2" viewBox="0 0 120 140" role="img" width="100%" height="100%" aria-hidden="true" focusable="false" data-avatar-mode="personal" data-avatar-kind="sunflower" data-avatar-stage="6" data-avatar-month="0" data-avatar-outfit="default">
+  
+  <defs>
+    <linearGradient id="overview-4-leaf" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#b4cf7b"/><stop offset=".5" stop-color="#72a66b"/><stop offset="1" stop-color="#437b62"/></linearGradient>
+    
+  </defs>
+  
+  
+  
+  
+
+
+<g class="av-costume-back" transform="translate(60 96) scale(1) translate(-60 -96)">
+
+</g>
+
+
+
+<g class="av-v2 av-body" stroke-linejoin="round" stroke-linecap="round"><g transform="translate(60 108) scale(0.96)">
+
+
+
+</g>
+
+<ellipse cx="60" cy="135" rx="29" ry="3" fill="#302f3c" opacity=".12"/>
+
+<path d="M36 109Q60 116 84 109L78 131Q60 139 42 131Z" fill="url(#avg-pot)" stroke="#885b48" stroke-width="1.4"/>
+<path d="M43 117L47 130" stroke="#ffdfb3" stroke-width="3" opacity=".5" stroke-linecap="round"/>
+<ellipse cx="60" cy="108" rx="27" ry="8" fill="#e8ad87" stroke="#885b48" stroke-width="1.4"/>
+
+<ellipse class="av-soil" cx="60" cy="107" rx="23" ry="5" fill="#67483b"/>
+<ellipse class="av-soilwet" cx="60" cy="107" rx="23" ry="5" fill="#3c302b"/>
+
+
+
+<g class="av-stem"><path d="M60 107Q56 83 60 38" fill="none" stroke="#41664c" stroke-width="5"/><path d="M59 104Q56 82 60 38" fill="none" stroke="#a2bf6e" stroke-width="2"/>
+<g class="av-leaf" transform="translate(59 98) scale(-1 1)"><path d="M0 0Q9-19 24-16Q28-2 12 2Z" fill="url(#overview-4-leaf)" stroke="#41664c" stroke-width="1.1"/><path d="M1 0L21-13" stroke="#d2dda0" fill="none" stroke-width="1.2"/></g><g class="av-leaf" transform="translate(59 91) scale(1 1)"><path d="M0 0Q9-19 24-16Q28-2 12 2Z" fill="url(#overview-4-leaf)" stroke="#41664c" stroke-width="1.1"/><path d="M1 0L21-13" stroke="#d2dda0" fill="none" stroke-width="1.2"/></g><g class="av-leaf" transform="translate(59 80) scale(-1 1)"><path d="M0 0Q9-19 24-16Q28-2 12 2Z" fill="url(#overview-4-leaf)" stroke="#41664c" stroke-width="1.1"/><path d="M1 0L21-13" stroke="#d2dda0" fill="none" stroke-width="1.2"/></g><g class="av-leaf" transform="translate(59 71) scale(1 1)"><path d="M0 0Q9-19 24-16Q28-2 12 2Z" fill="url(#overview-4-leaf)" stroke="#41664c" stroke-width="1.1"/><path d="M1 0L21-13" stroke="#d2dda0" fill="none" stroke-width="1.2"/></g><g class="av-leaf" transform="translate(59 61) scale(-1 1)"><path d="M0 0Q9-19 24-16Q28-2 12 2Z" fill="url(#overview-4-leaf)" stroke="#41664c" stroke-width="1.1"/><path d="M1 0L21-13" stroke="#d2dda0" fill="none" stroke-width="1.2"/></g>
+
+<g transform="translate(60 38)"><g class="av-bloom">
+
+<path d="M0-4Q-8-19 0-31Q9-19 0-4Z" transform="rotate(0)" fill="#f7cf6c" stroke="#bc853c" stroke-width=".8"/><path d="M0-4Q-8-19 0-31Q9-19 0-4Z" transform="rotate(30)" fill="#efb44d" stroke="#bc853c" stroke-width=".8"/><path d="M0-4Q-8-19 0-31Q9-19 0-4Z" transform="rotate(60)" fill="#f7cf6c" stroke="#bc853c" stroke-width=".8"/><path d="M0-4Q-8-19 0-31Q9-19 0-4Z" transform="rotate(90)" fill="#efb44d" stroke="#bc853c" stroke-width=".8"/><path d="M0-4Q-8-19 0-31Q9-19 0-4Z" transform="rotate(120)" fill="#f7cf6c" stroke="#bc853c" stroke-width=".8"/><path d="M0-4Q-8-19 0-31Q9-19 0-4Z" transform="rotate(150)" fill="#efb44d" stroke="#bc853c" stroke-width=".8"/><path d="M0-4Q-8-19 0-31Q9-19 0-4Z" transform="rotate(180)" fill="#f7cf6c" stroke="#bc853c" stroke-width=".8"/><path d="M0-4Q-8-19 0-31Q9-19 0-4Z" transform="rotate(210)" fill="#efb44d" stroke="#bc853c" stroke-width=".8"/><path d="M0-4Q-8-19 0-31Q9-19 0-4Z" transform="rotate(240)" fill="#f7cf6c" stroke="#bc853c" stroke-width=".8"/><path d="M0-4Q-8-19 0-31Q9-19 0-4Z" transform="rotate(270)" fill="#efb44d" stroke="#bc853c" stroke-width=".8"/><path d="M0-4Q-8-19 0-31Q9-19 0-4Z" transform="rotate(300)" fill="#f7cf6c" stroke="#bc853c" stroke-width=".8"/><path d="M0-4Q-8-19 0-31Q9-19 0-4Z" transform="rotate(330)" fill="#efb44d" stroke="#bc853c" stroke-width=".8"/>
+<circle r="11.97" fill="url(#avg-disc)" stroke="#805b43" stroke-width="1.4"/>
+<path d="M-4 -3l1 1" stroke="#d4ab6e" stroke-width="1.5"/><path d="M2 -5l1 1" stroke="#d4ab6e" stroke-width="1.5"/><path d="M5 0l1 1" stroke="#d4ab6e" stroke-width="1.5"/><path d="M0 2l1 1" stroke="#d4ab6e" stroke-width="1.5"/><path d="M-5 3l1 1" stroke="#d4ab6e" stroke-width="1.5"/><path d="M3 6l1 1" stroke="#d4ab6e" stroke-width="1.5"/>
+
+<g class="av-acc" transform="translate(0 -19) scale(0.65)">
+  
+</g>
+</g></g>
+<path d="M60 90Q85 91 85 77" stroke="#58894d" stroke-width="3" fill="none"/><g transform="translate(85 74)"><g class="av-bloom"><ellipse cy="-6" rx="3" ry="6" transform="rotate(0)" fill="#f7cf6c" stroke="#bc853c" stroke-width=".7"/><ellipse cy="-6" rx="3" ry="6" transform="rotate(60)" fill="#f7cf6c" stroke="#bc853c" stroke-width=".7"/><ellipse cy="-6" rx="3" ry="6" transform="rotate(120)" fill="#f7cf6c" stroke="#bc853c" stroke-width=".7"/><ellipse cy="-6" rx="3" ry="6" transform="rotate(180)" fill="#f7cf6c" stroke="#bc853c" stroke-width=".7"/><ellipse cy="-6" rx="3" ry="6" transform="rotate(240)" fill="#f7cf6c" stroke="#bc853c" stroke-width=".7"/><ellipse cy="-6" rx="3" ry="6" transform="rotate(300)" fill="#f7cf6c" stroke="#bc853c" stroke-width=".7"/><circle r="4" fill="#805b43"/></g></g>
+</g>
+
+<g class="av-anchor-pot" data-anchor="pot" transform="translate(60 121)">
+
+
+
+</g><g transform="translate(60 108)">
+
+
+
+</g>
+
+<g class="av-acc" transform="translate(39 115)">
+
+</g>
+
+
+<g class="av-regalia" transform="translate(60 116)">
+  
+  
+  <path d="M-16 0 q-6 5 -4 11" stroke="#4a3a8a" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+  <path d="M16 0 q6 5 4 11" stroke="#4a3a8a" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+  <path d="M-16 0 Q0 4.4 16 0" stroke="#6a56b8" stroke-width="1.6" fill="none" stroke-linecap="round" opacity=".85"/>
+  
+  
+  <path d="M0 6.8 l1.3 3.1 3.3 .4 -2.4 2.3 .6 3.3 -2.8 -1.6 -2.8 1.6 .6 -3.3 -2.4 -2.3 3.3 -.4 Z" fill="url(#avg-sun)"/>
+  <circle cy="9.4" r="1" fill="#fff2c9"/>
+  
+  
+</g>
+
+
+
+
+<g class="av-costume-front" transform="translate(60 96) scale(1) translate(-60 -96)">
+
+</g>
+
+</g>
+
+  
+</svg>
+</div><p>Sunflower</p></article><article><div class="art">
+
+
+
+
+
+
+
+<svg data-avatar-art="v2" viewBox="0 0 120 140" role="img" width="100%" height="100%" aria-hidden="true" focusable="false" data-avatar-mode="personal" data-avatar-kind="fern" data-avatar-stage="6" data-avatar-month="0" data-avatar-outfit="default">
+  
+  <defs>
+    <linearGradient id="overview-5-leaf" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#b4cf7b"/><stop offset=".5" stop-color="#72a66b"/><stop offset="1" stop-color="#437b62"/></linearGradient>
+    
+  </defs>
+  
+  
+  
+  
+
+
+<g class="av-costume-back" transform="translate(60 96) scale(1) translate(-60 -96)">
+
+</g>
+
+
+
+<g class="av-v2 av-body" stroke-linecap="round" stroke-linejoin="round"><g transform="translate(60 108) scale(0.96)">
+
+
+
+</g>
+  
+<ellipse cx="60" cy="135" rx="29" ry="3" fill="#302f3c" opacity=".12"/>
+
+<path d="M36 109Q60 116 84 109L78 131Q60 139 42 131Z" fill="url(#avg-pot)" stroke="#885b48" stroke-width="1.4"/>
+<path d="M43 117L47 130" stroke="#ffdfb3" stroke-width="3" opacity=".5" stroke-linecap="round"/>
+<ellipse cx="60" cy="108" rx="27" ry="8" fill="#e8ad87" stroke="#885b48" stroke-width="1.4"/>
+
+<ellipse class="av-soil" cx="60" cy="107" rx="23" ry="5" fill="#67483b"/>
+<ellipse class="av-soilwet" cx="60" cy="107" rx="23" ry="5" fill="#3c302b"/>
+
+
+  <path d="M44 108Q59 103 76 108" fill="none" stroke="#78935f" stroke-width="4"/>
+  
+  
+  <g transform="translate(60 107) rotate(-32)">
+    <g class="av-frond-1">
+    
+      <path d="M0 0C-3-19.25 3-38.5 0-55" fill="none" stroke="#41664c" stroke-width="2.6"/>
+      
+      
+      <path d="M0 -13.2Q-12 -11.2-13 -21.2Q-4 -23.2 0 -13.2Q4 -23.2 13 -21.2Q12 -11.2 0 -13.2Z" fill="url(#overview-5-leaf)" stroke="#41664c" stroke-width=".9"/>
+      <path d="M-10 -19.2L0 -13.2L10 -19.2" fill="none" stroke="#d4e1aa" stroke-width=".8"/>
+      
+      
+      
+      <path d="M0 -24.2Q-14 -22.2-15 -32.2Q-4 -34.2 0 -24.2Q4 -34.2 15 -32.2Q14 -22.2 0 -24.2Z" fill="url(#overview-5-leaf)" stroke="#41664c" stroke-width=".9"/>
+      <path d="M-12 -30.2L0 -24.2L12 -30.2" fill="none" stroke="#d4e1aa" stroke-width=".8"/>
+      <circle cx="-5" cy="-27.2" r="1.1" fill="#d0a564"/><circle cx="5" cy="-27.2" r="1.1" fill="#d0a564"/>
+      
+      
+      <path d="M0 -35.2Q-12 -33.2-13 -43.2Q-4 -45.2 0 -35.2Q4 -45.2 13 -43.2Q12 -33.2 0 -35.2Z" fill="url(#overview-5-leaf)" stroke="#41664c" stroke-width=".9"/>
+      <path d="M-10 -41.2L0 -35.2L10 -41.2" fill="none" stroke="#d4e1aa" stroke-width=".8"/>
+      
+      
+      
+      <path d="M0 -45.65Q-9 -43.65-10 -53.65Q-4 -55.65 0 -45.65Q4 -55.65 10 -53.65Q9 -43.65 0 -45.65Z" fill="url(#overview-5-leaf)" stroke="#41664c" stroke-width=".9"/>
+      <path d="M-7 -51.65L0 -45.65L7 -51.65" fill="none" stroke="#d4e1aa" stroke-width=".8"/>
+      
+      
+      <path d="M0-50Q-7-56 0-62Q7-56 0-50Z" fill="url(#overview-5-leaf)" stroke="#41664c" stroke-width=".9"/>
+    
+    </g>
+  </g>
+  
+  
+  <g transform="translate(60 107) rotate(30)">
+    <g class="av-frond-2">
+    
+      <path d="M0 0C-3-18.2 3-36.4 0-52" fill="none" stroke="#41664c" stroke-width="2.6"/>
+      
+      
+      <path d="M0 -12.48Q-12 -10.48-13 -20.48Q-4 -22.48 0 -12.48Q4 -22.48 13 -20.48Q12 -10.48 0 -12.48Z" fill="url(#overview-5-leaf)" stroke="#41664c" stroke-width=".9"/>
+      <path d="M-10 -18.48L0 -12.48L10 -18.48" fill="none" stroke="#d4e1aa" stroke-width=".8"/>
+      
+      
+      
+      <path d="M0 -22.88Q-14 -20.88-15 -30.88Q-4 -32.879999999999995 0 -22.88Q4 -32.879999999999995 15 -30.88Q14 -20.88 0 -22.88Z" fill="url(#overview-5-leaf)" stroke="#41664c" stroke-width=".9"/>
+      <path d="M-12 -28.88L0 -22.88L12 -28.88" fill="none" stroke="#d4e1aa" stroke-width=".8"/>
+      <circle cx="-5" cy="-25.88" r="1.1" fill="#d0a564"/><circle cx="5" cy="-25.88" r="1.1" fill="#d0a564"/>
+      
+      
+      <path d="M0 -33.28Q-12 -31.28-13 -41.28Q-4 -43.28 0 -33.28Q4 -43.28 13 -41.28Q12 -31.28 0 -33.28Z" fill="url(#overview-5-leaf)" stroke="#41664c" stroke-width=".9"/>
+      <path d="M-10 -39.28L0 -33.28L10 -39.28" fill="none" stroke="#d4e1aa" stroke-width=".8"/>
+      
+      
+      
+      <path d="M0 -43.16Q-9 -41.16-10 -51.16Q-4 -53.16 0 -43.16Q4 -53.16 10 -51.16Q9 -41.16 0 -43.16Z" fill="url(#overview-5-leaf)" stroke="#41664c" stroke-width=".9"/>
+      <path d="M-7 -49.16L0 -43.16L7 -49.16" fill="none" stroke="#d4e1aa" stroke-width=".8"/>
+      
+      
+      <path d="M0-47Q-7-53 0-59Q7-53 0-47Z" fill="url(#overview-5-leaf)" stroke="#41664c" stroke-width=".9"/>
+    
+    </g>
+  </g>
+  
+  
+  <g transform="translate(60 107) rotate(-8)">
+    <g class="av-frond-3">
+    
+      <path d="M0 0C-3-25.2 3-50.4 0-72" fill="none" stroke="#41664c" stroke-width="2.6"/>
+      
+      
+      <path d="M0 -17.28Q-12 -15.280000000000001-13 -25.28Q-4 -27.28 0 -17.28Q4 -27.28 13 -25.28Q12 -15.280000000000001 0 -17.28Z" fill="url(#overview-5-leaf)" stroke="#41664c" stroke-width=".9"/>
+      <path d="M-10 -23.28L0 -17.28L10 -23.28" fill="none" stroke="#d4e1aa" stroke-width=".8"/>
+      
+      
+      
+      <path d="M0 -31.68Q-14 -29.68-15 -39.68Q-4 -41.68 0 -31.68Q4 -41.68 15 -39.68Q14 -29.68 0 -31.68Z" fill="url(#overview-5-leaf)" stroke="#41664c" stroke-width=".9"/>
+      <path d="M-12 -37.68L0 -31.68L12 -37.68" fill="none" stroke="#d4e1aa" stroke-width=".8"/>
+      
+      
+      
+      <path d="M0 -46.08Q-12 -44.08-13 -54.08Q-4 -56.08 0 -46.08Q4 -56.08 13 -54.08Q12 -44.08 0 -46.08Z" fill="url(#overview-5-leaf)" stroke="#41664c" stroke-width=".9"/>
+      <path d="M-10 -52.08L0 -46.08L10 -52.08" fill="none" stroke="#d4e1aa" stroke-width=".8"/>
+      
+      
+      
+      <path d="M0 -59.76Q-9 -57.76-10 -67.75999999999999Q-4 -69.75999999999999 0 -59.76Q4 -69.75999999999999 10 -67.75999999999999Q9 -57.76 0 -59.76Z" fill="url(#overview-5-leaf)" stroke="#41664c" stroke-width=".9"/>
+      <path d="M-7 -65.75999999999999L0 -59.76L7 -65.75999999999999" fill="none" stroke="#d4e1aa" stroke-width=".8"/>
+      
+      
+      <path d="M0-67Q-7-73 0-79Q7-73 0-67Z" fill="url(#overview-5-leaf)" stroke="#41664c" stroke-width=".9"/>
+    
+    </g>
+  </g>
+  
+  
+  <g transform="translate(60 107) rotate(-60)">
+    <g class="av-frond-4">
+    
+      <path d="M0 0C-3-16.45 3-32.9 0-47" fill="none" stroke="#41664c" stroke-width="2.6"/>
+      
+      
+      <path d="M0 -11.28Q-12 -9.28-13 -19.28Q-4 -21.28 0 -11.28Q4 -21.28 13 -19.28Q12 -9.28 0 -11.28Z" fill="url(#overview-5-leaf)" stroke="#41664c" stroke-width=".9"/>
+      <path d="M-10 -17.28L0 -11.28L10 -17.28" fill="none" stroke="#d4e1aa" stroke-width=".8"/>
+      
+      
+      
+      <path d="M0 -20.68Q-14 -18.68-15 -28.68Q-4 -30.68 0 -20.68Q4 -30.68 15 -28.68Q14 -18.68 0 -20.68Z" fill="url(#overview-5-leaf)" stroke="#41664c" stroke-width=".9"/>
+      <path d="M-12 -26.68L0 -20.68L12 -26.68" fill="none" stroke="#d4e1aa" stroke-width=".8"/>
+      
+      
+      
+      <path d="M0 -30.080000000000002Q-12 -28.080000000000002-13 -38.08Q-4 -40.08 0 -30.080000000000002Q4 -40.08 13 -38.08Q12 -28.080000000000002 0 -30.080000000000002Z" fill="url(#overview-5-leaf)" stroke="#41664c" stroke-width=".9"/>
+      <path d="M-10 -36.08L0 -30.080000000000002L10 -36.08" fill="none" stroke="#d4e1aa" stroke-width=".8"/>
+      
+      
+      
+      <path d="M0 -39.01Q-9 -37.01-10 -47.01Q-4 -49.01 0 -39.01Q4 -49.01 10 -47.01Q9 -37.01 0 -39.01Z" fill="url(#overview-5-leaf)" stroke="#41664c" stroke-width=".9"/>
+      <path d="M-7 -45.01L0 -39.01L7 -45.01" fill="none" stroke="#d4e1aa" stroke-width=".8"/>
+      
+      
+      <path d="M0-42Q-7-48 0-54Q7-48 0-42Z" fill="url(#overview-5-leaf)" stroke="#41664c" stroke-width=".9"/>
+    
+    </g>
+  </g>
+  
+  
+  <g transform="translate(60 107) rotate(58)">
+    <g class="av-frond-5">
+    
+      <path d="M0 0C-3-17.849999999999998 3-35.699999999999996 0-51" fill="none" stroke="#41664c" stroke-width="2.6"/>
+      
+      
+      <path d="M0 -12.24Q-12 -10.24-13 -20.240000000000002Q-4 -22.240000000000002 0 -12.24Q4 -22.240000000000002 13 -20.240000000000002Q12 -10.24 0 -12.24Z" fill="url(#overview-5-leaf)" stroke="#41664c" stroke-width=".9"/>
+      <path d="M-10 -18.240000000000002L0 -12.24L10 -18.240000000000002" fill="none" stroke="#d4e1aa" stroke-width=".8"/>
+      
+      
+      
+      <path d="M0 -22.44Q-14 -20.44-15 -30.44Q-4 -32.44 0 -22.44Q4 -32.44 15 -30.44Q14 -20.44 0 -22.44Z" fill="url(#overview-5-leaf)" stroke="#41664c" stroke-width=".9"/>
+      <path d="M-12 -28.44L0 -22.44L12 -28.44" fill="none" stroke="#d4e1aa" stroke-width=".8"/>
+      
+      
+      
+      <path d="M0 -32.64Q-12 -30.64-13 -40.64Q-4 -42.64 0 -32.64Q4 -42.64 13 -40.64Q12 -30.64 0 -32.64Z" fill="url(#overview-5-leaf)" stroke="#41664c" stroke-width=".9"/>
+      <path d="M-10 -38.64L0 -32.64L10 -38.64" fill="none" stroke="#d4e1aa" stroke-width=".8"/>
+      
+      
+      
+      <path d="M0 -42.33Q-9 -40.33-10 -50.33Q-4 -52.33 0 -42.33Q4 -52.33 10 -50.33Q9 -40.33 0 -42.33Z" fill="url(#overview-5-leaf)" stroke="#41664c" stroke-width=".9"/>
+      <path d="M-7 -48.33L0 -42.33L7 -48.33" fill="none" stroke="#d4e1aa" stroke-width=".8"/>
+      
+      
+      <path d="M0-46Q-7-52 0-58Q7-52 0-46Z" fill="url(#overview-5-leaf)" stroke="#41664c" stroke-width=".9"/>
+    
+    </g>
+  </g>
+  
+  
+  <g transform="translate(60 107) rotate(12)">
+    <g class="av-frond-6 av-frond-top">
+    
+      <path d="M0 0C-3-22.4 3-44.8 0-64" fill="none" stroke="#41664c" stroke-width="2.6"/>
+      
+      
+      <path d="M0 -15.36Q-12 -13.36-13 -23.36Q-4 -25.36 0 -15.36Q4 -25.36 13 -23.36Q12 -13.36 0 -15.36Z" fill="url(#overview-5-leaf)" stroke="#41664c" stroke-width=".9"/>
+      <path d="M-10 -21.36L0 -15.36L10 -21.36" fill="none" stroke="#d4e1aa" stroke-width=".8"/>
+      
+      
+      
+      <path d="M0 -28.16Q-14 -26.16-15 -36.16Q-4 -38.16 0 -28.16Q4 -38.16 15 -36.16Q14 -26.16 0 -28.16Z" fill="url(#overview-5-leaf)" stroke="#41664c" stroke-width=".9"/>
+      <path d="M-12 -34.16L0 -28.16L12 -34.16" fill="none" stroke="#d4e1aa" stroke-width=".8"/>
+      
+      
+      
+      <path d="M0 -40.96Q-12 -38.96-13 -48.96Q-4 -50.96 0 -40.96Q4 -50.96 13 -48.96Q12 -38.96 0 -40.96Z" fill="url(#overview-5-leaf)" stroke="#41664c" stroke-width=".9"/>
+      <path d="M-10 -46.96L0 -40.96L10 -46.96" fill="none" stroke="#d4e1aa" stroke-width=".8"/>
+      
+      
+      
+      <path d="M0 -53.12Q-9 -51.12-10 -61.12Q-4 -63.12 0 -53.12Q4 -63.12 10 -61.12Q9 -51.12 0 -53.12Z" fill="url(#overview-5-leaf)" stroke="#41664c" stroke-width=".9"/>
+      <path d="M-7 -59.12L0 -53.12L7 -59.12" fill="none" stroke="#d4e1aa" stroke-width=".8"/>
+      
+      
+      <path d="M0-59Q-7-65 0-71Q7-65 0-59Z" fill="url(#overview-5-leaf)" stroke="#41664c" stroke-width=".9"/>
+    
+    </g>
+  </g>
+  
+  <path d="M43 110l3-1m28 1 3-1" stroke="#d0b58b" stroke-width="2"/>
+  
+<g class="av-anchor-pot" data-anchor="pot" transform="translate(60 121)">
+
+
+
+</g><g transform="translate(60 108)">
+
+
+
+</g>
+
+<g class="av-acc" transform="translate(39 115)">
+
+</g>
+
+
+<g class="av-regalia" transform="translate(60 116)">
+  
+  
+  <path d="M-16 0 q-6 5 -4 11" stroke="#4a3a8a" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+  <path d="M16 0 q6 5 4 11" stroke="#4a3a8a" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+  <path d="M-16 0 Q0 4.4 16 0" stroke="#6a56b8" stroke-width="1.6" fill="none" stroke-linecap="round" opacity=".85"/>
+  
+  
+  <path d="M0 6.8 l1.3 3.1 3.3 .4 -2.4 2.3 .6 3.3 -2.8 -1.6 -2.8 1.6 .6 -3.3 -2.4 -2.3 3.3 -.4 Z" fill="url(#avg-sun)"/>
+  <circle cy="9.4" r="1" fill="#fff2c9"/>
+  
+  
+</g>
+
+
+
+
+<g class="av-costume-front" transform="translate(60 96) scale(1) translate(-60 -96)">
+
+</g>
+
+
+</g>
+
+  
+</svg>
+</div><p>Fern</p></article><article><div class="art">
+
+
+
+
+
+
+
+<svg data-avatar-art="v2" viewBox="0 0 120 140" role="img" width="100%" height="100%" aria-hidden="true" focusable="false" data-avatar-mode="personal" data-avatar-kind="mushroom" data-avatar-stage="6" data-avatar-month="0" data-avatar-outfit="default">
+  
+  <defs>
+    <linearGradient id="overview-6-cap" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#f6c09e"/><stop offset=".5" stop-color="#e7937f"/><stop offset="1" stop-color="#bc6267"/></linearGradient>
+    
+  </defs>
+  
+  
+  
+  
+
+
+<g class="av-costume-back" transform="translate(60 96) scale(1) translate(-60 -96)">
+
+</g>
+
+
+
+
+<g class="av-v2 av-body" stroke-linejoin="round" stroke-linecap="round"><g transform="translate(60 108) scale(0.96)">
+
+
+
+</g>
+  
+<ellipse cx="60" cy="135" rx="29" ry="3" fill="#302f3c" opacity=".12"/>
+
+<path d="M36 109Q60 116 84 109L78 131Q60 139 42 131Z" fill="url(#avg-pot)" stroke="#885b48" stroke-width="1.4"/>
+<path d="M43 117L47 130" stroke="#ffdfb3" stroke-width="3" opacity=".5" stroke-linecap="round"/>
+<ellipse cx="60" cy="108" rx="27" ry="8" fill="#e8ad87" stroke="#885b48" stroke-width="1.4"/>
+
+<ellipse class="av-soil" cx="60" cy="107" rx="23" ry="5" fill="#67483b"/>
+<ellipse class="av-soilwet" cx="60" cy="107" rx="23" ry="5" fill="#3c302b"/>
+
+
+  <path d="M43 108l8-2m18 3 7-3" stroke="#a88862" stroke-width="2"/>
+  <path d="M47 106Q49 88 49 52H71Q71 88 73 106Q60 112 47 106Z" fill="url(#avg-mush-stem)" stroke="#a28265" stroke-width="1.3"/>
+  <path d="M51 102Q52 87 52 57" fill="none" stroke="#fff3d8" stroke-width="2.4"/>
+  
+  <g class="av-head">
+    
+<g class="av-eye" transform="translate(56 63)">
+  <circle r="2.6" fill="#fffdf6"/>
+  <circle cy="0.3" r="1.6" fill="#4a3226"/>
+  <circle cy="0.3" r="0.8" fill="#221a14"/>
+  <circle cx="-0.7" cy="-0.8"
+          r="0.5" fill="#fff"/>
+  <ellipse class="av-lid" rx="3.4" ry="3.4" fill="#efdfc1"/>
+</g>
+
+    
+<g class="av-eye" transform="translate(64 63)">
+  <circle r="2.6" fill="#fffdf6"/>
+  <circle cy="0.3" r="1.6" fill="#4a3226"/>
+  <circle cy="0.3" r="0.8" fill="#221a14"/>
+  <circle cx="-0.7" cy="-0.8"
+          r="0.5" fill="#fff"/>
+  <ellipse class="av-lid" rx="3.4" ry="3.4" fill="#efdfc1"/>
+</g>
+
+    <path d="M57 68Q60 71 63 68" fill="none" stroke="#8f6753" stroke-width="1.2"/>
+    <ellipse cx="52" cy="66" rx="2" ry="1.2" fill="#e7a59b"/>
+    <ellipse cx="68" cy="66" rx="2" ry="1.2" fill="#e7a59b"/>
+  </g>
+  
+  <path d="M46 74Q60 81 74 74L71 79Q60 84 49 79Z" fill="#f3e1c4" stroke="#bc9779" stroke-width="1"/>
+  <g transform="translate(60 47)">
+    <g class="av-cap">
+      <ellipse cy="6" rx="32" ry="4.8" fill="#dfb99e" stroke="#a56c61" stroke-width="1.1"/>
+      <path d="M-24.0 6L0 4L24.0 6M-14.4 9L0 4L14.4 9" fill="none" stroke="#b28577" stroke-width=".9"/>
+      <path d="M-32 3C-32-11.2-14.4-28.8 0-28.8C14.4-28.8 32-11.2 32 3Q0 9-32 3Z" fill="url(#overview-6-cap)" stroke="#a45d60" stroke-width="1.5"/>
+      <path d="M-24.0 0Q-19.2-19.2-4.16-22.4" fill="none" stroke="#ffe0bc" stroke-width="2" opacity=".65"/>
+      
+      <ellipse cx="0" cy="-18.88" rx="2.9800000000000004" ry="2.2" fill="#fff0d4"/>
+      
+      <ellipse cx="-14.72" cy="-8.0" rx="2.3840000000000003" ry="1.7600000000000002" fill="#fff0d4"/>
+      
+      <ellipse cx="14.4" cy="-6.08" rx="2.6820000000000004" ry="1.9800000000000002" fill="#fff0d4"/>
+      
+      <ellipse cx="-23.36" cy="0.64" rx="1.6390000000000005" ry="1.2100000000000002" fill="#fff0d4"/>
+      
+      <ellipse cx="3.84" cy="-0.96" rx="1.4900000000000002" ry="1.1" fill="#fff0d4"/>
+      
+      
+<g class="av-acc" transform="translate(0 -22.4) scale(0.7000000000000001)">
+  
+</g>
+
+    </g>
+    <g class="av-spore" fill="#e6c5ac">
+      <circle cx="-17" cy="-34.8" r="1.6"/><circle cy="-38.8" r="1.4"/><circle cx="17" cy="-34.8" r="1.6"/>
+    </g>
+  </g>
+  
+  <g transform="translate(40 97)">
+    <path d="M-3 10L-3 0H3V10" fill="#f1dfbd" stroke="#a28265"/>
+    <g class="av-cap"><path d="M-9 1Q-9-10 0-9Q9-10 9 1Q0 6-9 1Z" fill="url(#overview-6-cap)" stroke="#a45d60" stroke-width="1.1"/><circle cy="-4" r="1.5" fill="#fff0d4"/></g>
+  </g>
+  <g transform="translate(80 96)">
+    <path d="M-3 10L-3 0H3V10" fill="#f1dfbd" stroke="#a28265"/>
+    <g class="av-cap"><path d="M-7 1Q-7-10 0-9Q7-10 7 1Q0 6-7 1Z" fill="url(#overview-6-cap)" stroke="#a45d60" stroke-width="1.1"/><circle cy="-4" r="1.5" fill="#fff0d4"/></g>
+  </g>
+  
+<g class="av-anchor-pot" data-anchor="pot" transform="translate(60 121)">
+
+
+
+</g><g transform="translate(60 108)">
+
+
+
+</g>
+
+
+<g class="av-regalia" transform="translate(60 116)">
+  
+  
+  <path d="M-16 0 q-6 5 -4 11" stroke="#4a3a8a" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+  <path d="M16 0 q6 5 4 11" stroke="#4a3a8a" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+  <path d="M-16 0 Q0 4.4 16 0" stroke="#6a56b8" stroke-width="1.6" fill="none" stroke-linecap="round" opacity=".85"/>
+  
+  
+  <path d="M0 6.8 l1.3 3.1 3.3 .4 -2.4 2.3 .6 3.3 -2.8 -1.6 -2.8 1.6 .6 -3.3 -2.4 -2.3 3.3 -.4 Z" fill="url(#avg-sun)"/>
+  <circle cy="9.4" r="1" fill="#fff2c9"/>
+  
+  
+</g>
+
+
+
+
+<g class="av-costume-front" transform="translate(60 96) scale(1) translate(-60 -96)">
+
+</g>
+
+
+</g>
+
+  
+</svg>
+</div><p>Mushroom</p></article><article><div class="art">
+
+
+
+
+
+
+
+<svg data-avatar-art="v2" viewBox="0 0 120 140" role="img" width="100%" height="100%" aria-hidden="true" focusable="false" data-avatar-mode="personal" data-avatar-kind="succulent" data-avatar-stage="6" data-avatar-month="0" data-avatar-outfit="default">
+  
+  <defs>
+    <linearGradient id="overview-7-leaf" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#b4cf7b"/><stop offset=".5" stop-color="#72a66b"/><stop offset="1" stop-color="#437b62"/></linearGradient>
+    
+  </defs>
+  
+  
+  
+  
+
+
+<g class="av-costume-back" transform="translate(60 96) scale(1) translate(-60 -96)">
+
+</g>
+
+
+
+<g class="av-v2 av-body" stroke-linejoin="round" stroke-linecap="round"><g transform="translate(60 108) scale(0.96)">
+
+
+
+</g>
+  
+<ellipse cx="60" cy="135" rx="29" ry="3" fill="#302f3c" opacity=".12"/>
+
+<path d="M29 112L91 112L83 130Q60 137 37 130Z" fill="url(#avg-pot2)" stroke="#66556e" stroke-width="1.5"/>
+<path d="M38 118L43 128M77 131L80 123" stroke="#cab8c9" stroke-width="3" stroke-linecap="round"/>
+<ellipse cx="60" cy="111" rx="33" ry="7" fill="#b7a3b5" stroke="#66556e" stroke-width="1.4"/>
+
+<ellipse class="av-soil" cx="60" cy="110" rx="23" ry="5" fill="#67483b"/>
+<ellipse class="av-soilwet" cx="60" cy="110" rx="23" ry="5" fill="#3c302b"/>
+
+
+  <path d="M42 110l5-2m28 3 4-3" stroke="#d5c4a7" stroke-width="3"/>
+  
+  <g transform="translate(60 85) scale(1 .55)">
+    
+    <g transform="rotate(0)">
+<path d="M0 0C-9-12.6-11-30.24 0-42C11-30.24 9-12.6 0 0Z" fill="url(#overview-7-leaf)" stroke="#41664c" stroke-width="1.1"/>
+<path d="M-2-4Q-7-23.520000000000003 0-36.96" fill="none" stroke="#deebbc" stroke-width="1.6" opacity=".65"/>
+<path d="M-2-39L0-42L2-39" stroke="#c6909f" stroke-width="2" fill="none" stroke-linecap="round"/>
+</g>
+    
+    <g transform="rotate(36)">
+<path d="M0 0C-9-12.6-11-30.24 0-42C11-30.24 9-12.6 0 0Z" fill="url(#overview-7-leaf)" stroke="#41664c" stroke-width="1.1"/>
+<path d="M-2-4Q-7-23.520000000000003 0-36.96" fill="none" stroke="#deebbc" stroke-width="1.6" opacity=".65"/>
+<path d="M-2-39L0-42L2-39" stroke="#c6909f" stroke-width="2" fill="none" stroke-linecap="round"/>
+</g>
+    
+    <g transform="rotate(72)">
+<path d="M0 0C-9-12.6-11-30.24 0-42C11-30.24 9-12.6 0 0Z" fill="url(#overview-7-leaf)" stroke="#41664c" stroke-width="1.1"/>
+<path d="M-2-4Q-7-23.520000000000003 0-36.96" fill="none" stroke="#deebbc" stroke-width="1.6" opacity=".65"/>
+<path d="M-2-39L0-42L2-39" stroke="#c6909f" stroke-width="2" fill="none" stroke-linecap="round"/>
+</g>
+    
+    <g transform="rotate(108)">
+<path d="M0 0C-9-12.6-11-30.24 0-42C11-30.24 9-12.6 0 0Z" fill="url(#overview-7-leaf)" stroke="#41664c" stroke-width="1.1"/>
+<path d="M-2-4Q-7-23.520000000000003 0-36.96" fill="none" stroke="#deebbc" stroke-width="1.6" opacity=".65"/>
+<path d="M-2-39L0-42L2-39" stroke="#c6909f" stroke-width="2" fill="none" stroke-linecap="round"/>
+</g>
+    
+    <g transform="rotate(144)">
+<path d="M0 0C-9-12.6-11-30.24 0-42C11-30.24 9-12.6 0 0Z" fill="url(#overview-7-leaf)" stroke="#41664c" stroke-width="1.1"/>
+<path d="M-2-4Q-7-23.520000000000003 0-36.96" fill="none" stroke="#deebbc" stroke-width="1.6" opacity=".65"/>
+<path d="M-2-39L0-42L2-39" stroke="#c6909f" stroke-width="2" fill="none" stroke-linecap="round"/>
+</g>
+    
+    <g transform="rotate(180)">
+<path d="M0 0C-9-12.6-11-30.24 0-42C11-30.24 9-12.6 0 0Z" fill="url(#overview-7-leaf)" stroke="#41664c" stroke-width="1.1"/>
+<path d="M-2-4Q-7-23.520000000000003 0-36.96" fill="none" stroke="#deebbc" stroke-width="1.6" opacity=".65"/>
+<path d="M-2-39L0-42L2-39" stroke="#c6909f" stroke-width="2" fill="none" stroke-linecap="round"/>
+</g>
+    
+    <g transform="rotate(216)">
+<path d="M0 0C-9-12.6-11-30.24 0-42C11-30.24 9-12.6 0 0Z" fill="url(#overview-7-leaf)" stroke="#41664c" stroke-width="1.1"/>
+<path d="M-2-4Q-7-23.520000000000003 0-36.96" fill="none" stroke="#deebbc" stroke-width="1.6" opacity=".65"/>
+<path d="M-2-39L0-42L2-39" stroke="#c6909f" stroke-width="2" fill="none" stroke-linecap="round"/>
+</g>
+    
+    <g transform="rotate(252)">
+<path d="M0 0C-9-12.6-11-30.24 0-42C11-30.24 9-12.6 0 0Z" fill="url(#overview-7-leaf)" stroke="#41664c" stroke-width="1.1"/>
+<path d="M-2-4Q-7-23.520000000000003 0-36.96" fill="none" stroke="#deebbc" stroke-width="1.6" opacity=".65"/>
+<path d="M-2-39L0-42L2-39" stroke="#c6909f" stroke-width="2" fill="none" stroke-linecap="round"/>
+</g>
+    
+    <g transform="rotate(288)">
+<path d="M0 0C-9-12.6-11-30.24 0-42C11-30.24 9-12.6 0 0Z" fill="url(#overview-7-leaf)" stroke="#41664c" stroke-width="1.1"/>
+<path d="M-2-4Q-7-23.520000000000003 0-36.96" fill="none" stroke="#deebbc" stroke-width="1.6" opacity=".65"/>
+<path d="M-2-39L0-42L2-39" stroke="#c6909f" stroke-width="2" fill="none" stroke-linecap="round"/>
+</g>
+    
+    <g transform="rotate(324)">
+<path d="M0 0C-9-12.6-11-30.24 0-42C11-30.24 9-12.6 0 0Z" fill="url(#overview-7-leaf)" stroke="#41664c" stroke-width="1.1"/>
+<path d="M-2-4Q-7-23.520000000000003 0-36.96" fill="none" stroke="#deebbc" stroke-width="1.6" opacity=".65"/>
+<path d="M-2-39L0-42L2-39" stroke="#c6909f" stroke-width="2" fill="none" stroke-linecap="round"/>
+</g>
+    
+    <g transform="rotate(22)">
+<path d="M0 0C-9-8.316-11-19.9584 0-27.720000000000002C11-19.9584 9-8.316 0 0Z" fill="url(#overview-7-leaf)" stroke="#41664c" stroke-width="1.1"/>
+<path d="M-2-4Q-7-15.523200000000003 0-24.393600000000003" fill="none" stroke="#deebbc" stroke-width="1.6" opacity=".65"/>
+<path d="M-2-24.720000000000002L0-27.720000000000002L2-24.720000000000002" stroke="#c6909f" stroke-width="2" fill="none" stroke-linecap="round"/>
+</g><g transform="rotate(82)">
+<path d="M0 0C-9-8.316-11-19.9584 0-27.720000000000002C11-19.9584 9-8.316 0 0Z" fill="url(#overview-7-leaf)" stroke="#41664c" stroke-width="1.1"/>
+<path d="M-2-4Q-7-15.523200000000003 0-24.393600000000003" fill="none" stroke="#deebbc" stroke-width="1.6" opacity=".65"/>
+<path d="M-2-24.720000000000002L0-27.720000000000002L2-24.720000000000002" stroke="#c6909f" stroke-width="2" fill="none" stroke-linecap="round"/>
+</g><g transform="rotate(142)">
+<path d="M0 0C-9-8.316-11-19.9584 0-27.720000000000002C11-19.9584 9-8.316 0 0Z" fill="url(#overview-7-leaf)" stroke="#41664c" stroke-width="1.1"/>
+<path d="M-2-4Q-7-15.523200000000003 0-24.393600000000003" fill="none" stroke="#deebbc" stroke-width="1.6" opacity=".65"/>
+<path d="M-2-24.720000000000002L0-27.720000000000002L2-24.720000000000002" stroke="#c6909f" stroke-width="2" fill="none" stroke-linecap="round"/>
+</g><g transform="rotate(202)">
+<path d="M0 0C-9-8.316-11-19.9584 0-27.720000000000002C11-19.9584 9-8.316 0 0Z" fill="url(#overview-7-leaf)" stroke="#41664c" stroke-width="1.1"/>
+<path d="M-2-4Q-7-15.523200000000003 0-24.393600000000003" fill="none" stroke="#deebbc" stroke-width="1.6" opacity=".65"/>
+<path d="M-2-24.720000000000002L0-27.720000000000002L2-24.720000000000002" stroke="#c6909f" stroke-width="2" fill="none" stroke-linecap="round"/>
+</g><g transform="rotate(262)">
+<path d="M0 0C-9-8.316-11-19.9584 0-27.720000000000002C11-19.9584 9-8.316 0 0Z" fill="url(#overview-7-leaf)" stroke="#41664c" stroke-width="1.1"/>
+<path d="M-2-4Q-7-15.523200000000003 0-24.393600000000003" fill="none" stroke="#deebbc" stroke-width="1.6" opacity=".65"/>
+<path d="M-2-24.720000000000002L0-27.720000000000002L2-24.720000000000002" stroke="#c6909f" stroke-width="2" fill="none" stroke-linecap="round"/>
+</g><g transform="rotate(322)">
+<path d="M0 0C-9-8.316-11-19.9584 0-27.720000000000002C11-19.9584 9-8.316 0 0Z" fill="url(#overview-7-leaf)" stroke="#41664c" stroke-width="1.1"/>
+<path d="M-2-4Q-7-15.523200000000003 0-24.393600000000003" fill="none" stroke="#deebbc" stroke-width="1.6" opacity=".65"/>
+<path d="M-2-24.720000000000002L0-27.720000000000002L2-24.720000000000002" stroke="#c6909f" stroke-width="2" fill="none" stroke-linecap="round"/>
+</g>
+    <g transform="rotate(-35)">
+<path d="M0 0C-9-4.788-11-11.491200000000001 0-15.96C11-11.491200000000001 9-4.788 0 0Z" fill="url(#overview-7-leaf)" stroke="#41664c" stroke-width="1.1"/>
+<path d="M-2-4Q-7-8.937600000000002 0-14.0448" fill="none" stroke="#deebbc" stroke-width="1.6" opacity=".65"/>
+
+</g><g transform="rotate(85)">
+<path d="M0 0C-9-4.788-11-11.491200000000001 0-15.96C11-11.491200000000001 9-4.788 0 0Z" fill="url(#overview-7-leaf)" stroke="#41664c" stroke-width="1.1"/>
+<path d="M-2-4Q-7-8.937600000000002 0-14.0448" fill="none" stroke="#deebbc" stroke-width="1.6" opacity=".65"/>
+
+</g><g transform="rotate(205)">
+<path d="M0 0C-9-4.788-11-11.491200000000001 0-15.96C11-11.491200000000001 9-4.788 0 0Z" fill="url(#overview-7-leaf)" stroke="#41664c" stroke-width="1.1"/>
+<path d="M-2-4Q-7-8.937600000000002 0-14.0448" fill="none" stroke="#deebbc" stroke-width="1.6" opacity=".65"/>
+
+</g>
+  </g>
+  
+  
+  <path d="M60 76Q73 73 77 44" fill="none" stroke="#809464" stroke-width="2.8"/>
+  <g transform="translate(77 42)"><g class="av-bloom">
+  <path d="M0 1Q-10-4-5-10Q1-15 0 1Z" transform="rotate(0)" fill="#eab0b4" stroke="#ac7486" stroke-width=".8"/><path d="M0 1Q-10-4-5-10Q1-15 0 1Z" transform="rotate(72)" fill="#eab0b4" stroke="#ac7486" stroke-width=".8"/><path d="M0 1Q-10-4-5-10Q1-15 0 1Z" transform="rotate(144)" fill="#eab0b4" stroke="#ac7486" stroke-width=".8"/><path d="M0 1Q-10-4-5-10Q1-15 0 1Z" transform="rotate(216)" fill="#eab0b4" stroke="#ac7486" stroke-width=".8"/><path d="M0 1Q-10-4-5-10Q1-15 0 1Z" transform="rotate(288)" fill="#eab0b4" stroke="#ac7486" stroke-width=".8"/><circle r="3" fill="#efd18b"/>
+  </g></g>
+  
+  
+  <path d="M71 69Q89 70 90 60" fill="none" stroke="#809464" stroke-width="2"/>
+  <g transform="translate(90 58)"><g class="av-bloom"><ellipse cy="-4" rx="2.7" ry="4.5" transform="rotate(0)" fill="#eab0b4" stroke="#ac7486" stroke-width=".7"/><ellipse cy="-4" rx="2.7" ry="4.5" transform="rotate(72)" fill="#eab0b4" stroke="#ac7486" stroke-width=".7"/><ellipse cy="-4" rx="2.7" ry="4.5" transform="rotate(144)" fill="#eab0b4" stroke="#ac7486" stroke-width=".7"/><ellipse cy="-4" rx="2.7" ry="4.5" transform="rotate(216)" fill="#eab0b4" stroke="#ac7486" stroke-width=".7"/><ellipse cy="-4" rx="2.7" ry="4.5" transform="rotate(288)" fill="#eab0b4" stroke="#ac7486" stroke-width=".7"/><circle r="2" fill="#efd18b"/></g></g>
+  <path d="M49 105Q43 108 38 107" fill="none" stroke="#60865d" stroke-width="2"/>
+  <g transform="translate(38 107) scale(.5 .3)"><g transform="rotate(0)">
+<path d="M0 0C-9-6.8999999999999995-11-16.56 0-23C11-16.56 9-6.8999999999999995 0 0Z" fill="url(#overview-7-leaf)" stroke="#41664c" stroke-width="1.1"/>
+<path d="M-2-4Q-7-12.88 0-20.24" fill="none" stroke="#deebbc" stroke-width="1.6" opacity=".65"/>
+<path d="M-2-20L0-23L2-20" stroke="#c6909f" stroke-width="2" fill="none" stroke-linecap="round"/>
+</g><g transform="rotate(60)">
+<path d="M0 0C-9-6.8999999999999995-11-16.56 0-23C11-16.56 9-6.8999999999999995 0 0Z" fill="url(#overview-7-leaf)" stroke="#41664c" stroke-width="1.1"/>
+<path d="M-2-4Q-7-12.88 0-20.24" fill="none" stroke="#deebbc" stroke-width="1.6" opacity=".65"/>
+<path d="M-2-20L0-23L2-20" stroke="#c6909f" stroke-width="2" fill="none" stroke-linecap="round"/>
+</g><g transform="rotate(120)">
+<path d="M0 0C-9-6.8999999999999995-11-16.56 0-23C11-16.56 9-6.8999999999999995 0 0Z" fill="url(#overview-7-leaf)" stroke="#41664c" stroke-width="1.1"/>
+<path d="M-2-4Q-7-12.88 0-20.24" fill="none" stroke="#deebbc" stroke-width="1.6" opacity=".65"/>
+<path d="M-2-20L0-23L2-20" stroke="#c6909f" stroke-width="2" fill="none" stroke-linecap="round"/>
+</g><g transform="rotate(180)">
+<path d="M0 0C-9-6.8999999999999995-11-16.56 0-23C11-16.56 9-6.8999999999999995 0 0Z" fill="url(#overview-7-leaf)" stroke="#41664c" stroke-width="1.1"/>
+<path d="M-2-4Q-7-12.88 0-20.24" fill="none" stroke="#deebbc" stroke-width="1.6" opacity=".65"/>
+<path d="M-2-20L0-23L2-20" stroke="#c6909f" stroke-width="2" fill="none" stroke-linecap="round"/>
+</g><g transform="rotate(240)">
+<path d="M0 0C-9-6.8999999999999995-11-16.56 0-23C11-16.56 9-6.8999999999999995 0 0Z" fill="url(#overview-7-leaf)" stroke="#41664c" stroke-width="1.1"/>
+<path d="M-2-4Q-7-12.88 0-20.24" fill="none" stroke="#deebbc" stroke-width="1.6" opacity=".65"/>
+<path d="M-2-20L0-23L2-20" stroke="#c6909f" stroke-width="2" fill="none" stroke-linecap="round"/>
+</g><g transform="rotate(300)">
+<path d="M0 0C-9-6.8999999999999995-11-16.56 0-23C11-16.56 9-6.8999999999999995 0 0Z" fill="url(#overview-7-leaf)" stroke="#41664c" stroke-width="1.1"/>
+<path d="M-2-4Q-7-12.88 0-20.24" fill="none" stroke="#deebbc" stroke-width="1.6" opacity=".65"/>
+<path d="M-2-20L0-23L2-20" stroke="#c6909f" stroke-width="2" fill="none" stroke-linecap="round"/>
+</g></g>
+  
+  
+<g class="av-anchor-pot" data-anchor="pot" transform="translate(60 121)">
+
+
+
+</g><g transform="translate(60 108)">
+
+
+
+</g>
+
+<g class="av-acc" transform="translate(39 115)">
+
+</g>
+
+
+<g class="av-regalia" transform="translate(60 116)">
+  
+  
+  <path d="M-16 0 q-6 5 -4 11" stroke="#4a3a8a" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+  <path d="M16 0 q6 5 4 11" stroke="#4a3a8a" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+  <path d="M-16 0 Q0 4.4 16 0" stroke="#6a56b8" stroke-width="1.6" fill="none" stroke-linecap="round" opacity=".85"/>
+  
+  
+  <path d="M0 6.8 l1.3 3.1 3.3 .4 -2.4 2.3 .6 3.3 -2.8 -1.6 -2.8 1.6 .6 -3.3 -2.4 -2.3 3.3 -.4 Z" fill="url(#avg-sun)"/>
+  <circle cy="9.4" r="1" fill="#fff2c9"/>
+  
+  
+</g>
+
+
+
+
+<g class="av-costume-front" transform="translate(60 96) scale(1) translate(-60 -96)">
+
+</g>
+
+
+</g>
+
+  
+</svg>
+</div><p>Succulent</p></article><article><div class="art">
+
+
+
+
+
+
+
+<svg data-avatar-art="v2" viewBox="0 0 120 140" role="img" width="100%" height="100%" aria-hidden="true" focusable="false" data-avatar-mode="personal" data-avatar-kind="cat" data-avatar-stage="6" data-avatar-month="0" data-avatar-outfit="default">
+  
+  <defs>
+    <linearGradient id="overview-8-fur" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#ffd699"/><stop offset=".55" stop-color="#efb26e"/><stop offset="1" stop-color="#d68a50"/></linearGradient>
+    <linearGradient id="overview-8-cream" x1="0" y1="0" x2=".7" y2="1"><stop stop-color="#fff7e7"/><stop offset="1" stop-color="#edcfaa"/></linearGradient>
+    
+  </defs>
+  
+  
+  
+  
+
+
+<g class="av-costume-back" transform="translate(60 96) scale(1.0) translate(-60 -96)">
+
+</g>
+
+
+
+
+
+
+  <ellipse cx="60" cy="121" rx="30" ry="7" fill="#00000012"/>
+
+<g class="av-v2 av-body" transform="translate(60 96) scale(1.0) translate(-60 -96)" stroke-linejoin="round"><g transform="translate(60 94)">
+
+
+
+
+
+
+
+</g>
+  <g class="av-tail">
+    
+    <path d="M78 115 C108 119 106 78 91 83 C82 87 90 96 97 91" fill="none" stroke="#b97745" stroke-width="10" stroke-linecap="round"/>
+    <path d="M78 113 C105 116 103 80 92 85" fill="none" stroke="#ecad66" stroke-width="6" stroke-linecap="round"/>
+    <path d="M99 98l5 2M98 105l5 2" stroke="#b97745" stroke-width="3"/>
+    
+  </g>
+  <path d="M41 118 Q34 91 48 85 Q60 79 73 86 Q88 96 80 120 Q60 130 43 118Z" fill="url(#overview-8-fur)" stroke="var(--av-outline,#815b43)" stroke-width="1.5"/>
+  <path d="M48 99 Q60 88 73 100 L73 119 Q60 126 48 119Z" fill="url(#overview-8-cream)"/>
+  <path d="M49 101L48 117M71 101L72 117" stroke="#b97745" stroke-width="1.5" stroke-linecap="round"/>
+  <path d="M42 105Q34 111 40 119M78 105Q86 111 80 119" fill="none" stroke="#b97745" stroke-width="2"/>
+  <path d="M49 97L52 105 56 102 60 109 64 102 68 105 71 97" fill="url(#overview-8-cream)"/>
+  <g class="av-paws" fill="url(#overview-8-cream)" stroke="var(--av-outline,#815b43)" stroke-width="1.2">
+    <ellipse cx="48" cy="119" rx="9" ry="6"/><ellipse cx="72" cy="119" rx="9" ry="6"/>
+    <path d="M45 119v3m5-3v3m19-3v3m5-3v3" stroke="#c89c79"/>
+  </g>
+  <g class="av-head">
+    <g class="av-ear-l"><path d="M38 44L35 38 43 43" fill="url(#overview-8-fur)" stroke="var(--av-outline,#815b43)"/><path d="M39 65 Q32 39 42 41 L55 55Z" fill="url(#overview-8-fur)" stroke="var(--av-outline,#815b43)" stroke-width="1.5"/><path d="M41 58L39 46 49 55Z" fill="#d98c92"/></g>
+    <g class="av-ear-r"><path d="M82 44L85 38 77 43" fill="url(#overview-8-fur)" stroke="var(--av-outline,#815b43)"/><path d="M81 65 Q88 39 78 41 L65 55Z" fill="url(#overview-8-fur)" stroke="var(--av-outline,#815b43)" stroke-width="1.5"/><path d="M79 58L81 46 71 55Z" fill="#d98c92"/></g>
+    <path d="M37 59 Q39 42 60 43 Q81 42 83 59 L88 76 82 78 85 82 Q81 96 60 97 Q39 96 35 82 L38 78 32 76Z" fill="url(#overview-8-fur)" stroke="var(--av-outline,#815b43)" stroke-width="1.5"/>
+    <path d="M43 61Q48 54 56 55" stroke="#ffdc9c" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M53 51L56 58M60 49v8M67 51L64 58" stroke="#bb7848" stroke-width="3" stroke-linecap="round"/>
+    <ellipse cx="52" cy="85" rx="10" ry="7" fill="url(#overview-8-cream)"/><ellipse cx="68" cy="85" rx="10" ry="7" fill="url(#overview-8-cream)"/>
+    
+<g class="av-eye" transform="translate(49 73)">
+  <circle r="4.5" fill="#fffdf6"/>
+  <circle cy="0.5" r="2.8" fill="#658b72"/>
+  <circle cy="0.5" r="1.4" fill="#221a14"/>
+  <circle cx="-1.3" cy="-1.3"
+          r="0.8" fill="#fff"/>
+  <ellipse class="av-lid" rx="5.3" ry="5.3" fill="#efb26e"/>
+</g>
+
+    
+<g class="av-eye" transform="translate(71 73)">
+  <circle r="4.5" fill="#fffdf6"/>
+  <circle cy="0.5" r="2.8" fill="#658b72"/>
+  <circle cy="0.5" r="1.4" fill="#221a14"/>
+  <circle cx="-1.3" cy="-1.3"
+          r="0.8" fill="#fff"/>
+  <ellipse class="av-lid" rx="5.3" ry="5.3" fill="#efb26e"/>
+</g>
+
+    <path d="M56 81 Q60 79 64 81 L60 85Z" fill="#bd7280"/>
+    <path d="M60 85v3q-5 5-9 0m9 0q5 5 9 0" stroke="#614b43" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+    <path d="M42 83L28 80M42 87L29 89M78 83L92 80M78 87L91 89" stroke="#7e624b" stroke-width="1.2" stroke-linecap="round"/>
+    <path d="M39 73l6 2m30 0 6-2" stroke="#b97745" stroke-width="2"/>
+    <g class="av-anchor-head" data-anchor="head" transform="translate(60 49)">
+
+
+
+
+<g class="av-equipment" data-equipment="small_cap">
+<path d="M-13 0Q-12-17 2-15Q12-13 12 0Z" fill="#7295af" stroke="#466780" stroke-width="1.2"/><path d="M-15 0H20Q19 5 10 5H-14Z" fill="#466780"/>
+
+</g>
+
+
+</g>
+    
+<g class="av-acc" transform="translate(60 49) scale(1)">
+  
+</g>
+
+  </g>
+  
+
+
+<g class="av-costume-front" transform="translate(60 96) scale(1) translate(-60 -96)">
+
+</g>
+
+
+<g class="av-regalia" transform="translate(60 98) scale(1)">
+  
+  
+  <path d="M-9 -1 Q-18 12 -12 22 Q-5 16 -8 4 Z" fill="#4a3a8a"/>
+  <path d="M9 -1 Q18 12 12 22 Q5 16 8 4 Z" fill="#4a3a8a"/>
+  <path d="M-9 -1 Q0 4 9 -1" stroke="#6a56b8" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+  
+  
+  <path d="M0 6.6 l1.4 3.3 3.5 .4 -2.6 2.4 .7 3.5 -3 -1.7 -3 1.7 .7 -3.5 -2.6 -2.4 3.5 -.4 Z" fill="url(#avg-sun)"/>
+  <circle cy="9.4" r="1.1" fill="#fff2c9"/>
+  <path d="M-13 6 l1 2.4 2.4 1 -2.4 1 -1 2.4 -1 -2.4 -2.4 -1 2.4 -1 Z" fill="#f6c445" opacity=".85"/>
+  <path d="M13 6 l1 2.4 2.4 1 -2.4 1 -1 2.4 -1 -2.4 -2.4 -1 2.4 -1 Z" fill="#f6c445" opacity=".85"/>
+  
+  
+</g>
+
+
+  <g class="av-anchor-neck" data-anchor="neck" transform="translate(60 98)">
+
+
+<g class="av-equipment" data-equipment="bandana">
+<path d="M-14-3Q0 4 14-3L0 15Z" fill="#588c9b" stroke="#355a70" stroke-width="1.2"/><path d="M-6 0L0 9" fill="none" stroke="#b7dcce"/>
+
+</g>
+
+
+
+
+</g>
+  <path d="M91 47l2 4 4 1-3 3 1 4-4-2-4 2 1-4-3-3 4-1Z" fill="#e7bf61"/>
+  <g class="av-food"><ellipse cx="94" cy="34" rx="7" ry="4" fill="url(#avg-fish)"/><path d="M100 34l6-4-1 4 1 4Z" fill="#e5731f"/><circle cx="91" cy="33" r=".9" fill="#221a14"/></g>
+</g>
+
+  
+</svg>
+</div><p>Cat</p></article><article><div class="art">
+
+
+
+
+
+
+
+<svg data-avatar-art="v2" viewBox="0 0 120 140" role="img" width="100%" height="100%" aria-hidden="true" focusable="false" data-avatar-mode="personal" data-avatar-kind="bird" data-avatar-stage="6" data-avatar-month="0" data-avatar-outfit="default">
+  
+  
+  
+  
+
+
+<g class="av-costume-back" transform="translate(60 96) scale(1.0) translate(-60 -96)">
+
+</g>
+
+
+
+
+  <ellipse cx="60" cy="121" rx="26" ry="7" fill="#00000012"/>
+
+<g class="av-v2 av-body" transform="translate(60 98) scale(1.0) translate(-60 -98)" stroke-linejoin="round"><g transform="translate(60 94)">
+
+
+
+</g>
+ <g class="av-tail"><path d="M47 105Q27 111 28 119Q47 124 57 111Z" fill="url(#avg-bird3)" stroke="#477d7b" stroke-width="1.3"/><path d="M45 111l-9 7m14-4-7 7" stroke="#9bc9be" stroke-width="1.3"/></g>
+ <path d="M50 114l-2 8m0-1-5 2m5-2 5 2m17-9 2 8m0-1-5 2m5-2 5 2" stroke="#bb813e" stroke-width="2" stroke-linecap="round"/>
+ <path d="M36 96Q33 61 59 60Q84 63 85 89Q91 115 65 119Q42 122 36 96Z" fill="url(#avg-bird)" stroke="#477d7b" stroke-width="1.5"/>
+ <path d="M49 86Q62 80 75 92Q84 114 65 116Q44 117 45 100Z" fill="url(#avg-bird2)"/>
+ <g class="av-wing-l"><path d="M43 88Q7 73.5 8 70.66666666666667Q39 77 50 94Q50 104 43 101Z" fill="url(#avg-bird3)" stroke="#477d7b" stroke-width="1.3"/><path d="M40 94L7 73.66666666666667M42 90L12 70.66666666666667" stroke="#a6d5cd" stroke-width="1.2"/></g>
+ <g class="av-wing-r"><path d="M78 87Q114 71.5 112 68.66666666666667Q80 77 72 95Q73 104 80 100Z" fill="url(#avg-bird3)" stroke="#477d7b" stroke-width="1.3"/><path d="M80 94L113 71.66666666666667M78 89L108 68.66666666666667" stroke="#a6d5cd" stroke-width="1.2"/></g>
+ <g class="av-head">
+  <path d="M39 76Q34 51 58 49Q79 45 82 69Q87 88 68 92Q46 95 39 76Z" fill="url(#avg-bird)" stroke="#477d7b" stroke-width="1.5"/>
+  <path d="M53 51Q48 36 56 34L61 50Q60 36 68 38L66 50" fill="url(#avg-bird3)" stroke="#477d7b" stroke-width="1.2"/>
+  <path d="M44 64Q47 55 56 55" stroke="#cfebe3" stroke-width="3" fill="none" stroke-linecap="round"/>
+  
+<g class="av-eye" transform="translate(52 71)">
+  <circle r="4.5" fill="#fffdf6"/>
+  <circle cy="0.5" r="2.8" fill="#446b69"/>
+  <circle cy="0.5" r="1.4" fill="#221a14"/>
+  <circle cx="-1.3" cy="-1.3"
+          r="0.8" fill="#fff"/>
+  <ellipse class="av-lid" rx="5.3" ry="5.3" fill="#a5d3c9"/>
+</g>
+
+<g class="av-eye" transform="translate(70 70)">
+  <circle r="3.6" fill="#fffdf6"/>
+  <circle cy="0.4" r="2.2" fill="#446b69"/>
+  <circle cy="0.4" r="1.2" fill="#221a14"/>
+  <circle cx="-1.0" cy="-1.1"
+          r="0.6" fill="#fff"/>
+  <ellipse class="av-lid" rx="4.4" ry="4.4" fill="#a5d3c9"/>
+</g>
+
+  <path d="M61 78Q68 72 75 78L67 86Z" fill="url(#avg-beak)" stroke="#b98143" stroke-width="1"/><path d="M62 79l10 0" stroke="#c08b4c" stroke-width=".8"/>
+  <ellipse cx="46" cy="81" rx="4" ry="2.5" fill="#e7b3a1"/>
+  <g class="av-anchor-head" data-anchor="head" transform="translate(60 49)">
+
+
+
+</g>
+<g class="av-acc" transform="translate(60 49) scale(0.8)">
+  
+</g>
+
+ </g>
+ 
+
+
+<g class="av-costume-front" transform="translate(60 96) scale(1) translate(-60 -96)">
+
+</g>
+
+
+<g class="av-regalia" transform="translate(60 96) scale(0.7)">
+  
+  
+  <path d="M-9 -1 Q-18 12 -12 22 Q-5 16 -8 4 Z" fill="#4a3a8a"/>
+  <path d="M9 -1 Q18 12 12 22 Q5 16 8 4 Z" fill="#4a3a8a"/>
+  <path d="M-9 -1 Q0 4 9 -1" stroke="#6a56b8" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+  
+  
+  <path d="M0 6.6 l1.4 3.3 3.5 .4 -2.6 2.4 .7 3.5 -3 -1.7 -3 1.7 .7 -3.5 -2.6 -2.4 3.5 -.4 Z" fill="url(#avg-sun)"/>
+  <circle cy="9.4" r="1.1" fill="#fff2c9"/>
+  <path d="M-13 6 l1 2.4 2.4 1 -2.4 1 -1 2.4 -1 -2.4 -2.4 -1 2.4 -1 Z" fill="#f6c445" opacity=".85"/>
+  <path d="M13 6 l1 2.4 2.4 1 -2.4 1 -1 2.4 -1 -2.4 -2.4 -1 2.4 -1 Z" fill="#f6c445" opacity=".85"/>
+  
+  
+</g>
+
+
+ <g class="av-anchor-neck" data-anchor="neck" transform="translate(60 96)">
+
+
+
+</g>
+ <path d="M52 103q8 7 16 0m-13 6q5 4 10 0" fill="none" stroke="#78b5ae" stroke-width="1.5"/>
+ <g class="av-food" fill="#96744f"><ellipse cx="94" cy="32" rx="3" ry="5"/><ellipse cx="101" cy="37" rx="3" ry="4"/></g>
+</g>
+
+  
+</svg>
+</div><p>Bird</p></article><article><div class="art">
+
+
+
+
+
+
+
+<svg data-avatar-art="v2" viewBox="0 0 120 140" role="img" width="100%" height="100%" aria-hidden="true" focusable="false" data-avatar-mode="personal" data-avatar-kind="turtle" data-avatar-stage="6" data-avatar-month="0" data-avatar-outfit="default">
+  
+  
+  
+  
+
+
+<g class="av-costume-back" transform="translate(60 96) scale(1.0) translate(-60 -96)">
+
+</g>
+
+
+
+
+  <ellipse cx="60" cy="121" rx="32" ry="7" fill="#00000012"/>
+
+<g class="av-v2 av-body" transform="translate(60 100) scale(1.0) translate(-60 -100)" stroke-linejoin="round"><g transform="translate(60 94)">
+
+
+
+</g>
+ <path d="M31 106l-12 1 14 6" fill="url(#avg-turtleskin)" stroke="#547951" stroke-width="1.3"/>
+ <g fill="url(#avg-turtleskin)" stroke="#547951" stroke-width="1.3"><path d="M35 103Q23 106 27 116Q34 121 43 115L45 104Z"/><path d="M70 103Q68 118 79 119Q90 119 88 112L83 103Z"/></g>
+ <path d="M29 115v3m5-2v3m43-1v3m5-4v3" stroke="#c9d8a2" stroke-width="1.5"/>
+ <g class="av-head av-turtle-head">
+  <path d="M77 98Q78 79 94 79Q109 79 108 94Q109 106 97 108L80 108Z" fill="url(#avg-turtleskin)" stroke="#547951" stroke-width="1.5"/>
+  <path d="M86 86Q91 81 97 84" stroke="#dbebba" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  
+<g class="av-eye" transform="translate(96 91)">
+  <circle r="3.7" fill="#fffdf6"/>
+  <circle cy="0.4" r="2.3" fill="#536d49"/>
+  <circle cy="0.4" r="1.2" fill="#221a14"/>
+  <circle cx="-1.0" cy="-1.1"
+          r="0.7" fill="#fff"/>
+  <ellipse class="av-lid" rx="4.5" ry="4.5" fill="#bbd7a3"/>
+</g>
+
+  <path d="M98 101q6 1 8-3" stroke="#547951" stroke-width="1.2" fill="none" stroke-linecap="round"/><ellipse cx="89" cy="100" rx="3" ry="2" fill="#deb69a"/>
+  <g class="av-anchor-head" data-anchor="head" transform="translate(92 79) scale(.5)">
+
+
+
+</g>
+<g class="av-acc" transform="translate(92 79) scale(0.5)">
+  
+</g>
+
+ </g>
+ <path d="M26 104Q27 57 54 57Q82 55 88 104Q60 120 26 104Z" fill="url(#avg-shell2)" stroke="#3f6a4e" stroke-width="1.5"/>
+ <path d="M30 101Q33 61 54 61Q77 59 83 102Q59 112 30 101Z" fill="url(#avg-shell)"/>
+ <path d="M34 79.0Q40 62 53 63" stroke="#bad496" stroke-width="3" fill="none" stroke-linecap="round"/>
+ <path d="M49 66L63 66L72 80.0L65 101H47L39 80.0Z" fill="none" stroke="#477857" stroke-width="1.5"/>
+ <path d="M49 66L45 60M63 66L67 62M72 80.0L81 81.0M39 80.0L31 81.0M47 101L43 108M65 101L70 108" fill="none" stroke="#477857" stroke-width="1.4"/>
+ <path d="M49 73L60 73L65 82.0L60 96H51L46 82.0Z" fill="#8cba7c" stroke="#74a36a" stroke-width="1"/>
+ <path d="M32 103Q58 116 83 103" stroke="#c0d391" stroke-width="2" fill="none"/>
+ <path d="M53 80l4-6 5 6-5 6Z" fill="#b4ce89"/>
+ 
+
+
+<g class="av-costume-front" transform="translate(60 96) scale(1) translate(-60 -96)">
+
+</g>
+
+
+<g class="av-regalia" transform="translate(60 96) scale(0.7)">
+  
+  
+  <path d="M-9 -1 Q-18 12 -12 22 Q-5 16 -8 4 Z" fill="#4a3a8a"/>
+  <path d="M9 -1 Q18 12 12 22 Q5 16 8 4 Z" fill="#4a3a8a"/>
+  <path d="M-9 -1 Q0 4 9 -1" stroke="#6a56b8" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+  
+  
+  <path d="M0 6.6 l1.4 3.3 3.5 .4 -2.6 2.4 .7 3.5 -3 -1.7 -3 1.7 .7 -3.5 -2.6 -2.4 3.5 -.4 Z" fill="url(#avg-sun)"/>
+  <circle cy="9.4" r="1.1" fill="#fff2c9"/>
+  <path d="M-13 6 l1 2.4 2.4 1 -2.4 1 -1 2.4 -1 -2.4 -2.4 -1 2.4 -1 Z" fill="#f6c445" opacity=".85"/>
+  <path d="M13 6 l1 2.4 2.4 1 -2.4 1 -1 2.4 -1 -2.4 -2.4 -1 2.4 -1 Z" fill="#f6c445" opacity=".85"/>
+  
+  
+</g>
+
+
+ <g class="av-anchor-neck" data-anchor="neck" transform="translate(84 97) scale(.5)">
+
+
+
+</g>
+ <g class="av-food"><path d="M91 32q8-9 16-2-1 11-11 12Z" fill="url(#avg-leaf)"/><path d="M94 38l10-7" stroke="#537c53" stroke-width="1"/></g>
+</g>
+
+  
+</svg>
+</div><p>Turtle</p></article><article><div class="art">
+
+
+
+
+
+
+
+<svg data-avatar-art="v2" viewBox="0 0 120 140" role="img" width="100%" height="100%" aria-hidden="true" focusable="false" data-avatar-mode="personal" data-avatar-kind="dog" data-avatar-stage="6" data-avatar-month="0" data-avatar-outfit="default">
+  
+  
+  
+  
+
+
+<g class="av-costume-back" transform="translate(60 96) scale(1.0) translate(-60 -96)">
+
+</g>
+
+
+
+
+  <ellipse cx="60" cy="121" rx="30" ry="7" fill="#00000012"/>
+
+<g class="av-v2 av-body" transform="translate(60 98) scale(1.0) translate(-60 -98)" stroke-linejoin="round"><g transform="translate(60 94)">
+
+
+
+</g>
+ <g class="av-tail"><path d="M78 111 Q111 111 96 78" fill="none" stroke="#946339" stroke-width="10" stroke-linecap="round"/><path d="M79 109 Q107 109 96 78" fill="none" stroke="#e5bd83" stroke-width="6" stroke-linecap="round"/></g>
+ <path d="M39 116 Q32 98 47 80 Q60 75 74 80 Q89 98 82 118 Q61 129 39 116Z" fill="url(#avg-dogfur)" stroke="#88613f" stroke-width="1.5"/>
+ <path d="M49 94 Q60 88 72 94 L72 119 Q60 126 49 119Z" fill="url(#avg-dogfur2)"/>
+ <path d="M48 101L47 117M73 101L74 117" stroke="#ab7d4d" stroke-width="1.5"/>
+ <path d="M41 104Q32 110 39 119M80 104Q89 110 82 119" fill="none" stroke="#ab7d4d" stroke-width="2"/>
+ <g fill="url(#avg-dogfur2)" stroke="#88613f" stroke-width="1.2"><ellipse cx="47" cy="120" rx="9" ry="5.5"/><ellipse cx="74" cy="120" rx="9" ry="5.5"/><path d="M44 120v3m5-3v3m22-3v3m5-3v3"/></g>
+ <g class="av-head">
+  <g class="av-ear-l"><path d="M42 48 Q22 46 28 80 Q37 92 44 75L50 55Z" fill="url(#avg-dogfur3)" stroke="#88613f" stroke-width="1.5"/><path d="M34 59Q30 72 35 79" fill="none" stroke="#d2a573" stroke-width="3" stroke-linecap="round"/></g>
+  <g class="av-ear-r"><path d="M78 48 Q98 46 92 80 Q83 92 76 75L70 55Z" fill="url(#avg-dogfur3)" stroke="#88613f" stroke-width="1.5"/></g>
+  <path d="M37 60 Q37 42 60 42 Q83 42 83 60L85 76Q80 91 60 92Q40 91 35 76Z" fill="url(#avg-dogfur)" stroke="#88613f" stroke-width="1.5"/>
+  <path d="M57 44Q51 59 56 72L65 72Q62 57 65 44" fill="url(#avg-dogfur2)"/>
+  <path d="M43 53Q47 48 52 49" stroke="#ffe1a5" stroke-width="3" fill="none" stroke-linecap="round"/>
+  
+<g class="av-eye" transform="translate(48 67)">
+  <circle r="4.4" fill="#fffdf6"/>
+  <circle cy="0.5" r="2.7" fill="#77543b"/>
+  <circle cy="0.5" r="1.4" fill="#221a14"/>
+  <circle cx="-1.2" cy="-1.3"
+          r="0.8" fill="#fff"/>
+  <ellipse class="av-lid" rx="5.2" ry="5.2" fill="#e5bd83"/>
+</g>
+
+<g class="av-eye" transform="translate(72 67)">
+  <circle r="4.4" fill="#fffdf6"/>
+  <circle cy="0.5" r="2.7" fill="#77543b"/>
+  <circle cy="0.5" r="1.4" fill="#221a14"/>
+  <circle cx="-1.2" cy="-1.3"
+          r="0.8" fill="#fff"/>
+  <ellipse class="av-lid" rx="5.2" ry="5.2" fill="#e5bd83"/>
+</g>
+
+  <ellipse cx="51" cy="80" rx="10" ry="8" fill="url(#avg-dogfur2)"/><ellipse cx="69" cy="80" rx="10" ry="8" fill="url(#avg-dogfur2)"/>
+  <path d="M55 74Q60 71 65 74Q65 80 60 81Q55 80 55 74Z" fill="#493b35"/><path d="M57 75h4" stroke="#c7b4a1" stroke-width="1.4" stroke-linecap="round"/>
+  <path d="M60 81v3q-5 5-9 0m9 0q5 5 9 0" stroke="#72513e" stroke-width="1.3" fill="none"/>
+  <path d="M60 85Q62 97 68 88L68 85" fill="#dc8e99"/>
+  <path d="M42 59q5-4 10-2m16 0q5-2 10 2" fill="none" stroke="#946339" stroke-width="1.5"/>
+  <g class="av-anchor-head" data-anchor="head" transform="translate(60 42)">
+
+
+
+</g>
+<g class="av-acc" transform="translate(60 42) scale(1)">
+  
+</g>
+
+ </g>
+ 
+
+
+<g class="av-costume-front" transform="translate(60 96) scale(1) translate(-60 -96)">
+
+</g>
+
+
+<g class="av-regalia" transform="translate(60 99) scale(0.85)">
+  
+  
+  <path d="M-9 -1 Q-18 12 -12 22 Q-5 16 -8 4 Z" fill="#4a3a8a"/>
+  <path d="M9 -1 Q18 12 12 22 Q5 16 8 4 Z" fill="#4a3a8a"/>
+  <path d="M-9 -1 Q0 4 9 -1" stroke="#6a56b8" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+  
+  
+  <path d="M0 6.6 l1.4 3.3 3.5 .4 -2.6 2.4 .7 3.5 -3 -1.7 -3 1.7 .7 -3.5 -2.6 -2.4 3.5 -.4 Z" fill="url(#avg-sun)"/>
+  <circle cy="9.4" r="1.1" fill="#fff2c9"/>
+  <path d="M-13 6 l1 2.4 2.4 1 -2.4 1 -1 2.4 -1 -2.4 -2.4 -1 2.4 -1 Z" fill="#f6c445" opacity=".85"/>
+  <path d="M13 6 l1 2.4 2.4 1 -2.4 1 -1 2.4 -1 -2.4 -2.4 -1 2.4 -1 Z" fill="#f6c445" opacity=".85"/>
+  
+  
+</g>
+
+
+ <g class="av-anchor-neck" data-anchor="neck" transform="translate(60 99)">
+
+
+
+</g>
+ <path d="M49 96l4 8 7-5 7 5 5-8" fill="url(#avg-dogfur2)"/>
+ <g class="av-food" fill="#f4ecda"><path d="M88 32h14v5H88Z"/><circle cx="88" cy="32" r="3"/><circle cx="88" cy="37" r="3"/><circle cx="102" cy="32" r="3"/><circle cx="102" cy="37" r="3"/></g>
+</g>
+
+  
+</svg>
+</div><p>Dog</p></article><article><div class="art">
+
+
+
+
+
+
+
+<svg data-avatar-art="v2" viewBox="0 0 120 140" role="img" width="100%" height="100%" aria-hidden="true" focusable="false" data-avatar-mode="personal" data-avatar-kind="rabbit" data-avatar-stage="6" data-avatar-month="0" data-avatar-outfit="default">
+  
+  
+  
+  
+
+
+<g class="av-costume-back" transform="translate(60 96) scale(1.0) translate(-60 -96)">
+
+</g>
+
+
+
+
+
+  <ellipse cx="60" cy="121" rx="28" ry="7" fill="#00000012"/>
+
+<g class="av-v2 av-body" transform="translate(60 98) scale(1.0) translate(-60 -98)" stroke-linejoin="round"><g transform="translate(60 94)">
+
+
+
+</g>
+ <g class="av-tail"><circle cx="84" cy="108" r="9.0" fill="#fff6e9" stroke="#ae9f94" stroke-width="1.3"/></g>
+ <path d="M41 119 Q32 98 49 88 Q60 82 72 89 Q88 99 79 119Z" fill="url(#avg-rabbit)" stroke="#9c8b80" stroke-width="1.5"/>
+ <ellipse cx="60" cy="108" rx="13" ry="16" fill="#fff6e9"/>
+ <path d="M40 104Q29 113 41 121M80 104Q91 113 79 121" fill="url(#avg-rabbit)" stroke="#9c8b80" stroke-width="1.3"/>
+ <g fill="#fff6e9" stroke="#9c8b80" stroke-width="1.2"><ellipse cx="46" cy="121" rx="11" ry="5"/><ellipse cx="74" cy="121" rx="11" ry="5"/><path d="M51 103L50 117Q54 121 57 117L58 104M62 104L63 117Q67 121 70 117L69 103"/></g>
+ <g class="av-head">
+  <g class="av-ear-l"><path d="M43 58Q27 3 44 8Q56 4 55 59Z" fill="url(#avg-rabbit)" stroke="#9c8b80" stroke-width="1.5"/><path d="M46 52Q38 17 44 15Q49 13 49 52Z" fill="#e8b3bd"/></g>
+  <g class="av-ear-r"><path d="M65 59Q64 7 76 8Q92 11 77 58Z" fill="url(#avg-rabbit)" stroke="#9c8b80" stroke-width="1.5"/><path d="M70 52Q70 15 76 15Q82 17 74 52Z" fill="#e8b3bd"/></g>
+  <path d="M38 67Q38 46 60 47Q82 46 82 67Q91 83 76 90Q60 99 44 90Q29 83 38 67Z" fill="url(#avg-rabbit)" stroke="#9c8b80" stroke-width="1.5"/>
+  <path d="M44 57Q49 51 55 53" fill="none" stroke="#fff9ee" stroke-width="3" stroke-linecap="round"/>
+  
+<g class="av-eye" transform="translate(48 71)">
+  <circle r="4.2" fill="#fffdf6"/>
+  <circle cy="0.5" r="2.6" fill="#6b5553"/>
+  <circle cy="0.5" r="1.3" fill="#221a14"/>
+  <circle cx="-1.2" cy="-1.3"
+          r="0.8" fill="#fff"/>
+  <ellipse class="av-lid" rx="5.0" ry="5.0" fill="#efe5d7"/>
+</g>
+
+<g class="av-eye" transform="translate(72 71)">
+  <circle r="4.2" fill="#fffdf6"/>
+  <circle cy="0.5" r="2.6" fill="#6b5553"/>
+  <circle cy="0.5" r="1.3" fill="#221a14"/>
+  <circle cx="-1.2" cy="-1.3"
+          r="0.8" fill="#fff"/>
+  <ellipse class="av-lid" rx="5.0" ry="5.0" fill="#efe5d7"/>
+</g>
+
+  <ellipse cx="49" cy="83" rx="10" ry="7" fill="#fff8ee"/><ellipse cx="71" cy="83" rx="10" ry="7" fill="#fff8ee"/>
+  <path d="M56 79Q60 76 64 79L60 83Z" fill="#cd8998"/><path d="M60 83v3q-4 4-8 0m8 0q4 4 8 0" stroke="#8c7168" stroke-width="1.2" fill="none"/>
+  <path d="M57 89h6v5h-6Z" fill="#fff" stroke="#c5b4a4" stroke-width=".8"/><path d="M60 89v4" stroke="#c5b4a4" stroke-width=".8"/>
+  <path d="M40 80l-10-2m10 7-10 2m50-7 10-2m-10 7 10 2" stroke="#a98c7d" stroke-width="1"/>
+  <g class="av-anchor-head" data-anchor="head" transform="translate(60 48)">
+
+
+
+</g>
+<g class="av-acc" transform="translate(60 48) scale(0.85)">
+  
+</g>
+
+ </g>
+ 
+
+
+<g class="av-costume-front" transform="translate(60 96) scale(1) translate(-60 -96)">
+
+</g>
+
+
+<g class="av-regalia" transform="translate(60 99) scale(0.8)">
+  
+  
+  <path d="M-9 -1 Q-18 12 -12 22 Q-5 16 -8 4 Z" fill="#4a3a8a"/>
+  <path d="M9 -1 Q18 12 12 22 Q5 16 8 4 Z" fill="#4a3a8a"/>
+  <path d="M-9 -1 Q0 4 9 -1" stroke="#6a56b8" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+  
+  
+  <path d="M0 6.6 l1.4 3.3 3.5 .4 -2.6 2.4 .7 3.5 -3 -1.7 -3 1.7 .7 -3.5 -2.6 -2.4 3.5 -.4 Z" fill="url(#avg-sun)"/>
+  <circle cy="9.4" r="1.1" fill="#fff2c9"/>
+  <path d="M-13 6 l1 2.4 2.4 1 -2.4 1 -1 2.4 -1 -2.4 -2.4 -1 2.4 -1 Z" fill="#f6c445" opacity=".85"/>
+  <path d="M13 6 l1 2.4 2.4 1 -2.4 1 -1 2.4 -1 -2.4 -2.4 -1 2.4 -1 Z" fill="#f6c445" opacity=".85"/>
+  
+  
+</g>
+
+
+ <g class="av-anchor-neck" data-anchor="neck" transform="translate(60 99)">
+
+
+
+</g>
+ <path d="M48 96l5 5 7-4 7 4 5-5" fill="#fff6e9"/>
+ <g class="av-food"><path d="M88 30l8 17 6-19Z" fill="#ed9c50"/><path d="M94 30l-3-9m6 8 2-10" stroke="#689568" stroke-width="2"/></g>
+</g>
+
+  
+</svg>
+</div><p>Rabbit</p></article><article><div class="art">
+
+
+
+
+
+
+
+<svg data-avatar-art="v2" viewBox="0 0 120 140" role="img" width="100%" height="100%" aria-hidden="true" focusable="false" data-avatar-mode="personal" data-avatar-kind="fish" data-avatar-stage="6" data-avatar-month="0" data-avatar-outfit="default">
+  
+  <g class="av-water" aria-hidden="true">
+    <ellipse cx="60" cy="118" rx="31" ry="9" fill="url(#avg-water)"/>
+    <path d="M34 114 q6 -3 12 0 q6 3 12 0 q6 -3 12 0 q6 3 12 0" stroke="#ffffff55" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+  </g>
+  
+  
+  
+  
+
+
+<g class="av-costume-back" transform="translate(60 96) scale(1.0) translate(-60 -96)">
+
+</g>
+
+
+<g class="av-v2 av-body" transform="translate(60 92) scale(0.98) translate(-60 -92)" stroke-linejoin="round" stroke-linecap="round"><g transform="translate(60 94)">
+
+
+
+</g>
+ <g class="av-fin-t"><path d="M42 87Q14 60 15 76Q28 91 19 111Q23 111 43 97Z" fill="url(#avg-fish2)" stroke="#b66130" stroke-width="1.5"/><path d="M40 91L24 79M40 94L23 106" stroke="#ffd08c" stroke-width="1.2"/></g>
+ <path d="M49 79Q49 54 72 76L68 84" fill="url(#avg-fish2)" stroke="#b66130" stroke-width="1.3"/>
+ <ellipse cx="64" cy="92" rx="26" ry="14" fill="url(#avg-fish)" stroke="#b66130" stroke-width="1.5"/>
+ <path d="M47 96Q63 110 83 97Q67 114 47 100Z" fill="#ffe1b0"/>
+ <path d="M49 83Q57 78 65 80" stroke="#ffe3ad" stroke-width="3" fill="none"/>
+ <path d="M57 80Q63 92 57 105" stroke="#ffeac6" stroke-width="4" fill="none"/>
+ <path d="M64 86q5 4 0 8m7-7q5 4 0 8m-9 0q4 3 0 6" stroke="#c57938" stroke-width="1.1" fill="none"/>
+ <g class="av-fin-b"><path d="M60 98Q48 122 70 110L73 100" fill="url(#avg-fish2)" stroke="#b66130" stroke-width="1.2"/><path d="M64 102L60 110" stroke="#ffd08c" stroke-width="1.2"/></g>
+ 
+
+
+<g class="av-costume-front" transform="translate(60 96) scale(1) translate(-60 -96)">
+
+</g>
+
+
+<g class="av-regalia" transform="translate(61 87) scale(0.5)">
+  
+  
+  <path d="M-9 -1 Q-18 12 -12 22 Q-5 16 -8 4 Z" fill="#4a3a8a"/>
+  <path d="M9 -1 Q18 12 12 22 Q5 16 8 4 Z" fill="#4a3a8a"/>
+  <path d="M-9 -1 Q0 4 9 -1" stroke="#6a56b8" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+  
+  
+  <path d="M0 6.6 l1.4 3.3 3.5 .4 -2.6 2.4 .7 3.5 -3 -1.7 -3 1.7 .7 -3.5 -2.6 -2.4 3.5 -.4 Z" fill="url(#avg-sun)"/>
+  <circle cy="9.4" r="1.1" fill="#fff2c9"/>
+  <path d="M-13 6 l1 2.4 2.4 1 -2.4 1 -1 2.4 -1 -2.4 -2.4 -1 2.4 -1 Z" fill="#f6c445" opacity=".85"/>
+  <path d="M13 6 l1 2.4 2.4 1 -2.4 1 -1 2.4 -1 -2.4 -2.4 -1 2.4 -1 Z" fill="#f6c445" opacity=".85"/>
+  
+  
+</g>
+
+
+ <g class="av-head">
+<g class="av-eye" transform="translate(77 87)">
+  <circle r="4.2" fill="#fffdf6"/>
+  <circle cy="0.5" r="2.6" fill="#77543b"/>
+  <circle cy="0.5" r="1.3" fill="#221a14"/>
+  <circle cx="-1.2" cy="-1.3"
+          r="0.8" fill="#fff"/>
+  <ellipse class="av-lid" rx="5.0" ry="5.0" fill="#efa04b"/>
+</g>
+<path d="M86 95q4 3 6-1" fill="none" stroke="#965434" stroke-width="1.4"/><ellipse cx="82" cy="96" rx="3" ry="1.8" fill="#e99b8a"/>
+ <g class="av-anchor-head" data-anchor="head" transform="translate(76 74) scale(.65)">
+
+
+
+</g>
+<g class="av-acc" transform="translate(76 74) scale(0.65)">
+  
+</g>
+</g>
+ <g class="av-anchor-neck" data-anchor="neck" transform="translate(68 100) scale(.6)">
+
+
+
+</g>
+ <g class="av-bubbles" stroke="#8ebbd0" fill="none" stroke-width="1.2"><circle cx="94" cy="76" r="2.5"/><circle cx="99" cy="64" r="1.7"/><circle cx="95" cy="54" r="1.1"/></g>
+ <g class="av-food" fill="#e8b04a"><path d="M88 28l4 1-2 3ZM96 32l3 2-3 2ZM92 38l3 1-2 3Z"/></g>
+</g>
+
+  
+</svg>
+</div><p>Fish</p></article><article><div class="art">
+
+
+
+
+
+
+
+<svg data-avatar-art="v2" viewBox="0 0 120 140" role="img" width="100%" height="100%" aria-hidden="true" focusable="false" data-avatar-mode="personal" data-avatar-kind="dolphin" data-avatar-stage="6" data-avatar-month="0" data-avatar-outfit="default">
+  
+  <g class="av-water" aria-hidden="true">
+    <ellipse cx="60" cy="118" rx="31" ry="9" fill="url(#avg-water)"/>
+    <path d="M34 114 q6 -3 12 0 q6 3 12 0 q6 -3 12 0 q6 3 12 0" stroke="#ffffff55" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+  </g>
+  
+  
+  
+  
+
+
+<g class="av-costume-back" transform="translate(60 96) scale(1.0) translate(-60 -96)">
+
+</g>
+
+
+<g class="av-v2 av-body" transform="translate(60 92) scale(0.99) translate(-60 -92)" stroke-linecap="round" stroke-linejoin="round"><g transform="translate(60 94)">
+
+
+
+</g>
+ <g class="av-fin-t"><path d="M44 94Q24 79 17 88L26 96 16 108Q32 109 44 99Z" fill="url(#avg-dolphin)" stroke="#426b80" stroke-width="1.5"/><path d="M25 94L39 97" stroke="#b8dbe4" stroke-width="1.3"/><path d="M22 89L34 95M21 104L35 99" stroke="#6b9bb0" stroke-width="1"/></g>
+ <path d="M54 80Q50 50 73 65Q65 73 69 81Z" fill="url(#avg-dolphin)" stroke="#426b80" stroke-width="1.5"/>
+ <path d="M40 98C33 87 47 73 65 73C80 73 89 79 91 86L105 88Q107 94 89 94C85 105 57 115 40 98Z" fill="url(#avg-dolphin)" stroke="#426b80" stroke-width="1.5"/>
+ <path d="M42 98Q62 109 88 94Q76 111 52 106Z" fill="url(#avg-dolphin2)"/>
+ <path d="M47 84Q58 77 70 79" fill="none" stroke="#cce9ed" stroke-width="3"/>
+ <g class="av-fin-b"><path d="M62 98Q45 119 72 110L74 98" fill="url(#avg-dolphin)" stroke="#426b80" stroke-width="1.5"/></g>
+ 
+
+
+<g class="av-costume-front" transform="translate(60 96) scale(1) translate(-60 -96)">
+
+</g>
+
+
+<g class="av-regalia" transform="translate(60 87) scale(0.5)">
+  
+  
+  <path d="M-9 -1 Q-18 12 -12 22 Q-5 16 -8 4 Z" fill="#4a3a8a"/>
+  <path d="M9 -1 Q18 12 12 22 Q5 16 8 4 Z" fill="#4a3a8a"/>
+  <path d="M-9 -1 Q0 4 9 -1" stroke="#6a56b8" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+  
+  
+  <path d="M0 6.6 l1.4 3.3 3.5 .4 -2.6 2.4 .7 3.5 -3 -1.7 -3 1.7 .7 -3.5 -2.6 -2.4 3.5 -.4 Z" fill="url(#avg-sun)"/>
+  <circle cy="9.4" r="1.1" fill="#fff2c9"/>
+  <path d="M-13 6 l1 2.4 2.4 1 -2.4 1 -1 2.4 -1 -2.4 -2.4 -1 2.4 -1 Z" fill="#f6c445" opacity=".85"/>
+  <path d="M13 6 l1 2.4 2.4 1 -2.4 1 -1 2.4 -1 -2.4 -2.4 -1 2.4 -1 Z" fill="#f6c445" opacity=".85"/>
+  
+  
+</g>
+
+
+ <g class="av-head">
+<g class="av-eye" transform="translate(78 84)">
+  <circle r="4.0" fill="#fffdf6"/>
+  <circle cy="0.5" r="2.5" fill="#3e6475"/>
+  <circle cy="0.5" r="1.3" fill="#221a14"/>
+  <circle cx="-1.1" cy="-1.2"
+          r="0.7" fill="#fff"/>
+  <ellipse class="av-lid" rx="4.8" ry="4.8" fill="#72a8c0"/>
+</g>
+<path d="M85 94Q94 97 104 91" fill="none" stroke="#35586f" stroke-width="1.3"/><ellipse cx="81" cy="94" rx="3" ry="1.5" fill="#c6dfe3"/>
+ <path d="M74 76q4-2 7 0" fill="none" stroke="#426b80" stroke-width="1.2"/>
+ <g class="av-anchor-head" data-anchor="head" transform="translate(74 72) scale(.65)">
+
+
+
+</g>
+<g class="av-acc" transform="translate(74 72) scale(0.65)">
+  
+</g>
+</g>
+ <g class="av-anchor-neck" data-anchor="neck" transform="translate(70 100) scale(.65)">
+
+
+
+</g>
+ <g class="av-bubbles" stroke="#8ebbd0" fill="none" stroke-width="1.2"><circle cx="66" cy="60" r="2.5"/><circle cx="71" cy="49" r="1.7"/><circle cx="68" cy="39" r="1.1"/></g>
+ <g class="av-food"><ellipse cx="93" cy="32" rx="6" ry="3.5" fill="url(#avg-fish)"/><path d="M98 32l5-3v6Z" fill="#e8a04b"/><circle cx="90" cy="31" r="1" fill="#302c36"/></g>
+</g>
+
+  
+</svg>
+</div><p>Dolphin</p></article><article><div class="art">
+
+
+
+
+
+
+
+<svg data-avatar-art="v2" viewBox="0 0 120 140" role="img" width="100%" height="100%" aria-hidden="true" focusable="false" data-avatar-mode="personal" data-avatar-kind="owl" data-avatar-stage="6" data-avatar-month="0" data-avatar-outfit="default">
+  
+  
+  
+  
+
+
+<g class="av-costume-back" transform="translate(60 96) scale(1.0) translate(-60 -96)">
+
+</g>
+
+
+
+  <ellipse cx="60" cy="121" rx="28" ry="7" fill="#00000012"/>
+<path d="M27 122Q59 116 94 122M80 120l9-9" fill="none" stroke="#82644b" stroke-width="4" stroke-linecap="round"/>
+<g class="av-v2 av-body" transform="translate(60 99) scale(0.99) translate(-60 -99)" stroke-linejoin="round" stroke-linecap="round"><g transform="translate(60 94)">
+
+
+
+</g>
+ <ellipse cx="60" cy="95" rx="25" ry="27" fill="url(#avg-owl)" stroke="#795b43" stroke-width="1.5"/>
+ <g class="av-wing-l"><path d="M42 80Q25 96 41 117Q50 103 46 84Z" fill="url(#avg-owl3)" stroke="#795b43" stroke-width="1.3"/><path d="M36 96l7 8m-7-1 6 8" stroke="#a58259" stroke-width="1.2"/></g>
+ <g class="av-wing-r"><path d="M78 80Q95 96 79 117Q70 103 74 84Z" fill="url(#avg-owl3)" stroke="#795b43" stroke-width="1.3"/><path d="M84 96l-7 8m7-1-6 8" stroke="#a58259" stroke-width="1.2"/></g>
+ <ellipse cx="60" cy="100" rx="14" ry="20" fill="url(#avg-owl2)"/>
+ <path d="M53 91l3 3 3-3m3 0 3 3 3-3" fill="none" stroke="#b99a70" stroke-width="1.2"/><path d="M53 96l3 3 3-3m3 0 3 3 3-3" fill="none" stroke="#b99a70" stroke-width="1.2"/><path d="M53 101l3 3 3-3m3 0 3 3 3-3" fill="none" stroke="#b99a70" stroke-width="1.2"/><path d="M53 106l3 3 3-3m3 0 3 3 3-3" fill="none" stroke="#b99a70" stroke-width="1.2"/><path d="M53 111l3 3 3-3m3 0 3 3 3-3" fill="none" stroke="#b99a70" stroke-width="1.2"/>
+ <path d="M49 119l-3 4m3-4v5m0-5 3 4m19-4-3 4m3-4v5m0-5 3 4" stroke="#c28c43" stroke-width="2.5"/>
+ 
+
+
+<g class="av-costume-front" transform="translate(60 96) scale(1) translate(-60 -96)">
+
+</g>
+
+
+<g class="av-regalia" transform="translate(60 93) scale(0.8)">
+  
+  
+  <path d="M-9 -1 Q-18 12 -12 22 Q-5 16 -8 4 Z" fill="#4a3a8a"/>
+  <path d="M9 -1 Q18 12 12 22 Q5 16 8 4 Z" fill="#4a3a8a"/>
+  <path d="M-9 -1 Q0 4 9 -1" stroke="#6a56b8" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+  
+  
+  <path d="M0 6.6 l1.4 3.3 3.5 .4 -2.6 2.4 .7 3.5 -3 -1.7 -3 1.7 .7 -3.5 -2.6 -2.4 3.5 -.4 Z" fill="url(#avg-sun)"/>
+  <circle cy="9.4" r="1.1" fill="#fff2c9"/>
+  <path d="M-13 6 l1 2.4 2.4 1 -2.4 1 -1 2.4 -1 -2.4 -2.4 -1 2.4 -1 Z" fill="#f6c445" opacity=".85"/>
+  <path d="M13 6 l1 2.4 2.4 1 -2.4 1 -1 2.4 -1 -2.4 -2.4 -1 2.4 -1 Z" fill="#f6c445" opacity=".85"/>
+  
+  
+</g>
+
+
+ <g class="av-head">
+ <path d="M40 54l-4-18 16 10m28 8 4-18-16 10" fill="url(#avg-owl)" stroke="#795b43" stroke-width="1.5"/>
+ <path d="M36 64Q33 40 60 40Q87 40 84 64Q82 84 60 87Q38 84 36 64Z" fill="url(#avg-owl)" stroke="#795b43" stroke-width="1.5"/>
+ <path d="M60 51Q46 40 41 57Q37 74 60 82Q83 74 79 57Q74 40 60 51Z" fill="url(#avg-owl2)"/>
+ 
+<g class="av-eye" transform="translate(49 64)">
+  <circle r="6.0" fill="#fffdf6"/>
+  <circle cy="0.7" r="3.7" fill="#b18c3b"/>
+  <circle cy="0.7" r="1.9" fill="#221a14"/>
+  <circle cx="-1.7" cy="-1.8"
+          r="1.1" fill="#fff"/>
+  <ellipse class="av-lid" rx="6.8" ry="6.8" fill="#eedbbc"/>
+</g>
+
+<g class="av-eye" transform="translate(71 64)">
+  <circle r="6.0" fill="#fffdf6"/>
+  <circle cy="0.7" r="3.7" fill="#b18c3b"/>
+  <circle cy="0.7" r="1.9" fill="#221a14"/>
+  <circle cx="-1.7" cy="-1.8"
+          r="1.1" fill="#fff"/>
+  <ellipse class="av-lid" rx="6.8" ry="6.8" fill="#eedbbc"/>
+</g>
+
+ <path d="M60 68l-4 5 4 6 4-6Z" fill="#d6a04e" stroke="#a37635" stroke-width="1"/>
+ <path d="M43 54q5-4 11-2m12 0q6-2 11 2" fill="none" stroke="#947045" stroke-width="2"/>
+ <g class="av-anchor-head" data-anchor="head" transform="translate(60 40)">
+
+
+
+</g>
+<g class="av-acc" transform="translate(60 40) scale(1)">
+  
+</g>
+</g>
+ <g class="av-anchor-neck" data-anchor="neck" transform="translate(60 97)">
+
+
+
+</g>
+ <g class="av-food"><circle cx="92" cy="34" r="3.5" fill="#b96275"/><circle cx="97" cy="38" r="3" fill="#cf8490"/><path d="M92 30q2-4 6-4" fill="none" stroke="#68865d" stroke-width="2"/></g>
+</g>
+
+  
+</svg>
+</div><p>Owl</p></article><article><div class="art">
+
+
+
+
+
+
+
+<svg data-avatar-art="v2" viewBox="0 0 120 140" role="img" width="100%" height="100%" aria-hidden="true" focusable="false" data-avatar-mode="personal" data-avatar-kind="bat" data-avatar-stage="6" data-avatar-month="0" data-avatar-outfit="default">
+  
+  
+  
+  
+
+
+<g class="av-costume-back" transform="translate(60 96) scale(1.0) translate(-60 -96)">
+
+</g>
+
+
+
+  <ellipse cx="60" cy="121" rx="24" ry="7" fill="#00000012"/>
+<g class="av-v2 av-body" transform="translate(60 97) scale(0.9850000000000001) translate(-60 -97)" stroke-linejoin="round" stroke-linecap="round"><g transform="translate(60 94)">
+
+
+
+</g>
+ <g class="av-wing-l"><path d="M48 83Q12 74 6 53L10 79Q20 75 22 93Q35 88 45 108L51 96Z" fill="url(#avg-batwing)" stroke="#57506e" stroke-width="1.5"/><path d="M47 88L6 53M47 88L10 79M47 88L22 93" fill="none" stroke="#a79bbd" stroke-width="1.2"/></g>
+ <g class="av-wing-r"><path d="M72 83Q108 74 114 53L110 79Q100 75 98 93Q85 88 75 108L69 96Z" fill="url(#avg-batwing)" stroke="#57506e" stroke-width="1.5"/><path d="M73 88L114 53M73 88L110 79M73 88L98 93" fill="none" stroke="#a79bbd" stroke-width="1.2"/></g>
+ <ellipse cx="60" cy="96" rx="15" ry="20" fill="url(#avg-bat)" stroke="#57506e" stroke-width="1.5"/>
+ <ellipse cx="60" cy="101" rx="9" ry="12" fill="url(#avg-bat2)"/>
+ <path d="M54 94l3 3 3-3 3 3 3-3" fill="none" stroke="#d0bcd2" stroke-width="1.3"/>
+ <path d="M54 114l-3 5m3-5v5m12-5 3 5m-3-5v5" stroke="#57506e" stroke-width="2"/>
+ 
+
+
+<g class="av-costume-front" transform="translate(60 96) scale(1) translate(-60 -96)">
+
+</g>
+
+
+<g class="av-regalia" transform="translate(60 96) scale(0.7)">
+  
+  
+  <path d="M-9 -1 Q-18 12 -12 22 Q-5 16 -8 4 Z" fill="#4a3a8a"/>
+  <path d="M9 -1 Q18 12 12 22 Q5 16 8 4 Z" fill="#4a3a8a"/>
+  <path d="M-9 -1 Q0 4 9 -1" stroke="#6a56b8" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+  
+  
+  <path d="M0 6.6 l1.4 3.3 3.5 .4 -2.6 2.4 .7 3.5 -3 -1.7 -3 1.7 .7 -3.5 -2.6 -2.4 3.5 -.4 Z" fill="url(#avg-sun)"/>
+  <circle cy="9.4" r="1.1" fill="#fff2c9"/>
+  <path d="M-13 6 l1 2.4 2.4 1 -2.4 1 -1 2.4 -1 -2.4 -2.4 -1 2.4 -1 Z" fill="#f6c445" opacity=".85"/>
+  <path d="M13 6 l1 2.4 2.4 1 -2.4 1 -1 2.4 -1 -2.4 -2.4 -1 2.4 -1 Z" fill="#f6c445" opacity=".85"/>
+  
+  
+</g>
+
+
+ <g class="av-head"><g class="av-ear-l"><path d="M45 61L39 33Q53 34 55 56" fill="url(#avg-bat)" stroke="#57506e" stroke-width="1.5"/><path d="M46 55l-3-15 8 13" fill="#d3afc5"/></g>
+ <g class="av-ear-r"><path d="M75 61L81 33Q67 34 65 56" fill="url(#avg-bat)" stroke="#57506e" stroke-width="1.5"/><path d="M74 55l3-15-8 13" fill="#d3afc5"/></g>
+ <path d="M40 68Q39 48 60 48Q81 48 80 68Q79 85 60 87Q41 85 40 68Z" fill="url(#avg-bat)" stroke="#57506e" stroke-width="1.5"/>
+ <path d="M46 72Q60 65 74 72Q72 85 60 85Q48 85 46 72Z" fill="url(#avg-bat2)"/>
+ 
+<g class="av-eye" transform="translate(50 67)">
+  <circle r="4.5" fill="#fffdf6"/>
+  <circle cy="0.5" r="2.8" fill="#b89450"/>
+  <circle cy="0.5" r="1.4" fill="#221a14"/>
+  <circle cx="-1.3" cy="-1.3"
+          r="0.8" fill="#fff"/>
+  <ellipse class="av-lid" rx="5.3" ry="5.3" fill="#8e86ab"/>
+</g>
+
+<g class="av-eye" transform="translate(70 67)">
+  <circle r="4.5" fill="#fffdf6"/>
+  <circle cy="0.5" r="2.8" fill="#b89450"/>
+  <circle cy="0.5" r="1.4" fill="#221a14"/>
+  <circle cx="-1.3" cy="-1.3"
+          r="0.8" fill="#fff"/>
+  <ellipse class="av-lid" rx="5.3" ry="5.3" fill="#8e86ab"/>
+</g>
+
+ <path d="M56 73Q60 70 64 73L60 77Z" fill="#af788d"/><path d="M54 79q6 5 12 0" fill="none" stroke="#57506e" stroke-width="1.2"/>
+ <path d="M55 80l2 4 1-3m4 0 1 3 2-4" fill="#fff6e7"/>
+ <g class="av-anchor-head" data-anchor="head" transform="translate(60 48) scale(.85)">
+
+
+
+</g>
+<g class="av-acc" transform="translate(60 48) scale(0.85)">
+  
+</g>
+</g>
+ <g class="av-anchor-neck" data-anchor="neck" transform="translate(60 99) scale(.8)">
+
+
+
+</g>
+ <g class="av-food"><path d="M88 32Q96 26 102 32Q98 40 90 38Z" fill="#f0c46a"/><path d="M89 33q6-4 11 0" fill="none" stroke="#ca9c4e" stroke-width="1.2"/></g>
+</g>
+
+  
+</svg>
+</div><p>Bat</p></article></main></html>

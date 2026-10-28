@@ -1,0 +1,3 @@
+=== qa_preflight: 0 failure(s), 1 warning(s) ===
+  WARN: no _backups/* dir to compare sizes against
+RESULT: GREEN — build is importable and intact; proceed to functional QA.

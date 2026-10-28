@@ -1,0 +1,8 @@
+{
+  "measured_source": "fecd276a9d888691c000c297d4ca1c1f6a958535",
+  "integration_source": "559301eed8f1e0e520944edd577d4e7dbd9df141",
+  "production_and_measurement_files_compared": 880,
+  "changed": [],
+  "excluded": "deploy_hf.py release payload list, CI configuration, tests and documentation are tracked separately",
+  "ci_checkout": "23e4a7ad80651a436c9ff35db48c25b5a7e5c540"
+}

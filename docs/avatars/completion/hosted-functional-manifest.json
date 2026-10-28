@@ -1,0 +1,11 @@
+{
+  "run": 40620559865,
+  "artifact_id": 12787451989,
+  "source": "fecd276a9d888691c000c297d4ca1c1f6a958535",
+  "status": "passed",
+  "archive_sha256": "c4b38a23b0b4504a727b2cd9e5d008097f5d0405fe61778cc342702ef5d4be34",
+  "junit_tests": 126,
+  "junit_failures": 0,
+  "junit_skips": 0,
+  "rig_cases": 432
+}

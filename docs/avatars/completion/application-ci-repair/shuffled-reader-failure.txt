@@ -1,0 +1,3 @@
+2026-10-28T03:44:11.2165443Z tests/test_supplies_reports.py:101: in test_report_html_print_xlsx_and_scoped_http
+2026-10-28T03:44:11.2223677Z FAILED tests/test_supplies_reports.py::test_report_html_print_xlsx_and_scoped_http - RuntimeError: SQLiteReader is shutdown
+2026-10-28T03:44:11.2224924Z 1 failed, 3237 passed, 1 deselected, 2 warnings in 550.12s (0:09:10)

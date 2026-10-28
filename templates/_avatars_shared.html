@@ -1,3 +1,4 @@
+{% from "_avatar_wardrobe.html" import wear as _wear %}
 {# Shared SVG helpers. Species modules load only when their artwork is requested. #}
 
 {% macro costume_back(kind, s, costume) %}
@@ -222,7 +223,7 @@
 
 {% endmacro %}
 
-{% macro plant_finish(kind,s,m,costume) %}
-<g class="av-anchor-pot" data-anchor="pot" transform="translate(60 121)"></g>
+{% macro plant_finish(kind,s,m,costume,preferences=none) %}
+<g class="av-anchor-pot" data-anchor="pot" transform="translate(60 121){% if kind == 'bonsai' %} scale(1.3 .65){% endif %}">{{ _wear(preferences,"pot") }}</g><g transform="translate(60 108)">{{ _wear(preferences,"ornament") }}</g>
 {% if kind != "mushroom" %}{{ pot_bow(m,39,115) }}{% endif %}{{ pot_regalia(s,60,116) }}{{ costume_front(kind,s,costume,scaled=true) }}
 {% endmacro %}

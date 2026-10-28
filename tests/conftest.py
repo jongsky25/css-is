@@ -37,11 +37,31 @@ def pytest_unconfigure(config):
 
 
 def pytest_addoption(parser):
+    parser.addoption("--application-suite", action="store_true", default=False,
+                     help="Run application tests; leave explicitly disabled avatar experiment modules uncollected")
     parser.addoption("--shuffle-seed", type=int, default=None,
                      help="Deterministically shuffle test cases with this seed")
 
 
+def pytest_ignore_collect(collection_path, config):
+    if not config.getoption("--application-suite"):
+        return None
+    from tests.avatar_opt_in_suites import AVATAR_OPT_IN_SUITES
+    opt_in = AVATAR_OPT_IN_SUITES.get(collection_path.name)
+    return bool(opt_in and os.getenv(opt_in[0]) != opt_in[1])
+
+
 def pytest_collection_modifyitems(config, items):
+    if config.getoption("--application-suite"):
+        from tests.avatar_opt_in_suites import AVATAR_OPT_IN_CASES
+        excluded = []
+        for item in items[:]:
+            opt_in = AVATAR_OPT_IN_CASES.get(item.nodeid)
+            if opt_in and os.getenv(opt_in[0]) != opt_in[1]:
+                excluded.append(item)
+                items.remove(item)
+        if excluded:
+            config.hook.pytest_deselected(items=excluded)
     seed = config.getoption("--shuffle-seed")
     if seed is not None:
         import hashlib
@@ -66,6 +86,25 @@ def application_clock(monkeypatch):
 def real_application_clock(monkeypatch):
     """Opt into the real timezone adapter when testing that adapter itself."""
     monkeypatch.setattr(tz, "now_local", _REAL_NOW_LOCAL)
+
+
+@pytest.fixture(autouse=True)
+def isolated_application_reader(monkeypatch):
+    """Own the shared reader even for legacy clients with custom DB fixtures."""
+    import sys
+    app_mod = sys.modules.get("app")
+    if app_mod is None:
+        yield
+        return
+    from sqlite_reader import SQLiteReader
+    reader = SQLiteReader()
+    monkeypatch.setattr(app_mod, "_read_worker", reader)
+    try:
+        yield
+    finally:
+        # A lifespan startup may replace the fixture's reader.
+        app_mod._read_worker.close()
+        reader.close()
 
 
 PW = "Test1234!"
@@ -177,8 +216,10 @@ def app_mod(reference_database, monkeypatch):
         monkeypatch.setattr(app_mod, "_today_local", lambda: tz.today_local())
         monkeypatch.setattr(app_mod, "_now_local", lambda: tz.now_local())
         st.basic_status_clear_cache()
-        yield app_mod
-        st.basic_status_clear_cache()
+        try:
+            yield app_mod
+        finally:
+            st.basic_status_clear_cache()
 
 @pytest.fixture(autouse=True)
 def _reset_shared_state(request):

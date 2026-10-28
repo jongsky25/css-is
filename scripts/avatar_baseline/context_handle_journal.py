@@ -12,7 +12,6 @@ import subprocess
 import sys
 import time
 
-import frida
 from playwright.sync_api import Browser, BrowserContext
 from scripts.avatar_baseline import element_membership_lifecycle as baseline
 from scripts.avatar_baseline.hosted_native_calibration import SOURCES as BASE_SOURCES
@@ -122,6 +121,7 @@ def analyze(journal, capture):
 
 
 def capture(out, mode):
+    import frida  # Optional: required only when explicitly running this diagnostic.
     out.mkdir(parents=True)
     data={'protocol':PROTOCOL,'messages':[],'clock_samples':[],'cdp_events':[],
           'snapshot_requested':False,'gc_requested':False}

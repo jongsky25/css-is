@@ -10,7 +10,7 @@ from jinja2 import Environment, FileSystemLoader, StrictUndefined
 from playwright.sync_api import sync_playwright
 from gallery import ROOT, CATALOG
 
-p=argparse.ArgumentParser();p.add_argument('--out',default='docs/avatars/increment1');p.add_argument('--before',default='1c964dc');p.add_argument('--kinds',default='cat,plant');p.add_argument('--no-prototypes',action='store_true');a=p.parse_args();kinds=a.kinds.split(',')
+p=argparse.ArgumentParser();p.add_argument('--out',default='docs/avatars/increment1');p.add_argument('--before',default='1c964dc');p.add_argument('--kinds',default='cat,plant');p.add_argument('--no-prototypes',action='store_true');p.add_argument('--record-only',action='store_true');a=p.parse_args();kinds=a.kinds.split(',')
 out=Path(a.out);out.mkdir(parents=True,exist_ok=True)
 
 def module(folder,prefix):
@@ -26,11 +26,14 @@ def prototypes(page):
  page.locator('.av-anchor-pot').evaluate_all('''els=>els.forEach(el=>{el.innerHTML='<path d="M-21-2Q0 4 21-2L19 10Q0 16-19 10Z" fill="#588c9b" stroke="#355a70" stroke-width="1"/><path d="M-15 4Q0 9 15 4" fill="none" stroke="#b7dcce" stroke-width="2"/>'})''')
 
 with tempfile.TemporaryDirectory() as tmp, sync_playwright() as pw:
- for name in ['_avatars.html','_avatars_art.html']:
-  Path(tmp,name).write_bytes(subprocess.check_output(['git','show',a.before+':templates/'+name]))
+ # Load the complete historical macro tree; split species import shared helpers.
+ for name in subprocess.check_output(['git','ls-tree','-r','--name-only',a.before,'templates'],text=True).splitlines():
+  if Path(name).name.startswith('_avatar') or '/_avatar_species/' in name:
+   target=Path(tmp)/Path(name).relative_to('templates');target.parent.mkdir(parents=True,exist_ok=True)
+   target.write_bytes(subprocess.check_output(['git','show',a.before+':'+name]))
  before=module(tmp,'before-');after=module(ROOT/'templates','slice-')
  browser=pw.chromium.launch(executable_path=shutil.which('chromium'),args=['--no-sandbox'])
- for theme in ['light','dark','contrast']:
+ for theme in ([] if a.record_only else ['light','dark','contrast']):
   cards=[]
   for size in [64,170]:
    for kind in kinds:
@@ -48,7 +51,7 @@ with tempfile.TemporaryDirectory() as tmp, sync_playwright() as pw:
   if not a.no_prototypes:page.screenshot(path=str(out/f'before-after-{theme}.png'),full_page=True)
   (out/f'gallery-{theme}.html').write_text(page.content());context.close()
  # Recording uses actual scripts through a local HTTP fixture origin.
- context=browser.new_context(viewport={'width':1440,'height':600},record_video_dir=str(out/'motion'))
+ context=browser.new_context(viewport={'width':1440,'height':900},record_video_size={'width':1440,'height':900},record_video_dir=str(out/'motion'))
  page=context.new_page()
  def serve(route):
   path=route.request.url.split('http://avatar.local')[-1].split('?')[0]
@@ -57,7 +60,7 @@ with tempfile.TemporaryDirectory() as tmp, sync_playwright() as pw:
   elif path=='/avatar/care':route.fulfill(json={'ok':True,'mood':'happy','counted':False})
   else:
    cards=''.join('<article><p>'+label+' '+kind+'</p>'+str(m.avatar(kind,6,size=170,interactive=True,care=True,mood='okay'))+'</article>' for label,m in [('Before',before),('After',after)] for kind in kinds)
-   route.fulfill(body='<html><meta charset="utf-8">'+str(after.avatar_defs())+'<style>body{font:16px system-ui;background:#f4f6fa}main{display:flex;gap:40px}</style><main>'+cards+'</main></html>',content_type='text/html')
+   route.fulfill(body='<html><meta charset="utf-8">'+str(after.avatar_defs())+'<style>body{font:16px system-ui;background:#f4f6fa}main{display:grid;grid-template-columns:repeat(4,1fr);gap:32px}</style><main>'+cards+'</main></html>',content_type='text/html')
  page.route('http://avatar.local/**',serve)
  page.add_init_script("const D=Date;window.Date=class extends D{constructor(...a){super(...(a.length?a:['2026-07-15T12:00:00Z']))}static now(){return D.now()}}")
  page.goto('http://avatar.local/');page.wait_for_timeout(2500)

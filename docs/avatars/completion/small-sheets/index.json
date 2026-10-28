@@ -1,0 +1,410 @@
+[
+  {
+    "file": "light-default-00.png",
+    "theme": "light",
+    "outfit": "default",
+    "month": 0,
+    "cells": 96,
+    "art_size_px": 64
+  },
+  {
+    "file": "light-default-01.png",
+    "theme": "light",
+    "outfit": "default",
+    "month": 1,
+    "cells": 96,
+    "art_size_px": 64
+  },
+  {
+    "file": "light-default-02.png",
+    "theme": "light",
+    "outfit": "default",
+    "month": 2,
+    "cells": 96,
+    "art_size_px": 64
+  },
+  {
+    "file": "light-default-03.png",
+    "theme": "light",
+    "outfit": "default",
+    "month": 3,
+    "cells": 96,
+    "art_size_px": 64
+  },
+  {
+    "file": "light-default-04.png",
+    "theme": "light",
+    "outfit": "default",
+    "month": 4,
+    "cells": 96,
+    "art_size_px": 64
+  },
+  {
+    "file": "light-default-05.png",
+    "theme": "light",
+    "outfit": "default",
+    "month": 5,
+    "cells": 96,
+    "art_size_px": 64
+  },
+  {
+    "file": "light-default-06.png",
+    "theme": "light",
+    "outfit": "default",
+    "month": 6,
+    "cells": 96,
+    "art_size_px": 64
+  },
+  {
+    "file": "light-default-07.png",
+    "theme": "light",
+    "outfit": "default",
+    "month": 7,
+    "cells": 96,
+    "art_size_px": 64
+  },
+  {
+    "file": "light-default-08.png",
+    "theme": "light",
+    "outfit": "default",
+    "month": 8,
+    "cells": 96,
+    "art_size_px": 64
+  },
+  {
+    "file": "light-default-09.png",
+    "theme": "light",
+    "outfit": "default",
+    "month": 9,
+    "cells": 96,
+    "art_size_px": 64
+  },
+  {
+    "file": "light-default-10.png",
+    "theme": "light",
+    "outfit": "default",
+    "month": 10,
+    "cells": 96,
+    "art_size_px": 64
+  },
+  {
+    "file": "light-default-11.png",
+    "theme": "light",
+    "outfit": "default",
+    "month": 11,
+    "cells": 96,
+    "art_size_px": 64
+  },
+  {
+    "file": "light-default-12.png",
+    "theme": "light",
+    "outfit": "default",
+    "month": 12,
+    "cells": 96,
+    "art_size_px": 64
+  },
+  {
+    "file": "light-halloween-10.png",
+    "theme": "light",
+    "outfit": "halloween",
+    "month": 10,
+    "cells": 96,
+    "art_size_px": 64
+  },
+  {
+    "file": "light-halloween_vampire-10.png",
+    "theme": "light",
+    "outfit": "halloween_vampire",
+    "month": 10,
+    "cells": 96,
+    "art_size_px": 64
+  },
+  {
+    "file": "light-halloween_pumpkin-10.png",
+    "theme": "light",
+    "outfit": "halloween_pumpkin",
+    "month": 10,
+    "cells": 96,
+    "art_size_px": 64
+  },
+  {
+    "file": "light-christmas-12.png",
+    "theme": "light",
+    "outfit": "christmas",
+    "month": 12,
+    "cells": 96,
+    "art_size_px": 64
+  },
+  {
+    "file": "dark-default-00.png",
+    "theme": "dark",
+    "outfit": "default",
+    "month": 0,
+    "cells": 96,
+    "art_size_px": 64
+  },
+  {
+    "file": "dark-default-01.png",
+    "theme": "dark",
+    "outfit": "default",
+    "month": 1,
+    "cells": 96,
+    "art_size_px": 64
+  },
+  {
+    "file": "dark-default-02.png",
+    "theme": "dark",
+    "outfit": "default",
+    "month": 2,
+    "cells": 96,
+    "art_size_px": 64
+  },
+  {
+    "file": "dark-default-03.png",
+    "theme": "dark",
+    "outfit": "default",
+    "month": 3,
+    "cells": 96,
+    "art_size_px": 64
+  },
+  {
+    "file": "dark-default-04.png",
+    "theme": "dark",
+    "outfit": "default",
+    "month": 4,
+    "cells": 96,
+    "art_size_px": 64
+  },
+  {
+    "file": "dark-default-05.png",
+    "theme": "dark",
+    "outfit": "default",
+    "month": 5,
+    "cells": 96,
+    "art_size_px": 64
+  },
+  {
+    "file": "dark-default-06.png",
+    "theme": "dark",
+    "outfit": "default",
+    "month": 6,
+    "cells": 96,
+    "art_size_px": 64
+  },
+  {
+    "file": "dark-default-07.png",
+    "theme": "dark",
+    "outfit": "default",
+    "month": 7,
+    "cells": 96,
+    "art_size_px": 64
+  },
+  {
+    "file": "dark-default-08.png",
+    "theme": "dark",
+    "outfit": "default",
+    "month": 8,
+    "cells": 96,
+    "art_size_px": 64
+  },
+  {
+    "file": "dark-default-09.png",
+    "theme": "dark",
+    "outfit": "default",
+    "month": 9,
+    "cells": 96,
+    "art_size_px": 64
+  },
+  {
+    "file": "dark-default-10.png",
+    "theme": "dark",
+    "outfit": "default",
+    "month": 10,
+    "cells": 96,
+    "art_size_px": 64
+  },
+  {
+    "file": "dark-default-11.png",
+    "theme": "dark",
+    "outfit": "default",
+    "month": 11,
+    "cells": 96,
+    "art_size_px": 64
+  },
+  {
+    "file": "dark-default-12.png",
+    "theme": "dark",
+    "outfit": "default",
+    "month": 12,
+    "cells": 96,
+    "art_size_px": 64
+  },
+  {
+    "file": "dark-halloween-10.png",
+    "theme": "dark",
+    "outfit": "halloween",
+    "month": 10,
+    "cells": 96,
+    "art_size_px": 64
+  },
+  {
+    "file": "dark-halloween_vampire-10.png",
+    "theme": "dark",
+    "outfit": "halloween_vampire",
+    "month": 10,
+    "cells": 96,
+    "art_size_px": 64
+  },
+  {
+    "file": "dark-halloween_pumpkin-10.png",
+    "theme": "dark",
+    "outfit": "halloween_pumpkin",
+    "month": 10,
+    "cells": 96,
+    "art_size_px": 64
+  },
+  {
+    "file": "dark-christmas-12.png",
+    "theme": "dark",
+    "outfit": "christmas",
+    "month": 12,
+    "cells": 96,
+    "art_size_px": 64
+  },
+  {
+    "file": "contrast-default-00.png",
+    "theme": "contrast",
+    "outfit": "default",
+    "month": 0,
+    "cells": 96,
+    "art_size_px": 64
+  },
+  {
+    "file": "contrast-default-01.png",
+    "theme": "contrast",
+    "outfit": "default",
+    "month": 1,
+    "cells": 96,
+    "art_size_px": 64
+  },
+  {
+    "file": "contrast-default-02.png",
+    "theme": "contrast",
+    "outfit": "default",
+    "month": 2,
+    "cells": 96,
+    "art_size_px": 64
+  },
+  {
+    "file": "contrast-default-03.png",
+    "theme": "contrast",
+    "outfit": "default",
+    "month": 3,
+    "cells": 96,
+    "art_size_px": 64
+  },
+  {
+    "file": "contrast-default-04.png",
+    "theme": "contrast",
+    "outfit": "default",
+    "month": 4,
+    "cells": 96,
+    "art_size_px": 64
+  },
+  {
+    "file": "contrast-default-05.png",
+    "theme": "contrast",
+    "outfit": "default",
+    "month": 5,
+    "cells": 96,
+    "art_size_px": 64
+  },
+  {
+    "file": "contrast-default-06.png",
+    "theme": "contrast",
+    "outfit": "default",
+    "month": 6,
+    "cells": 96,
+    "art_size_px": 64
+  },
+  {
+    "file": "contrast-default-07.png",
+    "theme": "contrast",
+    "outfit": "default",
+    "month": 7,
+    "cells": 96,
+    "art_size_px": 64
+  },
+  {
+    "file": "contrast-default-08.png",
+    "theme": "contrast",
+    "outfit": "default",
+    "month": 8,
+    "cells": 96,
+    "art_size_px": 64
+  },
+  {
+    "file": "contrast-default-09.png",
+    "theme": "contrast",
+    "outfit": "default",
+    "month": 9,
+    "cells": 96,
+    "art_size_px": 64
+  },
+  {
+    "file": "contrast-default-10.png",
+    "theme": "contrast",
+    "outfit": "default",
+    "month": 10,
+    "cells": 96,
+    "art_size_px": 64
+  },
+  {
+    "file": "contrast-default-11.png",
+    "theme": "contrast",
+    "outfit": "default",
+    "month": 11,
+    "cells": 96,
+    "art_size_px": 64
+  },
+  {
+    "file": "contrast-default-12.png",
+    "theme": "contrast",
+    "outfit": "default",
+    "month": 12,
+    "cells": 96,
+    "art_size_px": 64
+  },
+  {
+    "file": "contrast-halloween-10.png",
+    "theme": "contrast",
+    "outfit": "halloween",
+    "month": 10,
+    "cells": 96,
+    "art_size_px": 64
+  },
+  {
+    "file": "contrast-halloween_vampire-10.png",
+    "theme": "contrast",
+    "outfit": "halloween_vampire",
+    "month": 10,
+    "cells": 96,
+    "art_size_px": 64
+  },
+  {
+    "file": "contrast-halloween_pumpkin-10.png",
+    "theme": "contrast",
+    "outfit": "halloween_pumpkin",
+    "month": 10,
+    "cells": 96,
+    "art_size_px": 64
+  },
+  {
+    "file": "contrast-christmas-12.png",
+    "theme": "contrast",
+    "outfit": "christmas",
+    "month": 12,
+    "cells": 96,
+    "art_size_px": 64
+  }
+]

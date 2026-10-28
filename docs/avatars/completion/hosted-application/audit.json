@@ -1,0 +1,80 @@
+{
+  "run_url": "https://github.com/jongsky25/css-is/actions/runs/40628692333",
+  "branch_source": "559301eed8f1e0e520944edd577d4e7dbd9df141",
+  "ci_checkout": "23e4a7ad80651a436c9ff35db48c25b5a7e5c540",
+  "jobs": [
+    {
+      "name": "verification / Python 3.11 (shuffled)",
+      "id": 122620063555,
+      "conclusion": "success"
+    },
+    {
+      "name": "verification / Dependency audit",
+      "id": 122620063697,
+      "conclusion": "success"
+    },
+    {
+      "name": "verification / Python 3.11 (normal)",
+      "id": 122620063744,
+      "conclusion": "success"
+    },
+    {
+      "name": "verification / Release metadata",
+      "id": 122620063784,
+      "conclusion": "success"
+    },
+    {
+      "name": "verification / Required checks",
+      "id": 122626362450,
+      "conclusion": "success"
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 12791820509,
+      "name": "python311-shuffled-40628692333-1",
+      "bytes": 202779,
+      "sha256": "dabd3a89e1e458fdd502f88646a7005e208fd96d4fb6d68e038fc6dbc9ff0415",
+      "expires_at": "2026-11-11T04:09:56Z"
+    },
+    {
+      "id": 12790768660,
+      "name": "python311-normal-40628692333-1",
+      "bytes": 143182,
+      "sha256": "4c9e6ef09152c891ae8fa1a04f4b7a7ed7fef393c23d43c12e35bc4e44efe72a",
+      "expires_at": "2026-11-11T04:02:21Z"
+    },
+    {
+      "id": 12790712147,
+      "name": "dependency-audit-40628692333-1",
+      "bytes": 22287,
+      "sha256": "8b1a2928465847156a2aaed322cb4aea41be649c0cb026bef7ddb442983dd9c1",
+      "expires_at": "2026-11-11T03:51:50Z"
+    }
+  ],
+  "notes": [
+    "One executable archived profiler case explicitly deselected; it is not counted as a pass.",
+    "Both application orders contain 7060 selected cases with zero failures/errors/skips.",
+    "AI reports bind to the exact GitHub temporary PR checkout; its tree matches the branch snapshot.",
+    "No deployment or main merge."
+  ],
+  "results": {
+    "normal": {
+      "tests": 7060,
+      "failures": 0,
+      "errors": 0,
+      "skips": 0,
+      "ai_cases": 447,
+      "ai_gate": "AI evaluation gate OK: 447 cases, all categories passed; offline fixtures only"
+    },
+    "shuffled": {
+      "tests": 7060,
+      "failures": 0,
+      "errors": 0,
+      "skips": 0,
+      "ai_cases": 447,
+      "ai_gate": "AI evaluation gate OK: 447 cases, all categories passed; offline fixtures only"
+    }
+  },
+  "status": "passed"
+}

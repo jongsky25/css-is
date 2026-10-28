@@ -1,0 +1,7 @@
+....                                                                     [100%]
+=============================== warnings summary ===============================
+tests/test_deploy_hf.py::test_write_build_info_creates_expected_file
+  /workspace/css-is/tests/conftest.py:108: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html

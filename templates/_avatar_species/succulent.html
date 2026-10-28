@@ -1,3 +1,4 @@
+{% from "_avatar_wardrobe.html" import wear as _wear %}
 {# succulent artwork. Keep placement groups separate from animated groups. #}
 {% from "_avatars_shared.html" import illustrated_pot as _illustrated_pot, plant_finish as _plant_finish %}
 
@@ -7,10 +8,10 @@
 {% if tip %}<path d="M-2-{{ length-3 }}L0-{{ length }}L2-{{ length-3 }}" stroke="#c6909f" stroke-width="2" fill="none" stroke-linecap="round"/>{% endif %}
 {% endmacro %}
 
-{% macro art(s, m=0, costume="", scope="") %}
+{% macro art(s, m=0, costume="", scope="", preferences=none) %}
 {% set leaf='url(#' ~ scope ~ '-leaf)' if scope else 'url(#avg-succ)' %}
 {% set cy=[0,107,99,95,91,88,85][s] %}{% set length=[0,17,24,30,35,39,42][s] %}
-<g class="av-v2 av-body" stroke-linejoin="round" stroke-linecap="round">
+<g class="av-v2 av-body" stroke-linejoin="round" stroke-linecap="round"><g transform="translate(60 108) scale({{ 0.6+s*0.06 }})">{{ _wear(preferences,'back') }}</g>
   {{ _illustrated_pot(true) }}
   <path d="M42 110l5-2m28 3 4-3" stroke="#d5c4a7" stroke-width="3"/>
   {% if s==1 %}
@@ -38,6 +39,6 @@
   <path d="M49 105Q43 108 38 107" fill="none" stroke="#60865d" stroke-width="2"/>
   <g transform="translate(38 107) scale(.5 .3)">{% for angle in range(0,360,60) %}<g transform="rotate({{ angle }})">{{ _fleshy_leaf(23,leaf,true) }}</g>{% endfor %}</g>
   {% endif %}
-  {{ _plant_finish('succulent',s,m,costume) }}
+  {{ _plant_finish('succulent',s,m,costume,preferences) }}
 </g>
 {% endmacro %}

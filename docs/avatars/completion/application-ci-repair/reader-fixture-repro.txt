@@ -1,0 +1,334 @@
+.F                                                                       [100%]
+=================================== FAILURES ===================================
+_______________ test_export_selected_no_ids_redirects_with_error _______________
+  + Exception Group Traceback (most recent call last):
+  |   File "/workspace/css-is/.venv/lib/python3.12/site-packages/starlette/_utils.py", line 104, in create_collapsing_task_group
+  |     async with anyio.create_task_group() as tg:
+  |                ^^^^^^^^^^^^^^^^^^^^^^^^^
+  |   File "/workspace/css-is/.venv/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 847, in __aexit__
+  |     raise BaseExceptionGroup(
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Traceback (most recent call last):
+    |   File "/workspace/css-is/.venv/lib/python3.12/site-packages/_pytest/runner.py", line 361, in from_call
+    |     result: TResult | None = func()
+    |                              ^^^^^^
+    |   File "/workspace/css-is/.venv/lib/python3.12/site-packages/_pytest/runner.py", line 250, in <lambda>
+    |     lambda: runtest_hook(item=item, **kwds),
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/workspace/css-is/.venv/lib/python3.12/site-packages/pluggy/_caller.py", line 197, in __call__
+    |     return self._hookexec(
+    |            ^^^^^^^^^^^^^^^
+    |   File "/workspace/css-is/.venv/lib/python3.12/site-packages/pluggy/_manager.py", line 183, in _hookexec
+    |     return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/workspace/css-is/.venv/lib/python3.12/site-packages/pluggy/_execution.py", line 195, in _multicall
+    |     raise exception
+    |   File "/workspace/css-is/.venv/lib/python3.12/site-packages/pluggy/_execution.py", line 167, in _multicall
+    |     teardown.throw(exception)
+    |   File "/workspace/css-is/.venv/lib/python3.12/site-packages/_pytest/logging.py", line 865, in pytest_runtest_call
+    |     yield
+    |   File "/workspace/css-is/.venv/lib/python3.12/site-packages/pluggy/_execution.py", line 167, in _multicall
+    |     teardown.throw(exception)
+    |   File "/workspace/css-is/.venv/lib/python3.12/site-packages/_pytest/capture.py", line 900, in pytest_runtest_call
+    |     return (yield)
+    |             ^^^^^
+    |   File "/workspace/css-is/.venv/lib/python3.12/site-packages/pluggy/_execution.py", line 167, in _multicall
+    |     teardown.throw(exception)
+    |   File "/workspace/css-is/.venv/lib/python3.12/site-packages/_pytest/skipping.py", line 268, in pytest_runtest_call
+    |     return (yield)
+    |             ^^^^^
+    |   File "/workspace/css-is/.venv/lib/python3.12/site-packages/pluggy/_execution.py", line 147, in _multicall
+    |     res = hook_impl.function(*args)
+    |           ^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/workspace/css-is/.venv/lib/python3.12/site-packages/_pytest/runner.py", line 184, in pytest_runtest_call
+    |     item.runtest()
+    |   File "/workspace/css-is/.venv/lib/python3.12/site-packages/_pytest/python.py", line 1707, in runtest
+    |     self.ihook.pytest_pyfunc_call(pyfuncitem=self)
+    |   File "/workspace/css-is/.venv/lib/python3.12/site-packages/pluggy/_caller.py", line 197, in __call__
+    |     return self._hookexec(
+    |            ^^^^^^^^^^^^^^^
+    |   File "/workspace/css-is/.venv/lib/python3.12/site-packages/pluggy/_manager.py", line 183, in _hookexec
+    |     return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/workspace/css-is/.venv/lib/python3.12/site-packages/pluggy/_execution.py", line 195, in _multicall
+    |     raise exception
+    |   File "/workspace/css-is/.venv/lib/python3.12/site-packages/pluggy/_execution.py", line 147, in _multicall
+    |     res = hook_impl.function(*args)
+    |           ^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/workspace/css-is/.venv/lib/python3.12/site-packages/_pytest/python.py", line 167, in pytest_pyfunc_call
+    |     result = testfunction(**testargs)
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/workspace/css-is/tests/test_bulk_actions.py", line 16, in test_export_selected_no_ids_redirects_with_error
+    |     r = admin.post("/reports/activities/export-selected", data={},
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/workspace/css-is/.venv/lib/python3.12/site-packages/httpx/_client.py", line 1144, in post
+    |     return self.request(
+    |            ^^^^^^^^^^^^^
+    |   File "/workspace/css-is/.venv/lib/python3.12/site-packages/starlette/testclient.py", line 518, in request
+    |     return super().request(
+    |            ^^^^^^^^^^^^^^^^
+    |   File "/workspace/css-is/.venv/lib/python3.12/site-packages/httpx/_client.py", line 825, in request
+    |     return self.send(request, auth=auth, follow_redirects=follow_redirects)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/workspace/css-is/.venv/lib/python3.12/site-packages/httpx/_client.py", line 928, in send
+    |     raise exc
+    |   File "/workspace/css-is/.venv/lib/python3.12/site-packages/httpx/_client.py", line 922, in send
+    |     response.read()
+    |   File "/workspace/css-is/.venv/lib/python3.12/site-packages/httpx/_models.py", line 881, in read
+    |     self._content = b"".join(self.iter_bytes())
+    |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/workspace/css-is/.venv/lib/python3.12/site-packages/httpx/_models.py", line 897, in iter_bytes
+    |     for raw_bytes in self.iter_raw():
+    |                      ^^^^^^^^^^^^^^^
+    |   File "/workspace/css-is/.venv/lib/python3.12/site-packages/httpx/_models.py", line 951, in iter_raw
+    |     for raw_stream_bytes in self.stream:
+    |                             ^^^^^^^^^^^
+    |   File "/workspace/css-is/.venv/lib/python3.12/site-packages/httpx/_client.py", line 153, in __iter__
+    |     for chunk in self._stream:
+    |                  ^^^^^^^^^^^^
+    |   File "/workspace/css-is/.venv/lib/python3.12/site-packages/starlette/testclient.py", line 384, in iter_body
+    |     exit_stack.close()
+    |   File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/contextlib.py", line 618, in close
+    |     self.__exit__(None, None, None)
+    |   File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/contextlib.py", line 610, in __exit__
+    |     raise exc_details[1]
+    |   File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/contextlib.py", line 595, in __exit__
+    |     if cb(*exc_details):
+    |        ^^^^^^^^^^^^^^^^
+    |   File "/workspace/css-is/.venv/lib/python3.12/site-packages/starlette/testclient.py", line 399, in close_app
+    |     raise exception
+    |   File "/workspace/css-is/.venv/lib/python3.12/site-packages/anyio/from_thread.py", line 265, in _call_func
+    |     retval = await retval_or_awaitable
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/workspace/css-is/.venv/lib/python3.12/site-packages/starlette/testclient.py", line 366, in run_app
+    |     await self.app(scope, receive, send)
+    |   File "/workspace/css-is/.venv/lib/python3.12/site-packages/fastapi/applications.py", line 1194, in __call__
+    |     await super().__call__(scope, receive, send)
+    |   File "/workspace/css-is/.venv/lib/python3.12/site-packages/starlette/applications.py", line 96, in __call__
+    |     await self.middleware_stack(scope, receive, send)
+    |   File "/workspace/css-is/.venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 186, in __call__
+    |     raise exc
+    |   File "/workspace/css-is/.venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    |     await self.app(scope, receive, _send)
+    |   File "/workspace/css-is/.venv/lib/python3.12/site-packages/fastapi/telemetry/_asgi.py", line 151, in __call__
+    |     await self.app(scope, receive, send)
+    |   File "/workspace/css-is/browser_security.py", line 101, in __call__
+    |     await self.app(scope, receive, protected_send)
+    |   File "/workspace/css-is/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 203, in __call__
+    |     response = await self.dispatch_func(request, call_next)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/workspace/css-is/app.py", line 2299, in _metrics_gate
+    |     resp = await call_next(request)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/workspace/css-is/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 179, in call_next
+    |     raise app_exc from app_exc.__cause__ or app_exc.__context__
+    |   File "/workspace/css-is/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 149, in coro
+    |     await self.app(scope, receive_or_disconnect, send_no_error)
+    |   File "/workspace/css-is/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 203, in __call__
+    |     response = await self.dispatch_func(request, call_next)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/workspace/css-is/app.py", line 2217, in _auth_gate
+    |     request.state.user = await asyncio.to_thread(_user_from_request, request)
+    |                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/asyncio/threads.py", line 25, in to_thread
+    |     return await loop.run_in_executor(None, func_call)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/concurrent/futures/thread.py", line 59, in run
+    |     result = self.fn(*self.args, **self.kwargs)
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/workspace/css-is/app.py", line 2010, in _user_from_request
+    |     return read_db(lambda conn: st.session_actor(conn, payload))
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/workspace/css-is/app.py", line 1575, in read_db
+    |     return _read_worker.read(DB, get_conn, operation, refresh=DB not in _schema_ready_for)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/workspace/css-is/sqlite_reader.py", line 25, in read
+    |     raise RuntimeError("SQLiteReader is shutdown")
+    | RuntimeError: SQLiteReader is shutdown
+    +------------------------------------
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/workspace/css-is/tests/test_bulk_actions.py", line 16, in test_export_selected_no_ids_redirects_with_error
+    r = admin.post("/reports/activities/export-selected", data={},
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/css-is/.venv/lib/python3.12/site-packages/httpx/_client.py", line 1144, in post
+    return self.request(
+           ^^^^^^^^^^^^^
+  File "/workspace/css-is/.venv/lib/python3.12/site-packages/starlette/testclient.py", line 518, in request
+    return super().request(
+           ^^^^^^^^^^^^^^^^
+  File "/workspace/css-is/.venv/lib/python3.12/site-packages/httpx/_client.py", line 825, in request
+    return self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/css-is/.venv/lib/python3.12/site-packages/httpx/_client.py", line 928, in send
+    raise exc
+  File "/workspace/css-is/.venv/lib/python3.12/site-packages/httpx/_client.py", line 922, in send
+    response.read()
+  File "/workspace/css-is/.venv/lib/python3.12/site-packages/httpx/_models.py", line 881, in read
+    self._content = b"".join(self.iter_bytes())
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/css-is/.venv/lib/python3.12/site-packages/httpx/_models.py", line 897, in iter_bytes
+    for raw_bytes in self.iter_raw():
+                     ^^^^^^^^^^^^^^^
+  File "/workspace/css-is/.venv/lib/python3.12/site-packages/httpx/_models.py", line 951, in iter_raw
+    for raw_stream_bytes in self.stream:
+                            ^^^^^^^^^^^
+  File "/workspace/css-is/.venv/lib/python3.12/site-packages/httpx/_client.py", line 153, in __iter__
+    for chunk in self._stream:
+                 ^^^^^^^^^^^^
+  File "/workspace/css-is/.venv/lib/python3.12/site-packages/starlette/testclient.py", line 384, in iter_body
+    exit_stack.close()
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/contextlib.py", line 618, in close
+    self.__exit__(None, None, None)
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/contextlib.py", line 610, in __exit__
+    raise exc_details[1]
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/contextlib.py", line 595, in __exit__
+    if cb(*exc_details):
+       ^^^^^^^^^^^^^^^^
+  File "/workspace/css-is/.venv/lib/python3.12/site-packages/starlette/testclient.py", line 399, in close_app
+    raise exception
+  File "/workspace/css-is/.venv/lib/python3.12/site-packages/anyio/from_thread.py", line 265, in _call_func
+    retval = await retval_or_awaitable
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/css-is/.venv/lib/python3.12/site-packages/starlette/testclient.py", line 366, in run_app
+    await self.app(scope, receive, send)
+  File "/workspace/css-is/.venv/lib/python3.12/site-packages/fastapi/applications.py", line 1194, in __call__
+    await super().__call__(scope, receive, send)
+  File "/workspace/css-is/.venv/lib/python3.12/site-packages/starlette/applications.py", line 96, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/workspace/css-is/.venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 186, in __call__
+    raise exc
+  File "/workspace/css-is/.venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "/workspace/css-is/.venv/lib/python3.12/site-packages/fastapi/telemetry/_asgi.py", line 151, in __call__
+    await self.app(scope, receive, send)
+  File "/workspace/css-is/browser_security.py", line 101, in __call__
+    await self.app(scope, receive, protected_send)
+  File "/workspace/css-is/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 203, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/css-is/app.py", line 2299, in _metrics_gate
+    resp = await call_next(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/css-is/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 179, in call_next
+    raise app_exc from app_exc.__cause__ or app_exc.__context__
+  File "/workspace/css-is/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 149, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "/workspace/css-is/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 203, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/css-is/app.py", line 2217, in _auth_gate
+    request.state.user = await asyncio.to_thread(_user_from_request, request)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/asyncio/threads.py", line 25, in to_thread
+    return await loop.run_in_executor(None, func_call)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/concurrent/futures/thread.py", line 59, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/css-is/app.py", line 2010, in _user_from_request
+    return read_db(lambda conn: st.session_actor(conn, payload))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/css-is/app.py", line 1575, in read_db
+    return _read_worker.read(DB, get_conn, operation, refresh=DB not in _schema_ready_for)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/css-is/sqlite_reader.py", line 25, in read
+    raise RuntimeError("SQLiteReader is shutdown")
+RuntimeError: SQLiteReader is shutdown
+
+The above exception was the direct cause of the following exception:
+tests/test_bulk_actions.py:16: in test_export_selected_no_ids_redirects_with_error
+    r = admin.post("/reports/activities/export-selected", data={},
+.venv/lib/python3.12/site-packages/httpx/_client.py:1144: in post
+    return self.request(
+.venv/lib/python3.12/site-packages/starlette/testclient.py:518: in request
+    return super().request(
+.venv/lib/python3.12/site-packages/httpx/_client.py:825: in request
+    return self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/httpx/_client.py:928: in send
+    raise exc
+.venv/lib/python3.12/site-packages/httpx/_client.py:922: in send
+    response.read()
+.venv/lib/python3.12/site-packages/httpx/_models.py:881: in read
+    self._content = b"".join(self.iter_bytes())
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/httpx/_models.py:897: in iter_bytes
+    for raw_bytes in self.iter_raw():
+                     ^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/httpx/_models.py:951: in iter_raw
+    for raw_stream_bytes in self.stream:
+                            ^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/httpx/_client.py:153: in __iter__
+    for chunk in self._stream:
+                 ^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/starlette/testclient.py:384: in iter_body
+    exit_stack.close()
+/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/contextlib.py:618: in close
+    self.__exit__(None, None, None)
+/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/contextlib.py:610: in __exit__
+    raise exc_details[1]
+/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/contextlib.py:595: in __exit__
+    if cb(*exc_details):
+       ^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/starlette/testclient.py:399: in close_app
+    raise exception
+.venv/lib/python3.12/site-packages/anyio/from_thread.py:265: in _call_func
+    retval = await retval_or_awaitable
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/starlette/testclient.py:366: in run_app
+    await self.app(scope, receive, send)
+.venv/lib/python3.12/site-packages/fastapi/applications.py:1194: in __call__
+    await super().__call__(scope, receive, send)
+.venv/lib/python3.12/site-packages/starlette/applications.py:96: in __call__
+    await self.middleware_stack(scope, receive, send)
+.venv/lib/python3.12/site-packages/starlette/middleware/errors.py:186: in __call__
+    raise exc
+.venv/lib/python3.12/site-packages/starlette/middleware/errors.py:164: in __call__
+    await self.app(scope, receive, _send)
+.venv/lib/python3.12/site-packages/fastapi/telemetry/_asgi.py:151: in __call__
+    await self.app(scope, receive, send)
+browser_security.py:101: in __call__
+    await self.app(scope, receive, protected_send)
+.venv/lib/python3.12/site-packages/starlette/middleware/base.py:203: in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+app.py:2299: in _metrics_gate
+    resp = await call_next(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/starlette/middleware/base.py:179: in call_next
+    raise app_exc from app_exc.__cause__ or app_exc.__context__
+.venv/lib/python3.12/site-packages/starlette/middleware/base.py:149: in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+.venv/lib/python3.12/site-packages/starlette/middleware/base.py:203: in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+app.py:2217: in _auth_gate
+    request.state.user = await asyncio.to_thread(_user_from_request, request)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/asyncio/threads.py:25: in to_thread
+    return await loop.run_in_executor(None, func_call)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/concurrent/futures/thread.py:59: in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+app.py:2010: in _user_from_request
+    return read_db(lambda conn: st.session_actor(conn, payload))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+app.py:1575: in read_db
+    return _read_worker.read(DB, get_conn, operation, refresh=DB not in _schema_ready_for)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+sqlite_reader.py:25: in read
+    raise RuntimeError("SQLiteReader is shutdown")
+E   RuntimeError: SQLiteReader is shutdown
+=============================== warnings summary ===============================
+tests/test_browser_security.py:8
+  /workspace/css-is/tests/test_browser_security.py:8: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_bulk_actions.py::test_export_selected_no_ids_redirects_with_error

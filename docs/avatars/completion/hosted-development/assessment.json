@@ -1,0 +1,69 @@
+{
+  "baseline_findings": {},
+  "source_commit": "9f28f9f3d20ebc4961ed21fbcec914d2d9503710",
+  "python": "3.12.15 (main, Oct 21 2026, 03:33:00) [GCC 14.2.0]",
+  "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.41",
+  "cpu_count": 4,
+  "affinity": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "chromium": "Chromium 156.0.8078.47 built on Debian GNU/Linux 13 (trixie)",
+  "expected_chromium": "156.0.8078.47",
+  "working_tree_status": "",
+  "frame_budget_ms": 33.3,
+  "original_frame_budget_ms": 33,
+  "callback_budget_ms": 50,
+  "frame_exception": "User accepted0.3ms frame overrun; no waiver for callbacks or larger stalls.",
+  "source_sha256": {
+    "static/js/avatars.js": "556cb94a29dc7f9d85eb77ee5b481d3dd5e5bbc57e0886b32d4e1e45ac1bc90e",
+    "templates/_avatars.html": "868a527420e0c8db9296513a85f98295d55427a40f5ec0f926ee6be493db7e0d",
+    "templates/me.html": "23cb1af47bc171bb8b00d343784f0767ba4c63eb48ee141a9eea3fbbef8aafd8",
+    "templates/_growth.html": "b7f52bf1ee876ab7f773a77ad58699d9121f16359d6124879cfb0fcf303c6b5b",
+    "scripts/avatar_baseline/ci_verify.py": "7e9678df0a1e28edfd501466703663a6f601bc96761f45d7919c8f75de1b997e",
+    "scripts/avatar_baseline/verification_result.py": "a709d30f6e8623e936515a2ea78a615d8fa0262ec29e53b6bf48aabf24dc77d0",
+    "tests/test_avatar_cpu_attribution.py": "e10ca1c3128ac73756f11956df92150483bd4384a1dea2ff40eae7e61bf5ff8d"
+  },
+  "comparison_base": "0a91f73cf2ef2a72af70a149dc2deca2fb9c8b9a",
+  "batch_kinds": [
+    "cat",
+    "fern",
+    "fish",
+    "bat"
+  ],
+  "species_sha256": {
+    "cat": "b3646fd13d238df45da09b9587fbc3b0c2766fbccc48ceb84b94edff5a413843",
+    "fern": "c1e4cdf7be58d343b28a4dcf2dcaf6551fd63ca0a7a2c63c9319963fa2989253",
+    "fish": "bbe459db76524b55607319f90a6fd5cd51682a8020fa79ecf47aa364f2e15c63",
+    "bat": "16ebe459edee23170527716af06d7299f2ca5d7ca688b4ce4d74f01c642b1f12"
+  },
+  "phase": "completion-functional",
+  "runner_statuses": {
+    "wardrobe-and-core": 0,
+    "customizer": 1,
+    "animal-care": 0,
+    "seasonal": 0,
+    "visibility": 0,
+    "sheets": 0,
+    "preflight": 0
+  },
+  "status": "application_regression",
+  "gates": {
+    "wardrobe-and-core_tests": true,
+    "wardrobe_and_core": true,
+    "customizer_tests": false,
+    "customizer_browser": false,
+    "animal-care_tests": true,
+    "animal_care": true,
+    "seasonal_tests": true,
+    "seasonal_live_refresh": true,
+    "visibility_tests": true,
+    "native_visibility_touch_keyboard": true,
+    "contact_sheets": true,
+    "preflight": true
+  },
+  "environment_checks": {},
+  "harness_errors": {}
+}

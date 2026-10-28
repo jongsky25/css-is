@@ -1,58 +1,21 @@
-{# dolphin artwork. Keep placement groups separate from animated groups. #}
+{% from "_avatar_wardrobe.html" import wear as _wear %}
+{# Original illustrated dolphin; fixed water backdrop is supplied by the frame. #}
 {% from "_avatars_shared.html" import costume_front, eye as _eye, accessory as _accessory, regalia as _regalia %}
-
-{% macro art(s, m=0, costume="") %}
-  {% set sc = 0.62 + (s - 1) * 0.074 %}
-  {# home water is drawn by avatar_svg() OUTSIDE the roaming layer (see _fish):
-     the dolphin glides/leaps around it while the surface stays put. #}
-  <g transform="translate(60 92) scale({{ '%.3f'|format(sc) }}) translate(-60 -92)">
-    {# broad tail fluke — flicks on the .av-fin-t idle #}
-    <g class="av-fin-t">
-      <path d="M46 92 Q33 82 27 78 Q37 86 40 90 Q34 96 27 101 Q37 99 46 94 Z" fill="url(#avg-dolphin)"/>
-      {% if s >= 5 %}
-      <path d="M40 89 Q30 80 23 78 M40 93 Q31 99 24 102" stroke="url(#avg-dolphin)" stroke-width="2.6" fill="none" stroke-linecap="round"/>
-      {% endif %}
-    </g>
-    {# dorsal fin, curved back over the shoulders #}
-    <path d="M58 75 Q60 60 73 63 Q67 71 66 76 Z" fill="url(#avg-dolphin)"/>
-    {# streamlined body + lighter belly #}
-    <path d="M44 99 C36 87 47 74 65 74 C81 74 91 82 94 87 C90 88.6 86 89 82 89
-             C87 94 85 100 78 103 C66 108 50 106 44 99 Z" fill="url(#avg-dolphin)"/>
-    <path d="M50 100 C48 94 53 88 63 87 C74 86 82 90 85 93 C80 101 63 104 50 100 Z" fill="url(#avg-dolphin2)"/>
-    <path d="M50 84 Q60 78 74 80" stroke="#ffffff48" stroke-width="2.4" fill="none" stroke-linecap="round"/>
-    {# pectoral fin (waves gently as the belly fin) #}
-    <g class="av-fin-b">
-      <path d="M60 99 Q57 108 64 110 Q65 103 67 100 Z" fill="url(#avg-dolphin)"/>
-    </g>
-    {# beak / rostrum + a smiling mouth line #}
-    <path d="M90 86.5 l10 1.4 -8 3 Z" fill="url(#avg-dolphin)"/>
-    <path d="M84 90 q5 2 9 2.4" stroke="#2c4a5e" stroke-width="1.1" fill="none" stroke-linecap="round"/>
-    {% if s >= 3 %}
-    <circle cx="58" cy="86" r="1" fill="#ffffff55"/><circle cx="66" cy="92" r=".9" fill="#ffffff55"/>
-    <circle cx="52" cy="90" r=".8" fill="#ffffff55"/>
-    {% endif %}
-    {{ costume_front("dolphin", s, costume, scaled=true) }}
-    {{ _regalia(s, 58, 80, 0.4) }}
-    <g class="av-head">
-      {{ _eye(75, 84, 3, "#22303c", "#5f95b8") }}
-      <ellipse cx="80" cy="90" rx="1.8" ry="1" fill="#bfe0ef" opacity=".6"/>
-      {% if s >= 5 %}<ellipse cx="70" cy="90" rx="2.2" ry="1.2" fill="#f2b8a0" opacity=".45"/>{% endif %}
-      {{ _accessory(m, 70, 72, 0.55, costume=costume) }}
-    </g>
-    {% if s >= 6 %}
-    <path d="M64 70 l1.6 -6 3 4 3 -4 1.6 6 Z" fill="url(#avg-sun)"/>
-    {% endif %}
-    {# breath bubbles rising from the blowhole on the serene idle #}
-    <g class="av-bubbles" stroke="#a8d8f0" fill="none" stroke-width="1.2">
-      <circle cx="66" cy="66" r="2.3"/>
-      <circle cx="70" cy="57" r="1.6"/>
-      <circle cx="67" cy="49" r="1.1"/>
-    </g>
-    {# hidden treat: a little fish (the feeding arc animates this group) #}
-    <g class="av-food">
-      <ellipse cx="93" cy="32" rx="6" ry="3.4" fill="url(#avg-fish)"/>
-      <path d="M98 32 l5 -3 -1 3 1 3 Z" fill="#e5731f"/>
-      <circle cx="90" cy="31.4" r=".8" fill="#221a14"/>
-    </g>
-  </g>
+{% macro art(s,m=0,costume="", scope="", preferences=none) %}
+{% set sc=0.64+(s-1)*0.07 %}{% set beak=97 if s<3 else 105 %}
+<g class="av-v2 av-body" transform="translate(60 92) scale({{ sc }}) translate(-60 -92)" stroke-linecap="round" stroke-linejoin="round"><g transform="translate(60 94)">{{ _wear(preferences,'back') }}</g>
+ <g class="av-fin-t"><path d="M44 94Q24 79 17 88L26 96 16 108Q32 109 44 99Z" fill="url(#avg-dolphin)" stroke="#426b80" stroke-width="1.5"/><path d="M25 94L39 97" stroke="#b8dbe4" stroke-width="1.3"/>{% if s>=4 %}<path d="M22 89L34 95M21 104L35 99" stroke="#6b9bb0" stroke-width="1"/>{% endif %}</g>
+ <path d="M54 80Q{{ 56-s }} {{ 56-s }} 73 65Q65 73 69 81Z" fill="url(#avg-dolphin)" stroke="#426b80" stroke-width="1.5"/>
+ <path d="M40 98C33 87 47 73 65 73C80 73 89 79 91 86L{{ beak }} 88Q{{ beak+2 }} 94 89 94C85 105 57 115 40 98Z" fill="url(#avg-dolphin)" stroke="#426b80" stroke-width="1.5"/>
+ <path d="M42 98Q62 109 88 94Q76 111 52 106Z" fill="url(#avg-dolphin2)"/>
+ <path d="M47 84Q58 77 70 79" fill="none" stroke="#cce9ed" stroke-width="3"/>
+ <g class="av-fin-b"><path d="M62 98Q{{ 51-s }} 119 72 110L74 98" fill="url(#avg-dolphin)" stroke="#426b80" stroke-width="1.5"/></g>
+ {{ costume_front('dolphin',s,costume,scaled=true) }}{{ _regalia(s,60,87,0.5) }}
+ <g class="av-head">{{ _eye(78,84,4.6 if s<3 else 4,'#3e6475','#72a8c0') }}<path d="M85 94Q94 97 {{ beak-1 }} 91" fill="none" stroke="#35586f" stroke-width="1.3"/><ellipse cx="81" cy="94" rx="3" ry="1.5" fill="#c6dfe3"/>
+ {% if s>=3 %}<path d="M74 76q4-2 7 0" fill="none" stroke="#426b80" stroke-width="1.2"/>{% endif %}
+ <g class="av-anchor-head" data-anchor="head" transform="translate(74 72) scale(.65)">{{ _wear(preferences,'head') }}</g>{{ _accessory(m,74,72,0.65,costume=costume) }}</g>
+ <g class="av-anchor-neck" data-anchor="neck" transform="translate(70 100) scale(.65)">{{ _wear(preferences,'neck') }}</g>
+ <g class="av-bubbles" stroke="#8ebbd0" fill="none" stroke-width="1.2"><circle cx="66" cy="60" r="2.5"/><circle cx="71" cy="49" r="1.7"/><circle cx="68" cy="39" r="1.1"/></g>
+ <g class="av-food"><ellipse cx="93" cy="32" rx="6" ry="3.5" fill="url(#avg-fish)"/><path d="M98 32l5-3v6Z" fill="#e8a04b"/><circle cx="90" cy="31" r="1" fill="#302c36"/></g>
+</g>
 {% endmacro %}

@@ -9,7 +9,6 @@ import subprocess
 import threading
 import time
 
-import frida
 from playwright.sync_api import sync_playwright
 
 BUILD = '1c5dca8527a61d07372e489142bee26af1bcaf71'
@@ -35,6 +34,7 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def main():
+    import frida  # Optional: required only when explicitly running this diagnostic.
     p=argparse.ArgumentParser();p.add_argument('--out',type=Path,required=True);p.add_argument('--mode',choices=['control','probe'],default='probe');args=p.parse_args()
     args.out.mkdir(parents=True,exist_ok=False)
     root=Path(__file__).resolve().parents[2]

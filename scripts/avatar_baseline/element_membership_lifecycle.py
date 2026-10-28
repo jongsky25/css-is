@@ -8,7 +8,6 @@ from pathlib import Path
 import subprocess
 import threading
 import time
-import frida
 from playwright.sync_api import sync_playwright
 from scripts.avatar_baseline.mixed_membership_fixture import Handler, SELECT_JS, SCHEDULE
 
@@ -28,6 +27,7 @@ def digest(path):
 
 
 def run(out, mode, timing=None):
+    import frida  # Optional: required only when explicitly running this diagnostic.
     if timing is not None and mode != 'control':
         raise ValueError('Timing diagnostic must remain uninjected')
     out.mkdir(parents=True, exist_ok=False)

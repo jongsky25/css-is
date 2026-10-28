@@ -2,6 +2,39 @@
 
 Last updated: **2026-10-28 (Asia/Manila)**. Repository: `jongsky25/css-is`.
 
+## Current continuation — remaining implementation authorized
+
+The user authorized remaining avatar implementation and review preparation on
+2026-10-28. Work continues on `codex/avatar-upgrade-completion`, based on
+`0a91f73`. Production deployment and main-branch merging remain unauthorized.
+This supersedes older prohibitions on starting later increments.
+
+All remaining product increments are implemented as separate commits on
+`codex/avatar-upgrade-completion` in `/workspace/css-is`. The temporary implementation
+worktree was removed after its changes were preserved; do not resume from its older
+branch. Draft review: [PR #526](https://github.com/jongsky25/css-is/pull/526).
+3A was selectively recovered from cb2220f; 3B is original authored art. Wardrobe,
+profile customization and shared motion are implemented. Current status and test
+limits are in [the completion report](avatars/completion/REPORT.md).
+
+Frozen product/measurement source: **fecd276a9d888691c000c297d4ca1c1f6a958535**.
+[Hosted run 40620559865](https://github.com/jongsky25/css-is/actions/runs/40620559865)
+passes final functional acceptance (126 tests, no failures/skips, 432 rigs) and
+whole-runtime timing (20 current CPU4 samples; max callback 3.364 ms, max frame
+p95 16.8 ms). Independent numeric/source/artifact audits pass. All 4,896 final
+64 px cells and 36 equipped turtle retraction cases have retained visual evidence.
+The full matrix passes: all 104 median memory comparisons stay within 10 MiB
+(max RSS +7.742 MiB, heap +3.673 MiB); all timing/transfer/frame/control gates pass.
+Full normal/shuffled application CI 40628692333 passes all 7,060 selected cases
+per order with zero failures/errors/skips, plus both 447-case offline AI gates.
+Dependency, metadata and aggregate Required checks pass. All scoped automated
+acceptance is complete; the candidate is ready for review. Tested branch source
+is 559301e (GitHub temporary checkout 23e4a7ad has the same tree). CI checkout,
+test-fixture isolation, archived-probe selection and release-manifest fixes are
+recorded separately; frozen production JS/CSS/templates/Python are unchanged.
+Do not restart successful performance cohorts for those non-product fixes.
+No archived GC research, deployment or main merge occurred.
+
 ## Start here — 2B provisionally accepted by the user
 
 **2B is provisionally unblocked. Stop GC/instrumentation research.**

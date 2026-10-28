@@ -1,5 +1,6 @@
 """Compare retained full-duration groups; never conceal existing baseline failures."""
 import argparse
+import os
 import gzip
 import json
 from pathlib import Path
@@ -27,11 +28,17 @@ for g in after['groups']:
    'picker_encoded_delta':g['picker_encoded_bytes']['median']-b['picker_encoded_bytes']['median']})
 # Inline CSS is compressed separately for the CSS+JS budget, while complete
 # actual HTTP documents above include its contribution to transferred pages.
-old_template=subprocess.check_output(['git','show','1c964dc:templates/_avatars.html'],text=True)
+budget_base=os.getenv('CSS_AVATAR_COMPARE_BASE','1c964dc')
+result['budget_base']=budget_base
+old_template=subprocess.check_output(['git','show',budget_base+':templates/_avatars.html'],text=True)
 new_template=Path('templates/_avatars.html').read_text()
 def css_bytes(s):return len(gzip.compress(s.split('<style>',1)[1].split('</style>',1)[0].encode(),mtime=0))
 css_delta=css_bytes(new_template)-css_bytes(old_template)
-js_delta=sum(len(gzip.compress(Path(f'static/js/{name}').read_bytes(),mtime=0))-len(gzip.compress(subprocess.check_output(['git','show',f'1c964dc:static/js/{name}']),mtime=0)) for name in ['avatars.js','avatar-audio.js','search.js'])
+def previous_script(name):
+ path='static/js/'+name
+ exists=subprocess.check_output(['git','ls-tree','--name-only',budget_base,path],text=True).strip()
+ return subprocess.check_output(['git','show',budget_base+':'+path]) if exists else b''
+js_delta=sum(len(gzip.compress(Path(f'static/js/{name}').read_bytes(),mtime=0))-(len(gzip.compress(previous_script(name),mtime=0)) if previous_script(name) else 0) for name in ['avatars.js','avatar-audio.js','search.js','appearance.js','companion-customizer.js'])
 result['css_js_gzip_delta_bytes']=css_delta+js_delta
 result['gates']={
  'css_js_added_le_15kib':css_delta+js_delta<=15*1024,
