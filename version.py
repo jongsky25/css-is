@@ -18,10 +18,22 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "9.02"
+APP_VERSION = "9.03"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "9.03",
+        "date": "October 28, 2026",
+        "summary": "Supplies now sends email, so nobody has to keep checking the page.",
+        "changes": [
+            "Request approvers are emailed when a supply request from their unit is submitted, and the requester is emailed when it is approved, returned for correction or rejected.",
+            "Replenishment approvers are emailed when a purchase request needs a decision, and the custodian who prepared it is told the result.",
+            "People are asked to confirm receipt when supplies are released to them, and requesters are told when stock is set aside for an approved request, including after a delivery fills a shortage.",
+            "Each Monday, supply custodians get one summary of open stock warnings and approved requests still to hand over or waiting for stock. Nothing is sent when there is nothing to chase.",
+            "Administrators can switch each of these emails on or off, and change the summary weekday, on the Email page."
+        ]
+    },
     {
         "version": "9.02",
         "date": "October 28, 2026",

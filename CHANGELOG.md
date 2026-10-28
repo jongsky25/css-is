@@ -1,3 +1,9 @@
+## 9.03 — October 28, 2026
+
+- Add Supplies email through a durable `supply_mail` outbox queued inside each business transaction from `supplies_storage.record()` (and the allocator for stock set aside). A worker in the scheduler loop composes from current data at send time, rechecks the recipient's active account and current role, and cancels anything no longer relevant (decided, withdrawn, acknowledged, cancelled). Delivery is at-most-once: attempts are committed before network I/O, ambiguous sends become `uncertain` and are never resent, only definite failures are retried up to the existing send-retry setting, and messages unsent after three days are cancelled. Mail failure cannot undo stock or approval work.
+- New switchable email features on /admin/email: `supplies_request_pending`, `supplies_request_decided`, `supplies_replenishment_pending`, `supplies_replenishment_decided`, `supplies_issue_recorded`, `supplies_stock_ready`, and the scheduled `job_supplies_digest` with a weekday setting (default Monday). Switch-offs and the global pause are logged as `skipped_off`; every attempt appears in the send log. The console explains when Supplies itself is switched off.
+- Stock-warning notices stay in-app; custodians get the one weekly digest of open warnings and approved requests to hand over or awaiting stock, nothing when there is nothing to chase. Add `tests/test_supplies_mail.py`.
+
 ## 9.02 — October 28, 2026
 
 - Show a "break time has passed and your approver hasn't decided yet" note on a still-pending wellness break request in My break requests, so an undecided request is not mistaken for an approved one that failed to appear. Display only: approval routing, expiry and notifications are unchanged.

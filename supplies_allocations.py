@@ -52,6 +52,7 @@ def allocate_outstanding(conn, user, item_ids, operation_key):
     """Caller owns the write transaction and its recorded operation; no hidden commit."""
     if not conn.in_transaction:
         raise RuntimeError('Allocation requires the caller write transaction.')
+    increased = []
     for item_id in sorted(set(item_ids)):
         on_hand = stock._totals(conn, item_id)['on_hand']
         lines = rows(conn, '''SELECT r.*,d.approved_quantity FROM supply_reservation r
@@ -62,6 +63,8 @@ def allocate_outstanding(conn, user, item_ids, operation_key):
             if quantity == line['reserved_quantity']:
                 continue
             conn.execute('UPDATE supply_reservation SET reserved_quantity=?,version=version+1 WHERE id=?', (quantity,line['id']))
+            if quantity > line['reserved_quantity']:
+                increased.append(line['request_id'])
             detail = {'line_id':line['line_id'],'item_id':item_id,
                       'previous_reserved_quantity':line['reserved_quantity'],'reserved_quantity':quantity}
             conn.execute('''INSERT INTO supply_event
@@ -71,6 +74,9 @@ def allocate_outstanding(conn, user, item_ids, operation_key):
         availability(conn,item_id)
         from supplies_notify import enqueue
         enqueue(conn,[item_id],operation_key)
+    if increased:
+        from supplies_mail import on_reservation_increase
+        on_reservation_increase(conn, increased, operation_key)
 
 
 def fulfillment(lines):

@@ -27,6 +27,8 @@ PARAMS = {
         "Weekly whereabouts chief roll-up: weekday", 1, 0, 4),
     "travel_filing_lead_days": (
         "Travel filing reminder: days before", 2, 1, 14),
+    "supplies_digest_weekday": (
+        "Supplies weekly custodian summary: weekday", 0, 0, 6),
     "work_digest_weekday": (
         "Shared work weekly digest: weekday", 0, 0, 6),
     "room_morning_hour": (

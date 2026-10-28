@@ -4699,6 +4699,9 @@ def _email_blockers(conn):
         out["job_work_updates"] = ("Shared work is switched off.", "/admin/documents/readiness")
     if st.get_setting(conn, "travel.enabled", "1") == "0":
         out["job_travel_filing_due"] = ("Travel filing is switched off.", "/admin/travel")
+    if st.get_setting(conn, "supplies.enabled", "0") != "1":
+        for key in ("job_supplies_digest",) + tuple(k for k in mailer.FEATURES if k.startswith("supplies_")):
+            out[key] = ("Supplies is switched off.", "/supplies/settings")
     return out
 
 
