@@ -33,12 +33,15 @@ const AT_TEMPLATES = [
              'noted_by_title', 'recommended_name', 'recommended_title', 'unit_name'] },
   { key: 'program_flow', title: 'Template - program flow', build: at_buildProgramFlow_,
     expect: ['title', 'pf_time', 'pf_topic', 'pf_person'] },
+  { key: 'notice_of_meeting', title: 'Template - notice of meeting', build: at_buildNotice_,
+    expect: ['date', 'title', 'meeting_when', 'venue', 'invited', 'agenda', 'prepared_by', 'prepared_title', 'head_name',
+             'head_title', 'unit_name'] },
   { key: 'minutes', title: 'Template - minutes of the meeting', build: at_buildMinutes_,
     expect: ['title', 'meeting_when', 'venue', 'attendees', 'agenda', 'discussion', 'm_action', 'm_who', 'm_due', 'next_steps',
              'prepared_by', 'prepared_title', 'approved_by', 'unit_name'] }
 ];
 
-// Rebuilds all four templates even when they are already good, for a new letterhead or logos. TPL_<key> then points to the
+// Rebuilds every template even when they are already good, for a new letterhead or logos. TPL_<key> then points to the
 // new Docs; the old ones stay in "_templates".
 function rebuildActivityTemplates() {
   return makeActivityTemplates(true);
@@ -355,6 +358,34 @@ function at_buildProgramFlow_(body, doc) {
   at_add_(body, 'Tentative Program Flow:');
   const table = at_table_(body, [['Date/Time', 'Topic/Activity', 'Person Responsible'], ['{{pf_time}}', '{{pf_topic}}', '{{pf_person}}']]);
   table.getRow(0).editAsText().setBold(true);
+  body.editAsText().setFontFamily('Times New Roman');
+  body.editAsText().setFontSize(12);
+  at_footer_(doc);
+  const first = body.getChild(0);
+  if (first.getType() === DocumentApp.ElementType.PARAGRAPH && first.asParagraph().getText() === '') body.removeChild(first);
+}
+
+// Notice of meeting (spot feedback #189/#192): the date, what the meeting is, when and where (with the online link when there is
+// one), who is invited and the agenda to write. {{invited}} and {{agenda}} are blocks; {{meeting_link}} is optional.
+function at_buildNotice_(body, doc) {
+  at_letterhead_(doc.addHeader());
+  at_add_(body, '{{date}}');
+  at_add_(body, 'NOTICE OF MEETING').setBold(true).setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+  at_add_(body, '{{title}}').setBold(true).setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+  at_add_(body, 'Please be informed that a meeting will be held as follows:').setAlignment(DocumentApp.HorizontalAlignment.JUSTIFY);
+  at_add_(body, 'Date and time: {{meeting_when}}');
+  at_add_(body, 'Venue: {{venue}}');
+  at_add_(body, 'Online link: {{meeting_link}}');
+  at_add_(body, 'Invited:').setBold(true);
+  at_add_(body, '{{invited}}');
+  at_add_(body, 'Agenda:').setBold(true);
+  at_add_(body, '{{agenda}}');
+  at_add_(body, 'Your attendance is requested.').setAlignment(DocumentApp.HorizontalAlignment.JUSTIFY);
+  at_add_(body, '{{head_name}}').setBold(true);
+  at_add_(body, '{{head_title}}');
+  at_add_(body, '{{unit_name}}');
+  at_add_(body, 'Prepared by: {{prepared_by}}');
+  at_add_(body, '{{prepared_title}}');
   body.editAsText().setFontFamily('Times New Roman');
   body.editAsText().setFontSize(12);
   at_footer_(doc);

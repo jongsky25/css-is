@@ -1,3 +1,10 @@
+## 9.03 — October 28, 2026
+
+- DPO: use the venue named in the invitation (or DPO-cites) when the item has none (spot feedback #184, #187). File-copy page: pre-fill the reviewer's name and title in row 2 of the first box (S4/S5 and S1–S3 reviewers, from the traveller's section; blank if unknown or mixed), centre column 2, size both boxes to their text, and suggest keywords and related issuances read from the invitation (#185, #186). The relay `extras` carry `reviewer`, `keywords` and `issuances`; an older relay ignores them.
+- Add the `notice_of_meeting` document (draft in Google Docs, suggested for meetings; run `makeActivityTemplates()` to create its template) (#189, #192).
+- Add "Expected participants from other offices" to calendar items and the entry page; required when the item's room request asks for meals (#188, #190).
+- Supply request form explains an empty item catalog (#191). Spot feedback #193 is covered by 9.02: that request is still pending in the app because the approver has not decided it there.
+
 ## 9.02 — October 28, 2026
 
 - Show a "break time has passed and your approver hasn't decided yet" note on a still-pending wellness break request in My break requests, so an undecided request is not mistaken for an approved one that failed to appear. Display only: approval routing, expiry and notifications are unchanged.

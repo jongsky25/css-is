@@ -70,7 +70,7 @@ function generateDoc_(req) {
     formatDoc_(body);
     if (req.template_key === 'travel_report') { reportLetterhead_(doc); formatReport_(body); }
     doc.saveAndClose();
-    if (req.extras && req.extras.file_copy) extras = addFileCopy_(copy.getId());
+    if (req.extras && req.extras.file_copy) extras = addFileCopy_(copy.getId(), req.extras);
   }
   (req.share_with || []).forEach(function (a) {
     if (String(a).toLowerCase().endsWith('@' + P.getProperty('ALLOWED_DOMAIN'))) shareQuietly_(copy, a, 'writer');
@@ -271,10 +271,19 @@ function formatReport_(body) {
 // Apps Script document service cannot make a section, so this uses the Docs advanced service (Services > Google Docs API).
 // Best effort: when it is not switched on, or Google refuses, the order itself is already complete and the result says why.
 const FILE_COPY_MARK = '[[FILE COPY]]';
-const FILE_COPY_SLIP = [['', 'BLHSD'], ['Initials', ''], ['Date', '']];
-// First columns just wide enough for their text; the second columns keep their width (spot feedback #165).
-const FILE_COPY_SLIP_WIDTHS = [60, 234], FILE_COPY_KEYS_WIDTHS = [210, 234];
-const FILE_COPY_KEYS = [['Keywords', ''], ['Related issuances, laws, directives', '']];
+// The two boxes (spot feedback #185/#186). Row 2 of the first box carries the reviewer's name and title, centred, when the app
+// knows who it is; the second box carries the keywords and the related issuances the app read from the invitation.
+const FILE_COPY_MINS = { slip: [0, 150], keys: [0, 180] };
+
+// Pure: the cells of the two boxes for one DPO's "extras".
+function fileCopyTables_(extras) {
+  const rv = (extras && extras.reviewer) || {};
+  const who = rv.name ? rv.name + (rv.title ? '\n' + rv.title : '') : '';
+  return {
+    slip: [['', 'BLHSD'], ['Initials', who], ['Date', '']],
+    keys: [['Keywords', (extras && extras.keywords) || ''], ['Related issuances, laws, directives', (extras && extras.issuances) || '']]
+  };
+}
 
 // Pure: where the paragraph holding `mark` starts in a Docs API document, or -1.
 function findMarkIndex_(docJson, mark) {
@@ -296,15 +305,29 @@ function lastSectionBreakIndex_(docJson) {
   return count > 1 ? found : -1;
 }
 
-function plainTable_(body, cells, widths) {
+function plainTable_(body, cells) {
   const t = body.appendTable(cells);
   t.editAsText().setBold(false);
   t.editAsText().setFontFamily(FORM_FONT); t.editAsText().setFontSize(FORM_SIZE);
-  (widths || [234, 234]).forEach(function (w, c) { t.setColumnWidth(c, w); });
   return t;
 }
 
-function addFileCopy_(docId) {
+// Sizes a box to its text and centres a column (spot feedback #185). Best effort: a box left at the default size is fine.
+function shapeFileCopyBox_(table, mins, centreColumn) {
+  try {
+    fitTable_(table, mins);
+    if (centreColumn < 0) return;
+    for (let r = 0; r < table.getNumRows(); r++) {
+      const cell = table.getCell(r, centreColumn);
+      for (let k = 0; k < cell.getNumChildren(); k++) {
+        const ch = cell.getChild(k);
+        if (ch.getType() === DocumentApp.ElementType.PARAGRAPH) ch.asParagraph().setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+      }
+    }
+  } catch (e) { /* keep the box as it is */ }
+}
+
+function addFileCopy_(docId, extras) {
   if (typeof Docs === 'undefined') return 'docs_service_off';
   let placed = false;
   try {
@@ -320,10 +343,11 @@ function addFileCopy_(docId) {
       else if (t === T.LIST_ITEM) body.appendListItem(el.asListItem().copy());
       else if (t === T.HORIZONTAL_RULE) body.appendHorizontalRule();
     }
+    const cells = fileCopyTables_(extras);
     body.appendParagraph('').setBold(false);
-    plainTable_(body, FILE_COPY_SLIP, FILE_COPY_SLIP_WIDTHS);
+    shapeFileCopyBox_(plainTable_(body, cells.slip), FILE_COPY_MINS.slip, 1);
     body.appendParagraph('').setBold(false);
-    plainTable_(body, FILE_COPY_KEYS, FILE_COPY_KEYS_WIDTHS);
+    shapeFileCopyBox_(plainTable_(body, cells.keys), FILE_COPY_MINS.keys, -1);
     doc.saveAndClose();
 
     const at = findMarkIndex_(Docs.Documents.get(docId), FILE_COPY_MARK);
@@ -412,13 +436,15 @@ function applyBlocks_(body, blocks) {
 
 // Column widths that fit the text (spot feedback #181): each column as wide as its longest line needs, within the 468 pt
 // between the margins, in Times New Roman 12 with single spacing and no space between rows.
-function fitTable_(table) {
+function fitTable_(table, mins) {
   const n = table.getRow(0).getNumCells(), longest = [];
   for (let c = 0; c < n; c++) longest.push(0);
   for (let r = 0; r < table.getNumRows(); r++) {
-    for (let c = 0; c < n; c++) longest[c] = Math.max(longest[c], table.getCell(r, c).getText().length);
+    for (let c = 0; c < n; c++) {
+      table.getCell(r, c).getText().split('\n').forEach(function (line) { longest[c] = Math.max(longest[c], line.length); });
+    }
   }
-  const want = longest.map(function (len) { return Math.max(60, len * 6.4 + 16); });
+  const want = longest.map(function (len, c) { return Math.max(60, (mins && mins[c]) || 0, len * 6.4 + 16); });
   const total = want.reduce(function (a, b) { return a + b; }, 0), scale = total > 468 ? 468 / total : 1;
   want.forEach(function (w, c) { table.setColumnWidth(c, Math.floor(w * scale)); });
   const text = table.editAsText();

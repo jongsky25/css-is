@@ -419,6 +419,11 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
         except Exception:  # noqa: BLE001 - report failed cleanup without exposing file contents
             return False
 
+    def _meals_tagged(conn, entry_id):
+        """Whether a live conference-room request tied to this item asks for meals (spot feedback #190)."""
+        return any(r["meals_requested"] and r["status"] in ("requested", "approved")
+                   for r in rooms.reservations_for_entry(conn, entry_id))
+
     def _documents_block(conn, e):
         """The "Documents for this activity" block, or None. Never raises: the page must open regardless."""
         try:
@@ -429,6 +434,8 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
                     "outside": activity_docs.get_outside(conn, e["id"]),
                     "dpo_cites": activity_docs.get_dpo_cites(conn, e["id"]),
                     "dpo_people": activity_docs.dpo_travellers(conn, e),
+                    "visitors": activity_docs.get_visitors(conn, e["id"]),
+                    "meals": _meals_tagged(conn, e["id"]),
                     "invited_as": activity_docs.INVITED_AS,
                     "uploads_ready": _uploads_ready(conn)}
         except Exception:                                   # noqa: BLE001
@@ -452,7 +459,7 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
             "conflict": conflict, "kinds": FORM_KIND_LABELS, "statuses": STATUS_LABELS,
             "modalities": MODALITY_LABELS, "audiences": AUDIENCE_LABELS,
             "units": oc.unit_choices(conn), "people": oc.people_choices(conn),
-            "room_slots": rooms.list_slots(conn), "noun": "calendar item",
+            "room_slots": rooms.list_slots(conn), "noun": "calendar item", "visitors_field": True,
             "show_room_chip": not (entry and entry.get("event_id")) and not (
                 entry and any(r["status"] in ("requested", "approved") for r in rooms.reservations_for_entry(conn, entry["id"]))),
             "room_link": _room_link(request, conn, entry) if entry else None,
@@ -539,9 +546,12 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
                 "venue": "", "modality": "", "meeting_url": "", "note": "",
                 "owner_org_id": "", "extra_org_ids": [], "audience": "unit", "tags": "", "updated_at": "",
                 "repeat": "none", "until": "", "reserve_room": "", "room_from": "", "room_to": "",
-                "room_meals": "", "room_standby": ""}
+                "room_meals": "", "room_standby": "", "visitors": ""}
 
     # ── the conference room line on the form (rooms R8, for calendar items) ─────
+
+    VISITORS_REQUIRED = ("Meals are requested, so list the people expected from other offices (names and offices, one per "
+                         "line). Write \u201cNone\u201d if nobody is coming from outside.")
 
     def _room_precheck(conn, f):
         """An error for a room choice that can't work, or "" — caught BEFORE the item is saved."""
@@ -554,6 +564,8 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
             return f"Conference room: {e} Untick the room line to save the item without it."
         except ValueError:
             return ""                                       # the date check reports a bad date
+        if f.get("room_meals") and not activity_docs.clean_visitors(f.get("visitors")):
+            return VISITORS_REQUIRED                        # spot feedback #190
         return ""
 
     def _room_after_save(conn, user, entry_id, title, f):
@@ -814,6 +826,8 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
                     eid = calendar_actions.create(conn, request.state.user, fields, people, tags)
                 except ValueError as e:
                     error = str(e)
+                else:
+                    activity_docs.set_visitors(conn, eid, f.get("visitors"), request.state.user["username"])
             if error:
                 detach = ({"id": series["id"], "date": f["detach_date"], "date_label": f["detach_date"]}
                           if series else None)
@@ -992,13 +1006,15 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
                 return RedirectResponse(
                     f"/calendar/entries/{entry_id}?err={quote('Restore it before editing.')}",
                     status_code=303)
-            return _form_page(request, conn, _entry_form(e, _activity_of(conn, e)), entry=e)
+            return _form_page(request, conn, {**_entry_form(e, _activity_of(conn, e)),
+                                              "visitors": activity_docs.get_visitors(conn, entry_id)}, entry=e)
         finally:
             conn.close()
 
     @router.post("/calendar/entries/{entry_id}/edit")
     async def calendar_edit(request: Request, entry_id: int):
         f = await _posted_form(request)
+        visitors_posted = "visitors" in f                  # a form without the field must not wipe what was saved
         for k, v in _blank_form_defaults().items():
             f.setdefault(k, v)
         user = request.state.user
@@ -1066,6 +1082,8 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
                 return _form_page(request, conn, f, entry=e, error=str(ex), status_code=400)
             if redate:
                 _redate_activity(request, conn, activity, redate, notify == "yes", user)
+            if visitors_posted:
+                activity_docs.set_visitors(conn, entry_id, f.get("visitors"), user["username"])
             said = ("Saved." + (_room_after_save(conn, user, entry_id, f["title"], f) if f.get("reserve_room") else "")
                     + meet_relay.sync(conn, entry_id, by=user["username"]))
         finally:
@@ -1175,6 +1193,32 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
                 st.audit(conn, user["username"], "activity_dpo_cites", target_type="calendar_entry", target_id=entry_id,
                          summary="DPO cites saved")
                 note = f"ok={quote('Saved. The next DPO draft will cite it.')}"
+            except ValueError as ex:
+                note = f"err={quote(str(ex))}"
+        finally:
+            conn.close()
+        return RedirectResponse(f"/calendar/entries/{entry_id}?{note}#documents", status_code=303)
+
+    @router.post("/calendar/entries/{entry_id}/visitors")
+    async def calendar_visitors(request: Request, entry_id: int):
+        """Who is expected from other offices (spot feedback #188); required once the item asks for meals (#190)."""
+        raw = parse_qs((await request.body()).decode("utf-8"), keep_blank_values=True)
+        user = request.state.user
+        conn = get_conn()
+        try:
+            e = oc.viewable_entry(conn, user, entry_id)
+            if e is None:
+                return _not_found(request)
+            try:
+                if e["status"] == "cancelled" or e["kind"] not in DOC_KINDS:
+                    raise ValueError("That cannot be set for this item.")
+                text = (raw.get("visitors") or [""])[0]
+                if _meals_tagged(conn, entry_id) and not activity_docs.clean_visitors(text):
+                    raise ValueError(VISITORS_REQUIRED)
+                activity_docs.set_visitors(conn, entry_id, text, user["username"])
+                st.audit(conn, user["username"], "activity_visitors", target_type="calendar_entry", target_id=entry_id,
+                         summary="Expected participants from other offices saved")
+                note = f"ok={quote('Saved. A notice of meeting will list them.')}"
             except ValueError as ex:
                 note = f"err={quote(str(ex))}"
         finally:

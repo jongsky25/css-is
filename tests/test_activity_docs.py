@@ -770,3 +770,96 @@ def test_a_meeting_can_draft_minutes(viewer, conn, relay):
     call = relay.calls[0]
     assert call["template_key"] == "minutes" and call["fields"]["title"] == "Planning Meeting"
     assert "actions" in call["rows"]
+
+
+# ---- venue from the invitation, the file copy's reviewer and suggestions, the notice of meeting (spot feedback #184-#192) ---
+
+@pytest.mark.parametrize("text, venue", [
+    ("The meeting is on October 20 at the Manila Grand Opera Hotel. Please confirm.", "Manila Grand Opera Hotel"),
+    ("Venue: Manila Grand Opera Hotel, Manila", "Manila Grand Opera Hotel, Manila"),
+    ("the venue is the Hotel Ozamiz; lunch is provided", "Hotel Ozamiz"),
+    ("we are requested to lecture on CALEP", ""), ("", "")])
+def test_the_venue_is_read_from_the_invitation_words(text, venue):
+    assert ad.venue_from_text(text) == venue
+
+
+def test_a_dpo_names_the_venue_of_the_invitation_when_the_item_has_none(viewer, conn, relay):
+    eid = create(viewer, kind="travel", title="BHW Training", venue="", start_date="2026-10-20")
+    outside(viewer, eid, conducted_by="outside", host="CHD NCR", invited_as="attendee",
+            invitation="Training of BHWs on October 20, 2026 at the Manila Grand Opera Hotel.")
+    draft(viewer, eid, "dpo")
+    f = relay.calls[0]["fields"]
+    assert "in Manila Grand Opera Hotel" in f["subject"] + f["intro"] and f"in {ad.BLANK}" not in f["subject"]
+    assert f["venue"] == "Manila Grand Opera Hotel"
+    assert "Manila Grand Opera Hotel" in f["background"]
+
+
+def test_the_items_own_venue_wins_over_the_invitation(viewer, conn, relay):
+    eid = create(viewer, kind="travel", title="BHW Training", venue="Cebu City")
+    outside(viewer, eid, conducted_by="outside", host="CHD NCR", invited_as="attendee",
+            invitation="Training at the Manila Grand Opera Hotel.")
+    draft(viewer, eid, "dpo")
+    assert "in Cebu City" in relay.calls[0]["fields"]["intro"]
+
+
+def test_keywords_and_issuances_are_read_from_the_invitation():
+    kw, laws = ad.suggest_file_copy("Orientation of Barangay Health Workers (BHWs) per RA 7883 and Administrative Order No. 2020-0019")
+    assert kw == "Barangay Health Workers (BHWs)" and laws == "AO 2020-0019, RA 7883"
+    assert ad.suggest_file_copy("BHWs only") == ("Barangay Health Workers (BHWs)", "RA 7883")
+    assert ad.suggest_file_copy("a plain trip", "") == ("", "")
+
+
+@pytest.mark.parametrize("section, name", [("S4", "MARIA LOURDES GAJITOS, MD, MPH"), ("S5", "MARIA LOURDES GAJITOS, MD, MPH"),
+                                           ("S1", "KATHRINE JOYCE FLORES, MD, MPM"), ("S3", "KATHRINE JOYCE FLORES, MD, MPM"),
+                                           ("ADMIN", "")])
+def test_the_reviewer_follows_the_travellers_section(conn, monkeypatch, section, name):
+    monkeypatch.setattr(st, "get_user_profile", lambda c, u: {"org_path": f"BLHSD/X/{section}"})
+    got = ad.file_copy_reviewer(conn, {}, [1])
+    assert got[0] == name and (got[1] == "Medical Officer V" if name else got == ("", ""))
+
+
+def test_travellers_of_different_reviewers_leave_the_reviewer_blank(conn, monkeypatch):
+    paths = {1: "BLHSD/HSMED/S4", 2: "BLHSD/HSDD/S1"}
+    monkeypatch.setattr(st, "get_user_profile", lambda c, u: {"org_path": paths[u]})
+    assert ad.file_copy_reviewer(conn, {}, [1, 2]) == ("", "")
+    assert ad.file_copy_reviewer(conn, {}, [1])[0].startswith("MARIA")
+
+
+def test_a_dpo_sends_the_reviewer_and_suggestions_to_the_file_copy(viewer, conn, relay, monkeypatch):
+    real = st.get_user_profile
+    monkeypatch.setattr(st, "get_user_profile", lambda c, u: {**(real(c, u) or {}), "org_path": "BLHSD/HSMED/S4"})
+    eid = create(viewer, kind="travel", title="BHW Orientation", people=[str(uid(conn, "viewer@test.local"))])
+    outside(viewer, eid, conducted_by="outside", host="CHD NCR", invited_as="attendee", invitation="BHWs under RA 7883.")
+    draft(viewer, eid, "dpo")
+    assert relay.calls[0]["extras"] == {"file_copy": True,
+                                        "reviewer": {"name": "MARIA LOURDES GAJITOS, MD, MPH", "title": "Medical Officer V"},
+                                        "keywords": "Barangay Health Workers (BHWs)", "issuances": "RA 7883"}
+
+
+@pytest.mark.skipif(shutil.which("node") is None, reason="node is not installed")
+def test_the_file_copy_boxes_carry_the_reviewer_centred_and_the_suggestions():
+    t = file_copy()["tables"]
+    assert t["none"] == {"slip": [["", "BLHSD"], ["Initials", ""], ["Date", ""]],
+                         "keys": [["Keywords", ""], ["Related issuances, laws, directives", ""]]}
+    assert t["full"]["slip"][1] == ["Initials", "KATHRINE JOYCE FLORES, MD, MPM\nMedical Officer V"]
+    assert t["full"]["keys"] == [["Keywords", "BHWs"], ["Related issuances, laws, directives", "RA 7883"]]
+
+
+def test_a_meeting_suggests_a_notice_and_minutes_and_nothing_else_does():
+    sug = ad.suggest(entry(kind="meeting"))
+    assert sug["notice_of_meeting"][0] and sug["minutes"][0]
+    assert not ad.suggest(entry(kind="training"))["notice_of_meeting"][0]
+
+
+def test_a_notice_of_meeting_is_drafted_with_the_details_and_the_invited(viewer, conn, relay):
+    eid = create(viewer, kind="meeting", title="CALEP Planning", venue="Room 2", audience="bureau",
+                 people=[str(uid(conn, "viewer@test.local"))], meeting_url="https://meet.google.com/abc-defg-hij")
+    ad.set_visitors(conn, eid, "Dr. Cruz, CHD VII\n\nMs. Reyes, OSEC", "viewer@test.local")
+    r = draft(viewer, eid, "notice_of_meeting")
+    assert r.status_code == 303 and "ok=" in r.headers["location"]
+    call = relay.calls[0]
+    assert call["template_key"] == "notice_of_meeting" and call["title"] == "Notice of Meeting - CALEP Planning"
+    assert call["fields"]["venue"] == "Room 2" and call["fields"]["meeting_link"] == "https://meet.google.com/abc-defg-hij"
+    invited = call["blocks"]["invited"]
+    assert invited[-2:] == ["2. Dr. Cruz, CHD VII", "3. Ms. Reyes, OSEC"] and len(invited) == 3
+    assert "Notice of meeting" in entry_page(viewer, eid)

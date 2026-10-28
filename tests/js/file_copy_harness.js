@@ -73,6 +73,14 @@ console.log(JSON.stringify({
   ok: run({ children: original }),
   off: run({ children: original, noDocs: true }),
   fail: run({ children: original, fail: true }),
+  tables: (function () {
+    const ctx = { PropertiesService: { getScriptProperties: () => ({ getProperty: () => null }) }, console };
+    vm.createContext(ctx);
+    vm.runInContext(fs.readFileSync(path.join(root, 'apps_script', 'travel_docs.gs'), 'utf8'), ctx);
+    return { none: ctx.fileCopyTables_(undefined),
+             full: ctx.fileCopyTables_({ reviewer: { name: 'KATHRINE JOYCE FLORES, MD, MPM', title: 'Medical Officer V' },
+                                         keywords: 'BHWs', issuances: 'RA 7883' }) };
+  })(),
   pure: (function () {
     const ctx = { PropertiesService: { getScriptProperties: () => ({ getProperty: () => null }) }, console };
     vm.createContext(ctx);
