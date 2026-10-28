@@ -14,7 +14,7 @@ from tests.test_avatar_native_control import PURE
 
 pytestmark=pytest.mark.skipif(os.getenv('CSS_AVATAR_CPU_DIAGNOSTIC')!='1',reason='Opt-in CPU attribution')
 
-@pytest.mark.parametrize('kind',['fern','mushroom','succulent'])
+@pytest.mark.parametrize('kind',os.getenv('CSS_AVATAR_BATCH_KINDS','fern,mushroom,succulent').split(','))
 def test_cpu_attribution(baseline_server,app_mod,tmp_path,kind):
     import storage as st
     from tests.avatar_browser_fixture import historical_art_loader

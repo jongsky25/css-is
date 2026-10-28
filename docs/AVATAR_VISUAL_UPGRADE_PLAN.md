@@ -652,14 +652,21 @@ browser tests ran.
 | 1 Cat + plant slice | Complete — measured relative gates passed | `58cf98f`, `0be7fc3`, `ad4e7ad`, `d464461` + evidence revision | [Bare comparison](avatars/increment1/before-after-bare-light.png), [motion](avatars/increment1/before-after-motion.webm), [51 seasonal sheets](avatars/increment1/sheets/index.json) | [Report](avatars/increment1/REPORT.md), [20-sample comparison](avatars/increment1/comparison.json); 102 tests, native touch/keyboard/filter checks, sampled callback trace passed; baseline lifecycle/picker blockers retained. |
 | 2A Cactus/bonsai/sunflower | Complete — measured relative gates passed | `6064a82`, `1b453e0`, `28fbb7b` + evidence revision | [Six-stage comparison](avatars/increment2a/before-after-bare-light.png), [51 sheets](avatars/increment2a/sheets/index.json), [motion](avatars/increment2a/before-after-motion.webm) | [Report](avatars/increment2a/REPORT.md), [fresh 20 comparison](avatars/increment2a/comparison.json); 105 tests, 324 visual reaction cases, mature care/traces and native checks passed. Pre-fix failures retained; audio-sync feedback fixed. Remaining lifecycle/picker blockers persist. |
 | 2B Fern/mushroom/succulent | Provisionally accepted — user-approved memory exception | Avatar `f700187` in current `cf363bf`; `cd94bf3` remains isolated | Existing visual/functional passes retained | [Provisional decision](avatars/increment2b/PROVISIONAL_ACCEPTANCE.md); historical failures retained in the [report](avatars/increment2b/REPORT.md): warm desktop offscreen +11.336, reduced motion +11.098, background +18.836 MiB; 10 MiB limit. Prior checker omitted these scenarios. [Exact source validation](avatars/increment2b/svg-validation/REPORT.md): all 40 observer/SVG samples complete, neither intervention qualifies in both orders; same-source repeat also fails +11.895 MiB. [Paired variance](avatars/increment2b/paired-variance/REPORT.md): 20 valid slots, 10 unstable control metric sets; late-navigation current RSS higher in all source pairs, but no qualified effect. No correction promoted. |
-| 3A Ground animals + bird | Pending | — | — | — |
+| 3A Ground animals + bird | Recovered; fresh validation in progress | Based on `cb2220f` | [Current rig checks](avatars/increment3a/resumed/motion-rig-check.json) | 86 focused tests, four care browser tests, 216 rig cases, 2,448 unchanged SVG checks pass; performance pending. |
 | 3B Swimmers + owl + bat | Pending | — | — | — |
 | 4A Wardrobe model/rendering | Pending | — | — | — |
 | 4B Wardrobe UI/integration | Pending | — | — | — |
 | 5 Movement | Pending | — | — | — |
 | 6 Release readiness | Pending | — | — | — |
 
-## New-chat invocation
+## Current continuation — 2026-10-28
+
+The user now authorizes remaining implementation and review preparation. Continue
+on `codex/avatar-upgrade-completion`; do not resume memory/GC research. No merge
+or production deployment is authorized. Current 3A work and fresh validation are
+recorded in [the resumed report](avatars/increment3a/resumed/REPORT.md).
+
+## Historical new-chat invocation — superseded
 
 Use Sol. Continue `jongsky25/css-is` on `codex/avatar-2b-verification` and read
 [the authoritative restart handoff](AVATAR_UPGRADE_HANDOFF.md#start-here--sol-handoff-current-after-component-order-calibration)

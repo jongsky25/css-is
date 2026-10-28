@@ -1,0 +1,19 @@
+{
+  "assets": [
+    {
+      "species": [
+        "dog",
+        "rabbit",
+        "bird",
+        "turtle"
+      ],
+      "source": "Original authored inline SVG in templates/_avatar_species; existing shared gradients/helpers",
+      "upstream_url": null,
+      "upstream_revision": null,
+      "license": "Existing repository terms; no third-party assets added",
+      "modifications": "24 structural stages, outlined silhouettes, expressive faces, growth proportions, preserved rigs and seasonal attachment, head/neck anchors"
+    }
+  ],
+  "external_asset_requests": 0,
+  "added_runtime_javascript_dependencies": 0
+}

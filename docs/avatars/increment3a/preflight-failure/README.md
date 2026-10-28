@@ -1,0 +1,1 @@
+Run 40279025648 failed the accounting regression test before any browser benchmark. The test expected fern/mushroom/succulent despite the new batch environment. The repaired test explicitly exercises both default and animal species. No measured sample is replaced. The first local video also clipped the rightmost companion; its replacement uses a two-row layout.

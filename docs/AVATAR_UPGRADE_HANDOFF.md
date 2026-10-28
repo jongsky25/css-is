@@ -2,6 +2,21 @@
 
 Last updated: **2026-10-28 (Asia/Manila)**. Repository: `jongsky25/css-is`.
 
+## Current continuation — remaining implementation authorized
+
+The user authorized remaining avatar implementation and review preparation on
+2026-10-28. Work continues on `codex/avatar-upgrade-completion`, based on
+`0a91f73`. Production deployment and main-branch merging remain unauthorized.
+This supersedes older prohibitions on starting later increments.
+
+3A product recovered selectively from `cb2220f`: four species, corrected turtle
+retraction, and browser/visual checks. Current local checks: 86 care/audio/onboarding
+tests, four authenticated persisted-care browser tests, 216 stage/mood/theme rig
+cases, and 2,448 unchanged-species comparisons pass. Native performance check is
+running; 3A is implemented, not yet accepted. See
+[resumed validation](avatars/increment3a/resumed/REPORT.md). No 3B product changes.
+The shared-gradient candidate remains isolated; archived GC research stays closed.
+
 ## Start here — 2B provisionally accepted by the user
 
 **2B is provisionally unblocked. Stop GC/instrumentation research.**
