@@ -4,6 +4,7 @@ from urllib.parse import urlencode
 import supplies as s
 import supplies_permissions as permissions
 import supplies_stock as stock
+from supplies_status import requester_stage
 from supplies_storage import Denied, Invalid, rows
 
 
@@ -48,6 +49,11 @@ def _base(conn, user, kind, mine):
           COALESCE((SELECT SUM(r.reserved_quantity) FROM supply_reservation r WHERE r.request_id=q.id),0) AS reserved_quantity,
           COALESCE((SELECT SUM(d.approved_quantity-r.effective_issued_quantity-r.cancelled_quantity) FROM supply_reservation r
             JOIN supply_request_decision_line d ON d.revision_line_id=r.revision_line_id WHERE r.request_id=q.id),0) AS outstanding_quantity
+          ,(SELECT COUNT(*) FROM supply_issue i WHERE i.request_id=q.id) AS issue_count,
+          (SELECT COUNT(*) FROM supply_issue i WHERE i.request_id=q.id AND COALESCE((SELECT a.status FROM supply_issue_acknowledgment a
+            WHERE a.issue_id=i.id ORDER BY a.revision DESC LIMIT 1),'pending')='pending') AS ack_pending,
+          (SELECT COUNT(*) FROM supply_issue i WHERE i.request_id=q.id AND COALESCE((SELECT a.status FROM supply_issue_acknowledgment a
+            WHERE a.issue_id=i.id ORDER BY a.revision DESC LIMIT 1),'pending')='disputed') AS ack_disputed
           FROM supply_request q WHERE '''+where, values
     if kind=='shortages':
         return '''SELECT q.id AS request_id,q.control_number,q.requester_snapshot,q.unit_snapshot AS request_unit_snapshot,
@@ -95,6 +101,12 @@ def _filter(kind, state):
     raise Invalid('Choose a supported queue status.')
 
 
+def approver_names(conn, request_id):
+    return [p['name'] for p in rows(conn,'''SELECT COALESCE(rp.name,u.username) AS name FROM supply_request q
+      JOIN admin_user u ON u.active=1 LEFT JOIN resource_person rp ON rp.id=u.rp_id
+      WHERE q.id=? AND u.id<>q.requester_id AND '''+permissions.request_scope_clause('u.id')+' ORDER BY name,u.id LIMIT 6',(request_id,))]
+
+
 def _next_action(conn, entry, kind):
     if kind=='releases':
         entry['next_action'] = ('Recipient: '+entry['recipient_snapshot']+(' — resolve the dispute' if entry['acknowledgment_status']=='disputed' else ' — acknowledge receipt')) if entry['acknowledgment_status']!='acknowledged' else 'Acknowledged; no receipt response pending'
@@ -105,14 +117,15 @@ def _next_action(conn, entry, kind):
     action = {'draft':'You: review and submit','returned':'You: correct and resubmit',
               'rejected':'Decision complete; review the reason','cancelled':'Request cancelled; no further action'}.get(state)
     if state=='submitted':
-        names = rows(conn,'''SELECT COALESCE(rp.name,u.username) AS name FROM supply_request q
-          JOIN admin_user u ON u.active=1 LEFT JOIN resource_person rp ON rp.id=u.rp_id
-          WHERE q.id=? AND u.id<>q.requester_id AND '''+permissions.request_scope_clause('u.id')+' ORDER BY name,u.id LIMIT 6',(entry['id'],))
-        action = ('Approver: '+', '.join(p['name'] for p in names[:5])+(' and others' if len(names)>5 else '')) if names else 'Administrator: assign a supply request approver'
+        names = approver_names(conn,entry['id'])
+        action = ('Approver: '+', '.join(names[:5])+(' and others' if len(names)>5 else '')) if names else 'Administrator: assign a supply request approver'
     elif state=='approved':
         action = ('Custodian: arrange handover of reserved supplies' if entry['reserved_quantity'] else
                   'Custodian: receive stock for outstanding demand') if entry['outstanding_quantity'] else 'Fulfillment complete; review releases and acknowledgments'
     entry['next_action'] = action
+    if kind=='requests':
+        entry['approver_names'] = approver_names(conn,entry['id']) if state=='submitted' else []
+        entry['stage'] = requester_stage(entry)
 
 
 def queue(conn, user, kind, *, page=1, query='', state='', mine=False, count_only=False, limit=25):
