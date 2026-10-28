@@ -52,3 +52,10 @@ Both imports are required by shipped application code. Commit b700e85 adds those
 two filenames; all four deploy-manifest tests pass. No deployment ran. Production
 Python/JS/CSS/template bytes and the frozen performance source remain unchanged.
 qa_preflight remains GREEN (only missing backup-directory warning).
+
+Reader fixture isolation exposed a scheduler test's global threading.Thread stub:
+a fresh reader's close queued work on a stub that never ran. A bounded 20-second
+reproducer timed out (exit 124). The test now starts its reader before replacing
+thread creation. All 24 document-job integration cases pass; production scheduler
+and reader code remain unchanged. This is a fixture compatibility correction,
+not a new reader product candidate or memory investigation.
