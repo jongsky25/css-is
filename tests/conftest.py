@@ -174,6 +174,11 @@ def app_mod(reference_database, monkeypatch):
         st.set_setting(_c, "travel.review_required", "0")
         _c.commit(); _c.close()
         monkeypatch.setattr(app_mod, "DB", test_db)
+        # Lifespan tests close the application reader. Keep that lifecycle local
+        # to this test, just like its database, instead of poisoning later clients.
+        from sqlite_reader import SQLiteReader
+        reader = SQLiteReader()
+        monkeypatch.setattr(app_mod, "_read_worker", reader)
         monkeypatch.setattr(monitoring, "LOG_PATH", os.path.join(directory, "requests.log"))
         # Test-local snapshots prevent direct cache mutation leaking into later cases.
         monkeypatch.setattr(app_mod, "_atoms_state", dict(
@@ -187,8 +192,13 @@ def app_mod(reference_database, monkeypatch):
         monkeypatch.setattr(app_mod, "_today_local", lambda: tz.today_local())
         monkeypatch.setattr(app_mod, "_now_local", lambda: tz.now_local())
         st.basic_status_clear_cache()
-        yield app_mod
-        st.basic_status_clear_cache()
+        try:
+            yield app_mod
+        finally:
+            # Startup may replace the fixture reader; close both owners.
+            app_mod._read_worker.close()
+            reader.close()
+            st.basic_status_clear_cache()
 
 @pytest.fixture(autouse=True)
 def _reset_shared_state(request):
