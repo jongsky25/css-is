@@ -47,15 +47,18 @@ def make_router(templates, get_conn):
 
     def render(request, conn, template, *, status_code=200, **values):
         user = permissions.require_actor(conn, request.state.user)
+        can_configure = user['role'] == 'admin'
+        can_approve = bool(conn.execute("SELECT 1 FROM supply_role_grant WHERE user_id=? AND role='request_approver' AND revoked_at IS NULL",(user['id'],)).fetchone())
+        can_maintain = permissions.has_role(conn, user, 'custodian')
+        can_audit = permissions.has_role(conn, user, 'auditor')
+        can_replenish_approve = permissions.has_role(conn, user, 'replenishment_approver')
         return templates.TemplateResponse(request, 'supplies/' + template + '.html', {
             'nav_active': 'supplies', 'enabled': supplies.enabled(conn), 'csrf': csrf(request),
-            'can_configure': user['role'] == 'admin',
-            'can_approve': bool(conn.execute("SELECT 1 FROM supply_role_grant WHERE user_id=? AND role='request_approver' AND revoked_at IS NULL",(user['id'],)).fetchone()),
-            'can_maintain': permissions.has_role(conn, user, 'custodian'),
-            'can_audit': permissions.has_role(conn, user, 'auditor'),
-            'can_replenish_approve': permissions.has_role(conn, user, 'replenishment_approver'),
-            'can_read_stock': (permissions.has_role(conn, user, 'custodian') or
-                               permissions.has_role(conn, user, 'auditor')),
+            'can_configure': can_configure, 'can_approve': can_approve,
+            'can_maintain': can_maintain, 'can_audit': can_audit,
+            'can_replenish_approve': can_replenish_approve,
+            'can_read_stock': can_maintain or can_audit,
+            'requester_only': not (can_configure or can_approve or can_maintain or can_audit or can_replenish_approve),
             'new_key': lambda: str(uuid4()), 'error': '', 'submitted': {}, **values,
         }, status_code=status_code)
 

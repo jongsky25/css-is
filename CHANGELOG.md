@@ -1,3 +1,7 @@
+## 9.10 — October 28, 2026
+
+- Supplies increment 1.1: `render()` adds a `requester_only` flag (no approver, custodian, auditor, replenishment-approver or admin role). Requester-only users see a three-link Supplies nav (Home · Request supplies · My requests); everyone else's nav is unchanged. Navigation only; no permission changes.
+
 ## 9.09 — October 28, 2026
 
 - Add `docs/plans/supplies-requester-ux.md`, a phased plan to simplify Supplies for requesters (requester-only navigation, status tracker, one-step send, picture-based catalog). Docs only; no behaviour change.
