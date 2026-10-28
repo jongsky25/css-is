@@ -2,15 +2,28 @@
 
 Last updated: **2026-10-28 (Asia/Manila)**. Repository: `jongsky25/css-is`.
 
-## Start here — Sol handoff, current after original GC offline audit
+## Start here — 2B provisionally accepted by the user
 
-**Objective: unblock 2B only. Do not start or resume 3A or later increments.**
-This section supersedes older next-step instructions below. The chronology is
-retained as evidence, not a queue of experiments to repeat.
+**2B is provisionally unblocked. Stop GC/instrumentation research.**
+On 2026-10-28 (Asia/Manila), the user explicitly accepted the unresolved memory risk
+and relaxed the original memory gate for provisional avatar acceptance. Read the
+[acceptance decision](avatars/increment2b/PROVISIONAL_ACCEPTANCE.md) first.
+This supersedes every older blocked-status, no-waiver and next-GC-probe instruction
+in the historical material below. No failed measurement becomes a pass, and full
+performance validation is not claimed. No merge, deployment, candidate promotion
+or later increment is automatically authorized.
+
+No diagnostic is queued. Do not implement the prepared disposal probe or continue
+the GC chain. Follow the next product request using provisional 2B acceptance;
+do not ask the user to approve the same memory-policy exception again.
 
 ### Checkout and current state
 
-- Repository: `jongsky25/css-is`; resume `codex/avatar-2b-verification`.
+- Repository: `jongsky25/css-is`; status/evidence branch `codex/avatar-2b-verification`.
+- Current decision: **2B provisionally accepted; GC investigation stopped**.
+  The +10 MiB memory criterion and related unresolved qualification/control
+  prerequisites are deferred as provisional blockers by explicit user approval.
+  All original results and uncertainty remain retained.
 - Latest completed work: [offline audit of original failed GC](avatars/increment2b/original-gc-audit/REPORT.md).
   Zero new browser measurements. All 145 hashes verify; original native failure
   reproduces exactly, 36 focused tests pass. Both probes record 21 shutdown calls,
@@ -20,7 +33,7 @@ retained as evidence, not a queue of experiments to repeat.
   Missing records: proxy disposal lifecycle/reuse args, nested ScriptState cleanup,
   notification and retaining edges. Source shows notification tracing is conditional.
   A [minimal four-function design](avatars/increment2b/original-gc-audit/NEXT_PROBE.md)
-  is prepared, not implemented/launched. No supported correction or qualification.
+  is archived, not implemented/launched. No supported correction or qualification.
 - Latest runtime experiment: uninjected counter/GC-trace comparison, harness 8f7b7d4 /
   workflow 0ab5c33, [PR #523](https://github.com/jongsky25/css-is/pull/523),
   [run40609043507](https://github.com/jongsky25/css-is/actions/runs/40609043507).
@@ -78,7 +91,8 @@ retained as evidence, not a queue of experiments to repeat.
 - Comparison baseline: `1c964dcba2fa19de1eab077b00e0e5748d742554`.
 - Current experimental product: `cf363bfe547d5e23619eee28cdaf68bd4b6d7753`,
   including the thread-owned reader candidate and avatar product `f700187`.
-  It is not an accepted 2B release.
+  Its avatar increment is provisionally accepted under the recorded exception;
+  it is not a fully performance-validated or deployed release.
 - Latest isolated candidate: `codex/avatar-shared-cat-gradients`,
   `cd94bf35d29b796ca0d6467756221e4b545a40be`. Do not silently promote it.
 - Product sources remain unchanged. No active measurement, pending deployment
@@ -88,131 +102,22 @@ retained as evidence, not a queue of experiments to repeat.
   for the frozen comparisons. Scratch paths may not survive a new session;
   committed archives and their manifests are the durable evidence.
 
-### How far from unblocking 2B?
+### Current acceptance and next work
 
-The artwork is implemented and substantial visual/functional evidence exists.
-The latest candidate passes 2,880 exact visual cells and nine applicable browser
-checks. **The remaining blocker is unresolved memory acceptance, not unfinished
-artwork or a missing final approval.** We have narrowed the behavior to native
-renderer allocation/reclamation and retained capacity, but have not established
-a product correction that reliably clears the budget with stable controls.
+2B is provisionally unblocked by the user's acceptance decision. No additional
+memory correction, native qualification or GC experiment is required for that
+status. Artwork and substantial visual/functional evidence are retained; the
+original memory failures and unstable controls remain unresolved. Performance has
+not been guaranteed free of significant slowdown.
 
-Latest uninjected screen: all eight workloads completed; forward navigation 5
-and 10 RSS increases are +11.699 and +16.301 MiB against the +10 MiB limit. Both
-same-source controls fail stability; the largest absolute repeat swing is
-36.379 MiB. All heap checks pass and renderer counts match. The candidate reduces
-markup and improves navigation 20 in both orders, but those partial benefits
-cannot override the failed gates. This screen compares current versus candidate;
-it is not the complete original-versus-candidate acceptance matrix.
+The latest screen's +11.699/+16.301 MiB navigation RSS differences and 36.379 MiB
+largest control swing remain documented. The user chose practical provisional
+acceptance instead of further research. Keep the current product source cf363bf;
+do not silently promote isolated candidate cd94bf3.
 
-Latest result: [original failed-GC offline audit](avatars/increment2b/original-gc-audit/REPORT.md).
-The failed probe ran a natural major GC and processed weak references; the passing
-probe reclaimed labelled pages before its second major. Document shutdown is not
-proof that proxy/context disposal completed. Those transition records and retaining
-edges are absent in the old capture. A source-supported minimal disposal witness is
-prepared; no new browser measurement or supported correction has occurred. Native/
-application qualification and original memory acceptance remain blocked.
-
-There is no defensible percentage or ETA. At least three milestones remain:
-
-1. Establish and implement a supported correction that produces a repeatable
-   memory improvement, with source effects distinguishable from repeat variation.
-2. Pass the fixed candidate screen and its same-source controls, then the required
-   larger validation. Do not skip failed prerequisites or substitute a lucky rerun.
-3. Run and independently audit complete acceptance against the original baseline:
-   five runs per cold/warm desktop/mobile group, all eight scenarios and five
-   navigation checkpoints, RSS and JS heap, plus the plan's visual, functional,
-   transfer, latency, frame and lifecycle gates. Record every failure and limitation.
-
-Thus we are past implementation and deep into diagnosis, but **not yet at final
-verification**. No candidate currently qualifies to unblock 2B.
-
-### Read first and next bounded work
-
-Read these in order before changing code or launching browsers:
-
-1. [Original GC audit](avatars/increment2b/original-gc-audit/REPORT.md),
-   full chronology, pinned source and prepared minimal disposal-witness design. Then
-   [uninjected GC comparison](avatars/increment2b/uninjected-gc-contrast/REPORT.md),
-   protocol, raw captures/traces, independent assessment and environment audit. Then
-   [native-buffer caller diagnostic](avatars/increment2b/native-handle-buffer/REPORT.md),
-   raw buffers/proof, independent assessment and weak-queue caller evidence. Then
-   [context handle journal](avatars/increment2b/context-handle-journal/REPORT.md),
-   protocol, raw journals, ABI evidence and independent assessment. Then
-   [native root diagnostic](avatars/increment2b/native-root-retention/REPORT.md),
-   frozen protocol, prior trace analysis and independently checked graphs. Then
-   [application observer calibration](avatars/increment2b/application-observer-calibration/REPORT.md),
-   all five attempts and frozen protocols. Then
-   [hosted native calibration](avatars/increment2b/hosted-native-calibration/REPORT.md),
-   proof/screen archive, exact assessment and [native setup PR #513](https://github.com/jongsky25/css-is/pull/513).
-   Then [mobile hosted runner](avatars/increment2b/mobile-runner/REPORT.md),
-   [phone instructions](avatars/increment2b/mobile-runner/README.md), and
-   [setup PR #511](https://github.com/jongsky25/css-is/pull/511).
-   The earlier [runner isolation blocker](avatars/increment2b/runner-isolation/REPORT.md) and
-   [concrete runner requirements](avatars/increment2b/runner-isolation/RUNNER_REQUIREMENTS.md).
-   Then [control timing diagnostic](avatars/increment2b/control-phase-timing/REPORT.md),
-   both frozen protocols, failed initialization and complete control/CPU evidence.
-   Then [native recorder result](avatars/increment2b/native-callback-recorder/REPORT.md),
-   frozen protocols, failed implementations, passed proofs, control interval analysis
-   and the failed four-slot calibration. Then [mixed getter result](avatars/increment2b/mixed-reclamation-getter/REPORT.md),
-   four frozen screen protocols, type proofs, failed audits and native-period summaries.
-2. [Path-only getter](avatars/increment2b/absent-attribute-receiver/REPORT.md),
-   [lifecycle v6](avatars/increment2b/native-membership-lifecycle/REPORT.md), and
-   [earlier membership](avatars/increment2b/native-element-membership/REPORT.md).
-3. [Product candidate](avatars/increment2b/shared-cat-gradients/REPORT.md), the
-   [overall report](avatars/increment2b/REPORT.md) and
-   [acceptance gates](AVATAR_VISUAL_UPGRADE_PLAN.md#performance-acceptance-gates).
-4. Historical [page capability](avatars/increment2b/page-history-capability/REPORT.md),
-   [application history](avatars/increment2b/page-history-application/REPORT.md),
-   [reader retention](avatars/increment2b/reader-retention/REPORT.md) and
-   [native types](avatars/increment2b/native-type-ownership/REPORT.md) remain constraints.
-
-The separate uninjected control diagnostic is completed. Initial d867258 slots all
-failed before measurement because /proc task children is unavailable; repair
-84ce8e9 validates the Playwright-owned driver PID directly. All four fresh controls
-complete 108 phase brackets each. Navigation and before-DOM serialization account
-for most slow/fast variation. Slot 2 first navigation/serialization coincide with
-31.03/38.74% aggregate CPU steal; quota counters do not advance. Host/cgroup pressure
-files are unavailable. This supports runner contention investigation, but cannot
-retroactively explain v12's unmeasured scheduling context or establish causation.
-Both archives reconstruct/re-audit identically; 97 focused tests pass.
-
-The diagnostic's 16.1449% range is not a passing qualification result. Telemetry and
-extra queries change the workload. V12 remains failed at 20.7568% control variation,
-though both recorder cost/reclamation probes passed. No timing subtraction,
-post-hoc load filter, quiet-window rerun or budget waiver is allowed.
-
-The actual hosted native calibration is complete and passes every original gate.
-Fresh native selftest and 384-pair mixed receiver proof precede four fresh fixed
-control/probe/probe/control slots. Probes preserve 1536 joins and ten measured
-labelled returns each (DOM4/SVG3/style3), all twenty overlapping natural sweeps.
-Costs 2.7115/2.9615%, maximum observation <=13.004ms, control variation 1.8382%,
-paired ratios 1.01442/1.01464. All proofs and the full audit/period summary reproduce
-identically; 57 native artifact manifest entries verify. 104 local/60 cloud tests.
-
-Runner condition is standard GitHub Azure/AMD EPYC 7763, four CPUs, no container
-CPU quota, exact Python/browser/toolchain; container-only SYS_PTRACE for native
-proofs. No physical exclusivity claim or host isolation changes. Product cf363bf
-and unpromoted cd94bf3 remain unchanged. That historical native success does not
-replace the latest failed same-job prerequisite or accept application memory.
-
-Initial invalid controller YAML and incidental control retrigger 40508311821 are
-retained. PR #511 now guards automatic control repeats; separate native PR #513
-uses an opened-only trigger. The incidental run does not replace any sample or
-qualify the instrument. Both setup PRs remain unmerged; default-branch manual
-registration still faces existing release-version policy. No waiver or deploy.
-
-Application calibration remains blocked. Original failed-GC offline audit is
-complete; use its source-supported [minimal disposal-witness design](avatars/increment2b/original-gc-audit/NEXT_PROBE.md).
-Implement/validate/freeze four low-rate native callbacks: LocalWindowProxy disposal
-arguments, nested ScriptState cleanup, V8 notification and post-GC boundary. Preserve
-opaque-address/generation limits. Do not assume an early return is a bug without
-its state/branch evidence. Avoid broad global-handle hooks, object-field reads,
-snapshots, Runtime subscriptions, forced collection, extra waits and repeated
-per-slot startup clock RPCs. No collector/run exists yet. All slots/failures must
-be retained; absence of the failed state cannot justify a fix. After a supported
-correction, fresh native qualification must precede the frozen lossless application
-calibration. Full 2B acceptance remains outstanding.
+Next work is the next requested product task, not the prepared disposal probe.
+No later increment, merge or deployment has started. Earlier experiment summaries,
+source identities and detailed reports below are historical evidence only.
 
 ### Important traps and execution constraints
 
@@ -225,23 +130,28 @@ calibration. Full 2B acceptance remains outstanding.
 - Page-request stacks identify request triggers, not every object's owner or
   retained bytes. Observed address reuse does not establish a pool hit.
 - Preserve every scheduled sample, source hash, control and failure. No forced GC,
-  cache flush, memory-budget waiver, favorable replacement runs, concurrent heavy
-  work during measurements, or silent measurement-policy changes.
+  cache flush, favorable replacement runs, concurrent heavy work during
+  measurements, or silent measurement-policy changes. The recorded user-approved
+  provisional memory exception is explicit; it does not alter past measurements.
 - No subagents unless the user explicitly authorizes delegation. Use Sol in the
   new session. No 3A, later increment, merge or deployment.
-- Update this start section, the detailed report and execution plan after the next
-  completed experiment so a later session does not follow superseded instructions.
+- Keep this decision current in the handoff/report/plan; do not resume historical
+  experiments without a new reason or user request.
 
-### Copy into the new Sol session
+### Copy into a new session
 
-> Continue jongsky25/css-is on codex/avatar-2b-verification using Sol. Read the
-> authoritative Start here section and mixed-reclamation-getter report. Goal:
-> unblock 2B only. Latest d0eeb19/v11 passes representative labelled reclamation
-> in both probes but fails one 5% cost gate (5.2188%). No application calibration.
-> Next prove a cheaper native callback/buffer recorder with exact clock/concurrency/
-> pointer/phase/overflow equivalence before a new fixed cost screen. Preserve all
-> prior failures; no unchanged favourable rerun, forced GC, sample/threshold waiver,
-> 3A, merge or deployment. No product fix is established.
+> Continue jongsky25/css-is on codex/avatar-2b-verification. 2B is provisionally
+> accepted by explicit user approval on 2026-10-28 (Asia/Manila). Read the current
+> decision and status first. Stop the GC/instrumentation chain; the strict memory
+> gate and related unresolved controls/qualification are deferred as provisional
+> blockers. Preserve all failed results and do not claim full performance validation.
+> Keep product cf363bf; leave candidate cd94bf3 isolated. No merge/deploy or later
+> increment is automatically authorized; follow the next product request.
+
+## Historical evidence — earlier blocking decisions superseded
+
+The remaining sections preserve prior findings and their original next-step text.
+They do not override the user-approved provisional acceptance above.
 
 ## Current blocking correction
 

@@ -1,6 +1,6 @@
 # Avatar visual upgrade — phased execution plan for Sol
 
-Status: 2B acceptance withdrawn after omitted memory gates were audited. Offscreen, reduced-motion, background and navigation RSS exceed the unchanged budget. 3A work is preserved separately but paused; later increments remain pending.
+Status: 2B is provisionally accepted and unblocked by explicit user approval on 2026-10-28 (Asia/Manila), with unresolved memory risk accepted. Stop GC/instrumentation research. Full performance validation remains unproven. No deployment or later increment starts automatically.
 Created: 2026-10-25
 Repository: jongsky25/css-is
 Owner request: Material improvement to companion artwork, optional animal dress-up,
@@ -23,7 +23,26 @@ Retain existing account identity, growth, wellness scoring, care cooldowns, soun
 seasonal administration, and accessibility behavior.
 
 A phase fails if its visuals remain essentially the same except for color changes,
-or if it exceeds a performance gate. Fix or reduce complexity before expanding it.
+or if it exceeds an applicable performance gate. Apply the explicit user-approved
+2B exception below; preserve every measured failure. Other increments retain their
+gates unless the user separately changes them.
+
+## User-approved 2B provisional acceptance — current policy
+
+[Decision](avatars/increment2b/PROVISIONAL_ACCEPTANCE.md): the user accepted the
+recommendation to stop the disproportionate GC investigation and unblock the avatar
+provisionally. The +10 MiB memory criterion and related unresolved memory/control/
+observer prerequisites are deferred as blockers for provisional 2B acceptance only.
+No numeric replacement limit is invented and no failed result is converted to pass.
+The absence of significant slowdown is not guaranteed; full performance validation
+remains incomplete. Keep current product cf363bf; leave candidate cd94bf3 isolated.
+
+No new GC/native observer experiment, prepared disposal probe or acceptance matrix
+is queued. Follow the next requested product task. No merge, deployment, candidate
+promotion or later increment is automatically authorized. Historical blocked-status
+and next-step instructions below are superseded by this explicit decision.
+
+## Historical investigations — retained evidence
 
 ## Original failed-GC offline audit — disposal witness is missing
 
@@ -454,6 +473,9 @@ Hard gates:
   (original33ms budget plus the user-approved0.3ms exception).
   Record baseline and regression; do not claim 60 fps solely from requestAnimationFrame.
 - Renderer/JS memory growth <= 10 MiB over baseline after identical scenarios.
+  **2B exception:** explicitly deferred as a provisional-acceptance blocker by the
+  user on 2026-10-28; preserve measured failures and associated control uncertainty.
+  This exception does not claim full performance validation or apply to later increments.
   State measurement limits when browser memory APIs cannot capture all renderer memory.
 - No accumulating listeners, timers, DOM nodes or memory trend after 20 mounts or
   navigations. No repeating visual animation work while hidden or offscreen.
@@ -626,10 +648,10 @@ browser tests ran.
 
 | Increment | Status | Commit | Visual evidence | Performance evidence / notes |
 |---|---|---|---|---|
-| 0 Baseline | Complete — baseline established; release gates remain unmet | `94269dd` + evidence/ledger revision | [51 sheets](avatars/sheets/index.json), [monthly overview](avatars/sheets/monthly-stage 6-overview.png), [hero/moods](avatars/smoke/) | [Report](avatars/BASELINE_REPORT.md), [20 full samples + summary](avatars/application/summary.json), native hidden/touch check; existing frame, picker, timer and remount failures retained. |
+| 0 Baseline | Complete — baseline established; release gates remain unmet | `94269dd` + evidence/ledger revision | [51 sheets](avatars/sheets/index.json), [monthly overview](avatars/sheets/monthly-stage6-overview.png), [hero/moods](avatars/smoke/) | [Report](avatars/BASELINE_REPORT.md), [20 full samples + summary](avatars/application/summary.json), native hidden/touch check; existing frame, picker, timer and remount failures retained. |
 | 1 Cat + plant slice | Complete — measured relative gates passed | `58cf98f`, `0be7fc3`, `ad4e7ad`, `d464461` + evidence revision | [Bare comparison](avatars/increment1/before-after-bare-light.png), [motion](avatars/increment1/before-after-motion.webm), [51 seasonal sheets](avatars/increment1/sheets/index.json) | [Report](avatars/increment1/REPORT.md), [20-sample comparison](avatars/increment1/comparison.json); 102 tests, native touch/keyboard/filter checks, sampled callback trace passed; baseline lifecycle/picker blockers retained. |
 | 2A Cactus/bonsai/sunflower | Complete — measured relative gates passed | `6064a82`, `1b453e0`, `28fbb7b` + evidence revision | [Six-stage comparison](avatars/increment2a/before-after-bare-light.png), [51 sheets](avatars/increment2a/sheets/index.json), [motion](avatars/increment2a/before-after-motion.webm) | [Report](avatars/increment2a/REPORT.md), [fresh 20 comparison](avatars/increment2a/comparison.json); 105 tests, 324 visual reaction cases, mature care/traces and native checks passed. Pre-fix failures retained; audio-sync feedback fixed. Remaining lifecycle/picker blockers persist. |
-| 2B Fern/mushroom/succulent | Blocked — prior acceptance withdrawn | Product `f700187`; final source `e909de1` | Existing visual/functional passes retained | [Corrected report](avatars/increment2b/REPORT.md): warm desktop offscreen +11.336, reduced motion +11.098, background +18.836 MiB; 10 MiB limit. Prior checker omitted these scenarios. [Exact source validation](avatars/increment2b/svg-validation/REPORT.md): all 40 observer/SVG samples complete, neither intervention qualifies in both orders; same-source repeat also fails +11.895 MiB. [Paired variance](avatars/increment2b/paired-variance/REPORT.md): 20 valid slots, 10 unstable control metric sets; late-navigation current RSS higher in all source pairs, but no qualified effect. No correction promoted. |
+| 2B Fern/mushroom/succulent | Provisionally accepted — user-approved memory exception | Avatar `f700187` in current `cf363bf`; `cd94bf3` remains isolated | Existing visual/functional passes retained | [Provisional decision](avatars/increment2b/PROVISIONAL_ACCEPTANCE.md); historical failures retained in the [report](avatars/increment2b/REPORT.md): warm desktop offscreen +11.336, reduced motion +11.098, background +18.836 MiB; 10 MiB limit. Prior checker omitted these scenarios. [Exact source validation](avatars/increment2b/svg-validation/REPORT.md): all 40 observer/SVG samples complete, neither intervention qualifies in both orders; same-source repeat also fails +11.895 MiB. [Paired variance](avatars/increment2b/paired-variance/REPORT.md): 20 valid slots, 10 unstable control metric sets; late-navigation current RSS higher in all source pairs, but no qualified effect. No correction promoted. |
 | 3A Ground animals + bird | Pending | — | — | — |
 | 3B Swimmers + owl + bat | Pending | — | — | — |
 | 4A Wardrobe model/rendering | Pending | — | — | — |

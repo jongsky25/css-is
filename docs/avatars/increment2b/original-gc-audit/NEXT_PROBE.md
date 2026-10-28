@@ -1,5 +1,9 @@
 # Prepared design: minimal navigation-disposal witness
 
+**STOPPED by the user's 2026-10-28 provisional acceptance decision.**
+[Current policy](../PROVISIONAL_ACCEPTANCE.md). This unimplemented design is archived;
+it is not a pending task. Do not build or launch it from historical next-step text.
+
 Design only. No collector implementation or new capture has run. Implement and
 freeze source/protocol/ABI preflight before any measurement. This is the specific
 observability gap established by the offline audit, not a supported product fix.

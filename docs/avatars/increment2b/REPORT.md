@@ -1,18 +1,28 @@
-# Increment 2B — acceptance withdrawn: uncovered memory failures
+# Increment 2B — provisionally accepted by the user
 
-## Readiness and next-session entry point
+## Current status and next-session entry point
 
-2B is **not at final verification**. Artwork and extensive visual/functional checks
-are complete, but no candidate has demonstrated a repeatable memory correction
-with stable controls. Remaining milestones: a supported fix, qualified candidate
-validation, then complete original-baseline acceptance across all device/cache
-and scenario groups. No defensible percentage or ETA is established.
+**Provisionally accepted and unblocked on 2026-10-28 (Asia/Manila). GC investigation
+stopped.** The user explicitly accepted the unresolved memory risk and relaxed the
++10 MiB gate and associated unresolved controls/GC qualification as blockers for
+this provisional decision. [Full decision](PROVISIONAL_ACCEPTANCE.md).
 
-Use the [Sol restart handoff](../../AVATAR_UPGRADE_HANDOFF.md#start-here--sol-handoff-current-after-original-gc-offline-audit)
-for current source identities, evidence order, next bounded work and constraints.
-The original-GC offline audit below is the latest completed work.
-The latest runtime experiment remains the uninjected GC comparison.
-Older next-step instructions in this report are historical where superseded.
+Artwork/visual/functional evidence remains retained. The original memory failures,
+control instability and incomplete full performance validation remain unresolved;
+no assessment is rewritten as passing and no "no slowdown" guarantee is claimed.
+Current product reference cf363bf is unchanged; isolated cd94bf3 is not promoted.
+No merge, deployment or later increment is automatically authorized.
+
+Use the [current handoff](../../AVATAR_UPGRADE_HANDOFF.md#start-here--2b-provisionally-accepted-by-the-user).
+No diagnostic is queued. Do not implement the prepared disposal probe or resume
+older next-step instructions. Future work follows the next product request.
+
+## Historical investigation and failed evidence
+
+The following reports retain their original findings and historical instructions.
+They are superseded as an acceptance/continuation policy by the decision above.
+The latest runtime experiment remains the uninjected GC comparison; the latest
+analysis is the offline original-GC audit. Neither constitutes full acceptance.
 
 ## Original failed-GC offline audit — disposal witness is missing
 
