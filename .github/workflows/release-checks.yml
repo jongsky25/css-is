@@ -93,9 +93,9 @@ jobs:
   tests:
     name: Python 3.11 (${{ matrix.order }})
     runs-on: ubuntu-latest
-    # OCR/browser setup can take 14 minutes before the complete suites start.
-    # Leave room for both test execution and the mandatory report/artifact gates.
-    timeout-minutes: 45
+    # OCR/browser setup plus the growing full suite exceeded the 45-minute
+    # budget. Keep both complete orders and all report gates, with setup headroom.
+    timeout-minutes: 75
     strategy:
       fail-fast: false
       matrix:

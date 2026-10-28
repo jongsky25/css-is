@@ -53,6 +53,14 @@ def pytest_report_header(config):
 
 
 @pytest.fixture(autouse=True)
+def isolated_scheduler(monkeypatch):
+    # TestClient lifespan otherwise starts real background consumers against each
+    # test database. Worker tests invoke their tick/run entry points explicitly;
+    # startup tests can opt in with monkeypatch.setenv('CSS_NO_SCHEDULER', '0').
+    monkeypatch.setenv("CSS_NO_SCHEDULER", "1")
+
+
+@pytest.fixture(autouse=True)
 def application_clock(monkeypatch):
     # Epoch-based tokens and local dates share one reference. Monotonic time and
     # short elapsed intervals keep advancing, so worker timeouts still work.
