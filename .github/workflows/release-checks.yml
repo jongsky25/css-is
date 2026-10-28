@@ -101,6 +101,8 @@ jobs:
         order: [normal, shuffled]
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -130,7 +132,7 @@ jobs:
           mkdir -p test-results
           args=()
           if [ "$TEST_ORDER" = shuffled ]; then args+=(--shuffle-seed=311); fi
-          python -m pytest --application-suite "${args[@]}" --tb=short --junitxml=test-results/results.xml --ai-evaluation-report=test-results/ai-evaluation.json
+          python -m pytest --application-suite --maxfail=1 "${args[@]}" --tb=short --junitxml=test-results/results.xml --ai-evaluation-report=test-results/ai-evaluation.json
       - name: Reject empty reports, failures and skipped tests
         run: python scripts/check_release.py junit test-results/results.xml
       - name: Require complete current AI evaluation evidence

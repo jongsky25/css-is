@@ -1,0 +1,24 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+____________________ test_full_identity_audit_and_tampering ____________________
+tests/test_avatar_paired_variance.py:107: in test_full_identity_audit_and_tampering
+    cache[arm]={name:hashlib.sha256(expected_fixture(repo,ref,name) if name in HARNESS else subprocess.check_output(['git','show',source_ref+':'+name],cwd=repo)).hexdigest() for name in required_sources(repo,source_ref)}
+                                                                                                                                                                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scripts/avatar_baseline/analyze_paired_variance.py:109: in required_sources
+    tree=subprocess.check_output(['git','ls-tree','-r','--name-only',ref,'templates'],cwd=repo,text=True).splitlines()
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/subprocess.py:466: in check_output
+    return run(*popenargs, stdout=PIPE, timeout=timeout, check=True,
+/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/subprocess.py:571: in run
+    raise CalledProcessError(retcode, process.args,
+E   subprocess.CalledProcessError: Command '['git', 'ls-tree', '-r', '--name-only', '1c964dcba2fa19de1eab077b00e0e5748d742554', 'templates']' returned non-zero exit status 128.
+----------------------------- Captured stderr call -----------------------------
+fatal: not a tree object
+=============================== warnings summary ===============================
+tests/test_avatar_paired_variance.py::test_full_identity_audit_and_tampering
+  /workspace/css-is/tests/conftest.py:98: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_avatar_paired_variance.py::test_full_identity_audit_and_tampering

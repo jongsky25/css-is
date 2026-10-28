@@ -3,7 +3,8 @@ on:
   workflow_dispatch:
   push:
     branches: [codex/avatar-upgrade-completion]
-    paths-ignore: ['docs/**', 'CHANGELOG.md']
+    # CI/report-only edits do not repeat a frozen product measurement.
+    paths-ignore: ['docs/**', 'CHANGELOG.md', '.github/workflows/**']
 permissions:
   contents: read
 concurrency:
