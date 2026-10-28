@@ -36,6 +36,26 @@ def pytest_unconfigure(config):
     tz.today_local = _REAL_TODAY_LOCAL
 
 
+
+def pytest_ignore_collect(collection_path, config):
+    # Current avatar browser acceptance runs explicitly in its dedicated job.
+    opt_in = {
+        'test_avatar_animal_batch_browser.py',
+        'test_avatar_chase_writes_browser.py',
+        'test_avatar_container_resize_browser.py',
+        'test_avatar_geometry_browser.py',
+        'test_avatar_motion_preference_browser.py',
+        'test_avatar_pagehide_browser.py',
+        'test_avatar_pointer_browser.py',
+        'test_avatar_static_preview_browser.py',
+        'test_avatar_visibility_browser.py',
+        'test_companion_customizer_browser.py',
+        'test_home_search_boot_browser.py',
+        "test_avatar_frame_budget_browser.py",
+    }
+    return collection_path.name in opt_in and os.getenv("CSS_AVATAR_BASELINE") != "1"
+
+
 def pytest_addoption(parser):
     parser.addoption("--shuffle-seed", type=int, default=None,
                      help="Deterministically shuffle test cases with this seed")

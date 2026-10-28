@@ -1,0 +1,44 @@
+{% from "_avatar_wardrobe.html" import wear as _wear %}
+{# succulent artwork. Keep placement groups separate from animated groups. #}
+{% from "_avatars_shared.html" import illustrated_pot as _illustrated_pot, plant_finish as _plant_finish %}
+
+{% macro _fleshy_leaf(length, leaf, tip=false) %}
+<path d="M0 0C-9-{{ length*0.3 }}-11-{{ length*0.72 }} 0-{{ length }}C11-{{ length*0.72 }} 9-{{ length*0.3 }} 0 0Z" fill="{{ leaf }}" stroke="#41664c" stroke-width="1.1"/>
+<path d="M-2-4Q-7-{{ length*0.56 }} 0-{{ length*0.88 }}" fill="none" stroke="#deebbc" stroke-width="1.6" opacity=".65"/>
+{% if tip %}<path d="M-2-{{ length-3 }}L0-{{ length }}L2-{{ length-3 }}" stroke="#c6909f" stroke-width="2" fill="none" stroke-linecap="round"/>{% endif %}
+{% endmacro %}
+
+{% macro art(s, m=0, costume="", scope="", preferences=none) %}
+{% set leaf='url(#' ~ scope ~ '-leaf)' if scope else 'url(#avg-succ)' %}
+{% set cy=[0,107,99,95,91,88,85][s] %}{% set length=[0,17,24,30,35,39,42][s] %}
+<g class="av-v2 av-body" stroke-linejoin="round" stroke-linecap="round"><g transform="translate(60 108) scale({{ 0.6+s*0.06 }})">{{ _wear(preferences,'back') }}</g>
+  {{ _illustrated_pot(true) }}
+  <path d="M42 110l5-2m28 3 4-3" stroke="#d5c4a7" stroke-width="3"/>
+  {% if s==1 %}
+    {% for angle in [-30,30] %}<g transform="translate(60 {{ cy }}) rotate({{ angle }})">{{ _fleshy_leaf(17,leaf) }}</g>{% endfor %}
+    <path d="M59 106L61 101" stroke="#41664c" stroke-width="2"/>
+  {% else %}
+  <g transform="translate(60 {{ cy }}) scale(1 .55)">
+    {% for angle in range(0,360,60 if s==2 else (45 if s==3 else 36)) %}
+    <g transform="rotate({{ angle }})">{{ _fleshy_leaf(length,leaf,s>=4) }}</g>
+    {% endfor %}
+    {% if s>=3 %}{% for angle in range(22,382,60) %}<g transform="rotate({{ angle }})">{{ _fleshy_leaf(length*0.66,leaf,s>=4) }}</g>{% endfor %}{% endif %}
+    {% for angle in [-35,85,205] %}<g transform="rotate({{ angle }})">{{ _fleshy_leaf(length*0.38,leaf) }}</g>{% endfor %}
+  </g>
+  {% endif %}
+  {% if s>=4 %}
+  <path d="M60 {{ cy-9 }}Q73 73 {{ 71 if s==4 else 77 }} {{ 64 if s==4 else (52 if s==5 else 44) }}" fill="none" stroke="#809464" stroke-width="2.8"/>
+  <g transform="translate({{ 71 if s==4 else 77 }} {{ 63 if s==4 else (50 if s==5 else 42) }})"><g class="av-bloom">
+  {% if s==4 %}<path data-bloom-state="bud" d="M0 5Q-9-2-2-9Q7-9 5-2Z" fill="#dda0a7" stroke="#a76881" stroke-width="1.1"/>
+  {% else %}{% for angle in [0,72,144,216,288] %}<path d="M0 1Q-10-4-5-10Q1-15 0 1Z" transform="rotate({{ angle }})" fill="#eab0b4" stroke="#ac7486" stroke-width=".8"/>{% endfor %}<circle r="3" fill="#efd18b"/>{% endif %}
+  </g></g>
+  {% endif %}
+  {% if s==6 %}
+  <path d="M71 69Q89 70 90 60" fill="none" stroke="#809464" stroke-width="2"/>
+  <g transform="translate(90 58)"><g class="av-bloom">{% for angle in [0,72,144,216,288] %}<ellipse cy="-4" rx="2.7" ry="4.5" transform="rotate({{ angle }})" fill="#eab0b4" stroke="#ac7486" stroke-width=".7"/>{% endfor %}<circle r="2" fill="#efd18b"/></g></g>
+  <path d="M49 105Q43 108 38 107" fill="none" stroke="#60865d" stroke-width="2"/>
+  <g transform="translate(38 107) scale(.5 .3)">{% for angle in range(0,360,60) %}<g transform="rotate({{ angle }})">{{ _fleshy_leaf(23,leaf,true) }}</g>{% endfor %}</g>
+  {% endif %}
+  {{ _plant_finish('succulent',s,m,costume,preferences) }}
+</g>
+{% endmacro %}

@@ -1,0 +1,22 @@
+{% from "_avatar_wardrobe.html" import wear as _wear %}
+{# cactus artwork. Keep placement groups separate from animated groups. #}
+{% from "_avatars_shared.html" import illustrated_pot as _illustrated_pot, plant_finish as _plant_finish %}
+
+{% macro art(s,m=0,costume="",scope="", preferences=none) %}
+{% set leaf='url(#' ~ scope ~ '-leaf)' if scope else 'url(#avg-cactus)' %}
+{% set top=[0,88,76,63,52,44,38][s] %}
+<g class="av-v2 av-body" stroke-linejoin="round" stroke-linecap="round"><g transform="translate(60 108) scale({{ 0.6+s*0.06 }})">{{ _wear(preferences,'back') }}</g>
+{{ _illustrated_pot() }}
+<g class="av-stem">
+{% if s>=2 %}<path d="M49 95Q34 96 34 82L34 {{ 79 if s==2 else 70 }}" fill="none" stroke="#41664c" stroke-width="13"/><path d="M49 95Q34 96 34 82L34 {{ 79 if s==2 else 70 }}" fill="none" stroke="{{ leaf }}" stroke-width="10"/>{% endif %}
+{% if s>=3 %}<path d="M71 86Q86 88 86 73L86 {{ 67 if s==3 else 58 }}" fill="none" stroke="#41664c" stroke-width="13"/><path d="M71 86Q86 88 86 73L86 {{ 67 if s==3 else 58 }}" fill="none" stroke="{{ leaf }}" stroke-width="10"/>{% endif %}
+<path d="M48 105V{{ top+13 }}Q48 {{ top }} 60 {{ top }}Q73 {{ top }} 73 {{ top+13 }}V105Q60 112 48 105Z" fill="{{ leaf }}" stroke="#41664c" stroke-width="1.5"/>
+<path d="M57 103V{{ top+8 }}" fill="none" stroke="#d1df9a" stroke-width="3"/><path d="M66 102V{{ top+9 }}" fill="none" stroke="#487c55" stroke-width="1.2"/>
+{% for x,y in [(49,top+15),(72,top+24),(49,top+37)] %}{% if y<103 %}<path d="M{{ x-3 }} {{ y-2 }}l3 2-2 3M{{ x }} {{ y }}h3" stroke="#f5e7b6" stroke-width="1.2" fill="none"/>{% endif %}{% endfor %}
+{% if s>=4 %}<g transform="translate(60 {{ top }})"><g class="av-bloom">
+{% if s==4 %}<path d="M0 0Q-10-8 0-14Q10-8 0 0Z" fill="#dc93a4" stroke="#a95877"/>{% else %}
+{% for a in [0,72,144,216,288] %}<path d="M0 0Q-14-7-5-15Q5-18 0 0Z" transform="rotate({{ a }})" fill="#efabb6" stroke="#ad6883" stroke-width=".8"/>{% endfor %}<circle r="4" fill="#f6d489"/>{% endif %}</g></g>{% endif %}
+{% if s==6 %}<g transform="translate(86 56)"><g class="av-bloom"><path d="M0 3Q-13-3-8-9Q-2-14 0-5Q7-16 11-8Q15 0 0 3Z" fill="#efabb6" stroke="#ad6883"/><circle r="2.5" fill="#f6d489"/></g></g><path d="M39 105Q25 102 29 94Q39 90 43 104" fill="{{ leaf }}" stroke="#41664c"/>{% endif %}
+</g><path d="M42 109l4-2m29 3 3-2" stroke="#c8ad7b" stroke-width="3"/>
+{{ _plant_finish('cactus',s,m,costume,preferences) }}</g>
+{% endmacro %}

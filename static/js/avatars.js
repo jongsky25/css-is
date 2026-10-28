@@ -21,9 +21,194 @@
  */
 (function () {
   "use strict";
+  if (window.__cssAvatarEngine) return;
+  window.__cssAvatarEngine = true;
 
   var mq = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
-  function still() { return !!(mq && mq.matches); }
+  // Read browser preference once; input and timer callbacks use event-updated
+  // state rather than querying MediaQueryList on every movement.
+  var reducedMotion = !!(mq && mq.matches);
+  function still() { return reducedMotion; }
+
+  // One visibility policy owns idle/roaming scheduling and CSS playback.
+  var motionWraps = new Set();
+  function motionAllowed(w) {
+    return w.isConnected && !still() && !document.hidden && !w._avOffscreen && !asleep(w);
+  }
+  function stopMotion(w) {
+    w.dataset.motionPaused = '1';
+    ['_avIdleT','_avRoamT','_avGaitT','_avChainT','_avDoT','_avActionT','_avPetT','_avExpT'].forEach(function (key) { clearTimeout(w[key]); w[key] = null; });
+    clearInterval(w._avHeartI);
+    if (w._avStopChase) w._avStopChase();
+    w._avPetting = false;
+    w.classList.remove('av-petting');
+    w.classList.remove.apply(w.classList, ALL_DO.concat(GAITS));
+    if (w._avAway) returnHome(w);
+  }
+  function syncMotion(w) {
+    if (!motionAllowed(w)) { stopMotion(w); return; }
+    if (w.dataset.motionPaused === '0') return;
+    w.dataset.motionPaused = '0';
+    startIdle(w);
+    startRoam(w);
+  }
+  var motionObserver = window.IntersectionObserver ? new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) { entry.target._avOffscreen = !entry.isIntersecting; syncMotion(entry.target); });
+  }) : null;
+  function registerMotion(w) {
+    motionWraps.add(w);
+    w._avOffscreen = !!motionObserver;
+    w.dataset.motionPaused = '1';
+    if (motionObserver) motionObserver.observe(w);
+    syncMotion(w);
+  }
+  function releaseRemovedMotion() {
+    motionWraps.forEach(function (w) {
+      if (w.isConnected) return;
+      stopMotion(w);
+      ['_avSleepT','_avCareT','_avBubT','_avBackT','_avWagT'].forEach(function (key) { clearTimeout(w[key]); w[key] = null; });
+      if (motionObserver) motionObserver.unobserve(w);
+      if (w._avResizeObserver) w._avResizeObserver.disconnect();
+      if (w._avPointerListener) document.removeEventListener('pointermove', w._avPointerListener);
+      motionWraps.delete(w);
+    });
+  }
+  function priorityAction(w, duration) {
+    w._avBusy = Date.now() + duration;
+    w._avPartBusyUntil = w._avBusy;
+    clearTimeout(w._avRoamT); clearTimeout(w._avChainT); clearTimeout(w._avGaitT); clearTimeout(w._avDoT);
+    if (w._avStopChase) w._avStopChase();
+    w.classList.remove.apply(w.classList, ALL_DO.concat(GAITS));
+    var head = w.querySelector('.av-head');
+    if (head) head.style.transform = '';
+    clearTimeout(w._avActionT);
+    w._avActionT = setTimeout(function () { if (motionAllowed(w)) startRoam(w); }, duration + 100);
+  }
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden && watchRaf) { cancelAnimationFrame(watchRaf); watchRaf = null; }
+    motionWraps.forEach(syncMotion);
+  });
+  window.addEventListener('pagehide', function () { motionWraps.forEach(stopMotion); });
+  window.addEventListener('pageshow', function () { motionWraps.forEach(syncMotion); });
+
+  /* Interaction geometry changes with layout, not with every input event.
+   * Cache untransformed positions and translate them by the movement we own.
+   * Resize/scroll/SVG replacement invalidate the cache; all queued measurements
+   * finish before curiosity writes any transforms. */
+  var geometryState = window.__cssAvatarGeometry;
+  if (!geometryState) geometryState = window.__cssAvatarGeometry = { raf: null, bodyObserver: null, listening: false };
+  function transitionFraction(t, curve) {
+    if (!curve) return t;
+    var low = 0, high = 1, u = t;
+    for (var i = 0; i < 12; i++) {
+      u = (low + high) / 2;
+      var x = 3 * (1-u) * (1-u) * u * curve[0] + 3 * (1-u) * u * u * curve[2] + u * u * u;
+      if (x < t) low = u; else high = u;
+    }
+    return 3 * (1-u) * (1-u) * u * curve[1] + 3 * (1-u) * u * u * curve[3] + u * u * u;
+  }
+  function geometryPosition(w) {
+    var motion = w._avMotion;
+    if (!motion) return { x: w._avPosX || 0, y: w._avPosY || 0 };
+    if (motion.start === null) return { x: motion.fromX, y: motion.fromY };
+    var clock = document.timeline.currentTime;
+    var t = Math.max(0, Math.min(1, (clock - motion.start) / motion.duration));
+    if (t >= 1) { w._avMotion = null; return { x: w._avPosX, y: w._avPosY }; }
+    var fraction = transitionFraction(t, motion.curve);
+    return { x: motion.fromX + (motion.toX - motion.fromX) * fraction,
+             y: motion.fromY + (motion.toY - motion.fromY) * fraction };
+  }
+  // Capture the browser's actual transition endpoints/start time after styles
+  // resolve. Pointer/chase updates then interpolate using only the timeline.
+  function syncGeometryTransition(w) {
+    if (!w._avMotion) return;
+    var animations = w.getAnimations ? w.getAnimations() : [];
+    for (var i = 0; i < animations.length; i++) {
+      var animation = animations[i];
+      if (animation.transitionProperty !== "transform" || !animation.effect) continue;
+      var frames = animation.effect.getKeyframes(), timing = animation.effect.getTiming();
+      try {
+        var from = new DOMMatrix(frames[0].transform), to = new DOMMatrix(frames[frames.length - 1].transform);
+        var easing = frames[0].easing !== "linear" ? frames[0].easing : timing.easing;
+        var curves = { ease: [.25,.1,.25,1], "ease-in": [.42,0,1,1],
+          "ease-out": [0,0,.58,1], "ease-in-out": [.42,0,.58,1] };
+        var curve = curves[easing] || null;
+        var custom = /^cubic-bezier\(([^)]+)\)$/.exec(easing);
+        if (custom) curve = custom[1].split(",").map(Number);
+        w._avMotion = { fromX: from.e, fromY: from.f, toX: to.e, toY: to.f,
+          start: animation.startTime === null ? document.timeline.currentTime - (animation.currentTime || 0) : animation.startTime,
+          duration: Number(timing.duration), curve: curve };
+      } catch (ignore) { w._avMotion = null; }
+      return;
+    }
+    w._avMotion = null;
+  }
+  function measureGeometry(w) {
+    var play = w.closest(".av-play"), head = WATCH[w.dataset.kind] ? w.querySelector(".av-head") : null;
+    if (w._avMotion && w._avMotion.start === null) syncGeometryTransition(w);
+    var position = geometryPosition(w), box = w.getBoundingClientRect();
+    var geometry = { box: box, head: head ? head.getBoundingClientRect() : null,
+      x: position.x, y: position.y,
+      play: play ? play.getBoundingClientRect() : null, bounds: null };
+    if (play) {
+      var left = w.offsetLeft, top = w.offsetTop;
+      geometry.bounds = { minX: -left, maxX: play.clientWidth - left - w.offsetWidth,
+                          minY: -top, maxY: play.clientHeight - top - w.offsetHeight };
+    }
+    w._avGeometry = geometry;
+    return geometry;
+  }
+  function geometryFor(w) { return w._avGeometry || measureGeometry(w); }
+  function positionedBox(w, geometry, box) {
+    if (!box) return null;
+    var position = geometryPosition(w);
+    var dx = position.x - geometry.x, dy = position.y - geometry.y;
+    return { left: box.left + dx, right: box.right + dx,
+             top: box.top + dy, bottom: box.bottom + dy,
+             width: box.width, height: box.height };
+  }
+  function queueGeometry() {
+    if (geometryState.raf !== null) return;
+    geometryState.raf = requestAnimationFrame(function () {
+      geometryState.raf = null;
+      var wraps = document.querySelectorAll(".avwrap[data-interactive]");
+      for (var i = 0; i < wraps.length; i++) {
+        if (!wraps[i]._avGeometry) measureGeometry(wraps[i]);
+      }
+    });
+  }
+  function invalidateGeometry() {
+    var wraps = document.querySelectorAll(".avwrap[data-interactive]");
+    for (var i = 0; i < wraps.length; i++) wraps[i]._avGeometry = null;
+    queueGeometry();
+  }
+  function trackGeometry(w) {
+    if (window.ResizeObserver) {
+      var observer = new ResizeObserver(function () {
+        if (!w.isConnected) { observer.disconnect(); return; }
+        // ResizeObserver runs after layout. Snapshot now: deferring the read
+        // to next frame lets intervening animation writes dirty layout again.
+        measureGeometry(w);
+      });
+      w._avResizeObserver = observer;
+      observer.observe(w);
+      var play = w.closest(".av-play");
+      if (play) observer.observe(play);
+      if (!geometryState.bodyObserver && document.body) {
+        geometryState.bodyObserver = new ResizeObserver(function () {
+          var wraps = document.querySelectorAll(".avwrap[data-interactive]");
+          for (var i = 0; i < wraps.length; i++) measureGeometry(wraps[i]);
+        });
+        geometryState.bodyObserver.observe(document.body);
+      }
+    }
+    queueGeometry();
+  }
+  if (!geometryState.listening) {
+    geometryState.listening = true;
+    window.addEventListener("resize", invalidateGeometry, { passive: true });
+    document.addEventListener("scroll", invalidateGeometry, { passive: true, capture: true });
+  }
 
   /* ---- night-time sleep: 9pm-6am on the viewer's clock ------------------ */
   function isNight() {
@@ -37,11 +222,13 @@
     var should = isNight() && w.dataset.kind !== "bat" &&
                  !(w._avWakeUntil && Date.now() < w._avWakeUntil);
     w.classList.toggle("av-asleep", should);
+    if (motionWraps.has(w)) syncMotion(w);
   }
   function wake(w) {
     if (!isNight() || w.dataset.kind === "bat") return;
     w._avWakeUntil = Date.now() + 45000;               // stirs for a bit, then dozes off
     w.classList.remove("av-asleep");
+    if (motionWraps.has(w)) syncMotion(w);
     clearTimeout(w._avSleepT);
     w._avSleepT = setTimeout(function () { refreshSleep(w); }, 45500);
   }
@@ -99,18 +286,40 @@
     return base;
   }
 
+  // An absent class starts an animation naturally. Only flush styles when
+  // replaying an animation whose class is still present.
+  function replayClass(w, cls, clear) {
+    var replaying = w.classList.contains(cls);
+    if (replaying && cls === "happy" && w.getAnimations) {
+      // Restart the live CSS animations without removing/re-adding their class.
+      // offsetWidth here used to force layout of the whole mature SVG on taps.
+      var animations = w.getAnimations({ subtree: true });
+      for (var i = 0; i < animations.length; i++) {
+        if (animations[i].animationName === "av-bounce" || animations[i].animationName === "av-spark") {
+          animations[i].currentTime = 0;
+          animations[i].play();
+        }
+      }
+      return;
+    }
+    w.classList.remove.apply(w.classList, clear || [cls]);
+    if (replaying) void w.offsetWidth;
+    w.classList.add(cls);
+  }
+
   function startIdle(w) {
     var reps = BEHAVIORS[w.dataset.kind];
     if (!reps || !reps.length) return;
     (function tick() {
       w._avIdleT = setTimeout(function () {
         if (!w.isConnected) return;                    // removed from the page
-        if (still() || document.hidden || asleep(w)) { tick(); return; }
+        if (!motionAllowed(w)) return;
+        if (w._avPetting || w.classList.contains("av-dragging")) { tick(); return; }
         if (w._avBusy && Date.now() < w._avBusy) { tick(); return; }  // mid-walk: gait owns .avstage
         var pick = reps[Math.floor(Math.random() * reps.length)];
-        w.classList.remove.apply(w.classList, ALL_DO); // clear any leftover
-        void w.offsetWidth;                            // restart CSS animations
-        w.classList.add(pick[0]);
+        w._avBusy = Date.now() + pick[1] + 80; // head/part gestures own their transforms until recovery
+        w._avPartBusyUntil = w._avBusy;
+        replayClass(w, pick[0], ALL_DO);
         clearTimeout(w._avDoT);
         w._avDoT = setTimeout(function () { w.classList.remove(pick[0]); }, pick[1] + 80);
         maybeVoice(w);                                 // occasionally vocalize, too
@@ -176,7 +385,8 @@
     (function amble() {
       w._avRoamT = setTimeout(function () {
         if (!w.isConnected) return;
-        if (still() || document.hidden || asleep(w) || w._avAway ||
+        if (!motionAllowed(w)) return;
+        if ((w._avBusy && Date.now() < w._avBusy) || w._avPetting || w._avAway ||
             w._avDragMoved || w._avChasing || w.classList.contains("av-dragging")) { amble(); return; }
         var legs = 1, fast = false;
         if (spec.zoom && Math.random() < spec.zoom) { legs = 3; fast = true; }  // zoomies!
@@ -208,7 +418,8 @@
     (function hop() {
       w._avRoamT = setTimeout(function () {
         if (!w.isConnected) return;
-        if (still() || document.hidden || asleep(w)) { hop(); return; }
+        if (!motionAllowed(w)) return;
+        if ((w._avBusy && Date.now() < w._avBusy) || w._avPetting || w.classList.contains("av-dragging")) { hop(); return; }
         var x, y, flip;
         if (swims) {
           var p = fig8[leg++ % fig8.length];
@@ -248,7 +459,7 @@
   }
 
   function launchExplore(w) {
-    if (w._avAway || still()) return;
+    if (w._avAway || !motionAllowed(w)) return;
     var svg = w.querySelector("svg");
     var span = svg && svg.parentElement;
     if (!svg || !span) return;
@@ -310,7 +521,7 @@
       if (overlay && overlay.classList.contains("av-explore-layer")) overlay.remove();
       w.classList.remove("av-away");
     }
-    if (still() || !w.isConnected || !w._avHomeSpan) { restore(); return; }
+    if (still() || document.hidden || w._avOffscreen || !w.isConnected || !w._avHomeSpan) { restore(); return; }
     var r = w._avHomeSpan.getBoundingClientRect();
     holder.style.transition = "transform 1.1s ease-in-out";
     holder.style.transform = "translate(" + Math.round(r.left) + "px," + Math.round(r.top) + "px) scale(1,1)";
@@ -363,43 +574,53 @@
     if (watchRaf) return;
     watchRaf = requestAnimationFrame(function () {
       watchRaf = null;
+      if (still()) return; // preference can change after the input was queued
       var wraps = document.querySelectorAll(".avwrap[data-kind]");
+      var measured = [];
+      // Read every box before changing transforms. Reading a head immediately
+      // after tilting its stage forces a second style/layout flush on each move.
       for (var i = 0; i < wraps.length; i++) {
         var wr = wraps[i];
-        if (asleep(wr) || wr._avAway) continue;
+        if (!wr.hasAttribute("data-interactive") || !motionAllowed(wr) || wr._avAway || wr._avPetting) continue;
+        var stage = wr.hasAttribute("data-interactive") ? wr.querySelector(".av-tiltstage") : null;
+        var spec = WATCH[wr.dataset.kind];
+        var partsBusy = wr._avPartBusyUntil && now < wr._avPartBusyUntil;
+        var h = spec && !partsBusy ? wr.querySelector(".av-head") : null;
+        var geometry = geometryFor(wr);
+        var sr = stage ? positionedBox(wr, geometry, geometry.box) : null;
+        var r = h ? positionedBox(wr, geometry, geometry.head) : null;
+        var excite = wr.dataset.kind === "dog" && vel > 1.5 &&
+          (!wr._avNextExcite || now > wr._avNextExcite);
+        measured.push({ wrap: wr, stage: stage, stageBox: sr, spec: spec,
+          head: h, headBox: r, exciteBox: excite ? (sr || positionedBox(wr, geometry, geometry.box)) : null });
+      }
+      for (var j = 0; j < measured.length; j++) {
+        var item = measured[j];
+        var wr = item.wrap, stage = item.stage, sr = item.stageBox;
+        var spec = item.spec, h = item.head, r = item.headBox;
 
         // ---- 3D lean: any interactive companion leans toward the cursor
         // while it's over the companion's own box (Spot Feedback #82, "make
         // the pet 3d") — a tilt-card effect, not species curiosity, so it
         // runs for every kind, not just the WATCH list below.
-        if (wr.hasAttribute("data-interactive")) {
-          var stage = wr.querySelector(".av-tiltstage");
-          if (stage) {
-            var sr = wr.getBoundingClientRect();
-            var within = sr.width > 0 &&
-              e.clientX >= sr.left && e.clientX <= sr.right &&
-              e.clientY >= sr.top && e.clientY <= sr.bottom;
-            if (within) {
-              var lx = (e.clientX - (sr.left + sr.width / 2)) / (sr.width / 2);
-              var ly = (e.clientY - (sr.top + sr.height / 2)) / (sr.height / 2);
-              stage.style.transition = "";
-              stage.style.transform = "rotateY(" + (lx * 10).toFixed(1) + "deg) " +
-                                       "rotateX(" + (ly * -8).toFixed(1) + "deg)";
-              stage._avTilted = true;
-            } else if (stage._avTilted) {
-              stage.style.transition = "transform .35s cubic-bezier(.22,1,.36,1)";
-              stage.style.transform = "";
-              stage._avTilted = false;
-            }
+        if (stage) {
+          var within = sr.width > 0 &&
+            e.clientX >= sr.left && e.clientX <= sr.right &&
+            e.clientY >= sr.top && e.clientY <= sr.bottom;
+          if (within) {
+            var lx = (e.clientX - (sr.left + sr.width / 2)) / (sr.width / 2);
+            var ly = (e.clientY - (sr.top + sr.height / 2)) / (sr.height / 2);
+            stage.style.transition = "";
+            stage.style.transform = "rotateY(" + (lx * 10).toFixed(1) + "deg) " +
+                                     "rotateX(" + (ly * -8).toFixed(1) + "deg)";
+            stage._avTilted = true;
+          } else if (stage._avTilted) {
+            stage.style.transition = "transform .35s cubic-bezier(.22,1,.36,1)";
+            stage.style.transform = "";
+            stage._avTilted = false;
           }
         }
-
-        var spec = WATCH[wr.dataset.kind];
-        if (!spec) continue;
-        var h = wr.querySelector(".av-head");
-        if (!h) continue;
-        var r = h.getBoundingClientRect();
-        if (!r.width) continue;
+        if (!h || !r.width) continue;
         var tilt = Math.max(-spec.max, Math.min(spec.max,
                    (e.clientX - (r.left + r.width / 2)) / spec.div));
         h.style.transform = "rotate(" + tilt.toFixed(1) + "deg)";
@@ -408,9 +629,8 @@
         h._avBackT = setTimeout((function (hh) {
           return function () { hh.style.transform = ""; };
         })(h), 2000);
-        if (wr.dataset.kind === "dog" && vel > 1.5 &&
-            (!wr._avNextExcite || now > wr._avNextExcite)) {
-          var wb = wr.getBoundingClientRect();
+        if (item.exciteBox) {
+          var wb = item.exciteBox;
           var ex = e.clientX - (wb.left + wb.width / 2);
           var ey = e.clientY - (wb.top + wb.height / 2);
           if (ex * ex + ey * ey < 220 * 220) {
@@ -505,9 +725,8 @@
     if (!w || w._avDragMoved || w._avPetted || w._avAway) return;   // drags/pets aren't taps; nobody's home while exploring
     wake(w);                                           // a tap stirs a sleeper
     play("tap", w.dataset.kind);
-    w.classList.remove("happy");
-    void w.offsetWidth;                                // force reflow => restart
-    w.classList.add("happy");
+    priorityAction(w, 800);
+    replayClass(w, "happy");
     bubbleFlash(w, phraseFor(w));
   });
   document.addEventListener("animationend", function (e) {
@@ -531,9 +750,9 @@
     var cls = action === "water" ? "av-caring-water" : "av-caring-feed";
     wake(w);                                           // being cared for stirs a sleeper
     play(action, w.dataset.kind);
-    w.classList.remove("av-caring-water", "av-caring-feed");
-    void w.offsetWidth;
-    w.classList.add(cls);
+    priorityAction(w, 3600);
+    w.classList.remove("happy", "av-pounce");
+    replayClass(w, cls, ["av-caring-water", "av-caring-feed"]);
     clearTimeout(w._avCareT);
     w._avCareT = setTimeout(function () { w.classList.remove(cls); }, 3600);
     try {
@@ -600,12 +819,27 @@
     w._avDrag = true;
     var pos = { x: 0, y: 0 };
     var posKey = w.getAttribute("data-drag-key") || POS_KEY;
-    function apply() { w.style.transform = "translate(" + pos.x + "px," + pos.y + "px)"; }
-    function clampToPlay() {
-      var play = w.closest(".av-play");
-      if (!play) return;
-      pos.x = Math.max(-w.offsetLeft, Math.min(play.clientWidth - w.offsetLeft - w.offsetWidth, pos.x));
-      pos.y = Math.max(-w.offsetTop, Math.min(play.clientHeight - w.offsetTop - w.offsetHeight, pos.y));
+    w.addEventListener("transitionrun", function (e) {
+      if (e.target === w && e.propertyName === "transform") syncGeometryTransition(w);
+    });
+    function apply(animated) {
+      if (w._avPosX === pos.x && w._avPosY === pos.y) {
+        // No CSS transition starts for an unchanged destination. Keep the
+        // current timeline instead of replacing it with a pending record.
+        if (!animated || still()) w._avMotion = null;
+        return;
+      }
+      var from = geometryPosition(w);
+      w._avMotion = animated && !still() ? { fromX: from.x, fromY: from.y, start: null } : null;
+      w._avPosX = pos.x; w._avPosY = pos.y;
+      w.style.transform = "translate(" + pos.x + "px," + pos.y + "px)";
+    }
+    function playBounds() { return geometryFor(w).bounds; }
+    function clampToPlay(bounds) {
+      bounds = bounds || playBounds();
+      if (!bounds) return;
+      pos.x = Math.max(bounds.minX, Math.min(bounds.maxX, pos.x));
+      pos.y = Math.max(bounds.minY, Math.min(bounds.maxY, pos.y));
     }
     function save() {
       try { localStorage.setItem(posKey, JSON.stringify(pos)); } catch (e) {}
@@ -613,7 +847,7 @@
     try {
       var saved = JSON.parse(localStorage.getItem(posKey) || "null");
       if (saved && typeof saved.x === "number" && typeof saved.y === "number") {
-        pos = saved; clampToPlay(); apply();
+        pos = saved; clampToPlay(); apply(true);
       }
     } catch (e) {}
 
@@ -628,6 +862,7 @@
         if (mv) { mv.style.transition = "transform .3s ease"; mv.style.transform = ""; }
         w._avGX = 0;
       }
+      wake(w);
       w.style.transition = "";
       start = { px: e.clientX, py: e.clientY, x: pos.x, y: pos.y };
       w.setPointerCapture(e.pointerId);
@@ -636,12 +871,14 @@
       w._avPetT = setTimeout(startPet, 450);
     });
     function startPet() {
+      if (!w.isConnected || document.hidden || w._avOffscreen) return;
+      priorityAction(w, 1000);
       w._avPetting = true;
       w.classList.add("av-petting");
       play("pet", w.dataset.kind);
       spawnHearts(w);
       clearInterval(w._avHeartI);
-      w._avHeartI = setInterval(function () { spawnHearts(w); }, 900);
+      if (!still()) w._avHeartI = setInterval(function () { spawnHearts(w); }, 900);
     }
     function stopPet() {
       clearTimeout(w._avPetT);
@@ -655,15 +892,16 @@
     w.addEventListener("pointermove", function (e) {
       if (!start) return;
       var dx = e.clientX - start.px, dy = e.clientY - start.py;
-      if (!w._avDragMoved && Math.abs(dx) + Math.abs(dy) > 4) {
+      if (!w._avDragMoved && Math.abs(dx) + Math.abs(dy) <= 4) return;
+      var bounds = playBounds();              // read before gesture/class writes
+      if (!w._avDragMoved) {
         stopPet();                                         // movement means drag, not pet
         clearTimeout(w._avPetT);
         w._avDragMoved = true;
         w.classList.add("av-dragging");
       }
-      if (!w._avDragMoved) return;
       pos.x = start.x + dx; pos.y = start.y + dy;
-      clampToPlay(); apply();
+      clampToPlay(bounds); apply();
     });
     function done() {
       stopPet();
@@ -680,54 +918,66 @@
      * moving over (or near) its .av-play stage, pounces when it catches up,
      * then loses interest a few seconds after the pointer goes still. ------- */
     if (w.hasAttribute("data-chase")) {
-      var ptr = null, lastMove = 0, caught = 0, chaseT = null;
-      document.addEventListener("pointermove", function (e) {
-        if (e.pointerType === "touch") return;
+      var ptr = null, lastMove = 0, caught = 0;
+      w._avPointerListener = function (e) {
+        if (e.pointerType === "touch" || !motionAllowed(w)) return;
         ptr = { x: e.clientX, y: e.clientY }; lastMove = Date.now();
-      }, { passive: true });
-      var stopChase = function () {
+        if (!w._avChaseI) w._avStartChase();
+      };
+      document.addEventListener("pointermove", w._avPointerListener, { passive: true });
+      var stopChase = w._avStopChase = function () {
+        clearInterval(w._avChaseI); w._avChaseI = null;
         if (!w._avChasing) return;
         w._avChasing = false;
         w.classList.remove.apply(w.classList, GAITS);
         w.classList.remove("av-chasing");
         w.style.transition = "";
       };
-      chaseT = setInterval(function () {
-        if (!w.isConnected) { clearInterval(chaseT); return; }
+      w._avStartChase = function () {
+        if (w._avChaseI) return;
+        w._avChaseI = setInterval(function () {
+        if (!w.isConnected) { stopChase(); return; }
         var play = w.closest(".av-play");
-        if (!ptr || !play || still() || document.hidden || asleep(w) || w._avAway || w._avPetting ||
+        if (!ptr || !play || !motionAllowed(w) || w._avAway || w._avPetting ||
+            (w._avBusy && Date.now() < w._avBusy && !w._avChasing) ||
             w._avDragMoved || start || Date.now() - lastMove > 5000) { stopChase(); return; }
-        var pr = play.getBoundingClientRect();
+        var geometry = geometryFor(w), pr = geometry.play;
         if (ptr.x < pr.left - 140 || ptr.x > pr.right + 140 ||
             ptr.y < pr.top - 100 || ptr.y > pr.bottom + 100) { stopChase(); return; }
-        var wr = w.getBoundingClientRect();
+        var wr = positionedBox(w, geometry, geometry.box);
         var dx = ptr.x - (wr.left + wr.width / 2), dy = ptr.y - (wr.top + wr.height * 0.6);
         var dist = Math.sqrt(dx * dx + dy * dy);
         if (dist < 55) {                              // got it! pounce, then wait
           stopChase();
           if (Date.now() - caught > 2500) {
             caught = Date.now();
-            w.classList.remove("av-pounce"); void w.offsetWidth; w.classList.add("av-pounce");
+            replayClass(w, "av-pounce");
             setTimeout(function () { w.classList.remove("av-pounce"); }, 850);
           }
           return;
         }
+        var bounds = playBounds(play);        // all layout reads precede gait writes
         var k = Math.min(1, 32 / dist);              // up to 32px per 80ms tick (~400px/s)
         if (!w._avChasing) {
           w._avChasing = true;
+          w.classList.add("av-chasing");
           if (w._avGX) { w._avGX = 0; }
         }
-        w.classList.add("av-chasing");
         var mv = w.querySelector(".avmove");
         if (mv) {
-          mv.style.transition = "transform .15s";
-          mv.style.transform = "scale(" + (dx < 0 ? -1 : 1) + ",1)";
+          if (mv.style.transition !== "transform 0.15s") mv.style.transition = "transform .15s";
+          var facing = "scale(" + (dx < 0 ? -1 : 1) + ", 1)";
+          if (mv.style.transform !== facing) mv.style.transform = facing;
         }
         w._avBusy = Date.now() + 300;
-        w.style.transition = "transform .08s linear";
-        pos.x += dx * k; pos.y += dy * k;
-        clampToPlay(); apply();
+        if (w.style.transition !== "transform 0.08s linear") w.style.transition = "transform .08s linear";
+        // Ignore numerical drift below a hundredth of a CSS pixel. At a
+        // clamped edge it otherwise restarts an invisible transition forever.
+        if (Math.abs(dx * k) >= .01) pos.x += dx * k;
+        if (Math.abs(dy * k) >= .01) pos.y += dy * k;
+        clampToPlay(bounds); apply(true);
       }, 80);
+      };
     }
     w.addEventListener("keydown", function (e) {
       if (!e.target.closest(".av-play-btn")) return;
@@ -735,7 +985,7 @@
       if (!d) return;
       e.preventDefault();
       pos.x += d[0]; pos.y += d[1];
-      clampToPlay(); apply(); save();
+      clampToPlay(); apply(true); save();
     });
   }
 
@@ -778,10 +1028,12 @@
       if (w._av) continue;
       w._av = true;
       refreshSleep(w);
-      startIdle(w);
-      startRoam(w);
+      // Picker/growth/teaser copies are illustrations, not additional pets.
+      if (!w.hasAttribute("data-interactive")) continue;
       initDrag(w);
+      trackGeometry(w);
       initExplore(w);
+      registerMotion(w);
       checkLevelUp(w);
     }
     if (window.AvatarAudio) window.AvatarAudio.sync();
@@ -789,10 +1041,12 @@
   // re-evaluate bedtime every 5 minutes so the page crosses 9pm/6am live
   setInterval(function () {
     var wraps = document.querySelectorAll(".avwrap[data-kind]");
-    for (var i = 0; i < wraps.length; i++) refreshSleep(wraps[i]);
+    for (var i = 0; i < wraps.length; i++) { refreshSleep(wraps[i]); if (wraps[i].hasAttribute("data-interactive")) syncMotion(wraps[i]); }
   }, 300000);
-  if (mq && mq.addEventListener) {
-    mq.addEventListener("change", function () {
+  if (mq) {
+    var motionPreferenceChanged = function (event) {
+      reducedMotion = !!event.matches;
+      motionWraps.forEach(syncMotion);
       if (!still()) return;
       // motion turned off mid-session: freeze the movers where they are
       var moves = document.querySelectorAll(".avwrap[data-kind] .avmove");
@@ -806,7 +1060,9 @@
         wraps[j]._avGX = 0;
         if (wraps[j]._avAway) returnHome(wraps[j]);   // explorer comes straight home
       }
-    });
+    };
+    if (mq.addEventListener) mq.addEventListener("change", motionPreferenceChanged);
+    else if (mq.addListener) mq.addListener(motionPreferenceChanged);
   }
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", initAll);
@@ -815,9 +1071,23 @@
   }
   // pickers/pages that swap avatars in later still get the idle engine
   if (window.MutationObserver) {
-    new MutationObserver(function () {
-      clearTimeout(initAll._t);
-      initAll._t = setTimeout(initAll, 200);
+    new MutationObserver(function (records) {
+      releaseRemovedMotion();
+      var addedAvatar = false, changedArt = false;
+      for (var i = 0; i < records.length; i++) {
+        var nodes = records[i].addedNodes;
+        for (var j = 0; j < nodes.length; j++) {
+          var node = nodes[j];
+          if (node.nodeType !== 1) continue;
+          if (node.matches(".avwrap[data-kind]") || node.querySelector(".avwrap[data-kind]")) addedAvatar = true;
+          if (node.matches("svg[data-avatar-kind]") || node.querySelector("svg[data-avatar-kind]")) changedArt = true;
+        }
+      }
+      if (changedArt) invalidateGeometry();
+      if (addedAvatar) {
+        clearTimeout(initAll._t);
+        initAll._t = setTimeout(initAll, 200);
+      }
     }).observe(document.documentElement, { childList: true, subtree: true });
   }
 })();

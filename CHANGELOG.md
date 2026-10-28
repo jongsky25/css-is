@@ -1,3 +1,10 @@
+## 9.04 — October 28, 2026
+
+- Bring the complete sixteen-species illustrated companion catalog onto current main, preserving six-stage growth, care, saved identities and opt-in sounds.
+- Add thirteen compatible accessories, seasonal/personal/none modes and read-only preview with explicit Save/Cancel/reset at `/me#companion`.
+- Share motion visibility/reduced-motion handling and action priority; update service-worker caching and include the wardrobe module in the release payload.
+- Preserve the newer v9.03 application changes and the existing production database reader. Historical avatar performance evidence remains scoped to its recorded source; archived GC/native diagnostics are not imported or resumed.
+
 ## 9.03 — October 28, 2026
 
 - DPO: use the venue named in the invitation (or DPO-cites) when the item has none (spot feedback #184, #187). File-copy page: pre-fill the reviewer's name and title in row 2 of the first box (S4/S5 and S1–S3 reviewers, from the traveller's section; blank if unknown or mixed), centre column 2, size both boxes to their text, and suggest keywords and related issuances read from the invitation (#185, #186). The relay `extras` carry `reviewer`, `keywords` and `issuances`; an older relay ignores them.

@@ -18,10 +18,21 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "9.03"
+APP_VERSION = "9.04"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "9.04",
+        "date": "October 28, 2026",
+        "summary": "Illustrated growing companions, optional accessories and livelier movement.",
+        "changes": [
+            "All sixteen companions now have illustrated artwork and six distinct growth stages.",
+            "Choose up to two compatible accessories on your profile, or follow seasonal outfits or show no accessories.",
+            "Preview companion changes before saving, cancel them, remove an item or return to seasonal outfits.",
+            "Companions move and react more naturally, rest when offscreen and respect reduced-motion settings."
+        ]
+    },
     {
         "version": "9.03",
         "date": "October 28, 2026",
