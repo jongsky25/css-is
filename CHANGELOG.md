@@ -1,3 +1,7 @@
+## 9.15 — October 29, 2026
+
+- Supplies 2.1, the requester's picture grid: `GET /supplies/requests/new` now renders one card per active catalog item (picture or initials tile, name, unit, an Available / Limited / Out of stock badge and a `qty_<item id>` box whose `max` is the requestable amount of rule R1; disabled when Out of stock), with a search box (`q`, plus instant filtering in `static/js/supplies-shop.js`), + / - buttons and a sticky "N items chosen / Save draft" bar. The classic 20-line form stays at `?view=list` and for editing a saved draft. Saving reuses `POST /supplies/requests`: `qty_<item id>` boxes are mapped to request lines (`supplies_shop.quantities_from`), the field limit for the save is raised from 180 to 500 for a long catalog, and R1 is still enforced by the service. Pictures come from `supplies_pictures` (Supplies 1.4) when that module exists, else a tinted initials tile.
+
 ## 9.14 — October 28, 2026
 
 - My meal requests and the meal request page now carry a short explanation for the requester: meal requests are not approved, the Administrative Section orders them, and "Ordered" is the confirmation; each status is defined, and the date each meal was marked is shown beside it (spot feedback #197). The Administrative Section's own pages do not show it. Requesters are still not notified when a meal is ordered.

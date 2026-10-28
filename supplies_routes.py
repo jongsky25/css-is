@@ -17,6 +17,7 @@ import dashboard_pdf
 import supplies_import as imports
 import supplies_import_review as review
 import supplies_requests as requests_service
+import supplies_shop as shop
 import supplies_approvals as approvals
 import supplies_backorders as backorders
 import supplies_issues as issues
@@ -201,8 +202,8 @@ def make_router(templates, get_conn):
         return render(request, conn, 'settings', error=error, status_code=status_code,
                       submitted=submitted or {}, **values)
 
-    async def posted(request):
-        form = await request.form(max_files=0, max_fields=180, max_part_size=16384)
+    async def posted(request, max_fields=180):
+        form = await request.form(max_files=0, max_fields=max_fields, max_part_size=16384)
         if not request.cookies.get(auth.COOKIE_NAME) or not hmac.compare_digest(str(form.get('csrf', '')), csrf(request)):
             raise Denied('The form expired. Reload the page and try again.')
         return dict(form)
@@ -662,12 +663,18 @@ def make_router(templates, get_conn):
         return await mutation(request, lambda c, u, f: stock.post_receipt(c, u, receipt_fields(f),
             operation_key=f.get('operation_key')), view='receipt')
 
-    def request_form(request, conn, draft=None, *, submitted=None, error='', status_code=200):
+    def request_form(request, conn, draft=None, *, submitted=None, error='', status_code=200, view='', query=''):
         user, identity = requests_service.requester(conn, request.state.user)
         if draft is not None and draft['requester_id'] != user['id']:
             raise Missing('Supply request not found or unavailable to you.')
         if draft is not None and draft['approval_status'] not in ('draft','returned'):
             raise Conflict('Only draft or returned requests can be edited.')
+        if draft is None and view != 'list':                      # Supplies 2.1: a new request starts from the picture grid
+            values = submitted or {}
+            return render(request, conn, 'request_grid', identity=identity, query=query,
+                          cards=shop.shop_items(conn, query), form_values=values,
+                          quantities={k[4:]: v for k, v in values.items() if k.startswith('qty_')},
+                          error=error, status_code=status_code)
         items = rows(conn, 'SELECT id,code,description,unit FROM supply_item WHERE active=1 ORDER BY code')
         return render(request, conn, 'request_form', draft=draft, identity=identity, items=items,
                       max_lines=requests_service.MAX_LINES, form_values=submitted if submitted is not None else draft,
@@ -899,7 +906,8 @@ def make_router(templates, get_conn):
     def new_request(request: Request):
         conn = get_conn()
         try:
-            return request_form(request, conn)
+            return request_form(request, conn, view=request.query_params.get('view', ''),
+                                query=request.query_params.get('q', '')[:100])
         except (Denied, Invalid, Conflict) as exc:
             return failure(request, exc)
         finally:
@@ -931,7 +939,7 @@ def make_router(templates, get_conn):
         fields = {}
         lines = []
         try:
-            fields = await posted(request)
+            fields = await posted(request, max_fields=500 if action == 'save' else 180)
             args = {'operation_key': fields.get('operation_key')}
             if action == 'save':
                 lines = []
@@ -939,6 +947,7 @@ def make_router(templates, get_conn):
                     item, quantity = fields.get(f'item_{i}', ''), fields.get(f'quantity_{i}', '')
                     if item or quantity:
                         lines.append({'item_id': item, 'requested_quantity': quantity})
+                lines += shop.quantities_from(fields)                  # the picture grid (Supplies 2.1)
                 result = requests_service.save_draft(conn, request.state.user, {**fields, 'lines': lines},
                           request_id=request_id, expected_revision=fields.get('revision'), **args)
             elif action == 'submit':
@@ -953,7 +962,8 @@ def make_router(templates, get_conn):
                 try:
                     draft = requests_service.get_request(conn, request.state.user, request_id) if request_id else None
                     return request_form(request, conn, draft, submitted={**fields, 'lines': lines},
-                                        error=str(exc), status_code=409 if isinstance(exc, Conflict) else 422)
+                                        error=str(exc), status_code=409 if isinstance(exc, Conflict) else 422,
+                                        view='grid' if fields.get('view') == 'grid' else 'list')
                 except (Denied, Invalid, Conflict) as render_exc:
                     return failure(request, render_exc)
             return failure(request, exc)

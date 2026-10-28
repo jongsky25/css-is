@@ -1,0 +1,111 @@
+"""Supplies 2.1 in a real browser: the picture grid at phone and desktop width, the + / - buttons, search and the bar."""
+import os
+from urllib.parse import urlsplit
+
+import pytest
+
+import storage as st
+import supplies as s
+from conftest import in_the_directory
+from tests.test_document_registry_grid_browser import grid_browser  # noqa: F401
+from tests.test_supplies import key
+from tests.test_supplies_stock import opening
+
+SHOTS = os.environ.get('SHOP_SHOTS', '')          # a folder to keep screenshots in, when asked
+
+
+@pytest.fixture
+def shop_page(grid_browser, app_mod, viewer):
+    with in_the_directory(app_mod, 'viewer@test.local', path='SHOPFX/D1/S1'):
+        c = st.connect(app_mod.DB)
+        admin = st.get_admin_user(c, 'admin@test.local')
+        user = st.get_admin_user(c, 'viewer@test.local')
+        s.grant_role(c, admin, user['id'], 'custodian', operation_key=key())
+        s.set_enabled(c, admin, '1', expected_revision=0, operation_key=key())
+        names = [('A4 Bond Paper', 'ream', 12), ('Ballpen (Blue)', 'box', 3), ('Fancy Folder (Red)', 'pack', 0),
+                 ('Stapler', 'piece', 7), ('Masking Tape', 'roll', 40)]
+        for i, (name, unit, qty) in enumerate(names):
+            item = s.create_item(c, user, {'code': f'SHOP-{i}', 'description': name, 'unit': unit, 'critical_level': '5',
+                                           'target_level': '20'}, operation_key=key())
+            if qty:
+                opening(c, user, item, quantity=str(qty))
+        context = grid_browser.new_context(viewport={'width': 375, 'height': 800})
+        page = context.new_page()
+        errors = []
+        page.on('pageerror', lambda e: errors.append(str(e)))
+
+        def serve(route):
+            url = urlsplit(route.request.url)
+            if url.hostname != 'office.test':
+                route.abort()
+                return
+            response = viewer.request(route.request.method, url.path + ('?' + url.query if url.query else ''),
+                                      content=route.request.post_data_buffer,
+                                      headers={k: v for k, v in route.request.headers.items() if k.lower() in ('content-type', 'x-csrf-token')},
+                                      follow_redirects=False)
+            route.fulfill(status=response.status_code, body=response.content,
+                          headers={k: v for k, v in response.headers.items() if k.lower() not in ('content-length', 'content-encoding', 'set-cookie')})
+        page.route('**/*', serve)
+        page.goto('http://office.test/supplies/requests/new')
+        yield page, errors
+        assert errors == []
+        context.close()
+        c.close()
+
+
+def shot(page, name):
+    if SHOTS:
+        page.screenshot(path=os.path.join(SHOTS, name), full_page=True)
+
+
+def test_the_grid_fits_a_phone_and_the_buttons_work(shop_page):
+    page, _ = shop_page
+    page.locator('.shop-card').first.wait_for()
+    assert page.evaluate('document.documentElement.scrollWidth <= window.innerWidth')          # no sideways scrolling at 375 px
+    shot(page, 'shop-375.png')
+    card = page.locator('.shop-card', has_text='Ballpen (Blue)')                                # 3 on hand
+    plus = card.get_by_role('button', name='One more', exact=False)
+    for _ in range(6):
+        plus.click()
+    assert card.locator('input').input_value() == '3'                                           # the box stops at what can be asked for
+    card.get_by_role('button', name='One less', exact=False).click()
+    assert card.locator('input').input_value() == '2'
+    page.locator('.shop-card', has_text='A4 Bond Paper').get_by_role('button', name='One more', exact=False).click()
+    assert page.locator('[data-shop-count]').inner_text() == '2 items chosen'
+    out = page.locator('.shop-card', has_text='Fancy Folder')
+    assert out.locator('input').is_disabled() and 'Out of stock' in out.inner_text()
+    assert out.get_by_role('button').count() == 0                                               # nothing to press on an unavailable item
+
+
+def test_search_hides_cards_without_losing_what_was_typed(shop_page):
+    page, _ = shop_page
+    page.locator('.shop-card').first.wait_for()
+    page.locator('.shop-card', has_text='Stapler').locator('input').fill('2')
+    page.locator('#shop-q').fill('tape')
+    assert page.locator('.shop-card:visible').count() == 1 and 'Masking Tape' in page.locator('.shop-card:visible').inner_text()
+    page.locator('#shop-q').fill('')
+    assert page.locator('.shop-card:visible').count() == 5
+    assert page.locator('.shop-card', has_text='Stapler').locator('input').input_value() == '2'
+
+
+def test_the_form_sends_what_was_chosen_and_the_bar_does_not_cover_the_feedback_button(shop_page):
+    page, _ = shop_page
+    page.locator('.shop-card').first.wait_for()
+    page.locator('.shop-card', has_text='A4 Bond Paper').locator('input').fill('4')
+    page.locator('.shop-card', has_text='Stapler').get_by_role('button', name='One more', exact=False).click()
+    page.locator('#request-purpose').fill('Browser synthetic purpose')
+    sent = page.evaluate("Object.fromEntries([...new FormData(document.querySelector('[data-shop]')).entries()].filter(e => e[1] !== ''))")
+    quantities = {k: v for k, v in sent.items() if k.startswith('qty_')}
+    assert sorted(quantities.values()) == ['1', '4'] and sent['purpose'] == 'Browser synthetic purpose' and sent['view'] == 'grid'
+    assert not any(k.startswith('qty_') and v == '' for k, v in sent.items())
+    # the bar's Save draft button must not sit under the floating feedback button
+    page.evaluate("window.scrollTo(0, 0)")
+    save = page.get_by_role('button', name='Save draft').bounding_box()
+    bubble = page.locator('#sfBtn').bounding_box()
+    if bubble:
+        assert save['x'] + save['width'] <= bubble['x'] or save['y'] + save['height'] <= bubble['y'] or bubble['y'] + bubble['height'] <= save['y']
+    page.set_viewport_size({'width': 1280, 'height': 900})
+    page.goto('http://office.test/supplies/requests/new')
+    page.locator('.shop-card').first.wait_for()
+    assert page.evaluate('document.documentElement.scrollWidth <= window.innerWidth')
+    shot(page, 'shop-1280.png')

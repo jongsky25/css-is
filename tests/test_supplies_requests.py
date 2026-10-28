@@ -246,7 +246,7 @@ def test_multipart_twenty_line_form_and_validation_preserve_input(request_db,app
     try:
         with TestClient(app_mod.app) as client:
             client.cookies.set(auth.COOKIE_NAME,session_token(u[2]))
-            page=client.get('/supplies/requests/new');token=hidden(page.text,'csrf')
+            page=client.get('/supplies/requests/new?view=list');token=hidden(page.text,'csrf')
             assert page.text.count('<fieldset')==20
             data={'csrf':token,'operation_key':key(),'purpose':'<script>synthetic input</script>','date_needed':'',
                   'item_0':str(item),'quantity_0':'0'}
