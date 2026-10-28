@@ -89,7 +89,7 @@ RUNTIME_PY = [
     "supplies.py", "supplies_storage.py", "supplies_permissions.py", "supplies_stock.py", "supplies_grid.py", "supplies_stock_dashboard.py",
     "supplies_import.py", "supplies_import_review.py", "supplies_requests.py", "supplies_approvals.py",
     "supplies_allocations.py", "supplies_backorders.py", "supplies_issues.py", "supplies_acknowledgments.py",
-    "supplies_print.py", "supplies_corrections.py", "supplies_notify.py", "supplies_mail.py", "supplies_dashboard.py",
+    "supplies_print.py", "supplies_corrections.py", "supplies_notify.py", "supplies_mail.py", "supplies_dashboard.py", "supplies_status.py",
     "supplies_replenishment.py", "supplies_replenishment_flow.py", "supplies_deliveries.py",
     "supplies_reports.py", "supplies_routes.py",
     # Imported by app.py for the daily reminder sweep the scheduler loop fires.

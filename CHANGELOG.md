@@ -1,3 +1,7 @@
+## 9.11 — October 28, 2026
+
+- Supplies increment 1.2: new `supplies_status.py` with `requester_stage(entry)` returning `{step, label, tone, sentence, action}` for every request state (Sent → Approved → Ready for pickup → Received, plus the exception states). `supplies_dashboard.queue()` for the `requests` kind now adds read-only `issue_count`, `ack_pending`, `ack_disputed`, `approver_names` and `stage`; the approver lookup is shared with `_next_action`. No screen uses it yet; no behaviour or permission change.
+
 ## 9.10 — October 28, 2026
 
 - Supplies increment 1.1: `render()` adds a `requester_only` flag (no approver, custodian, auditor, replenishment-approver or admin role). Requester-only users see a three-link Supplies nav (Home · Request supplies · My requests); everyone else's nav is unchanged. Navigation only; no permission changes.
