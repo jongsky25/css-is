@@ -15,6 +15,7 @@
   {% if r.status == 'submitted' %}<p>The Administrative Section orders these meals and records delivery. No conference room approval is needed.</p>
   {% else %}<p>This request was withdrawn. The Administrative Section should cancel any outstanding supplier orders.</p>{% endif %}
 </section>
+{% if not meal_admin %}{% include "_meals_status_help.html" %}{% endif %}
 <div class="table-wrap"><table class="list resp-table"><thead><tr><th>Meal</th><th>Deliver at</th><th>Status</th><th>Last update / note</th>{% if meal_admin %}<th>Update</th>{% endif %}</tr></thead>
 <tbody>{% for i in r["items"] %}<tr>
   <td data-label="Meal">{{ meal_labels[i.meal] }}</td><td data-label="Deliver at">{{ i.deliver_at }}</td>
