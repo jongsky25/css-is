@@ -81,6 +81,7 @@ def test_only_current_custodian_can_issue(approval_db,who):
     with pytest.raises(Denied):issues.issuance_queue(c,u[who])
 
 
+@pytest.mark.usefixtures('unlimited_requests')
 def test_unapproved_unreserved_and_cancelled_demand_cannot_be_issued(approval_db):
     c,u,_,_,item=approval_db;r=draft(c,u,item);submit(c,u,r)
     with pytest.raises(Conflict):issue(c,u,r,fields={'recipient_id':u[2]['id'],'effective_date':'2026-10-19','confirmed':'yes',
@@ -169,6 +170,7 @@ def test_two_connections_compete_for_last_reserved_units(approval_db):
     assert c.execute('SELECT COUNT(*) FROM supply_issue').fetchone()[0]==1
 
 
+@pytest.mark.usefixtures('unlimited_requests')
 def test_receipt_stales_form_then_issue_and_cancel_reconcile(approval_db):
     c,u,_,_,item=approval_db;a=ready(c,u,item,6);b=ready(c,u,item,7);old=data(c,u,b,2)
     receipt(c,u,item,2)

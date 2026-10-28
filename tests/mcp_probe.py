@@ -90,14 +90,14 @@ with tempfile.TemporaryDirectory(prefix='office-mcp-probe-') as directory:
     conn.execute("INSERT INTO supply_role_grant(user_id,role,granted_by,created_at) VALUES (?,'custodian',?,?)",
                  (manager, owner, '2026-10-20'))
     item = conn.execute('''INSERT INTO supply_item(code,description,unit,critical_level,created_by,created_at,updated_at)
-        VALUES (?,?,?,?,?,?,?)''', ('MCP-LOW', 'Synthetic low stock', 'pieces', 5, manager,
+        VALUES (?,?,?,?,?,?,?)''', ('MCP-LOW', 'Synthetic low stock', 'pieces', 20, manager,
                                    '2026-10-20', '2026-10-20')).lastrowid
     key = 'synthetic-opening-operation'
     conn.execute('''INSERT INTO supply_operation(operation_key,actor_id,action,payload_sha256,result_json,created_at)
         VALUES (?,?,?,?,?,?)''', (key, manager, 'opening', '0' * 64, '{}', '2026-10-20'))
     conn.execute('''INSERT INTO supply_stock_movement(item_id,kind,quantity_delta,effective_date,posted_at,
         posted_by,actor_snapshot,source_type,source_id,code_snapshot,description_snapshot,unit_snapshot,operation_key)
-        VALUES (?,'opening',1,?,?,?,?,?,?,?,?,?,?)''',
+        VALUES (?,'opening',10,?,?,?,?,?,?,?,?,?,?)''',
         (item, '2026-10-20', '2026-10-20', manager, 'Synthetic manager', 'item', item,
          'MCP-LOW', 'Synthetic low stock', 'pieces', key))
     owned_doc = conn.execute('''INSERT INTO document

@@ -397,3 +397,11 @@ def reference_form(app_mod):
     finally:
         conn.close()
         app_mod.invalidate_atoms()
+
+
+@pytest.fixture
+def unlimited_requests(monkeypatch):
+    """Switch off the request-time quantity limit (rule R1) for tests whose subject is what happens
+    after approval, e.g. shortages and backorders, which need demand above the stock on hand."""
+    import supplies_requests
+    monkeypatch.setattr(supplies_requests, '_within_requestable', lambda conn, lines, request_id: None)

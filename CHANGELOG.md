@@ -1,3 +1,7 @@
+## 9.12 — October 28, 2026
+
+- Supplies increment 1.3, rule R1 (business-rule change): `supplies_allocations.requestable()` = on hand − reserved − quantities in other requests that are `submitted` (never below 0), plus `badge()` (Out of stock / Limited / Available). `supplies_requests.save_draft` and `submit` (and so the web form and the MCP draft/submit paths) refuse quantities above it with "Only N <units> of <item> can be requested right now.", including on resubmitting a returned request. Items with no stock recorded are requestable 0. Approval, reservations and backorders are unchanged. Tests: `request_db` now stocks 10 units; shortage/backorder tests use the new `unlimited_requests` fixture to build demand above stock.
+
 ## 9.11 — October 28, 2026
 
 - Supplies increment 1.2: new `supplies_status.py` with `requester_stage(entry)` returning `{step, label, tone, sentence, action}` for every request state (Sent → Approved → Ready for pickup → Received, plus the exception states). `supplies_dashboard.queue()` for the `requests` kind now adds read-only `issue_count`, `ack_pending`, `ack_disputed`, `approver_names` and `stage`; the approver lookup is shared with `_next_action`. No screen uses it yet; no behaviour or permission change.

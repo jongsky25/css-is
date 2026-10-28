@@ -52,6 +52,7 @@ def receipt(c,u,item,quantity,op=None):
         'lines':[{'item_id':item,'expected_revision':1,'accepted_quantity':quantity}]},operation_key=op or key())
 
 
+@pytest.mark.usefixtures('unlimited_requests')
 def test_receipt_refills_older_demand_atomically_and_replay_no_extra_stock(approval_db):
     c,u,_,_,item=approval_db;a=ready(c,u,item,8);b=ready(c,u,item,7)
     assert [get(c,u,r)['lines'][0]['reserved_quantity'] for r in (a,b)]==[8,2]
@@ -64,6 +65,7 @@ def test_receipt_refills_older_demand_atomically_and_replay_no_extra_stock(appro
     assert shortages[0]['request_unit_snapshot']=='Synthetic section'
 
 
+@pytest.mark.usefixtures('unlimited_requests')
 def test_cancel_releases_reservations_to_next_and_preserves_approval(approval_db):
     c,u,_,_,item=approval_db;a=ready(c,u,item,6);b=ready(c,u,item,7)
     original=[tuple(row) for row in c.execute('SELECT * FROM supply_request_decision ORDER BY id')]
@@ -82,6 +84,7 @@ def test_cancel_releases_reservations_to_next_and_preserves_approval(approval_db
     assert c.execute('SELECT COUNT(*) FROM supply_request_cancellation').fetchone()[0]==1
 
 
+@pytest.mark.usefixtures('unlimited_requests')
 def test_mixed_item_cancel_only_selected_full_remainder(approval_db):
     c,u,_,_,item=approval_db;other=create(c,u[1],code='NO-STOCK')['id']
     r=draft(c,u,item,lines=[{'item_id':item,'requested_quantity':3},{'item_id':other,'requested_quantity':5}]);submit(c,u,r);decide(c,u,r)
@@ -95,6 +98,7 @@ def test_mixed_item_cancel_only_selected_full_remainder(approval_db):
     assert get(c,u,r)['fulfillment']=='Cancelled before issue'
 
 
+@pytest.mark.usefixtures('unlimited_requests')
 def test_opening_stock_also_refills_preexisting_demand(approval_db):
     c,u,_,_,_=approval_db;item=create(c,u[1],code='UNPOSTED')['id'];r=ready(c,u,item,7)
     stock.post_opening(c,u[1],item,{'quantity':5,'effective_date':'2026-10-19','reason':'Synthetic count'},expected_revision=1,operation_key=key())
@@ -125,6 +129,7 @@ def test_only_owner_or_custodian_can_cancel(approval_db,who):
     assert get(c,u,r)['fulfillment']=='Cancelled before issue'
 
 
+@pytest.mark.usefixtures('unlimited_requests')
 def test_queue_owner_scope_global_read_and_revocation(approval_db):
     c,u,units,_,item=approval_db;a=ready(c,u,item,15);b=ready(c,u,item,8,owner=4)
     assert [line['request_id'] for line in backorders.awaiting_stock(c,u[2])['shortages']]==[a]
@@ -138,6 +143,7 @@ def test_queue_owner_scope_global_read_and_revocation(approval_db):
     assert not backorders.awaiting_stock(c,u[3])['shortages']
 
 
+@pytest.mark.usefixtures('unlimited_requests')
 def test_refresh_is_safe_idempotent_and_current_custodian_only(approval_db):
     c,u,_,_,item=approval_db;r=ready(c,u,item,15)
     before=[tuple(row) for row in c.execute('SELECT * FROM supply_reservation')]
@@ -152,6 +158,7 @@ def test_refresh_is_safe_idempotent_and_current_custodian_only(approval_db):
     with pytest.raises(Denied):backorders.refresh_reservations(c,u[1],operation_key=op)
 
 
+@pytest.mark.usefixtures('unlimited_requests')
 def test_cancellation_after_issue_preserves_issue_projection_and_movements(approval_db):
     c,u,_,_,item=approval_db;a=ready(c,u,item,6);b=ready(c,u,item,7)
     # Model S3.1's future posted issue without adding an issuance feature to S2.3.
@@ -170,6 +177,7 @@ def test_cancellation_after_issue_preserves_issue_projection_and_movements(appro
     assert before==[tuple(row) for row in c.execute('SELECT * FROM supply_stock_movement')]
 
 
+@pytest.mark.usefixtures('unlimited_requests')
 def test_failure_in_refill_rolls_back_receipt_and_cancellation(approval_db,monkeypatch):
     c,u,_,_,item=approval_db;r=ready(c,u,item,15)
     before=[tuple(row) for row in c.execute('SELECT * FROM supply_reservation')]
@@ -187,6 +195,7 @@ def test_failure_in_refill_rolls_back_receipt_and_cancellation(approval_db,monke
     assert get(c,u,r)['revision']==3
 
 
+@pytest.mark.usefixtures('unlimited_requests')
 def test_cancelled_demand_allows_deactivation_but_other_obligations_block(approval_db):
     c,u,_,_,item=approval_db;a=ready(c,u,item,6);b=ready(c,u,item,7)
     cancel(c,u,a)
@@ -196,6 +205,7 @@ def test_cancelled_demand_allows_deactivation_but_other_obligations_block(approv
     assert get(c,u,a)['approval_status']=='approved'
 
 
+@pytest.mark.usefixtures('unlimited_requests')
 def test_parallel_cancellations_apply_once(approval_db):
     c,u,_,path,item=approval_db;a=ready(c,u,item,6);b=ready(c,u,item,7);data=cancel_fields(c,u,a);barrier=Barrier(2)
     def worker(actor):
@@ -211,6 +221,7 @@ def test_parallel_cancellations_apply_once(approval_db):
     assert c.execute('SELECT COUNT(*) FROM supply_request_cancellation').fetchone()[0]==1
 
 
+@pytest.mark.usefixtures('unlimited_requests')
 def test_receipt_invalidates_stale_line_version_even_without_header_change(approval_db):
     c,u,_,_,item=approval_db;r=ready(c,u,item,15);data=cancel_fields(c,u,r)
     receipt(c,u,item,2)
@@ -229,6 +240,7 @@ def test_immutable_cancellation_and_repeat_install(approval_db):
     assert not c.execute('PRAGMA foreign_key_check').fetchall()
 
 
+@pytest.mark.usefixtures('unlimited_requests')
 def test_disabled_changes_retain_queue_and_history(approval_db):
     c,u,_,_,item=approval_db;r=ready(c,u,item,15)
     c.execute("UPDATE app_setting SET value='0' WHERE key='supplies.enabled'");c.commit()
@@ -237,6 +249,7 @@ def test_disabled_changes_retain_queue_and_history(approval_db):
     with pytest.raises(Disabled):backorders.refresh_reservations(c,u[1],operation_key=key())
 
 
+@pytest.mark.usefixtures('unlimited_requests')
 def test_http_queue_cancellation_csrf_and_controls(approval_db,app_mod):
     c,u,_,path,item=approval_db;a=ready(c,u,item,6);b=ready(c,u,item,7);old=app_mod.DB;app_mod.DB=path;target=f'/supplies/requests/{a}'
     try:
@@ -260,6 +273,7 @@ def test_http_queue_cancellation_csrf_and_controls(approval_db,app_mod):
     finally:app_mod.DB=old
 
 
+@pytest.mark.usefixtures('unlimited_requests')
 def test_imported_opening_refills_existing_approved_demand(approval_db):
     from tests.test_supplies_import_review import stage, save, finish, apply, include
     c,u,_,_,_=approval_db;item=create(c,u[1],code='UNPOSTED')['id'];r=ready(c,u,item,15)
@@ -270,6 +284,7 @@ def test_imported_opening_refills_existing_approved_demand(approval_db):
     assert allocations.availability(c,item)=={'on_hand':13,'reserved_quantity':13,'available':0}
 
 
+@pytest.mark.usefixtures('unlimited_requests')
 def test_cancellation_audit_failure_rolls_back_evidence_and_projection(approval_db,monkeypatch):
     c,u,_,_,item=approval_db;a=ready(c,u,item,6);b=ready(c,u,item,7)
     before=[tuple(row) for row in c.execute('SELECT * FROM supply_reservation ORDER BY id')]
@@ -282,6 +297,7 @@ def test_cancellation_audit_failure_rolls_back_evidence_and_projection(approval_
     assert get(c,u,a)['revision']==3
 
 
+@pytest.mark.usefixtures('unlimited_requests')
 def test_shortage_queue_pagination_and_no_private_draft_or_submitted_demand(approval_db):
     c,u,_,_,_=approval_db;item=create(c,u[1],code='EMPTY')['id']
     private=draft(c,u,item);pending=draft(c,u,item);submit(c,u,pending)
@@ -304,6 +320,7 @@ def test_revoked_custodian_and_disabled_flag_block_cancellation_replay(approval_
     assert c.execute('SELECT COUNT(*) FROM supply_request_cancellation').fetchone()[0]==1
 
 
+@pytest.mark.usefixtures('unlimited_requests')
 def test_parallel_receipt_and_cancellation_preserve_stock_and_demand_equations(approval_db):
     c,u,_,path,item=approval_db;a=ready(c,u,item,15);b=ready(c,u,item,7);data=cancel_fields(c,u,a);barrier=Barrier(2)
     def worker(action):
