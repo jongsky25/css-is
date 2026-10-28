@@ -26,6 +26,7 @@ def fields(*lines):
             'procurement_reference':'APR-SYN-1','lines':list(lines)}
 
 
+@pytest.mark.usefixtures('unlimited_requests')
 def test_plan_scenario_suggestion_counts_outstanding_once_and_incoming_once(approval_db):
     c,u,_,_,item=approval_db
     s.update_item(c,u[1],item,{'code':'PAPER','description':'Synthetic paper','unit':'Ream',

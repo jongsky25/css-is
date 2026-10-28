@@ -23,6 +23,7 @@ def request_db(supplies_db):
         c.execute('UPDATE admin_user SET rp_id=? WHERE id=?',(rp,u[i]['id']));c.commit()
         u[i]=st.get_admin_user_by_id(c,u[i]['id'])
     item=create(c,u[1])['id']
+    stock.post_opening(c,u[1],item,{'quantity':'10','effective_date':'2026-10-19','reason':'Synthetic opening'},expected_revision=1,operation_key=key())
     return c,u,units,path,item
 
 
@@ -48,7 +49,6 @@ def withdraw(c,u,r,**kw):
 
 def test_create_edit_combine_submit_track_and_retry_never_changes_stock(request_db):
     c,u,_,_,item=request_db
-    stock.post_opening(c,u[1],item,{'quantity':'10','effective_date':'2026-10-19','reason':'Synthetic count'},expected_revision=1,operation_key=key())
     before=[tuple(r) for r in c.execute('SELECT * FROM supply_stock_movement')]
     op=key();data=fields(item,lines=[{'item_id':item,'requested_quantity':'3'},{'item_id':str(item),'requested_quantity':'2'}])
     first=requests.save_draft(c,u[2],data,operation_key=op)
@@ -145,7 +145,7 @@ def test_open_obligation_blocks_deactivation_withdrawal_releases_guard(request_d
     s.deactivate_item(c,u[1],item,expected_revision=1,operation_key=key(),reason='Obligation closed')
     with pytest.raises(Conflict):submit(c,u,r)
     with pytest.raises(Conflict):withdraw(c,u,r)
-    assert c.execute('SELECT COUNT(*) FROM supply_stock_movement').fetchone()[0]==0
+    assert c.execute('SELECT COUNT(*) FROM supply_stock_movement').fetchone()[0]==1
 
 
 def test_draft_withdraw_and_stale_submission_do_not_consume_numbers(request_db):
@@ -236,10 +236,11 @@ def test_http_create_edit_submit_withdraw_and_owner_isolation(request_db,app_mod
             token=hidden(client.get(target).text,'csrf')
             assert client.post(target+'/withdraw',data={'csrf':token,'operation_key':key(),'revision':'2','reason':'Meeting cancelled'},follow_redirects=False).status_code==303
             page=client.get(target);assert 'Withdrawn by requester' in page.text and 'Submit for approval' not in page.text
-            assert c.execute('SELECT COUNT(*) FROM supply_stock_movement').fetchone()[0]==0
+            assert c.execute('SELECT COUNT(*) FROM supply_stock_movement').fetchone()[0]==1
     finally:app_mod.DB=old
 
 
+@pytest.mark.usefixtures('unlimited_requests')
 def test_multipart_twenty_line_form_and_validation_preserve_input(request_db,app_mod):
     c,u,_,path,item=request_db;old=app_mod.DB;app_mod.DB=path
     try:

@@ -67,6 +67,7 @@ def test_issue_reversal_preserves_cancelled_remainder_and_explicit_choice(approv
     assert evidence==c.execute('SELECT movement_id FROM supply_issue_line').fetchone()[0]
 
 
+@pytest.mark.usefixtures('unlimited_requests')
 def test_stocktake_loss_preview_releases_newest_reserved_demand_first(approval_db):
     c,u,_,_,item=approval_db;a=ready(c,u,item,4);b=ready(c,u,item,4);d=ready(c,u,item,4)
     fields={'quantity':'3','effective_date':'2026-10-20','reason':'Synthetic missing supplies'}
@@ -258,6 +259,7 @@ def test_correction_history_pagination_and_stable_old_evidence_link(approval_db)
     with pytest.raises(Missing):corrections.get_correction(c,u[2],9999)
 
 
+@pytest.mark.usefixtures('unlimited_requests')
 def test_return_to_stock_allocates_older_other_request_without_leaking_it(approval_db):
     from tests.test_supplies_requests import draft, submit, fields
     from tests.test_supplies_approvals import decide

@@ -18,10 +18,19 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "9.11"
+APP_VERSION = "9.12"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "9.12",
+        "date": "October 28, 2026",
+        "summary": "Supply requests can no longer ask for more than is available.",
+        "changes": [
+            "When you save or send a supply request, you can only ask for as much as is available to request right now. If you ask for more, you are told how many can be requested.",
+            "Items with no stock recorded show as out of stock and cannot be requested until stock is entered."
+        ]
+    },
     {
         "version": "9.11",
         "date": "October 28, 2026",
