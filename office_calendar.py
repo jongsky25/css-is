@@ -656,7 +656,9 @@ def _rooms_layer(conn, ctx, start, end, scope):
             "people": ([{"user_id": req, "role": "attending", **cards[req]}] if req in cards else []),
             "tags": [], "venue": "Conference room",
             "modality": modality if modality in ("f2f", "online", "hybrid") else None, "meeting_url": None,
-            "url": f"/rooms?week={day}", "css": None,
+            # Spot feedback #195: the requester's room booking that belongs to their own calendar item opens that item,
+            # where its documents (notice of meeting, minutes) are, not the room board.
+            "url": f"/calendar/entries/{entry_id}" if entry_id and req is not None and req == me else f"/rooms?week={day}", "css": None,
             "flags": [] if status == "approved" else (["provisional (standby)"] if standby else ["awaiting approval"]),
             "editable": False, "private": False, "ref": ref, "event_id": event_id, "calendar_entry_id": entry_id,
         })

@@ -20,6 +20,16 @@
     <span class="cal-chip" title="Who can see this item">{{ audience_label }}</span>
   </p>
 
+  {% if e.status in ("confirmed", "tentative", "postponed") and not e.event_id %}
+  <form method="post" action="/calendar/entries/{{ e.id }}/status" class="cal-quick-status" aria-label="Change status or people">
+    <input type="hidden" name="updated_at" value="{{ e.updated_at or '' }}">
+    <span class="cal-hint">Status:</span>
+    {% for k, label in (("confirmed", "Confirmed"), ("tentative", "Tentative"), ("postponed", "Postponed")) %}
+    <button class="cal-btn" type="submit" name="status" value="{{ k }}" {{ 'aria-pressed=true disabled' if e.status == k }}>{{ label }}</button>{% endfor %}
+    <a class="cal-btn" href="/calendar/entries/{{ e.id }}/edit#people">Add or remove people</a>
+  </form>
+  {% endif %}
+
   <dl class="cal-facts">
     <dt>When</dt>
     <dd>{{ e.start_date }}{% if e.end_date %} → {{ e.end_date }}{% endif %}
