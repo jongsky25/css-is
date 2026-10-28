@@ -1,0 +1,20 @@
+v8::internal::baseline::BaselineBatchCompiler::Enqueue(v8::internal::DirectHandle<v8::internal::SharedFunctionInfo>)
+baseline-batch-compiler.cc:?
+
+Source-line diagnostics:
+addr2line: DWARF error: mangled line number section (bad file number)
+addr2line: DWARF error: mangled line number section (bad file number)
+addr2line: DWARF error: mangled line number section (bad file number)
+addr2line: DWARF error: mangled line number section (bad file number)
+addr2line: DWARF error: mangled line number section (bad file number)
+addr2line: DWARF error: mangled line number section (bad file number)
+addr2line: DWARF error: mangled line number section (bad file number)
+addr2line: DWARF error: mangled line number section (bad file number)
+addr2line: DWARF error: mangled line number section (bad file number)
+addr2line: DWARF error: mangled line number section (bad file number)
+addr2line: DWARF error: mangled line number section (bad file number)
+addr2line: DWARF error: mangled line number section (bad file number)
+addr2line: DWARF error: mangled line number section (bad file number)
+addr2line: DWARF error: mangled line number section (bad file number)
+addr2line: DWARF error: mangled line number section (bad file number)
+addr2line: DWARF error: mangled line number section (bad file number)

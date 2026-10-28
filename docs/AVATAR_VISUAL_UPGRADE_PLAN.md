@@ -25,6 +25,27 @@ seasonal administration, and accessibility behavior.
 A phase fails if its visuals remain essentially the same except for color changes,
 or if it exceeds a performance gate. Fix or reduce complexity before expanding it.
 
+## Native-buffer caller diagnostic — weak queue identified, failure still absent
+
+[Latest report](avatars/increment2b/native-handle-buffer/REPORT.md) and
+[run40605880095](https://github.com/jongsky25/css-is/actions/runs/40605880095):
+frozen 76baed0 completes four captures with 9,543 native records each. It removes
+per-event JS callbacks and the added Runtime subscription, and covers 1,011 births
+per slot outside known owners. The sole older unreleased candidate among observed
+births resolves to V8's WeakFixedArray compilation queue; its function entries are
+weak. This is not evidence that the queue strongly retains old documents.
+
+All four show low retention. No supported correction yet. **47 local/cloud tests
+pass**; all **42** hashes, four independent analyses, new native buffer proof and
+original preflight audit match. The buffer proves 20 clock samples, 1,024 immutable
+records/four threads and deliberate overflow. Candidates are not a strong-root
+census; inlined transitions/restoration and pre-attach roots can be missing.
+
+Next compare uninjected captures with and without GC tracing in a separately frozen
+fixed design, before another intrusive graph. No unchanged rerun, qualification,
+application transport cost result or 2B acceptance follows. PR #522 is unmerged;
+no active measurement, product change, candidate promotion or deployment.
+
 ## Snapshot-free context journal — cleanup observed, failed root still unknown
 
 [Latest report](avatars/increment2b/context-handle-journal/REPORT.md) and

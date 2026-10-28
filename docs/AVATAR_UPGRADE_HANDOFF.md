@@ -1,8 +1,8 @@
 # Avatar upgrade: new-chat handoff
 
-Last updated: **2026-10-27 UTC**. Repository: `jongsky25/css-is`.
+Last updated: **2026-10-28 UTC**. Repository: `jongsky25/css-is`.
 
-## Start here — Sol handoff, current after context handle journal
+## Start here — Sol handoff, current after native handle buffer
 
 **Objective: unblock 2B only. Do not start or resume 3A or later increments.**
 This section supersedes older next-step instructions below. The chronology is
@@ -11,7 +11,17 @@ retained as evidence, not a queue of experiments to repeat.
 ### Checkout and current state
 
 - Repository: `jongsky25/css-is`; resume `codex/avatar-2b-verification`.
-- Latest completed work: snapshot-free context/handle journal, harness 2c898c6 /
+- Latest completed work: native-buffer handle/caller diagnostic, harness 76baed0 /
+  workflow e4ea574, [PR #522](https://github.com/jongsky25/css-is/pull/522),
+  [run40605880095](https://github.com/jongsky25/css-is/actions/runs/40605880095).
+  Four captures, 9,543 native records each; no per-event JS callbacks or extra
+  Runtime subscription. Coverage adds 1,011 births outside known owners per slot.
+  The one older unreleased candidate among observed births resolves to V8's weak
+  compilation queue, not evidence of strong old-document retention. All four show
+  low retention. The failed retaining root remains unidentified; no correction.
+  All 42 hashes, four independent analyses and both native proofs/audits match;
+  47 local/cloud tests pass. No native/application qualification or 2B acceptance.
+- Previous diagnostic: snapshot-free context/handle journal, harness 2c898c6 /
   workflow 47852d7, [PR #521](https://github.com/jongsky25/css-is/pull/521),
   [run40599450345](https://github.com/jongsky25/css-is/actions/runs/40599450345).
   All four journal-only/journal+membership captures complete. At GC 6/11, no known
@@ -75,12 +85,13 @@ markup and improves navigation 20 in both orders, but those partial benefits
 cannot override the failed gates. This screen compares current versus candidate;
 it is not the complete original-versus-candidate acceptance matrix.
 
-Latest result: [snapshot-free context journal](avatars/increment2b/context-handle-journal/REPORT.md).
-Known older owner handles are weakened/released before natural GC in all four
-captures, which all show low retention. This does not identify a retaining root in
-the prior failed capture. Broader root ownership and observer effects remain
-unresolved; no supported correction is established. Application transport remains
-unmeasured and original memory acceptance blocked. All prior failures are retained.
+Latest result: [native-buffer caller diagnostic](avatars/increment2b/native-handle-buffer/REPORT.md).
+Broader handle births and native caller recording again show only low retention.
+The sole older candidate resolves to a weak compilation queue, so it does not
+support a document cleanup patch. Pre-attach roots and heap edges remain unobserved;
+no strong-root census or causal correction is established. Next isolate tracing/
+attachment conditions with a minimally instrumented uninjected contrast. Application
+transport is still unmeasured; original qualification and memory failures remain.
 
 There is no defensible percentage or ETA. At least three milestones remain:
 
@@ -100,7 +111,9 @@ verification**. No candidate currently qualifies to unblock 2B.
 
 Read these in order before changing code or launching browsers:
 
-1. [Context handle journal](avatars/increment2b/context-handle-journal/REPORT.md),
+1. [Native-buffer caller diagnostic](avatars/increment2b/native-handle-buffer/REPORT.md),
+   raw buffers/proof, independent assessment and weak-queue caller evidence. Then
+   [context handle journal](avatars/increment2b/context-handle-journal/REPORT.md),
    protocol, raw journals, ABI evidence and independent assessment. Then
    [native root diagnostic](avatars/increment2b/native-root-retention/REPORT.md),
    frozen protocol, prior trace analysis and independently checked graphs. Then
@@ -165,16 +178,16 @@ uses an opened-only trigger. The incidental run does not replace any sample or
 qualify the instrument. Both setup PRs remain unmerged; default-branch manual
 registration still faces existing release-version policy. No waiver or deploy.
 
-Application calibration remains blocked. Root graphs and the snapshot-free owner
-journal are complete. Both show only low retention; the owner journal observes
-normal weakening/release in the audited initializer classes. Do not repeat either
-unchanged or infer the old failed root was corrected. The gap is other root owners
-in a high-retention capture. Next consider native-buffer handle birth/release and
-caller-site recording beyond these initializers, avoiding per-event JS callbacks
-and the additional Runtime subscription. Freeze/validate that distinct diagnostic
-before capture; preserve every slot and original gate. After a supported correction,
-fresh native qualification must pass before the frozen lossless application
-transport can be measured. Original 2B acceptance remains outstanding.
+Application calibration remains blocked. Root graphs, snapshot-free owner journals
+and the native-buffer broader-handle trace are complete; all show low retention.
+Do not add another layer of handle-birth hooks or repeat these builds unchanged.
+The gap is a high-retention capture with minimal observer interference and evidence
+about pre-existing roots/heap edges. Next freeze a distinct uninjected comparison
+with counter-only baseline slots and GC-trace-only slots in a fixed order. No Frida,
+snapshots, collection requests, extra waits, selected replacements or qualification
+claims. Use it to separate tracing/attachment conditions before another intrusive
+graph. After a supported correction, fresh native qualification must precede the
+frozen lossless application calibration. Full 2B acceptance remains outstanding.
 
 ### Important traps and execution constraints
 

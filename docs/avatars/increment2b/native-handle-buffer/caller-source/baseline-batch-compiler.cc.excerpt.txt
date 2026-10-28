@@ -1,0 +1,26 @@
+289: void BaselineBatchCompiler::Enqueue(DirectHandle<SharedFunctionInfo> shared) {
+290:   EnsureQueueCapacity();
+291:   compilation_queue_->set(last_index_++, MakeWeak(*shared));
+292: }
+293: 
+294: void BaselineBatchCompiler::InstallBatch() {
+295:   DCHECK(v8_flags.concurrent_sparkplug);
+296:   concurrent_compiler_->InstallBatch();
+297: }
+298: 
+299: void BaselineBatchCompiler::EnsureQueueCapacity() {
+300:   if (compilation_queue_.is_null()) {
+301:     compilation_queue_ = isolate_->global_handles()->Create(
+302:         *isolate_->factory()->NewWeakFixedArray(kInitialQueueSize,
+303:                                                 AllocationType::kOld));
+304:     return;
+305:   }
+306:   if (last_index_ >= compilation_queue_->ulength().value()) {
+307:     DirectHandle<WeakFixedArray> new_queue =
+308:         isolate_->factory()->CopyWeakFixedArrayAndGrow(compilation_queue_,
+309:                                                        last_index_);
+310:     GlobalHandles::Destroy(compilation_queue_.location());
+311:     compilation_queue_ = isolate_->global_handles()->Create(*new_queue);
+312:   }
+313: }
+314: 

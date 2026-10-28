@@ -1,0 +1,30 @@
+
+/workspace/scratch/avatar-runtime/root/usr/lib/chromium/chromium:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+000000000567f078 <ChromeMain@@Base+0x24f3588>:
+     567f078:	49 8b 06             	mov    (%r14),%rax
+     567f07b:	4c 8b a0 68 0c 01 00 	mov    0x10c68(%rax),%r12
+     567f082:	eb 1c                	jmp    567f0a0 <ChromeMain@@Base+0x24f35b0>
+     567f084:	49 8b 3e             	mov    (%r14),%rdi
+     567f087:	4c 8b a7 68 0c 01 00 	mov    0x10c68(%rdi),%r12
+     567f08e:	be 20 00 00 00       	mov    $0x20,%esi
+     567f093:	ba 01 00 00 00       	mov    $0x1,%edx
+     567f098:	e8 43 59 aa fd       	call   31249e0 <malloc_stats@@Base+0x9b00>
+     567f09d:	49 89 c7             	mov    %rax,%r15
+     567f0a0:	49 8b 37             	mov    (%r15),%rsi
+     567f0a3:	4c 89 e7             	mov    %r12,%rdi
+     567f0a6:	e8 65 3c ac ff       	call   5142d10 <ChromeMain@@Base+0x1fb7220>
+     567f0ab:	49 89 46 08          	mov    %rax,0x8(%r14)
+     567f0af:	48 8b 38             	mov    (%rax),%rdi
+     567f0b2:	41 8b 56 10          	mov    0x10(%r14),%edx
+     567f0b6:	48 ff cf             	dec    %rdi
+     567f0b9:	8d 42 01             	lea    0x1(%rdx),%eax
+     567f0bc:	41 89 46 10          	mov    %eax,0x10(%r14)
+     567f0c0:	4c 8b 03             	mov    (%rbx),%r8
+     567f0c3:	4c 89 c1             	mov    %r8,%rcx
+     567f0c6:	48 83 c9 03          	or     $0x3,%rcx
+     567f0ca:	89 d0                	mov    %edx,%eax
+     567f0cc:	89 4c 87 08          	mov    %ecx,0x8(%rdi,%rax,4)

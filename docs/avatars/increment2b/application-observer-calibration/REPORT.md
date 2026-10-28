@@ -91,7 +91,19 @@ so cleanup is confirmed only in those observed captures; the earlier retaining r
 is still unknown. All 39 hashes and four independent analyses match; 47 local/cloud
 preflight tests pass. No qualification or supported product correction follows.
 
+## Native-buffer follow-up
+
+[Native-buffer caller diagnostic](../native-handle-buffer/REPORT.md) completes all
+four slots with 9,543 records each, including 1,011 unscoped births per slot. All 42
+hashes and independent analyses/proofs match; 47 local/cloud tests pass. The one
+older unreleased candidate resolves to V8's WeakFixedArray compilation queue,
+not evidence of a strong document-retention path. All four again have low retention;
+no supported correction or qualification follows. Read that report for next work.
+
 ## Next bounded work
+
+The native-buffer follow-up above supersedes this historical next-step text.
+Read its latest report before another capture.
 
 The context-owner journal is complete. Next read its report and investigate other
 root owners using separately frozen native-buffer handle/caller-site tracing to

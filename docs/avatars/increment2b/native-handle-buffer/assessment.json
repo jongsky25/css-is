@@ -1,0 +1,350 @@
+{
+  "status": "diagnostic_complete",
+  "run_url": "https://github.com/jongsky25/css-is/actions/runs/40605880095",
+  "artifact_id": 12780722669,
+  "artifact_sha256": "fc779f61af86700f16b4d6255e96c4c5ff1c04fba49e1ee02ad6f8f3f3441718",
+  "harness_commit": "76baed0e1236c089a57ae8b768e9292877aa9009",
+  "workflow_commit": "e4ea57473530ec6c2980e45932a961130ff047bc",
+  "internal_hashes_verified": 42,
+  "independent_all_four_analyses_identical": true,
+  "independent_new_native_buffer_proof_identical": true,
+  "independent_original_native_preflight_identical": true,
+  "frozen_sources_verified": true,
+  "preflight_tests": 47,
+  "native_buffer_proof": {
+    "status": "native_buffer_selftest_passed",
+    "acceptance": false,
+    "clock_samples": 20,
+    "threads": 4,
+    "immutable_records": 1024,
+    "overflow_stored": 32,
+    "overflow_dropped": 36
+  },
+  "acceptance": false,
+  "instrument_qualified": false,
+  "application_qualified": false,
+  "failed_retention_profile_observed": false,
+  "cohorts": [
+    {
+      "index": 0,
+      "mode": "buffer-only",
+      "event_count": 9543,
+      "event_counts": {
+        "global_create": 4539,
+        "global_weak_direct": 50,
+        "global_release": 4540,
+        "extension_invalidate": 48,
+        "state_dispose": 24,
+        "holder_dtor": 24,
+        "global_weak_field": 96,
+        "state_ctor": 24,
+        "per_ctor": 24,
+        "holder_set": 24,
+        "extension_ctor": 48,
+        "extension_dtor": 48,
+        "gc_epilogue": 2,
+        "state_dtor": 26,
+        "per_dtor": 26
+      },
+      "created_handle_generations": 4539,
+      "births_by_role": {
+        "unscoped": 1011,
+        "ScriptState::context_": 24,
+        "V8PerContextData::context_": 24,
+        "gin::ContextHolder::context_": 24,
+        "extensions::ScriptContext::v8_context_": 48,
+        "other-scoped": 3408
+      },
+      "unknown_preexisting_transitions": {
+        "global_release": 371,
+        "global_weak_field": 2
+      },
+      "known_callsite_witness": true,
+      "stage_6": {
+        "index": 6,
+        "documents": 1,
+        "nodes": 9007,
+        "jsEventListeners": 1,
+        "heap": 1204344
+      },
+      "stage_11": {
+        "index": 11,
+        "documents": 1,
+        "nodes": 6008,
+        "jsEventListeners": 1,
+        "heap": 1035792
+      },
+      "gc_samples": [
+        {
+          "stage": 6,
+          "old_unreleased_candidates": [
+            {
+              "creation": 778,
+              "role": "unscoped",
+              "created_stage": 0,
+              "caller_offset": "0x567f0ab"
+            }
+          ],
+          "old_without_observed_weakening": [
+            778
+          ]
+        },
+        {
+          "stage": 11,
+          "old_unreleased_candidates": [
+            {
+              "creation": 778,
+              "role": "unscoped",
+              "created_stage": 0,
+              "caller_offset": "0x567f0ab"
+            }
+          ],
+          "old_without_observed_weakening": [
+            778
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "mode": "buffer+membership",
+      "event_count": 9543,
+      "event_counts": {
+        "global_create": 4539,
+        "global_weak_direct": 50,
+        "global_release": 4540,
+        "extension_invalidate": 48,
+        "state_dispose": 24,
+        "holder_dtor": 24,
+        "global_weak_field": 96,
+        "state_ctor": 24,
+        "per_ctor": 24,
+        "holder_set": 24,
+        "extension_ctor": 48,
+        "extension_dtor": 48,
+        "gc_epilogue": 2,
+        "state_dtor": 26,
+        "per_dtor": 26
+      },
+      "created_handle_generations": 4539,
+      "births_by_role": {
+        "unscoped": 1011,
+        "ScriptState::context_": 24,
+        "V8PerContextData::context_": 24,
+        "gin::ContextHolder::context_": 24,
+        "extensions::ScriptContext::v8_context_": 48,
+        "other-scoped": 3408
+      },
+      "unknown_preexisting_transitions": {
+        "global_release": 371,
+        "global_weak_field": 2
+      },
+      "known_callsite_witness": true,
+      "stage_6": {
+        "index": 6,
+        "documents": 1,
+        "nodes": 9007,
+        "jsEventListeners": 1,
+        "heap": 1204420
+      },
+      "stage_11": {
+        "index": 11,
+        "documents": 1,
+        "nodes": 6008,
+        "jsEventListeners": 1,
+        "heap": 1035868
+      },
+      "gc_samples": [
+        {
+          "stage": 6,
+          "old_unreleased_candidates": [
+            {
+              "creation": 778,
+              "role": "unscoped",
+              "created_stage": 0,
+              "caller_offset": "0x567f0ab"
+            }
+          ],
+          "old_without_observed_weakening": [
+            778
+          ]
+        },
+        {
+          "stage": 11,
+          "old_unreleased_candidates": [
+            {
+              "creation": 778,
+              "role": "unscoped",
+              "created_stage": 0,
+              "caller_offset": "0x567f0ab"
+            }
+          ],
+          "old_without_observed_weakening": [
+            778
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "mode": "buffer+membership",
+      "event_count": 9543,
+      "event_counts": {
+        "global_create": 4539,
+        "global_weak_direct": 50,
+        "global_release": 4540,
+        "extension_invalidate": 48,
+        "state_dispose": 24,
+        "holder_dtor": 24,
+        "global_weak_field": 96,
+        "state_ctor": 24,
+        "per_ctor": 24,
+        "holder_set": 24,
+        "extension_ctor": 48,
+        "extension_dtor": 48,
+        "gc_epilogue": 2,
+        "state_dtor": 26,
+        "per_dtor": 26
+      },
+      "created_handle_generations": 4539,
+      "births_by_role": {
+        "unscoped": 1011,
+        "ScriptState::context_": 24,
+        "V8PerContextData::context_": 24,
+        "gin::ContextHolder::context_": 24,
+        "extensions::ScriptContext::v8_context_": 48,
+        "other-scoped": 3408
+      },
+      "unknown_preexisting_transitions": {
+        "global_release": 371,
+        "global_weak_field": 2
+      },
+      "known_callsite_witness": true,
+      "stage_6": {
+        "index": 6,
+        "documents": 1,
+        "nodes": 9007,
+        "jsEventListeners": 1,
+        "heap": 1204420
+      },
+      "stage_11": {
+        "index": 11,
+        "documents": 1,
+        "nodes": 6008,
+        "jsEventListeners": 1,
+        "heap": 1035868
+      },
+      "gc_samples": [
+        {
+          "stage": 6,
+          "old_unreleased_candidates": [
+            {
+              "creation": 778,
+              "role": "unscoped",
+              "created_stage": 0,
+              "caller_offset": "0x567f0ab"
+            }
+          ],
+          "old_without_observed_weakening": [
+            778
+          ]
+        },
+        {
+          "stage": 11,
+          "old_unreleased_candidates": [
+            {
+              "creation": 778,
+              "role": "unscoped",
+              "created_stage": 0,
+              "caller_offset": "0x567f0ab"
+            }
+          ],
+          "old_without_observed_weakening": [
+            778
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "mode": "buffer-only",
+      "event_count": 9543,
+      "event_counts": {
+        "global_create": 4539,
+        "global_weak_direct": 50,
+        "global_release": 4540,
+        "extension_invalidate": 48,
+        "state_dispose": 24,
+        "holder_dtor": 24,
+        "global_weak_field": 96,
+        "state_ctor": 24,
+        "per_ctor": 24,
+        "holder_set": 24,
+        "extension_ctor": 48,
+        "extension_dtor": 48,
+        "gc_epilogue": 2,
+        "state_dtor": 26,
+        "per_dtor": 26
+      },
+      "created_handle_generations": 4539,
+      "births_by_role": {
+        "unscoped": 1011,
+        "ScriptState::context_": 24,
+        "V8PerContextData::context_": 24,
+        "gin::ContextHolder::context_": 24,
+        "extensions::ScriptContext::v8_context_": 48,
+        "other-scoped": 3408
+      },
+      "unknown_preexisting_transitions": {
+        "global_release": 371,
+        "global_weak_field": 2
+      },
+      "known_callsite_witness": true,
+      "stage_6": {
+        "index": 6,
+        "documents": 1,
+        "nodes": 9007,
+        "jsEventListeners": 1,
+        "heap": 1204344
+      },
+      "stage_11": {
+        "index": 11,
+        "documents": 1,
+        "nodes": 6008,
+        "jsEventListeners": 1,
+        "heap": 1035792
+      },
+      "gc_samples": [
+        {
+          "stage": 6,
+          "old_unreleased_candidates": [
+            {
+              "creation": 778,
+              "role": "unscoped",
+              "created_stage": 0,
+              "caller_offset": "0x567f0ab"
+            }
+          ],
+          "old_without_observed_weakening": [
+            778
+          ]
+        },
+        {
+          "stage": 11,
+          "old_unreleased_candidates": [
+            {
+              "creation": 778,
+              "role": "unscoped",
+              "created_stage": 0,
+              "caller_offset": "0x567f0ab"
+            }
+          ],
+          "old_without_observed_weakening": [
+            778
+          ]
+        }
+      ]
+    }
+  ],
+  "limits": "Candidates are not a strong-root census. Inlined transitions/restoration and pre-attach roots may be missing. All captures show low retention; no inference about cause/correction of the earlier failure or product acceptance."
+}

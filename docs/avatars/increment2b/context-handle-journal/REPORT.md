@@ -14,7 +14,7 @@ No supported correction or passing native/application calibration follows.
 
 ## Observed lifecycle
 
-| Slot | Instrumentation | Nodes stage6 / stage11 | Old known strong handles at GC6 / GC11 |
+| Slot | Instrumentation | Nodes stage 6 / stage 11 | Old known strong handles at GC 6 / GC 11 |
 | --- | --- | ---: | ---: |
 | 0 | journal only | 9,007 / 6,008 | 0 / 0 |
 | 1 | journal + membership | 9,007 / 6,008 | 0 / 0 |
@@ -81,7 +81,19 @@ The archive includes raw journals, traces, captures, setup/native-preflight logs
 inventory, frozen sources and all four slots. [Assessment](assessment.json),
 [frozen protocol](PROTOCOL.md), reviewed workflow and ABI/source excerpts are committed.
 
+## Native-buffer follow-up
+
+[Native-buffer caller diagnostic](../native-handle-buffer/REPORT.md) completes all
+four slots with 9,543 records each, including 1,011 unscoped births per slot. All 42
+hashes and independent analyses/proofs match; 47 local/cloud tests pass. The one
+older unreleased candidate resolves to V8's WeakFixedArray compilation queue,
+not evidence of a strong document-retention path. All four again have low retention;
+no supported correction or qualification follows. Read that report for next work.
+
 ## Next bounded work
+
+The native-buffer follow-up above supersedes this historical next-step text.
+Read its latest report before another capture.
 
 The remaining evidence gap is a retaining root in a high-retention capture. Known
 owner cleanup is observed here, but other roots are not covered. A supported next

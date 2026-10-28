@@ -1,0 +1,9 @@
+{
+  "caller_return_pc": "0x567f0ab",
+  "resolved_pc": "0x567f0aa",
+  "function": "v8::internal::baseline::BaselineBatchCompiler::Enqueue",
+  "source_helper": "EnsureQueueCapacity (inlined)",
+  "upstream_url": "https://raw.githubusercontent.com/v8/v8/392e44423f46d75904da712fadea4c7d5d97967f/src/baseline/baseline-batch-compiler.cc",
+  "sha256_full_source": "2823ecf1046a13187cd9614e6a22dae802d14036c25573e07dfbd9531d5eb9d9",
+  "interpretation": "Strong handle owns a WeakFixedArray compilation queue whose enqueued function entries are weak. This is not evidence of strong document/context retention. No source line is claimed from incomplete DWARF line resolution."
+}
