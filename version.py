@@ -18,10 +18,19 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "9.03"
+APP_VERSION = "9.04"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "9.04",
+        "date": "October 28, 2026",
+        "summary": "The notice-of-meeting template can now be created in Google Docs.",
+        "changes": [
+            "Building the document templates no longer fails while saving the letterhead.",
+            "Nothing changes in the app itself; an administrator re-runs the template setup once to create the notice of meeting."
+        ]
+    },
     {
         "version": "9.03",
         "date": "October 28, 2026",

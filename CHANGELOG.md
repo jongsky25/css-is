@@ -1,3 +1,7 @@
+## 9.04 — October 28, 2026
+
+- Apps Script `activity_templates.gs`: `at_dropLeadingBlank_` shrinks the header's blank first line instead of deleting it. Docs accepted the deletion but refused to save the document afterwards, which made `makeActivityTemplates()` fail for any newly built template ("Service Documents failed while accessing document"). Templates already built are unaffected.
+
 ## 9.03 — October 28, 2026
 
 - DPO: use the venue named in the invitation (or DPO-cites) when the item has none (spot feedback #184, #187). File-copy page: pre-fill the reviewer's name and title in row 2 of the first box (S4/S5 and S1–S3 reviewers, from the traveller's section; blank if unknown or mixed), centre column 2, size both boxes to their text, and suggest keywords and related issuances read from the invitation (#185, #186). The relay `extras` carry `reviewer`, `keywords` and `issuances`; an older relay ignores them.

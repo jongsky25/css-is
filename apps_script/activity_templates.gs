@@ -152,13 +152,15 @@ function at_letterhead_(body) {
   at_dropLeadingBlank_(body);
 }
 
-// A new header starts with one empty paragraph that would sit above the letterhead. A container always keeps a
-// paragraph at its end, so this is only tried when there is more than one child; if Docs refuses, the blank line stays.
+// A new header starts with one empty paragraph that would sit above the letterhead. Deleting it is not safe: Docs accepts
+// the removal when it is made, then refuses to save the document ("Service Documents failed while accessing document"),
+// and a try/catch cannot see that. So the blank line is shrunk to nothing instead, which looks the same.
 function at_dropLeadingBlank_(container) {
   try {
     if (typeof container.getNumChildren !== 'function' || container.getNumChildren() < 2) return;
     const first = container.getChild(0);
-    if (first.getType() === DocumentApp.ElementType.PARAGRAPH && first.asParagraph().getText() === '') container.removeChild(first);
+    if (first.getType() !== DocumentApp.ElementType.PARAGRAPH || first.asParagraph().getText() !== '') return;
+    first.asParagraph().setFontSize(1).setLineSpacing(1).setSpacingBefore(0).setSpacingAfter(0);
   } catch (e) { /* cosmetic only */ }
 }
 
