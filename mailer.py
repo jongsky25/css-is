@@ -1318,6 +1318,47 @@ def feedback_update_message(submitter_name, status, reply, link):
     return subject, body, html
 
 
+def _supply_message(name, subject, heading, intro, link, cta, *, note=None, rows=None, footnote=""):
+    """Shared shape for the Supplies emails: plain text, plus the standard HTML shell."""
+    lines = [f"Hello {name or 'there'},", "", intro]
+    if rows:
+        lines += [""] + [f"  • {r}" for r in rows]
+    if note:
+        lines += ["", f"{note[0]}: {note[1]}"]
+    lines += ["", f"{cta}:", f"  {link}"]
+    if footnote:
+        lines += ["", footnote]
+    extra = (_note_box_html(*note) if note else "") + (_list_html(rows) if rows else "")
+    html = _email_html(greeting=f"Hi {name or 'there'},", heading=heading, intro=_e(intro),
+                       cta_label=cta, link=link, footnote=footnote, extra_html=extra)
+    return subject, "\n".join(lines) + "\n", html
+
+
+def supply_request_pending_message(approver_name, requester_name, control_number, unit, purpose, link):
+    """To a request approver: a supply request in their unit is waiting for a decision."""
+    return _supply_message(
+        approver_name, f"Supply request to decide: {control_number}", "Supply request to decide",
+        f"{requester_name or 'A staff member'} ({unit}) submitted supply request {control_number} and it is waiting for your decision.",
+        link, "Review the request", note=("Purpose", purpose),
+        footnote="You get this because you are a supply request approver for this unit.")
+
+
+_SUPPLY_DECISION = {"approved": "approved", "returned": "returned for correction", "rejected": "rejected"}
+
+
+def supply_request_decided_message(name, control_number, decision, reason, link):
+    """To the requester: their supply request was approved, returned for correction, or rejected."""
+    verdict = _SUPPLY_DECISION.get(decision, decision)
+    intro = f"Your supply request {control_number} was {verdict}."
+    if decision == "approved":
+        intro += " The custodian will tell you when the supplies are ready to collect."
+    elif decision == "returned":
+        intro += " Fix the points below, then submit it again."
+    return _supply_message(
+        name, f"Supply request {verdict}: {control_number}", f"Supply request {verdict}", intro, link,
+        "Open the request", note=("Approver's note", reason) if reason else None)
+
+
 def travel_review_request_message(reviewer_name, traveller_name, ref, title, link, again=False):
     """To the chosen reviewer: a travel claim's papers are waiting for their check (spot feedback #174)."""
     subject = f"{'Travel papers ready to check again' if again else 'Travel papers to review'}: {ref}"
@@ -1546,6 +1587,14 @@ FEATURES = {
         "Filing reopened",
         "Staff who missed a deadline are told an admin reopened it.",
         "transactional"),
+    "supplies_request_pending": (
+        "Supply request to decide",
+        "A request approver is told a supply request from their unit was submitted and is waiting for a decision.",
+        "transactional"),
+    "supplies_request_decided": (
+        "Supply request decision result",
+        "The requester is told their supply request was approved, returned for correction, or rejected.",
+        "transactional"),
     "travel_review_request": (
         "Travel papers to review",
         "The chosen reviewer is told a traveller asked them to check a claim's papers (or asked again after fixing notes).",
@@ -1756,6 +1805,10 @@ _PREVIEWS = {
         "Juan Reyes", "approved", "October 1-15, 2026", None, _SAMPLE_LINK),
     "awa_reopened": lambda: work_arrangement_reopened_message(
         "Juan Reyes", "October 1-15, 2026", _SAMPLE_LINK),
+    "supplies_request_pending": lambda: supply_request_pending_message(
+        "Maria Santos", "Juan Reyes", "SUP-2026-00012", "Planning Unit", "Bond paper for the section report", _SAMPLE_LINK),
+    "supplies_request_decided": lambda: supply_request_decided_message(
+        "Juan Reyes", "SUP-2026-00012", "returned", "Please reduce the quantity of folders.", _SAMPLE_LINK),
     "travel_review_request": lambda: travel_review_request_message(
         "Gilbert", "Ana Reyes", "TF-2610-0007", "Regional Planning Workshop", _SAMPLE_LINK),
     "travel_review_result": lambda: travel_review_result_message(

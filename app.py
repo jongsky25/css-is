@@ -5067,6 +5067,15 @@ def _mcp_activity_creation_tick():
         conn.close()
 
 
+def _supplies_mail_tick():
+    import supplies_mail
+    conn = get_conn()
+    try:
+        return supplies_mail.run(conn)
+    finally:
+        conn.close()
+
+
 async def _scheduler_loop():
     while True:
         try:
@@ -5121,6 +5130,10 @@ async def _scheduler_loop():
         try:
             await asyncio.to_thread(_mcp_activity_creation_tick)
         except Exception:         # Creation notices cannot stop other jobs.
+            pass
+        try:
+            await asyncio.to_thread(_supplies_mail_tick)
+        except Exception:         # Supplies email cannot stop other jobs.
             pass
         await asyncio.sleep(_SCHED_TICK)
 
