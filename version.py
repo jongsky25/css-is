@@ -18,12 +18,12 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "9.03"
+APP_VERSION = "9.04"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
-        "version": "9.03",
+        "version": "9.04",
         "date": "October 28, 2026",
         "summary": "Supplies now sends email, so nobody has to keep checking the page.",
         "changes": [
@@ -32,6 +32,19 @@ CHANGELOG = [
             "People are asked to confirm receipt when supplies are released to them, and requesters are told when stock is set aside for an approved request, including after a delivery fills a shortage.",
             "Each Monday, supply custodians get one summary of open stock warnings and approved requests still to hand over or waiting for stock. Nothing is sent when there is nothing to chase.",
             "Administrators can switch each of these emails on or off, and change the summary weekday, on the Email page."
+        ]
+    },
+    {
+        "version": "9.03",
+        "date": "October 28, 2026",
+        "summary": "Better DPOs, a notice of meeting, and a list of people expected from other offices.",
+        "changes": [
+            "A DPO now names the venue stated in the invitation when the activity has no venue of its own.",
+            "The second page of a DPO fills in the reviewer for the traveller's section, centred in the box, and sizes both boxes to their text.",
+            "That page also suggests keywords and related issuances (for example BHWs and RA 7883) taken from the invitation.",
+            "A meeting can now be drafted as a notice of meeting in Google Docs, with the date, place, link and invited people filled in.",
+            "An activity can list the participants expected from other offices, and the list is required when meals are requested.",
+            "The supply request form now says when the item catalog is empty, instead of showing an unexplained blank list."
         ]
     },
     {

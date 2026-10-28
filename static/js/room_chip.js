@@ -83,4 +83,7 @@
   if (dateEl) { dateEl.addEventListener('change', refresh); dateEl.addEventListener('input', refresh); }
   chip.addEventListener('toggle', function () { if (chip.open && !touched && wants() && !closed) { box.checked = true; } });
   refresh(); apply();
+  // Meals need the list of people expected from other offices (spot feedback #190): the field is required while it is ticked.
+  var meals = document.querySelector('input[name=room_meals]'), visitors = document.getElementById('room-visitors');
+  if (meals && visitors) { var need = function () { visitors.required = meals.checked; }; meals.addEventListener('change', need); need(); }
 })();

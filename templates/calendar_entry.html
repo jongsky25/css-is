@@ -141,6 +141,13 @@
       <p class="cal-hint">It opens the DPO&rsquo;s first paragraph, followed by &ldquo;In support of this, &hellip; will conduct &hellip;&rdquo;. Nothing is made up: if this is empty (and there are no invitation lines above), the paragraph only says who conducts the activity, when and where.</p>
       <button class="cal-btn" type="submit">Save</button>
     </form>
+    <form method="post" action="/calendar/entries/{{ e.id }}/visitors" class="cal-dpo-cites cal-visitors">
+      <label for="visitors">Expected participants from other offices{% if documents['meals'] %} <strong>(required: meals are requested)</strong>{% endif %}
+        <small>(name and office, one per line; write &ldquo;None&rdquo; if nobody is coming from outside)</small></label>
+      <textarea id="visitors" name="visitors" rows="4" maxlength="1000" {{ 'required' if documents['meals'] }}>{{ documents['visitors'] }}</textarea>
+      <p class="cal-hint">A notice of meeting lists them after the people on this item.</p>
+      <button class="cal-btn" type="submit">Save</button>
+    </form>
     <ul class="cal-doc-list">
     {% for d in documents['items'] %}
       <li class="cal-doc {{ 'is-needed' if d.needed }}">
@@ -164,7 +171,7 @@
               {% for p in documents['dpo_people'] %}<label class="cal-hint">{{ p.name }} <input type="text" name="designation_{{ p.user_id }}" maxlength="160" autocomplete="off"></label>
               {% endfor %}</fieldset>
             {% endif %}
-            {% if d.key in ('dpo', 'concept_note', 'invitation') %}<label class="cal-hint"><input type="checkbox" name="positions" value="1"> Fill in positions from saved profiles (otherwise they are left blank for you to complete)</label>{% endif %}
+            {% if d.key in ('dpo', 'concept_note', 'invitation', 'notice_of_meeting') %}<label class="cal-hint"><input type="checkbox" name="positions" value="1"> Fill in positions from saved profiles (otherwise they are left blank for you to complete)</label>{% endif %}
             <button class="cal-btn primary" type="submit">{{ 'Draft again in Google Docs' if d.doc_url else 'Draft in Google Docs' }}</button></form>
           {% else %}<p class="cal-hint">Drafting in Google Docs is not switched on yet.</p>{% endif %}
           {% if d.doc_url %}<p><a href="{{ d.doc_url }}" target="_blank" rel="noopener">Open the latest draft</a></p>

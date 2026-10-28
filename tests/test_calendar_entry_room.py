@@ -189,3 +189,41 @@ def test_a_form_sent_back_with_an_error_keeps_the_room_choice_the_person_made(ma
     bad = post(manager, "/calendar/new", d, title="", modality="online")      # no room ticked, but invalid
     assert bad.status_code == 400 and 'data-decided="1"' in bad.text
     assert conn.execute("SELECT COUNT(*) FROM room_reservation").fetchone()[0] == 0
+
+
+# ---- expected participants from other offices (spot feedback #188, #190) ---
+
+def test_meals_need_the_list_of_participants_from_other_offices(manager, conn):
+    s9, s10 = S(conn, 9, 10)
+    r = post(manager, "/calendar/new", day(conn), reserve_room="1", room_from=s9, room_to=s10, room_meals="1")
+    assert r.status_code == 400 and "list the people expected from other offices" in r.text
+    assert conn.execute("SELECT COUNT(*) FROM calendar_entry WHERE title LIKE 'CALROOM %'").fetchone()[0] == 0
+    r = post(manager, "/calendar/new", day(conn), reserve_room="1", room_from=s9, room_to=s10, room_meals="1",
+             visitors="  Dr. Cruz, CHD VII\r\n\r\nMs. Reyes,  DOH-OSEC ")
+    assert r.status_code == 303
+    eid = entry_id(r)
+    import activity_docs
+    assert activity_docs.get_visitors(conn, eid) == "Dr. Cruz, CHD VII\nMs. Reyes, DOH-OSEC"
+    page = manager.get(f"/calendar/entries/{eid}").text
+    assert "Expected participants from other offices" in page and "required: meals are requested" in page
+
+
+def test_without_meals_the_list_is_optional_and_a_form_without_it_keeps_the_saved_one(manager, conn):
+    import activity_docs
+    eid = entry_id(post(manager, "/calendar/new", day(conn), visitors="Dr. Cruz, CHD VII"))
+    assert activity_docs.get_visitors(conn, eid) == "Dr. Cruz, CHD VII"
+    e = st.cal_get(conn, eid)
+    edit = post(manager, f"/calendar/entries/{eid}/edit", day(conn), updated_at=e["updated_at"] or "")
+    assert edit.status_code == 303
+    assert activity_docs.get_visitors(conn, eid) == "Dr. Cruz, CHD VII"
+    r = manager.post(f"/calendar/entries/{eid}/visitors", content=urlencode({"visitors": ""}), headers=FORM, follow_redirects=False)
+    assert r.status_code == 303 and "ok=" in r.headers["location"] and activity_docs.get_visitors(conn, eid) == ""
+
+
+def test_the_entry_page_will_not_clear_the_list_once_meals_are_requested(manager, conn):
+    import activity_docs
+    s9, s10 = S(conn, 9, 10)
+    eid = entry_id(post(manager, "/calendar/new", day(conn), reserve_room="1", room_from=s9, room_to=s10, room_meals="1",
+                        visitors="None"))
+    r = manager.post(f"/calendar/entries/{eid}/visitors", content=urlencode({"visitors": " "}), headers=FORM, follow_redirects=False)
+    assert "err=" in r.headers["location"] and activity_docs.get_visitors(conn, eid) == "None"

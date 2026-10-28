@@ -702,6 +702,13 @@ def init_db(conn):
         updated_by TEXT, updated_at TEXT
     );
 
+    -- Who is expected from other offices (Spot Feedback #188): names and offices typed by the person; required once meals are requested (#190).
+    CREATE TABLE IF NOT EXISTS calendar_entry_visitors (
+        entry_id INTEGER PRIMARY KEY REFERENCES calendar_entry(id) ON DELETE CASCADE,
+        text TEXT NOT NULL DEFAULT '',
+        updated_by TEXT, updated_at TEXT
+    );
+
     -- What the DPO cites as the reason for an activity (Spot Feedback #170): the law, memo or invitation, typed by the person.
     CREATE TABLE IF NOT EXISTS calendar_entry_dpo_cites (
         entry_id INTEGER PRIMARY KEY REFERENCES calendar_entry(id) ON DELETE CASCADE,
@@ -11606,6 +11613,7 @@ def cal_delete(conn, entry_id, *, by=None):
     conn.execute("DELETE FROM calendar_entry_unit WHERE entry_id=?", (entry_id,))
     conn.execute("DELETE FROM calendar_entry_outside WHERE entry_id=?", (entry_id,))
     conn.execute("DELETE FROM calendar_entry_dpo_cites WHERE entry_id=?", (entry_id,))
+    conn.execute("DELETE FROM calendar_entry_visitors WHERE entry_id=?", (entry_id,))
     conn.execute("DELETE FROM calendar_entry_revision WHERE entry_id=?", (entry_id,))
     conn.execute("DELETE FROM calendar_entry WHERE id=?", (entry_id,))
     conn.commit()
