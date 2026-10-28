@@ -1,10 +1,14 @@
-## 9.11 — October 28, 2026
+## 9.12 — October 28, 2026
 
 - My meal requests and the meal request page now carry a short explanation for the requester: meal requests are not approved, the Administrative Section orders them, and "Ordered" is the confirmation; each status is defined, and the date each meal was marked is shown beside it (spot feedback #197). The Administrative Section's own pages do not show it. Requesters are still not notified when a meal is ordered.
 
-## 9.10 — October 28, 2026
+## 9.11 — October 28, 2026
 
 - Home page leaderboard card: still the top 5 by default, now with period (month, quarter, all time), group (section, division, bureau) and show-more (top 10, everyone) links, kept in the URL as `lb_period`, `lb_scope` and `lb_top` and anchored to the card; unknown values fall back to the defaults. The viewer's own row is always shown (spot feedback #196).
+
+## 9.10 — October 28, 2026
+
+- Supplies increment 1.1: `render()` adds a `requester_only` flag (no approver, custodian, auditor, replenishment-approver or admin role). Requester-only users see a three-link Supplies nav (Home · Request supplies · My requests); everyone else's nav is unchanged. Navigation only; no permission changes.
 
 ## 9.09 — October 28, 2026
 
