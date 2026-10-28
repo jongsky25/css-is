@@ -1,6 +1,6 @@
 """Committed UI/service changes and dormant routing; no provider send or action replay."""
 from concurrent.futures import ThreadPoolExecutor
-from datetime import date,timedelta
+from datetime import date,datetime,timedelta
 import json
 
 import pytest
@@ -150,7 +150,12 @@ def test_route_revocation_source_and_restore_fences(routed,monkeypatch,change):
     elif change=='flag':monkeypatch.setenv('CSS_TELEGRAM_CHANGE_NOTICES_ENABLED','0')
     elif change=='bot':monkeypatch.setenv('CSS_TELEGRAM_BOT_TOKEN','123456:'+'B'*35)
     elif change=='restore':backups.clear_restored_sessions(path)
-    else:when+=timedelta(days=2)
+    else:
+        # Trigger metadata uses SQLite's clock, independent of the patched
+        # Python fixture clock. Advance from this event's actual timestamp.
+        event=rows(c,'SELECT * FROM telegram_change_event WHERE event_key=?',(route['event_key'],))[0]
+        recorded=datetime.fromisoformat(event['recorded_at'].replace('Z','+00:00'))
+        when=recorded+changes.TTL+timedelta(seconds=1)
     assert not changes.authorize_route(c,route['id'],when)
     assert not changes.verify_route(c,route['id'],when)
     if change in ('read','link','inactive','source','source_delete','restore'):

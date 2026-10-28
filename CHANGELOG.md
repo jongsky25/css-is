@@ -1,3 +1,9 @@
+## 9.01 — October 28, 2026
+
+- Disable live lifespan scheduler loops by default in the shared pytest fixtures, so native/MCP delivery tests own their worker calls and queued notices. Startup tests explicitly opt back in; production scheduler behavior is unchanged.
+- Anchor Telegram change-route expiry coverage to the immutable SQL-trigger event timestamp plus its TTL, rather than a fixed Python date that drifts from SQLite's real clock.
+- Increase full normal/shuffled test-job budgets from 45 to 75 minutes to include OCR/browser setup, both complete suites and mandatory JUnit/evaluation/artifact gates. Preserve dependency, release metadata, full-test and backup requirements before deployment.
+
 ## 9.00 — October 27, 2026
 
 - Add default-off `travel:review:decide` context/preview/recovery for the current selected Administrative Section reviewer: approve complete papers with no draft notes, or return exact notes already drafted in Office Connect. Refuse self-review and technical-only authority; do not accept model note text or recipient overrides.
