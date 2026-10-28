@@ -7,6 +7,7 @@ to the draft are stored; the content of a draft is built when it is asked for an
 
 `suggest`, `describe_people` and `payload` are pure; the rest touch the database or the relay."""
 from __future__ import annotations
+import re
 from typing import Optional
 
 import gdocs_relay
@@ -23,6 +24,8 @@ DOCS = {
                      "blurb": "Explains why the activity is held, who takes part and what it costs, with the program of activities."},
     "program_flow": {"label": "Program flow",
                      "blurb": "The day-by-day schedule: when, what, and who is responsible."},
+    "notice_of_meeting": {"label": "Notice of meeting",
+                          "blurb": "Tells the invited people what the meeting is, when and where it is held, and who is invited."},
     "minutes": {"label": "Minutes of the meeting",
                 "blurb": "The record of a meeting: who attended, what was discussed and decided, and the action points."},
 }
@@ -40,6 +43,107 @@ ASSISTANCE = (
     ("Meals", "Provide meals for the participants during the activity."),
     ("Coordination", "Facilitate the coordination and attendance of the identified participants."),
 )                  # left for the person to fill in by hand on the draft
+
+# Who reviews a DPO's file copy (spot feedback #186): the section of the traveller decides. Names are the office's own.
+REVIEWERS = (
+    (("S4", "S5"), "MARIA LOURDES GAJITOS, MD, MPH", "Medical Officer V"),
+    (("S1", "S2", "S3"), "KATHRINE JOYCE FLORES, MD, MPM", "Medical Officer V"),
+)
+VISITORS_MAX = 1000
+
+
+def get_visitors(conn, entry_id) -> str:
+    """Who is expected from other offices (spot feedback #188), or ''."""
+    r = conn.execute("SELECT text FROM calendar_entry_visitors WHERE entry_id=?", (entry_id,)).fetchone()
+    return (r[0] or "") if r else ""
+
+
+def clean_visitors(text) -> str:
+    """The person's list with each line trimmed and blank lines dropped, so it reads as a list in a document."""
+    lines = [" ".join(l.split()) for l in str(text or "").replace("\r", "").split("\n")]
+    return "\n".join(l for l in lines if l)[:VISITORS_MAX]
+
+
+def set_visitors(conn, entry_id, text, by, *, commit=True) -> None:
+    """Keep the expected participants from other offices (one per line; empty clears it)."""
+    text = clean_visitors(text)
+    if not text:
+        conn.execute("DELETE FROM calendar_entry_visitors WHERE entry_id=?", (entry_id,))
+    else:
+        conn.execute("INSERT INTO calendar_entry_visitors(entry_id, text, updated_by, updated_at) VALUES (?,?,?,?) "
+                     "ON CONFLICT(entry_id) DO UPDATE SET text=excluded.text, updated_by=excluded.updated_by, "
+                     "updated_at=excluded.updated_at", (entry_id, text, by, tz.now_iso()))
+    if commit:
+        conn.commit()
+
+
+_VENUE_LABEL = re.compile(r"\bvenue\s*(?:is|will be|:|-|\u2013)\s*(?:at\s+)?([^\n.;]+)", re.I)
+_NAME = r"[A-Z][\w&'\u2019\-]*(?:\.[\w&'\u2019\-]+)*"
+_VENUE_AT = re.compile(r"\bat\s+((?:the\s+)?" + _NAME + r"(?:\s+(?:of|de|del|and|&|" + _NAME + r"))*"
+                       r"(?:,\s*" + _NAME + r"(?:\s+" + _NAME + r"){0,3}){0,2})")
+
+
+def venue_from_text(*texts) -> str:
+    """The venue an invitation names (spot feedback #184), or ''. Looks for "Venue: X" first, then "at the X" where X is a
+    capitalised name such as a hotel. A suggestion read from words the person pasted: it is never kept on the item."""
+    for text in texts:
+        text = " ".join(str(text or "").split())
+        m = _VENUE_LABEL.search(text) or _VENUE_AT.search(text)
+        if m:
+            venue = m.group(1).strip(" ,;:-")
+            venue = venue[4:] if venue.lower().startswith("the ") else venue
+            if len(venue) >= 4:
+                return venue[:120]
+    return ""
+
+
+# Keywords and the laws usually cited with them, read from the invitation for the DPO's file copy (spot feedback #185).
+_KEYWORDS = (
+    (r"barangay health workers?|\bBHWs?\b", "Barangay Health Workers (BHWs)", "RA 7883"),
+    (r"universal health care|\bUHC\b", "Universal Health Care (UHC)", "RA 11223"),
+    (r"rural health units?|\bRHUs?\b", "Rural Health Units (RHUs)", ""),
+    (r"local health systems?|\bLHS\b", "Local Health Systems", ""),
+    (r"health promotion", "Health Promotion", ""),
+    (r"province-?wide health systems?|\bPWHS\b", "Province-wide Health Systems", ""),
+)
+_ISSUANCE = re.compile(r"\b(?:(R\.?A\.?|Republic Act)|(A\.?O\.?|Administrative Order)|(D\.?O\.?|Department Order)|"
+                       r"(D\.?M\.?|Department Memorandum)|(E\.?O\.?|Executive Order))\s*(?:No\.?\s*)?(\d[\d\-]*\d|\d)", re.I)
+_ISSUANCE_NAME = ("RA", "AO", "DO", "DM", "EO")
+
+
+def suggest_file_copy(*texts) -> tuple:
+    """(keywords, issuances) as two one-line strings read from the invitation's words (spot feedback #185). Only what the
+    words say or a law the keyword is known by; both may be ''. The person edits them on the draft."""
+    text = " ".join(" ".join(str(t or "").split()) for t in texts)
+    words, laws = [], []
+    for pattern, label, law in _KEYWORDS:
+        if re.search(pattern, text, re.I):
+            words.append(label)
+            if law:
+                laws.append(law)
+    for m in _ISSUANCE.finditer(text):
+        i = next(n for n in range(1, 6) if m.group(n))
+        laws.insert(0, f"{_ISSUANCE_NAME[i - 1]} {m.group(6)}")
+    seen, uniq = set(), []
+    for l in laws:
+        if l not in seen:
+            seen.add(l)
+            uniq.append(l)
+    return ", ".join(words), ", ".join(uniq)
+
+
+def file_copy_reviewer(conn, entry, people_ids) -> tuple:
+    """(name, title) the DPO's file copy goes to (spot feedback #186), from the section of the travellers: S4 and S5 to one
+    reviewer, S1 to S3 to the other. ('', '') when a traveller has no section or they belong to different reviewers."""
+    found = set()
+    for uid in people_ids:
+        path = (st.get_user_profile(conn, uid) or {}).get("org_path") or ""
+        section = path.split("/")[-1].strip().upper()
+        match = next((r for r in REVIEWERS if section in r[0]), None)
+        if not match:
+            return "", ""
+        found.add(match[1:])
+    return next(iter(found)) if len(found) == 1 else ("", "")
 
 
 def suggest(entry, kind_label="") -> dict:
@@ -71,8 +175,10 @@ def suggest(entry, kind_label="") -> dict:
     else:
         out["program_flow"] = (False, "A single short item rarely needs a program.")
     if entry.get("kind") == "meeting":
+        out["notice_of_meeting"] = (True, "A meeting is usually announced with a notice.")
         out["minutes"] = (True, "A meeting is usually followed by minutes.")
     else:
+        out["notice_of_meeting"] = (False, "Only a meeting usually needs a notice.")
         out["minutes"] = (False, "Only a meeting usually needs minutes.")
     return out
 
@@ -269,10 +375,12 @@ def payload(conn, entry, key, user, owner_label="", positions=False, designation
                        or ((profile.get("designation") or "") if positions else ""))])
         days = days_text(entry)
         # Spot feedback #178: the venue is always in the subject and the body; with none on the item it is a blank to fill.
-        place = (entry.get("venue") or "").strip() or BLANK
+        outside = get_outside(conn, entry["id"])
+        # Spot feedback #184/#187: with no venue on the item, the venue the invitation names is used before a blank.
+        place = (entry.get("venue") or "").strip() or venue_from_text(
+            (outside or {}).get("invitation"), get_dpo_cites(conn, entry["id"])) or BLANK
         in_place = f" in {place}"
         unit = owner_label.strip()
-        outside = get_outside(conn, entry["id"])
         the_title = title if title.lower().startswith("the ") else f"the {title}"
         place_part = f", in {place}"
         # The wording follows the office's sample DPO (spot feedback #170): the first paragraph gives the rationale taken from
@@ -317,6 +425,8 @@ def payload(conn, entry, key, user, owner_label="", positions=False, designation
                   "title": title, "purpose": f"attend {title}", "dates": days, "venue": where_text(entry),
                   "funding_source": DPO_FUNDING, "unit_name": SIGNATORY_UNIT, "head_name": head_name.upper(), "head_title": head_title,
                   "prepared_by": me}
+        if place != BLANK and not (entry.get("venue") or "").strip():
+            fields["venue"] = place                      # the venue read from the invitation
         # The personnel go in as a table (Name | Position) and, for a template that still has a {{personnel}} line, as
         # numbered lines too. Whichever the template carries is filled; the other is skipped.
         rows = {"personnel": {"marker": "p_name", "fit": True,           # fit: widths follow the text (spot feedback #181)
@@ -327,7 +437,19 @@ def payload(conn, entry, key, user, owner_label="", positions=False, designation
             rows["personnel"] = {"marker": "p_name", "data": [{"p_name": "", "p_position": ""}], "remove": True}
             blocks = {"personnel": [""]}
         # Spot feedback #158: after the order, a second page without the letterhead, with the routing tables.
-        return td.DocPayload("dpo", "dpo", f"DPO - {title}"[:120], fields, blocks=blocks, rows=rows, extras={"file_copy": True})
+        # The file copy's tables come pre-filled where the app can tell (spot feedback #185/#186): who reviews it, from the
+        # travellers' section, and keywords and issuances read from the invitation. Empty ones are left out of the request.
+        ids = [t["user_id"] for t in dpo_travellers(conn, entry)] or [user["id"]]
+        reviewer = file_copy_reviewer(conn, entry, ids)
+        keywords, issuances = suggest_file_copy((outside or {}).get("invitation"), get_dpo_cites(conn, entry["id"]))
+        extras = {"file_copy": True}
+        if reviewer[0]:
+            extras["reviewer"] = {"name": reviewer[0], "title": reviewer[1]}
+        if keywords:
+            extras["keywords"] = keywords
+        if issuances:
+            extras["issuances"] = issuances
+        return td.DocPayload("dpo", "dpo", f"DPO - {title}"[:120], fields, blocks=blocks, rows=rows, extras=extras)
     if key == "invitation":
         if entry.get("audience") == "bureau":
             invited = "All personnel of the bureau"
@@ -361,6 +483,8 @@ def payload(conn, entry, key, user, owner_label="", positions=False, designation
         return _concept_note(conn, entry, title, me, profile, head_name, head_title, owner_label.strip(), positions)
     if key == "program_flow":
         return _program_flow(entry, title)
+    if key == "notice_of_meeting":
+        return _notice_of_meeting(conn, entry, title, me, profile, head_name, head_title, owner_label.strip(), positions)
     if key == "minutes":
         return _minutes(conn, entry, title, me, profile, head_name, owner_label.strip(), positions)
     raise ValueError("Unknown document.")
@@ -395,6 +519,22 @@ def _concept_note(conn, entry, title, me, profile, head_name, head_title, unit, 
     rows = {"program": {"marker": "pd_day", "data": [{"pd_day": _day_label(i, d), "pd_am": "", "pd_pm": ""}
                                                      for i, d in enumerate(days, 1)]}}
     return td.DocPayload("concept_note", "concept_note", f"Concept Note - {title}"[:120], fields, blocks=blocks, rows=rows)
+
+
+def _notice_of_meeting(conn, entry, title, me, profile, head_name, head_title, unit, positions=False) -> td.DocPayload:
+    """Notice of meeting (spot feedback #189/#192). The app knows the date, time, place, link and who is invited, so those
+    are filled; the agenda is the person's to write. Expected participants from other offices come from the item."""
+    people = describe_people(conn, entry, None, positions)
+    invited = [_line(i, n, d) for i, (n, d) in enumerate(people, 1)] or ["[List who is invited.]"]
+    others = [l for l in get_visitors(conn, entry["id"]).split("\n") if l]
+    invited += [f"{len(people) + i}. {l}" for i, l in enumerate(others, 1)]
+    link = (entry.get("meeting_url") or "").strip()
+    fields = {"date": td.long_date(tz.today_local()), "title": title, "unit_name": unit,
+              "meeting_when": when_text(entry), "venue": where_text(entry), "meeting_link": link or "",
+              "prepared_by": me, "prepared_title": (profile.get("designation") or "") if positions else "",
+              "head_name": head_name.upper() if head_name else BLANK, "head_title": head_title}
+    blocks = {"invited": invited, "agenda": ["1. [first agenda item]", "2. [second agenda item]"]}
+    return td.DocPayload("notice_of_meeting", "notice_of_meeting", f"Notice of Meeting - {title}"[:120], fields, blocks=blocks)
 
 
 MINUTES_PROMPTS = {

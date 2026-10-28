@@ -8,7 +8,8 @@
 {% if draft %}<input type="hidden" name="revision" value="{{ form_values.revision }}">{% endif %}
 <label for="request-purpose">Purpose</label><textarea id="request-purpose" name="purpose" maxlength="2000" required>{{ form_values.purpose if form_values else '' }}</textarea>
 <label for="request-date">Date needed (optional)</label><input id="request-date" type="date" name="date_needed" value="{{ form_values.date_needed or '' if form_values else '' }}">
-<p>Choose up to {{ max_lines }} item lines. Leave unused lines empty.</p>
+<p>Choose up to {{ max_lines }} item lines from the supplies catalog. Each line is a list to pick from, not free text. Leave unused lines empty.</p>
+{% if not items %}<p class="notice" role="status">The supplies catalog has no items yet, so there is nothing to choose. Ask the supplies custodian to add the items, then reload this page.</p>{% endif %}
 {% for i in range(max_lines) %}{% set line = form_values.lines[i] if form_values and i<form_values.lines|length else none %}
 {% if i==5 %}<details class="supply-panel"><summary>Add more items (up to {{ max_lines }} lines)</summary>{% endif %}
 <fieldset class="supply-panel"><legend>Item {{ i+1 }}</legend>
