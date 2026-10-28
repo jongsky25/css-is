@@ -1,5 +1,6 @@
 """Freeze real animal rig reactions at each stage/mood and check reduced motion."""
 import argparse
+import os
 import json
 import re
 import shutil
@@ -9,6 +10,8 @@ from gallery import render
 
 p=argparse.ArgumentParser();p.add_argument('--out',type=Path,required=True);a=p.parse_args();a.out.mkdir(parents=True,exist_ok=True)
 rigs={'dog':('wag','.av-tail','av-wag'),'rabbit':('ear','.av-ear-l','av-earflick'),'bird':('flap','.av-wing-l','av-flap-l'),'turtle':('hide','.av-head','av-retract')}
+rigs.update({'fish':('fin','.av-fin-t','av-fin'),'dolphin':('fin','.av-fin-t','av-fin'),'owl':('turn','.av-head','av-headturn'),'bat':('flap','.av-wing-l','av-flap-l')})
+rigs={k:v for k,v in rigs.items() if k in os.getenv('CSS_AVATAR_BATCH_KINDS','dog,rabbit,bird,turtle').split(',')}
 rows=[]
 with sync_playwright() as pw:
  b=pw.chromium.launch(executable_path=shutil.which('chromium'),args=['--no-sandbox'])
