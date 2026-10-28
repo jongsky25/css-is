@@ -7,6 +7,7 @@
 {% block page_width %}narrow{% endblock %}
 {% block content %}
 {{ avatar_defs() }}
+<script src="/static/js/companion-customizer.js?v=1" defer></script>
 {{ growth_defs() }}
 {{ photo_crop_styles() }}
 <style>
@@ -180,6 +181,7 @@
                value="{{ profile.avatar_name }}" required>
         <p class="hint">Up to {{ name_maxlen }} characters.</p>
       </div>
+      {% include '_companion_customizer.html' %}
     </div>
 
     <section class="panel" aria-labelledby="companion-growth-title">

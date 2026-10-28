@@ -5877,12 +5877,22 @@ def _render_me(request, msg="", err="", form=None):
     finally:
         conn.close()
     kind = (profile or {}).get("avatar_kind") or st.AVATAR_DEFAULT
+    preferences = (profile or {}).get('avatar_wardrobe') or wardrobe.normalize(kind)
+    if form:
+        profile = dict(profile or {})
+        if st.valid_avatar_kind(form.get('avatar_kind')):
+            kind = profile['avatar_kind'] = form['avatar_kind']
+        profile['avatar_name'] = form.get('avatar_name', profile.get('avatar_name', ''))
+        if 'avatar_appearance_mode' in form:
+            preferences = wardrobe.normalize(kind, form.get('avatar_appearance_mode'),
+                                              [form.get('avatar_primary'), form.get('avatar_secondary')])
     return templates.TemplateResponse(request, "me.html", {
         "nav_active": "", "show_scope": False,
         "profile": profile, "has_person": bool(profile and profile.get("rp_id")),
         "initials": _initials(profile.get("person_name") if profile else ""),
         "catalog": st.AVATAR_CATALOG, "name_maxlen": st.AVATAR_NAME_MAXLEN,
-        "wstats": wstats,
+        "wstats": wstats, "wardrobe_preferences": preferences,
+        "wardrobe_modes": wardrobe.MODES, "wardrobe_catalog": wardrobe.CATALOG,
         "ladder": st.avatar_growth_ladder(kind, wstats),
         "growth_how": st.avatar_growth_actions(kind),
         "msg": msg, "err": err, **_birthday_ctx(profile, form), "my_cards": _my_card_count(profile, request),
@@ -5896,6 +5906,20 @@ def me_form(request: Request, msg: str = "", err: str = ""):
     photo, avatar species and pet name — so the one-time /welcome choice is never
     a trap."""
     return _render_me(request, msg=msg, err=err)
+
+
+@app.get("/me/companion-preview", response_class=HTMLResponse)
+def companion_preview(request: Request, kind: str = "plant", stage: int = 1,
+                      mode: str = "seasonal", primary: str = "", secondary: str = ""):
+    if not st.valid_avatar_kind(kind):
+        return HTMLResponse("Choose a listed companion.", status_code=400)
+    try:
+        preferences = wardrobe.validate(kind, mode, [key for key in (primary, secondary) if key])
+    except ValueError as error:
+        return HTMLResponse(str(error), status_code=400)
+    art = templates.env.get_template('_avatars.html').module.avatar_svg(
+        kind, max(1, min(6, stage)), static_preview=True, preferences=preferences)
+    return HTMLResponse(str(art), headers={"Cache-Control": "private, no-store"})
 
 
 @app.get("/me/photo")
@@ -5936,9 +5960,9 @@ async def me_submit(request: Request):
     kind = (p.get("avatar_kind") or "").strip()
     pet_name = (p.get("avatar_name") or "").strip()
     if not st.valid_avatar_kind(kind):
-        return _render_me(request, err="Please pick a companion.")
+        return _render_me(request, err="Please pick a companion.", form=p)
     if not pet_name:
-        return _render_me(request, err="Give your companion a name.")
+        return _render_me(request, err="Give your companion a name.", form=p)
     try:
         bday = _birthday_from_form(p)
     except ValueError as e:
@@ -5954,6 +5978,12 @@ async def me_submit(request: Request):
     conn = get_conn()
     try:
         profile = st.get_user_profile(conn, uid)
+        preferences = None
+        if 'avatar_appearance_mode' in p:
+            try:
+                preferences = wardrobe.from_form(kind, p, (profile or {}).get('avatar_kind'))
+            except ValueError as error:
+                return _render_me(request, err=str(error), form=p)
         if photo:
             # Linked accounts keep their photo on the directory row (so it shows
             # on their people page); everyone else stores it on the account, so
@@ -6004,6 +6034,8 @@ async def me_submit(request: Request):
         if "employee_no" in p:                  # only when the field was on the form it never wipes
             st.set_user_employee_no(conn, uid, p.get("employee_no"))
         st.set_user_avatar(conn, uid, kind, pet_name)
+        if preferences is not None:
+            st.set_avatar_wardrobe(conn, uid, kind, preferences['mode'], preferences['items'])
         _audit(request, conn, "avatar_choose", target_type="user",
                target_id=uid,
                summary=f"set companion to {kind} named '{st.clean_avatar_name(pet_name)}'")
