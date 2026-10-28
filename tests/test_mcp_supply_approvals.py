@@ -38,7 +38,7 @@ REASON='APPROVAL_REASON <script>untrusted</script>'
 
 
 @pytest.fixture
-def pilot(approval_db,app_mod,monkeypatch):
+def pilot(approval_db,app_mod,monkeypatch,unlimited_requests):
     conn,users,units,path,item=approval_db
     monkeypatch.setattr(app_mod,'DB',path)
     for flag in ('CSS_MCP_ENABLED',service.FLAG):monkeypatch.setenv(flag,'1')
