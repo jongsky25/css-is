@@ -29,7 +29,7 @@
   .av-v2 { --av-outline:#815b43; --av-leaf-outline:#41664c; --av-rose-outline:#b46883; }
   svg[data-avatar-mode="personal"] .av-regalia, svg[data-avatar-mode="none"] .av-regalia { display:none; }
   .avwrap { display:inline-block; text-align:center; position:relative;
-            --av-sway:5s; --av-breathe:3.6s; perspective:700px; }
+            --av-sway:7s; --av-breathe:6.4s; perspective:700px; }
   .av-play-btn { display:block; border:0; padding:0; width:100%; background:transparent;
                  color:inherit; cursor:pointer; border-radius:1rem; }
   .av-care-btn, .av-sound-btn, .av-explore-btn { min-width:44px; min-height:44px; }
@@ -50,7 +50,7 @@
   /* the succulent's whole personality is that it does not bother moving */
   .avwrap[data-kind="succulent"] .avstage { animation:none; }
   @keyframes av-sway   { 0%,100%{ transform:rotate(-2deg);} 50%{ transform:rotate(2deg);} }
-  @keyframes av-breathe{ 0%,100%{ transform:scale(1);} 50%{ transform:scale(1.045);} }
+  @keyframes av-breathe{ 0%,35%,100%{ transform:scale(1);} 65%{ transform:scale(1.025);} }
   .avwrap.happy .avstage { animation:av-bounce .6s ease; }
   @keyframes av-bounce { 0%,100%{ transform:translateY(0) scale(1);} 30%{ transform:translateY(-9px) scale(1.06);} 60%{ transform:translateY(0) scale(.97);} }
   .av-spark { opacity:0; }
@@ -63,6 +63,14 @@
   .avwrap[data-interactive]:focus-within .av-bubble { opacity:1; }
   .av-bubble.show { opacity:1; }
 
+  .avwrap[data-kind="dog"] { --av-breathe:5.7s; }
+  .avwrap[data-kind="owl"] { --av-breathe:8.2s; }
+  .avwrap[data-kind="bonsai"] { --av-sway:9.1s; }
+  .avwrap[data-motion-paused="1"] *, .avwrap[data-motion-paused="1"] {
+    animation-play-state:paused !important; transition:none !important;
+  }
+  .av-caring-water .av-leaf { animation:av-leaf-settle 1.8s ease .8s; transform-origin:50% 95%; }
+  @keyframes av-leaf-settle { 0%,100%{transform:rotate(0);} 35%{transform:rotate(3deg);} 70%{transform:rotate(-1.5deg);} }
   /* ---- eyes / part groups (art in _avatars_art.html) -------------------- */
   .av-lid  { transform:scaleY(0); transform-box:fill-box; transform-origin:50% 0; transition:transform .25s; }
   .av-head, .av-tail, .av-ear-l, .av-ear-r, .av-wing-l, .av-wing-r, .av-cap,
@@ -213,7 +221,7 @@
   .av-explore-layer { position:fixed; inset:0; z-index:14; pointer-events:none; }
   .av-explore-pet   { position:fixed; left:0; top:0; display:inline-block; text-align:center;
                       will-change:transform; pointer-events:auto; cursor:pointer;
-                      --av-sway:5s; --av-breathe:3.6s; }
+                      --av-sway:7s; --av-breathe:6.4s; }
   .avwrap.av-away .av-bubble { opacity:0; }
 
   /* ---- drag (wellness hub play area) ------------------------------------- */
@@ -332,7 +340,7 @@
   </defs>
 </svg>
 <script src="/static/js/avatar-audio.js?v=8.12" defer></script>
-<script src="/static/js/avatars.js?v=8.21" defer></script>
+<script src="/static/js/avatars.js?v=8.22" defer></script>
 {% endmacro %}
 
 

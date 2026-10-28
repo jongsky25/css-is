@@ -28,6 +28,65 @@
   var reducedMotion = !!(mq && mq.matches);
   function still() { return reducedMotion; }
 
+  // One visibility policy owns idle/roaming scheduling and CSS playback.
+  var motionWraps = new Set();
+  function motionAllowed(w) {
+    return w.isConnected && !still() && !document.hidden && !w._avOffscreen && !asleep(w);
+  }
+  function stopMotion(w) {
+    w.dataset.motionPaused = '1';
+    ['_avIdleT','_avRoamT','_avGaitT','_avChainT','_avDoT','_avActionT','_avPetT','_avExpT'].forEach(function (key) { clearTimeout(w[key]); w[key] = null; });
+    clearInterval(w._avHeartI);
+    if (w._avStopChase) w._avStopChase();
+    w._avPetting = false;
+    w.classList.remove('av-petting');
+    w.classList.remove.apply(w.classList, ALL_DO.concat(GAITS));
+    if (w._avAway) returnHome(w);
+  }
+  function syncMotion(w) {
+    if (!motionAllowed(w)) { stopMotion(w); return; }
+    if (w.dataset.motionPaused === '0') return;
+    w.dataset.motionPaused = '0';
+    startIdle(w);
+    startRoam(w);
+  }
+  var motionObserver = window.IntersectionObserver ? new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) { entry.target._avOffscreen = !entry.isIntersecting; syncMotion(entry.target); });
+  }) : null;
+  function registerMotion(w) {
+    motionWraps.add(w);
+    w._avOffscreen = !!motionObserver;
+    w.dataset.motionPaused = '1';
+    if (motionObserver) motionObserver.observe(w);
+    syncMotion(w);
+  }
+  function releaseRemovedMotion() {
+    motionWraps.forEach(function (w) {
+      if (w.isConnected) return;
+      stopMotion(w);
+      if (motionObserver) motionObserver.unobserve(w);
+      if (w._avResizeObserver) w._avResizeObserver.disconnect();
+      if (w._avPointerListener) document.removeEventListener('pointermove', w._avPointerListener);
+      motionWraps.delete(w);
+    });
+  }
+  function priorityAction(w, duration) {
+    w._avBusy = Date.now() + duration;
+    clearTimeout(w._avRoamT); clearTimeout(w._avChainT); clearTimeout(w._avGaitT); clearTimeout(w._avDoT);
+    if (w._avStopChase) w._avStopChase();
+    w.classList.remove.apply(w.classList, ALL_DO.concat(GAITS));
+    var head = w.querySelector('.av-head');
+    if (head) head.style.transform = '';
+    clearTimeout(w._avActionT);
+    w._avActionT = setTimeout(function () { if (motionAllowed(w)) startRoam(w); }, duration + 100);
+  }
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden && watchRaf) { cancelAnimationFrame(watchRaf); watchRaf = null; }
+    motionWraps.forEach(syncMotion);
+  });
+  window.addEventListener('pagehide', function () { motionWraps.forEach(stopMotion); });
+  window.addEventListener('pageshow', function () { motionWraps.forEach(syncMotion); });
+
   /* Interaction geometry changes with layout, not with every input event.
    * Cache untransformed positions and translate them by the movement we own.
    * Resize/scroll/SVG replacement invalidate the cache; all queued measurements
@@ -127,6 +186,7 @@
         // to next frame lets intervening animation writes dirty layout again.
         measureGeometry(w);
       });
+      w._avResizeObserver = observer;
       observer.observe(w);
       var play = w.closest(".av-play");
       if (play) observer.observe(play);
@@ -247,7 +307,8 @@
     (function tick() {
       w._avIdleT = setTimeout(function () {
         if (!w.isConnected) return;                    // removed from the page
-        if (still() || document.hidden || asleep(w)) { tick(); return; }
+        if (!motionAllowed(w)) return;
+        if (w._avPetting || w.classList.contains("av-dragging")) { tick(); return; }
         if (w._avBusy && Date.now() < w._avBusy) { tick(); return; }  // mid-walk: gait owns .avstage
         var pick = reps[Math.floor(Math.random() * reps.length)];
         replayClass(w, pick[0], ALL_DO);
@@ -316,7 +377,8 @@
     (function amble() {
       w._avRoamT = setTimeout(function () {
         if (!w.isConnected) return;
-        if (still() || document.hidden || asleep(w) || w._avAway ||
+        if (!motionAllowed(w)) return;
+        if ((w._avBusy && Date.now() < w._avBusy) || w._avPetting || w._avAway ||
             w._avDragMoved || w._avChasing || w.classList.contains("av-dragging")) { amble(); return; }
         var legs = 1, fast = false;
         if (spec.zoom && Math.random() < spec.zoom) { legs = 3; fast = true; }  // zoomies!
@@ -348,7 +410,8 @@
     (function hop() {
       w._avRoamT = setTimeout(function () {
         if (!w.isConnected) return;
-        if (still() || document.hidden || asleep(w)) { hop(); return; }
+        if (!motionAllowed(w)) return;
+        if ((w._avBusy && Date.now() < w._avBusy) || w._avPetting || w.classList.contains("av-dragging")) { hop(); return; }
         var x, y, flip;
         if (swims) {
           var p = fig8[leg++ % fig8.length];
@@ -388,7 +451,7 @@
   }
 
   function launchExplore(w) {
-    if (w._avAway || still()) return;
+    if (w._avAway || !motionAllowed(w)) return;
     var svg = w.querySelector("svg");
     var span = svg && svg.parentElement;
     if (!svg || !span) return;
@@ -450,7 +513,7 @@
       if (overlay && overlay.classList.contains("av-explore-layer")) overlay.remove();
       w.classList.remove("av-away");
     }
-    if (still() || !w.isConnected || !w._avHomeSpan) { restore(); return; }
+    if (still() || document.hidden || w._avOffscreen || !w.isConnected || !w._avHomeSpan) { restore(); return; }
     var r = w._avHomeSpan.getBoundingClientRect();
     holder.style.transition = "transform 1.1s ease-in-out";
     holder.style.transform = "translate(" + Math.round(r.left) + "px," + Math.round(r.top) + "px) scale(1,1)";
@@ -510,7 +573,7 @@
       // after tilting its stage forces a second style/layout flush on each move.
       for (var i = 0; i < wraps.length; i++) {
         var wr = wraps[i];
-        if (!wr.hasAttribute("data-interactive") || asleep(wr) || wr._avAway) continue;
+        if (!wr.hasAttribute("data-interactive") || !motionAllowed(wr) || wr._avAway || wr._avPetting || (wr._avBusy && Date.now() < wr._avBusy)) continue;
         var stage = wr.hasAttribute("data-interactive") ? wr.querySelector(".av-tiltstage") : null;
         var spec = WATCH[wr.dataset.kind];
         var h = spec ? wr.querySelector(".av-head") : null;
@@ -653,6 +716,7 @@
     if (!w || w._avDragMoved || w._avPetted || w._avAway) return;   // drags/pets aren't taps; nobody's home while exploring
     wake(w);                                           // a tap stirs a sleeper
     play("tap", w.dataset.kind);
+    priorityAction(w, 800);
     replayClass(w, "happy");
     bubbleFlash(w, phraseFor(w));
   });
@@ -677,6 +741,8 @@
     var cls = action === "water" ? "av-caring-water" : "av-caring-feed";
     wake(w);                                           // being cared for stirs a sleeper
     play(action, w.dataset.kind);
+    priorityAction(w, 3600);
+    w.classList.remove("happy", "av-pounce");
     replayClass(w, cls, ["av-caring-water", "av-caring-feed"]);
     clearTimeout(w._avCareT);
     w._avCareT = setTimeout(function () { w.classList.remove(cls); }, 3600);
@@ -795,6 +861,8 @@
       w._avPetT = setTimeout(startPet, 450);
     });
     function startPet() {
+      if (!motionAllowed(w)) return;
+      priorityAction(w, 1000);
       w._avPetting = true;
       w.classList.add("av-petting");
       play("pet", w.dataset.kind);
@@ -841,21 +909,27 @@
      * then loses interest a few seconds after the pointer goes still. ------- */
     if (w.hasAttribute("data-chase")) {
       var ptr = null, lastMove = 0, caught = 0, chaseT = null;
-      document.addEventListener("pointermove", function (e) {
-        if (e.pointerType === "touch") return;
+      w._avPointerListener = function (e) {
+        if (e.pointerType === "touch" || !motionAllowed(w)) return;
         ptr = { x: e.clientX, y: e.clientY }; lastMove = Date.now();
-      }, { passive: true });
-      var stopChase = function () {
+        if (!w._avChaseI) w._avStartChase();
+      };
+      document.addEventListener("pointermove", w._avPointerListener, { passive: true });
+      var stopChase = w._avStopChase = function () {
+        clearInterval(w._avChaseI); w._avChaseI = null;
         if (!w._avChasing) return;
         w._avChasing = false;
         w.classList.remove.apply(w.classList, GAITS);
         w.classList.remove("av-chasing");
         w.style.transition = "";
       };
-      chaseT = setInterval(function () {
-        if (!w.isConnected) { clearInterval(chaseT); return; }
+      w._avStartChase = function () {
+        if (w._avChaseI) return;
+        w._avChaseI = setInterval(function () {
+        if (!w.isConnected) { stopChase(); return; }
         var play = w.closest(".av-play");
-        if (!ptr || !play || still() || document.hidden || asleep(w) || w._avAway || w._avPetting ||
+        if (!ptr || !play || !motionAllowed(w) || w._avAway || w._avPetting ||
+            (w._avBusy && Date.now() < w._avBusy && !w._avChasing) ||
             w._avDragMoved || start || Date.now() - lastMove > 5000) { stopChase(); return; }
         var geometry = geometryFor(w), pr = geometry.play;
         if (ptr.x < pr.left - 140 || ptr.x > pr.right + 140 ||
@@ -893,6 +967,7 @@
         if (Math.abs(dy * k) >= .01) pos.y += dy * k;
         clampToPlay(bounds); apply(true);
       }, 80);
+      };
     }
     w.addEventListener("keydown", function (e) {
       if (!e.target.closest(".av-play-btn")) return;
@@ -945,11 +1020,10 @@
       refreshSleep(w);
       // Picker/growth/teaser copies are illustrations, not additional pets.
       if (!w.hasAttribute("data-interactive")) continue;
-      startIdle(w);
-      startRoam(w);
       initDrag(w);
       trackGeometry(w);
       initExplore(w);
+      registerMotion(w);
       checkLevelUp(w);
     }
     if (window.AvatarAudio) window.AvatarAudio.sync();
@@ -957,11 +1031,12 @@
   // re-evaluate bedtime every 5 minutes so the page crosses 9pm/6am live
   setInterval(function () {
     var wraps = document.querySelectorAll(".avwrap[data-kind]");
-    for (var i = 0; i < wraps.length; i++) refreshSleep(wraps[i]);
+    for (var i = 0; i < wraps.length; i++) { refreshSleep(wraps[i]); if (wraps[i].hasAttribute("data-interactive")) syncMotion(wraps[i]); }
   }, 300000);
   if (mq) {
     var motionPreferenceChanged = function (event) {
       reducedMotion = !!event.matches;
+      motionWraps.forEach(syncMotion);
       if (!still()) return;
       // motion turned off mid-session: freeze the movers where they are
       var moves = document.querySelectorAll(".avwrap[data-kind] .avmove");
@@ -987,6 +1062,7 @@
   // pickers/pages that swap avatars in later still get the idle engine
   if (window.MutationObserver) {
     new MutationObserver(function (records) {
+      releaseRemovedMotion();
       var addedAvatar = false, changedArt = false;
       for (var i = 0; i < records.length; i++) {
         var nodes = records[i].addedNodes;
