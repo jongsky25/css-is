@@ -102,6 +102,7 @@ def _complete(c,u,item):
     return a,b,rid,first,second,first_delivery,final_delivery
 
 
+@pytest.mark.usefixtures('unlimited_requests')
 def test_full_scenario_reconciles_and_backup_restores_with_other_app_records(flow_db,tmp_path,monkeypatch):
     c,u,_,path,item=flow_db
     a,b,rid,first,second,first_delivery,final_delivery=_complete(c,u,item)

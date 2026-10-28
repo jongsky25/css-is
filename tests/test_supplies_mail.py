@@ -230,6 +230,7 @@ def test_issue_to_the_custodian_themselves_sends_nothing(approval_db, outbox):
     assert not [x for x in states(c) if x[0] == 'supplies_issue_recorded']
 
 
+@pytest.mark.usefixtures('unlimited_requests')
 def test_delivery_that_fills_a_shortage_emails_only_the_requester_who_gained_stock(approval_db, outbox):
     c, u, _, _, item = approval_db
     sent, send = outbox
@@ -244,6 +245,7 @@ def test_delivery_that_fills_a_shortage_emails_only_the_requester_who_gained_sto
     assert 'Supplies ready' in sent[0]['subject'] and '6 of 7' in sent[0]['body']
 
 
+@pytest.mark.usefixtures('unlimited_requests')
 def test_stock_ready_waits_for_nothing_when_request_was_cancelled(approval_db, outbox):
     c, u, _, _, item = approval_db
     sent, send = outbox
@@ -283,6 +285,7 @@ def digest_sent(monkeypatch):
     return sent
 
 
+@pytest.mark.usefixtures('unlimited_requests')
 def test_digest_lists_warnings_and_requests_to_hand_over_for_each_custodian(approval_db, digest_sent, monkeypatch):
     c, u, _, _, item = approval_db
     monday(monkeypatch)

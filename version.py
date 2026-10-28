@@ -18,12 +18,12 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "9.13"
+APP_VERSION = "9.14"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
-        "version": "9.13",
+        "version": "9.14",
         "date": "October 28, 2026",
         "summary": "My meal requests now explain what each status means.",
         "changes": [
@@ -33,12 +33,21 @@ CHANGELOG = [
         ]
     },
     {
-        "version": "9.12",
+        "version": "9.13",
         "date": "October 28, 2026",
         "summary": "Choose what the home page leaderboard shows.",
         "changes": [
             "The leaderboard on the home page still starts with the top 5, and now has buttons to show the top 10 or everyone.",
             "You can switch it between this month, this quarter and all time, and between your section, your division and the whole bureau, without leaving the home page."
+        ]
+    },
+    {
+        "version": "9.12",
+        "date": "October 28, 2026",
+        "summary": "Supply requests can no longer ask for more than is available.",
+        "changes": [
+            "When you save or send a supply request, you can only ask for as much as is available to request right now. If you ask for more, you are told how many can be requested.",
+            "Items with no stock recorded show as out of stock and cannot be requested until stock is entered."
         ]
     },
     {

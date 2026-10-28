@@ -60,7 +60,7 @@ def test_first_connections_initialize_schema_once_across_threads(app_mod, tmp_pa
 
 
 @pytest.fixture
-def queue_db(approval_db):
+def queue_db(approval_db,unlimited_requests):
     c,u,units,path,item=approval_db
     closed=ready(c,u,item,4);first=issue(c,u,closed,2)['id'];second=issue(c,u,closed,2)['id']
     pending=draft(c,u,item,purpose='Visible pending purpose');submit(c,u,pending)

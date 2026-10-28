@@ -4,6 +4,7 @@ import json
 import supplies as s
 import supplies_permissions as permissions
 import supplies_stock as stock
+from supplies_allocations import requestable
 import tzutil as tz
 from supplies_storage import Conflict, Denied, Invalid, Missing, operation, record, rows, transaction
 
@@ -53,6 +54,24 @@ def _active_items(conn, lines):
             raise Conflict('A requested item is inactive. Choose an active catalog item before saving or submitting.')
 
 
+def _plural(unit, quantity):
+    word = unit.strip().lower()
+    if quantity == 1:
+        return word
+    return word + ('es' if word.endswith(('s', 'x', 'ch', 'sh')) else 's')
+
+
+def _within_requestable(conn, lines, request_id):
+    for line in lines:
+        item = s._item(conn, line['item_id'])
+        most = requestable(conn, item['id'], request_id)
+        if line['requested_quantity'] <= most:
+            continue
+        if most == 0:
+            raise Invalid(f"{item['description']} is out of stock right now and can't be requested.")
+        raise Invalid(f"Only {most} {_plural(item['unit'], most)} of {item['description']} can be requested right now.")
+
+
 def _check_revision(request, revision):
     if request['revision'] != s.integer(revision, 'Request revision', 1):
         raise Conflict('This request changed. Reload and review the latest version.')
@@ -91,6 +110,7 @@ def save_draft_in_transaction(conn, user, fields, *, operation_key, request_id=N
         return prior
     user, identity = requester(conn,user)
     _active_items(conn,values['lines'])
+    _within_requestable(conn,values['lines'],request_id)
     now = tz.now_iso()
     if request_id is None:
         request_id = conn.execute('''INSERT INTO supply_request
@@ -150,6 +170,7 @@ def submit_in_transaction(conn, user, request_id, *, expected_revision, operatio
     lines = rows(conn,'SELECT * FROM supply_request_draft_line WHERE request_id=? AND active=1 ORDER BY id',(request['id'],))
     _fields({**request,'lines':lines})
     _active_items(conn,lines)
+    _within_requestable(conn,lines,request['id'])
     for line in lines:
         item = s._item(conn,line['item_id'])
         if any(line[k+'_snapshot'] != item[k] for k in ('code','description','unit')):

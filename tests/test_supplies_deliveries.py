@@ -52,6 +52,7 @@ def post(c,u,rid,fields,revision=None,op=None):
         expected_revision=revision or rep.get_replenishment(c,u[1],rid)['revision'],operation_key=op or key())
 
 
+@pytest.mark.usefixtures('unlimited_requests')
 def test_two_partial_deliveries_reconcile_incoming_stock_allocations_and_warnings(flow_db):
     c,u,_,_,item=flow_db
     a=ready(c,u,item,6);b=ready(c,u,item,7)

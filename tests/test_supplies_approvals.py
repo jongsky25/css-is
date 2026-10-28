@@ -24,7 +24,6 @@ def approval_db(request_db):
     c,u,units,path,item=request_db
     s.grant_role(c,u[0],u[3]['id'],'request_approver',unit_id=units[0],operation_key=key())
     s.grant_role(c,u[0],u[4]['id'],'request_approver',unit_id=units[0],operation_key=key())
-    stock.post_opening(c,u[1],item,{'quantity':'10','effective_date':'2026-10-19','reason':'Synthetic opening'},expected_revision=1,operation_key=key())
     return c,u,units,path,item
 
 
@@ -38,6 +37,7 @@ def decide(c,u,r,quantity=None,**kw):
                 submitted_revision=kw.pop('submitted_revision',entry['current_revision']),operation_key=kw.pop('operation_key',key()),**kw)
 
 
+@pytest.mark.usefixtures('unlimited_requests')
 def test_reduced_approval_and_oldest_first_shortage_no_stock_change(approval_db):
     c,u,_,_,item=approval_db
     a=draft(c,u,item,lines=[{'item_id':item,'requested_quantity':'8'}]);submit(c,u,a)
@@ -97,6 +97,7 @@ def test_invalid_approval_is_atomic(approval_db,change):
     assert c.execute('SELECT COUNT(*) FROM supply_reservation').fetchone()[0]==0
 
 
+@pytest.mark.usefixtures('unlimited_requests')
 def test_return_edit_remove_readd_lines_resubmit_keeps_old_evidence(approval_db):
     c,u,_,_,item=approval_db;other=create(c,u[1],code='SYN-PEN',unit='Piece')['id']
     r=draft(c,u,item,lines=[{'item_id':item,'requested_quantity':'3'},{'item_id':other,'requested_quantity':'2'}]);submit(c,u,r)
@@ -181,6 +182,7 @@ def test_two_simultaneous_approvers_only_one_decides(approval_db):
     assert allocations.availability(c,item)['reserved_quantity']==3
 
 
+@pytest.mark.usefixtures('unlimited_requests')
 def test_simultaneous_requests_never_over_reserve(approval_db):
     c,u,_,path,item=approval_db;ids=[draft(c,u,item,lines=[{'item_id':item,'requested_quantity':'8'}]) for _ in range(2)]
     sources=[]
@@ -198,6 +200,7 @@ def test_simultaneous_requests_never_over_reserve(approval_db):
     assert stock.stock_totals(c,u[1],item)['on_hand']==10
 
 
+@pytest.mark.usefixtures('unlimited_requests')
 def test_zero_approval_unrecorded_stock_and_allocator_repeat(approval_db):
     c,u,_,_,item=approval_db;other=create(c,u[1],code='NO-STOCK')['id']
     a=draft(c,u,other);submit(c,u,a);decide(c,u,a)
@@ -269,6 +272,7 @@ def test_revoked_approver_cannot_replay_successful_decision(approval_db):
     assert allocations.availability(c,item)['reserved_quantity']==3
 
 
+@pytest.mark.usefixtures('unlimited_requests')
 def test_shared_allocator_uses_older_demand_after_receipt_on_next_approval(approval_db):
     c,u,_,_,item=approval_db
     ids=[]
@@ -281,6 +285,7 @@ def test_shared_allocator_uses_older_demand_after_receipt_on_next_approval(appro
     assert allocations.availability(c,item)=={'on_hand':14,'reserved_quantity':14,'available':0}
 
 
+@pytest.mark.usefixtures('unlimited_requests')
 def test_outstanding_approved_units_are_fixed_without_stock_history(approval_db):
     c,u,_,_,_=approval_db;item=create(c,u[1],code='UNPOSTED')['id']
     r=draft(c,u,item);submit(c,u,r);decide(c,u,r)
