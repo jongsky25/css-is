@@ -1,0 +1,23 @@
+{
+  "steady_input_live_geometry_reads": 0,
+  "resize_scroll_clamp": {
+    "left": 127.859375,
+    "top": 197,
+    "right": 257.859375,
+    "bottom": 419.796875,
+    "width": 258,
+    "height": 420
+  },
+  "geometry_listeners_before": {
+    "scroll": 1,
+    "resize": 3,
+    "pagehide": 4
+  },
+  "geometry_listeners_after_20_evaluations": {
+    "scroll": 1,
+    "resize": 3,
+    "pagehide": 4
+  },
+  "shared_cache_state_retained": true,
+  "errors": []
+}

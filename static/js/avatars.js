@@ -21,6 +21,8 @@
  */
 (function () {
   "use strict";
+  if (window.__cssAvatarEngine) return;
+  window.__cssAvatarEngine = true;
 
   var mq = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
   // Read browser preference once; input and timer callbacks use event-updated
@@ -73,6 +75,7 @@
   }
   function priorityAction(w, duration) {
     w._avBusy = Date.now() + duration;
+    w._avPartBusyUntil = w._avBusy;
     clearTimeout(w._avRoamT); clearTimeout(w._avChainT); clearTimeout(w._avGaitT); clearTimeout(w._avDoT);
     if (w._avStopChase) w._avStopChase();
     w.classList.remove.apply(w.classList, ALL_DO.concat(GAITS));
@@ -315,6 +318,7 @@
         if (w._avBusy && Date.now() < w._avBusy) { tick(); return; }  // mid-walk: gait owns .avstage
         var pick = reps[Math.floor(Math.random() * reps.length)];
         w._avBusy = Date.now() + pick[1] + 80; // head/part gestures own their transforms until recovery
+        w._avPartBusyUntil = w._avBusy;
         replayClass(w, pick[0], ALL_DO);
         clearTimeout(w._avDoT);
         w._avDoT = setTimeout(function () { w.classList.remove(pick[0]); }, pick[1] + 80);
@@ -577,10 +581,11 @@
       // after tilting its stage forces a second style/layout flush on each move.
       for (var i = 0; i < wraps.length; i++) {
         var wr = wraps[i];
-        if (!wr.hasAttribute("data-interactive") || !motionAllowed(wr) || wr._avAway || wr._avPetting || (wr._avBusy && Date.now() < wr._avBusy)) continue;
+        if (!wr.hasAttribute("data-interactive") || !motionAllowed(wr) || wr._avAway || wr._avPetting) continue;
         var stage = wr.hasAttribute("data-interactive") ? wr.querySelector(".av-tiltstage") : null;
         var spec = WATCH[wr.dataset.kind];
-        var h = spec ? wr.querySelector(".av-head") : null;
+        var partsBusy = wr._avPartBusyUntil && now < wr._avPartBusyUntil;
+        var h = spec && !partsBusy ? wr.querySelector(".av-head") : null;
         var geometry = geometryFor(wr);
         var sr = stage ? positionedBox(wr, geometry, geometry.box) : null;
         var r = h ? positionedBox(wr, geometry, geometry.head) : null;

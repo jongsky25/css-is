@@ -110,3 +110,19 @@ Normal CI uses the explicitly scoped [application suite](application-suite-selec
 The existing zero-failure/zero-skip gate remains intact. Dedicated avatar CI still
 executes current functional/browser and full performance checks; disabled archived
 experiments are not launched. Full integrated performance acceptance is pending.
+
+### Hosted pointer/idempotence corrections
+
+The expanded nine-browser regression group found two genuine motion regressions:
+20 script evaluations added 20 pagehide listeners, and chase arbitration could
+leave the outer lean tilted on pointer exit. The engine is now idempotent; head
+gestures have their own priority deadline, while the separate outer lean can
+settle normally. Thirty-five geometry/motion/pointer/customizer/audio tests pass,
+including the existing 20-reload and owl/cat/dog/bird pointer checks. Original
+hosted failures and their exact archive hashes remain in hosted-development/.
+
+The long performance cohorts now start only after functional acceptance passes.
+A skipped or cancelled performance phase is never a pass. Runtime and application
+matrix phases still run independently after that prerequisite, with matched
+before/after hosts. Established portable review packaging retains numeric/visual
+files in downloadable parts; all original compressed traces remain in raw artifacts.

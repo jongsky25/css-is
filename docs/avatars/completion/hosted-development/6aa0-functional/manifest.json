@@ -1,0 +1,8 @@
+{
+  "run": 40619249345,
+  "source": "6aa0bf6",
+  "artifact": 12786388895,
+  "sha256": "1b661e02c2e73100694be5a15897bcbe689158ec4b672b745ae8c3d2c3b8e7e6",
+  "findings": "Functional browser regressions exposed script reload pagehide-listener growth and stale lean after chase. Both are fixed; 35 local regressions pass. Original failures stay intact.",
+  "acceptance": false
+}
