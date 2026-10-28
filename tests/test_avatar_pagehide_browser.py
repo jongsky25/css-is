@@ -19,11 +19,19 @@ def test_pagehide_cleanup(baseline_server):
         context.add_cookies([cookie]);context.add_init_script(PROBE)
         page=context.new_page()
         page.goto(origin+'/?view=me');page.wait_for_timeout(500)
-        before=page.evaluate("document.querySelector('.avwrap[data-interactive]').getAnimations({subtree:true}).filter(a=>a.playState==='running').length")
+        before=page.evaluate("""()=>{const w=document.querySelector('.avwrap[data-interactive]');
+          window.cachedAvatarAnimations=w.getAnimations({subtree:true}).filter(a=>a.playState==='running');
+          return cachedAvatarAnimations.length;}""")
         assert before>0
         page.evaluate("window.dispatchEvent(new PageTransitionEvent('pagehide',{persisted:true}))")
-        preserved=page.evaluate("document.querySelector('.avwrap[data-interactive]').getAnimations({subtree:true}).filter(a=>a.playState==='running').length")
-        assert preserved==before, 'Cached-page animations must survive'
+        preserved=page.evaluate("""()=>{const w=document.querySelector('.avwrap[data-interactive]');
+          const animations=w.getAnimations({subtree:true});
+          return {paused:w.dataset.motionPaused==='1',running:animations.filter(a=>a.playState==='running').length,
+            retained:cachedAvatarAnimations.every(a=>animations.includes(a)&&a.playState==='paused')};}""")
+        assert preserved=={'paused':True,'running':0,'retained':True}, preserved
+        page.evaluate("window.dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true}))")
+        page.wait_for_function("document.querySelector('.avwrap[data-interactive]').dataset.motionPaused==='0'")
+        assert page.evaluate("cachedAvatarAnimations.every(a=>a.playState==='running')"), 'Cached-page animations must resume'
         page.evaluate('''()=>{const element=document.createElement('div');element.id='outside-avatar-animation';document.body.append(element);
           element.animate([{opacity:0},{opacity:1}],{duration:1000,iterations:Infinity});
           window.addEventListener('pagehide',event=>sessionStorage.setItem('avatar-cleanup-probe',JSON.stringify({persisted:event.persisted,

@@ -40,3 +40,14 @@ strict offline AI evidence, dependency audits, version check, fresh backup and
 live-version verification. None of those safeguards are bypassed. Use a normal
 revert commit and a fresh version/cache bump for rollback. Leave the additive
 columns unused rather than dropping or clearing saved preferences or care data.
+
+## Navigation contract correction
+
+The first hosted avatar job stopped after 123 passes on an imported page-hide
+assertion that expected cached pages to keep running animations. That conflicts
+with the shared visibility policy. The current test instead proves that persisted
+page-hide pauses and retains the same animation objects, persisted page-show
+resumes those objects, and real navigation stops only avatar motion while leaving
+an unrelated animation alone. The corrected local case passes. Production JS is
+unchanged by this test correction; the original failure is retained under
+development/. Hosted acceptance is rerun and remains required.
