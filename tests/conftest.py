@@ -88,6 +88,25 @@ def real_application_clock(monkeypatch):
     monkeypatch.setattr(tz, "now_local", _REAL_NOW_LOCAL)
 
 
+@pytest.fixture(autouse=True)
+def isolated_application_reader(monkeypatch):
+    """Own the shared reader even for legacy clients with custom DB fixtures."""
+    import sys
+    app_mod = sys.modules.get("app")
+    if app_mod is None:
+        yield
+        return
+    from sqlite_reader import SQLiteReader
+    reader = SQLiteReader()
+    monkeypatch.setattr(app_mod, "_read_worker", reader)
+    try:
+        yield
+    finally:
+        # A lifespan startup may replace the fixture's reader.
+        app_mod._read_worker.close()
+        reader.close()
+
+
 PW = "Test1234!"
 ROLE_USERS = {
     "viewer":          "viewer@test.local",
@@ -184,11 +203,6 @@ def app_mod(reference_database, monkeypatch):
         st.set_setting(_c, "travel.review_required", "0")
         _c.commit(); _c.close()
         monkeypatch.setattr(app_mod, "DB", test_db)
-        # Lifespan tests close the application reader. Keep that lifecycle local
-        # to this test, just like its database, instead of poisoning later clients.
-        from sqlite_reader import SQLiteReader
-        reader = SQLiteReader()
-        monkeypatch.setattr(app_mod, "_read_worker", reader)
         monkeypatch.setattr(monitoring, "LOG_PATH", os.path.join(directory, "requests.log"))
         # Test-local snapshots prevent direct cache mutation leaking into later cases.
         monkeypatch.setattr(app_mod, "_atoms_state", dict(
@@ -205,9 +219,6 @@ def app_mod(reference_database, monkeypatch):
         try:
             yield app_mod
         finally:
-            # Startup may replace the fixture reader; close both owners.
-            app_mod._read_worker.close()
-            reader.close()
             st.basic_status_clear_cache()
 
 @pytest.fixture(autouse=True)
