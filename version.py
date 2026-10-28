@@ -18,10 +18,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "9.07"
+APP_VERSION = "9.08"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "9.08",
+        "date": "October 28, 2026",
+        "summary": "A companion leaderboard to encourage the wellness break.",
+        "changes": [
+            "The home page now shows this month's top companions and where yours stands, with a link to the full list.",
+            "The full leaderboard lets you compare your section, your division or the whole bureau, over this month, this quarter or all time.",
+            "Companions appear by their pet name only. Points come from wellness breaks taken, reflections and full weeks, with the care streak and badges shown beside them."
+        ]
+    },
     {
         "version": "9.07",
         "date": "October 28, 2026",

@@ -893,6 +893,24 @@
   </section>
   {% endif %}
 
+  {# ---------------- the companion leaderboard (spot feedback #196) ---------------- #}
+  {% if lb and lb.total %}
+  <section class="oc-card" style="margin-top:1.4rem;" data-tour="oc-leaderboard">
+    <h2>Companion leaderboard <span class="meta">· {{ lb.period_label|lower }}</span></h2>
+    <p class="sub">Take your wellness break and care for your companion to climb.
+      {% if lb.me %}You are <strong>#{{ lb.me.rank }}</strong> of {{ lb.total }}.{% endif %}</p>
+    <ol class="lb-home" style="list-style:none;padding:0;margin:.4rem 0 .8rem">
+      {% for r in lb.shown %}
+      <li style="display:flex;gap:.7rem;padding:.3rem 0;border-bottom:1px solid var(--line);{{ 'font-weight:700' if r.is_me }}">
+        <span style="min-width:2rem;text-align:right">#{{ r.rank }}</span>
+        <span style="flex:1">{{ r.pet }}{% if r.is_me %} <span class="badge">You</span>{% endif %} <small class="muted">· {{ r.stage_name }}</small></span>
+        <span>{{ r.points }} pts</span></li>
+      {% endfor %}
+    </ol>
+    <a class="btn ghost" href="/wellness/leaderboard">See everyone · all periods and groups</a>
+  </section>
+  {% endif %}
+
   {# ---------------- the three doors ---------------- #}
   <div class="doors">
     <a class="door" href="{{ '/approvals#wellness' if d and d.approvals and d.approvals.wellness else '/wellness' }}">

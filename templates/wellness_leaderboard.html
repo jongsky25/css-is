@@ -1,0 +1,52 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header, empty_state %}
+{% block title %}Companion leaderboard{% endblock %}
+{% block content %}
+{{ page_header("Companion leaderboard", "Every companion, by pet name. Taking your wellness break and caring for your companion move it up.") }}
+<style>
+  .lb-pick { display:flex; gap:1.4rem; flex-wrap:wrap; margin:.4rem 0 1rem; }
+  .lb-pick div { display:flex; gap:.4rem; flex-wrap:wrap; align-items:center; }
+  .lb-pick b { color:var(--soft); font-size:.78rem; text-transform:uppercase; letter-spacing:.04em; margin-right:.2rem; }
+  .lb-pill { border:1px solid var(--line); border-radius:999px; padding:.25rem .8rem; font-size:.85rem; text-decoration:none; color:var(--ink); background:var(--surface); }
+  .lb-pill[aria-current="true"] { background:var(--accent); color:#fff; border-color:var(--accent); font-weight:700; }
+  .lb-tbl td.num, .lb-tbl th.num { text-align:right; font-variant-numeric:tabular-nums; }
+  .lb-tbl tr.me { background:color-mix(in srgb, var(--accent) 10%, transparent); font-weight:700; }
+  .lb-note { color:var(--soft); font-size:.82rem; margin-top:.8rem; }
+</style>
+
+<div class="lb-pick">
+  <div role="group" aria-label="Period"><b>Period</b>
+    {% for k, label in periods %}<a class="lb-pill" href="?period={{ k }}&scope={{ b.scope }}" {% if k == b.period %}aria-current="true"{% endif %}>{{ label }}</a>{% endfor %}</div>
+  <div role="group" aria-label="Who to compare"><b>Compare with</b>
+    {% for k, label in b.scope_options %}<a class="lb-pill" href="?period={{ b.period }}&scope={{ k }}" {% if k == b.scope %}aria-current="true"{% endif %}>{{ label }}</a>{% endfor %}</div>
+</div>
+
+{% if b.me %}<p><strong>You are #{{ b.me.rank }} of {{ b.rows|length }}</strong> · {{ b.period_label|lower }} · {{ b.scope_label|lower }}
+  — {{ b.me.points }} point{{ '' if b.me.points == 1 else 's' }}.</p>{% endif %}
+
+{% if b.rows %}
+<div class="table-wrap"><table class="list lb-tbl">
+  <caption class="sr-only">Companion leaderboard, {{ b.period_label|lower }}, {{ b.scope_label|lower }}</caption>
+  <thead><tr><th class="num">#</th><th>Companion</th><th>Stage</th><th class="num">Points</th><th class="num">Breaks</th>
+    <th class="num" title="Weeks in a row with a completed break">Break streak</th>
+    <th class="num" title="Days in a row you cared for your companion">Care streak</th><th class="num">Badges</th></tr></thead>
+  <tbody>
+  {% for r in b.rows %}
+  <tr class="{{ 'me' if r.is_me }}">
+    <td class="num">{{ r.rank }}</td>
+    <td>{{ r.pet }}{% if r.pet != r.species %} <small class="muted">({{ r.species }})</small>{% endif %}{% if r.is_me %} <span class="badge">You</span>{% endif %}</td>
+    <td>{{ r.stage_name }}</td>
+    <td class="num">{{ r.points }}</td><td class="num">{{ r.breaks }}</td>
+    <td class="num">{{ r.streak }}</td><td class="num">{{ r.care }}</td><td class="num">{{ r.badges }}</td>
+  </tr>
+  {% endfor %}
+  </tbody></table></div>
+{% else %}{{ empty_state("No companions here yet.", "Nobody active is in this group.", "🌱") }}{% endif %}
+
+<p class="lb-note">Points: a completed break +10, a reflection +5, a week with the full 2 hours +5.
+  {% if b.period == "all" %}All time also counts +2 for each week of your current break streak, so it matches your hub.{% else %}
+  A month or quarter counts only what was earned in it. Break streak and stage always reflect everything so far.{% endif %}
+  Ties go to the longer care streak, then to more badges. People appear by their companion's name only. Everyone can take part:
+  the 2-hour weekly break is the office's wellness entitlement (DM 2025-0135).</p>
+<p><a href="/wellness">← My wellness break</a></p>
+{% endblock %}
