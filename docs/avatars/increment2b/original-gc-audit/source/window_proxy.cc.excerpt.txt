@@ -1,0 +1,47 @@
+From line 71:
+71: void WindowProxy::ClearForNavigation() {
+72:   DisposeContext(Lifecycle::kGlobalObjectIsDetached, kFrameWillBeReused);
+73: }
+74: 
+75: void WindowProxy::ClearForSwap() {
+76:   DisposeContext(Lifecycle::kGlobalObjectIsDetached, kFrameWillNotBeReused);
+77: }
+78: 
+79: void WindowProxy::ClearForV8MemoryPurge() {
+80:   DisposeContext(Lifecycle::kV8MemoryIsForciblyPurged, kFrameWillNotBeReused);
+81: }
+82: 
+83: v8::Local<v8::Object> WindowProxy::GetGlobalProxy() {
+84:   return global_proxy_.Get(isolate_);
+85: }
+86: 
+87: v8::Local<v8::Object> WindowProxy::ReleaseGlobalProxy() {
+88:   DCHECK(lifecycle_ == Lifecycle::kContextIsUninitialized ||
+89:          lifecycle_ == Lifecycle::kGlobalObjectIsDetached);
+90: 
+91:   // Make sure the global object was detached from the proxy by calling
+92:   // ClearForSwap().
+93:   DLOG_IF(FATAL, is_global_object_attached_)
+94:       << "Context not detached by calling ClearForSwap()";
+95: 
+96:   v8::Local<v8::Object> global_proxy = global_proxy_.Get(isolate_);
+97:   global_proxy_.Reset();
+98:   return global_proxy;
+99: }
+100: 
+101: void WindowProxy::SetGlobalProxy(v8::Local<v8::Object> global_proxy) {
+102:   DCHECK_EQ(lifecycle_, Lifecycle::kContextIsUninitialized);
+103: 
+104:   CHECK(global_proxy_.IsEmpty());
+105:   // Only re-initialize the window proxy if it was previously initialized, i.e.
+106:   // it was previously scripted or ran script.
+107:   if (!global_proxy.IsEmpty()) {
+108:     global_proxy_.Reset(isolate_, global_proxy);
+109:     // Advance the lifecycle past uninitialized; things like `UpdateDocument()`
+110:     // use this as a signal to reinitialize the v8::Context and associate it
+111:     // with the global proxy.
+112:     lifecycle_ = Lifecycle::kGlobalObjectIsDetached;
+113:   }
+114: }
+115: 
+116: // Create a new environment and setup the global object.

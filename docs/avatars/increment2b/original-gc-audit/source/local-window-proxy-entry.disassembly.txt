@@ -1,0 +1,39 @@
+
+/workspace/scratch/avatar-runtime/root/usr/lib/chromium/chromium:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+000000000ef965e0 <getaddrinfo@@Base+0x1ff0bf0>:
+     ef965e0:	f3 0f 1e fa          	endbr64
+     ef965e4:	55                   	push   %rbp
+     ef965e5:	48 89 e5             	mov    %rsp,%rbp
+     ef965e8:	41 57                	push   %r15
+     ef965ea:	41 56                	push   %r14
+     ef965ec:	41 55                	push   %r13
+     ef965ee:	41 54                	push   %r12
+     ef965f0:	53                   	push   %rbx
+     ef965f1:	48 83 ec 38          	sub    $0x38,%rsp
+     ef965f5:	89 f3                	mov    %esi,%ebx
+     ef965f7:	49 89 fe             	mov    %rdi,%r14
+     ef965fa:	64 48 8b 04 25 28 00 	mov    %fs:0x28,%rax
+     ef96601:	00 00 
+     ef96603:	48 89 45 d0          	mov    %rax,-0x30(%rbp)
+     ef96607:	48 c7 47 30 00 00 00 	movq   $0x0,0x30(%rdi)
+     ef9660e:	00 
+     ef9660f:	8b 47 20             	mov    0x20(%rdi),%eax
+     ef96612:	83 f8 01             	cmp    $0x1,%eax
+     ef96615:	74 12                	je     ef96629 <getaddrinfo@@Base+0x1ff0c39>
+     ef96617:	83 f8 02             	cmp    $0x2,%eax
+     ef9661a:	0f 85 74 03 00 00    	jne    ef96994 <getaddrinfo@@Base+0x1ff0fa4>
+     ef96620:	41 89 5e 20          	mov    %ebx,0x20(%r14)
+     ef96624:	e9 6b 03 00 00       	jmp    ef96994 <getaddrinfo@@Base+0x1ff0fa4>
+     ef96629:	49 63 46 24          	movslq 0x24(%r14),%rax
+     ef9662d:	4c 8d 2d 0c 53 b8 04 	lea    0x4b8530c(%rip),%r13        # 13b1b940 <__data_start@@Base+0x2b940>
+     ef96634:	48 c1 e0 03          	shl    $0x3,%rax
+     ef96638:	49 23 45 00          	and    0x0(%r13),%rax
+     ef9663c:	48 8b 48 08          	mov    0x8(%rax),%rcx
+     ef96640:	48 89 4d a8          	mov    %rcx,-0x58(%rbp)
+     ef96644:	48 8b 91 28 02 00 00 	mov    0x228(%rcx),%rdx
+     ef9664b:	48 89 55 b0          	mov    %rdx,-0x50(%rbp)
+     ef9664f:	48                   	rex.W

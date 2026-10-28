@@ -1,0 +1,4 @@
+0000000004fde210 t v8::Isolate::ContextDisposedNotification(bool)
+00000000051184b0 t v8::internal::Isolate::CheckDetachedContextsAfterGC()
+000000000ef965e0 t blink::LocalWindowProxy::DisposeContext(blink::WindowProxy::Lifecycle, blink::WindowProxy::FrameReuseStatus)
+000000000fd46800 t blink::ScriptState::DisposePerContextData()

@@ -1,0 +1,77 @@
+From line 171:
+171: void LocalWindowProxy::DisposeContext(Lifecycle next_status,
+172:                                       FrameReuseStatus frame_reuse_status) {
+173:   // Clear the deferred callback to prevent it from carrying over to a future
+174:   // context initialization.
+175:   abort_script_execution_callback_ = nullptr;
+176:   DCHECK(next_status == Lifecycle::kV8MemoryIsForciblyPurged ||
+177:          next_status == Lifecycle::kGlobalObjectIsDetached ||
+178:          next_status == Lifecycle::kFrameIsDetached ||
+179:          next_status == Lifecycle::kFrameIsDetachedAndV8MemoryIsPurged);
+180: 
+181:   // If the current lifecycle is kV8MemoryIsForciblyPurged, next status should
+182:   // be either kFrameIsDetachedAndV8MemoryIsPurged, or kGlobalObjectIsDetached.
+183:   // If the former, |global_proxy_| should become weak, and if the latter, the
+184:   // necessary operations are already done so can return here.
+185:   if (lifecycle_ == Lifecycle::kV8MemoryIsForciblyPurged) {
+186:     DCHECK(next_status == Lifecycle::kGlobalObjectIsDetached ||
+187:            next_status == Lifecycle::kFrameIsDetachedAndV8MemoryIsPurged);
+188:     lifecycle_ = next_status;
+189:     return;
+190:   }
+191: 
+192:   if (lifecycle_ != Lifecycle::kContextIsInitialized)
+193:     return;
+194: 
+195:   ScriptState::Scope scope(script_state_);
+196:   v8::Local<v8::Context> context = script_state_->GetContext();
+197:   // The embedder could run arbitrary code in response to the
+198:   // willReleaseScriptContext callback, so all disposing should happen after
+199:   // it returns.
+200:   GetFrame()->Client()->WillReleaseScriptContext(context, world_->GetWorldId());
+201:   CHECK_EQ(GetIsolate(), script_state_->GetIsolate());
+202:   MainThreadDebugger::Instance(GetIsolate())
+203:       ->ContextWillBeDestroyed(script_state_);
+204:   if (next_status == Lifecycle::kV8MemoryIsForciblyPurged ||
+205:       next_status == Lifecycle::kGlobalObjectIsDetached) {
+206:     // Clean up state on the global proxy, which will be reused.
+207:     v8::Local<v8::Object> global = context->Global();
+208:     if (!global_proxy_.IsEmpty()) {
+209:       CHECK(global_proxy_ == global);
+210:       CHECK(V8DOMWrapper::CheckNativeInfoForGlobal(
+211:           GetIsolate(), global, V8Window::GetWrapperTypeInfo()));
+212:     }
+213:     auto* window = GetFrame()->DomWindow();
+214:     V8DOMWrapper::ClearNativeInfo(GetIsolate(), global,
+215:                                   V8Window::GetWrapperTypeInfo());
+216:     script_state_->World().DomDataStore().ClearIfEqualTo(window, global);
+217: #if DCHECK_IS_ON()
+218:     HeapVector<Member<DOMWrapperWorld>> all_worlds;
+219:     DOMWrapperWorld::AllWorldsInIsolate(script_state_->GetIsolate(),
+220:                                         all_worlds);
+221:     for (auto& world : all_worlds) {
+222:       DCHECK(!world->DomDataStore().EqualTo(window, global));
+223:     }
+224: #endif  // DCHECK_IS_ON()
+225:     script_state_->DetachGlobalObject();
+226: #if DCHECK_IS_ON()
+227:     DidDetachGlobalObject();
+228: #endif
+229:   }
+230: 
+231:   script_state_->DisposePerContextData();
+232:   // It's likely that disposing the context has created a lot of
+233:   // garbage. Notify V8 about this so it'll have a chance of cleaning
+234:   // it up when idle.
+235:   V8GCForContextDispose::Instance().NotifyContextDisposed(
+236:       script_state_->GetIsolate(), GetFrame()->IsMainFrame(),
+237:       frame_reuse_status);
+238: 
+239:   DCHECK_EQ(lifecycle_, Lifecycle::kContextIsInitialized);
+240:   lifecycle_ = next_status;
+241: }
+242: 
+243: void LocalWindowProxy::Initialize() {
+244:   TRACE_EVENT2("v8", "LocalWindowProxy::Initialize", "IsMainFrame",
+245:                GetFrame()->IsMainFrame(), "IsOutermostMainFrame",
+246:                GetFrame()->IsOutermostMainFrame());

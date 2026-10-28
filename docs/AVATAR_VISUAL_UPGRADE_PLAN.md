@@ -25,6 +25,30 @@ seasonal administration, and accessibility behavior.
 A phase fails if its visuals remain essentially the same except for color changes,
 or if it exceeds a performance gate. Fix or reduce complexity before expanding it.
 
+## Original failed-GC offline audit — disposal witness is missing
+
+[Latest report](avatars/increment2b/original-gc-audit/REPORT.md), [assessment](avatars/increment2b/original-gc-audit/assessment.json)
+and [prepared minimal probe](avatars/increment2b/original-gc-audit/NEXT_PROBE.md). Zero new browser
+measurements. All **145** original hashes verify; the original failed native audit
+reproduces exactly. **36 focused tests pass.** No failed result is rescued.
+
+The failed probe runs natural marking, weak processing and observed sweeping.
+Both probes have 21 completed shutdown calls/six pagehide markers/six beacon receipts
+before first marking. The passing probe returns five labelled generations before
+its second major, so a universal second-GC requirement is insufficient. Receiver
+joins remain exact 1,536; source-labelled page reclamation is the failing prerequisite.
+
+Pinned source distinguishes proxy disposal, ScriptState cleanup and notification
+from Document shutdown. The old capture lacks these call records and retaining
+edges. The context-notification trace event is conditional; its absence does not
+prove notification was skipped. Marked proxy counts are not root/context identities.
+
+Next implement/validate/freeze the prepared four-function native disposal witness:
+proxy lifecycle/reuse args, nested ScriptState disposal, V8 notification and GC
+boundary. No broad handle hooks, object-field reads, snapshots, Runtime subscription,
+collection requests or repeated per-slot startup RPC loop. No new collector has
+run. No supported product fix, qualification, 2B acceptance, merge or deployment.
+
 ## Uninjected GC comparison — low retention in both factors
 
 [Latest report](avatars/increment2b/uninjected-gc-contrast/REPORT.md) and
@@ -111,7 +135,7 @@ active measurement, product change, candidate promotion, acceptance or deploymen
 ## Application observer calibration — fresh native prerequisite blocked
 
 [Latest report](avatars/increment2b/application-observer-calibration/REPORT.md) and
-[run40532187252](https://github.com/jongsky25/css-is/actions/runs/40532187252):
+[run 40532187252](https://github.com/jongsky25/css-is/actions/runs/40532187252):
 frozen lossless transport 9e47c14 passes **80 cloud/local preflight and 102 expanded
 local analysis tests**, but fresh full native qualification fails source-labelled
 natural page returns in the first probe. Both probes retain 1,536 exact joins and
@@ -1008,7 +1032,7 @@ workflow run; hosted results are unavailable and the cause is not established.
 See the [current report](avatars/increment2b/REPORT.md). GitHub did start the earlier
 workflows; the commit-run connector returned empty lists. Direct run/job lookup
 reveals missing Chromium154 packages caused installation failure. Workflow65f1e16
-uses exact Chromium156 with fresh before/current baselines, validates all test
+uses exact Chromium 156 with fresh before/current baselines, validates all test
 results, continues independent checks, and adds whole-runtime old/current traces.
 Run40247047928 has passed setup and13 driver tests and is executing four sequential
 phases. Final acceptance awaits all raw artifacts. Product unchanged atc2f404f;
@@ -1018,7 +1042,7 @@ no main merge/deployment. Historical154 results remain separate and unaltered.
 ### Complete hosted outcome and memory attribution — 2026-10-26
 
 Run40247047928 completed on harness65f1e16, unchanged productc2f404f,
-Chromium156.0.8078.47. Audit40256359917 independently verified all raw cohorts,
+Chromium 156.0.8078.47. Audit40256359917 independently verified all raw cohorts,
 source identities and controls. Functional, focused and whole-runtime phases pass.
 All40 matrix samples completed. Current callback maxima across focused/runtime
 traces are3.257/4.079ms; framep95 stays16.7–16.8ms. No50ms waiver.

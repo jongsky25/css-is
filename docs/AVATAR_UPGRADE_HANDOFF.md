@@ -1,8 +1,8 @@
 # Avatar upgrade: new-chat handoff
 
-Last updated: **2026-10-28 UTC**. Repository: `jongsky25/css-is`.
+Last updated: **2026-10-28 (Asia/Manila)**. Repository: `jongsky25/css-is`.
 
-## Start here — Sol handoff, current after uninjected GC comparison
+## Start here — Sol handoff, current after original GC offline audit
 
 **Objective: unblock 2B only. Do not start or resume 3A or later increments.**
 This section supersedes older next-step instructions below. The chronology is
@@ -11,7 +11,17 @@ retained as evidence, not a queue of experiments to repeat.
 ### Checkout and current state
 
 - Repository: `jongsky25/css-is`; resume `codex/avatar-2b-verification`.
-- Latest completed work: uninjected counter/GC-trace comparison, harness 8f7b7d4 /
+- Latest completed work: [offline audit of original failed GC](avatars/increment2b/original-gc-audit/REPORT.md).
+  Zero new browser measurements. All 145 hashes verify; original native failure
+  reproduces exactly, 36 focused tests pass. Both probes record 21 shutdown calls,
+  six pagehides and six beacon receipts before first marking. Failed probe runs
+  marking/weak/sweep phases, while passing probe returns five labelled generations
+  before its second major. Receiver joins exact 1,536; reclamation is the failed gate.
+  Missing records: proxy disposal lifecycle/reuse args, nested ScriptState cleanup,
+  notification and retaining edges. Source shows notification tracing is conditional.
+  A [minimal four-function design](avatars/increment2b/original-gc-audit/NEXT_PROBE.md)
+  is prepared, not implemented/launched. No supported correction or qualification.
+- Latest runtime experiment: uninjected counter/GC-trace comparison, harness 8f7b7d4 /
   workflow 0ab5c33, [PR #523](https://github.com/jongsky25/css-is/pull/523),
   [run40609043507](https://github.com/jongsky25/css-is/actions/runs/40609043507).
   Counter/trace/trace/counter completes without injection/ptrace. All four show low
@@ -52,7 +62,7 @@ retained as evidence, not a queue of experiments to repeat.
   No supported correction or unchanged rerun is queued.
 - Latest application calibration run: lossless application observer harness 9e47c14 / workflow 3563eb2,
   [PR #519](https://github.com/jongsky25/css-is/pull/519),
-  [run40532187252](https://github.com/jongsky25/css-is/actions/runs/40532187252).
+  [run 40532187252](https://github.com/jongsky25/css-is/actions/runs/40532187252).
   Fresh full native qualification fails: first probe has no source-labelled natural
   page returns; second probe passes. All 1,536 joins/probe and timing/cost gates
   pass. Application proof/slots correctly do not launch. Transport cost is unknown.
@@ -95,14 +105,13 @@ markup and improves navigation 20 in both orders, but those partial benefits
 cannot override the failed gates. This screen compares current versus candidate;
 it is not the complete original-versus-candidate acceptance matrix.
 
-Latest result: [uninjected GC comparison](avatars/increment2b/uninjected-gc-contrast/REPORT.md).
-Both counter-only and GC-traced captures show low retention without any browser
-injection. This identifies no causal observer effect or correction. Prior failed
-GC/root state remains the missing evidence. Environment/package audit establishes
-no correcting change; CPU model varies and earlier AMD captures were also clean.
-No new measurement is justified without a specific reproduction condition or
-source-supported diagnostic change. Native/application qualification and original
-memory acceptance remain blocked; all prior failures are retained.
+Latest result: [original failed-GC offline audit](avatars/increment2b/original-gc-audit/REPORT.md).
+The failed probe ran a natural major GC and processed weak references; the passing
+probe reclaimed labelled pages before its second major. Document shutdown is not
+proof that proxy/context disposal completed. Those transition records and retaining
+edges are absent in the old capture. A source-supported minimal disposal witness is
+prepared; no new browser measurement or supported correction has occurred. Native/
+application qualification and original memory acceptance remain blocked.
 
 There is no defensible percentage or ETA. At least three milestones remain:
 
@@ -122,7 +131,9 @@ verification**. No candidate currently qualifies to unblock 2B.
 
 Read these in order before changing code or launching browsers:
 
-1. [Uninjected GC comparison](avatars/increment2b/uninjected-gc-contrast/REPORT.md),
+1. [Original GC audit](avatars/increment2b/original-gc-audit/REPORT.md),
+   full chronology, pinned source and prepared minimal disposal-witness design. Then
+   [uninjected GC comparison](avatars/increment2b/uninjected-gc-contrast/REPORT.md),
    protocol, raw captures/traces, independent assessment and environment audit. Then
    [native-buffer caller diagnostic](avatars/increment2b/native-handle-buffer/REPORT.md),
    raw buffers/proof, independent assessment and weak-queue caller evidence. Then
@@ -191,17 +202,17 @@ uses an opened-only trigger. The incidental run does not replace any sample or
 qualify the instrument. Both setup PRs remain unmerged; default-branch manual
 registration still faces existing release-version policy. No waiver or deploy.
 
-Application calibration remains blocked. The native-buffer trace and the distinct
-uninjected counter/GC-trace comparison are complete. Both counter-only and traced
-slots remain clean; no causal root or correction has been established. Do not
-repeat these builds unchanged, fish for a desired GC outcome, or add another broad
-handle-birth probe. Next audit the failed sample's incremental-marking, weak-reference
-and disposal chronology against pinned engine source. Document which root data is
-missing and establish a specific reproduction condition or distinct source-supported
-diagnostic change before another capture. No threshold waiver, substituted sample,
-forced collection, cache flush or later increment. After a supported correction,
-fresh native qualification must precede the frozen lossless application calibration;
-original 2B acceptance remains outstanding.
+Application calibration remains blocked. Original failed-GC offline audit is
+complete; use its source-supported [minimal disposal-witness design](avatars/increment2b/original-gc-audit/NEXT_PROBE.md).
+Implement/validate/freeze four low-rate native callbacks: LocalWindowProxy disposal
+arguments, nested ScriptState cleanup, V8 notification and post-GC boundary. Preserve
+opaque-address/generation limits. Do not assume an early return is a bug without
+its state/branch evidence. Avoid broad global-handle hooks, object-field reads,
+snapshots, Runtime subscriptions, forced collection, extra waits and repeated
+per-slot startup clock RPCs. No collector/run exists yet. All slots/failures must
+be retained; absence of the failed state cannot justify a fix. After a supported
+correction, fresh native qualification must precede the frozen lossless application
+calibration. Full 2B acceptance remains outstanding.
 
 ### Important traps and execution constraints
 

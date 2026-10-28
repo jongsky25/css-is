@@ -1,0 +1,47 @@
+From line 10873:
+10873: int Isolate::ContextDisposedNotification(bool dependant_context) {
+10874:   i::Isolate* i_isolate = reinterpret_cast<i::Isolate*>(this);
+10875:   if (V8_UNLIKELY(i::v8_flags.trace_context_disposal)) {
+10876:     i_isolate->PrintWithTimestamp("[context-disposal] Disposing %s context\n",
+10877:                                   dependant_context ? "nested" : "top-level");
+10878:   }
+10879: #if V8_ENABLE_WEBASSEMBLY
+10880:   if (!dependant_context) {
+10881:     if (!i_isolate->context().is_null()) {
+10882:       // We left the current context, we can abort all WebAssembly compilations
+10883:       // of that context.
+10884:       // A handle scope for the native context.
+10885:       i::HandleScope handle_scope(i_isolate);
+10886:       i::wasm::GetWasmEngine()->DeleteCompileJobsOnContext(
+10887:           i_isolate->native_context());
+10888:     }
+10889:   }
+10890: #endif  // V8_ENABLE_WEBASSEMBLY
+10891:   i_isolate->AbortConcurrentOptimization(i::BlockingBehavior::kDontBlock);
+10892:   return i_isolate->heap()->NotifyContextDisposed(dependant_context);
+10893: }
+10894: 
+10895: void Isolate::ContextDisposedNotification(ContextDependants dependants) {
+10896:   // TODO(mlippautz): Move implementation here once the deprecated version of
+10897:   // ContextDisposedNotification() with the return parameter is removed.
+10898:   START_ALLOW_USE_DEPRECATED()
+10899:   ContextDisposedNotification(dependants == ContextDependants::kSomeDependants);
+10900:   END_ALLOW_USE_DEPRECATED()
+10901: }
+10902: 
+10903: void Isolate::IsolateInForegroundNotification() {
+10904:   i::Isolate* i_isolate = reinterpret_cast<i::Isolate*>(this);
+10905:   return i_isolate->SetPriority(Priority::kUserBlocking);
+10906: }
+10907: 
+10908: void Isolate::IsolateInBackgroundNotification() {
+10909:   i::Isolate* i_isolate = reinterpret_cast<i::Isolate*>(this);
+10910:   return i_isolate->SetPriority(Priority::kBestEffort);
+10911: }
+10912: 
+10913: void Isolate::SetPriority(Priority priority) {
+10914:   i::Isolate* i_isolate = reinterpret_cast<i::Isolate*>(this);
+10915:   return i_isolate->SetPriority(priority);
+10916: }
+10917: 
+10918: void Isolate::MemoryPressureNotification(MemoryPressureLevel level) {

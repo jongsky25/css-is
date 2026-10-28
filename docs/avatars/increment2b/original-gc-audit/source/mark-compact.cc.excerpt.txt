@@ -1,0 +1,94 @@
+From line 2495:
+2495: bool ShouldRetainMap(Heap* heap, MarkingState* marking_state, Tagged<Map> map,
+2496:                      int age) {
+2497:   if (age == 0) {
+2498:     // The map has aged. Do not retain this map.
+2499:     return false;
+2500:   }
+2501:   Tagged<Object> constructor = map->GetConstructor();
+2502:   if (!IsHeapObject(constructor) ||
+2503:       MarkingHelper::IsUnmarkedAndNotAlwaysLive(
+2504:           heap, marking_state, Cast<HeapObject>(constructor))) {
+2505:     // The constructor is dead, no new objects with this map can
+2506:     // be created. Do not retain this map.
+2507:     return false;
+2508:   }
+2509:   return true;
+2510: }
+2511: 
+2512: }  // namespace
+2513: 
+2514: void MarkCompactCollector::RetainMaps() {
+2515:   // Retaining maps increases the chances of reusing map transitions at some
+2516:   // memory cost, hence disable it when trying to reduce memory footprint more
+2517:   // aggressively.
+2518:   const bool should_retain_maps =
+2519:       !heap_->ShouldReduceMemory() && v8_flags.retain_maps_for_n_gc != 0;
+2520: 
+2521:   for (Tagged<WeakArrayList> retained_maps : heap_->FindAllRetainedMaps()) {
+2522:     const uint32_t retained_maps_len = retained_maps->length().value();
+2523:     DCHECK_EQ(0, retained_maps_len % 2);
+2524:     for (uint32_t i = 0; i < retained_maps_len; i += 2) {
+2525:       Tagged<MaybeObject> value = retained_maps->Get(i);
+2526:       Tagged<HeapObject> map_heap_object;
+2527:       if (!value.GetHeapObjectIfWeak(&map_heap_object)) {
+2528:         continue;
+2529:       }
+2530:       int age = retained_maps->Get(i + 1).ToSmi().value();
+2531:       int new_age;
+2532:       Tagged<Map> map = Cast<Map>(map_heap_object);
+2533:       if (should_retain_maps && MarkingHelper::IsUnmarkedAndNotAlwaysLive(
+2534:                                     heap_, marking_state_, map)) {
+2535:         if (ShouldRetainMap(heap_, marking_state_, map, age)) {
+2536:           if (MarkingHelper::ShouldMarkObject(heap_, map)) {
+2537:             MarkingHelper::TryMarkAndPush(
+2538:                 heap_, local_marking_worklists_.get(), marking_state_,
+2539:                 MarkingHelper::WorklistTarget::kRegular, map);
+2540:           }
+From line 1970:
+1970: void MarkCompactCollector::MarkRootsFromConservativeStack(
+1971:     RootVisitor* root_visitor) {
+1972:   TRACE_GC(heap_->tracer(), GCTracer::Scope::CONSERVATIVE_STACK_SCANNING);
+1973:   DCHECK(!in_conservative_stack_scanning_);
+1974:   in_conservative_stack_scanning_ = true;
+1975:   heap_->IterateConservativeStackRoots(root_visitor,
+1976:                                        Heap::IterateRootsMode::kMainIsolate);
+1977: 
+1978:   Isolate* const isolate = heap_->isolate();
+1979:   if (isolate->is_shared_space_isolate()) {
+1980:     ClientRootVisitor<> client_root_visitor(root_visitor);
+1981:     // For client isolates, use the stack marker to conservatively scan the
+1982:     // stack.
+1983:     isolate->global_safepoint()->IterateClientIsolates(
+1984:         [v = &client_root_visitor](Isolate* client) {
+1985:           client->heap()->IterateConservativeStackRoots(
+1986:               v, Heap::IterateRootsMode::kClientIsolate);
+1987:         });
+1988:   }
+1989:   in_conservative_stack_scanning_ = false;
+1990: }
+1991: 
+1992: void MarkCompactCollector::MarkObjectsFromClientHeaps() {
+1993:   Isolate* const isolate = heap_->isolate();
+1994:   if (!isolate->is_shared_space_isolate()) return;
+1995: 
+1996:   isolate->global_safepoint()->IterateClientIsolates(
+1997:       [collector = this](Isolate* client) {
+1998:         collector->MarkObjectsFromClientHeap(client);
+1999:       });
+2000: }
+2001: 
+2002: void MarkCompactCollector::MarkObjectsFromClientHeap(Isolate* client) {
+2003:   // There is no OLD_TO_SHARED remembered set for the young generation. We
+2004:   // therefore need to iterate each object and check whether it points into the
+2005:   // shared heap. As an optimization and to avoid a second heap iteration in the
+2006:   // "update pointers" phase, all pointers into the shared heap are recorded in
+2007:   // the OLD_TO_SHARED remembered set as well.
+2008:   SharedHeapObjectVisitor visitor(this);
+2009: 
+2010:   PtrComprCageBase cage_base(client);
+2011:   Heap* client_heap = client->heap();
+2012: 
+2013:   // Finish sweeping quarantined pages for Scavenger's new space in order to
+2014:   // iterate objects in it.
+2015:   client_heap->EnsureQuarantinedPagesSweepingCompleted();

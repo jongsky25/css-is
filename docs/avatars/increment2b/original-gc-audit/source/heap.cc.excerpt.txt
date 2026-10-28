@@ -1,0 +1,47 @@
+From line 1788:
+1788: int Heap::NotifyContextDisposed(bool has_dependent_context) {
+1789:   if (!has_dependent_context) {
+1790:     tracer()->ResetSurvivalEvents();
+1791:     if (!initial_size_overwritten_) {
+1792:       DCHECK_IMPLIES(initial_size_overwritten_, !configured_);
+1793:       limits()->ResetAllocationLimit();
+1794:     }
+1795:     if (memory_reducer_) {
+1796:       memory_reducer_->NotifyPossibleGarbage();
+1797:     }
+1798:   } else if (v8_flags.idle_gc_on_context_disposal &&
+1799:              !v8_flags.single_generation) {
+1800:     DCHECK_NOT_NULL(new_space());
+1801:     const size_t id = notify_context_disposed_counter_++;
+1802:     TRACE_EVENT(TRACE_DISABLED_BY_DEFAULT("v8.gc"),
+1803:                 "V8.GCNotifyContextDisposed", "id", id);
+1804:     TaskOnContextDispose::TryPostJob(this, id, gc_count());
+1805:   }
+1806:   if (!isolate()->context().is_null()) {
+1807:     RemoveDirtyFinalizationRegistriesOnContext(isolate()->raw_native_context());
+1808:     isolate()->raw_native_context()->set_retained_maps(
+1809:         ReadOnlyRoots(this).empty_weak_array_list());
+1810:   }
+1811: 
+1812:   return ++contexts_disposed_;
+1813: }
+1814: 
+1815: void Heap::StartIncrementalMarking(GCFlags gc_flags,
+1816:                                    GarbageCollectionReason gc_reason,
+1817:                                    GCCallbackFlags gc_callback_flags,
+1818:                                    GarbageCollector collector,
+1819:                                    const char* reason) {
+1820:   DCHECK(incremental_marking()->IsStopped());
+1821:   DCHECK_EQ(isolate(), Isolate::TryGetCurrent());
+1822: 
+1823:   if (gc_callbacks_depth_ > 0) {
+1824:     // Do not start incremental marking while invoking GC callbacks.
+1825:     // Heap::CollectGarbage already decided which GC is going to be
+1826:     // invoked. In case it chose a young-gen GC, starting an incremental
+1827:     // full GC during callbacks would break the separate GC phases
+1828:     // guarantee.
+1829:     return;
+1830:   }
+1831: 
+1832:   TRACE_EVENT(
+1833:       "v8",

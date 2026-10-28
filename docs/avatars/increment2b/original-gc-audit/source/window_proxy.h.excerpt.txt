@@ -1,0 +1,94 @@
+From line 168:
+168:   enum FrameReuseStatus { kFrameWillNotBeReused, kFrameWillBeReused };
+169: 
+170:  protected:
+171:   // Lifecycle represents the following four states.
+172:   //
+173:   // * kContextIsUninitialized
+174:   // We lazily initialize WindowProxies for performance reasons, and this state
+175:   // is "to be initialized on demand". WindowProxy basically behaves the same as
+176:   // |kContextIsInitialized| from a point of view of call sites.
+177:   // - Possible next states: kContextIsInitialized
+178:   // It's possible to detach the context's frame from the DOM or navigate to a
+179:   // new page without initializing the WindowProxy, however, there is no
+180:   // transition to |kFrameIsDetached| or |kGlobalObjectIsDetached| or
+181:   // |kV8MemoryIsForciblyPurged| because |DisposeContext| does not change the
+182:   // state if the state is |kContextIsUninitialized|. In either case of a) the
+183:   // browsing context container is detached from the DOM or b) the page is
+184:   // navigated away, there must be no way for author script to access the
+185:   // context of |kContextIsUninitialized| because |kContextIsUninitialized|
+186:   // means that author script has never accessed the context, hence there must
+187:   // exist no reference to the context.
+188:   //
+189:   // * kContextIsInitialized
+190:   // The context is initialized and its frame is still attached to the DOM.
+191:   // - Possible next states: kFrameIsDetached, kGlobalObjectIsDetached,
+192:   // kV8MemoryIsForciblyPurged
+193:   //
+194:   // * kV8MemoryIsForciblyPurged
+195:   // The context is initialized and its frame is still attached to the DOM, but
+196:   // the global object is detached from the global proxy in order to drop all
+197:   // references to v8, hopefully causing all JS objects to be collected for
+198:   // memory reduction.
+199:   // - Possible next states: kGlobalObjectIsDetached,
+200:   // kFrameIsDetachedAndV8MemoryIsPurged
+201:   // Navigation can occur after V8 memory purge, and the state will transition
+202:   // to kGlobalObjectIsDetached in that case. When frame is detached after V8
+203:   // memory purge, the global proxy will be a weak reference and will transition
+204:   // to kFrameIsDetachedAndV8MemoryIsPurged.
+205:   //
+206:   // * kGlobalObjectIsDetached
+207:   // The context is initialized and its frame is still attached to the DOM, but
+208:   // the global object(inner global)'s Document is no longer the active Document
+209:   // of the frame (i.e. it is being navigated away). The global object (inner
+210:   // global) is detached from the global proxy (outer global), but the
+211:   // (detached) global object and context are still alive, and author script may
+212:   // have references to the context.
+213:   // The spec does not support full web features in this state. Blink supports
+From line 238:
+238:   enum class Lifecycle {
+239:     // v8::Context is not yet initialized.
+240:     kContextIsUninitialized,
+241:     // v8::Context is initialized.
+242:     kContextIsInitialized,
+243:     // The global object (inner global) is detached from the global proxy (outer
+244:     // global). Could transition to kGlobalObjectIsDetached.
+245:     kV8MemoryIsForciblyPurged,
+246:     // The global object (inner global) is detached from the global proxy (outer
+247:     // global).
+248:     kGlobalObjectIsDetached,
+249:     // The context's frame is detached from the DOM.
+250:     kFrameIsDetached,
+251:     // The context's frame is detached from the DOM, and global object is
+252:     // detached from the global proxy.
+253:     kFrameIsDetachedAndV8MemoryIsPurged,
+254:   };
+255: 
+256:   WindowProxy(v8::Isolate*, Frame&, DOMWrapperWorld*);
+257: 
+258:   virtual void Initialize() = 0;
+259: 
+260:   virtual void DisposeContext(Lifecycle next_status, FrameReuseStatus) = 0;
+261: 
+262:   v8::Isolate* GetIsolate() const { return isolate_; }
+263:   Frame* GetFrame() const { return frame_.Get(); }
+264: 
+265: #if DCHECK_IS_ON()
+266:   void DidAttachGlobalObject() { is_global_object_attached_ = true; }
+267:   void DidDetachGlobalObject() { is_global_object_attached_ = false; }
+268: #endif
+269: 
+270:  private:
+271:   v8::Isolate* const isolate_;
+272:   const Member<Frame> frame_;
+273: #if DCHECK_IS_ON()
+274:   bool is_global_object_attached_ = false;
+275: #endif
+276: 
+277:  protected:
+278:   // TODO(dcheng): Consider making these private and using getters.
+279:   const Member<DOMWrapperWorld> world_;
+280:   // Note: this used to be a ScopedPersistent, making `global_proxy_` a strong
+281:   // GC root from Blink to v8::Context. When the context was disposed (e.g. when
+282:   // detaching the frame or purging v8), it was important to call `SetPhantom()`
+283:   // to convert `global_proxy_` to a weak GC root. Otherwise, even if

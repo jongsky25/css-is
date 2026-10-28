@@ -1,0 +1,47 @@
+From line 866:
+866: void GCTracer::IncrementJSGlobalProxyCount() {
+867:   v8::base::Relaxed_AtomicIncrement(reinterpret_cast<v8::base::AtomicWord*>(
+868:                                         &current_.found_js_global_proxies),
+869:                                     1);
+870: }
+871: 
+872: void GCTracer::Output(const char* format, ...) const {
+873:   if (v8_flags.trace_gc) {
+874:     va_list arguments;
+875:     va_start(arguments, format);
+876:     base::OS::VPrint(format, arguments);
+877:     va_end(arguments);
+878:   }
+879: 
+880:   const int kBufferSize = 256;
+881:   char raw_buffer[kBufferSize];
+882:   base::Vector<char> buffer(raw_buffer, kBufferSize);
+883:   va_list arguments2;
+884:   va_start(arguments2, format);
+885:   base::VSNPrintF(buffer, format, arguments2);
+886:   va_end(arguments2);
+887: 
+888:   heap_->AddToRingBuffer(buffer.begin());
+889: }
+890: 
+891: void GCTracer::Print() const {
+892:   const base::TimeDelta duration = current_.end_time - current_.start_time;
+893:   const size_t kIncrementalStatsSize = 128;
+894:   char incremental_buffer[kIncrementalStatsSize] = {0};
+895: 
+896:   if (current_.type == Event::Type::INCREMENTAL_MARK_COMPACTOR) {
+897:     base::OS::SNPrintF(
+898:         incremental_buffer, kIncrementalStatsSize,
+899:         " (+ %.1f ms in %d steps since start of marking, "
+900:         "biggest step %.1f ms, walltime since start of marking %.f ms)",
+901:         current_scope(Scope::MC_INCREMENTAL),
+902:         incremental_scope(Scope::MC_INCREMENTAL).steps,
+903:         incremental_scope(Scope::MC_INCREMENTAL).longest_step.InMillisecondsF(),
+904:         (current_.end_time - current_.incremental_marking_start_time)
+905:             .InMillisecondsF());
+906:   }
+907: 
+908:   const double total_external_time =
+909:       current_scope(Scope::HEAP_EXTERNAL_WEAK_GLOBAL_HANDLES) +
+910:       current_scope(Scope::HEAP_EXTERNAL_EPILOGUE) +
+911:       current_scope(Scope::HEAP_EXTERNAL_PROLOGUE) +

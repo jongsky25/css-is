@@ -1,0 +1,94 @@
+From line 7960:
+7960: void Isolate::AddDetachedContext(DirectHandle<Context> context) {
+7961:   HandleScope scope(this);
+7962:   Handle<WeakArrayList> detached_contexts = factory()->detached_contexts();
+7963:   detached_contexts = WeakArrayList::AddToEnd(
+7964:       this, detached_contexts, MaybeObjectDirectHandle::Weak(context),
+7965:       Smi::zero());
+7966:   heap()->set_detached_contexts(*detached_contexts);
+7967: }
+7968: 
+7969: void Isolate::CheckDetachedContextsAfterGC() {
+7970:   HandleScope scope(this);
+7971:   DirectHandle<WeakArrayList> detached_contexts =
+7972:       factory()->detached_contexts();
+7973:   const uint32_t length = detached_contexts->length().value();
+7974:   if (length == 0) return;
+7975:   uint32_t new_length = 0;
+7976:   for (uint32_t i = 0; i < length; i += 2) {
+7977:     Tagged<MaybeObject> context = detached_contexts->Get(i);
+7978:     DCHECK(context.IsWeakOrCleared());
+7979:     if (!context.IsCleared()) {
+7980:       int mark_sweeps = detached_contexts->Get(i + 1).ToSmi().value();
+7981:       detached_contexts->Set(new_length, context);
+7982:       detached_contexts->Set(new_length + 1, Smi::FromInt(mark_sweeps + 1));
+7983:       new_length += 2;
+7984:     }
+7985:   }
+7986:   detached_contexts->set_length(new_length);
+7987:   uint32_t last_context_index = new_length;
+7988:   while (last_context_index < length) {
+7989:     detached_contexts->Set(last_context_index, Smi::zero());
+7990:     ++last_context_index;
+7991:   }
+7992: 
+7993:   if (v8_flags.trace_detached_contexts) {
+7994:     PrintF("%d detached contexts are collected out of %d\n",
+7995:            length - new_length, length);
+7996:     for (uint32_t i = 0; i < new_length; i += 2) {
+7997:       Tagged<MaybeObject> context = detached_contexts->Get(i);
+7998:       int mark_sweeps = detached_contexts->Get(i + 1).ToSmi().value();
+7999:       DCHECK(context.IsWeakOrCleared());
+8000:       if (mark_sweeps > 3) {
+8001:         PrintF("detached context %p\n survived %d GCs (leak?)\n",
+8002:                reinterpret_cast<void*>(context.ptr()), mark_sweeps);
+8003:       }
+8004:     }
+8005:   }
+From line 7969:
+7969: void Isolate::CheckDetachedContextsAfterGC() {
+7970:   HandleScope scope(this);
+7971:   DirectHandle<WeakArrayList> detached_contexts =
+7972:       factory()->detached_contexts();
+7973:   const uint32_t length = detached_contexts->length().value();
+7974:   if (length == 0) return;
+7975:   uint32_t new_length = 0;
+7976:   for (uint32_t i = 0; i < length; i += 2) {
+7977:     Tagged<MaybeObject> context = detached_contexts->Get(i);
+7978:     DCHECK(context.IsWeakOrCleared());
+7979:     if (!context.IsCleared()) {
+7980:       int mark_sweeps = detached_contexts->Get(i + 1).ToSmi().value();
+7981:       detached_contexts->Set(new_length, context);
+7982:       detached_contexts->Set(new_length + 1, Smi::FromInt(mark_sweeps + 1));
+7983:       new_length += 2;
+7984:     }
+7985:   }
+7986:   detached_contexts->set_length(new_length);
+7987:   uint32_t last_context_index = new_length;
+7988:   while (last_context_index < length) {
+7989:     detached_contexts->Set(last_context_index, Smi::zero());
+7990:     ++last_context_index;
+7991:   }
+7992: 
+7993:   if (v8_flags.trace_detached_contexts) {
+7994:     PrintF("%d detached contexts are collected out of %d\n",
+7995:            length - new_length, length);
+7996:     for (uint32_t i = 0; i < new_length; i += 2) {
+7997:       Tagged<MaybeObject> context = detached_contexts->Get(i);
+7998:       int mark_sweeps = detached_contexts->Get(i + 1).ToSmi().value();
+7999:       DCHECK(context.IsWeakOrCleared());
+8000:       if (mark_sweeps > 3) {
+8001:         PrintF("detached context %p\n survived %d GCs (leak?)\n",
+8002:                reinterpret_cast<void*>(context.ptr()), mark_sweeps);
+8003:       }
+8004:     }
+8005:   }
+8006: }
+8007: 
+8008: void Isolate::DetachGlobal(DirectHandle<NativeContext> env) {
+8009:   if (env->IsDetached()) {
+8010:     // Respective global_proxy_for_api object must be "attached" to the
+8011:     // global object.
+8012:     DCHECK(!env->global_object()->global_proxy_for_api()->IsDetachedFrom(
+8013:         env->global_object()));
+8014:     return;

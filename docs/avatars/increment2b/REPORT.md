@@ -8,10 +8,35 @@ with stable controls. Remaining milestones: a supported fix, qualified candidate
 validation, then complete original-baseline acceptance across all device/cache
 and scenario groups. No defensible percentage or ETA is established.
 
-Use the [Sol restart handoff](../../AVATAR_UPGRADE_HANDOFF.md#start-here--sol-handoff-current-after-uninjected-gc-comparison)
+Use the [Sol restart handoff](../../AVATAR_UPGRADE_HANDOFF.md#start-here--sol-handoff-current-after-original-gc-offline-audit)
 for current source identities, evidence order, next bounded work and constraints.
-The uninjected GC comparison below is the latest completed experiment.
+The original-GC offline audit below is the latest completed work.
+The latest runtime experiment remains the uninjected GC comparison.
 Older next-step instructions in this report are historical where superseded.
+
+## Original failed-GC offline audit — disposal witness is missing
+
+[Latest report](original-gc-audit/REPORT.md), [assessment](original-gc-audit/assessment.json)
+and [prepared minimal probe](original-gc-audit/NEXT_PROBE.md). Zero new browser
+measurements. All **145** original hashes verify; the original failed native audit
+reproduces exactly. **36 focused tests pass.** No failed result is rescued.
+
+The failed probe runs natural marking, weak processing and observed sweeping.
+Both probes have 21 completed shutdown calls/six pagehide markers/six beacon receipts
+before first marking. The passing probe returns five labelled generations before
+its second major, so a universal second-GC requirement is insufficient. Receiver
+joins remain exact 1,536; source-labelled page reclamation is the failing prerequisite.
+
+Pinned source distinguishes proxy disposal, ScriptState cleanup and notification
+from Document shutdown. The old capture lacks these call records and retaining
+edges. The context-notification trace event is conditional; its absence does not
+prove notification was skipped. Marked proxy counts are not root/context identities.
+
+Next implement/validate/freeze the prepared four-function native disposal witness:
+proxy lifecycle/reuse args, nested ScriptState disposal, V8 notification and GC
+boundary. No broad handle hooks, object-field reads, snapshots, Runtime subscription,
+collection requests or repeated per-slot startup RPC loop. No new collector has
+run. No supported product fix, qualification, 2B acceptance, merge or deployment.
 
 ## Uninjected GC comparison — low retention in both factors
 
@@ -99,7 +124,7 @@ active measurement, product change, candidate promotion, acceptance or deploymen
 ## Application observer calibration — fresh native prerequisite blocked
 
 [Latest report](application-observer-calibration/REPORT.md) and
-[run40532187252](https://github.com/jongsky25/css-is/actions/runs/40532187252):
+[run 40532187252](https://github.com/jongsky25/css-is/actions/runs/40532187252):
 frozen lossless transport 9e47c14 passes **80 cloud/local preflight and 102 expanded
 local analysis tests**, but fresh full native qualification fails source-labelled
 natural page returns in the first probe. Both probes retain 1,536 exact joins and

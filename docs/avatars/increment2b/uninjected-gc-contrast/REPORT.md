@@ -77,7 +77,17 @@ Artifact **12781893879** is retained byte-for-byte as
 workflow are committed. Setup logs outside the 39-file result manifest are preserved
 under the full ZIP hash. Every slot remains retained without replacements.
 
+## Offline audit follow-up
+
+[Original GC audit](../original-gc-audit/REPORT.md) now completes that read-only next
+step. All 145 original hashes and the failed native audit match; 36 focused tests
+pass. It identifies missing proxy/context disposal call records and prepares a
+minimal four-function witness. No new browser measurement or product correction.
+Read that report/design before another collector or capture.
+
 ## Next bounded work
+
+The offline audit above supersedes this historical next-step text.
 
 Do not repeat this comparison unchanged or add another broad handle-birth trace.
 The earlier failed sample is still the evidence containing extra surviving
