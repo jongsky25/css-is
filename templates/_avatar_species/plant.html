@@ -4,7 +4,7 @@
 
 {% macro art(s, m=0, costume="", scope="", preferences=none) %}
 {% set leaf = 'url(#' ~ scope ~ '-leaf)' if scope else 'url(#avg-leaf)' %}
-<g class="av-v2 av-body" stroke-linejoin="round"><g transform="translate(60 108) scale({{ .6+s*.06 }})">{{ _wear(preferences,'back') }}</g>
+<g class="av-v2 av-body" stroke-linejoin="round"><g transform="translate(60 108) scale({{ 0.6+s*0.06 }})">{{ _wear(preferences,'back') }}</g>
   <ellipse cx="60" cy="133" rx="25" ry="3" fill="#302f3c" opacity=".12"/>
   <path d="M37 109 Q60 116 83 109 L78 130 Q60 139 42 130Z" fill="url(#avg-pot)" stroke="#885b48" stroke-width="1.4"/>
   <path d="M43 116 Q47 119 49 130" stroke="#ffdfb3" stroke-width="3" opacity=".5" fill="none"/>

@@ -25,6 +25,7 @@ import hashlib
 import recurrence
 import short_links
 import json
+import companion_wardrobe as wardrobe
 import sqlite3
 import uuid
 import re
@@ -4720,7 +4721,6 @@ def set_user_avatar(conn, user_id, kind, name):
     ValueError on an unknown species. Leaves onboarded_at alone."""
     if not valid_avatar_kind(kind):
         raise ValueError("Pick one of the available companions.")
-    import companion_wardrobe as wardrobe
     saved = get_admin_user_by_id(conn, user_id)
     if saved and saved.get("avatar_kind") != kind:
         preferences = wardrobe.normalize(kind, saved.get("avatar_appearance_mode"), saved.get("avatar_equipment"))
@@ -4811,7 +4811,7 @@ def get_user_profile(conn, user_id):
         "rp_id": acct.get("rp_id"),
         "avatar_kind": acct.get("avatar_kind") or AVATAR_DEFAULT,
         "avatar_name": acct.get("avatar_name") or "",
-        "avatar_wardrobe": __import__("companion_wardrobe").normalize(acct.get("avatar_kind") or AVATAR_DEFAULT, acct.get("avatar_appearance_mode"), acct.get("avatar_equipment")),
+        "avatar_wardrobe": wardrobe.normalize(acct.get("avatar_kind") or AVATAR_DEFAULT, acct.get("avatar_appearance_mode"), acct.get("avatar_equipment")),
         "avatar_last_care_at": acct.get("avatar_last_care_at"),
         "avatar_mood": avatar_mood(acct.get("avatar_last_care_at")),
         "avatar_care_streak": acct.get("avatar_care_streak") or 0,
@@ -11850,7 +11850,6 @@ def cal_link_event(conn, entry_id, event_id, *, by=None):
 
 
 def set_avatar_wardrobe(conn, user_id, kind, mode, items):
-    import companion_wardrobe as wardrobe
     preferences = wardrobe.validate(kind, mode, items)
     if not conn.execute("SELECT 1 FROM admin_user WHERE id=? AND COALESCE(avatar_kind,?)=?", (user_id, AVATAR_DEFAULT, kind)).fetchone():
         raise ValueError("Choose a companion belonging to this account.")

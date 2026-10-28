@@ -9,10 +9,12 @@ import subprocess
 import sys
 from verification_result import Results, frame_pass, validate_samples, pytest_evidence
 
-p=argparse.ArgumentParser();p.add_argument('phase',choices=['functional','control','focused','runtime','matrix']);p.add_argument('--output',type=Path,default=Path('avatar-verification'));a=p.parse_args()
+p=argparse.ArgumentParser();p.add_argument('phase',choices=['functional','completion-functional','control','focused','runtime','matrix']);p.add_argument('--output',type=Path,default=Path('avatar-verification'));a=p.parse_args()
 root=Path.cwd();out=(a.output/a.phase).resolve();out.mkdir(parents=True,exist_ok=False)
 python=sys.executable
 base_env=dict(os.environ,CSS_TEST_NOW='2026-07-15T12:00:00',CSS_AVATAR_BASELINE='1',CSS_AVATAR_PIN_RENDERER='0')
+kinds=os.getenv("CSS_AVATAR_BATCH_KINDS","fern,mushroom,succulent").split(",")
+comparison_base=os.getenv("CSS_AVATAR_COMPARE_BASE")
 statuses={}
 results=Results()
 def run(name,args,*,cwd=root,extra=None):
@@ -53,6 +55,9 @@ try:
           'source_sha256':{f:hashlib.sha256((root/f).read_bytes()).hexdigest() for f in ['static/js/avatars.js','templates/_avatars.html','templates/me.html','templates/_growth.html','scripts/avatar_baseline/ci_verify.py','scripts/avatar_baseline/verification_result.py','tests/test_avatar_cpu_attribution.py']}}
     if meta['chromium'].split()[1] != meta['expected_chromium']:
         raise ValueError('Installed browser differs from explicit benchmark version')
+    meta['comparison_base']=comparison_base
+    meta['batch_kinds']=kinds
+    meta['species_sha256']={kind:hashlib.sha256((root/'templates/_avatar_species'/f'{kind}.html').read_bytes()).hexdigest() for kind in kinds}
     (out/'environment.json').write_text(json.dumps(meta,indent=2))
 except Exception as error:
     results.errors['metadata']=repr(error)
@@ -66,13 +71,21 @@ try:
         results.check('seasonal_live_refresh',lambda: pytest('seasonal-live-refresh',['tests/test_appearance_browser.py::test_publish_private_preview_mobile_and_live_outfit_without_form_reload'],expected=1)==0)
         results.check('native_visibility_touch_keyboard',lambda: pytest('native-behavior',['tests/test_avatar_baseline_browser.py','-k','native_visibility_and_touch'],{'CSS_AVATAR_OUT':str(out/'native/application')},expected=1)==0)
         results.check('persisted_plant_care',lambda: pytest('care',['tests/test_avatar_baseline_browser.py','-k','plant_care_live_surfaces'],{'CSS_AVATAR_OUT':str(out/'care/application'),'CSS_AVATAR_MATURE':'1','CSS_AVATAR_PLANTS':'fern,mushroom,succulent'},expected=1)==0)
+    elif a.phase=='completion-functional':
+        results.check('wardrobe_and_core',lambda: pytest('wardrobe-and-core',['tests/test_companion_wardrobe.py','tests/test_avatar_care.py','tests/test_avatar_audio.py','tests/test_onboarding_storage.py'],expected=104)==0)
+        results.check('customizer_browser',lambda: pytest('customizer',['tests/test_companion_customizer_browser.py'],{'CSS_AVATAR_OUT':str(out/'browser/application')},expected=2)==0)
+        results.check('animal_care',lambda: pytest('animal-care',['tests/test_avatar_animal_batch_browser.py'],{'CSS_AVATAR_OUT':str(out/'care/application'),'CSS_AVATAR_MATURE':'1','CSS_AVATAR_BATCH_KINDS':'dog,rabbit,bird,turtle,fish,dolphin,owl,bat'},expected=8)==0)
+        results.check('seasonal_live_refresh',lambda: pytest('seasonal',['tests/test_appearance_browser.py::test_publish_private_preview_mobile_and_live_outfit_without_form_reload'],expected=1)==0)
+        results.check('native_visibility_touch_keyboard',lambda: pytest('visibility',['tests/test_avatar_baseline_browser.py','-k','native_visibility_and_touch'],{'CSS_AVATAR_OUT':str(out/'visibility/application')},expected=1)==0)
+        results.check('contact_sheets',lambda: run('sheets',[python,'scripts/avatar_baseline/completion_visuals.py','--out',str(out/'sheets')])==0)
+        results.check('preflight',lambda: run('preflight',[python,'qa_preflight.py'])==0)
     elif a.phase=='control':
         run_control()
     elif a.phase=='focused':
         run_control()
-        results.check('native_runner',lambda: pytest('native',['tests/test_avatar_native_control.py'],{'CSS_AVATAR_OUT':str(out/'native/application'),'CSS_AVATAR_MATURE':'1','CSS_AVATAR_NATIVE_AFTER_ONLY':'1'},expected=3)==0)
-        results.check('trace_runner',lambda: pytest('traces',['tests/test_avatar_cpu_attribution.py'],{'CSS_AVATAR_OUT':str(out/'traces/application'),'CSS_AVATAR_MATURE':'1','CSS_AVATAR_CPU_DIAGNOSTIC':'1','CSS_AVATAR_CPU_RUNS':'5'},expected=3)==0)
-        for kind in ['fern','mushroom','succulent']:
+        results.check('native_runner',lambda: pytest('native',['tests/test_avatar_native_control.py'],{'CSS_AVATAR_OUT':str(out/'native/application'),'CSS_AVATAR_MATURE':'1','CSS_AVATAR_NATIVE_AFTER_ONLY':'1'},expected=len(kinds))==0)
+        results.check('trace_runner',lambda: pytest('traces',['tests/test_avatar_cpu_attribution.py'],{'CSS_AVATAR_OUT':str(out/'traces/application'),'CSS_AVATAR_MATURE':'1','CSS_AVATAR_CPU_DIAGNOSTIC':'1','CSS_AVATAR_CPU_RUNS':'5'},expected=len(kinds))==0)
+        for kind in kinds:
             def native_check():
                 native=read(out/f'native/{kind}/native-control.json');rows=native['samples']
                 validate_samples(rows,5)
@@ -90,7 +103,7 @@ try:
         run_control()
         # Whole pre-2B checkout, not old SVG served by the current JavaScript.
         before=root.parent/'avatar-2b-runtime-before'
-        subprocess.run(['git','worktree','add','--detach',str(before),'5b580d9'],check=True)
+        subprocess.run(['git','worktree','add','--detach',str(before),comparison_base or '5b580d9'],check=True)
         copied=['test_avatar_baseline_browser.py','avatar_browser_fixture.py','test_avatar_native_control.py','test_avatar_cpu_attribution.py']
         existed={}
         try:
@@ -98,8 +111,8 @@ try:
                 path=before/'tests'/name;existed[name]=path.read_bytes() if path.exists() else None
                 shutil.copy2(root/'tests'/name,path)
             for arm,cwd in [('before',before),('after',root)]:
-                results.check(arm+'_runner',lambda: pytest('runtime-'+arm,['tests/test_avatar_cpu_attribution.py'],{'CSS_AVATAR_OUT':str(out/arm/'application'),'CSS_AVATAR_MATURE':'1','CSS_AVATAR_CPU_DIAGNOSTIC':'1','CSS_AVATAR_CPU_RUNS':'5','CSS_AVATAR_CPU_AFTER_ONLY':'1'},cwd=cwd,expected=3)==0)
-            for kind in ['fern','mushroom','succulent']:
+                results.check(arm+'_runner',lambda: pytest('runtime-'+arm,['tests/test_avatar_cpu_attribution.py'],{'CSS_AVATAR_OUT':str(out/arm/'application'),'CSS_AVATAR_MATURE':'1','CSS_AVATAR_CPU_DIAGNOSTIC':'1','CSS_AVATAR_CPU_RUNS':'5','CSS_AVATAR_CPU_AFTER_ONLY':'1'},cwd=cwd,expected=len(kinds))==0)
+            for kind in kinds:
                 def compare_runtime():
                     pair=[read(out/arm/kind/'summary.json') for arm in ['before','after']]
                     for data in pair:
@@ -120,10 +133,12 @@ try:
     else:
         run_control()
         before=root.parent/'avatar-2b-before'
-        subprocess.run(['git','worktree','add','--detach',str(before),'1c964dc'],check=True)
+        subprocess.run(['git','worktree','add','--detach',str(before),comparison_base or '1c964dc'],check=True)
+        existed={}
         try:
             for name in ['test_avatar_baseline_browser.py','avatar_browser_fixture.py']:
-                shutil.copy2(root/'tests'/name,before/'tests'/name)
+                path=before/'tests'/name;existed[name]=path.read_bytes() if path.exists() else None
+                shutil.copy2(root/'tests'/name,path)
             fs={str(path):subprocess.check_output(['stat','-f','-c','%T',str(path)],text=True).strip() for path in [root,before]}
             assert len(set(fs.values()))==1,'Before/current filesystem mismatch'
             (out/'filesystems.json').write_text(json.dumps(fs,indent=2))
@@ -150,8 +165,10 @@ try:
                     for metric,budget in [('lcp_ms',100),('interaction_duration_per_run_median_ms',20),('renderer_rss_sum_bytes',10*1048576),('js_heap_bytes',10*1048576)]:
                         if metric in metrics:gates[f"{g['mobile']}-{g['cache']}-{scenario}-{metric}"]=metrics[metric]['median_delta']<=budget
         finally:
-            subprocess.run(['git','-C',str(before),'restore','tests/test_avatar_baseline_browser.py'],check=True)
-            (before/'tests/avatar_browser_fixture.py').unlink(missing_ok=True)
+            for name,contents in existed.items():
+                path=before/'tests'/name
+                if contents is None:path.unlink(missing_ok=True)
+                else:path.write_bytes(contents)
             subprocess.run(['git','worktree','remove',str(before)],check=True)
 except Exception as error:
     results.errors['phase']=repr(error)

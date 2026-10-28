@@ -9,13 +9,18 @@ The user authorized remaining avatar implementation and review preparation on
 `0a91f73`. Production deployment and main-branch merging remain unauthorized.
 This supersedes older prohibitions on starting later increments.
 
-3A product recovered selectively from `cb2220f`: four species, corrected turtle
-retraction, and browser/visual checks. Current local checks: 86 care/audio/onboarding
-tests, four authenticated persisted-care browser tests, 216 stage/mood/theme rig
-cases, and 2,448 unchanged-species comparisons pass. Native performance check is
-running; 3A is implemented, not yet accepted. See
-[resumed validation](avatars/increment3a/resumed/REPORT.md). No 3B product changes.
-The shared-gradient candidate remains isolated; archived GC research stays closed.
+All remaining product increments are implemented as separate commits on
+`codex/avatar-remaining-implementation` (worktree `/workspace/css-is-completion`).
+3A was selectively recovered from cb2220f; 3B is original authored art. Wardrobe,
+profile customization and shared motion are implemented. Current status and test
+limits are in [the completion report](avatars/completion/REPORT.md).
+
+Fresh 3A checks include 20 passing native CPU4/mobile frame samples (16.7–16.8 ms).
+Integrated checks cover equipment persistence/permissions, 1,584 equipment/stage
+combinations, browser customization/motion, all eight animal care interactions,
+appearance/onboarding/PWA regressions, and GREEN qa_preflight. Full hosted
+performance acceptance for the integrated source is pending; no later memory gate
+is waived. No archived GC research was restarted. No deployment or main merge.
 
 ## Start here — 2B provisionally accepted by the user
 

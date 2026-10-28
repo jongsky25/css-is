@@ -1,0 +1,60 @@
+........................................................................ [ 69%]
+.........F.....................                                          [100%]
+=================================== FAILURES ===================================
+______ test_cat_petting_uses_purr_and_failed_audio_does_not_block_feeding ______
+
+audio_page = <function audio_page.<locals>.open_page at 0x7fbdad89a020>
+
+    def test_cat_petting_uses_purr_and_failed_audio_does_not_block_feeding(audio_page):
+        page, state = audio_page('cat', care=True)
+        page.locator('.av-sound-btn').click()
+        page.wait_for_function('audioStarts.length === 1')
+        page.wait_for_timeout(500)
+        page.locator('.av-play-btn').hover()
+        page.mouse.down()
+>       page.wait_for_function('audioStarts.length === 2')
+
+tests/test_avatar_audio.py:205: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../css-is/.venv/lib/python3.12/site-packages/playwright/sync_api/_generated.py:12761: in wait_for_function
+    self._sync(
+../css-is/.venv/lib/python3.12/site-packages/playwright/_impl/_page.py:1151: in wait_for_function
+    return await self._main_frame.wait_for_function(**locals_to_params(locals()))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../css-is/.venv/lib/python3.12/site-packages/playwright/_impl/_frame.py:940: in wait_for_function
+    await self._channel.send("waitForFunction", self._timeout, params)
+../css-is/.venv/lib/python3.12/site-packages/playwright/_impl/_connection.py:76: in send
+    return await self._connection.wrap_api_call(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <playwright._impl._connection.Connection object at 0x7fbdaddbc3b0>
+cb = <function Channel.send.<locals>.<lambda> at 0x7fbdad89a0c0>
+is_internal = False, title = None
+
+    async def wrap_api_call(
+        self, cb: Callable[[], Any], is_internal: bool = False, title: str = None
+    ) -> Any:
+        if self._api_zone.get():
+            return await cb()
+        task = asyncio.current_task(self._loop)
+        parsed_st = _attach_api_call_information(
+            getattr(task, "__pw_stack__", None) or _capture_stack_trace(),
+            is_internal,
+            title,
+        )
+        self._api_zone.set(parsed_st)
+        try:
+            return await cb()
+        except Exception as error:
+>           raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+E           playwright._impl._errors.TimeoutError: Page.wait_for_function: Timeout 30000ms exceeded.
+
+../css-is/.venv/lib/python3.12/site-packages/playwright/_impl/_connection.py:632: TimeoutError
+=============================== warnings summary ===============================
+tests/test_companion_wardrobe.py::test_catalog_accepts_two_compatible_slots[cat-items0]
+  /workspace/css-is-completion/tests/conftest.py:88: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_avatar_audio.py::test_cat_petting_uses_purr_and_failed_audio_does_not_block_feeding

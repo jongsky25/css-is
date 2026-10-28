@@ -5,7 +5,7 @@
 {% macro art(s,m=0,costume="",scope="", preferences=none) %}
 {% set leaf='url(#' ~ scope ~ '-leaf)' if scope else 'url(#avg-leaf)' %}
 {% set top=[0,85,74,63,51,42,32][s] %}
-<g class="av-v2 av-body" stroke-linejoin="round" stroke-linecap="round"><g transform="translate(60 108) scale({{ .6+s*.06 }})">{{ _wear(preferences,'back') }}</g>
+<g class="av-v2 av-body" stroke-linejoin="round" stroke-linecap="round"><g transform="translate(60 108) scale({{ 0.6+s*0.06 }})">{{ _wear(preferences,'back') }}</g>
 {{ _illustrated_pot(true) }}
 <path d="M45 108Q58 105 76 108" stroke="#719665" stroke-width="5" fill="none"/>
 <g class="av-stem">

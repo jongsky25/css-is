@@ -1,0 +1,80 @@
+FF..........                                                             [100%]
+=================================== FAILURES ===================================
+_____________ test_mobile_preview_cancel_save_and_seasonal_update ______________
+
+baseline_server = ('http://127.0.0.1:40761', {'name': 'css_session', 'value': 'eyJ1aWQiOjQsInUiOiJhZG1pbkB0ZXN0LmxvY2FsIiwiciI6ImFkbWluI...ZGIyOTIxNTY4In0.bdf7e97ba1d6d0e749256a64111e085f2bd381a2ace65ee2d50c4c3e7b43d679', 'url': 'http://127.0.0.1:40761'}, 4)
+app_mod = <module 'app' from '/workspace/css-is-completion/app.py'>
+
+    def test_mobile_preview_cancel_save_and_seasonal_update(baseline_server,app_mod):
+        import storage as st
+        from playwright.sync_api import sync_playwright, expect
+        origin,cookie,uid=baseline_server
+        conn=st.connect(app_mod.DB);st.set_user_avatar(conn,uid,'cat','Miso');conn.close()
+        with sync_playwright() as pw:
+            browser=pw.chromium.launch(executable_path=shutil.which('chromium'),args=['--no-sandbox'])
+            context=browser.new_context(viewport={'width':390,'height':844},has_touch=True,reduced_motion='reduce')
+            context.add_cookies([cookie]);page=context.new_page();errors=[]
+            page.on('pageerror',lambda e:errors.append(str(e)))
+            page.goto(origin+'/me#companion')
+            page.locator('#avatar-appearance-mode').select_option('personal')
+            page.locator('#avatar-primary').select_option('small_cap')
+            expect(page.locator('#companion-customizer-preview [data-equipment="small_cap"]')).to_have_count(1)
+            conn=st.connect(app_mod.DB);assert st.get_user_profile(conn,uid)['avatar_wardrobe']['mode']=='seasonal';conn.close()
+            page.locator('#companion-customizer-cancel').click()
+            expect(page.locator('#avatar-appearance-mode')).to_have_value('seasonal')
+            expect(page.locator('#companion-customizer-preview [data-equipment]')).to_have_count(0)
+            page.locator('#avatar-appearance-mode').select_option('personal')
+            page.locator('#avatar-primary').select_option('small_cap');page.locator('#avatar-secondary').select_option('bandana')
+            expect(page.locator('#companion-customizer-preview [data-equipment]')).to_have_count(2)
+            page.locator('#companion-customizer button[type=submit]').click()
+            page.wait_for_url('**/?msg=*')
+>           expect(page.locator('svg[data-avatar-kind="cat"] [data-equipment]')).to_have_count(2)
+E           AssertionError: Locator expected to have count '2'
+E           Actual value: 14 
+E           Call log:
+E             - Expect "to_have_count" with timeout 5000ms
+E             - waiting for locator("svg[data-avatar-kind=\"cat\"] [data-equipment]")
+E               14 × locator resolved to 14 elements
+E                  - unexpected value "14"
+
+tests/test_companion_customizer_browser.py:34: AssertionError
+_________ test_motion_suspends_resumes_and_releases_removed_companions _________
+
+baseline_server = ('http://127.0.0.1:49591', {'name': 'css_session', 'value': 'eyJ1aWQiOjQsInUiOiJhZG1pbkB0ZXN0LmxvY2FsIiwiciI6ImFkbWluI...ZmUzOGE2N2MzIn0.378c39d127277dc30214968d3810f19493be215e2cf0b0f37e6d68c2be7be25e', 'url': 'http://127.0.0.1:49591'}, 4)
+
+    def test_motion_suspends_resumes_and_releases_removed_companions(baseline_server):
+        from playwright.sync_api import sync_playwright, expect
+        origin,cookie,_=baseline_server
+        with sync_playwright() as pw:
+            browser=pw.chromium.launch(executable_path=shutil.which('chromium'),args=['--no-sandbox'])
+            context=browser.new_context(viewport={'width':1100,'height':900})
+            context.add_cookies([cookie]);page=context.new_page()
+            page.goto(origin+'/wellness')
+            wrap=page.locator('.avwrap[data-interactive]').first
+>           wrap.scroll_into_view_if_needed();expect(wrap).to_have_attribute('data-motion-paused','0')
+                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AssertionError: Locator expected to have attribute '0'
+E           Actual value: 1 
+E           Call log:
+E             - Expect "to_have_attribute" with timeout 5000ms
+E             - waiting for locator(".avwrap[data-interactive]").first
+E               14 × locator resolved to <span data-drag="" role="group" data-stage="6" data-kind="cat" data-mood="droopy" data-interactive="" data-motion-paused="1" aria-label="Baseline Cat controls" class="avwrap fam-animal av-asleep">…</span>
+E                  - unexpected value "1"
+E           
+E           Aria snapshot:
+E           - group "Baseline Cat controls":
+E             - button "Play with Baseline Cat"
+E             - text: Baseline Cat
+E             - button "Feed Baseline Cat": 🍽️ Feed
+E             - button "Turn companion sounds on or off": 🔇
+
+tests/test_companion_customizer_browser.py:62: AssertionError
+=============================== warnings summary ===============================
+tests/test_companion_customizer_browser.py::test_mobile_preview_cancel_save_and_seasonal_update
+  /workspace/css-is-completion/tests/conftest.py:88: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_companion_customizer_browser.py::test_mobile_preview_cancel_save_and_seasonal_update
+FAILED tests/test_companion_customizer_browser.py::test_motion_suspends_resumes_and_releases_removed_companions

@@ -1,0 +1,34 @@
+................F
+=================================== FAILURES ===================================
+_____________ test_all_stage_item_and_seasonal_combinations_render _____________
+
+app_mod = <module 'app' from '/workspace/css-is-completion/app.py'>
+
+    def test_all_stage_item_and_seasonal_combinations_render(app_mod):
+        from lxml import etree
+        macros=app_mod.templates.env.get_template('_avatars.html').module
+        count=0
+        for kind in st.AVATAR_KEYS:
+            compatible=[key for key,entry in wardrobe.CATALOG.items() if kind in entry['species']]
+            for stage in range(1,7):
+                for key in compatible:
+                    art=str(macros.avatar_svg(kind,stage,preferences=wardrobe.validate(kind,'personal',[key])))
+                    tree=etree.fromstring(art.encode())
+                    items=tree.xpath('.//*[@data-equipment]')
+>                   assert [item.get('data-equipment') for item in items]==[key], (kind,stage,key)
+E                   AssertionError: ('mushroom', 1, 'terracotta')
+E                   assert [] == ['terracotta']
+E                     
+E                     Right contains one more item: 'terracotta'
+E                     Use -v to get more diff
+
+tests/test_companion_wardrobe.py:104: AssertionError
+=============================== warnings summary ===============================
+tests/test_companion_wardrobe.py::test_catalog_accepts_two_compatible_slots[cat-items0]
+  /workspace/css-is-completion/tests/conftest.py:88: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_companion_wardrobe.py::test_all_stage_item_and_seasonal_combinations_render
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!

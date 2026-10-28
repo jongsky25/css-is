@@ -11,7 +11,7 @@
 {% macro art(s, m=0, costume="", scope="", preferences=none) %}
 {% set leaf='url(#' ~ scope ~ '-leaf)' if scope else 'url(#avg-succ)' %}
 {% set cy=[0,107,99,95,91,88,85][s] %}{% set length=[0,17,24,30,35,39,42][s] %}
-<g class="av-v2 av-body" stroke-linejoin="round" stroke-linecap="round"><g transform="translate(60 108) scale({{ .6+s*.06 }})">{{ _wear(preferences,'back') }}</g>
+<g class="av-v2 av-body" stroke-linejoin="round" stroke-linecap="round"><g transform="translate(60 108) scale({{ 0.6+s*0.06 }})">{{ _wear(preferences,'back') }}</g>
   {{ _illustrated_pot(true) }}
   <path d="M42 110l5-2m28 3 4-3" stroke="#d5c4a7" stroke-width="3"/>
   {% if s==1 %}

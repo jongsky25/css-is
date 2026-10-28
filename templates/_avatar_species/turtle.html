@@ -14,7 +14,7 @@
   <path d="M86 86Q91 81 97 84" stroke="#dbebba" stroke-width="2.5" fill="none" stroke-linecap="round"/>
   {{ _eye(96,91,4.2 if s<3 else 3.7,"#536d49","#bbd7a3") }}
   <path d="M98 101q6 1 8-3" stroke="#547951" stroke-width="1.2" fill="none" stroke-linecap="round"/><ellipse cx="89" cy="100" rx="3" ry="2" fill="#deb69a"/>
-  <g class="av-anchor-head" data-anchor="head" transform="translate(92 79)">{{ _wear(preferences,'head') }}</g>{{ _accessory(m,92,79,0.5,costume=costume) }}
+  <g class="av-anchor-head" data-anchor="head" transform="translate(92 79) scale(.5)">{{ _wear(preferences,'head') }}</g>{{ _accessory(m,92,79,0.5,costume=costume) }}
  </g>
  <path d="M26 104Q27 {{ top }} 54 {{ top }}Q82 {{ top-2 }} 88 104Q60 120 26 104Z" fill="url(#avg-shell2)" stroke="#3f6a4e" stroke-width="1.5"/>
  <path d="M30 101Q33 {{ top+4 }} 54 {{ top+4 }}Q77 {{ top+2 }} 83 102Q59 112 30 101Z" fill="url(#avg-shell)"/>
@@ -25,7 +25,7 @@
  {% if s>=5 %}<path d="M32 103Q58 116 83 103" stroke="#c0d391" stroke-width="2" fill="none"/>{% endif %}
  {% if s>=6 %}<path d="M53 80l4-6 5 6-5 6Z" fill="#b4ce89"/>{% endif %}
  {{ costume_front("turtle",s,costume,scaled=true) }}{{ _regalia(s,60,96,0.7) }}
- <g class="av-anchor-neck" data-anchor="neck" transform="translate(60 96)">{{ _wear(preferences,'neck') }}</g>
+ <g class="av-anchor-neck" data-anchor="neck" transform="translate(84 97) scale(.5)">{{ _wear(preferences,'neck') }}</g>
  <g class="av-food"><path d="M91 32q8-9 16-2-1 11-11 12Z" fill="url(#avg-leaf)"/><path d="M94 38l10-7" stroke="#537c53" stroke-width="1"/></g>
 </g>
 {% endmacro %}

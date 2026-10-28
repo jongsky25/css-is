@@ -1,0 +1,27 @@
+dog after 0 frame 16.799999999999272 max_callback 0
+dog after 1 frame 16.700000000000728 max_callback 0
+dog after 2 frame 16.700000000000728 max_callback 0
+dog after 3 frame 16.700000000000728 max_callback 0
+dog after 4 frame 16.700000000000728 max_callback 0
+.rabbit after 0 frame 16.700000000000728 max_callback 0
+rabbit after 1 frame 16.700000000000728 max_callback 0
+rabbit after 2 frame 16.799999999999272 max_callback 0
+rabbit after 3 frame 16.700000000000728 max_callback 0
+rabbit after 4 frame 16.700000000000728 max_callback 0
+.bird after 0 frame 16.700000000000728 max_callback 0
+bird after 1 frame 16.799999999999272 max_callback 0
+bird after 2 frame 16.799999999999272 max_callback 0
+bird after 3 frame 16.700000000000728 max_callback 0
+bird after 4 frame 16.700000000000728 max_callback 0
+.turtle after 0 frame 16.700000000000728 max_callback 0
+turtle after 1 frame 16.700000000000728 max_callback 0
+turtle after 2 frame 16.700000000000728 max_callback 0
+turtle after 3 frame 16.700000000000728 max_callback 0
+turtle after 4 frame 16.799999999999272 max_callback 0
+.
+=============================== warnings summary ===============================
+tests/test_avatar_native_control.py::test_native_art_control[dog]
+  /workspace/css-is/tests/conftest.py:88: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html

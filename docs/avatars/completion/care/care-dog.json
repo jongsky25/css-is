@@ -1,0 +1,14 @@
+{
+  "kind": "dog",
+  "stage": 6,
+  "response": {
+    "ok": true,
+    "counted": true,
+    "mood": "happy",
+    "last_care_at": "2026-10-20T06:00:00",
+    "streak": 1,
+    "badge": null
+  },
+  "persisted": true,
+  "errors": []
+}

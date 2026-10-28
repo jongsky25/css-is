@@ -32,7 +32,7 @@ def install_context(app, get_conn, read_db):
         def read():
             def load(conn):
                 active = rules.resolve(store.load(conn))
-                actor = st.get_admin_user_by_id(conn, request.state.user['id'])
+                actor = st.get_admin_user_by_id(conn, request.state.user['id']) or {}
                 personal = {'kind': actor.get('avatar_kind') or st.AVATAR_DEFAULT,
                             'preferences': wardrobe.normalize(actor.get('avatar_kind') or st.AVATAR_DEFAULT, actor.get('avatar_appearance_mode'), actor.get('avatar_equipment'))}
                 return active, personal
@@ -49,6 +49,8 @@ def install_context(app, get_conn, read_db):
                 active.update(month=rules.accessory_month(active["outfit"]), preview=True)
             except ValueError:
                 return HTMLResponse("Choose a valid preview theme and outfit.", status_code=400, headers=PRIVATE)
+        if active.get("preview"):
+            personal["preferences"] = {"mode": "seasonal", "items": []}
         request.state.appearance = active
         token = rules.current.set(active)
         personal_token = wardrobe.current.set(personal)

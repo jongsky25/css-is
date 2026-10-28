@@ -1,3 +1,10 @@
+## 8.57 — October 28, 2026 (review candidate)
+
+- Illustrate the remaining eight animal companions across six growth stages.
+- Add optional allowlisted accessories, three appearance modes and explicit profile Save/Cancel with a read-only preview.
+- Coordinate visibility, reduced motion and action priority across companion movement.
+- Preserve the provisional 2B decision and original failures; later performance acceptance is recorded separately.
+
 ## 8.56 — October 25, 2026
 
 - Add default-off authenticated Telegram webhook intake with bounded input, durable update deduplication and rolling global/per-sender rate limits. Accept neutral private /start and /help only; acknowledge unsupported updates as ignored without retaining content.

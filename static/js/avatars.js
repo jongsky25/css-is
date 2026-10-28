@@ -64,6 +64,7 @@
     motionWraps.forEach(function (w) {
       if (w.isConnected) return;
       stopMotion(w);
+      ['_avSleepT','_avCareT','_avBubT','_avBackT','_avWagT'].forEach(function (key) { clearTimeout(w[key]); w[key] = null; });
       if (motionObserver) motionObserver.unobserve(w);
       if (w._avResizeObserver) w._avResizeObserver.disconnect();
       if (w._avPointerListener) document.removeEventListener('pointermove', w._avPointerListener);
@@ -218,11 +219,13 @@
     var should = isNight() && w.dataset.kind !== "bat" &&
                  !(w._avWakeUntil && Date.now() < w._avWakeUntil);
     w.classList.toggle("av-asleep", should);
+    if (motionWraps.has(w)) syncMotion(w);
   }
   function wake(w) {
     if (!isNight() || w.dataset.kind === "bat") return;
     w._avWakeUntil = Date.now() + 45000;               // stirs for a bit, then dozes off
     w.classList.remove("av-asleep");
+    if (motionWraps.has(w)) syncMotion(w);
     clearTimeout(w._avSleepT);
     w._avSleepT = setTimeout(function () { refreshSleep(w); }, 45500);
   }
@@ -853,6 +856,7 @@
         if (mv) { mv.style.transition = "transform .3s ease"; mv.style.transform = ""; }
         w._avGX = 0;
       }
+      wake(w);
       w.style.transition = "";
       start = { px: e.clientX, py: e.clientY, x: pos.x, y: pos.y };
       w.setPointerCapture(e.pointerId);
@@ -861,14 +865,14 @@
       w._avPetT = setTimeout(startPet, 450);
     });
     function startPet() {
-      if (!motionAllowed(w)) return;
+      if (!w.isConnected || document.hidden || w._avOffscreen) return;
       priorityAction(w, 1000);
       w._avPetting = true;
       w.classList.add("av-petting");
       play("pet", w.dataset.kind);
       spawnHearts(w);
       clearInterval(w._avHeartI);
-      w._avHeartI = setInterval(function () { spawnHearts(w); }, 900);
+      if (!still()) w._avHeartI = setInterval(function () { spawnHearts(w); }, 900);
     }
     function stopPet() {
       clearTimeout(w._avPetT);
@@ -908,7 +912,7 @@
      * moving over (or near) its .av-play stage, pounces when it catches up,
      * then loses interest a few seconds after the pointer goes still. ------- */
     if (w.hasAttribute("data-chase")) {
-      var ptr = null, lastMove = 0, caught = 0, chaseT = null;
+      var ptr = null, lastMove = 0, caught = 0;
       w._avPointerListener = function (e) {
         if (e.pointerType === "touch" || !motionAllowed(w)) return;
         ptr = { x: e.clientX, y: e.clientY }; lastMove = Date.now();

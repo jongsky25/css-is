@@ -2,7 +2,7 @@
 {# Original illustrated owl; face and accessories share pointer tracking. #}
 {% from "_avatars_shared.html" import costume_front, eye as _eye, shadow as _shadow, accessory as _accessory, regalia as _regalia %}
 {% macro art(s,m=0,costume="", scope="", preferences=none) %}
-{% set sc=.65+(s-1)*.068 %}{% set hy=70 if s<3 else 64 %}{% set belly=21 if s<3 else 25 %}
+{% set sc=0.65+(s-1)*0.068 %}{% set hy=70 if s<3 else 64 %}{% set belly=21 if s<3 else 25 %}
 {{ _shadow(28) }}<path d="M27 122Q59 116 94 122M80 120l9-9" fill="none" stroke="#82644b" stroke-width="4" stroke-linecap="round"/>
 <g class="av-v2 av-body" transform="translate(60 99) scale({{ sc }}) translate(-60 -99)" stroke-linejoin="round" stroke-linecap="round"><g transform="translate(60 94)">{{ _wear(preferences,'back') }}</g>
  <ellipse cx="60" cy="95" rx="{{ belly }}" ry="27" fill="url(#avg-owl)" stroke="#795b43" stroke-width="1.5"/>
@@ -11,7 +11,7 @@
  <ellipse cx="60" cy="100" rx="14" ry="20" fill="url(#avg-owl2)"/>
  {% for row in range(1,s) %}<path d="M53 {{ 86+row*5 }}l3 3 3-3m3 0 3 3 3-3" fill="none" stroke="#b99a70" stroke-width="1.2"/>{% endfor %}
  <path d="M49 119l-3 4m3-4v5m0-5 3 4m19-4-3 4m3-4v5m0-5 3 4" stroke="#c28c43" stroke-width="2.5"/>
- {{ costume_front('owl',s,costume,scaled=true) }}{{ _regalia(s,60,93,.8) }}
+ {{ costume_front('owl',s,costume,scaled=true) }}{{ _regalia(s,60,93,0.8) }}
  <g class="av-head">
  {% if s>=3 %}<path d="M40 {{ hy-10 }}l-4-18 16 10m28 8 4-18-16 10" fill="url(#avg-owl)" stroke="#795b43" stroke-width="1.5"/>{% endif %}
  <path d="M36 {{ hy }}Q33 {{ hy-24 }} 60 {{ hy-24 }}Q87 {{ hy-24 }} 84 {{ hy }}Q82 {{ hy+20 }} 60 {{ hy+23 }}Q38 {{ hy+20 }} 36 {{ hy }}Z" fill="url(#avg-owl)" stroke="#795b43" stroke-width="1.5"/>

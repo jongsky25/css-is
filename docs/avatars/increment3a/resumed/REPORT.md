@@ -16,3 +16,11 @@ Commands use .venv/bin/python and repository locked test dependencies.
 Native five-run, 30-second CPU4/mobile interaction checks for all four animals are
 in progress. Acceptance remains pending. No physical-phone testing, deployment
 or main merge. The 2B exception does not waive any 3A gate.
+
+Frozen 3A native check completed: all four species × five 30-second CPU4/mobile
+interaction runs pass the 33.3 ms frame ceiling (p95 range 16.7–16.8 ms). All 20
+samples are retained under performance/. Chromium 154 results remain separate from
+historical 156 results. Product files stayed fixed in /workspace/css-is while
+later implementation used a separate worktree. This verifies this frame gate only;
+LoAF reporting no owned callback is not proof of the separate 50 ms callback gate.
+Later integrated wardrobe/motion changes need their own performance verification.

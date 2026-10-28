@@ -5,7 +5,7 @@
 {% macro art(s, m=0, costume="", scope="", preferences=none) %}
 {% set leaf='url(#' ~ scope ~ '-leaf)' if scope else 'url(#avg-leaf)' %}
 {% set lengths=[[24],[36,28],[42,38,50],[46,43,57,30],[50,47,64,43,46],[55,52,72,47,51,64]][s-1] %}
-<g class="av-v2 av-body" stroke-linecap="round" stroke-linejoin="round"><g transform="translate(60 108) scale({{ .6+s*.06 }})">{{ _wear(preferences,'back') }}</g>
+<g class="av-v2 av-body" stroke-linecap="round" stroke-linejoin="round"><g transform="translate(60 108) scale({{ 0.6+s*0.06 }})">{{ _wear(preferences,'back') }}</g>
   {{ _illustrated_pot() }}
   <path d="M44 108Q59 103 76 108" fill="none" stroke="#78935f" stroke-width="4"/>
   {% for n in range(1,s+1) %}
