@@ -74,3 +74,22 @@ def test_motion_suspends_resumes_and_releases_removed_companions(baseline_server
         wrap.evaluate('w=>w.remove()');page.wait_for_timeout(100)
         assert page.evaluate('!testCompanion._avIdleT&&!testCompanion._avRoamT&&!testCompanion._avChaseI')
         context.close();browser.close()
+
+
+def test_water_followthrough_preserves_leaf_placement(baseline_server,app_mod):
+    import storage as st
+    from playwright.sync_api import sync_playwright
+    origin,cookie,uid=baseline_server
+    conn=st.connect(app_mod.DB);st.set_user_avatar(conn,uid,'plant','Sprout');conn.close()
+    with sync_playwright() as pw:
+        browser=pw.chromium.launch(executable_path=shutil.which('chromium'),args=['--no-sandbox'])
+        context=browser.new_context(viewport={'width':1100,'height':900});context.add_cookies([cookie]);context.add_init_script(PROBE)
+        page=context.new_page();page.goto(origin+'/wellness')
+        wrap=page.locator('.avwrap[data-interactive]').first
+        leaf=wrap.locator('.av-leaf').first
+        before=leaf.evaluate('e=>getComputedStyle(e).transform')
+        wrap.locator('.av-care-btn').click(force=True)
+        page.evaluate("document.getAnimations().filter(a=>a.animationName==='av-leaf-settle').forEach(a=>{a.pause();a.currentTime=1400})")
+        assert leaf.evaluate('e=>getComputedStyle(e).transform')==before
+        assert leaf.locator('path').first.evaluate('e=>getComputedStyle(e).animationName')=='av-leaf-settle'
+        context.close();browser.close()

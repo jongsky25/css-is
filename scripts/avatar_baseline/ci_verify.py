@@ -73,7 +73,7 @@ try:
         results.check('persisted_plant_care',lambda: pytest('care',['tests/test_avatar_baseline_browser.py','-k','plant_care_live_surfaces'],{'CSS_AVATAR_OUT':str(out/'care/application'),'CSS_AVATAR_MATURE':'1','CSS_AVATAR_PLANTS':'fern,mushroom,succulent'},expected=1)==0)
     elif a.phase=='completion-functional':
         results.check('wardrobe_and_core',lambda: pytest('wardrobe-and-core',['tests/test_companion_wardrobe.py','tests/test_avatar_care.py','tests/test_avatar_audio.py','tests/test_onboarding_storage.py'],expected=104)==0)
-        results.check('customizer_browser',lambda: pytest('customizer',['tests/test_companion_customizer_browser.py'],{'CSS_AVATAR_OUT':str(out/'browser/application')},expected=2)==0)
+        results.check('customizer_browser',lambda: pytest('customizer',['tests/test_companion_customizer_browser.py'],{'CSS_AVATAR_OUT':str(out/'browser/application')},expected=3)==0)
         results.check('animal_care',lambda: pytest('animal-care',['tests/test_avatar_animal_batch_browser.py'],{'CSS_AVATAR_OUT':str(out/'care/application'),'CSS_AVATAR_MATURE':'1','CSS_AVATAR_BATCH_KINDS':'dog,rabbit,bird,turtle,fish,dolphin,owl,bat'},expected=8)==0)
         results.check('seasonal_live_refresh',lambda: pytest('seasonal',['tests/test_appearance_browser.py::test_publish_private_preview_mobile_and_live_outfit_without_form_reload'],expected=1)==0)
         results.check('native_visibility_touch_keyboard',lambda: pytest('visibility',['tests/test_avatar_baseline_browser.py','-k','native_visibility_and_touch'],{'CSS_AVATAR_OUT':str(out/'visibility/application')},expected=1)==0)

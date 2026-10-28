@@ -69,7 +69,7 @@
   .avwrap[data-motion-paused="1"] *, .avwrap[data-motion-paused="1"] {
     animation-play-state:paused !important; transition:none !important;
   }
-  .av-caring-water .av-leaf { animation:av-leaf-settle 1.8s ease .8s; transform-origin:50% 95%; }
+  .av-caring-water .av-leaf > path { animation:av-leaf-settle 1.8s ease .8s; transform-box:fill-box; transform-origin:50% 95%; }
   @keyframes av-leaf-settle { 0%,100%{transform:rotate(0);} 35%{transform:rotate(3deg);} 70%{transform:rotate(-1.5deg);} }
   /* ---- eyes / part groups (art in _avatars_art.html) -------------------- */
   .av-lid  { transform:scaleY(0); transform-box:fill-box; transform-origin:50% 0; transition:transform .25s; }

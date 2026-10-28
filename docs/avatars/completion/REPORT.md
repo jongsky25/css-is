@@ -47,6 +47,19 @@ It retains all scenarios and navigation memory comparisons with the unchanged
 10 MiB limit. No GC/native instrumentation research is included. All phases retain
 failures independently. Full integrated performance acceptance remains pending.
 
+Draft review: [PR #526](https://github.com/jongsky25/css-is/pull/526). Initial
+hosted run [40616347893](https://github.com/jongsky25/css-is/actions/runs/40616347893)
+installed pinned Chromium successfully; it is superseded by the leaf-placement
+correction before performance acceptance. The final customizer browser trio passes,
+including a regression that confirms watering rotates inner paths without replacing
+a leaf placement transform. Source changes require a fresh hosted run; no cancelled
+or partial cohort is acceptance evidence.
+
+Separate [before](motion/before-motion.webm) and [after](motion/after-motion.webm)
+recordings use each arm's own CSS/JavaScript for fern, dog, bat and fish; care replies
+are synthetic. [Hero overview](hero-overview.png) shows the final catalog with two
+optional accessory examples.
+
 New script and service-worker cache versions, version.py/CHANGELOG, original-art
 [asset manifest](asset-manifest.json) and [rollback instructions](ROLLBACK.md) are
 included. This candidate is for review; release readiness remains false until the
