@@ -1,3 +1,7 @@
+## 9.02 — October 28, 2026
+
+- Show a "break time has passed and your approver hasn't decided yet" note on a still-pending wellness break request in My break requests, so an undecided request is not mistaken for an approved one that failed to appear. Display only: approval routing, expiry and notifications are unchanged.
+
 ## 9.01 — October 28, 2026
 
 - Disable live lifespan scheduler loops by default in the shared pytest fixtures, so native/MCP delivery tests own their worker calls and queued notices. Startup tests explicitly opt back in; production scheduler behavior is unchanged.
