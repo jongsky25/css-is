@@ -1,136 +1,198 @@
 # Supplies — requester UX plan
 
-Goal: someone who only *requests* supplies should see two things — **Request** and **My requests** —
-and be able to pick items visually (Foodpanda/Grab style) and follow their request at a glance.
+Goal: someone who only *requests* supplies sees two things — **Request supplies** and **My requests** —
+picks items visually (Foodpanda/Grab style) without being able to ask for more than is available,
+and follows each request at a glance until they confirm they received it.
 
-Approvers, custodians, auditors and admins keep today's screens unchanged.
+Approvers, custodians, auditors and admins keep today's management screens. They also get the new
+request flow when *they* request supplies.
+
+## Decisions (confirmed by the owner, Oct 28 2026)
+
+| Topic | Decision |
+|---|---|
+| Stock numbers | Requesters see a badge only (**Available / Limited / Out of stock**), never quantities |
+| Quantity limit | Requesters **cannot request more than is available to request** (rule R1 below) |
+| Categories | Not now |
+| Item pictures | Generated automatically from the item name (simple illustrations); no uploads needed |
+
+## User stories (requester)
+
+| # | As a requester I want to… | So that… | Increment |
+|---|---|---|---|
+| US1 | find an item by picture and name | I don't scroll a long code list | 2.1 |
+| US2 | add a quantity and be stopped at what's available | I don't ask for what can't be given | 1.3, 2.1 |
+| US3 | review my cart and send it in one tap | requesting takes under a minute | 2.2 |
+| US4 | see at a glance where each request is and who has it | I don't have to chase people | 3.1, 3.2 |
+| US5 | know when it's ready to pick up | I go to the stockroom once | 1.2, 3.2 |
+| US6 | confirm I received it, or report a problem, in one tap | the record closes without paperwork | 3.3 |
+| US7 | fix a returned request in the same cart view | corrections are easy | 2.3 |
+| US8 | withdraw a request I no longer need | stock isn't held for nothing | 3.2 |
+| US9 | repeat a past request | regular orders are quick | 2.3 |
+| US10 | print the official request form when asked | I still have the paper copy | 3.2 |
+
+## Page inventory for a requester-only user (checked Oct 28 2026)
+
+Requester-only = no `request_approver` grant, not custodian, not auditor, not replenishment
+approver, not admin. All other pages already return 403 for them.
+
+| Page today | Shows | After this plan |
+|---|---|---|
+| `/supplies` Overview | Role cards, jargon | **Redesign** → Supplies home (3.4) |
+| `/supplies/requests/new`, `/{id}/edit` | 20 dropdown lines | **Replace** → picture grid + cart (2.1–2.3) |
+| `/supplies/requests` My requests | Table | **Redesign** → cards with progress tracker (3.1) |
+| `/supplies/requests/{id}` | 11-column table, timeline | **Redesign** → tracker + "Full details" (3.2) |
+| `/supplies/requests/{id}/print` | Official form | **Keep**, linked from tracker |
+| `/supplies/issues` Releases | List | **Fold into My requests**; redirect (4.1) |
+| `/supplies/issues/{id}` | Release + acknowledgment form | **Simplify** for recipient: two buttons (3.3) |
+| `/supplies/awaiting-stock` | Backorder lines | **Fold into tracker** ("Waiting for stock"); redirect (4.1) |
+| `/supplies/items`, `/items/{id}` | Stock numbers, thresholds | **Redirect** to the picture grid (4.1) |
+| `/supplies/stock-dashboard` (+ `inventory-data`, `inventory-export.csv`, `presentation-data`) | Stock numbers | **Stock readers only** (4.2) |
+
+Requester navigation ends up as: **Home · Request supplies · My requests**.
+
+## Rule R1 — "available to request"
+
+`available` today (`supplies_allocations.availability`) = on hand − reserved for approved requests.
+Submitted-but-undecided requests reserve nothing, so on its own it would let two people each claim
+the same last units. Use:
+
+```
+requestable(item, excluding_request) =
+    on_hand − reserved − Σ requested_quantity of OTHER requests in status 'submitted'
+    (never below 0)
+```
+
+- Enforced **in the service layer** (`supplies_requests.save_draft` and `submit`), so the web form,
+  the new grid, and the MCP paths (`mcp_supply_drafts.py`, `mcp_supply_submissions.py`) all obey it.
+- Checked again on submit and on resubmitting a returned request; quantities may have changed since save.
+- Items with no stock recorded are requestable 0 → "Out of stock".
+- It is a request-time limit, not a reservation. Approval and the existing reservation/backorder flow
+  are unchanged and still handle edge cases (e.g. a physical-count adjustment after submission).
+- Badge: Out of stock = 0 · Limited = 1 … `critical_level` (or ≤ 20% of `target_level` when critical is 0) · Available otherwise.
+- Error text: "Only 4 reams of Bond paper, A4 can be requested right now."
 
 ## Ground rules for every increment
 
-- **One increment = one branch = one PR.** Do them in order; each assumes the previous one is merged.
-- **UI only unless the increment says otherwise.** Do not change approval states, stock rules,
-  permissions, revision checks or `operation_key` idempotency in `supplies_requests.py`,
-  `supplies_approvals.py`, `supplies_stock.py`, `supplies_permissions.py`.
-- **Hiding a link is not a permission change.** Direct URLs keep the access they have today.
-- **"Requester-only"** means: no `request_approver` grant, not custodian, not auditor, not
-  replenishment approver, not admin. Defined once in increment 1.1 and reused.
-- Before pushing: `python3 -m pytest tests/test_supplies*.py -q`, then `bash run_tests.sh`.
-- Bump `APP_VERSION` and prepend a plain-language entry, following the header of `version.py`.
-  The CI release gate (`python scripts/check_release.py release --base <main sha>`) also requires
-  the first `CHANGELOG.md` heading and `CACHE_VERSION` in `static/js/sw.js` (`v<version>-a`) to match.
-  Merge the latest `main` first so the bump is above whatever version main is on.
-- Add or extend tests in the matching `tests/test_supplies_*.py`; reuse the fixtures in
-  `tests/test_supplies.py` (`supplies_db`, `setup_catalog`, `create`) and `tests/test_supplies_requests.py`
-  (`request_db`, `draft`).
-- Mobile first: check every new page at 375px wide (pattern: `tests/test_supplies_grid_browser.py`).
-- Keep the existing no-JavaScript fallback working; JS only enhances.
+- **One increment = one branch = one PR**, in order; each assumes the previous one is merged.
+- Only increments that say so may change business rules or permissions (1.3 and 4.2).
+  Do not touch approval states, reservations, revision checks or `operation_key` idempotency.
+- Run `python3 -m pytest tests/test_supplies*.py tests/test_mcp_supply*.py -q`, then `bash run_tests.sh`.
+- Version bump on every PR: `APP_VERSION` + plain-language entry in `version.py` (see its header),
+  first heading of `CHANGELOG.md`, and `CACHE_VERSION = "v<version>-a"` in `static/js/sw.js`.
+  Merge the latest `main` first. Check with `python scripts/check_release.py release --base <main sha>`.
+- Tests reuse fixtures: `supplies_db`, `setup_catalog`, `create` (`tests/test_supplies.py`),
+  `request_db`, `draft` (`tests/test_supplies_requests.py`). Log in via `tests.conftest.session_token`.
+- Mobile first: check new pages at 375px (pattern: `tests/test_supplies_grid_browser.py`).
+- Pages must work without JavaScript; JS only enhances (steppers, sticky cart bar).
+- Plain words everywhere a requester looks: no "reserved", "outstanding", "revision", "snapshot", "issuance".
 
 ---
 
-## Phase 1 — Simplify for requesters (no database change)
+## Phase 1 — Foundations (little or no visible change)
 
-### 1.1 Requester-only navigation
-- `supplies_routes.py` `render()`: add `requester_only` to the template context, computed from the
-  flags already there (`not (can_approve or can_maintain or can_audit or can_replenish_approve or can_configure)`).
-- `templates/supplies/base.html`: when `requester_only`, show only **Home · Request supplies · My requests · My releases**.
-- Tests: requester `GET /supplies` has no "Stock dashboard"/"Awaiting stock" links; a custodian still
-  sees them; requester `GET /supplies/items` still returns 200 (no permission change).
+### 1.1 Requester-only flag and navigation
+- `supplies_routes.py` `render()`: add `requester_only` to the context, computed from the existing flags.
+- `templates/supplies/base.html`: when `requester_only`, nav = **Home · Request supplies · My requests**.
+- Tests: requester sees exactly those three links; a custodian's nav is unchanged.
 
-### 1.2 Plain-language status helper (pure Python)
-- New `supplies_status.py` with `requester_stage(entry) -> dict(step, total_steps, label, tone, sentence)`.
-- Steps: **Sent → Approved → Ready for pickup → Received**. Exceptions: Not sent yet (draft),
-  Needs your changes (returned), Not approved (rejected), Withdrawn (cancelled), Waiting for stock
-  (approved, outstanding, nothing reserved).
-- Inputs come from what `supplies_dashboard.queue()` / `supplies_requests.get_request()` already
-  return (`approval_status`, `reserved_quantity`, `outstanding_quantity`, releases and their
-  `acknowledgment_status`). Investigate where release acknowledgment is available on list rows
-  before coding; if it is missing, add it to the query in `supplies_dashboard.py` read-only.
-- Sentence reuses `next_action` approver names: e.g. "Waiting for Juan Dela Cruz to approve."
-- Unit tests for every state in a new `tests/test_supplies_status.py`.
+### 1.2 Plain-language status helper
+- New `supplies_status.py`: `requester_stage(entry) -> {step, label, tone, sentence, action}`.
+- Tracker steps: **Sent → Approved → Ready for pickup → Received**.
+  Exceptions: Not sent yet (draft) · Needs your changes (returned) · Not approved (rejected) ·
+  Withdrawn (cancelled) · Waiting for stock (approved, outstanding, nothing reserved) ·
+  Please confirm receipt (released, acknowledgment pending) · Problem reported (disputed).
+- Sentence names the next person using the approver names in `supplies_dashboard._next_action`.
+- If list rows lack release/acknowledgment data, add it read-only to `supplies_dashboard.queue()`.
+- Unit tests for every state: `tests/test_supplies_status.py`.
 
-### 1.3 Status stepper component
-- New partial `templates/supplies/_status_stepper.html` + CSS in `static/css/supplies.css`
-  (horizontal on desktop, compact on phone, colour + text so it is not colour-only).
-- Use it on `requests.html` (replace the table with cards for requester-only; keep the table for others)
-  and in the recent-requests list on `dashboard.html`.
+### 1.3 Rule R1: requestable quantity *(business rule change)*
+- `supplies_allocations.py`: `requestable(conn, item_id, exclude_request_id=None)` and
+  `badge(requestable, item)`.
+- Enforce in `supplies_requests.save_draft` and `submit`. Raise `Invalid` with the plain message.
+- Tests: over-limit save/submit rejected; own draft excluded from the pending sum; other pending
+  submissions counted; resubmit re-checked; MCP draft/submit paths rejected too; zero-stock item.
 
-### 1.4 Requester home
-- `dashboard.html`, when `requester_only`: big **Request supplies** button, a **Needs your action**
-  banner (drafts, returned requests, releases waiting for acknowledgment — counts already exist in
-  `supplies_dashboard.dashboard()`), then recent requests with the stepper. Hide the role cards.
+### 1.4 Item pictures generated from the name
+- `static/img/supplies/` set of ~40 simple flat SVG illustrations in one consistent style:
+  bond paper, specialty paper, notebook, sticky notes, envelope, folder, expanding file, ballpen,
+  sign pen, pencil, marker, highlighter, whiteboard marker, eraser, correction tape, ruler, scissors,
+  cutter, stapler, staple wire, paper clip, binder clip, fastener, puncher, glue, tape, packaging tape,
+  rubber band, ink bottle, toner, ink cartridge, battery, USB drive, mouse, calculator, alcohol,
+  tissue, hand soap, trash bag, cleaning cloth, plus a generic box.
+- `supplies_pictures.py`: `picture_for(description, code) -> static path`, keyword rules (English and
+  common local terms, e.g. "ballpen", "bond", "fastener", "tisyu"), first match wins; fallback is a
+  coloured tile with the item's initials (colour hashed from the code).
+- No database change. Later, a custodian override can be added if wanted.
+- Tests: sample names map to the expected picture; unknown names fall back.
+- Tune keywords against the real catalog: the owner exports the item list (Supply catalog → CSV)
+  and the keywords are adjusted so most items get a real picture.
 
-### 1.5 Simpler request detail for the owner
-- `request.html`, when the viewer is the owner and cannot decide/issue: top summary card with
-  the stepper, the sentence, and one line per item: "Bond paper, A4 · asked 3 · received 2 ream".
-- Move the 11-column table, revision history and timeline into a **Full details** `<details>`.
-- Rename timeline actions that still print raw names (fallback `{{ event.action }}`) to plain words.
-- Approver and custodian view: unchanged (assert in a test).
+## Phase 2 — Requesting
 
-## Phase 2 — Faster requesting (no database change)
+### 2.1 Picture grid ("shop")
+- `GET /supplies/requests/new` renders a grid for **everyone** who can request
+  (classic form kept at `?view=list` for one release, then removed).
+- Card: picture, description, unit, badge, quantity input `qty_<item_id>` with
+  `max = requestable` and disabled when Out of stock. Search box (`q`) on top.
+- `static/js/supplies-shop.js`: +/− stepper, sticky bottom bar "3 items · Review".
+- Server still enforces R1 (the `max` attribute is only a convenience).
 
-### 2.1 One-step "Send request"
-- Form gets two buttons: primary **Send request** and secondary **Save as draft**.
-- Send = existing `save_draft` then `submit` in one POST. Investigate how `operation_key` is
-  validated and recorded in `supply_operation` first: each operation needs its own key — post two
-  hidden keys (`operation_key`, `submit_operation_key`), do not reuse one.
-- If save succeeds but submit fails, redirect to the draft with the error shown (draft is not lost).
-- Tests: send creates a submitted request with a control number; double-post is idempotent;
-  submit failure leaves a draft.
+### 2.2 Cart review and one-step send
+- POST grid → review page: thumbnails, editable quantities, purpose (placeholder example),
+  date needed, **Send request** (primary) and **Save for later** (secondary).
+- Send = `save_draft` then `submit` in one POST with **two** operation keys
+  (`operation_key`, `submit_operation_key`). Check how `supply_operation` records keys first.
+- If submit fails after save, show the draft with the error; nothing is lost.
+- Map `qty_<id>` to the existing `lines` shape; respect `MAX_LINES` (20).
+- Tests: send → submitted with control number; double POST idempotent; R1 error shown on the cart.
 
-### 2.2 Reorder and rewrite the classic form
-- Items first, then purpose and date needed. Purpose placeholder with examples
-  ("For the Oct 30 training, 25 participants").
-- Replace jargon sentences with plain ones; keep labels accessible.
+### 2.3 Edit, fix and repeat in the cart
+- Drafts and returned requests open in the cart view with the approver's reason shown on top.
+- **Request again** on any past request opens a cart with the same items, capped to what is
+  requestable now and dropping inactive items with a note.
 
-### 2.3 "Request again"
-- On a past request (any final state), a **Request again** link opens a new draft form pre-filled with
-  the same items and quantities (inactive items dropped with a note). No new service function needed:
-  pre-fill via `form_values` in `request_form()`.
+## Phase 3 — Monitoring
 
-## Phase 3 — Visual catalog with photos (database change)
+### 3.1 My requests
+- Cards: control number, first item names with pictures, progress tracker, one sentence, date.
+- **Needs your action** section first: drafts, returned, waiting for your receipt confirmation.
+- Filters reduced to: Active · Completed · All.
 
-### 3.1 Item photos (storage + custodian upload)
-- `supplies_storage.py` schema setup: add `photo BLOB` and `photo_mime TEXT` to `supply_item` using
-  the existing `PRAGMA table_info` + `ALTER TABLE` pattern (see lines ~248, ~608).
-- **Never `SELECT *` from `supply_item` in list/report/export queries after this** — audit
-  `supplies_reports.py`, `supplies_import*.py`, `supplies_grid.py`, `supplies_stock_dashboard.py`,
-  `mcp_*supply*` and backups for `SELECT *` or `item.*` and list columns explicitly.
-- `GET /supplies/items/{id}/photo` (signed-in users only, `Cache-Control` with revision-based ETag).
-- Custodian upload/remove on `item.html`: PNG/JPEG/WebP, ≤512 KB, verify magic bytes, bump item
-  `revision` and record a `supply_event` like other item edits. Follow `_decode_photo` in `app.py`
-  and `storage.set_user_photo`.
-- Tests: upload, wrong type, too large, non-custodian denied, list queries don't load blobs.
+### 3.2 Request tracker (owner view of `/supplies/requests/{id}`)
+- Top: tracker, sentence ("Waiting for Maria Santos to approve"), items as
+  "Bond paper, A4 · asked 3 · approved 3 · received 2 reams".
+- Actions in context only: Fix and resend (returned) · Withdraw (before approval) ·
+  Confirm receipt (released) · Print form · Request again.
+- **Full details** `<details>`: the existing table, revisions, timeline (all event names in plain words).
+- Approver/custodian view of the same URL: unchanged (assert in a test).
 
-### 3.2 Availability badge for requesters
-- Pure function: **Available / Limited / Out of stock** from the existing availability warning data
-  (`item.warning`). Requesters see the badge only, never on-hand numbers *(default — see open decisions)*.
+### 3.3 One-tap receipt confirmation
+- On the tracker and on `/supplies/issues/{id}` for the recipient: **Yes, I received it** and
+  **Report a problem** (opens a note box). Reuse the existing acknowledge endpoint and fields.
+- Custodian controls on the release page stay as they are.
 
-### 3.3 Browse grid (works without JS)
-- `GET /supplies/requests/new` for requester-only renders a card grid: photo (or generic icon),
-  description, unit, badge, quantity input named `qty_<item_id>`. Search box reuses the catalog `q`.
-  Classic form stays reachable via "Use list form".
-- JS enhancement (`static/js/supplies-shop.js`): +/− stepper, sticky bottom bar
-  "3 items · Review request". No JS → plain number inputs and a submit button.
+### 3.4 Supplies home
+- Big **Request supplies** button, **Needs your action**, the three latest requests with trackers,
+  link to My requests. Role cards remain for management users only.
 
-### 3.4 Cart review and send
-- POST grid → review page: chosen items (thumbnails, editable quantities), purpose, date needed,
-  **Send request** (reuses 2.1) and **Save as draft**. Map `qty_<id>` to the existing `lines` shape;
-  enforce `MAX_LINES` (20) with a friendly message.
+## Phase 4 — Close the side doors
 
-### 3.5 Categories (only if approved — see open decisions)
-- `category TEXT` on `supply_item`, custodian field, filter chips on the grid; workbook import column.
+### 4.1 Redirect requester-only users from management pages
+- `/supplies/items` and `/supplies/items/{id}` → picture grid (search term carried over).
+- `/supplies/issues` → My requests. `/supplies/awaiting-stock` → My requests (filter Active).
+- Release detail links from emails keep working (3.3).
 
-## Phase 4 — Polish
-- Playwright screenshots at 375px and 1280px for home, grid, review, list, detail; fix overflow.
-- Keyboard/screen-reader pass on the stepper and the quantity stepper.
-- Optional: a short guided tour in `tours.py` for first-time requesters.
+### 4.2 Stock numbers for stock readers only *(permission change)*
+- `/supplies/stock-dashboard`, `/supplies/inventory-data`, `/supplies/inventory-export.csv`,
+  `/supplies/stock-dashboard/presentation-data`: require custodian/auditor (or approver if the
+  owner wants approvers to keep it). Requesters get 403 or a redirect to the grid.
+- Check emails, MCP reads (`mcp_read.py`) and tours for links or data that expose quantities to requesters.
 
----
+## Phase 5 — Polish
+- Playwright screenshots at 375px and 1280px: home, grid, cart, my requests, tracker, receipt.
+- Keyboard and screen-reader pass (stepper buttons labelled, tracker readable as text).
+- Optional first-time tour in `tours.py`.
 
-## Open decisions (owner to confirm before the affected increment)
-
-| Decision | Default if not answered | Blocks |
-|---|---|---|
-| Can requesters see stock numbers? | No — badge only | 3.2 |
-| Add item categories? | Not yet | 3.5 |
-| Who uploads photos? | Custodians | 3.1 |
+## Still to confirm before 4.2
+- Should approvers keep the stock dashboard? Default: yes (they need it to decide), requesters no.
