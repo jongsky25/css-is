@@ -289,6 +289,9 @@ def test_legacy_running_waits_before_receipt_check(registry):
 
 def test_application_recovery_startup_opt_out_and_shutdown(app_mod,monkeypatch):
     started=[]
+    # The test replaces Thread.start below. Start its isolated reader first so
+    # shutdown can queue the close on a real worker rather than the thread stub.
+    app_mod.read_db(lambda c: None)
     monkeypatch.setattr(app_mod,'_hydrate_atoms_from_pickle',lambda c:None)
     monkeypatch.setattr(app_mod.threading,'Thread',lambda **kw:type('Thread',(),{'start':lambda self:None})())
     monkeypatch.setattr(app_mod.short_links,'enabled',lambda:False)
