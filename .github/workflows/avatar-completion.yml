@@ -11,9 +11,14 @@ concurrency:
   cancel-in-progress: true
 jobs:
   verify:
+    name: ${{ matrix.phase }}
+    strategy:
+      fail-fast: false
+      matrix:
+        phase: [completion-functional, runtime, matrix]
     runs-on: ubuntu-24.04
     container: python:3.12-trixie@sha256:0d0db5b17f11b1b7d1aafa74ceadaa64ba0944b267ff6fc22008a197acd6b9ad
-    timeout-minutes: 180
+    timeout-minutes: 150
     env:
       CSS_AVATAR_CHROMIUM: 156.0.8078.47
       CSS_AVATAR_COMPARE_BASE: 0a91f73cf2ef2a72af70a149dc2deca2fb9c8b9a
@@ -23,29 +28,18 @@ jobs:
         with:
           fetch-depth: 0
       - name: Install exact browser and locked dependencies
-        id: install
         run: |
           apt-get update
           apt-get install -y --no-install-recommends chromium=156.0.8078.47-1~deb13u1 chromium-common=156.0.8078.47-1~deb13u1 git procps
           python -m venv .venv
           .venv/bin/python -m pip install --require-hashes --only-binary=:all: -r requirements-test.txt
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
-      - name: Functional and visual integration
-        id: functional
-        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
-        run: .venv/bin/python scripts/avatar_baseline/ci_verify.py completion-functional
-      - name: Whole-runtime interaction timing against accepted 2B
-        id: runtime
-        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
-        run: .venv/bin/python scripts/avatar_baseline/ci_verify.py runtime
-      - name: Complete cold-warm desktop-mobile application matrix
-        id: matrix
-        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
-        run: .venv/bin/python scripts/avatar_baseline/ci_verify.py matrix
+      - name: Run bounded phase with matching before-after host and filesystem
+        run: .venv/bin/python scripts/avatar_baseline/ci_verify.py ${{ matrix.phase }}
       - name: Preserve every result and failure
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: avatar-completion-review
+          name: avatar-completion-${{ matrix.phase }}
           path: avatar-verification/
           retention-days: 30

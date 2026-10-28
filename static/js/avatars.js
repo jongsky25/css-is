@@ -314,6 +314,7 @@
         if (w._avPetting || w.classList.contains("av-dragging")) { tick(); return; }
         if (w._avBusy && Date.now() < w._avBusy) { tick(); return; }  // mid-walk: gait owns .avstage
         var pick = reps[Math.floor(Math.random() * reps.length)];
+        w._avBusy = Date.now() + pick[1] + 80; // head/part gestures own their transforms until recovery
         replayClass(w, pick[0], ALL_DO);
         clearTimeout(w._avDoT);
         w._avDoT = setTimeout(function () { w.classList.remove(pick[0]); }, pick[1] + 80);

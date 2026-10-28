@@ -79,3 +79,16 @@ opt-in browser calibrations remain skipped. Standard application CI is rerun.
 Exact compressed CSS/JS deltas are +5,642 bytes against increment 0 and +2,448
 bytes against accepted 2B, both below 15 KiB; see payload-budget.json. This source
 budget does not establish HTTP document-transfer, timing or memory acceptance.
+
+### Final motion arbitration and hosted phase visibility
+
+Idle gestures now reserve their part transforms through recovery, so pointer
+tracking/roaming cannot compete with a running head/ear gesture. Thirty-two motion,
+pointer, customizer and audio regressions pass on this final runtime.
+
+The hosted workflow now uploads functional, runtime and application-matrix
+artifacts independently. Each phase's before/after arms still share one runner,
+browser and filesystem; distinct phases use independent runners and their own
+controls. A functional failure can therefore be inspected immediately without
+waiting for the longer performance phases. Earlier cancelled/partial runs are
+retained as such and do not establish final acceptance.
