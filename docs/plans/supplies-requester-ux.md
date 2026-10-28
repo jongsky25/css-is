@@ -15,6 +15,7 @@ request flow when *they* request supplies.
 | Quantity limit | Requesters **cannot request more than is available to request** (rule R1 below) |
 | Categories | Not now |
 | Item pictures | Generated automatically from the item name (simple illustrations); no uploads needed |
+| Stock dashboard | Approvers keep it; requester-only users lose it |
 
 ## User stories (requester)
 
@@ -114,19 +115,46 @@ requestable(item, excluding_request) =
   submissions counted; resubmit re-checked; MCP draft/submit paths rejected too; zero-stock item.
 
 ### 1.4 Item pictures generated from the name
-- `static/img/supplies/` set of ~40 simple flat SVG illustrations in one consistent style:
-  bond paper, specialty paper, notebook, sticky notes, envelope, folder, expanding file, ballpen,
-  sign pen, pencil, marker, highlighter, whiteboard marker, eraser, correction tape, ruler, scissors,
-  cutter, stapler, staple wire, paper clip, binder clip, fastener, puncher, glue, tape, packaging tape,
-  rubber band, ink bottle, toner, ink cartridge, battery, USB drive, mouse, calculator, alcohol,
-  tissue, hand soap, trash bag, cleaning cloth, plus a generic box.
-- `supplies_pictures.py`: `picture_for(description, code) -> static path`, keyword rules (English and
-  common local terms, e.g. "ballpen", "bond", "fastener", "tisyu"), first match wins; fallback is a
-  coloured tile with the item's initials (colour hashed from the code).
-- No database change. Later, a custodian override can be added if wanted.
-- Tests: sample names map to the expected picture; unknown names fall back.
-- Tune keywords against the real catalog: the owner exports the item list (Supply catalog → CSV)
-  and the keywords are adjusted so most items get a real picture.
+Built against the office's real list: `tests/data/supplies_catalog_names.tsv` (99 items from the
+stock card workbook, names and units only). A prototype of the rules below matched **98 of 99**
+items using **49 pictures**.
+
+- `static/img/supplies/<name>.svg`: 49 simple flat illustrations in one consistent style
+  (same stroke, rounded corners, two-tone, square 96×96 viewBox, no text inside the picture),
+  plus `generic.svg`:
+
+  | Picture | Real items it covers (examples) |
+  |---|---|
+  | `paper-ream` | A4 / B4 / Legal Bond Paper, A4 Bond Paper (100 gsm), Cannon |
+  | `photo-paper` | Avia Matte, Paper Parchment |
+  | `colored-paper` | Cartolina, Wrapping Paper |
+  | `carbon-paper`, `fax-roll` | Carbon Paper · Croco Fax |
+  | `notebook` | Record Book, Ruled Pad, Steno Note Book, Binder Filler |
+  | `sticky-notes`, `index-card` | Post it Notes (all sizes), Post it (Sign Here) · Index Tab, Index Card |
+  | `envelope`, `expanding-file` | Brown/Coin/Mailing/With Handle envelopes · Expanding envelopes and folders, Envelope Organizer, Document File |
+  | `folder`, `box-file`, `ring-binder`, `clear-book` | Fancy/White/Brown/Short/L Type folders · File System · Ring Binder 25/50mm · Clear Book |
+  | `ballpen`, `sign-pen`, `pencil`, `highlighter`, `marker`, `crayon` | Ballpen, Sign Pen, Pencil, Highlighter, Whiteboard and Permanent markers, Crayon |
+  | `correction-tape`, `correction-fluid` | Correction Tape · Correction Fluid |
+  | `ink-bottle`, `ribbon-cartridge`, `stamp-pad` | Brother Ink, Stamp Pad (Ink) · Typewriter Ribbon · Stamp Pad |
+  | `stapler`, `staples`, `staple-remover`, `puncher`, `fastener` | Stapler · Stapler Wire · Stapler Remover · Puncher (2 Hole) · Fastener |
+  | `binder-clip`, `map-pins`, `rubber-bands`, `id-holder` | Clip Binder Joy, Clip Double · Map Pins · Rubber Bands · ID Holder |
+  | `tape`, `tape-wide`, `glue`, `scissors`, `cutter`, `clay` | Scotch/Transparent/Masking/Double Adhesive · Duct/Packing/Silver · Glue · Scissor · Cutter · Modeling Clay |
+  | `battery`, `battery-charger`, `disc`, `speaker` | AA/AAA batteries · Charger · CD/DVD · Speaker |
+  | `alcohol`, `air-freshener`, `tissue`, `waste-basket`, `sweetener` | Alcohol · Air Freshener · Tissue · Waste basket · Splenda |
+
+- `supplies_pictures.py`: `picture_for(description, code) -> {'src', 'tint'}`.
+  - An ordered list of `(picture, regex)` rules, specific before general (e.g. `staple remover`
+    before `stapler`, `sign pen` before `pen`, `correction tape` and duct/packing before `tape`).
+    Matching is case-insensitive and tolerant of the spellings in the real list
+    ("Air Freshner", "Maskin", "Packin", "Typewritter", "Injet", "Scissor").
+  - **Colour tint:** a colour word in the name (black, blue, red, yellow, green, peach, white, brown,
+    cyan, magenta) sets a CSS variable on the picture, so "Fancy Folder (Red)" and "(Blue)" look different.
+  - **Fallback:** a tile with the item's initials, colour hashed from the code. Today only "Epson 0442"
+    falls back (see open questions).
+- No database change. A custodian override can be added later if wanted.
+- Tests (`tests/test_supplies_pictures.py`): every line of `supplies_catalog_names.tsv` except the
+  known fallback gets a non-generic picture; the specific-before-general cases above; tint words;
+  unknown names fall back; every rule's SVG file exists.
 
 ## Phase 2 — Requesting
 
@@ -185,8 +213,8 @@ requestable(item, excluding_request) =
 
 ### 4.2 Stock numbers for stock readers only *(permission change)*
 - `/supplies/stock-dashboard`, `/supplies/inventory-data`, `/supplies/inventory-export.csv`,
-  `/supplies/stock-dashboard/presentation-data`: require custodian/auditor (or approver if the
-  owner wants approvers to keep it). Requesters get 403 or a redirect to the grid.
+  `/supplies/stock-dashboard/presentation-data`: require custodian, auditor **or request approver**
+  (confirmed: approvers keep it). Requester-only users are redirected to the grid.
 - Check emails, MCP reads (`mcp_read.py`) and tours for links or data that expose quantities to requesters.
 
 ## Phase 5 — Polish
@@ -194,5 +222,6 @@ requestable(item, excluding_request) =
 - Keyboard and screen-reader pass (stepper buttons labelled, tracker readable as text).
 - Optional first-time tour in `tours.py`.
 
-## Still to confirm before 4.2
-- Should approvers keep the stock dashboard? Default: yes (they need it to decide), requesters no.
+## Open questions
+- **"Epson 0442"** (unit: Box): is it ink, a cartridge or photo paper? Until answered it gets the initials tile.
+- **"Cannon"** (unit: Ream) is assumed to be copy paper.
