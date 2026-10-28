@@ -13,6 +13,33 @@ appearance. Identity, care, growth, cooldowns, account roles and opt-in audio re
 The deployment allowlist includes companion_wardrobe.py. APP_VERSION, changelog,
 changed avatar asset URLs and service-worker cache identify this release as 9.05.
 
+## Final v9.05 acceptance (405bcd2)
+
+The final combined source includes the v9.04 letterhead-template fix intact.
+[Avatar acceptance 40639625919](https://github.com/jongsky25/css-is/actions/runs/40639625919)
+passes **131 tests with zero failures/skips**, 432 animal rig cases and six themed
+sheets (1,170 cards). Four 30-second CPU4 mobile samples report 16.7–16.8 ms frame
+p95, within 33 ms. The original archive digest and 27 source hashes were checked
+locally before the execution workspace became unavailable; the verified summary
+is retained in [v905-avatar-audit.json](v905-avatar-audit.json). The final original
+archive remains in its [GitHub artifact](https://github.com/jongsky25/css-is/actions/runs/40639625919/artifacts/12794904258)
+for the hosted retention period.
+
+[Full application CI 40639625929](https://github.com/jongsky25/css-is/actions/runs/40639625929)
+passes **8,028 tests per normal/shuffled order with zero failures/errors/skips**,
+plus all 447 offline AI cases per report. Metadata, dependency audit and aggregate
+Required checks pass. Job conclusions, strict JUnit/AI gate logs and artifact
+digests are recorded in [v905-application-acceptance.json](v905-application-acceptance.json).
+The GitHub temporary checkout ddc765a0 has the identical Git tree to branch 405bcd2.
+A second local audit of the final application ZIPs was unavailable after the
+workspace outage; this is distinguished from the completed hosted strict gates.
+
+All pre-merge automated acceptance is complete. The closing commit adds only
+reports and evidence; production/test sources stay unchanged. Main's existing
+full verification, fresh-backup, strict-version and live-version deployment gates
+remain required. No current-main full memory matrix or physical-phone testing is
+claimed, and no archived research is pending.
+
 ## Prior accepted integration snapshot (bb91698)
 
 127 local core/wardrobe/appearance/onboarding/packaging cases pass; qa_preflight
@@ -37,8 +64,8 @@ and aggregate Required checks pass. [application/audit.json](application/audit.j
 records independent archive hashes, all JUnit cases and strict AI checks against
 GitHub's exact temporary checkout 0eae87ed (same tree as branch bb91698).
 Later report-only changes do not change the accepted production or test sources.
-Those checks passed the prior v9.04 candidate. The final v9.05 integration
-requires fresh checks before merge; prior evidence is not relabelled. Deployment status is
+Those reports remain scoped to the prior v9.04 candidate; the final v9.05 results
+are recorded above. Deployment status is
 tracked by the existing [main deployment workflow](https://github.com/jongsky25/css-is/actions/workflows/deploy-hf.yml).
 
 Historical full matrix evidence remains available in
@@ -82,7 +109,9 @@ results remain authoritative.
 
 ## Rechecking retained evidence
 
-The original avatar and application ZIPs are retained beside their audit JSONs.
+The prior bb91698 avatar and application ZIPs are retained beside their audit JSONs.
+Final v9.05 archives are linked from the summaries above and retain GitHub's
+hosted expiry; their recorded digests are preserved here.
 Verify their recorded SHA-256 values before extracting. JUnit acceptance uses
 scripts/check_release.py junit; strict AI reports must be checked from exact
 checkout 0eae87edb718ba76a067bbe0e2f2ef488ca72bb3 because their provenance binds
@@ -96,6 +125,5 @@ The final merge guard detected main advancing from d01f417 to 9c77133 while the
 full suites ran. PR #529 used v9.04 for a Google Docs letterhead-template fix.
 That fix is preserved intact; the companion release is therefore v9.05. Only the
 release version/changelog/cache asset URLs and the unrelated upstream Apps Script
-fix differ from the already accepted integration code. Current full application
-and avatar acceptance workflows are rerun on the final combined source before
-merge. No production reader, scheduler or archived diagnostic was imported.
+fix differ from the already accepted integration code. Full application and avatar acceptance workflows were rerun on the final
+combined source and passed before merge. No production reader, scheduler or archived diagnostic was imported.
