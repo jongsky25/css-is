@@ -1,0 +1,69 @@
+{
+  "run_url": "https://github.com/jongsky25/css-is/actions/runs/40620559865",
+  "source_commit": "fecd276a9d888691c000c297d4ca1c1f6a958535",
+  "artifacts": [
+    {
+      "id": 12790390224,
+      "name": "avatar-completion-matrix",
+      "bytes": 3793297,
+      "sha256": "sha256:a3a02238cb8e1f9097c65160b54eb49b118f645fd5e37b0e654f01e539abf824",
+      "expires_at": "2026-11-27T03:31:45Z"
+    },
+    {
+      "id": 12789692286,
+      "name": "avatar-review-matrix-1",
+      "bytes": 2245697,
+      "sha256": "sha256:82748d60fbbf28b281b7ff751cab01b1de7872e74306ca0a40bac14e402f7d7e",
+      "expires_at": "2026-11-27T03:31:48Z"
+    },
+    {
+      "id": 12789672500,
+      "name": "avatar-review-matrix-index",
+      "bytes": 366,
+      "sha256": "sha256:4874a85869ea201ca3fa6785d9547a5c4285099bc0517a5d6ce6eb22b05d0efe",
+      "expires_at": "2026-11-27T03:31:47Z"
+    },
+    {
+      "id": 12789617634,
+      "name": "avatar-review-matrix-2",
+      "bytes": 1458187,
+      "sha256": "sha256:5e13808e032b511797c4bb9d97e8a51d0647a9de43e58b9e642759bb3ddef955",
+      "expires_at": "2026-11-27T03:31:49Z"
+    },
+    {
+      "id": 12788218478,
+      "name": "avatar-review-runtime-1",
+      "bytes": 294676,
+      "sha256": "sha256:49cdc87415db6752b0dfe0662b5cb20dcf66086044770329008a793f8b06a2c0",
+      "expires_at": "2026-11-27T03:01:48Z"
+    },
+    {
+      "id": 12788158482,
+      "name": "avatar-review-runtime-index",
+      "bytes": 311,
+      "sha256": "sha256:faad8b42ca4d72467b0ed5fd95403826416c3ad5d2248db612cf4a28d4751265",
+      "expires_at": "2026-11-27T03:01:46Z"
+    },
+    {
+      "id": 12788058795,
+      "name": "avatar-completion-runtime",
+      "bytes": 96502142,
+      "sha256": "sha256:19ff0b9c0fbbe4a23d310bd4d1ffe59090813f8c7949b651af7ef1238460f810",
+      "expires_at": "2026-11-27T03:01:42Z"
+    },
+    {
+      "id": 12787451989,
+      "name": "avatar-completion-completion-functional",
+      "bytes": 10753231,
+      "sha256": "sha256:c4b38a23b0b4504a727b2cd9e5d008097f5d0405fe61778cc342702ef5d4be34",
+      "expires_at": "2026-11-27T02:29:00Z"
+    }
+  ],
+  "verification": {
+    "functional_zip_sha256_verified": true,
+    "matrix_zip_digests_verified": 4,
+    "matrix_tar_part_hashes_verified": 2,
+    "runtime_portable_zip_and_tar_hashes_verified": true,
+    "limitation": "Full runtime trace bytes remain in the hosted 96,502,142-byte artifact; portable audit verifies numeric/visual files and records all 40 trace hashes. Hosted artifacts expire on 2026-11-27."
+  }
+}

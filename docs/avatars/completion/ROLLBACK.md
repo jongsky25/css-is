@@ -21,3 +21,10 @@ stages through the actual macros; personal preview GETs must never save. Keep
 performance runs separate from screenshots and other heavy work. Report the exact
 browser, source hashes, viewport and CPU throttle; desktop emulation is not a
 physical phone. Preserve failing samples and do not restart archived GC research.
+
+Release packaging now includes companion_wardrobe.py and the baseline's existing
+sqlite_reader.py. If wardrobe is reverted, remove only its import/list entry after
+all callers are reverted. Keep sqlite_reader.py in the release payload while the
+baseline application imports it. Do not revert that packaging repair as a side
+effect of an avatar rollback. Test-fixture isolation and historical checkout fixes
+are independent of the avatar product and do not need product rollback.

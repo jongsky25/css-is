@@ -1,0 +1,36 @@
+{
+  "source_commit": "fecd276a9d888691c000c297d4ca1c1f6a958535",
+  "phase": "completion-functional",
+  "status": "passed",
+  "checks": {
+    "phase_complete": true,
+    "source_and_browser": true,
+    "unchanged_budgets": true,
+    "source:static/js/avatars.js": true,
+    "source:templates/_avatars.html": true,
+    "source:templates/me.html": true,
+    "source:templates/_growth.html": true,
+    "source:scripts/avatar_baseline/ci_verify.py": true,
+    "source:scripts/avatar_baseline/verification_result.py": true,
+    "source:tests/test_avatar_cpu_attribution.py": true,
+    "source:templates/_avatar_species/cat.html": true,
+    "source:templates/_avatar_species/fern.html": true,
+    "source:templates/_avatar_species/fish.html": true,
+    "source:templates/_avatar_species/bat.html": true,
+    "junit:browser-regressions": true,
+    "junit:wardrobe-and-core": true,
+    "junit:customizer": true,
+    "junit:animal-care": true,
+    "junit:seasonal": true,
+    "junit:visibility": true,
+    "rig_cases": true,
+    "contact_sheets": true
+  },
+  "failed": [],
+  "details": {},
+  "limitations": [
+    "No physical-phone testing",
+    "No archived GC experiment or forced collection",
+    "This audit does not authorize deployment or main merge"
+  ]
+}

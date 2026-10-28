@@ -17,12 +17,19 @@ branch. Draft review: [PR #526](https://github.com/jongsky25/css-is/pull/526).
 profile customization and shared motion are implemented. Current status and test
 limits are in [the completion report](avatars/completion/REPORT.md).
 
-Fresh 3A checks include 20 passing native CPU4/mobile frame samples (16.7–16.8 ms).
-Integrated checks cover equipment persistence/permissions, 1,584 equipment/stage
-combinations, browser customization/motion, all eight animal care interactions,
-appearance/onboarding/PWA regressions, and GREEN qa_preflight. Full hosted
-performance acceptance for the integrated source is pending; no later memory gate
-is waived. No archived GC research was restarted. No deployment or main merge.
+Frozen product/measurement source: **fecd276a9d888691c000c297d4ca1c1f6a958535**.
+[Hosted run 40620559865](https://github.com/jongsky25/css-is/actions/runs/40620559865)
+passes final functional acceptance (126 tests, no failures/skips, 432 rigs) and
+whole-runtime timing (20 current CPU4 samples; max callback 3.364 ms, max frame
+p95 16.8 ms). Independent numeric/source/artifact audits pass. All 4,896 final
+64 px cells and 36 equipped turtle retraction cases have retained visual evidence.
+The full matrix passes: all 104 median memory comparisons stay within 10 MiB
+(max RSS +7.742 MiB, heap +3.673 MiB); all timing/transfer/frame/control gates pass.
+Only normal/shuffled application gates remain pending. CI checkout,
+test-fixture isolation, archived-probe selection and release-manifest fixes are
+recorded separately; frozen production JS/CSS/templates/Python are unchanged.
+Do not restart successful performance cohorts for those non-product fixes.
+No archived GC research, deployment or main merge occurred.
 
 ## Start here — 2B provisionally accepted by the user
 

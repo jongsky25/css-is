@@ -1,128 +1,107 @@
-# Avatar completion review candidate — 2026-10-28 (Asia/Manila)
+# Avatar upgrade review — 2026-10-28 (Asia/Manila)
 
-All remaining product increments are implemented in reviewable commits after the
-accepted 0a91f73 baseline: recovered 3A animals; new 3B animals; wardrobe model;
-profile customization; shared motion; integration fixes and review evidence.
-No unrelated reader or isolated shared-gradient candidate was promoted. No merge
-into main, deployment or third-party messaging has occurred.
+All remaining product increments are implemented on `codex/avatar-upgrade-completion`:
+3A dog/rabbit/bird/turtle, 3B fish/dolphin/owl/bat, optional wardrobe, accessible
+profile customization, shared motion, cache versions and release documentation.
+[Draft PR #526](https://github.com/jongsky25/css-is/pull/526) targets accepted
+`codex/avatar-2b-verification`. No main merge or production deployment occurred.
 
-## Functional and visual evidence
+The frozen product/measurement snapshot is **fecd276a9d888691c000c297d4ca1c1f6a958535**.
+Later CI/documentation/test-fixture changes do not change its production sources.
+The full [hosted run](https://github.com/jongsky25/css-is/actions/runs/40620559865)
+retains every sample, failure and original trace. Remaining gates are tracked below;
+implementation complete does not mean release acceptance.
 
-- Recovered 3A: 86 core tests, four persisted-care browser checks, 216 rig cases,
-  2,448 unchanged-species comparisons; frozen 20-sample native frame gate passes
-  at 16.7–16.8 ms p95 on Chromium 154.0.8037.57, CPU4, 390×844.
-- Integrated regression suite: 133 tests pass before the final scarf-slot coverage
-  addition; 18 focused wardrobe tests pass afterward. The exhaustive render test
-  now covers 1,584 compatible equipment/stage combinations plus 1,632 seasonal
-  combinations (96 bases × 17 monthly/seasonal selections).
-- 26 additional onboarding/PWA/native-visibility/render tests pass. Accounting
-  regressions: 27 pass. qa_preflight is GREEN (only missing backup-directory warning).
-- New mobile browser checks prove read-only preview, Cancel, Save, compatible
-  filtering and persistence on Home/Wellness. Motion checks prove reduced-motion,
-  offscreen suspend/resume and removal cleanup. Existing actual hidden-tab, touch,
-  keyboard, audio, care, seasonal-live-refresh and static-preview checks pass.
-- 216 3B stage/mood/theme rig cases pass. [Six final contact sheets](sheets/index.json)
-  cover 96 bases and 294 equipment thumbnails per surface, including forced colors.
-  [Mobile customization](browser/mobile-customizer.png) and [3B reactions](../increment3b/reactions-light.png)
-  were actually rendered and inspected. Final small placement refinements give
-  turtle neck items a smaller neck anchor and bonsai finishes a shallow-pot scale.
+## Product changes
 
-See retained logs/XML and asset manifest. Development failures remain in
-[development-failures](development-failures/); interrupted syntax-error attempts
-are not passing evidence. A subsequent real night-time petting regression was
-fixed by waking the companion before the held-pet action. No 2B result changed.
+- All eight remaining animals have six structural stages and their existing
+  interaction hooks. Swimmer water stays outside the moving creature.
+- Thirteen authored, allowlisted accessories have species compatibility, slots,
+  stage anchors and draw order, with at most two items. Persistence is additive;
+  existing accounts default to seasonal appearance. Identity and care data remain.
+- `/me#companion` offers seasonal/personal/none modes, read-only live preview,
+  explicit Save/Cancel, removal and seasonal reset. Invalid saves are atomic;
+  existing authentication and Origin protection apply. Preferences are actor-scoped
+  across Home, Wellness and profile; shared admin art stays seasonal.
+- Shared motion suspends offscreen, hidden and reduced-motion companions. Care,
+  petting, idle and pointer movement arbitrate their transforms. Script evaluation
+  is idempotent, removed companions unregister, and plant followthrough preserves
+  leaf placement. Sounds remain opt-in; no accessory has its own perpetual timer.
+- Version 8.57, changed script URLs and service-worker cache were updated. No new
+  runtime dependency, external artwork, paid service or runtime AI generation.
 
-## Performance and release status
+## Verified evidence
 
-The 2B provisional acceptance and unresolved failures remain intact. It grants no
-exception to the new work. Local 3A frame evidence is scoped to that frozen batch,
-not the later integrated runtime. Zero runtime JavaScript dependencies, remote
-artwork or paid services were added. Physical-phone testing is unavailable.
+Final hosted functional acceptance passes **126 tests, zero failures/skips**:
+9 browser regressions, 104 core/wardrobe checks, 3 customization flows, 8 animal
+care checks, seasonal refresh and native visibility/touch/keyboard. All **432**
+animal stage/mood/theme rigs pass. Source and artifact hashes were independently
+checked in [the offline functional audit](hosted-functional-audit.json).
+The retained functional ZIP matches GitHub SHA-256
+`c4b38a23b0b4504a727b2cd9e5d008097f5d0405fe61778cc342702ef5d4be34`.
 
-A single hosted completion workflow is prepared using the established Linux x64
-runner and pinned Chromium 156.0.8078.47. It runs functional checks, five 30-second
-whole-runtime samples per representative plant/ground animal/flyer/swimmer in both
-accepted-2B/current arms, then the full five-run cold/warm desktop/mobile matrix.
-It retains all scenarios and navigation memory comparisons with the unchanged
-10 MiB limit. No GC/native instrumentation research is included. All phases retain
-failures independently. Full integrated performance acceptance remains pending.
+The final hosted runtime phase passes: four representative kinds (cat, fern,
+fish, bat), five 30-second CPU4 samples each, in both matched source arms.
+All 20 current samples meet the unchanged 50 ms callback and 33.3 ms frame limits.
+Worst owned callback is **3.364 ms**; worst frame p95 is **16.8 ms**.
+Empty controls pass. [Independent runtime audit](hosted-runtime-audit.json)
+rehashes 20 numeric/visual files and verifies source identities; 40 original
+compressed traces and their hashes remain in the full hosted runtime artifact.
+The portable [runtime review part](hosted-runtime/avatar-review-runtime-1.tar.gz)
+and [index](hosted-runtime/avatar-review-runtime-parts.json) are retained locally.
 
-Draft review: [PR #526](https://github.com/jongsky25/css-is/pull/526). Initial
-hosted run [40616347893](https://github.com/jongsky25/css-is/actions/runs/40616347893)
-installed pinned Chromium successfully; it is superseded by the leaf-placement
-correction before performance acceptance. The final customizer browser trio passes,
-including a regression that confirms watering rotates inner paths without replacing
-a leaf placement transform. Source changes require a fresh hosted run; no cancelled
-or partial cohort is acceptance evidence.
+Additional completed checks include 1,584 compatible equipment/stage renders,
+1,632 seasonal renders, 35 motion/pointer/customizer/audio regressions,
+24 wardrobe/customizer/appearance checks, 26 onboarding/PWA/native checks and
+27 accounting regressions. qa_preflight is GREEN (backup-directory warning only).
+[51 sheets](small-sheets/index.json) cover **4,896 actual 64 px cells** across all
+six stages, outfits and surfaces. All 36 turtle cap/crown retraction cases hide
+the eyes; [measurements](turtle-equipped-retraction.json) and
+[rendered evidence](turtle-equipped-retraction.png) are retained.
 
-Separate [before](motion/before-motion.webm) and [after](motion/after-motion.webm)
-recordings use each arm's own CSS/JavaScript for fern, dog, bat and fish; care replies
-are synthetic. [Hero overview](hero-overview.png) shows the final catalog with two
-optional accessory examples.
+Exact compressed CSS/JS source growth is **5,733 bytes versus increment 0** and
+**2,539 bytes versus accepted 2B**, below 15 KiB; see [payload-budget.json](payload-budget.json).
+This byte calculation does not prove cumulative timing/memory versus increment 0.
 
-New script and service-worker cache versions, version.py/CHANGELOG, original-art
-[asset manifest](asset-manifest.json) and [rollback instructions](ROLLBACK.md) are
-included. This candidate is for review; release readiness remains false until the
-remaining performance evidence passes. No production deployment is authorized.
+## Final matrix acceptance and remaining application gate
 
-### Standard CI collection repair
+The complete five-run cold/warm desktop/mobile application matrix **passes** on
+fecd276 against accepted 2B. All 104 scenario/navigation median RSS and heap
+comparisons meet the unchanged 10 MiB criterion, with matched renderer counts.
+Largest RSS median increase is **7.742 MiB**; largest heap increase is **3.673 MiB**.
+Every mobile interaction frame p95 is at most 16.8 ms. The largest group-median
+LCP change is +4 ms; no interaction-duration median increases. Home document
+transfer grows at most 255 bytes and picker transfer at most 1,552 bytes.
+No JavaScript errors or external requests were recorded. Empty controls,
+visibility/reduced-motion/background checks, complete cohorts and all matrix gates
+pass. No later memory budget was waived.
 
-The initial standard PR CI failed during collection because archived analysis
-modules imported optional Frida at module load. This also exists in accepted
-baseline 0a91f73 (global imports remain there; Frida is a separate optional lock).
-Frida imports now occur only in explicit diagnostic entry points in six archived
-modules and their PageHistory helper. No diagnostic behavior/protocol, raw archive
-or numerical finding was changed, and no instrumentation was launched. The
-previously blocked offline/collection regression set passes without Frida; its
-opt-in browser calibrations remain skipped. Standard application CI is rerun.
+[Independent matrix audit](hosted-matrix-audit.json) recomputes all 104 comparisons,
+checks every source identity and rehashes 35 portable numeric/visual files.
+The [complete matrix ZIP](hosted-matrix.zip) matches GitHub SHA-256
+`a3a02238cb8e1f9097c65160b54eb49b118f645fd5e37b0e654f01e539abf824`.
+All four matrix transport ZIP digests and both portable tar-part hashes were
+verified before extraction. These results concern this exact hosted comparison;
+they do not resolve the older 2B findings or establish physical-phone performance.
 
-Exact compressed CSS/JS deltas are +5,683 bytes against increment 0 and +2,489
-bytes against accepted 2B, both below 15 KiB; see payload-budget.json. This source
-budget does not establish HTTP document-transfer, timing or memory acceptance.
+Standard application CI is being repaired at the test/checkout boundary:
+full history is needed by unchanged offline identity tests, and lifespan tests
+leaked a closed reader into later clients. The reader leak reproduces on accepted
+0a91f73. Only test fixtures are isolated; production reader code is unchanged.
+See [the bounded CI repair evidence](application-ci-repair/README.md) and
+[application-suite selection](application-suite-selection.md).
+Earlier timed-out, cancelled and failing jobs remain failures/partial evidence.
+A complete normal/shuffled application run with zero failures/skips remains required.
 
-### Final motion arbitration and hosted phase visibility
+The accepted 2B exception remains scoped to 2B. Its +11.699/+16.301 MiB navigation
+RSS differences, 36.379 MiB same-source control swing, and earlier failures remain
+recorded. No claim of reliable cumulative performance versus increment 0 or
+physical-phone testing is made. No GC/root-retention/native-hook/observer research
+was restarted; the disposal probe remains archived. The isolated shared-gradient
+candidate was not promoted.
 
-Idle gestures now reserve their part transforms through recovery, so pointer
-tracking/roaming cannot compete with a running head/ear gesture. Thirty-two motion,
-pointer, customizer and audio regressions pass on this final runtime.
-
-The hosted workflow now uploads functional, runtime and application-matrix
-artifacts independently. Each phase's before/after arms still share one runner,
-browser and filesystem; distinct phases use independent runners and their own
-controls. A functional failure can therefore be inspected immediately without
-waiting for the longer performance phases. Earlier cancelled/partial runs are
-retained as such and do not establish final acceptance.
-
-### Final integrated seasonal and collection checks
-
-The global /appearance/avatar renderer explicitly uses seasonal preferences, so
-shared seasonal illustrations cannot pick up the viewer's personal equipment.
-Unsaved seasonal customizer previews follow real global outfit updates, while
-saved personal mode and equipment remain unchanged. All 24 wardrobe/customizer/
-appearance checks pass, including this flow. All 432 current animal stage/mood/
-theme rigs pass. Sheets and recordings were regenerated on the final product.
-
-The corrected leaf fixture establishes its own mature growth state instead of
-relying on a caller environment variable. This closes the hosted functional
-failure recorded under hosted-development/; its original archive/hash is retained.
-
-Normal CI uses the explicitly scoped [application suite](application-suite-selection.md).
-The existing zero-failure/zero-skip gate remains intact. Dedicated avatar CI still
-executes current functional/browser and full performance checks; disabled archived
-experiments are not launched. Full integrated performance acceptance is pending.
-
-### Hosted pointer/idempotence corrections
-
-The expanded nine-browser regression group found two genuine motion regressions:
-20 script evaluations added 20 pagehide listeners, and chase arbitration could
-leave the outer lean tilted on pointer exit. The engine is now idempotent; head
-gestures have their own priority deadline, while the separate outer lean can
-settle normally. Thirty-five geometry/motion/pointer/customizer/audio tests pass,
-including the existing 20-reload and owl/cat/dog/bird pointer checks. Original
-hosted failures and their exact archive hashes remain in hosted-development/.
-
-The long performance cohorts now start only after functional acceptance passes.
-A skipped or cancelled performance phase is never a pass. Runtime and application
-matrix phases still run independently after that prerequisite, with matched
-before/after hosts. Established portable review packaging retains numeric/visual
-files in downloadable parts; all original compressed traces remain in raw artifacts.
+[Validation history](VALIDATION_HISTORY.md) retains development failures and
+superseded attempts. [Original asset manifest](asset-manifest.json),
+[before](motion/before-motion.webm)/[after](motion/after-motion.webm) motion recordings
+(synthetic care replies), [hero overview](hero-overview.png), and
+[rollback instructions](ROLLBACK.md) are available for review.

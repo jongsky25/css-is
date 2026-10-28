@@ -1,37 +1,37 @@
 {
-  "source_commit": "3572ac9aa24e3e1058e59d94206ee981442e7a77",
-  "working_tree_css_sha256": "868a527420e0c8db9296513a85f98295d55427a40f5ec0f926ee6be493db7e0d",
+  "source_commit": "fecd276a9d888691c000c297d4ca1c1f6a958535",
+  "working_tree_css_sha256": "43646bd04ce128c7b2394432553d9a261dbc15d3668a46592fc288b71692e6a8",
   "rows": [
     {
       "baseline": "1c964dc",
       "css_gzip_delta_bytes": 440,
       "scripts": {
-        "avatars.js": 3698,
+        "avatars.js": 3748,
         "avatar-audio.js": 54,
         "appearance.js": 15,
         "companion-customizer.js": 1306,
         "search.js": 170
       },
-      "total_gzip_delta_bytes": 5683,
+      "total_gzip_delta_bytes": 5733,
       "within_15kib": true
     },
     {
       "baseline": "0a91f73",
       "css_gzip_delta_bytes": 220,
       "scripts": {
-        "avatars.js": 948,
+        "avatars.js": 998,
         "avatar-audio.js": 0,
         "appearance.js": 15,
         "companion-customizer.js": 1306,
         "search.js": 0
       },
-      "total_gzip_delta_bytes": 2489,
+      "total_gzip_delta_bytes": 2539,
       "within_15kib": true
     }
   ],
-  "notes": "Exact compressed CSS/JS source deltas, including new customizer and changed appearance refresh. Actual document transfer, timing and memory require hosted matrix; this does not accept those gates.",
+  "notes": "Exact compressed CSS/JS source deltas. Full cumulative performance versus increment 0 is not established by this source-byte calculation.",
   "script_sha256": {
-    "avatars.js": "c6535cf92bc806558281d1742c1f550ee24545ca4125d143f5177bc8ed00fb14",
+    "avatars.js": "f65020434bcd443e0b1efd8a6ee8d2e291307b8a6d7eafe669895a830b70db90",
     "avatar-audio.js": "0434c719d23e149eb4e5b8471c06fdf439d8c1b3f1983192e5ce9e3ffa9fbf32",
     "appearance.js": "2d526047b2cba628474639b3e4c09c1d1be6e93502c552747ee2c7e3644cfe2e",
     "companion-customizer.js": "75ec49c45bf6c6f40335a2302672f97741bb83cac1406382a2879b745db059fb",

@@ -1,0 +1,223 @@
+{
+  "source_commit": "fecd276a9d888691c000c297d4ca1c1f6a958535",
+  "cases": 36,
+  "all_eyes_hidden": true,
+  "rows": [
+    {
+      "stage": "1",
+      "mood": "happy",
+      "item": "small_cap",
+      "eyes_hidden": true
+    },
+    {
+      "stage": "1",
+      "mood": "okay",
+      "item": "small_cap",
+      "eyes_hidden": true
+    },
+    {
+      "stage": "1",
+      "mood": "droopy",
+      "item": "small_cap",
+      "eyes_hidden": true
+    },
+    {
+      "stage": "2",
+      "mood": "happy",
+      "item": "small_cap",
+      "eyes_hidden": true
+    },
+    {
+      "stage": "2",
+      "mood": "okay",
+      "item": "small_cap",
+      "eyes_hidden": true
+    },
+    {
+      "stage": "2",
+      "mood": "droopy",
+      "item": "small_cap",
+      "eyes_hidden": true
+    },
+    {
+      "stage": "3",
+      "mood": "happy",
+      "item": "small_cap",
+      "eyes_hidden": true
+    },
+    {
+      "stage": "3",
+      "mood": "okay",
+      "item": "small_cap",
+      "eyes_hidden": true
+    },
+    {
+      "stage": "3",
+      "mood": "droopy",
+      "item": "small_cap",
+      "eyes_hidden": true
+    },
+    {
+      "stage": "4",
+      "mood": "happy",
+      "item": "small_cap",
+      "eyes_hidden": true
+    },
+    {
+      "stage": "4",
+      "mood": "okay",
+      "item": "small_cap",
+      "eyes_hidden": true
+    },
+    {
+      "stage": "4",
+      "mood": "droopy",
+      "item": "small_cap",
+      "eyes_hidden": true
+    },
+    {
+      "stage": "5",
+      "mood": "happy",
+      "item": "small_cap",
+      "eyes_hidden": true
+    },
+    {
+      "stage": "5",
+      "mood": "okay",
+      "item": "small_cap",
+      "eyes_hidden": true
+    },
+    {
+      "stage": "5",
+      "mood": "droopy",
+      "item": "small_cap",
+      "eyes_hidden": true
+    },
+    {
+      "stage": "6",
+      "mood": "happy",
+      "item": "small_cap",
+      "eyes_hidden": true
+    },
+    {
+      "stage": "6",
+      "mood": "okay",
+      "item": "small_cap",
+      "eyes_hidden": true
+    },
+    {
+      "stage": "6",
+      "mood": "droopy",
+      "item": "small_cap",
+      "eyes_hidden": true
+    },
+    {
+      "stage": "1",
+      "mood": "happy",
+      "item": "flower_crown",
+      "eyes_hidden": true
+    },
+    {
+      "stage": "1",
+      "mood": "okay",
+      "item": "flower_crown",
+      "eyes_hidden": true
+    },
+    {
+      "stage": "1",
+      "mood": "droopy",
+      "item": "flower_crown",
+      "eyes_hidden": true
+    },
+    {
+      "stage": "2",
+      "mood": "happy",
+      "item": "flower_crown",
+      "eyes_hidden": true
+    },
+    {
+      "stage": "2",
+      "mood": "okay",
+      "item": "flower_crown",
+      "eyes_hidden": true
+    },
+    {
+      "stage": "2",
+      "mood": "droopy",
+      "item": "flower_crown",
+      "eyes_hidden": true
+    },
+    {
+      "stage": "3",
+      "mood": "happy",
+      "item": "flower_crown",
+      "eyes_hidden": true
+    },
+    {
+      "stage": "3",
+      "mood": "okay",
+      "item": "flower_crown",
+      "eyes_hidden": true
+    },
+    {
+      "stage": "3",
+      "mood": "droopy",
+      "item": "flower_crown",
+      "eyes_hidden": true
+    },
+    {
+      "stage": "4",
+      "mood": "happy",
+      "item": "flower_crown",
+      "eyes_hidden": true
+    },
+    {
+      "stage": "4",
+      "mood": "okay",
+      "item": "flower_crown",
+      "eyes_hidden": true
+    },
+    {
+      "stage": "4",
+      "mood": "droopy",
+      "item": "flower_crown",
+      "eyes_hidden": true
+    },
+    {
+      "stage": "5",
+      "mood": "happy",
+      "item": "flower_crown",
+      "eyes_hidden": true
+    },
+    {
+      "stage": "5",
+      "mood": "okay",
+      "item": "flower_crown",
+      "eyes_hidden": true
+    },
+    {
+      "stage": "5",
+      "mood": "droopy",
+      "item": "flower_crown",
+      "eyes_hidden": true
+    },
+    {
+      "stage": "6",
+      "mood": "happy",
+      "item": "flower_crown",
+      "eyes_hidden": true
+    },
+    {
+      "stage": "6",
+      "mood": "okay",
+      "item": "flower_crown",
+      "eyes_hidden": true
+    },
+    {
+      "stage": "6",
+      "mood": "droopy",
+      "item": "flower_crown",
+      "eyes_hidden": true
+    }
+  ]
+}
