@@ -1,0 +1,13 @@
+.............................................ss......................... [ 39%]
+....................s................................................... [ 78%]
+.......................................                                  [100%]
+=============================== warnings summary ===============================
+tests/test_absent_attribute_capability.py::test_getter_matches_known_reference_without_claiming_performance
+  /workspace/css-is/tests/conftest.py:88: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+SKIPPED [1] tests/test_avatar_application_membership_browser.py:20: Opt-in application observer calibration
+SKIPPED [1] tests/test_avatar_page_history_browser.py:17: Opt-in native history
+SKIPPED [1] tests/test_membership_lifecycle_transport_browser.py:13: Opt-in pinned transport capability

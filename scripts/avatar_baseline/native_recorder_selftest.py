@@ -8,7 +8,6 @@ import subprocess
 import threading
 import time
 from http.server import ThreadingHTTPServer
-import frida
 from playwright.sync_api import sync_playwright
 from tests import avatar_page_history_probe as helper
 from scripts.avatar_baseline.mixed_membership_fixture import Handler
@@ -89,6 +88,7 @@ def audit(root,repo,ref):
 
 
 def run(out):
+    import frida  # Optional: required only when explicitly running this diagnostic.
     out.mkdir(parents=True,exist_ok=False);repo=Path(__file__).resolve().parents[2]
     ref=subprocess.check_output(['git','rev-parse','HEAD'],cwd=repo,text=True).strip();hashes={}
     for name in SOURCES:

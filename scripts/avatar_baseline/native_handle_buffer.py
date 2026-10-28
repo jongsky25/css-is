@@ -14,7 +14,6 @@ import sys
 import threading
 import time
 
-import frida
 from playwright.sync_api import Browser, sync_playwright
 from scripts.avatar_baseline import element_membership_lifecycle as baseline
 from scripts.avatar_baseline.context_handle_journal import OFFSETS, ROLES
@@ -72,6 +71,7 @@ def validate_proof(proof):
 
 
 def proof(out):
+    import frida  # Optional: required only when explicitly running this diagnostic.
     out.mkdir(parents=True,exist_ok=False)
     p={'messages':[],'clock_samples':[],'frida_version':frida.__version__}
     server=ThreadingHTTPServer(('127.0.0.1',0),Handler);server.lifecycle_events=[]
@@ -164,6 +164,7 @@ def analyze(journal,capture):
 
 
 def capture(out,mode):
+    import frida  # Optional: required only when explicitly running this diagnostic.
     out.mkdir(parents=True)
     data={'protocol':PROTOCOL,'messages':[],'clock_samples':[]}
     original_cdp,original_close=Browser.new_browser_cdp_session,Browser.close

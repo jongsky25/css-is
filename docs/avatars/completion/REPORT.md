@@ -64,3 +64,18 @@ New script and service-worker cache versions, version.py/CHANGELOG, original-art
 [asset manifest](asset-manifest.json) and [rollback instructions](ROLLBACK.md) are
 included. This candidate is for review; release readiness remains false until the
 remaining performance evidence passes. No production deployment is authorized.
+
+### Standard CI collection repair
+
+The initial standard PR CI failed during collection because archived analysis
+modules imported optional Frida at module load. This also exists in accepted
+baseline 0a91f73 (global imports remain there; Frida is a separate optional lock).
+Frida imports now occur only in explicit diagnostic entry points in six archived
+modules and their PageHistory helper. No diagnostic behavior/protocol, raw archive
+or numerical finding was changed, and no instrumentation was launched. The
+previously blocked offline/collection regression set passes without Frida; its
+opt-in browser calibrations remain skipped. Standard application CI is rerun.
+
+Exact compressed CSS/JS deltas are +5,642 bytes against increment 0 and +2,448
+bytes against accepted 2B, both below 15 KiB; see payload-budget.json. This source
+budget does not establish HTTP document-transfer, timing or memory acceptance.

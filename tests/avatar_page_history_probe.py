@@ -4,7 +4,6 @@ from pathlib import Path
 import time
 import json
 import subprocess
-import frida
 
 ROOT = Path(__file__).resolve().parents[1]
 HOOK = ROOT/'scripts/avatar_baseline/native/page_history.js'
@@ -12,6 +11,7 @@ HOOK = ROOT/'scripts/avatar_baseline/native/page_history.js'
 
 class PageHistory:
     def __init__(self, page, enabled):
+        import frida  # Optional: only explicit native diagnostics instantiate this helper.
         self.session = None
         self.script = None
         self.messages = []

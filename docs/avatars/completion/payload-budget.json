@@ -1,0 +1,33 @@
+{
+  "source_commit": "190d084005e75078d71a121383a1f136dc7d631d",
+  "working_tree_css_sha256": "868a527420e0c8db9296513a85f98295d55427a40f5ec0f926ee6be493db7e0d",
+  "rows": [
+    {
+      "baseline": "1c964dc",
+      "css_gzip_delta_bytes": 440,
+      "scripts": {
+        "avatars.js": 3657,
+        "avatar-audio.js": 54,
+        "appearance.js": 15,
+        "companion-customizer.js": 1306,
+        "search.js": 170
+      },
+      "total_gzip_delta_bytes": 5642,
+      "within_15kib": true
+    },
+    {
+      "baseline": "0a91f73",
+      "css_gzip_delta_bytes": 220,
+      "scripts": {
+        "avatars.js": 907,
+        "avatar-audio.js": 0,
+        "appearance.js": 15,
+        "companion-customizer.js": 1306,
+        "search.js": 0
+      },
+      "total_gzip_delta_bytes": 2448,
+      "within_15kib": true
+    }
+  ],
+  "notes": "Exact compressed CSS/JS source deltas, including new customizer and changed appearance refresh. Actual document transfer, timing and memory require hosted matrix; this does not accept those gates."
+}

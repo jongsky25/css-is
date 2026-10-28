@@ -38,7 +38,7 @@ def previous_script(name):
  path='static/js/'+name
  exists=subprocess.check_output(['git','ls-tree','--name-only',budget_base,path],text=True).strip()
  return subprocess.check_output(['git','show',budget_base+':'+path]) if exists else b''
-js_delta=sum(len(gzip.compress(Path(f'static/js/{name}').read_bytes(),mtime=0))-len(gzip.compress(previous_script(name),mtime=0)) for name in ['avatars.js','avatar-audio.js','search.js','appearance.js','companion-customizer.js'])
+js_delta=sum(len(gzip.compress(Path(f'static/js/{name}').read_bytes(),mtime=0))-(len(gzip.compress(previous_script(name),mtime=0)) if previous_script(name) else 0) for name in ['avatars.js','avatar-audio.js','search.js','appearance.js','companion-customizer.js'])
 result['css_js_gzip_delta_bytes']=css_delta+js_delta
 result['gates']={
  'css_js_added_le_15kib':css_delta+js_delta<=15*1024,
