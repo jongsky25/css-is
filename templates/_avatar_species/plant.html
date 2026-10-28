@@ -1,9 +1,10 @@
+{% from "_avatar_wardrobe.html" import wear as _wear %}
 {# plant artwork. Keep placement groups separate from animated groups. #}
 {% from "_avatars_shared.html" import costume_front, pot_bow as _pot_bow, pot_regalia as _pot_regalia %}
 
-{% macro art(s, m=0, costume="", scope="") %}
+{% macro art(s, m=0, costume="", scope="", preferences=none) %}
 {% set leaf = 'url(#' ~ scope ~ '-leaf)' if scope else 'url(#avg-leaf)' %}
-<g class="av-v2 av-body" stroke-linejoin="round">
+<g class="av-v2 av-body" stroke-linejoin="round"><g transform="translate(60 108) scale({{ .6+s*.06 }})">{{ _wear(preferences,'back') }}</g>
   <ellipse cx="60" cy="133" rx="25" ry="3" fill="#302f3c" opacity=".12"/>
   <path d="M37 109 Q60 116 83 109 L78 130 Q60 139 42 130Z" fill="url(#avg-pot)" stroke="#885b48" stroke-width="1.4"/>
   <path d="M43 116 Q47 119 49 130" stroke="#ffdfb3" stroke-width="3" opacity=".5" fill="none"/>
@@ -50,8 +51,8 @@
     {% endfor %}{% endif %}
   </g>
   {% endif %}
-  <g class="av-anchor-pot" data-anchor="pot" transform="translate(60 119)"></g>
-  {{ _pot_bow(m, 40, 113) }}{{ _pot_regalia(s,60,115) }}
+  <g class="av-anchor-pot" data-anchor="pot" transform="translate(60 119)">{{ _wear(preferences,'pot') }}</g>
+  <g transform="translate(60 108)">{{ _wear(preferences,'ornament') }}</g>{{ _pot_bow(m, 40, 113) }}{{ _pot_regalia(s,60,115) }}
   {{ costume_front("plant", s, costume, scaled=true) }}
 </g>
 {% endmacro %}

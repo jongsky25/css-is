@@ -1142,6 +1142,10 @@ def _add_missing_columns(conn):
         # "not yet onboarded" and sees it once after this update ships.
         if "avatar_kind" not in au_cols:
             conn.execute("ALTER TABLE admin_user ADD COLUMN avatar_kind TEXT")
+        if "avatar_appearance_mode" not in au_cols:
+            conn.execute("ALTER TABLE admin_user ADD COLUMN avatar_appearance_mode TEXT NOT NULL DEFAULT 'seasonal'")
+        if "avatar_equipment" not in au_cols:
+            conn.execute("ALTER TABLE admin_user ADD COLUMN avatar_equipment TEXT NOT NULL DEFAULT '[]'")
         if "avatar_name" not in au_cols:
             conn.execute("ALTER TABLE admin_user ADD COLUMN avatar_name TEXT")
         if "onboarded_at" not in au_cols:
@@ -4638,6 +4642,7 @@ def _admin_row(r):
             "designation": r[15], "has_account_photo": bool(r[16]),
             "bureau_access": r[17] or "", "has_account_signature": bool(r[18]),
             "nickname": r[19] or "", "employee_no": r[20] or "",
+            "avatar_appearance_mode": r[21] or "seasonal", "avatar_equipment": r[22] or "[]",
             "pending": (r[2] == "")}      # no password set yet => still invited
 
 
@@ -4651,7 +4656,7 @@ _ADMIN_COLS = ("id, username, pw_hash, salt, role, active, must_change, rp_id, "
                "(photo IS NOT NULL) AS has_account_photo, "
                "COALESCE(bureau_access, ''), "
                "(signature IS NOT NULL) AS has_account_signature, "
-               "nickname, employee_no")
+               "nickname, employee_no, avatar_appearance_mode, avatar_equipment")
 
 
 def get_admin_user(conn, username):
@@ -4715,6 +4720,11 @@ def set_user_avatar(conn, user_id, kind, name):
     ValueError on an unknown species. Leaves onboarded_at alone."""
     if not valid_avatar_kind(kind):
         raise ValueError("Pick one of the available companions.")
+    import companion_wardrobe as wardrobe
+    saved = get_admin_user_by_id(conn, user_id)
+    if saved and saved.get("avatar_kind") != kind:
+        preferences = wardrobe.normalize(kind, saved.get("avatar_appearance_mode"), saved.get("avatar_equipment"))
+        conn.execute("UPDATE admin_user SET avatar_equipment=? WHERE id=?", (json.dumps(preferences['items']), user_id))
     conn.execute("UPDATE admin_user SET avatar_kind=?, avatar_name=? WHERE id=?",
                  (kind, clean_avatar_name(name), user_id))
     conn.commit()
@@ -4801,6 +4811,7 @@ def get_user_profile(conn, user_id):
         "rp_id": acct.get("rp_id"),
         "avatar_kind": acct.get("avatar_kind") or AVATAR_DEFAULT,
         "avatar_name": acct.get("avatar_name") or "",
+        "avatar_wardrobe": __import__("companion_wardrobe").normalize(acct.get("avatar_kind") or AVATAR_DEFAULT, acct.get("avatar_appearance_mode"), acct.get("avatar_equipment")),
         "avatar_last_care_at": acct.get("avatar_last_care_at"),
         "avatar_mood": avatar_mood(acct.get("avatar_last_care_at")),
         "avatar_care_streak": acct.get("avatar_care_streak") or 0,
@@ -11836,3 +11847,13 @@ def cal_link_event(conn, entry_id, event_id, *, by=None):
     if by:
         audit(conn, by, "calendar_link_activity", target_type="calendar_entry", target_id=entry_id,
               summary=f"Linked '{cur['title']}' to CSS activity #{event_id}")
+
+
+def set_avatar_wardrobe(conn, user_id, kind, mode, items):
+    import companion_wardrobe as wardrobe
+    preferences = wardrobe.validate(kind, mode, items)
+    if not conn.execute("SELECT 1 FROM admin_user WHERE id=? AND COALESCE(avatar_kind,?)=?", (user_id, AVATAR_DEFAULT, kind)).fetchone():
+        raise ValueError("Choose a companion belonging to this account.")
+    conn.execute("UPDATE admin_user SET avatar_appearance_mode=?, avatar_equipment=? WHERE id=?", (preferences['mode'], json.dumps(preferences['items']), user_id))
+    conn.commit()
+    return preferences

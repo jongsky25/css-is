@@ -90,7 +90,7 @@
   {% endif %}
   <span class="pic">
     {% if c.photo_url %}<img src="{{ c.photo_url }}?s=128" alt="" loading="lazy" decoding="async">
-    {% elif c.avatar_kind %}{{ avatar_svg(c.avatar_kind, 4) }}
+    {% elif c.avatar_kind %}{{ avatar_svg(c.avatar_kind, 4, preferences=false) }}
     {% else %}{{ c.initials }}{% endif %}
   </span>
   {% if done %}<span class="chk" aria-hidden="true">✓</span>{% endif %}

@@ -61,6 +61,7 @@ import integration_api
 import integration_access
 import integration_access_routes
 import appearance
+import companion_wardrobe as wardrobe
 import appearance_routes
 from sqlite_reader import SQLiteReader
 
@@ -519,6 +520,8 @@ templates.env.globals["avatar_is_swimmer"] = st.avatar_is_swimmer
 templates.env.globals["avatar_uid"] = lambda: "av-" + uuid4().hex
 templates.env.globals["avatar_month"] = appearance.accessory_month
 templates.env.globals["avatar_outfit"] = appearance.avatar_outfit
+templates.env.globals["avatar_preferences"] = wardrobe.for_kind
+templates.env.globals["avatar_equipment_catalog"] = wardrobe.CATALOG
 
 
 # =====================================================================

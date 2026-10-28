@@ -27,6 +27,7 @@
 {% macro avatar_defs() %}
 <style>
   .av-v2 { --av-outline:#815b43; --av-leaf-outline:#41664c; --av-rose-outline:#b46883; }
+  svg[data-avatar-mode="personal"] .av-regalia, svg[data-avatar-mode="none"] .av-regalia { display:none; }
   .avwrap { display:inline-block; text-align:center; position:relative;
             --av-sway:5s; --av-breathe:3.6s; perspective:700px; }
   .av-play-btn { display:block; border:0; padding:0; width:100%; background:transparent;
@@ -336,12 +337,15 @@
 
 
 {#-- one species at a stage; returns just the <svg> so pickers/heroes can size it --#}
-{% macro avatar_svg(kind, stage, outfit_month=none, outfit=none, static_preview=false) %}
+{% macro avatar_svg(kind, stage, outfit_month=none, outfit=none, static_preview=false, preferences=none) %}
 {% set s = [[stage|int, 6]|min, 1]|max %}
 {% set scope = avatar_uid() if kind in ["cat","plant","cactus","bonsai","sunflower","fern","mushroom","succulent"] else "" %}
+{% set preferences = preferences if preferences is not none else (avatar_preferences(kind) if avatar_preferences is defined and outfit is none and outfit_month is none else {'mode':'seasonal','items':[]}) %}
+{% if not preferences %}{% set preferences = {'mode':'seasonal','items':[]} %}{% endif %}
 {% set accessory = avatar_month() if outfit_month is none else outfit_month %}
 {% set costume = outfit if outfit is not none else (avatar_outfit() if outfit_month is none else ('halloween' if accessory == 10 else ('christmas' if accessory == 12 else 'default'))) %}
-<svg{% if scope or kind in ["dog","rabbit","bird","turtle","fish","dolphin","owl","bat"] %} data-avatar-art="v2"{% endif %} viewBox="0 0 120 140" role="img" width="100%" height="100%" aria-hidden="true" focusable="false" data-avatar-kind="{{ kind }}" data-avatar-stage="{{ s }}" data-avatar-month="{{ accessory }}" data-avatar-outfit="{{ costume }}">
+{% if preferences.mode != 'seasonal' %}{% set accessory=0 %}{% set costume='default' %}{% endif %}
+<svg{% if scope or kind in ["dog","rabbit","bird","turtle","fish","dolphin","owl","bat"] %} data-avatar-art="v2"{% endif %} viewBox="0 0 120 140" role="img" width="100%" height="100%" aria-hidden="true" focusable="false" data-avatar-mode="{{ preferences.mode }}" data-avatar-kind="{{ kind }}" data-avatar-stage="{{ s }}" data-avatar-month="{{ accessory }}" data-avatar-outfit="{{ costume }}">
   {% if scope %}
   <defs>
     {% if kind == "cat" %}<linearGradient id="{{ scope }}-fur" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#ffd699"/><stop offset=".55" stop-color="#efb26e"/><stop offset="1" stop-color="#d68a50"/></linearGradient>
@@ -363,7 +367,7 @@
   {# Decorative previews never run movement or care reactions. Avoid allocating
      their movement wrappers and permanently invisible reaction layers. #}
   {% if not static_preview %}<g class="avmove">
-    <g class="avstage">{{ costume_back(kind, s, costume) }}{{ species_art(kind, s, accessory, costume, scope) }}</g>
+    <g class="avstage">{{ costume_back(kind, s, costume) }}{{ species_art(kind, s, accessory, costume, scope, preferences) }}</g>
     {% if avatar_family(kind) == "plant" %}
     <g class="av-drops" fill="#5fa8d8">
       <path d="M46 18 c3.2 5 3.2 8.4 0 9.6 c-3.2 -1.2 -3.2 -4.6 0 -9.6 Z"/>
@@ -382,7 +386,7 @@
       <path d="M95 22 h5 l-5 5 h5" stroke-width="1.8"/>
     </g>
   </g>{% else %}
-  {{ costume_back(kind, s, costume) }}{{ species_art(kind, s, accessory, costume, scope) }}
+  {{ costume_back(kind, s, costume) }}{{ species_art(kind, s, accessory, costume, scope, preferences) }}
   {% endif %}
 </svg>
 {% endmacro %}
@@ -393,7 +397,7 @@
      care=true adds the water/feed button; drag=true lets it be moved around
      its .av-play container (wellness hub). --#}
 {% macro avatar(kind, stage, name="", size=170, interactive=false, mood="", care=false, drag=false,
-                person="", care_streak=0, last_care="", drag_key="", chase=false) %}
+                person="", care_streak=0, last_care="", drag_key="", chase=false, preferences=none) %}
 {% set fam = "fam-animal" if avatar_family(kind) == "animal" else "fam-plant" %}
 {% set verb = avatar_care_verb(kind) %}
 <span class="avwrap {{ fam }}" data-kind="{{ kind }}" data-stage="{{ [[stage|int, 6]|min, 1]|max }}"
@@ -406,7 +410,7 @@
       style="width:{{ size }}px;">
   {% if interactive %}<button type="button" class="av-play-btn" aria-label="Play with {{ name or 'your companion' }}">{% endif %}
   <span class="av-tiltstage" style="display:block;width:{{ size }}px;height:{{ (size * 1.16)|round|int }}px;">
-    {{ avatar_svg(kind, stage) }}
+    {{ avatar_svg(kind, stage, preferences=preferences) }}
   </span>
   {% if interactive %}</button>{% endif %}
   {% if name or interactive %}<span class="av-bubble"{% if interactive %} aria-live="polite" aria-atomic="true"{% endif %}>{{ name }}</span>{% endif %}

@@ -8,6 +8,7 @@ from urllib.parse import parse_qsl
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 
+import companion_wardrobe as wardrobe
 import appearance as rules
 import appearance_storage as store
 import auth
@@ -29,9 +30,15 @@ def install_context(app, get_conn, read_db):
             return await call_next(request)
 
         def read():
-            return read_db(lambda conn: rules.resolve(store.load(conn)))
+            def load(conn):
+                active = rules.resolve(store.load(conn))
+                actor = st.get_admin_user_by_id(conn, request.state.user['id'])
+                personal = {'kind': actor.get('avatar_kind') or st.AVATAR_DEFAULT,
+                            'preferences': wardrobe.normalize(actor.get('avatar_kind') or st.AVATAR_DEFAULT, actor.get('avatar_appearance_mode'), actor.get('avatar_equipment'))}
+                return active, personal
+            return read_db(load)
 
-        active = await asyncio.to_thread(read)
+        active, personal = await asyncio.to_thread(read)
         if request.query_params.get("appearance_preview") == "1" and auth.can(request.state.user["role"], "manage_users"):
             try:
                 active.update(rules.selection(request.query_params.get("theme", "default"),
@@ -44,10 +51,12 @@ def install_context(app, get_conn, read_db):
                 return HTMLResponse("Choose a valid preview theme and outfit.", status_code=400, headers=PRIVATE)
         request.state.appearance = active
         token = rules.current.set(active)
+        personal_token = wardrobe.current.set(personal)
         try:
             return await call_next(request)
         finally:
             rules.current.reset(token)
+            wardrobe.current.reset(personal_token)
 
 
 def make_router(templates, get_conn, read_db):

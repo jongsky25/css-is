@@ -1,10 +1,11 @@
+{% from "_avatar_wardrobe.html" import wear as _wear %}
 {# bonsai artwork. Keep placement groups separate from animated groups. #}
 {% from "_avatars_shared.html" import illustrated_pot as _illustrated_pot, plant_finish as _plant_finish %}
 
-{% macro art(s,m=0,costume="",scope="") %}
+{% macro art(s,m=0,costume="",scope="", preferences=none) %}
 {% set leaf='url(#' ~ scope ~ '-leaf)' if scope else 'url(#avg-leaf)' %}
 {% set top=[0,85,74,63,51,42,32][s] %}
-<g class="av-v2 av-body" stroke-linejoin="round" stroke-linecap="round">
+<g class="av-v2 av-body" stroke-linejoin="round" stroke-linecap="round"><g transform="translate(60 108) scale({{ .6+s*.06 }})">{{ _wear(preferences,'back') }}</g>
 {{ _illustrated_pot(true) }}
 <path d="M45 108Q58 105 76 108" stroke="#719665" stroke-width="5" fill="none"/>
 <g class="av-stem">
@@ -19,5 +20,5 @@
 {% endif %}{% endfor %}
 {% if s>=5 %}{% for x,y in [(45,46),(78,79),(34,68)] %}<g class="av-bloom"><circle cx="{{ x }}" cy="{{ y }}" r="3" fill="#efb1b6" stroke="#b46883" stroke-width=".7"/><circle cx="{{ x }}" cy="{{ y }}" r="1" fill="#fff0c4"/></g>{% endfor %}{% endif %}
 </g><path d="M52 109l-7 1m14-3 9 3" stroke="#805b43" stroke-width="2"/>
-{{ _plant_finish('bonsai',s,m,costume) }}</g>
+{{ _plant_finish('bonsai',s,m,costume,preferences) }}</g>
 {% endmacro %}

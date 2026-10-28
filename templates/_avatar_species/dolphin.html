@@ -1,8 +1,9 @@
+{% from "_avatar_wardrobe.html" import wear as _wear %}
 {# Original illustrated dolphin; fixed water backdrop is supplied by the frame. #}
 {% from "_avatars_shared.html" import costume_front, eye as _eye, accessory as _accessory, regalia as _regalia %}
-{% macro art(s,m=0,costume="") %}
+{% macro art(s,m=0,costume="", scope="", preferences=none) %}
 {% set sc=.64+(s-1)*.07 %}{% set beak=97 if s<3 else 105 %}
-<g class="av-v2 av-body" transform="translate(60 92) scale({{ sc }}) translate(-60 -92)" stroke-linecap="round" stroke-linejoin="round">
+<g class="av-v2 av-body" transform="translate(60 92) scale({{ sc }}) translate(-60 -92)" stroke-linecap="round" stroke-linejoin="round"><g transform="translate(60 94)">{{ _wear(preferences,'back') }}</g>
  <g class="av-fin-t"><path d="M44 94Q24 79 17 88L26 96 16 108Q32 109 44 99Z" fill="url(#avg-dolphin)" stroke="#426b80" stroke-width="1.5"/><path d="M25 94L39 97" stroke="#b8dbe4" stroke-width="1.3"/>{% if s>=4 %}<path d="M22 89L34 95M21 104L35 99" stroke="#6b9bb0" stroke-width="1"/>{% endif %}</g>
  <path d="M54 80Q{{ 56-s }} {{ 56-s }} 73 65Q65 73 69 81Z" fill="url(#avg-dolphin)" stroke="#426b80" stroke-width="1.5"/>
  <path d="M40 98C33 87 47 73 65 73C80 73 89 79 91 86L{{ beak }} 88Q{{ beak+2 }} 94 89 94C85 105 57 115 40 98Z" fill="url(#avg-dolphin)" stroke="#426b80" stroke-width="1.5"/>
@@ -12,8 +13,8 @@
  {{ costume_front('dolphin',s,costume,scaled=true) }}{{ _regalia(s,60,87,.5) }}
  <g class="av-head">{{ _eye(78,84,4.6 if s<3 else 4,'#3e6475','#72a8c0') }}<path d="M85 94Q94 97 {{ beak-1 }} 91" fill="none" stroke="#35586f" stroke-width="1.3"/><ellipse cx="81" cy="94" rx="3" ry="1.5" fill="#c6dfe3"/>
  {% if s>=3 %}<path d="M74 76q4-2 7 0" fill="none" stroke="#426b80" stroke-width="1.2"/>{% endif %}
- <g class="av-anchor-head" data-anchor="head" transform="translate(74 72) scale(.65)"></g>{{ _accessory(m,74,72,.65,costume=costume) }}</g>
- <g class="av-anchor-neck" data-anchor="neck" transform="translate(70 100) scale(.65)"></g>
+ <g class="av-anchor-head" data-anchor="head" transform="translate(74 72) scale(.65)">{{ _wear(preferences,'head') }}</g>{{ _accessory(m,74,72,.65,costume=costume) }}</g>
+ <g class="av-anchor-neck" data-anchor="neck" transform="translate(70 100) scale(.65)">{{ _wear(preferences,'neck') }}</g>
  <g class="av-bubbles" stroke="#8ebbd0" fill="none" stroke-width="1.2"><circle cx="66" cy="60" r="2.5"/><circle cx="71" cy="49" r="1.7"/><circle cx="68" cy="39" r="1.1"/></g>
  <g class="av-food"><ellipse cx="93" cy="32" rx="6" ry="3.5" fill="url(#avg-fish)"/><path d="M98 32l5-3v6Z" fill="#e8a04b"/><circle cx="90" cy="31" r="1" fill="#302c36"/></g>
 </g>

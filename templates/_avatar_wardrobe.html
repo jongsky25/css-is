@@ -1,0 +1,22 @@
+{# Fixed authored paths only. IDs come from the server allowlist, never SVG input. #}
+{% macro item(key) %}
+{% if key == 'bandana' %}<path d="M-14-3Q0 4 14-3L0 15Z" fill="#588c9b" stroke="#355a70" stroke-width="1.2"/><path d="M-6 0L0 9" fill="none" stroke="#b7dcce"/>
+{% elif key == 'bow_tie' %}<path d="M-2 0Q-18-12-14 5Q-8 10-2 2M2 0Q18-12 14 5Q8 10 2 2" fill="#b87891" stroke="#774d6e"/><circle r="3" fill="#ebc1bc"/>
+{% elif key == 'small_cap' %}<path d="M-13 0Q-12-17 2-15Q12-13 12 0Z" fill="#7295af" stroke="#466780" stroke-width="1.2"/><path d="M-15 0H20Q19 5 10 5H-14Z" fill="#466780"/>
+{% elif key == 'flower_crown' %}<path d="M-18 0Q0-8 18 0" fill="none" stroke="#65855c" stroke-width="3"/>{% for x,y in [(-13,-3),(0,-6),(13,-3)] %}<g transform="translate({{ x }} {{ y }})">{% for angle in [0,72,144,216,288] %}<ellipse cy="-3" rx="2" ry="3" transform="rotate({{ angle }})" fill="#f2d7d1" stroke="#bc8a9f" stroke-width=".4"/>{% endfor %}<circle r="2" fill="#eac078"/></g>{% endfor %}
+{% elif key == 'scarf' %}<path d="M-16-5Q0 2 16-5L15 2Q0 8-15 2Z" fill="#b97975" stroke="#86524f"/><path d="M5 4L15 19 9 22 0 6Z" fill="#cf9790" stroke="#86524f"/>
+{% elif key == 'simple_cape' %}<path d="M-10-8Q-26 5-24 24L-8 19 0 24 8 19 24 24Q26 5 10-8Z" fill="#78968b" stroke="#4f7166" stroke-width="1.3"/><path d="M-8-6Q0 1 8-6" fill="none" stroke="#d2cba3" stroke-width="2"/>
+{% elif key in ['terracotta','ceramic','pot_wrap'] %}<path d="M-23-5Q0 1 23-5L19 10Q0 16-19 10Z" fill="{{ '#bd7c58' if key == 'terracotta' else ('#8faeb1' if key == 'ceramic' else '#588c9b') }}" stroke="{{ '#885b48' if key == 'terracotta' else '#526c79' }}" stroke-width="1.2"/><path d="M-16 2Q0 7 16 2" fill="none" stroke="#e3cfaa" stroke-width="2"/>
+{% elif key == 'ribbon' %}<path d="M-2 0Q-16-9-13 3Q-8 7-2 2M2 0Q16-9 13 3Q8 7 2 2M-2 2l-3 10m7-10 3 10" fill="#bd8294" stroke="#805470" stroke-width="1.4"/><circle r="2.5" fill="#e4bdb8"/>
+{% elif key == 'plant_label' %}<path d="M22-6V-35" stroke="#9d7d58" stroke-width="2"/><path d="M12-40H32V-28H12Z" fill="#e1d2b4" stroke="#927957"/><path d="M17-34h10" stroke="#65855c" stroke-width="2"/>
+{% elif key == 'small_trellis' %}<path d="M-21 0V-65M21 0V-65M-21-55H21M-21-38H21M-21-21H21M0-65V0" fill="none" stroke="#aa9370" stroke-width="2"/>
+{% elif key == 'decorative_stake' %}<path d="M25-6V-39" stroke="#78917c" stroke-width="2"/><path d="M25-46l2 5 6 1-4 4 1 6-5-3-5 3 1-6-4-4 6-1Z" fill="#e5c17b" stroke="#ae8d50"/>
+{% endif %}
+{% endmacro %}
+{% macro wear(preferences, anchor) %}
+{% if preferences and preferences.mode == 'personal' %}
+{% for key in preferences['items'] %}
+{% if avatar_equipment_catalog[key].anchor == anchor %}<g class="av-equipment" data-equipment="{{ key }}">{{ item(key) }}</g>{% endif %}
+{% endfor %}
+{% endif %}
+{% endmacro %}

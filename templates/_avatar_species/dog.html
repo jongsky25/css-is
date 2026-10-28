@@ -1,10 +1,11 @@
+{% from "_avatar_wardrobe.html" import wear as _wear %}
 {# Original authored illustrated artwork; placement and motion groups stay separate. #}
 {% from "_avatars_shared.html" import costume_front, eye as _eye, shadow as _shadow, accessory as _accessory, regalia as _regalia %}
-{% macro art(s, m=0, costume="") %}
+{% macro art(s, m=0, costume="", scope="", preferences=none) %}
 {% set sc = 0.64 + (s-1)*0.072 %}
 {% set hy = 74 if s<3 else (70 if s<5 else 67) %}
 {{ _shadow(30) }}
-<g class="av-v2 av-body" transform="translate(60 98) scale({{ sc }}) translate(-60 -98)" stroke-linejoin="round">
+<g class="av-v2 av-body" transform="translate(60 98) scale({{ sc }}) translate(-60 -98)" stroke-linejoin="round"><g transform="translate(60 94)">{{ _wear(preferences,'back') }}</g>
  <g class="av-tail"><path d="M78 111 Q{{ 97 if s<3 else 111 }} 111 {{ 87 if s<3 else 96 }} {{ 95 if s<3 else 78 }}" fill="none" stroke="#946339" stroke-width="10" stroke-linecap="round"/><path d="M79 109 Q{{ 94 if s<3 else 107 }} 109 {{ 87 if s<3 else 96 }} {{ 95 if s<3 else 78 }}" fill="none" stroke="#e5bd83" stroke-width="6" stroke-linecap="round"/></g>
  <path d="M39 116 Q32 98 47 {{ 87 if s<3 else 80 }} Q60 75 74 {{ 87 if s<3 else 80 }} Q89 98 82 118 Q61 129 39 116Z" fill="url(#avg-dogfur)" stroke="#88613f" stroke-width="1.5"/>
  <path d="M49 94 Q60 88 72 94 L72 119 Q60 126 49 119Z" fill="url(#avg-dogfur2)"/>
@@ -23,10 +24,10 @@
   <path d="M60 {{ hy+14 }}v3q-5 5-9 0m9 0q5 5 9 0" stroke="#72513e" stroke-width="1.3" fill="none"/>
   {% if s>=2 %}<path d="M60 {{ hy+18 }}Q62 {{ hy+30 }} 68 {{ hy+21 }}L68 {{ hy+18 }}" fill="#dc8e99"/>{% endif %}
   {% if s>=5 %}<path d="M42 {{ hy-8 }}q5-4 10-2m16 0q5-2 10 2" fill="none" stroke="#946339" stroke-width="1.5"/>{% endif %}
-  <g class="av-anchor-head" data-anchor="head" transform="translate(60 {{ hy-25 }})"></g>{{ _accessory(m,60,hy-25,1,costume=costume) }}
+  <g class="av-anchor-head" data-anchor="head" transform="translate(60 {{ hy-25 }})">{{ _wear(preferences,'head') }}</g>{{ _accessory(m,60,hy-25,1,costume=costume) }}
  </g>
  {{ costume_front("dog",s,costume,scaled=true) }}{{ _regalia(s,60,99,0.85) }}
- <g class="av-anchor-neck" data-anchor="neck" transform="translate(60 99)"></g>
+ <g class="av-anchor-neck" data-anchor="neck" transform="translate(60 99)">{{ _wear(preferences,'neck') }}</g>
  {% if s>=6 %}<path d="M49 96l4 8 7-5 7 5 5-8" fill="url(#avg-dogfur2)"/>{% endif %}
  <g class="av-food" fill="#f4ecda"><path d="M88 32h14v5H88Z"/><circle cx="88" cy="32" r="3"/><circle cx="88" cy="37" r="3"/><circle cx="102" cy="32" r="3"/><circle cx="102" cy="37" r="3"/></g>
 </g>
