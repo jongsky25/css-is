@@ -1318,7 +1318,7 @@ def feedback_update_message(submitter_name, status, reply, link):
     return subject, body, html
 
 
-def _supply_message(name, subject, heading, intro, link, cta, *, note=None, rows=None, footnote=""):
+def _supply_email(name, subject, heading, intro, link, cta, *, note=None, rows=None, footnote=""):
     """Shared shape for the Supplies emails: plain text, plus the standard HTML shell."""
     lines = [f"Hello {name or 'there'},", "", intro]
     if rows:
@@ -1336,7 +1336,7 @@ def _supply_message(name, subject, heading, intro, link, cta, *, note=None, rows
 
 def supply_request_pending_message(approver_name, requester_name, control_number, unit, purpose, link):
     """To a request approver: a supply request in their unit is waiting for a decision."""
-    return _supply_message(
+    return _supply_email(
         approver_name, f"Supply request to decide: {control_number}", "Supply request to decide",
         f"{requester_name or 'A staff member'} ({unit}) submitted supply request {control_number} and it is waiting for your decision.",
         link, "Review the request", note=("Purpose", purpose),
@@ -1354,14 +1354,14 @@ def supply_request_decided_message(name, control_number, decision, reason, link)
         intro += " The custodian will tell you when the supplies are ready to collect."
     elif decision == "returned":
         intro += " Fix the points below, then submit it again."
-    return _supply_message(
+    return _supply_email(
         name, f"Supply request {verdict}: {control_number}", f"Supply request {verdict}", intro, link,
         "Open the request", note=("Approver's note", reason) if reason else None)
 
 
 def supply_replenishment_pending_message(approver_name, preparer_name, control_number, purpose, link):
     """To a replenishment approver: a custodian submitted a purchase request for decision."""
-    return _supply_message(
+    return _supply_email(
         approver_name, f"Replenishment to decide: {control_number}", "Replenishment to decide",
         f"{preparer_name or 'A custodian'} submitted replenishment {control_number} and it is waiting for your decision.",
         link, "Review the replenishment", note=("Purpose", purpose),
@@ -1376,14 +1376,14 @@ def supply_replenishment_decided_message(name, control_number, decision, reason,
         intro += " You can now record the order."
     elif decision == "returned":
         intro += " Fix the points below, then submit it again."
-    return _supply_message(
+    return _supply_email(
         name, f"Replenishment {verdict}: {control_number}", f"Replenishment {verdict}", intro, link,
         "Open the replenishment", note=("Approver's note", reason) if reason else None)
 
 
 def supply_issue_recorded_message(name, release_number, control_number, lines, link):
     """To the recipient: the custodian recorded a handover of supplies to them and they should confirm it."""
-    return _supply_message(
+    return _supply_email(
         name, f"Supplies released to you: {release_number}", "Please confirm you received your supplies",
         f"The custodian recorded release {release_number} for your supply request {control_number}. "
         "Please confirm you received it, or report a problem.",
@@ -1393,7 +1393,7 @@ def supply_issue_recorded_message(name, release_number, control_number, lines, l
 
 def supply_stock_ready_message(name, control_number, lines, link):
     """To the requester: stock is now set aside for an approved request (first time, or more after a delivery)."""
-    return _supply_message(
+    return _supply_email(
         name, f"Supplies ready for your request {control_number}", "Your supplies are ready",
         f"Stock is now set aside for your approved supply request {control_number}. "
         "Please arrange to collect it with the custodian.",
@@ -1412,7 +1412,7 @@ def supply_digest_message(name, week_label, digest, link):
     intro = ("This is your Supplies summary for the week of " + week_label + ". "
              + ("; ".join(parts).capitalize() + ". " if parts else "")
              + (f"{digest['warning_count']} item(s) have an open stock warning." if digest["warning_count"] else ""))
-    subject, body, html = _supply_message(
+    subject, body, html = _supply_email(
         name, f"Supplies summary: week of {week_label}", "Supplies summary", intro.strip(), link, "Open Supplies",
         rows=rows, footnote="You get this on Mondays because you are a supply custodian and something needs your attention.")
     return subject, body, html
