@@ -25,7 +25,11 @@ p95 16.8 ms). Independent numeric/source/artifact audits pass. All 4,896 final
 64 px cells and 36 equipped turtle retraction cases have retained visual evidence.
 The full matrix passes: all 104 median memory comparisons stay within 10 MiB
 (max RSS +7.742 MiB, heap +3.673 MiB); all timing/transfer/frame/control gates pass.
-Only normal/shuffled application gates remain pending. CI checkout,
+Full normal/shuffled application CI 40628692333 passes all 7,060 selected cases
+per order with zero failures/errors/skips, plus both 447-case offline AI gates.
+Dependency, metadata and aggregate Required checks pass. All scoped automated
+acceptance is complete; the candidate is ready for review. Tested branch source
+is 559301e (GitHub temporary checkout 23e4a7ad has the same tree). CI checkout,
 test-fixture isolation, archived-probe selection and release-manifest fixes are
 recorded separately; frozen production JS/CSS/templates/Python are unchanged.
 Do not restart successful performance cohorts for those non-product fixes.

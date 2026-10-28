@@ -9,8 +9,9 @@ profile customization, shared motion, cache versions and release documentation.
 The frozen product/measurement snapshot is **fecd276a9d888691c000c297d4ca1c1f6a958535**.
 Later CI/documentation/test-fixture changes do not change its production sources.
 The full [hosted run](https://github.com/jongsky25/css-is/actions/runs/40620559865)
-retains every sample, failure and original trace. Remaining gates are tracked below;
-implementation complete does not mean release acceptance.
+retains every sample, failure and original trace. All scoped automated acceptance
+phases pass. This is a review candidate;
+physical-phone testing, production deployment and main merging are not claimed.
 
 ## Product changes
 
@@ -63,7 +64,7 @@ Exact compressed CSS/JS source growth is **5,733 bytes versus increment 0** and
 **2,539 bytes versus accepted 2B**, below 15 KiB; see [payload-budget.json](payload-budget.json).
 This byte calculation does not prove cumulative timing/memory versus increment 0.
 
-## Final matrix acceptance and remaining application gate
+## Final matrix and application acceptance
 
 The complete five-run cold/warm desktop/mobile application matrix **passes** on
 fecd276 against accepted 2B. All 104 scenario/navigation median RSS and heap
@@ -84,14 +85,24 @@ All four matrix transport ZIP digests and both portable tar-part hashes were
 verified before extraction. These results concern this exact hosted comparison;
 they do not resolve the older 2B findings or establish physical-phone performance.
 
-Standard application CI is being repaired at the test/checkout boundary:
-full history is needed by unchanged offline identity tests, and lifespan tests
-leaked a closed reader into later clients. The reader leak reproduces on accepted
-0a91f73. Only test fixtures are isolated; production reader code is unchanged.
-See [the bounded CI repair evidence](application-ci-repair/README.md) and
-[application-suite selection](application-suite-selection.md).
-Earlier timed-out, cancelled and failing jobs remain failures/partial evidence.
-A complete normal/shuffled application run with zero failures/skips remains required.
+Full [application CI 40628692333](https://github.com/jongsky25/css-is/actions/runs/40628692333)
+**passes** in both normal and shuffled (seed 311) orders: **7,060 tests per order,
+zero failures/errors/skips**. Each strict AI evaluation gate passes all 447 offline
+fixture cases. Release metadata, dependency audit and the aggregate Required
+checks job also pass. [The independent application audit](hosted-application/audit.json)
+verifies archive hashes, all JUnit cases and the untouched AI evidence against
+GitHub's exact temporary PR checkout. Original archives are retained under
+[hosted-application](hosted-application/README.md).
+
+The tested branch snapshot is 559301e; GitHub's temporary checkout 23e4a7ad has
+an identical tree. Later report-only changes do not repeat those tests. Checkout,
+optional-import/selection, test reader-lifecycle and release-payload integration
+fixes are documented in [the bounded CI repair evidence](application-ci-repair/README.md).
+Production reader code is unchanged. One executable archived profiler case is
+explicitly deselected, not counted as a pass; the documented
+[application selection](application-suite-selection.md) keeps 17 offline profile
+analysis cases and all other selected application tests. Earlier timed-out,
+cancelled, failing and local browser-skipped runs remain as recorded.
 
 The accepted 2B exception remains scoped to 2B. Its +11.699/+16.301 MiB navigation
 RSS differences, 36.379 MiB same-source control swing, and earlier failures remain

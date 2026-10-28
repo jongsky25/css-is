@@ -24,3 +24,14 @@ historical 156 results. Product files stayed fixed in /workspace/css-is while
 later implementation used a separate worktree. This verifies this frame gate only;
 LoAF reporting no owned callback is not proof of the separate 50 ms callback gate.
 Later integrated wardrobe/motion changes need their own performance verification.
+
+
+## Final integrated acceptance — 2026-10-28
+
+The recovered 3A batch is included in frozen fecd276. Final functional, runtime
+and full matrix checks pass, including all 104 median memory comparisons within
+10 MiB against accepted 2B. Full normal/shuffled application CI 40628692333 passes
+7,060 selected tests per order with zero failures/errors/skips and all strict AI,
+dependency and metadata gates. See [the completion report](../../completion/REPORT.md)
+for independently audited evidence and preserved limits. Earlier pending text
+above describes the recovered-batch stage. No main merge or deployment occurred.

@@ -33,5 +33,6 @@ The integrated functional, runtime and complete application-matrix phases pass
 on hosted run 40620559865. All 104 median RSS/heap comparisons meet 10 MiB against
 accepted 2B; final runtime max callback is 3.364 ms and max frame p95 is 16.8 ms.
 See [the completion report](../completion/REPORT.md) for audited sources, raw
-evidence and limits. Broad normal/shuffled application CI is separately pending.
+evidence and limits. Full normal/shuffled application CI 40628692333 passes 7,060 tests per order
+with zero failures/errors/skips, plus the strict offline AI and release gates.
 No deployment or main merge occurred; earlier failures remain recorded.

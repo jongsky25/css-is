@@ -79,3 +79,14 @@ and any lifespan replacement. Production sources are unchanged.
 All 61 shuffled reader/security/supplies-report/document-job/bulk/wardrobe cases
 pass with the shared fixture. The original 3,237-pass/one-failure result remains
 recorded; it is not full-suite acceptance. Both full test orders are retried.
+
+## Final result
+
+Run 40628692333 passes normal and shuffled application orders: 7,060 selected
+cases each, zero failures/errors/skips, plus 447 offline AI cases per report.
+Metadata, dependency audit and Required checks pass. All three archive hashes,
+both JUnit reports and both strict AI reports were independently verified;
+see ../hosted-application/audit.json. The final local shuffled run also exits 0,
+with eight unavailable bundled-Chromium skips; it is supplemental evidence and
+is not substituted for either complete hosted pass. Production code and the
+frozen fecd276 avatar measurements are unchanged by these fixture repairs.
