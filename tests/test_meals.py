@@ -124,3 +124,18 @@ def test_storage_upgrade_is_idempotent_and_preserves_requests(viewer, conn):
     st.init_db(conn)
     assert conn.execute("SELECT COUNT(*) FROM meal_request").fetchone()[0] == 1
     assert conn.execute("SELECT COUNT(*) FROM meal_request_item").fetchone()[0] == 1
+
+
+def test_the_requester_is_told_there_is_no_approval_and_what_each_status_means(viewer, section, conn):
+    # spot feedback #197: "how do you know if the request was approved?"
+    url = submit(viewer).headers["location"]
+    for path in ("/meals/mine", url):
+        text = viewer.get(path).text
+        assert "How do I know my request went through?" in text and "Meal requests are not approved" in text
+        assert "Ordered</strong> — the Administrative Section has placed the order" in text
+    assert "(" + tz.today_local().isoformat() + ")" not in viewer.get("/meals/mine").text        # nothing is marked yet
+    section.post(f"{url}/tag", data={"meal": "lunch", "status": "requested", "note": "Supplier confirmed"})
+    assert "(" + tz.now_local().date().isoformat() + ")" in viewer.get("/meals/mine").text       # the day it was marked, beside the meal
+    # the Administrative Section's own pages do not carry the requester's explanation
+    assert "How do I know my request went through?" not in section.get("/meals").text
+    assert "How do I know my request went through?" not in section.get(url).text
