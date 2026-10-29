@@ -1,6 +1,10 @@
+## 9.31 — October 29, 2026
+
+- Plan only: `docs/ACTIVITY_TEMPLATE_REFRESH_PLAN.md` maps the office's Documents Templates folder (concept note and program, executive briefer, external letter, internal memo, notice of meeting) onto our activity documents and records the samples' page, margin, type, letterhead and footer measurements; `docs/ACTIVITY_TEMPLATE_HANDOFF.md` is the phased plan the template refresh follows (Increment 0, the layout tool, shipped in 9.30). No code, template or database change.
+
 ## 9.30 — October 29, 2026
 
-- Plan only (`docs/ACTIVITY_TEMPLATE_REFRESH_PLAN.md`): maps the office's Documents Templates folder (concept note and program, executive briefer, external letter, internal memo, notice of meeting) onto our activity documents, records the page, margin, type, letterhead and footer measurements from the samples, and phases the template refresh; `docs/ACTIVITY_TEMPLATE_HANDOFF.md` is the starting point for the work (convert the office's Blank files, relay constraints, one PR per increment). No code, template or database change.
+- Activity template refresh, Increment 0 (measurement tooling): `tools/docx_layout.py` reads DOCX files using the Python standard library and emits deterministic JSON containing section page sizes, margins and header/footer distances, first-page and even-page settings, style defaults and formatting profiles, paragraph indents/alignment/spacing, table grids/borders/cell properties, floating/inline image extents and header/footer text. Body wording is excluded; `--omit-header-footer-text` also removes header/footer wording. Generated OOXML fixtures exercise measurement and the standalone CLI. No app, Apps Script, database or placeholder changes. The five-Blank reference is measured from the office exports, with source hashes and Blank/Sample distinctions recorded in `docs/templates/README.md`.
 
 ## 9.29 — October 29, 2026
 

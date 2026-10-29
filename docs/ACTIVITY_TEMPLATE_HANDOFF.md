@@ -5,7 +5,8 @@ Read this first in a new session. It replaces the approach in section 5 of `docs
 
 ## 1. Where things stand
 
-- Draft PR jongsky25/css-is#546 (branch `claude/funny-allen-3nym2e`) holds the plan and release 9.30. No code changed.
+- Draft PR jongsky25/css-is#546 (branch `claude/funny-allen-3nym2e`) holds this plan (release 9.31). No code changed.
+- **Increment 0 is done**: jongsky25/css-is#548 (9.30) added `tools/docx_layout.py`, `docs/templates/activity_reference.json` and `docs/templates/README.md`. Start at Increment 1.
 - Source files: Drive folder **Documents Templates**, id `1HU-MCk_csQhYmIs_5g1HqKNZ3DIbPVy4`, shared by link, owner
   `blhsdpurokalusugan@doh.gov.ph`. Ten files, a Blank and a Sample of each:
 
@@ -150,4 +151,4 @@ Nothing in an increment changes the database.
 
 > Continue the activity template refresh in jongsky25/css-is. Read `docs/ACTIVITY_TEMPLATE_HANDOFF.md` first, then
 > `docs/ACTIVITY_TEMPLATE_REFRESH_PLAN.md` for the measurements. Decisions D1 to D7 in the handoff: [paste answers, or "use the defaults"].
-> Start with Increment [0 or 1] on a new branch from main, one PR per increment, following section 6 to check it.
+> Start with Increment 1 on a new branch from main, one PR per increment, following section 6 to check it.
