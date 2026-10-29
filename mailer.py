@@ -662,6 +662,39 @@ def event_dates_changed_message(name, title, old_when, new_when, venue, link):
     return subject, body, html
 
 
+def meeting_notice_message(name, title, when, where, meeting_link, agenda, others, sender, link):
+    """Returns (subject, plain_text_body, html_body). The notice of meeting a person sends from a calendar item:
+    what, when, where, the online link if any, the agenda they typed, and who else is expected from other offices."""
+    subject = f"Notice of meeting — {title}"
+    agenda_lines = [l for l in str(agenda or "").split("\n") if l.strip()]
+    rows = [("When", when), ("Where", where)] + ([("Link", meeting_link)] if meeting_link else [])
+    body = (f"Hello {name or 'there'},\n\n{sender} is inviting you to a meeting.\n\n  {title}\n"
+            + "".join(f"  {k}: {v}\n" for k, v in rows)
+            + ("\nAgenda:\n" + "\n".join(f"  {l}" for l in agenda_lines) + "\n" if agenda_lines else "")
+            + ("\nAlso expected:\n" + "\n".join(f"  {o}" for o in others) + "\n" if others else "")
+            + f"\nSee it on the calendar:\n  {link}\n")
+    cells = "".join(
+        f'<tr><td style="padding:6px 12px 6px 0; font-family:Arial,Helvetica,sans-serif; font-size:13px; '
+        f'color:{_SOFT}; vertical-align:top;">{_e(k)}</td>'
+        f'<td style="padding:6px 0; font-family:Arial,Helvetica,sans-serif; font-size:14px; color:{_INK};">{_e(v)}</td></tr>'
+        for k, v in rows)
+    extra = (f'<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:16px 0 4px;">{cells}</table>')
+    if agenda_lines:
+        extra += (f'<p style="font-family:Arial,Helvetica,sans-serif; font-size:13px; color:{_SOFT}; margin:12px 0 4px;">Agenda</p>'
+                  f'<p style="font-family:Arial,Helvetica,sans-serif; font-size:14px; color:{_INK}; margin:0;">'
+                  + "<br>".join(_e(l) for l in agenda_lines) + "</p>")
+    if others:
+        extra += (f'<p style="font-family:Arial,Helvetica,sans-serif; font-size:13px; color:{_SOFT}; margin:12px 0 4px;">Also expected</p>'
+                  f'<p style="font-family:Arial,Helvetica,sans-serif; font-size:14px; color:{_INK}; margin:0;">'
+                  + "<br>".join(_e(o) for o in others) + "</p>")
+    html = _email_html(
+        greeting=f"Hi {name or 'there'},",
+        heading="Notice of meeting",
+        intro=f"{_e(sender)} is inviting you to <strong>{_e(title)}</strong>.",
+        extra_html=extra, cta_label="See it on the calendar", link=link)
+    return subject, body, html
+
+
 def calendar_css_nudge_message(name, title, when, link):
     """Returns (subject, plain_text_body, html_body). Sent once, the day after a
     training that was only on the calendar, to ask the organiser if they want to
@@ -1687,6 +1720,11 @@ FEATURES = {
         "A registrant is told when an organiser moves an activity they signed up for "
         "(the organiser chooses whether to notify).",
         "transactional"),
+    "meeting_notice": (
+        "Notice of meeting",
+        "The people on a calendar item (and any extra addresses) get the meeting's date, place and agenda when "
+        "someone presses Send notice of meeting.",
+        "transactional"),
     "calendar_changes": (
         "Calendar — added / changed / cancelled",
         "A person on a calendar item gets one email (not one per edit) when it is added, changed "
@@ -1928,6 +1966,9 @@ _PREVIEWS = {
         "Juan Reyes", "Friday", _SAMPLE_LINK),
     "job_awa_file": lambda: work_arrangement_file_reminder_message(
         "Juan Reyes", "October 1-15, 2026", "Friday", _SAMPLE_LINK),
+    "meeting_notice": lambda: meeting_notice_message(
+        "Juan", "Meeting with Central Luzon CHD", "Thursday, October 29, 2026, 09:00 to 11:00", "Conference room",
+        "", "1. Opening\n2. Updates from the regions", ["Maria Santos, Central Luzon CHD"], "Rey Ventura", _SAMPLE_LINK),
     "calendar_changes": lambda: calendar_changes_message(
         "Juan Reyes",
         [{"kind": "added", "title": "Orientation for new staff", "when": "Tue, Oct 14 · 9:00–10:00",

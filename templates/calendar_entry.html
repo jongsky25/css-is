@@ -188,6 +188,31 @@
           <p class="cal-hint">The draft is shared with you in Google Docs; no email is sent. Drafting again makes another copy and this link moves to it.</p>{% endif %}
           {% if d.doc_state == 'failed' and d.note %}<p class="cal-doc-error" role="alert">{{ d.note }}</p>{% endif %}
         </div>
+        {% if d.key == 'notice_of_meeting' and documents['notice'] %}{% set nt = documents['notice'] %}
+        <div class="cal-notice" id="doc-notice_of_meeting">
+          <h3>Send the notice by email</h3>
+          {% if nt.changed %}<p class="cal-doc-error" role="alert">The date, place, link or room changed after the last notice was sent. Send an updated notice so people have the right details.</p>{% endif %}
+          {% if nt.can_send %}
+          <form method="post" action="/calendar/entries/{{ e.id }}/notice/send">
+            <p class="cal-hint">It goes to {% if nt.to %}{% for p in nt.to %}{{ p.name or p.email }}{{ ', ' if not loop.last }}{% endfor %}{% else %}nobody on the item yet{% endif %}. It gives the date, time, place and online link, then the agenda below{% if nt.others %}, and lists who is expected from other offices{% endif %}.</p>
+            <label for="notice-agenda">Agenda <small>(one item per line; optional)</small></label>
+            <textarea id="notice-agenda" name="agenda" rows="4" maxlength="{{ nt.agenda_max }}" placeholder="1. Opening&#10;2. Updates"></textarea>
+            <label for="notice-extra">Also send to <small>(email addresses, one per line; for people from other offices who have no account)</small></label>
+            <textarea id="notice-extra" name="extra" rows="2" maxlength="1200" autocomplete="off"></textarea>
+            <button class="cal-btn primary" type="submit">{{ 'Send an updated notice' if nt.sent else 'Send notice of meeting' }}</button>
+          </form>
+          <p class="cal-hint">This sends email to other people. The Google Docs draft above stays the formal paper; this does not attach it.</p>
+          {% else %}<p class="cal-hint">Only the person who made this item, the people on it, or a section manager can send it.</p>{% endif %}
+          {% if nt.sent %}
+          <h4>Sent</h4>
+          <ul class="cal-notice-history">
+            {% for s in nt.sent %}<li><strong>{{ s.at[:16]|replace('T', ' ') }}</strong> by {{ s.by }}:
+              {% for st_, n in s.counts.items() %}{{ n }} {{ {'sent': 'sent', 'queued': 'sending', 'failed': 'failed', 'not_configured': 'not sent (email is not set up)', 'skipped_off': 'not sent (this email is switched off)'}.get(st_, st_) }}{{ ', ' if not loop.last }}{% endfor %}
+              <details><summary>Who</summary><ul>{% for r in s.to %}<li>{{ r.name or r.email }} <small>{{ r.email if r.name }}</small> — {{ r.status }}</li>{% endfor %}</ul></details></li>{% endfor %}
+          </ul>
+          {% endif %}
+        </div>
+        {% endif %}
         {% endif %}
       </li>
     {% endfor %}

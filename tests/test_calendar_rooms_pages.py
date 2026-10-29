@@ -92,3 +92,44 @@ def test_someone_else_sees_the_booking_but_cannot_start_its_item(viewer, conn):
     assert "Budget review" in page and "Make the calendar item for this booking" not in page
     viewer.post(f"/calendar/rooms/{b['id']}/make-item", follow_redirects=False)
     assert not rooms.get_reservation(conn, b["id"])["calendar_entry_id"]
+
+
+def test_an_administrator_can_start_the_item_for_someone_elses_booking(admin, conn):
+    b = book(conn)                                                # booked by the encoder
+    assert "Make the calendar item for this booking" in admin.get(f"/calendar/rooms/{b['id']}").text
+    r = admin.post(f"/calendar/rooms/{b['id']}/make-item", follow_redirects=False)
+    assert r.status_code == 303 and r.headers["location"].startswith("/calendar/entries/")
+    entry_id = rooms.get_reservation(conn, b["id"])["calendar_entry_id"]
+    assert entry_id and st.cal_get(conn, entry_id)["people"][0]["user_id"] == b["requester_user_id"]
+
+
+def test_the_booker_sees_the_room_features_their_role_allows(encoder, manager, conn):
+    b = book(conn)                                                # booked by the encoder
+    page = encoder.get(f"/calendar/rooms/{b['id']}").text
+    assert "Make the calendar item for this booking" in page
+    assert f'href="/rooms/meals/{b["id"]}"' in page and f'action="/rooms/{b["id"]}/withdraw"' in page
+    assert 'href="/rooms/mine"' in page and "from_room=" not in page          # an encoder cannot create CSS activities
+    m = book(conn, who="manager@test.local", title="Section meeting", hours=(13, 14))
+    assert f'href="/create?from_room={m["id"]}"' in manager.get(f"/calendar/rooms/{m['id']}").text
+
+
+def test_someone_else_sees_the_booking_but_none_of_its_actions(viewer, conn):
+    b = book(conn)
+    page = viewer.get(f"/calendar/rooms/{b['id']}").text
+    assert "Budget review" in page and "Only the person who booked it" in page
+    assert "/rooms/meals/" not in page and "from_room=" not in page and "/withdraw" not in page
+
+
+def test_an_administrator_gets_the_item_but_cannot_withdraw_someone_elses_booking(admin, conn):
+    b = book(conn)
+    page = admin.get(f"/calendar/rooms/{b['id']}").text
+    assert "Make the calendar item for this booking" in page and "/withdraw" not in page
+
+
+def test_a_booking_tied_to_a_css_activity_opens_the_activity_page(encoder, conn):
+    import test_rooms_activity as tra
+    ev = tra.event(conn)
+    b = book(conn)
+    conn.execute("UPDATE room_reservation SET event_id=? WHERE id=?", (ev["id"], b["id"])); conn.commit()
+    r = encoder.get(f"/calendar/rooms/{b['id']}", follow_redirects=False)
+    assert r.status_code == 303 and r.headers["location"] == f"/activities/{ev['event_token']}/manage"

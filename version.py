@@ -18,12 +18,12 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "9.26"
+APP_VERSION = "9.27"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
-        "version": "9.26",
+        "version": "9.27",
         "date": "October 29, 2026",
         "summary": "Stock quantities are now only for the people who manage supplies.",
         "changes": [
@@ -32,7 +32,7 @@ CHANGELOG = [
         ]
     },
     {
-        "version": "9.25",
+        "version": "9.26",
         "date": "October 29, 2026",
         "summary": "Staff who only request supplies are taken straight to their own pages.",
         "changes": [
@@ -42,7 +42,7 @@ CHANGELOG = [
         ]
     },
     {
-        "version": "9.24",
+        "version": "9.25",
         "date": "October 29, 2026",
         "summary": "The Supplies home page now starts with what you need to do.",
         "changes": [
@@ -52,7 +52,7 @@ CHANGELOG = [
         ]
     },
     {
-        "version": "9.23",
+        "version": "9.24",
         "date": "October 29, 2026",
         "summary": "Confirm you received your supplies in one tap.",
         "changes": [
@@ -62,7 +62,7 @@ CHANGELOG = [
         ]
     },
     {
-        "version": "9.22",
+        "version": "9.23",
         "date": "October 29, 2026",
         "summary": "Your request page now opens on where the request is.",
         "changes": [
@@ -72,7 +72,7 @@ CHANGELOG = [
         ]
     },
     {
-        "version": "9.21",
+        "version": "9.22",
         "date": "October 29, 2026",
         "summary": "My supply requests now shows each request as a card with its progress.",
         "changes": [
@@ -82,7 +82,7 @@ CHANGELOG = [
         ]
     },
     {
-        "version": "9.20",
+        "version": "9.21",
         "date": "October 29, 2026",
         "summary": "Fix a returned supply request, or request the same things again, from the same review page.",
         "changes": [
@@ -92,13 +92,23 @@ CHANGELOG = [
         ]
     },
     {
-        "version": "9.19",
+        "version": "9.20",
         "date": "October 29, 2026",
         "summary": "Review your supply request, then send it in one step.",
         "changes": [
             "After choosing items on the grid, Review shows your list with pictures and numbers you can still change, plus the purpose and date needed.",
             "Send request saves and sends it in one tap. Save for later keeps it as a draft instead.",
             "If something stops the sending, your request is kept as a draft and you stay on the review page to fix it, so nothing you typed is lost."
+        ]
+    },
+    {
+        "version": "9.19",
+        "date": "October 29, 2026",
+        "summary": "You can now send the notice of meeting by email from the calendar.",
+        "changes": [
+            "On a meeting's page, under Notice of meeting, a new Send notice of meeting button emails the date, time, place, online link and agenda to everyone on the meeting.",
+            "You can add email addresses for people from other offices, and the notice lists the people you noted as expected from other offices.",
+            "The page shows who was sent the notice and whether each email went out, and warns you if the date, place, link or room changed after it was sent."
         ]
     },
     {
