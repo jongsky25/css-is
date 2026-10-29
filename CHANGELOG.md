@@ -1,4 +1,4 @@
-## Unreleased
+## 9.16 — October 29, 2026
 
 - Calendar: clicking a conference-room card no longer drops you on the room board. It opens the booking's page (`/calendar/rooms/<id>`), which goes straight to the linked calendar item when you can see it, and otherwise shows the booking's details. The person who booked it, or the Administrative Section, can press "Make the calendar item for this booking" to create the item (title, date, hours and conference room pre-filled, booking linked, audited as `room_calendar_item`) and get to the notice of meeting and minutes.
 
