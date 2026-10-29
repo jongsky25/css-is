@@ -1043,7 +1043,14 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
                 return _not_found(request)
             if res["calendar_entry_id"] and oc.viewable_entry(conn, user, res["calendar_entry_id"]) is not None:
                 return RedirectResponse(f"/calendar/entries/{res['calendar_entry_id']}", status_code=303)
+            activity = st.get_event_by_id(conn, res["event_id"]) if res["event_id"] else None
+            if activity:                       # a CSS activity's own page manages it (people who can't manage it get its public page)
+                return RedirectResponse(f"/activities/{activity['event_token']}/manage", status_code=303)
             can_act = _may_start_item(conn, user, res)
+            mine = res["requester_user_id"] is not None and res["requester_user_id"] == user["id"]
+            room_act = mine or rooms.is_room_admin(conn, user)          # the people the room's own features allow
+            live = res["status"] in ("requested", "approved")
+            upcoming = live and res["day"] >= today_local().isoformat()
             req_name = ""
             if res["requester_user_id"] is not None:
                 req_name = oc.display_names(conn, [conn.execute("SELECT username FROM admin_user WHERE id=?",
@@ -1053,8 +1060,11 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
             return templates.TemplateResponse(request, "calendar_room.html", {
                 "nav_active": "calendar", "res": res, "ok": ok, "err": err, "requester": req_name,
                 "when": rooms.queue_when(res), "hours": rooms.hours_text(conn, res),
-                "can_make_item": can_act and not res["calendar_entry_id"] and not res["event_id"],
-                "activity": st.get_event_by_id(conn, res["event_id"]) if res["event_id"] else None,
+                "can_make_item": can_act and not res["calendar_entry_id"],
+                "can_meals": room_act and live,
+                "can_activity": room_act and upcoming and auth.can(user["role"], "create_activity"),
+                "can_withdraw": mine and live,
+                "mine": mine,
             })
         finally:
             conn.close()
