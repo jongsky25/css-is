@@ -2,7 +2,7 @@
 {% block supplies_content %}
 {% set entry = supply_request %}
 <h1>{{ entry.control_number or ('Supply draft #' ~ entry.id) }}</h1>
-{% if entry.current_revision %}<p><a href="/supplies/requests/{{ entry.id }}/print">Print submitted request</a></p>{% endif %}
+{% if entry.current_revision %}<p><a href="/supplies/requests/{{ entry.id }}/print">Print submitted request</a>{% if enabled and entry.is_owner %} · <a href="/supplies/requests/{{ entry.id }}/again">Request again</a>{% endif %}</p>{% endif %}
 <p role="status">{{ entry.approval_status|capitalize }}{% if entry.approval_status == 'cancelled' %} · Withdrawn by requester{% endif %} · Version {{ entry.revision }}{% if entry.current_revision %} · Submitted revision {{ entry.current_revision }}{% endif %}</p>
 <p>Requester: {{ entry.requester_snapshot }} · Unit: {{ entry.unit_snapshot }}</p>
 <p><strong>Purpose:</strong> {{ entry.purpose }}</p><p><strong>Date needed:</strong> {{ entry.date_needed|humandate if entry.date_needed else 'Not specified' }}</p>

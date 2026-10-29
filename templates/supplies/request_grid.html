@@ -8,11 +8,12 @@
 <form method="get" action="/supplies/requests/new" class="shop-search" role="search" data-shop-searchbar>
   <label for="shop-q">Find an item</label>
   <input id="shop-q" name="q" type="search" value="{{ query }}" autocomplete="off" placeholder="Bond paper, ballpen, folder…" data-shop-search>
-  <button type="submit">Search</button>{% if query %} <a href="/supplies/requests/new">Show everything</a>{% endif %}
+  {% if not request_id %}<button type="submit">Search</button>{% endif %}{% if query %} <a href="/supplies/requests/new">Show everything</a>{% endif %}
 </form>
 <form method="post" action="/supplies/requests" class="shop-form" data-shop>
 <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="operation_key" value="{{ new_key() }}">
 <input type="hidden" name="view" value="grid">
+{% if request_id %}<input type="hidden" name="request_id" value="{{ request_id }}"><input type="hidden" name="revision" value="{{ form_values.revision }}">{% endif %}
 <label for="request-purpose">Purpose</label>
 <textarea id="request-purpose" name="purpose" maxlength="2000" required placeholder="e.g. Printing of training materials for the regional workshop">{{ form_values.purpose if form_values and form_values.purpose else '' }}</textarea>
 <label for="request-date">Date needed (optional)</label>
@@ -41,7 +42,7 @@
 <div class="shop-bar" data-shop-bar>
   <span data-shop-count aria-live="polite">Nothing chosen yet</span>
   <span class="cart-actions"><button type="submit" formaction="/supplies/requests/review" formnovalidate>Review</button>
-    <button type="submit" class="secondary">Save draft</button></span>
+    <button type="submit" class="secondary"{% if request_id %} formaction="/supplies/requests/{{ request_id }}/save"{% endif %}>Save draft</button></span>
 </div>
 <p class="supply-hint">The number is the most you can ask for right now. A request that asks for more is not saved.</p>
 </form>

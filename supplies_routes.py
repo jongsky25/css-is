@@ -671,8 +671,9 @@ def make_router(templates, get_conn):
             raise Conflict('Only draft or returned requests can be edited.')
         if draft is None and view != 'list':                      # Supplies 2.1: a new request starts from the picture grid
             values = submitted or {}
-            return render(request, conn, 'request_grid', identity=identity, query=query,
-                          cards=shop.shop_items(conn, query), form_values=values,
+            editing = int(values['request_id']) if str(values.get('request_id', '')).isdigit() else None
+            return render(request, conn, 'request_grid', identity=identity, query=query, request_id=editing,
+                          cards=shop.shop_items(conn, query, editing), form_values=values,
                           quantities={k[4:]: v for k, v in values.items() if k.startswith('qty_')},
                           error=error, status_code=status_code)
         items = rows(conn, 'SELECT id,code,description,unit FROM supply_item WHERE active=1 ORDER BY code')
@@ -916,7 +917,7 @@ def make_router(templates, get_conn):
         finally:
             conn.close()
 
-    def cart_page(request, conn, fields, *, error='', status_code=200):
+    def cart_page(request, conn, fields, *, error='', status_code=200, notes=(), reason=''):
         """Supplies 2.2: what the requester picked, with pictures and editable numbers, before it is sent."""
         user, identity = requests_service.requester(conn, request.state.user)
         asked = {l['item_id']: l['requested_quantity'] for l in shop.quantities_from(fields)}
@@ -926,7 +927,59 @@ def make_router(templates, get_conn):
             return request_form(request, conn, submitted=fields, view='grid', status_code=422,
                                 error='Choose at least one item first.')
         return render(request, conn, 'request_cart', identity=identity, cards=cards, request_id=request_id,
-                      form_values=fields, error=error, status_code=status_code)
+                      form_values=fields, error=error, status_code=status_code, notes=notes, reason=reason)
+
+    def cart_from_request(request, conn, entry):
+        """Supplies 2.3: a saved draft or a returned request opens in the cart; what was returned is shown on top."""
+        user, _ = requests_service.requester(conn, request.state.user)
+        if entry['requester_id'] != user['id']:
+            raise Missing('Supply request not found or unavailable to you.')
+        if entry['approval_status'] not in ('draft', 'returned'):
+            raise Conflict('Only draft or returned requests can be edited.')
+        fields = {'purpose': entry['purpose'], 'date_needed': entry['date_needed'] or '',
+                  'request_id': str(entry['id']), 'revision': str(entry['revision'])}
+        notes = []
+        for line in entry['lines']:
+            if line.get('active', 1):
+                fields[f"qty_{line['item_id']}"] = str(line['requested_quantity'])
+            else:
+                notes.append(f"{line['description_snapshot']} is no longer in the catalog, so it was left out.")
+        reason = next((e['reason'] for e in reversed(entry['events']) if e['decision'] == 'returned' and e['reason']), '')
+        if entry['approval_status'] == 'returned' and not reason:
+            reason = 'Your approver asked for a correction.'
+        return cart_page(request, conn, fields, notes=notes, reason=reason if entry['approval_status'] == 'returned' else '')
+
+    @router.get('/supplies/requests/{request_id}/again')
+    def request_again(request: Request, request_id: int):
+        """Supplies 2.3: a past request's items in a new cart, held to what can be requested now. Nothing is saved until sent."""
+        conn = get_conn()
+        try:
+            user, _ = requests_service.requester(conn, request.state.user)
+            entry = requests_service.get_request(conn, request.state.user, request_id)
+            if entry['requester_id'] != user['id']:
+                raise Missing('Supply request not found or unavailable to you.')
+            cards = {str(c['id']): c for c in shop.shop_items(conn)}
+            fields, notes = {'purpose': entry['purpose'] or ''}, []
+            for line in entry['lines']:
+                card, asked = cards.get(str(line['item_id'])), int(line['requested_quantity'])
+                name = line.get('description_snapshot') or line['item_id']
+                if not card:
+                    notes.append(f'{name} is no longer in the catalog, so it was left out.')
+                elif card['max'] <= 0:
+                    notes.append(f'{name} is out of stock right now, so it was left out.')
+                elif asked > card['max']:
+                    fields[f"qty_{line['item_id']}"] = str(card['max'])
+                    notes.append(f"Only {card['max']} {card['unit']} of {name} can be requested now, so that is what is in your cart.")
+                else:
+                    fields[f"qty_{line['item_id']}"] = str(asked)
+            if not shop.quantities_from(fields):
+                return request_form(request, conn, submitted=fields, view='grid', status_code=200,
+                                    error='None of the items in that request can be requested right now. ' + ' '.join(notes))
+            return cart_page(request, conn, fields, notes=notes)
+        except (Denied, Invalid, Conflict) as exc:
+            return failure(request, exc)
+        finally:
+            conn.close()
 
     @router.post('/supplies/requests/review')
     async def review_request(request: Request):
@@ -985,7 +1038,10 @@ def make_router(templates, get_conn):
     def edit_request(request: Request, request_id: int):
         conn = get_conn()
         try:
-            return request_form(request, conn, requests_service.get_request(conn, request.state.user, request_id))
+            entry = requests_service.get_request(conn, request.state.user, request_id)
+            if request.query_params.get('view') == 'list':
+                return request_form(request, conn, entry)
+            return cart_from_request(request, conn, entry)
         except (Denied, Invalid, Conflict) as exc:
             return failure(request, exc)
         finally:

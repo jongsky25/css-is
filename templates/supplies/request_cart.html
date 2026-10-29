@@ -1,7 +1,9 @@
 {% extends 'supplies/base.html' %}
 {% block supplies_content %}
-<h1>Review your request</h1>
+<h1>{{ 'Edit your request' if request_id else 'Review your request' }}</h1>
 <p>Requester: {{ identity.requester_snapshot }} · Unit: {{ identity.unit_snapshot }}</p>
+{% if reason %}<p class="supply-notice" role="status"><strong>Returned for correction:</strong> {{ reason }}</p>{% endif %}
+{% if notes %}<ul class="supply-notice" role="status">{% for n in notes %}<li>{{ n }}</li>{% endfor %}</ul>{% endif %}
 {% if error %}<p class="supply-error" role="alert">{{ error }}</p>{% endif %}
 {% if enabled %}
 <form method="post" action="/supplies/requests/send" class="shop-form cart-form" data-shop>

@@ -18,10 +18,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "9.17"
+APP_VERSION = "9.18"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "9.18",
+        "date": "October 29, 2026",
+        "summary": "Fix a returned supply request, or request the same things again, from the same review page.",
+        "changes": [
+            "Editing a draft or a request your approver returned now opens the same review page, with the approver's reason shown at the top.",
+            "Request again on a past request fills a new review page with the same items, lowered to what can be requested now. Items that are no longer in the catalog or are out of stock are left out, with a note saying so.",
+            "Nothing is saved until you send it or save it for later."
+        ]
+    },
     {
         "version": "9.17",
         "date": "October 29, 2026",
