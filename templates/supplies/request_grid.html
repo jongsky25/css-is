@@ -19,6 +19,7 @@
 <label for="request-date">Date needed (optional)</label>
 <input id="request-date" type="date" name="date_needed" value="{{ form_values.date_needed if form_values and form_values.date_needed else '' }}">
 {% if not cards %}<p class="supply-notice" role="status">{% if query %}Nothing in the catalog matches “{{ query }}”. <a href="/supplies/requests/new">Show everything</a>.{% else %}The supplies catalog has no items yet, so there is nothing to choose. Ask the supplies custodian to add the items, then reload this page.{% endif %}</p>{% endif %}
+<p class="sr-only" role="status" aria-live="polite" data-shop-result></p>
 <ul class="shop-grid" aria-label="Supply items">
 {% for c in cards %}
   <li class="shop-card{{ ' is-out' if c.max <= 0 }}" data-name="{{ c.search }}">

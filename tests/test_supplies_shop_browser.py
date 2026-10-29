@@ -203,3 +203,60 @@ def test_my_requests_cards_fit_a_phone_and_show_the_progress(shop_page):
     assert page.locator('.req-track li').count() == 4 and page.locator('.req-pic').count() >= 1
     assert page.evaluate('document.documentElement.scrollWidth <= window.innerWidth')
     shot(page, 'requests-375.png')
+
+
+# ---- Supplies Phase 5: keyboard, screen reader and touch checks ----
+
+def test_the_grid_works_from_the_keyboard_and_tells_a_screen_reader_what_search_found(shop_page):
+    page, _ = shop_page
+    page.locator('.shop-card').first.wait_for()
+    plus = page.locator('.shop-card', has_text='Stapler').get_by_role('button', name='One more', exact=False)
+    minus = page.locator('.shop-card', has_text='Stapler').get_by_role('button', name='One less', exact=False)
+    field = page.locator('.shop-card', has_text='Stapler').locator('input')
+    for _ in range(60):                                                        # Tab from the top until the Stapler's + button
+        page.keyboard.press('Tab')
+        if plus.evaluate('el => el === document.activeElement'):
+            break
+    else:
+        pytest.fail('the + button cannot be reached with Tab')
+    focus = plus.evaluate("el => { const s = getComputedStyle(el); return [s.outlineStyle, s.outlineWidth, s.boxShadow] }")
+    assert focus[0] != 'none' or focus[2] != 'none'                            # a visible focus ring
+    page.keyboard.press('Enter')
+    page.keyboard.press('Enter')
+    assert field.input_value() == '2'
+    page.keyboard.press('Shift+Tab'); page.keyboard.press('Shift+Tab')         # back over the box to the - button
+    assert minus.evaluate('el => el === document.activeElement')
+    page.keyboard.press('Space')
+    assert field.input_value() == '1'
+    assert 'item' in page.locator('[data-shop-count]').inner_text()
+    search = page.get_by_role('searchbox')
+    search.fill('stapler')
+    assert page.locator('[data-shop-result]').inner_text() == '1 item shown'
+    search.fill('zzzz')
+    assert page.locator('[data-shop-result]').inner_text() == 'No items match what you typed'
+    search.fill('')
+    assert page.locator('[data-shop-result]').inner_text() == ''
+
+
+def test_tap_targets_are_big_enough_on_a_phone(shop_page):
+    page, _ = shop_page
+    page.locator('.shop-card').first.wait_for()
+    small = []
+    for locator in (page.locator('.shop-step button'), page.get_by_role('button', name='Review'), page.get_by_role('button', name='Save draft')):
+        for i in range(min(locator.count(), 3)):
+            box = locator.nth(i).bounding_box()
+            if box and (box['width'] < 40 or box['height'] < 40):
+                small.append((round(box['width']), round(box['height'])))
+    assert small == []
+    page.locator('.shop-card', has_text='Stapler').get_by_role('button', name='One more', exact=False).click()
+    page.get_by_role('button', name='Review').click()
+    page.get_by_role('heading', name='Review your request').wait_for()
+    page.locator('#request-purpose').fill('Phone purpose')
+    page.get_by_role('button', name='Send request').click()
+    page.wait_for_url('**/supplies/requests/1')
+    page.goto('http://office.test/supplies/requests')
+    page.locator('.req-card').first.wait_for()
+    for locator in (page.locator('.req-tabs a'), page.locator('.req-action')):
+        for i in range(locator.count()):
+            box = locator.nth(i).bounding_box()
+            assert box and box['height'] >= 40, (box,)

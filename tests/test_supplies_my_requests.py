@@ -302,3 +302,34 @@ def test_the_supply_office_auditors_and_approvers_keep_the_stock_numbers(approva
         finally:
             client.__exit__(None, None, None)
             app_mod.DB = old
+
+
+# ---- Supplies Phase 5: the progress bar says where the request is, and the styles follow the theme ----
+
+def test_the_progress_bar_marks_the_current_step_for_a_screen_reader(approval_db, app_mod):
+    c, u, _, path, item = approval_db
+    sub = draft(c, u, item)
+    submit(c, u, sub)
+    client, old = client_for(app_mod, path, u[2])
+    try:
+        for url in (f'/supplies/requests/{sub}', '/supplies/requests?status=all', '/supplies'):
+            page = client.get(url).text
+            assert page.count('aria-current="step"') == 1 and '(this is where your request is)' in page, url
+            assert '(not reached yet)' in page and 'class="sr-only"' in page
+    finally:
+        client.__exit__(None, None, None)
+        app_mod.DB = old
+
+
+def test_the_supplies_styles_take_their_colours_from_the_theme_tokens():
+    import re
+    from pathlib import Path
+    css = Path('static/css/supplies.css').read_text()
+    bad = []
+    for n, line in enumerate(css.splitlines(), 1):
+        if not re.match(r'[^{]*\.(shop|req|cart|supply-big)', line):
+            continue
+        bare = re.sub(r'var\([^)]*\)', '', line)                                # a colour inside var(--x, #fallback) is fine
+        if re.search(r'(?<![\w-])(color|background(-color)?|border[\w-]*)\s*:[^;}]*#[0-9a-fA-F]{3,8}', bare):
+            bad.append((n, line.strip()[:90]))
+    assert bad == [], 'a fixed colour does not follow the dark and high-contrast themes'
