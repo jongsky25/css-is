@@ -17,6 +17,7 @@ import dashboard_pdf
 import supplies_import as imports
 import supplies_import_review as review
 import supplies_requests as requests_service
+import supplies_shop as shop
 import supplies_approvals as approvals
 import supplies_backorders as backorders
 import supplies_issues as issues
@@ -201,8 +202,8 @@ def make_router(templates, get_conn):
         return render(request, conn, 'settings', error=error, status_code=status_code,
                       submitted=submitted or {}, **values)
 
-    async def posted(request):
-        form = await request.form(max_files=0, max_fields=180, max_part_size=16384)
+    async def posted(request, max_fields=180):
+        form = await request.form(max_files=0, max_fields=max_fields, max_part_size=16384)
         if not request.cookies.get(auth.COOKIE_NAME) or not hmac.compare_digest(str(form.get('csrf', '')), csrf(request)):
             raise Denied('The form expired. Reload the page and try again.')
         return dict(form)
@@ -673,6 +674,14 @@ def make_router(templates, get_conn):
                       max_lines=requests_service.MAX_LINES, form_values=submitted if submitted is not None else draft,
                       error=error, status_code=status_code)
 
+    def shop_page(request, conn, *, submitted=None, error='', status_code=200):
+        user, identity = requests_service.requester(conn, request.state.user)
+        query = request.query_params.get('q', '') if submitted is None else submitted.get('q', '')
+        return render(request, conn, 'shop', identity=identity, query=query,
+                      items=shop.shop_items(conn, query), max_lines=shop.MAX_LINES,
+                      chosen=shop.chosen_quantities(submitted) if submitted else {},
+                      form_values=submitted or {}, error=error, status_code=status_code)
+
     @router.get('/supplies/issuance')
     def issuance_queue(request: Request):
         conn = get_conn()
@@ -899,7 +908,9 @@ def make_router(templates, get_conn):
     def new_request(request: Request):
         conn = get_conn()
         try:
-            return request_form(request, conn)
+            if request.query_params.get('view') == 'list':
+                return request_form(request, conn)
+            return shop_page(request, conn)
         except (Denied, Invalid, Conflict) as exc:
             return failure(request, exc)
         finally:
@@ -931,11 +942,13 @@ def make_router(templates, get_conn):
         fields = {}
         lines = []
         try:
-            fields = await posted(request)
+            fields = await posted(request, max_fields=2000)
             args = {'operation_key': fields.get('operation_key')}
             if action == 'save':
                 lines = []
-                for i in range(requests_service.MAX_LINES):
+                if fields.get('view') == 'shop':
+                    lines = shop.lines_from_form(fields)
+                for i in range(0 if fields.get('view') == 'shop' else requests_service.MAX_LINES):
                     item, quantity = fields.get(f'item_{i}', ''), fields.get(f'quantity_{i}', '')
                     if item or quantity:
                         lines.append({'item_id': item, 'requested_quantity': quantity})
@@ -951,6 +964,9 @@ def make_router(templates, get_conn):
         except (Denied, Invalid, Conflict) as exc:
             if action == 'save' and not isinstance(exc, Denied):
                 try:
+                    if fields.get('view') == 'shop':
+                        return shop_page(request, conn, submitted=fields, error=str(exc),
+                                         status_code=409 if isinstance(exc, Conflict) else 422)
                     draft = requests_service.get_request(conn, request.state.user, request_id) if request_id else None
                     return request_form(request, conn, draft, submitted={**fields, 'lines': lines},
                                         error=str(exc), status_code=409 if isinstance(exc, Conflict) else 422)

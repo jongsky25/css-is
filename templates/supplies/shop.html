@@ -1,0 +1,40 @@
+{% extends 'supplies/base.html' %}
+{% block supplies_content %}
+<h1>Request supplies</h1>
+<p>{{ identity.requester_snapshot }} · {{ identity.unit_snapshot }}</p>
+{% if enabled %}
+<form class="shop-search" method="get" action="/supplies/requests/new" role="search">
+  <label for="shop-q">Find an item</label>
+  <div class="shop-search-row"><input id="shop-q" type="search" name="q" value="{{ query }}" maxlength="200" autocomplete="off"><button type="submit">Search</button></div>
+</form>
+<form class="shop-form" method="post" action="/supplies/requests">
+  <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="operation_key" value="{{ new_key() }}">
+  <input type="hidden" name="view" value="shop"><input type="hidden" name="q" value="{{ query }}">
+  {% if not items %}<p class="supply-notice" role="status">{% if query %}No items match "{{ query }}". Try a shorter word.{% else %}There are no supplies to request yet. Ask the supply office to add them.{% endif %}</p>{% endif %}
+  <ul class="shop-grid" id="shop-grid">
+  {% for item in items %}
+    <li class="shop-card" data-name="{{ (item.description ~ ' ' ~ item.code ~ ' ' ~ item.unit)|lower }}">
+      <div class="shop-pic" style="background:{{ item.picture.tint }}">{% if item.picture.initials %}<span class="shop-initials" aria-hidden="true">{{ item.picture.initials }}</span>{% else %}<img src="{{ item.picture.src }}" alt="" width="96" height="96" loading="lazy">{% endif %}</div>
+      <p class="shop-name">{{ item.description }}</p>
+      <p class="shop-unit">{{ item.unit }}</p>
+      <p><span class="shop-badge shop-badge-{{ item.badge|lower|replace(' ', '-') }}">{{ item.badge }}</span></p>
+      <label class="shop-qty"><span>How many {{ item.unit|lower }}?</span>
+        <input id="qty-{{ item.id }}" name="qty_{{ item.id }}" type="number" inputmode="numeric" min="0" max="{{ item.requestable }}" step="1" value="{{ chosen.get(item.id, '') }}" data-item="{{ item.description }}"{% if item.requestable < 1 %} disabled{% endif %}>
+      </label>
+    </li>
+  {% endfor %}
+  </ul>
+  <fieldset class="supply-panel shop-details" id="request-details"><legend>About your request</legend>
+    {% if error %}<p class="supply-error" role="alert">{{ error }}</p>{% endif %}
+    <label for="shop-purpose">What is it for?</label>
+    <textarea id="shop-purpose" name="purpose" maxlength="2000" required placeholder="Example: Paper and folders for the September training">{{ form_values.get('purpose', '') }}</textarea>
+    <label for="shop-date">Date needed (optional)</label>
+    <input id="shop-date" type="date" name="date_needed" value="{{ form_values.get('date_needed', '') }}">
+    <p><button type="submit">Save draft</button></p>
+    <p class="shop-hint">You can pick up to {{ max_lines }} different items. You will review and send the draft on the next page.</p>
+  </fieldset>
+  <div class="shop-bar" id="shop-bar" hidden><span id="shop-count" aria-live="polite">0 items</span> <a class="shop-bar-link" href="#request-details">Review</a></div>
+</form>
+<script src="/static/js/supplies-shop.js" defer></script>
+{% else %}<p class="supply-notice" role="status">Supply requests are switched off right now.</p>{% endif %}
+{% endblock %}

@@ -1,3 +1,7 @@
+## 9.16 — October 29, 2026
+
+- Supplies increment 2.1: `GET /supplies/requests/new` now renders a picture grid for everyone who can request (classic form kept at `?view=list` for one release). New `supplies_shop.py` (`shop_items`, `lines_from_form`), `templates/supplies/shop.html`, `static/js/supplies-shop.js` (+/- steppers, live search that keeps typed quantities, sticky "N items · Review" bar) and shop styles. Cards show the picture, name, unit and an Available / Limited / Out of stock badge, and a `qty_<item id>` input with `max` set to what can be requested (disabled when out of stock). The grid form posts to `POST /supplies/requests` with `view=shop` and saves a draft through the existing service, so rule R1 is still enforced on the server; the form-field cap for request posts is raised to 2000 so large catalogs work. Until 2.2 adds the cart review, the grid page carries the purpose and date fields. No permission or approval change.
+
 ## 9.15 — October 28, 2026
 
 - Supplies increment 1.4: 49 flat 96×96 SVG pictures plus `generic.svg` in `static/img/supplies/`, and `supplies_pictures.py` with `picture_for(description, code) -> {src, tint, initials}`. Ordered regex rules (specific before general, tolerant of the office's spellings) match 98 of the 99 real catalog names; a colour word in the name sets the tile tint; anything unmatched (today only "Epson 0442") gets an initials tile whose colour is hashed from the code. No database change and no screen uses it yet.

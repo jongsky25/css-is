@@ -41,3 +41,26 @@
 .supply-replenishment-form details { margin: 1rem 0; }
 .supply-replenishment-form summary { cursor: pointer; }
 .supply-delivery-line { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr)); gap: .4rem 1rem; margin: 1rem 0; border: 1px solid var(--line, #cbd5e1); border-radius: .4rem; }
+.shop-search label { display: block; font-weight: 600; margin-bottom: .3rem; }
+.shop-search-row { display: flex; gap: .5rem; max-width: 32rem; }
+.shop-search-row input { flex: 1; min-width: 0; }
+.shop-grid { list-style: none; margin: 1rem 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 140px), 1fr)); gap: .6rem; }
+.shop-card { border: 1px solid var(--line, #cbd5e1); border-radius: .7rem; padding: .6rem; display: flex; flex-direction: column; gap: .15rem; background: var(--card, #fff); }
+.shop-card[hidden] { display: none; }
+.shop-card p { margin: 0; }
+.shop-pic { border-radius: .5rem; display: flex; align-items: center; justify-content: center; aspect-ratio: 4 / 3; margin-bottom: .3rem; overflow: hidden; }
+.shop-pic img { width: auto; height: 80%; max-width: 80%; }
+.shop-initials { font-size: 2rem; font-weight: 700; color: #334155; }
+.shop-name { font-weight: 600; line-height: 1.25; }
+.shop-unit { font-size: .85rem; opacity: .75; }
+.shop-badge { display: inline-block; border-radius: 1rem; padding: .1rem .55rem; font-size: .8rem; font-weight: 600; border: 1px solid currentColor; }
+.shop-badge-available { color: #166534; }
+.shop-badge-limited { color: #92400e; }
+.shop-badge-out-of-stock { color: #991b1b; }
+.shop-qty { margin: .4rem 0 0; font-size: .85rem; }
+.shop-qty-row { display: flex; align-items: stretch; gap: .3rem; }
+.shop-qty-row input { flex: 1; min-width: 0; text-align: center; }
+.shop-step { min-width: 2.4rem; font-size: 1.2rem; }
+.shop-hint { font-size: .85rem; opacity: .8; }
+.shop-bar { position: sticky; bottom: 0; display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: .7rem 5.5rem .7rem 1rem; margin-top: 1rem; background: var(--card, #fff); border-top: 2px solid var(--line, #cbd5e1); font-weight: 600; z-index: 5; }
+.shop-bar[hidden] { display: none; }
