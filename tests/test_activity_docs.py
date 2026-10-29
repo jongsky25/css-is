@@ -908,3 +908,43 @@ def test_file_copy_disables_inherited_first_page_variants():
     assert style["sectionStyle"] == {"useFirstPageHeaderFooter": False}
     assert style["fields"] == "useFirstPageHeaderFooter"
     assert style["range"]["startIndex"] < style["range"]["endIndex"]
+
+
+def test_notice_invitee_rows_use_directory_offices_and_keep_free_text_visitors(viewer, conn, relay):
+    org = st.add_org_unit(conn, "Meeting Office", "section", "BLHSD/MEETING")
+    rp = st.add_rp(conn, "Directory Person", True, org_unit_id=org)
+    conn.execute("UPDATE admin_user SET rp_id=? WHERE id=?", (rp, uid(conn, "viewer@test.local")))
+    st.set_setting(conn, "travel.sig.head_name", "Configured Head")
+    st.set_setting(conn, "travel.sig.head_title", "Configured Title")
+    conn.commit()
+    eid = create(viewer, kind="meeting", title="Office Planning", venue="Room", people=[str(uid(conn, "viewer@test.local"))],
+                 start_time="09:00", end_time="14:30", note="PRIVATE NOTE")
+    ad.set_visitors(conn, eid, "Visitor, MD, External Office\nOther Visitor", "viewer@test.local")
+    draft(viewer, eid, "notice_of_meeting")
+    call = relay.calls[0]
+    assert call["rows"]["invitees"] == {"marker": "inv_name", "data": [
+        {"inv_name": "Directory Person", "inv_office": "Meeting Office"},
+        {"inv_name": "Visitor, MD, External Office", "inv_office": ""},
+        {"inv_name": "Other Visitor", "inv_office": ""}]}
+    assert call["fields"]["meeting_time"] == "9:00 AM to 2:30 PM"
+    assert call["fields"]["subject"] == "Office Planning"
+    assert call["fields"]["head_name"] == "CONFIGURED HEAD" and call["fields"]["head_title"] == "Configured Title"
+    assert call["fields"]["unit_name"] == ad.SIGNATORY_UNIT
+    assert call["extras"] == {"file_copy": True, "boxes": []}
+    assert "PRIVATE NOTE" not in json.dumps(call) and "PEREZ" not in json.dumps(call)
+
+
+@pytest.mark.skipif(shutil.which("node") is None, reason="node is not installed")
+def test_notice_template_and_payload_agree_with_unknown_invitees_left_blank(viewer, conn, relay):
+    result = subprocess.run(["node", "tests/js/office_templates_harness.js"], capture_output=True, text=True, timeout=30)
+    assert result.returncode == 0, result.stderr
+    expected = set(json.loads(result.stdout)["notice"]["expect"])
+    eid = create(viewer, kind="meeting", title="No Invitees", people=[], start_time="", end_time="", time_note="After lunch")
+    draft(viewer, eid, "notice_of_meeting")
+    call = relay.calls[0]
+    filled = set(call["fields"]) | set(call["blocks"]) | {
+        key for row in call["rows"]["invitees"]["data"] for key in row}
+    assert expected <= filled
+    assert call["rows"]["invitees"]["data"] == [{"inv_name": ad.BLANK, "inv_office": ""}]
+    assert call["fields"]["meeting_time"] == "After lunch"
+    assert call["blocks"]["agenda"] == ["[First agenda item]", "[Second agenda item]"]

@@ -30,7 +30,7 @@ Both templates are plain Google Docs in the `_templates` folder under the relay'
 | `dpo` | `dpo_year`, `dpo_no`, `dpo_date`, `subject`, `background`, `intro`, `funding_source`, `p_name` and `p_position` (one table row, copied per person), `head_name`, `head_title`, `unit_name`. Also available: `title`, `purpose`, `dates`, `venue`, `prepared_by`, and a `{{personnel}}` line of numbered names |
 | `invitation` (converted office memo, 9.34) | Fields `date`, `for_name`, `for_title`, `for_office`, `from_name`, `from_title`, `unit_name`, `subject`; blocks `reiteration`, `rationale`, `details`, `representatives` (bullets), `contact_details`. `extras.addressees` repeats the name/title/office paragraph group; unknown addressees remain blank. Legacy `opening`, contact fields, `a_area`/`a_request` rows and other fields remain available for the old drawn template. |
 | `concept_note` | `title`, `date_duration`, `venue`, `participant_count`, `facilitators`, `budget`, `prepared_by`, `prepared_title`, `noted_by_name`, `noted_by_title`, `recommended_name`, `recommended_title`, `unit_name`; blocks `background`, `objectives`, `outputs`, `participants`, `methodology`; one table row `pd_day` / `pd_am` / `pd_pm` copied per day |
-| `notice_of_meeting` | `date`, `title`, `meeting_when`, `venue`, `meeting_link`, `prepared_by`, `prepared_title`, `head_name`, `head_title`, `unit_name`; blocks `invited`, `agenda` |
+| `notice_of_meeting` (converted office NOM, 9.33) | Fields `date`, `subject`, `meeting_date`, `meeting_time`, `venue`, `meeting_link`, `head_name`, `head_title`, `unit_name`; one repeatable row `inv_name` / `inv_office`; block `agenda` in the grid's bulleted cell. Legacy `title`, `meeting_when`, `prepared_by`, `prepared_title` and `invited` remain for the drawn template. |
 | `minutes` | `title`, `meeting_when`, `venue`, `prepared_by`, `prepared_title`, `approved_by`, `unit_name`; blocks `attendees`, `agenda`, `discussion`, `next_steps`; one table row `m_action` / `m_who` / `m_due` |
 | `program_flow` | `title`; one table row `pf_time` / `pf_topic` / `pf_person` copied for each day heading and each empty row |
 
@@ -263,3 +263,71 @@ measurements match after normalizing anchored-image order only: Google reversed
 the two image records in this export. The source exports remain outside Git.
 The full suite was not run. Administrator deployment, maker log, real draft and
 DOCX/PDF checks remain pending; these remain administrator acceptance checks after the code merge.
+
+## Activity template refresh: Increment 3 (Notice of Meeting, 9.35)
+
+This increment is stacked on Increment 2, PR #550. It adds the NOM only; it does
+not activate the memo or resolve that PR's pending ASSISTANCE-table choice.
+The office's `Blank [NOM] .docx` is a Word file, copied and converted to Google
+Docs by the same Drive API path as the travel forms. A fresh download matches
+the committed NOM reference exactly, including its SHA-256.
+
+The converter keeps A4 (11906 × 16838 twips), one-inch margins, half-inch
+header/footer distances, first-page letterhead, original eight-digit footer
+numbers and the two table grids (4005/5730 and 1365/735/7275 twips). It replaces
+source head details with settings-backed fields and keeps one invitee prototype
+row for expansion. It removes the embedded duplicate and clears the following
+page-break paragraph while retaining the required paragraph after the last table.
+The relay creates a filled copy in its own section with empty headers/footers
+and `extras.boxes = []`, because the source NOM has no initials/keywords boxes.
+
+The Word invitee table lives inside a content control. Drive conversion must
+expose it as a normal Google Docs table. A missing/unflattened table, unexpected
+labels, changed table dimensions, populated source invitee cells or an unexpected
+duplicate structure cause validation to fail before activation. Do not work
+around a failed log by setting `TPL_notice_of_meeting` manually.
+
+Administrator rollout:
+
+1. Complete the applicable relay setup from Increment 2 and save the current
+   `TPL_notice_of_meeting` ID for rollback. Add/replace this release's
+   `activity_office_templates.gs`. Drive API v3 and Google Docs API advanced
+   services must be enabled. The relay code is unchanged by Increment 3.
+2. Deploy the 9.35 app payload before activating the new NOM. Its legacy fields
+   and invited block can still fill the drawn template during the transition.
+3. Run **`makeOfficeNoticeTemplate()`** as the office mailbox. This selects the
+   NOM only and avoids rebuilding/activating the pending memo. Read the Execution
+   log: it must report `all placeholders present` and the previous template ID.
+   Run `checkOfficeTemplates()` and verify the NOM's office-format marker matches.
+   Use `rebuildOfficeNoticeTemplate()` only when a fresh converted copy is needed.
+4. Draft a NOM from a real meeting with internal invitees and at least one saved
+   free-text visitor. Names follow the item order; directory unit names fill the
+   Office column when available. A free-text visitor line stays intact in Name,
+   with Office blank: commas can be part of names/credentials and are not parsed.
+   Unknown invitees/offices are left blank. No private note is copied.
+5. Check FROM against the head settings and the bureau name. Check SUBJECT, the
+   separate date and time cells (including time ranges/time notes), venue and
+   online link, the editable bulleted agenda, and the filled file copy. The
+   calendar email notice is unchanged by this work.
+6. Follow handoff section 6: retain the maker log, export the real draft as DOCX,
+   compare the original section with `activity_reference.json`'s
+   `notice_of_meeting`, and compare the office Sample and draft PDFs side by side.
+   Verify A4, margins, distances, first-page-only logos, exact table grids and
+   paragraph/list spacing. Row counts and content vary with invitees and agenda;
+   widths must not be fitted/resized. Confirm no duplicate blank notice, trailing
+   blank page or inherited first-page letterhead/footer on the file copy.
+
+Rollback: restore the saved old `TPL_notice_of_meeting` ID and delete its
+`TPLF_notice_of_meeting` marker (or leave it stale). The retained legacy payload
+fields and invited block fill the old drawn template again. Restore the old
+pointer before reverting the app payload. Existing drafts are not edited.
+
+Local verification: 153 focused activity, travel-script, office-relay, converter
+and release tests pass. They cover NOM mapping/failed activation, table-row and
+agenda expansion with preserved grids, source-name removal, payload/template
+agreement, directory offices, intact visitors, unknown invitees and separate
+meeting times. The actual Word structure is accepted by the pure mapper after
+unwrapping its content-control table for the offline check. This does not verify
+Google's conversion of that control. Release metadata and whitespace checks pass.
+The full suite was not run. Administrator conversion, maker log, real-calendar
+draft and DOCX/PDF comparisons remain pending; these remain administrator acceptance checks after the code merge.
