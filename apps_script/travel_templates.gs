@@ -59,7 +59,7 @@ const TM_TEMPLATES = [
              'dates', 'dpo_ref', 'printed_name', 'designation', 'noted_by_name', 'noted_by_title'] },
   { key: 'rer', source: 'RER (Above 300).xlsx', mime: TM_SHEET, build: tm_rer_,
     expect: ['payee_name', 'payee_designation', 'amount_words', 'amount_figures', 'ride_from', 'ride_to', 'ride_date',
-             'activity_title', 'dpo_ref'] }
+             'ride_mode', 'activity_title', 'dpo_ref'] }
 ];
 
 // ------------------------------------------------------------------ entry points ---
@@ -471,12 +471,30 @@ function tm_rer_(id) {
   const sh = SpreadsheetApp.openById(id).getSheets()[0];
   tm_sheetRep_(sh, 'MR\\. RALIE JAY N\\. RAMOS', '{{payee_name}}', false);
   tm_sheetRep_(sh, 'ADMINISTRATIVE ASSISTANT III', '{{payee_designation}}', false);
-  tm_sheetRep_(sh, 'of _{3,}', 'of {{amount_words}}', false);
+  // Spot feedback #203, to follow General Form No. 2 (Revised January 1992): "in the amount of", the kind of transport
+  // in the fare line, and the form's own instruction about rentals and transportation.
+  tm_sheetRep_(sh, '(?:the amount )?of _{3,}', 'the amount of {{amount_words}}', false);
   tm_sheetRep_(sh, '\\(P_{3,}\\)', '(P{{amount_figures}})', false);
-  tm_sheetRep_(sh, 'Taxi fare from _+', 'fare from {{ride_from}} to {{ride_to}}', false);
+  tm_sheetRep_(sh, '(?:Taxi )?fare from _+', '{{ride_mode}} fare from {{ride_from}} to {{ride_to}}', false);
   tm_sheetRep_(sh, '\\bon _{3,}', 'on {{ride_date}}', false);
   tm_sheetRep_(sh, 'in Attendance[\\s\\S]*?2026-5451', 'in attendance to {{activity_title}} as per {{dpo_ref}}', false);
+  tm_rerInstruction_(sh);
 }
+
+const TM_RER_INSTRUCTION = 'Rental or transportation should show inclusive dates, purpose, distance, inclusive points of travel, etc.';
+
+// Puts the form's instruction under the payment lines unless the sheet already carries it.
+function tm_rerInstruction_(sh) {
+  if (sh.createTextFinder('inclusive points of travel').findNext()) return;
+  const hit = sh.createTextFinder('{{ride_from}}').findNext();
+  if (!hit) return;
+  const v = String(hit.getValue());
+  hit.setValue(v + '\n\n' + TM_RER_INSTRUCTION);
+  hit.setWrap(true);
+}
+
+// Makes the RER again from its source even when it looks good (after a change to tm_rer_).
+function rebuildRerTemplate() { return tm_make_(['rer'], true); }
 
 // ------------------------------------------------------------- when a template needs a look ---
 
