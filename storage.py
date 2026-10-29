@@ -710,6 +710,24 @@ def init_db(conn):
         updated_by TEXT, updated_at TEXT
     );
 
+    -- Notices of meeting sent by email from a calendar item, and who each went to with what happened to it.
+    CREATE TABLE IF NOT EXISTS calendar_entry_notice (
+        id INTEGER PRIMARY KEY,
+        entry_id INTEGER NOT NULL REFERENCES calendar_entry(id) ON DELETE CASCADE,
+        sent_by TEXT NOT NULL, sent_at TEXT NOT NULL,
+        agenda TEXT NOT NULL DEFAULT '',
+        fingerprint TEXT NOT NULL DEFAULT '',       -- the when / where / room it told people, to spot a later change
+        base_url TEXT NOT NULL DEFAULT ''
+    );
+    CREATE INDEX IF NOT EXISTS ix_cal_notice_entry ON calendar_entry_notice(entry_id, id);
+    CREATE TABLE IF NOT EXISTS calendar_entry_notice_to (
+        id INTEGER PRIMARY KEY,
+        notice_id INTEGER NOT NULL REFERENCES calendar_entry_notice(id) ON DELETE CASCADE,
+        user_id INTEGER, name TEXT NOT NULL DEFAULT '', email TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'queued',      -- queued / sent / failed / not_configured / skipped_off
+        detail TEXT, done_at TEXT
+    );
+
     -- What the DPO cites as the reason for an activity (Spot Feedback #170): the law, memo or invitation, typed by the person.
     CREATE TABLE IF NOT EXISTS calendar_entry_dpo_cites (
         entry_id INTEGER PRIMARY KEY REFERENCES calendar_entry(id) ON DELETE CASCADE,

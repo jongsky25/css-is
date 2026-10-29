@@ -13,19 +13,51 @@
     {% if requester %}<dt>Booked by</dt><dd>{{ requester }}</dd>{% endif %}
     {% if res.purpose %}<dt>Purpose</dt><dd>{{ res.purpose }}</dd>{% endif %}
   </dl>
-  {% if activity %}
-  <p>This booking belongs to the CSS activity <strong>{{ activity.title }}</strong>. Open it from the calendar's activities, or see it under Conference room → My reservations.</p>
-  {% elif res.calendar_entry_id %}
+  {% if res.calendar_entry_id %}
   <p class="cal-hint">This booking belongs to a calendar item you can't see, so only the booking is shown.</p>
-  {% elif can_make_item %}
-  <p>There is no calendar item for this booking yet, so there is nowhere to prepare the notice of meeting or the minutes.</p>
-  <form method="post" action="/calendar/rooms/{{ res.id }}/make-item">
-    <button class="cal-btn primary" type="submit">Make the calendar item for this booking</button>
-  </form>
-  <p class="cal-hint">It starts with this title, date, hours and the conference room, and the booking is linked to it. You can then add people and draft the notice of meeting and the minutes.</p>
-  {% else %}
-  <p class="cal-hint">Only the person who booked it, or the Administrative Section, can start the calendar item for it.</p>
   {% endif %}
+
+  <h2>Manage this booking</h2>
+  <ul class="cal-doc-list">
+    {% if can_make_item %}
+    <li class="cal-doc">
+      <div class="cal-doc-head"><strong>Make the calendar item</strong></div>
+      <p class="cal-hint">There is no calendar item for this booking yet. The item is where the meeting is run: the people on it, the notice of meeting (drafted and emailed), the minutes, the invitation or DPO if needed, and a calendar copy. It starts with this title, date, hours and the conference room, and the booking is linked to it.</p>
+      <form method="post" action="/calendar/rooms/{{ res.id }}/make-item">
+        <button class="cal-btn primary" type="submit">Make the calendar item for this booking</button>
+      </form>
+    </li>
+    {% endif %}
+    {% if can_meals %}
+    <li class="cal-doc">
+      <div class="cal-doc-head"><strong>Meals</strong>{% if res.meals_requested %} <span class="cal-chip need">Meals requested</span>{% endif %}</div>
+      <p class="cal-hint">Request meals for this meeting at least 2 calendar days before it. The Administrative Section orders them.</p>
+      <p><a class="cal-btn" href="/rooms/meals/{{ res.id }}">{{ 'Open the meal form' if res.meals_requested else 'Request meals' }}</a></p>
+    </li>
+    {% endif %}
+    {% if can_activity %}
+    <li class="cal-doc">
+      <div class="cal-doc-head"><strong>Make it a CSS activity</strong></div>
+      <p class="cal-hint">If people should register, give feedback or get a certificate, create the activity from this booking. The room stays with the activity.</p>
+      <p><a class="cal-btn" href="/create?from_room={{ res.id }}">Create a CSS activity</a></p>
+    </li>
+    {% endif %}
+    {% if can_withdraw %}
+    <li class="cal-doc">
+      <div class="cal-doc-head"><strong>Withdraw the booking</strong></div>
+      <p class="cal-hint">Frees the hours. Withdrawing an approved booking less than a day before it starts is recorded as a late withdrawal.</p>
+      <form method="post" action="/rooms/{{ res.id }}/withdraw">
+        <label for="withdraw-reason">Reason <small>(optional)</small></label>
+        <input id="withdraw-reason" name="reason" maxlength="200" autocomplete="off">
+        <button class="cal-btn" type="submit">Withdraw this booking</button>
+      </form>
+    </li>
+    {% endif %}
+    {% if not (can_make_item or can_meals or can_activity or can_withdraw) %}
+    <li class="cal-doc"><p class="cal-hint">Only the person who booked it, an administrator, a section manager or the Administrative Section can manage this booking.</p></li>
+    {% endif %}
+  </ul>
+  {% if mine %}<p><a href="/rooms/mine">Conference room → My reservations</a></p>{% endif %}
   <p><a class="cal-btn" href="/rooms?week={{ res.day }}">See it on the room board</a></p>
 </article>
 {% endblock %}
