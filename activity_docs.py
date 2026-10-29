@@ -20,6 +20,8 @@ DOCS = {
             "blurb": "Authorises the personnel to attend or travel for the activity."},
     "invitation": {"label": "Invitation (memorandum)",
                    "blurb": "A memorandum asking the recipient's office for its help, with what, when and where."},
+    "invitation_external": {"label": "Invitation (external letter)",
+                            "blurb": "A letter inviting a named outside office or partner to the activity."},
     "concept_note": {"label": "Concept note",
                      "blurb": "Explains why the activity is held, who takes part and what it costs, with the program of activities."},
     "program_flow": {"label": "Program flow",
@@ -146,7 +148,7 @@ def file_copy_reviewer(conn, entry, people_ids) -> tuple:
     return next(iter(found)) if len(found) == 1 else ("", "")
 
 
-def suggest(entry, kind_label="") -> dict:
+def suggest(entry, kind_label="", outside=None, visitors="") -> dict:
     """{key: (needed, reason)} from what the entry already says. A suggestion only: the person decides."""
     travelling = [p for p in entry.get("people") or [] if p.get("role") == "travel"]
     out = {}
@@ -163,6 +165,13 @@ def suggest(entry, kind_label="") -> dict:
         out["invitation"] = (True, f"A {(kind_label or entry.get('kind') or 'training').lower()} is usually announced with an invitation.")
     else:
         out["invitation"] = (False, "It is for the people you listed or your own unit.")
+    host = ((outside or {}).get("host") or "").strip()
+    has_visitors = any(line.strip() and line.strip().lower() != "none" for line in str(visitors or "").splitlines())
+    out["invitation_external"] = (
+        bool(host or has_visitors),
+        "An outside office or visitor is listed; use a letter if inviting them." if host or has_visitors
+        else "No outside office or visitor is listed."
+    )
     multi_day = bool(entry.get("end_date")) and entry["end_date"] != entry.get("start_date")
     if entry.get("kind") in INVITE_KINDS:
         out["concept_note"] = (True, f"A {(kind_label or 'training').lower()} is usually prepared with a concept note.")
@@ -258,7 +267,8 @@ def clear_outside(conn, entry_id) -> None:
 
 def state_for(conn, entry, kind_label="") -> list:
     """One dict per document: the suggestion, the person's choice, the effective answer and the draft so far."""
-    sug, rows, out = suggest(entry, kind_label), get_rows(conn, entry["id"]), []
+    sug = suggest(entry, kind_label, get_outside(conn, entry["id"]), get_visitors(conn, entry["id"]))
+    rows, out = get_rows(conn, entry["id"]), []
     for key in KEYS:
         row = rows.get(key, {"needed": None, "doc_url": "", "doc_state": "", "note": "", "rev": 0})
         suggested, reason = sug[key]
@@ -493,6 +503,8 @@ def payload(conn, entry, key, user, owner_label="", positions=False, designation
         fields["unit_name"] = SIGNATORY_UNIT
         return td.DocPayload("invitation", "invitation", f"Memorandum - {title}"[:120], fields,
                              blocks=blocks, rows=rows, extras=extras)
+    if key == "invitation_external":
+        return _invitation_external(conn, entry, title, me, head_name, head_title, user["id"])
     if key == "concept_note":
         return _concept_note(conn, entry, title, me, profile, head_name, head_title, owner_label.strip(), positions)
     if key == "program_flow":
@@ -502,6 +514,34 @@ def payload(conn, entry, key, user, owner_label="", positions=False, designation
     if key == "minutes":
         return _minutes(conn, entry, title, me, profile, head_name, owner_label.strip(), positions)
     raise ValueError("Unknown document.")
+
+
+def _invitation_external(conn, entry, title, me, head_name, head_title, drafter_id) -> td.DocPayload:
+    """The stored host names an office, not its head/address; do not infer personal addressees."""
+    outside = get_outside(conn, entry["id"]) or {}
+    fields = {"date": td.long_date(tz.today_local()), "addressee_name": BLANK,
+              "addressee_title": BLANK, "addressee_agency": outside.get("host") or BLANK,
+              "addressee_address": BLANK, "salutation_name": BLANK,
+              "subject": f"Invitation to {title}", "head_name": head_name.upper() if head_name else BLANK,
+              "head_title": head_title or BLANK}
+    details = [f"Activity: {title}", f"When: {when_text(entry)}", f"Venue: {where_text(entry)}",
+               "[Specify the requested representatives and their role.]"]
+    if entry.get("meeting_url"):
+        details.append(f"Online meeting: {entry['meeting_url']}")
+    blocks = {"letter_opening": [f"We respectfully invite your office to participate in {title}."],
+              "activity_purpose": ["[Explain the activity's purpose and why this office's participation is requested.]"],
+              "letter_details": details,
+              "contact_details": [f"For coordination, please contact {me} at {BLANK}; telephone {BLANK}."]}
+    # Contact email is supplied by the caller's account only; no contact is taken from source wording.
+    account = st.get_admin_user_by_id(conn, drafter_id) or {}
+    if account.get("username"):
+        blocks["contact_details"] = [f"For coordination, please contact {me} at {account['username']}; telephone {BLANK}."]
+    extras = {"file_copy": True, "boxes": ["slip"]}
+    reviewer = file_copy_reviewer(conn, entry, [drafter_id])
+    if reviewer[0]:
+        extras["reviewer"] = {"name": reviewer[0], "title": reviewer[1]}
+    return td.DocPayload("invitation_external", "invitation_external", f"External Invitation - {title}"[:120],
+                         fields, blocks=blocks, extras=extras)
 
 
 # Prompts the person replaces. Square brackets mark text that is theirs to write: the app only knows dates, places and people.
@@ -649,6 +689,8 @@ def record(conn, prep, res, user) -> dict:
     revision, so it never overwrites the earlier one, and a failure keeps the last good link."""
     url = (res.data or {}).get("url") if res.ok else ""
     err = "" if url else PLAIN_ERRORS.get(res.error, GENERIC_ERROR)
+    if prep.key == "invitation_external" and res.error == "template_not_set":
+        err = "The external invitation template has not been set up yet. Ask an administrator to complete its setup."
     conn.execute("INSERT INTO calendar_entry_doc(entry_id, doc_key, doc_url, doc_state, note, rev, updated_by, updated_at) "
                  "VALUES (?,?,?,?,?,?,?,?) ON CONFLICT(entry_id, doc_key) DO UPDATE SET doc_url=CASE WHEN excluded.doc_url<>'' "
                  "THEN excluded.doc_url ELSE calendar_entry_doc.doc_url END, doc_state=excluded.doc_state, note=excluded.note, "

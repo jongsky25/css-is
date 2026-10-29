@@ -5,9 +5,11 @@ Read this first in a new session. It replaces the approach in section 5 of `docs
 
 ## 1. Where things stand
 
-- Draft PR jongsky25/css-is#546 (branch `claude/funny-allen-3nym2e`) holds this plan (release 9.32). No code changed.
+- Merged planning PR jongsky25/css-is#546 holds this plan (release 9.32). It changed no application code.
 - **Increment 0 is done**: jongsky25/css-is#548 (9.30) added `tools/docx_layout.py`, `docs/templates/activity_reference.json` and `docs/templates/README.md`.
-- **Increment 1 is done**: jongsky25/css-is#549 (9.31). Titles stay in capitals (`KEEP_UPPER_TITLES_`); a `TPLF_<key>` property equal to `TPL_<key>` skips `formatDoc_` for a converted template (D7); blocks fill list items; `extras.boxes` picks `slip` and/or `keys`. It took the handoff's default for duplicated Blanks: **converters keep only the original body**, and the relay makes the file copy afterwards. Pending Google checks are listed in `docs/ACTIVITY_DOCS_SETUP.md`. Start at Increment 2.
+- **Increment 1 is done**: jongsky25/css-is#549 (9.31). Titles stay in capitals (`KEEP_UPPER_TITLES_`); a `TPLF_<key>` property equal to `TPL_<key>` skips `formatDoc_` for a converted template (D7); blocks fill list items; `extras.boxes` picks `slip` and/or `keys`. It took the handoff's default for duplicated Blanks: **converters keep only the original body**, and the relay makes the file copy afterwards. Pending Google checks are listed in `docs/ACTIVITY_DOCS_SETUP.md`.
+- **Increments 2–4 are code-merged**: #550 (memo, 9.34), #551 (NOM, 9.35), #553 (concept note/program flow, 9.36). Releases were reconciled with planning 9.32 and wellness 9.33. The user approved the memo's table-to-bullets layout with the merge request; legacy data remains for rollback. Google maker/draft/DOCX/PDF checks are still pending administrator access; these code merges did not deploy Apps Script.
+- **Increment 5 is prepared for review**: external letter, 9.37. Its scoped converter and new document card are described in `docs/ACTIVITY_DOCS_SETUP.md`; live Google acceptance checks remain pending. Next implementation increment: **6, executive briefer**.
 - Source files: Drive folder **Documents Templates**, id `1HU-MCk_csQhYmIs_5g1HqKNZ3DIbPVy4`, shared by link, owner
   `blhsdpurokalusugan@doh.gov.ph`. Ten files, a Blank and a Sample of each:
 

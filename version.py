@@ -18,10 +18,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "9.36"
+APP_VERSION = "9.37"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "9.37",
+        "date": "October 29, 2026",
+        "summary": "Activities can have an external invitation letter.",
+        "changes": [
+            "An external invitation letter is suggested when an outside office or visitor is listed, and you can choose whether it is needed.",
+            "After administrator setup, the letter uses the office form, activity details and configured signatory, with an initials-only file copy.",
+            "Recipient names, titles, addresses and salutations stay blank when they are not known."
+        ]
+    },
     {
         "version": "9.36",
         "date": "October 29, 2026",
