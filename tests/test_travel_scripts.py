@@ -166,3 +166,13 @@ def test_every_sheet_made_for_a_row_gets_a_link():
     import travel
     assert travel.extra_doc_urls("More: https://x/1 https://x/2") == ["https://x/1", "https://x/2"]
     assert travel.extra_doc_urls(None) == [] and travel.extra_doc_urls("a paper note") == []
+
+
+def test_activity_document_titles_keep_their_capitals(formatted):
+    for key, title in {
+        "memoTitle": "MEMORANDUM", "conceptTitle": "CONCEPT NOTE",
+        "noticeTitle": "NOTICE OF MEETING", "minutesTitle": "MINUTES OF THE MEETING",
+        "brieferTitle": "EXECUTIVE BRIEFER",
+    }.items():
+        assert formatted["doc"][key]["text"] == title
+        assert formatted["doc"][key]["bold"] is True

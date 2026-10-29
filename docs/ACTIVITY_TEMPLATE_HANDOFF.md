@@ -5,8 +5,9 @@ Read this first in a new session. It replaces the approach in section 5 of `docs
 
 ## 1. Where things stand
 
-- Draft PR jongsky25/css-is#546 (branch `claude/funny-allen-3nym2e`) holds this plan (release 9.31). No code changed.
-- **Increment 0 is done**: jongsky25/css-is#548 (9.30) added `tools/docx_layout.py`, `docs/templates/activity_reference.json` and `docs/templates/README.md`. Start at Increment 1.
+- Draft PR jongsky25/css-is#546 (branch `claude/funny-allen-3nym2e`) holds this plan (release 9.32). No code changed.
+- **Increment 0 is done**: jongsky25/css-is#548 (9.30) added `tools/docx_layout.py`, `docs/templates/activity_reference.json` and `docs/templates/README.md`.
+- **Increment 1 is done**: jongsky25/css-is#549 (9.31). Titles stay in capitals (`KEEP_UPPER_TITLES_`); a `TPLF_<key>` property equal to `TPL_<key>` skips `formatDoc_` for a converted template (D7); blocks fill list items; `extras.boxes` picks `slip` and/or `keys`. It took the handoff's default for duplicated Blanks: **converters keep only the original body**, and the relay makes the file copy afterwards. Pending Google checks are listed in `docs/ACTIVITY_DOCS_SETUP.md`. Start at Increment 2.
 - Source files: Drive folder **Documents Templates**, id `1HU-MCk_csQhYmIs_5g1HqKNZ3DIbPVy4`, shared by link, owner
   `blhsdpurokalusugan@doh.gov.ph`. Ten files, a Blank and a Sample of each:
 
@@ -151,4 +152,4 @@ Nothing in an increment changes the database.
 
 > Continue the activity template refresh in jongsky25/css-is. Read `docs/ACTIVITY_TEMPLATE_HANDOFF.md` first, then
 > `docs/ACTIVITY_TEMPLATE_REFRESH_PLAN.md` for the measurements. Decisions D1 to D7 in the handoff: [paste answers, or "use the defaults"].
-> Start with Increment 1 on a new branch from main, one PR per increment, following section 6 to check it.
+> Start with Increment 2 on a new branch from main, one PR per increment, following section 6 to check it.

@@ -863,3 +863,15 @@ def test_a_notice_of_meeting_is_drafted_with_the_details_and_the_invited(viewer,
     invited = call["blocks"]["invited"]
     assert invited[-2:] == ["2. Dr. Cruz, CHD VII", "3. Ms. Reyes, OSEC"] and len(invited) == 3
     assert "Notice of meeting" in entry_page(viewer, eid)
+
+
+@pytest.mark.skipif(shutil.which("node") is None, reason="node is not installed")
+def test_file_copy_can_select_only_the_initials_box_without_changing_the_dpo_default():
+    result = file_copy()
+    assert result["both"] == result["ok"]
+    slip = result["slip"]
+    assert slip["status"] == "ok"
+    assert [child["cells"] for child in slip["children"][9:] if child["type"] == "TABLE"] == [
+        [["", "BLHSD"], ["Initials", ""], ["Date", ""]]]
+    assert result["empty"]["status"] == "ok"
+    assert not [child for child in result["empty"]["children"][9:] if child["type"] == "TABLE"]

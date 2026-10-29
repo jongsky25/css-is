@@ -69,7 +69,8 @@ function generateDoc_(req) {
     applyRows_(body, req.rows || {});
     if (req.template_key === 'travel_report') dropEmptyReportSections_(body, req.blocks || {});
     applyBlocks_(body, req.blocks || {}); applyFields_(body, req.fields || {});
-    formatDoc_(body);
+    // Bind the office-format marker to this template ID, so restoring an old TPL_ also restores formatting.
+    if (P.getProperty('TPLF_' + req.template_key) !== tpl) formatDoc_(body);
     if (req.template_key === 'travel_report') { reportLetterhead_(doc); formatReport_(body); }
     if (SIGNATORY_FIELDS_[req.template_key]) alignSignatory_(body, req.fields || {}, SIGNATORY_FIELDS_[req.template_key]);
     doc.saveAndClose();
@@ -161,7 +162,8 @@ function trashFile_(req) {
 const FORM_FONT = 'Times New Roman', FORM_SIZE = 12, JUSTIFY_FROM = 60;      // paragraphs shorter than this stay as they are
 const KEEP_CAPS_ = { DPO: 1, CENRR: 1, RER: 1, MC: 1, DOH: 1, JO: 1, OIC: 1, TNVS: 1, DM: 1, CESO: 1, MD: 1, MPA: 1, II: 1, III: 1, IV: 1, VI: 1, VII: 1, VIII: 1, IX: 1 };
 // Titles that are always printed in capitals (spot feedback #164): the DPO heading is not Title Cased.
-const KEEP_UPPER_TITLES_ = ['DEPARTMENT PERSONNEL ORDER'];
+const KEEP_UPPER_TITLES_ = ['DEPARTMENT PERSONNEL ORDER', 'MEMORANDUM', 'CONCEPT NOTE',
+  'NOTICE OF MEETING', 'MINUTES OF THE MEETING', 'EXECUTIVE BRIEFER'];
 const SMALL_WORDS_ = { a: 1, an: 1, and: 1, as: 1, at: 1, by: 1, for: 1, from: 1, in: 1, of: 1, on: 1, or: 1, the: 1, to: 1, with: 1 };
 
 // "CERTIFICATION OF EXPENSES" -> "Certification of Expenses". Initials and known acronyms keep their capitals.
@@ -347,10 +349,13 @@ function addFileCopy_(docId, extras) {
       else if (t === T.HORIZONTAL_RULE) body.appendHorizontalRule();
     }
     const cells = fileCopyTables_(extras);
-    body.appendParagraph('').setBold(false);
-    shapeFileCopyBox_(plainTable_(body, cells.slip), FILE_COPY_MINS.slip, 1);
-    body.appendParagraph('').setBold(false);
-    shapeFileCopyBox_(plainTable_(body, cells.keys), FILE_COPY_MINS.keys, -1);
+    // Absent boxes keeps the DPO's two boxes; an explicit list selects the required boxes.
+    const boxes = extras && Array.isArray(extras.boxes) ? extras.boxes : ['slip', 'keys'];
+    ['slip', 'keys'].forEach(function (box) {
+      if (boxes.indexOf(box) < 0) return;
+      body.appendParagraph('').setBold(false);
+      shapeFileCopyBox_(plainTable_(body, cells[box]), FILE_COPY_MINS[box], box === 'slip' ? 1 : -1);
+    });
     doc.saveAndClose();
 
     const at = findMarkIndex_(Docs.Documents.get(docId), FILE_COPY_MARK);
@@ -485,11 +490,18 @@ function alignSignatory_(body, fields, keys) {
 function applyBlocks_(body, blocks) {
   Object.keys(blocks).forEach(function (k) {
     const hit = body.findText('\\{\\{' + k + '\\}\\}'); if (!hit) return;
-    const para = hit.getElement().getParent().asParagraph(), parent = para.getParent();
+    const element = hit.getElement().getParent();
+    const isList = element.getType() === DocumentApp.ElementType.LIST_ITEM;
+    const para = isList ? element.asListItem() : element.asParagraph(), parent = para.getParent();
     const lines = blocks[k].length ? blocks[k] : [''];
     para.setText(lines[0]);
     const idx = parent.getChildIndex(para);
-    for (let i = 1; i < lines.length; i++) parent.insertParagraph(idx + i, lines[i]).setAttributes(para.getAttributes());
+    for (let i = 1; i < lines.length; i++) {
+      if (isList) {
+        // Copy glyph, nesting and paragraph attributes, and join the original list.
+        parent.insertListItem(idx + i, para.copy()).setText(lines[i]).setListId(para);
+      } else parent.insertParagraph(idx + i, lines[i]).setAttributes(para.getAttributes());
+    }
   });
 }
 

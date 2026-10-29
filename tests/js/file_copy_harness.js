@@ -62,7 +62,7 @@ function run(opts) {
                    openById: () => doc.api }, Docs };
   vm.createContext(ctx);
   vm.runInContext(fs.readFileSync(path.join(root, 'apps_script', 'travel_docs.gs'), 'utf8'), ctx, { filename: 'travel_docs.gs' });
-  const status = ctx.addFileCopy_('DOC1');
+  const status = ctx.addFileCopy_('DOC1', opts.extras);
   return { status, calls: doc.calls, children: doc.children, sectionBreaks: doc.sectionBreaks, marksRemoved: doc.marksRemoved,
            pure: { mark: ctx.findMarkIndex_(doc.json(), '[[FILE COPY]]'), last: ctx.lastSectionBreakIndex_(doc.json()) } };
 }
@@ -71,6 +71,9 @@ const original = [{ type: 'PARAGRAPH', text: 'DEPARTMENT PERSONNEL ORDER' }, { t
                   { type: 'TABLE', cells: [['Name', 'Position']] }, { type: 'PARAGRAPH', text: 'By Authority of the Secretary of Health:' }];
 console.log(JSON.stringify({
   ok: run({ children: original }),
+  slip: run({ children: original, extras: { boxes: ['slip'] } }),
+  both: run({ children: original, extras: { boxes: ['slip', 'keys'] } }),
+  empty: run({ children: original, extras: { boxes: [] } }),
   off: run({ children: original, noDocs: true }),
   fail: run({ children: original, fail: true }),
   tables: (function () {
