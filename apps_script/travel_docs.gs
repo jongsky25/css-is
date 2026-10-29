@@ -66,9 +66,12 @@ function generateDoc_(req) {
     SpreadsheetApp.flush();
   } else {
     const doc = DocumentApp.openById(copy.getId()), body = doc.getBody();
-    applyRows_(body, req.rows || {}); applyBlocks_(body, req.blocks || {}); applyFields_(body, req.fields || {});
+    applyRows_(body, req.rows || {});
+    if (req.template_key === 'travel_report') dropEmptyReportSections_(body, req.blocks || {});
+    applyBlocks_(body, req.blocks || {}); applyFields_(body, req.fields || {});
     formatDoc_(body);
     if (req.template_key === 'travel_report') { reportLetterhead_(doc); formatReport_(body); }
+    if (SIGNATORY_FIELDS_[req.template_key]) alignSignatory_(body, req.fields || {}, SIGNATORY_FIELDS_[req.template_key]);
     doc.saveAndClose();
     if (req.extras && req.extras.file_copy) extras = addFileCopy_(copy.getId(), req.extras);
   }
@@ -421,6 +424,62 @@ function applyFields_(body, fields) {
     if (/^[a-z0-9_]+$/.test(k)) body.replaceText('\\{\\{' + k + '\\}\\}', esc_(fields[k]));
   });
   body.replaceText('\\{\\{[a-z0-9_]+\\}\\}', '');   // never leave raw braces
+}
+
+// Spot feedback #200: the sections of the travel report from "Key points" on are optional. One the traveller left empty is taken out
+// of the document, its title as well as its text, and its block is dropped so applyBlocks_ does not look for it.
+const OPTIONAL_REPORT_SECTIONS_ = { key_points: 'key points raised', contributions: 'key contributions and observations',
+  support_needed: 'support needed', recommendations: 'policy recommendations', conclusion: 'conclusion' };
+
+// Pure: true when a block has no text in any of its lines.
+function blockIsEmpty_(lines) {
+  return !(lines || []).some(function (l) { return String(l).trim() !== ''; });
+}
+
+function dropEmptyReportSections_(body, blocks) {
+  Object.keys(OPTIONAL_REPORT_SECTIONS_).forEach(function (k) {
+    if (!(k in blocks) || !blockIsEmpty_(blocks[k])) return;
+    try {
+      const hit = body.findText('\\{\\{' + k + '\\}\\}');
+      if (!hit) return;
+      const para = hit.getElement().getParent().asParagraph(), parent = para.getParent();
+      const idx = parent.getChildIndex(para), title = OPTIONAL_REPORT_SECTIONS_[k];
+      const prev = idx > 0 ? parent.getChild(idx - 1) : null;
+      parent.removeChild(para);
+      if (prev && prev.getType() === DocumentApp.ElementType.PARAGRAPH &&
+          prev.asParagraph().getText().trim().replace(/:$/, '').toLowerCase() === title) parent.removeChild(prev);
+      delete blocks[k];
+    } catch (err) { /* leave the section as it is rather than fail the document */ }
+  });
+}
+
+// Spot feedback #201: the head's name and designation start at the 3-inch mark of the ruler (216 pt) on the documents the
+// Director signs alone: the MC 114 justification and the Job Order certification. The name and its title keep their lines.
+const SIGNATORY_FIELDS_ = { mc114_justification: ['approver_name', 'approver_title'], jo_cert: ['signatory_name', 'signatory_title'] };
+const SIGNATORY_INDENT_PT_ = 216;
+
+function alignSignatory_(body, fields, keys) {
+  try {
+    const name = String(fields[keys[0]] || '').trim(), title = String(fields[keys[1]] || '').trim();
+    if (!name) return;
+    const T = DocumentApp.ElementType;
+    for (let i = 0; i < body.getNumChildren(); i++) {
+      const el = body.getChild(i);
+      if (el.getType() !== T.PARAGRAPH) continue;
+      const p = el.asParagraph(), text = p.getText().trim();
+      if (text.indexOf(name) !== 0) continue;
+      const lines = [p];
+      for (let j = i + 1; j < body.getNumChildren() && j <= i + 2; j++) {
+        const nx = body.getChild(j);
+        if (nx.getType() === T.PARAGRAPH && title && nx.asParagraph().getText().trim().indexOf(title) === 0) { lines.push(nx.asParagraph()); break; }
+      }
+      lines.forEach(function (q) {
+        q.setAlignment(DocumentApp.HorizontalAlignment.LEFT);
+        q.setIndentStart(SIGNATORY_INDENT_PT_); q.setIndentFirstLine(SIGNATORY_INDENT_PT_);
+      });
+      return;
+    }
+  } catch (err) { /* keep the signature block where the template put it */ }
 }
 
 function applyBlocks_(body, blocks) {

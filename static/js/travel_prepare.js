@@ -40,14 +40,16 @@
   // One day of the Post Travel Report written from the itinerary: the rides entered for that date and, inside the activity's
   // dates, taking part in it. `modes` maps a mode code to its label. Returns '' when there is nothing to say yet.
   function plain(label) { label = String(label); return label.length > 1 && label.charAt(1) === label.charAt(1).toUpperCase() && label.charAt(1) !== label.charAt(1).toLowerCase() ? label : label.charAt(0).toLowerCase() + label.slice(1); }
+  // "14:30" from a time box as people read it ("2:30 PM"); anything else is left as typed (no military time on the forms).
+  function clock(v) { var m = /^([01]?\d|2[0-3]):([0-5]\d)$/.exec(String(v || '').trim()); if (!m) return String(v || ''); var h = +m[1]; return (h % 12 || 12) + ':' + m[2] + ' ' + (h < 12 ? 'AM' : 'PM'); }
   function describeDay(rows, iso, act, modes) {
     var rides = [];
     (rows || []).forEach(function (r) {
       if (r.date !== iso || !r.mode || r.mode === 'none') return;
       var s = 'travelled' + (r.from ? ' from ' + r.from : '') + (r.to ? ' to ' + r.to : '') + ' by ' + plain((modes || {})[r.mode] || r.mode);
       var when = [];
-      if (r.dep) when.push('left ' + r.dep);
-      if (r.arr) when.push('arrived ' + r.arr);
+      if (r.dep) when.push('left ' + clock(r.dep));
+      if (r.arr) when.push('arrived ' + clock(r.arr));
       rides.push(when.length ? s + ' (' + when.join(', ') + ')' : s);
     });
     var inside = act && iso >= act.start && iso <= act.end;
@@ -630,11 +632,11 @@
     app.appendChild(section('Post travel report', [textArea('Overview', 'overview'),
       el('p', { 'class': 'tv-hint', text: 'Each day below is written from your itinerary and follows it until you edit that day yourself.' })]
       .concat(dayFields)
-      .concat([textArea('Key points', 'key_points', 'The main things you learned or decided. Only you can write this.'),
-               textArea('Contributions', 'contributions', 'What you contributed to the activity.'),
-               textArea('Support needed', 'support_needed', 'Anything the office needs to provide as a follow-up.'),
-               textArea('Recommendations', 'recommendations', 'What you recommend, based on what you saw.'),
-               textArea('Conclusion', 'conclusion', 'A short closing statement.')])));
+      .concat([textArea('Key points (optional)', 'key_points', 'The main things you learned or decided. Only you can write this. Leave it empty and this part is left out of the report.'),
+               textArea('Contributions (optional)', 'contributions', 'What you contributed to the activity. Left out of the report if empty.'),
+               textArea('Support needed (optional)', 'support_needed', 'Anything the office needs to provide as a follow-up. Left out of the report if empty.'),
+               textArea('Recommendations (optional)', 'recommendations', 'What you recommend, based on what you saw. Left out of the report if empty.'),
+               textArea('Conclusion (optional)', 'conclusion', 'A short closing statement. Left out of the report if empty.')])));
   }
   // Keep each day's line in step with the itinerary, but never overwrite a line the person has written or changed.
   function draftReport() {

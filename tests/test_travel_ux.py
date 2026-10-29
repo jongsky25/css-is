@@ -434,7 +434,7 @@ def test_report_days_follow_the_itinerary_until_the_person_edits_one(page, viewe
     pw.expect(day2).to_have_value('I wrote this myself.')                    # never overwritten
     page.reload()
     pw.expect(day1).to_have_value(re.compile(r'to Antipolo by TNVS'))      # the saved draft keeps following too
-    pw.expect(page.get_by_label('Key points', exact=True)).to_have_attribute('placeholder', re.compile('Only you can write'))
+    pw.expect(page.get_by_label('Key points (optional)', exact=True)).to_have_attribute('placeholder', re.compile('Only you can write'))
 
 
 def test_liquidation_figures_compare_expenses_with_the_cash_advance(page, viewer, conn, relay):

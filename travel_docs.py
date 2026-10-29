@@ -135,6 +135,16 @@ def _txt(v, n=600) -> str:
     return " ".join(str(v or "").split())[:n]
 
 
+def clock_text(v) -> str:
+    """A time typed on the prepare page ("14:30", 24-hour) as people read it ("2:30 PM"). Spot feedback #202: the
+    forms must not show military time. Anything that is not HH:MM (a time already written out) is left as typed."""
+    m = re.fullmatch(r"([01]?\d|2[0-3]):([0-5]\d)", str(v or "").strip())
+    if not m:
+        return str(v or "")
+    h = int(m.group(1))
+    return f"{h % 12 or 12}:{m.group(2)} {'AM' if h < 12 else 'PM'}"
+
+
 def _para(v, n=3000) -> list:
     """Free text to relay paragraphs: blank lines and over-long input are trimmed, never raised."""
     lines = [_txt(x, 800) for x in str(v or "").replace("\r", "").split("\n")]
@@ -323,8 +333,8 @@ def _appendix_a(ctx) -> DocPayload:
     for r in ctx["rows"]:
         total = r["allowance"] + r["per_diem"]
         grand += total
-        data.append({"r_date": long_date(r["date"]) if r["date"] else "", "r_place": _leg(r), "r_dep": r["dep"],
-                     "r_arr": r["arr"], "r_mode": MODE_LABELS[r["mode"]], "r_allowance": _m(r["allowance"]) if r["allowance"] else "",
+        data.append({"r_date": long_date(r["date"]) if r["date"] else "", "r_place": _leg(r), "r_dep": clock_text(r["dep"]),
+                     "r_arr": clock_text(r["arr"]), "r_mode": MODE_LABELS[r["mode"]], "r_allowance": _m(r["allowance"]) if r["allowance"] else "",
                      "r_perdiem": _m(r["per_diem"]) if r["per_diem"] else "", "r_total": _m(total) if total else ""})
     purpose = (f"To {ctx['texts']['purpose'].strip() or 'attend ' + f['act_title']} on "
                f"{date_range(f['act_start'], f['act_end'])}" + (f" at {f['act_venue']}" if f.get("act_venue") else "")
@@ -408,7 +418,7 @@ def _jo_cert(ctx) -> DocPayload:
 def _ride_phrase(r) -> str:
     mode = MODE_LABELS.get(r.get("mode"), "").lower()
     s = "travelled" + (f" from {r['from']}" if r.get("from") else "") + (f" to {r['to']}" if r.get("to") else "") + (f" by {mode}" if mode else "")
-    when = ([f"left {r['dep']}"] if r.get("dep") else []) + ([f"arrived {r['arr']}"] if r.get("arr") else [])
+    when = ([f"left {clock_text(r['dep'])}"] if r.get("dep") else []) + ([f"arrived {clock_text(r['arr'])}"] if r.get("arr") else [])
     return s + (f" ({', '.join(when)})" if when else "")
 
 
@@ -476,7 +486,8 @@ def _rers(ctx) -> list:
             continue
         out.append(DocPayload("rer", "rer", ctx["title"]("rer"), {
             "payee_name": ctx["name"], "payee_designation": ctx["designation"], "amount_words": peso_words(r["allowance"]),
-            "amount_figures": _m(r["allowance"]), "ride_from": r["from"], "ride_to": r["to"],
+            "amount_figures": _m(r["allowance"]), "ride_mode": MODE_LABELS.get(r["mode"], "") or "Taxi",
+            "ride_from": r["from"], "ride_to": r["to"],
             "ride_date": long_date(r["date"]) if r["date"] else "", "purpose": f"attend {ctx['filing']['act_title']}",
             "activity_title": ctx["filing"]["act_title"], "dpo_ref": dpo_ref(ctx["filing"])},
             index=len(out) + 1))

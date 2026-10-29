@@ -18,10 +18,22 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "9.28"
+APP_VERSION = "9.29"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "9.29",
+        "date": "October 29, 2026",
+        "summary": "Clicking your own room booking opens the meeting page, and the travel forms are tidier.",
+        "changes": [
+            "Clicking your own conference room booking on the calendar now opens its meeting page, with the notice of meeting, minutes and other documents. If the booking had no calendar item yet, one is made for you.",
+            "Departure and arrival times on the travel forms and the report now read like 2:30 PM instead of 14:30.",
+            "In the Post Travel Report, Key points, Contributions, Support needed, Recommendations and Conclusion are optional. A part you leave empty, with its title, is left out of the document.",
+            "The Director's name and designation on the MC 114 justification and the Job Order certification now start at the 3-inch mark of the ruler.",
+            "The RER now says \"in the amount of\", names the kind of transport in the fare line, and carries the form's instruction about rentals and transportation."
+        ]
+    },
     {
         "version": "9.28",
         "date": "October 29, 2026",
