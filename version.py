@@ -18,10 +18,18 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "9.17"
+APP_VERSION = "9.18"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "9.18",
+        "date": "October 29, 2026",
+        "summary": "Behind the scenes: the automatic check on the companions was repaired.",
+        "changes": [
+            "Nothing looks different. The automatic test that checks the pets and their outfits stopped running because the web browser it uses was updated; it now uses the current one."
+        ]
+    },
     {
         "version": "9.17",
         "date": "October 29, 2026",

@@ -1,3 +1,7 @@
+## 9.18 — October 29, 2026
+
+- CI: the `functional` job of `.github/workflows/avatar-release.yml` pinned Chromium `156.0.8078.47-1~deb13u1`, which Debian's security archive no longer serves for amd64 (it now carries only `156.0.8078.73-1~deb13u1`), so the job failed at `apt-get install` before any test ran. The pin is now `156.0.8078.73-1~deb13u1` (checked against `security.debian.org/debian-security/dists/trixie-security/main/binary-amd64/Packages.xz`). The pin will go stale again at the next Chromium security update; refresh both package versions on that line then.
+
 ## 9.17 — October 29, 2026
 
 - Calendar: clicking a conference-room card no longer drops you on the room board. It opens the booking's page (`/calendar/rooms/<id>`), which goes straight to the linked calendar item when you can see it, and otherwise shows the booking's details. The person who booked it, or the Administrative Section, can press "Make the calendar item for this booking" to create the item (title, date, hours and conference room pre-filled, booking linked, audited as `room_calendar_item`) and get to the notice of meeting and minutes.
