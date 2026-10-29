@@ -1,4 +1,6 @@
 """Increment 2.1 in a real browser at phone and desktop width: steppers, limits, search, sticky bar."""
+import re
+import traceback
 from urllib.parse import urlsplit
 
 import pytest
@@ -33,15 +35,22 @@ def shop_page(grid_browser, app_mod, viewer):
     page = context.new_page()
     errors = []
     page.on('pageerror', lambda error: errors.append(str(error)))
+    page.calls = calls = []
 
     def serve(route):
         url = urlsplit(route.request.url)
         if url.hostname != 'office.test':
             route.abort()
             return
-        response = viewer.request(route.request.method, url.path + ('?' + url.query if url.query else ''),
-                                  content=route.request.post_data_buffer, follow_redirects=False,
-                                  headers={k: v for k, v in route.request.headers.items() if k.lower() == 'content-type'})
+        try:
+            response = viewer.request(route.request.method, url.path + ('?' + url.query if url.query else ''),
+                                      content=route.request.post_data_buffer, follow_redirects=False,
+                                      headers={k: v for k, v in route.request.headers.items() if k.lower() == 'content-type'})
+        except Exception:  # show a server error on the page instead of hanging the browser
+            calls.append((route.request.method, url.path, 'server exception'))
+            route.fulfill(status=500, content_type='text/plain', body=traceback.format_exc())
+            return
+        calls.append((route.request.method, url.path, response.status_code))
         route.fulfill(status=response.status_code, body=response.content,
                       headers={k: v for k, v in response.headers.items()
                                if k.lower() not in ('content-length', 'content-encoding', 'set-cookie')})
@@ -88,6 +97,10 @@ def test_desktop_width_and_save_draft_round_trip(shop_page):
     page.get_by_role('button', name='More Blue ballpen').click()
     page.locator('#shop-purpose').fill('Browser test purpose')
     page.get_by_role('button', name='Save draft').click()
-    page.wait_for_url('**/supplies/requests/*')
-    page.get_by_text('Browser test purpose').first.wait_for()
+    try:
+        page.wait_for_url(re.compile(r'/supplies/requests/\d+$'), timeout=15000)
+        page.get_by_text('Browser test purpose').first.wait_for(timeout=15000)
+    except Exception as exc:
+        body = page.inner_text('body')[:800]
+        raise AssertionError(f'Draft page not reached. url={page.url} calls={page.calls} body={body!r}') from exc
     assert 'Blue ballpen' in page.content()
