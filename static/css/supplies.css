@@ -70,3 +70,10 @@
 .shop-step button { min-width:2.6rem; min-height:2.6rem; font-size:1.2rem; }
 .shop-step input { text-align:center; flex:1; min-width:0; }
 .shop-bar { position:sticky; bottom:0; display:flex; justify-content:space-between; align-items:center; gap:1rem; padding:.7rem 4.6rem .7rem 1rem;   /* room on the right for the floating feedback button */ background:var(--surface, #fff); border-top:1px solid var(--line, #d8dee9); box-shadow:0 -4px 12px rgba(20,30,50,.08); }
+
+/* Supplies 2.2: the cart review page and the grid's Review / Save draft buttons */
+.cart-actions { display:flex; flex-wrap:wrap; gap:.5rem; justify-content:flex-end; }
+.cart-actions button.secondary { background:transparent; color:inherit; border:1px solid var(--line, #b8c2d3); }
+.shop-bar { flex-wrap:wrap; }
+.cart-form .shop-bar { position:static; padding:.7rem 0; border-top:0; box-shadow:none; background:transparent; }
+.cart-form .cart-actions { justify-content:flex-start; }

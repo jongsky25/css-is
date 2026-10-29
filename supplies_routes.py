@@ -916,6 +916,60 @@ def make_router(templates, get_conn):
         finally:
             conn.close()
 
+    def cart_page(request, conn, fields, *, error='', status_code=200):
+        """Supplies 2.2: what the requester picked, with pictures and editable numbers, before it is sent."""
+        user, identity = requests_service.requester(conn, request.state.user)
+        asked = {l['item_id']: l['requested_quantity'] for l in shop.quantities_from(fields)}
+        request_id = int(fields['request_id']) if str(fields.get('request_id', '')).isdigit() else None
+        cards = [{**c, 'qty': asked[str(c['id'])]} for c in shop.shop_items(conn, '', request_id) if str(c['id']) in asked]
+        if not cards:
+            return request_form(request, conn, submitted=fields, view='grid', status_code=422,
+                                error='Choose at least one item first.')
+        return render(request, conn, 'request_cart', identity=identity, cards=cards, request_id=request_id,
+                      form_values=fields, error=error, status_code=status_code)
+
+    @router.post('/supplies/requests/review')
+    async def review_request(request: Request):
+        conn = get_conn()
+        try:
+            fields = await posted(request, max_fields=500)
+            if fields.get('step') == 'grid':
+                return request_form(request, conn, submitted=fields, view='grid')
+            return cart_page(request, conn, fields)
+        except (Denied, Invalid, Conflict) as exc:
+            return failure(request, exc)
+        finally:
+            conn.close()
+
+    @router.post('/supplies/requests/send')
+    async def send_request(request: Request):
+        """Save the cart as a draft and, for Send, submit it in the same step. A failed submit keeps the saved draft."""
+        conn = get_conn()
+        fields = {}
+        try:
+            fields = await posted(request, max_fields=500)
+            request_id = int(fields['request_id']) if str(fields.get('request_id', '')).isdigit() else None
+            try:
+                saved = requests_service.save_draft(
+                    conn, request.state.user, {**fields, 'lines': shop.quantities_from(fields)}, request_id=request_id,
+                    expected_revision=fields.get('revision') if request_id else None, operation_key=fields.get('operation_key'))
+                if fields.get('act') != 'send':
+                    return RedirectResponse('/supplies/requests/' + str(saved['id']), status_code=303)
+                try:
+                    sent = requests_service.submit(conn, request.state.user, saved['id'], expected_revision=saved['revision'],
+                                                   operation_key=fields.get('submit_operation_key'))
+                except (Invalid, Conflict) as exc:
+                    return cart_page(request, conn, {**fields, 'request_id': saved['id'], 'revision': saved['revision']},
+                                     error=f'Your request is saved as a draft but was not sent: {exc}',
+                                     status_code=409 if isinstance(exc, Conflict) else 422)
+                return RedirectResponse('/supplies/requests/' + str(sent['id']), status_code=303)
+            except (Invalid, Conflict) as exc:
+                return cart_page(request, conn, fields, error=str(exc), status_code=409 if isinstance(exc, Conflict) else 422)
+        except (Denied, Invalid, Conflict) as exc:
+            return failure(request, exc)
+        finally:
+            conn.close()
+
     @router.get('/supplies/requests/{request_id}')
     def request_detail(request: Request, request_id: int):
         conn = get_conn()

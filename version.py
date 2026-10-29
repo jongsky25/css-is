@@ -18,10 +18,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "9.16"
+APP_VERSION = "9.17"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "9.17",
+        "date": "October 29, 2026",
+        "summary": "Review your supply request, then send it in one step.",
+        "changes": [
+            "After choosing items on the grid, Review shows your list with pictures and numbers you can still change, plus the purpose and date needed.",
+            "Send request saves and sends it in one tap. Save for later keeps it as a draft instead.",
+            "If something stops the sending, your request is kept as a draft and you stay on the review page to fix it, so nothing you typed is lost."
+        ]
+    },
     {
         "version": "9.16",
         "date": "October 29, 2026",

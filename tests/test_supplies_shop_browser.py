@@ -1,5 +1,6 @@
 """Supplies 2.1 in a real browser: the picture grid at phone and desktop width, the + / - buttons, search and the bar."""
 import os
+import sqlite3
 from urllib.parse import urlsplit
 
 import pytest
@@ -16,7 +17,9 @@ SHOTS = os.environ.get('SHOP_SHOTS', '')          # a folder to keep screenshots
 
 @pytest.fixture
 def shop_page(grid_browser, app_mod, viewer):
-    with in_the_directory(app_mod, 'viewer@test.local', path='SHOPFX/D1/S1'):
+    directory = in_the_directory(app_mod, 'viewer@test.local', path='SHOPFX/D1/S1')
+    directory.__enter__()
+    try:
         c = st.connect(app_mod.DB)
         admin = st.get_admin_user(c, 'admin@test.local')
         user = st.get_admin_user(c, 'viewer@test.local')
@@ -43,6 +46,10 @@ def shop_page(grid_browser, app_mod, viewer):
                                       content=route.request.post_data_buffer,
                                       headers={k: v for k, v in route.request.headers.items() if k.lower() in ('content-type', 'x-csrf-token')},
                                       follow_redirects=False)
+            if 300 <= response.status_code < 400 and response.headers.get('location'):     # a fulfilled redirect is not followed
+                route.fulfill(status=200, content_type='text/html',
+                              body='<meta http-equiv="refresh" content="0;url=' + response.headers['location'] + '">')
+                return
             route.fulfill(status=response.status_code, body=response.content,
                           headers={k: v for k, v in response.headers.items() if k.lower() not in ('content-length', 'content-encoding', 'set-cookie')})
         page.route('**/*', serve)
@@ -51,6 +58,11 @@ def shop_page(grid_browser, app_mod, viewer):
         assert errors == []
         context.close()
         c.close()
+    finally:
+        try:
+            directory.__exit__(None, None, None)
+        except sqlite3.IntegrityError:               # a request the test sent still points at the temporary person
+            pass
 
 
 def shot(page, name, full=True):
@@ -141,3 +153,29 @@ def test_the_plain_list_search_filters_the_drop_downs_and_keeps_a_choice(shop_pa
     assert 'Masking Tape' in first.locator('option:checked').inner_text()                         # what was already chosen stays
     page.locator('#list-q').fill('')
     assert page.locator('select[name="item_1"] option').count() == 6                              # five items and "Choose an item"
+
+
+def test_review_opens_the_cart_which_fits_a_phone_and_send_submits_it(shop_page):
+    page, _ = shop_page
+    page.locator('.shop-card').first.wait_for()
+    page.locator('.shop-card', has_text='A4 Bond Paper').locator('input').fill('4')
+    page.locator('.shop-card', has_text='Stapler').get_by_role('button', name='One more', exact=False).click()
+    page.locator('#request-purpose').fill('Browser cart purpose')
+    page.get_by_role('button', name='Review').click()
+    page.get_by_role('heading', name='Review your request').wait_for()
+    assert page.locator('.cart-line').count() == 2 and page.locator('#request-purpose').input_value() == 'Browser cart purpose'
+    assert page.evaluate('document.documentElement.scrollWidth <= window.innerWidth')
+    shot(page, 'cart-375.png')
+    send = page.get_by_role('button', name='Send request').bounding_box()
+    bubble = page.locator('#sfBtn').bounding_box()
+    if bubble:
+        assert send['x'] + send['width'] <= bubble['x'] or send['y'] + send['height'] <= bubble['y'] or bubble['y'] + bubble['height'] <= send['y']
+    page.locator('.cart-line', has_text='Stapler').get_by_role('button', name='One more', exact=False).click()
+    page.get_by_role('button', name='Choose more').click()                       # back to the grid keeps what was chosen
+    page.locator('.shop-card', has_text='Stapler').wait_for()
+    assert page.locator('.shop-card', has_text='Stapler').locator('input').input_value() == '2'
+    page.get_by_role('button', name='Review').click()
+    page.get_by_role('button', name='Send request').click()
+    page.wait_for_url('**/supplies/requests/1')
+    page.wait_for_load_state('load')
+    assert 'SUP-' in page.content() and 'Browser cart purpose' in page.content()
