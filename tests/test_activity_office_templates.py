@@ -143,3 +143,26 @@ def test_changed_letter_source_does_not_replace_active_template(office_template)
     for failure in office_template["letterFailures"]:
         assert "FAILED" in failure["report"]
         assert failure["writes"] == [] and failure["active"] == "OLD"
+
+
+def test_briefer_preserves_wide_grid_merged_title_repeated_vi_and_offset(office_template):
+    briefer = office_template["briefer"]
+    assert "all placeholders present" in briefer["report"]
+    assert "SOURCE" not in briefer["text"]
+    assert set(briefer["expect"]) == set(re.findall(r"\{\{([a-z_]+)\}\}", briefer["text"]))
+    assert briefer["writes"] == [{"TPL_executive_briefer": "CANDIDATE", "TPLF_executive_briefer": "CANDIDATE"}]
+    for children in (briefer["children"], briefer["filled"]["children"]):
+        table = next(child for child in children if child["type"] == "table")
+        assert table["grid"] == [2445, 8475] and sum(table["grid"]) > 9360
+        assert len(table["rows"]) == 9 and table["rows"][0] == [" EXECUTIVE BRIEFER"]
+        assert table["rows"][6][0] == "VI. Date/Venue/ References"
+        assert table["rows"][7][0] == "VI. Prepared by"
+        assert children[1]["attrs"]["indentStart"] == -27
+    assert "{{" not in briefer["filled"]["text"]
+    assert "DRAFTER\nStaff title\n\nNoted by:\n\nREVIEWER\nReviewer title" in briefer["filled"]["text"]
+
+
+def test_unexpected_briefer_structure_and_signature_slots_do_not_activate(office_template):
+    for failure in office_template["brieferFailures"]:
+        assert "FAILED" in failure["report"]
+        assert failure["writes"] == [] and failure["active"] == "OLD"

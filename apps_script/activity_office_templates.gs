@@ -18,8 +18,14 @@ const AO_TEMPLATES = [
     expect: ['title', 'pf_time', 'pf_topic', 'pf_person'] },
   { key: 'invitation_external', source: 'Blank [Letter - Invitation - External]', build: ao_letter_,
     expect: ['date', 'addressee_name', 'addressee_title', 'addressee_agency', 'addressee_address',
-      'subject', 'salutation_name', 'letter_opening', 'activity_purpose', 'letter_details', 'contact_details', 'head_name', 'head_title'] }
+      'subject', 'salutation_name', 'letter_opening', 'activity_purpose', 'letter_details', 'contact_details', 'head_name', 'head_title'] },
+  { key: 'executive_briefer', source: 'Blank [Executive Briefer]', build: ao_briefer_,
+    expect: ['subject', 'requested_action', 'background', 'outputs', 'participants', 'date_venue_references',
+      'prepared_by', 'prepared_title', 'noted_by_name', 'noted_by_title', 'head_name', 'head_title', 'approved_unit'] }
 ];
+
+function makeOfficeBrieferTemplate() { return makeOfficeTemplates(['executive_briefer'], false); }
+function rebuildOfficeBrieferTemplate() { return makeOfficeTemplates(['executive_briefer'], true); }
 
 function makeOfficeExternalLetterTemplate() { return makeOfficeTemplates(['invitation_external'], false); }
 function rebuildOfficeExternalLetterTemplate() { return makeOfficeTemplates(['invitation_external'], true); }
@@ -473,5 +479,53 @@ function ao_letter_(id) {
   addressee.replaceText(ao_literal_('[NAME OF HEAD]'), '{{addressee_name}}');
   addressee.replaceText(ao_literal_('[Name of Agency]'), '{{addressee_title}}\n{{addressee_agency}}');
   addressee.replaceText(ao_literal_('[Address of Agency]'), '{{addressee_address}}');
+  doc.saveAndClose();
+}
+
+function ao_brieferPlan_(items) {
+  const tables = items.reduce(function (out, item, i) { if (item.type === 'table') out.push(i); return out; }, []);
+  if (tables.length !== 1 || items.some(function (item) { return item.type !== 'table' && ao_norm_(item.text || ''); })) {
+    throw new Error('unexpected briefer body');
+  }
+  const rows = items[tables[0]].rows;
+  const labels = ['I. Subject', 'II. Requested Action', 'III. Background/ Rational / Legal Basis',
+    'IV. Key Outputs / Expected Output / Attachments', 'V. Participants / Key Stakeholders',
+    'VI. Date/Venue/ References', 'VI. Prepared by', 'Approved by'];
+  if (rows.length !== labels.length + 1 || rows[0].length !== 1 || ao_norm_(rows[0][0]) !== 'EXECUTIVE BRIEFER'
+      || rows.slice(1).some(function (row, i) { return row.length !== 2 || ao_norm_(row[0]) !== labels[i]; })) {
+    throw new Error('unexpected briefer labels or merged title');
+  }
+  if (rows.slice(1, 7).some(function (row) { return ao_norm_(row[1]); })) throw new Error('briefer value area is not blank');
+  return { table: tables[0] };
+}
+function ao_brieferSignaturePlan_(prepared, approved) {
+  const staff = prepared.map(ao_norm_), head = approved.map(ao_norm_);
+  const name = staff.indexOf('Name of Staff'), noted = staff.indexOf('Noted by:'), supervisor = staff.indexOf('Name of Supervisor');
+  const nonempty = head.reduce(function (out, value, i) { if (value) out.push(i); return out; }, []);
+  if (name < 0 || staff[name + 1] !== 'Designation' || noted <= name + 1 || supervisor <= noted
+      || staff[supervisor + 1] !== 'Designation' || nonempty.length !== 3
+      || nonempty[1] !== nonempty[0] + 1 || nonempty[2] !== nonempty[1] + 1
+      || staff.some(function (value, i) { return value && [name, name + 1, noted, supervisor, supervisor + 1].indexOf(i) < 0; })) {
+    throw new Error('unexpected briefer signature cells');
+  }
+  return { prepared: [[name, '{{prepared_by}}'], [name + 1, '{{prepared_title}}'],
+      [supervisor, '{{noted_by_name}}'], [supervisor + 1, '{{noted_by_title}}']],
+    approved: [[nonempty[0], '{{head_name}}'], [nonempty[1], '{{head_title}}'], [nonempty[2], '{{approved_unit}}']] };
+}
+function ao_cellParagraphTexts_(cell) {
+  const texts = [];
+  for (let i = 0; i < cell.getNumChildren(); i++) texts.push(cell.getChild(i).getText());
+  return texts;
+}
+function ao_briefer_(id) {
+  const doc = DocumentApp.openById(id), body = doc.getBody(), plan = ao_brieferPlan_(ao_items_(body));
+  const table = body.getChild(plan.table).asTable(), prepared = table.getCell(7, 1), approved = table.getCell(8, 1);
+  const signatures = ao_brieferSignaturePlan_(ao_cellParagraphTexts_(prepared), ao_cellParagraphTexts_(approved));
+  // Keep every label, merged title, row, grid, border and offset exactly as copied.
+  ['subject', 'requested_action', 'background', 'outputs', 'participants', 'date_venue_references'].forEach(function (key, i) {
+    ao_cellText_(table.getCell(i + 1, 1), '{{' + key + '}}');
+  });
+  signatures.prepared.forEach(function (replacement) { ao_text_(prepared.getChild(replacement[0]), replacement[1]); });
+  signatures.approved.forEach(function (replacement) { ao_text_(approved.getChild(replacement[0]), replacement[1]); });
   doc.saveAndClose();
 }

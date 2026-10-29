@@ -1058,3 +1058,70 @@ def test_external_letter_without_host_has_blank_agency_and_clear_setup_failure(v
     assert relay.calls[0]["fields"]["addressee_agency"] == ad.BLANK
     row = ad.get_rows(conn, eid)["invitation_external"]
     assert row["doc_state"] == "failed" and "external invitation template" in row["note"]
+
+
+def test_executive_briefer_is_manual_and_uses_existing_choice_routes(viewer, conn):
+    assert not ad.suggest(entry())["executive_briefer"][0]
+    eid = create(viewer, audience="bureau")
+    assert "Executive briefer" in entry_page(viewer, eid)
+    response = viewer.post(f"/calendar/entries/{eid}/documents/executive_briefer/needed",
+                           content=urlencode({"needed": "yes"}), headers=FORM, follow_redirects=False)
+    assert response.status_code == 303 and "ok=" in response.headers["location"]
+    assert ad.get_rows(conn, eid)["executive_briefer"]["needed"] == 1
+    viewer.post(f"/calendar/entries/{eid}/documents/executive_briefer/needed",
+                content=urlencode({"needed": "auto"}), headers=FORM)
+    assert ad.get_rows(conn, eid)["executive_briefer"]["needed"] is None
+
+
+@pytest.mark.skipif(shutil.which("node") is None, reason="node is not installed")
+def test_executive_briefer_payload_agrees_with_template_and_uses_known_activity_data(viewer, conn, relay, monkeypatch):
+    st.set_setting(conn, "travel.sig.head_name", "Configured Head")
+    st.set_setting(conn, "travel.sig.head_title", "Director")
+    monkeypatch.setattr(ad, "file_copy_reviewer", lambda *args: ("Section Reviewer", "Reviewer Title"))
+    eid = create(viewer, kind="training", title="Current Workshop", venue="Room", people=[str(uid(conn, "viewer@test.local"))],
+                 start_date="2026-10-12", end_date="2026-10-13", note="PRIVATE NOTE")
+    ad.set_visitors(conn, eid, "Visitor, MD, Partner Office", "viewer@test.local")
+    ad.set_dpo_cites(conn, eid, "AO 2026-0012", "viewer@test.local")
+    response = draft(viewer, eid, "executive_briefer")
+    assert response.status_code == 303 and "ok=" in response.headers["location"]
+    call = relay.calls[0]
+    assert call["template_key"] == "executive_briefer" and call["title"] == "Executive Briefer - Current Workshop"
+    fields, blocks = call["fields"], call["blocks"]
+    assert fields["subject"] == "Current Workshop" and fields["prepared_by"] == "viewer@test.local"
+    assert fields["prepared_title"] == ""
+    assert fields["noted_by_name"] == "Section Reviewer" and fields["noted_by_title"] == "Reviewer Title"
+    assert fields["head_name"] == "CONFIGURED HEAD" and fields["head_title"] == "Director"
+    assert fields["approved_unit"] == ad.SIGNATORY_UNIT
+    assert blocks["requested_action"][0].startswith("[") and blocks["background"][0].startswith("[")
+    assert blocks["outputs"] == ad.CONCEPT_PROMPTS["outputs"]
+    assert blocks["participants"] == ["1. viewer@test.local", "2. Visitor, MD, Partner Office"]
+    assert blocks["date_venue_references"] == ["Date: October 12-13, 2026", "Venue: Room", "References: AO 2026-0012"]
+    assert not call.get("extras") and not call["rows"]
+    assert "PRIVATE NOTE" not in json.dumps(call) and "PEREZ" not in json.dumps(call)
+    result = subprocess.run(["node", "tests/js/office_templates_harness.js"], capture_output=True, text=True, timeout=30)
+    assert result.returncode == 0, result.stderr
+    expected = set(json.loads(result.stdout)["briefer"]["expect"])
+    assert expected <= set(fields) | set(blocks)
+    assert ad.get_rows(conn, eid)["executive_briefer"]["doc_state"] == "done"
+
+
+def test_briefer_leaves_unknown_signers_and_references_blank(conn, monkeypatch):
+    monkeypatch.setattr(ad, "head_of_office", lambda *args: ("", ""))
+    monkeypatch.setattr(ad, "file_copy_reviewer", lambda *args: ("", ""))
+    monkeypatch.setattr(st, "get_user_profile", lambda *args: {"person_name": "Known Drafter", "designation": "Known Title"})
+    payload = ad.payload(conn, {"id": 1, "title": "Activity", "start_date": "2026-10-12", "people": []},
+                         "executive_briefer", {"id": 10, "username": "drafter@test.local"}, positions=True)
+    assert payload.fields["prepared_title"] == "Known Title"
+    for key in ("head_name", "head_title", "noted_by_name", "noted_by_title"):
+        assert payload.fields[key] == ad.BLANK
+    assert payload.blocks["participants"] == ["[List participants and key stakeholders.]"]
+    assert payload.blocks["date_venue_references"][-1].startswith("References: [")
+    assert not payload.extras
+
+
+def test_missing_briefer_template_has_an_actionable_setup_message(viewer, conn, relay):
+    eid = create(viewer, audience="bureau")
+    relay.fail["executive_briefer"] = "template_not_set"
+    draft(viewer, eid, "executive_briefer")
+    saved = ad.get_rows(conn, eid)["executive_briefer"]
+    assert saved["doc_state"] == "failed" and "executive briefer template" in saved["note"]
