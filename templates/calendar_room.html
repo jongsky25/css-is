@@ -1,0 +1,31 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header, flash %}
+{% block title %}Conference room booking{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/calendar.css?v=7.87">{% endblock %}
+{% block content %}
+{{ page_header(res.title, "A conference room booking on the calendar.") }}
+{{ flash(msg=ok, err=err) }}
+<article class="cal-detail">
+  <dl class="cal-facts">
+    <dt>When</dt><dd>{{ when }}{% if hours %}, {{ hours }}{% endif %}</dd>
+    <dt>Where</dt><dd>Conference room{% if res.modality != 'f2f' %} ({{ res.modality }}){% endif %}</dd>
+    <dt>Status</dt><dd>{{ 'Approved' if res.status == 'approved' else ('Provisional (standby)' if res.standby else 'Waiting for the Administrative Section') }} <code>{{ res.ref_code }}</code></dd>
+    {% if requester %}<dt>Booked by</dt><dd>{{ requester }}</dd>{% endif %}
+    {% if res.purpose %}<dt>Purpose</dt><dd>{{ res.purpose }}</dd>{% endif %}
+  </dl>
+  {% if activity %}
+  <p>This booking belongs to the CSS activity <strong>{{ activity.title }}</strong>. Open it from the calendar's activities, or see it under Conference room → My reservations.</p>
+  {% elif res.calendar_entry_id %}
+  <p class="cal-hint">This booking belongs to a calendar item you can't see, so only the booking is shown.</p>
+  {% elif can_make_item %}
+  <p>There is no calendar item for this booking yet, so there is nowhere to prepare the notice of meeting or the minutes.</p>
+  <form method="post" action="/calendar/rooms/{{ res.id }}/make-item">
+    <button class="cal-btn primary" type="submit">Make the calendar item for this booking</button>
+  </form>
+  <p class="cal-hint">It starts with this title, date, hours and the conference room, and the booking is linked to it. You can then add people and draft the notice of meeting and the minutes.</p>
+  {% else %}
+  <p class="cal-hint">Only the person who booked it, or the Administrative Section, can start the calendar item for it.</p>
+  {% endif %}
+  <p><a class="cal-btn" href="/rooms?week={{ res.day }}">See it on the room board</a></p>
+</article>
+{% endblock %}

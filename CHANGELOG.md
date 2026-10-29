@@ -1,3 +1,7 @@
+## Unreleased
+
+- Calendar: clicking a conference-room card no longer drops you on the room board. It opens the booking's page (`/calendar/rooms/<id>`), which goes straight to the linked calendar item when you can see it, and otherwise shows the booking's details. The person who booked it, or the Administrative Section, can press "Make the calendar item for this booking" to create the item (title, date, hours and conference room pre-filled, booking linked, audited as `room_calendar_item`) and get to the notice of meeting and minutes.
+
 ## 9.15 — October 28, 2026
 
 - Supplies increment 1.4: 49 flat 96×96 SVG pictures plus `generic.svg` in `static/img/supplies/`, and `supplies_pictures.py` with `picture_for(description, code) -> {src, tint, initials}`. Ordered regex rules (specific before general, tolerant of the office's spellings) match 98 of the 99 real catalog names; a colour word in the name sets the tile tint; anything unmatched (today only "Epson 0442") gets an initials tile whose colour is hashed from the code. No database change and no screen uses it yet.
