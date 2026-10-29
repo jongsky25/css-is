@@ -130,7 +130,7 @@ def test_inventory_inactive_saved_view_rechecks_revoked_grant(inventory_page):
     page.get_by_role('button',name='Save new view',exact=True).click()
     page.wait_for_function("document.getElementById('inventory-view-status').textContent.includes('View saved')")
     c.execute("UPDATE supply_role_grant SET revoked_at='2026-10-24',revoked_by=? WHERE id=?",(state['user']['id'],state['grant']['id']));c.commit()
-    page.reload()
+    page.get_by_role('button',name='Apply filters',exact=True).click()                         # the page itself would now redirect (Supplies 4.1)
     page.wait_for_function("document.getElementById('inventory-table-status').textContent.includes('could not load')")
     assert page.locator('#inventory-standard').is_visible() and 'INACTIVE' not in page.locator('#inventory-standard').inner_text()
     assert page.locator('.tabulator-row').count()==0

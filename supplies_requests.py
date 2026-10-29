@@ -278,7 +278,8 @@ def get_request(conn, user, request_id):
               JOIN supply_request_revision_line l ON l.id=r.revision_line_id
               WHERE c.request_id=? ORDER BY c.id,cl.id""",(request['id'],))
 
-        request['releases'] = rows(conn,'''SELECT i.id,i.release_number,i.effective_date,i.recipient_snapshot,
+        request['releases'] = rows(conn,'''SELECT i.id,i.release_number,i.effective_date,i.recipient_snapshot,i.recipient_id,
+          COALESCE((SELECT MAX(a.revision) FROM supply_issue_acknowledgment a WHERE a.issue_id=i.id),0) AS acknowledgment_revision,
           COALESCE((SELECT a.status FROM supply_issue_acknowledgment a WHERE a.issue_id=i.id ORDER BY a.revision DESC LIMIT 1),'pending') AS acknowledgment_status
           FROM supply_issue i WHERE request_id=? ORDER BY i.id''',(request['id'],))
         return request

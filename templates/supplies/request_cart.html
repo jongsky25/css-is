@@ -1,0 +1,49 @@
+{% extends 'supplies/base.html' %}
+{% block supplies_content %}
+<h1>{{ 'Edit your request' if request_id else 'Review your request' }}</h1>
+<p>Requester: {{ identity.requester_snapshot }} · Unit: {{ identity.unit_snapshot }}</p>
+{% if reason %}<p class="supply-notice" role="status"><strong>Returned for correction:</strong> {{ reason }}</p>{% endif %}
+{% if notes %}<ul class="supply-notice" role="status">{% for n in notes %}<li>{{ n }}</li>{% endfor %}</ul>{% endif %}
+{% if error %}<p class="supply-error" role="alert">{{ error }}</p>{% endif %}
+{% if enabled %}
+<form method="post" action="/supplies/requests/send" class="shop-form cart-form" data-shop>
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<input type="hidden" name="operation_key" value="{{ new_key() }}"><input type="hidden" name="submit_operation_key" value="{{ new_key() }}">
+<input type="hidden" name="view" value="grid">
+{% if request_id %}<input type="hidden" name="request_id" value="{{ request_id }}"><input type="hidden" name="revision" value="{{ form_values.revision }}">{% endif %}
+<ul class="shop-grid cart-list" aria-label="Items in your request">
+{% for c in cards %}
+  <li class="shop-card cart-line{{ ' is-out' if c.max <= 0 }}">
+    <div class="shop-pic" style="--tint:{{ c.picture.tint }}" aria-hidden="true">
+      {% if c.picture.src and not c.picture.initials %}<img src="{{ c.picture.src }}" alt="" loading="lazy" width="96" height="96">{% else %}<span>{{ c.picture.initials or '?' }}</span>{% endif %}
+    </div>
+    <div class="shop-body">
+      <strong class="shop-name">{{ c.description }}</strong>
+      <span class="shop-unit">per {{ c.unit }}</span>
+      <span class="shop-badge shop-{{ c.tone }}">{{ c.badge }}</span>
+      {% if c.qty|int > c.max %}<span class="supply-error">{% if c.max <= 0 %}No longer available to request.{% else %}Only {{ c.max }} can be requested right now.{% endif %} Lower the number or remove it.</span>{% endif %}
+    </div>
+    <div class="shop-qty">
+      <label for="qty-{{ c.id }}">How many {{ c.description }}? (0 removes it)</label>
+      <input id="qty-{{ c.id }}" name="qty_{{ c.id }}" type="number" inputmode="numeric" min="0" step="1" max="{{ c.max if c.max > 0 else c.qty }}" value="{{ c.qty }}" data-shop-qty>
+    </div>
+  </li>
+{% endfor %}
+</ul>
+<label for="request-purpose">Purpose</label>
+<textarea id="request-purpose" name="purpose" maxlength="2000" required placeholder="e.g. Printing of training materials for the regional workshop">{{ form_values.purpose or '' }}</textarea>
+<label for="request-date">Date needed (optional)</label>
+<input id="request-date" type="date" name="date_needed" value="{{ form_values.date_needed or '' }}">
+<div class="shop-bar" data-shop-bar>
+  <span data-shop-count aria-live="polite">{{ cards|length }} item{{ '' if cards|length == 1 else 's' }}</span>
+  <span class="cart-actions">
+    <button type="submit" name="step" value="grid" formaction="/supplies/requests/review" formnovalidate class="secondary">Choose more</button>
+    <button type="submit" name="act" value="save" class="secondary">Save for later</button>
+    <button type="submit" name="act" value="send">Send request</button>
+  </span>
+</div>
+<p class="supply-hint">Sending asks your approver to approve it. Saving for later keeps it as a draft you can send afterwards.</p>
+</form>
+<script src="/static/js/supplies-shop.js?v={{ APP_VERSION }}" defer></script>
+{% endif %}
+{% endblock %}

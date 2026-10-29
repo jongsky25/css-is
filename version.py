@@ -18,10 +18,89 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "9.19"
+APP_VERSION = "9.27"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "9.27",
+        "date": "October 29, 2026",
+        "summary": "Stock quantities are now only for the people who manage supplies.",
+        "changes": [
+            "The stock dashboard, the inventory table and their downloads now show quantities only to the supply office, auditors, request approvers, replenishment approvers and administrators.",
+            "Staff who only request supplies who open the stock dashboard are taken to the request page. They still see whether an item is Available, Limited or Out of stock when they choose items."
+        ]
+    },
+    {
+        "version": "9.26",
+        "date": "October 29, 2026",
+        "summary": "Staff who only request supplies are taken straight to their own pages.",
+        "changes": [
+            "If you only request supplies, the old supply catalog, releases and awaiting-stock pages now take you to the request page (with what you searched for) or to My requests.",
+            "A link to a single release from an email still opens it, so you can confirm receipt.",
+            "People who manage supplies, approve requests or read stock keep every page as before."
+        ]
+    },
+    {
+        "version": "9.25",
+        "date": "October 29, 2026",
+        "summary": "The Supplies home page now starts with what you need to do.",
+        "changes": [
+            "The Supplies page opens with a big Request supplies button.",
+            "Below it, Needs your action lists anything waiting on you, and Your latest requests shows your three most recent requests with their progress bars.",
+            "People who manage supplies still see their work cards further down; everyone else sees a simpler page."
+        ]
+    },
+    {
+        "version": "9.24",
+        "date": "October 29, 2026",
+        "summary": "Confirm you received your supplies in one tap.",
+        "changes": [
+            "When supplies are handed over to you, your request page and the release page ask \"Did you receive these supplies?\" with a Yes, I received it button.",
+            "If something is wrong, Report a problem opens a box for what is wrong. The supply office still sees it the same way as before.",
+            "If a problem was reported and then sorted out, you can say how and confirm receipt."
+        ]
+    },
+    {
+        "version": "9.23",
+        "date": "October 29, 2026",
+        "summary": "Your request page now opens on where the request is.",
+        "changes": [
+            "Open one of your requests and the top shows its progress bar, one sentence on who has it now, and each item as asked, approved and received.",
+            "The buttons you need are right there: Fix and resend, Review and send, Confirm receipt, Print the request form, Request again and Withdraw.",
+            "The full table, the approval history and the timeline are still there under Full details. Approvers and the supply office see the same page as before."
+        ]
+    },
+    {
+        "version": "9.22",
+        "date": "October 29, 2026",
+        "summary": "My supply requests now shows each request as a card with its progress.",
+        "changes": [
+            "Each request is a card with pictures of what you asked for, a four-step progress bar (Sent, Approved, Ready for pickup, Received) and one sentence saying who has it now.",
+            "Anything waiting on you, such as a draft, a returned request or a delivery to confirm, is listed first under Needs your action, with a button to go straight to it.",
+            "The list opens on Active requests, with Completed and All a tap away."
+        ]
+    },
+    {
+        "version": "9.21",
+        "date": "October 29, 2026",
+        "summary": "Fix a returned supply request, or request the same things again, from the same review page.",
+        "changes": [
+            "Editing a draft or a request your approver returned now opens the same review page, with the approver's reason shown at the top.",
+            "Request again on a past request fills a new review page with the same items, lowered to what can be requested now. Items that are no longer in the catalog or are out of stock are left out, with a note saying so.",
+            "Nothing is saved until you send it or save it for later."
+        ]
+    },
+    {
+        "version": "9.20",
+        "date": "October 29, 2026",
+        "summary": "Review your supply request, then send it in one step.",
+        "changes": [
+            "After choosing items on the grid, Review shows your list with pictures and numbers you can still change, plus the purpose and date needed.",
+            "Send request saves and sends it in one tap. Save for later keeps it as a draft instead.",
+            "If something stops the sending, your request is kept as a draft and you stay on the review page to fix it, so nothing you typed is lost."
+        ]
+    },
     {
         "version": "9.19",
         "date": "October 29, 2026",

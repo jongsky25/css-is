@@ -9,7 +9,7 @@ import supplies as s
 import supplies_grid as grid
 from supplies_notify import classify
 from supplies_storage import Denied, Invalid, Conflict
-from tests.test_supplies import supplies_db, setup_catalog, create, key
+from tests.test_supplies import supplies_db, setup_catalog, create, key, reader
 from tests.test_supplies_stock import opening
 
 
@@ -25,7 +25,7 @@ def save(c, user, name='Inventory', **changes):
 
 def test_global_filter_sort_pagination_export_and_fresh_inactive_scope(supplies_db):
     c,u,_,_=supplies_db
-    grant=setup_catalog(c,u)
+    grant=setup_catalog(c,u);reader(c,u)
     ids=[]
     for index in range(65):
         item=create(c,u[1],code=f'INV-{index:03}',unit='Ream' if index<61 else 'Box')
@@ -52,14 +52,16 @@ def test_global_filter_sort_pagination_export_and_fresh_inactive_scope(supplies_
                    lambda:save(c,u[1],name='No longer allowed',active='all')):
         with pytest.raises(Denied):action()
     assert grid.views(c,u[1])[0]['state']['active']=='all'
-    assert grid.page(c,u[1],{})['last_row']==65
+    with pytest.raises(Denied):grid.page(c,u[1],{})                                  # Supplies 4.2: no grant left, no stock numbers
+    assert grid.page(c,u[2],{})['last_row']==65                                      # an approver still reads the active items
+    with pytest.raises(Denied):grid.page(c,u[2],{'active':'all'})
     c.execute('UPDATE admin_user SET active=0 WHERE id=?',(u[2]['id'],));c.commit()
     for action in (lambda:grid.page(c,u[2],{}),lambda:grid.export_csv(c,u[2],{}),lambda:grid.views(c,u[2])):
         with pytest.raises(Denied):action()
 
 
 def test_stock_classifier_boundaries_unknowns_numeric_order_and_exact_csv(supplies_db):
-    c,u,_,_=supplies_db;setup_catalog(c,u)
+    c,u,_,_=supplies_db;setup_catalog(c,u);reader(c,u)
     items=[]
     for index,quantity in enumerate((None,'0','4','5','12')):
         item=create(c,u[1],code=f'S-{index}')
@@ -103,7 +105,7 @@ def test_invalid_options_are_rejected(supplies_db,params):
 
 
 def test_private_view_persistence_conflicts_quota_schema_and_read_only_data(supplies_db):
-    c,u,_,path=supplies_db;setup_catalog(c,u);create(c,u[1])
+    c,u,_,path=supplies_db;setup_catalog(c,u);reader(c,u);create(c,u[1])
     before={table:c.execute(f'SELECT * FROM {table}').fetchall() for table in
             ('supply_item','supply_stock_movement','supply_reservation','supply_operation','supply_event')}
     saved=save(c,u[2],physical='unrecorded')
@@ -131,7 +133,7 @@ def test_private_view_persistence_conflicts_quota_schema_and_read_only_data(supp
 
 
 def test_export_limit_and_column_allowlist(supplies_db,monkeypatch):
-    c,u,_,_=supplies_db;setup_catalog(c,u)
+    c,u,_,_=supplies_db;setup_catalog(c,u);reader(c,u)
     for index in range(3):create(c,u[1],code=f'LIMIT-{index}')
     monkeypatch.setattr(grid,'MAX_EXPORT_ROWS',2)
     with pytest.raises(Invalid,match='10,000'):grid.export_csv(c,u[2],{})
@@ -149,15 +151,15 @@ from tests.test_supplies_stock import receive
 def test_reservations_drive_availability_without_changing_physical_stock(approval_db):
     c,u,_,_,item=approval_db
     ready(c,u,item,'10')
-    fully=grid.page(c,u[2],{'availability':'fully_reserved'})
+    fully=grid.page(c,u[3],{'availability':'fully_reserved'})
     assert fully['last_row']==1 and fully['data'][0]['physical']=='normal'
     assert fully['data'][0]['reserved']=='10' and fully['data'][0]['available']=='0'
     receive(c,u[1],s.get_item(c,u[1],item),quantity='5')
-    assert grid.page(c,u[2],{'availability':'available'})['data'][0]['available']=='5'
+    assert grid.page(c,u[3],{'availability':'available'})['data'][0]['available']=='5'
     ready(c,u,item,'3')
-    low=grid.page(c,u[2],{'availability':'low_available','physical':'normal'})
+    low=grid.page(c,u[3],{'availability':'low_available','physical':'normal'})
     assert low['last_row']==1 and low['data'][0]['available']=='2'
-    assert grid.page(c,u[2],{'physical':'critical'})['last_row']==0
+    assert grid.page(c,u[3],{'physical':'critical'})['last_row']==0
 
 
 def test_inventory_http_json_csrf_errors_cache_and_disabled_reads(app_mod,viewer):
@@ -166,6 +168,8 @@ def test_inventory_http_json_csrf_errors_cache_and_disabled_reads(app_mod,viewer
     user=st.get_admin_user(c,'viewer@test.local')
     c.execute('''INSERT INTO supply_item(code,description,unit,created_by,created_at,updated_at)
         VALUES ('HTTP-1','Synthetic read-only item','Piece',?,'2026-10-19','2026-10-19')''',(user['id'],));c.commit()
+    unit=st.add_org_unit(c,'HTTP division','division','HTTP/D1')                # Supplies 4.1/4.2: an approver is the lowest role that sees stock
+    s.grant_role(c,st.get_admin_user(c,'admin@test.local'),user['id'],'request_approver',unit_id=unit,operation_key=key())
     assert not s.enabled(c)
     html=viewer.get('/supplies/items')
     assert html.status_code==200 and 'supplies-grid.js?v=' in html.text
@@ -199,7 +203,7 @@ def test_inventory_http_json_csrf_errors_cache_and_disabled_reads(app_mod,viewer
 
 
 def test_preferences_never_project_pending_stock_notices(supplies_db,monkeypatch):
-    c,u,_,_=supplies_db;setup_catalog(c,u)
+    c,u,_,_=supplies_db;setup_catalog(c,u);reader(c,u)
     item=create(c,u[1]);opening(c,u[1],item,quantity='0')
     c.execute('UPDATE supply_alert_event SET processed_at=NULL');c.commit()
     pending=c.execute('SELECT COUNT(*) FROM supply_alert_event WHERE processed_at IS NULL').fetchone()[0]

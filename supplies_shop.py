@@ -122,3 +122,23 @@ def narrow(items, query, keep=()):
         return items
     return [i for i in items if str(i['id']) in {str(k) for k in keep}
             or text_matches(search_text(i['description'], i['code']), words)]
+
+
+def items_for(conn, entries, *, limit=3):
+    """{request id: {'items': [{'description', 'quantity', 'unit', 'picture'}], 'more': n}} for the cards on My requests.
+
+    A sent request shows what was sent (its latest revision); a draft or returned one shows what is being edited."""
+    out = {}
+    for entry in entries:
+        if entry.get('current_revision') and entry['approval_status'] not in ('draft', 'returned'):
+            lines = rows(conn, 'SELECT l.description_snapshot AS description, l.code_snapshot AS code, l.unit_snapshot AS unit, '
+                               'l.requested_quantity AS quantity FROM supply_request_revision v '
+                               'JOIN supply_request_revision_line l ON l.revision_id=v.id '
+                               'WHERE v.request_id=? AND v.revision=? ORDER BY l.line_id', (entry['id'], entry['current_revision']))
+        else:
+            lines = rows(conn, 'SELECT description_snapshot AS description, code_snapshot AS code, unit_snapshot AS unit, '
+                               'requested_quantity AS quantity FROM supply_request_draft_line WHERE request_id=? AND active=1 ORDER BY id',
+                         (entry['id'],))
+        out[entry['id']] = {'items': [{**ln, 'picture': tile(ln['description'], ln['code'])} for ln in lines[:limit]],
+                            'more': max(0, len(lines) - limit)}
+    return out

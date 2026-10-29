@@ -1,0 +1,15 @@
+{% macro card(entry) %}
+{% set st = entry.stage %}{% set shown = pictures.get(entry.id, {'items': [], 'more': 0}) %}
+<li class="req-card req-{{ st.tone }}">
+  <div class="req-pics" aria-hidden="true">{% for it in shown['items'] %}<span class="req-pic" style="--tint:{{ it.picture.tint }}">{% if it.picture.src and not it.picture.initials %}<img src="{{ it.picture.src }}" alt="" loading="lazy" width="48" height="48">{% else %}<b>{{ it.picture.initials or '?' }}</b>{% endif %}</span>{% endfor %}{% if shown['more'] %}<span class="req-more">+{{ shown['more'] }}</span>{% endif %}</div>
+  <div class="req-main">
+    <a class="req-title" href="/supplies/requests/{{ entry.id }}">{{ entry.control_number or 'Draft request' }}</a>
+    <span class="req-items">{% for it in shown['items'] %}{{ it.description }}{{ ', ' if not loop.last }}{% endfor %}{% if shown['more'] %} and {{ shown['more'] }} more{% endif %}</span>
+    <span class="req-pill req-pill-{{ st.tone }}">{{ st.label }}</span>
+    {% if entry.approval_status in ('submitted', 'approved') %}<ol class="req-track" aria-label="Progress">{% for name in steps %}<li class="{{ 'is-done' if loop.index < st.step else 'is-now' if loop.index == st.step }}">{{ name }}</li>{% endfor %}</ol>{% endif %}
+    <span class="req-sentence">{{ st.sentence }}</span>
+    <span class="req-date">Updated {{ entry.updated_at|humandt }}</span>
+  </div>
+  {% if st.action %}<a class="req-action" href="{{ '/supplies/requests/' ~ entry.id ~ ('/edit' if entry.approval_status in ('draft', 'returned') else '') }}">{{ st.action }}</a>{% endif %}
+</li>
+{% endmacro %}

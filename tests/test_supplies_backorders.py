@@ -266,7 +266,8 @@ def test_http_queue_cancellation_csrf_and_controls(approval_db,app_mod):
             assert client.post(target+'/cancel-remainder',data=data,follow_redirects=False).status_code==303
             page=client.get(target);assert 'Cancelled before issue' in page.text and 'Meeting no longer needs supplies' in page.text
             assert 'Cancel selected remainders' not in page.text
-            queue=client.get('/supplies/awaiting-stock');assert 'No approved shortages' in queue.text
+            queue=client.get('/supplies/awaiting-stock',follow_redirects=False)      # Supplies 4.1: a requester is sent to My requests
+            assert queue.status_code==303 and queue.headers['location']=='/supplies/requests?status=active'
             client.cookies.set(auth.COOKIE_NAME,session_token(u[3]))
             assert 'Cancel selected remainders' not in client.get(f'/supplies/requests/{b}').text
             assert client.post('/supplies/allocations/refresh',data={'csrf':hmac.new(auth._secret(),('supplies:'+client.cookies.get(auth.COOKIE_NAME)).encode(),hashlib.sha256).hexdigest(),'operation_key':key()}).status_code==403

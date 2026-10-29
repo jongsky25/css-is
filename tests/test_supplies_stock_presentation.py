@@ -2,12 +2,12 @@
 import pytest
 import supplies_stock_dashboard as dashboard
 from supplies_storage import Invalid,Denied
-from tests.test_supplies import supplies_db,setup_catalog,create
+from tests.test_supplies import supplies_db,setup_catalog,create,reader
 from tests.test_supplies_stock import opening
 
 
 def test_presentation_all_pages_exact_quantities_and_current_authority(supplies_db):
-    c,u,_,_=supplies_db;grant=setup_catalog(c,u)
+    c,u,_,_=supplies_db;grant=setup_catalog(c,u);reader(c,u)
     for index in range(31):
         item=create(c,u[1],code=f'EXPORT-{index:03}',target_level='')
         opening(c,u[1],item,quantity='2')
@@ -22,13 +22,15 @@ def test_presentation_all_pages_exact_quantities_and_current_authority(supplies_
     assert dashboard.report(c,u[1],{'active':'all'},presentation=True)['total']==32
     c.execute("UPDATE supply_role_grant SET revoked_at='2026-10-24',revoked_by=? WHERE id=?",(u[0]['id'],grant['id']));c.commit()
     with pytest.raises(Denied):dashboard.report(c,u[1],{'active':'all'},presentation=True)
-    assert dashboard.report(c,u[1],{},presentation=True)['total']==32
+    with pytest.raises(Denied):dashboard.report(c,u[1],{},presentation=True)       # Supplies 4.2: no grant left, no stock numbers
+    assert dashboard.report(c,u[2],{},presentation=True)['total']==32              # an approver still reads the active items
+    with pytest.raises(Denied):dashboard.report(c,u[2],{'active':'all'},presentation=True)
     c.execute('UPDATE admin_user SET active=0 WHERE id=?',(u[2]['id'],));c.commit()
     with pytest.raises(Denied):dashboard.report(c,u[2],{},presentation=True)
 
 
 def test_presentation_limit_refuses_truncation_and_dashboard_still_pages(supplies_db,monkeypatch):
-    c,u,_,_=supplies_db;setup_catalog(c,u)
+    c,u,_,_=supplies_db;setup_catalog(c,u);reader(c,u)
     for index in range(3):
         item=create(c,u[1],code=f'LOW-{index}')
         opening(c,u[1],item,quantity='1')

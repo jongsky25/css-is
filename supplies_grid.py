@@ -40,7 +40,7 @@ def options(value):
 
 
 def require_scope(conn, user, values):
-    actor = permissions.require_actor(conn, user)
+    actor = permissions.require_stock_numbers(conn, user)                  # Supplies 4.2: no stock numbers for a plain requester
     if values['active'] != 'active':
         permissions.require_stock_reader(conn, actor)
     return actor
@@ -89,7 +89,7 @@ def selected_query(conn, user, params):
 
 def units(conn, user):
     with stock._snapshot(conn):
-        actor = permissions.require_actor(conn, user)
+        actor = permissions.require_stock_numbers(conn, user)
         privileged = permissions.has_role(conn, actor, 'custodian') or permissions.has_role(conn, actor, 'auditor')
         return [r[0] for r in conn.execute('SELECT DISTINCT unit FROM supply_item' +
                 ('' if privileged else ' WHERE active=1') + ' ORDER BY unit COLLATE NOCASE,unit')]

@@ -7,7 +7,8 @@ import supplies_requests as requests
 import supplies_shop as shop
 import supplies_stock as stock
 from tests.test_supplies import key, hidden, create, supplies_db  # noqa: F401
-from tests.test_supplies_requests import request_db, get  # noqa: F401  (shared fixtures)
+from tests.test_supplies_requests import request_db, get, draft, submit  # noqa: F401  (shared fixtures)
+from tests.test_supplies_approvals import approval_db, decide  # noqa: F401
 from tests.conftest import session_token
 
 
@@ -138,7 +139,7 @@ def test_asking_for_more_than_can_be_requested_is_refused_and_the_grid_keeps_wha
         app_mod.DB = old
 
 
-def test_editing_a_saved_draft_still_uses_the_plain_form(request_db, app_mod):
+def test_editing_a_saved_draft_opens_the_cart_and_the_plain_list_is_one_link_away(request_db, app_mod):
     c, u, _, path, item = request_db
     client, old = client_for(app_mod, path, u[2])
     try:
@@ -146,7 +147,9 @@ def test_editing_a_saved_draft_still_uses_the_plain_form(request_db, app_mod):
         r = client.post('/supplies/requests', data={'csrf': token, 'operation_key': key(), 'view': 'grid', 'purpose': 'p',
                                                     'date_needed': '', f'qty_{item}': '2'}, follow_redirects=False)
         edit = client.get(r.headers['location'] + '/edit').text
-        assert 'class="shop-grid"' not in edit and edit.count('<fieldset') == 20
+        assert 'Edit your request' in edit and f'name="qty_{item}"' in edit and 'value="2"' in edit and 'name="request_id"' in edit
+        plain = client.get(r.headers['location'] + '/edit?view=list').text
+        assert 'class="shop-grid"' not in plain and plain.count('<fieldset') == 20
     finally:
         client.__exit__(None, None, None)
         app_mod.DB = old
@@ -207,9 +210,172 @@ def test_editing_a_draft_has_the_script_only_search_box(request_db, app_mod):
         token = hidden(client.get('/supplies/requests/new').text, 'csrf')
         r = client.post('/supplies/requests', data={'csrf': token, 'operation_key': key(), 'view': 'grid', 'purpose': 'p',
                                                     'date_needed': '', f'qty_{item}': '2'}, follow_redirects=False)
-        edit = client.get(r.headers['location'] + '/edit').text
+        edit = client.get(r.headers['location'] + '/edit?view=list').text
         assert 'data-list-search' in edit and 'method="get"' not in edit.split('<form method="post"')[0].split('role="search"')[-1]
         assert 'supplies-shop.js' in edit
+    finally:
+        client.__exit__(None, None, None)
+        app_mod.DB = old
+
+
+# ---- Supplies 2.2: the cart review and one-step send ----
+
+def cart_data(client, item, qty, **extra):
+    token = hidden(client.get('/supplies/requests/new').text, 'csrf')
+    return {'csrf': token, 'operation_key': key(), 'submit_operation_key': key(), 'view': 'grid',
+            'purpose': 'Cart synthetic purpose', 'date_needed': '', f'qty_{item}': str(qty), **extra}
+
+
+def test_review_shows_the_cart_with_pictures_and_editable_numbers_and_back_keeps_them(request_db, app_mod):
+    c, u, _, path, item = request_db
+    other = second_item(c, u, 5)
+    client, old = client_for(app_mod, path, u[2])
+    try:
+        data = cart_data(client, item, 3, **{f'qty_{other}': '2', 'qty_999': ''})
+        page = client.post('/supplies/requests/review', data=data)
+        assert page.status_code == 200 and 'Review your request' in page.text
+        assert f'name="qty_{item}"' in page.text and 'value="3"' in page.text and 'value="2"' in page.text
+        assert '/static/img/supplies/ballpen.svg' in page.text and 'Send request' in page.text and 'Save for later' in page.text
+        assert 'Cart synthetic purpose' in page.text and 'qty_999' not in page.text
+        assert c.execute('SELECT COUNT(*) FROM supply_request').fetchone()[0] == 0          # reviewing writes nothing
+        back = client.post('/supplies/requests/review', data={**data, 'step': 'grid'})
+        assert 'class="shop-grid"' in back.text and 'value="3"' in back.text and 'Cart synthetic purpose' in back.text
+        empty = client.post('/supplies/requests/review', data={**data, f'qty_{item}': '', f'qty_{other}': ''})
+        assert empty.status_code == 422 and 'Choose at least one item' in empty.text and 'class="shop-grid"' in empty.text
+    finally:
+        client.__exit__(None, None, None)
+        app_mod.DB = old
+
+
+def test_send_saves_and_submits_in_one_step_and_a_repeat_post_does_nothing_new(request_db, app_mod):
+    c, u, _, path, item = request_db
+    client, old = client_for(app_mod, path, u[2])
+    try:
+        data = cart_data(client, item, 4, act='send')
+        sent = client.post('/supplies/requests/send', data=data, follow_redirects=False)
+        assert sent.status_code == 303
+        r = int(sent.headers['location'].rsplit('/', 1)[1])
+        got = get(c, u, r)
+        assert got['approval_status'] == 'submitted' and got['control_number'].startswith('SUP-')
+        assert {ln['item_id']: ln['requested_quantity'] for ln in got['lines']} == {item: 4}
+        again = client.post('/supplies/requests/send', data=data, follow_redirects=False)
+        assert again.headers['location'] == sent.headers['location']
+        assert c.execute('SELECT COUNT(*) FROM supply_request').fetchone()[0] == 1
+    finally:
+        client.__exit__(None, None, None)
+        app_mod.DB = old
+
+
+def test_save_for_later_keeps_a_draft_that_is_not_sent(request_db, app_mod):
+    c, u, _, path, item = request_db
+    client, old = client_for(app_mod, path, u[2])
+    try:
+        saved = client.post('/supplies/requests/send', data=cart_data(client, item, 2, act='save'), follow_redirects=False)
+        r = int(saved.headers['location'].rsplit('/', 1)[1])
+        assert get(c, u, r)['approval_status'] == 'draft'
+    finally:
+        client.__exit__(None, None, None)
+        app_mod.DB = old
+
+
+def test_more_than_can_be_requested_is_shown_on_the_cart_and_nothing_is_created(request_db, app_mod):
+    c, u, _, path, item = request_db                                              # 10 on hand
+    client, old = client_for(app_mod, path, u[2])
+    try:
+        bad = client.post('/supplies/requests/send', data=cart_data(client, item, 11, act='send'))
+        assert bad.status_code == 422 and 'Review your request' in bad.text and 'Only 10' in bad.text and 'value="11"' in bad.text
+        assert c.execute('SELECT COUNT(*) FROM supply_request').fetchone()[0] == 0
+    finally:
+        client.__exit__(None, None, None)
+        app_mod.DB = old
+
+
+def test_a_failed_submit_keeps_the_saved_draft_and_a_retry_updates_it(request_db, app_mod, monkeypatch):
+    c, u, _, path, item = request_db
+    client, old = client_for(app_mod, path, u[2])
+    try:
+        real = requests.submit
+        monkeypatch.setattr(requests, 'submit', lambda *a, **k: (_ for _ in ()).throw(requests.Invalid('Synthetic refusal.')))
+        page = client.post('/supplies/requests/send', data=cart_data(client, item, 3, act='send'))
+        assert page.status_code == 422 and 'saved as a draft but was not sent: Synthetic refusal.' in page.text
+        r = c.execute('SELECT id,approval_status FROM supply_request').fetchall()
+        assert len(r) == 1 and r[0][1] == 'draft'
+        monkeypatch.setattr(requests, 'submit', real)
+        retry = {**cart_data(client, item, 5, act='send'), 'request_id': hidden(page.text, 'request_id'),
+                 'revision': hidden(page.text, 'revision')}
+        done = client.post('/supplies/requests/send', data=retry, follow_redirects=False)
+        assert done.status_code == 303
+        assert c.execute('SELECT COUNT(*) FROM supply_request').fetchone()[0] == 1
+        assert get(c, u, r[0][0])['approval_status'] == 'submitted'
+    finally:
+        client.__exit__(None, None, None)
+        app_mod.DB = old
+
+
+# ---- Supplies 2.3: edit and fix in the cart, request again ----
+
+def test_a_returned_request_opens_in_the_cart_with_the_reason_and_can_be_fixed_and_resent(approval_db, app_mod):
+    c, u, _, path, item = approval_db
+    r = draft(c, u, item)
+    submit(c, u, r)
+    decide(c, u, r, fields={'decision': 'returned', 'reason': 'Please say what the paper is for'})
+    client, old = client_for(app_mod, path, u[2])
+    try:
+        page = client.get(f'/supplies/requests/{r}/edit').text
+        assert 'Returned for correction' in page and 'Please say what the paper is for' in page
+        assert f'name="qty_{item}"' in page and 'name="request_id"' in page
+        data = {'csrf': hidden(page, 'csrf'), 'operation_key': key(), 'submit_operation_key': key(), 'view': 'grid',
+                'request_id': str(r), 'revision': hidden(page, 'revision'), 'purpose': 'Paper for the training handouts',
+                'date_needed': '', f'qty_{item}': '2', 'act': 'send'}
+        sent = client.post('/supplies/requests/send', data=data, follow_redirects=False)
+        assert sent.status_code == 303
+        got = get(c, u, r)
+        assert got['approval_status'] == 'submitted' and got['purpose'] == 'Paper for the training handouts'
+        assert got['control_number'] and c.execute('SELECT COUNT(*) FROM supply_request').fetchone()[0] == 1
+    finally:
+        client.__exit__(None, None, None)
+        app_mod.DB = old
+
+
+def test_choose_more_from_an_edit_keeps_saving_onto_the_same_request(request_db, app_mod):
+    c, u, _, path, item = request_db
+    r = draft(c, u, item)
+    client, old = client_for(app_mod, path, u[2])
+    try:
+        page = client.get(f'/supplies/requests/{r}/edit').text
+        data = {'csrf': hidden(page, 'csrf'), 'view': 'grid', 'step': 'grid', 'request_id': str(r),
+                'revision': hidden(page, 'revision'), 'purpose': 'x', 'date_needed': '', f'qty_{item}': '3'}
+        grid = client.post('/supplies/requests/review', data=data).text
+        assert 'class="shop-grid"' in grid and f'formaction="/supplies/requests/{r}/save"' in grid and 'name="request_id"' in grid
+    finally:
+        client.__exit__(None, None, None)
+        app_mod.DB = old
+
+
+def test_request_again_fills_a_new_cart_capped_to_what_is_available_now(request_db, app_mod):
+    c, u, _, path, item = request_db                                              # 10 on hand
+    gone = second_item(c, u, 5)
+    r = requests.save_draft(c, u[2], {'purpose': 'Monthly paper', 'date_needed': '', 'lines': [
+        {'item_id': item, 'requested_quantity': '8'}, {'item_id': gone, 'requested_quantity': '2'}]}, operation_key=key())['id']
+    requests.submit(c, u[2], r, expected_revision=1, operation_key=key())
+    requests.withdraw(c, u[2], r, reason='Synthetic withdrawal', expected_revision=2, operation_key=key())   # a past request
+    c.execute('UPDATE supply_item SET active=0 WHERE id=?', (gone,))
+    c.commit()
+    # someone else now holds 5, so only 5 of the paper can be asked for
+    other = requests.save_draft(c, u[3], {'purpose': 'x', 'date_needed': '', 'lines': [
+        {'item_id': item, 'requested_quantity': '5'}]}, operation_key=key())['id']
+    requests.submit(c, u[3], other, expected_revision=1, operation_key=key())
+    client, old = client_for(app_mod, path, u[2])
+    try:
+        page = client.get(f'/supplies/requests/{r}/again')
+        assert page.status_code == 200 and 'Review your request' in page.text
+        assert 'Monthly paper' in page.text and f'name="qty_{item}"' in page.text and 'value="5"' in page.text
+        assert 'Only 5' in page.text and 'no longer in the catalog' in page.text and f'name="qty_{gone}"' not in page.text
+        assert 'name="request_id"' not in page.text                                    # a new request, nothing saved yet
+        assert c.execute('SELECT COUNT(*) FROM supply_request').fetchone()[0] == 2
+        stranger = client_for(app_mod, path, u[4])[0]
+        assert stranger.get(f'/supplies/requests/{r}/again').status_code in (403, 404)
+        stranger.__exit__(None, None, None)
     finally:
         client.__exit__(None, None, None)
         app_mod.DB = old

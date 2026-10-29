@@ -1,12 +1,15 @@
 {% extends 'supplies/base.html' %}
 {% block supplies_content %}
-<h1>Supplies overview</h1>
-<p>Your current requests and responsibilities. Counts link to the matching records you can access.</p>
-{% if enabled and can_request %}<p><a class="supply-primary-link" href="/supplies/requests/new">New supply request</a></p>{% elif not can_request %}<p>To make a new request, ask an administrator to link your account to internal staff with an organizational unit.</p>{% endif %}
+{% from 'supplies/_request_card.html' import card with context %}
+<h1>{{ 'Supplies' if requester_only else 'Supplies overview' }}</h1>
+{% if enabled and can_request %}<p><a class="supply-primary-link supply-big-button" href="/supplies/requests/new">Request supplies</a></p>{% elif not can_request %}<p>To make a new request, ask an administrator to link your account to internal staff with an organizational unit.</p>{% endif %}
 {% if not enabled %}<p>Review records below while stock and request changes are paused. Business action forms become available when Supplies is enabled.</p>{% endif %}
-{% for group in card_groups %}<section aria-label="{{ group.title }}"><h2>{{ group.title }}</h2><div class="supply-dashboard-grid">{% for card in group.cards %}<a class="supply-panel supply-dashboard-card" href="{{ card.url }}"><h3>{{ card.title }}</h3><p class="supply-card-count">{{ card.count }}</p><p>{{ card.responsible }}</p></a>{% endfor %}</div></section>{% endfor %}
-<h2>My recent requests</h2>
-{% if recent_requests %}<ul class="supply-work-list">{% for entry in recent_requests %}<li><a href="/supplies/requests/{{ entry.id }}">{{ entry.control_number or ('Draft #' ~ entry.id) }}</a> · {{ entry.approval_status|capitalize }}<p>{{ entry.next_action }}</p></li>{% endfor %}</ul>{% else %}<p>No requests yet.</p>{% endif %}<p><a href="/supplies/requests">View all my requests</a></p>
+{% if needs %}<section aria-labelledby="needs-h"><h2 id="needs-h">Needs your action</h2><ul class="req-list">{% for entry in needs %}{{ card(entry) }}{% endfor %}</ul></section>{% endif %}
+<section aria-labelledby="latest-h"><h2 id="latest-h">Your latest requests</h2>
+{% if latest %}<ul class="req-list">{% for entry in latest %}{{ card(entry) }}{% endfor %}</ul>{% elif not needs %}<p>You have not made a supply request yet.</p>{% endif %}
+<p><a href="/supplies/requests">See all my requests</a></p></section>
+{% if not requester_only %}<p>Counts below link to the matching records you can access.</p>
+{% for group in card_groups %}<section aria-label="{{ group.title }}"><h2>{{ group.title }}</h2><div class="supply-dashboard-grid">{% for card_item in group.cards %}<a class="supply-panel supply-dashboard-card" href="{{ card_item.url }}"><h3>{{ card_item.title }}</h3><p class="supply-card-count">{{ card_item.count }}</p><p>{{ card_item.responsible }}</p></a>{% endfor %}</div></section>{% endfor %}{% endif %}
 {% if show_stock_activity %}<h2>Latest stock activity</h2>
 {% if pending_warning_updates %}<p class="supply-notice" role="status">{{ pending_warning_updates }} warning update{{ '' if pending_warning_updates==1 else 's' }} pending. Stock quantities are current; <a href="/supplies/warnings">review or retry notices</a>.</p>{% endif %}
 {% if activities %}<ul class="supply-work-list">{% for movement in activities %}<li><a href="/supplies/items/{{ movement.item_id }}">{{ movement.code_snapshot }} · {{ movement.description_snapshot }}</a><p>{{ {'opening':'Opening stock','receipt':'Stock received','issue':'Supplies issued','return':'Usable return','adjustment':'Physical-count adjustment','reversal':'Movement reversed'}[movement.kind] }} · {{ '+' if movement.quantity_delta>0 else '' }}{{ movement.quantity_delta }} {{ movement.unit_snapshot }} · {{ movement.posted_at|humandt }} · {{ movement.actor_snapshot }}</p></li>{% endfor %}</ul>{% else %}<p>No stock movements recorded.</p>{% endif %}<p><a href="/supplies/activity">View all stock activity</a></p>{% endif %}

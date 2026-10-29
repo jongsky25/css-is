@@ -312,8 +312,8 @@ def test_opening_receipt_http_and_cost_privacy(app_mod, supplies_db):
             assert invalid.status_code == 422 and 'Confidential Supplier' in invalid.text
             assert stock.stock_totals(c, u[1], item['id'])['on_hand'] == 15
             client.cookies.set(auth.COOKIE_NAME, session_token(u[2]))
-            staff_detail = client.get(target)
-            assert staff_detail.status_code == 200 and 'On hand: 15 Ream' in staff_detail.text
+            staff_detail = client.get(target, follow_redirects=False)                  # Supplies 4.1: staff are sent to the request grid
+            assert staff_detail.status_code == 303 and staff_detail.headers['location'] == '/supplies/requests/new'
             assert 'Confidential Supplier' not in staff_detail.text and '123.4567' not in staff_detail.text
             for url in ('/supplies/receipts', '/supplies/receipts/new', detail_url):
                 assert client.get(url).status_code == 403

@@ -58,6 +58,23 @@ def require_stock_reader(conn, user):
     return user
 
 
+def can_read_stock_numbers(conn, user):
+    """Who may see stock quantities (the stock dashboard and the inventory grid, data and exports): the supply office,
+    auditors, request approvers, replenishment approvers and administrators. A requester sees badges, never numbers."""
+    user = require_actor(conn, user)
+    return (user['role'] == 'admin' or has_role(conn, user, 'custodian') or has_role(conn, user, 'auditor')
+            or has_role(conn, user, 'replenishment_approver')
+            or bool(conn.execute("SELECT 1 FROM supply_role_grant WHERE user_id=? AND role='request_approver' AND revoked_at IS NULL",
+                                 (user['id'],)).fetchone()))
+
+
+def require_stock_numbers(conn, user):
+    user = require_actor(conn, user)
+    if not can_read_stock_numbers(conn, user):
+        raise Denied('Stock quantities are available to the supply office, auditors and request approvers.')
+    return user
+
+
 def request_scope_clause(actor_sql='?'):
     """Current grant scope against q's immutable latest submitted unit."""
     if actor_sql not in ('?', 'u.id'):

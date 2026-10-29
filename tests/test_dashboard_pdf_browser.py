@@ -45,8 +45,7 @@ def test_supplies_pdf_applied_scope_fresh_data_no_script_and_revoked_access(inve
     denied=page.goto('http://office.test/supplies/stock-dashboard/export.pdf?active=all')
     assert denied.status==403 and denied.headers['cache-control']=='no-store'
     assert 'attachment' not in denied.headers.get('content-disposition','')
-    page.get_by_role('link',name='Reset dashboard filters',exact=True).click()
-    assert '36 matching catalog items' in page.locator('#stock-dashboard').inner_text()
+    assert page.evaluate("fetch('/supplies/stock-dashboard/presentation-data').then(r=>r.status)")==403      # Supplies 4.2: no grant, no numbers
 
 
 def test_document_pdf_fresh_visibility_no_script_and_bounded_error(grid_page,app_mod,monkeypatch):

@@ -2,6 +2,7 @@
 import hashlib
 import hmac
 import json
+import re
 from urllib.parse import urlencode
 from uuid import uuid4
 
@@ -18,6 +19,7 @@ import supplies_import as imports
 import supplies_import_review as review
 import supplies_requests as requests_service
 import supplies_shop as shop
+from supplies_status import STEPS as request_steps
 import supplies_approvals as approvals
 import supplies_backorders as backorders
 import supplies_issues as issues
@@ -60,8 +62,29 @@ def make_router(templates, get_conn):
             'can_replenish_approve': can_replenish_approve,
             'can_read_stock': can_maintain or can_audit,
             'requester_only': not (can_configure or can_approve or can_maintain or can_audit or can_replenish_approve),
-            'new_key': lambda: str(uuid4()), 'error': '', 'submitted': {}, **values,
+            'new_key': lambda: str(uuid4()), 'error': '', 'submitted': {}, 'stage': None, 'steps': request_steps, 'user_id': user['id'],
+            'plural': requests_service._plural, **values,
         }, status_code=status_code)
+
+    def requester_only(conn, request):
+        """True for a signed-in user with no management role (the same test the navigation uses)."""
+        user = permissions.require_actor(conn, request.state.user)
+        return not (user['role'] == 'admin' or permissions.has_role(conn, user, 'custodian')
+                    or permissions.has_role(conn, user, 'auditor') or permissions.has_role(conn, user, 'replenishment_approver')
+                    or conn.execute("SELECT 1 FROM supply_role_grant WHERE user_id=? AND role='request_approver' AND revoked_at IS NULL",
+                                    (user['id'],)).fetchone())
+
+    def side_door(request, to):
+        """Supplies 4.1: a requester-only user who opens a management page is sent to the page that is theirs."""
+        conn = get_conn()
+        try:
+            if requester_only(conn, request):
+                return RedirectResponse(to, status_code=303)
+        except (Denied, Invalid, Conflict) as exc:
+            return failure(request, exc)
+        finally:
+            conn.close()
+        return None
 
     def failure(request, exc):
         status = 404 if isinstance(exc, Missing) else 403 if isinstance(exc, Denied) else 409 if isinstance(exc, Conflict) else 422
@@ -262,7 +285,13 @@ def make_router(templates, get_conn):
     def home(request: Request):
         conn = get_conn()
         try:
-            return render(request, conn, 'dashboard', **dashboard_views.dashboard(conn, request.state.user))
+            data = dashboard_views.dashboard(conn, request.state.user)
+            needs = dashboard_views.queue(conn, request.state.user, 'requests', state='needs_action', limit=5)['requests']
+            needs_ids = {e['id'] for e in needs}
+            latest = [e for e in dashboard_views.queue(conn, request.state.user, 'requests', limit=8)['requests']
+                      if e['id'] not in needs_ids][:3]                                                  # Supplies 3.4
+            return render(request, conn, 'dashboard', **data, needs=needs, latest=latest,
+                          pictures=shop.items_for(conn, needs + latest))
         except (Denied, Invalid, Conflict) as exc:
             return failure(request, exc)
         finally:
@@ -459,6 +488,10 @@ def make_router(templates, get_conn):
 
     @router.get('/supplies/items')
     def catalog(request: Request):
+        query = request.query_params.get('q', '')[:100]
+        door = side_door(request, '/supplies/requests/new' + ('?' + urlencode({'q': query}) if query.strip() else ''))
+        if door is not None:
+            return door
         conn = get_conn()
         try:
             response=catalog_page(request, conn)
@@ -479,6 +512,9 @@ def make_router(templates, get_conn):
 
     @router.get('/supplies/stock-dashboard')
     def supply_stock_dashboard(request: Request):
+        door = side_door(request, '/supplies/requests/new')
+        if door is not None:
+            return door
         conn=get_conn()
         try:
             result=stock_dashboard.report(conn,request.state.user,request.query_params)
@@ -572,6 +608,9 @@ def make_router(templates, get_conn):
 
     @router.get('/supplies/items/{item_id}')
     def item(request: Request, item_id: int):
+        door = side_door(request, '/supplies/requests/new')
+        if door is not None:
+            return door
         conn = get_conn()
         try:
             return item_page(request, conn, item_id)
@@ -671,8 +710,9 @@ def make_router(templates, get_conn):
             raise Conflict('Only draft or returned requests can be edited.')
         if draft is None and view != 'list':                      # Supplies 2.1: a new request starts from the picture grid
             values = submitted or {}
-            return render(request, conn, 'request_grid', identity=identity, query=query,
-                          cards=shop.shop_items(conn, query), form_values=values,
+            editing = int(values['request_id']) if str(values.get('request_id', '')).isdigit() else None
+            return render(request, conn, 'request_grid', identity=identity, query=query, request_id=editing,
+                          cards=shop.shop_items(conn, query, editing), form_values=values,
                           quantities={k[4:]: v for k, v in values.items() if k.startswith('qty_')},
                           error=error, status_code=status_code)
         items = rows(conn, 'SELECT id,code,description,unit FROM supply_item WHERE active=1 ORDER BY code')
@@ -697,6 +737,9 @@ def make_router(templates, get_conn):
 
     @router.get('/supplies/issues')
     def releases(request: Request):
+        door = side_door(request, '/supplies/requests')
+        if door is not None:
+            return door
         conn = get_conn()
         try:
             return render(request, conn, 'issues', **issues.list_issues(conn, request.state.user,
@@ -734,7 +777,9 @@ def make_router(templates, get_conn):
             callback = acknowledgments.record_paper_acknowledgment if paper else acknowledgments.acknowledge_issue
             callback(conn, request.state.user, issue_id, fields,
                      expected_revision=fields.get('revision'), operation_key=fields.get('operation_key'))
-            return RedirectResponse('/supplies/issues/' + str(issue_id), status_code=303)
+            back = fields.get('back', '')                              # Supplies 3.3: the request page can ask to come back to it
+            return RedirectResponse(back if re.fullmatch(r'/supplies/requests/\d+', back) else '/supplies/issues/' + str(issue_id),
+                                    status_code=303)
         except (Denied, Invalid, Conflict) as exc:
             if not isinstance(exc, Denied):
                 try:
@@ -808,6 +853,9 @@ def make_router(templates, get_conn):
 
     @router.get('/supplies/awaiting-stock')
     def awaiting_stock(request: Request):
+        door = side_door(request, '/supplies/requests?status=active')
+        if door is not None:
+            return door
         conn = get_conn()
         try:
             return render(request, conn, 'awaiting_stock', **backorders.awaiting_stock(conn, request.state.user,
@@ -897,9 +945,19 @@ def make_router(templates, get_conn):
     def request_index(request: Request):
         conn = get_conn()
         try:
-            return render(request, conn, 'requests', **requests_service.my_requests(conn, request.state.user,
-                          page=request.query_params.get('page', '1'), query=request.query_params.get('q', ''),
-                          state=request.query_params.get('status', '')))
+            params = request.query_params
+            page, query = params.get('page', '1'), params.get('q', '')
+            status = params.get('status')
+            tab = 'active' if status is None else ('' if status == 'all' else status)     # Supplies 3.1: Active, Completed, All
+            data = requests_service.my_requests(conn, request.state.user, page=page, query=query, state=tab)
+            needs = []
+            if tab in ('active', 'completed', '') and not query and page in ('1', ''):
+                needs = requests_service.my_requests(conn, request.state.user, state='needs_action')['requests']
+            needs_ids = {e['id'] for e in needs}
+            entries = [e for e in data['requests'] if e['id'] not in needs_ids]
+            return render(request, conn, 'requests', **{**data, 'requests': entries, 'total': data['total'] - (len(data['requests']) - len(entries))},
+                          needs=needs, tab=tab,
+                          pictures=shop.items_for(conn, needs + entries), steps=request_steps)
         except (Denied, Invalid) as exc:
             return failure(request, exc)
         finally:
@@ -916,12 +974,119 @@ def make_router(templates, get_conn):
         finally:
             conn.close()
 
+    def cart_page(request, conn, fields, *, error='', status_code=200, notes=(), reason=''):
+        """Supplies 2.2: what the requester picked, with pictures and editable numbers, before it is sent."""
+        user, identity = requests_service.requester(conn, request.state.user)
+        asked = {l['item_id']: l['requested_quantity'] for l in shop.quantities_from(fields)}
+        request_id = int(fields['request_id']) if str(fields.get('request_id', '')).isdigit() else None
+        cards = [{**c, 'qty': asked[str(c['id'])]} for c in shop.shop_items(conn, '', request_id) if str(c['id']) in asked]
+        if not cards:
+            return request_form(request, conn, submitted=fields, view='grid', status_code=422,
+                                error='Choose at least one item first.')
+        return render(request, conn, 'request_cart', identity=identity, cards=cards, request_id=request_id,
+                      form_values=fields, error=error, status_code=status_code, notes=notes, reason=reason)
+
+    def cart_from_request(request, conn, entry):
+        """Supplies 2.3: a saved draft or a returned request opens in the cart; what was returned is shown on top."""
+        user, _ = requests_service.requester(conn, request.state.user)
+        if entry['requester_id'] != user['id']:
+            raise Missing('Supply request not found or unavailable to you.')
+        if entry['approval_status'] not in ('draft', 'returned'):
+            raise Conflict('Only draft or returned requests can be edited.')
+        fields = {'purpose': entry['purpose'], 'date_needed': entry['date_needed'] or '',
+                  'request_id': str(entry['id']), 'revision': str(entry['revision'])}
+        notes = []
+        for line in entry['lines']:
+            if line.get('active', 1):
+                fields[f"qty_{line['item_id']}"] = str(line['requested_quantity'])
+            else:
+                notes.append(f"{line['description_snapshot']} is no longer in the catalog, so it was left out.")
+        reason = next((e['reason'] for e in reversed(entry['events']) if e['decision'] == 'returned' and e['reason']), '')
+        if entry['approval_status'] == 'returned' and not reason:
+            reason = 'Your approver asked for a correction.'
+        return cart_page(request, conn, fields, notes=notes, reason=reason if entry['approval_status'] == 'returned' else '')
+
+    @router.get('/supplies/requests/{request_id}/again')
+    def request_again(request: Request, request_id: int):
+        """Supplies 2.3: a past request's items in a new cart, held to what can be requested now. Nothing is saved until sent."""
+        conn = get_conn()
+        try:
+            user, _ = requests_service.requester(conn, request.state.user)
+            entry = requests_service.get_request(conn, request.state.user, request_id)
+            if entry['requester_id'] != user['id']:
+                raise Missing('Supply request not found or unavailable to you.')
+            cards = {str(c['id']): c for c in shop.shop_items(conn)}
+            fields, notes = {'purpose': entry['purpose'] or ''}, []
+            for line in entry['lines']:
+                card, asked = cards.get(str(line['item_id'])), int(line['requested_quantity'])
+                name = line.get('description_snapshot') or line['item_id']
+                if not card:
+                    notes.append(f'{name} is no longer in the catalog, so it was left out.')
+                elif card['max'] <= 0:
+                    notes.append(f'{name} is out of stock right now, so it was left out.')
+                elif asked > card['max']:
+                    fields[f"qty_{line['item_id']}"] = str(card['max'])
+                    notes.append(f"Only {card['max']} {card['unit']} of {name} can be requested now, so that is what is in your cart.")
+                else:
+                    fields[f"qty_{line['item_id']}"] = str(asked)
+            if not shop.quantities_from(fields):
+                return request_form(request, conn, submitted=fields, view='grid', status_code=200,
+                                    error='None of the items in that request can be requested right now. ' + ' '.join(notes))
+            return cart_page(request, conn, fields, notes=notes)
+        except (Denied, Invalid, Conflict) as exc:
+            return failure(request, exc)
+        finally:
+            conn.close()
+
+    @router.post('/supplies/requests/review')
+    async def review_request(request: Request):
+        conn = get_conn()
+        try:
+            fields = await posted(request, max_fields=500)
+            if fields.get('step') == 'grid':
+                return request_form(request, conn, submitted=fields, view='grid')
+            return cart_page(request, conn, fields)
+        except (Denied, Invalid, Conflict) as exc:
+            return failure(request, exc)
+        finally:
+            conn.close()
+
+    @router.post('/supplies/requests/send')
+    async def send_request(request: Request):
+        """Save the cart as a draft and, for Send, submit it in the same step. A failed submit keeps the saved draft."""
+        conn = get_conn()
+        fields = {}
+        try:
+            fields = await posted(request, max_fields=500)
+            request_id = int(fields['request_id']) if str(fields.get('request_id', '')).isdigit() else None
+            try:
+                saved = requests_service.save_draft(
+                    conn, request.state.user, {**fields, 'lines': shop.quantities_from(fields)}, request_id=request_id,
+                    expected_revision=fields.get('revision') if request_id else None, operation_key=fields.get('operation_key'))
+                if fields.get('act') != 'send':
+                    return RedirectResponse('/supplies/requests/' + str(saved['id']), status_code=303)
+                try:
+                    sent = requests_service.submit(conn, request.state.user, saved['id'], expected_revision=saved['revision'],
+                                                   operation_key=fields.get('submit_operation_key'))
+                except (Invalid, Conflict) as exc:
+                    return cart_page(request, conn, {**fields, 'request_id': saved['id'], 'revision': saved['revision']},
+                                     error=f'Your request is saved as a draft but was not sent: {exc}',
+                                     status_code=409 if isinstance(exc, Conflict) else 422)
+                return RedirectResponse('/supplies/requests/' + str(sent['id']), status_code=303)
+            except (Invalid, Conflict) as exc:
+                return cart_page(request, conn, fields, error=str(exc), status_code=409 if isinstance(exc, Conflict) else 422)
+        except (Denied, Invalid, Conflict) as exc:
+            return failure(request, exc)
+        finally:
+            conn.close()
+
     @router.get('/supplies/requests/{request_id}')
     def request_detail(request: Request, request_id: int):
         conn = get_conn()
         try:
             result = requests_service.get_request(conn, request.state.user, request_id)
-            return render(request, conn, 'request', supply_request=result)
+            stage = dashboard_views.request_stage(conn, request.state.user, request_id) if result['is_owner'] else None
+            return render(request, conn, 'request', supply_request=result, stage=stage)
         except (Denied, Invalid) as exc:
             return failure(request, exc)
         finally:
@@ -931,7 +1096,10 @@ def make_router(templates, get_conn):
     def edit_request(request: Request, request_id: int):
         conn = get_conn()
         try:
-            return request_form(request, conn, requests_service.get_request(conn, request.state.user, request_id))
+            entry = requests_service.get_request(conn, request.state.user, request_id)
+            if request.query_params.get('view') == 'list':
+                return request_form(request, conn, entry)
+            return cart_from_request(request, conn, entry)
         except (Denied, Invalid, Conflict) as exc:
             return failure(request, exc)
         finally:

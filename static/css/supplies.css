@@ -70,3 +70,39 @@
 .shop-step button { min-width:2.6rem; min-height:2.6rem; font-size:1.2rem; }
 .shop-step input { text-align:center; flex:1; min-width:0; }
 .shop-bar { position:sticky; bottom:0; display:flex; justify-content:space-between; align-items:center; gap:1rem; padding:.7rem 4.6rem .7rem 1rem;   /* room on the right for the floating feedback button */ background:var(--surface, #fff); border-top:1px solid var(--line, #d8dee9); box-shadow:0 -4px 12px rgba(20,30,50,.08); }
+
+/* Supplies 2.2: the cart review page and the grid's Review / Save draft buttons */
+.cart-actions { display:flex; flex-wrap:wrap; gap:.5rem; justify-content:flex-end; }
+.cart-actions button.secondary { background:transparent; color:inherit; border:1px solid var(--line, #b8c2d3); }
+.shop-bar { flex-wrap:wrap; }
+.cart-form .shop-bar { position:static; padding:.7rem 0; border-top:0; box-shadow:none; background:transparent; }
+.cart-form .cart-actions { justify-content:flex-start; }
+
+/* Supplies 3.1: My requests as cards with a progress tracker */
+.req-list { list-style:none; margin:.5rem 0 1rem; padding:0; display:flex; flex-direction:column; gap:.7rem; }
+.req-card { display:flex; gap:.8rem; align-items:flex-start; flex-wrap:wrap; border:1px solid var(--line, #d8dee9); border-left-width:5px; border-radius:12px; padding:.7rem .8rem; background:var(--surface, #fff); }
+.req-warn { border-left-color:#b7791f; } .req-bad { border-left-color:#b42318; } .req-good { border-left-color:#1a7f4b; } .req-info { border-left-color:#1d5fa8; }
+.req-pics { display:flex; gap:.3rem; align-items:center; }
+.req-pic { width:48px; height:48px; border-radius:10px; background:var(--tint, #e8ecf3); display:inline-flex; align-items:center; justify-content:center; overflow:hidden; }
+.req-pic img { width:38px; height:38px; } .req-pic b { font-size:.9rem; }
+.req-more { font-size:.85rem; color:var(--muted, #556); }
+.req-main { flex:1 1 14rem; display:flex; flex-direction:column; gap:.25rem; min-width:0; }
+.req-title { font-weight:700; } .req-items, .req-date { font-size:.88rem; color:var(--muted, #556); }
+.req-pill { align-self:flex-start; font-size:.8rem; font-weight:700; padding:.1rem .55rem; border-radius:999px; background:#eef1f6; }
+.req-pill-warn { background:#fdf3dc; } .req-pill-bad { background:#fde8e6; } .req-pill-good { background:#e2f4ea; } .req-pill-info { background:#e3eefb; }
+.req-track { display:flex; gap:.25rem; list-style:none; margin:.2rem 0; padding:0; }
+.req-track li { flex:1; font-size:.72rem; text-align:center; padding:.25rem .1rem; border-top:4px solid #d8dee9; color:var(--muted, #556); }
+.req-track li.is-done { border-top-color:#1a7f4b; color:inherit; } .req-track li.is-now { border-top-color:#1d5fa8; font-weight:700; color:inherit; }
+.req-action { align-self:center; padding:.45rem .9rem; border-radius:8px; background:#1d5fa8; color:#fff; text-decoration:none; font-weight:600; }
+.req-tabs { display:flex; gap:.4rem; margin:.5rem 0; }
+.req-tabs a { padding:.35rem .9rem; border:1px solid var(--line, #c7cfdc); border-radius:999px; text-decoration:none; }
+.req-tabs a[aria-current="page"] { background:#1d5fa8; color:#fff; border-color:#1d5fa8; }
+
+/* Supplies 3.2: the owner's request page leads with where it is; the old detail view sits under Full details */
+.req-head { border:1px solid var(--line, #d8dee9); border-left-width:5px; border-radius:12px; padding:.8rem 1rem; margin:.6rem 0 1rem; background:var(--surface, #fff); }
+.req-lines { margin:.3rem 0; padding-left:1.1rem; }
+.req-actions { display:flex; flex-wrap:wrap; gap:.6rem; align-items:center; }
+.req-full > summary { cursor:pointer; font-weight:600; }
+
+/* Supplies 3.4: the home page leads with one big button */
+.supply-big-button { display:inline-block; padding:.8rem 1.6rem; font-size:1.15rem; font-weight:700; border-radius:12px; background:#1d5fa8; color:#fff; text-decoration:none; }
