@@ -948,3 +948,49 @@ def test_notice_template_and_payload_agree_with_unknown_invitees_left_blank(view
     assert call["rows"]["invitees"]["data"] == [{"inv_name": ad.BLANK, "inv_office": ""}]
     assert call["fields"]["meeting_time"] == "After lunch"
     assert call["blocks"]["agenda"] == ["[First agenda item]", "[Second agenda item]"]
+
+
+@pytest.mark.skipif(shutil.which("node") is None, reason="node is not installed")
+def test_converted_concept_and_program_placeholders_have_payload_values(viewer, conn, relay):
+    result = subprocess.run(["node", "tests/js/office_templates_harness.js"], capture_output=True, text=True, timeout=30)
+    assert result.returncode == 0, result.stderr
+    templates = json.loads(result.stdout)["concepts"]
+    st.set_setting(conn, "travel.sig.head_name", "Configured Head")
+    st.set_setting(conn, "travel.sig.head_title", "Director")
+    eid = create(viewer, kind="training", title="Current Activity", people=[str(uid(conn, "viewer@test.local"))],
+                 start_date="2026-10-12", end_date="2026-10-13")
+    for key in ("concept_note", "program_flow"):
+        draft(viewer, eid, key)
+        call = relay.calls[-1]
+        filled = set(call["fields"]) | set(call["blocks"]) | {
+            key for spec in call["rows"].values() for row in spec["data"] for key in row}
+        assert set(templates[key]["expect"]) <= filled
+        assert "PEREZ" not in json.dumps(call) and "SAYSON-GARCIA" not in json.dumps(call)
+    concept, program = relay.calls
+    assert concept["rows"]["participants"]["data"] == [{"pt_group": "viewer@test.local", "pt_count": "1"}]
+    assert concept["fields"]["participant_count"] == "1"
+    assert len(concept["rows"]["program"]["data"]) == 2
+    assert all(row["pd_text"] == "[Activities for this day]" for row in concept["rows"]["program"]["data"])
+    assert concept["fields"]["recommended_name"] == "CONFIGURED HEAD"
+    assert concept["fields"]["approved_name"] == ad.BLANK
+    assert concept["fields"]["approved_title"] == concept["fields"]["approved_unit"] == ad.BLANK
+    assert len(program["rows"]["flow"]["data"]) == 6
+    assert all(not row["pf_topic"] and not row["pf_person"] for row in program["rows"]["flow"]["data"])
+
+
+def test_concept_supervisor_comes_from_own_directory_seat_and_unknown_counts_stay_blank(conn, monkeypatch):
+    profiles = {10: {"person_name": "Drafter", "org_path": "BLHSD/S1", "rp_id": 123}}
+    monkeypatch.setattr(st, "get_user_profile", lambda c, uid: profiles.get(uid, {}))
+    seats = []
+    def supervisor(c, rank, **kw):
+        seats.append((rank, kw))
+        return "Directory Supervisor", "Section Chief"
+    monkeypatch.setattr(st, "org_seat_holder", supervisor)
+    st.set_setting(conn, "travel.sig.head_name", "Configured Head")
+    payload = ad.payload(conn, {"id": 1, "title": "Activity", "start_date": "2026-10-12", "people": []},
+                         "concept_note", {"id": 10, "username": "drafter@test.local"})
+    assert payload.fields["noted_by_name"] == "Directory Supervisor"
+    assert seats == [(1, {"org_path": "BLHSD/S1", "exclude_rp_id": 123})]
+    assert payload.fields["participant_count"] == ad.BLANK
+    assert payload.rows["participants"]["data"] == [{"pt_group": "[Participant group]", "pt_count": ad.BLANK}]
+    assert payload.fields["approved_name"] == ad.BLANK

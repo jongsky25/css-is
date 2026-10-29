@@ -99,6 +99,59 @@ function original() {
     '[Contact details of assigned staff] ', 'Thank you very much. ', ''];
   return new Body(first.concat(first.slice(1), [new Para('SOURCE REVIEWER MUST GO', T.TABLE), '']));
 }
+function concept() {
+  return new Body(['CONCEPT NOTE', '[Name of Activity / Event / Technical Assistance]', '',
+    'Background and Rationale', '', '', 'Objectives', '', 'Expected Outputs', '', '', 'Participants',
+    new Table([['Participant', 'Number'], ['', ''], ['', ''], ['', ''], ['', ''], ['Estimated Total', '']], [7695, 1200]),
+    '', '', 'Methodology', '', 'Operational Details',
+    new Table(['Title', 'Date/Duration', 'Venue', 'Participants', 'Facilitators', 'Budget and Source'].map(x => [x, '']), [1850, 7370]),
+    '', 'Proposed Program of Activities', new Table([['Day', 'Activity'], ['Day 1', ''], ['Day 2', '']], [1215, 7995]),
+    '', 'Prepared by:        Noted by:', '', '', 'SOURCE STAFF\tSOURCE SUPERVISOR', 'Designation\tDesignation', '',
+    'Recommended by:', '', '', 'SOURCE DIRECTOR', 'SOURCE DIRECTOR TITLE', 'SOURCE DIRECTOR UNIT', '', '',
+    'Approved by:', '', '', 'SOURCE APPROVER', 'SOURCE APPROVER TITLE', 'SOURCE APPROVER UNIT', '']);
+}
+function program() {
+  return new Body(['', 'Activity: SOURCE ACTIVITY', 'Tentative Program Flow:',
+    new Table([['Date/Time', 'Topic/Activity', 'Person Responsible'], ['SOURCE MERGED DAY'],
+      ['SOURCE TIME', 'SOURCE SCHEDULE', 'SOURCE PERSON'], ['SOURCE MERGED DAY 2'],
+      ['SOURCE TIME 2', 'SOURCE SCHEDULE 2', 'SOURCE PERSON 2']], [2370, 4575, 2415]), '']);
+}
+function splitApi(ctx, selected, drift = false) {
+  const base = {documentStyle: {documentSize: {width: {magnitude: 612, unit: 'PT'}, height: {magnitude: 792, unit: 'PT'}},
+    marginTop: {magnitude: 72, unit: 'PT'}, marginFooter: {magnitude: 21.6, unit: 'PT'}, useFirstPageHeaderFooter: true},
+    headers: {H1: {content: [{paragraph: {elements: [{textRun: {content: 'OFFICE HEADER'}}]}}]},
+              H2: {content: [{paragraph: {elements: [{textRun: {content: 'OFFICE HEADER'}}]}}]}},
+    footers: {}, body: {content: [
+      {startIndex: 0, endIndex: 1, sectionBreak: {sectionStyle: {firstPageHeaderId: 'H1', marginFooter: {magnitude: 21.6, unit: 'PT'}}}},
+      {startIndex: 1, endIndex: 500, paragraph: {}},
+      {startIndex: 500, endIndex: 501, sectionBreak: {sectionStyle: {firstPageHeaderId: 'H2', marginFooter: {magnitude: 36, unit: 'PT'}}}},
+      {startIndex: 501, endIndex: 1500, paragraph: {}}
+    ]}};
+  base.headers.H2.content[0].paragraph.elements[0].textRun.content = 'PROGRAM HEADER';
+  base.headers.H1.content[0].paragraph.positionedObjectIds = ['IMAGE1'];
+  base.headers.H2.content[0].paragraph.positionedObjectIds = ['IMAGE2'];
+  base.positionedObjects = Object.fromEntries(['IMAGE1', 'IMAGE2'].map(id => [id, {
+    objectId: id, positionedObjectProperties: {embeddedObject: {
+      size: {width: {magnitude: 75, unit: 'PT'}}, imageProperties: {contentUri: 'temporary-image-url'}
+    }}
+  }]));
+  const requests = []; let after = null;
+  ctx.Docs = {Documents: {
+    get() { return JSON.parse(JSON.stringify(after || base)); },
+    batchUpdate(batch) {
+      requests.push(...batch.requests);
+      after = JSON.parse(JSON.stringify(base));
+      const style = batch.requests.find(r => r.updateSectionStyle).updateSectionStyle.sectionStyle;
+      after.body.content = [{startIndex: 0, endIndex: 1, sectionBreak: {sectionStyle: {...style, firstPageHeaderId: selected ? 'H2' : 'H1'}}},
+        {startIndex: 1, endIndex: 200, paragraph: {}}];
+      if (drift === true || drift === 'header') after.headers[selected ? 'H2' : 'H1'].content[0].paragraph.elements[0].textRun.content = 'CHANGED HEADER';
+      if (drift === 'image') after.positionedObjects.IMAGE1.positionedObjectProperties.embeddedObject.size.width.magnitude = 100;
+      if (drift === 'wrong_section') after.body.content[0].sectionBreak.sectionStyle.firstPageHeaderId = selected ? 'H1' : 'H2';
+      if (drift === 'paper') after.documentStyle.documentSize.width.magnitude = 700;
+    }
+  }};
+  return requests;
+}
 function context(body, opts = {}) {
   const key = opts.key || 'invitation';
   const props = { ['TPL_' + key]: opts.existing || 'OLD' }, writes = [], docs = {};
@@ -182,4 +235,35 @@ nom.ctx.applyFields_(nomBody, {date: 'Today', head_name: 'CONFIGURED HEAD', head
 output.noticeFilled = {children: snapshot(nomBody), text: nomBody.getText()};
 const agendaCell = nomBody.children[9].getCell(4, 2);
 output.noticeAgenda = agendaCell.children.map(p => ({text: p.text, type: p.type, attrs: p.attrs}));
+output.concepts = {};
+for (const key of ['concept_note', 'program_flow']) {
+  const body = key === 'concept_note' ? concept() : program();
+  const env = context(body, {key});
+  const requests = splitApi(env.ctx, key === 'program_flow' ? 1 : 0);
+  const report = env.ctx.makeOfficeTemplates(key);
+  output.concepts[key] = {report, writes: env.writes, text: body.getText(), children: snapshot(body), requests,
+    expect: vm.runInContext('AO_TEMPLATES.find(t => t.key === "' + key + '").expect', env.ctx)};
+  vm.runInContext(load('travel_docs.gs'), env.ctx);
+  if (key === 'concept_note') {
+    env.ctx.applyRows_(body, {participants: {marker: 'pt_group', data: [{pt_group: 'Person One', pt_count: '1'}, {pt_group: 'Person Two', pt_count: '1'}]},
+      program: {marker: 'pd_day', data: [{pd_day: 'Day 1', pd_text: 'First activities'}, {pd_day: 'Day 2', pd_text: 'Second activities'}]}});
+    env.ctx.applyBlocks_(body, {background: ['Background'], objectives: ['Objective'], outputs: ['Output'], methodology: ['Method'], participants_note: ['Confirm count']});
+    const fields = Object.fromEntries(output.concepts[key].expect.filter(k => !['pt_group', 'pt_count', 'pd_day', 'pd_text'].includes(k)).map(k => [k, k === 'participant_count' ? '2' : 'Value']));
+    env.ctx.applyFields_(body, fields);
+  } else {
+    env.ctx.applyRows_(body, {flow: {marker: 'pf_time', data: [{pf_time: 'Day 1', pf_topic: '', pf_person: ''}, {pf_time: '', pf_topic: '', pf_person: ''}]}});
+    env.ctx.applyFields_(body, {title: 'Current activity'});
+  }
+  output.concepts[key].filled = {text: body.getText(), children: snapshot(body)};
+}
+output.conceptFailures = [];
+for (const mode of ['header', 'image', 'paper', 'wrong_section', 'prose', 'table', 'program']) {
+  const key = ['program', 'wrong_section'].includes(mode) ? 'program_flow' : 'concept_note';
+  const body = key === 'program_flow' ? program() : concept();
+  if (mode === 'prose') body.children[4].text = 'Unexpected prose';
+  if (mode === 'table') body.children[12].getCell(1, 0).children[0].text = 'Unexpected participant';
+  if (mode === 'program') body.children[3].getCell(0, 0).children[0].text = 'CHANGED HEADER';
+  const env = context(body, {key}); splitApi(env.ctx, key === 'program_flow' ? 1 : 0, ['header', 'image', 'paper', 'wrong_section'].includes(mode) ? mode : false);
+  output.conceptFailures.push({report: env.ctx.makeOfficeTemplates(key), writes: env.writes});
+}
 console.log(JSON.stringify(output));
