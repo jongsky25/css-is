@@ -50,10 +50,26 @@ def test_search_matches_every_word_in_the_name_or_code(request_db):
     assert names('sh2') == ['Ballpen Black']                                   # the code matches too
 
 
-def test_tiles_show_initials_without_pictures_and_never_fail():
-    t = shop.tile('Ballpen Black', 'SH2')
-    assert t['initials'] == 'BB' and t['tint'].startswith('#') and t['src'] in ('', t['src'])
+def test_tiles_use_the_item_pictures_and_fall_back_to_initials_without_failing():
+    named = shop.tile('Ballpen Black', 'SH2')                                  # Supplies 1.4 picks a picture from the name
+    assert named['src'].endswith('ballpen.svg') and named['initials'] == '' and named['tint'].startswith('#')
+    unknown = shop.tile('Zebra Gadget', 'ZG1')                                 # nothing matches: a tile with the initials
+    assert unknown['initials'] == 'ZG' and unknown['tint'].startswith('#')
     assert shop.tile('', '')['initials'] == ''
+
+
+def test_the_grid_shows_a_picture_for_a_known_item_and_initials_for_an_unknown_one(request_db, app_mod):
+    c, u, _, path, item = request_db
+    second_item(c, u, 5)                                                       # "Ballpen Black"
+    create(c, u[1], code='ZG1', description='Zebra Gadget')
+    client, old = client_for(app_mod, path, u[2])
+    try:
+        page = client.get('/supplies/requests/new').text
+        assert '/static/img/supplies/ballpen.svg' in page
+        assert '<span>ZG</span>' in page
+    finally:
+        client.__exit__(None, None, None)
+        app_mod.DB = old
 
 
 def test_quantities_come_from_the_grid_boxes_in_item_order():

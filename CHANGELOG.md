@@ -1,6 +1,10 @@
-## 9.15 — October 29, 2026
+## 9.16 — October 29, 2026
 
 - Supplies 2.1, the requester's picture grid: `GET /supplies/requests/new` now renders one card per active catalog item (picture or initials tile, name, unit, an Available / Limited / Out of stock badge and a `qty_<item id>` box whose `max` is the requestable amount of rule R1; disabled when Out of stock), with a search box (`q`, plus instant filtering in `static/js/supplies-shop.js`), + / - buttons and a sticky "N items chosen / Save draft" bar. The classic 20-line form stays at `?view=list` and for editing a saved draft. Saving reuses `POST /supplies/requests`: `qty_<item id>` boxes are mapped to request lines (`supplies_shop.quantities_from`), the field limit for the save is raised from 180 to 500 for a long catalog, and R1 is still enforced by the service. Search: the box stays pinned under the site header while scrolling; matching is by every word typed, inside an item's name, code or alternative names (`supplies_shop.ALIASES`, e.g. ballpoint for ballpen, copy paper for bond paper, the office list's own misspellings) and tolerates one typo in words of four letters or more (a letter added, dropped, changed or two neighbours swapped), the same rules on the server and in `supplies-shop.js`. The plain list has a search box too (`?view=list&q=`, plus live filtering of its drop-downs; items already chosen stay). Pictures come from `supplies_pictures` (Supplies 1.4) when that module exists, else a tinted initials tile.
+
+## 9.15 — October 28, 2026
+
+- Supplies increment 1.4: 49 flat 96×96 SVG pictures plus `generic.svg` in `static/img/supplies/`, and `supplies_pictures.py` with `picture_for(description, code) -> {src, tint, initials}`. Ordered regex rules (specific before general, tolerant of the office's spellings) match 98 of the 99 real catalog names; a colour word in the name sets the tile tint; anything unmatched (today only "Epson 0442") gets an initials tile whose colour is hashed from the code. No database change and no screen uses it yet.
 
 ## 9.14 — October 28, 2026
 

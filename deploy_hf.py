@@ -87,7 +87,7 @@ RUNTIME_PY = [
     "documents_grid.py", "documents_dashboard.py", "dashboard_pdf.py",
     "office_calendar.py", "calendar_routes.py", "calendar_guidance.py", "activity_docs.py", "activity_invitation.py", "rooms.py", "rooms_guidance.py", "rooms_routes.py", "rooms_notify.py", "travel.py", "travel_guidance.py", "travel_grid.py", "travel_routes.py", "travel_submissions.py", "travel_notify.py", "travel_review.py", "gdocs_relay.py", "meet_relay.py", "travel_rules.py", "travel_checklist.py", "travel_docs.py", "travel_rates.py", "travel_scan.py", "travel_readings.py", "meals.py", "meals_routes.py", "rooms_meals.py", "rooms_meals_routes.py", "room_meal_form.py", "calendar_import.py", "calendar_import_apply.py", "calendar_import_suggest.py", "calendar_people.py", "birthdays.py", "birthday_cards.py", "calendar_ics.py", "recurrence.py", "calendar_answers.py", "search_sources.py", "office_answers.py",
     "supplies.py", "supplies_storage.py", "supplies_permissions.py", "supplies_stock.py", "supplies_grid.py", "supplies_stock_dashboard.py",
-    "supplies_import.py", "supplies_import_review.py", "supplies_requests.py", "supplies_shop.py", "supplies_approvals.py",
+    "supplies_import.py", "supplies_import_review.py", "supplies_requests.py", "supplies_shop.py", "supplies_pictures.py", "supplies_approvals.py",
     "supplies_allocations.py", "supplies_backorders.py", "supplies_issues.py", "supplies_acknowledgments.py",
     "supplies_print.py", "supplies_corrections.py", "supplies_notify.py", "supplies_mail.py", "supplies_dashboard.py", "supplies_status.py",
     "supplies_replenishment.py", "supplies_replenishment_flow.py", "supplies_deliveries.py",
