@@ -121,3 +121,17 @@ The rest of the DOH package is drafted too.
   again. It creates the two new templates and keeps the DPO and the invitation if they are already current.
 - **Database:** the first start of 7.52 rebuilds the small `calendar_entry_doc` table so it accepts the two new document types.
   Existing choices and draft links are kept.
+
+
+## Activity template refresh: Increment 0 (measurement only)
+
+The defaults D1–D7 in planning PR [#546](https://github.com/jongsky25/css-is/pull/546)
+apply. Increment 0 adds the offline measuring tool described in
+[templates/README.md](templates/README.md). The placeholder table above is unchanged.
+No Apps Script replacement, maker run, template rebuild or relay deployment is
+needed for this increment. Keep the five Blank exports outside the repository;
+commit only their measured JSON after checking it against section 2 of the plan.
+
+The Google maker/draft/export/PDF checks in handoff section 6 apply when later
+increments change the templates or relay. Increment 0 verifies the measuring tool
+with a generated DOCX and checks the actual Blank measurements against the plan.
