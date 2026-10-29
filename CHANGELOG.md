@@ -1,6 +1,10 @@
-## 9.32 — October 29, 2026
+## 9.33 — October 29, 2026
 
 - Wellness late filing: new `GET`/`POST /wellness/late` lets a staff member's chain approver (section chief, or acting OIC, per `get_approvers_for`) or an admin file a break the staff member already took (`storage.file_late_wellness_claim`). It skips only the timing rules of `create_wellness_claim` (no past dates, 30-minute lead time, current-week window); Mon–Fri, the 2-hour weekly entitlement and the no-overlap rule still apply (now shared through `_wellness_parse_claim` and `_wellness_check_room`). The break date may go back to the 1st of the previous month (`wellness_late_earliest_date`); a start the ordinary form would still accept is refused. A reason is required. When the filer may decide the claim (`is_approver_for`), it is stored as approved and the staff member is emailed; otherwise (an admin outside the chain) it is pending and the approvers get the usual pending email with decide links. Nobody files their own. New nullable columns `wellness_claim.late_filed_by` and `late_reason` (added on start-up for existing databases); `get_wellness_claim` returns them with `late_filed_by_name`. The approvals queue and the staff member's wellness list show "Filed late by …: reason"; links on the wellness hub (chiefs), the approvals inbox, the utilization dashboard and the Wellness menu. Each filing is audited as `wellness_late_file`. The Annex A register is unchanged.
+
+## 9.32 — October 29, 2026
+
+- Plan only: `docs/ACTIVITY_TEMPLATE_REFRESH_PLAN.md` maps the office's Documents Templates folder (concept note and program, executive briefer, external letter, internal memo, notice of meeting) onto our activity documents and records the samples' page, margin, type, letterhead and footer measurements; `docs/ACTIVITY_TEMPLATE_HANDOFF.md` is the phased plan the template refresh follows (Increment 0 shipped in 9.30, Increment 1 in 9.31). No code, template or database change.
 
 ## 9.31 — October 29, 2026
 
