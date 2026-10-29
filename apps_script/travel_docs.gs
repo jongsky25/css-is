@@ -68,6 +68,7 @@ function generateDoc_(req) {
     const doc = DocumentApp.openById(copy.getId()), body = doc.getBody();
     applyRows_(body, req.rows || {});
     if (req.template_key === 'travel_report') dropEmptyReportSections_(body, req.blocks || {});
+    if (req.extras && req.extras.addressees) applyAddressees_(body, req.extras.addressees);
     applyBlocks_(body, req.blocks || {}); applyFields_(body, req.fields || {});
     // Bind the office-format marker to this template ID, so restoring an old TPL_ also restores formatting.
     if (P.getProperty('TPLF_' + req.template_key) !== tpl) formatDoc_(body);
@@ -365,7 +366,9 @@ function addFileCopy_(docId, extras) {
     if (brk < 0) throw new Error('section break not found');
     Docs.Documents.batchUpdate({ requests: [
       { createHeader: { type: 'DEFAULT', sectionBreakLocation: { index: brk } } },
-      { createFooter: { type: 'DEFAULT', sectionBreakLocation: { index: brk } } }
+      { createFooter: { type: 'DEFAULT', sectionBreakLocation: { index: brk } } },
+      { updateSectionStyle: { range: { startIndex: brk + 1, endIndex: brk + 2 },
+          sectionStyle: { useFirstPageHeaderFooter: false }, fields: 'useFirstPageHeaderFooter' } }
     ] }, docId);
     Docs.Documents.batchUpdate({ requests: [
       { replaceAllText: { containsText: { text: FILE_COPY_MARK, matchCase: true }, replaceText: '' } }
@@ -485,6 +488,30 @@ function alignSignatory_(body, fields, keys) {
       return;
     }
   } catch (err) { /* keep the signature block where the template put it */ }
+}
+
+// A memo addressee is a three-paragraph group: bold name, plain title and office.
+// Keep each prototype's formatting when repeating the group; FOR appears only once.
+function applyAddressees_(body, groups) {
+  const keys = ['for_name', 'for_title', 'for_office'];
+  const hit = body.findText('\\{\\{for_name\\}\\}');
+  if (!hit) return;
+  const name = hit.getElement().getParent().asParagraph(), parent = name.getParent();
+  const index = parent.getChildIndex(name), prototypes = [];
+  for (let i = 0; i < keys.length; i++) {
+    const para = parent.getChild(index + i).asParagraph();
+    if (para.getText().indexOf('{{' + keys[i] + '}}') < 0) throw new Error('incomplete addressee group');
+    prototypes.push(para.copy());
+  }
+  const data = groups.length ? groups : [{}];
+  data.forEach(function (group, n) {
+    keys.forEach(function (key, i) {
+      const para = n === 0 ? parent.getChild(index + i).asParagraph()
+        : parent.insertParagraph(index + n * keys.length + i, prototypes[i].copy());
+      if (n > 0 && i === 0) para.replaceText('^FOR:', '');
+      para.replaceText('\\{\\{' + key + '\\}\\}', esc_(group[key] || ''));
+    });
+  });
 }
 
 function applyBlocks_(body, blocks) {

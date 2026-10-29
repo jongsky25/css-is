@@ -12,7 +12,7 @@ node = pytest.mark.skipif(shutil.which("node") is None, reason="node is not inst
 
 
 @node
-@pytest.mark.parametrize("name", ["travel_docs.gs", "travel_templates.gs"])
+@pytest.mark.parametrize("name", ["travel_docs.gs", "travel_templates.gs", "activity_office_templates.gs"])
 def test_the_scripts_parse(name, tmp_path):
     copy = tmp_path / (name + ".js")
     copy.write_text((ROOT / "apps_script" / name).read_text())

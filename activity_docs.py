@@ -475,10 +475,24 @@ def payload(conn, entry, key, user, owner_label="", positions=False, designation
                   "opening": (f"The {unit} respectfully requests" if unit else "We respectfully request")
                              + f" your office\u2019s assistance in the conduct of {title} on {days}{in_place}.",
                   "contact_name": me, "contact_email": user.get("username") or "", "contact_phone": BLANK}
-        # what the request asks of the office: one row each, the person edits the wording
+        # The office memo uses prose and bullets. Keep legacy table data for an old-template rollback.
         rows = {"assistance": {"marker": "a_area", "data": [{"a_area": a, "a_request": r} for a, r in ASSISTANCE]}}
+        blocks = {
+            "reiteration": [fields["opening"]],
+            "rationale": ["[Rationale of invitation: explain why the office's participation is requested.]"],
+            "details": lines,
+            "representatives": [f"{area}: {request}" for area, request in ASSISTANCE],
+            "contact_details": [f"For coordination, please contact {me} at {user.get('username') or BLANK}; telephone {BLANK}."],
+        }
+        reviewer = file_copy_reviewer(conn, entry, [user["id"]])
+        extras = {"file_copy": True, "boxes": ["slip"],
+                  "addressees": [{"for_name": BLANK, "for_title": BLANK, "for_office": BLANK}]}
+        if reviewer[0]:
+            extras["reviewer"] = {"name": reviewer[0], "title": reviewer[1]}
+        # FROM belongs to the head's bureau, not the drafter's section.
+        fields["unit_name"] = SIGNATORY_UNIT
         return td.DocPayload("invitation", "invitation", f"Memorandum - {title}"[:120], fields,
-                             blocks={"details": lines}, rows=rows)
+                             blocks=blocks, rows=rows, extras=extras)
     if key == "concept_note":
         return _concept_note(conn, entry, title, me, profile, head_name, head_title, owner_label.strip(), positions)
     if key == "program_flow":

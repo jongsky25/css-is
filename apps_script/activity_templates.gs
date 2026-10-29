@@ -57,6 +57,9 @@ function makeActivityTemplates(force) {
   AT_TEMPLATES.forEach(function (t) {
     try {
       const existing = P.getProperty('TPL_' + t.key);
+      if (existing && P.getProperty('TPLF_' + t.key) === existing) {
+        report.push(t.key + ': office template kept; use makeOfficeTemplates to rebuild'); return;
+      }
       if (existing && !force) {
         let gaps = null;
         try { gaps = at_missing_(existing, t); } catch (e) { gaps = ['(could not open it)']; }
@@ -84,6 +87,9 @@ function checkActivityTemplates() {
   AT_TEMPLATES.forEach(function (t) {
     const id = P.getProperty('TPL_' + t.key);
     if (!id) { report.push(t.key + ': not set'); return; }
+    if (P.getProperty('TPLF_' + t.key) === id) {
+      report.push(t.key + ': office template; use checkOfficeTemplates'); return;
+    }
     try {
       const gaps = at_missing_(id, t);
       report.push(t.key + ': ' + (gaps.length ? 'MISSING ' + gaps.join(', ') : 'all placeholders present'));

@@ -28,7 +28,7 @@ Both templates are plain Google Docs in the `_templates` folder under the relay'
 | Template | Placeholders |
 |---|---|
 | `dpo` | `dpo_year`, `dpo_no`, `dpo_date`, `subject`, `background`, `intro`, `funding_source`, `p_name` and `p_position` (one table row, copied per person), `head_name`, `head_title`, `unit_name`. Also available: `title`, `purpose`, `dates`, `venue`, `prepared_by`, and a `{{personnel}}` line of numbered names |
-| `invitation` (the DOH memorandum) | `date`, `for_name`, `for_title`, `for_office`, `from_name`, `from_title`, `unit_name`, `subject`, `opening`, `details` (a block of What / When / Where lines), `a_area` and `a_request` (one table row, copied per request), `contact_name`, `contact_email`, `contact_phone`. Also available: `title`, `invited`, `sender_name`, `sender_title`, `contact`, `head_name`, `head_title` |
+| `invitation` (converted office memo, 9.34) | Fields `date`, `for_name`, `for_title`, `for_office`, `from_name`, `from_title`, `unit_name`, `subject`; blocks `reiteration`, `rationale`, `details`, `representatives` (bullets), `contact_details`. `extras.addressees` repeats the name/title/office paragraph group; unknown addressees remain blank. Legacy `opening`, contact fields, `a_area`/`a_request` rows and other fields remain available for the old drawn template. |
 | `concept_note` | `title`, `date_duration`, `venue`, `participant_count`, `facilitators`, `budget`, `prepared_by`, `prepared_title`, `noted_by_name`, `noted_by_title`, `recommended_name`, `recommended_title`, `unit_name`; blocks `background`, `objectives`, `outputs`, `participants`, `methodology`; one table row `pd_day` / `pd_am` / `pd_pm` copied per day |
 | `notice_of_meeting` | `date`, `title`, `meeting_when`, `venue`, `meeting_link`, `prepared_by`, `prepared_title`, `head_name`, `head_title`, `unit_name`; blocks `invited`, `agenda` |
 | `minutes` | `title`, `meeting_when`, `venue`, `prepared_by`, `prepared_title`, `approved_by`, `unit_name`; blocks `attendees`, `agenda`, `discussion`, `next_steps`; one table row `m_action` / `m_who` / `m_due` |
@@ -189,3 +189,77 @@ pass. The full suite was not run. Google deployment, execution log, real-calenda
 draft and DOCX/PDF checks remain pending administrator access; keep this increment
 in draft until those checks are recorded. The Node harnesses check relay behavior,
 not Google's rendering or pagination.
+
+## Activity template refresh: Increment 2 (office memo, 9.34)
+
+This increment prepares the internal memo only. The DPO, NOM, concept note,
+program flow, external letter and executive briefer are not converted here.
+The memo is copied from `Blank [Memo - Invitation - Internal]` in the handoff's
+Documents Templates folder. The converter retains its page setup, first-page
+header, footer and anchored artwork. It uses label positions instead of fixed
+personal names, replaces the original signatory details with placeholders and
+removes the embedded duplicate body and its named initials table. The relay
+makes the file copy from the filled original and adds the initials box only.
+
+The user approved the proposed office layout when requesting the merge of this
+increment: the same four assistance requests move into editable bullets. The app
+retains the old table's payload rows for rollback; the converted template has no
+ASSISTANCE table. Administrator validation remains required before activation.
+
+Administrator rollout (requires access to the relay project and office mailbox):
+
+1. Save the current `TPL_invitation` document ID for rollback. Keep its document
+   in `_templates`. Ensure Drive API v3 and Google Docs API advanced services are
+   enabled in the existing relay project.
+2. Add `activity_office_templates.gs` to the same project. Replace `travel_docs.gs`
+   and `activity_templates.gs` with this release and deploy a new version of the
+   existing relay web app **before** enabling the new template. The legacy maker
+   now skips a template whose `TPLF_<key>` matches its `TPL_<key>`, even if forced.
+3. Deploy the 9.34 app payload before activating the converted memo. Until then,
+   keep the old drawn template selected. The 9.34 payload retains its legacy
+   fields/table data, so it can fill that template during the transition.
+4. Run `makeOfficeTemplates()` as the office
+   mailbox. It makes only the memo in this increment. Read the Execution log:
+   it must report `all placeholders present` and the previous template ID. A
+   changed/ambiguous source or missing placeholder is a failure; the old active
+   properties remain unchanged. Failed candidate documents stay in `_templates`
+   for inspection. Run `checkOfficeTemplates()` to check the active placeholders
+   and office-format marker. `rebuildOfficeMemoTemplate()` forces a fresh copy.
+5. Draft an invitation from a real calendar item. Check its date, FOR / FROM /
+   SUBJECT, activity details, editable rationale/request bullets and contact line.
+   Names not known to the app stay blank. FROM uses the configured head and the
+   bureau name; the file-copy reviewer follows the drafter's section via REVIEWERS,
+   or stays blank if no reviewer is known. No name is taken from the source file.
+6. Follow handoff section 6: retain the maker execution log; export the real draft
+   as DOCX and compare its original section with
+   `docs/templates/activity_reference.json` (`invitation_internal`); compare PDFs
+   of the office Sample and draft side by side. Confirm Letter paper, one-inch
+   margins, half-inch header/footer distances, first-page letterhead, the original
+   footer numbers and matching artwork/type. Confirm the file copy has no header
+   or footer, has only the initials box and contains all filled content. The
+   reference's two-column initials grid belongs to the source's embedded copy;
+   the relay-generated initials box replaces it, so compare that separately.
+
+Rollback: restore the saved old `TPL_invitation` ID, and delete `TPLF_invitation`
+(or leave its now-stale value). The relay resumes the old formatter and the app's
+retained legacy fields/rows fill the old drawn template. If reverting app code
+as well, restore the old template before reverting the app payload. Existing
+created drafts are not modified. To opt back into the office template, run the
+office maker again; do not use the old activity maker to manage it.
+
+`extras.addressees` is a list of objects with `for_name`, `for_title`, `for_office`.
+The relay repeats the three prototype paragraphs, preserving name bolding and
+plain stacked title/office styling, and prints FOR once. The current app has no
+structured addressee editor and sends one blank group; the person completes it
+in the draft. This does not guess addressees from the activity's participant list.
+The four old assistance requests remain starting text for editing, not inferred
+commitments. The private calendar note is never copied.
+
+Local verification: 148 focused activity, travel-script, office-relay, converter
+and release tests passed before the final documentation pass. The real Blank was
+re-exported and accepted by the pure mapping function (12 replacements). Its page
+setup and body measurements match the committed reference exactly. Header/footer
+measurements match after normalizing anchored-image order only: Google reversed
+the two image records in this export. The source exports remain outside Git.
+The full suite was not run. Administrator deployment, maker log, real draft and
+DOCX/PDF checks remain pending; these remain administrator acceptance checks after the code merge.
