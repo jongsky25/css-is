@@ -232,3 +232,35 @@ def test_a_requester_with_no_requests_sees_the_button_and_a_plain_message(reques
     finally:
         client.__exit__(None, None, None)
         app_mod.DB = old
+
+
+# ---- Supplies 4.1: requester-only users are sent away from the management pages ----
+
+def test_a_requester_is_sent_from_the_management_pages_to_their_own(released, app_mod):
+    c, u, _, path, _, r, first, second = released
+    client, old = client_for(app_mod, path, u[2])
+    try:
+        go = lambda url: client.get(url, follow_redirects=False)
+        sent = go('/supplies/items?q=bond+paper')
+        assert sent.status_code == 303 and sent.headers['location'] == '/supplies/requests/new?q=bond+paper'
+        assert go('/supplies/items').headers['location'] == '/supplies/requests/new'
+        assert go('/supplies/items/1').headers['location'] == '/supplies/requests/new'
+        assert go('/supplies/issues?mine=1&status=pending').headers['location'] == '/supplies/requests'
+        assert go('/supplies/awaiting-stock').headers['location'] == '/supplies/requests?status=active'
+        assert go(f'/supplies/issues/{first}').status_code == 200                                # a link from an email still works
+        assert go(f'/supplies/requests/{r}').status_code == 200
+    finally:
+        client.__exit__(None, None, None)
+        app_mod.DB = old
+
+
+def test_people_who_manage_supplies_keep_those_pages(released, app_mod):
+    c, u, _, path, _, r, first, second = released
+    for who in (u[1], u[3]):                                                                      # custodian and approver
+        client, old = client_for(app_mod, path, who)
+        try:
+            for url in ('/supplies/items', '/supplies/issues', '/supplies/awaiting-stock'):
+                assert client.get(url, follow_redirects=False).status_code == 200, (who['username'], url)
+        finally:
+            client.__exit__(None, None, None)
+            app_mod.DB = old

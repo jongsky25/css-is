@@ -66,6 +66,26 @@ def make_router(templates, get_conn):
             'plural': requests_service._plural, **values,
         }, status_code=status_code)
 
+    def requester_only(conn, request):
+        """True for a signed-in user with no management role (the same test the navigation uses)."""
+        user = permissions.require_actor(conn, request.state.user)
+        return not (user['role'] == 'admin' or permissions.has_role(conn, user, 'custodian')
+                    or permissions.has_role(conn, user, 'auditor') or permissions.has_role(conn, user, 'replenishment_approver')
+                    or conn.execute("SELECT 1 FROM supply_role_grant WHERE user_id=? AND role='request_approver' AND revoked_at IS NULL",
+                                    (user['id'],)).fetchone())
+
+    def side_door(request, to):
+        """Supplies 4.1: a requester-only user who opens a management page is sent to the page that is theirs."""
+        conn = get_conn()
+        try:
+            if requester_only(conn, request):
+                return RedirectResponse(to, status_code=303)
+        except (Denied, Invalid, Conflict) as exc:
+            return failure(request, exc)
+        finally:
+            conn.close()
+        return None
+
     def failure(request, exc):
         status = 404 if isinstance(exc, Missing) else 403 if isinstance(exc, Denied) else 409 if isinstance(exc, Conflict) else 422
         return templates.TemplateResponse(request, 'supplies/error.html', {
@@ -468,6 +488,10 @@ def make_router(templates, get_conn):
 
     @router.get('/supplies/items')
     def catalog(request: Request):
+        query = request.query_params.get('q', '')[:100]
+        door = side_door(request, '/supplies/requests/new' + ('?' + urlencode({'q': query}) if query.strip() else ''))
+        if door is not None:
+            return door
         conn = get_conn()
         try:
             response=catalog_page(request, conn)
@@ -581,6 +605,9 @@ def make_router(templates, get_conn):
 
     @router.get('/supplies/items/{item_id}')
     def item(request: Request, item_id: int):
+        door = side_door(request, '/supplies/requests/new')
+        if door is not None:
+            return door
         conn = get_conn()
         try:
             return item_page(request, conn, item_id)
@@ -707,6 +734,9 @@ def make_router(templates, get_conn):
 
     @router.get('/supplies/issues')
     def releases(request: Request):
+        door = side_door(request, '/supplies/requests')
+        if door is not None:
+            return door
         conn = get_conn()
         try:
             return render(request, conn, 'issues', **issues.list_issues(conn, request.state.user,
@@ -820,6 +850,9 @@ def make_router(templates, get_conn):
 
     @router.get('/supplies/awaiting-stock')
     def awaiting_stock(request: Request):
+        door = side_door(request, '/supplies/requests?status=active')
+        if door is not None:
+            return door
         conn = get_conn()
         try:
             return render(request, conn, 'awaiting_stock', **backorders.awaiting_stock(conn, request.state.user,

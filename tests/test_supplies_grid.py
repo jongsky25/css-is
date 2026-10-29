@@ -167,9 +167,10 @@ def test_inventory_http_json_csrf_errors_cache_and_disabled_reads(app_mod,viewer
     c.execute('''INSERT INTO supply_item(code,description,unit,created_by,created_at,updated_at)
         VALUES ('HTTP-1','Synthetic read-only item','Piece',?,'2026-10-19','2026-10-19')''',(user['id'],));c.commit()
     assert not s.enabled(c)
-    html=viewer.get('/supplies/items')
-    assert html.status_code==200 and 'supplies-grid.js?v=' in html.text
-    token=re.search(r'data-csrf="([a-f0-9]+)"',html.text)[1]
+    sent=viewer.get('/supplies/items',follow_redirects=False)                    # Supplies 4.1: the page itself is not for a requester
+    assert sent.status_code==303 and sent.headers['location']=='/supplies/requests/new'
+    import hashlib,hmac,auth
+    token=hmac.new(auth._secret(),('supplies:'+viewer.cookies.get(auth.COOKIE_NAME)).encode(),hashlib.sha256).hexdigest()
     for path in ('/supplies/inventory-data','/supplies/inventory-export.csv','/supplies/inventory-views'):
         result=viewer.get(path)
         assert result.status_code==200 and result.headers['cache-control']=='no-store'

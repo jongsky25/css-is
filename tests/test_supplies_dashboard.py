@@ -234,6 +234,9 @@ def test_http_dashboard_filters_and_queue_counts_match_and_scope_denies(queue_db
                 client.cookies.set(auth.COOKIE_NAME,session_token(actor))
                 assert client.get('/supplies').status_code==200
                 for card in card_data(c,actor):
+                    if actor is u[2] and card['url'].startswith(('/supplies/issues','/supplies/awaiting-stock')):
+                        sent=client.get(card['url'],follow_redirects=False)           # Supplies 4.1: a requester is sent to My requests
+                        assert sent.status_code==303 and sent.headers['location'].startswith('/supplies/requests');continue
                     page=client.get(card['url']);assert page.status_code==200
                     if not card['url'].startswith('/supplies/notices'):
                         assert f'{card["count"]} matching ' in page.text
@@ -244,7 +247,10 @@ def test_http_dashboard_filters_and_queue_counts_match_and_scope_denies(queue_db
             payload='<script>unique_test_only()</script>'
             escaped=client.get('/supplies/requests',params={'q':payload})
             assert payload not in escaped.text and '&lt;script&gt;unique_test_only()&lt;/script&gt;' in escaped.text
+            assert client.get('/supplies/issues?status=unknown',follow_redirects=False).status_code==303
+            client.cookies.set(auth.COOKIE_NAME,session_token(u[1]))
             assert client.get('/supplies/issues?status=unknown').status_code==422
+            client.cookies.set(auth.COOKIE_NAME,session_token(u[2]))
             c.execute('UPDATE admin_user SET active=0 WHERE id=?',(u[2]['id'],));c.commit()
             assert client.get('/supplies',follow_redirects=False).status_code in (303,401,403)
     finally:app_mod.DB=old

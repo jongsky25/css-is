@@ -18,10 +18,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "9.22"
+APP_VERSION = "9.23"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "9.23",
+        "date": "October 29, 2026",
+        "summary": "Staff who only request supplies are taken straight to their own pages.",
+        "changes": [
+            "If you only request supplies, the old supply catalog, releases and awaiting-stock pages now take you to the request page (with what you searched for) or to My requests.",
+            "A link to a single release from an email still opens it, so you can confirm receipt.",
+            "People who manage supplies, approve requests or read stock keep every page as before."
+        ]
+    },
     {
         "version": "9.22",
         "date": "October 29, 2026",

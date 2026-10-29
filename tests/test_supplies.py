@@ -324,10 +324,11 @@ def test_http_catalog_configuration_and_permission_boundaries(app_mod, supplies_
             assert client.post(target + '/update', data=update, follow_redirects=False).status_code == 303
             assert client.post(target + '/update', data={**update, 'operation_key': key()}).status_code == 409
             login(u[2])
-            staff_catalog = client.get('/supplies/items')
-            assert staff_catalog.status_code == 200 and 'Add supply item' not in staff_catalog.text
+            staff_catalog = client.get('/supplies/items?q=paper', follow_redirects=False)      # Supplies 4.1: staff are sent to the request grid
+            assert staff_catalog.status_code == 303 and staff_catalog.headers['location'] == '/supplies/requests/new?q=paper'
+            assert client.get('/supplies/items', follow_redirects=False).headers['location'] == '/supplies/requests/new'
             assert client.get('/supplies/settings').status_code == 403
-            assert client.get('/supplies/items/999999').status_code == 404
+            assert client.get('/supplies/items/999999', follow_redirects=False).status_code == 303
             login(u[0])
             current_token = hidden(client.get('/supplies/settings').text, 'csrf')
             # Session-bound tokens cannot be copied to another logged-in account.
