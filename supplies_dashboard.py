@@ -91,6 +91,10 @@ def _filter(kind, state):
     if kind=='requests':
         if state=='action':return "approval_status IN ('draft','returned')",[]
         if state=='outstanding':return "approval_status='approved' AND outstanding_quantity>0",[]
+        # Supplies 3.1: the requester's three views. Needs action is what only the requester can move forward.
+        if state=='needs_action':return "(approval_status IN ('draft','returned') OR (approval_status='approved' AND ack_pending>0))",[]
+        if state=='active':return "(approval_status='submitted' OR (approval_status='approved' AND (outstanding_quantity>0 OR ack_pending>0)))",[]
+        if state=='completed':return "(approval_status IN ('rejected','cancelled') OR (approval_status='approved' AND outstanding_quantity<=0 AND ack_pending=0))",[]
         if state in REQUEST_STATES:return 'approval_status=?',[state]
     if kind=='releases' and state in ('pending','acknowledged','disputed'):
         return 'acknowledgment_status=?',[state]

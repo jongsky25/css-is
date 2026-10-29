@@ -18,6 +18,7 @@ import supplies_import as imports
 import supplies_import_review as review
 import supplies_requests as requests_service
 import supplies_shop as shop
+from supplies_status import STEPS as request_steps
 import supplies_approvals as approvals
 import supplies_backorders as backorders
 import supplies_issues as issues
@@ -898,9 +899,19 @@ def make_router(templates, get_conn):
     def request_index(request: Request):
         conn = get_conn()
         try:
-            return render(request, conn, 'requests', **requests_service.my_requests(conn, request.state.user,
-                          page=request.query_params.get('page', '1'), query=request.query_params.get('q', ''),
-                          state=request.query_params.get('status', '')))
+            params = request.query_params
+            page, query = params.get('page', '1'), params.get('q', '')
+            status = params.get('status')
+            tab = 'active' if status is None else ('' if status == 'all' else status)     # Supplies 3.1: Active, Completed, All
+            data = requests_service.my_requests(conn, request.state.user, page=page, query=query, state=tab)
+            needs = []
+            if tab in ('active', 'completed', '') and not query and page in ('1', ''):
+                needs = requests_service.my_requests(conn, request.state.user, state='needs_action')['requests']
+            needs_ids = {e['id'] for e in needs}
+            entries = [e for e in data['requests'] if e['id'] not in needs_ids]
+            return render(request, conn, 'requests', **{**data, 'requests': entries, 'total': data['total'] - (len(data['requests']) - len(entries))},
+                          needs=needs, tab=tab,
+                          pictures=shop.items_for(conn, needs + entries), steps=request_steps)
         except (Denied, Invalid) as exc:
             return failure(request, exc)
         finally:

@@ -1,12 +1,32 @@
 {% extends 'supplies/base.html' %}
+{% macro card(entry) %}
+{% set st = entry.stage %}{% set shown = pictures.get(entry.id, {'items': [], 'more': 0}) %}
+<li class="req-card req-{{ st.tone }}">
+  <div class="req-pics" aria-hidden="true">{% for it in shown['items'] %}<span class="req-pic" style="--tint:{{ it.picture.tint }}">{% if it.picture.src and not it.picture.initials %}<img src="{{ it.picture.src }}" alt="" loading="lazy" width="48" height="48">{% else %}<b>{{ it.picture.initials or '?' }}</b>{% endif %}</span>{% endfor %}{% if shown['more'] %}<span class="req-more">+{{ shown['more'] }}</span>{% endif %}</div>
+  <div class="req-main">
+    <a class="req-title" href="/supplies/requests/{{ entry.id }}">{{ entry.control_number or 'Draft request' }}</a>
+    <span class="req-items">{% for it in shown['items'] %}{{ it.description }}{{ ', ' if not loop.last }}{% endfor %}{% if shown['more'] %} and {{ shown['more'] }} more{% endif %}</span>
+    <span class="req-pill req-pill-{{ st.tone }}">{{ st.label }}</span>
+    {% if entry.approval_status in ('submitted', 'approved') %}<ol class="req-track" aria-label="Progress">{% for name in steps %}<li class="{{ 'is-done' if loop.index < st.step else 'is-now' if loop.index == st.step }}">{{ name }}</li>{% endfor %}</ol>{% endif %}
+    <span class="req-sentence">{{ st.sentence }}</span>
+    <span class="req-date">Updated {{ entry.updated_at|humandt }}</span>
+  </div>
+  {% if st.action %}<a class="req-action" href="{{ '/supplies/requests/' ~ entry.id ~ ('/edit' if entry.approval_status in ('draft', 'returned') else '') }}">{{ st.action }}</a>{% endif %}
+</li>
+{% endmacro %}
 {% block supplies_content %}
 <h1>My supply requests</h1>
-{% include 'supplies/_queue_filters.html' %}
-
 {% if enabled %}<p><a href="/supplies/requests/new">New supply request</a></p>{% endif %}
-<p>Draft your request, review its items and submit it for approval. Submission does not reserve or issue stock.</p>
-{% if requests %}<div class="supply-table" role="region" aria-label="My supply requests" tabindex="0"><table><thead><tr><th scope="col">Request</th><th scope="col">Purpose</th><th scope="col">Status</th><th scope="col">Next person / action</th><th scope="col">Updated</th></tr></thead><tbody>
-{% for entry in requests %}<tr><td><a href="/supplies/requests/{{ entry.id }}">{{ entry.control_number or ('Draft #' ~ entry.id) }}</a></td><td>{{ entry.purpose }}</td><td>{{ entry.approval_status|capitalize }}</td><td>{{ entry.next_action }}</td><td>{{ entry.updated_at|humandt }}</td></tr>{% endfor %}
-</tbody></table></div><ul class="supply-mobile-quantities" aria-label="Request actions">{% for entry in requests %}<li><a href="/supplies/requests/{{ entry.id }}">{{ entry.control_number or ('Draft #' ~ entry.id) }}</a> · {{ entry.approval_status|capitalize }} · {{ entry.next_action }}</li>{% endfor %}</ul>{% else %}<p>You have no supply requests yet.</p>{% endif %}
+{% if needs %}<section aria-labelledby="needs-h"><h2 id="needs-h">Needs your action</h2><ul class="req-list">{% for entry in needs %}{{ card(entry) }}{% endfor %}</ul></section>{% endif %}
+<nav class="req-tabs" aria-label="Show requests">
+  <a href="?status=active"{% if tab == 'active' %} aria-current="page"{% endif %}>Active</a>
+  <a href="?status=completed"{% if tab == 'completed' %} aria-current="page"{% endif %}>Completed</a>
+  <a href="?status=all"{% if tab == '' %} aria-current="page"{% endif %}>All</a>
+</nav>
+<form method="get" class="supply-actions" aria-label="Search my requests"><input type="hidden" name="status" value="{{ tab or 'all' }}">
+  <label for="queue-query">Search my requests<input id="queue-query" type="search" name="q" value="{{ query }}" maxlength="200"></label><button type="submit">Search</button></form>
+<p class="supply-result-count">{{ total }} matching request{{ '' if total == 1 else 's' }}.</p>
+{% if requests %}<ul class="req-list" aria-label="My supply requests">{% for entry in requests %}{{ card(entry) }}{% endfor %}</ul>
+{% elif not needs %}<p>{% if query %}No request matches “{{ query }}”.{% elif tab == 'active' %}You have nothing in progress.{% elif tab == 'completed' %}You have no finished requests yet.{% else %}You have no supply requests yet.{% endif %}</p>{% endif %}
 {% include 'supplies/_queue_pagination.html' %}
 {% endblock %}

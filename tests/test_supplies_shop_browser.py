@@ -179,3 +179,18 @@ def test_review_opens_the_cart_which_fits_a_phone_and_send_submits_it(shop_page)
     page.wait_for_url('**/supplies/requests/1')
     page.wait_for_load_state('load')
     assert 'SUP-' in page.content() and 'Browser cart purpose' in page.content()
+
+
+def test_my_requests_cards_fit_a_phone_and_show_the_progress(shop_page):
+    page, _ = shop_page
+    page.locator('.shop-card').first.wait_for()
+    page.locator('.shop-card', has_text='A4 Bond Paper').locator('input').fill('2')
+    page.locator('#request-purpose').fill('Browser list purpose')
+    page.get_by_role('button', name='Review').click()
+    page.get_by_role('button', name='Send request').click()
+    page.wait_for_url('**/supplies/requests/1')
+    page.goto('http://office.test/supplies/requests')
+    page.locator('.req-card').first.wait_for()
+    assert page.locator('.req-track li').count() == 4 and page.locator('.req-pic').count() >= 1
+    assert page.evaluate('document.documentElement.scrollWidth <= window.innerWidth')
+    shot(page, 'requests-375.png')
