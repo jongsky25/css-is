@@ -97,3 +97,9 @@
 .req-tabs { display:flex; gap:.4rem; margin:.5rem 0; }
 .req-tabs a { padding:.35rem .9rem; border:1px solid var(--line, #c7cfdc); border-radius:999px; text-decoration:none; }
 .req-tabs a[aria-current="page"] { background:#1d5fa8; color:#fff; border-color:#1d5fa8; }
+
+/* Supplies 3.2: the owner's request page leads with where it is; the old detail view sits under Full details */
+.req-head { border:1px solid var(--line, #d8dee9); border-left-width:5px; border-radius:12px; padding:.8rem 1rem; margin:.6rem 0 1rem; background:var(--surface, #fff); }
+.req-lines { margin:.3rem 0; padding-left:1.1rem; }
+.req-actions { display:flex; flex-wrap:wrap; gap:.6rem; align-items:center; }
+.req-full > summary { cursor:pointer; font-weight:600; }

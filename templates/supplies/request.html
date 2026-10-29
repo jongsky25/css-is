@@ -2,7 +2,23 @@
 {% block supplies_content %}
 {% set entry = supply_request %}
 <h1>{{ entry.control_number or ('Supply draft #' ~ entry.id) }}</h1>
-{% if entry.current_revision %}<p><a href="/supplies/requests/{{ entry.id }}/print">Print submitted request</a>{% if enabled and entry.is_owner %} · <a href="/supplies/requests/{{ entry.id }}/again">Request again</a>{% endif %}</p>{% endif %}
+{% if entry.is_owner %}{% set st = stage %}
+<section class="req-head req-{{ st.tone if st else 'info' }}" aria-label="Where your request is">
+{% if st %}<span class="req-pill req-pill-{{ st.tone }}">{{ st.label }}</span>
+{% if entry.approval_status in ('submitted', 'approved') %}<ol class="req-track" aria-label="Progress">{% for name in steps %}<li class="{{ 'is-done' if loop.index < st.step else 'is-now' if loop.index == st.step }}">{{ name }}</li>{% endfor %}</ol>{% endif %}
+<p class="req-sentence"><strong>{{ st.sentence }}</strong></p>{% endif %}
+{% if entry.purpose %}<p><strong>Purpose:</strong> {{ entry.purpose }}{% if entry.date_needed %} · <strong>Needed by:</strong> {{ entry.date_needed|humandate }}{% endif %}</p>{% endif %}
+<ul class="req-lines" aria-label="Items">{% for line in entry.lines %}<li>{{ line.description_snapshot }} · asked {{ line.requested_quantity }}{% if entry.approval_status == 'approved' and line.approved_quantity is not none %} · approved {{ line.approved_quantity }} · received {{ line.effective_issued_quantity }} {{ plural(line.unit_snapshot, line.effective_issued_quantity) }}{% else %} {{ plural(line.unit_snapshot, line.requested_quantity) }}{% endif %}{% if line.active is defined and not line.active %} · no longer in the catalog{% endif %}</li>{% endfor %}</ul>
+<p class="req-actions">
+{% if enabled and entry.approval_status in ('draft', 'returned') %}<a class="req-action" href="/supplies/requests/{{ entry.id }}/edit">{{ 'Fix and resend' if entry.approval_status == 'returned' else 'Review and send' }}</a>{% endif %}
+{% if st and st.action == 'Confirm receipt' %}{% for release in entry.releases if release.acknowledgment_status == 'pending' %}{% if loop.first %}<a class="req-action" href="/supplies/issues/{{ release.id }}">Confirm receipt</a>{% endif %}{% endfor %}{% endif %}
+{% if entry.current_revision %}<a href="/supplies/requests/{{ entry.id }}/print">Print the request form</a>{% if enabled %} · <a href="/supplies/requests/{{ entry.id }}/again">Request again</a>{% endif %}{% endif %}
+</p>
+{% if enabled and entry.is_owner and entry.approval_status in ('draft','submitted','returned') %}<details class="supply-panel"><summary>Withdraw request</summary><form method="post" action="/supplies/requests/{{ entry.id }}/withdraw"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="operation_key" value="{{ new_key() }}"><input type="hidden" name="revision" value="{{ entry.revision }}"><label for="withdraw-reason">Withdrawal reason</label><input id="withdraw-reason" name="reason" maxlength="2000" required><p>Withdrawal closes this request. Create a new draft if you need to request supplies later.</p><button type="submit">Withdraw before approval</button></form></details>{% endif %}
+</section>
+<details class="supply-panel req-full"><summary>Full details</summary>
+{% endif %}
+{% if entry.current_revision and not entry.is_owner %}<p><a href="/supplies/requests/{{ entry.id }}/print">Print submitted request</a></p>{% endif %}
 <p role="status">{{ entry.approval_status|capitalize }}{% if entry.approval_status == 'cancelled' %} · Withdrawn by requester{% endif %} · Version {{ entry.revision }}{% if entry.current_revision %} · Submitted revision {{ entry.current_revision }}{% endif %}</p>
 <p>Requester: {{ entry.requester_snapshot }} · Unit: {{ entry.unit_snapshot }}</p>
 <p><strong>Purpose:</strong> {{ entry.purpose }}</p><p><strong>Date needed:</strong> {{ entry.date_needed|humandate if entry.date_needed else 'Not specified' }}</p>
@@ -12,7 +28,6 @@
 </tbody></table></div>
 {% if enabled and entry.is_owner and entry.approval_status in ('draft','returned') %}<p><a href="/supplies/requests/{{ entry.id }}/edit">{{ 'Edit returned request' if entry.approval_status=='returned' else 'Edit draft' }}</a></p>
 <form method="post" action="/supplies/requests/{{ entry.id }}/submit"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="operation_key" value="{{ new_key() }}"><input type="hidden" name="revision" value="{{ entry.revision }}"><p>Review the items and quantities before submitting. {{ 'The existing control number is retained on resubmission.' if entry.control_number else 'A control number is assigned when you submit.' }}</p><button type="submit">Submit for approval</button></form>{% endif %}
-{% if enabled and entry.is_owner and entry.approval_status in ('draft','submitted','returned') %}<details class="supply-panel"><summary>Withdraw request</summary><form method="post" action="/supplies/requests/{{ entry.id }}/withdraw"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="operation_key" value="{{ new_key() }}"><input type="hidden" name="revision" value="{{ entry.revision }}"><label for="withdraw-reason">Withdrawal reason</label><input id="withdraw-reason" name="reason" maxlength="2000" required><p>Withdrawal closes this request. Create a new draft if you need to request supplies later.</p><button type="submit">Withdraw before approval</button></form></details>{% endif %}
 {% if entry.fulfillment %}<p class="supply-notice">{{ entry.fulfillment }}. Approval reserves available stock and does not change physical on-hand.</p>{% endif %}
 {% if entry.approval_status=='approved' %}<ul class="supply-mobile-quantities" aria-label="Approved quantities by item">{% for line in entry.lines %}<li>{{ line.code_snapshot }}: approved {{ line.approved_quantity }} {{ line.unit_snapshot }}; issued {{ line.effective_issued_quantity }}; cancelled {{ line.cancelled_quantity }}; reserved {{ line.reserved_quantity }}; awaiting stock {{ line.awaiting_stock_quantity }}.</li>{% endfor %}</ul>{% endif %}
 {% if entry.approval_status=='approved' and entry.can_cancel_remainder and enabled %}
@@ -46,4 +61,5 @@
 </details>{% endif %}
 <h2>Request timeline</h2>
 <ol>{% for event in entry.events %}<li>{{ event.created_at|humandt }} · {% if event.action=='request_save' %}Draft saved{% elif event.action=='request_submit' %}Submitted for approval{% elif event.action=='request_decide' %}{{ event.decision|capitalize }} by approver{% elif event.action=='reservation_allocate' %}Stock reservation updated{% elif event.action=='request_cancel_remainder' %}Remaining demand cancelled{% elif event.action=='issue_post' %}Supplies issued{% elif event.action=='correction_return' %}Returned supplies recorded{% elif event.action=='correction_issue_reversal' %}Mistaken issue corrected{% elif event.action=='stocktake_reservation_release' %}Reservation reduced after physical count{% elif event.action=='request_withdraw' %}Withdrawn by requester{% else %}{{ event.action }}{% endif %}{% if event.reason %} · {{ event.reason }}{% endif %}{% if event.correction_id and (event.action!='stocktake_reservation_release' or can_read_stock) %} · <a href="/supplies/corrections/{{ event.correction_id }}">Correction {{ event.correction_id }}</a>{% endif %}</li>{% endfor %}</ol>
+{% if entry.is_owner %}</details>{% endif %}
 {% endblock %}

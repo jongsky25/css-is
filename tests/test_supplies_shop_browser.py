@@ -189,6 +189,10 @@ def test_my_requests_cards_fit_a_phone_and_show_the_progress(shop_page):
     page.get_by_role('button', name='Review').click()
     page.get_by_role('button', name='Send request').click()
     page.wait_for_url('**/supplies/requests/1')
+    page.locator('.req-head').wait_for()                                           # Supplies 3.2: the page opens on where it is
+    assert page.locator('.req-track li').count() == 4 and page.get_by_text('Full details').count() == 1
+    assert page.evaluate('document.documentElement.scrollWidth <= window.innerWidth')
+    shot(page, 'request-375.png')
     page.goto('http://office.test/supplies/requests')
     page.locator('.req-card').first.wait_for()
     assert page.locator('.req-track li').count() == 4 and page.locator('.req-pic').count() >= 1

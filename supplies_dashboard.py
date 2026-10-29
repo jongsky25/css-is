@@ -132,6 +132,18 @@ def _next_action(conn, entry, kind):
         entry['stage'] = requester_stage(entry)
 
 
+def request_stage(conn, user, request_id):
+    """The requester's plain-language stage for one of their own requests (None when it is not theirs)."""
+    with stock._snapshot(conn):
+        user = permissions.require_actor(conn,user)
+        base,args = _base(conn,user,'requests',False)
+        found = rows(conn,'WITH queue AS ('+base+') SELECT * FROM queue WHERE id=?',(*args,request_id))
+        if not found:
+            return None
+        _next_action(conn,found[0],'requests')
+        return found[0]['stage']
+
+
 def queue(conn, user, kind, *, page=1, query='', state='', mine=False, count_only=False, limit=25):
     with stock._snapshot(conn):
         user = permissions.require_actor(conn,user)

@@ -61,7 +61,8 @@ def make_router(templates, get_conn):
             'can_replenish_approve': can_replenish_approve,
             'can_read_stock': can_maintain or can_audit,
             'requester_only': not (can_configure or can_approve or can_maintain or can_audit or can_replenish_approve),
-            'new_key': lambda: str(uuid4()), 'error': '', 'submitted': {}, **values,
+            'new_key': lambda: str(uuid4()), 'error': '', 'submitted': {}, 'stage': None, 'steps': request_steps,
+            'plural': requests_service._plural, **values,
         }, status_code=status_code)
 
     def failure(request, exc):
@@ -1039,7 +1040,8 @@ def make_router(templates, get_conn):
         conn = get_conn()
         try:
             result = requests_service.get_request(conn, request.state.user, request_id)
-            return render(request, conn, 'request', supply_request=result)
+            stage = dashboard_views.request_stage(conn, request.state.user, request_id) if result['is_owner'] else None
+            return render(request, conn, 'request', supply_request=result, stage=stage)
         except (Denied, Invalid) as exc:
             return failure(request, exc)
         finally:
