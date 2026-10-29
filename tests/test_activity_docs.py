@@ -223,7 +223,7 @@ def test_a_cancelled_item_cannot_be_drafted(viewer, conn, relay):
 
 # ------------------------------------------------ the Apps Script template and the app agree ---
 
-def test_the_invitation_is_the_doh_memorandum_with_the_request_table(viewer, conn, relay):
+def test_the_invitation_supports_the_office_memo_and_retains_legacy_request_data(viewer, conn, relay):
     st.set_setting(conn, "travel.sig.head_name", "Dr. Ana Reyes"); st.set_setting(conn, "travel.sig.head_title", "OIC - Director IV")
     eid = create(viewer, audience="bureau", title="CALEP Planning Workshop", venue="Hotel Ozamiz",
                  start_date="2026-10-12", end_date="2026-10-16")
@@ -596,7 +596,7 @@ def test_the_file_copy_page_has_its_own_empty_header_and_footer_and_the_routing_
     assert ok["status"] == "ok"
     names = [c if isinstance(c, str) else next(iter(c)) for c in ok["calls"]]
     # find the mark, start a new section there, give THAT section an empty header and footer, then clear the mark
-    assert names == ["get", "insertSectionBreak", "get", "createHeader", "createFooter", "replaceAllText"]
+    assert names == ["get", "insertSectionBreak", "get", "createHeader", "createFooter", "updateSectionStyle", "replaceAllText"]
     assert ok["calls"][1]["insertSectionBreak"]["sectionType"] == "NEXT_PAGE"
     assert ok["calls"][3]["createHeader"]["type"] == "DEFAULT" and "sectionBreakLocation" in ok["calls"][3]["createHeader"]
     assert ok["calls"][4]["createFooter"]["sectionBreakLocation"] == ok["calls"][3]["createHeader"]["sectionBreakLocation"]
@@ -623,10 +623,12 @@ def test_the_index_finders_read_a_docs_document_correctly():
     assert p == {"oneBreak": -1, "twoBreaks": 3, "missing": -1, "found": 4, "empty": -1, "emptyBreak": -1}
 
 
-def test_only_the_dpo_asks_for_the_file_copy_page(viewer, conn, relay):
+def test_dpo_and_invitation_ask_for_their_own_file_copy_boxes(viewer, conn, relay):
     eid = create(viewer, kind="travel", title="CALEP Field Visit", audience="bureau", people=[str(uid(conn, "viewer@test.local"))])
     draft(viewer, eid, "dpo"); draft(viewer, eid, "invitation")
-    assert relay.calls[0].get("extras") == {"file_copy": True} and not relay.calls[1].get("extras")
+    assert relay.calls[0].get("extras") == {"file_copy": True}
+    assert relay.calls[1]["extras"]["file_copy"] is True
+    assert relay.calls[1]["extras"]["boxes"] == ["slip"]
 
 
 def test_the_relay_client_sends_extras_only_when_asked_for(monkeypatch):
@@ -875,3 +877,34 @@ def test_file_copy_can_select_only_the_initials_box_without_changing_the_dpo_def
         [["", "BLHSD"], ["Initials", ""], ["Date", ""]]]
     assert result["empty"]["status"] == "ok"
     assert not [child for child in result["empty"]["children"][9:] if child["type"] == "TABLE"]
+
+
+@pytest.mark.skipif(shutil.which("node") is None, reason="node is not installed")
+def test_office_memo_placeholders_have_payload_values_and_no_source_names(viewer, conn, relay, monkeypatch):
+    result = subprocess.run(["node", "tests/js/office_templates_harness.js"], capture_output=True, text=True, timeout=30)
+    assert result.returncode == 0, result.stderr
+    expected = set(json.loads(result.stdout)["built"]["expect"])
+    st.set_setting(conn, "travel.sig.head_name", "Configured Head")
+    st.set_setting(conn, "travel.sig.head_title", "Configured Director")
+    monkeypatch.setattr(ad, "file_copy_reviewer", lambda *args: ("Configured Reviewer", "Reviewer Title"))
+    eid = create(viewer, audience="bureau", title="Office Workshop", venue="Venue", note="PRIVATE MUST NOT COPY")
+    draft(viewer, eid, "invitation")
+    call = relay.calls[0]
+    assert expected <= set(call["fields"]) | set(call["blocks"])
+    assert call["fields"]["from_name"] == "CONFIGURED HEAD"
+    assert call["fields"]["unit_name"] == ad.SIGNATORY_UNIT
+    assert call["extras"]["addressees"] == [
+        {"for_name": ad.BLANK, "for_title": ad.BLANK, "for_office": ad.BLANK}]
+    assert len(call["blocks"]["representatives"]) == len(ad.ASSISTANCE)
+    assert all(request in " ".join(call["blocks"]["representatives"]) for area, request in ad.ASSISTANCE)
+    assert "[Rationale" in call["blocks"]["rationale"][0]
+    assert call["extras"]["reviewer"] == {"name": "Configured Reviewer", "title": "Reviewer Title"}
+    assert "PRIVATE MUST NOT COPY" not in json.dumps(call)
+    assert all(word not in json.dumps(call).upper() for word in ("PEREZ", "SAYSON-GARCIA", "GAJITOS"))
+
+
+def test_file_copy_disables_inherited_first_page_variants():
+    style = file_copy()["ok"]["calls"][5]["updateSectionStyle"]
+    assert style["sectionStyle"] == {"useFirstPageHeaderFooter": False}
+    assert style["fields"] == "useFirstPageHeaderFooter"
+    assert style["range"]["startIndex"] < style["range"]["endIndex"]
