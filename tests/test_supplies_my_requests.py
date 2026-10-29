@@ -132,3 +132,58 @@ def test_the_approver_sees_the_same_page_as_before(approval_db, app_mod):
     finally:
         client.__exit__(None, None, None)
         app_mod.DB = old
+
+
+# ---- Supplies 3.3: one-tap receipt confirmation ----
+
+from tests.test_supplies_acknowledgments import released  # noqa: E402,F401
+import supplies_issues as issues  # noqa: E402
+
+
+def ack_status(c, u, issue_id):
+    return issues.get_issue(c, u[1], issue_id)['acknowledgment']['status']
+
+
+def test_the_release_page_has_two_plain_answers_for_the_recipient(released, app_mod):
+    c, u, _, path, _, r, first, second = released
+    client, old = client_for(app_mod, path, u[2])
+    try:
+        page = client.get(f'/supplies/issues/{first}').text
+        assert 'Yes, I received it' in page and 'Report a problem' in page and '<select id="ack-status"' not in page
+        data = {'csrf': hidden(page, 'csrf'), 'operation_key': key(), 'revision': '0', 'status': 'acknowledged'}
+        done = client.post(f'/supplies/issues/{first}/acknowledge', data=data, follow_redirects=False)
+        assert done.status_code == 303 and done.headers['location'] == f'/supplies/issues/{first}'
+        assert ack_status(c, u, first) == 'acknowledged'
+        after = client.get(f'/supplies/issues/{first}').text
+        assert 'Yes, I received it' not in after and 'Report a problem' in after             # a problem can still be raised
+        # a problem needs its reason; then the recipient resolves it with an explanation
+        late = {'csrf': hidden(after, 'csrf'), 'operation_key': key(), 'revision': '1', 'status': 'disputed', 'note': ''}
+        assert client.post(f'/supplies/issues/{first}/acknowledge', data=late).status_code == 422
+        client.post(f'/supplies/issues/{first}/acknowledge', data={**late, 'note': 'Two reams were damaged'})
+        assert ack_status(c, u, first) == 'disputed'
+        disputed = client.get(f'/supplies/issues/{first}').text
+        assert 'sorted out' in disputed and 'Report a problem' not in disputed
+    finally:
+        client.__exit__(None, None, None)
+        app_mod.DB = old
+
+
+def test_the_request_page_confirms_receipt_in_one_tap_and_comes_back_to_itself(released, app_mod):
+    c, u, _, path, _, r, first, second = released
+    client, old = client_for(app_mod, path, u[2])
+    try:
+        page = client.get(f'/supplies/requests/{r}').text
+        head = page.split('Full details')[0]
+        assert 'Please confirm receipt' in head and 'Yes, I received ISS-2026-00001' in head and 'Report a problem with ISS-2026-00002' in head
+        data = {'csrf': hidden(page, 'csrf'), 'operation_key': key(), 'revision': '0', 'status': 'acknowledged',
+                'back': f'/supplies/requests/{r}'}
+        done = client.post(f'/supplies/issues/{first}/acknowledge', data=data, follow_redirects=False)
+        assert done.headers['location'] == f'/supplies/requests/{r}' and ack_status(c, u, first) == 'acknowledged'
+        after = client.get(f'/supplies/requests/{r}').text.split('Full details')[0]
+        assert 'Yes, I received ISS-2026-00001' not in after and 'Yes, I received ISS-2026-00002' in after
+        outside = client.post(f'/supplies/issues/{second}/acknowledge', data={**data, 'operation_key': key(), 'back': 'https://evil.example/x'},
+                              follow_redirects=False)
+        assert outside.headers['location'] == f'/supplies/issues/{second}'                  # only the request page is allowed back
+    finally:
+        client.__exit__(None, None, None)
+        app_mod.DB = old

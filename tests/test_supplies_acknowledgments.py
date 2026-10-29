@@ -198,7 +198,7 @@ def test_http_ack_forms_print_privacy_csrf_and_escaping(released,app_mod):
     try:
         with TestClient(app_mod.app) as client:
             client.cookies.set(auth.COOKIE_NAME,session_token(u[2]))
-            page=client.get(target);assert 'Pending' in page.text and 'Record recipient response' in page.text
+            page=client.get(target);assert 'Pending' in page.text and 'Yes, I received it' in page.text and 'Report a problem' in page.text
             token=hidden(page.text,'csrf');fields={'csrf':token,'operation_key':key(),'revision':'0','status':'disputed','note':'<script>Synthetic</script>'}
             assert client.post(target+'/acknowledge',data={**fields,'csrf':'bad'}).status_code==403
             assert client.post(target+'/acknowledge',data=fields,headers={'Origin':'https://foreign.example'}).status_code==403

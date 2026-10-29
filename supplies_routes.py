@@ -2,6 +2,7 @@
 import hashlib
 import hmac
 import json
+import re
 from urllib.parse import urlencode
 from uuid import uuid4
 
@@ -61,7 +62,7 @@ def make_router(templates, get_conn):
             'can_replenish_approve': can_replenish_approve,
             'can_read_stock': can_maintain or can_audit,
             'requester_only': not (can_configure or can_approve or can_maintain or can_audit or can_replenish_approve),
-            'new_key': lambda: str(uuid4()), 'error': '', 'submitted': {}, 'stage': None, 'steps': request_steps,
+            'new_key': lambda: str(uuid4()), 'error': '', 'submitted': {}, 'stage': None, 'steps': request_steps, 'user_id': user['id'],
             'plural': requests_service._plural, **values,
         }, status_code=status_code)
 
@@ -737,7 +738,9 @@ def make_router(templates, get_conn):
             callback = acknowledgments.record_paper_acknowledgment if paper else acknowledgments.acknowledge_issue
             callback(conn, request.state.user, issue_id, fields,
                      expected_revision=fields.get('revision'), operation_key=fields.get('operation_key'))
-            return RedirectResponse('/supplies/issues/' + str(issue_id), status_code=303)
+            back = fields.get('back', '')                              # Supplies 3.3: the request page can ask to come back to it
+            return RedirectResponse(back if re.fullmatch(r'/supplies/requests/\d+', back) else '/supplies/issues/' + str(issue_id),
+                                    status_code=303)
         except (Denied, Invalid, Conflict) as exc:
             if not isinstance(exc, Denied):
                 try:
