@@ -18,18 +18,26 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "9.18"
+APP_VERSION = "9.19"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
-        "version": "9.18",
+        "version": "9.19",
         "date": "October 29, 2026",
         "summary": "You can now send the notice of meeting by email from the calendar.",
         "changes": [
             "On a meeting's page, under Notice of meeting, a new Send notice of meeting button emails the date, time, place, online link and agenda to everyone on the meeting.",
             "You can add email addresses for people from other offices, and the notice lists the people you noted as expected from other offices.",
             "The page shows who was sent the notice and whether each email went out, and warns you if the date, place, link or room changed after it was sent."
+        ]
+    },
+    {
+        "version": "9.18",
+        "date": "October 29, 2026",
+        "summary": "Behind the scenes: the automatic check on the companions was repaired.",
+        "changes": [
+            "Nothing looks different. The automatic test that checks the pets and their outfits stopped running because the web browser it uses was updated; it now uses the current one."
         ]
     },
     {
