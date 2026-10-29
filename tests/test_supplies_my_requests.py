@@ -187,3 +187,48 @@ def test_the_request_page_confirms_receipt_in_one_tap_and_comes_back_to_itself(r
     finally:
         client.__exit__(None, None, None)
         app_mod.DB = old
+
+
+# ---- Supplies 3.4: the Supplies home ----
+
+@pytest.mark.usefixtures("unlimited_requests")
+def test_the_home_leads_with_one_button_what_needs_action_and_the_latest_requests(approval_db, app_mod):
+    c, u, _, path, item = approval_db
+    d, sub, ret, rej = mixed(c, u, item)
+    client, old = client_for(app_mod, path, u[2])
+    try:
+        page = client.get('/supplies').text
+        assert 'supply-big-button' in page and '>Request supplies<' in page and 'Overview' not in page.split('<h1>')[1].split('</h1>')[0]
+        assert page.index('Needs your action') < page.index('Your latest requests')
+        assert 'Review and send' in page and 'Fix and resend' in page
+        assert f'href="/supplies/requests/{sub}"' in page and f'href="/supplies/requests/{rej}"' in page
+        assert page.count(f'href="/supplies/requests/{d}"') == 1                                  # not repeated under latest
+        assert page.count('class="req-track"') == 1 and 'See all my requests' in page
+        assert 'supply-dashboard-grid' not in page                                              # no role cards for a requester
+    finally:
+        client.__exit__(None, None, None)
+        app_mod.DB = old
+
+
+def test_management_users_keep_their_role_cards_and_get_their_own_requests_too(approval_db, app_mod):
+    c, u, _, path, item = approval_db
+    draft(c, u, item, purpose='Custodian draft')
+    client, old = client_for(app_mod, path, u[3])                                                 # an approver
+    try:
+        page = client.get('/supplies').text
+        assert 'supply-dashboard-grid' in page and 'Request supplies' in page and 'Your latest requests' in page
+        assert 'Supplies overview' in page
+    finally:
+        client.__exit__(None, None, None)
+        app_mod.DB = old
+
+
+def test_a_requester_with_no_requests_sees_the_button_and_a_plain_message(request_db, app_mod):
+    c, u, _, path, _ = request_db
+    client, old = client_for(app_mod, path, u[2])
+    try:
+        page = client.get('/supplies').text
+        assert 'Request supplies' in page and 'You have not made a supply request yet.' in page and 'Needs your action' not in page
+    finally:
+        client.__exit__(None, None, None)
+        app_mod.DB = old

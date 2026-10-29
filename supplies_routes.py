@@ -265,7 +265,13 @@ def make_router(templates, get_conn):
     def home(request: Request):
         conn = get_conn()
         try:
-            return render(request, conn, 'dashboard', **dashboard_views.dashboard(conn, request.state.user))
+            data = dashboard_views.dashboard(conn, request.state.user)
+            needs = dashboard_views.queue(conn, request.state.user, 'requests', state='needs_action', limit=5)['requests']
+            needs_ids = {e['id'] for e in needs}
+            latest = [e for e in dashboard_views.queue(conn, request.state.user, 'requests', limit=8)['requests']
+                      if e['id'] not in needs_ids][:3]                                                  # Supplies 3.4
+            return render(request, conn, 'dashboard', **data, needs=needs, latest=latest,
+                          pictures=shop.items_for(conn, needs + latest))
         except (Denied, Invalid, Conflict) as exc:
             return failure(request, exc)
         finally:

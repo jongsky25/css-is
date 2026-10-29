@@ -193,6 +193,11 @@ def test_my_requests_cards_fit_a_phone_and_show_the_progress(shop_page):
     assert page.locator('.req-track li').count() == 4 and page.get_by_text('Full details').count() == 1
     assert page.evaluate('document.documentElement.scrollWidth <= window.innerWidth')
     shot(page, 'request-375.png')
+    page.goto('http://office.test/supplies')                                       # Supplies 3.4: the home
+    page.locator('.req-card').first.wait_for()
+    assert page.get_by_role('link', name='Request supplies').count() >= 1 and page.locator('.req-track li').count() == 4
+    assert page.evaluate('document.documentElement.scrollWidth <= window.innerWidth')
+    shot(page, 'home-375.png')
     page.goto('http://office.test/supplies/requests')
     page.locator('.req-card').first.wait_for()
     assert page.locator('.req-track li').count() == 4 and page.locator('.req-pic').count() >= 1
