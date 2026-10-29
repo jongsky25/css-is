@@ -32,6 +32,7 @@ import calendar_ics as cics
 import calendar_guidance
 import calendar_schedule
 import calendar_actions
+from documents_storage import transaction
 import gdocs_relay
 import ratelimit
 import mailer
@@ -995,6 +996,88 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
                                      r["action"], oc.describe_change(r["diff"]))}
                         for r in revs],
         })
+
+    # ── a room booking seen from the calendar ───────────────────────────────────
+
+    def _booking_for(conn, user, rid):
+        """The reservation a calendar card stands for, if this person may see it (the layer's own rule: an approved
+        booking is bureau-wide, a pending one only for its requester and the people who decide), else None."""
+        res = rooms.get_reservation(conn, rid)
+        if res is None or res["status"] not in ("requested", "approved"):
+            return None
+        mine = res["requester_user_id"] is not None and res["requester_user_id"] == user["id"]
+        if res["status"] == "requested" and not (mine or rooms.is_room_admin(conn, user)):
+            return None
+        return res
+
+    @router.get("/calendar/rooms/{rid}", response_class=HTMLResponse)
+    def calendar_room(request: Request, rid: int, ok: str = "", err: str = ""):
+        """Where a conference-room card on the calendar leads. If the booking belongs to a calendar item the person can
+        open, that item (notice of meeting, minutes, people); otherwise the booking's details with a way to start the item."""
+        user = request.state.user
+        conn = get_conn()
+        try:
+            res = _booking_for(conn, user, rid)
+            if res is None:
+                return _not_found(request)
+            if res["calendar_entry_id"] and oc.viewable_entry(conn, user, res["calendar_entry_id"]) is not None:
+                return RedirectResponse(f"/calendar/entries/{res['calendar_entry_id']}", status_code=303)
+            mine = res["requester_user_id"] is not None and res["requester_user_id"] == user["id"]
+            can_act = mine or rooms.is_room_admin(conn, user)
+            req_name = ""
+            if res["requester_user_id"] is not None:
+                req_name = oc.display_names(conn, [conn.execute("SELECT username FROM admin_user WHERE id=?",
+                                                                (res["requester_user_id"],)).fetchone()[0]]).popitem()[1]
+            elif res["ext_org"]:
+                req_name = f"Guest · {res['ext_org']}"
+            return templates.TemplateResponse(request, "calendar_room.html", {
+                "nav_active": "calendar", "res": res, "ok": ok, "err": err, "requester": req_name,
+                "when": rooms.queue_when(res), "hours": rooms.hours_text(conn, res),
+                "can_make_item": can_act and not res["calendar_entry_id"] and not res["event_id"],
+                "activity": st.get_event_by_id(conn, res["event_id"]) if res["event_id"] else None,
+            })
+        finally:
+            conn.close()
+
+    @router.post("/calendar/rooms/{rid}/make-item")
+    def calendar_room_make_item(request: Request, rid: int):
+        """Start the calendar item for a booking that has none, so its notice of meeting and minutes can be done."""
+        user = request.state.user
+        conn = get_conn()
+        try:
+            res = _booking_for(conn, user, rid)
+            if res is None:
+                return _not_found(request)
+            mine = res["requester_user_id"] is not None and res["requester_user_id"] == user["id"]
+            if not (mine or rooms.is_room_admin(conn, user)):
+                return RedirectResponse(f"/calendar/rooms/{rid}?err={quote('Only the person who booked it, or the Administrative Section, can do this.')}", status_code=303)
+            if res["calendar_entry_id"] or res["event_id"]:
+                return RedirectResponse(f"/calendar/rooms/{rid}", status_code=303)
+            slots = {s["id"]: s for s in rooms.list_slots(conn, active_only=False)}
+            held = [slots[i] for i in res["slot_ids"] if i in slots]
+            ctx = oc.viewer_context(conn, user)
+            owner = ""
+            if ctx["section_path"]:
+                r = conn.execute("SELECT id FROM org_unit WHERE path=?", (ctx["section_path"],)).fetchone()
+                owner = r[0] if r else None
+            fields = {"title": res["title"], "start_date": res["day"], "kind": "meeting", "status": "confirmed",
+                      "start_time": held[0]["start_time"] if held else None, "end_time": held[-1]["end_time"] if held else None,
+                      "venue": "Conference room", "modality": res["modality"], "audience": "people" if not owner else "unit",
+                      "owner_org_id": owner or None, "extra_org_ids": []}
+            people = [(res["requester_user_id"] or user["id"], "attending")]
+            try:
+                with transaction(conn):
+                    eid = calendar_actions.create_in_transaction(conn, user, fields, people, [])
+                    conn.execute("UPDATE room_reservation SET calendar_entry_id=? WHERE id=? AND calendar_entry_id IS NULL",
+                                 (eid, rid))
+                    st.audit(conn, user["username"], "room_calendar_item", target_type="room_reservation", target_id=rid,
+                             summary=f"calendar item {eid} made for booking {res['ref_code']}", commit=False)
+            except ValueError as ex:
+                return RedirectResponse(f"/calendar/rooms/{rid}?err={quote(str(ex))}", status_code=303)
+        finally:
+            conn.close()
+        return RedirectResponse(f"/calendar/entries/{eid}?ok={quote('Calendar item made for this booking. You can now draft the notice of meeting and the minutes.')}",
+                                status_code=303)
 
     @router.get("/calendar/entries/{entry_id}/edit", response_class=HTMLResponse)
     def calendar_edit_form(request: Request, entry_id: int):

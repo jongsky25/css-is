@@ -31,7 +31,7 @@ def test_the_agenda_shows_an_approved_booking_to_anyone_with_its_hours_and_icon(
     book(conn)
     page = viewer.get("/calendar").text
     assert "Budget review" in page and 'data-kind="room"' in page and "🏢" in page
-    assert "09:00" in page and "Conference room" in page and "/rooms?week=" in page
+    assert "09:00" in page and "Conference room" in page and "/calendar/rooms/" in page
 
 
 def test_a_pending_request_is_hidden_from_others_and_marked_for_its_owner(viewer, encoder, conn):
@@ -73,3 +73,22 @@ def test_the_api_serves_rooms_only_when_asked_and_never_a_hidden_request(viewer,
     mine = encoder.get(f"/api/calendar?start={start}&layers=rooms").json()
     assert sorted(i["title"] for i in mine["items"]) == ["Approved one", "Pending one"]
     assert viewer.get(f"/api/calendar?start={start}&layers=rooms&kind=room").status_code == 200
+
+
+def test_a_booking_card_opens_its_details_and_the_booker_can_start_the_item(viewer, conn):
+    b = book(conn, who="viewer@test.local")
+    page = viewer.get(f"/calendar/rooms/{b['id']}").text
+    assert "Budget review" in page and "Make the calendar item for this booking" in page
+    r = viewer.post(f"/calendar/rooms/{b['id']}/make-item", follow_redirects=False)
+    assert r.status_code == 303 and r.headers["location"].startswith("/calendar/entries/")
+    assert rooms.get_reservation(conn, b["id"])["calendar_entry_id"]
+    again = viewer.get(f"/calendar/rooms/{b['id']}", follow_redirects=False)
+    assert again.status_code == 303 and again.headers["location"].startswith("/calendar/entries/")
+
+
+def test_someone_else_sees_the_booking_but_cannot_start_its_item(viewer, conn):
+    b = book(conn)                                                # booked by the encoder
+    page = viewer.get(f"/calendar/rooms/{b['id']}").text
+    assert "Budget review" in page and "Make the calendar item for this booking" not in page
+    viewer.post(f"/calendar/rooms/{b['id']}/make-item", follow_redirects=False)
+    assert not rooms.get_reservation(conn, b["id"])["calendar_entry_id"]

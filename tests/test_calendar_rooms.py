@@ -78,7 +78,7 @@ def test_the_item_carries_the_hours_the_requesters_unit_and_a_link(w):
     (i,) = items(w, "s3")
     assert (i["layer"], i["kind"], i["status"], i["key"]) == ("rooms", "room", "confirmed", f"room:{b['id']}")
     assert (i["start"], i["end"], i["start_time"], i["end_time"], i["all_day"]) == ("2030-03-07", "2030-03-07", "09:00", "11:00", False)
-    assert i["venue"] == "Conference room" and i["url"] == "/rooms?week=2030-03-07" and not i["editable"]
+    assert i["venue"] == "Conference room" and i["url"] == f"/calendar/rooms/{b['id']}" and not i["editable"]
     assert i["owner_label"] == "S1" and i["owner_org_id"] == w["unit"]["T/D1/S1"] and i["tone"] in oc.UNIT_TONES
     assert [p["user_id"] for p in i["people"]] == [w["s1"]["id"]] and i["flags"] == []
 
@@ -214,4 +214,4 @@ def test_a_booking_tied_to_the_requesters_own_item_opens_that_item_not_the_room_
                       today=MON, calendar_entry_id=9001)
     rooms.approve(w["conn"], r["id"], "boss@test.local", today=MON)
     assert [i["url"] for i in items(w, "s1")] == ["/calendar/entries/9001"]
-    assert [i["url"] for i in items(w, "s3")] == ["/rooms?week=2030-03-07"]           # another person cannot open the item
+    assert [i["url"] for i in items(w, "s3")] == [f"/calendar/rooms/{r['id']}"]  # another person goes to the booking's page, which sends them to the item if they can see it

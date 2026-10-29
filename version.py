@@ -18,12 +18,12 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "9.23"
+APP_VERSION = "9.24"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
-        "version": "9.23",
+        "version": "9.24",
         "date": "October 29, 2026",
         "summary": "Staff who only request supplies are taken straight to their own pages.",
         "changes": [
@@ -33,7 +33,7 @@ CHANGELOG = [
         ]
     },
     {
-        "version": "9.22",
+        "version": "9.23",
         "date": "October 29, 2026",
         "summary": "The Supplies home page now starts with what you need to do.",
         "changes": [
@@ -43,7 +43,7 @@ CHANGELOG = [
         ]
     },
     {
-        "version": "9.21",
+        "version": "9.22",
         "date": "October 29, 2026",
         "summary": "Confirm you received your supplies in one tap.",
         "changes": [
@@ -53,7 +53,7 @@ CHANGELOG = [
         ]
     },
     {
-        "version": "9.20",
+        "version": "9.21",
         "date": "October 29, 2026",
         "summary": "Your request page now opens on where the request is.",
         "changes": [
@@ -63,7 +63,7 @@ CHANGELOG = [
         ]
     },
     {
-        "version": "9.19",
+        "version": "9.20",
         "date": "October 29, 2026",
         "summary": "My supply requests now shows each request as a card with its progress.",
         "changes": [
@@ -73,7 +73,7 @@ CHANGELOG = [
         ]
     },
     {
-        "version": "9.18",
+        "version": "9.19",
         "date": "October 29, 2026",
         "summary": "Fix a returned supply request, or request the same things again, from the same review page.",
         "changes": [
@@ -83,13 +83,22 @@ CHANGELOG = [
         ]
     },
     {
-        "version": "9.17",
+        "version": "9.18",
         "date": "October 29, 2026",
         "summary": "Review your supply request, then send it in one step.",
         "changes": [
             "After choosing items on the grid, Review shows your list with pictures and numbers you can still change, plus the purpose and date needed.",
             "Send request saves and sends it in one tap. Save for later keeps it as a draft instead.",
             "If something stops the sending, your request is kept as a draft and you stay on the review page to fix it, so nothing you typed is lost."
+        ]
+    },
+    {
+        "version": "9.17",
+        "date": "October 29, 2026",
+        "summary": "Clicking a conference room booking on the calendar now opens the meeting.",
+        "changes": [
+            "Clicking a conference room booking on the calendar no longer takes you to the room reservation page. It opens the meeting, where you can prepare the notice of meeting and the minutes.",
+            "If a booking has no calendar item yet, its page shows the booking details, and the person who booked it can make the calendar item with one button."
         ]
     },
     {
