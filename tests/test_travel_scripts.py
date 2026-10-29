@@ -62,15 +62,16 @@ def test_cenrr_with_no_rows_leaves_no_placeholders(harness):
 
 def test_rer_template_and_fill(harness):
     tpl = flat(harness["rerTemplate"])
-    for k in ("payee_name", "payee_designation", "amount_words", "amount_figures", "ride_from", "ride_to", "ride_date",
+    for k in ("payee_name", "payee_designation", "amount_words", "amount_figures", "ride_mode", "ride_from", "ride_to", "ride_date",
               "activity_title", "dpo_ref"):
         assert "{{%s}}" % k in tpl, k
     assert "RALIE" not in tpl and "5451" not in tpl
     assert "Fund Cluster : ______" in tpl and "RER No. : ______" in tpl            # the blanks left for handwriting stay
     filled = flat(harness["rerFilled"])
     assert "RECEIVED from MR. RALIE" not in filled and "Juan" in filled
-    assert "of Five Hundred Pesos (P500)" in filled
-    assert "fare from Home to Airport" in filled and "on September 1, 2026" in filled
+    assert "the amount of Five Hundred Pesos (P500)" in filled                       # spot feedback #203
+    assert "Taxi fare from Home to Airport" in filled and "on September 1, 2026" in filled
+    assert "Rental or transportation should show inclusive dates, purpose, distance, inclusive points of travel, etc." in filled
     assert "in attendance to Workshop as per DPO No. 2026-123" in filled and "{{" not in filled
 
 

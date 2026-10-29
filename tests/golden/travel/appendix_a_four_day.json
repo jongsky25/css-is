@@ -22,8 +22,8 @@
         {
           "r_date": "September 1, 2026",
           "r_place": "Home to Airport",
-          "r_dep": "06:00",
-          "r_arr": "07:00",
+          "r_dep": "6:00 AM",
+          "r_arr": "7:00 AM",
           "r_mode": "Taxi",
           "r_allowance": "250",
           "r_perdiem": "500",
@@ -32,8 +32,8 @@
         {
           "r_date": "September 2, 2026",
           "r_place": "Home to Airport",
-          "r_dep": "06:00",
-          "r_arr": "07:00",
+          "r_dep": "6:00 AM",
+          "r_arr": "7:00 AM",
           "r_mode": "Taxi",
           "r_allowance": "250",
           "r_perdiem": "500",
@@ -42,8 +42,8 @@
         {
           "r_date": "September 3, 2026",
           "r_place": "Home to Airport",
-          "r_dep": "06:00",
-          "r_arr": "07:00",
+          "r_dep": "6:00 AM",
+          "r_arr": "7:00 AM",
           "r_mode": "Taxi",
           "r_allowance": "250",
           "r_perdiem": "500",
@@ -52,8 +52,8 @@
         {
           "r_date": "September 4, 2026",
           "r_place": "Home to Airport",
-          "r_dep": "06:00",
-          "r_arr": "07:00",
+          "r_dep": "6:00 AM",
+          "r_arr": "7:00 AM",
           "r_mode": "Taxi",
           "r_allowance": "250",
           "r_perdiem": "500",

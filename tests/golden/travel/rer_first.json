@@ -7,6 +7,7 @@
     "payee_designation": "Nurse II",
     "amount_words": "Five Hundred Pesos",
     "amount_figures": "500",
+    "ride_mode": "Public transport",
     "ride_from": "Home",
     "ride_to": "Airport",
     "ride_date": "September 1, 2026",

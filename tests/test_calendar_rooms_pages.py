@@ -75,15 +75,27 @@ def test_the_api_serves_rooms_only_when_asked_and_never_a_hidden_request(viewer,
     assert viewer.get(f"/api/calendar?start={start}&layers=rooms&kind=room").status_code == 200
 
 
-def test_a_booking_card_opens_its_details_and_the_booker_can_start_the_item(viewer, conn):
-    b = book(conn, who="viewer@test.local")
-    page = viewer.get(f"/calendar/rooms/{b['id']}").text
+def test_a_booking_card_opens_its_details_and_the_booker_can_start_the_item(admin, conn):
+    b = book(conn)                                                # booked by the encoder, so the booker's own click is tested below
+    page = admin.get(f"/calendar/rooms/{b['id']}").text
     assert "Budget review" in page and "Make the calendar item for this booking" in page
-    r = viewer.post(f"/calendar/rooms/{b['id']}/make-item", follow_redirects=False)
+    r = admin.post(f"/calendar/rooms/{b['id']}/make-item", follow_redirects=False)
     assert r.status_code == 303 and r.headers["location"].startswith("/calendar/entries/")
     assert rooms.get_reservation(conn, b["id"])["calendar_entry_id"]
-    again = viewer.get(f"/calendar/rooms/{b['id']}", follow_redirects=False)
+    again = admin.get(f"/calendar/rooms/{b['id']}", follow_redirects=False)
     assert again.status_code == 303 and again.headers["location"].startswith("/calendar/entries/")
+
+
+def test_the_bookers_own_click_makes_the_item_and_opens_it(viewer, conn):
+    """Spot feedback #199: opening your own booking lands on the meeting page, never on the booking summary."""
+    b = book(conn, who="viewer@test.local")
+    assert not rooms.get_reservation(conn, b["id"])["calendar_entry_id"]
+    r = viewer.get(f"/calendar/rooms/{b['id']}", follow_redirects=False)
+    assert r.status_code == 303 and r.headers["location"].startswith("/calendar/entries/")
+    entry_id = rooms.get_reservation(conn, b["id"])["calendar_entry_id"]
+    assert entry_id and r.headers["location"].startswith(f"/calendar/entries/{entry_id}")
+    again = viewer.get(f"/calendar/rooms/{b['id']}", follow_redirects=False)
+    assert again.status_code == 303 and again.headers["location"].startswith(f"/calendar/entries/{entry_id}")
 
 
 def test_someone_else_sees_the_booking_but_cannot_start_its_item(viewer, conn):
@@ -105,12 +117,12 @@ def test_an_administrator_can_start_the_item_for_someone_elses_booking(admin, co
 
 def test_the_booker_sees_the_room_features_their_role_allows(encoder, manager, conn):
     b = book(conn)                                                # booked by the encoder
-    page = encoder.get(f"/calendar/rooms/{b['id']}").text
-    assert "Make the calendar item for this booking" in page
-    assert f'href="/rooms/meals/{b["id"]}"' in page and f'action="/rooms/{b["id"]}/withdraw"' in page
-    assert 'href="/rooms/mine"' in page and "from_room=" not in page          # an encoder cannot create CSS activities
+    r = encoder.get(f"/calendar/rooms/{b['id']}", follow_redirects=False)
+    assert r.status_code == 303 and r.headers["location"].startswith("/calendar/entries/")      # their own: the item, made on the way in
+    page = encoder.get(r.headers["location"]).text
+    assert f'href="/rooms/meals/{b["id"]}"' in page and 'href="/rooms/mine"' in page
     m = book(conn, who="manager@test.local", title="Section meeting", hours=(13, 14))
-    assert f'href="/create?from_room={m["id"]}"' in manager.get(f"/calendar/rooms/{m['id']}").text
+    assert manager.get(f"/calendar/rooms/{m['id']}", follow_redirects=False).status_code == 303
 
 
 def test_someone_else_sees_the_booking_but_none_of_its_actions(viewer, conn):

@@ -278,9 +278,9 @@ def test_the_page_writes_each_report_day_from_the_itinerary():
     assert out.returncode == 0, out.stderr
     assert json.loads(out.stdout) == [
         "",                                                                    # before the activity, nothing entered
-        "travelled from Quezon City to Tagaytay by TNVS (left 06:00, arrived 08:30); took part in Planning Workshop at Tagaytay",
+        "travelled from Quezon City to Tagaytay by TNVS (left 6:00 AM, arrived 8:30 AM); took part in Planning Workshop at Tagaytay",
         "took part in Planning Workshop at Tagaytay",                           # a middle day: the activity alone
-        "took part in Planning Workshop at Tagaytay; travelled from Tagaytay to Quezon City by DOH van (left 17:00)"]
+        "took part in Planning Workshop at Tagaytay; travelled from Tagaytay to Quezon City by DOH van (left 5:00 PM)"]
 
 
 @pytest.mark.skipif(shutil.which("node") is None, reason="node is not installed")
@@ -337,3 +337,9 @@ def test_designation_confirmed_on_the_prepare_page_is_used_on_every_form():
         == ["Senior Health Program Officer"] * 3
     blank = build(["cenrr"], rows)                                       # nothing typed: the profile's designation
     assert blank[0].fields["designation"] == "Nurse II"
+
+
+def test_clock_text_never_shows_military_time():
+    import travel_docs as td
+    assert [td.clock_text(v) for v in ("00:05", "06:00", "12:00", "13:30", "23:59", "", "8:15 AM", "noon")] == \
+        ["12:05 AM", "6:00 AM", "12:00 PM", "1:30 PM", "11:59 PM", "", "8:15 AM", "noon"]

@@ -1025,6 +1025,28 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
             return None
         return res
 
+    def _make_booking_item(conn, user, res, rid):
+        """Make the calendar item for a booking that has none and link the booking to it; returns the item's id."""
+        slots = {s["id"]: s for s in rooms.list_slots(conn, active_only=False)}
+        held = [slots[i] for i in res["slot_ids"] if i in slots]
+        ctx = oc.viewer_context(conn, user)
+        owner = ""
+        if ctx["section_path"]:
+            r = conn.execute("SELECT id FROM org_unit WHERE path=?", (ctx["section_path"],)).fetchone()
+            owner = r[0] if r else None
+        fields = {"title": res["title"], "start_date": res["day"], "kind": "meeting", "status": "confirmed",
+                  "start_time": held[0]["start_time"] if held else None, "end_time": held[-1]["end_time"] if held else None,
+                  "venue": "Conference room", "modality": res["modality"], "audience": "people" if not owner else "unit",
+                  "owner_org_id": owner or None, "extra_org_ids": []}
+        people = [(res["requester_user_id"] or user["id"], "attending")]
+        with transaction(conn):
+            eid = calendar_actions.create_in_transaction(conn, user, fields, people, [])
+            conn.execute("UPDATE room_reservation SET calendar_entry_id=? WHERE id=? AND calendar_entry_id IS NULL",
+                         (eid, rid))
+            st.audit(conn, user["username"], "room_calendar_item", target_type="room_reservation", target_id=rid,
+                     summary=f"calendar item {eid} made for booking {res['ref_code']}", commit=False)
+        return eid
+
     def _may_start_item(conn, user, res):
         """Who may make the calendar item for a booking that has none: the person who booked it, the Administrative
         Section, and administrators and section managers (they can already send the notice of meeting)."""
@@ -1046,6 +1068,17 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
             activity = st.get_event_by_id(conn, res["event_id"]) if res["event_id"] else None
             if activity:                       # a CSS activity's own page manages it (people who can't manage it get its public page)
                 return RedirectResponse(f"/activities/{activity['event_token']}/manage", status_code=303)
+            # Spot feedback #199: a person opening their own live booking wants the meeting page (notice of meeting,
+            # minutes, DPO), not a booking summary, so the item is made for them on the way in. Others still see the page.
+            if (not res["calendar_entry_id"] and res["status"] in ("requested", "approved")
+                    and res["requester_user_id"] is not None and res["requester_user_id"] == user["id"]):
+                try:
+                    eid = _make_booking_item(conn, user, res, rid)
+                except ValueError:
+                    eid = None
+                if eid:
+                    return RedirectResponse(f"/calendar/entries/{eid}?ok={quote('Calendar item made for this booking. You can now draft the notice of meeting and the minutes.')}",
+                                            status_code=303)
             can_act = _may_start_item(conn, user, res)
             mine = res["requester_user_id"] is not None and res["requester_user_id"] == user["id"]
             room_act = mine or rooms.is_room_admin(conn, user)          # the people the room's own features allow
@@ -1082,25 +1115,8 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
                 return RedirectResponse(f"/calendar/rooms/{rid}?err={quote('Only the person who booked it, an administrator, a section manager or the Administrative Section can do this.')}", status_code=303)
             if res["calendar_entry_id"] or res["event_id"]:
                 return RedirectResponse(f"/calendar/rooms/{rid}", status_code=303)
-            slots = {s["id"]: s for s in rooms.list_slots(conn, active_only=False)}
-            held = [slots[i] for i in res["slot_ids"] if i in slots]
-            ctx = oc.viewer_context(conn, user)
-            owner = ""
-            if ctx["section_path"]:
-                r = conn.execute("SELECT id FROM org_unit WHERE path=?", (ctx["section_path"],)).fetchone()
-                owner = r[0] if r else None
-            fields = {"title": res["title"], "start_date": res["day"], "kind": "meeting", "status": "confirmed",
-                      "start_time": held[0]["start_time"] if held else None, "end_time": held[-1]["end_time"] if held else None,
-                      "venue": "Conference room", "modality": res["modality"], "audience": "people" if not owner else "unit",
-                      "owner_org_id": owner or None, "extra_org_ids": []}
-            people = [(res["requester_user_id"] or user["id"], "attending")]
             try:
-                with transaction(conn):
-                    eid = calendar_actions.create_in_transaction(conn, user, fields, people, [])
-                    conn.execute("UPDATE room_reservation SET calendar_entry_id=? WHERE id=? AND calendar_entry_id IS NULL",
-                                 (eid, rid))
-                    st.audit(conn, user["username"], "room_calendar_item", target_type="room_reservation", target_id=rid,
-                             summary=f"calendar item {eid} made for booking {res['ref_code']}", commit=False)
+                eid = _make_booking_item(conn, user, res, rid)
             except ValueError as ex:
                 return RedirectResponse(f"/calendar/rooms/{rid}?err={quote(str(ex))}", status_code=303)
         finally:
