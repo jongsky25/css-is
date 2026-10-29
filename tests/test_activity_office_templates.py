@@ -1,4 +1,4 @@
-"""Office memo converter contract, fail-closed activation and relay paragraph groups."""
+"""Office memo/NOM converter contracts, activation checks and relay expansion."""
 import json
 import re
 import shutil
@@ -52,3 +52,34 @@ def test_repeated_addressees_keep_name_bold_title_indent_and_one_for_label(offic
     assert groups[0]["bold"] and groups[3]["bold"]
     assert not groups[1]["bold"] and not groups[4]["bold"]
     assert groups[1]["attrs"] == groups[4]["attrs"] == {"indentStart": 180}
+
+
+def test_notice_converter_preserves_grids_and_keeps_only_original(office_template):
+    notice = office_template["notice"]
+    assert "all placeholders present" in notice["report"]
+    assert notice["text"].count("NOTICE OF MEETING") == 1
+    assert "SOURCE" not in notice["text"]
+    assert set(notice["expect"]) == set(re.findall(r"\{\{([a-z_]+)\}\}", notice["text"]))
+    tables = [child for child in notice["children"] if child["type"] == "table"]
+    assert [table["grid"] for table in tables] == [[4005, 5730], [1365, 735, 7275]]
+    assert tables[0]["rows"] == [["Name", "Office"], ["{{inv_name}}", "{{inv_office}}"]]
+    assert notice["children"][-1]["text"] == ""
+    assert "pageBreak" not in notice["children"][-1]["attrs"]
+    assert notice["writes"] == [{"TPL_notice_of_meeting": "CANDIDATE", "TPLF_notice_of_meeting": "CANDIDATE"}]
+    assert "all placeholders present" in office_template["plainAgenda"]
+
+
+def test_notice_refuses_unexpected_or_unflattened_source_without_activation(office_template):
+    for failure in office_template["noticeFailures"]:
+        assert "FAILED" in failure["report"]
+        assert failure["writes"] == [] and failure["active"] == "OLD"
+
+
+def test_notice_rows_and_list_blocks_fill_the_converted_tables(office_template):
+    filled = office_template["noticeFilled"]
+    assert "{{" not in filled["text"]
+    tables = [child for child in filled["children"] if child["type"] == "table"]
+    assert tables[0]["rows"] == [["Name", "Office"], ["Person One", "Office One"], ["Person Two", ""]]
+    assert tables[0]["grid"] == [4005, 5730] and tables[1]["grid"] == [1365, 735, 7275]
+    assert [p["text"] for p in office_template["noticeAgenda"]] == ["First topic", "Second topic"]
+    assert all(p["type"] == "L" for p in office_template["noticeAgenda"])

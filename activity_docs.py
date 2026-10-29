@@ -539,16 +539,35 @@ def _notice_of_meeting(conn, entry, title, me, profile, head_name, head_title, u
     """Notice of meeting (spot feedback #189/#192). The app knows the date, time, place, link and who is invited, so those
     are filled; the agenda is the person's to write. Expected participants from other offices come from the item."""
     people = describe_people(conn, entry, None, positions)
-    invited = [_line(i, n, d) for i, (n, d) in enumerate(people, 1)] or ["[List who is invited.]"]
-    others = [l for l in get_visitors(conn, entry["id"]).split("\n") if l]
-    invited += [f"{len(people) + i}. {l}" for i, l in enumerate(others, 1)]
+    # Retain the legacy block for the old drawn template during rollout/rollback.
+    invited = [_line(i, n, d) for i, (n, d) in enumerate(people, 1)]
+    rows = []
+    for person in entry.get("people") or []:
+        prof = st.get_user_profile(conn, person["user_id"]) or {}
+        name = prof.get("person_name") or prof.get("username") or ""
+        if not name:
+            continue
+        office = conn.execute("SELECT name FROM org_unit WHERE id=?", (prof.get("org_unit_id"),)).fetchone()
+        rows.append({"inv_name": name, "inv_office": office[0] if office else ""})
+    others = [line for line in get_visitors(conn, entry["id"]).split("\n") if line.strip()]
+    invited += [f"{len(people) + i}. {line}" for i, line in enumerate(others, 1)]
+    # Free-text visitors are not split at commas: names and credentials may contain them.
+    rows += [{"inv_name": line, "inv_office": ""} for line in others]
     link = (entry.get("meeting_url") or "").strip()
-    fields = {"date": td.long_date(tz.today_local()), "title": title, "unit_name": unit,
-              "meeting_when": when_text(entry), "venue": where_text(entry), "meeting_link": link or "",
+    start, end = entry.get("start_time"), entry.get("end_time")
+    time = entry.get("time_note") or BLANK
+    if start:
+        time = td.clock_text(start) + (f" to {td.clock_text(end)}" if end else "")
+    fields = {"date": td.long_date(tz.today_local()), "title": title, "subject": title, "unit_name": SIGNATORY_UNIT,
+              "meeting_date": days_text(entry), "meeting_time": time,
+              "meeting_when": when_text(entry), "venue": where_text(entry), "meeting_link": link,
               "prepared_by": me, "prepared_title": (profile.get("designation") or "") if positions else "",
               "head_name": head_name.upper() if head_name else BLANK, "head_title": head_title}
-    blocks = {"invited": invited, "agenda": ["1. [first agenda item]", "2. [second agenda item]"]}
-    return td.DocPayload("notice_of_meeting", "notice_of_meeting", f"Notice of Meeting - {title}"[:120], fields, blocks=blocks)
+    blocks = {"invited": invited or ["[List who is invited.]"],
+              "agenda": ["[First agenda item]", "[Second agenda item]"]}
+    table = {"invitees": {"marker": "inv_name", "data": rows or [{"inv_name": BLANK, "inv_office": ""}]}}
+    return td.DocPayload("notice_of_meeting", "notice_of_meeting", f"Notice of Meeting - {title}"[:120], fields,
+                         blocks=blocks, rows=table, extras={"file_copy": True, "boxes": []})
 
 
 MINUTES_PROMPTS = {
