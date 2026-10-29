@@ -137,3 +137,55 @@ is recorded in `docs/templates/README.md`.
 The Google maker/draft/export/PDF checks in handoff section 6 apply when later
 increments change the templates or relay. Increment 0 verifies the measuring tool
 with a generated DOCX and checks the actual Blank measurements against the plan.
+
+## Activity template refresh: Increment 1 (relay groundwork, 9.31)
+
+The placeholder table above is unchanged. This increment updates only the relay:
+activity headings stay in capitals, blocks can fill list items, converted office
+templates can preserve their formatting, and file copies can select their boxes.
+
+Administrator release steps:
+
+1. Replace `travel_docs.gs` in the existing relay project with this release and
+   deploy a new version of the existing web app. Keep its URL and settings.
+2. Do not rebuild templates or set office-format markers yet. Increment 2 will
+   create the first converted template. Existing drafts are unaffected; new
+   drafts use the updated heading rules.
+3. From a real calendar item, draft an invitation and a DPO. Check that
+   MEMORANDUM and DEPARTMENT PERSONNEL ORDER stay in capitals, that the DPO's
+   file copy still has its separate header/footer and both routing boxes, and
+   that the remaining payload fields are filled.
+4. Follow handoff section 6 for Google validation: retain the execution log and
+   export the real draft as DOCX/PDF for layout and visual comparison. The
+   current drawn templates still have the layout gaps recorded in the plan;
+   matching the office reference becomes the acceptance check for each later
+   converted template. There is no new maker to run in this increment.
+
+Converted-template contract for Increment 2 and later:
+
+- After conversion, set `TPL_<key>` to the converted document ID and set
+  `TPLF_<key>` to that same ID. The relay skips `formatDoc_` only when the two
+  properties match. A stale marker does not affect a restored template ID;
+  deleting `TPLF_<key>` also restores the formatter. No request field can opt out.
+- Keep only the original document body in the converted template. Blocks and
+  repeating rows still fill their first occurrence. The converter must remove
+  the office Blank's embedded file-copy body before inserting placeholders;
+  use `extras.file_copy = true` to create the copy after all content is filled.
+- For memo and external letter copies send `extras.boxes = ["slip"]`.
+  Omitting `boxes` preserves the DPO's `slip` and `keys` boxes. Explicit `[]`
+  adds no boxes. Supported names are `slip` and `keys`; unknown names are ignored,
+  duplicates are not repeated, and boxes retain slip-before-keys order.
+- Put a block marker alone in a paragraph or list item (including inside a table
+  cell). Each supplied line becomes a paragraph or a list item of the same
+  type; list copies retain glyph/nesting/attributes and join the original list.
+  Empty input leaves the original item with empty text, matching paragraph blocks.
+- Do not request `rows.*.fit` for fixed office grids: that option intentionally
+  resizes existing drawn tables. Preserve the converted grid instead.
+
+Verification: the focused activity, travel-script, office-relay and release tests
+pass (142 tests). The original Increment 0 focused suite also passes (123 tests)
+in the restored test environment. The release metadata check and `git diff --check`
+pass. The full suite was not run. Google deployment, execution log, real-calendar
+draft and DOCX/PDF checks remain pending administrator access; keep this increment
+in draft until those checks are recorded. The Node harnesses check relay behavior,
+not Google's rendering or pagination.
