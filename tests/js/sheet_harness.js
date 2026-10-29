@@ -7,6 +7,8 @@ class FakeRange {
   constructor(sh, r, c, nr, nc) { Object.assign(this, { sh, r, c, nr: nr || 1, nc: nc || 1 }); }
   getValues() { const out = []; for (let i = 0; i < this.nr; i++) { const row = []; for (let j = 0; j < this.nc; j++) row.push(this.sh.cell(this.r + i, this.c + j)); out.push(row); } return out; }
   setValue(v) { this.sh.set(this.r, this.c, v); return this; }
+  getValue() { return this.sh.cell(this.r, this.c); }
+  setWrap() { return this; }
   setNumberFormat() { return this; }
   getRow() { return this.r; }
   copyTo(dest) { for (let i = 0; i < this.nr; i++) for (let j = 0; j < this.nc; j++) this.sh.set(dest.r + i, dest.c + j, this.sh.cell(this.r + i, this.c + j)); }
@@ -91,6 +93,6 @@ maker.SpreadsheetApp.openById = () => ({ getSheets: () => [rer] });
 maker.tm_rer_('x');
 out.rerTemplate = rer.grid.map(r => r.join('|'));
 relay.applyFieldsSheet_(rer, { payee_name: 'Juan', payee_designation: 'Nurse II', amount_words: 'Five Hundred Pesos', amount_figures: '500',
-  ride_from: 'Home', ride_to: 'Airport', ride_date: 'September 1, 2026', activity_title: 'Workshop', dpo_ref: 'DPO No. 2026-123' });
+  ride_mode: 'Taxi', ride_from: 'Home', ride_to: 'Airport', ride_date: 'September 1, 2026', activity_title: 'Workshop', dpo_ref: 'DPO No. 2026-123' });
 out.rerFilled = rer.grid.map(r => r.join('|'));
 console.log(JSON.stringify(out));

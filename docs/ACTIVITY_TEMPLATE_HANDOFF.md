@@ -5,7 +5,7 @@ Read this first in a new session. It replaces the approach in section 5 of `docs
 
 ## 1. Where things stand
 
-- Draft PR jongsky25/css-is#546 (branch `claude/funny-allen-3nym2e`) holds the plan and release 9.29. No code changed.
+- Draft PR jongsky25/css-is#546 (branch `claude/funny-allen-3nym2e`) holds the plan and release 9.30. No code changed.
 - Source files: Drive folder **Documents Templates**, id `1HU-MCk_csQhYmIs_5g1HqKNZ3DIbPVy4`, shared by link, owner
   `blhsdpurokalusugan@doh.gov.ph`. Ten files, a Blank and a Sample of each:
 
@@ -54,6 +54,7 @@ Keep the drawn builders for the `dpo` and `minutes` documents, which have no off
    `NOTICE OF MEETING` and `EXECUTIVE BRIEFER` all come out in Title Case. This already happens to today's drafts (check one real
    draft to confirm). Only `DEPARTMENT PERSONNEL ORDER` is protected (`KEEP_UPPER_TITLES_`). It also forces every body paragraph to
    Times New Roman 12, which would undo the NOM's own spacing choices if they ever differ.
+   Since 9.29 the relay also realigns signatory blocks for the keys in `SIGNATORY_FIELDS_` (`alignSignatory_`, spot feedback #202) and drops empty optional travel-report sections; a converted template's key must be checked against both passes.
 2. **Blocks and rows hit the first occurrence only.** `applyBlocks_` and `applyRows_` use `findText` once, and `applyFields_` then
    deletes any `{{...}}` left over. The memo, letter and NOM Blanks each hold the document **twice** (the original and the file copy), so a
    block or row in the second copy would come out empty.

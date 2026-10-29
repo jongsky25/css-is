@@ -1,6 +1,10 @@
-## 9.29 — October 29, 2026
+## 9.30 — October 29, 2026
 
 - Plan only (`docs/ACTIVITY_TEMPLATE_REFRESH_PLAN.md`): maps the office's Documents Templates folder (concept note and program, executive briefer, external letter, internal memo, notice of meeting) onto our activity documents, records the page, margin, type, letterhead and footer measurements from the samples, and phases the template refresh; `docs/ACTIVITY_TEMPLATE_HANDOFF.md` is the starting point for the work (convert the office's Blank files, relay constraints, one PR per increment). No code, template or database change.
+
+## 9.29 — October 29, 2026
+
+- Spot feedback #199, #200, #201, #202 and #203. Opening `/calendar/rooms/{id}` as the requester of a live booking that has no calendar item (and no activity) now makes the item (`_make_booking_item`, shared with `POST /calendar/rooms/{id}/make-item`) and redirects to it, so the calendar link never lands on the booking summary. Times on Appendix A, the Post Travel Report day lines and the prepare page's day text are shown as `2:30 PM` (`travel_docs.clock_text`, `clock()` in `travel_prepare.js`); the stored `HH:MM` is unchanged. In `apps_script/travel_docs.gs`, `dropEmptyReportSections_` removes the title and text of an empty Key points / Contributions / Support needed / Recommendations / Conclusion section from the Post Travel Report, and `alignSignatory_` indents the head's name and designation to 216 pt (the 3-inch mark) on the MC 114 justification and the Job Order certification. The RER payload gains `ride_mode`; `tm_rer_` now writes "the amount of", `{{ride_mode}} fare from … to …` and the form's rental / transportation instruction, so the RER template must be remade with `rebuildRerTemplate()` after the script is redeployed. #204 (document format per a template given to the admin) is not done: the template is not in the repository. No database change.
 
 ## 9.28 — October 29, 2026
 
