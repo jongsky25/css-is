@@ -557,6 +557,10 @@ NAV_GROUPS = [
          "hint": "How your section is using its wellness hours",
          "kw": "wellness monitoring dashboard team section utilization register rollup "
                "who availed reflection rate", "cap": "chief"},
+        {"key": "wellness_late", "url": "/wellness/late", "label": "File a late break",
+         "hint": "Record a break your staff took but couldn't file in time",
+         "kw": "wellness late filing lapsed missed past break after the fact override "
+               "backdate retroactive chief", "cap": "chief"},
         {"key": "wellness_approvals", "url": "/approvals", "label": "Approvals",
          "hint": "Everything waiting on your decision — wellness breaks and work arrangements",
          "kw": "wellness approvals approve decide queue pending requests waiting chief",
@@ -16428,6 +16432,85 @@ async def wellness_cancel(request: Request, claim_id: int):
         conn.close()
     return RedirectResponse("/wellness?cheer=Request+withdrawn+—+those+hours+are+back+in+your+week.",
                             status_code=303)
+
+
+def _wellness_late_page(request, staff, err="", form=None, ok=""):
+    return templates.TemplateResponse(request, "wellness_late.html", {
+        "nav_active": "wellness", "show_scope": False,
+        "staff": staff, "activities": st.WELLNESS_ACTIVITIES,
+        "weekly_hours": st.WELLNESS_WEEKLY_HOURS,
+        "earliest": st.wellness_late_earliest_date().isoformat(),
+        "today": _today_local().isoformat(),
+        "err": err, "ok": ok, "form": form or {},
+    }, status_code=400 if err else 200)
+
+
+@app.get("/wellness/late", response_class=HTMLResponse)
+def wellness_late_form(request: Request, ok: str = ""):
+    """File a break a staff member already took but didn't file in time — for
+    their section chief (or acting OIC) and for admins only."""
+    conn = get_conn()
+    try:
+        staff = st.wellness_late_filing_staff(conn, request.state.user)
+    finally:
+        conn.close()
+    if not staff:
+        return _wellness_forbid(request)
+    return _wellness_late_page(request, staff, ok=ok)
+
+
+@app.post("/wellness/late")
+async def wellness_late_submit(request: Request):
+    user = request.state.user
+    p = await _posted(request)
+    conn = get_conn()
+    try:
+        staff = st.wellness_late_filing_staff(conn, user)
+        if not staff:
+            return _wellness_forbid(request)
+        try:
+            staff_id = int(p.get("staff_id") or 0)
+        except ValueError:
+            staff_id = 0
+        try:
+            claim_id = st.file_late_wellness_claim(
+                conn, user, staff_id, p.get("break_date", ""), p.get("start_time", ""),
+                p.get("activity", ""), p.get("reason"), note=p.get("note"),
+                hours=p.get("hours", "1"), activity_other=p.get("activity_other"))
+        except PermissionError:
+            return _wellness_late_page(request, staff, form=p,
+                                       err="Pick someone from your own staff.")
+        except ValueError as e:
+            return _wellness_late_page(request, staff, err=str(e), form=p)
+        claim = st.get_wellness_claim(conn, claim_id)
+        _audit(request, conn, "wellness_late_file", target_type="wellness_claim",
+               target_id=claim_id,
+               summary=f"filed a late wellness break for {claim['person_name']} on "
+                       f"{claim['break_date']} {claim['start_time']} "
+                       f"({claim['status']}): {claim['late_reason']}")
+        filer = _person_name(conn, user["id"]) or user["username"]
+        if claim["status"] == "approved":
+            subj, body, html = mailer.wellness_decided_message(
+                claim["person_name"], "approved", claim["break_date"],
+                f"Filed late by {filer}: {claim['late_reason']}",
+                f"{_base_url(request)}/wellness")
+            _notify_account(conn, staff_id, subj, body, html=html,
+                           feature="wellness_decided")
+            ok = f"Filed and approved for {claim['person_name']}."
+        else:
+            approvals_link = f"{_base_url(request)}/approvals#wellness"
+            for approver_id in st.get_approvers_for(conn, staff_id):
+                approve_link, deny_link = _wellness_decide_links(request, claim_id, approver_id)
+                subj, body, html = mailer.wellness_pending_message(
+                    _person_name(conn, approver_id), claim["person_name"],
+                    claim["break_date"], claim["start_time"], claim["hours"],
+                    approvals_link, approve_link=approve_link, deny_link=deny_link)
+                _notify_account(conn, approver_id, subj, body, html=html,
+                               feature="wellness_approval")
+            ok = f"Filed for {claim['person_name']} — sent to their approver."
+    finally:
+        conn.close()
+    return RedirectResponse(f"/wellness/late?ok={quote(ok)}", status_code=303)
 
 
 def _inbox_url(section, **params):
