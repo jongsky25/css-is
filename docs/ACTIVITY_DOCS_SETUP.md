@@ -130,7 +130,9 @@ apply. Increment 0 adds the offline measuring tool described in
 [templates/README.md](templates/README.md). The placeholder table above is unchanged.
 No Apps Script replacement, maker run, template rebuild or relay deployment is
 needed for this increment. Keep the five Blank exports outside the repository;
-commit only their measured JSON after checking it against section 2 of the plan.
+the measured JSON is committed in `docs/templates/activity_reference.json`.
+The comparison with section 2 of the plan, including Blank/Sample distinctions,
+is recorded in `docs/templates/README.md`.
 
 The Google maker/draft/export/PDF checks in handoff section 6 apply when later
 increments change the templates or relay. Increment 0 verifies the measuring tool
