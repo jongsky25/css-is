@@ -1025,6 +1025,12 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
             return None
         return res
 
+    def _may_start_item(conn, user, res):
+        """Who may make the calendar item for a booking that has none: the person who booked it, the Administrative
+        Section, and administrators and section managers (they can already send the notice of meeting)."""
+        mine = res["requester_user_id"] is not None and res["requester_user_id"] == user["id"]
+        return mine or rooms.is_room_admin(conn, user) or user.get("role") in ("admin", "section_manager")
+
     @router.get("/calendar/rooms/{rid}", response_class=HTMLResponse)
     def calendar_room(request: Request, rid: int, ok: str = "", err: str = ""):
         """Where a conference-room card on the calendar leads. If the booking belongs to a calendar item the person can
@@ -1037,8 +1043,7 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
                 return _not_found(request)
             if res["calendar_entry_id"] and oc.viewable_entry(conn, user, res["calendar_entry_id"]) is not None:
                 return RedirectResponse(f"/calendar/entries/{res['calendar_entry_id']}", status_code=303)
-            mine = res["requester_user_id"] is not None and res["requester_user_id"] == user["id"]
-            can_act = mine or rooms.is_room_admin(conn, user)
+            can_act = _may_start_item(conn, user, res)
             req_name = ""
             if res["requester_user_id"] is not None:
                 req_name = oc.display_names(conn, [conn.execute("SELECT username FROM admin_user WHERE id=?",
@@ -1063,9 +1068,8 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
             res = _booking_for(conn, user, rid)
             if res is None:
                 return _not_found(request)
-            mine = res["requester_user_id"] is not None and res["requester_user_id"] == user["id"]
-            if not (mine or rooms.is_room_admin(conn, user)):
-                return RedirectResponse(f"/calendar/rooms/{rid}?err={quote('Only the person who booked it, or the Administrative Section, can do this.')}", status_code=303)
+            if not _may_start_item(conn, user, res):
+                return RedirectResponse(f"/calendar/rooms/{rid}?err={quote('Only the person who booked it, an administrator, a section manager or the Administrative Section can do this.')}", status_code=303)
             if res["calendar_entry_id"] or res["event_id"]:
                 return RedirectResponse(f"/calendar/rooms/{rid}", status_code=303)
             slots = {s["id"]: s for s in rooms.list_slots(conn, active_only=False)}

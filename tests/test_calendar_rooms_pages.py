@@ -92,3 +92,12 @@ def test_someone_else_sees_the_booking_but_cannot_start_its_item(viewer, conn):
     assert "Budget review" in page and "Make the calendar item for this booking" not in page
     viewer.post(f"/calendar/rooms/{b['id']}/make-item", follow_redirects=False)
     assert not rooms.get_reservation(conn, b["id"])["calendar_entry_id"]
+
+
+def test_an_administrator_can_start_the_item_for_someone_elses_booking(admin, conn):
+    b = book(conn)                                                # booked by the encoder
+    assert "Make the calendar item for this booking" in admin.get(f"/calendar/rooms/{b['id']}").text
+    r = admin.post(f"/calendar/rooms/{b['id']}/make-item", follow_redirects=False)
+    assert r.status_code == 303 and r.headers["location"].startswith("/calendar/entries/")
+    entry_id = rooms.get_reservation(conn, b["id"])["calendar_entry_id"]
+    assert entry_id and st.cal_get(conn, entry_id)["people"][0]["user_id"] == b["requester_user_id"]
