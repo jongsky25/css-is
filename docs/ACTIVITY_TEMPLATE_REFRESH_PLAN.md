@@ -2,6 +2,8 @@
 
 Status: plan only. No code or template is changed by this file.
 
+> **Superseded approach.** The phases in section 5 are replaced by `docs/ACTIVITY_TEMPLATE_HANDOFF.md`, which converts the office's Blank files instead of redrawing them and lists constraints found in the relay. Sections 1 to 4 and 6 stay as the measurement record.
+
 Source: the shared Drive folder **Documents Templates** (owner `blhsdpurokalusugan@doh.gov.ph`), ten Google Docs / Word files:
 a **Blank** and a **Sample** each for Concept Note and Program, Executive Briefer, Letter - Invitation - External,
 Memo - Invitation - Internal and Notice of Meeting (NOM).

@@ -1,6 +1,6 @@
 ## 9.29 — October 29, 2026
 
-- Plan only (`docs/ACTIVITY_TEMPLATE_REFRESH_PLAN.md`): maps the office's Documents Templates folder (concept note and program, executive briefer, external letter, internal memo, notice of meeting) onto our activity documents, records the page, margin, type, letterhead and footer measurements from the samples, and phases the template refresh. No code, template or database change.
+- Plan only (`docs/ACTIVITY_TEMPLATE_REFRESH_PLAN.md`): maps the office's Documents Templates folder (concept note and program, executive briefer, external letter, internal memo, notice of meeting) onto our activity documents, records the page, margin, type, letterhead and footer measurements from the samples, and phases the template refresh; `docs/ACTIVITY_TEMPLATE_HANDOFF.md` is the starting point for the work (convert the office's Blank files, relay constraints, one PR per increment). No code, template or database change.
 
 ## 9.28 — October 29, 2026
 
