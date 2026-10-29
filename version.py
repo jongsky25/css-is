@@ -18,10 +18,21 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "9.15"
+APP_VERSION = "9.16"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "9.16",
+        "date": "October 29, 2026",
+        "summary": "Requesting supplies now starts from a grid of items.",
+        "changes": [
+            "A new supply request opens as a grid of items with a type-in box under each one, instead of twenty drop-down lists.",
+            "Each item shows whether it is Available, Limited or Out of stock, and the box stops at the most you can ask for right now.",
+            "You can search for an item by name. The search box stays in view as you scroll, finds items by other names (for example ballpoint for ballpen) and forgives a typo.",
+            "The plain list is still available from a link on the page, and now has a search box too."
+        ]
+    },
     {
         "version": "9.15",
         "date": "October 28, 2026",
