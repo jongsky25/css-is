@@ -18,10 +18,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "9.35"
+APP_VERSION = "9.36"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "9.36",
+        "date": "October 29, 2026",
+        "summary": "Concept notes and program flows can use the office's own forms.",
+        "changes": [
+            "After administrator setup, concept notes keep the office's participant, operational-details and daily-activities tables.",
+            "The program flow starts with a heading and editable schedule rows for each activity day.",
+            "Signatory names come from settings or the staff directory, and unknown approvers stay blank."
+        ]
+    },
     {
         "version": "9.35",
         "date": "October 29, 2026",

@@ -29,7 +29,7 @@ Both templates are plain Google Docs in the `_templates` folder under the relay'
 |---|---|
 | `dpo` | `dpo_year`, `dpo_no`, `dpo_date`, `subject`, `background`, `intro`, `funding_source`, `p_name` and `p_position` (one table row, copied per person), `head_name`, `head_title`, `unit_name`. Also available: `title`, `purpose`, `dates`, `venue`, `prepared_by`, and a `{{personnel}}` line of numbered names |
 | `invitation` (converted office memo, 9.34) | Fields `date`, `for_name`, `for_title`, `for_office`, `from_name`, `from_title`, `unit_name`, `subject`; blocks `reiteration`, `rationale`, `details`, `representatives` (bullets), `contact_details`. `extras.addressees` repeats the name/title/office paragraph group; unknown addressees remain blank. Legacy `opening`, contact fields, `a_area`/`a_request` rows and other fields remain available for the old drawn template. |
-| `concept_note` | `title`, `date_duration`, `venue`, `participant_count`, `facilitators`, `budget`, `prepared_by`, `prepared_title`, `noted_by_name`, `noted_by_title`, `recommended_name`, `recommended_title`, `unit_name`; blocks `background`, `objectives`, `outputs`, `participants`, `methodology`; one table row `pd_day` / `pd_am` / `pd_pm` copied per day |
+| `concept_note` (converted office note, 9.36) | Fields `title`, `date_duration`, `venue`, `participant_count`, `facilitators`, `budget`, `prepared_by`, `prepared_title`, `noted_by_name`, `noted_by_title`, `recommended_name`, `recommended_title`, `recommended_unit`, `approved_name`, `approved_title`, `approved_unit`; blocks `background`, `objectives`, `outputs`, `participants_note`, `methodology`; repeatable participant row `pt_group` / `pt_count` plus a total and daily row `pd_day` / `pd_text`. Legacy `participants`, `unit_name`, `pd_am`, `pd_pm` remain for the drawn template. |
 | `notice_of_meeting` (converted office NOM, 9.33) | Fields `date`, `subject`, `meeting_date`, `meeting_time`, `venue`, `meeting_link`, `head_name`, `head_title`, `unit_name`; one repeatable row `inv_name` / `inv_office`; block `agenda` in the grid's bulleted cell. Legacy `title`, `meeting_when`, `prepared_by`, `prepared_title` and `invited` remain for the drawn template. |
 | `minutes` | `title`, `meeting_when`, `venue`, `prepared_by`, `prepared_title`, `approved_by`, `unit_name`; blocks `attendees`, `agenda`, `discussion`, `next_steps`; one table row `m_action` / `m_who` / `m_due` |
 | `program_flow` | `title`; one table row `pf_time` / `pf_topic` / `pf_person` copied for each day heading and each empty row |
@@ -331,3 +331,88 @@ unwrapping its content-control table for the offline check. This does not verify
 Google's conversion of that control. Release metadata and whitespace checks pass.
 The full suite was not run. Administrator conversion, maker log, real-calendar
 draft and DOCX/PDF comparisons remain pending; these remain administrator acceptance checks after the code merge.
+
+## Activity template refresh: Increment 4 (concept note and program flow, 9.36)
+
+This increment is stacked on #551 and copies `Blank [Concept Note and Program]`
+twice, selecting one source section per template. The new scoped maker does not
+activate or rebuild the pending memo or NOM. The source's program page contains a
+filled schedule even though the file is named Blank; all of its dates, activities
+and named responsibilities are removed. The new program contains only the current
+activity title and the payload's day headings and editable empty rows.
+
+Section preservation matters: both parts use Letter paper and one-inch margins,
+but the concept section's footer distance is 0.3 inch (432 twips, exported as
+`431.99999999999994`), while the program section uses 0.5 inch (720 twips).
+The converter uses the Docs advanced API to remove the other section, reapplies
+the selected section's effective page settings, and inspects the result before
+publishing its pointer. It requires one remaining section and matching effective
+margins, first-page setting, paper size and header/footer structure, including
+referenced image layout. Temporary image URLs and object/index identifiers are
+excluded from that structural comparison. Actual artwork and rendering still
+need the DOCX/PDF checks below. If a section merge changes its header/footer or a
+required image cannot be inspected, the candidate is left inactive; do not bypass
+that failure by setting its properties manually.
+
+The concept note retains the participant grid 7695/1200 twips and Estimated Total,
+operational grid 1850/7370 and Day/Activity grid 1215/7995. Each known listed person
+gets a participant row and count 1; when nobody is known, the group/count and total
+stay as prompts/blanks. These counts describe only people already listed on the
+item, not an inferred attendance target. A prompt below the table asks the person
+to confirm groups/counts and add unlisted people. Existing `CONCEPT_PROMPTS` remain
+unchanged. Each activity day gets one editable Activity cell; legacy AM/PM values
+remain in the payload for the old drawn template.
+
+Prepared uses the drafter's profile and a designation only when requested. Noted
+uses the directory's section-chief seat on the drafter's own org path, excluding
+the drafter, or remains blank. Recommended uses `head_of_office` and the bureau
+name. Approved name/title/unit remain blank: the application has no configured
+Chief of Staff/Undersecretary approval role matching the source. No source name
+or source cluster assignment is copied. The program grid stays 2370/4575/2415;
+merged source sample-day rows are removed, and the original three-cell row is
+repeated for day headings and editable schedule rows as `_program_flow` already
+does. No file copy is requested for either form.
+
+Administrator rollout and checks:
+
+1. Complete the applicable relay setup from Increment 2. Save both old
+   `TPL_concept_note` and `TPL_program_flow` IDs. Add/replace this release's
+   `activity_office_templates.gs`; the Docs advanced service must be enabled for
+   section inspection/splitting. Increment 4 does not change the relay code.
+2. Deploy the matching 9.36 app payload before activating converted templates.
+   It retains legacy fields/blocks/rows for the drawn templates during rollout.
+3. Run **`makeOfficeConceptTemplates()`** as the office mailbox, then read both
+   log entries and run `checkOfficeTemplates()`. Both must report all placeholders
+   present with matching office-format markers. Each candidate is validated and
+   activated independently; a failed candidate keeps that key's old pointer.
+   If either fails, restore both saved IDs to keep the pair on the previous setup
+   while investigating. `rebuildOfficeConceptTemplates()` forces fresh candidates.
+4. Draft both forms from a real multi-day activity with listed participants.
+   Confirm participant rows/total, operational details, one Day/Activity row per
+   day and editable program rows. Confirm settings/directory signatures and blank
+   unknown signatories, no retained source schedule, and no private calendar note.
+5. Follow handoff section 6: retain maker logs, export both real drafts as DOCX
+   and compare with their respective sections of the committed combined reference.
+   Verify Letter paper, all margins/distances, first-page letterhead, footer and
+   the exact table grids. Confirm each draft has only its own source section,
+   with no leading/trailing blank page and the correct footer distance.
+6. Compare PDFs of the office Sample's corresponding part and each draft side by
+   side. The local section/header inspection does not verify Google conversion,
+   pagination, artwork identity or visual fidelity. Record these checks before
+   marking this increment ready.
+
+Rollback: restore both saved `TPL_<key>` IDs and delete their `TPLF_<key>` markers
+(or leave the stale values). Legacy payload values fill the drawn forms again;
+restore pointers before reverting app code. Existing drafts are not changed.
+
+Local verification: 159 focused activity, travel-script, office-relay, converter
+and release tests pass. The harness checks both mappings, source-name/schedule
+removal, row/total expansion without changing grids, section deletion ranges and
+the two footer distances, header/image/paper drift rejection, signature provenance
+and payload/placeholder agreement. Both pure mappers accept the actual source
+sections. A fresh source export has unchanged measured page/body/header/footer
+layout and existing styles after normalizing image order; it adds an unused
+`TableofFigures` style definition. The committed reference remains unchanged.
+Release metadata and whitespace checks pass. The full suite was not run. Google
+conversion/splitting, maker logs, real-calendar drafts and DOCX/PDF comparisons
+remain pending administrator access; these remain administrator acceptance checks after the code merge.

@@ -83,3 +83,43 @@ def test_notice_rows_and_list_blocks_fill_the_converted_tables(office_template):
     assert tables[0]["grid"] == [4005, 5730] and tables[1]["grid"] == [1365, 735, 7275]
     assert [p["text"] for p in office_template["noticeAgenda"]] == ["First topic", "Second topic"]
     assert all(p["type"] == "L" for p in office_template["noticeAgenda"])
+
+
+@pytest.mark.parametrize("key,grids", [
+    ("concept_note", [[7695, 1200], [1850, 7370], [1215, 7995]]),
+    ("program_flow", [[2370, 4575, 2415]]),
+])
+def test_concept_and_program_converters_remove_source_content_and_preserve_grids(office_template, key, grids):
+    converted = office_template["concepts"][key]
+    assert "all placeholders present" in converted["report"]
+    assert "SOURCE" not in converted["text"]
+    assert set(converted["expect"]) == set(re.findall(r"\{\{([a-z_]+)\}\}", converted["text"]))
+    assert [c["grid"] for c in converted["children"] if c["type"] == "table"] == grids
+    assert converted["writes"] == [{"TPL_" + key: "CANDIDATE", "TPLF_" + key: "CANDIDATE"}]
+    assert "{{" not in converted["filled"]["text"]
+    assert [c["grid"] for c in converted["filled"]["children"] if c["type"] == "table"] == grids
+    if key == "concept_note":
+        tables = [c for c in converted["filled"]["children"] if c["type"] == "table"]
+        assert tables[0]["rows"] == [["Participant", "Number"], ["Person One", "1"], ["Person Two", "1"], ["Estimated Total", "2"]]
+        assert tables[2]["rows"] == [["Day", "Activity"], ["Day 1", "First activities"], ["Day 2", "Second activities"]]
+    else:
+        assert "CONCEPT NOTE" not in converted["text"]
+
+
+def test_section_split_restores_the_selected_footer_distance_and_letter_paper(office_template):
+    concept = office_template["concepts"]["concept_note"]["requests"]
+    program = office_template["concepts"]["program_flow"]["requests"]
+    assert concept[0] == {"deleteContentRange": {"range": {"startIndex": 500, "endIndex": 1499}}}
+    assert program[0] == {"deleteContentRange": {"range": {"startIndex": 1, "endIndex": 501}}}
+    assert concept[1]["updateSectionStyle"]["sectionStyle"]["marginFooter"] == {"magnitude": 21.6, "unit": "PT"}
+    assert program[1]["updateSectionStyle"]["sectionStyle"]["marginFooter"] == {"magnitude": 36, "unit": "PT"}
+    for requests in (concept, program):
+        assert requests[1]["updateSectionStyle"]["sectionStyle"]["useFirstPageHeaderFooter"] is True
+        assert requests[2]["updateDocumentStyle"]["documentStyle"]["documentSize"] == {
+            "width": {"magnitude": 612, "unit": "PT"}, "height": {"magnitude": 792, "unit": "PT"}}
+
+
+def test_section_layout_drift_and_source_changes_leave_old_templates_selected(office_template):
+    for failure in office_template["conceptFailures"]:
+        assert "FAILED" in failure["report"]
+        assert failure["writes"] == []

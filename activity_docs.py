@@ -529,9 +529,18 @@ def _concept_note(conn, entry, title, me, profile, head_name, head_title, unit, 
               "prepared_by": me, "prepared_title": (profile.get("designation") or "") if positions else "",
               "noted_by_name": BLANK, "noted_by_title": BLANK,
               "recommended_name": head_name.upper(), "recommended_title": head_title}
-    blocks = {**CONCEPT_PROMPTS, "participants": participants}
-    rows = {"program": {"marker": "pd_day", "data": [{"pd_day": _day_label(i, d), "pd_am": "", "pd_pm": ""}
+    supervisor = st.org_seat_holder(conn, 1, org_path=profile["org_path"], exclude_rp_id=profile.get("rp_id")) if profile.get("org_path") else None
+    if supervisor:
+        fields["noted_by_name"], fields["noted_by_title"] = supervisor
+    fields.update(recommended_name=head_name.upper() if head_name else BLANK,
+                  recommended_unit=SIGNATORY_UNIT, approved_name=BLANK, approved_title=BLANK, approved_unit=BLANK)
+    blocks = {**CONCEPT_PROMPTS, "participants": participants,
+              "participants_note": ["[Confirm participant groups and counts; add any people not yet listed.]"]}
+    rows = {"program": {"marker": "pd_day", "data": [{"pd_day": _day_label(i, d), "pd_text": "[Activities for this day]", "pd_am": "", "pd_pm": ""}
                                                      for i, d in enumerate(days, 1)]}}
+    rows["participants"] = {"marker": "pt_group", "data": [
+        {"pt_group": n + (f", {d}" if d else ""), "pt_count": "1"} for n, d in people
+    ] or [{"pt_group": "[Participant group]", "pt_count": BLANK}]}
     return td.DocPayload("concept_note", "concept_note", f"Concept Note - {title}"[:120], fields, blocks=blocks, rows=rows)
 
 
