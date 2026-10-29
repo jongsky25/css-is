@@ -994,3 +994,67 @@ def test_concept_supervisor_comes_from_own_directory_seat_and_unknown_counts_sta
     assert payload.fields["participant_count"] == ad.BLANK
     assert payload.rows["participants"]["data"] == [{"pt_group": "[Participant group]", "pt_count": ad.BLANK}]
     assert payload.fields["approved_name"] == ad.BLANK
+
+
+def test_external_letter_suggestion_uses_explicit_outside_context():
+    assert not ad.suggest(entry())["invitation_external"][0]
+    assert ad.suggest(entry(), outside={"host": "Named Office"})["invitation_external"][0]
+    assert ad.suggest(entry(), visitors="Named Partner")["invitation_external"][0]
+    assert not ad.suggest(entry(), visitors="  None  ")["invitation_external"][0]
+    assert not ad.suggest(entry(note="An outside partner is mentioned privately"))["invitation_external"][0]
+
+
+def test_external_letter_card_and_needed_choice_use_existing_routes(viewer, conn):
+    eid = create(viewer, audience="bureau")
+    assert "Invitation (external letter)" in entry_page(viewer, eid)
+    outside(viewer, eid, conducted_by="outside", host="Named Office", invited_as="attendee")
+    item = next(row for row in ad.state_for(conn, {"id": eid, **entry()}) if row["key"] == "invitation_external")
+    assert item["suggested"] and item["needed"]
+    r = viewer.post(f"/calendar/entries/{eid}/documents/invitation_external/needed",
+                    content=urlencode({"needed": "no"}), headers=FORM, follow_redirects=False)
+    assert r.status_code == 303 and "ok=" in r.headers["location"]
+    assert ad.get_rows(conn, eid)["invitation_external"]["needed"] == 0
+    viewer.post(f"/calendar/entries/{eid}/documents/invitation_external/needed",
+                content=urlencode({"needed": "auto"}), headers=FORM)
+    assert ad.get_rows(conn, eid)["invitation_external"]["needed"] is None
+
+
+@pytest.mark.skipif(shutil.which("node") is None, reason="node is not installed")
+def test_external_letter_payload_matches_template_without_guessing_addressee(viewer, conn, relay, monkeypatch):
+    st.set_setting(conn, "travel.sig.head_name", "Configured Head")
+    st.set_setting(conn, "travel.sig.head_title", "Configured Director")
+    monkeypatch.setattr(ad, "file_copy_reviewer", lambda *args: ("Configured Reviewer", "Reviewer Title"))
+    eid = create(viewer, audience="bureau", title="Current Workshop", venue="Room 2", note="PRIVATE NOTE",
+                 meeting_url="https://meet.google.com/abc-defg-hij")
+    outside(viewer, eid, conducted_by="outside", host="Named Agency", invited_as="attendee", invitation="Pasted names must not become addressees")
+    r = draft(viewer, eid, "invitation_external")
+    assert r.status_code == 303 and "ok=" in r.headers["location"]
+    call = relay.calls[0]
+    assert call["template_key"] == "invitation_external" and call["folder_key"] == f"act-{eid}"
+    fields = call["fields"]
+    assert fields["addressee_agency"] == "Named Agency"
+    for key in ("addressee_name", "addressee_title", "addressee_address", "salutation_name"):
+        assert fields[key] == ad.BLANK
+    assert fields["head_name"] == "CONFIGURED HEAD" and fields["head_title"] == "Configured Director"
+    assert call["extras"] == {"file_copy": True, "boxes": ["slip"],
+        "reviewer": {"name": "Configured Reviewer", "title": "Reviewer Title"}}
+    assert "Current Workshop" in " ".join(call["blocks"]["letter_details"])
+    assert "https://meet.google.com/abc-defg-hij" in " ".join(call["blocks"]["letter_details"])
+    assert "viewer@test.local" in call["blocks"]["contact_details"][0]
+    assert "[Explain" in call["blocks"]["activity_purpose"][0]
+    assert "PRIVATE NOTE" not in json.dumps(call) and "Pasted names" not in json.dumps(call)
+    result = subprocess.run(["node", "tests/js/office_templates_harness.js"], capture_output=True, text=True, timeout=30)
+    assert result.returncode == 0, result.stderr
+    expected = set(json.loads(result.stdout)["letter"]["expect"])
+    assert expected <= set(fields) | set(call["blocks"])
+    assert ad.get_rows(conn, eid)["invitation_external"]["doc_state"] == "done"
+    assert "Google Doc" in entry_page(viewer, eid)
+
+
+def test_external_letter_without_host_has_blank_agency_and_clear_setup_failure(viewer, conn, relay):
+    eid = create(viewer, audience="bureau")
+    relay.fail["invitation_external"] = "template_not_set"
+    draft(viewer, eid, "invitation_external")
+    assert relay.calls[0]["fields"]["addressee_agency"] == ad.BLANK
+    row = ad.get_rows(conn, eid)["invitation_external"]
+    assert row["doc_state"] == "failed" and "external invitation template" in row["note"]

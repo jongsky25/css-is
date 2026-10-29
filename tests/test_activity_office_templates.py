@@ -123,3 +123,23 @@ def test_section_layout_drift_and_source_changes_leave_old_templates_selected(of
     for failure in office_template["conceptFailures"]:
         assert "FAILED" in failure["report"]
         assert failure["writes"] == []
+
+
+def test_external_letter_keeps_only_original_and_preserves_addressee_run_styles(office_template):
+    letter = office_template["letter"]
+    assert "all placeholders present" in letter["report"]
+    assert letter["text"].count("Very truly yours,") == 1
+    assert set(letter["expect"]) == set(re.findall(r"\{\{([a-z_]+)\}\}", letter["text"]))
+    assert letter["writes"] == [{"TPL_invitation_external": "CANDIDATE", "TPLF_invitation_external": "CANDIDATE"}]
+    runs = letter["children"][1]["runs"]
+    assert runs == [{"text": "{{addressee_name}}", "bold": True},
+                    {"text": "\n{{addressee_title}}\n{{addressee_agency}}\n{{addressee_address}}", "bold": False}]
+    assert "{{" not in letter["filled"]["text"]
+    assert "Activity details\nRequested representatives" in letter["filled"]["text"]
+    assert letter["filled"]["children"][1]["runs"][0] == {"text": "RECIPIENT", "bold": True}
+
+
+def test_changed_letter_source_does_not_replace_active_template(office_template):
+    for failure in office_template["letterFailures"]:
+        assert "FAILED" in failure["report"]
+        assert failure["writes"] == [] and failure["active"] == "OLD"

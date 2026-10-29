@@ -18,7 +18,13 @@ class Para {
   setIndentStart(x) { this.attrs.indentStart = x; return this; }
   setIndentFirstLine(x) { this.attrs.indentFirstLine = x; return this; }
   setGlyphType(x) { this.glyph = x; return this; }
-  replaceText(pattern, value) { this.text = this.text.replace(new RegExp(pattern, 'g'), () => value); return this; }
+  replaceText(pattern, value) {
+    if (this.runs) {
+      this.runs.forEach(run => run.text = run.text.replace(new RegExp(pattern, 'g'), () => value));
+      this.text = this.runs.map(run => run.text).join('');
+    } else this.text = this.text.replace(new RegExp(pattern, 'g'), () => value);
+    return this;
+  }
   editAsText() {
     const p = this;
     return {
@@ -152,6 +158,17 @@ function splitApi(ctx, selected, drift = false) {
   }};
   return requests;
 }
+function letter() {
+  function original() {
+    const addressee = new Para('[NAME OF HEAD]\n[Name of Agency]\n[Address of Agency]');
+    addressee.runs = [{text: '[NAME OF HEAD]', bold: true}, {text: '\n[Name of Agency]\n[Address of Agency]', bold: false}];
+    return ['[Date]', addressee, 'Subject: ', 'Dear [Head]:', '[Brief purpose of letter or invitation]',
+      '[Purpose of activity]', '[Expanded reiteration of purpose of letter or invitation, e.g. representatives]',
+      '[Contact details of staff or personnel]', 'Thank you very much.', 'Very truly yours,', '',
+      '[NAME OF HEAD OF OFFICE OR CLUSTER LEAD]', '[Designation]', '', ''];
+  }
+  return new Body(original().concat(original()));
+}
 function context(body, opts = {}) {
   const key = opts.key || 'invitation';
   const props = { ['TPL_' + key]: opts.existing || 'OLD' }, writes = [], docs = {};
@@ -210,7 +227,7 @@ const nomBody = notice(), nom = context(nomBody, {key: 'notice_of_meeting'});
 const nomReport = nom.ctx.makeOfficeNoticeTemplate();
 const snapshot = body => body.children.map(p => p instanceof Table
   ? {type: 'table', grid: p.grid, rows: p.rows.map(r => r.cells.map(c => c.getText()))}
-  : {type: p.type, text: p.text, attrs: p.attrs});
+  : {type: p.type, text: p.text, attrs: p.attrs, runs: p.runs ? p.runs.map(run => ({...run})) : undefined});
 output.notice = {report: nomReport, writes: nom.writes, children: snapshot(nomBody),
   expect: vm.runInContext('AO_TEMPLATES[1].expect', nom.ctx), text: nomBody.getText()};
 output.noticeFailures = [];
@@ -265,5 +282,27 @@ for (const mode of ['header', 'image', 'paper', 'wrong_section', 'prose', 'table
   if (mode === 'program') body.children[3].getCell(0, 0).children[0].text = 'CHANGED HEADER';
   const env = context(body, {key}); splitApi(env.ctx, key === 'program_flow' ? 1 : 0, ['header', 'image', 'paper', 'wrong_section'].includes(mode) ? mode : false);
   output.conceptFailures.push({report: env.ctx.makeOfficeTemplates(key), writes: env.writes});
+}
+const letterBody = letter(), letterEnv = context(letterBody, {key: 'invitation_external'});
+output.letter = {report: letterEnv.ctx.makeOfficeExternalLetterTemplate(), writes: letterEnv.writes,
+  expect: vm.runInContext('AO_TEMPLATES.find(t => t.key === "invitation_external").expect', letterEnv.ctx),
+  text: letterBody.getText(), children: snapshot(letterBody)};
+vm.runInContext(load('travel_docs.gs'), letterEnv.ctx);
+letterEnv.ctx.applyBlocks_(letterBody, {letter_opening: ['Opening'], activity_purpose: ['Purpose'],
+  letter_details: ['Activity details', 'Requested representatives'], contact_details: ['Contact']});
+letterEnv.ctx.applyFields_(letterBody, {date: 'Current date', subject: 'Current subject', salutation_name: 'Recipient',
+  addressee_name: 'RECIPIENT', addressee_title: 'Recipient title', addressee_agency: 'Named agency',
+  addressee_address: 'Known address', head_name: 'CONFIGURED HEAD', head_title: 'Configured title'});
+output.letter.filled = {text: letterBody.getText(), children: snapshot(letterBody)};
+output.letterFailures = [];
+for (const mode of ['purpose', 'duplicate', 'addressee', 'element']) {
+  const body = letter();
+  if (mode === 'purpose') body.children[5].text = 'Unexpected purpose';
+  if (mode === 'duplicate') body.children[15].text = 'Not date';
+  if (mode === 'addressee') body.children[1].text += ' UNEXPECTED PERSON';
+  if (mode === 'element') body.children[4].type = 'UNSUPPORTED';
+  const env = context(body, {key: 'invitation_external'});
+  output.letterFailures.push({report: env.ctx.makeOfficeExternalLetterTemplate(), writes: env.writes,
+    active: env.props.TPL_invitation_external});
 }
 console.log(JSON.stringify(output));

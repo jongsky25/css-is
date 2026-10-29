@@ -15,8 +15,14 @@ const AO_TEMPLATES = [
       'pd_day', 'pd_text', 'prepared_by', 'prepared_title', 'noted_by_name', 'noted_by_title',
       'recommended_name', 'recommended_title', 'recommended_unit', 'approved_name', 'approved_title', 'approved_unit'] },
   { key: 'program_flow', source: 'Blank [Concept Note and Program]', build: ao_program_,
-    expect: ['title', 'pf_time', 'pf_topic', 'pf_person'] }
+    expect: ['title', 'pf_time', 'pf_topic', 'pf_person'] },
+  { key: 'invitation_external', source: 'Blank [Letter - Invitation - External]', build: ao_letter_,
+    expect: ['date', 'addressee_name', 'addressee_title', 'addressee_agency', 'addressee_address',
+      'subject', 'salutation_name', 'letter_opening', 'activity_purpose', 'letter_details', 'contact_details', 'head_name', 'head_title'] }
 ];
+
+function makeOfficeExternalLetterTemplate() { return makeOfficeTemplates(['invitation_external'], false); }
+function rebuildOfficeExternalLetterTemplate() { return makeOfficeTemplates(['invitation_external'], true); }
 
 function makeOfficeConceptTemplates() { return makeOfficeTemplates(['concept_note', 'program_flow'], false); }
 function rebuildOfficeConceptTemplates() { return makeOfficeTemplates(['concept_note', 'program_flow'], true); }
@@ -419,5 +425,53 @@ function ao_program_(id) {
   const table = body.getChild(plan.table).asTable();
   for (let r = table.getNumRows() - 1; r > 0; r--) if (r !== plan.prototype) table.removeRow(r);
   ['pf_time', 'pf_topic', 'pf_person'].forEach(function (key, i) { ao_cellText_(table.getCell(1, i), '{{' + key + '}}'); });
+  doc.saveAndClose();
+}
+
+function ao_literal_(value) { return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+function ao_letterPlan_(items) {
+  const texts = items.map(function (item) { return ao_norm_(item.text || ''); });
+  const dates = [];
+  texts.forEach(function (text, i) { if (text === '[Date]') dates.push(i); });
+  if (dates.length !== 2) throw new Error('expected original and file-copy letter');
+  const start = dates[0], second = dates[1];
+  function find(predicate) {
+    const found = [];
+    for (let i = start; i < second; i++) if (predicate(texts[i])) found.push(i);
+    if (found.length !== 1) throw new Error('letter label missing/ambiguous');
+    return found[0];
+  }
+  const addressee = find(function (text) {
+    return text.indexOf('[NAME OF HEAD]') >= 0 && text.indexOf('[Name of Agency]') >= 0 && text.indexOf('[Address of Agency]') >= 0;
+  });
+  const subject = find(function (text) { return text === 'Subject:'; });
+  const dear = find(function (text) { return text === 'Dear [Head]:'; });
+  const opening = find(function (text) { return text === '[Brief purpose of letter or invitation]'; });
+  const purpose = find(function (text) { return text === '[Purpose of activity]'; });
+  const details = find(function (text) { return /^\[Expanded reiteration of purpose of letter or invitation,.*\]$/.test(text); });
+  const contact = find(function (text) { return text === '[Contact details of staff or personnel]'; });
+  const thanks = find(function (text) { return text === 'Thank you very much.'; });
+  const close = find(function (text) { return text === 'Very truly yours,'; });
+  const name = find(function (text) { return text === '[NAME OF HEAD OF OFFICE OR CLUSTER LEAD]'; });
+  const title = find(function (text) { return text === '[Designation]'; });
+  const positions = [start, addressee, subject, dear, opening, purpose, details, contact, thanks, close, name, title];
+  if (positions.some(function (pos, i) { return i && pos <= positions[i - 1]; })) throw new Error('letter sections out of order');
+  for (let i = start; i <= title; i++) if (items[i].type !== 'paragraph') throw new Error('unexpected letter body element');
+  const residue = texts[addressee].replace('[NAME OF HEAD]', '').replace('[Name of Agency]', '').replace('[Address of Agency]', '').trim();
+  if (residue) throw new Error('unexpected letter addressee content');
+  return { addressee: addressee, end: title + 1, replacements: [
+    [start, '{{date}}'], [subject, 'Subject: {{subject}}'], [dear, 'Dear {{salutation_name}}:'],
+    [opening, '{{letter_opening}}'], [purpose, '{{activity_purpose}}'], [details, '{{letter_details}}'],
+    [contact, '{{contact_details}}'], [name, '{{head_name}}'], [title, '{{head_title}}'] ] };
+}
+function ao_letter_(id) {
+  const doc = DocumentApp.openById(id), body = doc.getBody(), plan = ao_letterPlan_(ao_items_(body));
+  for (let i = body.getNumChildren() - 1; i >= plan.end; i--) body.removeChild(body.getChild(i));
+  plan.replacements.forEach(function (replacement) { ao_text_(body.getChild(replacement[0]), replacement[1]); });
+  // Replace runs individually: the source name is bold, agency/address are plain.
+  const addressee = body.getChild(plan.addressee);
+  addressee.replaceText(ao_literal_('[NAME OF HEAD]'), '{{addressee_name}}');
+  addressee.replaceText(ao_literal_('[Name of Agency]'), '{{addressee_title}}\n{{addressee_agency}}');
+  addressee.replaceText(ao_literal_('[Address of Agency]'), '{{addressee_address}}');
   doc.saveAndClose();
 }

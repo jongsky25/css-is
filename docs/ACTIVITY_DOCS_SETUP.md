@@ -29,6 +29,7 @@ Both templates are plain Google Docs in the `_templates` folder under the relay'
 |---|---|
 | `dpo` | `dpo_year`, `dpo_no`, `dpo_date`, `subject`, `background`, `intro`, `funding_source`, `p_name` and `p_position` (one table row, copied per person), `head_name`, `head_title`, `unit_name`. Also available: `title`, `purpose`, `dates`, `venue`, `prepared_by`, and a `{{personnel}}` line of numbered names |
 | `invitation` (converted office memo, 9.34) | Fields `date`, `for_name`, `for_title`, `for_office`, `from_name`, `from_title`, `unit_name`, `subject`; blocks `reiteration`, `rationale`, `details`, `representatives` (bullets), `contact_details`. `extras.addressees` repeats the name/title/office paragraph group; unknown addressees remain blank. Legacy `opening`, contact fields, `a_area`/`a_request` rows and other fields remain available for the old drawn template. |
+| `invitation_external` (office external letter, 9.37) | Fields `date`, `addressee_name`, `addressee_title`, `addressee_agency`, `addressee_address`, `salutation_name`, `subject`, `head_name`, `head_title`; blocks `letter_opening`, `activity_purpose`, `letter_details`, `contact_details`. File copy uses `extras.boxes = ["slip"]`. |
 | `concept_note` (converted office note, 9.36) | Fields `title`, `date_duration`, `venue`, `participant_count`, `facilitators`, `budget`, `prepared_by`, `prepared_title`, `noted_by_name`, `noted_by_title`, `recommended_name`, `recommended_title`, `recommended_unit`, `approved_name`, `approved_title`, `approved_unit`; blocks `background`, `objectives`, `outputs`, `participants_note`, `methodology`; repeatable participant row `pt_group` / `pt_count` plus a total and daily row `pd_day` / `pd_text`. Legacy `participants`, `unit_name`, `pd_am`, `pd_pm` remain for the drawn template. |
 | `notice_of_meeting` (converted office NOM, 9.33) | Fields `date`, `subject`, `meeting_date`, `meeting_time`, `venue`, `meeting_link`, `head_name`, `head_title`, `unit_name`; one repeatable row `inv_name` / `inv_office`; block `agenda` in the grid's bulleted cell. Legacy `title`, `meeting_when`, `prepared_by`, `prepared_title` and `invited` remain for the drawn template. |
 | `minutes` | `title`, `meeting_when`, `venue`, `prepared_by`, `prepared_title`, `approved_by`, `unit_name`; blocks `attendees`, `agenda`, `discussion`, `next_steps`; one table row `m_action` / `m_who` / `m_due` |
@@ -218,8 +219,8 @@ Administrator rollout (requires access to the relay project and office mailbox):
 3. Deploy the 9.34 app payload before activating the converted memo. Until then,
    keep the old drawn template selected. The 9.34 payload retains its legacy
    fields/table data, so it can fill that template during the transition.
-4. Run `makeOfficeTemplates()` as the office
-   mailbox. It makes only the memo in this increment. Read the Execution log:
+4. Run `rebuildOfficeMemoTemplate()` as the office
+   mailbox to select the memo only. Read the Execution log:
    it must report `all placeholders present` and the previous template ID. A
    changed/ambiguous source or missing placeholder is a failure; the old active
    properties remain unchanged. Failed candidate documents stay in `_templates`
@@ -266,8 +267,8 @@ DOCX/PDF checks remain pending; these remain administrator acceptance checks aft
 
 ## Activity template refresh: Increment 3 (Notice of Meeting, 9.35)
 
-This increment is stacked on Increment 2, PR #550. It adds the NOM only; it does
-not activate the memo or resolve that PR's pending ASSISTANCE-table choice.
+Increment 3 was merged as PR #551 after Increment 2 (#550). Its scoped maker
+selects only the NOM and leaves the existing memo unchanged.
 The office's `Blank [NOM] .docx` is a Word file, copied and converted to Google
 Docs by the same Drive API path as the travel forms. A fresh download matches
 the committed NOM reference exactly, including its SHA-256.
@@ -296,7 +297,7 @@ Administrator rollout:
 2. Deploy the 9.35 app payload before activating the new NOM. Its legacy fields
    and invited block can still fill the drawn template during the transition.
 3. Run **`makeOfficeNoticeTemplate()`** as the office mailbox. This selects the
-   NOM only and avoids rebuilding/activating the pending memo. Read the Execution
+   NOM only and avoids rebuilding/activating other office templates. Read the Execution
    log: it must report `all placeholders present` and the previous template ID.
    Run `checkOfficeTemplates()` and verify the NOM's office-format marker matches.
    Use `rebuildOfficeNoticeTemplate()` only when a fresh converted copy is needed.
@@ -335,8 +336,8 @@ draft and DOCX/PDF comparisons remain pending; these remain administrator accept
 ## Activity template refresh: Increment 4 (concept note and program flow, 9.36)
 
 This increment is stacked on #551 and copies `Blank [Concept Note and Program]`
-twice, selecting one source section per template. The new scoped maker does not
-activate or rebuild the pending memo or NOM. The source's program page contains a
+twice, selecting one source section per template. The scoped maker does not
+activate or rebuild the memo or NOM. The source's program page contains a
 filled schedule even though the file is named Blank; all of its dates, activities
 and named responsibilities are removed. The new program contains only the current
 activity title and the payload's day headings and editable empty rows.
@@ -416,3 +417,79 @@ layout and existing styles after normalizing image order; it adds an unused
 Release metadata and whitespace checks pass. The full suite was not run. Google
 conversion/splitting, maker logs, real-calendar drafts and DOCX/PDF comparisons
 remain pending administrator access; these remain administrator acceptance checks after the code merge.
+
+## Activity template refresh: Increment 5 (external invitation letter, 9.37)
+
+The activity document list now includes **Invitation (external letter)** alongside
+the internal memorandum. Its Yes/No/Auto controls, drafting, saved revisions and
+Google Doc link use the existing calendar document routes and permissions.
+`calendar_entry_doc` already supports document keys without a database migration.
+
+An external letter is suggested when the saved outside-activity host or a nonempty
+external visitor list is present (`None` is treated as no visitors). The suggestion
+is conditional: an outside office being named does not establish that a letter
+must be sent, and an incoming invitation is not treated as permission to send an
+outgoing one. The person still decides whether the document is needed. A letter
+can also be selected manually when none of that context is stored. Drafting makes
+a Google Doc; it does not email a letter.
+
+The payload copies the saved host into Agency only. That field names an office,
+so it does not identify the office's head, designation, address or preferred
+salutation. Those fields remain blank for editing, even when a host is present.
+No name or address is extracted from pasted invitation text, a private note or a
+free-text visitor line. The four body blocks provide an editable invitation,
+activity-purpose prompt, activity details/representative prompt and the drafter's
+contact line. The head comes from `head_of_office`; the file-copy reviewer follows
+the existing own-section rules. No source signatory name is retained.
+
+The converter copies `Blank [Letter - Invitation - External]`, validates its two
+bodies and bracketed labels, replaces only the original's content, and removes
+the embedded duplicate and page break. Addressee tokens are replaced individually
+so the name stays bold and the title/agency/address stay plain; paragraph spacing,
+Letter paper, one-inch margins, half-inch header/footer distances, default-header
+letterhead and original old-format footer numbers are retained. Unlike the memo,
+this source has different-first-page disabled. The relay creates the filled file
+copy afterwards in a section with empty headers/footers and only the initials box.
+
+Administrator rollout:
+
+1. Complete the relay setup from the earlier increments. Add/replace this
+   release's `activity_office_templates.gs` in that project; enable Drive API v3
+   and Google Docs API advanced services. Increment 5 does not change relay code.
+2. Deploy the 9.37 app payload. Until the new template exists, its card remains
+   available and a draft attempt explains that administrator setup is needed;
+   existing document templates/drafts remain usable.
+3. Run **`makeOfficeExternalLetterTemplate()`** as the office mailbox. This targets
+   only the external letter. Keep any previous `TPL_invitation_external` ID for
+   rollback. Read the maker log and run `checkOfficeTemplates()`: all expected
+   placeholders must be present, and the office-format marker must match. Changed
+   source labels/structure or missing placeholders leave the old pointer selected.
+   `rebuildOfficeExternalLetterTemplate()` forces a fresh candidate when needed.
+4. Draft from a real item naming an outside office. Confirm the agency, blank
+   unknown addressee/salutation fields, date, activity/date/time/venue/link details,
+   editable purpose/representative prompts and settings-backed head. Confirm that
+   the body and file copy are both filled and that only the initials box is added.
+5. Follow handoff section 6: retain the maker log, export the draft as DOCX and
+   compare its original section to `activity_reference.json`'s
+   `invitation_external`. Check paper, margins/distances, font/run styles, header
+   artwork, footer and first/even-page settings. Compare the office Sample and
+   draft PDFs side by side, including addressee line breaks and bolding, paragraph
+   spacing, page transitions and the file copy's blank header/footer.
+
+Rollback: restore the previous template ID and matching office-format marker, if
+there was one. If this is the first setup, remove both `TPL_invitation_external`
+and `TPLF_invitation_external` to disable new drafting for this type; the app will
+show its setup message. Saved drafts remain linked. No other template needs to
+be rebuilt, and no database change needs to be undone.
+
+Local validation: 198 focused tests pass across activity docs, travel scripts,
+office relay/converters, release checks and calendar entry pages. They cover the
+new suggestion/card/choice/draft path, saved state, blank unknown recipients,
+settings/reviewer provenance, private-note exclusion, template/payload agreement,
+bold/plain addressee runs and failed-candidate isolation. The pure mapper accepts
+a fresh actual Blank (nine paragraph replacements plus the addressee token
+replacements); its page/body and header/footer measurements match the committed
+reference after normalizing anchored-image order. Release metadata and whitespace
+checks pass. The full suite was not run. Google maker/conversion runs, real drafts
+and DOCX/PDF visual comparisons remain administrator acceptance checks; keep this
+increment in draft until those are recorded.
