@@ -28,6 +28,8 @@ DOCS = {
                      "blurb": "The day-by-day schedule: when, what, and who is responsible."},
     "notice_of_meeting": {"label": "Notice of meeting",
                           "blurb": "Tells the invited people what the meeting is, when and where it is held, and who is invited."},
+    "executive_briefer": {"label": "Executive briefer",
+                          "blurb": "A short brief of the activity, requested action and key details for the approving official."},
     "minutes": {"label": "Minutes of the meeting",
                 "blurb": "The record of a meeting: who attended, what was discussed and decided, and the action points."},
 }
@@ -189,6 +191,7 @@ def suggest(entry, kind_label="", outside=None, visitors="") -> dict:
     else:
         out["notice_of_meeting"] = (False, "Only a meeting usually needs a notice.")
         out["minutes"] = (False, "Only a meeting usually needs minutes.")
+    out["executive_briefer"] = (False, "Choose a briefer when an executive summary or decision is needed.")
     return out
 
 
@@ -511,9 +514,35 @@ def payload(conn, entry, key, user, owner_label="", positions=False, designation
         return _program_flow(entry, title)
     if key == "notice_of_meeting":
         return _notice_of_meeting(conn, entry, title, me, profile, head_name, head_title, owner_label.strip(), positions)
+    if key == "executive_briefer":
+        return _executive_briefer(conn, entry, title, me, profile, head_name, head_title, user["id"], positions)
     if key == "minutes":
         return _minutes(conn, entry, title, me, profile, head_name, owner_label.strip(), positions)
     raise ValueError("Unknown document.")
+
+
+def _executive_briefer(conn, entry, title, me, profile, head_name, head_title, drafter_id, positions=False) -> td.DocPayload:
+    reviewer = file_copy_reviewer(conn, entry, [drafter_id])
+    fields = {"subject": title, "prepared_by": me,
+              "prepared_title": (profile.get("designation") or "") if positions else "",
+              "noted_by_name": reviewer[0] or BLANK, "noted_by_title": reviewer[1] or BLANK,
+              "head_name": head_name.upper() if head_name else BLANK, "head_title": head_title or BLANK,
+              "approved_unit": SIGNATORY_UNIT}
+    people = describe_people(conn, entry, None, positions)
+    participants = [_line(i, name, designation) for i, (name, designation) in enumerate(people, 1)]
+    visitors = [line for line in get_visitors(conn, entry["id"]).splitlines() if line.strip() and line.strip().lower() != "none"]
+    participants += [f"{len(people) + i}. {line}" for i, line in enumerate(visitors, 1)]
+    references = get_dpo_cites(conn, entry["id"]).strip()
+    details = [f"Date: {days_text(entry)}", f"Venue: {where_text(entry)}",
+               f"References: {references or '[Add the relevant issuances or reference documents.]'}"]
+    if entry.get("meeting_url"):
+        details.append(f"Online meeting: {entry['meeting_url']}")
+    blocks = {"requested_action": ["[State the decision, approval or other action requested.]"],
+              "background": ["[Explain the background, rationale and legal basis of the activity.]"],
+              "outputs": list(CONCEPT_PROMPTS["outputs"]),
+              "participants": participants or ["[List participants and key stakeholders.]"],
+              "date_venue_references": details}
+    return td.DocPayload("executive_briefer", "executive_briefer", f"Executive Briefer - {title}"[:120], fields, blocks=blocks)
 
 
 def _invitation_external(conn, entry, title, me, head_name, head_title, drafter_id) -> td.DocPayload:
@@ -689,8 +718,9 @@ def record(conn, prep, res, user) -> dict:
     revision, so it never overwrites the earlier one, and a failure keeps the last good link."""
     url = (res.data or {}).get("url") if res.ok else ""
     err = "" if url else PLAIN_ERRORS.get(res.error, GENERIC_ERROR)
-    if prep.key == "invitation_external" and res.error == "template_not_set":
-        err = "The external invitation template has not been set up yet. Ask an administrator to complete its setup."
+    if prep.key in ("invitation_external", "executive_briefer") and res.error == "template_not_set":
+        label = "external invitation" if prep.key == "invitation_external" else "executive briefer"
+        err = f"The {label} template has not been set up yet. Ask an administrator to complete its setup."
     conn.execute("INSERT INTO calendar_entry_doc(entry_id, doc_key, doc_url, doc_state, note, rev, updated_by, updated_at) "
                  "VALUES (?,?,?,?,?,?,?,?) ON CONFLICT(entry_id, doc_key) DO UPDATE SET doc_url=CASE WHEN excluded.doc_url<>'' "
                  "THEN excluded.doc_url ELSE calendar_entry_doc.doc_url END, doc_state=excluded.doc_state, note=excluded.note, "

@@ -32,6 +32,7 @@ Both templates are plain Google Docs in the `_templates` folder under the relay'
 | `invitation_external` (office external letter, 9.37) | Fields `date`, `addressee_name`, `addressee_title`, `addressee_agency`, `addressee_address`, `salutation_name`, `subject`, `head_name`, `head_title`; blocks `letter_opening`, `activity_purpose`, `letter_details`, `contact_details`. File copy uses `extras.boxes = ["slip"]`. |
 | `concept_note` (converted office note, 9.36) | Fields `title`, `date_duration`, `venue`, `participant_count`, `facilitators`, `budget`, `prepared_by`, `prepared_title`, `noted_by_name`, `noted_by_title`, `recommended_name`, `recommended_title`, `recommended_unit`, `approved_name`, `approved_title`, `approved_unit`; blocks `background`, `objectives`, `outputs`, `participants_note`, `methodology`; repeatable participant row `pt_group` / `pt_count` plus a total and daily row `pd_day` / `pd_text`. Legacy `participants`, `unit_name`, `pd_am`, `pd_pm` remain for the drawn template. |
 | `notice_of_meeting` (converted office NOM, 9.33) | Fields `date`, `subject`, `meeting_date`, `meeting_time`, `venue`, `meeting_link`, `head_name`, `head_title`, `unit_name`; one repeatable row `inv_name` / `inv_office`; block `agenda` in the grid's bulleted cell. Legacy `title`, `meeting_when`, `prepared_by`, `prepared_title` and `invited` remain for the drawn template. |
+| `executive_briefer` (office briefer, 9.38) | Fields `subject`, `prepared_by`, `prepared_title`, `noted_by_name`, `noted_by_title`, `head_name`, `head_title`, `approved_unit`; blocks `requested_action`, `background`, `outputs`, `participants`, `date_venue_references`. Values stay in the original table cells; no repeatable rows or file copy. |
 | `minutes` | `title`, `meeting_when`, `venue`, `prepared_by`, `prepared_title`, `approved_by`, `unit_name`; blocks `attendees`, `agenda`, `discussion`, `next_steps`; one table row `m_action` / `m_who` / `m_due` |
 | `program_flow` | `title`; one table row `pf_time` / `pf_topic` / `pf_person` copied for each day heading and each empty row |
 
@@ -491,5 +492,83 @@ a fresh actual Blank (nine paragraph replacements plus the addressee token
 replacements); its page/body and header/footer measurements match the committed
 reference after normalizing anchored-image order. Release metadata and whitespace
 checks pass. The full suite was not run. Google maker/conversion runs, real drafts
-and DOCX/PDF visual comparisons remain administrator acceptance checks; keep this
-increment in draft until those are recorded.
+and DOCX/PDF visual comparisons remain administrator acceptance checks after the
+code merge of #554.
+
+## Activity template refresh: Increment 6 (executive briefer, 9.38)
+
+The activity document list now includes **Executive briefer**. It is manual by
+default: choose Yes when an executive summary or decision is needed. Its existing
+Yes/No/Auto controls, drafting, revision state and saved Google Doc link use the
+same calendar routes and permissions as the other activity documents. The new
+key needs no database migration. Drafting creates a Google Doc, not an email.
+
+The converter copies `Blank [Executive Briefer]` and keeps the source layout as
+given under D4: Letter paper, one-inch margins, half-inch header/footer distances,
+a first-page header containing two anchored logos without title text, an empty
+footer, and one nine-row table. The title row stays merged, the grid stays
+2445/8475 twips (10920 total, wider than the 9360-twip text area), the -540-twip
+paragraph offset is preserved, and both VI labels remain. The original spelling
+of the labels is kept too. The converter does not resize, renumber or redraw the
+form. It validates row labels, blank value areas and signature paragraph slots
+before changing a candidate; failure leaves the active template selected.
+
+The payload fills Subject from the activity title and lists the item's people
+with designations only when requested, followed by intact saved external-visitor
+lines. It fills the activity dates and venue, optional online link and the
+explicitly saved DPO-cites/reference text. Private notes and incoming invitation
+text are not copied. Requested action and background/legal basis are prompts.
+The item currently has no structured expected-output field, so Outputs retains
+the existing editable `CONCEPT_PROMPTS["outputs"]` rather than inventing results
+or attachments. No file-copy page or routing boxes are requested for this form.
+
+Prepared uses the drafter's profile; its designation is filled only when requested.
+Noted uses the existing `REVIEWERS`/`file_copy_reviewer` section rules for the
+drafter, or remains blank. Approved uses `head_of_office` and the bureau name,
+matching the source's Director signature role. All source signature wording is
+replaced with placeholders; unknown names/titles stay blank. The source's Noted
+by label, paragraph order and blank lines stay in their existing cells.
+
+Administrator rollout:
+
+1. Complete the relay setup from earlier increments. Add/replace this release's
+   `activity_office_templates.gs` in the same Apps Script project. Existing Drive
+   API v3 and Google Docs API services remain required. Increment 6 does not change
+   relay code or require rebuilding any other template.
+2. Deploy the matching 9.38 app payload. Before the briefer template is installed,
+   its card is available and a draft attempt explains that setup is needed.
+3. Run **`makeOfficeBrieferTemplate()`** as the office mailbox. Keep any previous
+   `TPL_executive_briefer` ID for rollback. Inspect the maker log and run
+   `checkOfficeTemplates()`: every briefer placeholder must be present and the
+   office-format marker must match. Use `rebuildOfficeBrieferTemplate()` when a
+   fresh candidate is needed. Do not manually activate a candidate with failed
+   label/signature validation.
+4. Draft from a real activity with participants and explicitly saved references.
+   Check its subject, participant/stakeholder list, dates/venue/link, reference
+   text and editable action/background/outputs. Check drafter, section reviewer
+   and configured head. Confirm no private note or source signatory name remains.
+5. Follow handoff section 6: retain the maker log; export the real draft as DOCX
+   and compare against `activity_reference.json`'s `executive_briefer`. Check the
+   2445/8475 grid, source offset, merged title, repeated VI labels, margins and
+   distances, first-page logo sizes/positions, fonts and empty footer.
+6. Compare the office Sample and draft PDFs side by side. Pay particular attention
+   to the wide table and page edges, multiline value cells and signature spacing.
+   D4 preserves the wide grid and repeated VI labels; do not silently fit the table
+   inside the text margins or renumber it. Record the visual checks before calling
+   the template deployment complete.
+
+Rollback: restore the previous template ID and its matching office-format marker,
+if one existed. For a first setup, remove `TPL_executive_briefer` and
+`TPLF_executive_briefer` to disable new drafts and restore the setup message.
+Previously created drafts remain linked. No database change needs to be undone.
+
+Local validation: 204 focused tests pass across activity docs, travel scripts,
+office relay/converters, release checks and calendar entry pages. They cover the
+manual card/choice/draft/saved-state flow, known-data/prompts, unknown signers,
+reviewer/head provenance, private-note exclusion, placeholder/payload agreement,
+wide/merged/repeated-label preservation and failed-candidate isolation. Both pure
+mappers accept a fresh actual Blank, whose page/body/header/footer measurements
+match the committed reference after normalizing anchored-image order. Release
+metadata and whitespace checks pass. The full suite was not run. Administrator
+maker runs, real drafts and DOCX/PDF comparisons remain pending; this increment
+stays in draft until those checks are recorded.

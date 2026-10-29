@@ -169,6 +169,15 @@ function letter() {
   }
   return new Body(original().concat(original()));
 }
+function briefer() {
+  const labels = ['I. Subject', 'II. Requested Action', 'III. Background/ Rational / Legal Basis',
+    'IV. Key Outputs / Expected Output / Attachments', 'V. Participants / Key Stakeholders ', 'VI. Date/Venue/ References'];
+  const table = new Table([[' EXECUTIVE BRIEFER'], ...labels.map(label => [label, '']),
+    ['VI. Prepared by', new Cell(['', 'Name of Staff', 'Designation', '', 'Noted by:', '', 'Name of Supervisor', 'Designation'])],
+    ['Approved by', new Cell(['', '', 'SOURCE HEAD MUST GO', 'SOURCE TITLE MUST GO', 'SOURCE UNIT MUST GO'])]], [2445, 8475]);
+  const lead = new Para(''); lead.attrs.indentStart = -27;
+  return new Body(['', lead, table, '']);
+}
 function context(body, opts = {}) {
   const key = opts.key || 'invitation';
   const props = { ['TPL_' + key]: opts.existing || 'OLD' }, writes = [], docs = {};
@@ -304,5 +313,25 @@ for (const mode of ['purpose', 'duplicate', 'addressee', 'element']) {
   const env = context(body, {key: 'invitation_external'});
   output.letterFailures.push({report: env.ctx.makeOfficeExternalLetterTemplate(), writes: env.writes,
     active: env.props.TPL_invitation_external});
+}
+const brieferBody = briefer(), be = context(brieferBody, {key: 'executive_briefer'});
+output.briefer = {report: be.ctx.makeOfficeBrieferTemplate(), writes: be.writes, text: brieferBody.getText(), children: snapshot(brieferBody),
+  expect: vm.runInContext('AO_TEMPLATES.find(t => t.key === "executive_briefer").expect', be.ctx)};
+vm.runInContext(load('travel_docs.gs'), be.ctx);
+be.ctx.applyBlocks_(brieferBody, {requested_action: ['Editable action'], background: ['Background'], outputs: ['Output one', 'Output two'],
+  participants: ['Person one', 'Visitor two'], date_venue_references: ['Date: Today', 'Venue: Room', 'References: Known reference']});
+be.ctx.applyFields_(brieferBody, {subject: 'Current activity', prepared_by: 'DRAFTER', prepared_title: 'Staff title',
+  noted_by_name: 'REVIEWER', noted_by_title: 'Reviewer title', head_name: 'CONFIGURED HEAD', head_title: 'Director', approved_unit: 'Bureau'});
+output.briefer.filled = {text: brieferBody.getText(), children: snapshot(brieferBody)};
+output.brieferFailures = [];
+for (const mode of ['label', 'title', 'data', 'signature', 'body']) {
+  const body = briefer();
+  if (mode === 'label') body.children[2].getCell(7, 0).children[0].text = 'VII. Prepared by';
+  if (mode === 'title') body.children[2].getRow(0).cells.push(new Cell(['extra title cell']));
+  if (mode === 'data') body.children[2].getCell(1, 1).children[0].text = 'Unexpected existing subject';
+  if (mode === 'signature') body.children[2].getCell(7, 1).children[1].text = 'Unknown staff slot';
+  if (mode === 'body') body.children[0].text = 'Unexpected body';
+  const env = context(body, {key: 'executive_briefer'});
+  output.brieferFailures.push({report: env.ctx.makeOfficeBrieferTemplate(), writes: env.writes, active: env.props.TPL_executive_briefer});
 }
 console.log(JSON.stringify(output));
