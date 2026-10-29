@@ -7,7 +7,7 @@ import documents_dashboard as documents
 import supplies_stock_dashboard as supplies
 from tests.test_documents import registry
 from tests.test_document_registry_pagination import seed_many
-from tests.test_supplies import supplies_db,setup_catalog,create
+from tests.test_supplies import supplies_db,setup_catalog,create, reader as approver_reader
 from tests.test_supplies_stock import opening
 
 
@@ -21,7 +21,7 @@ def content(payload):
 
 
 def test_supply_pdf_complete_rows_precise_quantities_safe_text_and_empty(supplies_db,tmp_path):
-    c,u,_,_=supplies_db;setup_catalog(c,u)
+    c,u,_,_=supplies_db;setup_catalog(c,u);approver_reader(c,u)
     for index in range(33):
         item=create(c,u[1],code=f'PDF-{index:03}',description=('Niño & <tag> report '*11).strip(),target_level='')
         opening(c,u[1],item,quantity='0' if index==0 else '2')
