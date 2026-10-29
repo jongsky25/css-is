@@ -32,6 +32,7 @@
   .reg-dl button { font:inherit; font-weight:800; cursor:pointer; padding:.4rem .8rem; color:var(--ink-soft);
                   border:1px solid var(--line); border-radius:10px; background:var(--surface); }
   .reg-dl button:hover { border-color:var(--accent); color:var(--accent); }
+  .weekbar a.reg-late { font-weight:700; font-size:.85rem; color:var(--accent); }
 </style>
 
 {{ page_header("Wellness utilization", "How the bureau is using its 2-hour weekly wellness break — the live view behind the monitoring register.") }}
@@ -46,6 +47,7 @@
     <label>To <input type="date" name="date_to" value="{{ week_end }}"></label>
     <button type="submit">⬇ Download the register (Excel)</button>
   </form>
+  <a class="reg-late" href="/wellness/late">File a late break</a>
 </div>
 
 <div class="tiles">
