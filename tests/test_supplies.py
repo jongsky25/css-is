@@ -44,6 +44,13 @@ def supplies_db(tmp_path):
     c.close()
 
 
+def reader(c, users):
+    """A request approver: since Supplies 4.2 the lowest role that may see stock numbers (active items only)."""
+    unit = c.execute('SELECT id FROM org_unit ORDER BY id').fetchone()[0]
+    s.grant_role(c, users[0], users[2]['id'], 'request_approver', unit_id=unit, operation_key=key())
+    return users[2]
+
+
 def setup_catalog(c, users):
     grant = s.grant_role(c, users[0], users[1]['id'], 'custodian', operation_key=key())
     s.set_enabled(c, users[0], '1', expected_revision=0, operation_key=key())

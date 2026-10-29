@@ -72,6 +72,12 @@ def test_presentation_empty_failed_request_assets_and_revoked_permission(invento
     page.wait_for_function("document.getElementById('stock-presentation-status').textContent.includes('Narrow the dashboard')")
     assert page.get_by_role('button',name='Export PowerPoint report',exact=True).is_enabled()
     page.unroute('**/supplies/stock-dashboard/presentation-data?**')
+    page.route('**/static/vendor/pptxgenjs/**',lambda route:route.abort())           # the failed library is checked while the grant is still current
+    page.goto('http://office.test/supplies/stock-dashboard')
+    assert page.get_by_role('button',name='Export PowerPoint report',exact=True).is_disabled()
+    assert 'could not load' in page.locator('#stock-presentation-status').inner_text()
+    assert page.get_by_role('region',name='Physical stock counts').is_visible()
+    page.unroute('**/static/vendor/pptxgenjs/**')
     page.goto('http://office.test/supplies/stock-dashboard?active=all')
     c.execute("UPDATE supply_role_grant SET revoked_at='2026-10-24',revoked_by=? WHERE id=?",(state['user']['id'],state['grant']['id']));c.commit()
     with page.expect_response('**/supplies/stock-dashboard/presentation-data?**') as response:
@@ -79,8 +85,4 @@ def test_presentation_empty_failed_request_assets_and_revoked_permission(invento
     assert response.value.status==403 and response.value.headers['cache-control']=='no-store'
     page.wait_for_function("!document.getElementById('stock-presentation-export').disabled")
     assert 'downloaded' not in page.locator('#stock-presentation-status').inner_text()
-    page.route('**/static/vendor/pptxgenjs/**',lambda route:route.abort())
-    page.goto('http://office.test/supplies/stock-dashboard')
-    assert page.get_by_role('button',name='Export PowerPoint report',exact=True).is_disabled()
-    assert 'could not load' in page.locator('#stock-presentation-status').inner_text()
-    assert page.get_by_role('region',name='Physical stock counts').is_visible()
+

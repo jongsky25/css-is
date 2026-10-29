@@ -5,7 +5,7 @@ import pytest
 import supplies_grid as grid
 import supplies_stock_dashboard as dashboard
 from supplies_storage import Denied,Invalid
-from tests.test_supplies import supplies_db,setup_catalog,create,key
+from tests.test_supplies import supplies_db,setup_catalog,create,key,reader
 from tests.test_supplies_stock import opening,receive
 from tests.test_supplies_requests import request_db
 from tests.test_supplies_approvals import approval_db
@@ -16,7 +16,7 @@ def params(href):return {k:v[0] for k,v in parse_qs(urlsplit(href).query,keep_bl
 
 
 def test_counts_threshold_unknown_zero_unit_scope_and_exact_links(supplies_db):
-    c,u,_,_=supplies_db;setup_catalog(c,u)
+    c,u,_,_=supplies_db;setup_catalog(c,u);reader(c,u)
     for index,quantity in enumerate((None,'0','4','5','12')):
         item=create(c,u[1],code=f'CHART-{index}',unit='Ream' if index<4 else 'Box')
         if quantity is not None:opening(c,u[1],item,quantity=quantity)
@@ -47,7 +47,7 @@ def test_counts_threshold_unknown_zero_unit_scope_and_exact_links(supplies_db):
 
 
 def test_low_list_all_pages_search_and_live_inactive_authority(supplies_db):
-    c,u,_,_=supplies_db;grant=setup_catalog(c,u)
+    c,u,_,_=supplies_db;grant=setup_catalog(c,u);reader(c,u)
     for index in range(31):
         item=create(c,u[1],code=f'LOW-{index:03}')
         opening(c,u[1],item,quantity='2')
@@ -59,7 +59,9 @@ def test_low_list_all_pages_search_and_live_inactive_authority(supplies_db):
     assert dashboard.report(c,u[1],{'active':'all'})['total']==31
     c.execute("UPDATE supply_role_grant SET revoked_at='2026-10-24',revoked_by=? WHERE id=?",(u[0]['id'],grant['id']));c.commit()
     with pytest.raises(Denied):dashboard.report(c,u[1],{'active':'all'})
-    assert dashboard.report(c,u[1],{})['total']==31
+    with pytest.raises(Denied):dashboard.report(c,u[1],{})                         # Supplies 4.2: no grant left, no stock numbers
+    assert dashboard.report(c,u[2],{})['total']==31                                # an approver still reads the active items
+    with pytest.raises(Denied):dashboard.report(c,u[2],{'active':'all'})
     c.execute('UPDATE admin_user SET active=0 WHERE id=?',(u[2]['id'],));c.commit()
     with pytest.raises(Denied):dashboard.report(c,u[2],{})
 
@@ -67,14 +69,14 @@ def test_low_list_all_pages_search_and_live_inactive_authority(supplies_db):
 def test_reservations_change_availability_not_physical_counts(approval_db):
     c,u,_,_,identifier=approval_db
     ready(c,u,identifier,'10')
-    report=dashboard.report(c,u[2],{})
+    report=dashboard.report(c,u[3],{})
     assert next(r['count'] for r in report['availability'] if r['key']=='fully_reserved')==1
     assert next(r['count'] for r in report['physical'] if r['key']=='normal')==1
     assert report['low_count']==0
     import supplies
     receive(c,u[1],supplies.get_item(c,u[1],identifier),quantity='5')
     ready(c,u,identifier,'3')
-    changed=dashboard.report(c,u[2],{})
+    changed=dashboard.report(c,u[3],{})
     assert next(r['count'] for r in changed['availability'] if r['key']=='low_available')==1
     assert changed['low_count']==0
 

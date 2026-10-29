@@ -512,6 +512,9 @@ def make_router(templates, get_conn):
 
     @router.get('/supplies/stock-dashboard')
     def supply_stock_dashboard(request: Request):
+        door = side_door(request, '/supplies/requests/new')
+        if door is not None:
+            return door
         conn=get_conn()
         try:
             result=stock_dashboard.report(conn,request.state.user,request.query_params)

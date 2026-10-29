@@ -50,10 +50,10 @@ def test_stock_mobile_failed_charts_no_script_filters_and_revoked_grant(inventor
     page.goto('http://office.test/supplies/items?interactive=1&physical=critical&active=active')
     assert page.locator('#inventory-standard tbody tr').count()==4
     c.execute("UPDATE supply_role_grant SET revoked_at='2026-10-24',revoked_by=? WHERE id=?",(state['user']['id'],state['grant']['id']));c.commit()
-    forbidden=page.goto('http://office.test/supplies/stock-dashboard?active=all')
-    assert forbidden.status==403 and forbidden.headers['cache-control']=='no-store'
-    active=page.goto('http://office.test/supplies/stock-dashboard')
-    assert active.status==200 and '36 matching catalog items' in page.locator('#stock-dashboard').inner_text()
+    # Supplies 4.2: with no grant left the data is refused (and the page itself would send the user to the request grid)
+    refused=page.evaluate("fetch('/supplies/stock-dashboard/presentation-data?active=all').then(r=>[r.status,r.headers.get('cache-control')])")
+    assert refused==[403,'no-store']
+    assert page.evaluate("fetch('/supplies/inventory-data').then(r=>r.status)")==403
 
 
 def test_linked_inventory_fallback_paging_and_recovered_assets(inventory_page):

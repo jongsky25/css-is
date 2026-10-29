@@ -264,3 +264,41 @@ def test_people_who_manage_supplies_keep_those_pages(released, app_mod):
         finally:
             client.__exit__(None, None, None)
             app_mod.DB = old
+
+
+# ---- Supplies 4.2: stock numbers for the supply office, auditors and approvers only ----
+
+def test_a_requester_cannot_read_stock_numbers_anywhere(approval_db, app_mod):
+    c, u, _, path, item = approval_db
+    import supplies_grid as grid
+    import supplies_stock_dashboard as dash
+    from supplies_storage import Denied
+    for call in (lambda: grid.page(c, u[2], {}), lambda: grid.export_csv(c, u[2], {}), lambda: dash.report(c, u[2], {})):
+        with pytest.raises(Denied):
+            call()
+    client, old = client_for(app_mod, path, u[2])
+    try:
+        sent = client.get('/supplies/stock-dashboard?q=paper', follow_redirects=False)
+        assert sent.status_code == 303 and sent.headers['location'] == '/supplies/requests/new'
+        for url in ('/supplies/inventory-data', '/supplies/inventory-export.csv',
+                    '/supplies/stock-dashboard/presentation-data', '/supplies/stock-dashboard/export.pdf'):
+            assert client.get(url).status_code == 403, url
+        grid_page = client.get('/supplies/requests/new').text
+        assert 'on hand' not in grid_page.lower() and 'shop-badge' in grid_page                 # badges, not quantities
+    finally:
+        client.__exit__(None, None, None)
+        app_mod.DB = old
+
+
+def test_the_supply_office_auditors_and_approvers_keep_the_stock_numbers(approval_db, app_mod):
+    c, u, units, path, item = approval_db
+    import supplies as s
+    s.grant_role(c, u[0], u[4]['id'], 'auditor', operation_key=key())
+    for who in (u[0], u[1], u[3], u[4]):                                                     # admin, custodian, approver, auditor
+        client, old = client_for(app_mod, path, who)
+        try:
+            assert client.get('/supplies/inventory-data').status_code == 200, who['username']
+            assert client.get('/supplies/stock-dashboard', follow_redirects=False).status_code == 200, who['username']
+        finally:
+            client.__exit__(None, None, None)
+            app_mod.DB = old
