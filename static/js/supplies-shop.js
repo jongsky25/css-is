@@ -92,9 +92,13 @@
   if (search) {
     search.form.addEventListener('submit', function (e) { e.preventDefault(); });
     search.addEventListener('input', function () {
-      [].slice.call(form.querySelectorAll('.shop-card')).forEach(function (card) {
+      var shown = 0, cards = [].slice.call(form.querySelectorAll('.shop-card'));
+      cards.forEach(function (card) {
         card.hidden = !matches(card.getAttribute('data-name') || '', search.value);
+        if (!card.hidden) shown++;
       });
+      var result = form.querySelector('[data-shop-result]');             // say how many are left, for a screen reader
+      if (result) result.textContent = !search.value.trim() ? '' : shown ? shown + (shown === 1 ? ' item shown' : ' items shown') : 'No items match what you typed';
     });
   }
   refresh();

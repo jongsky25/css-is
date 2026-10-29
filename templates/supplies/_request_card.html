@@ -6,7 +6,7 @@
     <a class="req-title" href="/supplies/requests/{{ entry.id }}">{{ entry.control_number or 'Draft request' }}</a>
     <span class="req-items">{% for it in shown['items'] %}{{ it.description }}{{ ', ' if not loop.last }}{% endfor %}{% if shown['more'] %} and {{ shown['more'] }} more{% endif %}</span>
     <span class="req-pill req-pill-{{ st.tone }}">{{ st.label }}</span>
-    {% if entry.approval_status in ('submitted', 'approved') %}<ol class="req-track" aria-label="Progress">{% for name in steps %}<li class="{{ 'is-done' if loop.index < st.step else 'is-now' if loop.index == st.step }}">{{ name }}</li>{% endfor %}</ol>{% endif %}
+    {% if entry.approval_status in ('submitted', 'approved') %}<ol class="req-track" aria-label="Progress">{% for name in steps %}<li class="{{ 'is-done' if loop.index < st.step else 'is-now' if loop.index == st.step }}"{% if loop.index == st.step %} aria-current="step"{% endif %}>{{ name }}<span class="sr-only"> {{ '(done)' if loop.index < st.step else '(this is where your request is)' if loop.index == st.step else '(not reached yet)' }}</span></li>{% endfor %}</ol>{% endif %}
     <span class="req-sentence">{{ st.sentence }}</span>
     <span class="req-date">Updated {{ entry.updated_at|humandt }}</span>
   </div>

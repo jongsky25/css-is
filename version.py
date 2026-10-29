@@ -18,10 +18,21 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "9.27"
+APP_VERSION = "9.28"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "9.28",
+        "date": "October 29, 2026",
+        "summary": "The new supply screens are easier to read in dark mode and with a screen reader.",
+        "changes": [
+            "The supply request screens now follow the dark and high-contrast themes. Status labels, progress bars, item badges and buttons were hard to read in dark mode and are fixed.",
+            "A screen reader now says which step your request has reached, and says how many items are left while you search for an item.",
+            "Out-of-stock items are no longer faded, which made their words hard to read. Only the picture is dimmed.",
+            "The Active, Completed and All tabs are bigger and easier to tap."
+        ]
+    },
     {
         "version": "9.27",
         "date": "October 29, 2026",
