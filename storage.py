@@ -288,7 +288,9 @@ def init_db(conn):
         decided_at  TEXT,
         decide_note TEXT,                        -- approver's remark (e.g. reason for denial)
         cancel_reason TEXT,                      -- claimant's own remark when withdrawing (optional)
-        created_at  TEXT
+        created_at  TEXT,
+        late_filed_by INTEGER REFERENCES admin_user(id),  -- chief/admin who filed it after the fact
+        late_reason TEXT                         -- why it was filed late (required for a late filing)
     );
     CREATE INDEX IF NOT EXISTS idx_wellness_claim_user_week ON wellness_claim(user_id, week_start);
     CREATE INDEX IF NOT EXISTS idx_wellness_claim_status    ON wellness_claim(status);
@@ -1695,6 +1697,11 @@ def _add_missing_columns(conn):
         # Spot Feedback #77: a documented reason when the claimant withdraws
         # their own request (mirrors decide_note, the approver's side of it).
         conn.execute("ALTER TABLE wellness_claim ADD COLUMN cancel_reason TEXT")
+    if wc_cols and "late_filed_by" not in wc_cols:
+        # A break filed after the fact by the staff member's chief or an admin
+        # (file_late_wellness_claim): who filed it, and the reason they gave.
+        conn.execute("ALTER TABLE wellness_claim ADD COLUMN late_filed_by INTEGER")
+        conn.execute("ALTER TABLE wellness_claim ADD COLUMN late_reason TEXT")
     wr_cols = {row[1] for row in conn.execute("PRAGMA table_info(wellness_reflection)")}
     if wr_cols:
         if "usefulness" not in wr_cols:
@@ -8052,11 +8059,9 @@ def wellness_hours_used(conn, user_id, week_start):
         (user_id, week_start, *_WELLNESS_COUNTED)).fetchone()[0]
 
 
-def create_wellness_claim(conn, user_id, break_date, start_time, activity,
-                          note=None, hours=1, activity_other=None):
-    """File a break request of `hours` hours (1 or 2 — the DM allows the whole
-    weekly entitlement in one sitting). Validates the DM's rules and raises
-    ValueError with a human-readable reason; returns the new claim id."""
+def _wellness_parse_claim(break_date, start_time, activity, hours, activity_other):
+    """The field checks every break shares, however it is filed. Returns
+    (date, start_time, hours, activity_other) or raises ValueError."""
     try:
         hours = int(hours)
     except (TypeError, ValueError):
@@ -8078,6 +8083,34 @@ def create_wellness_claim(conn, user_id, break_date, start_time, activity,
         raise ValueError("Tell us what the 'Others' activity is.")
     if activity != "other":
         activity_other = None            # only meaningful for the "Others" option
+    return d, start_time, hours, activity_other
+
+
+def _wellness_check_room(conn, user_id, d, start_time, hours):
+    """The week's entitlement and the no-overlap rule, which hold for every
+    break — a late filing included. Raises ValueError."""
+    used = wellness_hours_used(conn, user_id, wellness_week_start(d))
+    if used + hours > WELLNESS_WEEKLY_HOURS:
+        left = WELLNESS_WEEKLY_HOURS - used
+        if left <= 0:
+            raise ValueError(f"That week's {WELLNESS_WEEKLY_HOURS}-hour wellness "
+                             "entitlement is already fully claimed.")
+        raise ValueError(
+            f"Only {left} hour{'s' if left != 1 else ''} left in that week's "
+            f"{WELLNESS_WEEKLY_HOURS}-hour entitlement.")
+    start_minutes = _wellness_time_to_minutes(start_time)
+    if _wellness_overlapping_claim(conn, user_id, d, start_minutes,
+                                   start_minutes + hours * 60):
+        raise ValueError("You already have a break that overlaps that time.")
+
+
+def create_wellness_claim(conn, user_id, break_date, start_time, activity,
+                          note=None, hours=1, activity_other=None):
+    """File a break request of `hours` hours (1 or 2 — the DM allows the whole
+    weekly entitlement in one sitting). Validates the DM's rules and raises
+    ValueError with a human-readable reason; returns the new claim id."""
+    d, start_time, hours, activity_other = _wellness_parse_claim(
+        break_date, start_time, activity, hours, activity_other)
     if d < tz.today_local():
         raise ValueError("Breaks are scheduled ahead — pick today or a future date.")
     if d > wellness_window_last_date():
@@ -8096,20 +8129,7 @@ def create_wellness_claim(conn, user_id, break_date, start_time, activity,
         raise ValueError(
             f"File a break at least {WELLNESS_MIN_LEAD_MINUTES} minutes before it "
             "starts, so your approver has time to see it.")
-    ws = wellness_week_start(d)
-    used = wellness_hours_used(conn, user_id, ws)
-    if used + hours > WELLNESS_WEEKLY_HOURS:
-        left = WELLNESS_WEEKLY_HOURS - used
-        if left <= 0:
-            raise ValueError(f"That week's {WELLNESS_WEEKLY_HOURS}-hour wellness "
-                             "entitlement is already fully claimed.")
-        raise ValueError(
-            f"Only {left} hour{'s' if left != 1 else ''} left in that week's "
-            f"{WELLNESS_WEEKLY_HOURS}-hour entitlement.")
-    start_minutes = _wellness_time_to_minutes(start_time)
-    if _wellness_overlapping_claim(conn, user_id, d, start_minutes,
-                                   start_minutes + hours * 60):
-        raise ValueError("You already have a break that overlaps that time.")
+    _wellness_check_room(conn, user_id, d, start_time, hours)
     # The Director has nobody above them to decide their own claim (see
     # get_approvers_for) — rather than leave it pending on the admin fallback,
     # it's approved the moment it's filed.
@@ -8123,9 +8143,101 @@ def create_wellness_claim(conn, user_id, break_date, start_time, activity,
                                       hours, activity, activity_other, note, status,
                                       created_at, decided_by, decided_at, decide_note)
            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-        (user_id, ws, d.isoformat(), start_time, hours, activity, activity_other,
-         (note or "").strip() or None, status, tz.now_iso(), decided_by, decided_at,
-         decide_note))
+        (user_id, wellness_week_start(d), d.isoformat(), start_time, hours, activity,
+         activity_other, (note or "").strip() or None, status, tz.now_iso(),
+         decided_by, decided_at, decide_note))
+    conn.commit()
+    return cur.lastrowid
+
+
+# ---- late filing ------------------------------------------------------------
+# The DM allows a break that was taken but not filed in time to be filed after
+# the fact. Only the people who would have decided it (the staff member's
+# chain approvers — their section chief, an acting OIC) or an admin may do
+# that, and only back to the first of the previous month, so a month's
+# register isn't reopened indefinitely. Everything but the timing rules still
+# applies: Mon–Fri, the 2-hour week, no overlap.
+
+def wellness_late_earliest_date(today=None):
+    """First date a late filing may be for: the 1st of the previous month."""
+    today = today or tz.today_local()
+    return (today.replace(day=1) - timedelta(days=1)).replace(day=1)
+
+
+def may_file_late_wellness(conn, user, staff_id):
+    """May `user` file a late break for `staff_id`? Their chain approvers may,
+    and so may an admin; nobody files their own (a late break still needs
+    someone other than the claimant to stand behind it)."""
+    if user["id"] == staff_id:
+        return False
+    staff = get_admin_user_by_id(conn, staff_id)
+    if not staff or not staff.get("active"):
+        return False
+    if user.get("role") == "admin":
+        return True
+    return user["id"] in get_approvers_for(conn, staff_id)
+
+
+def wellness_late_filing_staff(conn, user):
+    """The active staff `user` may file a late break for, by name — the late
+    filing form's picker. [{'id','name','section'}]."""
+    staff_sql, staff_params = _staff_only_sql()
+    rows = conn.execute(
+        f"""SELECT a.id, COALESCE(rp.name, a.username), ou.short_name, ou.path
+            FROM admin_user a
+            LEFT JOIN resource_person rp ON rp.id = a.rp_id
+            LEFT JOIN org_unit ou ON ou.id = rp.org_unit_id
+            WHERE a.active = 1 AND rp.archived_at IS NULL AND a.id != ?
+              AND {staff_sql}
+            ORDER BY COALESCE(rp.name, a.username)""",
+        (user["id"], *staff_params)).fetchall()
+    return [{"id": r[0], "name": r[1],
+             "section": r[2] or (r[3].rsplit("/", 1)[-1] if r[3] else "")}
+            for r in rows if may_file_late_wellness(conn, user, r[0])]
+
+
+def file_late_wellness_claim(conn, user, staff_id, break_date, start_time, activity,
+                             reason, note=None, hours=1, activity_other=None):
+    """File a break that `staff_id` already took (or that is too close to file
+    the ordinary way) on their behalf. `user` is the chief or admin filing it;
+    `reason` is required and kept on the claim. Raises PermissionError when
+    `user` may not file for this person, ValueError otherwise.
+
+    Filed by someone who may decide it (is_approver_for), the break is approved
+    there and then — the chief vouching for it IS the decision. Filed by an
+    admin outside the chain, it goes to the chief as an ordinary pending
+    request. Returns the new claim id."""
+    if not may_file_late_wellness(conn, user, staff_id):
+        raise PermissionError("Only the staff member's section chief or an admin "
+                              "can file a late break for them.")
+    reason = (reason or "").strip()
+    if not reason:
+        raise ValueError("Say why this break is being filed late.")
+    d, start_time, hours, activity_other = _wellness_parse_claim(
+        break_date, start_time, activity, hours, activity_other)
+    earliest = wellness_late_earliest_date()
+    if d < earliest:
+        raise ValueError(f"A late break can only be filed back to "
+                         f"{earliest.strftime('%B')} 1.")
+    if d.weekday() >= 5:
+        raise ValueError("Wellness breaks are taken within the work week (Mon–Fri).")
+    starts_at = datetime.combine(d, time.fromisoformat(start_time))
+    if starts_at >= tz.now_local() + timedelta(minutes=WELLNESS_MIN_LEAD_MINUTES):
+        raise ValueError("That break can still be filed the ordinary way, from "
+                         "the staff member's own Apply page.")
+    _wellness_check_room(conn, staff_id, d, start_time, hours)
+    auto = is_approver_for(conn, user, staff_id)
+    now = tz.now_iso()
+    cur = conn.execute(
+        """INSERT INTO wellness_claim(user_id, week_start, break_date, start_time,
+                                      hours, activity, activity_other, note, status,
+                                      created_at, decided_by, decided_at,
+                                      late_filed_by, late_reason)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+        (staff_id, wellness_week_start(d), d.isoformat(), start_time, hours, activity,
+         activity_other, (note or "").strip() or None,
+         "approved" if auto else "pending", now,
+         user["id"] if auto else None, now if auto else None, user["id"], reason))
     conn.commit()
     return cur.lastrowid
 
@@ -8256,12 +8368,15 @@ def get_wellness_claim(conn, claim_id):
                   rp.name, ou.short_name, ou.path,
                   r.id IS NOT NULL, r.mood_before, r.mood_after,
                   c.activity_other, r.usefulness, r.felt_refreshed, r.managed_stress,
-                  r.focus_impact, r.suggestions, c.cancel_reason
+                  r.focus_impact, r.suggestions, c.cancel_reason,
+                  c.late_filed_by, c.late_reason, COALESCE(lrp.name, lu.username)
            FROM wellness_claim c
            JOIN admin_user u ON u.id = c.user_id
            LEFT JOIN resource_person rp ON rp.id = u.rp_id
            LEFT JOIN org_unit ou ON ou.id = rp.org_unit_id
            LEFT JOIN wellness_reflection r ON r.claim_id = c.id
+           LEFT JOIN admin_user lu ON lu.id = c.late_filed_by
+           LEFT JOIN resource_person lrp ON lrp.id = lu.rp_id
            WHERE c.id=?""", (claim_id,)).fetchone()
     if not row:
         return None
@@ -8282,7 +8397,9 @@ def get_wellness_claim(conn, claim_id):
             "mood_before": row[18], "mood_after": row[19],
             "usefulness": row[21], "felt_refreshed": row[22],
             "managed_stress": row[23], "focus_impact": row[24],
-            "suggestions": row[25], "cancel_reason": row[26]}
+            "suggestions": row[25], "cancel_reason": row[26],
+            "late_filed_by": row[27], "late_reason": row[28],
+            "late_filed_by_name": row[29] if row[27] else None}
 
 
 def list_my_wellness_claims(conn, user_id, limit=25):

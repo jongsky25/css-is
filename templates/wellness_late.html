@@ -1,0 +1,83 @@
+{% extends "dash_layout.html" %}
+{% from "_components.html" import page_header, flash, field %}
+{% block title %}File a late break{% endblock %}
+{% block page_width %}narrow{% endblock %}
+{% block content %}
+<style>
+  .panel { border:1px solid var(--line); background:var(--surface); border-radius:16px;
+           padding:1.2rem 1.4rem; margin-bottom:1.1rem; box-shadow:0 1px 3px rgba(20,30,50,.05);
+           max-width:640px; }
+  .field { margin-bottom:1rem; }
+  .field label, .field legend { display:block; font-weight:700; margin-bottom:.3rem; }
+  .field input, .field textarea, .field select { width:100%; font:inherit; padding:.5rem .7rem;
+           border:1px solid var(--line); border-radius:10px; background:var(--bg); color:var(--ink);
+           box-sizing:border-box; }
+  .field .help { color:var(--soft); font-size:.8rem; margin-top:.25rem; }
+  .row2 { display:flex; gap:.8rem; flex-wrap:wrap; }
+  .row2 .field { flex:1; min-width:150px; }
+  fieldset.field { border:0; padding:0; margin:0 0 1rem; }
+  .choice { display:flex; gap:.5rem; flex-wrap:wrap; }
+  .choice label { position:relative; flex:1; min-width:110px; text-align:center; border:1px solid var(--line);
+                  border-radius:12px; padding:.5rem .4rem; cursor:pointer; background:var(--bg);
+                  font-weight:700; margin:0; }
+  .field .choice input { position:absolute; inset:0; width:100%; height:100%; margin:0; padding:0;
+                  border:0; opacity:0; cursor:pointer; }
+  .choice label:has(input:checked) { border-color:var(--accent); background:var(--accent-bg); }
+  .choice label:has(input:focus-visible) { outline:2px solid var(--accent); outline-offset:2px; }
+  .btn { font:inherit; font-weight:700; cursor:pointer; border:1px solid var(--accent);
+         background:var(--accent); color:var(--on-accent, #fff); border-radius:10px; padding:.6rem 1.2rem; }
+</style>
+
+{{ page_header("File a late break",
+   "For a wellness break a staff member took but couldn't file in time. Filed by their section chief, it is approved at once; filed by an admin, it goes to their chief to decide.") }}
+{{ flash(msg=ok, err=err) }}
+
+<div class="panel">
+  <form method="post" action="/wellness/late">
+    <div class="field">
+      <label for="f-staff_id">Staff member</label>
+      <select id="f-staff_id" name="staff_id" required>
+        <option value="">Choose…</option>
+        {% for p in staff %}
+        <option value="{{ p.id }}" {{ "selected" if form.get("staff_id")|string == p.id|string }}>{{ p.name }}{% if p.section %} · {{ p.section }}{% endif %}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="row2">
+      {{ field("break_date", "Date of the break", form.get("break_date", ""), type="date", required=True,
+               attrs='min="' ~ earliest ~ '" max="' ~ today ~ '"',
+               help="Monday to Friday, back to " ~ earliest ~ ".") }}
+      {{ field("start_time", "Start time", form.get("start_time", ""), type="time", required=True) }}
+    </div>
+
+    <fieldset class="field">
+      <legend>Length</legend>
+      <div class="choice">
+        {% for h in range(1, weekly_hours + 1) %}
+        <label><input type="radio" name="hours" value="{{ h }}" required
+                      {{ "checked" if form.get("hours", "1") == h|string }}> {{ h }} hour{{ "s" if h > 1 }}</label>
+        {% endfor %}
+      </div>
+    </fieldset>
+
+    <div class="field">
+      <label for="f-activity">Activity</label>
+      <select id="f-activity" name="activity" required>
+        <option value="">Choose…</option>
+        {% for key, label in activities %}
+        <option value="{{ key }}" {{ "selected" if form.get("activity") == key }}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    {{ field("activity_other", "If Others, please specify", form.get("activity_other", ""), optional=True,
+             attrs='maxlength="120"') }}
+    {{ field("reason", "Why is this being filed late?", form.get("reason", ""), type="textarea", required=True,
+             attrs='maxlength="500" rows="3"',
+             help="Kept with the break and shown to the approver and the staff member.") }}
+    {{ field("note", "Note", form.get("note", ""), optional=True, attrs='maxlength="500"') }}
+
+    <button class="btn" type="submit">File the break</button>
+  </form>
+</div>
+{% endblock %}

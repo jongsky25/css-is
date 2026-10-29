@@ -1092,3 +1092,112 @@ def test_check_in_radios_are_pinned_to_their_own_label():
         html = fh.read()
     assert ".moods label, .rate label, .choice label { position:relative; }" in html
     assert ".field .moods input, .field .rate input, .field .choice input" in html and "inset:0" in html
+
+
+# ---- late filing (a break taken but not filed in time) ------------------------
+
+@pytest.fixture()
+def wed_afternoon(monkeypatch):
+    """Wednesday, October 14, 2026, 3 PM: the previous month starts on Tuesday,
+    September 1."""
+    now = datetime(2026, 10, 14, 15, 0)
+    monkeypatch.setattr(tz, "now_local", lambda: now)
+    monkeypatch.setattr(tz, "today_local", lambda: now.date())
+    return now
+
+
+def _late_admin(conn):
+    """An admin account outside the directory, so nobody's chain approver."""
+    conn.execute("DELETE FROM admin_user WHERE username = 'w-admin@test.local'")
+    uid = st.create_admin_user(conn, "w-admin@test.local", "x", "y", "admin")
+    conn.commit()
+    return {"id": uid, "role": "admin"}
+
+
+def test_late_break_filed_by_the_chief_is_approved(wellness_org, wed_afternoon):
+    conn, emp = wellness_org["conn"], wellness_org["emp"]
+    chief = {"id": wellness_org["chief"], "role": "section_manager"}
+    cid = st.file_late_wellness_claim(conn, chief, emp, "2026-10-13", "14:00",
+                                      "exercise", "Forgot to file before the walk")
+    c = st.get_wellness_claim(conn, cid)
+    assert c["status"] == "approved" and c["decided_by"] == chief["id"]
+    assert c["late_filed_by"] == chief["id"] and c["late_filed_by_name"] == "W-Test Chief"
+    assert c["late_reason"] == "Forgot to file before the walk"
+    assert c["week_start"] == "2026-10-12"
+    # the staff member can then check in for it as usual
+    assert st.wellness_check_in_ready(c)
+
+
+def test_late_break_filed_by_an_admin_goes_to_the_chief(app_mod, wellness_org, wed_afternoon):
+    conn, emp = wellness_org["conn"], wellness_org["emp"]
+    admin_user = _late_admin(conn)
+    cid = st.file_late_wellness_claim(conn, admin_user, emp, "2026-10-12", "09:00",
+                                      "meditation", "Relay was down Monday")
+    assert st.get_wellness_claim(conn, cid)["status"] == "pending"
+    chief = st.get_admin_user_by_id(conn, wellness_org["chief"])
+    assert [c["id"] for c in st.list_wellness_approvals(conn, chief)] == [cid]
+    html = _client_for_id(app_mod, wellness_org["chief"]).get("/approvals").text
+    assert "Filed late by w-admin@test.local: Relay was down Monday" in html
+
+
+def test_late_break_who_may_file(wellness_org, wed_afternoon):
+    conn, emp, loner = wellness_org["conn"], wellness_org["emp"], wellness_org["loner"]
+    chief = {"id": wellness_org["chief"], "role": "section_manager"}
+    staff = {"id": emp, "role": "viewer"}
+    with pytest.raises(PermissionError):      # not their section chief
+        st.file_late_wellness_claim(conn, staff, loner, "2026-10-13", "14:00",
+                                    "exercise", "x")
+    with pytest.raises(PermissionError):      # not in the chief's section
+        st.file_late_wellness_claim(conn, chief, loner, "2026-10-13", "14:00",
+                                    "exercise", "x")
+    admin_user = _late_admin(conn)
+    with pytest.raises(PermissionError):      # nobody files their own
+        st.file_late_wellness_claim(conn, admin_user, admin_user["id"], "2026-10-13",
+                                    "14:00", "exercise", "x")
+    with pytest.raises(PermissionError):      # no such account
+        st.file_late_wellness_claim(conn, admin_user, 999999, "2026-10-13",
+                                    "14:00", "exercise", "x")
+    assert [p["id"] for p in st.wellness_late_filing_staff(conn, chief)] == [emp]
+    assert st.wellness_late_filing_staff(conn, staff) == []
+    assert {emp, loner} <= {p["id"] for p in st.wellness_late_filing_staff(conn, admin_user)}
+
+
+def test_late_break_rules(wellness_org, wed_afternoon):
+    conn, emp = wellness_org["conn"], wellness_org["emp"]
+    chief = {"id": wellness_org["chief"], "role": "section_manager"}
+
+    def late(d, t="10:00", reason="Missed it", hours=1):
+        return st.file_late_wellness_claim(conn, chief, emp, d, t, "exercise",
+                                           reason, hours=hours)
+
+    assert st.wellness_late_earliest_date() == date(2026, 9, 1)
+    with pytest.raises(ValueError, match="September 1"):
+        late("2026-08-31")
+    assert late("2026-09-01")                         # the first of last month is in
+    with pytest.raises(ValueError, match="Mon–Fri"):
+        late("2026-10-10")                            # a Saturday
+    with pytest.raises(ValueError, match="why"):
+        late("2026-10-13", reason="  ")
+    with pytest.raises(ValueError, match="ordinary way"):
+        late("2026-10-15")                            # tomorrow: the normal form takes it
+    # the week's 2 hours and the no-overlap rule still hold
+    late("2026-10-13", "09:00", hours=2)
+    with pytest.raises(ValueError, match="fully claimed"):
+        late("2026-10-14", "08:00")
+
+
+def test_http_late_filing(app_mod, wellness_org, viewer, wed_afternoon):
+    assert viewer.get("/wellness/late").status_code == 403
+    assert viewer.post("/wellness/late", data={}).status_code == 403
+    chief_c = _client_for_id(app_mod, wellness_org["chief"])
+    page = chief_c.get("/wellness/late")
+    assert page.status_code == 200 and "W-Test Employee" in page.text
+    form = {"staff_id": str(wellness_org["emp"]), "break_date": "2026-10-13",
+            "start_time": "14:00", "hours": "1", "activity": "hobby", "reason": ""}
+    r = chief_c.post("/wellness/late", data=form)
+    assert r.status_code == 400 and "filed late" in r.text
+    r = chief_c.post("/wellness/late", data={**form, "reason": "Away from desk"},
+                     follow_redirects=False)
+    assert r.status_code == 303 and r.headers["location"].startswith("/wellness/late?ok=")
+    hub = _client_for_id(app_mod, wellness_org["emp"]).get("/wellness").text
+    assert "Filed late by W-Test Chief: Away from desk" in hub

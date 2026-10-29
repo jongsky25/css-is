@@ -28,7 +28,7 @@ Both templates are plain Google Docs in the `_templates` folder under the relay'
 | Template | Placeholders |
 |---|---|
 | `dpo` | `dpo_year`, `dpo_no`, `dpo_date`, `subject`, `background`, `intro`, `funding_source`, `p_name` and `p_position` (one table row, copied per person), `head_name`, `head_title`, `unit_name`. Also available: `title`, `purpose`, `dates`, `venue`, `prepared_by`, and a `{{personnel}}` line of numbered names |
-| `invitation` (converted office memo, 9.32) | Fields `date`, `for_name`, `for_title`, `for_office`, `from_name`, `from_title`, `unit_name`, `subject`; blocks `reiteration`, `rationale`, `details`, `representatives` (bullets), `contact_details`. `extras.addressees` repeats the name/title/office paragraph group; unknown addressees remain blank. Legacy `opening`, contact fields, `a_area`/`a_request` rows and other fields remain available for the old drawn template. |
+| `invitation` (converted office memo, 9.34) | Fields `date`, `for_name`, `for_title`, `for_office`, `from_name`, `from_title`, `unit_name`, `subject`; blocks `reiteration`, `rationale`, `details`, `representatives` (bullets), `contact_details`. `extras.addressees` repeats the name/title/office paragraph group; unknown addressees remain blank. Legacy `opening`, contact fields, `a_area`/`a_request` rows and other fields remain available for the old drawn template. |
 | `concept_note` | `title`, `date_duration`, `venue`, `participant_count`, `facilitators`, `budget`, `prepared_by`, `prepared_title`, `noted_by_name`, `noted_by_title`, `recommended_name`, `recommended_title`, `unit_name`; blocks `background`, `objectives`, `outputs`, `participants`, `methodology`; one table row `pd_day` / `pd_am` / `pd_pm` copied per day |
 | `notice_of_meeting` | `date`, `title`, `meeting_when`, `venue`, `meeting_link`, `prepared_by`, `prepared_title`, `head_name`, `head_title`, `unit_name`; blocks `invited`, `agenda` |
 | `minutes` | `title`, `meeting_when`, `venue`, `prepared_by`, `prepared_title`, `approved_by`, `unit_name`; blocks `attendees`, `agenda`, `discussion`, `next_steps`; one table row `m_action` / `m_who` / `m_due` |
@@ -190,7 +190,7 @@ draft and DOCX/PDF checks remain pending administrator access; keep this increme
 in draft until those checks are recorded. The Node harnesses check relay behavior,
 not Google's rendering or pagination.
 
-## Activity template refresh: Increment 2 (office memo, 9.32)
+## Activity template refresh: Increment 2 (office memo, 9.34)
 
 This increment prepares the internal memo only. The DPO, NOM, concept note,
 program flow, external letter and executive briefer are not converted here.
@@ -201,11 +201,10 @@ personal names, replaces the original signatory details with placeholders and
 removes the embedded duplicate body and its named initials table. The relay
 makes the file copy from the filled original and adds the initials box only.
 
-**Pending layout choice:** the handoff says to confirm before dropping the old
-ASSISTANCE table. This draft proposes the office layout, with the same four
-requests carried into editable bullets. The app retains the old table's payload
-rows for rollback; the converted template has no ASSISTANCE table. Do not activate
-this template until the layout choice is confirmed.
+The user approved the proposed office layout when requesting the merge of this
+increment: the same four assistance requests move into editable bullets. The app
+retains the old table's payload rows for rollback; the converted template has no
+ASSISTANCE table. Administrator validation remains required before activation.
 
 Administrator rollout (requires access to the relay project and office mailbox):
 
@@ -216,10 +215,10 @@ Administrator rollout (requires access to the relay project and office mailbox):
    and `activity_templates.gs` with this release and deploy a new version of the
    existing relay web app **before** enabling the new template. The legacy maker
    now skips a template whose `TPLF_<key>` matches its `TPL_<key>`, even if forced.
-3. Deploy the 9.32 app payload before activating the converted memo. Until then,
-   keep the old drawn template selected. The 9.32 payload retains its legacy
+3. Deploy the 9.34 app payload before activating the converted memo. Until then,
+   keep the old drawn template selected. The 9.34 payload retains its legacy
    fields/table data, so it can fill that template during the transition.
-4. After the layout choice is confirmed, run `makeOfficeTemplates()` as the office
+4. Run `makeOfficeTemplates()` as the office
    mailbox. It makes only the memo in this increment. Read the Execution log:
    it must report `all placeholders present` and the previous template ID. A
    changed/ambiguous source or missing placeholder is a failure; the old active
@@ -263,5 +262,4 @@ setup and body measurements match the committed reference exactly. Header/footer
 measurements match after normalizing anchored-image order only: Google reversed
 the two image records in this export. The source exports remain outside Git.
 The full suite was not run. Administrator deployment, maker log, real draft and
-DOCX/PDF checks remain pending; this increment stays in draft until those checks
-and the request-table choice are recorded.
+DOCX/PDF checks remain pending; these remain administrator acceptance checks after the code merge.
