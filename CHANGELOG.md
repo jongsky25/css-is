@@ -1,3 +1,7 @@
+## 9.18 — October 29, 2026
+
+- Calendar: "Send notice of meeting" on a meeting's page (under its Notice of meeting document). `POST /calendar/entries/<id>/notice/send` emails the item's people, plus up to 20 extra addresses typed by the sender, the when / where / online link, the typed agenda and the "expected from other offices" list (`mailer.meeting_notice_message`, email feature `meeting_notice`, switchable on the admin email page). It is allowed to the item's creator, anyone on it, and section managers and admins. Each send is stored in `calendar_entry_notice` / `calendar_entry_notice_to` with a result per recipient (queued, sent, failed, not_configured, skipped_off), delivered after the response one email at a time, and audited as `meeting_notice_sent`. The page lists who was sent what, and warns when the date, time, venue, link, status or live room booking changed after the last notice (a fingerprint compare). A second send by the same person within a minute is refused. Telegram is not used.
+
 ## 9.17 — October 29, 2026
 
 - Calendar: clicking a conference-room card no longer drops you on the room board. It opens the booking's page (`/calendar/rooms/<id>`), which goes straight to the linked calendar item when you can see it, and otherwise shows the booking's details. The person who booked it, or the Administrative Section, can press "Make the calendar item for this booking" to create the item (title, date, hours and conference room pre-filled, booking linked, audited as `room_calendar_item`) and get to the notice of meeting and minutes.

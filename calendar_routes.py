@@ -20,7 +20,7 @@ import logging
 import re
 import zipfile
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, BackgroundTasks, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from starlette.concurrency import run_in_threadpool
 
@@ -32,6 +32,7 @@ import calendar_ics as cics
 import calendar_guidance
 import calendar_schedule
 import calendar_actions
+import calendar_notice
 from documents_storage import transaction
 import gdocs_relay
 import ratelimit
@@ -426,7 +427,20 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
         return any(r["meals_requested"] and r["status"] in ("requested", "approved")
                    for r in rooms.reservations_for_entry(conn, entry_id))
 
-    def _documents_block(conn, e):
+    def _notice_block(conn, user, e):
+        """What the notice-of-meeting panel shows: whether this person may send, who it would go to, what was already
+        sent, and whether the meeting changed since the last send. Never raises (the page must open regardless)."""
+        try:
+            sent = calendar_notice.history(conn, e["id"])
+            to = calendar_notice.people_recipients(conn, e)
+            return {"can_send": calendar_notice.can_send(user, e), "to": [{"name": n, "email": em} for _u, n, em in to],
+                    "sent": sent, "agenda_max": calendar_notice.AGENDA_MAX,
+                    "changed": bool(sent) and sent[0]["fingerprint"] != calendar_notice.fingerprint(conn, e),
+                    "others": [l for l in activity_docs.get_visitors(conn, e["id"]).split("\n") if l and l.lower() != "none"]}
+        except Exception:                                   # noqa: BLE001
+            return None
+
+    def _documents_block(conn, e, user=None):
         """The "Documents for this activity" block, or None. Never raises: the page must open regardless."""
         try:
             if e["status"] == "cancelled" or e["kind"] not in DOC_KINDS:
@@ -439,7 +453,8 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
                     "visitors": activity_docs.get_visitors(conn, e["id"]),
                     "meals": _meals_tagged(conn, e["id"]),
                     "invited_as": activity_docs.INVITED_AS,
-                    "uploads_ready": _uploads_ready(conn)}
+                    "uploads_ready": _uploads_ready(conn),
+                    "notice": _notice_block(conn, user, e)}
         except Exception:                                   # noqa: BLE001
             return None
 
@@ -969,7 +984,7 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
                    "candidates": oc.activity_candidates_for_entry(conn, e) if eligible else []}
             room_link = _room_link(request, conn, e)
             filing = _travel_block(conn, user, e, request.query_params.get("date", ""))
-            documents = _documents_block(conn, e)
+            documents = _documents_block(conn, e, user)
             # A requested or booked conference room makes the venue the office: no travel to claim.
             if filing and not filing["chip"] and room_link and room_link.get("state") in (
                     "requested", "booked", "move_pending", "mismatch", "archived_holds"):
@@ -1206,6 +1221,33 @@ def make_router(templates, get_conn, today_local, *, can_manage_event=None, noti
             return f"{a:%B} {a.day}, {a.year}"
         b = date.fromisoformat(end)
         return f"{a:%B} {a.day} – {b:%B} {b.day}, {b.year}"
+
+    @router.post("/calendar/entries/{entry_id}/notice/send")
+    async def calendar_notice_send(request: Request, entry_id: int, background: BackgroundTasks):
+        """Send the notice of meeting by email to the people on the item (and any extra addresses), then say who."""
+        user = request.state.user
+        f = await _posted_form(request)
+        agenda = calendar_notice.clean_agenda(f.get("agenda"))
+        extra, bad = calendar_notice.parse_extra(f.get("extra"))
+        conn = get_conn()
+        try:
+            e = oc.viewable_entry(conn, user, entry_id)
+            if e is None:
+                return _not_found(request)
+            if not calendar_notice.can_send(user, e):
+                return RedirectResponse(f"/calendar/entries/{entry_id}?err={quote('Only the person who made this item, the people on it, or a section manager can send the notice.')}", status_code=303)
+            try:
+                if bad:
+                    raise ValueError(bad)
+                nid = calendar_notice.queue(conn, e, user, agenda, extra, base_url(request) if base_url else "")
+            except ValueError as ex:
+                return RedirectResponse(f"/calendar/entries/{entry_id}?err={quote(str(ex))}", status_code=303)
+            n = conn.execute("SELECT COUNT(*) FROM calendar_entry_notice_to WHERE notice_id=?", (nid,)).fetchone()[0]
+        finally:
+            conn.close()
+        background.add_task(calendar_notice.deliver, get_conn, nid)
+        said = f"Notice of meeting is being sent to {n} {'person' if n == 1 else 'people'}. Who got it is listed under the notice below."
+        return RedirectResponse(f"/calendar/entries/{entry_id}?ok={quote(said)}#doc-notice_of_meeting", status_code=303)
 
     @router.post("/calendar/entries/{entry_id}/documents/{key}/needed")
     async def calendar_document_needed(request: Request, entry_id: int, key: str):
