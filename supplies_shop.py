@@ -35,24 +35,71 @@ def tile(description, code=''):
             'initials': _initials(description)}
 
 
-def _matches(item, words):
-    hay = f"{item['description']} {item['code']}".lower()
-    return all(w in hay for w in words)
+# Extra words a card also answers to, so people find an item by the name they use. Each entry adds words when the pattern
+# is in the item's name: common alternative names, plural forms and the misspellings the office's own list carries.
+ALIASES = (
+    (r'ball\s*pen', 'pen ballpoint'), (r'bond\s+paper', 'copy paper photocopy xerox'), (r'post\s*-?\s*it', 'sticky notes memo'),
+    (r'scissor', 'scissors'), (r'batter', 'batteries'), (r'fresh(?:e)?ner', 'freshener freshner air freshener'),
+    (r'maskin', 'masking'), (r'packin', 'packing'), (r'typewrit+er', 'typewriter'), (r'inj?et', 'inkjet ink jet'),
+    (r'cann?on', 'canon copy paper'), (r'folder', 'file'), (r'staple', 'staples stapler'), (r'tape', 'adhesive'),
+    (r'marker', 'pentel whiteboard'), (r'clip', 'clips paper clip'),
+)
+
+
+def _words(text):
+    return re.findall(r'[a-z0-9]+', (text or '').lower())
+
+
+def search_text(description, code=''):
+    """Everything a card can be found by: its name and code plus the alternative words in ALIASES."""
+    low = f"{description or ''} {code or ''}".lower()
+    extra = [words for pattern, words in ALIASES if re.search(pattern, low)]
+    return ' '.join([low] + extra)
+
+
+def _within_one(a, b):
+    """True when two words differ by one typo: a letter added, dropped or changed, or two neighbouring letters swapped."""
+    if a == b:
+        return True
+    if abs(len(a) - len(b)) > 1:
+        return False
+    if len(a) == len(b):
+        wrong = [i for i, (x, y) in enumerate(zip(a, b)) if x != y]
+        # one letter changed, or two neighbouring letters swapped
+        return len(wrong) <= 1 or (len(wrong) == 2 and wrong[1] == wrong[0] + 1 and a[wrong[0]] == b[wrong[1]] and a[wrong[1]] == b[wrong[0]])
+    short, long_ = (a, b) if len(a) < len(b) else (b, a)
+    return any(long_[:i] + long_[i + 1:] == short for i in range(len(long_)))
+
+
+def text_matches(text, query_words):
+    """Every word typed must be found: inside the text, at the start of one of its words, or one typo away from one
+    (typos only for words of four letters or more, so "pen" does not match "pan")."""
+    have = _words(text)
+    low = ' '.join(have)
+    for w in query_words:
+        if w in low:
+            continue
+        if len(w) >= 4 and any(_within_one(w, h) for h in have if len(h) >= 4):
+            continue
+        return False
+    return True
 
 
 def shop_items(conn, query='', exclude_request_id=None):
     """The active catalog as cards, A to Z, narrowed by the words in `query` (every word must appear in the name or code)."""
-    words = [w for w in re.findall(r'\S+', (query or '').lower())][:8]
+    words = _words(query)[:8]
     items = rows(conn, 'SELECT id,code,description,unit,critical_level,target_level FROM supply_item WHERE active=1 '
                        'ORDER BY description COLLATE NOCASE, code')
     out = []
     for item in items:
-        if words and not _matches(item, words):
+        text = search_text(item['description'], item['code'])
+        if words and not text_matches(text, words):
             continue
         can = allocations.requestable(conn, item['id'], exclude_request_id)
         label = allocations.badge(can, item)
         out.append({'id': item['id'], 'code': item['code'], 'description': item['description'], 'unit': item['unit'],
-                    'max': can, 'badge': label, 'tone': BADGE_TONE[label], 'picture': tile(item['description'], item['code'])})
+                    'max': can, 'badge': label, 'tone': BADGE_TONE[label], 'picture': tile(item['description'], item['code']),
+                    'search': text})
     return out
 
 
@@ -66,3 +113,12 @@ def quantities_from(fields):
         if text and text != '0' and key[4:].isdigit():
             found.append((int(key[4:]), text))
     return [{'item_id': str(i), 'requested_quantity': q} for i, q in sorted(found)]
+
+
+def narrow(items, query, keep=()):
+    """The plain list's items narrowed by what was typed; items in `keep` (already chosen) always stay."""
+    words = _words(query)[:8]
+    if not words:
+        return items
+    return [i for i in items if str(i['id']) in {str(k) for k in keep}
+            or text_matches(search_text(i['description'], i['code']), words)]

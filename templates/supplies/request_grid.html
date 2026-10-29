@@ -5,7 +5,7 @@
 <p>Pick what you need. Type a number under each item. You can save a draft and review it before you send it.
   <a href="/supplies/requests/new?view=list">Use the plain list instead</a></p>
 {% if enabled %}
-<form method="get" action="/supplies/requests/new" class="shop-search" role="search">
+<form method="get" action="/supplies/requests/new" class="shop-search" role="search" data-shop-searchbar>
   <label for="shop-q">Find an item</label>
   <input id="shop-q" name="q" type="search" value="{{ query }}" autocomplete="off" placeholder="Bond paper, ballpen, folder…" data-shop-search>
   <button type="submit">Search</button>{% if query %} <a href="/supplies/requests/new">Show everything</a>{% endif %}
@@ -20,7 +20,7 @@
 {% if not cards %}<p class="supply-notice" role="status">{% if query %}Nothing in the catalog matches “{{ query }}”. <a href="/supplies/requests/new">Show everything</a>.{% else %}The supplies catalog has no items yet, so there is nothing to choose. Ask the supplies custodian to add the items, then reload this page.{% endif %}</p>{% endif %}
 <ul class="shop-grid" aria-label="Supply items">
 {% for c in cards %}
-  <li class="shop-card{{ ' is-out' if c.max <= 0 }}" data-name="{{ (c.description ~ ' ' ~ c.code)|lower }}">
+  <li class="shop-card{{ ' is-out' if c.max <= 0 }}" data-name="{{ c.search }}">
     <div class="shop-pic" style="--tint:{{ c.picture.tint }}" aria-hidden="true">
       {% if c.picture.src and not c.picture.initials %}<img src="{{ c.picture.src }}" alt="" loading="lazy" width="96" height="96">{% else %}<span>{{ c.picture.initials or '?' }}</span>{% endif %}
     </div>

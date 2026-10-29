@@ -134,3 +134,66 @@ def test_editing_a_saved_draft_still_uses_the_plain_form(request_db, app_mod):
     finally:
         client.__exit__(None, None, None)
         app_mod.DB = old
+
+
+# ---- the search: wider matching, the plain list's search box ---------------------------------------------------------
+
+@pytest.mark.parametrize("name, typed, found", [
+    ("Ballpen (Blue)", "pen", True), ("Ballpen (Blue)", "ballpoint", True), ("Air Freshner", "freshener", True),
+    ("A4 Bond Paper", "copy paper", True), ("Scissor", "scissors", True), ("Masking Tape", "maskin", True),
+    ("Post it Notes 3x3", "sticky", True), ("Cartolina", "cartolna", True), ("A4 Bond Paper", "bond a4", True),
+    ("Stapler", "pan", False), ("Pencil", "pan", False), ("Cartolina", "xyz", False), ("Stapler", "staple remover", False),
+    ("Tape", "tap", True), ("Scissor", "sicssor", True), ("Stapler", "staplre", True)])
+def test_the_search_finds_alternative_names_plurals_and_one_typo(name, typed, found):
+    assert shop.text_matches(shop.search_text(name), shop._words(typed)) is found
+
+
+def test_a_typo_needs_four_letters_so_short_words_stay_exact():
+    assert shop._within_one('cartolna', 'cartolina') and shop._within_one('scisor', 'scissor') and shop._within_one('sicssor', 'scissor')
+    assert not shop._within_one('stapel', 'stapler') and not shop._within_one('abcd', 'badc')      # two edits, or two swaps, are too far
+    assert not shop.text_matches('pencil', ['pan'])                   # three letters: no typo allowed
+    assert shop.text_matches('pencil', ['pencl'])                     # five letters: one typo allowed
+
+
+def test_the_cards_carry_the_search_words(request_db):
+    c, u, _, _, item = request_db
+    second_item(c, u, 5)
+    ball = next(x for x in shop.shop_items(c) if x['description'] == 'Ballpen Black')
+    assert 'ballpoint' in ball['search'] and 'sh2' in ball['search']
+    assert [x['description'] for x in shop.shop_items(c, 'ballpoint')] == ['Ballpen Black']
+    assert [x['description'] for x in shop.shop_items(c, 'ballpn')] == ['Ballpen Black']       # one letter missing
+
+
+def test_the_plain_list_has_a_search_box_that_narrows_the_drop_downs(request_db, app_mod):
+    c, u, _, path, item = request_db
+    second_item(c, u, 5)
+    client, old = client_for(app_mod, path, u[2])
+    try:
+        plain = client.get('/supplies/requests/new?view=list').text
+        assert 'data-list-search' in plain and plain.count('Ballpen Black') >= 20 and plain.count('<fieldset') == 20
+        narrowed = client.get('/supplies/requests/new?view=list&q=ballpoint').text
+        assert 'Ballpen Black' in narrowed and 'Synthetic paper' not in narrowed and narrowed.count('<fieldset') == 20
+        assert 'Show everything' in narrowed and 'value="ballpoint"' in narrowed
+        # an item already chosen on a form sent back with an error stays in the drop-down whatever was typed
+        token = hidden(client.get('/supplies/requests/new?view=list').text, 'csrf')
+        back = client.post('/supplies/requests', data={'csrf': token, 'operation_key': key(), 'purpose': 'p', 'date_needed': '',
+                                                       'item_0': str(item), 'quantity_0': '999'})
+        assert back.status_code == 422 and f'value="{item}" data-search' in back.text
+    finally:
+        client.__exit__(None, None, None)
+        app_mod.DB = old
+
+
+def test_editing_a_draft_has_the_script_only_search_box(request_db, app_mod):
+    c, u, _, path, item = request_db
+    client, old = client_for(app_mod, path, u[2])
+    try:
+        token = hidden(client.get('/supplies/requests/new').text, 'csrf')
+        r = client.post('/supplies/requests', data={'csrf': token, 'operation_key': key(), 'view': 'grid', 'purpose': 'p',
+                                                    'date_needed': '', f'qty_{item}': '2'}, follow_redirects=False)
+        edit = client.get(r.headers['location'] + '/edit').text
+        assert 'data-list-search' in edit and 'method="get"' not in edit.split('<form method="post"')[0].split('role="search"')[-1]
+        assert 'supplies-shop.js' in edit
+    finally:
+        client.__exit__(None, None, None)
+        app_mod.DB = old

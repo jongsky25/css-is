@@ -53,9 +53,9 @@ def shop_page(grid_browser, app_mod, viewer):
         c.close()
 
 
-def shot(page, name):
+def shot(page, name, full=True):
     if SHOTS:
-        page.screenshot(path=os.path.join(SHOTS, name), full_page=True)
+        page.screenshot(path=os.path.join(SHOTS, name), full_page=full)
 
 
 def test_the_grid_fits_a_phone_and_the_buttons_work(shop_page):
@@ -109,3 +109,35 @@ def test_the_form_sends_what_was_chosen_and_the_bar_does_not_cover_the_feedback_
     page.locator('.shop-card').first.wait_for()
     assert page.evaluate('document.documentElement.scrollWidth <= window.innerWidth')
     shot(page, 'shop-1280.png')
+
+
+def test_the_search_box_stays_in_view_and_finds_items_by_other_names(shop_page):
+    page, _ = shop_page
+    page.locator('.shop-card').first.wait_for()
+    page.set_viewport_size({'width': 375, 'height': 420})                                       # a short screen, so the page must scroll
+    page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+    box = page.locator('#shop-q').bounding_box()
+    nav = page.locator('.topnav').bounding_box()
+    assert box and 0 <= box['y'] and box['y'] >= nav['y'] + nav['height'] - 1                    # visible, and not under the site header
+    shot(page, 'shop-pinned-375.png', full=False)
+    page.locator('#shop-q').fill('ballpoint')                                                   # an alternative name for "Ballpen"
+    assert page.locator('.shop-card:visible').count() == 1 and 'Ballpen' in page.locator('.shop-card:visible').inner_text()
+    page.locator('#shop-q').fill('staplr')                                                      # a typo
+    assert page.locator('.shop-card:visible').count() == 1 and 'Stapler' in page.locator('.shop-card:visible').inner_text()
+    page.locator('#shop-q').fill('pan')                                                         # three letters stay exact
+    assert page.locator('.shop-card:visible').count() == 0
+
+
+def test_the_plain_list_search_filters_the_drop_downs_and_keeps_a_choice(shop_page):
+    page, _ = shop_page
+    page.goto('http://office.test/supplies/requests/new?view=list')
+    page.locator('select[name="item_0"]').wait_for()
+    first = page.locator('select[name="item_0"]')
+    first.select_option(label=first.locator('option', has_text='Masking Tape').inner_text())
+    page.locator('#list-q').fill('staplr')
+    options = page.locator('select[name="item_1"] option')
+    texts = [options.nth(i).inner_text() for i in range(options.count())]
+    assert any('Stapler' in t for t in texts) and not any('Masking' in t for t in texts) and not any('Ballpen' in t for t in texts)
+    assert 'Masking Tape' in first.locator('option:checked').inner_text()                         # what was already chosen stays
+    page.locator('#list-q').fill('')
+    assert page.locator('select[name="item_1"] option').count() == 6                              # five items and "Choose an item"

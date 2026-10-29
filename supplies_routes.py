@@ -676,7 +676,10 @@ def make_router(templates, get_conn):
                           quantities={k[4:]: v for k, v in values.items() if k.startswith('qty_')},
                           error=error, status_code=status_code)
         items = rows(conn, 'SELECT id,code,description,unit FROM supply_item WHERE active=1 ORDER BY code')
-        return render(request, conn, 'request_form', draft=draft, identity=identity, items=items,
+        chosen = [ln.get('item_id') for ln in ((submitted or draft or {}).get('lines') or [])]
+        items = [{**i, 'search': shop.search_text(i['description'], i['code'])} for i in shop.narrow(items, query, chosen)] \
+            if query else [{**i, 'search': shop.search_text(i['description'], i['code'])} for i in items]
+        return render(request, conn, 'request_form', draft=draft, identity=identity, items=items, query=query,
                       max_lines=requests_service.MAX_LINES, form_values=submitted if submitted is not None else draft,
                       error=error, status_code=status_code)
 

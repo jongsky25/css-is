@@ -44,6 +44,13 @@
 
 /* Supplies 2.1: the requester's picture grid */
 .shop-search { display:flex; gap:.5rem; flex-wrap:wrap; align-items:end; margin:.6rem 0 1rem; }
+/* the search box stays in view under the site header while a long catalog scrolls */
+.shop-search[data-shop-searchbar] { position:sticky; top:var(--topnav-h, 53px); z-index:15; padding:.5rem 0; margin:.2rem 0 .6rem; flex-wrap:nowrap; align-items:center;
+  background:var(--surface, #fff); border-bottom:1px solid var(--line, #d8dee9); }
+.shop-search[data-shop-searchbar] label { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }   /* read aloud, not shown, to keep the pinned box short */
+.shop-search[data-shop-searchbar] input[type=search] { flex:1 1 auto; min-width:0; }
+.shop-search[data-shop-searchbar] button { flex:0 0 auto; white-space:nowrap; }
+.shop-search[data-shop-searchbar] a { white-space:nowrap; font-size:.85rem; }
 .shop-search input[type=search] { flex:1 1 14rem; min-width:0; }
 .shop-grid { list-style:none; margin:1rem 0; padding:0; display:grid; gap:.8rem; grid-template-columns:repeat(auto-fill, minmax(11.5rem, 1fr)); }
 .shop-card { border:1px solid var(--line, #d8dee9); border-radius:12px; padding:.7rem; display:flex; flex-direction:column; gap:.5rem; background:var(--surface, #fff); }
