@@ -166,3 +166,34 @@ def test_unexpected_briefer_structure_and_signature_slots_do_not_activate(office
     for failure in office_template["brieferFailures"]:
         assert "FAILED" in failure["report"]
         assert failure["writes"] == [] and failure["active"] == "OLD"
+
+
+@pytest.mark.parametrize("key", ["dpo", "minutes"])
+def test_office_dpo_minutes_use_actual_body_builders_without_redrawing_the_frame(office_template, key):
+    template = office_template["officeBodies"][key]
+    assert "all placeholders present" in template["report"]
+    assert template["clears"] == 1 and template["reads"] == 2
+    assert (template["font"], template["size"]) == ("Times New Roman", 12)
+    assert template["writes"] == [{"TPL_" + key: "CANDIDATE", "TPLF_" + key: "CANDIDATE"}]
+    assert set(template["expect"]) == set(re.findall(r"\{\{([a-z_]+)\}\}", template["text"]))
+    assert "SOURCE" not in template["text"] and "MEMORANDUM" not in template["text"]
+    assert "{{" not in template["filled"]["text"]
+    if key == "dpo":
+        assert "DEPARTMENT PERSONNEL ORDER" in template["text"]
+        assert "By Authority of the Secretary of Health:" in template["text"]
+        table = next(c for c in template["children"] if c["type"] == "table")
+        assert table["columnWidths"] == [234, 234]
+        filled_table = next(c for c in template["filled"]["children"] if c["type"] == "table")
+        assert filled_table["rows"] == [["Name", "Designation"], ["Person One", "Role One"], ["Person Two", "Role Two"]]
+    else:
+        assert "MINUTES OF THE MEETING" in template["text"]
+        assert "Action points:" in template["text"] and "Approved by:" in template["text"]
+        assert "Person One\nPerson Two" in template["filled"]["text"]
+
+
+def test_frame_or_source_drift_never_replaces_active_dpo_template(office_template):
+    failures = office_template["officeBodyFailures"]
+    assert len(failures) == 10
+    for failure in failures:
+        assert "FAILED" in failure["report"]
+        assert failure["writes"] == [] and failure["active"] == "OLD"

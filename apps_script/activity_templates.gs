@@ -1,4 +1,6 @@
-// Office Connect: one-time activity template maker (DPO, memorandum, concept note and program flow).
+// Office Connect: legacy activity body builders and drawn-template maker.
+// The office maker reuses the DPO/minutes bodies with officeFrame=true inside a copied memo Blank.
+// Ordinary two-argument builder calls retain the drawn header/footer for legacy setup and rollback.
 //
 // Add this file to the SAME Apps Script project as travel_docs.gs (File > New > Script). Unlike the travel
 // forms, these two documents are built here from scratch, so no source folder is needed. Run
@@ -41,7 +43,8 @@ const AT_TEMPLATES = [
              'prepared_by', 'prepared_title', 'approved_by', 'unit_name'] }
 ];
 
-// Rebuilds every template even when they are already good, for a new letterhead or logos. TPL_<key> then points to the
+// Rebuilds drawn templates even when they are already good, for a new letterhead or logos.
+// Office-managed templates are kept; rebuild them with their scoped office-maker function. TPL_<key> then points to the
 // new Docs; the old ones stay in "_templates".
 function rebuildActivityTemplates() {
   return makeActivityTemplates(true);
@@ -104,6 +107,7 @@ function at_missing_(id, t) {
   return t.expect.filter(function (k) { return text.indexOf('{{' + k + '}}') < 0; });
 }
 
+// DPO/minutes accept officeFrame=true when the office maker already copied their header/footer and page setup.
 // The DOH Department Personnel Order layout: letterhead, date, DPO number, subject, background, authority line, a Name /
 // Position table, funding and accounting paragraphs, the signatory and the DOH address footer.
 //   {{p_name}} and {{p_position}} sit in ONE table row: the app copies that row once per person.
@@ -204,8 +208,8 @@ var AT_DPO_BODY_FIRST_LINE = 36;     // first line of each body paragraph
 var AT_DPO_SIGNATORY_INDENT = 144;   // "By Authority of the Secretary of Health:" and the signatory block: the 2-inch mark (spot feedback #182)
 var AT_DPO_SPACE_AFTER = 12;         // points of space after each paragraph
 
-function at_buildDpo_(body, doc) {
-  at_letterhead_(doc.addHeader());
+function at_buildDpo_(body, doc, officeFrame) {
+  if (!officeFrame) at_letterhead_(doc.addHeader());
   // A space after the subject and after every paragraph (spot feedback #170).
   const add = function (text) { return at_add_(body, text).setSpacingAfter(AT_DPO_SPACE_AFTER); };
   add('{{dpo_date}}').setAlignment(DocumentApp.HorizontalAlignment.RIGHT);
@@ -254,7 +258,7 @@ function at_buildDpo_(body, doc) {
   add('{{unit_name}}').setIndentStart(AT_DPO_SIGNATORY_INDENT).setIndentFirstLine(AT_DPO_SIGNATORY_INDENT);
   body.editAsText().setFontFamily('Times New Roman');
   body.editAsText().setFontSize(12);
-  at_footer_(doc);
+  if (!officeFrame) at_footer_(doc);
   const first = body.getChild(0);
   if (first.getType() === DocumentApp.ElementType.PARAGRAPH && first.asParagraph().getText() === '') body.removeChild(first);
 }
@@ -404,8 +408,8 @@ function at_buildNotice_(body, doc) {
 // Minutes of the meeting (spot feedback #177): title, when and where, who attended, the agenda, what was discussed and
 // decided, a table of action points and the signatures. {{attendees}}, {{agenda}}, {{discussion}} and {{next_steps}} are
 // blocks; {{m_action}}, {{m_who}} and {{m_due}} sit in ONE table row.
-function at_buildMinutes_(body, doc) {
-  at_letterhead_(doc.addHeader());
+function at_buildMinutes_(body, doc, officeFrame) {
+  if (!officeFrame) at_letterhead_(doc.addHeader());
   at_add_(body, 'MINUTES OF THE MEETING').setBold(true).setAlignment(DocumentApp.HorizontalAlignment.CENTER);
   at_add_(body, '{{title}}').setBold(true).setAlignment(DocumentApp.HorizontalAlignment.CENTER);
   at_add_(body, 'Date and time: {{meeting_when}}');
@@ -429,7 +433,7 @@ function at_buildMinutes_(body, doc) {
   at_add_(body, '{{unit_name}}');
   body.editAsText().setFontFamily('Times New Roman');
   body.editAsText().setFontSize(12);
-  at_footer_(doc);
+  if (!officeFrame) at_footer_(doc);
   const first = body.getChild(0);
   if (first.getType() === DocumentApp.ElementType.PARAGRAPH && first.asParagraph().getText() === '') body.removeChild(first);
 }

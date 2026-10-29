@@ -10,7 +10,8 @@ Read this first in a new session. It replaces the approach in section 5 of `docs
 - **Increment 1 is done**: jongsky25/css-is#549 (9.31). Titles stay in capitals (`KEEP_UPPER_TITLES_`); a `TPLF_<key>` property equal to `TPL_<key>` skips `formatDoc_` for a converted template (D7); blocks fill list items; `extras.boxes` picks `slip` and/or `keys`. It took the handoff's default for duplicated Blanks: **converters keep only the original body**, and the relay makes the file copy afterwards. Pending Google checks are listed in `docs/ACTIVITY_DOCS_SETUP.md`.
 - **Increments 2–4 are code-merged**: #550 (memo, 9.34), #551 (NOM, 9.35), #553 (concept note/program flow, 9.36). Releases were reconciled with planning 9.32 and wellness 9.33. The user approved the memo's table-to-bullets layout with the merge request; legacy data remains for rollback. Google maker/draft/DOCX/PDF checks are still pending administrator access; these code merges did not deploy Apps Script.
 - **Increment 5 is code-merged**: external letter, #554 (9.37). The scoped converter and document card are described in `docs/ACTIVITY_DOCS_SETUP.md`; live Google acceptance checks remain pending.
-- **Increment 6 is prepared for review**: executive briefer, 9.38, preserving D4 widths/numbering. Next implementation increment: **7, DPO and minutes**. Administrator validation remains pending for the converted templates.
+- **Increment 6 is code-merged**: executive briefer, #555 (9.38), preserving D4 widths/numbering. Administrator validation remains pending.
+- **Increment 7 is prepared for review**: DPO/minutes bodies in copied memo frames, 9.39. All planned code increments are now implemented/prepared; the remaining completion work is administrator maker runs, real drafts and DOCX/PDF acceptance checks from section 6. Code completion does not mean the templates are deployed or visually verified.
 - Source files: Drive folder **Documents Templates**, id `1HU-MCk_csQhYmIs_5g1HqKNZ3DIbPVy4`, shared by link, owner
   `blhsdpurokalusugan@doh.gov.ph`. Ten files, a Blank and a Sample of each:
 
@@ -155,4 +156,4 @@ Nothing in an increment changes the database.
 
 > Continue the activity template refresh in jongsky25/css-is. Read `docs/ACTIVITY_TEMPLATE_HANDOFF.md` first, then
 > `docs/ACTIVITY_TEMPLATE_REFRESH_PLAN.md` for the measurements. Decisions D1 to D7 in the handoff: [paste answers, or "use the defaults"].
-> Start with Increment 2 on a new branch from main, one PR per increment, following section 6 to check it.
+> Use section 1 for the current increment status. Continue any pending implementation on a new branch from main, one PR per increment, and complete the administrator checks in section 6 before calling the refresh done.

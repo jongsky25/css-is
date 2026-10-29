@@ -286,7 +286,7 @@ def build_templates():
 
 
 @pytest.mark.skipif(shutil.which("node") is None, reason="node is not installed")
-@pytest.mark.parametrize("key", ["dpo", "invitation", "concept_note", "program_flow"])
+@pytest.mark.parametrize("key", ["dpo", "invitation", "concept_note", "program_flow", "minutes"])
 def test_every_template_has_the_letterhead_logos_and_address_footer(key):
     built = build_templates()[key]
     assert [i.split()[2] for i in built["images"]] == ["image/png", "image/png"]
@@ -297,7 +297,8 @@ def test_every_template_has_the_letterhead_logos_and_address_footer(key):
 @pytest.mark.parametrize("key, over", [
     ("dpo", {"kind": "travel"}), ("invitation", {"audience": "bureau"}),
     ("concept_note", {"kind": "training", "start_date": "2026-10-12", "end_date": "2026-10-13"}),
-    ("program_flow", {"kind": "training", "start_date": "2026-10-12", "end_date": "2026-10-13"})])
+    ("program_flow", {"kind": "training", "start_date": "2026-10-12", "end_date": "2026-10-13"}),
+    ("minutes", {"kind": "meeting"})])
 def test_every_placeholder_in_a_template_is_one_the_app_fills(viewer, conn, relay, key, over):
     """Runs the template builders against a fake Docs API (the real one only runs in Google), then checks the
     placeholders each writes against what a draft sends, so a template and the app cannot drift apart."""
@@ -1125,3 +1126,22 @@ def test_missing_briefer_template_has_an_actionable_setup_message(viewer, conn, 
     draft(viewer, eid, "executive_briefer")
     saved = ad.get_rows(conn, eid)["executive_briefer"]
     assert saved["doc_state"] == "failed" and "executive briefer template" in saved["note"]
+
+
+@pytest.mark.skipif(shutil.which("node") is None, reason="node is not installed")
+@pytest.mark.parametrize("key,kind", [("dpo", "travel"), ("minutes", "meeting")])
+def test_copied_frame_templates_still_match_existing_payloads(viewer, conn, relay, key, kind):
+    result = subprocess.run(["node", "tests/js/office_templates_harness.js"], capture_output=True, text=True, timeout=30)
+    assert result.returncode == 0, result.stderr
+    expected = set(json.loads(result.stdout)["officeBodies"][key]["expect"])
+    eid = create(viewer, kind=kind, title="Current Activity", people=[str(uid(conn, "viewer@test.local"))])
+    draft(viewer, eid, key)
+    call = relay.calls[0]
+    filled = set(call["fields"]) | set(call["blocks"]) | {
+        marker for spec in call["rows"].values() for row in spec["data"] for marker in row}
+    assert expected <= filled
+    assert call["template_key"] == key
+    if key == "dpo":
+        assert call["extras"]["file_copy"] is True and "boxes" not in call["extras"]
+    else:
+        assert not call.get("extras")
