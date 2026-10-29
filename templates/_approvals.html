@@ -124,6 +124,7 @@
         <td data-label="Who">
           <div class="who">{{ c.person_name }}</div>
           <div class="sub">{{ c.section or "—" }} · filed {{ c.created_at|replace('T', ' ') }}</div>
+          {% if c.late_filed_by %}<div class="note">Filed late by {{ c.late_filed_by_name }}: {{ c.late_reason }}</div>{% endif %}
         </td>
         <td data-label="When">{{ c.break_date }} · {{ c.start_time }} ({{ c.hours }} h)</td>
         <td data-label="Activity">{{ c.activity_label }}{% if c.note %}<div class="note">“{{ c.note }}”</div>{% endif %}</td>

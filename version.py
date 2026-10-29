@@ -18,12 +18,12 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "9.34"
+APP_VERSION = "9.36"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
-        "version": "9.34",
+        "version": "9.36",
         "date": "October 29, 2026",
         "summary": "Concept notes and program flows can use the office's own forms.",
         "changes": [
@@ -33,7 +33,7 @@ CHANGELOG = [
         ]
     },
     {
-        "version": "9.33",
+        "version": "9.35",
         "date": "October 29, 2026",
         "summary": "Meeting notices can use the office's own form.",
         "changes": [
@@ -43,13 +43,32 @@ CHANGELOG = [
         ]
     },
     {
-        "version": "9.32",
+        "version": "9.34",
         "date": "October 29, 2026",
         "summary": "Invitation memos can use the office's own form.",
         "changes": [
             "After the administrator sets up the office form, invitation memos keep its letterhead, margins and footer.",
             "The memo includes the activity details, editable request bullets and a file copy with the initials box.",
             "Signatory and reviewer details come from the existing office settings."
+        ]
+    },
+    {
+        "version": "9.33",
+        "date": "October 29, 2026",
+        "summary": "Section chiefs can file a wellness break that was taken but not filed in time.",
+        "changes": [
+            "A new File a late break page lets a section chief, or an admin, record a staff member's break from this month or last month.",
+            "Filed by the section chief, the break is approved straight away; filed by an admin, it goes to the chief to decide.",
+            "A reason is required, and it shows on the staff member's list and in the approvals queue.",
+            "The usual rules still apply: Monday to Friday, two hours a week, and no overlapping breaks."
+        ]
+    },
+    {
+        "version": "9.32",
+        "date": "October 29, 2026",
+        "summary": "A plan to bring our activity documents in line with the office's own templates.",
+        "changes": [
+            "Nothing changes on screen yet. The plan covers the concept note, memorandum and notice of meeting, and adds an external invitation letter and an executive briefer."
         ]
     },
     {
