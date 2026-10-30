@@ -7,6 +7,7 @@ to the draft are stored; the content of a draft is built when it is asked for an
 
 `suggest`, `describe_people` and `payload` are pure; the rest touch the database or the relay."""
 from __future__ import annotations
+import logging
 import re
 from typing import Optional
 
@@ -718,6 +719,9 @@ def record(conn, prep, res, user) -> dict:
     revision, so it never overwrites the earlier one, and a failure keeps the last good link."""
     url = (res.data or {}).get("url") if res.ok else ""
     err = "" if url else PLAIN_ERRORS.get(res.error, GENERIC_ERROR)
+    if not url:                      # the person sees a plain sentence; the relay's own code goes only to the log
+        logging.getLogger(__name__).warning("Activity document draft failed: entry=%s doc=%s rev=%s relay_error=%s",
+                                            prep.entry_id, prep.key, prep.rev, res.error or "no_url")
     if prep.key in ("invitation_external", "executive_briefer") and res.error == "template_not_set":
         label = "external invitation" if prep.key == "invitation_external" else "executive briefer"
         err = f"The {label} template has not been set up yet. Ask an administrator to complete its setup."

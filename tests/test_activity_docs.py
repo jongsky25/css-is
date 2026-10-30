@@ -1145,3 +1145,16 @@ def test_copied_frame_templates_still_match_existing_payloads(viewer, conn, rela
         assert call["extras"]["file_copy"] is True and "boxes" not in call["extras"]
     else:
         assert not call.get("extras")
+
+
+def test_a_failed_draft_logs_the_relay_error_but_shows_the_plain_sentence(caplog):
+    import sqlite3
+    import gdocs_relay
+    c = sqlite3.connect(":memory:")
+    c.execute("CREATE TABLE calendar_entry_doc(entry_id INTEGER, doc_key TEXT, doc_url TEXT, doc_state TEXT, note TEXT, "
+              "rev INTEGER NOT NULL DEFAULT 0, updated_by TEXT, updated_at TEXT, PRIMARY KEY(entry_id, doc_key))")
+    prep = ad.Prepared(7, "notice_of_meeting", 1, None)
+    with caplog.at_level("WARNING"):
+        out = ad.record(c, prep, gdocs_relay.RelayResult(False, error="Exception: boom"), {"username": "u"})
+    assert out["error"] == ad.GENERIC_ERROR and "boom" not in out["error"]
+    assert "entry=7 doc=notice_of_meeting" in caplog.text and "relay_error=Exception: boom" in caplog.text
