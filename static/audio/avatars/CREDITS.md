@@ -49,3 +49,6 @@ requested clip is decoded and cached in memory. The existing service worker
 caches successful public static responses as they are used; already fetched
 clips can play offline in an open page. The PWA does not cache personal pages.
 Recorded voice playback fails quietly if a clip cannot load or decode.
+
+Cat voice clips preserve the complete meow ending: `cat-meow-1.mp3` is one
+full meow and `cat-meow-2.mp3` contains two calls. Petting still uses a purr.

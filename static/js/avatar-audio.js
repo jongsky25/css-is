@@ -47,7 +47,7 @@
   }
   function manifest() {
     if (!manifestPromise) {
-      manifestPromise = request("manifest.json?v=1")
+      manifestPromise = request("manifest.json?v=2")
         .catch(function (e) { manifestPromise = null; throw e; });
     }
     return manifestPromise;

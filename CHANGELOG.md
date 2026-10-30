@@ -1,3 +1,7 @@
+## 9.43 — October 30, 2026
+
+- Replace the short and cut-off cat voice excerpts with a complete meow and a two-meow recording from the same credited source. New clip filenames and a refreshed manifest URL prevent reuse of cached excerpts. Petting retains the purr. All 26 avatar audio tests passed, covering decoding, playback, controls and cancellation.
+
 ## 9.42 — October 30, 2026
 
 - Fix the DPO/minutes frame check: the Docs API names the paper size `pageSize`, not `documentSize`, so the check found no paper size and refused to build. The check and the test fakes now use `pageSize` (found by running a diagnostic on the real memo Blank; margins, header/footer distances and first-page flag were already as expected). Administrators replace `activity_office_templates.gs` and re-run `makeOfficeDpoMinutesTemplates()`.
