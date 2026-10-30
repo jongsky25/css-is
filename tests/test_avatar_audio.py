@@ -292,3 +292,19 @@ def test_unchanged_audio_sync_does_not_retrigger_child_list_observer(audio_page)
     assert result['unchangedOff'] == result['unchangedOn'] == 0
     assert result['changed'] == 1
     assert result['icon'] == '🔊' and result['pressed'] == 'true'
+
+
+def test_cat_voice_actions_only_use_replacement_meow_recordings(audio_page):
+    page, state = audio_page('cat')
+    page.locator('.av-sound-btn').click()
+    page.wait_for_function('audioStarts.length === 1')
+    for action in ('tap', 'voice', 'voice'):
+        page.wait_for_timeout(650)
+        assert page.evaluate('(action) => AvatarAudio.play(action, "cat")', action)
+    requested = {Path(path).name for path in state['requests'] if path.endswith('.mp3')}
+    assert requested == {'cat-real-meow.mp3', 'cat-real-meow-twice.mp3'}
+    # The whole pool must come from the replacement cat recording, including
+    # the first call when enabling sound. No old excerpt or extra animal layer.
+    for name in requested:
+        assert {layer['source'] for layer in MANIFEST['clips'][name]['layers']} == {'cat'}
+    assert MANIFEST['sources']['cat']['url'] == 'https://freesound.org/people/qubodup/sounds/813113/'

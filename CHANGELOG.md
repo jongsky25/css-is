@@ -1,3 +1,7 @@
+## 9.45 — October 30, 2026
+
+- Replace both previous cat voice clips with a separate CC0 real cat recording (qubodup, from tuberatanka's cat meow II), preserving its complete call and original pitch. The two-meow variant repeats only that recording. New filenames, manifest URL, and service-worker cache version avoid serving previous cat clips. Real purr and feeding sounds remain unchanged.
+
 ## 9.44 — October 30, 2026
 
 - Calendar activity pages now use stacked, full-width fields on phones and a wider document workspace with a context sidebar on desktop, with solid form surfaces and existing light, dark and contrast themes preserved.
