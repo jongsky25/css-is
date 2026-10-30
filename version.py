@@ -18,10 +18,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "9.43"
+APP_VERSION = "9.44"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "9.44",
+        "date": "October 30, 2026",
+        "summary": "A clearer activity workspace on phones and computers.",
+        "changes": [
+            "Activity forms fit your phone, while larger screens show activity details and related actions beside the documents.",
+            "Invitation fields appear when another office conducts the activity, and meeting notices come first for meetings.",
+            "You can review meeting details, recipients and the agenda before sending a notice by email."
+        ]
+    },
     {
         "version": "9.43",
         "date": "October 30, 2026",

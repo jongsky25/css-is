@@ -1,3 +1,10 @@
+## 9.44 — October 30, 2026
+
+- Calendar activity pages now use stacked, full-width fields on phones and a wider document workspace with a context sidebar on desktop, with solid form surfaces and existing light, dark and contrast themes preserved.
+- Organizer invitation fields appear only for another office; document background and draft options collapse, recommendations are separated from the chosen requirement, and meeting notices appear first for meetings.
+- Meeting email has an expandable recipient list and a local review step showing meeting details, recipients and agenda before the final send. Editing invalidates the review; extra addresses are checked before review. Existing permissions, document drafts, send routes and delivery history are preserved.
+- Verified with the integrity preflight, calendar/document/notice tests, and browser checks at 360, 390, 768, 1280 and 1440 pixels across light, dark and contrast themes, including overflow, organizer disclosure and review-before-send behavior.
+
 ## 9.43 — October 30, 2026
 
 - Replace the short and cut-off cat voice excerpts with a complete meow and a two-meow recording from the same credited source. New clip filenames and a refreshed manifest URL prevent reuse of cached excerpts. Petting retains the purr. All 26 avatar audio tests passed, covering decoding, playback, controls and cancellation.
