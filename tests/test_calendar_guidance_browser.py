@@ -19,6 +19,13 @@ def make(conn, title='CALEP Browser', **kw):
     return st.cal_create(conn,title,DAY,audience='bureau',**kw)
 
 
+def next_step(scope):
+    """The next-step guidance sits in a collapsed "Schedule status and next steps"
+    card (9.44); open it without moving focus, then return the guidance region."""
+    scope.locator('details.cal-work-card:has(.cal-guidance)').evaluate('d=>{d.open=true}')
+    return scope.get_by_role('region',name='Calendar next step')
+
+
 def open_item(page,eid):
     page.goto('/calendar?day='+DAY)
     link=page.locator(f'.cal-tt[href="/calendar/entries/{eid}"]').first
@@ -35,7 +42,7 @@ def test_sheet_guidance_focus_and_cancellation_review_then_actual_save(calendar_
     eid=make(c,status='tentative')
     link=open_item(page,eid)
     sheet=page.locator('#cal-sheet')
-    expect(sheet.get_by_role('region',name='Calendar next step')).to_contain_text('Tentative')
+    expect(next_step(sheet)).to_contain_text('Tentative')
     close=sheet.get_by_role('button',name='Close',exact=True)
     close.focus()
     # Native dialog confines focus and Escape returns to the actual item link.
@@ -46,7 +53,7 @@ def test_sheet_guidance_focus_and_cancellation_review_then_actual_save(calendar_
     page.keyboard.press('Escape');expect(link).to_be_focused()
     expect(sheet).not_to_be_visible()
     link.press('Enter')
-    expect(sheet.get_by_role('region',name='Calendar next step')).to_be_visible()
+    expect(next_step(sheet)).to_be_visible()
     assert not writes(state)
     sheet.get_by_role('link',name='Cancel item — review first').click()
     expect(page.get_by_role('heading',name='Review calendar cancellation')).to_be_visible()
@@ -55,11 +62,11 @@ def test_sheet_guidance_focus_and_cancellation_review_then_actual_save(calendar_
     assert st.cal_get(c,eid)['status']=='tentative'
     page.get_by_role('link',name='Cancel item — review first').click()
     page.get_by_role('button',name='Confirm cancellation').click()
-    expect(page.get_by_role('region',name='Calendar next step')).to_contain_text('Cancelled on the office calendar')
+    expect(next_step(page)).to_contain_text('Cancelled on the office calendar')
     assert writes(state)==[f'/calendar/entries/{eid}/cancel']
     assert st.cal_get(c,eid)['status']=='cancelled'
     page.get_by_role('button',name='Restore',exact=True).click()
-    expect(page.get_by_role('region',name='Calendar next step')).to_contain_text('Tentative')
+    expect(next_step(page)).to_contain_text('Tentative')
     assert st.cal_get(c,eid)['status']=='tentative'
     assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
 
@@ -78,7 +85,7 @@ def test_sheet_failed_read_explicit_retry_and_closed_stale_success_are_harmless(
     expect(sheet.get_by_role('link',name='Open full page')).to_have_attribute('href',f'/calendar/entries/{eid}')
     page.unroute(path,fail)
     sheet.get_by_role('button',name='Try loading again').click()
-    expect(sheet.get_by_role('region',name='Calendar next step')).to_contain_text('Confirmed on')
+    expect(next_step(sheet)).to_contain_text('Confirmed on')
     page.keyboard.press('Escape');expect(sheet).not_to_be_visible()
     # A delayed read cannot reopen the sheet after native Escape dismissal.
     delayed=[]
@@ -125,7 +132,7 @@ def test_edit_conflict_focuses_message_retains_draft_and_saves_only_explicit_rep
     assert st.cal_get(c,eid)['venue']=='Other edit'
     assert writes(state)==[f'/calendar/entries/{eid}/edit']
     page.get_by_role('button',name='Replace with my changes').click()
-    expect(page.get_by_role('region',name='Calendar next step')).to_be_visible()
+    expect(next_step(page)).to_be_visible()
     assert st.cal_get(c,eid)['venue']=='My draft venue'
 
 
@@ -197,15 +204,15 @@ def test_bookmarked_preview_back_forward_and_quick_add_return_focus(calendar_pag
     eid=make(c)
     page.goto(f'/calendar?day={DAY}&item={eid}')
     sheet=page.locator('#cal-sheet')
-    expect(sheet.get_by_role('region',name='Calendar next step')).to_be_visible()
+    expect(next_step(sheet)).to_be_visible()
     page.keyboard.press('Escape')
     expect(sheet).not_to_be_visible()
     page.wait_for_url(lambda url:'item=' not in str(url))
     link=page.locator(f'.cal-tt[href="/calendar/entries/{eid}"]').first
     link.click()
-    expect(sheet.get_by_role('region',name='Calendar next step')).to_be_visible()
+    expect(next_step(sheet)).to_be_visible()
     page.go_back();expect(sheet).not_to_be_visible()
-    page.go_forward();expect(sheet.get_by_role('region',name='Calendar next step')).to_be_visible()
+    page.go_forward();expect(next_step(sheet)).to_be_visible()
     page.keyboard.press('Escape');expect(link).to_be_focused()
     quick=page.locator('.cal-dayadd').first
     quick.focus();quick.press('Enter')
@@ -226,7 +233,7 @@ def test_recurring_occurrence_keeps_query_deep_link_and_single_date_controls(cal
     link.click()
     page.wait_for_url(f'**/calendar/entries/{eid}?date=2026-11-01')
     expect(page.get_by_role('link',name='Change just this one',exact=True)).to_have_attribute('href',f'/calendar/entries/{eid}/detach?date=2026-11-01')
-    expect(page.get_by_role('region',name='Calendar next step')).to_contain_text('only the selected occurrence')
+    expect(next_step(page)).to_contain_text('only the selected occurrence')
     assert not writes(state)
 
 
@@ -235,7 +242,7 @@ def test_queued_close_event_cannot_clear_preview_reopened_by_history(calendar_pa
     eid=make(c)
     page.goto(f'/calendar?day={DAY}&item={eid}')
     sheet=page.locator('#cal-sheet')
-    expect(sheet.get_by_role('region',name='Calendar next step')).to_be_visible()
+    expect(next_step(sheet)).to_be_visible()
     # Deterministically deliver the two traversal states in one task. The native
     # dialog close event is still queued when the second popstate reopens it.
     page.evaluate('''() => {
@@ -244,7 +251,7 @@ def test_queued_close_event_cannot_clear_preview_reopened_by_history(calendar_pa
       history.replaceState(null,'',closedURL);dispatchEvent(new PopStateEvent('popstate'));
       history.replaceState(null,'',openURL);dispatchEvent(new PopStateEvent('popstate'));
     }''')
-    expect(sheet.get_by_role('region',name='Calendar next step')).to_be_visible()
+    expect(next_step(sheet)).to_be_visible()
     expect(sheet.get_by_role('button',name='Close',exact=True)).to_be_focused()
     assert page.locator('#cal-f').evaluate('(el)=>el.inert')
     assert not writes(state) and st.cal_get(c,eid)['sequence']==0

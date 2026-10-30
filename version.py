@@ -18,10 +18,18 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "9.45"
+APP_VERSION = "9.46"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "9.46",
+        "date": "October 30, 2026",
+        "summary": "Behind-the-scenes check fix so recent updates can go live.",
+        "changes": [
+            "No change to how the calendar looks or works; an automatic check was updated to match the 9.44 activity layout."
+        ]
+    },
     {
         "version": "9.45",
         "date": "October 30, 2026",
