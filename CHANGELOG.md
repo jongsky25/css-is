@@ -1,3 +1,7 @@
+## 9.46 — October 30, 2026
+
+- Log the relay's error code (entry, document, revision) when an activity document draft fails. The person still sees the plain sentence; the raw code goes only to the server log so a generic "document service refused" failure can be diagnosed. No database, relay or template change.
+
 ## 9.45 — October 30, 2026
 
 - Replace both previous cat voice clips with a separate CC0 real cat recording (qubodup, from tuberatanka's cat meow II), preserving its complete call and original pitch. The two-meow variant repeats only that recording. New filenames, manifest URL, and service-worker cache version avoid serving previous cat clips. Real purr and feeding sounds remain unchanged.

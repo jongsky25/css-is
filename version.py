@@ -18,10 +18,19 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "9.45"
+APP_VERSION = "9.46"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "9.46",
+        "date": "October 30, 2026",
+        "summary": "Administrators can now see why a document draft failed.",
+        "changes": [
+            "When a Google Docs draft fails, the real reason is now recorded for administrators.",
+            "Nothing changes for people drafting documents."
+        ]
+    },
     {
         "version": "9.45",
         "date": "October 30, 2026",
