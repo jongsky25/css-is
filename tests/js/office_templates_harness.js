@@ -4,6 +4,11 @@ const load = name => fs.readFileSync(path.resolve(__dirname, '../../apps_script/
 const T = { PARAGRAPH: 'P', LIST_ITEM: 'L', TABLE: 'T', TABLE_ROW: 'R' };
 class Para {
   constructor(text, type = T.PARAGRAPH) { Object.assign(this, { text, type, attrs: { spacing: 12 }, bold: false }); }
+  setBold(value) { this.bold = value; return this; }
+  setItalic(value) { this.italic = value; return this; }
+  setUnderline(value) { this.underline = value; return this; }
+  setAlignment(value) { this.attrs.alignment = value; return this; }
+  setSpacingAfter(value) { this.attrs.spacingAfter = value; return this; }
   getType() { return this.type; }
   asParagraph() { if (this.type !== T.PARAGRAPH) throw Error('not a paragraph'); return this; }
   getText() { return this.text; }
@@ -31,12 +36,20 @@ class Para {
       getText: () => p.text,
       insertText(i, value) { p.text = p.text.slice(0, i) + value + p.text.slice(i); return this; },
       deleteText(a, b) { p.text = p.text.slice(0, a) + p.text.slice(b + 1); return this; },
-      setBold(value) { p.bold = value; return this; }
+      setBold(value) { p.bold = value; return this; },
+      setUnderline(...value) { p.underline = value; return this; }
     };
   }
 }
 class Body {
   constructor(items) { this.children = items.map(x => typeof x === 'string' ? new Para(x) : x); this.children.forEach(p => p.parent = this); }
+  clear() { this.clears = (this.clears || 0) + 1; this.children = [new Para('')]; this.children[0].parent = this; return this; }
+  appendParagraph(text) { return this.insertParagraph(this.children.length, text); }
+  appendTable(rows) { const table = new Table(rows, []); table.parent = this; this.children.push(table); return table; }
+  editAsText() { const body = this; return {
+    setFontFamily(value) { body.font = value; return this; }, setFontSize(value) { body.size = value; return this; },
+    setBold(value) { body.bold = value; return this; }
+  }; }
   getNumChildren() { return this.children.length; }
   getChild(i) { return this.children[i]; }
   getChildIndex(p) { return this.children.indexOf(p); }
@@ -65,6 +78,7 @@ class Row {
   getType() { return T.TABLE_ROW; }
   asTableRow() { return this; }
   getParent() { return this.parent; }
+  editAsText() { const row = this; return {setBold(value) { row.bold = value; return this; }}; }
   getNumCells() { return this.cells.length; }
   getCell(i) { return this.cells[i]; }
   copy() { return new Row(this.cells.map(c => c.copy())); }
@@ -76,6 +90,9 @@ class Table {
   asTable() { return this; }
   getParent() { return this.parent; }
   getText() { return this.rows.map(r => r.cells.map(c => c.getText()).join(' ')).join('\n'); }
+  setBorderWidth(value) { this.borderWidth = value; return this; }
+  setColumnWidth(c, width) { if (!this.columnWidths) this.columnWidths = []; this.columnWidths[c] = width; return this; }
+  editAsText() { const table = this; return {setBold(value) { table.bold = value; return this; }}; }
   getNumRows() { return this.rows.length; }
   getRow(r) { return this.rows[r]; }
   getCell(r, c) { return this.rows[r].getCell(c); }
@@ -103,7 +120,7 @@ function original() {
     '[Reiteration of Subject]', '[Rationale of Invitation]',
     '[Further details of activity or event, e.g. date, venue, number of requested participants]',
     '[Contact details of assigned staff] ', 'Thank you very much. ', ''];
-  return new Body(first.concat(first.slice(1), [new Para('SOURCE REVIEWER MUST GO', T.TABLE), '']));
+  return new Body(first.concat(first.slice(1), [new Table([['Initials', 'SOURCE REVIEWER MUST GO']], [825, 4035]), '']));
 }
 function concept() {
   return new Body(['CONCEPT NOTE', '[Name of Activity / Event / Technical Assistance]', '',
@@ -218,7 +235,7 @@ output.kept = { report: kept.ctx.makeOfficeTemplates('invitation'), copies: kept
 const rebuild = context(original(), { existing: 'OLD', marked: true, existingBody: body });
 output.forced = { report: rebuild.ctx.makeOfficeTemplates('invitation', true), copies: rebuild.copies() };
 const unknown = context(original());
-output.unselected = { report: unknown.ctx.makeOfficeTemplates('minutes'), writes: unknown.writes };
+output.unselected = { report: unknown.ctx.makeOfficeTemplates('not_supported'), writes: unknown.writes };
 // Real relay group expansion: preserve different attributes and keep the FOR label once.
 vm.runInContext(load('travel_docs.gs'), env.ctx);
 const groupBody = new Body(['FOR:\t{{for_name}}', '{{for_title}}', '{{for_office}}', 'FROM: head']);
@@ -235,7 +252,7 @@ output.legacyRebuild = kept.ctx.rebuildActivityTemplates();
 const nomBody = notice(), nom = context(nomBody, {key: 'notice_of_meeting'});
 const nomReport = nom.ctx.makeOfficeNoticeTemplate();
 const snapshot = body => body.children.map(p => p instanceof Table
-  ? {type: 'table', grid: p.grid, rows: p.rows.map(r => r.cells.map(c => c.getText()))}
+  ? {type: 'table', grid: p.grid, columnWidths: p.columnWidths, rows: p.rows.map(r => r.cells.map(c => c.getText()))}
   : {type: p.type, text: p.text, attrs: p.attrs, runs: p.runs ? p.runs.map(run => ({...run})) : undefined});
 output.notice = {report: nomReport, writes: nom.writes, children: snapshot(nomBody),
   expect: vm.runInContext('AO_TEMPLATES[1].expect', nom.ctx), text: nomBody.getText()};
@@ -333,5 +350,68 @@ for (const mode of ['label', 'title', 'data', 'signature', 'body']) {
   if (mode === 'body') body.children[0].text = 'Unexpected body';
   const env = context(body, {key: 'executive_briefer'});
   output.brieferFailures.push({report: env.ctx.makeOfficeBrieferTemplate(), writes: env.writes, active: env.props.TPL_executive_briefer});
+}
+function officeFrameApi(ctx, mode = '') {
+  const dim = magnitude => ({magnitude, unit: 'PT'});
+  const frame = {
+    documentStyle: {documentSize: {width: dim(612), height: dim(792)},
+      marginTop: dim(72), marginBottom: dim(72), marginLeft: dim(72), marginRight: dim(72),
+      marginHeader: dim(36), marginFooter: dim(36), useFirstPageHeaderFooter: true},
+    body: {content: [{startIndex: 0, endIndex: 1, sectionBreak: {sectionStyle: {
+      firstPageHeaderId: 'HEADER', firstPageFooterId: 'FOOTER'
+    }}}]},
+    headers: {HEADER: {content: [{paragraph: {positionedObjectIds: ['LOGO1', 'LOGO2'], elements: [{textRun: {content: 'OFFICE LETTERHEAD'}}]}}]}},
+    footers: {FOOTER: {content: [{paragraph: {elements: [{textRun: {content: 'ORIGINAL FOOTER 651-7800'}}]}}]}},
+    positionedObjects: {LOGO1: {positionedObjectProperties: {embeddedObject: {size: {width: dim(75.375), height: dim(75.375)}}}},
+      LOGO2: {positionedObjectProperties: {embeddedObject: {size: {width: dim(103.2), height: dim(105.6)}}}}}
+  };
+  let reads = 0;
+  ctx.Docs = {Documents: {get() {
+    reads++;
+    const result = JSON.parse(JSON.stringify(frame));
+    if (reads > 1) {
+      if (mode === 'paper') result.documentStyle.documentSize.width = dim(600);
+      if (mode === 'margin') result.documentStyle.marginLeft = dim(70);
+      if (mode === 'first') result.documentStyle.useFirstPageHeaderFooter = false;
+      if (mode === 'header') result.headers.HEADER.content[0].paragraph.elements[0].textRun.content = 'CHANGED HEADER';
+      if (mode === 'footer') result.footers.FOOTER.content[0].paragraph.elements[0].textRun.content = 'CHANGED FOOTER';
+      if (mode === 'logo') result.positionedObjects.LOGO1.positionedObjectProperties.embeddedObject.size.width = dim(90);
+      if (mode === 'missing_image') delete result.positionedObjects.LOGO1;
+      if (mode === 'section') result.body.content.push({sectionBreak: {sectionStyle: {}}});
+    }
+    return result;
+  }}};
+  return {frame, reads: () => reads};
+}
+output.officeBodies = {};
+for (const key of ['dpo', 'minutes']) {
+  const body = original(), env = context(body, {key});
+  vm.runInContext(load('activity_templates.gs'), env.ctx);
+  env.ctx.DocumentApp.HorizontalAlignment = {RIGHT: 'right', CENTER: 'center', JUSTIFY: 'justify'};
+  const api = officeFrameApi(env.ctx);
+  const report = env.ctx.makeOfficeTemplates(key);
+  output.officeBodies[key] = {report, writes: env.writes, text: body.getText(), children: snapshot(body), clears: body.clears,
+    font: body.font, size: body.size, reads: api.reads(),
+    expect: vm.runInContext('AO_TEMPLATES.find(t => t.key === "' + key + '").expect', env.ctx)};
+  vm.runInContext(load('travel_docs.gs'), env.ctx);
+  const fields = Object.fromEntries(output.officeBodies[key].expect.map(k => [k, 'Value']));
+  if (key === 'dpo') {
+    env.ctx.applyRows_(body, {personnel: {marker: 'p_name', data: [{p_name: 'Person One', p_position: 'Role One'}, {p_name: 'Person Two', p_position: 'Role Two'}]}});
+    env.ctx.applyFields_(body, fields);
+  } else {
+    env.ctx.applyRows_(body, {actions: {marker: 'm_action', data: [{m_action: 'Action', m_who: 'Person', m_due: 'Date'}]}});
+    env.ctx.applyBlocks_(body, {attendees: ['Person One', 'Person Two'], agenda: ['Agenda'], discussion: ['Discussion'], next_steps: ['Next step']});
+    env.ctx.applyFields_(body, fields);
+  }
+  output.officeBodies[key].filled = {text: body.getText(), children: snapshot(body)};
+}
+output.officeBodyFailures = [];
+for (const mode of ['paper', 'margin', 'first', 'header', 'footer', 'logo', 'missing_image', 'section', 'source', 'missing_placeholder']) {
+  const body = original(), env = context(body, {key: 'dpo', missing: mode === 'missing_placeholder'});
+  vm.runInContext(load('activity_templates.gs'), env.ctx);
+  env.ctx.DocumentApp.HorizontalAlignment = {RIGHT: 'right', CENTER: 'center', JUSTIFY: 'justify'};
+  if (mode === 'source') body.children[14].text = 'UNEXPECTED SOURCE';
+  officeFrameApi(env.ctx, mode);
+  output.officeBodyFailures.push({report: env.ctx.makeOfficeTemplates('dpo'), writes: env.writes, active: env.props.TPL_dpo});
 }
 console.log(JSON.stringify(output));

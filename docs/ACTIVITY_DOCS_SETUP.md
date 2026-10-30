@@ -570,5 +570,88 @@ wide/merged/repeated-label preservation and failed-candidate isolation. Both pur
 mappers accept a fresh actual Blank, whose page/body/header/footer measurements
 match the committed reference after normalizing anchored-image order. Release
 metadata and whitespace checks pass. The full suite was not run. Administrator
-maker runs, real drafts and DOCX/PDF comparisons remain pending; this increment
-stays in draft until those checks are recorded.
+maker runs, real drafts and DOCX/PDF comparisons remain administrator acceptance
+checks after the code merge of #555.
+
+## Activity template refresh: Increment 7 (DPO and minutes frame, 9.39)
+
+The DPO and minutes have no office Blank of their own. This increment follows the
+handoff's preferred path: copy `Blank [Memo - Invitation - Internal]`, clear its
+body and draw the existing DPO/minutes body into it. Both source memo copies and
+the named initials table are removed before drawing. Headers, footers, artwork,
+page setup and section settings are retained from the memo; they are not rebuilt
+from the old inline-logo/table helpers. No application payload or placeholder
+changes are needed.
+
+The source must be the expected two-body memo with one section, Letter paper
+(612 × 792 pt), one-inch margins, half-inch header/footer distances and different
+first page enabled. The maker inspects it through the Docs advanced service,
+draws the new body, then inspects it again. It rejects changes to section count,
+effective frame settings, header/footer content or referenced image layout before
+publishing the pointer. Temporary image URLs/object indices are excluded from the
+structural comparison. Missing referenced images are failures. This verifies
+preservation during the build; it does not establish Google's rendering or the
+artwork's visual fidelity.
+
+The two existing body builders now accept `officeFrame=true` to omit their drawn
+header/footer. Their usual two-argument calls keep the legacy behavior. Body text,
+DPO signature indents/table, minutes action table and all placeholders are reused.
+Both bodies still use Times New Roman 12. The office-format marker skips the
+relay's generic formatter, as it does for other office templates. The DPO still
+requests its filled file-copy section with both routing boxes; minutes still
+requests no file copy. The relay's existing table-fit behavior on DPO personnel
+rows remains unchanged. Compare these drawn-body layouts with the previous DPO
+and minutes; the memo reference applies to the frame, not to their body tables.
+
+Administrator rollout:
+
+1. Ensure the deployed relay includes Increment 2's file-copy section fix (release
+   9.34 or later): it must disable inherited first-page header/footer variants on
+   a DPO copy. If not, replace/deploy the current `travel_docs.gs` first. Increment
+   7 does not itself change relay code. Drive API v3 and Google Docs API advanced
+   services must be enabled in the same project.
+2. Save the current `TPL_dpo` and `TPL_minutes` IDs for rollback. Replace both
+   `activity_templates.gs` and `activity_office_templates.gs` with this release.
+   The office maker needs the updated body builders; it will not create a new
+   drawn letterhead/footer as a fallback. Existing templates/drafts are untouched
+   until the maker is run. Application payloads remain compatible.
+3. Run **`makeOfficeDpoMinutesTemplates()`** as the office mailbox, inspect both
+   maker log entries and run `checkOfficeTemplates()`. Each must have all expected
+   placeholders and a matching office-format marker. Each candidate is validated
+   independently; a failure leaves that key's old pointer selected. For a paired
+   rollout, restore both saved IDs if either build/visual check fails. Use
+   `rebuildOfficeDpoMinutesTemplates()` to force fresh copies. Do not manually
+   activate a candidate that failed the frame or placeholder check.
+4. Draft a real DPO and minutes document. Check the existing fields, body content,
+   signature indents, personnel/action rows and the DPO's filled file copy with
+   both routing boxes. Confirm no original memo body, source signature name,
+   embedded duplicate or extra blank page remains. Check single-person DPOs too.
+5. Follow handoff section 6: retain maker logs; export both real drafts as DOCX.
+   Compare their original sections' page setup, margins/distances, header/footer
+   variants, floating image extents and footer measurements with the committed
+   `invitation_internal` reference. Preserve the memo's source footer variants,
+   including its first-page behavior and old-format telephone numbers. The DPO's
+   generated copy must have empty header/footer and disabled first-page variants.
+6. Compare PDFs side by side with the office memo Sample for the frame and previous
+   real DPO/minutes for the body. Confirm first-page-only letterhead and the new
+   logo sizes/positions, footer rule and typography, page edges, body alignment,
+   signature spacing and DPO-copy page transition. Record these checks before
+   calling the template deployment complete.
+
+Rollback: restore the saved `TPL_dpo`/`TPL_minutes` IDs and delete their `TPLF_`
+markers (or leave the now-stale values). The relay resumes generic formatting on
+those legacy templates. Their existing payloads still fill them. Existing drafts
+are not changed. The old drawn maker remains available and keeps office-managed
+templates even on a forced rebuild; use the scoped office maker to refresh copied
+frames instead of rebuilding unrelated converted documents.
+
+Local validation: 211 focused tests pass across activity docs, travel scripts,
+office relay/converters, release checks and calendar entry pages. The tests run
+the real body builders inside the copied-frame path, check placeholder/payload
+compatibility and legacy headers/footers (including minutes), exercise row/block
+filling, and reject changed frames/source structures or missing placeholders.
+The fresh memo export's section and header/footer measurements match the committed
+reference after normalizing image order. Release metadata and whitespace checks
+pass. The full suite was not run. Google `Body.clear()` frame preservation, maker
+logs, real-calendar drafts and DOCX/PDF comparisons remain pending administrator
+access; this increment stays in draft until those checks are recorded.

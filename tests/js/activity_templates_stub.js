@@ -27,10 +27,10 @@ global.DocumentApp = { HorizontalAlignment: { CENTER: 'C', RIGHT: 'R', JUSTIFY: 
 global.Utilities = { base64Decode: (b) => Buffer.from(b, 'base64'),
   newBlob: (bytes, type, name) => { log.push('IMAGE: ' + name + ' ' + type + ' ' + bytes.length); return { bytes, type, name }; } };
 const logos = process.argv[3] ? fs.readFileSync(process.argv[3], 'utf8') + '\n' : '';
-const src = logos + fs.readFileSync(process.argv[2], 'utf8') + '\n;module.exports = { AT_TEMPLATES, at_buildDpo_, at_buildInvitation_, at_buildConceptNote_, at_buildProgramFlow_ };';
+const src = logos + fs.readFileSync(process.argv[2], 'utf8') + '\n;module.exports = { AT_TEMPLATES, at_buildDpo_, at_buildInvitation_, at_buildConceptNote_, at_buildProgramFlow_, at_buildMinutes_ };';
 const m = new Function('module', 'DocumentApp', 'Utilities', src + '\nreturn module.exports;')({ exports: {} }, global.DocumentApp, global.Utilities);
 const out = {};
-[['dpo', m.at_buildDpo_], ['invitation', m.at_buildInvitation_], ['concept_note', m.at_buildConceptNote_], ['program_flow', m.at_buildProgramFlow_]].forEach(function (x) {
+[['dpo', m.at_buildDpo_], ['invitation', m.at_buildInvitation_], ['concept_note', m.at_buildConceptNote_], ['program_flow', m.at_buildProgramFlow_], ['minutes', m.at_buildMinutes_]].forEach(function (x) {
   log.length = 0;
   x[1](newBody(), doc);
   const text = log.join('\n');

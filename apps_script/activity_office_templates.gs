@@ -21,8 +21,17 @@ const AO_TEMPLATES = [
       'subject', 'salutation_name', 'letter_opening', 'activity_purpose', 'letter_details', 'contact_details', 'head_name', 'head_title'] },
   { key: 'executive_briefer', source: 'Blank [Executive Briefer]', build: ao_briefer_,
     expect: ['subject', 'requested_action', 'background', 'outputs', 'participants', 'date_venue_references',
-      'prepared_by', 'prepared_title', 'noted_by_name', 'noted_by_title', 'head_name', 'head_title', 'approved_unit'] }
+      'prepared_by', 'prepared_title', 'noted_by_name', 'noted_by_title', 'head_name', 'head_title', 'approved_unit'] },
+  { key: 'dpo', source: 'Blank [Memo - Invitation - Internal]', build: ao_dpo_,
+    expect: ['dpo_year', 'dpo_no', 'dpo_date', 'subject', 'background', 'intro', 'funding_source', 'p_name', 'p_position',
+      'head_name', 'head_title', 'unit_name'] },
+  { key: 'minutes', source: 'Blank [Memo - Invitation - Internal]', build: ao_minutes_,
+    expect: ['title', 'meeting_when', 'venue', 'attendees', 'agenda', 'discussion', 'm_action', 'm_who', 'm_due', 'next_steps',
+      'prepared_by', 'prepared_title', 'approved_by', 'unit_name'] }
 ];
+
+function makeOfficeDpoMinutesTemplates() { return makeOfficeTemplates(['dpo', 'minutes'], false); }
+function rebuildOfficeDpoMinutesTemplates() { return makeOfficeTemplates(['dpo', 'minutes'], true); }
 
 function makeOfficeBrieferTemplate() { return makeOfficeTemplates(['executive_briefer'], false); }
 function rebuildOfficeBrieferTemplate() { return makeOfficeTemplates(['executive_briefer'], true); }
@@ -528,4 +537,46 @@ function ao_briefer_(id) {
   signatures.prepared.forEach(function (replacement) { ao_text_(prepared.getChild(replacement[0]), replacement[1]); });
   signatures.approved.forEach(function (replacement) { ao_text_(approved.getChild(replacement[0]), replacement[1]); });
   doc.saveAndClose();
+}
+
+function ao_memoFrame_(doc) {
+  const sections = ao_sections_(doc);
+  if (sections.length !== 1) throw new Error('expected one memo frame section');
+  const effective = Object.assign({}, doc.documentStyle || {}, sections[0].sectionBreak.sectionStyle || {}), settings = {};
+  ['documentSize', 'marginTop', 'marginBottom', 'marginLeft', 'marginRight', 'marginHeader', 'marginFooter',
+   'useFirstPageHeaderFooter', 'useEvenPageHeaderFooter', 'useCustomHeaderFooterMargins', 'documentMode',
+   'columnProperties', 'columnSeparatorStyle', 'contentDirection'].forEach(function (key) {
+    if (effective[key] !== undefined) settings[key] = effective[key];
+  });
+  const size = effective.documentSize || {};
+  function points(value) {
+    if (!value || value.unit !== 'PT') throw new Error('memo frame dimension could not be inspected');
+    return value.magnitude;
+  }
+  if (points(size.width) !== 612 || points(size.height) !== 792 || !effective.useFirstPageHeaderFooter
+      || ['marginTop', 'marginBottom', 'marginLeft', 'marginRight'].some(function (key) { return points(effective[key]) !== 72; })
+      || points(effective.marginHeader) !== 36 || points(effective.marginFooter) !== 36) {
+    throw new Error('memo frame differs from Letter/one-inch/half-inch/first-page reference');
+  }
+  return JSON.stringify({ settings: ao_cleanLayout_(settings), headerFooter: ao_headerFooter_(doc, 0) });
+}
+function ao_buildOfficeBody_(id, builder) {
+  const before = Docs.Documents.get(id), frame = ao_memoFrame_(before);
+  const doc = DocumentApp.openById(id), body = doc.getBody();
+  // Validate the actual memo source, then remove both source copies and all names.
+  ao_memoPlan_(ao_items_(body));
+  body.clear();
+  builder(body, doc, true);
+  doc.saveAndClose();
+  if (ao_memoFrame_(Docs.Documents.get(id)) !== frame) {
+    throw new Error('body rebuild changed the memo frame; candidate not activated');
+  }
+}
+function ao_dpo_(id) {
+  if (typeof at_buildDpo_ !== 'function') throw new Error('add/update activity_templates.gs before making the DPO');
+  ao_buildOfficeBody_(id, at_buildDpo_);
+}
+function ao_minutes_(id) {
+  if (typeof at_buildMinutes_ !== 'function') throw new Error('add/update activity_templates.gs before making minutes');
+  ao_buildOfficeBody_(id, at_buildMinutes_);
 }
