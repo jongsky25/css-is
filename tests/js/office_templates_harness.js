@@ -53,7 +53,13 @@ class Body {
   getNumChildren() { return this.children.length; }
   getChild(i) { return this.children[i]; }
   getChildIndex(p) { return this.children.indexOf(p); }
-  removeChild(p) { this.children.splice(this.getChildIndex(p), 1); }
+  removeChild(p) {
+    // Google Docs refuses to remove a document body's last paragraph.
+    if (this.constructor === Body && p === this.children[this.children.length - 1] && p instanceof Para) {
+      throw new Error("Can't remove the last paragraph in a document section.");
+    }
+    this.children.splice(this.getChildIndex(p), 1);
+  }
   getText() { return this.children.map(p => p.getText()).join('\n'); }
   insertParagraph(i, p) { if (typeof p === 'string') p = new Para(p); this.children.splice(i, 0, p); p.parent = this; return p; }
   insertListItem(i, text) { return this.insertParagraph(i, typeof text === 'string' ? new Para(text, T.LIST_ITEM) : text); }

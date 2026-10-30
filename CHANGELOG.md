@@ -1,3 +1,7 @@
+## 9.40 — October 30, 2026
+
+- Fix the office template makers for the memo, notice of meeting and external letter: Google Docs refuses to remove a body's last paragraph, so the makers now remove the embedded duplicate except for that paragraph and empty it (`ao_trimTail_`). The test fake now enforces the same rule, so the earlier code fails its tests. Administrators replace `activity_office_templates.gs` and re-run the failed makers.
+
 ## 9.39 — October 29, 2026
 
 - Activity template refresh, Increment 7: build the existing DPO/minutes bodies into copies of the office's memo Blank, retaining its Letter paper, one-inch margins, half-inch header/footer distances, first-page letterhead and source footer variants/artwork. The body builders accept `officeFrame=true` to skip their old drawn header/footer; ordinary two-argument calls retain the legacy behavior. The office maker validates the memo source and frame before clearing both embedded bodies, draws only the existing DPO/minutes content, then verifies the frame again before publishing the ID and formatting marker. Changed paper/margins/first-page settings, header/footer content or image layout, missing images, extra sections and missing placeholders keep the old pointer selected. `makeOfficeDpoMinutesTemplates()` / `rebuildOfficeDpoMinutesTemplates()` target these two keys. Existing payloads/placeholders and DPO file-copy behavior are unchanged. No application logic, relay, email or database changes. Administrator rollout/rollback and pending Google DOCX/PDF checks are in `docs/ACTIVITY_DOCS_SETUP.md`.

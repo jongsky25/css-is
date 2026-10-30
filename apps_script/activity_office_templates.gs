@@ -141,6 +141,16 @@ function ao_memoPlan_(items) {
   return { replacements: replacements, end: thanks + 1, representativesBefore: contact, addressee: to };
 }
 
+// Docs refuses to remove a body's last paragraph: drop everything after `end` except that one, then empty it.
+function ao_trimTail_(body, end) {
+  const last = body.getNumChildren() - 1;
+  if (last < end) return;
+  for (let i = last - 1; i >= end; i--) body.removeChild(body.getChild(i));
+  const tail = body.getChild(end);
+  if (tail.getType() === DocumentApp.ElementType.PARAGRAPH) tail.asParagraph().clear();
+  else body.removeChild(tail);
+}
+
 // Keep the paragraph and its first character's text formatting, rather than replacing its structure.
 function ao_text_(paragraph, value) {
   const text = paragraph.editAsText(), length = text.getText().length;
@@ -157,7 +167,7 @@ function ao_memo_(id) {
   }
   const plan = ao_memoPlan_(items);
   // Remove the embedded duplicate and its named initials table; the relay copies the filled original later.
-  for (let i = body.getNumChildren() - 1; i >= plan.end; i--) body.removeChild(body.getChild(i));
+  ao_trimTail_(body, plan.end);
   plan.replacements.forEach(function (replacement) { ao_text_(body.getChild(replacement[0]).asParagraph(), replacement[1]); });
   // The Blank leaves this area empty. Retain bold names and plain stacked title/office lines.
   body.getChild(plan.addressee).asParagraph().editAsText().setBold(true);
@@ -236,7 +246,7 @@ function ao_notice_(id) {
     items.push(item);
   }
   const plan = ao_noticePlan_(items);
-  for (let i = body.getNumChildren() - 1; i >= plan.end; i--) body.removeChild(body.getChild(i));
+  ao_trimTail_(body, plan.end);
   // Keep the required paragraph after the last table, removing its old page break.
   body.getChild(plan.end - 1).asParagraph().clear();
   ao_text_(body.getChild(plan.date).asParagraph(), '{{date}}');
@@ -481,7 +491,7 @@ function ao_letterPlan_(items) {
 }
 function ao_letter_(id) {
   const doc = DocumentApp.openById(id), body = doc.getBody(), plan = ao_letterPlan_(ao_items_(body));
-  for (let i = body.getNumChildren() - 1; i >= plan.end; i--) body.removeChild(body.getChild(i));
+  ao_trimTail_(body, plan.end);
   plan.replacements.forEach(function (replacement) { ao_text_(body.getChild(replacement[0]), replacement[1]); });
   // Replace runs individually: the source name is bold, agency/address are plain.
   const addressee = body.getChild(plan.addressee);
