@@ -1,3 +1,7 @@
+## 9.46 — October 30, 2026
+
+- Fix the calendar guidance browser tests for the 9.44 layout. 9.44 moved the "Calendar next step" guidance into the collapsed "Schedule status and next steps" card, which closed content hides from the accessibility tree, so seven tests in `tests/test_calendar_guidance_browser.py` could not find it and the release checks failed (9.44 was cancelled at the 75-minute limit, 9.45 failed), leaving 9.43 live. The tests now open that card through a shared `next_step()` helper without moving focus. No application, template or database change; 9.44 and 9.45 ship with this release.
+
 ## 9.45 — October 30, 2026
 
 - Replace both previous cat voice clips with a separate CC0 real cat recording (qubodup, from tuberatanka's cat meow II), preserving its complete call and original pitch. The two-meow variant repeats only that recording. New filenames, manifest URL, and service-worker cache version avoid serving previous cat clips. Real purr and feeding sounds remain unchanged.
