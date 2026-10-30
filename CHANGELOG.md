@@ -1,3 +1,7 @@
+## 9.42 — October 30, 2026
+
+- Fix the DPO/minutes frame check: the Docs API names the paper size `pageSize`, not `documentSize`, so the check found no paper size and refused to build. The check and the test fakes now use `pageSize` (found by running a diagnostic on the real memo Blank; margins, header/footer distances and first-page flag were already as expected). Administrators replace `activity_office_templates.gs` and re-run `makeOfficeDpoMinutesTemplates()`.
+
 ## 9.41 — October 30, 2026
 
 - Fix the concept note/program flow and executive briefer makers after the first real Google run. The office Blank keeps the program page in a second Docs *tab*, not a second section, so the splitter now asks the Docs API for tab content and deletes the other tab (`deleteTab`), then checks the kept tab's page setup, headers, footers and artwork are unchanged. The briefer check accepts the extra empty cell Docs reports for the merged title row and now lists what it saw if the labels differ. Test fakes model tabs. Administrators replace `activity_office_templates.gs` and re-run the failed makers.

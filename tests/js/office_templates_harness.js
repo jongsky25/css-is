@@ -150,7 +150,7 @@ function splitApi(ctx, selected, drift = false) {
   const dim = magnitude => ({magnitude, unit: 'PT'});
   function tab(tabId, headerId, footerMargin, text) {
     return {tabProperties: {tabId}, documentTab: {
-      documentStyle: {documentSize: {width: dim(612), height: dim(792)}, marginTop: dim(72), marginFooter: dim(footerMargin),
+      documentStyle: {pageSize: {width: dim(612), height: dim(792)}, marginTop: dim(72), marginFooter: dim(footerMargin),
         useFirstPageHeaderFooter: true, firstPageHeaderId: headerId},
       headers: {[headerId]: {content: [{paragraph: {positionedObjectIds: ['IMG_' + tabId],
         elements: [{textRun: {content: text}}]}}]}},
@@ -175,7 +175,7 @@ function splitApi(ctx, selected, drift = false) {
       if (drift === true || drift === 'header') kept.headers[headerId].content[0].paragraph.elements[0].textRun.content = 'CHANGED HEADER';
       if (drift === 'image') Object.values(kept.positionedObjects)[0].positionedObjectProperties.embeddedObject.size.width.magnitude = 100;
       if (drift === 'wrong_section') after.tabs[0].tabProperties.tabId = 't.other';
-      if (drift === 'paper') kept.documentStyle.documentSize.width.magnitude = 700;
+      if (drift === 'paper') kept.documentStyle.pageSize.width.magnitude = 700;
     }
   }};
   return requests;
@@ -359,7 +359,7 @@ for (const mode of ['label', 'title', 'data', 'signature', 'body']) {
 function officeFrameApi(ctx, mode = '') {
   const dim = magnitude => ({magnitude, unit: 'PT'});
   const frame = {
-    documentStyle: {documentSize: {width: dim(612), height: dim(792)},
+    documentStyle: {pageSize: {width: dim(612), height: dim(792)},
       marginTop: dim(72), marginBottom: dim(72), marginLeft: dim(72), marginRight: dim(72),
       marginHeader: dim(36), marginFooter: dim(36), useFirstPageHeaderFooter: true},
     body: {content: [{startIndex: 0, endIndex: 1, sectionBreak: {sectionStyle: {
@@ -375,7 +375,7 @@ function officeFrameApi(ctx, mode = '') {
     reads++;
     const result = JSON.parse(JSON.stringify(frame));
     if (reads > 1) {
-      if (mode === 'paper') result.documentStyle.documentSize.width = dim(600);
+      if (mode === 'paper') result.documentStyle.pageSize.width = dim(600);
       if (mode === 'margin') result.documentStyle.marginLeft = dim(70);
       if (mode === 'first') result.documentStyle.useFirstPageHeaderFooter = false;
       if (mode === 'header') result.headers.HEADER.content[0].paragraph.elements[0].textRun.content = 'CHANGED HEADER';

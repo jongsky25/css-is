@@ -550,12 +550,12 @@ function ao_memoFrame_(doc) {
   const sections = ao_sections_(doc);
   if (sections.length !== 1) throw new Error('expected one memo frame section');
   const effective = Object.assign({}, doc.documentStyle || {}, sections[0].sectionBreak.sectionStyle || {}), settings = {};
-  ['documentSize', 'marginTop', 'marginBottom', 'marginLeft', 'marginRight', 'marginHeader', 'marginFooter',
+  ['pageSize', 'marginTop', 'marginBottom', 'marginLeft', 'marginRight', 'marginHeader', 'marginFooter',
    'useFirstPageHeaderFooter', 'useEvenPageHeaderFooter', 'useCustomHeaderFooterMargins', 'documentMode',
    'columnProperties', 'columnSeparatorStyle', 'contentDirection'].forEach(function (key) {
     if (effective[key] !== undefined) settings[key] = effective[key];
   });
-  const size = effective.documentSize || {};
+  const size = effective.pageSize || {};
   function points(value) {
     if (!value || value.unit !== 'PT') throw new Error('memo frame dimension could not be inspected');
     return value.magnitude;
