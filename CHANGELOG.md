@@ -1,3 +1,7 @@
+## 9.41 — October 30, 2026
+
+- Fix the concept note/program flow and executive briefer makers after the first real Google run. The office Blank keeps the program page in a second Docs *tab*, not a second section, so the splitter now asks the Docs API for tab content and deletes the other tab (`deleteTab`), then checks the kept tab's page setup, headers, footers and artwork are unchanged. The briefer check accepts the extra empty cell Docs reports for the merged title row and now lists what it saw if the labels differ. Test fakes model tabs. Administrators replace `activity_office_templates.gs` and re-run the failed makers.
+
 ## 9.40 — October 30, 2026
 
 - Fix the office template makers for the memo, notice of meeting and external letter: Google Docs refuses to remove a body's last paragraph, so the makers now remove the embedded duplicate except for that paragraph and empty it (`ao_trimTail_`). The test fake now enforces the same rule, so the earlier code fails its tests. Administrators replace `activity_office_templates.gs` and re-run the failed makers.

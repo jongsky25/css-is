@@ -316,34 +316,27 @@ function ao_headerFooter_(doc, index) {
   });
   return JSON.stringify(result);
 }
+// The office's concept/program Blank keeps the program page in a second TAB, which the Docs API hides unless
+// includeTabsContent is requested. Keep the selected tab and delete the other, so its page setup, headers,
+// footers and artwork never change; refuse activation if the kept tab's layout differs afterwards.
+function ao_tabDoc_(tab) {
+  const t = tab.documentTab || {};
+  return { documentStyle: t.documentStyle, body: t.body, headers: t.headers, footers: t.footers,
+    inlineObjects: t.inlineObjects, positionedObjects: t.positionedObjects };
+}
 function ao_splitConcept_(id, selected) {
-  const before = Docs.Documents.get(id), sections = ao_sections_(before);
-  if (sections.length !== 2) throw new Error('expected two concept/program sections');
-  const expected = ao_headerFooter_(before, selected), style = {}, effective = Object.assign({}, before.documentStyle,
-    sections[selected].sectionBreak.sectionStyle || {});
-  ['marginTop', 'marginBottom', 'marginLeft', 'marginRight', 'marginHeader', 'marginFooter',
-   'useFirstPageHeaderFooter'].forEach(function (key) { if (effective[key] !== undefined) style[key] = effective[key]; });
-  const content = before.body.content, last = content[content.length - 1];
-  const range = selected === 0
-    ? { startIndex: sections[1].startIndex, endIndex: last.endIndex - 1 }
-    : { startIndex: 1, endIndex: sections[1].endIndex };
-  if (!(range.startIndex < range.endIndex)) throw new Error('invalid concept/program split range');
-  const requests = [{ deleteContentRange: { range: range } },
-    { updateSectionStyle: { range: { startIndex: 1, endIndex: 2 }, sectionStyle: style, fields: Object.keys(style).join(',') } }];
-  if (before.documentStyle.documentSize) requests.push({ updateDocumentStyle: {
-    documentStyle: { documentSize: before.documentStyle.documentSize }, fields: 'documentSize' } });
-  Docs.Documents.batchUpdate({ requests: requests }, id);
-  const after = Docs.Documents.get(id);
-  if (ao_sections_(after).length !== 1 || ao_headerFooter_(after, 0) !== expected) {
+  const before = Docs.Documents.get(id, { includeTabsContent: true }), tabs = before.tabs || [];
+  if (tabs.length !== 2) throw new Error('expected two concept/program tabs, found ' + tabs.length);
+  const keep = tabs[selected], drop = tabs[1 - selected], keepId = keep.tabProperties.tabId;
+  const expected = ao_headerFooter_(ao_tabDoc_(keep), 0);
+  const style = JSON.stringify(ao_cleanLayout_(keep.documentTab.documentStyle));
+  Docs.Documents.batchUpdate({ requests: [{ deleteTab: { tabId: drop.tabProperties.tabId } }] }, id);
+  const after = Docs.Documents.get(id, { includeTabsContent: true }), left = after.tabs || [];
+  if (left.length !== 1 || left[0].tabProperties.tabId !== keepId) throw new Error('split kept the wrong tab; candidate not activated');
+  if (ao_sections_(ao_tabDoc_(left[0])).length !== 1 || ao_headerFooter_(ao_tabDoc_(left[0]), 0) !== expected) {
     throw new Error('split changed section headers/footers; candidate not activated');
   }
-  if (JSON.stringify(ao_cleanLayout_(after.documentStyle.documentSize)) !== JSON.stringify(ao_cleanLayout_(before.documentStyle.documentSize))) {
-    throw new Error('split changed paper size');
-  }
-  const actual = Object.assign({}, after.documentStyle, ao_sections_(after)[0].sectionBreak.sectionStyle || {});
-  Object.keys(style).forEach(function (key) {
-    if (JSON.stringify(ao_cleanLayout_(actual[key])) !== JSON.stringify(ao_cleanLayout_(style[key]))) throw new Error('split changed ' + key);
-  });
+  if (JSON.stringify(ao_cleanLayout_(left[0].documentTab.documentStyle)) !== style) throw new Error('split changed page setup');
 }
 function ao_items_(body) {
   const T = DocumentApp.ElementType, items = [];
@@ -510,9 +503,13 @@ function ao_brieferPlan_(items) {
   const labels = ['I. Subject', 'II. Requested Action', 'III. Background/ Rational / Legal Basis',
     'IV. Key Outputs / Expected Output / Attachments', 'V. Participants / Key Stakeholders',
     'VI. Date/Venue/ References', 'VI. Prepared by', 'Approved by'];
-  if (rows.length !== labels.length + 1 || rows[0].length !== 1 || ao_norm_(rows[0][0]) !== 'EXECUTIVE BRIEFER'
+  // Docs reports the merged title row's covered cells as extra empty cells; only the first may hold text.
+  if (rows.length !== labels.length + 1 || ao_norm_(rows[0][0]) !== 'EXECUTIVE BRIEFER'
+      || rows[0].slice(1).some(function (cell) { return ao_norm_(cell); })
       || rows.slice(1).some(function (row, i) { return row.length !== 2 || ao_norm_(row[0]) !== labels[i]; })) {
-    throw new Error('unexpected briefer labels or merged title');
+    throw new Error('unexpected briefer labels or merged title; saw ' + JSON.stringify(rows.map(function (row) {
+      return row.map(function (cell) { return ao_norm_(cell).slice(0, 30); });
+    })));
   }
   if (rows.slice(1, 7).some(function (row) { return ao_norm_(row[1]); })) throw new Error('briefer value area is not blank');
   return { table: tables[0] };

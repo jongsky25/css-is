@@ -146,37 +146,36 @@ function program() {
       ['SOURCE TIME 2', 'SOURCE SCHEDULE 2', 'SOURCE PERSON 2']], [2370, 4575, 2415]), '']);
 }
 function splitApi(ctx, selected, drift = false) {
-  const base = {documentStyle: {documentSize: {width: {magnitude: 612, unit: 'PT'}, height: {magnitude: 792, unit: 'PT'}},
-    marginTop: {magnitude: 72, unit: 'PT'}, marginFooter: {magnitude: 21.6, unit: 'PT'}, useFirstPageHeaderFooter: true},
-    headers: {H1: {content: [{paragraph: {elements: [{textRun: {content: 'OFFICE HEADER'}}]}}]},
-              H2: {content: [{paragraph: {elements: [{textRun: {content: 'OFFICE HEADER'}}]}}]}},
-    footers: {}, body: {content: [
-      {startIndex: 0, endIndex: 1, sectionBreak: {sectionStyle: {firstPageHeaderId: 'H1', marginFooter: {magnitude: 21.6, unit: 'PT'}}}},
-      {startIndex: 1, endIndex: 500, paragraph: {}},
-      {startIndex: 500, endIndex: 501, sectionBreak: {sectionStyle: {firstPageHeaderId: 'H2', marginFooter: {magnitude: 36, unit: 'PT'}}}},
-      {startIndex: 501, endIndex: 1500, paragraph: {}}
-    ]}};
-  base.headers.H2.content[0].paragraph.elements[0].textRun.content = 'PROGRAM HEADER';
-  base.headers.H1.content[0].paragraph.positionedObjectIds = ['IMAGE1'];
-  base.headers.H2.content[0].paragraph.positionedObjectIds = ['IMAGE2'];
-  base.positionedObjects = Object.fromEntries(['IMAGE1', 'IMAGE2'].map(id => [id, {
-    objectId: id, positionedObjectProperties: {embeddedObject: {
-      size: {width: {magnitude: 75, unit: 'PT'}}, imageProperties: {contentUri: 'temporary-image-url'}
-    }}
-  }]));
+  // The Blank holds the concept note and the program page in two tabs; the legacy `body` shows only the first.
+  const dim = magnitude => ({magnitude, unit: 'PT'});
+  function tab(tabId, headerId, footerMargin, text) {
+    return {tabProperties: {tabId}, documentTab: {
+      documentStyle: {documentSize: {width: dim(612), height: dim(792)}, marginTop: dim(72), marginFooter: dim(footerMargin),
+        useFirstPageHeaderFooter: true, firstPageHeaderId: headerId},
+      headers: {[headerId]: {content: [{paragraph: {positionedObjectIds: ['IMG_' + tabId],
+        elements: [{textRun: {content: text}}]}}]}},
+      footers: {},
+      positionedObjects: {['IMG_' + tabId]: {objectId: 'IMG_' + tabId, positionedObjectProperties: {embeddedObject: {
+        size: {width: dim(75)}, imageProperties: {contentUri: 'temporary-image-url'}}}}},
+      body: {content: [{startIndex: 0, endIndex: 1, sectionBreak: {sectionStyle: {}}}, {startIndex: 1, endIndex: 500, paragraph: {}}]}}};
+  }
+  const base = {tabs: [tab('t.0', 'H1', 21.6, 'OFFICE HEADER'), tab('t.1', 'H2', 36, 'PROGRAM HEADER')]};
   const requests = []; let after = null;
   ctx.Docs = {Documents: {
-    get() { return JSON.parse(JSON.stringify(after || base)); },
+    get(id, options) {
+      if (!options || !options.includeTabsContent) throw new Error('tabs must be requested');
+      return JSON.parse(JSON.stringify(after || base));
+    },
     batchUpdate(batch) {
       requests.push(...batch.requests);
+      const dropId = batch.requests[0].deleteTab.tabId;
       after = JSON.parse(JSON.stringify(base));
-      const style = batch.requests.find(r => r.updateSectionStyle).updateSectionStyle.sectionStyle;
-      after.body.content = [{startIndex: 0, endIndex: 1, sectionBreak: {sectionStyle: {...style, firstPageHeaderId: selected ? 'H2' : 'H1'}}},
-        {startIndex: 1, endIndex: 200, paragraph: {}}];
-      if (drift === true || drift === 'header') after.headers[selected ? 'H2' : 'H1'].content[0].paragraph.elements[0].textRun.content = 'CHANGED HEADER';
-      if (drift === 'image') after.positionedObjects.IMAGE1.positionedObjectProperties.embeddedObject.size.width.magnitude = 100;
-      if (drift === 'wrong_section') after.body.content[0].sectionBreak.sectionStyle.firstPageHeaderId = selected ? 'H1' : 'H2';
-      if (drift === 'paper') after.documentStyle.documentSize.width.magnitude = 700;
+      after.tabs = after.tabs.filter(t => t.tabProperties.tabId !== dropId);
+      const kept = after.tabs[0].documentTab, headerId = selected ? 'H2' : 'H1';
+      if (drift === true || drift === 'header') kept.headers[headerId].content[0].paragraph.elements[0].textRun.content = 'CHANGED HEADER';
+      if (drift === 'image') Object.values(kept.positionedObjects)[0].positionedObjectProperties.embeddedObject.size.width.magnitude = 100;
+      if (drift === 'wrong_section') after.tabs[0].tabProperties.tabId = 't.other';
+      if (drift === 'paper') kept.documentStyle.documentSize.width.magnitude = 700;
     }
   }};
   return requests;
@@ -195,7 +194,7 @@ function letter() {
 function briefer() {
   const labels = ['I. Subject', 'II. Requested Action', 'III. Background/ Rational / Legal Basis',
     'IV. Key Outputs / Expected Output / Attachments', 'V. Participants / Key Stakeholders ', 'VI. Date/Venue/ References'];
-  const table = new Table([[' EXECUTIVE BRIEFER'], ...labels.map(label => [label, '']),
+  const table = new Table([[' EXECUTIVE BRIEFER', ''], ...labels.map(label => [label, '']),
     ['VI. Prepared by', new Cell(['', 'Name of Staff', 'Designation', '', 'Noted by:', '', 'Name of Supervisor', 'Designation'])],
     ['Approved by', new Cell(['', '', 'SOURCE HEAD MUST GO', 'SOURCE TITLE MUST GO', 'SOURCE UNIT MUST GO'])]], [2445, 8475]);
   const lead = new Para(''); lead.attrs.indentStart = -27;

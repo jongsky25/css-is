@@ -106,17 +106,11 @@ def test_concept_and_program_converters_remove_source_content_and_preserve_grids
         assert "CONCEPT NOTE" not in converted["text"]
 
 
-def test_section_split_restores_the_selected_footer_distance_and_letter_paper(office_template):
+def test_split_deletes_the_other_tab_and_keeps_the_selected_one_untouched(office_template):
     concept = office_template["concepts"]["concept_note"]["requests"]
     program = office_template["concepts"]["program_flow"]["requests"]
-    assert concept[0] == {"deleteContentRange": {"range": {"startIndex": 500, "endIndex": 1499}}}
-    assert program[0] == {"deleteContentRange": {"range": {"startIndex": 1, "endIndex": 501}}}
-    assert concept[1]["updateSectionStyle"]["sectionStyle"]["marginFooter"] == {"magnitude": 21.6, "unit": "PT"}
-    assert program[1]["updateSectionStyle"]["sectionStyle"]["marginFooter"] == {"magnitude": 36, "unit": "PT"}
-    for requests in (concept, program):
-        assert requests[1]["updateSectionStyle"]["sectionStyle"]["useFirstPageHeaderFooter"] is True
-        assert requests[2]["updateDocumentStyle"]["documentStyle"]["documentSize"] == {
-            "width": {"magnitude": 612, "unit": "PT"}, "height": {"magnitude": 792, "unit": "PT"}}
+    assert concept == [{"deleteTab": {"tabId": "t.1"}}]
+    assert program == [{"deleteTab": {"tabId": "t.0"}}]
 
 
 def test_section_layout_drift_and_source_changes_leave_old_templates_selected(office_template):
@@ -154,7 +148,7 @@ def test_briefer_preserves_wide_grid_merged_title_repeated_vi_and_offset(office_
     for children in (briefer["children"], briefer["filled"]["children"]):
         table = next(child for child in children if child["type"] == "table")
         assert table["grid"] == [2445, 8475] and sum(table["grid"]) > 9360
-        assert len(table["rows"]) == 9 and table["rows"][0] == [" EXECUTIVE BRIEFER"]
+        assert len(table["rows"]) == 9 and table["rows"][0] == [" EXECUTIVE BRIEFER", ""]
         assert table["rows"][6][0] == "VI. Date/Venue/ References"
         assert table["rows"][7][0] == "VI. Prepared by"
         assert children[1]["attrs"]["indentStart"] == -27
