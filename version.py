@@ -18,10 +18,19 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "9.39"
+APP_VERSION = "9.40"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "9.40",
+        "date": "October 30, 2026",
+        "summary": "Fix for building the office memo, notice of meeting and external letter templates.",
+        "changes": [
+            "The administrator's template maker no longer stops with a 'last paragraph' error while removing the office file's duplicate copy.",
+            "Nothing changes for people drafting documents."
+        ]
+    },
     {
         "version": "9.39",
         "date": "October 29, 2026",
