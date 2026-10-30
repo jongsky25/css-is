@@ -1,0 +1,63 @@
+/* Calendar entry workspace: scoped so calendar lists and edit forms retain their layout. */
+.cal-workspace { max-width:1400px; margin-inline:auto; padding-bottom:5rem; overflow-wrap:anywhere; }
+.cal-workspace .page { margin-bottom:.65rem; font-size:clamp(1.5rem,2.5vw,2.25rem); line-height:1.2; }
+.cal-work-grid { display:grid; grid-template-columns:minmax(0,2fr) minmax(280px,1fr); gap:1.5rem; align-items:start; margin-top:1.5rem; }
+.cal-work-grid-simple { grid-template-columns:minmax(0,1fr); }
+.cal-work-grid-simple .cal-context { grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr)); }
+.cal-activity-summary { color:var(--soft); line-height:1.6; }
+.cal-work-main,.cal-context,.cal-workspace form,.cal-workspace fieldset { min-width:0; }
+.cal-workspace .cal-work-card,.cal-workspace .cal-doc,.cal-workspace .cal-outside,.cal-workspace .cal-document-settings,.cal-workspace .cal-calendar-copy { background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:1.25rem; }
+.cal-context { display:grid; gap:1rem; }
+.cal-context h2 { font-size:1.05rem; margin:0 0 1rem; }
+.cal-context .cal-facts { margin:0 0 1rem; grid-template-columns:minmax(0,1fr); gap:.3rem; }
+.cal-context .cal-facts dd { margin:0 0 .8rem; min-width:0; }
+.cal-context .cal-calendar-copy { margin:0; }
+.cal-context .cal-css-box { display:grid; gap:.65rem; }
+.cal-context .cal-range { display:block; font-size:.88rem; line-height:1.6; }
+.cal-context .cf-actions { margin:0; }
+.cal-workspace .cal-docs { margin:0; padding:0; border:0; }
+.cal-workspace .cal-docs > h2 { font-size:1.25rem; margin-bottom:.5rem; }
+.cal-workspace .cal-docs > .cal-hint { margin-bottom:1.25rem; }
+.cal-workspace .cal-guidance { margin-top:0; background:var(--surface); }
+.cal-workspace .cal-outside { margin:1rem 0; }
+.cal-workspace .cal-outside fieldset { border:0; margin:0; padding:0; }
+.cal-workspace legend { font-size:1rem; font-weight:700; margin-bottom:.75rem; padding:0; }
+.cal-workspace label { display:block; margin:.7rem 0 .4rem; line-height:1.5; }
+.cal-workspace input:not([type=radio]):not([type=checkbox]):not([type=hidden]),.cal-workspace select,.cal-workspace textarea { display:block; box-sizing:border-box; width:100%; max-width:100%; min-width:0; margin:.4rem 0 .9rem; padding:.75rem; border:1px solid var(--line); border-radius:8px; font:inherit; font-size:1rem; color:var(--ink); background:var(--bg); }
+.cal-workspace textarea { resize:vertical; min-height:6rem; }
+.cal-workspace input[type=radio],.cal-workspace input[type=checkbox] { width:1.15rem; height:1.15rem; accent-color:var(--accent); vertical-align:middle; margin:0 .35rem .15rem 0; flex-shrink:0; }
+.cal-outside label:has(input[type=radio]) { min-height:44px; display:flex; align-items:center; gap:.4rem; margin:0; }
+/* CSS handles organizer disclosure even when JavaScript is unavailable. */
+.cal-outside:has(input[value=blhsd]:checked) .cal-outside-fields,.cal-outside:has(input[value=blhsd]:checked) .cal-outside-upload,.cal-outside:has(input[value=blhsd]:checked) fieldset > .cal-hint { display:none; }
+.cal-workspace .cal-btn { min-height:44px; max-width:100%; white-space:normal; text-align:center; padding:.65rem 1rem; }
+.cal-workspace .cal-hint { font-size:.88rem; line-height:1.6; }
+.cal-workspace .cal-document-settings { margin:1rem 0; }
+.cal-workspace summary { cursor:pointer; min-height:44px; align-content:center; font-weight:600; }
+.cal-document-settings[open] > summary { margin-bottom:1rem; }
+.cal-workspace .cal-dpo-cites + .cal-dpo-cites { border-top:1px solid var(--line); margin-top:1.25rem; padding-top:1rem; }
+.cal-workspace .cal-doc-list { gap:1rem; margin-top:1rem; }
+.cal-workspace .cal-doc-head strong { font-size:1.1rem; }
+.cal-workspace .cal-doc-head { margin-bottom:.6rem; }
+.cal-workspace .cal-doc.is-needed { border-color:var(--line); border-top:3px solid var(--accent); }
+.cal-workspace .cal-doc-choice { margin:.9rem 0; gap:.5rem; }
+.cal-workspace .cal-doc-draft { margin-top:1rem; padding-top:.5rem; border-top:1px solid var(--line); }
+.cal-doc-draft > form { padding:.5rem 0; }
+.cal-workspace .cal-doc-draft label:has(input[type=checkbox]) { display:flex; align-items:flex-start; gap:.4rem; }
+.cal-workspace .cal-doc-draft input[type=checkbox] { margin-top:.2rem; }
+.cal-workspace .cal-notice { border-top:1px solid var(--line); margin-top:1rem; padding-top:1rem; }
+.cal-notice h3 { font-size:1rem; margin:0 0 .65rem; }
+.cal-notice-recipients { margin-bottom:1rem; }
+.cal-notice-recipients summary { color:var(--accent-ink,var(--accent)); }
+.cal-notice [data-notice-review] { width:100%; margin-top:.5rem; }
+.cal-notice-review { margin-top:1rem; padding:1rem; border:1px solid var(--line); border-radius:8px; background:var(--surface-2); }
+.cal-notice-review h4 { margin:0 0 1rem; font-size:1.1rem; }
+.cal-notice-review h5 { margin:1rem 0 .35rem; font-size:.95rem; }
+.cal-review-text { white-space:pre-wrap; }
+.cal-review-actions { display:flex; flex-wrap:wrap; gap:.75rem; margin-top:1rem; }
+.cal-workspace [hidden] { display:none!important; }
+.cal-workspace :focus-visible { outline:3px solid var(--accent); outline-offset:3px; }
+/* Keep the floating feedback control in its own gutter on small screens. */
+body:has(.cal-workspace) .sf-float { position:static; display:flex; width:fit-content; margin:0 1rem 1rem auto; }
+@media(max-width:1000px) { .cal-work-grid { grid-template-columns:minmax(0,1fr); gap:1.25rem; } .cal-context { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(max-width:600px) { .cal-work-grid { margin-top:1rem; } .cal-context { grid-template-columns:minmax(0,1fr); } .cal-workspace .cal-work-card,.cal-workspace .cal-doc,.cal-workspace .cal-outside,.cal-workspace .cal-document-settings,.cal-workspace .cal-calendar-copy { padding:1rem; } .cal-workspace .cal-doc-choice .cal-btn { flex:1 1 auto; } .cal-workspace .cal-doc-draft .cal-btn,.cal-review-actions .cal-btn { width:100%; } }
+@media print { .cal-work-grid,.cal-context { display:block; } .cal-workspace { max-width:none; } .cal-workspace .cal-doc { break-inside:avoid; } }

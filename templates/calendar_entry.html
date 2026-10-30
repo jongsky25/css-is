@@ -1,7 +1,12 @@
 {% extends "dash_layout.html" %}
 {% from "_components.html" import page_header, empty_state %}
 {% block title %}{{ "Not found" if missing else e.title }}{% endblock %}
-{% block head %}<link rel="stylesheet" href="/static/css/calendar.css?v=7.87">{% if documents and documents['outside'] and documents['uploads_ready'] %}<script src="/static/js/activity_invitation.js?v={{ APP_VERSION }}" defer></script>{% endif %}{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="/static/css/calendar.css?v={{ APP_VERSION }}">
+<link rel="stylesheet" href="/static/css/calendar_entry.css?v={{ APP_VERSION }}">
+<script src="/static/js/calendar_entry.js?v={{ APP_VERSION }}" defer></script>
+{% if documents and documents['outside'] and documents['uploads_ready'] %}<script src="/static/js/activity_invitation.js?v={{ APP_VERSION }}" defer></script>{% endif %}
+{% endblock %}
 {% block content %}
 {% if missing %}
   {{ empty_state("That calendar item isn't here.", "It may have been removed, or it isn't shared with you.", "📅") }}
@@ -11,8 +16,9 @@
 {% if ok %}<div class="cal-flash ok" role="status">✓ {{ ok }}</div>{% endif %}
 {% if err %}<div class="cal-flash err" role="alert">✕ {{ err }}</div>{% endif %}
 
-<article class="cal-detail" data-status="{{ e.status }}">
+<article class="cal-detail cal-workspace" data-status="{{ e.status }}">
   <h1 class="page"><span {% if e.status in ("cancelled", "postponed") %}style="text-decoration:line-through;opacity:.75"{% endif %}>{{ e.title }}</span></h1>
+  <p class="cal-activity-summary">{{ e.start_date }}{% if e.end_date %} → {{ e.end_date }}{% endif %} · {{ e.start_time or e.time_note or 'All day' }}{% if e.end_time %}–{{ e.end_time }}{% endif %}{% if e.venue %}<br>{{ e.venue }}{% endif %}</p>
   <p class="cal-chips">
     <span class="cal-chip">{{ kind_label }}</span>
     <span class="cal-chip {{ 'warn' if e.status != 'confirmed' }}">{{ status_label }}</span>
@@ -30,24 +36,9 @@
   </form>
   {% endif %}
 
-  <dl class="cal-facts">
-    <dt>When</dt>
-    <dd>{{ e.start_date }}{% if e.end_date %} → {{ e.end_date }}{% endif %}
-      {% if e.start_time %} · {{ e.start_time }}{% if e.end_time %}–{{ e.end_time }}{% endif %}{% elif e.time_note %} · {{ e.time_note }}{% else %} · All day{% endif %}</dd>
-    {% if e.venue or e.modality %}<dt>Where</dt>
-    <dd>{{ e.venue or "" }}{% if e.modality %} <span class="cal-chip">{{ {"f2f": "Face to face", "online": "Online", "hybrid": "Hybrid"}[e.modality] }}</span>{% endif %}</dd>{% endif %}
-    {% if e.meeting_url %}<dt>Link</dt><dd>
-      {% if e.status != "cancelled" %}<a class="cal-btn primary" href="{{ e.meeting_url }}" rel="noopener noreferrer" target="_blank">{% if e.meeting_url.startswith("https://meet.google.com/") %}Join Google Meet{% else %}Join meeting{% endif %}</a><br>{% endif %}
-      <a href="{{ e.meeting_url }}" rel="noopener noreferrer" target="_blank">{{ e.meeting_url }}</a></dd>{% endif %}
-    {% if attendees %}<dt>On it</dt>
-    <dd><ul class="cal-people">{% for p in attendees %}<li>{{ p.name }}{% if p.role == "lead" %} <small>(lead)</small>{% elif p.role == "travel" %} <small>(travelling)</small>{% endif %}</li>{% endfor %}</ul></dd>{% endif %}
-    {% if series %}<dt>Repeats</dt>
-    <dd>{{ series.text }}{% if series.next %} · next: {{ series.next.strftime("%a, %b") }} {{ series.next.day }}{% endif %}</dd>{% endif %}
-    {% if e.tags %}<dt>Tags</dt><dd>{% for t in e.tags %}<span class="cal-tag">{{ t }}</span> {% endfor %}</dd>{% endif %}
-    {% if e.note %}<dt>Notes</dt><dd class="cal-note">{{ e.note }}</dd>{% endif %}
-  </dl>
+  <div class="cal-work-grid {{ 'cal-work-grid-simple' if not documents }}">
+  <div class="cal-work-main">
 
-  {% include "_calendar_guidance.html" %}
 
   {% if series and e.status != 'cancelled' %}
   <div class="cal-flash ok" role="status" id="series">
@@ -77,6 +68,167 @@
     <ul>{% for h in heads_up %}<li>{{ h }}</li>{% endfor %}</ul></div>
   {% endif %}
 
+  {% if documents %}
+  <section class="cal-docs" id="documents" aria-labelledby="documents-h">
+    <h2 id="documents-h">Documents for this activity</h2>
+    <p class="cal-hint">Choose the documents you need, then create a draft or prepare a meeting email.</p>
+    {% set out = documents['outside'] %}
+    <form method="post" action="/calendar/entries/{{ e.id }}/outside" class="cal-outside">
+      <fieldset>
+        <legend>Who conducts this activity?</legend>
+        <label><input type="radio" name="conducted_by" value="blhsd" {{ 'checked' if not out }}> Our office · BLHSD</label>
+        <label><input type="radio" name="conducted_by" value="outside" {{ 'checked' if out }}> Another office</label>
+        <div class="cal-outside-fields">
+          <label>Office that invited us <input type="text" name="host" maxlength="160" value="{{ out.host if out }}" autocomplete="off"></label>
+          <label>We were invited
+            <select name="invited_as">
+              {% for k, v in documents['invited_as'].items() %}<option value="{{ k }}" {{ 'selected' if out and out.invited_as == k }}>{{ v }}</option>{% endfor %}
+            </select>
+          </label>
+          <label>Key lines from the invitation (the DPO uses them as the reason when &ldquo;DPO cites&rdquo; below is empty)
+            <textarea name="invitation" rows="3" maxlength="600">{{ out.invitation if out }}</textarea></label>
+        </div>
+        <button class="cal-btn" type="submit">Save organizer details</button>
+        {% if out and documents['uploads_ready'] %}
+        <div class="cal-outside-upload" data-invitation-upload data-url="/calendar/entries/{{ e.id }}/outside/upload">
+          <label>Or add the invitation or letter (PDF or photo, under 6 MB)
+            <input type="file" accept="application/pdf,image/jpeg,image/png,image/webp"></label>
+          <p>{% if out.file_url %}<a data-link href="{{ out.file_url }}" target="_blank" rel="noopener">{{ out.file_name or 'Open the letter' }}</a>{% else %}<a data-link href="#" target="_blank" rel="noopener" hidden></a>{% endif %}</p>
+          <p data-status class="cal-hint" role="status">The letter is kept in the office Drive and read for a suggestion; nothing is filled in until you press &ldquo;Use these&rdquo; and Save.</p>
+          <div data-offer></div>
+        </div>
+        {% endif %}
+        <p class="cal-hint">Another office's activity: the DPO names that office as the one conducting it.</p>
+      </fieldset>
+    </form>
+    {% if out and out.file_url %}
+    <form method="post" action="/calendar/entries/{{ e.id }}/outside/file/remove" class="cal-outside-remove">
+      <button class="cal-btn" type="submit">Remove the link to the letter</button>
+      <span class="cal-hint">The file stays in Drive; only the link here goes.</span>
+    </form>
+    {% endif %}
+    <details class="cal-document-settings"><summary>Document background and visiting participants</summary>
+    <form method="post" action="/calendar/entries/{{ e.id }}/dpo-cites" class="cal-dpo-cites">
+      <label for="dpo-cites">DPO cites <small>(the law, memo or invitation the DPO gives as the reason for this activity)</small></label>
+      <textarea id="dpo-cites" name="dpo_cites" rows="3" maxlength="1000" placeholder="e.g. Republic Act No. 7883, or the Barangay Health Workers&rsquo; Benefits and Incentives Act of 1995, provides for the training and continuing education of BHWs.">{{ documents['dpo_cites'] }}</textarea>
+      <p class="cal-hint">It opens the DPO&rsquo;s first paragraph, followed by &ldquo;In support of this, &hellip; will conduct &hellip;&rdquo;. Nothing is made up: if this is empty (and there are no invitation lines above), the paragraph only says who conducts the activity, when and where.</p>
+      <button class="cal-btn" type="submit">Save</button>
+    </form>
+    <form method="post" action="/calendar/entries/{{ e.id }}/visitors" class="cal-dpo-cites cal-visitors">
+      <label for="visitors">Expected participants from other offices{% if documents['meals'] %} <strong>(required: meals are requested)</strong>{% endif %}
+        <small>(name and office, one per line; write &ldquo;None&rdquo; if nobody is coming from outside)</small></label>
+      <textarea id="visitors" name="visitors" rows="4" maxlength="1000" {{ 'required' if documents['meals'] }}>{{ documents['visitors'] }}</textarea>
+      <p class="cal-hint">A notice of meeting lists them after the people on this item.</p>
+      <button class="cal-btn" type="submit">Save</button>
+    </form>
+    </details>
+    <ul class="cal-doc-list">
+    {% set ordered_docs = documents['items']|sort(attribute='needed', reverse=true) %}
+    {% if e.kind == 'meeting' %}{% set ordered_docs = (ordered_docs|selectattr('key', 'equalto', 'notice_of_meeting')|list) + (ordered_docs|rejectattr('key', 'equalto', 'notice_of_meeting')|list) %}{% endif %}
+    {% for d in ordered_docs %}
+      <li class="cal-doc {{ 'is-needed' if d.needed }}">
+        <div class="cal-doc-head">
+          <strong>{{ d.label }}</strong>
+          {% if d.choice is none %}<span class="cal-chip soft">{{ 'Recommended' if d.needed else 'Suggested: not needed' }}</span>{% else %}<span class="cal-chip soft">Your choice</span>{% endif %}
+        </div>
+        <p class="cal-hint">{{ d.blurb }} {{ d.reason }}</p>
+        <form method="post" action="/calendar/entries/{{ e.id }}/documents/{{ d.key }}/needed" class="cal-doc-choice">
+          <button class="cal-btn" type="submit" name="needed" value="yes" {{ 'aria-pressed=true' if d.needed }}>Needed</button>
+          <button class="cal-btn" type="submit" name="needed" value="no" {{ 'aria-pressed=true' if not d.needed }}>Not needed</button>
+          {% if d.choice is not none %}<button class="cal-btn" type="submit" name="needed" value="auto">Use the suggestion</button>{% endif %}
+        </form>
+        {% if d.needed %}
+        <details class="cal-doc-draft" {{ 'open' if d.doc_state == 'failed' }}><summary>Create document</summary>
+          {% if documents['relay'] %}
+          <form method="post" action="/calendar/entries/{{ e.id }}/documents/{{ d.key }}/draft">
+            {% if d.key == 'dpo' and documents['dpo_people'] %}
+            <fieldset class="cal-dpo-desig"><legend class="cal-hint">Designation of each person the DPO names (leave blank to fill in by hand)</legend>
+              {% for p in documents['dpo_people'] %}<label class="cal-hint">{{ p.name }} <input type="text" name="designation_{{ p.user_id }}" maxlength="160" autocomplete="off"></label>
+              {% endfor %}</fieldset>
+            {% endif %}
+            {% if d.key in ('dpo', 'concept_note', 'invitation', 'notice_of_meeting') %}<label class="cal-hint"><input type="checkbox" name="positions" value="1"> Fill in positions from saved profiles (otherwise they are left blank for you to complete)</label>{% endif %}
+            <button class="cal-btn primary" type="submit">{{ 'Draft again in Google Docs' if d.doc_url else 'Draft in Google Docs' }}</button></form>
+          {% else %}<p class="cal-hint">Drafting in Google Docs is not switched on yet.</p>{% endif %}
+          {% if d.doc_url %}<p><a href="{{ d.doc_url }}" target="_blank" rel="noopener">Open the latest draft</a></p>
+          <p class="cal-hint">The draft is shared with you in Google Docs; no email is sent. Drafting again makes another copy and this link moves to it.</p>{% endif %}
+          {% if d.doc_state == 'failed' and d.note %}<p class="cal-doc-error" role="alert">{{ d.note }}</p>{% endif %}
+        </details>
+        {% if d.key == 'notice_of_meeting' and documents['notice'] %}{% set nt = documents['notice'] %}
+        <div class="cal-notice" id="doc-notice_of_meeting">
+          <h3>Prepare email</h3>
+          {% if nt.changed %}<p class="cal-doc-error" role="alert">The date, place, link or room changed after the last notice was sent. Send an updated notice so people have the right details.</p>{% endif %}
+          {% if nt.can_send %}
+          <form method="post" action="/calendar/entries/{{ e.id }}/notice/send" data-notice-form>
+            <details class="cal-notice-recipients"><summary>To: {{ nt.to|length }} participant{{ 's' if nt.to|length != 1 }} · View recipients</summary>
+              <ul>{% for p in nt.to %}<li>{{ p.name or p.email }}{% if p.name %} <small>{{ p.email }}</small>{% endif %}</li>{% else %}<li>No participants with an active email account yet.</li>{% endfor %}</ul>
+            </details>
+            <label for="notice-agenda">Agenda <small>(one item per line; optional)</small></label>
+            <textarea id="notice-agenda" name="agenda" rows="4" maxlength="{{ nt.agenda_max }}" placeholder="1. Opening&#10;2. Updates"></textarea>
+            <label for="notice-extra">Additional recipients <small>(optional; one email address per line)</small></label>
+            <textarea id="notice-extra" name="extra" rows="2" maxlength="1200" autocomplete="off" placeholder="One email address per line"></textarea>
+            <button class="cal-btn primary" type="submit" data-notice-review>Review email</button>
+            <section class="cal-notice-review" data-notice-preview hidden tabindex="-1" aria-labelledby="notice-review-h">
+              <h4 id="notice-review-h">Review notice of meeting</h4>
+              <p><strong>{{ e.title }}</strong></p>
+              <p>{{ e.start_date }}{% if e.end_date %} → {{ e.end_date }}{% endif %} · {{ e.start_time or e.time_note or 'All day' }}{% if e.end_time %}–{{ e.end_time }}{% endif %}</p>
+              <p>{{ e.venue or 'Venue to be announced' }}{% if e.modality %} · {{ {'f2f': 'Face to face', 'online': 'Online', 'hybrid': 'Hybrid'}.get(e.modality, e.modality) }}{% endif %}</p>
+              {% if e.meeting_url %}<p><a href="{{ e.meeting_url }}" target="_blank" rel="noopener noreferrer">{{ e.meeting_url }}</a></p>{% endif %}
+              <h5>Recipients</h5>
+              <ul>{% for p in nt.to %}<li>{{ p.name or p.email }}{% if p.name %} · {{ p.email }}{% endif %}</li>{% endfor %}</ul>
+              <p data-review-extra class="cal-review-text"></p>
+              <h5>Agenda</h5><p data-review-agenda class="cal-review-text"></p>
+              {% if nt.others %}<h5>Expected from other offices</h5><ul>{% for person in nt.others %}<li>{{ person }}</li>{% endfor %}</ul>{% endif %}
+              <p class="cal-hint">The email includes these meeting details and agenda. The Google Docs draft is separate and is not attached.</p>
+              <div class="cal-review-actions"><button type="button" class="cal-btn" data-notice-edit>Edit email</button>
+              <button class="cal-btn primary" type="submit" data-notice-send>{{ 'Send an updated notice' if nt.sent else 'Send notice of meeting' }}</button></div>
+            </section>
+            <noscript><p>Check the recipients and meeting details above, then send.</p><button class="cal-btn primary" type="submit">{{ 'Send an updated notice' if nt.sent else 'Send notice of meeting' }}</button></noscript>
+          </form>
+          <p class="cal-hint">This sends email to other people. The Google Docs draft above stays the formal paper; this does not attach it.</p>
+          {% else %}<p class="cal-hint">Only the person who made this item, the people on it, or a section manager can send it.</p>{% endif %}
+          {% if nt.sent %}
+          <h4>Sent</h4>
+          <ul class="cal-notice-history">
+            {% for s in nt.sent %}<li><strong>{{ s.at[:16]|replace('T', ' ') }}</strong> by {{ s.by }}:
+              {% for st_, n in s.counts.items() %}{{ n }} {{ {'sent': 'sent', 'queued': 'sending', 'failed': 'failed', 'not_configured': 'not sent (email is not set up)', 'skipped_off': 'not sent (this email is switched off)'}.get(st_, st_) }}{{ ', ' if not loop.last }}{% endfor %}
+              <details><summary>Who</summary><ul>{% for r in s.to %}<li>{{ r.name or r.email }} <small>{{ r.email if r.name }}</small> — {{ r.status }}</li>{% endfor %}</ul></details></li>{% endfor %}
+          </ul>
+          {% endif %}
+        </div>
+        {% endif %}
+        {% endif %}
+      </li>
+    {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+
+  </div>
+  <aside class="cal-context" aria-label="Activity context">
+    <section class="cal-work-card" aria-labelledby="activity-details-h">
+      <h2 id="activity-details-h">Activity details</h2>
+  <dl class="cal-facts">
+    <dt>When</dt>
+    <dd>{{ e.start_date }}{% if e.end_date %} → {{ e.end_date }}{% endif %}
+      {% if e.start_time %} · {{ e.start_time }}{% if e.end_time %}–{{ e.end_time }}{% endif %}{% elif e.time_note %} · {{ e.time_note }}{% else %} · All day{% endif %}</dd>
+    {% if e.venue or e.modality %}<dt>Where</dt>
+    <dd>{{ e.venue or "" }}{% if e.modality %} <span class="cal-chip">{{ {"f2f": "Face to face", "online": "Online", "hybrid": "Hybrid"}[e.modality] }}</span>{% endif %}</dd>{% endif %}
+    {% if e.meeting_url %}<dt>Link</dt><dd>
+      {% if e.status != "cancelled" %}<a class="cal-btn primary" href="{{ e.meeting_url }}" rel="noopener noreferrer" target="_blank">{% if e.meeting_url.startswith("https://meet.google.com/") %}Join Google Meet{% else %}Join meeting{% endif %}</a><br>{% endif %}
+      <a href="{{ e.meeting_url }}" rel="noopener noreferrer" target="_blank">{{ e.meeting_url }}</a></dd>{% endif %}
+    {% if attendees %}<dt>On it</dt>
+    <dd><ul class="cal-people">{% for p in attendees %}<li>{{ p.name }}{% if p.role == "lead" %} <small>(lead)</small>{% elif p.role == "travel" %} <small>(travelling)</small>{% endif %}</li>{% endfor %}</ul></dd>{% endif %}
+    {% if series %}<dt>Repeats</dt>
+    <dd>{{ series.text }}{% if series.next %} · next: {{ series.next.strftime("%a, %b") }} {{ series.next.day }}{% endif %}</dd>{% endif %}
+    {% if e.tags %}<dt>Tags</dt><dd>{% for t in e.tags %}<span class="cal-tag">{{ t }}</span> {% endfor %}</dd>{% endif %}
+    {% if e.note %}<dt>Notes</dt><dd class="cal-note">{{ e.note }}</dd>{% endif %}
+  </dl>
+
+      <a class="cal-btn" href="/calendar/entries/{{ e.id }}/edit">Edit activity</a>
+    </section>
+    <details class="cal-work-card"><summary>Schedule status and next steps</summary>{% include "_calendar_guidance.html" %}</details>
+    <section class="cal-work-card" aria-labelledby="related-actions-h">
+      <h2 id="related-actions-h">Related actions</h2>
   {% include "_room_banner.html" %}
 
   {% if css.linked %}
@@ -106,120 +258,7 @@
     {% if filing.chip %}<a href="{{ filing.chip.url }}">{{ filing.chip.label }}</a>{% else %}none filed yet. <a href="{{ filing.new_url }}">File a travel claim</a>{% endif %}</p>
   {% endif %}
 
-  {% if documents %}
-  <section class="cal-docs" id="documents" aria-labelledby="documents-h">
-    <h2 id="documents-h">Documents for this activity</h2>
-    <p class="cal-hint">Say which documents this activity needs. We suggest from what the item already says; you decide. A needed document can be drafted in Google Docs from the item's details, with the blanks left for you.</p>
-    {% set out = documents['outside'] %}
-    <form method="post" action="/calendar/entries/{{ e.id }}/outside" class="cal-outside">
-      <fieldset>
-        <legend>Who conducts this activity?</legend>
-        <label><input type="radio" name="conducted_by" value="blhsd" {{ 'checked' if not out }}> BLHSD</label>
-        <label><input type="radio" name="conducted_by" value="outside" {{ 'checked' if out }}> Another office (we were requested or invited)</label>
-        <div class="cal-outside-fields">
-          <label>Office that invited us <input type="text" name="host" maxlength="160" value="{{ out.host if out }}" autocomplete="off"></label>
-          <label>We were invited
-            <select name="invited_as">
-              {% for k, v in documents['invited_as'].items() %}<option value="{{ k }}" {{ 'selected' if out and out.invited_as == k }}>{{ v }}</option>{% endfor %}
-            </select>
-          </label>
-          <label>Key lines from the invitation (the DPO uses them as the reason when &ldquo;DPO cites&rdquo; below is empty)
-            <textarea name="invitation" rows="3" maxlength="600">{{ out.invitation if out }}</textarea></label>
-        </div>
-        <button class="cal-btn" type="submit">Save</button>
-        {% if out and documents['uploads_ready'] %}
-        <div class="cal-outside-upload" data-invitation-upload data-url="/calendar/entries/{{ e.id }}/outside/upload">
-          <label>Or add the invitation or letter (PDF or photo, under 6 MB)
-            <input type="file" accept="application/pdf,image/jpeg,image/png,image/webp"></label>
-          <p>{% if out.file_url %}<a data-link href="{{ out.file_url }}" target="_blank" rel="noopener">{{ out.file_name or 'Open the letter' }}</a>{% else %}<a data-link href="#" target="_blank" rel="noopener" hidden></a>{% endif %}</p>
-          <p data-status class="cal-hint" role="status">The letter is kept in the office Drive and read for a suggestion; nothing is filled in until you press &ldquo;Use these&rdquo; and Save.</p>
-          <div data-offer></div>
-        </div>
-        {% endif %}
-        <p class="cal-hint">Another office's activity: the DPO names that office as the one conducting it.</p>
-      </fieldset>
-    </form>
-    {% if out and out.file_url %}
-    <form method="post" action="/calendar/entries/{{ e.id }}/outside/file/remove" class="cal-outside-remove">
-      <button class="cal-btn" type="submit">Remove the link to the letter</button>
-      <span class="cal-hint">The file stays in Drive; only the link here goes.</span>
-    </form>
-    {% endif %}
-    <form method="post" action="/calendar/entries/{{ e.id }}/dpo-cites" class="cal-dpo-cites">
-      <label for="dpo-cites">DPO cites <small>(the law, memo or invitation the DPO gives as the reason for this activity)</small></label>
-      <textarea id="dpo-cites" name="dpo_cites" rows="3" maxlength="1000" placeholder="e.g. Republic Act No. 7883, or the Barangay Health Workers&rsquo; Benefits and Incentives Act of 1995, provides for the training and continuing education of BHWs.">{{ documents['dpo_cites'] }}</textarea>
-      <p class="cal-hint">It opens the DPO&rsquo;s first paragraph, followed by &ldquo;In support of this, &hellip; will conduct &hellip;&rdquo;. Nothing is made up: if this is empty (and there are no invitation lines above), the paragraph only says who conducts the activity, when and where.</p>
-      <button class="cal-btn" type="submit">Save</button>
-    </form>
-    <form method="post" action="/calendar/entries/{{ e.id }}/visitors" class="cal-dpo-cites cal-visitors">
-      <label for="visitors">Expected participants from other offices{% if documents['meals'] %} <strong>(required: meals are requested)</strong>{% endif %}
-        <small>(name and office, one per line; write &ldquo;None&rdquo; if nobody is coming from outside)</small></label>
-      <textarea id="visitors" name="visitors" rows="4" maxlength="1000" {{ 'required' if documents['meals'] }}>{{ documents['visitors'] }}</textarea>
-      <p class="cal-hint">A notice of meeting lists them after the people on this item.</p>
-      <button class="cal-btn" type="submit">Save</button>
-    </form>
-    <ul class="cal-doc-list">
-    {% for d in documents['items'] %}
-      <li class="cal-doc {{ 'is-needed' if d.needed }}">
-        <div class="cal-doc-head">
-          <strong>{{ d.label }}</strong>
-          {% if d.needed %}<span class="cal-chip need">Needed</span>{% else %}<span class="cal-chip">Not needed</span>{% endif %}
-          {% if d.choice is none %}<span class="cal-chip soft">Suggested</span>{% else %}<span class="cal-chip soft">Your choice</span>{% endif %}
-        </div>
-        <p class="cal-hint">{{ d.blurb }} {{ d.reason }}</p>
-        <form method="post" action="/calendar/entries/{{ e.id }}/documents/{{ d.key }}/needed" class="cal-doc-choice">
-          <button class="cal-btn" type="submit" name="needed" value="yes" {{ 'aria-pressed=true' if d.choice == 1 }}>Needed</button>
-          <button class="cal-btn" type="submit" name="needed" value="no" {{ 'aria-pressed=true' if d.choice == 0 }}>Not needed</button>
-          {% if d.choice is not none %}<button class="cal-btn" type="submit" name="needed" value="auto">Use the suggestion</button>{% endif %}
-        </form>
-        {% if d.needed %}
-        <div class="cal-doc-draft">
-          {% if documents['relay'] %}
-          <form method="post" action="/calendar/entries/{{ e.id }}/documents/{{ d.key }}/draft">
-            {% if d.key == 'dpo' and documents['dpo_people'] %}
-            <fieldset class="cal-dpo-desig"><legend class="cal-hint">Designation of each person the DPO names (leave blank to fill in by hand)</legend>
-              {% for p in documents['dpo_people'] %}<label class="cal-hint">{{ p.name }} <input type="text" name="designation_{{ p.user_id }}" maxlength="160" autocomplete="off"></label>
-              {% endfor %}</fieldset>
-            {% endif %}
-            {% if d.key in ('dpo', 'concept_note', 'invitation', 'notice_of_meeting') %}<label class="cal-hint"><input type="checkbox" name="positions" value="1"> Fill in positions from saved profiles (otherwise they are left blank for you to complete)</label>{% endif %}
-            <button class="cal-btn primary" type="submit">{{ 'Draft again in Google Docs' if d.doc_url else 'Draft in Google Docs' }}</button></form>
-          {% else %}<p class="cal-hint">Drafting in Google Docs is not switched on yet.</p>{% endif %}
-          {% if d.doc_url %}<p><a href="{{ d.doc_url }}" target="_blank" rel="noopener">Open the latest draft</a></p>
-          <p class="cal-hint">The draft is shared with you in Google Docs; no email is sent. Drafting again makes another copy and this link moves to it.</p>{% endif %}
-          {% if d.doc_state == 'failed' and d.note %}<p class="cal-doc-error" role="alert">{{ d.note }}</p>{% endif %}
-        </div>
-        {% if d.key == 'notice_of_meeting' and documents['notice'] %}{% set nt = documents['notice'] %}
-        <div class="cal-notice" id="doc-notice_of_meeting">
-          <h3>Send the notice by email</h3>
-          {% if nt.changed %}<p class="cal-doc-error" role="alert">The date, place, link or room changed after the last notice was sent. Send an updated notice so people have the right details.</p>{% endif %}
-          {% if nt.can_send %}
-          <form method="post" action="/calendar/entries/{{ e.id }}/notice/send">
-            <p class="cal-hint">It goes to {% if nt.to %}{% for p in nt.to %}{{ p.name or p.email }}{{ ', ' if not loop.last }}{% endfor %}{% else %}nobody on the item yet{% endif %}. It gives the date, time, place and online link, then the agenda below{% if nt.others %}, and lists who is expected from other offices{% endif %}.</p>
-            <label for="notice-agenda">Agenda <small>(one item per line; optional)</small></label>
-            <textarea id="notice-agenda" name="agenda" rows="4" maxlength="{{ nt.agenda_max }}" placeholder="1. Opening&#10;2. Updates"></textarea>
-            <label for="notice-extra">Also send to <small>(email addresses, one per line; for people from other offices who have no account)</small></label>
-            <textarea id="notice-extra" name="extra" rows="2" maxlength="1200" autocomplete="off"></textarea>
-            <button class="cal-btn primary" type="submit">{{ 'Send an updated notice' if nt.sent else 'Send notice of meeting' }}</button>
-          </form>
-          <p class="cal-hint">This sends email to other people. The Google Docs draft above stays the formal paper; this does not attach it.</p>
-          {% else %}<p class="cal-hint">Only the person who made this item, the people on it, or a section manager can send it.</p>{% endif %}
-          {% if nt.sent %}
-          <h4>Sent</h4>
-          <ul class="cal-notice-history">
-            {% for s in nt.sent %}<li><strong>{{ s.at[:16]|replace('T', ' ') }}</strong> by {{ s.by }}:
-              {% for st_, n in s.counts.items() %}{{ n }} {{ {'sent': 'sent', 'queued': 'sending', 'failed': 'failed', 'not_configured': 'not sent (email is not set up)', 'skipped_off': 'not sent (this email is switched off)'}.get(st_, st_) }}{{ ', ' if not loop.last }}{% endfor %}
-              <details><summary>Who</summary><ul>{% for r in s.to %}<li>{{ r.name or r.email }} <small>{{ r.email if r.name }}</small> — {{ r.status }}</li>{% endfor %}</ul></details></li>{% endfor %}
-          </ul>
-          {% endif %}
-        </div>
-        {% endif %}
-        {% endif %}
-      </li>
-    {% endfor %}
-    </ul>
-  </section>
-  {% endif %}
-
+    </section>
   <section class="cal-calendar-copy" aria-label="Use in another calendar">
     <h2>Use in another calendar</h2>
     <p><a href="/calendar/entries/{{ e.id }}/event.ics">Download this item (.ics)</a> — a one-time copy{% if e.rrule %} of the whole series{% endif %}; later changes here do not automatically update an imported copy.</p>
@@ -242,7 +281,8 @@
   <details class="cal-history">
     <summary>History ({{ history|length }})</summary>
     <ul>{% for h in history %}<li><strong>{{ h.who }}</strong> {{ h.what }} <small>{{ h.at.replace("T", " ") if h.at }}</small></li>{% endfor %}</ul>
-  </details>
+  </details>  </aside>
+  </div>
 </article>
 {% endif %}
 {% endblock %}
