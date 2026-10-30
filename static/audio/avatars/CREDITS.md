@@ -13,7 +13,7 @@ intervals refer to those pinned masters.
 
 | Recordings | Creator | License |
 | --- | --- | --- |
-| Cat, dog and owl calls | Joseph SARDIN / BigSoundBank | CC0 1.0 |
+| Dog and owl calls | Joseph SARDIN / BigSoundBank | CC0 1.0 |
 | White-crowned Sparrow Chirp | Zott820 | CC0 1.0 |
 | Cat purr.wav | rareguy27 | CC0 1.0 |
 | Cat eating dry-food (croquettes) | Sadiquecat | CC0 1.0 |
@@ -50,5 +50,12 @@ caches successful public static responses as they are used; already fetched
 clips can play offline in an open page. The PWA does not cache personal pages.
 Recorded voice playback fails quietly if a clip cannot load or decode.
 
-Cat voice clips preserve the complete meow ending: `cat-meow-1.mp3` is one
-full meow and `cat-meow-2.mp3` contains two calls. Petting still uses a purr.
+## Cat voice replacement
+
+`cat-real-meow.mp3` uses the complete **Cat Meowing** recording by
+[qubodup](https://freesound.org/people/qubodup/sounds/813113/), an edit of
+[cat meow II by tuberatanka](https://freesound.org/people/tuberatanka/sounds/110010/),
+released under CC0 1.0. `cat-real-meow-twice.mp3` repeats that same recording
+with a short gap. Neither adds other animal recordings or changes the pitch.
+These replace the previous BigSoundBank cat excerpts entirely. Petting retains
+the separately credited real cat purr.

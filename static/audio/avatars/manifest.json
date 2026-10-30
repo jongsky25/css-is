@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "processing": "Mono 44.1 kHz, trimmed with 15/60 ms margins, RMS target -22 dBFS, peak limited to -6 dBFS, 12 ms attack / 80 ms release, MP3 96 kbps. No pitch changes. See layers for source intervals and filters.",
   "species": {
     "dog": {
@@ -13,8 +13,8 @@
     },
     "cat": {
       "voice": [
-        "cat-meow-1.mp3",
-        "cat-meow-2.mp3"
+        "cat-real-meow.mp3",
+        "cat-real-meow-twice.mp3"
       ],
       "feed": [
         "feed.mp3"
@@ -137,13 +137,14 @@
       "sha256": "c1f3aefdd182c112951cc49f930c2382f7a232c37c4c22ba4a5d88e6c7f0cdba"
     },
     "cat": {
-      "title": "Cat recording",
-      "author": "Joseph SARDIN / BigSoundBank",
-      "url": "https://bigsoundbank.com/detail-1889-meow-cat-1.html",
+      "title": "Cat Meowing (cat meow II excerpt)",
+      "author": "qubodup (original recording by tuberatanka)",
+      "url": "https://freesound.org/people/qubodup/sounds/813113/",
+      "original_url": "https://freesound.org/people/tuberatanka/sounds/110010/",
       "license": "CC0-1.0",
       "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
-      "download": "https://raw.githubusercontent.com/andlo/ovos-skill-sound-like/77d00889839d6e13af953bf0ee70afb067852aa1/sounds/animals/cat.mp3",
-      "sha256": "3563b04aa2c7d5774cc36cf9cc333245c4e80053b08b0cb1aaa74ec61d14400d"
+      "download": "https://cdn.freesound.org/previews/813/813113_71257-hq.mp3",
+      "sha256": "4d1964449b1aa07c043ad1c71854fc5e524b33bf2aa4393b58e470c2a1f6f110"
     },
     "owl": {
       "title": "Owl recording",
@@ -683,35 +684,42 @@
       "duration_seconds": 0.7,
       "sha256": "b5b166541d354dd10bb7c6089211514e9e397ae68d5eff207a9215ebdf5a89de"
     },
-    "cat-meow-1.mp3": {
-      "description": "Recorded cat meow",
-      "license": "CC0-1.0",
-      "layers": [
-        {
-          "source": "cat",
-          "start": 1.28,
-          "duration": 1.62,
-          "filter": "highpass=f=100,lowpass=f=7000",
-          "gain": 1
-        }
-      ],
-      "duration_seconds": 1.5907,
-      "sha256": "0d1ea8c3453b5d7c7410ac5fa71bb4109df37ef6c1b5a250992d5d166d52d229"
-    },
-    "cat-meow-2.mp3": {
-      "description": "Two recorded cat meows",
+    "cat-real-meow.mp3": {
+      "description": "Complete recorded cat meow, original pitch",
       "license": "CC0-1.0",
       "layers": [
         {
           "source": "cat",
           "start": 0,
-          "duration": 2.9,
-          "filter": "highpass=f=100,lowpass=f=7000",
+          "duration": 0.627,
+          "filter": "",
           "gain": 1
         }
       ],
-      "duration_seconds": 2.9,
-      "sha256": "c4a3b6820efaaf02ff0379111a87e8f8aed7148166b38f5201858335f3a16b01"
+      "duration_seconds": 0.5991,
+      "sha256": "4be8d5c806a6b857be9f3745a98264226ed6dc5bc47e1cb756fc5e9a8de24cb9"
+    },
+    "cat-real-meow-twice.mp3": {
+      "description": "Same real cat meow repeated after a short gap, original pitch",
+      "license": "CC0-1.0",
+      "layers": [
+        {
+          "source": "cat",
+          "start": 0,
+          "duration": 0.627,
+          "filter": "",
+          "gain": 1
+        },
+        {
+          "source": "cat",
+          "start": 0,
+          "duration": 0.627,
+          "filter": "adelay=850:all=1",
+          "gain": 1
+        }
+      ],
+      "duration_seconds": 1.4491,
+      "sha256": "6109bb829f5fad97537ffb9d23b93d5b726c5af956e8b42d62eecf6e0d607576"
     }
   }
 }
