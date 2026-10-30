@@ -18,10 +18,20 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "9.40"
+APP_VERSION = "9.41"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "9.41",
+        "date": "October 30, 2026",
+        "summary": "Fix for building the concept note, program flow and executive briefer templates.",
+        "changes": [
+            "The administrator's template maker now reads the office concept note file's second tab correctly when making the concept note and program flow.",
+            "It also accepts the executive briefer's merged title row as Google reports it.",
+            "Nothing changes for people drafting documents."
+        ]
+    },
     {
         "version": "9.40",
         "date": "October 30, 2026",
