@@ -2,8 +2,9 @@
 
 Inspected on 2026-10-31; the owner subsequently authorized a bucket privacy
 change. The bucket is now private and anonymous metadata/listing returns 401.
-Step 5 remains **incomplete**: admin durability review and an isolated recovery
-exercise have not been performed.
+A database-level isolated recovery exercise now passes. Step 5 remains
+**incomplete** for owner admin/mount verification, independent recovery retention
+and agreed recovery objectives. Historical third-party backup access is unknown.
 
 ## Verified hosting and code
 
@@ -131,3 +132,59 @@ was performed.
 - Remaining: owner admin durability review, mount identity confirmation, exposure
   assessment for the previously public bucket, and approved isolated recovery
   evidence. Do not reopen public access as a troubleshooting shortcut.
+
+## Authorized isolated recovery and exposure review — 2026-10-31, 16:06 UTC
+
+Owner authorized the recovery/exposure follow-up. See the sanitized
+[recovery evidence](operations/recovery-2026-10-31.json). An authenticated download
+of one existing automatic snapshot was performed into a mode-0700 temporary
+directory outside the repository. No new production snapshot was requested.
+SDK data caches were directed into the same temporary directory.
+
+Snapshot `css_is_20261101_000512_auto.db` was 49,143,808 bytes and uploaded at
+16:05:15 UTC. Download size matched metadata, and SQLite integrity_check passed.
+A separate Python 3.11 process received an allowlist environment with no inherited
+provider credentials and used the preview's outbound socket guard. No application
+server was started. It exercised the actual backups.restore_backup routine against
+a temporary destination containing a synthetic probe. The probe disappeared after
+restore; the generated pre-restore safety copy retained it. Restored integrity
+passed, no browser sessions remained, and integration revocation/disabled digest
+postconditions passed. The source snapshot's checksum was unchanged.
+
+The source already contained no browser sessions, so this is not a challenge
+case for session removal. Credential reset checks do not prove the source had
+active credentials. This is database-level recovery evidence, not a test of full
+application startup, production rollback, or a cold-start bucket remount.
+Download plus drill took 16.2 seconds; local restore/check took 0.83 seconds.
+These are observed timings, not agreed production recovery objectives.
+
+All temporary database copies, generated snapshots and download caches were
+removed after verification. No production database rows were printed or committed.
+Production health remained HTTP 200/status ok; an anonymous HEAD request to the
+selected snapshot returned 401. No live restore, restart or deployment occurred.
+
+### Exposure review outcome
+
+The inspected snapshot has populated account, integration credential and document
+record tables. Source code stores integration read credentials as secret hashes;
+a credential table's presence does not establish plaintext token exposure. Password
+hashes and personal/document records still warrant treating the prior public bucket
+as a potential data exposure. The absence of browser sessions in this one snapshot
+does not establish their absence in older snapshots.
+
+Current access cannot establish whether third parties downloaded snapshots, the
+public visibility start date, or any retained copies. Bucket creation on
+2026-06-18 is not proof that visibility was public since that date. No historical
+bucket download/audit trail is available through the connected tools. Hosting
+application request logs do not measure direct bucket downloads. The privacy fix
+cannot withdraw copies previously obtained.
+
+Owner follow-up: obtain available historical access/audit evidence from the hosting
+account/provider, assess the affected retained snapshots, and decide account/key
+reset scope with the service owner. No production credential/session reset or
+external report/message was sent during this review. Provider/account evidence
+and any consequential remediation remain separate from the completed privacy fix.
+
+Remaining operational acceptance: owner review of /ops and /admin/backups,
+confirmation of the configured mount identity, an independently retained recovery
+copy and agreed RPO/RTO. Do not mark these complete from this temporary drill.

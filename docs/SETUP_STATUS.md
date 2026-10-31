@@ -3,7 +3,7 @@
 Updated: 2026-10-31. Repository: `jongsky25/css-is` (Office Connect BLHSD).
 Setup branch: `setup/cloud-mobile-continuity`.
 
-## Current step: 5 — backup bucket private; admin/recovery verification pending
+## Current step: 5 — privacy fixed and isolated restore passed; owner operations checks pending
 
 Completed: root `AGENTS.md`, the new-chat handoff in
 `docs/CLOUD_COLLABORATION.md`, this checklist, and a README entry point.
@@ -74,13 +74,14 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
-See [operations findings](OPERATIONS_ACCESS.md). The owner-authorized bucket
-privacy change is complete: anonymous metadata/listing is denied, production
-health passes, and a new periodic snapshot appeared after the change. Next:
-owner admin review of Operations/Backups, exact mount identity confirmation and
-an approved isolated recovery exercise. Assess the earlier public exposure.
-Steps 1–4 are complete; step 5 remains open for those checks. No restart or
-production code deployment was performed.
+See [operations findings](OPERATIONS_ACCESS.md) and the
+[isolated recovery evidence](operations/recovery-2026-10-31.json). Bucket privacy
+is fixed and a database-level restore passed with temporary copies removed.
+Owner admin review of Operations/Backups, mount identity confirmation, independent
+recovery retention and agreed RPO/RTO remain. Historical backup downloads cannot
+be determined through the current connection; obtain provider/account audit evidence
+and decide exposure remediation with the service owner. Steps 1–4 are complete;
+step 5 remains open. No live restore, restart or code deployment occurred.
 
 ## Step 3 evidence — 2026-10-31, 14:15 UTC
 
@@ -293,3 +294,25 @@ was not tested. Current write evidence does not replace integrity/recovery
 verification or assessment of the earlier public exposure. Step 5 stays open for
 admin/mount/recovery evidence. Documentation diff and local-link checks passed;
 application tests were not rerun for a bucket settings change.
+
+## Step 5 recovery/exposure follow-up — 2026-10-31, 16:06 UTC
+
+Owner authorized the follow-up. Downloaded one existing private-bucket snapshot
+into restricted temporary storage, verified size/integrity, and exercised actual
+backups.restore_backup against a separate temporary destination under an isolated
+credential-free environment and outbound socket guard. Both integrity checks,
+synthetic pre-restore safety-copy check and restored session/integration reset
+postconditions passed. Source was unchanged. No app was run on the recovered data.
+Temporary database/cache copies were removed; production health remained 200/ok.
+Anonymous snapshot HEAD remains 401. Observed download/drill: 16.2 seconds;
+local restore/check: 0.83 seconds. These are not agreed recovery objectives.
+
+Sanitized evidence and limitations are saved in
+[recovery-2026-10-31.json](operations/recovery-2026-10-31.json). Snapshot contains
+account, document and integration credential records; source stores read keys as
+hashes. Prior third-party downloads/public exposure duration remain unknown.
+Current tools provide no historical bucket access audit. No production account/key
+reset or external notification was performed. Owner admin/mount evidence,
+independent retention, recovery objectives and exposure decisions remain pending.
+Documentation links/diff checks passed. No application suite rerun: this was an
+isolated exercise of the existing deployed recovery routine and documentation.
