@@ -119,9 +119,11 @@ def telegram_ops_summary(html):
                 'link_origin_configured', 'queue_available'):
         if type(worker.get(key)) is bool:
             result[key] = worker[key]
-    for key in ('processed', 'sent'):
+    for key in ('processed', 'sent', 'webhook_responses'):
         if type(worker.get(key)) is int and 0 <= worker[key] < 2**63:
             result[key] = worker[key]
+    if worker.get('reply_transport') in ('webhook', 'direct'):
+        result['reply_transport'] = worker['reply_transport']
     if isinstance(worker.get('location'), str) and re.fullmatch(r'[a-z_]+\.py:[0-9]{1,6}', worker['location']):
         result['location'] = worker['location']
     for key, allowed in (

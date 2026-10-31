@@ -1,5 +1,6 @@
 """Private read-only room availability and owner-bound request status."""
 from datetime import date, timedelta
+from contextlib import nullcontext
 import re
 from urllib.parse import urlencode
 
@@ -87,10 +88,12 @@ def request_line(conn,record):
     return common.clip(record['ref_code'],20)+' · '+record['day']+'\n'+hours+'\n'+common.clip(status,80)
 
 
-def render(conn,delivery,projection,bot,now):
+def render(conn,delivery,projection,bot,now, *, commit=True):
     if not descriptor(projection,bot):
         return None
-    with transaction(conn):
+    if not commit and not conn.in_transaction:
+        raise RuntimeError("Caller-owned rendering requires a transaction")
+    with transaction(conn) if commit else nullcontext():
         user=actor(conn,delivery,bot)
         if not user:
             return None
