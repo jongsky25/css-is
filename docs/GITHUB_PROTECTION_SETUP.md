@@ -1,5 +1,15 @@
 # Main branch protection — setup step 3
 
+## Latest observation — 2026-10-31 at 14:35 UTC
+
+Ruleset [26274179](https://github.com/jongsky25/css-is/rules/26274179) is now
+active for main, with no bypasses. PRs, the correct GitHub Actions check, resolved
+review threads, deletion protection and force-push blocking are verified.
+**One setting remains off:** require branches to be up to date before merging
+(`strict_required_status_checks_policy: false`). Enable it and save; step 3
+remains pending that final verification. The observations below describe the
+initial state before the user created the rule.
+
 ## Verified state on 2026-10-31 at 14:15 UTC
 
 **Enforcement is missing. Step 3 is pending an administrator action.**

@@ -3,7 +3,7 @@
 Updated: 2026-10-31. Repository: `jongsky25/css-is` (Office Connect BLHSD).
 Setup branch: `setup/cloud-mobile-continuity`.
 
-## Current step: 3 — inspected; administrator action required
+## Current step: 3 — active protection; up-to-date requirement pending
 
 Completed: root `AGENTS.md`, the new-chat handoff in
 `docs/CLOUD_COLLABORATION.md`, this checklist, and a README entry point.
@@ -67,18 +67,18 @@ access remains necessary in a fresh chat.
 
 - [x] 1. Continuity files verified and saved remotely.
 - [x] 2. Reproducible cloud development/test workspace verified (limits above).
-- [ ] 3. Inspection complete; protection must be enabled by an administrator and reverified.
+- [ ] 3. Protection active and verified; enable the remaining up-to-date requirement.
 - [ ] 4. Separate preview/staging usable from a phone.
 - [ ] 5. Hosting/log/storage access and recovery verified.
 - [ ] 6. Monitoring gaps assessed and reusable workflow documented.
 
 ## Next action
 
-The user must enable the prepared main ruleset in GitHub Settings → Rules.
-Follow [phone instructions and evidence](GITHUB_PROTECTION_SETUP.md), or import
-`.github/rulesets/main.json`. This file is a proposal, not applied configuration.
-Once saved, re-read live rules and details before marking step 3 complete. Then
-proceed to step 4 (separate staging/preview). Do not merge or deploy this setup branch.
+Open ruleset `26274179` in GitHub Settings → Rules and enable **Require branches
+to be up to date before merging** under required status checks, then save. All other
+intended settings are verified. Re-read the live rule to confirm
+`strict_required_status_checks_policy: true` before marking step 3 complete.
+Then proceed to step 4 (separate staging/preview). Do not merge or deploy this branch.
 
 ## Step 3 evidence — 2026-10-31, 14:15 UTC
 
@@ -103,3 +103,22 @@ proceed to step 4 (separate staging/preview). Do not merge or deploy this setup 
 No PR merge or production deployment authorized by this setup request. These
 documentation changes do not bump application versions; existing release metadata
 checks may require reconciliation before any later merge. Do not bypass them.
+
+## Step 3 follow-up — 2026-10-31, 14:35 UTC
+
+The user created ruleset `26274179`, **Office Connect main release gate**.
+Live branch, applicable-rules and ruleset-detail reads confirm:
+
+- Main is now `protected: true`; the ruleset is active and targets only main.
+- Bypass list is empty; current integration reports bypass `never`.
+- PRs required, zero approvals, review conversations must be resolved.
+- Required check is `verification / Required checks` from GitHub Actions `15368`.
+- Deletion and force pushes blocked.
+- **Remaining gap:** `strict_required_status_checks_policy` is false. The user
+  must enable the up-to-date branch requirement; no administration write access
+  is available through this integration.
+
+The branch endpoint's legacy `protection.enabled: false` describes classic
+protection, not the active ruleset. Applicable rules and ruleset details establish
+that the new protection is enforced. No merge, deployment or failing push was used
+to test enforcement. Previous unprotected observations above are historical.
