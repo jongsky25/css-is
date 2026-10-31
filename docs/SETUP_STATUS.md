@@ -5,9 +5,11 @@ Setup branch: `setup/cloud-mobile-continuity`.
 
 ## Current step: 1 — continuity
 
-Implemented locally: root `AGENTS.md`, the new-chat handoff in
+Completed: root `AGENTS.md`, the new-chat handoff in
 `docs/CLOUD_COLLABORATION.md`, this checklist, and a README entry point.
-Remote-save and verification results must be recorded before finishing this step.
+Saved on GitHub branch `setup/cloud-mobile-continuity`; initial implementation
+commit `d9d13e5`. All local Markdown links across the four changed files resolve;
+`git diff --check` passed. Application tests were not run for documentation changes.
 No application behavior, secrets, deployment settings, or live data changed.
 
 ## Evidence inspected
@@ -28,7 +30,7 @@ No application behavior, secrets, deployment settings, or live data changed.
 
 ## Checklist
 
-- [ ] 1. Continuity files verified and saved remotely.
+- [x] 1. Continuity files verified and saved remotely.
 - [ ] 2. Reproducible cloud development/test workspace verified.
 - [ ] 3. Actual repository protection and CI enforcement verified.
 - [ ] 4. Separate preview/staging usable from a phone.
@@ -37,8 +39,7 @@ No application behavior, secrets, deployment settings, or live data changed.
 
 ## Next action
 
-Finish step 1 by checking document links and saving this branch to GitHub. Then
-begin step 2: inventory available runtimes/tools and establish a repeatable isolated
+Begin step 2: inventory available runtimes/tools and establish a repeatable isolated
 test setup using the existing locks and CI prerequisites. Do not install extra
 plugins before identifying an actual missing capability.
 
