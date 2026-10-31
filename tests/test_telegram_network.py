@@ -178,7 +178,8 @@ def test_concurrent_checks_share_one_probe(monkeypatch):
 
 def test_http_client_logs_cannot_expose_token_url(caplog):
     with caplog.at_level(logging.DEBUG):
-        for name in ('httpx', 'urllib3.connectionpool'):
+        for name in ('httpx', 'urllib3.connectionpool', 'httpcore.connection', 'httpcore.http11',
+                     'httpcore.http2', 'httpcore.proxy', 'httpcore.socks'):
             logging.getLogger(name).info('GET https://api.telegram.org/bot%s/getMe', TOKEN)
     assert TOKEN not in caplog.text and 'api.telegram.org' not in caplog.text
 
