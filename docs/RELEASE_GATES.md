@@ -41,6 +41,13 @@ restricted.
 
 ## Repository enforcement requires administrator configuration
 
+Latest live inspection (2026-10-31, 14:37 UTC) confirms ruleset `26274179` is
+active for main, with PRs and the correct GitHub Actions gate required, strict
+up-to-date branches, no bypasses, resolved review threads, and deletion/force-push
+protection. Step 3 is complete. See [live verification evidence](GITHUB_PROTECTION_SETUP.md).
+The older implementation-era limitations below are historical; the current live
+status is recorded in that document and `SETUP_STATUS.md`.
+
 Workflow files alone cannot prohibit a user from merging a failing pull request.
 The current GitHub connector cannot administer branch protection; its protection
 read returned HTTP 403, and its ruleset listing was empty. The local GitHub CLI

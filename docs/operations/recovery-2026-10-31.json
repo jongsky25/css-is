@@ -1,0 +1,41 @@
+{
+  "verified_at_utc": "2026-10-31T16:06:07.183498+00:00",
+  "bucket": "equityinhealth/office-connect-data",
+  "bucket_private": true,
+  "source_snapshot": "css_is_20261101_000512_auto.db",
+  "snapshot_uploaded_at_utc": "2026-10-31T16:05:15.602000+00:00",
+  "source_size_bytes": 49143808,
+  "source_sha256": "7427a2a74cf02d3a5ba4cca8900c7a9d41f9a944fff9295e8473dcbbed523fbc",
+  "source_commit": "aaef9d3da0ac5289ca79b1e458c249a404292ddf",
+  "source_integrity_check": "ok",
+  "restored_integrity_check": "ok",
+  "restore_function": "backups.restore_backup",
+  "synthetic_destination_probe_removed": true,
+  "pre_restore_safety_copy_verified": true,
+  "restored_sessions_empty": true,
+  "integration_revocation_postconditions_passed": true,
+  "source_unchanged": true,
+  "download_size_matches_metadata": true,
+  "restore_check_seconds": 0.83,
+  "download_plus_check_seconds": 16.2,
+  "anonymous_snapshot_head_http_status": 401,
+  "production_health_http_status": 200,
+  "temporary_database_and_cache_copies_removed": true,
+  "populated_sensitive_categories": [
+    "account_records",
+    "integration_credential_records",
+    "document_records"
+  ],
+  "source_browser_sessions_present": false,
+  "app_started_against_restored_data": false,
+  "live_database_modified": false,
+  "historical_download_audit_available": false,
+  "limits": [
+    "Database-level restore only; no app startup or cold-start mount exercise.",
+    "Session-empty postcondition passes but source already had no browser sessions.",
+    "Credential reset postconditions do not establish that source credential records were active.",
+    "Timings describe this one drill, not agreed production RTO/RPO.",
+    "Previously public visibility/listing was confirmed; historical third-party downloads remain unknown.",
+    "No independent long-term recovery copy retained."
+  ]
+}

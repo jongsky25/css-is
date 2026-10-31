@@ -1,3 +1,9 @@
+## 9.55 — October 31, 2026
+
+- Add a repeatable cloud development workflow, saved session handoffs and the repository-based “office connect” startup shorthand.
+- Add an isolated private phone preview with synthetic data, restricted Hugging Face framing and preview-only cross-site login cookies.
+- Add work request/review templates and document monitoring coverage and operational limits; production authentication and security policies are unchanged.
+
 ## 9.54 — October 31, 2026
 
 - After submitting a Telegram linking code in Office Connect, send /status to the bot to retrieve the final confirmation command.
