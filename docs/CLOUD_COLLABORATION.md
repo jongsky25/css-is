@@ -7,6 +7,11 @@ for the working rules.
 
 ## Starting a new chat from a phone
 
+With this repository and setup branch selected, simply send **office connect**.
+`AGENTS.md` defines this as resuming the next unfinished setup step and saving
+progress to GitHub. The long prompt below is a recovery option if a client has
+not loaded the repository instructions. The keyword is not registered globally.
+
 Attach/select `jongsky25/css-is` and the branch holding the latest setup work, then send:
 
 > Continue the Office Connect cloud/mobile setup in jongsky25/css-is. Read AGENTS.md,
@@ -37,6 +42,8 @@ credentials are separate access paths and must each be checked when needed.
 Each step needs recorded evidence, remaining limitations, and a next action. Mark
 external settings verified only after observing them. Preserve existing release
 gates; documentation changes are not an excuse to bypass the version policy.
+
+Step 2 commands and isolation details: [Cloud workspace](CLOUD_WORKSPACE.md).
 
 ## Feature workflow after setup
 

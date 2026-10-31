@@ -5,6 +5,14 @@ FastAPI/Jinja application. Do not infer its stack from connected plugins.
 
 ## Start every session
 
+**User shorthand:** when the user says **“office connect”** (case insensitive),
+resume the cloud/mobile setup on `setup/cloud-mobile-continuity` in
+`jongsky25/css-is`: read these instructions and the two documents below, verify
+access and working state, complete the next unfinished step, update its status,
+and save progress to GitHub. An accompanying specific request takes precedence.
+This mapping works when this repository's instructions are available; it is not
+a global chat command or a substitute for repository access.
+
 1. Read `docs/CLOUD_COLLABORATION.md` and `docs/SETUP_STATUS.md`.
 2. Check the current branch, working tree and latest commit. Preserve existing work.
 3. Read instructions and feature documentation relevant to the requested change.
@@ -26,6 +34,9 @@ FastAPI/Jinja application. Do not infer its stack from connected plugins.
 
 - Use Python 3.11 and the hashed dependency locks. Read `docs/DEPENDENCIES.md`
   and `.github/workflows/release-checks.yml` before setting up the test environment.
+- For cloud setup and isolated run commands, follow `docs/CLOUD_WORKSPACE.md`.
+  Use `bash scripts/cloud_setup.sh` and `.venv/bin/python scripts/cloud_workspace.py`;
+  do not start the app directly against an unknown database or inherited credentials.
 - Read `docs/RELEASE_GATES.md` before preparing a release. The existing gate checks
   normal/shuffled suites, skipped tests, dependencies and synchronized versions.
 - Run checks appropriate to the change. Report exact outcomes and blockers; do not
