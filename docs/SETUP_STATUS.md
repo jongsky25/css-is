@@ -3,7 +3,7 @@
 Updated: 2026-10-31. Repository: `jongsky25/css-is` (Office Connect BLHSD).
 Setup branch: `setup/cloud-mobile-continuity`.
 
-## Current step: 5 — privacy fixed and isolated restore passed; owner operations checks pending
+## Current step: 5 — storage/restore verified; audit mismatch and exposure follow-up open
 
 Completed: root `AGENTS.md`, the new-chat handoff in
 `docs/CLOUD_COLLABORATION.md`, this checklist, and a README entry point.
@@ -74,14 +74,13 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
-See [operations findings](OPERATIONS_ACCESS.md) and the
-[isolated recovery evidence](operations/recovery-2026-10-31.json). Bucket privacy
-is fixed and a database-level restore passed with temporary copies removed.
-Owner admin review of Operations/Backups, mount identity confirmation, independent
-recovery retention and agreed RPO/RTO remain. Historical backup downloads cannot
-be determined through the current connection; obtain provider/account audit evidence
-and decide exposure remediation with the service owner. Steps 1–4 are complete;
-step 5 remains open. No live restore, restart or code deployment occurred.
+See [operations findings](OPERATIONS_ACCESS.md). The owner’s production
+Operations screenshot confirms current saving and daily backups; the isolated
+restore also passed. Investigate the confirmed audit hash mismatch at #8949
+and two later link mismatches without rewriting history. Historical backup
+downloads remain unknown; provider/account audit evidence, mount identity/cold-
+start confirmation, independent recovery retention and agreed objectives remain
+open. Steps 1–4 are complete. Step 5 retains these explicit operational limits.
 
 ## Step 3 evidence — 2026-10-31, 14:15 UTC
 
@@ -316,3 +315,20 @@ reset or external notification was performed. Owner admin/mount evidence,
 independent retention, recovery objectives and exposure decisions remain pending.
 Documentation links/diff checks passed. No application suite rerun: this was an
 isolated exercise of the existing deployed recovery routine and documentation.
+
+## Step 5 owner Operations verification — 2026-10-31
+
+Owner production screenshot confirms live permanent-storage saves (displayed
+2026-11-01 00:09:16 local), daily backups on, 25 saved/about 1.1 GB, last daily
+backup OK and next daily backup 2026-11-01 02:00. Owner admin durability status
+is now verified. Do not confuse the daily maintenance schedule with the 60-second
+periodic durability saver.
+
+The screenshot also reports audit gap #8949. Read-only inspection of existing
+snapshot css_is_20261101_001016_auto.db confirms one content-hash mismatch at
+#8949 (previous link itself matches #8948) and two later link-only mismatches.
+Sanitized [audit evidence](operations/audit-2026-10-31.json) is saved; no audit
+field contents were published. The cause remains unknown; recovery/integrity
+success does not establish audit authenticity. No rehash, deletion, live repair,
+restart or deployment was performed. Temporary audit snapshot/caches were removed.
+Audit investigation and exposure/remaining operational limits stay open.

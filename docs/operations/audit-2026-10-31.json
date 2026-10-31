@@ -1,0 +1,18 @@
+{
+  "snapshot": "css_is_20261101_001016_auto.db",
+  "first_bad_id": 8949,
+  "mismatch_count": 3,
+  "first_mismatch": {
+    "id": 8949,
+    "previous_link_matches": true,
+    "stored_content_hash_valid": false,
+    "stored_parent_id": 8948
+  },
+  "link_only_mismatches": 2,
+  "content_hash_mismatches": 1,
+  "database_opened_read_only": true,
+  "temporary_snapshot_and_caches_removed": true,
+  "audit_record_values_published": false,
+  "cause_established": false,
+  "production_changes": false
+}

@@ -188,3 +188,37 @@ and any consequential remediation remain separate from the completed privacy fix
 Remaining operational acceptance: owner review of /ops and /admin/backups,
 confirmation of the configured mount identity, an independently retained recovery
 copy and agreed RPO/RTO. Do not mark these complete from this temporary drill.
+
+## Owner Operations evidence and audit warning — 2026-10-31
+
+The owner supplied a production Operations screenshot confirming that live data
+is being saved to permanent storage (last saved display: 2026-11-01 00:09:16,
+application local time), daily backups are enabled, and 25 saved backups total
+about 1.1 GB. The next scheduled backup displays 2026-11-01 02:00; the last daily
+backup status is OK. The periodic durability saver and daily maintenance backup
+schedule are separate mechanisms; their timestamps need not match.
+
+This confirms the previously pending owner admin Operations view. The same
+screenshot reports an audit-record gap at entry #8949. A separate read-only
+inspection of existing snapshot css_is_20261101_001016_auto.db reproduces the
+first failure at #8949: its previous link matches entry #8948, but its content
+hash does not match the stored fields. Two later entries have link mismatches
+while their content hashes validate against their own stored parent hashes.
+Three mismatches were found in total. See the sanitized
+[audit evidence](operations/audit-2026-10-31.json).
+
+The first mismatch is not merely a missing sequential ID. Possible causes include
+changed data or inconsistent hash inputs at write time; no cause or actor has been
+established. Database integrity_check and recovery success are distinct from
+application audit authenticity. Do not label this proof of malicious tampering,
+and do not rehash/delete/rewrite the chain to suppress the warning. Investigate
+writer serialization, historical maintenance and available earlier backups while
+preserving history. No audit repair or application change was made.
+
+The audit snapshot was downloaded into restricted temporary storage, opened in
+SQLite read-only mode, and deleted with its download caches afterward. No actors,
+record text, document details or credential values were printed or committed.
+
+Remaining: audit mismatch investigation, historical exposure assessment, mount
+identity/cold-start evidence, independent recovery retention and agreed objectives.
+The owner admin durability view is now verified and no longer a missing check.
