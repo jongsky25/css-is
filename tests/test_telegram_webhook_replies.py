@@ -1,6 +1,7 @@
 """Authenticated private replies use Telegram's existing incoming TLS connection."""
 from concurrent.futures import ThreadPoolExecutor
 import json
+import re
 import sqlite3
 from threading import Event
 
@@ -49,11 +50,15 @@ def test_start_replies_inline_and_cannot_be_replayed_by_worker_or_duplicate(inli
 
 def activate_inline(inline):
     c, _, _, client, browser = inline
-    submit(client)
-    challenge = rows(c, 'SELECT * FROM telegram_link_challenge')[0]
-    links.claim(c, browser, links.code(challenge, 'claim'), ['calendar.read','rooms.read'], NOW)
-    reply = submit(client, update(2, text='/confirm '+links.code(challenge, 'confirm')))
-    assert reply.json()['method'] == 'sendMessage'
+    start_packet = submit(client).json()
+    raw = re.search(r'(?m)^[a-f0-9]{64}$', start_packet['text'])[0]
+    links.claim(c, browser, raw, ['calendar.read','rooms.read'], NOW)
+    assert not rows(c, "SELECT * FROM telegram_delivery WHERE dedupe_key LIKE 'link-confirm:%'")
+    status_packet = submit(client, update(2, text='/status')).json()
+    confirmation = re.search(r'/confirm [a-f0-9]{64}', status_packet['text'])[0]
+    assert browser['uid'] == rows(c, 'SELECT * FROM telegram_link_challenge')[0]['account_id']
+    reply = submit(client, update(3, text=confirmation))
+    assert reply.json()['method'] == 'sendMessage' and 'active' in reply.json()['text']
     assert rows(c, 'SELECT * FROM telegram_connection')[0]['state'] == 'active'
     return client
 
@@ -64,12 +69,12 @@ def test_link_confirmation_and_private_reads_keep_current_consent(inline, monkey
     monkeypatch.setenv('CSS_TELEGRAM_CALENDAR_READ_ENABLED','1')
     monkeypatch.setenv('CSS_TELEGRAM_ROOMS_READ_ENABLED','1')
     client = activate_inline(inline)
-    reply = submit(client, update(3, text=command)).json()
+    reply = submit(client, update(4, text=command)).json()
     assert reply['method'] == 'sendMessage' and reply['chat_id'] == 101 and reply['text']
     assert bot.process_updates(c, NOW) == bot.deliver(c, NOW) == 0
     if command == '/calendar':
         monkeypatch.setenv('CSS_TELEGRAM_CALENDAR_READ_ENABLED','0')
-        assert submit(client, update(4,text=command)).json() == {'ok': True}
+        assert submit(client, update(5,text=command)).json() == {'ok': True}
 
 
 @pytest.mark.parametrize('flag', ['CSS_TELEGRAM_DELIVERY_ENABLED','CSS_TELEGRAM_INBOUND_ENABLED'])
@@ -162,7 +167,7 @@ def test_disconnect_still_revokes_immediately_and_never_replays_old_handoffs(inl
     c, _, _, _, _ = inline
     client = activate_inline(inline)
     before = c.execute("SELECT count(*) FROM telegram_delivery WHERE error_code='webhook_response'").fetchone()[0]
-    assert submit(client,update(3,text='/disconnect')).json() == {'ok': True}
+    assert submit(client,update(4,text='/disconnect')).json() == {'ok': True}
     assert rows(c,'SELECT * FROM telegram_connection')[0]['state'] != 'active'
     assert bot.process_updates(c,NOW) == bot.deliver(c,NOW) == 0
     assert c.execute("SELECT count(*) FROM telegram_delivery WHERE error_code='webhook_response'").fetchone()[0] == before
@@ -194,3 +199,37 @@ def test_private_renderer_never_commits_a_caller_transaction(inline, module_name
             assert c.in_transaction
             raise RuntimeError('force caller rollback')
     assert c.execute('SELECT min(active) FROM admin_user').fetchone()[0] == 1
+
+
+@pytest.mark.parametrize('change', ['sender','expiry','logout','deactivate','pause','token'])
+def test_pending_confirmation_requires_original_sender_and_current_browser(inline, monkeypatch, change):
+    from datetime import timedelta
+    c, users, _, client, browser = inline
+    packet=submit(client).json()
+    raw=re.search(r'(?m)^[a-f0-9]{64}$',packet['text'])[0]
+    links.claim(c,browser,raw,['calendar.read'],NOW)
+    sender=101
+    if change=='sender': sender=102
+    elif change=='expiry': monkeypatch.setattr(bot,'now_utc',lambda:NOW+timedelta(minutes=11))
+    elif change=='logout': st.revoke_login_session(c,browser['sid'])
+    elif change=='deactivate':
+        c.execute('UPDATE admin_user SET active=0 WHERE id=?',(users[0]['id'],));c.commit()
+    elif change=='pause': monkeypatch.setenv('CSS_TELEGRAM_LINK_ENABLED','0')
+    elif change=='token': monkeypatch.setenv('CSS_TELEGRAM_BOT_TOKEN','123456:'+'B'*35)
+    response=submit(client,update(2,sender=sender,text='/status')).json()
+    assert '/confirm ' not in response.get('text','')
+    assert not rows(c,'SELECT * FROM telegram_connection')
+    assert not rows(c,'SELECT * FROM telegram_grant')
+
+
+def test_status_recovers_pending_confirmation_after_disconnect(inline):
+    c, _, _, _, browser=inline
+    client=activate_inline(inline)
+    links.disconnect(c,browser,NOW)
+    packet=submit(client,update(4)).json()
+    raw=re.search(r'(?m)^[a-f0-9]{64}$',packet['text'])[0]
+    links.claim(c,browser,raw,[],NOW)
+    packet=submit(client,update(5,text='/status')).json()
+    confirmation=re.search(r'/confirm [a-f0-9]{64}',packet['text'])[0]
+    assert 'active' in submit(client,update(6,text=confirmation)).json()['text']
+    assert c.execute("SELECT count(*) FROM telegram_connection WHERE state='active'").fetchone()[0]==1

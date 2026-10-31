@@ -8,8 +8,8 @@
 <p>Office Connect account: <strong>{{ account.username }}</strong></p>
 <p><a href="/account/integrations">Back to connected tools</a></p>
 {% if error %}<p role="alert">{{ error }}</p>{% endif %}
-<p>Connection: <strong>{{ connection.state if connection else 'not linked' }}</strong>.</p>
-{% if pending %}<p role="status">Waiting for confirmation in your original private Telegram chat. Check the account shown there before confirming.</p>{% endif %}
+<p>Connection: <strong>{{ 'awaiting confirmation' if pending else (connection.state if connection else 'not linked') }}</strong>.</p>
+{% if pending %}<p role="status">Waiting for confirmation in your original private Telegram chat. {% if webhook_replies %}Send <code>/status</code> to the bot to get your confirmation command. {% endif %}Check the account and permissions shown there, then send that exact <code>/confirm</code> command and reload this page. Do not send /start again while this link is pending.</p>{% endif %}
 {% if grants %}<p>Permissions you consented to:</p><ul>{% for grant in grants %}<li>{{ scopes.get(grant, grant) }}</li>{% endfor %}</ul>{% endif %}
 {% if calendar_ready %}
 <p>In your private chat, send <code>/calendar</code> for this week or <code>/calendar YYYY-MM-DD YYYY-MM-DD</code> for up to 31 days. Replies use Asia/Manila time. Use the next-page command in the reply to continue.</p>
@@ -25,7 +25,7 @@
 {% if ready and (not connection or connection.state == 'revoked') %}
 <section aria-labelledby="telegram-link-title">
 <h2 id="telegram-link-title">Link your private account</h2>
-<ol><li>Send <code>/start</code> to the approved Office Connect bot in a private chat.</li><li>Paste the ten-minute code here.</li><li>Return to that same chat, check the account and permissions shown, and send the confirmation command.</li></ol>
+<ol><li>Send <code>/start</code> to the approved Office Connect bot in a private chat.</li><li>Paste the ten-minute code here, choose permissions and submit the form.</li><li>Return to that same chat{% if webhook_replies %}, send <code>/status</code> to get your confirmation command{% endif %}, check the account and permissions shown, and send the exact confirmation command.</li><li>Reload this page to see the active connection.</li></ol>
 <p>Never forward codes or enter an Office Connect password into Telegram.</p>
 <form method="post" action="/account/telegram/link">
 <input type="hidden" name="csrf" value="{{ csrf }}">

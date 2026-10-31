@@ -18,10 +18,19 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "9.53"
+APP_VERSION = "9.54"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "9.54",
+        "date": "October 31, 2026",
+        "summary": "Finish Telegram linking through your private bot chat.",
+        "changes": [
+            "After submitting your linking code, send /status to the bot to get the final confirmation command.",
+            "The account page clearly shows when a link is awaiting your confirmation."
+        ]
+    },
     {
         "version": "9.53",
         "date": "October 31, 2026",

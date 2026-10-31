@@ -31,6 +31,7 @@ def make_router(templates, get_conn):
             return templates.TemplateResponse(request, 'telegram_link.html',
                 {'show_scope': False, 'account': user, 'connection': connection, 'grants': grants,
                  'pending': pending, 'ready': bool(links.available()), 'csrf': csrf(request),
+                 'webhook_replies': bot.reply_transport() == 'webhook',
                  'scopes': {k:v for k,v in links.SCOPES.items() if (k!='calendar.create' or bot.storage.enabled('calendar_create')) and (k!='rooms.request' or bot.storage.enabled('rooms_request'))}, 'error': error,
                  'room_request_ready': bool(execution_ready and links.authorized(conn,user['id'],'rooms.request') and links.authorized(conn,user['id'],'rooms.read') and links.authorized(conn,user['id'],'calendar.read')),
                  'meeting_ready': bool(execution_ready and links.authorized(conn,user['id'],'calendar.create') and links.authorized(conn,user['id'],'calendar.read')),
