@@ -1,6 +1,10 @@
-## 9.46 — October 30, 2026
+## 9.47 — October 31, 2026
 
 - Log the relay's error code (entry, document, revision) when an activity document draft fails. The person still sees the plain sentence; the raw code goes only to the server log so a generic "document service refused" failure can be diagnosed. No database, relay or template change.
+
+## 9.46 — October 30, 2026
+
+- Fix the calendar guidance browser tests for the 9.44 layout. 9.44 moved the "Calendar next step" guidance into the collapsed "Schedule status and next steps" card, which closed content hides from the accessibility tree, so seven tests in `tests/test_calendar_guidance_browser.py` could not find it and the release checks failed (9.44 was cancelled at the 75-minute limit, 9.45 failed), leaving 9.43 live. The tests now open that card through a shared `next_step()` helper without moving focus. The 9.44 workspace browser test now sets explicit Playwright timeouts and always closes its browser, and `pytest.ini` sets `faulthandler_timeout = 300` so a stalled test dumps every thread's stack instead of silently running to the 75-minute job limit (the normal-order job stalled at that test in two runs; not reproduced locally). No application, template or database change; 9.44 and 9.45 ship with this release.
 
 ## 9.45 — October 30, 2026
 
