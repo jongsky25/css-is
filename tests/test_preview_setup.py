@@ -73,6 +73,8 @@ def test_bundle_private_preview_login_and_mobile(tmp_path):
                 assert page.status_code == 200
                 assert 'PREVIEW — synthetic data only' in page.text
                 assert 'Set up the first account' not in page.text
+                assert 'x-frame-options' not in page.headers
+                assert "frame-ancestors 'self' https://huggingface.co" in page.headers['content-security-policy']
                 assert page.headers['x-office-connect-environment'] == 'preview'
                 denied = client.post('/login', data={'username':'preview@example.invalid',
                                                     'password':'wrong'},
@@ -102,3 +104,21 @@ def test_bundle_private_preview_login_and_mobile(tmp_path):
             process.wait(timeout=15)
     assert sentinel.read_bytes() == before
     assert not (tmp_path / 'must-not-create').exists()
+
+
+def test_preview_hub_frame_and_hosted_cookie_policy():
+    preview = load_script('preview_app')
+    for hosted in (False, True):
+        headers = [
+            (b'x-frame-options', b'SAMEORIGIN'),
+            (b'content-security-policy', b"base-uri 'self'; object-src 'none'; frame-ancestors 'self'"),
+            (b'set-cookie', b'session=synthetic; HttpOnly; Secure; SameSite=lax; Path=/'),
+        ]
+        preview.allow_hub_frame(headers, hosted=hosted)
+        policy = dict(headers)
+        assert b'x-frame-options' not in policy
+        assert policy[b'content-security-policy'] == (
+            b"base-uri 'self'; object-src 'none'; frame-ancestors 'self' https://huggingface.co")
+        cookie = policy[b'set-cookie']
+        assert b'HttpOnly' in cookie and b'Secure' in cookie
+        assert (b'SameSite=None' if hosted else b'SameSite=lax') in cookie

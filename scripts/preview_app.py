@@ -3,6 +3,7 @@ import ipaddress
 import os
 from pathlib import Path
 import secrets
+import re
 import socket
 import sqlite3
 import sys
@@ -36,6 +37,20 @@ def block_external_connections():
 
     socket.socket.connect = connect
     socket.socket.connect_ex = connect_ex
+
+
+def allow_hub_frame(headers, *, hosted=False):
+    """Allow the private Hub frame only in this disposable preview wrapper."""
+    headers[:] = [(name, value) for name, value in headers
+                  if name.lower() != b'x-frame-options']
+    for index, (name, value) in enumerate(headers):
+        if name.lower() == b'content-security-policy':
+            value = value.replace(b"frame-ancestors 'self'",
+                b"frame-ancestors 'self' https://huggingface.co")
+        if hosted and name.lower() == b'set-cookie':
+            value = re.sub(rb';\s*SameSite=[^;]+', b'; SameSite=None',
+                           value, flags=re.I)
+        headers[index] = (name, value)
 
 
 def main():
@@ -83,7 +98,11 @@ def main():
 
                 async def labeled(message):
                     if message['type'] == 'http.response.start':
-                        message.setdefault('headers', []).extend([
+                        # The private Hub embeds this disposable app cross-site.
+                        # Restrict the exception to this preview entrypoint.
+                        headers = message.setdefault('headers', [])
+                        allow_hub_frame(headers, hosted=bool(host))
+                        headers.extend([
                             (b'x-office-connect-environment', b'preview'),
                             (b'x-robots-tag', b'noindex, nofollow, noarchive')])
                     await send(message)

@@ -203,3 +203,21 @@ read-only APIs; no test push to main, merge, workflow rerun or deployment occurr
 - Remaining: successful signed-in phone login and synthetic page action, using
   the owner's saved preview password. No production data or credentials copied.
   Full release suites/audits were not rerun for this publication/status update.
+
+## Step 4 iOS embedding repair — 2026-10-31
+
+- Owner's phone confirmed Hub access but the app frame was blank. Authorized
+  remote `/login` had `frame-ancestors 'self'` and `X-Frame-Options: SAMEORIGIN`,
+  blocking the Hub embed. Direct `.hf.space` access returned private-access 404;
+  a Hub session does not automatically authorize that top-level URL on iOS.
+- Preview wrapper now permits only self and `https://huggingface.co` ancestors,
+  removes its incompatible frame-options header, and uses SameSite=None on
+  hosted preview cookies while retaining Secure/HttpOnly and origin checks.
+  Production security middleware and cookie configuration are unchanged.
+- Fresh hashed Python 3.11 test environment setup/doctor passed. The first browser
+  attempt ran before Chromium finished installing and failed to launch; after
+  installation, all 3 preview checks passed, including synthetic HTTP/mobile
+  login, isolation and header/cookie regression checks. All 23 existing browser
+  security tests passed. Both JUnit gates passed without skips; diff check passed.
+- Publish and remote header verification follow this committed change. Phone
+  acceptance remains pending. No production release or visibility change authorized.

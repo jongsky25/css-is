@@ -106,3 +106,16 @@ verifies failed/correct login through HTTP, signs in using a 390×844 Chromium
 viewport, checks the visible banner, confirms a sentinel database is untouched,
 and verifies external connections are rejected. Both tests passed without skips.
 Local success does not establish remote hosting, private access, or account eligibility.
+
+## Private Space embedding on iOS
+
+The preview entrypoint permits framing by `https://huggingface.co` and removes
+its `X-Frame-Options` header. Hosted preview cookies use `SameSite=None` while
+retaining Secure/HttpOnly and the application's origin checks, so the Hub frame
+can retain the synthetic login. These exceptions apply only to the disposable
+preview; production response policy is unchanged.
+
+Safari may still require temporarily disabling Prevent Cross-Site Tracking for
+Hugging Face's private-Space cookies. A direct `.hf.space` URL alone does not
+establish private Hub authorization. Use the signed-in Hub page for phone review;
+never put the HF token into a URL or browser instructions.
