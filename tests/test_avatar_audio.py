@@ -147,8 +147,8 @@ def test_default_off_volume_and_toggle_do_not_trigger_play_or_care(audio_page):
     page.locator('.avwrap').evaluate("el => el.classList.remove('happy')")
     page.locator('.av-volume').focus()
     page.keyboard.press('ArrowRight')
-    expect(page.locator('.av-volume')).to_have_value('40')
-    assert page.evaluate("localStorage.getItem('css-av-volume')") == '0.4'
+    expect(page.locator('.av-volume')).to_have_value('85')
+    assert page.evaluate("localStorage.getItem('css-av-volume')") == '0.85'
     assert not page.locator('.avwrap').evaluate("el => el.classList.contains('happy')")
     assert not state['posts']
     page.locator('.av-sound-btn').click()
@@ -308,3 +308,83 @@ def test_cat_voice_actions_only_use_replacement_meow_recordings(audio_page):
     for name in requested:
         assert {layer['source'] for layer in MANIFEST['clips'][name]['layers']} == {'cat'}
     assert MANIFEST['sources']['cat']['url'] == 'https://freesound.org/people/qubodup/sounds/813113/'
+
+
+def test_default_volume_is_audible_on_a_phone_speaker(audio_page):
+    page, _ = audio_page()
+    # The recordings are mastered quietly; the default must not add to that.
+    assert page.evaluate("localStorage.getItem('css-av-volume')") is None
+    page.locator('.av-sound-btn').click()
+    page.wait_for_function('audioStarts.length === 1')
+    expect(page.locator('.av-volume')).to_have_value('80')
+
+
+def test_output_goes_through_a_limiter_after_the_master_gain(audio_page):
+    page, _ = audio_page()
+    page.add_init_script('''
+      window.mixerLog = [];
+      const connect = AudioNode.prototype.connect;
+      AudioNode.prototype.connect = function (target, ...rest) {
+        const name = n => n && n.constructor ? n.constructor.name : String(n);
+        if (this instanceof GainNode || this instanceof DynamicsCompressorNode)
+          mixerLog.push(name(this) + '>' + name(target));
+        return connect.call(this, target, ...rest);
+      };
+    ''')
+    page.reload()
+    page.locator('.av-sound-btn').click()
+    page.wait_for_function('audioStarts.length === 1')
+    log = page.evaluate('mixerLog')
+    assert 'GainNode>DynamicsCompressorNode' in log
+    assert 'DynamicsCompressorNode>AudioDestinationNode' in log
+    assert 'GainNode>AudioDestinationNode' not in log
+
+
+def test_ios_audio_session_is_playback_inside_the_tap_and_released_when_muted(audio_page):
+    page, _ = audio_page()
+    page.add_init_script('''
+      window.sessionLog = []; let current = 'auto';
+      Object.defineProperty(navigator, 'audioSession', {configurable: true, value: {
+        get type() { return current; },
+        set type(value) { current = value; sessionLog.push(value); }
+      }});
+    ''')
+    page.reload()
+    # Nothing touches the session until sound is switched on.
+    assert page.evaluate('sessionLog') == []
+    # Dispatching the click synchronously proves it is set within the gesture itself,
+    # before any await (iOS ignores later changes for the unlocking tap).
+    assert page.evaluate("""() => { document.querySelector('.av-sound-btn').click(); return sessionLog.slice(); }""") == ['playback']
+    page.wait_for_function('audioStarts.length === 1')
+    page.locator('.av-sound-btn').click()
+    page.wait_for_function('liveVoices.size === 0')
+    assert page.evaluate('sessionLog') == ['playback', 'auto']
+
+
+def test_idle_voice_never_changes_the_audio_session(audio_page):
+    page, _ = audio_page()
+    page.add_init_script('''
+      window.sessionLog = [];
+      Object.defineProperty(navigator, 'audioSession', {configurable: true, value: {
+        set type(value) { sessionLog.push(value); }
+      }});
+    ''')
+    page.reload()
+    page.locator('.av-sound-btn').click()
+    page.wait_for_function('audioStarts.length === 1')
+    before = page.evaluate('sessionLog.length')
+    page.wait_for_timeout(500)
+    page.evaluate("AvatarAudio.play('voice','dog',true)")
+    assert page.evaluate('sessionLog.length') == before
+
+
+def test_audio_session_errors_never_block_playback(audio_page):
+    page, _ = audio_page()
+    page.add_init_script('''
+      Object.defineProperty(navigator, 'audioSession', {configurable: true, value: {
+        set type(value) { throw new DOMException('Not allowed', 'NotAllowedError'); }
+      }});
+    ''')
+    page.reload()
+    page.locator('.av-sound-btn').click()
+    page.wait_for_function('audioStarts.length === 1')
