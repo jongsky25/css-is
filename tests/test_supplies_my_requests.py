@@ -163,6 +163,7 @@ def test_the_release_page_has_two_plain_answers_for_the_recipient(released, app_
         assert ack_status(c, u, first) == 'disputed'
         disputed = client.get(f'/supplies/issues/{first}').text
         assert 'sorted out' in disputed and 'Report a problem' not in disputed
+        assert 'The problem is resolved' in disputed and 'Yes, I received it' not in disputed    # the button answers the question above it (#205)
     finally:
         client.__exit__(None, None, None)
         app_mod.DB = old

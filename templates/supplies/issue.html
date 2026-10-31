@@ -17,7 +17,7 @@
 {% if ack.status=='pending' %}<p><strong>Did you receive these supplies?</strong></p>
 <form method="post" action="/supplies/issues/{{ release.id }}/acknowledge">{{ hidden_fields() }}<input type="hidden" name="status" value="acknowledged"><button type="submit">Yes, I received it</button></form>
 {% elif ack.status=='disputed' %}<form method="post" action="/supplies/issues/{{ release.id }}/acknowledge">{{ hidden_fields() }}<input type="hidden" name="status" value="acknowledged">
-<label for="ack-note">The problem is sorted out. Say how (required)</label><input id="ack-note" name="note" maxlength="2000" required value="{{ submitted.get('note','') }}"><button type="submit">Yes, I received it</button></form>{% endif %}
+<label for="ack-note">The problem is sorted out. Say how (required)</label><input id="ack-note" name="note" maxlength="2000" required value="{{ submitted.get('note','') }}"><button type="submit">The problem is resolved</button></form>{% endif %}
 {% if ack.status!='disputed' %}<details class="supply-panel"{% if submitted.get('status')=='disputed' %} open{% endif %} id="problem"><summary>Report a problem</summary>
 <form method="post" action="/supplies/issues/{{ release.id }}/acknowledge">{{ hidden_fields() }}<input type="hidden" name="status" value="disputed">
 <label for="problem-note">What is wrong? (required)</label><input id="problem-note" name="note" maxlength="2000" required value="{{ submitted.get('note','') if submitted.get('status')=='disputed' else '' }}"><button type="submit">Report the problem</button></form></details>{% endif %}

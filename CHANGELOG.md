@@ -1,3 +1,7 @@
+## 9.50 — October 31, 2026
+
+- Relabel the button on a disputed supplies release (Spot Feedback #205): under "The problem is sorted out. Say how (required)" it now reads "The problem is resolved" instead of "Yes, I received it". Only the label changes; it still records receipt with the explanation. No route, database or permission change.
+
 ## 9.49 — October 31, 2026
 
 - Log the relay's error code (entry, document, revision) when an activity document draft fails. The person still sees the plain sentence; the raw code goes only to the server log so a generic "document service refused" failure can be diagnosed. No database, relay or template change.
