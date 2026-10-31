@@ -27,7 +27,8 @@ CHANGELOG = [
         "date": "October 31, 2026",
         "summary": "Behind-the-scenes check fix so recent updates can go live.",
         "changes": [
-            "No change to how the calendar looks or works; an automatic check that stalled the release was rebuilt."
+            "No change to how the calendar looks or works; an automatic check that stalled the release was rebuilt.",
+            "The PDF reading component was updated to a version with security fixes."
         ]
     },
     {
