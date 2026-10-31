@@ -3,7 +3,7 @@
 Updated: 2026-10-31. Repository: `jongsky25/css-is` (Office Connect BLHSD).
 Setup branch: `setup/cloud-mobile-continuity`.
 
-## Current step: 3 — active protection; up-to-date requirement pending
+## Current step: 3 — complete; main protection verified
 
 Completed: root `AGENTS.md`, the new-chat handoff in
 `docs/CLOUD_COLLABORATION.md`, this checklist, and a README entry point.
@@ -67,18 +67,18 @@ access remains necessary in a fresh chat.
 
 - [x] 1. Continuity files verified and saved remotely.
 - [x] 2. Reproducible cloud development/test workspace verified (limits above).
-- [ ] 3. Protection active and verified; enable the remaining up-to-date requirement.
+- [x] 3. Main protection and CI enforcement verified against live rules.
 - [ ] 4. Separate preview/staging usable from a phone.
 - [ ] 5. Hosting/log/storage access and recovery verified.
 - [ ] 6. Monitoring gaps assessed and reusable workflow documented.
 
 ## Next action
 
-Open ruleset `26274179` in GitHub Settings → Rules and enable **Require branches
-to be up to date before merging** under required status checks, then save. All other
-intended settings are verified. Re-read the live rule to confirm
-`strict_required_status_checks_policy: true` before marking step 3 complete.
-Then proceed to step 4 (separate staging/preview). Do not merge or deploy this branch.
+Begin step 4: assess a separate staging/preview environment for phone review.
+Inspect the existing Hugging Face deployment and persistence requirements before
+choosing hosting. Use synthetic data, separate credentials and disabled real
+notifications. Do not merge or deploy this setup branch to production. Steps 1–3
+are complete; the historical observations below retain the earlier setup evidence.
 
 ## Step 3 evidence — 2026-10-31, 14:15 UTC
 
@@ -122,3 +122,14 @@ The branch endpoint's legacy `protection.enabled: false` describes classic
 protection, not the active ruleset. Applicable rules and ruleset details establish
 that the new protection is enforced. No merge, deployment or failing push was used
 to test enforcement. Previous unprotected observations above are historical.
+
+## Step 3 final verification — 2026-10-31, 14:37 UTC
+
+After the user's second save, both the ruleset-detail endpoint and applicable
+main-branch rules confirm `strict_required_status_checks_policy: true`.
+Ruleset `26274179` remains active, targets only `refs/heads/main`, has no bypass
+actors, requires PRs and resolved review threads with zero required approvals,
+requires `verification / Required checks` from GitHub Actions app `15368`, and
+blocks deletion and force pushes. The integration cannot bypass the rules.
+All intended settings are now verified. Step 3 is complete. Verification used
+read-only APIs; no test push to main, merge, workflow rerun or deployment occurred.
