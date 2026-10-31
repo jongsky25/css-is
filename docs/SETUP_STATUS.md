@@ -378,3 +378,15 @@ Synchronized version.py, Markdown changelog and service-worker version to 9.55.
 This entry records the candidate, not a claim that CI, merge or deployment has
 completed. The PR and GitHub checks provide the actual integration outcome.
 Deferred audit/exposure findings stay deferred. No release gates may be bypassed.
+
+## Telegram review handoff — 2026-10-31
+
+Requested broader Telegram review is saved on `docs/telegram-broader-review`.
+See the [reconciled integration ledger](TELEGRAM_TWO_WAY_PLAN.md#broader-integration-review--2026-10-31).
+Private reply/link repairs #569/#570 are merged; latest main deployment run
+41227419174 passed. The complete T4.4 hosted pilot remains unverified, and its
+runbook PR #488 remains open. Next: verify hosted linking, then fresh outgoing
+connectivity before group/action/scheduled delivery and the full pilot.
+T5–T7 remain gated on T4.4. This was a source/GitHub/documentation review; no
+application tests, live sends, feature-switch changes, merge or deployment.
+Deferred audit/exposure work remains deferred.
