@@ -167,3 +167,20 @@ read-only APIs; no test push to main, merge, workflow rerun or deployment occurr
 - Remaining: private Space, preview password secret, scoped credential, upload,
   successful remote build, unauthorized-access rejection and authorized phone test.
   No remote URL is claimed live. Full release suites/audits were not run.
+
+## Step 4 manual progress — 2026-10-31
+
+- User created `equityinhealth/office-connect-preview`. Initial public metadata
+  showed Gradio; user corrected it and changed visibility to private.
+- User screenshot of committed README `06597e0` confirms `sdk: docker`,
+  `app_port: 7860`, no python_version line, and a private badge.
+- Anonymous metadata/README reads now return HTTP 401. Authenticated metadata
+  has not been verified; `HF_TOKEN` is not configured in this workspace.
+- User reports saving `OFFICE_PREVIEW_PASSWORD` in the preview Space's secrets.
+  Its value was neither requested nor inspected. Presence remains to be verified
+  by authenticated secret-name lookup or successful preview startup.
+- Next action: create a fine-grained HF token with write access only to the
+  preview Space and bind it as cloud secret `HF_TOKEN`. First locate the client's
+  supported cloud secret settings if necessary. Never paste credentials in chat.
+  After binding, verify SDK/private state and secret-name presence, publish the
+  prepared bundle, then monitor and test remotely. Preview is not yet deployed.
