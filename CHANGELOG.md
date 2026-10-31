@@ -1,3 +1,8 @@
+## 9.54 — October 31, 2026
+
+- After submitting a Telegram linking code in Office Connect, send /status to the bot to retrieve the final confirmation command.
+- Pending links show awaiting confirmation until you finish that command.
+
 ## 9.53 — October 31, 2026
 
 - Private Telegram linking, help, status, calendar and room lookups can reply through the incoming webhook connection.

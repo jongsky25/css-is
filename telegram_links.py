@@ -104,10 +104,11 @@ def claim(conn, payload, raw_code, scopes, now):
         conn.execute("UPDATE telegram_link_challenge SET state='claimed',account_id=?,session_id=?,scopes_json=?,claimed_at=? WHERE id=?",
                      (user['id'], payload['sid'], json.dumps(sorted(set(scopes))), stamp(now), ch['id']))
         projection = {'kind': 'link_confirm', 'challenge': ch['id'], 'bot': bot[0], 'fingerprint': bot[2]}
-        conn.execute('''INSERT INTO telegram_delivery
-            (dedupe_key,event_key,chat_id,projection_json,expires_at,created_at,updated_at)
-            VALUES (?,?,?,?,?,?,?)''', ('link-confirm:'+ch['id'], str(bot[0]), ch['private_chat_id'],
-                json.dumps(projection), ch['expires_at'], stamp(now), stamp(now)))
+        if os.environ.get('CSS_TELEGRAM_REPLY_TRANSPORT') == 'direct':
+            conn.execute('''INSERT INTO telegram_delivery
+                (dedupe_key,event_key,chat_id,projection_json,expires_at,created_at,updated_at)
+                VALUES (?,?,?,?,?,?,?)''', ('link-confirm:'+ch['id'], str(bot[0]), ch['private_chat_id'],
+                    json.dumps(projection), ch['expires_at'], stamp(now), stamp(now)))
         st.audit(conn, user['username'], 'telegram_link_claim', summary='Requested a private Telegram account link.', commit=False)
 
 
@@ -220,3 +221,14 @@ def render(conn, projection, sender, bot, now):
         labels = ', '.join(SCOPES[s] for s in json.loads(ch['scopes_json'])) or 'No business access'
         return 'Confirm linking to Office Connect account '+user['username']+' with '+labels+'. Only if this is your account, send:\n/confirm '+code(ch,'confirm')+'\nOtherwise send /disconnect. This code expires with the original 10-minute request.'
     return None
+
+
+def pending_confirmation(conn, sender, bot, now):
+    """Only the original Telegram sender can retrieve a current browser claim."""
+    found = rows(conn, '''SELECT id FROM telegram_link_challenge
+        WHERE telegram_user_id=? AND private_chat_id=? AND state='claimed' AND expires_at>?
+        ORDER BY created_at DESC,id DESC LIMIT 1''', (sender, sender, stamp(now)))
+    if not found:
+        return None
+    projection = {'kind': 'link_confirm', 'challenge': found[0]['id'], 'bot': bot[0], 'fingerprint': bot[2]}
+    return projection if render(conn, projection, sender, bot, now) else None

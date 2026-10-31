@@ -61,3 +61,27 @@ the existing Space, securing a fresh verified backup before the restart. This
 returns private replies to the original worker path and does not retry previous
 webhook handoffs. Pausing the existing delivery or inbound switch also prevents
 new webhook handoffs. Messages already handed to Telegram cannot be recalled.
+
+## Finish linking without an outgoing connection (9.54)
+
+After `/start`, submit the code and explicit consent on the signed-in account
+page. The page shows **awaiting confirmation**. Send `/status` in the original
+private bot chat to retrieve the account, chosen permissions and exact `/confirm`
+command. Send that command, then reload Office Connect to see **active**. Finish
+all steps within the original ten minutes. Do not issue another `/start` while
+waiting: it deliberately replaces the previous challenge.
+
+The browser claim does not queue a push confirmation when webhook replies are
+selected. A new explicit `/status` request renders the currently claimed
+challenge only for its original Telegram sender, with a still-current browser
+session, bot fingerprint, origin, linking switch and expiry. No grant is created
+until the existing two-channel `/confirm` checks succeed. Legacy direct mode
+retains its queued confirmation behavior. Existing uncertain confirmation sends
+are not retried or edited; a new `/status` request is a separate user action.
+
+The first 9.53 private reply test confirmed actual `/start` receipt, but its
+initial linking tests obtained a confirmation code from the synthetic database
+instead of verifying the user's confirmation delivery path. The 9.54 phone
+browser test now obtains both codes exclusively from actual webhook response
+messages and completes the real claim form with scripts disabled and outgoing
+sends forbidden. This corrects that verification gap.

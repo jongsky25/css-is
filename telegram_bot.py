@@ -233,6 +233,8 @@ def receive(conn, clean, raw, bot, now, webhook_reply=None):
             group_route = groups.route(conn, clean['chat_id'], clean['topic_id'], bot)
         command = clean['command']
         special = command == '/disconnect' or (storage.enabled('link') and command in ('/start','/confirm'))
+        if command == '/status' and links.pending_confirmation(conn, clean['sender_id'], bot, now):
+            special = True
         supported = command is not None and (permitted or special)
         if command in ('/register','/group_status','/group_calendar','/group_rooms'):
             supported = group_route is not None
@@ -429,7 +431,10 @@ def _process_update_in_transaction(conn, update, bot, now):
             cid, generation = result
             projection = {'kind': 'status', 'bot': bot[0], 'fingerprint': bot[2]}
     elif special and command == '/status':
-        projection = {'kind': 'status', 'bot': bot[0], 'fingerprint': bot[2]}
+        pending = links.pending_confirmation(conn, update['sender_id'], bot, now)
+        projection = pending or {'kind': 'status', 'bot': bot[0], 'fingerprint': bot[2]}
+        if pending:
+            valid = True
     else:
         valid = valid and normal
     group_route = None
