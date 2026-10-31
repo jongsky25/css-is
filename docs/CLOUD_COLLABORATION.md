@@ -48,6 +48,10 @@ Step 4 preview implementation and access setup: [Hugging Face preview](HF_PREVIE
 
 ## Feature workflow after setup
 
+Use the [mobile/cloud workflow](MOBILE_CLOUD_WORKFLOW.md),
+[monitoring guide](MONITORING_WORKFLOW.md) and
+[session handoff template](SESSION_HANDOFF_TEMPLATE.md).
+
 Capture the requested outcome and acceptance criteria in a GitHub issue when useful.
 Implement on a branch, run relevant checks, and provide a PR/preview link with a short
 phone-friendly review checklist. Record unfinished work before changing chats.

@@ -2,9 +2,13 @@
 
 Inspected on 2026-10-31; the owner subsequently authorized a bucket privacy
 change. The bucket is now private and anonymous metadata/listing returns 401.
-A database-level isolated recovery exercise now passes. Step 5 remains
-**incomplete** for owner admin/mount verification, independent recovery retention
-and agreed recovery objectives. Historical third-party backup access is unknown.
+Core hosting/log/storage access and the database-level isolated recovery check
+are verified. Owner Operations evidence confirms saving and daily backups.
+Open operational follow-ups remain documented below: audit mismatch, historical
+exposure, mount/cold-start verification, independent retention and recovery
+objectives. The user deferred the audit investigation while finishing the
+collaboration workflow. These limits do not establish that all production
+operations or security issues are resolved.
 
 ## Verified hosting and code
 

@@ -17,7 +17,10 @@ a global chat command or a substitute for repository access.
 2. Check the current branch, working tree and latest commit. Preserve existing work.
 3. Read instructions and feature documentation relevant to the requested change.
 4. Check current environment and connector access; prior-session access is not proof.
-5. Continue the first unfinished setup step when the user asks to continue setup.
+5. Follow the current next action in `docs/SETUP_STATUS.md`. Once collaboration
+   setup is ready, use `docs/MOBILE_CLOUD_WORKFLOW.md` for the requested work.
+   Deferred audit/security/operations findings do not resume automatically; the
+   user chooses when to return to them.
 
 ## Working preferences
 

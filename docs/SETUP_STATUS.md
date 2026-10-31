@@ -3,7 +3,7 @@
 Updated: 2026-10-31. Repository: `jongsky25/css-is` (Office Connect BLHSD).
 Setup branch: `setup/cloud-mobile-continuity`.
 
-## Current step: 5 — storage/restore verified; audit mismatch and exposure follow-up open
+## Collaboration workflow ready — operational follow-ups tracked separately
 
 Completed: root `AGENTS.md`, the new-chat handoff in
 `docs/CLOUD_COLLABORATION.md`, this checklist, and a README entry point.
@@ -69,18 +69,22 @@ access remains necessary in a fresh chat.
 - [x] 2. Reproducible cloud development/test workspace verified (limits above).
 - [x] 3. Main protection and CI enforcement verified against live rules.
 - [x] 4. Separate private preview usable from a phone (iOS limitations below).
-- [ ] 5. Hosting/log/storage access and recovery verified.
-- [ ] 6. Monitoring gaps assessed and reusable workflow documented.
+- [x] 5. Core hosting/log/storage access and isolated recovery verified; operational limits tracked.
+- [x] 6. Monitoring gaps assessed and reusable workflow/templates documented; no external alerts configured.
 
 ## Next action
 
-See [operations findings](OPERATIONS_ACCESS.md). The owner’s production
-Operations screenshot confirms current saving and daily backups; the isolated
-restore also passed. Investigate the confirmed audit hash mismatch at #8949
-and two later link mismatches without rewriting history. Historical backup
-downloads remain unknown; provider/account audit evidence, mount identity/cold-
-start confirmation, independent recovery retention and agreed objectives remain
-open. Steps 1–4 are complete. Step 5 retains these explicit operational limits.
+Use the [mobile/cloud workflow](MOBILE_CLOUD_WORKFLOW.md) for the user's next
+requested feature or fix. The collaboration setup is ready on this branch;
+it is not yet merged to main. Do not merge it as a side effect of setup: main
+triggers production deployment, and accumulated setup changes still require
+release review and CI on the actual candidate.
+
+The user explicitly deferred the audit investigation to finish collaboration
+setup. Do not automatically resume #8949 investigation or exposure remediation.
+Keep [operational follow-ups](OPERATIONS_ACCESS.md) visible; return to them when
+requested. Monitoring is currently manual; automatic outage alerts and phone
+notification delivery have not been configured or verified.
 
 ## Step 3 evidence — 2026-10-31, 14:15 UTC
 
@@ -332,3 +336,31 @@ field contents were published. The cause remains unknown; recovery/integrity
 success does not establish audit authenticity. No rehash, deletion, live repair,
 restart or deployment was performed. Temporary audit snapshot/caches were removed.
 Audit investigation and exposure/remaining operational limits stay open.
+
+## Step 6 — monitoring assessment and reusable workflow, 2026-10-31
+
+User chose collaboration setup before the deferred audit investigation. Inspected
+monitoring.py, request/exception middleware, health/Operations endpoints, durability
+and audit checks, CI and production deployment workflow, release gates and preview
+publisher. Existing in-process metrics/logs/health/Operations already cover manual
+diagnostics. No configured external uptime checker/error exporter or verified
+phone alert delivery was found. No new SDK, paid service, scheduled automation,
+alert recipient or production monitoring change was introduced.
+
+Added the phone request → branch → isolated build/tests → committed private preview
+→ phone acceptance → PR/release procedure, monitoring coverage/gap assessment,
+request/PR templates and a session handoff template. Documented shared-preview
+publish serialization, exact candidate provenance, iOS limitations, fresh-session
+access checks and production-connected main. AGENTS.md now follows current status
+and preserves deferred findings rather than automatically resuming them.
+
+Core step 5 access/storage/recovery evidence is complete within its recorded scope;
+remaining operational hardening/exposure/audit tasks are separate tracked work.
+Step 6's monitoring assessment and reusable procedures are complete. This does not
+claim external automatic alerting or full production security/recovery acceptance.
+Work is saved on setup/cloud-mobile-continuity; no merge, production deployment or
+preview republish occurred. GitHub issue/PR templates become default only after
+integration into the relevant default-branch workflow; they are usable as files now.
+No release CI or app suite was run for these docs/templates. Diff, links and issue
+frontmatter validation are the applicable checks. Instructions are still held on
+the setup branch; a fresh chat must select that branch until approved integration.

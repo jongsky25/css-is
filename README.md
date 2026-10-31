@@ -16,3 +16,6 @@ Internal testing deployment. Do not enter real respondent data here.
 
 Read [AGENTS.md](AGENTS.md), the [cloud/mobile handoff](docs/CLOUD_COLLABORATION.md),
 and the [setup status](docs/SETUP_STATUS.md) before continuing development or setup.
+
+For daily work, use the [phone/cloud workflow](docs/MOBILE_CLOUD_WORKFLOW.md)
+and [monitoring guide](docs/MONITORING_WORKFLOW.md).
