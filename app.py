@@ -4023,6 +4023,8 @@ def ops(request: Request):
         last_backup = bkinfo["cfg"]["last_backup_status"]
         inv = st.system_inventory(conn)
         pulse = st.usage_pulse(conn)
+        import telegram_bot
+        telegram = telegram_bot.worker_status(conn)
     finally:
         conn.close()
     plain = _ops_plain(snap, chain_ok, bad_id, bkinfo, last_backup,
@@ -4068,6 +4070,7 @@ def ops(request: Request):
         "people": people, "last_login_line": last_login_line,
         "recent_logins": recent_logins, "lately": lately,
         "build": _load_build_info(),
+        "telegram": telegram,
         "show_scope": False, "nav_active": "",
     })
 
@@ -5048,7 +5051,11 @@ def _work_channels_tick():
 
 def _telegram_tick():
     import telegram_bot
-    conn = st.connect(DB)
+    try:
+        conn = st.connect(DB)
+    except Exception as error:
+        telegram_bot.worker_failed('connect', error)
+        raise
     try:
         return telegram_bot.tick(conn)
     finally:

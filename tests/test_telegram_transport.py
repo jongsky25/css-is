@@ -67,6 +67,9 @@ def test_provider_failures_are_bounded_and_sanitized(monkeypatch, status, body, 
     value = response(monkeypatch, status, body)
     assert transport.send(TOKEN, 101, 'neutral help') == expected
     assert value.closed
+    metadata = transport.last_send_status()
+    assert metadata['state'] == expected[0] and metadata['http_status'] == status
+    assert 'private provider text' not in json.dumps(metadata)
 
 
 def test_timeout_exception_and_debug_urls_do_not_expose_credentials(monkeypatch, caplog):
@@ -82,6 +85,23 @@ def test_timeout_exception_and_debug_urls_do_not_expose_credentials(monkeypatch,
     with caplog.at_level(logging.DEBUG):
         assert transport.send(TOKEN, 101, 'neutral help') == ('uncertain', None, None)
     assert TOKEN not in caplog.text and 'api.telegram.org' not in caplog.text
+    assert transport.last_send_status()['http_status'] is None
+    assert transport.last_send_status()['error'] == 'transport_failure'
+
+
+def test_provider_metadata_excludes_identity_message_and_response_and_is_a_copy(monkeypatch):
+    private = TOKEN + ' private-message-and-provider-detail'
+    response(monkeypatch, 401, {'ok': False, 'description': private})
+    assert transport.send(TOKEN, 987654321, private) == ('failed', None, None)
+    metadata = transport.last_send_status()
+    assert metadata['state'] == 'failed' and metadata['http_status'] == 401
+    assert metadata['error'] == 'provider_rejected'
+    assert not any(value in json.dumps(metadata) for value in (TOKEN, '987654321', 'private-message'))
+    metadata['state'] = 'tampered'
+    assert transport.last_send_status()['state'] == 'failed'
+    response(monkeypatch, 200, {'ok': True, 'result': {'message_id': 71, 'chat': {'id': 101}}})
+    assert transport.send(TOKEN, 101, private) == ('accepted', 71, None)
+    assert transport.last_send_status()['error'] is None
 
 
 def test_configuration_rejects_invalid_or_oversized_identity(monkeypatch):

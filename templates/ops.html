@@ -69,6 +69,45 @@
   </div>
 </div>
 
+<div class="panel" id="telegram-health">
+  <h2>Telegram</h2>
+  <script type="application/json" id="telegram-diagnostics">{{ {'version': build.version, 'commit': build.commit, 'worker': telegram}|tojson }}</script>
+  {% if telegram.scheduler_disabled %}
+  <p role="status">Background jobs are disabled (CSS_NO_SCHEDULER=1). Messages can reach the webhook, but replies will not be processed.</p>
+  {% elif telegram.state == 'not_started' %}
+  <p role="status">The Telegram worker has not run since this process started.</p>
+  {% elif telegram.state == 'failed' %}
+  <p role="status">The Telegram worker failed during {{ telegram.stage }} ({{ telegram.error }}).{% if telegram.location %} Source: {{ telegram.location }}.{% endif %} Check the application logs for the matching safe error category.</p>
+  {% elif telegram.stale %}
+  <p role="status">The Telegram worker has not started a new run for over three minutes. An earlier background job or this worker may be stalled.</p>
+  {% else %}
+  <p role="status">Worker: {{ telegram.state }}. Last run processed {{ telegram.processed }} updates and attempted {{ telegram.sent }} sends. A send attempt does not prove delivery.</p>
+  {% endif %}
+  <p class="note">Last started: {{ telegram.started_at or 'not observed' }} · Last finished: {{ telegram.finished_at or 'not observed' }} (UTC). Worker observations reset when the process restarts.</p>
+  {% if telegram.provider %}
+  <p>Last send attempt since restart: {{ telegram.provider.state }}{% if telegram.provider.http_status %} · HTTP {{ telegram.provider.http_status }}{% endif %}{% if telegram.provider.error %} · {{ telegram.provider.error }}{% endif %}. Observed {{ telegram.provider.observed_at }} (UTC).</p>
+  {% else %}
+  <p>No provider send attempt observed since restart.</p>
+  {% endif %}
+  <div class="signals">
+    <div class="sig neutral">
+      <div class="h">Receive / reply / linking</div>
+      <div class="sub">Inbound {{ 'on' if telegram.switches.inbound else 'off' }} · Delivery {{ 'on' if telegram.switches.delivery else 'off' }} · Linking {{ 'on' if telegram.switches.link else 'off' }}</div>
+    </div>
+    <div class="sig neutral">
+      <div class="h">Configuration format checks</div>
+      <div class="sub">Bot token: {{ 'valid format' if telegram.bot_configured else 'missing or invalid' }} · Webhook secret: {{ 'valid format' if telegram.webhook_configured else 'missing or invalid' }} · Linking origin: {{ 'valid format' if telegram.link_origin_configured else 'missing or invalid' }}. These checks do not verify provider credentials or webhook registration.</div>
+    </div>
+  </div>
+  {% if telegram.queue_available %}
+  <p>Updates: {{ telegram.updates.get('queued', 0) }} queued · {{ telegram.updates.get('processing', 0) }} processing · {{ telegram.updates.get('ignored', 0) }} ignored · {{ telegram.updates.get('cancelled', 0) }} cancelled.</p>
+  <p>Replies: {{ telegram.deliveries.get('queued', 0) }} queued · {{ telegram.deliveries.get('claimed', 0) }} claimed · {{ telegram.deliveries.get('sending', 0) }} sending · {{ telegram.deliveries.get('retry_wait', 0) }} waiting to retry · {{ telegram.deliveries.get('accepted', 0) }} accepted by Telegram · {{ telegram.deliveries.get('failed', 0) }} failed · {{ telegram.deliveries.get('uncertain', 0) }} uncertain · {{ telegram.deliveries.get('cancelled', 0) }} cancelled.</p>
+  <p class="note">Counts cover retained queue records across configured bots. Accepted does not mean read. Uncertain sends are not automatically retried.</p>
+  {% else %}
+  <p role="status">Telegram queue status is unavailable. Check database health and migrations.</p>
+  {% endif %}
+</div>
+
 <div class="panel">
   <h2>Right now <span class="note" style="color:var(--soft); font-weight:400; font-size:.82rem;">· last 5 minutes</span></h2>
   <div class="signals">

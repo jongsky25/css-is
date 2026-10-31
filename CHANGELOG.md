@@ -1,3 +1,8 @@
+## 9.51 — October 31, 2026
+
+- Show Telegram worker freshness, receive/reply/link gates, configuration-format checks and aggregate queue outcomes on the administrator-only Operations page. Report failures by processing stage and source location without logging credentials, identifiers or message content.
+- Collect read-only queue totals from the verified pre-deploy backup and allowlisted worker metadata from Operations using the existing deployment identity. Preserve backup gates, feature switches, permissions and delivery retry rules; live reply verification remains pending.
+
 ## 9.50 — October 31, 2026
 
 - Relabel the button on a disputed supplies release (Spot Feedback #205): under "The problem is sorted out. Say how (required)" it now reads "The problem is resolved" instead of "Yes, I received it". Only the label changes; it still records receipt with the explanation. No route, database or permission change.
