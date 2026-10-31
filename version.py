@@ -31,6 +31,15 @@ CHANGELOG = [
         ]
     },
     {
+        "version": "9.49",
+        "date": "October 31, 2026",
+        "summary": "Administrators can now see why a document draft failed.",
+        "changes": [
+            "When a Google Docs draft fails, the real reason is now recorded for administrators.",
+            "Nothing changes for people drafting documents."
+        ]
+    },
+    {
         "version": "9.48",
         "date": "October 31, 2026",
         "summary": "Companion sounds are louder and now play on phone speakers.",
