@@ -1,3 +1,9 @@
+## 9.53 — October 31, 2026
+
+- Add an optional owned Telegram outbound service with signed, short-lived requests for only `getMe`, `getChatMember` and `sendMessage`. The bot token stays in hosting runtime memory and is never logged or stored by the service. Office Connect remains responsible for all business permissions and actions.
+- Require a durable one-time permit from the existing delivery lease immediately before each provider send. Duplicate requests and service restarts cannot obtain another permit; uncertainty never retries. Warm a sleeping service before claiming a send, preserving expiry and revocation checks without holding a database writer lock across HTTP.
+- Package the isolated service with hashed dependency versions constrained to the audited application inventory and audit its built image in CI. An explicit canonical merge trailer can configure its public URL only after source/connectivity preflight and a verified live backup. The transport stays disabled without hosting configuration; activation requires confirmed hosted connection evidence.
+
 ## 9.52 — October 31, 2026
 
 - Add an administrator-requested, read-only Telegram connection check using `getMe` with the sending client and the existing alternative HTTPS client. Keep TLS verification, environment proxy settings, fixed destinations, bounded responses, a one-minute cache and one probe at a time. Never send or retry a message from this check.

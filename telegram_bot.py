@@ -277,6 +277,34 @@ def receive(conn, clean, raw, bot, now):
 def make_router(get_conn):
     router = APIRouter()
 
+    @router.post('/integrations/telegram/outbound-permit')
+    async def outbound_permit(request: Request):
+        import telegram_outbound_protocol as protocol
+        proof = request.headers.get('x-office-proof', '')
+        bot = transport.config()
+        if not bot or not storage.enabled('delivery') or not transport.outbound.configured() or len(proof) != 86:
+            return JSONResponse({'ok': False}, status_code=403)
+        body = bytearray()
+        async for chunk in request.stream():
+            body.extend(chunk)
+            if len(body) > MAX_BODY:
+                return JSONResponse({'ok': False}, status_code=413)
+        conn = None
+        try:
+            value = protocol.verify(bytes(body), proof, protocol.public_key(bot[1]))
+            if value['method'] != 'sendMessage':
+                raise ValueError
+            conn = get_conn()
+            allowed = consume_outbound_permit(conn, value, bot, now_utc())
+            return JSONResponse({'ok': allowed}, status_code=200 if allowed else 409)
+        except ValueError:
+            return JSONResponse({'ok': False}, status_code=403)
+        except sqlite3.Error:
+            return JSONResponse({'ok': False}, status_code=503)
+        finally:
+            if conn is not None:
+                conn.close()
+
     @router.post(PATH)
     async def webhook(request: Request):
         if not storage.enabled('inbound'):
@@ -444,6 +472,23 @@ def eligible(conn, delivery, bot, now=None):
                                           {'kind': 'status', 'bot': bot[0], 'fingerprint': bot[2]})))
 
 
+def consume_outbound_permit(conn, value, bot, now):
+    """A durable one-time provider permit; never creates a delivery or business action."""
+    with transaction(conn):
+        found = rows(conn, "SELECT * FROM telegram_delivery WHERE state='sending' AND claim_token=?", (value['nonce'],))
+        if not found or transport.config() != bot or not storage.enabled('delivery'):
+            return False
+        delivery = found[0]
+        params = value['params']
+        if (delivery['error_code'] == 'outbound_started' or delivery['lease_until'] <= stamp(now)
+                or delivery['expires_at'] <= stamp(now) or params['chat_id'] != delivery['chat_id']
+                or params.get('message_thread_id') != delivery['topic_id'] or not eligible(conn, delivery, bot, now)):
+            return False
+        return conn.execute("""UPDATE telegram_delivery SET error_code='outbound_started'
+            WHERE id=? AND state='sending' AND claim_token=? AND coalesce(error_code,'')!='outbound_started'""",
+                            (delivery['id'], value['nonce'])).rowcount == 1
+
+
 def deliver(conn, now=None):
     if not storage.enabled('delivery'):
         return 0
@@ -460,6 +505,11 @@ def deliver(conn, now=None):
         conn.execute('''UPDATE telegram_delivery SET state='uncertain',claim_token=NULL,lease_until=NULL,
                 error_code='interrupted',updated_at=? WHERE id IN
                 (SELECT id FROM telegram_delivery WHERE state='sending' AND lease_until<=? LIMIT 20)''', (stamp(now), stamp(now)))
+    outbound_ready = True
+    if (transport.outbound.configured() and conn.execute(
+            "SELECT 1 FROM telegram_delivery WHERE state IN ('queued','retry_wait','claimed') LIMIT 1").fetchone()):
+        # A sleeping service is warmed before claiming a provider attempt. No writer lock or resend.
+        outbound_ready = transport.outbound.ready()
     for _ in range(MAX_TICK):
         now = clock()
         token = uuid4().hex
@@ -481,8 +531,10 @@ def deliver(conn, now=None):
                              (stamp(now), delivery['id']))
                 continue
             # Commit the sending marker before network I/O. Conditional finalizers fence restores.
+            if not outbound_ready:
+                break
             conn.execute('''UPDATE telegram_delivery SET state=?,claim_token=?,lease_until=?,
-                attempts=attempts+1,updated_at=? WHERE id=?''',
+                attempts=attempts+1,error_code=NULL,updated_at=? WHERE id=?''',
                 ('claimed' if delivery['chat_id'] < 0 else 'sending', token, stamp(now+timedelta(minutes=2)), stamp(now), delivery['id']))
         # Provider checks occur outside the writer lock.
         group_verified = True
@@ -543,7 +595,10 @@ def deliver(conn, now=None):
                                         (delivery['id'], token)).fetchone()):
                 message = None
             if message:
-                if delivery['chat_id'] < 0:
+                if transport.outbound.configured():
+                    outcome, message_id, retry = transport.send(bot[1], delivery['chat_id'], message,
+                                                               delivery['topic_id'], dispatch_nonce=token)
+                elif delivery['chat_id'] < 0:
                     outcome, message_id, retry = transport.send(bot[1], delivery['chat_id'], message, delivery['topic_id'])
                 else:
                     outcome, message_id, retry = transport.send(bot[1], delivery['chat_id'], message)

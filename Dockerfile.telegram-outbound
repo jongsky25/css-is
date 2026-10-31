@@ -1,0 +1,14 @@
+# syntax=docker/dockerfile:1
+FROM python:3.11-slim
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+WORKDIR /app
+COPY requirements-telegram-outbound.txt .
+RUN --mount=type=secret,id=proxy_ca \
+    if [ -f /run/secrets/proxy_ca ]; then export PIP_CERT=/run/secrets/proxy_ca; fi; \
+    python -m pip install --no-cache-dir --require-hashes --only-binary=:all: -r requirements-telegram-outbound.txt && python -m pip check
+COPY --chmod=644 apprise_transport.py telegram_transport.py telegram_outbound_client.py telegram_outbound_protocol.py telegram_outbound_service.py ./
+RUN useradd --create-home --uid 1000 outbound
+USER outbound
+RUN python -c "import telegram_outbound_service"
+EXPOSE 10000
+CMD ["sh", "-c", "exec uvicorn telegram_outbound_service:app --host 0.0.0.0 --port \"${PORT:-10000}\" --workers 1 --no-access-log --limit-concurrency 32"]

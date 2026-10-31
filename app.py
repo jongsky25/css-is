@@ -1951,7 +1951,8 @@ _PUBLIC_PREFIXES = ("/r/", "/photo/", "/e/", "/static/", "/lang/", "/wellness/de
 _PUBLIC_EXACT = {"/room", "/room/", "/room/day", "/seq", "/login", "/logout", "/favicon.ico",
                  "/set-password", "/forgot", "/reset-password", "/health",
                  "/sw.js", "/manifest.webmanifest",
-                 "/offsite-backup/ping", "/integrations/gmail/documents", "/integrations/telegram/webhook"}   # machine callbacks enforce their own authentication
+                 "/offsite-backup/ping", "/integrations/gmail/documents", "/integrations/telegram/webhook",
+                 "/integrations/telegram/outbound-key", "/integrations/telegram/outbound-permit"}   # callbacks authenticate; outbound-key is public verification material
 
 # These responses have no account-dependent content. Keep this narrower than
 # _PUBLIC_*: public surveys, directory photos and machine callbacks still use
@@ -4007,6 +4008,21 @@ def _load_build_info():
         "deployed_at": _humandt(info.get("deployed_at")) if info.get("deployed_at") else None,
         "deployed_by": info.get("deployed_by"),
     }
+
+
+@app.get('/integrations/telegram/outbound-key')
+def telegram_outbound_key():
+    import telegram_transport
+    import telegram_outbound_protocol
+    try:
+        bot = telegram_transport.config()
+        if not bot or not telegram_transport.outbound.configured():
+            raise ValueError
+        telegram_transport.outbound.base_url()
+    except Exception:
+        return JSONResponse({'error': 'unavailable'}, status_code=404)
+    return JSONResponse({'key': telegram_outbound_protocol.public_key(bot[1])},
+                        headers={'Cache-Control': 'no-store'})
 
 
 @app.get("/ops", response_class=HTMLResponse)

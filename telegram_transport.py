@@ -10,6 +10,7 @@ from threading import Lock
 
 import requests
 import httpx
+import telegram_outbound_client as outbound
 # Installs the existing urllib3 token-URL logging filter; no digest configuration is read.
 from apprise_transport import TOKEN
 
@@ -27,6 +28,8 @@ NETWORK_ERRORS = frozenset({'tls_certificate', 'tls', 'dns', 'proxy', 'connect_t
 
 def connection_error(error):
     """Classify wrapped client exceptions without reading their sensitive text."""
+    if isinstance(error, outbound.OutboundError):
+        return error.category if error.category in NETWORK_ERRORS else 'transport_failure'
     chain, pending, seen = [], [error], set()
     while pending and len(chain) < 16:
         item = pending.pop()
@@ -75,6 +78,8 @@ def _probe_response(status, chunks, identifier, started):
     bot = value.get('result') if isinstance(value, dict) else None
     valid = (isinstance(value, dict) and value.get('ok') is True and isinstance(bot, dict)
              and bot.get('is_bot') is True and type(bot.get('id')) is int and bot['id'] == identifier)
+    if valid and type(bot.get('username_matches')) is bool:
+        result['bot_username_matches'] = bot['username_matches']
     return dict(result, state='ok' if valid else 'invalid_response')
 
 
@@ -88,7 +93,7 @@ def probe_connection():
             return
         bot = config()
         results = {}
-        for name in ('requests', 'httpx'):
+        for name in ('requests', 'httpx') + (('outbound',) if outbound.configured() else ()):
             if bot is None:
                 results[name] = {'state': 'not_configured'}
                 continue
@@ -96,7 +101,14 @@ def probe_connection():
             started = time.monotonic()
             try:
                 url = 'https://api.telegram.org/bot' + bot[1] + '/getMe'
-                if name == 'requests':
+                if name == 'outbound':
+                    if not outbound.ready():
+                        results[name] = {'state': 'not_ready'}
+                        continue
+                    with outbound.request(bot[1], 'getMe', {}) as response:
+                        status = response.status_code
+                        results[name] = _probe_response(status, response.iter_content(4096), bot[0], started)
+                elif name == 'requests':
                     with requests.Session() as session:
                         with session.get(url, timeout=(3, 7), verify=True,
                                          allow_redirects=False, stream=True) as response:
@@ -135,7 +147,7 @@ def config():
     return identifier, token, hashlib.sha256(token.encode()).hexdigest()
 
 
-def send(token, chat_id, text, topic_id=None):
+def send(token, chat_id, text, topic_id=None, *, dispatch_nonce=None):
     """Keep one bounded attempt's safe status without retaining its content."""
     global _LAST_SEND
     http_status = None
@@ -146,7 +158,7 @@ def send(token, chat_id, text, topic_id=None):
             http_status = value
         elif isinstance(value, str) and value in NETWORK_ERRORS:
             transport_error = value
-    result = _send(token, chat_id, text, topic_id, observe)
+    result = _send(token, chat_id, text, topic_id, observe, dispatch_nonce=dispatch_nonce)
     state = result[0]
     error = (None if state == 'accepted' else 'provider_rejected' if state == 'failed' else
              'rate_limited' if state == 'retry_wait' else
@@ -158,7 +170,7 @@ def send(token, chat_id, text, topic_id=None):
     return result
 
 
-def _send(token, chat_id, text, topic_id, observe):
+def _send(token, chat_id, text, topic_id, observe, *, dispatch_nonce=None):
     """Return (state, provider message ID, retry seconds); uncertainty never retries."""
     payload = {'chat_id': chat_id, 'text': text, 'link_preview_options': {'is_disabled': True}}
     if topic_id is not None:
@@ -166,9 +178,10 @@ def _send(token, chat_id, text, topic_id, observe):
     started = time.monotonic()
     try:
         with requests.Session() as session:
-            response = session.post('https://api.telegram.org/bot' + token + '/sendMessage',
+            response = (outbound.request(token, 'sendMessage', payload, nonce=dispatch_nonce) if outbound.configured() else
+                session.post('https://api.telegram.org/bot' + token + '/sendMessage',
                 json=payload,
-                timeout=(3, 7), verify=True, allow_redirects=False, stream=True)
+                timeout=(3, 7), verify=True, allow_redirects=False, stream=True))
             observe(response.status_code)
             with response:
                 body = bytearray()
@@ -214,8 +227,10 @@ def member_status(token, chat_id, user_id):
     started=time.monotonic()
     try:
         with requests.Session() as session:
-            response=session.post('https://api.telegram.org/bot'+token+'/getChatMember',
-                json={'chat_id':chat_id,'user_id':user_id},timeout=(3,7),verify=True,allow_redirects=False,stream=True)
+            payload = {'chat_id':chat_id,'user_id':user_id}
+            response=(outbound.request(token, 'getChatMember', payload) if outbound.configured() else
+                session.post('https://api.telegram.org/bot'+token+'/getChatMember',
+                json=payload,timeout=(3,7),verify=True,allow_redirects=False,stream=True))
             with response:
                 body=bytearray()
                 for chunk in response.iter_content(4096):

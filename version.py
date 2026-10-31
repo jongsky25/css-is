@@ -18,10 +18,19 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "9.52"
+APP_VERSION = "9.53"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "9.53",
+        "date": "October 31, 2026",
+        "summary": "Allow Telegram replies through a dedicated Office Connect service.",
+        "changes": [
+            "Telegram can use a separate Office Connect connection when the main host cannot reach it.",
+            "Replies wait while the service starts, and uncertain sends are never repeated automatically."
+        ]
+    },
     {
         "version": "9.52",
         "date": "October 31, 2026",

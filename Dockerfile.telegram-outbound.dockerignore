@@ -1,0 +1,8 @@
+**
+!Dockerfile.telegram-outbound
+!requirements-telegram-outbound.txt
+!apprise_transport.py
+!telegram_transport.py
+!telegram_outbound_client.py
+!telegram_outbound_protocol.py
+!telegram_outbound_service.py

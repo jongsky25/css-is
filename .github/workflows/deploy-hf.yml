@@ -51,6 +51,7 @@ jobs:
           CSS_ADMIN_USER: ${{ secrets.CSS_ADMIN_USER }}  # for the pre-deploy backup gate
           CSS_ADMIN_PASS: ${{ secrets.CSS_ADMIN_PASS }}
           CSS_DEPLOY_STRICT_VERSION: "1"             # hard-abort if APP_VERSION wasn't bumped
+          CSS_TELEGRAM_OUTBOUND_SETUP: "1"           # optional public merge trailers; setup remains backup-gated
         run: |
           python deploy_hf.py --yes
 

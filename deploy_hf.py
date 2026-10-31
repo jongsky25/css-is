@@ -69,6 +69,73 @@ LIVE_BASE = f"https://{REPO_ID.replace('/', '-')}.hf.space"
 LOCAL_DB = "css_is.db"
 
 
+def outbound_release_config(message):
+    """An explicit, immutable merge trailer supplies public deployment metadata."""
+    fields = {}
+    for line in message.strip().split('\n\n')[-1].splitlines():
+        for name in ('Telegram-Outbound-URL', 'Telegram-Outbound-Commit'):
+            if line.startswith(name + ':'):
+                if name in fields:
+                    raise ValueError('Duplicate outbound release trailer')
+                fields[name] = line.split(':', 1)[1].strip()
+    if not fields:
+        return None
+    url, commit = fields.get('Telegram-Outbound-URL', ''), fields.get('Telegram-Outbound-Commit', '')
+    if (not re.fullmatch(r'https://[a-z0-9][a-z0-9-]{0,61}[a-z0-9]\.onrender\.com', url)
+            or not re.fullmatch('[a-f0-9]{40}', commit)):
+        raise ValueError('Invalid outbound release configuration')
+    return url, commit
+
+
+def requested_outbound_service():
+    if (os.environ.get('CSS_TELEGRAM_OUTBOUND_SETUP') != '1' or os.environ.get('GITHUB_ACTIONS') != 'true'
+            or os.environ.get('GITHUB_REF') != 'refs/heads/main'
+            or os.environ.get('GITHUB_REPOSITORY') != 'jongsky25/css-is'):
+        return None
+    try:
+        message = subprocess.check_output(['git', 'log', '-1', '--format=%B'], text=True)
+        return outbound_release_config(message)
+    except Exception:
+        sys.exit('ABORT — outbound release metadata is invalid or unavailable.')
+
+
+def _outbound_public_read(url):
+    class NoRedirect(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self, *args, **kwargs): return None
+    opener = urllib.request.build_opener(NoRedirect())
+    request = urllib.request.Request(url, headers={'User-Agent': 'office-connect-outbound-preflight'})
+    with opener.open(request, timeout=60) as response:
+        body = response.read(4097)
+    if len(body) > 4096:
+        raise ValueError('Oversized preflight response')
+    return json.loads(body)
+
+
+def prepare_outbound_service(api, configuration, persist_on):
+    """Verify the owned service, secure backup, then set only its public URL."""
+    if not persist_on or '--skip-backup' in sys.argv or os.environ.get('CSS_DEPLOY_SKIP_BACKUP') == '1':
+        sys.exit('ABORT — outbound setup requires the persistent live backup gate.')
+    url, commit = configuration
+    try:
+        health = _outbound_public_read(url + '/health')
+        network = _outbound_public_read(url + '/connection')
+        if (not isinstance(health, dict) or health.get('ok') is not True or type(health.get('protocol')) is not int
+                or health['protocol'] != 1 or health.get('source') != LIVE_BASE or health.get('commit') != commit
+                or not isinstance(network, dict) or network.get('state') != 'reached'
+                or type(network.get('http_status')) is not int or not 100 <= network['http_status'] <= 599):
+            raise ValueError('Service preflight failed')
+    except Exception:
+        sys.exit('ABORT — outbound service source or connectivity could not be verified.')
+    secure_predeploy_backup()  # Any environment update can restart the live Space.
+    try:
+        current = api.get_space_variables(REPO_ID).get('CSS_TELEGRAM_OUTBOUND_URL')
+        if getattr(current, 'value', None) != url:
+            api.add_space_variable(REPO_ID, key='CSS_TELEGRAM_OUTBOUND_URL', value=url)
+    except Exception:
+        sys.exit('ABORT — outbound hosting configuration could not be saved.')
+    print('Owned Telegram outbound service verified; public hosting configuration is ready.')
+
+
 def telegram_snapshot_summary(path):
     """Read only queue-state totals from the already verified pre-deploy backup."""
     conn = None
@@ -158,13 +225,13 @@ def telegram_ops_summary(html):
     network = worker.get('network')
     if isinstance(network, dict):
         result['network'] = {}
-        for name in ('requests', 'httpx'):
+        for name in ('requests', 'httpx', 'outbound'):
             item = network.get(name)
             if not isinstance(item, dict):
                 continue
             safe = {}
             for key, allowed in (
-                ('state', {'ok', 'http_error', 'invalid_response', 'failed', 'not_configured'}),
+                ('state', {'ok', 'http_error', 'invalid_response', 'failed', 'not_configured', 'not_ready'}),
                 ('error', {'tls_certificate', 'tls', 'dns', 'proxy', 'connect_timeout',
                            'read_timeout', 'timeout', 'connection', 'protocol',
                            'client_error', 'transport_failure'}),
@@ -174,6 +241,8 @@ def telegram_ops_summary(html):
             status = item.get('http_status')
             if type(status) is int and 100 <= status <= 599:
                 safe['http_status'] = status
+            if type(item.get('bot_username_matches')) is bool:
+                safe['bot_username_matches'] = item['bot_username_matches']
             result['network'][name] = safe
     return result
 
@@ -188,9 +257,9 @@ def report_live_telegram_status():
         opener, _ = pb._opener()
         pb.login(opener, LIVE_BASE, os.environ['CSS_ADMIN_USER'], os.environ['CSS_ADMIN_PASS'])
         for attempt in range(3):
-            suffix = '?telegram_probe=1' if attempt == 0 else ''
+            suffix = '?telegram_probe=1' if attempt in (0, 2) else ''
             request = urllib.request.Request(LIVE_BASE + '/ops' + suffix, headers={'User-Agent': 'deploy-hf-telegram-health'})
-            with opener.open(request, timeout=60 if attempt == 0 else 30) as response:
+            with opener.open(request, timeout=60 if attempt in (0, 2) else 30) as response:
                 body = response.read(2 * 1024 * 1024 + 1)
             if len(body) > 2 * 1024 * 1024:
                 raise ValueError('Oversized page')
@@ -205,6 +274,7 @@ def report_live_telegram_status():
         return False
 
 RUNTIME_PY = [
+    "telegram_outbound_client.py", "telegram_outbound_protocol.py",
     "app.py", "css_is_engine.py", "storage.py", "tzutil.py", "fix_timezone_history.py",
     "dashboard_insights.py", "dashboard_export.py", "dashboard_docs.py", "report_docs.py",
     "csm_report.py", "auth.py", "request_security.py", "request_reads.py", "browser_security.py", "mailer.py", "backups.py", "retention.py", "monitoring.py",
@@ -530,7 +600,10 @@ def main():
 
     # Under persistence a deploy RESTARTS the Space and boot-restore loads the
     # newest bucket snapshot — so secure a fresh, verified one FIRST or abort.
-    if persist_on:
+    outbound_service = requested_outbound_service()
+    if outbound_service:
+        prepare_outbound_service(api, outbound_service, persist_on)
+    elif persist_on:
         secure_predeploy_backup()
 
     res = api.upload_folder(

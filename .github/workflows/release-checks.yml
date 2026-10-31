@@ -55,7 +55,11 @@ jobs:
           docker run --rm --network none office-connect:dependency-audit python -m pip check
           docker run --rm --network none office-connect:dependency-audit python -m pip freeze --all > dependency-results/runtime-installed.txt
           docker image inspect office-connect:dependency-audit --format '{{.Id}}' > dependency-results/image-id.txt
-          sha256sum requirements*.txt Dockerfile > dependency-results/source-sha256.txt
+          docker build --file Dockerfile.telegram-outbound --tag office-connect-telegram:dependency-audit .
+          docker run --rm --network none office-connect-telegram:dependency-audit python -m pip check
+          docker run --rm --network none office-connect-telegram:dependency-audit python -m pip freeze --all > dependency-results/telegram-outbound-installed.txt
+          docker image inspect office-connect-telegram:dependency-audit --format '{{.Id}}' > dependency-results/telegram-outbound-image-id.txt
+          sha256sum requirements*.txt Dockerfile Dockerfile.telegram-outbound > dependency-results/source-sha256.txt
       - name: Verify vendored browser dependency
         run: |
           python scripts/check_vendor_dependencies.py --audit-output dependency-results/vendor-audit.json
@@ -79,7 +83,7 @@ jobs:
           done
           .venv-audit/bin/python -m pip freeze --all > dependency-results/tools-installed.txt
           python scripts/check_dependency_audit.py shared dependency-results/runtime-installed.txt dependency-results/test-installed.txt
-          for scope in test tools deploy; do
+          for scope in test tools deploy telegram-outbound; do
             .venv-audit/bin/pip-audit -r "dependency-results/${scope}-installed.txt" --no-deps --disable-pip --strict --progress-spinner off -f json -o "dependency-results/${scope}-audit.json"
             python scripts/check_dependency_audit.py report "dependency-results/${scope}-installed.txt" "dependency-results/${scope}-audit.json"
           done

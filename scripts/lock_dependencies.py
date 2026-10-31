@@ -10,6 +10,7 @@ LOCKS = {
     'requirements-test.txt': ('requirements-test.in', 'requirements.in', 'requirements.txt'),
     'requirements-tools.txt': ('requirements-tools.in',),
     'requirements-deploy.txt': ('requirements-deploy.in',),
+    'requirements-telegram-outbound.txt': ('requirements-telegram-outbound.in', 'requirements.txt'),
 }
 
 

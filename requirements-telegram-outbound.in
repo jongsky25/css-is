@@ -1,0 +1,10 @@
+# Keep the isolated service on exactly the application-audited package versions.
+-c requirements.txt
+pip
+setuptools
+wheel
+cryptography
+fastapi
+httpx
+requests
+uvicorn

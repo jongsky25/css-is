@@ -11,6 +11,7 @@ SAFE_METHODS = frozenset({'GET', 'HEAD', 'OPTIONS'})
 CSRF_EXCEPTIONS = {
     '/offsite-backup/ping': 'Shared X-Backup-Token secret; no session authority',
     '/integrations/telegram/webhook': 'Telegram secret header; neutral private help only, no session authority',
+    '/integrations/telegram/outbound-permit': 'Signed bot-source request and one-time eligible delivery lease; no session authority',
     '/integrations/gmail/documents': 'Timestamped body HMAC; no session authority',
     '/r/{qr_token}': 'Public survey token, response window and submission deduplication',
     '/seq': 'Public survey tokens, response windows and submission deduplication',

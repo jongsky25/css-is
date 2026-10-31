@@ -65,7 +65,7 @@ def test_report_reads_only_ops_with_existing_credentials_and_bounded_samples(mon
         def open(self, request, timeout):
             reads.append(request.full_url)
             assert request.get_method() == 'GET'
-            assert timeout == (60 if len(reads) == 1 else 30)
+            assert timeout == (60 if len(reads) in (1, 3) else 30)
             return Response()
     opener = Opener()
     monkeypatch.setattr(pull_backup, '_opener', lambda: (opener, None))
@@ -74,7 +74,7 @@ def test_report_reads_only_ops_with_existing_credentials_and_bounded_samples(mon
     assert deploy.report_live_telegram_status() is True
     output = capsys.readouterr().out
     assert len(logins) == 1
-    assert reads == [deploy.LIVE_BASE + '/ops?telegram_probe=1', deploy.LIVE_BASE + '/ops', deploy.LIVE_BASE + '/ops']
+    assert reads == [deploy.LIVE_BASE + '/ops?telegram_probe=1', deploy.LIVE_BASE + '/ops', deploy.LIVE_BASE + '/ops?telegram_probe=1']
     assert sleeps == [35, 35] and output.count('Telegram diagnostics:') == 3
     assert '"state": "failed"' in output
     assert 'private-user' not in output and 'private-password' not in output and 'Private staff' not in output
