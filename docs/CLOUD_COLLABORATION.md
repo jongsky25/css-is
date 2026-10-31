@@ -44,6 +44,7 @@ external settings verified only after observing them. Preserve existing release
 gates; documentation changes are not an excuse to bypass the version policy.
 
 Step 2 commands and isolation details: [Cloud workspace](CLOUD_WORKSPACE.md).
+Step 4 preview implementation and access setup: [Hugging Face preview](HF_PREVIEW_SETUP.md).
 
 ## Feature workflow after setup
 

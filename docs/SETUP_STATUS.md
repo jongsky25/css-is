@@ -3,7 +3,7 @@
 Updated: 2026-10-31. Repository: `jongsky25/css-is` (Office Connect BLHSD).
 Setup branch: `setup/cloud-mobile-continuity`.
 
-## Current step: 3 — complete; main protection verified
+## Current step: 4 — Hugging Face preview prepared; access setup pending
 
 Completed: root `AGENTS.md`, the new-chat handoff in
 `docs/CLOUD_COLLABORATION.md`, this checklist, and a README entry point.
@@ -74,11 +74,14 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
-Begin step 4: assess a separate staging/preview environment for phone review.
-Inspect the existing Hugging Face deployment and persistence requirements before
-choosing hosting. Use synthetic data, separate credentials and disabled real
-notifications. Do not merge or deploy this setup branch to production. Steps 1–3
-are complete; the historical observations below retain the earlier setup evidence.
+Complete the one-time private Hugging Face preview access setup in
+[HF_PREVIEW_SETUP.md](HF_PREVIEW_SETUP.md). First create a blank private Docker
+Space `equityinhealth/office-connect-preview` on CPU Basic, subject to the account's
+eligibility; do not purchase a plan or hardware. Add a new preview-only password
+secret there, then configure a fine-grained preview-only `HF_TOKEN` through secure
+cloud secret settings. No credential should be pasted into chat. Publish the
+prepared bundle and verify remote private access/build/mobile login before marking
+step 4 complete. Steps 1–3 are complete. Do not deploy this branch to production.
 
 ## Step 3 evidence — 2026-10-31, 14:15 UTC
 
@@ -133,3 +136,34 @@ requires `verification / Required checks` from GitHub Actions app `15368`, and
 blocks deletion and force pushes. The integration cannot bypass the rules.
 All intended settings are now verified. Step 3 is complete. Verification used
 read-only APIs; no test push to main, merge, workflow rerun or deployment occurred.
+
+## Step 4 evidence — 2026-10-31
+
+- User explicitly chose Hugging Face for preview instead of Render. No Render
+  resources were created or changed.
+- Target is fixed to `equityinhealth/office-connect-preview`; production target and
+  deployment script remain untouched. No preview has been created or uploaded.
+- No HF cached token or configured `HF_TOKEN` was available. Cloud environment
+  reports no secret bindings. GitHub Actions production secrets were not accessed.
+- Added `scripts/deploy_preview_hf.py`: dry-run defaults, code-only bundle, private
+  target check, committed-source provenance, and explicit publish flag. A staged
+  940-file bundle passed exclusion checks. Production databases, env files and
+  deploy scripts are not included. Generated metadata/Docker/README replace live
+  equivalents for the preview only.
+- Added `scripts/preview_app.py`: new temporary SQLite DB and synthetic admin on
+  each start, isolated signing key, scheduler disabled, inherited provider settings
+  removed, and Python/asyncio outbound socket guard. No real data is used.
+- Added visible PREVIEW banners to staged template copies, environment response
+  headers, noindex headers and a readiness endpoint. Source templates unchanged.
+- `tests/test_preview_setup.py`: two tests passed without skips, including staged
+  bundle startup, HTTP auth rejection/success, Chromium login at 390×844, banner,
+  untouched sentinel DB/persistence path, and external socket rejection. JUnit gate
+  passed. This does not prove deployed private access or an OS-level egress sandbox.
+- Isolated deployment SDK installed from hash-verified `requirements-deploy.txt`;
+  required HfApi method signatures verified. Dry-run made no network requests.
+- Current official Hugging Face docs confirm CPU Basic has no hourly charge but
+  new compute Spaces require eligible account plans. Eligibility remains unknown;
+  no plan/hardware/storage purchase was made.
+- Remaining: private Space, preview password secret, scoped credential, upload,
+  successful remote build, unauthorized-access rejection and authorized phone test.
+  No remote URL is claimed live. Full release suites/audits were not run.
