@@ -221,3 +221,13 @@ read-only APIs; no test push to main, merge, workflow rerun or deployment occurr
   security tests passed. Both JUnit gates passed without skips; diff check passed.
 - Publish and remote header verification follow this committed change. Phone
   acceptance remains pending. No production release or visibility change authorized.
+
+- Repair publication verified: Space commit
+  `5ac1982785c0298e0e9203c084a465f6d1ead53d`, source
+  `f03125c2d56e9f6f4f029e77ef821d91be46d076` confirmed from remote build metadata.
+  Runtime is RUNNING on CPU Basic. Authorized health/login both return 200.
+  Login now advertises `frame-ancestors 'self' https://huggingface.co` with no
+  X-Frame-Options header. Anonymous login remains hidden with HTTP 404.
+  Owner should retry the signed-in Hub page; iOS cookie restrictions may still
+  require the provider's temporary cross-site tracking workaround. Successful
+  remote phone login remains unverified; local mobile login passed.

@@ -10,8 +10,8 @@ Published on 2026-10-31 and verified **RUNNING** on CPU Basic. Authenticated
 metadata confirms private visibility and Docker SDK. `/preview-health` returns
 200 with the expected readiness text; `/login` returns 200 with the PREVIEW banner
 and preview environment header. Anonymous requests to both return 404.
-Source commit: `2cff502345d4c477985c80031c8c7663a0c4cc1a`.
-Space commit: `0d6467f4b82527f9546fe5fe20f3336918da39c8`.
+Source commit: `f03125c2d56e9f6f4f029e77ef821d91be46d076`.
+Space commit: `5ac1982785c0298e0e9203c084a465f6d1ead53d`.
 
 The preview password secret exists remotely; its value was not read or changed.
 Successful login and a mobile page action remain for the owner to verify using
