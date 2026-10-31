@@ -41,6 +41,11 @@ restricted.
 
 ## Repository enforcement requires administrator configuration
 
+Current live inspection (2026-10-31) confirms main is unprotected and has no active
+rules. Recent PR and deployment checks passed, but are not enforced before merge.
+See [step 3 evidence and phone setup instructions](GITHUB_PROTECTION_SETUP.md),
+including a ready-to-import ruleset. The policy has **not** been applied.
+
 Workflow files alone cannot prohibit a user from merging a failing pull request.
 The current GitHub connector cannot administer branch protection; its protection
 read returned HTTP 403, and its ruleset listing was empty. The local GitHub CLI

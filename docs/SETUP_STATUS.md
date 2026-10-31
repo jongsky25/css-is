@@ -3,7 +3,7 @@
 Updated: 2026-10-31. Repository: `jongsky25/css-is` (Office Connect BLHSD).
 Setup branch: `setup/cloud-mobile-continuity`.
 
-## Current step: 2 — cloud workspace completed
+## Current step: 3 — inspected; administrator action required
 
 Completed: root `AGENTS.md`, the new-chat handoff in
 `docs/CLOUD_COLLABORATION.md`, this checklist, and a README entry point.
@@ -58,8 +58,8 @@ access remains necessary in a fresh chat.
 - Repository is FastAPI/Jinja; Docker and CI specify Python 3.11.
 - PR CI already calls shared release checks, including Chromium and OCR prerequisites.
 - `.github/workflows/deploy-hf.yml` deploys main to Hugging Face after verification.
-- `docs/RELEASE_GATES.md` records an unresolved branch-protection enforcement gap.
-  Current GitHub rules have not yet been inspected in this setup.
+- Live branch/rule inspection confirms the branch-protection enforcement gap;
+  see step 3 below.
 - `DEPLOY.md` records conflicting historical persistence descriptions. Effective
   production storage and recovery have not been verified in this setup.
 
@@ -67,18 +67,36 @@ access remains necessary in a fresh chat.
 
 - [x] 1. Continuity files verified and saved remotely.
 - [x] 2. Reproducible cloud development/test workspace verified (limits above).
-- [ ] 3. Actual repository protection and CI enforcement verified.
+- [ ] 3. Inspection complete; protection must be enabled by an administrator and reverified.
 - [ ] 4. Separate preview/staging usable from a phone.
 - [ ] 5. Hosting/log/storage access and recovery verified.
 - [ ] 6. Monitoring gaps assessed and reusable workflow documented.
 
 ## Next action
 
-Begin step 3: inspect actual main branch rules/protection and current CI results.
-Reconcile the enforcement gap documented in `docs/RELEASE_GATES.md`; do not infer
-enforcement from workflow files. Do not merge this setup branch or trigger a
-production deployment as part of that inspection. Do not install extra plugins
-before identifying an actual missing capability.
+The user must enable the prepared main ruleset in GitHub Settings → Rules.
+Follow [phone instructions and evidence](GITHUB_PROTECTION_SETUP.md), or import
+`.github/rulesets/main.json`. This file is a proposal, not applied configuration.
+Once saved, re-read live rules and details before marking step 3 complete. Then
+proceed to step 4 (separate staging/preview). Do not merge or deploy this setup branch.
+
+## Step 3 evidence — 2026-10-31, 14:15 UTC
+
+- Main is `aaef9d3da0ac5289ca79b1e458c249a404292ddf`; branch endpoint reports
+  `protected: false`, required status checks off, and no contexts.
+- Ruleset listing and active main branch rules both returned empty lists.
+- Detailed classic protection returned HTTP 403 through connector and gh; this
+  integration lacks administration access. The connector has no rule write tool.
+- Latest five workflow runs succeeded. Latest PR CI `41201937781` and main deploy
+  `41206532759` each succeeded on attempt 2; their job lists confirm metadata,
+  dependency audit, both test orders and aggregate gate passed. No reruns triggered.
+- Required check name confirmed from the actual check run:
+  `verification / Required checks`, GitHub Actions integration ID `15368`.
+- Prepared a policy requiring PRs, the current aggregate check, up-to-date branches,
+  resolved review threads, no bypasses, and blocking deletion/force pushes.
+  It requires zero approvals to support a solo maintainer. Not yet applied.
+- Changes are documentation/configuration proposals only. No live settings, main
+  commits, workflows, deployments, or application behavior were changed.
 
 ## Release status
 
