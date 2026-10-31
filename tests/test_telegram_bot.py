@@ -35,6 +35,9 @@ def setup(workspace, monkeypatch):
     monkeypatch.setenv('CSS_TELEGRAM_WEBHOOK_SECRET', SECRET)
     monkeypatch.setenv('CSS_TELEGRAM_INBOUND_ENABLED', '1')
     monkeypatch.setenv('CSS_TELEGRAM_DELIVERY_ENABLED', '1')
+    # These cases exercise the existing asynchronous Bot API worker. The
+    # webhook transport has separate end-to-end cases with this override removed.
+    monkeypatch.setenv('CSS_TELEGRAM_REPLY_TRANSPORT', 'direct')
     monkeypatch.setattr(bot, 'now_utc', lambda: NOW)
     app = FastAPI()
     app.include_router(bot.make_router(lambda: st.connect(path)))

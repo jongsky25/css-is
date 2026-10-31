@@ -72,6 +72,10 @@
 <div class="panel" id="telegram-health">
   <h2>Telegram</h2>
   <script type="application/json" id="telegram-diagnostics">{{ {'version': build.version, 'commit': build.commit, 'worker': telegram}|tojson }}</script>
+  {% if telegram.reply_transport == 'webhook' %}
+  <p>Private linking, help, status, calendar and room lookup commands reply through Telegram's incoming connection. Responses handed to Telegram: {{ telegram.webhook_responses }}. Telegram provides no delivery confirmation for these responses; their delivery state remains uncertain.</p>
+  <p>Scheduled messages and group commands still require the outgoing Telegram connection shown below.</p>
+  {% endif %}
   <p><a href="/ops?telegram_probe=1">Check Telegram connection</a> (reads bot status without sending a message).</p>
   {% if telegram.network %}
   <ul>{% for client, outcome in telegram.network.items() %}
@@ -79,7 +83,7 @@
   {% endfor %}</ul>
   {% endif %}
   {% if telegram.scheduler_disabled %}
-  <p role="status">Background jobs are disabled (CSS_NO_SCHEDULER=1). Messages can reach the webhook, but replies will not be processed.</p>
+  <p role="status">Background jobs are disabled (CSS_NO_SCHEDULER=1). Queued messages will not be processed.{% if telegram.reply_transport == 'webhook' %} Supported private commands can still reply through the webhook.{% endif %}</p>
   {% elif telegram.state == 'not_started' %}
   <p role="status">The Telegram worker has not run since this process started.</p>
   {% elif telegram.state == 'failed' %}

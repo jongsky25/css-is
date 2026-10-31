@@ -1,3 +1,8 @@
+## 9.53 — October 31, 2026
+
+- Private Telegram linking, help, status, calendar and room lookups can reply through the incoming webhook connection.
+- Operations shows these responses separately because Telegram does not confirm their delivery.
+
 ## 9.52 — October 31, 2026
 
 - Add an administrator-requested, read-only Telegram connection check using `getMe` with the sending client and the existing alternative HTTPS client. Keep TLS verification, environment proxy settings, fixed destinations, bounded responses, a one-minute cache and one probe at a time. Never send or retry a message from this check.

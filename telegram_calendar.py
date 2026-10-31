@@ -1,4 +1,5 @@
 """Private, delegated calendar lookup. Queue metadata only; render current permitted data."""
+from contextlib import nullcontext
 import base64
 from datetime import date, timedelta
 import hashlib
@@ -188,11 +189,13 @@ def page(conn,delivery,query,bot,now):
     return {'text':text,'items':shown,'next_token':next_token}
 
 
-def render(conn,delivery,projection,bot,now):
+def render(conn,delivery,projection,bot,now, *, commit=True):
     if not descriptor(projection,bot):
         return None
     # One current snapshot; network I/O happens only after releasing the writer lock.
-    with transaction(conn):
+    if not commit and not conn.in_transaction:
+        raise RuntimeError("Caller-owned rendering requires a transaction")
+    with transaction(conn) if commit else nullcontext():
         try:
             result=page(conn,delivery,projection['query'],bot,now)
             return result['text'] if result else None

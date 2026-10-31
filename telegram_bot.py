@@ -69,11 +69,13 @@ def worker_status(conn):
                   switches={name: storage.enabled(name) for name in storage.SWITCHES},
                   bot_configured=transport.config() is not None,
                   webhook_configured=webhook_secret() is not None,
+                  reply_transport=reply_transport(),
                   link_origin_configured=links.origin() is not None,
                   provider=transport.last_send_status(), network=transport.last_connection_probe())
     try:
         status['updates'] = dict(conn.execute('SELECT state,count(*) FROM telegram_update GROUP BY state'))
         status['deliveries'] = dict(conn.execute('SELECT state,count(*) FROM telegram_delivery GROUP BY state'))
+        status['webhook_responses'] = conn.execute("SELECT count(*) FROM telegram_delivery WHERE error_code='webhook_response'").fetchone()[0]
         status['queue_available'] = True
     except sqlite3.Error:
         status.update(updates={}, deliveries={}, queue_available=False)
@@ -82,6 +84,10 @@ def worker_status(conn):
 
 def now_utc():
     return datetime.now(timezone.utc)
+
+
+def reply_transport():
+    return 'direct' if os.environ.get('CSS_TELEGRAM_REPLY_TRANSPORT') == 'direct' else 'webhook'
 
 
 def stamp(value):
@@ -190,7 +196,7 @@ def identity(conn, sender):
     return link['id'], link['generation'], bool(permitted)
 
 
-def receive(conn, clean, raw, bot, now):
+def receive(conn, clean, raw, bot, now, webhook_reply=None):
     with transaction(conn):
         if conn.execute('SELECT 1 FROM telegram_update WHERE bot_identity=? AND update_id=?',
                         (bot[0], clean['update_id'])).fetchone():
@@ -271,6 +277,10 @@ def receive(conn, clean, raw, bot, now):
             VALUES (?,?,?,?,?,?,?,?,?,?,?)''',
             (bot[0], clean['update_id'], clean['sender_id'], clean['chat_id'], clean['topic_id'], cid,
              generation, payload, hashlib.sha256(raw).hexdigest(), stamp(now), state))
+        if webhook_reply is not None:
+            packet = prepare_webhook_reply(conn, clean, bot, now)
+            if packet:
+                webhook_reply.append(packet)
     return 200
 
 
@@ -299,18 +309,63 @@ def make_router(get_conn):
         except (ValueError, UnicodeError, RecursionError):
             return JSONResponse({'error': 'invalid_input'}, status_code=400)
         conn = None
+        reply = []
         try:
             conn = get_conn()
-            status = receive(conn, clean, body, bot, now_utc())
+            inline = reply_transport() == 'webhook'
+            status = receive(conn, clean, body, bot, now_utc(), reply if inline else None)
         except sqlite3.Error:
             return JSONResponse({'error': 'temporarily_unavailable'}, status_code=503)
         finally:
             if conn is not None:
                 conn.close()
+        if reply and status == 200:
+            return JSONResponse(reply[0], headers={'Cache-Control': 'no-store'})
         return JSONResponse({'ok': status == 200}, status_code=status,
                             headers={'Retry-After': '60'} if status == 429 else None)
 
     return router
+
+
+def prepare_webhook_reply(conn, clean, bot, now):
+    """One private command, atomically consumed before its webhook response.
+
+    Telegram does not return a result for webhook-embedded requests. Persist an
+    uncertain handoff, never an accepted delivery and never an automatic resend.
+    Only this authenticated update can supply the destination; no backlog drains.
+    """
+    if (not storage.enabled('inbound') or not storage.enabled('delivery')
+            or transport.config() != bot or clean['chat_id'] != clean['sender_id']
+            or not clean['chat_id'] or clean['chat_id'] < 0 or clean['topic_id'] is not None
+            or clean['command'] not in ('/start', '/help', '/status', '/confirm',
+                '/calendar', '/calendar_next', '/room_slots', '/my_rooms', '/room_status')):
+        return None
+    found = rows(conn, 'SELECT * FROM telegram_update WHERE bot_identity=? AND update_id=?',
+                 (bot[0], clean['update_id']))
+    if not found or found[0]['state'] != 'queued':
+        return None
+    update = found[0]
+    _process_update_in_transaction(conn, update, bot, now)
+    found = rows(conn, "SELECT * FROM telegram_delivery WHERE dedupe_key=? AND state='queued' AND attempts=0",
+                 ('help:' + str(update['id']),))
+    if not found:
+        return None
+    delivery = found[0]
+    projection = json.loads(delivery['projection_json'])
+    message = render_delivery(conn, delivery, projection, bot, now, commit=False) if eligible(conn, delivery, bot, now) else None
+    if (not message or delivery['chat_id'] != clean['chat_id'] or delivery['expires_at'] <= stamp(now)
+            or not storage.enabled('inbound') or not storage.enabled('delivery') or transport.config() != bot
+            or not eligible(conn, delivery, bot, now)):
+        conn.execute("UPDATE telegram_delivery SET state='cancelled',error_code='ineligible',updated_at=? WHERE id=?",
+                     (stamp(now), delivery['id']))
+        return None
+    consumed = conn.execute("""UPDATE telegram_delivery SET state='uncertain',attempts=attempts+1,
+        error_code='webhook_response',updated_at=? WHERE id=? AND state='queued' AND attempts=0""",
+        (stamp(now), delivery['id'])).rowcount
+    if consumed != 1:
+        return None
+    return {'method': 'sendMessage', 'chat_id': delivery['chat_id'], 'text': message,
+            'link_preview_options': {'is_disabled': True}}
 
 
 def process_updates(conn, now):
@@ -332,88 +387,93 @@ def process_updates(conn, now):
             if not found:
                 return _
             update = found[0]
-            cid, generation, permitted = identity(conn, update['sender_id'])
-            valid = (permitted and cid == update['connection_id'] and generation == update['generation']
-                     and update['bot_identity'] == bot[0] and update['received_at'] > stamp(now - timedelta(hours=24)))
-            try:
-                projection = json.loads(update['payload_json'] or '{}')
-            except ValueError:
-                projection = {}
-            if isinstance(projection,dict) and projection.get('kind')=='meeting_action':
-                continue  # Arrived after the action-worker check; claim it on the next iteration.
-            normal = projection == {'kind': 'help', 'bot': bot[0], 'fingerprint': bot[2]}
-            command = projection.get('command') if isinstance(projection, dict) else None
-            command_shape = {'kind','command','bot','fingerprint'} | ({'argument_hash'} if command == '/confirm' else set())
-            special = (isinstance(projection, dict) and set(projection) == command_shape
-                       and projection.get('kind') == 'command' and projection.get('bot') == bot[0]
-                       and projection.get('fingerprint') == bot[2]
-                       and command in ('/start','/status','/confirm','/disconnect')
-                       and update['chat_id'] == update['sender_id'] and update['chat_id'] > 0
-                       and update['received_at'] > stamp(now-timedelta(minutes=10)))
-            if special and command == '/disconnect':
-                linked = rows(conn, 'SELECT a.username FROM telegram_connection c JOIN admin_user a ON a.id=c.account_id WHERE c.telegram_user_id=? AND c.revoked_at IS NULL', (update['sender_id'],))
-                links.disconnect_in_transaction(conn, now=now, sender=update['sender_id'])
-                if linked:
-                    import storage as st
-                    st.audit(conn, linked[0]['username'], 'telegram_disconnect', summary='Disconnected private Telegram access from the bot.', commit=False)
-                projection, valid = None, False
-            elif special and command == '/start' and storage.enabled('link'):
-                projection = links.start(conn, update['sender_id'], bot, datetime.fromisoformat(update['received_at']))
-                cid, generation, _permitted = identity(conn, update['sender_id'])
-                valid = True
-            elif special and command == '/confirm' and storage.enabled('link'):
-                result = links.confirm(conn, update['sender_id'], projection.get('argument_hash'), bot, now)
-                valid = result is not None
-                if valid:
-                    cid, generation = result
-                    projection = {'kind': 'status', 'bot': bot[0], 'fingerprint': bot[2]}
-            elif special and command == '/status':
-                projection = {'kind': 'status', 'bot': bot[0], 'fingerprint': bot[2]}
-            else:
-                valid = valid and normal
-            group_route = None
-            if isinstance(projection, dict) and projection.get('kind') == 'group_status':
-                group_route = groups.route(conn, update['chat_id'], update['topic_id'], bot)
-                expected = {'kind': 'group_status', 'bot': bot[0], 'fingerprint': bot[2],
-                            'registration_id': group_route['id'], 'registration_generation': group_route['generation']} if group_route else None
-                valid = (permitted and cid is not None and cid == update['connection_id'] and generation == update['generation']
-                         and update['received_at'] > stamp(now-timedelta(hours=24)) and group_route is not None and projection == expected)
-                if valid:
-                    projection = {'kind': 'group_status', 'bot': bot[0], 'fingerprint': bot[2]}
-            if isinstance(projection,dict) and projection.get('kind')=='group_read':
-                projection=dict(projection)
-                reg_id=projection.pop('registration_id',None);reg_gen=projection.pop('registration_generation',None)
-                context={**update,'registration_id':reg_id,'registration_generation':reg_gen,
-                         'projection_json':json.dumps(projection)}
-                authorized=groups.authorize_delivery(conn,context,bot)
-                group_route=authorized[0] if authorized else None
-                valid=(group_route is not None and cid==update['connection_id'] and generation==update['generation']
-                       and update['received_at']>stamp(now-timedelta(hours=24)))
-            if calendar_reads.descriptor(projection, bot):
-                context = {'connection_id': cid, 'generation': generation, 'chat_id': update['chat_id'],
-                           'topic_id': update['topic_id'], 'registration_id': None}
-                valid = (cid is not None and cid == update['connection_id'] and generation == update['generation']
-                         and update['received_at'] > stamp(now-timedelta(hours=24))
-                         and calendar_reads.actor(conn, context, bot) is not None)
-            if room_reads.descriptor(projection, bot):
-                context = {'connection_id': cid, 'generation': generation, 'chat_id': update['chat_id'],
-                           'topic_id': update['topic_id'], 'registration_id': None}
-                valid = (cid is not None and cid == update['connection_id'] and generation == update['generation']
-                         and update['received_at'] > stamp(now-timedelta(hours=24))
-                         and room_reads.actor(conn, context, bot) is not None)
-            if valid:
-                conn.execute('''INSERT INTO telegram_delivery
-                    (dedupe_key,event_key,connection_id,generation,chat_id,projection_json,expires_at,created_at,updated_at)
-                    VALUES (?,?,?,?,?,?,?,?,?) ON CONFLICT(dedupe_key) DO NOTHING''',
-                    ('help:' + str(update['id']), str(bot[0]), cid, generation, update['chat_id'],
-                     json.dumps(projection), stamp(datetime.fromisoformat(update['received_at']) + timedelta(hours=24)), stamp(now), stamp(now)))
-                if group_route:
-                    conn.execute('''UPDATE telegram_delivery SET registration_id=?,registration_generation=?,topic_id=? WHERE dedupe_key=?''',
-                        (group_route['id'], group_route['generation'], update['topic_id'], 'help:' + str(update['id'])))
-            conn.execute('''UPDATE telegram_update SET state=?,payload_json=NULL,claim_token=NULL,lease_until=NULL,
-                attempts=attempts+1,error_code=? WHERE id=?''',
-                ('processed' if valid else 'cancelled', None if valid else 'ineligible', update['id']))
+            _process_update_in_transaction(conn, update, bot, now)
     return MAX_TICK
+
+
+def _process_update_in_transaction(conn, update, bot, now):
+    """Apply one queued projection under the caller's writer transaction."""
+    cid, generation, permitted = identity(conn, update['sender_id'])
+    valid = (permitted and cid == update['connection_id'] and generation == update['generation']
+             and update['bot_identity'] == bot[0] and update['received_at'] > stamp(now - timedelta(hours=24)))
+    try:
+        projection = json.loads(update['payload_json'] or '{}')
+    except ValueError:
+        projection = {}
+    if isinstance(projection,dict) and projection.get('kind')=='meeting_action':
+        return  # The action worker owns this update.
+    normal = projection == {'kind': 'help', 'bot': bot[0], 'fingerprint': bot[2]}
+    command = projection.get('command') if isinstance(projection, dict) else None
+    command_shape = {'kind','command','bot','fingerprint'} | ({'argument_hash'} if command == '/confirm' else set())
+    special = (isinstance(projection, dict) and set(projection) == command_shape
+               and projection.get('kind') == 'command' and projection.get('bot') == bot[0]
+               and projection.get('fingerprint') == bot[2]
+               and command in ('/start','/status','/confirm','/disconnect')
+               and update['chat_id'] == update['sender_id'] and update['chat_id'] > 0
+               and update['received_at'] > stamp(now-timedelta(minutes=10)))
+    if special and command == '/disconnect':
+        linked = rows(conn, 'SELECT a.username FROM telegram_connection c JOIN admin_user a ON a.id=c.account_id WHERE c.telegram_user_id=? AND c.revoked_at IS NULL', (update['sender_id'],))
+        links.disconnect_in_transaction(conn, now=now, sender=update['sender_id'])
+        if linked:
+            import storage as st
+            st.audit(conn, linked[0]['username'], 'telegram_disconnect', summary='Disconnected private Telegram access from the bot.', commit=False)
+        projection, valid = None, False
+    elif special and command == '/start' and storage.enabled('link'):
+        projection = links.start(conn, update['sender_id'], bot, datetime.fromisoformat(update['received_at']))
+        cid, generation, _permitted = identity(conn, update['sender_id'])
+        valid = True
+    elif special and command == '/confirm' and storage.enabled('link'):
+        result = links.confirm(conn, update['sender_id'], projection.get('argument_hash'), bot, now)
+        valid = result is not None
+        if valid:
+            cid, generation = result
+            projection = {'kind': 'status', 'bot': bot[0], 'fingerprint': bot[2]}
+    elif special and command == '/status':
+        projection = {'kind': 'status', 'bot': bot[0], 'fingerprint': bot[2]}
+    else:
+        valid = valid and normal
+    group_route = None
+    if isinstance(projection, dict) and projection.get('kind') == 'group_status':
+        group_route = groups.route(conn, update['chat_id'], update['topic_id'], bot)
+        expected = {'kind': 'group_status', 'bot': bot[0], 'fingerprint': bot[2],
+                    'registration_id': group_route['id'], 'registration_generation': group_route['generation']} if group_route else None
+        valid = (permitted and cid is not None and cid == update['connection_id'] and generation == update['generation']
+                 and update['received_at'] > stamp(now-timedelta(hours=24)) and group_route is not None and projection == expected)
+        if valid:
+            projection = {'kind': 'group_status', 'bot': bot[0], 'fingerprint': bot[2]}
+    if isinstance(projection,dict) and projection.get('kind')=='group_read':
+        projection=dict(projection)
+        reg_id=projection.pop('registration_id',None);reg_gen=projection.pop('registration_generation',None)
+        context={**update,'registration_id':reg_id,'registration_generation':reg_gen,
+                 'projection_json':json.dumps(projection)}
+        authorized=groups.authorize_delivery(conn,context,bot)
+        group_route=authorized[0] if authorized else None
+        valid=(group_route is not None and cid==update['connection_id'] and generation==update['generation']
+               and update['received_at']>stamp(now-timedelta(hours=24)))
+    if calendar_reads.descriptor(projection, bot):
+        context = {'connection_id': cid, 'generation': generation, 'chat_id': update['chat_id'],
+                   'topic_id': update['topic_id'], 'registration_id': None}
+        valid = (cid is not None and cid == update['connection_id'] and generation == update['generation']
+                 and update['received_at'] > stamp(now-timedelta(hours=24))
+                 and calendar_reads.actor(conn, context, bot) is not None)
+    if room_reads.descriptor(projection, bot):
+        context = {'connection_id': cid, 'generation': generation, 'chat_id': update['chat_id'],
+                   'topic_id': update['topic_id'], 'registration_id': None}
+        valid = (cid is not None and cid == update['connection_id'] and generation == update['generation']
+                 and update['received_at'] > stamp(now-timedelta(hours=24))
+                 and room_reads.actor(conn, context, bot) is not None)
+    if valid:
+        conn.execute('''INSERT INTO telegram_delivery
+            (dedupe_key,event_key,connection_id,generation,chat_id,projection_json,expires_at,created_at,updated_at)
+            VALUES (?,?,?,?,?,?,?,?,?) ON CONFLICT(dedupe_key) DO NOTHING''',
+            ('help:' + str(update['id']), str(bot[0]), cid, generation, update['chat_id'],
+             json.dumps(projection), stamp(datetime.fromisoformat(update['received_at']) + timedelta(hours=24)), stamp(now), stamp(now)))
+        if group_route:
+            conn.execute('''UPDATE telegram_delivery SET registration_id=?,registration_generation=?,topic_id=? WHERE dedupe_key=?''',
+                (group_route['id'], group_route['generation'], update['topic_id'], 'help:' + str(update['id'])))
+    conn.execute('''UPDATE telegram_update SET state=?,payload_json=NULL,claim_token=NULL,lease_until=NULL,
+        attempts=attempts+1,error_code=? WHERE id=?''',
+        ('processed' if valid else 'cancelled', None if valid else 'ineligible', update['id']))
 
 
 def eligible(conn, delivery, bot, now=None):
@@ -442,6 +502,40 @@ def eligible(conn, delivery, bot, now=None):
             and permitted and cid == delivery['connection_id'] and generation == delivery['generation']
             and (meeting_lookup or room_lookup or calendar_lookup or linking or projection in ({'kind': 'help', 'bot': bot[0], 'fingerprint': bot[2]},
                                           {'kind': 'status', 'bot': bot[0], 'fingerprint': bot[2]})))
+
+
+def render_delivery(conn, delivery, projection, bot, now, *, commit=True):
+    """Render current authorized content without calling a provider."""
+    if projection['kind']==reminders.KIND:
+        message=reminders.render(conn,delivery,projection,bot,now)
+    elif projection['kind']==notices.KIND:
+        message=notices.render(conn,delivery,projection,bot,now)
+    elif projection['kind'] in meetings.KINDS:
+        try:
+            message = meetings.render(conn,delivery,projection,now)
+        except ValueError:
+            message = None
+    elif projection['kind'] == 'calendar':
+        message = (calendar_reads.render(conn, delivery, projection, bot, now) if commit else
+                   calendar_reads.render(conn, delivery, projection, bot, now, commit=False))
+    elif projection['kind'] == 'rooms':
+        message = (room_reads.render(conn, delivery, projection, bot, now) if commit else
+                   room_reads.render(conn, delivery, projection, bot, now, commit=False))
+    elif projection['kind'] == 'group_read':
+        message = shared_reads.render(conn, delivery, projection, bot, now)
+    elif projection['kind'] == 'group_status':
+        message = groups.STATUS
+    elif projection['kind'] == 'help':
+        message = (HELP if not storage.enabled('link') else
+            'Office Connect private commands: /start to link, /status to check your connection, '
+            '/disconnect to revoke it. Never send your Office Connect password here.'
+            + (' Private calendar lookup: /calendar (Asia/Manila).' if storage.enabled('calendar_read') else '')
+            + (' Private room lookup: /room_slots, /my_rooms, /room_status REFERENCE.' if storage.enabled('rooms_read') else '')
+            + (' Guided meeting pilot: /meeting (separate read/create consent required).' if storage.enabled('calendar_create') else '')
+            + (' Linked room request pilot: /room_request (separate room request/read and calendar read consent).' if storage.enabled('rooms_request') else ''))
+    else:
+        message = links.render(conn, projection, delivery['chat_id'], bot, now)
+    return message
 
 
 def deliver(conn, now=None):
@@ -509,33 +603,7 @@ def deliver(conn, now=None):
             outcome, message_id, retry = 'cancelled', None, None
         else:
             projection = json.loads(delivery['projection_json'])
-            if projection['kind']==reminders.KIND:
-                message=reminders.render(conn,delivery,projection,bot,clock())
-            elif projection['kind']==notices.KIND:
-                message=notices.render(conn,delivery,projection,bot,clock())
-            elif projection['kind'] in meetings.KINDS:
-                try:
-                    message = meetings.render(conn,delivery,projection,clock())
-                except ValueError:
-                    message = None
-            elif projection['kind'] == 'calendar':
-                message = calendar_reads.render(conn, delivery, projection, bot, clock())
-            elif projection['kind'] == 'rooms':
-                message = room_reads.render(conn, delivery, projection, bot, clock())
-            elif projection['kind'] == 'group_read':
-                message = shared_reads.render(conn, delivery, projection, bot, clock())
-            elif projection['kind'] == 'group_status':
-                message = groups.STATUS
-            elif projection['kind'] == 'help':
-                message = (HELP if not storage.enabled('link') else
-                    'Office Connect private commands: /start to link, /status to check your connection, '
-                    '/disconnect to revoke it. Never send your Office Connect password here.'
-                    + (' Private calendar lookup: /calendar (Asia/Manila).' if storage.enabled('calendar_read') else '')
-                    + (' Private room lookup: /room_slots, /my_rooms, /room_status REFERENCE.' if storage.enabled('rooms_read') else '')
-                    + (' Guided meeting pilot: /meeting (separate read/create consent required).' if storage.enabled('calendar_create') else '')
-                    + (' Linked room request pilot: /room_request (separate room request/read and calendar read consent).' if storage.enabled('rooms_request') else ''))
-            else:
-                message = links.render(conn, projection, delivery['chat_id'], bot, clock())
+            message = render_delivery(conn, delivery, projection, bot, clock())
             # Rendering can race with disconnect/config changes; fence again at the I/O boundary.
             if message and (not storage.enabled('delivery') or transport.config()!=bot
                     or not eligible(conn, delivery, bot, clock())

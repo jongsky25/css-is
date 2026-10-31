@@ -1,6 +1,6 @@
 # Office Connect ↔ Telegram delivery plan
 
-Status: T0–T4.3.2 merged; T4.4 live pilot incomplete; silent private replies isolated to outbound transport failure before HTTP response. Source defaults remain off; live v9.51 diagnostics verify inbound/delivery/link enabled and worker healthy.
+Status: T0–T4.3.2 merged; T4.4 live pilot incomplete; silent private replies isolated to outbound transport failure before HTTP response. Source activation defaults remain off; live v9.52 diagnostics verify inbound/delivery/link enabled and worker healthy. Hugging Face-only webhook response repair is in progress.
 Last updated: 2026-10-31.
 Repository: jongsky25/css-is.
 Planning baseline inspected: abf3141 (merge of PR #458).
@@ -148,7 +148,7 @@ T0 merged in PR #465 at `4cd01a0bfd17ccf57dba12b05a24c72bfd098f29`. T1.1 merged 
 | T4.2 | Merged | Codex / 2026-10-25 | [PR #485](https://github.com/jongsky25/css-is/pull/485), `feat/telegram-t4-2-change-notices` | Safe notices through the existing durable sender; 927 regressions + 29 release tests passed | Merged at `e78dfcb`, release 8.75; all fresh CI passed; next T4.3.1 |
 | T4.3.1 | Merged | Codex / 2026-10-25 | [PR #486](https://github.com/jongsky25/css-is/pull/486), `feat/telegram-t4-3-1-preferences` | Channel controls and quiet hours; 1,013 regressions + 29 release tests passed | Merged at `3e88262`, release 8.76; all required CI passed; next T4.3.2 |
 | T4.3.2 | Merged | Codex / 2026-10-25 | [PR #487](https://github.com/jongsky25/css-is/pull/487), `d68fc899dd343f94235c2d4b1e49b27d824ed98b` | Durable private Telegram reminders; implementation evidence below | Operator supplied /ops build evidence for v8.77 / d68fc89 on 2026-10-27; replies remain unverified |
-| T4.4 | In progress; transport diagnosis | Codex / 2026-10-31 | [PR #493](https://github.com/jongsky25/css-is/pull/493) merged; `fix/telegram-provider-network` | Live v9.51 worker healthy; fresh request processed; outbound connection failed before HTTP response | Read-only connection probe in progress; no complete workflow verified |
+| T4.4 | In progress; private reply repair | Codex / 2026-10-31 | PR #493 and #567 deployed; `fix/telegram-webhook-replies` | Live v9.52 worker healthy; two clients time out before HTTP response; all components must remain on Hugging Face | Webhook response implementation under verification; scheduled/group/guided-action paths and complete workflow remain unverified |
 | T5–T7 | Planned | Unassigned | — | Not implemented | Actual T4.4 verification remains a prerequisite |
 
 ### T0 handoff — 2026-10-25
@@ -515,3 +515,11 @@ T2.2 merge reconciliation: preserved concurrent search release 8.60 and its runt
 - 2026-10-25: Confirmed PR #485 merged at `e78dfcb` after fresh CI and no ongoing merge. Completed the separate T4.3.1 preference/quiet-hour child in [PR #486](https://github.com/jongsky25/css-is/pull/486) with 1,013 passing regressions and 29 release checks; Markdown runbook and progress evidence are included in the same PR. Await its CI/review/merge before T4.3.2; no reminder scheduler or hosted activation is claimed.
 
 - 2026-10-25: Confirmed PR #486 merged at `3e88262` after full normal/shuffled CI, required checks and no ongoing/queued merge. Completed T4.3.2 separately in [PR #487](https://github.com/jongsky25/css-is/pull/487) with 1,130 passing regressions, 29 release tests and the Markdown runbook/progress handoff. Await new PR CI/review/merge before T4.4; no hosted activation is claimed.
+
+### Hugging Face-only private reply repair — October 31, 2026
+
+- The user requires every component to remain on Hugging Face. PR #568 was closed unmerged; no Render resource or hosting configuration was created.
+- Live v9.52 accepts authentic Telegram requests, but Requests reports `read_timeout` and HTTPX `connect_timeout` without an HTTP response. Read-only samples at 10:14–10:15 UTC showed a healthy worker, enabled inbound/delivery/link switches, nine processed updates, six uncertain deliveries and three cancellations. This does not establish a permanent platform restriction.
+- The 9.53 candidate uses Telegram's documented webhook-response `sendMessage` method for private linking/help/status/calendar/room lookup commands. Intake, current authorization, rendering and an uncertain one-time handoff share a writer transaction. Duplicate updates and the worker cannot resend it. No extra host, outbound proxy, token copy, migration, business grant or activation-switch change is required.
+- Telegram provides no success result/message ID for this method. Operations reports handoffs separately; scheduled messages, group commands and guided actions still need the outgoing connection. Full T4.4 remains incomplete. See [transport runbook](TELEGRAM_WEBHOOK_REPLIES.md).
+- Validation: 18 focused webhook cases passed, covering a real two-channel linking flow, private reads, revocation, switch/config changes, rollback, duplicate updates, destination isolation and concurrent worker/retry exclusion. Existing asynchronous-worker behavior remains separately tested. Broader regressions, full CI and actual hosted user receipt are pending.
