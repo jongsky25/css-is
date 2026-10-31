@@ -67,7 +67,7 @@ def setup(monkeypatch, *, old_url=None, bad_network=False, bad_commit=False, bac
 def test_service_commit_network_and_backup_precede_the_only_environment_write(monkeypatch):
     api, events = setup(monkeypatch)
     deploy.prepare_outbound_service(api, (URL, COMMIT), True)
-    assert events == [URL+'/health', URL+'/connection', 'backup', 'variables', 'configure']
+    assert events == [URL+'/health', URL+'/connection', 'backup', 'variables', 'configure', 'backup']
 
 
 @pytest.mark.parametrize('failure', ['bad_network', 'bad_commit', 'backup_fails'])
@@ -87,6 +87,18 @@ def test_same_configuration_is_idempotent_and_override_is_refused(monkeypatch):
     with pytest.raises(SystemExit):
         deploy.prepare_outbound_service(api, (URL, COMMIT), True)
     assert not events
+
+
+def test_second_backup_failure_stops_before_the_code_upload_restart(monkeypatch):
+    api, events = setup(monkeypatch)
+    def backup():
+        events.append('backup')
+        if events.count('backup') == 2:
+            raise SystemExit('Post-configuration backup unavailable')
+    monkeypatch.setattr(deploy, 'secure_predeploy_backup', backup)
+    with pytest.raises(SystemExit, match='Post-configuration backup unavailable'):
+        deploy.prepare_outbound_service(api, (URL, COMMIT), True)
+    assert events[-2:] == ['configure', 'backup']
 
 
 def test_service_lock_is_an_exact_subset_of_audited_application_versions():

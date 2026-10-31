@@ -127,12 +127,18 @@ def prepare_outbound_service(api, configuration, persist_on):
     except Exception:
         sys.exit('ABORT — outbound service source or connectivity could not be verified.')
     secure_predeploy_backup()  # Any environment update can restart the live Space.
+    changed = False
     try:
         current = api.get_space_variables(REPO_ID).get('CSS_TELEGRAM_OUTBOUND_URL')
         if getattr(current, 'value', None) != url:
             api.add_space_variable(REPO_ID, key='CSS_TELEGRAM_OUTBOUND_URL', value=url)
+            changed = True
     except Exception:
         sys.exit('ABORT — outbound hosting configuration could not be saved.')
+    if changed:
+        # Protect writes made after that environment restart, before the code-upload restart.
+        # If the old app is still starting, abort safely; a retry sees the URL already set.
+        secure_predeploy_backup()
     print('Owned Telegram outbound service verified; public hosting configuration is ready.')
 
 
