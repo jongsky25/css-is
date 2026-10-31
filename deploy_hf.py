@@ -145,6 +145,9 @@ def telegram_ops_summary(html):
         for key, allowed in (
             ('state', {'accepted', 'failed', 'retry_wait', 'uncertain'}),
             ('error', {'provider_rejected', 'rate_limited', 'transport_failure', 'response_unverified'}),
+            ('transport_error', {'tls_certificate', 'tls', 'dns', 'proxy', 'connect_timeout',
+                                 'read_timeout', 'timeout', 'connection', 'protocol',
+                                 'client_error', 'transport_failure'}),
         ):
             if isinstance(provider.get(key), str) and provider[key] in allowed:
                 safe[key] = provider[key]
@@ -152,6 +155,26 @@ def telegram_ops_summary(html):
         if type(status) is int and 100 <= status <= 599:
             safe['http_status'] = status
         result['provider'] = safe
+    network = worker.get('network')
+    if isinstance(network, dict):
+        result['network'] = {}
+        for name in ('requests', 'httpx'):
+            item = network.get(name)
+            if not isinstance(item, dict):
+                continue
+            safe = {}
+            for key, allowed in (
+                ('state', {'ok', 'http_error', 'invalid_response', 'failed', 'not_configured'}),
+                ('error', {'tls_certificate', 'tls', 'dns', 'proxy', 'connect_timeout',
+                           'read_timeout', 'timeout', 'connection', 'protocol',
+                           'client_error', 'transport_failure'}),
+            ):
+                if isinstance(item.get(key), str) and item[key] in allowed:
+                    safe[key] = item[key]
+            status = item.get('http_status')
+            if type(status) is int and 100 <= status <= 599:
+                safe['http_status'] = status
+            result['network'][name] = safe
     return result
 
 
@@ -165,8 +188,9 @@ def report_live_telegram_status():
         opener, _ = pb._opener()
         pb.login(opener, LIVE_BASE, os.environ['CSS_ADMIN_USER'], os.environ['CSS_ADMIN_PASS'])
         for attempt in range(3):
-            request = urllib.request.Request(LIVE_BASE + '/ops', headers={'User-Agent': 'deploy-hf-telegram-health'})
-            with opener.open(request, timeout=30) as response:
+            suffix = '?telegram_probe=1' if attempt == 0 else ''
+            request = urllib.request.Request(LIVE_BASE + '/ops' + suffix, headers={'User-Agent': 'deploy-hf-telegram-health'})
+            with opener.open(request, timeout=60 if attempt == 0 else 30) as response:
                 body = response.read(2 * 1024 * 1024 + 1)
             if len(body) > 2 * 1024 * 1024:
                 raise ValueError('Oversized page')

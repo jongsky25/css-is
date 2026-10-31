@@ -72,6 +72,12 @@
 <div class="panel" id="telegram-health">
   <h2>Telegram</h2>
   <script type="application/json" id="telegram-diagnostics">{{ {'version': build.version, 'commit': build.commit, 'worker': telegram}|tojson }}</script>
+  <p><a href="/ops?telegram_probe=1">Check Telegram connection</a> (reads bot status without sending a message).</p>
+  {% if telegram.network %}
+  <ul>{% for client, outcome in telegram.network.items() %}
+    <li>{{ client }}: {{ outcome.state }}{% if outcome.http_status %} · HTTP {{ outcome.http_status }}{% endif %}{% if outcome.error %} · {{ outcome.error }}{% endif %}</li>
+  {% endfor %}</ul>
+  {% endif %}
   {% if telegram.scheduler_disabled %}
   <p role="status">Background jobs are disabled (CSS_NO_SCHEDULER=1). Messages can reach the webhook, but replies will not be processed.</p>
   {% elif telegram.state == 'not_started' %}

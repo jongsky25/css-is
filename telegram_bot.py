@@ -70,7 +70,7 @@ def worker_status(conn):
                   bot_configured=transport.config() is not None,
                   webhook_configured=webhook_secret() is not None,
                   link_origin_configured=links.origin() is not None,
-                  provider=transport.last_send_status())
+                  provider=transport.last_send_status(), network=transport.last_connection_probe())
     try:
         status['updates'] = dict(conn.execute('SELECT state,count(*) FROM telegram_update GROUP BY state'))
         status['deliveries'] = dict(conn.execute('SELECT state,count(*) FROM telegram_delivery GROUP BY state'))

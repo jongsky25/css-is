@@ -4014,6 +4014,9 @@ def ops(request: Request):
     """Admin operations dashboard, in plain language — one overall verdict, four
     everyday-words health cards, and a 'is the data safe?' summary. Gated on
     manage_users (see _required_cap)."""
+    if request.query_params.get('telegram_probe') == '1':
+        import telegram_transport
+        telegram_transport.probe_connection()
     mon.set_start_db_bytes(DB)
     snap = mon.snapshot(DB)
     conn = get_conn()
