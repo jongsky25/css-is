@@ -77,7 +77,8 @@ access remains necessary in a fresh chat.
 Open [the private preview](https://huggingface.co/spaces/equityinhealth/office-connect-preview)
 while signed into the authorized Hugging Face account. Sign in to the app as
 `preview@example.invalid` using the preview password saved in your password manager.
-Verify a successful phone login and a page action with synthetic data, then record
+Phone login is confirmed by the owner’s screenshot. Verify a subsequent page
+action with synthetic data, then record
 the outcome to complete step 4. Do not paste the password into chat. Steps 1–3
 are complete. Do not deploy this branch to production.
 
@@ -231,3 +232,13 @@ read-only APIs; no test push to main, merge, workflow rerun or deployment occurr
   Owner should retry the signed-in Hub page; iOS cookie restrictions may still
   require the provider's temporary cross-site tracking workaround. Successful
   remote phone login remains unverified; local mobile login passed.
+
+## Step 4 phone login confirmed — 2026-10-31
+
+Owner supplied an iPhone Safari screenshot showing the private Space Running,
+the PREVIEW synthetic-data banner, and the authenticated synthetic administrator
+home page (Hi, Preview). This confirms remote phone login and home rendering after
+the embedding repair. The screenshot does not establish a subsequent page action
+or whether Safari tracking protection was restored. Next: open Calendar or Your
+profile and confirm the page loads while remaining signed in. Step 4 remains open
+for that final interaction check. No hosting/code/production change in this update.

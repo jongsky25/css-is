@@ -14,8 +14,10 @@ Source commit: `f03125c2d56e9f6f4f029e77ef821d91be46d076`.
 Space commit: `5ac1982785c0298e0e9203c084a465f6d1ead53d`.
 
 The preview password secret exists remotely; its value was not read or changed.
-Successful login and a mobile page action remain for the owner to verify using
-the saved password. Step 4 remains open until that check is complete.
+The owner’s iPhone Safari screenshot on 2026-10-31 confirms successful login,
+the signed-in synthetic administrator home page, and the PREVIEW banner within
+the private Hub frame. A subsequent mobile page action remains to be confirmed;
+step 4 stays open until that check is complete.
 
 The current [Spaces overview](https://huggingface.co/docs/hub/spaces-overview) and
 [hardware guide](https://huggingface.co/docs/hub/spaces-gpus) were read on 2026-10-31.
