@@ -23,6 +23,7 @@ class _HideTelegram(logging.Filter):
 
 # urllib3 debug request paths otherwise contain Telegram's bot token.
 logging.getLogger('urllib3.connectionpool').addFilter(_HideTelegram())
+logging.getLogger('httpx').addFilter(_HideTelegram())
 
 
 def enabled():

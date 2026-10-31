@@ -1,3 +1,8 @@
+## 9.52 — October 31, 2026
+
+- Add an administrator-requested, read-only Telegram connection check using `getMe` with the sending client and the existing alternative HTTPS client. Keep TLS verification, environment proxy settings, fixed destinations, bounded responses, a one-minute cache and one probe at a time. Never send or retry a message from this check.
+- Classify connection failures without retaining exception text, tokens, bot identities or response bodies. The existing read-only deployment diagnostic job requests this check after release and can be rerun without a restart or another private test command. Outbound delivery remains unverified until the hosted connection failure is diagnosed.
+
 ## 9.51 — October 31, 2026
 
 - Show Telegram worker freshness, receive/reply/link gates, configuration-format checks and aggregate queue outcomes on the administrator-only Operations page. Report failures by processing stage and source location without logging credentials, identifiers or message content.
