@@ -53,3 +53,21 @@ jobs:
           CSS_DEPLOY_STRICT_VERSION: "1"             # hard-abort if APP_VERSION wasn't bumped
         run: |
           python deploy_hf.py --yes
+
+  telegram-diagnostics:
+    name: Read Telegram worker diagnostics
+    needs: deploy
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Read sanitized Operations metadata
+        env:
+          CSS_ADMIN_USER: ${{ secrets.CSS_ADMIN_USER }}
+          CSS_ADMIN_PASS: ${{ secrets.CSS_ADMIN_PASS }}
+        run: |
+          python -c "import deploy_hf; raise SystemExit(0 if deploy_hf.report_live_telegram_status() else 1)"

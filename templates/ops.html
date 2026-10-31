@@ -84,6 +84,11 @@
   <p role="status">Worker: {{ telegram.state }}. Last run processed {{ telegram.processed }} updates and attempted {{ telegram.sent }} sends. A send attempt does not prove delivery.</p>
   {% endif %}
   <p class="note">Last started: {{ telegram.started_at or 'not observed' }} · Last finished: {{ telegram.finished_at or 'not observed' }} (UTC). Worker observations reset when the process restarts.</p>
+  {% if telegram.provider %}
+  <p>Last send attempt since restart: {{ telegram.provider.state }}{% if telegram.provider.http_status %} · HTTP {{ telegram.provider.http_status }}{% endif %}{% if telegram.provider.error %} · {{ telegram.provider.error }}{% endif %}. Observed {{ telegram.provider.observed_at }} (UTC).</p>
+  {% else %}
+  <p>No provider send attempt observed since restart.</p>
+  {% endif %}
   <div class="signals">
     <div class="sig neutral">
       <div class="h">Receive / reply / linking</div>

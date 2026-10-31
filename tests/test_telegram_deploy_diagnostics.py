@@ -1,11 +1,15 @@
 """Read-only live worker observations using the existing deploy identity."""
 import json
 import sqlite3
+import subprocess
+import sys
+from pathlib import Path
 
 import pytest
 
 import deploy_hf as deploy
 import pull_backup
+import yaml
 
 
 def test_predeploy_snapshot_summary_is_read_only_and_excludes_private_fields(tmp_path):
@@ -35,9 +39,12 @@ def page(**fields):
 
 def test_only_allowlisted_typed_metadata_leaves_the_admin_page():
     result = deploy.telegram_ops_summary(page(token='secret-token', chat_id=123, text='private-message',
-                       updates={'queued': 4, 'private-name': 999}, deliveries={'failed': 1, 'accepted': True}))
+                       updates={'queued': 4, 'private-name': 999}, deliveries={'failed': 1, 'accepted': True},
+                       provider={'state':'failed','http_status':401,'error':'provider_rejected',
+                                 'token':'secret-token','text':'private-message'}))
     assert result['updates'] == {'queued': 4} and result['deliveries'] == {'failed': 1}
     assert result['state'] == 'failed' and result['stage'] == 'delivery'
+    assert result['provider'] == {'state':'failed','http_status':401,'error':'provider_rejected'}
     assert not any(secret in json.dumps(result) for secret in
                    ('secret-token', 'private-name', 'private-message', 'private-password', 'Private staff', 'chat_id'))
     result = deploy.telegram_ops_summary(page(state='secret-state', stage='private-stage', error='secret-error'))
@@ -63,7 +70,7 @@ def test_report_reads_only_ops_with_existing_credentials_and_bounded_samples(mon
     monkeypatch.setattr(pull_backup, '_opener', lambda: (opener, None))
     monkeypatch.setattr(pull_backup, 'login', lambda *args: logins.append(args))
     monkeypatch.setattr(deploy.time, 'sleep', sleeps.append)
-    deploy.report_live_telegram_status()
+    assert deploy.report_live_telegram_status() is True
     output = capsys.readouterr().out
     assert len(logins) == 1 and reads == [deploy.LIVE_BASE + '/ops'] * 3
     assert sleeps == [35, 35] and output.count('Telegram diagnostics:') == 3
@@ -78,12 +85,28 @@ def test_login_failure_does_not_print_exception_or_credentials(monkeypatch, caps
     monkeypatch.setattr(pull_backup, '_opener', lambda: (None, None))
     def fail(*args): raise failure
     monkeypatch.setattr(pull_backup, 'login', fail)
-    deploy.report_live_telegram_status()
+    assert deploy.report_live_telegram_status() is False
     assert capsys.readouterr().out == 'Telegram diagnostics: unavailable (login, response or network check failed).\n'
 
 
 def test_missing_credentials_skip_report_without_network(monkeypatch, capsys):
     monkeypatch.delenv('CSS_ADMIN_PASS', raising=False)
     monkeypatch.setattr(pull_backup, '_opener', lambda: pytest.fail('Unexpected login'))
-    deploy.report_live_telegram_status()
+    assert deploy.report_live_telegram_status() is False
     assert 'credentials not configured' in capsys.readouterr().out
+
+
+def test_read_only_job_is_main_only_after_deploy_and_does_not_receive_space_write_token():
+    root = Path(deploy.__file__).parent
+    workflow = yaml.safe_load((root / '.github/workflows/deploy-hf.yml').read_text())
+    job = workflow['jobs']['telegram-diagnostics']
+    assert job['needs'] == 'deploy' and job['if'] == "github.ref == 'refs/heads/main'"
+    assert job['timeout-minutes'] == 5 and workflow['permissions'] == {'contents':'read'}
+    step = job['steps'][-1]
+    assert set(step['env']) == {'CSS_ADMIN_USER','CSS_ADMIN_PASS'}
+    assert 'report_live_telegram_status()' in step['run']
+    assert '--yes' not in step['run'] and 'deploy_hf.py' not in step['run']
+    # The separate probe job deliberately needs only the standard library.
+    result = subprocess.run([sys.executable, '-S', '-c', 'import deploy_hf; import pull_backup'],
+                            cwd=root, capture_output=True, text=True, timeout=20)
+    assert result.returncode == 0, result.stderr

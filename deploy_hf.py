@@ -139,6 +139,19 @@ def telegram_ops_summary(html):
     ):
         result[key] = {state: count for state, count in worker.get(key, {}).items()
                        if state in states and type(count) is int and 0 <= count < 2**63}
+    provider = worker.get('provider')
+    if isinstance(provider, dict):
+        safe = {}
+        for key, allowed in (
+            ('state', {'accepted', 'failed', 'retry_wait', 'uncertain'}),
+            ('error', {'provider_rejected', 'rate_limited', 'transport_failure', 'response_unverified'}),
+        ):
+            if isinstance(provider.get(key), str) and provider[key] in allowed:
+                safe[key] = provider[key]
+        status = provider.get('http_status')
+        if type(status) is int and 100 <= status <= 599:
+            safe['http_status'] = status
+        result['provider'] = safe
     return result
 
 
@@ -146,7 +159,7 @@ def report_live_telegram_status():
     """Use the existing deployment admin identity for read-only, sanitized health."""
     if not os.environ.get('CSS_ADMIN_USER') or not os.environ.get('CSS_ADMIN_PASS'):
         print('Telegram diagnostics: unavailable (deployment admin credentials not configured).')
-        return
+        return False
     try:
         import pull_backup as pb
         opener, _ = pb._opener()
@@ -161,9 +174,11 @@ def report_live_telegram_status():
             print('Telegram diagnostics: ' + json.dumps(summary, sort_keys=True), flush=True)
             if attempt < 2:
                 time.sleep(35)  # Three observations cover the one-minute worker cadence.
+        return True
     except (Exception, SystemExit):
         # Login/network exceptions and HTML can contain secrets, cookies or staff data.
         print('Telegram diagnostics: unavailable (login, response or network check failed).')
+        return False
 
 RUNTIME_PY = [
     "app.py", "css_is_engine.py", "storage.py", "tzutil.py", "fix_timezone_history.py",
@@ -524,7 +539,6 @@ def main():
         return
 
     print(f"\n✅ Deployed v{want} → {LIVE_BASE}")
-    report_live_telegram_status()
 
 
 if __name__ == "__main__":

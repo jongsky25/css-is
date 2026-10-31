@@ -3,6 +3,8 @@ import hashlib
 import logging
 import os
 import time
+from datetime import datetime, timezone
+from threading import Lock
 
 import requests
 # Installs the existing urllib3 token-URL logging filter; no digest configuration is read.
@@ -10,6 +12,14 @@ from apprise_transport import TOKEN
 
 
 MAX_RESPONSE = 65536
+_SEND_LOCK = Lock()
+_LAST_SEND = None
+
+
+def last_send_status():
+    """Per-process operational metadata only; no destination, ID or content."""
+    with _SEND_LOCK:
+        return dict(_LAST_SEND) if _LAST_SEND is not None else None
 
 
 def config():
@@ -23,6 +33,25 @@ def config():
 
 
 def send(token, chat_id, text, topic_id=None):
+    """Keep one bounded attempt's safe status without retaining its content."""
+    global _LAST_SEND
+    http_status = None
+    def observe(value):
+        nonlocal http_status
+        if type(value) is int and 100 <= value <= 599:
+            http_status = value
+    result = _send(token, chat_id, text, topic_id, observe)
+    state = result[0]
+    error = (None if state == 'accepted' else 'provider_rejected' if state == 'failed' else
+             'rate_limited' if state == 'retry_wait' else
+             'transport_failure' if http_status is None else 'response_unverified')
+    with _SEND_LOCK:
+        _LAST_SEND = {'state': state, 'http_status': http_status, 'error': error,
+                      'observed_at': datetime.now(timezone.utc).isoformat(timespec='seconds')}
+    return result
+
+
+def _send(token, chat_id, text, topic_id, observe):
     """Return (state, provider message ID, retry seconds); uncertainty never retries."""
     payload = {'chat_id': chat_id, 'text': text, 'link_preview_options': {'is_disabled': True}}
     if topic_id is not None:
@@ -33,6 +62,7 @@ def send(token, chat_id, text, topic_id=None):
             response = session.post('https://api.telegram.org/bot' + token + '/sendMessage',
                 json=payload,
                 timeout=(3, 7), verify=True, allow_redirects=False, stream=True)
+            observe(response.status_code)
             with response:
                 body = bytearray()
                 for chunk in response.iter_content(4096):
