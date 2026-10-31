@@ -1,6 +1,10 @@
-## 9.47 — October 31, 2026
+## 9.48 — October 31, 2026
 
 - Log the relay's error code (entry, document, revision) when an activity document draft fails. The person still sees the plain sentence; the raw code goes only to the server log so a generic "document service refused" failure can be diagnosed. No database, relay or template change.
+
+## 9.47 — October 31, 2026
+
+- Rebuild the 9.44 workspace browser test (`tests/test_calendar_workspace_browser.py`). The normal-order release check stalled at that test in three runs (the 9.46 pull request's first run and the 9.46 deploy run among them): the `faulthandler_timeout` dump showed the test's Playwright driver never answering, with no application code involved. The test started its own Playwright and answered every request itself. It now uses the shared local-server browser fixture of the other calendar browser tests, intercepts only the final notice send so no real notice is delivered, and runs as six separate viewport/theme cases instead of one long test. It no longer saves preview screenshots. Assertions are unchanged and now use waiting checks. Also raise `pypdf` from 6.21.2 to 6.21.4 (requirements locks regenerated with the pinned `uv`): seven advisories published against 6.21.2 (CVE-2026-119203 to CVE-2026-119209) made the dependency audit fail for every change. No application, template or database change.
 
 ## 9.46 — October 30, 2026
 
