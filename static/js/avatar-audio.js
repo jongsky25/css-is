@@ -3,17 +3,20 @@
   "use strict";
   var ROOT = "/static/audio/avatars/";
   var SOUND_KEY = "css-av-sound", VOLUME_KEY = "css-av-volume";
+  // The slider is 0-100% of LEVEL. The clips are mastered quietly (about -22 LUFS), which
+  // is easy to miss on a phone speaker, so the mixer lifts them and a limiter catches peaks.
+  var DEFAULT_VOLUME = 0.8, LEVEL = 1.5;
   function setting(key, fallback) {
     try { return localStorage.getItem(key) || fallback; } catch (_) { return fallback; }
   }
   function save(key, value) { try { localStorage.setItem(key, value); } catch (_) {} }
   function volumeValue(value) {
     var n = Number(value);
-    return isFinite(n) ? Math.max(0, Math.min(1, n)) : 0.35;
+    return isFinite(n) ? Math.max(0, Math.min(1, n)) : DEFAULT_VOLUME;
   }
   var enabled = setting(SOUND_KEY, "off") === "on";
-  var volume = volumeValue(setting(VOLUME_KEY, "0.35"));
-  var ctx = null, master = null, manifestPromise = null;
+  var volume = volumeValue(setting(VOLUME_KEY, String(DEFAULT_VOLUME)));
+  var ctx = null, master = null, limiter = null, manifestPromise = null;
   var buffers = {}, lastChoice = {}, active = [], revision = 0, lastStart = -Infinity;
 
   function request(path) {
@@ -26,6 +29,11 @@
       }).finally(function () { clearTimeout(timer); });
   }
 
+  function sessionType(type) {
+    // iOS mutes Web Audio on the phone speaker while the ringer switch is on silent, yet plays
+    // it in earbuds. A "playback" audio session ignores the switch (older iOS: no such API).
+    try { if (navigator.audioSession) navigator.audioSession.type = type; } catch (_) {}
+  }
   function stop() {
     revision++;                         // also cancels pending fetch/decode/resume
     active.forEach(function (node) { try { node.stop(); } catch (_) {} });
@@ -37,8 +45,11 @@
     if (!AC) return null;
     ctx = new AC();
     master = ctx.createGain();
-    master.gain.value = volume;
-    master.connect(ctx.destination);
+    master.gain.value = volume * LEVEL;
+    limiter = ctx.createDynamicsCompressor();
+    limiter.threshold.value = -3; limiter.knee.value = 0; limiter.ratio.value = 20;
+    limiter.attack.value = 0.002; limiter.release.value = 0.1;
+    master.connect(limiter); limiter.connect(ctx.destination);
     // iOS requires starting a source inside the unlocking user gesture.
     var silent = ctx.createBufferSource();
     silent.buffer = ctx.createBuffer(1, 1, 22050);
@@ -102,6 +113,7 @@
     try { audio = idle ? ctx : context(); } catch (_) { return Promise.resolve(false); }
     if (!audio) return Promise.resolve(false);
     stop();
+    if (!idle) sessionType("playback");  // inside the tap, before resume()
     var ticket = revision;
     // resume() must be called synchronously within the gesture, before fetching.
     var ready;
@@ -147,12 +159,12 @@
   }
   function setOn(on) {
     enabled = !!on; save(SOUND_KEY, enabled ? "on" : "off");
-    if (!enabled) stop();
+    if (!enabled) { stop(); sessionType("auto"); }  // give other apps' audio back
     sync();
   }
   function setVolume(value) {
     volume = volumeValue(value); save(VOLUME_KEY, String(volume));
-    if (master) master.gain.setValueAtTime(volume, ctx.currentTime);
+    if (master) master.gain.setValueAtTime(volume * LEVEL, ctx.currentTime);
     if (!volume) stop();
     sync();
   }
@@ -171,9 +183,10 @@
   window.addEventListener("storage", function (e) {
     if (e.key !== SOUND_KEY && e.key !== VOLUME_KEY && e.key !== null) return;
     enabled = setting(SOUND_KEY, "off") === "on";
-    volume = volumeValue(setting(VOLUME_KEY, "0.35"));
-    if (master) master.gain.setValueAtTime(volume, ctx.currentTime);
+    volume = volumeValue(setting(VOLUME_KEY, String(DEFAULT_VOLUME)));
+    if (master) master.gain.setValueAtTime(volume * LEVEL, ctx.currentTime);
     if (!enabled || !volume) stop();
+    if (!enabled) sessionType("auto");
     sync();
   });
   window.AvatarAudio = { play: play, stop: stop, sync: sync, setOn: setOn,

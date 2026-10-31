@@ -18,17 +18,26 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "9.48"
+APP_VERSION = "9.49"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
-        "version": "9.48",
+        "version": "9.49",
         "date": "October 31, 2026",
         "summary": "Administrators can now see why a document draft failed.",
         "changes": [
             "When a Google Docs draft fails, the real reason is now recorded for administrators.",
             "Nothing changes for people drafting documents."
+        ]
+    },
+    {
+        "version": "9.48",
+        "date": "October 31, 2026",
+        "summary": "Companion sounds are louder and now play on phone speakers.",
+        "changes": [
+            "On iPhones, companion sounds now play through the speaker even when the silent switch is on, not only through earbuds.",
+            "Companion sounds are louder by default, so they are easier to hear on a phone speaker. You can still turn them down with the volume slider."
         ]
     },
     {
