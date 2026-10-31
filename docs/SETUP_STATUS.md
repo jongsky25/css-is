@@ -3,7 +3,7 @@
 Updated: 2026-10-31. Repository: `jongsky25/css-is` (Office Connect BLHSD).
 Setup branch: `setup/cloud-mobile-continuity`.
 
-## Current step: 5 — hosting/log/storage access and recovery verification
+## Current step: 5 — operations inspected; public bucket and recovery checks pending
 
 Completed: root `AGENTS.md`, the new-chat handoff in
 `docs/CLOUD_COLLABORATION.md`, this checklist, and a README entry point.
@@ -74,12 +74,12 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
-Step 4 is complete: owner screenshots confirm successful iPhone Safari login and
-Calendar navigation in the private preview. Next setup session: inspect actual
-hosting, logs, effective production storage paths and recovery evidence using
-read-only access first. Do not infer production storage from the disposable
-preview. Steps 1–4 are complete. No production deployment, restore, restart or
-storage change is authorized by this setup work.
+See [operations findings](OPERATIONS_ACCESS.md). Step 5 read-only inspection
+found an anonymously listable public bucket containing database snapshot entries.
+First confirm its production mount mapping and resolve visibility with a separately
+authorized live change. Then verify the admin Operations/Backups status and plan
+isolated recovery evidence. No credentials should be posted in chat. Steps 1–4
+are complete; step 5 remains open. No production change was made.
 
 ## Step 3 evidence — 2026-10-31, 14:15 UTC
 
@@ -252,3 +252,26 @@ Step 4 is complete. This verifies navigation/rendering, not calendar data writes
 or all application features. iOS private-Space cookie limitations remain; whether
 tracking protection was restored has not been verified. Preview remains synthetic,
 disposable and private; production is unchanged. Next is setup step 5.
+
+## Step 5 read-only inspection — 2026-10-31
+
+See [Operations access and recovery](OPERATIONS_ACCESS.md) for evidence and limits.
+Production/preview hosting, deployed production version 9.54/main aaef9d3,
+health, settings-name access and bounded hosting-log access are verified.
+Startup logs establish local css_is.db, /data/_backups/scheduled, a boot restore
+and a 60-second saver with 24 retained snapshots. They do not establish current
+backup age or a tested recovery objective.
+
+Important finding: equityinhealth/office-connect-data is public. Explicitly
+anonymous bucket metadata/listing succeeds and exposes 25 database snapshot
+entries. No database was downloaded. Confirm the exact mount mapping before
+making the bucket private and validating continued durability; visibility was
+not changed in this session. The configured HF token also has broader production
+read access than the intended preview-only scope.
+
+App admin credentials are absent, and /ops and /admin/backups redirect to login.
+GitHub deployment job metadata is readable, but secret-name listing is denied
+and useful deployment log text could not be retrieved. Actual recovery, independent
+backup retention and current durability remain unverified. Step 5 stays open.
+No test suite was rerun for this read-only/documentation task; Markdown links
+and git diff checks are the applicable validation.
