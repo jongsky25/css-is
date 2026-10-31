@@ -6,9 +6,9 @@ FastAPI/Jinja application. Do not infer its stack from connected plugins.
 ## Start every session
 
 **User shorthand:** when the user says **“office connect”** (case insensitive),
-resume the cloud/mobile setup on `setup/cloud-mobile-continuity` in
-`jongsky25/css-is`: read these instructions and the two documents below, verify
-access and working state, complete the next unfinished step, update its status,
+load the collaboration workflow from the current `main` branch of
+`jongsky25/css-is` (or the active review branch holding newer work): read these instructions and the two documents below, verify
+access and working state, follow its current next action for the requested work, update its status,
 and save progress to GitHub. An accompanying specific request takes precedence.
 This mapping works when this repository's instructions are available; it is not
 a global chat command or a substitute for repository access.
@@ -50,7 +50,8 @@ a global chat command or a substitute for repository access.
 ## Deployment and data
 
 - A push/merge to `main` triggers the Hugging Face deployment workflow. Use a review
-  branch for setup work. The current setup request does not authorize a production release.
+  branch for setup work. A production release requires an explicit user instruction; preview approval
+  alone does not authorize one.
 - Read `DEPLOY.md` and current release guidance before deployment. Effective live
   database/persistence paths require verification; older documentation conflicts.
 - Do not run the application against production data to test a change. Use isolated

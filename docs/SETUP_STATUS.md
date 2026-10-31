@@ -1,7 +1,8 @@
 # Cloud/mobile setup status
 
 Updated: 2026-10-31. Repository: `jongsky25/css-is` (Office Connect BLHSD).
-Setup branch: `setup/cloud-mobile-continuity`.
+Integration branch: `setup/cloud-mobile-continuity`; default startup branch after
+merge: `main`.
 
 ## Collaboration workflow ready — operational follow-ups tracked separately
 
@@ -76,9 +77,8 @@ access remains necessary in a fresh chat.
 
 Use the [mobile/cloud workflow](MOBILE_CLOUD_WORKFLOW.md) for the user's next
 requested feature or fix. The collaboration setup is ready on this branch;
-it is not yet merged to main. Do not merge it as a side effect of setup: main
-triggers production deployment, and accumulated setup changes still require
-release review and CI on the actual candidate.
+release 9.55 is being integrated with explicit user approval to merge once
+ready. Main triggers production deployment; all release/backup gates still apply.
 
 The user explicitly deferred the audit investigation to finish collaboration
 setup. Do not automatically resume #8949 investigation or exposure remediation.
@@ -364,3 +364,17 @@ integration into the relevant default-branch workflow; they are usable as files 
 No release CI or app suite was run for these docs/templates. Diff, links and issue
 frontmatter validation are the applicable checks. Instructions are still held on
 the setup branch; a fresh chat must select that branch until approved integration.
+
+## Main integration candidate — release 9.55
+
+User explicitly requested preparation, required checks and merge once ready,
+including the production deployment triggered by main. Reviewed the accumulated
+setup changes; production runtime logic remains unchanged except release metadata
+and service-worker cache version. Preview behavior is isolated in its own tooling.
+Updated startup instructions so “office connect” uses current main or the saved
+active review branch, rather than always selecting the historical setup branch.
+Synchronized version.py, Markdown changelog and service-worker version to 9.55.
+
+This entry records the candidate, not a claim that CI, merge or deployment has
+completed. The PR and GitHub checks provide the actual integration outcome.
+Deferred audit/exposure findings stay deferred. No release gates may be bypassed.

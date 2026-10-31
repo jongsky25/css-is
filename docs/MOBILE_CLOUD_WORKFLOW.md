@@ -21,11 +21,8 @@ that blocks progress. Deferred operational findings stay deferred until requeste
 ## Build and test
 
 1. Check the working tree and preserve existing changes. Work on an appropriate
-   review branch; record its name. Until setup is integrated, retain access to
-   `setup/cloud-mobile-continuity`, which holds these instructions and preview
-   tooling. For a feature based on this branch, use its branch point as the review
-   base to distinguish feature work from accumulated setup changes. A later main
-   integration needs separate release review.
+   review branch based on current main; record its name. If continuing saved
+   work, inspect its branch and handoff before creating another branch.
 2. Use the [cloud setup and isolated commands](CLOUD_WORKSPACE.md). Develop with
    synthetic data and disabled external integrations. Never use a production
    database as an application test fixture.
@@ -66,8 +63,7 @@ proves that view only; it does not prove untested writes or other features.
 Use the [PR template](../.github/pull_request_template.md) to record the problem,
 resulting behavior, tests and preview evidence. Draft PRs and branch pushes are
 review artifacts. CI must report the required checks on the actual candidate;
-local test success alone does not mean CI passed. The accumulated setup branch
-has not been validated as a production release; keep it on its review branch.
+local test success alone does not mean CI passed. Every release candidate must pass the checks for its actual source commit.
 
 Main is production-connected: merging triggers the deploy workflow. Release only
 within an explicit production release request, with synchronized versions and

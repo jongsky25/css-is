@@ -7,8 +7,9 @@ for the working rules.
 
 ## Starting a new chat from a phone
 
-With this repository and setup branch selected, simply send **office connect**.
-`AGENTS.md` defines this as resuming the next unfinished setup step and saving
+With this repository and `main` (or your active work branch) selected, simply send
+**office connect**.
+`AGENTS.md` defines this as following the current saved next action and saving
 progress to GitHub. The long prompt below is a recovery option if a client has
 not loaded the repository instructions. The keyword is not registered globally.
 
@@ -19,8 +20,8 @@ Attach/select `jongsky25/css-is` and the branch holding the latest setup work, t
 > access, then complete the next unfinished step. Keep the status current and save
 > progress to GitHub. Work one step at a time.
 
-If the files are absent on main, open the saved setup branch named in the previous
-chat's final response. Until that branch is merged, main will not contain these files.
+If these files are absent from a stale checkout, fetch current main. For ongoing
+feature work, open the saved review branch named in the previous handoff.
 If repository access is unavailable, reconnect GitHub or attach the repository;
 the agent must not invent the prior status. A GitHub connector and a terminal's Git
 credentials are separate access paths and must each be checked when needed.
