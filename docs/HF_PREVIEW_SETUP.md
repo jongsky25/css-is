@@ -6,9 +6,16 @@ user on 2026-10-31. No Render resource was created.
 
 ## Current status
 
-Implementation and local verification complete. **Not published or verified
-remotely:** this cloud environment has no configured Hugging Face credential or
-cached Hugging Face login. No preview URL is claimed live. Step 4 remains pending.
+Published on 2026-10-31 and verified **RUNNING** on CPU Basic. Authenticated
+metadata confirms private visibility and Docker SDK. `/preview-health` returns
+200 with the expected readiness text; `/login` returns 200 with the PREVIEW banner
+and preview environment header. Anonymous requests to both return 404.
+Source commit: `2cff502345d4c477985c80031c8c7663a0c4cc1a`.
+Space commit: `0d6467f4b82527f9546fe5fe20f3336918da39c8`.
+
+The preview password secret exists remotely; its value was not read or changed.
+Successful login and a mobile page action remain for the owner to verify using
+the saved password. Step 4 remains open until that check is complete.
 
 The current [Spaces overview](https://huggingface.co/docs/hub/spaces-overview) and
 [hardware guide](https://huggingface.co/docs/hub/spaces-gpus) were read on 2026-10-31.

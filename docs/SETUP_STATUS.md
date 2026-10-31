@@ -3,7 +3,7 @@
 Updated: 2026-10-31. Repository: `jongsky25/css-is` (Office Connect BLHSD).
 Setup branch: `setup/cloud-mobile-continuity`.
 
-## Current step: 4 — Hugging Face preview prepared; access setup pending
+## Current step: 4 — private Hugging Face preview running; phone acceptance pending
 
 Completed: root `AGENTS.md`, the new-chat handoff in
 `docs/CLOUD_COLLABORATION.md`, this checklist, and a README entry point.
@@ -74,14 +74,12 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
-Complete the one-time private Hugging Face preview access setup in
-[HF_PREVIEW_SETUP.md](HF_PREVIEW_SETUP.md). First create a blank private Docker
-Space `equityinhealth/office-connect-preview` on CPU Basic, subject to the account's
-eligibility; do not purchase a plan or hardware. Add a new preview-only password
-secret there, then configure a fine-grained preview-only `HF_TOKEN` through secure
-cloud secret settings. No credential should be pasted into chat. Publish the
-prepared bundle and verify remote private access/build/mobile login before marking
-step 4 complete. Steps 1–3 are complete. Do not deploy this branch to production.
+Open [the private preview](https://huggingface.co/spaces/equityinhealth/office-connect-preview)
+while signed into the authorized Hugging Face account. Sign in to the app as
+`preview@example.invalid` using the preview password saved in your password manager.
+Verify a successful phone login and a page action with synthetic data, then record
+the outcome to complete step 4. Do not paste the password into chat. Steps 1–3
+are complete. Do not deploy this branch to production.
 
 ## Step 3 evidence — 2026-10-31, 14:15 UTC
 
@@ -184,3 +182,24 @@ read-only APIs; no test push to main, merge, workflow rerun or deployment occurr
   supported cloud secret settings if necessary. Never paste credentials in chat.
   After binding, verify SDK/private state and secret-name presence, publish the
   prepared bundle, then monitor and test remotely. Preview is not yet deployed.
+
+## Step 4 publication — 2026-10-31
+
+- Fresh managed environment reports `HF_TOKEN` ready; authenticated HF API calls
+  succeeded. Token contents were not printed. The preview password secret name
+  was verified remotely; its value was not retrieved or replaced.
+- Installed the hashed deploy lock in isolated Python 3.11 environment;
+  `pip check` passed. Published the existing 940-file code-only bundle using
+  `scripts/deploy_preview_hf.py --publish` from a clean tree.
+- Source: `2cff502345d4c477985c80031c8c7663a0c4cc1a`; Space commit:
+  `0d6467f4b82527f9546fe5fe20f3336918da39c8`. Downloaded
+  `preview-build.json` confirms the source commit.
+- API confirms private Docker Space, stage `RUNNING`, hardware `cpu-basic`.
+  No plan/hardware/storage upgrade or production operation was performed.
+- Anonymous `/preview-health` and `/login`: HTTP 404. Authorized health: HTTP
+  200 and expected readiness text. Authorized login: HTTP 200, PREVIEW banner,
+  `x-office-connect-environment: preview`.
+- URL: https://huggingface.co/spaces/equityinhealth/office-connect-preview
+- Remaining: successful signed-in phone login and synthetic page action, using
+  the owner's saved preview password. No production data or credentials copied.
+  Full release suites/audits were not rerun for this publication/status update.
