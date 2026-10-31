@@ -3,7 +3,7 @@
 Updated: 2026-10-31. Repository: `jongsky25/css-is` (Office Connect BLHSD).
 Setup branch: `setup/cloud-mobile-continuity`.
 
-## Current step: 4 — private Hugging Face preview running; phone acceptance pending
+## Current step: 5 — hosting/log/storage access and recovery verification
 
 Completed: root `AGENTS.md`, the new-chat handoff in
 `docs/CLOUD_COLLABORATION.md`, this checklist, and a README entry point.
@@ -68,19 +68,18 @@ access remains necessary in a fresh chat.
 - [x] 1. Continuity files verified and saved remotely.
 - [x] 2. Reproducible cloud development/test workspace verified (limits above).
 - [x] 3. Main protection and CI enforcement verified against live rules.
-- [ ] 4. Separate preview/staging usable from a phone.
+- [x] 4. Separate private preview usable from a phone (iOS limitations below).
 - [ ] 5. Hosting/log/storage access and recovery verified.
 - [ ] 6. Monitoring gaps assessed and reusable workflow documented.
 
 ## Next action
 
-Open [the private preview](https://huggingface.co/spaces/equityinhealth/office-connect-preview)
-while signed into the authorized Hugging Face account. Sign in to the app as
-`preview@example.invalid` using the preview password saved in your password manager.
-Phone login is confirmed by the owner’s screenshot. Verify a subsequent page
-action with synthetic data, then record
-the outcome to complete step 4. Do not paste the password into chat. Steps 1–3
-are complete. Do not deploy this branch to production.
+Step 4 is complete: owner screenshots confirm successful iPhone Safari login and
+Calendar navigation in the private preview. Next setup session: inspect actual
+hosting, logs, effective production storage paths and recovery evidence using
+read-only access first. Do not infer production storage from the disposable
+preview. Steps 1–4 are complete. No production deployment, restore, restart or
+storage change is authorized by this setup work.
 
 ## Step 3 evidence — 2026-10-31, 14:15 UTC
 
@@ -242,3 +241,14 @@ the embedding repair. The screenshot does not establish a subsequent page action
 or whether Safari tracking protection was restored. Next: open Calendar or Your
 profile and confirm the page loads while remaining signed in. Step 4 remains open
 for that final interaction check. No hosting/code/production change in this update.
+
+## Step 4 accepted on phone — 2026-10-31
+
+Owner's second iPhone Safari screenshot confirms Calendar navigation after login:
+dated agenda cards, empty schedule, holiday entries and calendar legend rendered
+inside the private Running Space. Together with the preceding authenticated home
+screenshot, this completes the requested phone login/page-action acceptance.
+Step 4 is complete. This verifies navigation/rendering, not calendar data writes
+or all application features. iOS private-Space cookie limitations remain; whether
+tracking protection was restored has not been verified. Preview remains synthetic,
+disposable and private; production is unchanged. Next is setup step 5.

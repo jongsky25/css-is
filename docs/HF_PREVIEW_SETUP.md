@@ -16,8 +16,9 @@ Space commit: `5ac1982785c0298e0e9203c084a465f6d1ead53d`.
 The preview password secret exists remotely; its value was not read or changed.
 The owner’s iPhone Safari screenshot on 2026-10-31 confirms successful login,
 the signed-in synthetic administrator home page, and the PREVIEW banner within
-the private Hub frame. A subsequent mobile page action remains to be confirmed;
-step 4 stays open until that check is complete.
+the private Hub frame. A subsequent screenshot confirms Calendar navigation and agenda rendering.
+Step 4 phone acceptance is complete; this does not verify all features or data
+writes. Safari private-Space cookie limitations remain as documented below.
 
 The current [Spaces overview](https://huggingface.co/docs/hub/spaces-overview) and
 [hardware guide](https://huggingface.co/docs/hub/spaces-gpus) were read on 2026-10-31.
