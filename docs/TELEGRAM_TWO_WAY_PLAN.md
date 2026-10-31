@@ -1,6 +1,6 @@
 # Office Connect ↔ Telegram delivery plan
 
-Status: T0–T4.3.2 merged; T4.4 live pilot incomplete. Private webhook replies (PR #569, 9.53) and pending-link confirmation retrieval (PR #570, 9.54) are merged. Latest main deployment workflow passed at e0dde74 (9.55). Actual hosted end-to-end linking, outgoing group/action delivery and scheduled notifications remain unverified. Source activation defaults remain off.
+Status: T0–T4.3.2 merged; T4.4 live pilot incomplete. Private webhook replies (PR #569, 9.53) and pending-link confirmation retrieval (PR #570, 9.54) are merged. Latest main deployment workflow passed at e0dde74 (9.55). Owner confirms hosted linking and private calendar retrieval; outgoing group/action delivery and scheduled notifications remain unverified. Source activation defaults remain off.
 Last updated: 2026-10-31.
 Repository: jongsky25/css-is.
 Planning baseline inspected: abf3141 (merge of PR #458).
@@ -542,3 +542,10 @@ T2.2 merge reconciliation: preserved concurrent search release 8.60 and its runt
 - [PR #488](https://github.com/jongsky25/css-is/pull/488) is still OPEN and its hosted pilot runbook is absent from main. Reconcile that historical candidate with current transport, linking and release metadata before using it; do not merge it as proof of verification.
 - Next action: confirm the 9.54 hosted linking sequence using message-visible codes (`/start` → signed-in consent form → `/status` → `/confirm` → active account page). Then inspect fresh read-only hosted outbound diagnostics and repair/verify the Hugging Face outgoing path before the full approved-group/calendar/room approval/change/reminder/revocation/rollback pilot. Do not replay uncertain attempts. No new production activation or release is authorized by this review.
 - Validation: documentation diff and relative-link checks only; no application tests rerun or full-suite claim made. Existing GitHub check outcomes above were read, not rerun.
+
+### Owner acceptance and expansion request — 2026-10-31
+
+- Owner confirms the account is linked and calendar retrieval works through Telegram. This is user-reported hosted acceptance of those two flows, not independent verification of room commands, writes, group delivery or scheduled pushes. Supersedes the earlier linking-unverified handoff for this owner.
+- Owner requests progressively more Telegram capabilities. Recommended next bounded increment: make the existing private guided meeting creation flow usable end to end on Hugging Face, including user-visible preview retrieval, confirmation and receipt without reliance on a failing outgoing push; then linked room requests. Reuse current permissions, separate write consent and durable operation receipts. This is a proposed increment, not implementation or activation evidence.
+- Existing private read commands also include `/room_slots`, `/my_rooms` and `/room_status REFERENCE`, requiring room-read activation and the account's explicit room-read grant. `/help` reflects enabled host features; it does not establish that every listed flow works or is consented for the current user.
+- A preference question is pending for the first expansion: meetings/rooms (recommended), tasks/work status, or documents/status. T4.4 remains incomplete. If the owner selects a later module, explicitly rescope the plan and its prerequisites before implementation rather than silently marking T4.4 complete. No production change is implied by the expansion request.

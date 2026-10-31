@@ -390,3 +390,8 @@ connectivity before group/action/scheduled delivery and the full pilot.
 T5–T7 remain gated on T4.4. This was a source/GitHub/documentation review; no
 application tests, live sends, feature-switch changes, merge or deployment.
 Deferred audit/exposure work remains deferred.
+
+Owner subsequently confirms live Telegram linking and calendar retrieval. The
+next feature request is progressive Telegram expansion; recommended first scope
+is usable private guided meeting creation, then room requests. First-expansion
+preference is pending; see the Telegram ledger's owner acceptance entry.
