@@ -3,7 +3,7 @@
 Updated: 2026-10-31. Repository: `jongsky25/css-is` (Office Connect BLHSD).
 Setup branch: `setup/cloud-mobile-continuity`.
 
-## Current step: 5 — operations inspected; public bucket and recovery checks pending
+## Current step: 5 — backup bucket private; admin/recovery verification pending
 
 Completed: root `AGENTS.md`, the new-chat handoff in
 `docs/CLOUD_COLLABORATION.md`, this checklist, and a README entry point.
@@ -74,12 +74,13 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
-See [operations findings](OPERATIONS_ACCESS.md). Step 5 read-only inspection
-found an anonymously listable public bucket containing database snapshot entries.
-First confirm its production mount mapping and resolve visibility with a separately
-authorized live change. Then verify the admin Operations/Backups status and plan
-isolated recovery evidence. No credentials should be posted in chat. Steps 1–4
-are complete; step 5 remains open. No production change was made.
+See [operations findings](OPERATIONS_ACCESS.md). The owner-authorized bucket
+privacy change is complete: anonymous metadata/listing is denied, production
+health passes, and a new periodic snapshot appeared after the change. Next:
+owner admin review of Operations/Backups, exact mount identity confirmation and
+an approved isolated recovery exercise. Assess the earlier public exposure.
+Steps 1–4 are complete; step 5 remains open for those checks. No restart or
+production code deployment was performed.
 
 ## Step 3 evidence — 2026-10-31, 14:15 UTC
 
@@ -275,3 +276,20 @@ and useful deployment log text could not be retrieved. Actual recovery, independ
 backup retention and current durability remain unverified. Step 5 stays open.
 No test suite was rerun for this read-only/documentation task; Markdown links
 and git diff checks are the applicable validation.
+
+## Step 5 bucket privacy correction — 2026-10-31, 15:59 UTC
+
+Owner authorized the live bucket visibility change. The SDK update succeeded;
+authenticated bucket metadata now reports private=true. Anonymous metadata and
+snapshot listing both return HTTP 401; authenticated snapshot listing succeeds.
+Production health remained HTTP 200/status ok. New periodic snapshot
+css_is_20261031_235908_auto.db appeared after the change, confirming continued
+backup writes. No backup contents were downloaded or restored, no forced snapshot
+was requested, and no mount/restart/deployment/token change was made.
+
+The exact mount identity remains unavailable through the current API/browser
+access; settings HTML requires the owner's browser login. A cold-start remount
+was not tested. Current write evidence does not replace integrity/recovery
+verification or assessment of the earlier public exposure. Step 5 stays open for
+admin/mount/recovery evidence. Documentation diff and local-link checks passed;
+application tests were not rerun for a bucket settings change.

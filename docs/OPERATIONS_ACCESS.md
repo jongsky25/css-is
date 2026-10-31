@@ -1,8 +1,9 @@
 # Operations access and recovery — setup step 5
 
-Read-only observations on 2026-10-31. Step 5 remains **incomplete**: a public
-storage finding needs resolution, current durability needs admin verification,
-and an isolated recovery exercise has not been performed.
+Inspected on 2026-10-31; the owner subsequently authorized a bucket privacy
+change. The bucket is now private and anonymous metadata/listing returns 401.
+Step 5 remains **incomplete**: admin durability review and an isolated recovery
+exercise have not been performed.
 
 ## Verified hosting and code
 
@@ -21,9 +22,10 @@ and an isolated recovery exercise has not been performed.
   combined log command returned no text; the direct job-log request failed.
   Workflow success alone is not evidence that a current backup is recoverable.
 
-## Storage finding — resolve before closing step 5
+## Storage finding — original read-only evidence
 
-The account bucket `equityinhealth/office-connect-data` reports `private: false`.
+During the original inspection, `equityinhealth/office-connect-data` reported
+`private: false`.
 Both authenticated and explicitly anonymous SDK requests can read bucket metadata
 and enumerate `_backups/scheduled/`: 128 metadata entries, including 25 `.db`
 snapshot entries, were observed. Database contents were **not** requested or
@@ -35,11 +37,9 @@ bucket mount mapping was not returned by the metadata API, so confirm it in the
 production Space settings before changing access. Do not treat the absence of
 legacy Space persistent-disk metadata as absence of bucket-backed persistence.
 
-Recommended next change: make this bucket private after confirming the live
-Space's mount identity will retain access, then verify anonymous metadata/listing
-is denied and the application continues to save snapshots. This read-only setup
-session did not change visibility, mounts, tokens, hardware, or production state.
-A separate change authorization is needed because it affects live storage access.
+The owner subsequently approved making the bucket private. The visibility
+change is recorded below; mount configuration was not modified. The original
+inspection itself did not change production state.
 If exposure is confirmed, the owner should assess access history and affected
 backup contents without posting those contents or credentials in chat.
 
@@ -84,7 +84,8 @@ backup contents without posting those contents or credentials in chat.
 
 ## Complete the operational verification
 
-1. Resolve the bucket visibility finding and confirm the actual mount mapping.
+1. Bucket privacy is corrected; retain the private setting. Confirm the exact
+   mount identity/configuration through the owner’s hosting settings.
 2. With the owner's existing production admin account, open
    [Operations](https://equityinhealth-office-connect.hf.space/ops) and
    [Backups](https://equityinhealth-office-connect.hf.space/admin/backups).
@@ -101,5 +102,32 @@ backup contents without posting those contents or credentials in chat.
    snapshot by default. Its --list is metadata-only after admin login;
    --no-fresh downloads a production database and requires explicit data scope.
 
-No app admin login, snapshot creation, database download, restore, restart,
-production deployment or configuration write was performed in step 5.
+The initial inspection performed no production writes. The subsequently
+authorized change modified only bucket visibility. No app admin login, forced
+snapshot creation, database download, restore, restart or production deployment
+was performed.
+
+## Authorized privacy change — 2026-10-31, verified 15:59 UTC
+
+- Owner explicitly approved making the bucket private. Updated only
+  `equityinhealth/office-connect-data` using the SDK's bucket settings operation.
+  Authenticated metadata confirms `private: true`.
+- Explicitly anonymous bucket metadata and backup-list requests now both return
+  HTTP 401. Authenticated listing still succeeds and retained snapshot entries
+  remain available. No snapshot contents were downloaded.
+- Production remained RUNNING before the operation; health requests throughout
+  verification returned HTTP 200/status ok.
+- A new periodic snapshot, `css_is_20261031_235908_auto.db`, appeared in this
+  bucket after the visibility change. Observed at 2026-10-31 15:59:23 UTC.
+  This establishes continued snapshot writes after the change; it does not prove
+  database integrity, independent retention, or a successful recovery drill.
+- Hosting settings HTML redirected the API-token request to browser login; the
+  exact mount identity was not available there. Existing runtime evidence and
+  matching bucket paths were checked; mounts and credentials were left intact.
+  Continued snapshot creation supplies operational evidence that the current
+  running saver retained access. A future cold-start/mount remount was not tested.
+- No restart, deployment, mount edit, token change, database download or forced
+  backup was performed. The scheduled application snapshot was observed only.
+- Remaining: owner admin durability review, mount identity confirmation, exposure
+  assessment for the previously public bucket, and approved isolated recovery
+  evidence. Do not reopen public access as a troubleshooting shortcut.
