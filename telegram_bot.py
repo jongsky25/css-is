@@ -30,6 +30,7 @@ import telegram_tasks as task_actions
 import telegram_group_reads as shared_reads
 import telegram_actions
 import telegram_meetings as meetings
+import telegram_meeting_webhook as meeting_webhook
 import telegram_notices as notices
 import telegram_reminders as reminders
 import telegram_room_requests
@@ -157,7 +158,7 @@ def normalize(value):
         parts = text.split()
         if len(parts)==2 and parts[0] in ('/meeting_confirm','/room_confirm') and re.fullmatch('[A-Za-z0-9_-]{43}',parts[1]):
             clean['command']=parts[0];clean['meeting_argument']=links.digest(parts[1])
-        if len(parts)==2 and parts[0] in ('/meeting_receipt','/room_receipt') and re.fullmatch('[a-f0-9]{32}',parts[1]):
+        if len(parts)==2 and parts[0] in ('/meeting_receipt','/room_receipt','/meeting_preview','/room_preview') and re.fullmatch('[a-f0-9]{32}',parts[1]):
             clean['command']=parts[0];clean['meeting_argument']=parts[1]
         if first in ('/calendar', '/calendar_next'):
             clean['command'] = first
@@ -246,7 +247,8 @@ def receive(conn, clean, raw, bot, now, webhook_reply=None):
         if clean.get('group_event'):
             groups.handle_event(conn, clean, bot)
         cid, generation, permitted = identity(conn, clean['sender_id'])
-        if clean['command'] in task_actions.COMMANDS + document_reads.COMMANDS + supply_reads.COMMANDS + personal_reads.COMMANDS:
+        inline_meeting=(webhook_reply is not None and meeting_webhook.accepts(conn,clean))
+        if inline_meeting or clean['command'] in task_actions.COMMANDS + document_reads.COMMANDS + supply_reads.COMMANDS + personal_reads.COMMANDS:
             inline = (webhook_reply is not None and storage.enabled('delivery') and storage.enabled('link')
                       and transport.config()==bot and cid is not None and permitted)
             conn.execute("""INSERT INTO telegram_update
@@ -256,7 +258,8 @@ def receive(conn, clean, raw, bot, now, webhook_reply=None):
             if inline:
                 adapter=(document_reads if clean['command'] in document_reads.COMMANDS else
                          supply_reads if clean['command'] in supply_reads.COMMANDS else personal_reads.ADAPTERS.get(clean['command']))
-                text=adapter.render(conn,clean,bot,now) if adapter else task_actions.handle(conn,clean,bot,now)
+                text=(meeting_webhook.handle(conn,clean,bot,now) if inline_meeting else
+                      adapter.render(conn,clean,bot,now) if adapter else task_actions.handle(conn,clean,bot,now))
                 if adapter:
                     context={'connection_id':cid,'generation':generation,'chat_id':clean['chat_id'],
                              'topic_id':None,'registration_id':None}
@@ -299,6 +302,8 @@ def receive(conn, clean, raw, bot, now, webhook_reply=None):
         if command == '/status' and links.pending_confirmation(conn, clean['sender_id'], bot, now):
             special = True
         supported = command is not None and (permitted or special)
+        if command in ('/meeting_preview','/room_preview'):
+            supported = False  # New pull commands are private webhook-only.
         if command in ('/register','/group_status','/group_calendar','/group_rooms'):
             supported = group_route is not None
         projection = {'kind': 'help', 'bot': bot[0], 'fingerprint': bot[2]}
@@ -571,7 +576,8 @@ def eligible(conn, delivery, bot, now=None):
     calendar_lookup = calendar_reads.descriptor(projection, bot) and calendar_reads.actor(conn, delivery, bot) is not None
     room_lookup = room_reads.descriptor(projection, bot) and room_reads.actor(conn, delivery, bot) is not None
     work_read = work_lookup.descriptor(projection, bot) and work_lookup.actor(conn, delivery, bot) is not None
-    meeting_lookup = meetings.delivery_context(conn,delivery,projection,now or now_utc()) is not None
+    meeting_context = meetings.delivery_context(conn,delivery,projection,now or now_utc())
+    meeting_lookup = bool(meeting_context and (reply_transport()=='direct' or meeting_context[0]['chat_id']<0))
     linking = projection.get('kind') in ('link_code','link_confirm') if isinstance(projection, dict) else False
     if linking:
         permitted = links.render(conn, projection, delivery['chat_id'], bot, now or now_utc()) is not None

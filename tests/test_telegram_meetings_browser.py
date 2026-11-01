@@ -16,6 +16,8 @@ from tests.test_telegram_bot import TOKEN,SECRET,NOW,update
 
 
 def test_mobile_guided_meeting_form_and_private_confirmation_without_scripts(grid_browser,app_mod,monkeypatch):
+    # Legacy worker transport remains covered separately from webhook pulls.
+    monkeypatch.setenv('CSS_TELEGRAM_REPLY_TRANSPORT','direct')
     c=st.connect(app_mod.DB);user=st.get_admin_user(c,'admin@test.local')
     for capability in ('INBOUND','DELIVERY','LINK','CALENDAR_READ','CALENDAR_CREATE'):
         monkeypatch.setenv('CSS_TELEGRAM_'+capability+'_ENABLED','1')

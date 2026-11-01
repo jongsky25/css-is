@@ -33,6 +33,7 @@ CHANGELOG = [
             "Find permitted document numbers, subjects and status with a separate document read permission.",
             "Check your supply request approval and collection status with separate consent.",
             "Separate read permissions show your travel filing, meal request and work-arrangement status.",
+            "Private meeting and room-request forms now return previews and confirmations through incoming Telegram replies.",
             "A private summary combines overdue tasks, upcoming deadlines and work awaiting review."
         ]
     },

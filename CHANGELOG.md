@@ -1,5 +1,7 @@
 ## 9.56 — November 1, 2026
 
+- Complete private guided meeting/room actions through webhook guide, preview, confirmation and recovery replies, including partial room failure without recreating the saved meeting.
+
 - Add separately consented private travel checklist/status, standalone and room-linked meal status, and work-arrangement filing lookup.
 
 - Add separately consented private supplies-request lookup with source approval, collection and receipt-confirmation stages.

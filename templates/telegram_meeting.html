@@ -7,8 +7,13 @@
 <p>Start with <code>/meeting</code> in your private bot chat or an approved group/topic. Choose exact fields here, then check and confirm the preview in your own private bot chat within five minutes. This form creates no calendar entry.</p>
 <p>All dates and times use <strong>Asia/Manila</strong>. One date, with end time after start time; recurring meetings stay in Office Connect. You can optionally request the conference room with separate permission. No automatic video link is created.</p>
 {% if error %}<p role="alert">{{ error }}</p>{% endif %}
+{% if webhook_pull and prepared_operation %}
+{% if queued %}<p role="status">Your preview is prepared. Nothing is created until you confirm. Send <code>/meeting_preview {{ prepared_operation }}</code> in your original private Telegram chat, review every field and send its exact confirmation command before expiry.</p>{% endif %}
+{% if already %}<p role="status">This operation already has a recorded outcome. Send <code>/meeting_receipt {{ prepared_operation }}</code> in your original private chat. No second record is created by recovery.</p>{% endif %}
+{% else %}
 {% if queued %}<p role="status">Your preview is prepared. Check your private Telegram chat for its exact confirmation command. Nothing is created until you send that command. If delivery is uncertain or paused, check the hosting pilot; start a new preview after expiry.</p>{% endif %}
 {% if already %}<p role="status">This operation already has a receipt. Check your private chat or use the recovery command from the original preview. No second meeting was created.</p>{% endif %}
+{% endif %}
 {% if origins %}
 <form method="post" action="/account/telegram/meeting">
 <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="key" value="{{ key }}">
@@ -30,7 +35,7 @@
 </fieldset>
 {% else %}<p>Optional room submission requires separate room read and room-request consent and pilots. Without them, this creates only a meeting.</p>{% endif %}
 <p>Group membership grants no calendar access. This request does not share the meeting with a Telegram group; group sharing needs a separate exact-version approval. Participants and the full preview are sent only to your private bot chat.</p>
-<button type="submit">Send exact preview to my private chat</button>
+<button type="submit">{{ 'Prepare exact private preview' if webhook_pull else 'Send exact preview to my private chat' }}</button>
 </form>
 {% else %}<p>No current meeting request. Enable the optional pilot, consent to calendar reading and meeting creation when linking, and send <code>/meeting</code> again.</p>{% endif %}
 </div>

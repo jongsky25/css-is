@@ -504,3 +504,32 @@ Full repository suites/container audit remain exact-head PR CI gates. Next:
 review those checks or continue bounded additions as directed. No merge,
 production/preview settings, real send, deployment or live acceptance; those
 remain explicitly deferred.
+
+## Private meeting/room webhook flow staged — 2026-11-01
+
+Owner approved the next core-workflow repair on the same draft PR #572/branch,
+candidate 9.56. Private `/meeting` and `/room_request` now return guides through
+webhook replies; real forms show `/meeting_preview OPERATION_ID` or
+`/room_preview OPERATION_ID`; private confirmation/receipt commands commit and
+recover the existing authorized action without an outgoing provider connection.
+Combined room failure preserves the meeting and supports a fresh parent-linked
+room-only retry. Room requests remain pending approval, never auto-booked.
+[Runbook](TELEGRAM_PRIVATE_MEETING_WEBHOOK.md).
+
+No new grants/switches: current explicit calendar read/create and room read/request
+consent still apply. Source business mutations, audit, consumed preview, receipt,
+update deduplication and uncertain response handoff commit atomically. Private
+webhook pushes are not queued; old pending private pushes are suppressed in that
+mode. Group-origin confirmations still use the existing async membership path;
+direct-mode behavior remains available. Uncertain sends are never replayed.
+
+322 broader regressions and 19 shuffled flow/browser cases passed without
+failures/skips (overlapping groups). Two real phone no-script browser flows use
+only actual message/form-visible codes and forbid outbound sends/membership
+calls. Tests cover duplicate/concurrent commits, source/current authority,
+partial retry, old queue suppression and complete rollback on handoff failure.
+Metadata/locks/vendor/compatibility/AI contract, compile, links/diff checks pass.
+Full repository suites/container audit remain fresh exact-head CI gates. Next:
+review CI or separately scoped additions as directed. No merge/deployment,
+production/preview setting, real provider call or hosted acceptance. Live testing
+and full T4.4/group/scheduled-delivery verification remain deferred/open.
