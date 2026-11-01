@@ -139,6 +139,13 @@ execution. Owner actor jongsky25 is active; cron-source commit author/committer
 both map to that owner. No new notification test was sent.
 
 
+No scheduled event was observed through 07:49 UTC after the source edit and
+successful post-merge manual check. The enabled state was refreshed once against
+the new definition at 07:49:18 UTC; final state active. This does not restart the
+application. Do not claim this reset solved scheduling without a real event.
+If none appears through production verification, preserve the provider-side
+scheduling blocker rather than making further speculative application changes.
+
 Next: verify the production release and observe a real scheduled execution
 with healthy/valid signals, and obtain phone receipt confirmation. Do not claim
 either step passed until evidence exists. No production outage, failed backup
