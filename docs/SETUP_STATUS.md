@@ -75,6 +75,33 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**Audit warning resolved operationally — November 1, 2026.**
+The owner-requested writer fix [PR #573](https://github.com/jongsky25/css-is/pull/573)
+merged as `5f3d775` and deployed as 9.56. The historical incident acknowledgment
+[PR #574](https://github.com/jongsky25/css-is/pull/574) merged as `5a6338d` and
+deployed as **9.57**. Both PRs passed both full-suite orders, dependency audit,
+metadata, avatar acceptance and the required aggregate gate. Both production
+workflows passed their own verification, backup/version gates and deployment.
+
+Final [deployment run 41263751821](https://github.com/jongsky25/css-is/actions/runs/41263751821)
+completed successfully. Authenticated post-deploy Operations observations confirm
+version 9.57, commit `5a6338d`, `ok=true`, `acknowledged=true`, `bad_id=null`,
+`checkpoint_changed=false`, and `through_id=9452`. `raw_ok=false` is expected:
+original audit records/hashes remain unchanged and the historical chain failure
+is still documented. This clears the active audit warning without rewriting
+history. Changes to the reviewed prefix and new chain failures remain actionable.
+Only typed, sanitized status was read from the workflow archive; no private audit
+records or credential values were published. Temporary audit snapshot directories
+were checked absent after the read-only inspections.
+
+No further audit data repair is needed for this reviewed incident. Continue with
+the owner's next requested work. Automatic monitoring alerts remain a separate
+follow-up; the owner reports backups fixed. This final handoff is saved on
+`docs/audit-warning-resolved`; application changes are merged and deployed, while
+this documentation-only completion update is saved separately from main.
+
+### Historical action notes
+
 November 1 follow-up: owner authorized merging PR #573 and then clearing the
 reviewed historical warning. PR #573 is ready for review, with metadata,
 dependency audit and avatar acceptance passing; both full suites are still
