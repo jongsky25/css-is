@@ -4128,6 +4128,14 @@ def audit(conn, actor, action, *, target_type=None, target_id=None,
     failed audit write should surface loudly in logs, not break the action…
     except that silent-loss is worse for an audit trail, so we DO raise: the
     surrounding transaction simply fails with it, which is the safer default."""
+    # Hash exactly the representation persisted in the TEXT column (notably
+    # integer 0 must not hash as an empty value and then be stored as "0").
+    target_id = str(target_id) if target_id is not None else None
+    # Reserve SQLite's writer before reading the tail. Otherwise two idle
+    # connections can read the same parent and append a fork. Existing write
+    # transactions already hold the reservation; leave their ownership intact.
+    if not conn.in_transaction:
+        conn.execute("BEGIN IMMEDIATE")
     ts = tz.now_iso()
     row = conn.execute("SELECT row_hash FROM audit_log ORDER BY id DESC LIMIT 1").fetchone()
     prev_hash = row[0] if row else "genesis"
@@ -4137,7 +4145,7 @@ def audit(conn, actor, action, *, target_type=None, target_id=None,
         """INSERT INTO audit_log(ts, actor, action, target_type, target_id,
                summary, before_text, after_text, ip, prev_hash, row_hash)
            VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
-        (ts, actor, action, target_type, str(target_id) if target_id is not None else None,
+        (ts, actor, action, target_type, target_id,
          summary, before, after, ip, prev_hash, row_hash))
     if commit:
         conn.commit()
