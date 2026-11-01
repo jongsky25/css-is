@@ -187,7 +187,7 @@ def test_expiry_scrubbing_and_key_tombstone(action_env):
 
 
 def test_unconsented_actions_remain_unavailable(linking,monkeypatch):
-    assert set(actions.ADAPTERS)=={'calendar.create','rooms.request','tasks.acknowledge','tasks.submit','calendar.reschedule','calendar.cancel','rooms.withdraw','rooms.move','tasks.create'}
+    assert set(actions.ADAPTERS)=={'calendar.create','rooms.request','tasks.acknowledge','tasks.submit','calendar.reschedule','calendar.cancel','rooms.withdraw','rooms.move','tasks.create','tasks.deadline'}
     c,_,_,client,payload=linking
     activate(linking)
     monkeypatch.setenv('CSS_TELEGRAM_CALENDAR_CREATE_ENABLED','1')
@@ -269,7 +269,7 @@ def test_pending_payloads_are_scrubbed_on_revoke_and_restore(action_env):
 def test_upgrade_adds_preview_schema_without_altering_old_operations(action_env):
     linking,ctx,_=action_env;c,_,path,_,_=linking
     p=issue(action_env)
-    for name in ('telegram_preview_connection','telegram_preview_group','telegram_preview_grant','telegram_room_calendar_grant','telegram_combined_room_grant'):
+    for name in ('telegram_preview_connection','telegram_preview_group','telegram_preview_grant','telegram_room_calendar_grant','telegram_combined_room_grant','telegram_task_proposal_delete'):
         c.execute('DROP TRIGGER '+name)
     c.execute('DROP TABLE telegram_preview')
     c.execute('ALTER TABLE telegram_operation DROP COLUMN context_hash');c.commit()

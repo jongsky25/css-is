@@ -1,6 +1,5 @@
 """Guided task proposals; native officer assignment and source rules remain authoritative."""
 from datetime import date
-import hashlib
 import json
 import re
 import unicodedata
@@ -11,7 +10,7 @@ import telegram_calendar as common
 import telegram_links as links
 import telegram_meetings as dispatch
 import work
-import work_compat
+import telegram_work_actions as shared
 import work_reads
 import work_tasks
 
@@ -44,16 +43,7 @@ def choices(conn,user,mode):
 class Adapter:
     def prepare(self,conn,user,raw):
         if set(raw)!=set(FIELDS):raise actions.Unavailable('Complete only the supported task proposal fields.')
-        work.writable(conn)
-        item=work.get(conn,user,number(raw['case_id']))
-        work_compat.require_open(conn,item['id'])
-        # Native creation invalidates active consolidation packets, including
-        # downstream formal approvals. Keep that larger amendment in the source UI.
-        if conn.execute('''SELECT 1 FROM work_review_packet p JOIN document d ON d.id=p.document_id
-            WHERE p.case_id=? AND d.status NOT IN ('closed','cancelled','released','awaiting_acknowledgment')
-            AND NOT EXISTS(SELECT 1 FROM work_review_packet newer WHERE newer.document_id=p.document_id AND newer.id>p.id)
-            AND NOT EXISTS(SELECT 1 FROM work_review_invalidation i WHERE i.packet_id=p.id) LIMIT 1''',(item['id'],)).fetchone():
-            raise actions.Unavailable('Amend work under active consolidation review in Office Connect so dependent approvals can be reviewed there.')
+        item=shared.require_work(conn,user,number(raw['case_id']))
         unit_id=number(raw['unit_id'],optional=True) or item['unit_id']
         unit=rows(conn,'SELECT id,name,path FROM org_unit WHERE id=?',(unit_id,))
         if not unit:raise actions.Unavailable('Choose an existing contributing unit.')
@@ -74,13 +64,7 @@ class Adapter:
         clean={'case_id':item['id'],'title':text(raw['title'],'Task title',160),
                'expected_output':text(raw['expected_output'],'Expected output',1000,multiline=True),
                'unit_id':unit_id,'proposed_owner_id':owner_id,'due_date':due or ''}
-        documents=[]
-        for link in rows(conn,'SELECT * FROM work_document WHERE case_id=? ORDER BY document_id',(item['id'],)):
-            doc=work.resolved_document(conn,link['document_id'])
-            documents.append([link,{k:doc[k] for k in ('id','canonical_id','revision','due_date','status')} if doc else None])
-        expected={'source':hashlib.sha256(actions.packed([item,documents]).encode()).hexdigest(),
-                  'event_id':conn.execute('SELECT COALESCE(MAX(id),0) FROM work_event WHERE case_id=?',(item['id'],)).fetchone()[0],
-                  'unit':unit[0],'owner':owner}
+        expected={**shared.source_state(conn,item),'unit':unit[0],'owner':owner}
         summary={**clean,'work_title':common.clip(item['title'],120),'unit_name':common.clip(unit[0]['name'],120),
                  'owner_name':common.clip(owner['name'],120) if owner else 'None proposed'}
         if common.units(self.text(summary))>3000:

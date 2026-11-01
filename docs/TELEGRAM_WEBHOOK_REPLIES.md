@@ -44,7 +44,7 @@ that Telegram executed the response.
 
 Scheduled notifications, reminders, group membership checks, group commands and
 group-origin meeting/room actions still use the existing asynchronous outgoing path.
-Draft 9.64 adds [private guided meeting/room webhook replies](TELEGRAM_PRIVATE_MEETING_WEBHOOK.md),
+Draft 9.65 adds [private guided meeting/room webhook replies](TELEGRAM_PRIVATE_MEETING_WEBHOOK.md),
 including explicit preview retrieval, confirmation and recovery. This draft is
 not yet activated or verified live.
 This release does not establish that these work on the live host. An incoming

@@ -1,4 +1,6 @@
-## 9.64 — November 1, 2026
+## 9.65 — November 1, 2026
+
+- Add separately consented internal task deadline setting/explicit clearing through officer/work-lead authority, exact private previews and atomic native milestone/receipt writes; official dates and formal-review amendments remain in Office Connect.
 
 - Add separately consented /new_task proposals through signed-in forms and exact private confirmation, preserving source deadlines/access/open-work rules and officer-only assignment; atomic task/event/audit/receipt and deletion recovery remain protected.
 

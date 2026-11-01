@@ -5,7 +5,7 @@ import os
 # Deliberately independent of Apprise's private discussion digest switch.
 SWITCHES = (
     'inbound', 'delivery', 'link', 'groups', 'calendar_read', 'rooms_read',
-    'calendar_create', 'calendar_reschedule', 'calendar_cancel', 'rooms_request', 'rooms_withdraw', 'rooms_move', 'change_notices', 'reminders', 'work_read', 'tasks_acknowledge', 'tasks_submit', 'tasks_create', 'documents_read', 'supplies_read', 'travel_read', 'meals_read', 'arrangements_read',
+    'calendar_create', 'calendar_reschedule', 'calendar_cancel', 'rooms_request', 'rooms_withdraw', 'rooms_move', 'change_notices', 'reminders', 'work_read', 'tasks_acknowledge', 'tasks_submit', 'tasks_create', 'tasks_deadline', 'documents_read', 'supplies_read', 'travel_read', 'meals_read', 'arrangements_read',
 )
 
 
@@ -181,10 +181,14 @@ def install(conn):
       context_json TEXT NOT NULL, bot_identity INTEGER NOT NULL, bot_fingerprint TEXT NOT NULL,
       created_at TEXT NOT NULL, expires_at TEXT NOT NULL);
     CREATE INDEX IF NOT EXISTS telegram_meeting_origin_owner ON telegram_meeting_origin(account_id,expires_at);
-    CREATE TRIGGER IF NOT EXISTS telegram_task_proposal_delete BEFORE DELETE ON work_task
+    DROP TRIGGER IF EXISTS telegram_task_proposal_delete;
+    CREATE TRIGGER telegram_task_proposal_delete BEFORE DELETE ON work_task
     BEGIN
+      UPDATE telegram_preview SET state='cancelled',fields_json=NULL,summary_json=NULL,expected_json=NULL
+        WHERE state='pending' AND operation_id IN
+          (SELECT operation_id FROM telegram_operation WHERE action='tasks.deadline' AND target_id=OLD.id);
       UPDATE telegram_operation SET target_id=NULL,result_code='task_deleted'
-        WHERE action='tasks.create' AND target_id=OLD.id;
+        WHERE action IN ('tasks.create','tasks.deadline') AND target_id=OLD.id;
     END;
     CREATE TRIGGER IF NOT EXISTS telegram_calendar_receipt_delete BEFORE DELETE ON calendar_entry
     BEGIN
@@ -244,7 +248,7 @@ def install(conn):
           OR (NEW.action='rooms.read' AND action IN ('rooms.request','rooms.withdraw','rooms.move'))
           OR (NEW.action='calendar.read' AND action='rooms.move'
               AND json_extract(CASE WHEN json_valid(expected_json) THEN expected_json ELSE '{}' END,'$.entry_id') IS NOT NULL)
-          OR (NEW.action='work.read' AND action IN ('tasks.acknowledge','tasks.submit','tasks.create')));
+          OR (NEW.action='work.read' AND action IN ('tasks.acknowledge','tasks.submit','tasks.create','tasks.deadline')));
     END;
     CREATE TRIGGER IF NOT EXISTS telegram_account_revoked
     AFTER UPDATE OF active,must_change,role,username,pw_hash,salt ON admin_user

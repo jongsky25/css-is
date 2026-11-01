@@ -1,6 +1,6 @@
 # Office Connect ↔ Telegram delivery plan
 
-Status: T0–T4.3.2 merged; T4.4 hosted pilot incomplete. Draft PR #572 (candidate 9.64) adds private task/document/supplies/personal reads, confirmed task updates and private guided meeting/room webhook replies. Owner confirms hosted linking/calendar retrieval; new draft capabilities, group/automatic outgoing delivery and the complete pilot remain unverified live. Source switches remain default-off.
+Status: T0–T4.3.2 merged; T4.4 hosted pilot incomplete. Draft PR #572 (candidate 9.65) adds private task/document/supplies/personal reads, confirmed task updates and private guided meeting/room webhook replies. Owner confirms hosted linking/calendar retrieval; new draft capabilities, group/automatic outgoing delivery and the complete pilot remain unverified live. Source switches remain default-off.
 Last updated: 2026-11-01.
 Repository: jongsky25/css-is.
 Planning baseline inspected: abf3141 (merge of PR #458).
@@ -943,3 +943,72 @@ container/aggregate CI and review the draft. Release, host activation, real
 messages and user/live acceptance remain deferred. Automatic assignment, task
 acceptance/cancellation/deadline changes and amendments to active formal reviews
 remain separate scope. No production data or external staff messaging was used.
+
+
+### Private internal task deadlines — 2026-11-01
+
+The owner requested the next feature while keeping deployment, preview publication,
+activation and personal/live testing deferred. Added `/task_deadline` with a
+signed-in no-script form, `/deadline_preview`, `/deadline_confirm` and
+`/deadline_receipt` to draft PR #572, review branch
+`feat/telegram-private-work-lookup`, candidate **9.65**. Actual main remains
+`a7b9b38` (released 9.59); its changes and released changelog remain preserved.
+No main merge, provider calls, monitor execution or production data access occurred.
+
+Separate default-off `CSS_TELEGRAM_TASKS_DEADLINE_ENABLED` / `tasks.deadline`
+consent requires work read, source modules and original private webhook/account/
+chat/bot proof. The native concerned-officer or confirmed-work-lead `milestone`
+authority is checked at preparation and confirmation. Task ownership alone is
+insufficient. The form requires set/change with an exact date or explicit clear
+with a blank date, plus a bounded reason. The preview identifies work/task, status,
+old/new deadline and reason before exact five-minute confirmation.
+
+Confirmation uses the native task milestone transaction. Owner, progress,
+required status, expected output, submission and official deadlines stay unchanged.
+Internal targets cannot follow linked official deadlines. Completed/closed work,
+done/cancelled tasks, lost document visibility and active formal consolidation
+review block the operation. Formal review beginning after preview also blocks it;
+dependent approval amendments remain in Office Connect. Shared proposal/deadline
+helpers retain these rules and hash source state without projecting submissions.
+
+Native source/event/audit/reminder effects, preview consumption, receipt and
+private handoff commit atomically. Duplicate/concurrent confirmation changes one
+milestone; audit/receipt/handoff failures roll back. Task deletion cancels pending
+previews and clears recorded targets to fence numeric-ID reuse. Read revocation,
+source/host pauses, stale/reverted source, restored connection, expired proof and
+changed officer/lead authority refuse confirmation. Recovery rechecks current
+source view and reports current state without repeating a change.
+
+See [feature details](TELEGRAM_TASK_DEADLINES.md) and the extended
+[pending live checklist](TELEGRAM_LIVE_ACCEPTANCE_CHECKLIST.md). All live cases
+remain Pending. No scheduler, automatic assignment, acceptance, cancellation or
+external staff message was added.
+
+Isolated Python 3.11 verification: **1459 broad regressions passed** across
+`tests/test_telegram*.py`, `tests/test_work*.py`, audit-chain writers, deployment
+and release checks. **167 current shuffled checks** (seed 311) passed across
+deadline/proposal services and phone forms, menu, generic action engine, existing
+task actions and private meeting webhook handling. Zero failures/errors/skips in
+both groups; groups overlap. The broad run includes the final authority-revocation
+and four native nonterminal-state cases. No application source edits followed
+these runs.
+
+Earlier dedicated proposal/deadline/menu/phone sample: 90 passed; earlier generic
+engine/deadline sample: 76 passed. Initial synthetic linked-document fixtures
+needed access for the assigned contributor; the legacy-schema simulation needed
+to remove the newer deletion trigger before dropping its referenced table. Those
+fixtures were corrected without weakening authority or migration assertions.
+Final passing groups cover both corrections.
+
+Reports: `/tmp/telegram-task-deadline-regressions.xml` and
+`/tmp/telegram-task-deadline-shuffled.xml`; both pass the JUnit no-skips gate.
+Candidate 9.65 release metadata/increase over actual main 9.59, locks/vendor
+integrity, installed compatibility, AI contract, Python compilation, local Markdown
+links and whitespace pass. Existing Starlette/httpx deprecation warning remains.
+Full exact-head repository normal/shuffled/dependency/container/aggregate CI still
+requires inspection after push. No hosted or user acceptance is claimed.
+
+Next: inspect fresh exact-head repository-wide normal/shuffled/dependency/
+container/aggregate CI and continue the requested feature work. No hosted/user
+acceptance is claimed. Main merge, preview publication, release, feature activation,
+real messages and live testing remain deferred until the owner's later instruction.

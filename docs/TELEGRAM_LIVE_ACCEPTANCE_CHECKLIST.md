@@ -7,7 +7,7 @@ without the owner's later release/testing instruction.
 
 ## Before the later pilot
 
-1. Identify the reviewed PR/source commit and candidate version (currently 9.64).
+1. Identify the reviewed PR/source commit and candidate version (currently 9.65).
    Verify the actual candidate's required metadata/dependency/full normal/shuffled/
    aggregate CI, main freshness and synchronized versions. Old-head checks do not
    establish readiness. Follow existing release and verified-backup gates.
@@ -43,6 +43,8 @@ without the owner's later release/testing instruction.
 | Task actions | With separate read/acknowledge/submit consent, preview then confirm own To do → In progress → For review. Output is entered in the signed-in form. Source blockers/open-work/revisions remain enforced; readonly users get no write hint. | Pending |
 | Task proposal | Consent separately to work read/task proposal. `/new_task` → signed-in fields → exact private preview/confirmation creates one required contribution in proposed state with no confirmed owner. Retry/recover creates no second task. The native officer must still confirm assignment; proposing an account grants no document access. | Pending |
 | Proposal source rules | Hidden/completed work, linked official deadlines, changed work/unit/account, expired/revoked previews and source pauses prevent stale creation. Long/multiline/Unicode previews stay bounded and exact. Native assignment enforces linked-document access and review/completion rules; bot confirmation cannot replace that decision. | Pending |
+| Internal task deadline | With separate work-read/deadline consent, an authorized officer or confirmed work lead uses `/task_deadline`, the signed-in form and exact preview/confirmation to set/change or explicitly clear an internal deadline with a reason. Owner, progress, submission and official dates stay unchanged. | Pending |
+| Deadline authority and recovery | Task ownership alone grants no deadline authority. Changed source/official deadline, revoked rights, closed work, done/cancelled task or active formal consolidation review blocks confirmation. Retry/recover records one milestone; deleted-task recovery never touches a reused ID. Use synthetic fixtures for fault cases. | Pending |
 | Task recovery | Repeat an already consumed confirmation and request its receipt. One task transition/audit outcome is recorded; no second mutation or submission is created. | Pending |
 | Documents | Find a synthetic permitted number/subject and compare workflow/routing/paper status. Body/file/people/notes are absent. Unknown and another test account's restricted ID have the same denial. | Pending |
 | Supplies | Compare own approval, waiting-stock/pickup, handover and receipt-confirmation stages with the source UI. Reading changes no stock/request/receipt state; another person's request is denied even to an administrator through the bot. | Pending |
