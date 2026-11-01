@@ -414,3 +414,6 @@ Full repository suites/container audit remain CI gates. Next: review exact-head
 CI and the PR, then separately authorized release/activation and actual hosted
 acceptance. No live switch, real Telegram send, preview publish, merge or deploy.
 Deferred operations findings remain deferred.
+
+Saved remotely in [draft PR #572](https://github.com/jongsky25/css-is/pull/572),
+implementation commit `b31a6f2`; exact-head CI pending. No merge/deployment.
