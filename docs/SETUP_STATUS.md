@@ -1,6 +1,6 @@
 # Cloud/mobile setup status
 
-Updated: 2026-10-31. Repository: `jongsky25/css-is` (Office Connect BLHSD).
+Updated: 2026-11-01. Repository: `jongsky25/css-is` (Office Connect BLHSD).
 Integration branch: `setup/cloud-mobile-continuity`; default startup branch after
 merge: `main`.
 
@@ -74,6 +74,40 @@ access remains necessary in a fresh chat.
 - [x] 6. Monitoring gaps assessed and reusable workflow/templates documented; no external alerts configured.
 
 ## Next action
+
+November 1 follow-up: owner authorized merging PR #573 and then clearing the
+reviewed historical warning. PR #573 is ready for review, with metadata,
+dependency audit and avatar acceptance passing; both full suites are still
+running at this handoff. Auto-merge is disabled on the repository, so merge must
+be performed after observing the required aggregate gate pass.
+
+The acknowledgment candidate is on `fix/audit-incident-acknowledgment` (9.57).
+It pins the exact reviewed historical prefix, preserves the strict verifier and
+all original database records, and keeps future failures actionable. See the
+[incident acknowledgment design](operations/audit-2026-11-01.md).
+Local verification: 59 targeted audit/health/deploy-diagnostics checks passed,
+zero skips/failures (7.03 seconds); JUnit, release metadata and diff checks pass.
+Two independent read-only snapshots (`084815` and `085017` auto snapshots on
+November 1) matched the 9,411-row fingerprint through #9452. Candidate operational
+checks on the latter report acknowledged history with no active failure, while
+the raw full-chain failure remains. No app ran on the snapshot; temporary data
+was removed. Existing post-deploy diagnostics now expose only typed audit status
+alongside existing sanitized Operations observations for live verification.
+
+Next: finish the gated #573 merge, then merge/deploy the acknowledgment candidate
+after its checks, and confirm the live audit status. This owner request includes
+the releases necessary to clear the warning; no backup settings or automatic
+monitoring alerts are in scope. This is work in progress, not a claim of deployment.
+
+User resumed the audit warning on November 1 and reports backups fixed.
+Investigation and prospective write fixes are on `fix/audit-chain-investigation`;
+see [audit investigation](operations/audit-2026-11-01.md). The #8949 numeric-zero
+hash mismatch is reproduced; two later forks match the concurrent-writer defect.
+Historical records and warnings are preserved. Validation and save results are
+recorded below. No production release is authorized by this request.
+Automatic monitoring remains separate. Earlier deferral statements below are
+historical and no longer defer this requested investigation.
+
 
 Use the [mobile/cloud workflow](MOBILE_CLOUD_WORKFLOW.md) for the user's next
 requested feature or fix. The collaboration setup is ready on this branch;
@@ -533,3 +567,41 @@ Full repository suites/container audit remain fresh exact-head CI gates. Next:
 review CI or separately scoped additions as directed. No merge/deployment,
 production/preview setting, real provider call or hosted acceptance. Live testing
 and full T4.4/group/scheduled-delivery verification remain deferred/open.
+
+## Audit warning candidate — November 1, 2026
+
+Branch `fix/audit-chain-investigation`, based on main `e0dde74` (merged 9.55).
+Saved as [draft PR #573](https://github.com/jongsky25/css-is/pull/573), initial
+implementation commit `360517c`. Release CI is not yet verified.
+Version 9.56 synchronizes release metadata for review; it is not deployed.
+Read-only snapshot investigation and production limits are in
+[the audit report](operations/audit-2026-11-01.md).
+
+Python 3.11 hashed test-lock installation and pip check passed. Isolated targeted
+audit, integration access/changes, travel transaction, appearance and monitoring
+checks: **125 passed**, zero skips/failures (27.47 seconds). JUnit gate, release
+metadata check, changed documentation links and git diff check passed. One
+existing Starlette/httpx deprecation warning was emitted. Full normal/shuffled
+suites and dependency/container audits remain release CI requirements; these
+targeted results do not replace them. No preview is needed for this storage-only
+change. No production data mutation, merge, restart or deployment occurred.
+
+Next: review the saved candidate and its CI before any explicitly requested
+release. The historical #8949 warning is intentionally preserved; incident
+acknowledgment/checkpoint design remains separate from the prospective writer fix.
+
+## Telegram candidate reconciled with current main — 2026-11-01
+
+Main advanced to `5a6338d` with separately merged audit-write/incident work
+(PRs #573/#574), source version 9.57. Preserved those changes by merging current
+main into the Telegram review branch. This does not resume audit operations or
+authorize a production change. Previous audit candidate/status entries are
+historical. The current Telegram candidate is now **9.58**, with main's 9.56/9.57
+release history retained and Telegram's unpublished notes moved to 9.58.
+
+Meeting/room implementation commit `f9ab222` holds the transport repair. Before
+reconciliation, 322 broader cases, 19 shuffled flow cases and two final actual
+mobile webhook cases passed without failures/skips; the final browser run also
+verifies nullable legacy routing contexts do not crash the signed-in page.
+Fresh merged-candidate checks follow; prior-head results are not transferred.
+Draft PR #572 remains unmerged; deployment, activation and live testing deferred.

@@ -1,4 +1,4 @@
-## 9.56 — November 1, 2026
+## 9.58 — November 1, 2026
 
 - Complete private guided meeting/room actions through webhook guide, preview, confirmation and recovery replies, including partial room failure without recreating the saved meeting.
 
@@ -12,6 +12,18 @@
 - Add optional private Telegram task and work-status lookups with separate consent and current record access checks.
 - Support bounded pages, overdue/upcoming/review filters, deadlines, task progress and signed-in source links through private webhook replies.
 - With separate consent, preview and confirm task acknowledgement or output submission for review; no automatic notifications.
+
+## 9.57 — November 1, 2026
+
+- Acknowledge the owner-reviewed historical audit incident with an exact fingerprint of all original fields through #9452; do not rewrite any records or hashes.
+- System health and the audit viewer distinguish acknowledged history from active failures; changed reviewed history and new chain failures reopen the warning.
+- Preserve the strict full-chain verifier and show that the original chain remains broken at #8949.
+
+## 9.56 — November 1, 2026
+
+- Serialize audit appends before reading the previous hash, preserving caller-owned transactions.
+- Hash target IDs in their stored text representation, including numeric zero.
+- Preserve existing audit history and warnings; document the read-only investigation of #8949 and later chain forks.
 
 ## 9.55 — October 31, 2026
 

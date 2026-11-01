@@ -4128,6 +4128,14 @@ def audit(conn, actor, action, *, target_type=None, target_id=None,
     failed audit write should surface loudly in logs, not break the action…
     except that silent-loss is worse for an audit trail, so we DO raise: the
     surrounding transaction simply fails with it, which is the safer default."""
+    # Hash exactly the representation persisted in the TEXT column (notably
+    # integer 0 must not hash as an empty value and then be stored as "0").
+    target_id = str(target_id) if target_id is not None else None
+    # Reserve SQLite's writer before reading the tail. Otherwise two idle
+    # connections can read the same parent and append a fork. Existing write
+    # transactions already hold the reservation; leave their ownership intact.
+    if not conn.in_transaction:
+        conn.execute("BEGIN IMMEDIATE")
     ts = tz.now_iso()
     row = conn.execute("SELECT row_hash FROM audit_log ORDER BY id DESC LIMIT 1").fetchone()
     prev_hash = row[0] if row else "genesis"
@@ -4137,7 +4145,7 @@ def audit(conn, actor, action, *, target_type=None, target_id=None,
         """INSERT INTO audit_log(ts, actor, action, target_type, target_id,
                summary, before_text, after_text, ip, prev_hash, row_hash)
            VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
-        (ts, actor, action, target_type, str(target_id) if target_id is not None else None,
+        (ts, actor, action, target_type, target_id,
          summary, before, after, ip, prev_hash, row_hash))
     if commit:
         conn.commit()
@@ -4375,6 +4383,57 @@ def verify_audit_chain(conn):
             return False, r[0]
         prev = r[10]
     return True, None
+
+
+# Owner-acknowledged incident, 2026-11-01. This fingerprint commits to every
+# stored field (including original hashes and IPs) through the reviewed boundary.
+# It never repairs history. See docs/operations/audit-2026-11-01.md.
+_AUDIT_INCIDENT = {
+    "through_id": 9452,
+    "row_count": 9411,
+    "prefix_sha256": "ad94f9fc92da35ab963eeafd9cd0322b4e5f50b009faecdd0fe763d910725b41",
+    "bad_ids": [8949, 9406, 9452],
+}
+
+
+def _audit_prefix_digest(rows):
+    return hashlib.sha256(json.dumps(
+        rows, ensure_ascii=True, separators=(",", ":")).encode("utf-8")).hexdigest()
+
+
+def audit_health(conn):
+    """Operational verdict with an exact, code-reviewed historical exception.
+
+    The strict verifier above remains unchanged. A changed prefix or any new
+    inconsistency fails closed; an acknowledged incident is never called intact.
+    Read the whole table in one SELECT for a consistent SQLite snapshot.
+    """
+    rows = conn.execute("""SELECT id, ts, actor, action, target_type, target_id,
+        summary, before_text, after_text, ip, prev_hash, row_hash
+        FROM audit_log ORDER BY id""").fetchall()
+    previous, bad_ids = "genesis", []
+    for row in rows:
+        if row[10] != previous or _audit_hash(row[10], *row[1:9]) != row[11]:
+            bad_ids.append(row[0])
+        previous = row[11]
+    incident = _AUDIT_INCIDENT
+    prefix = [r for r in rows if r[0] <= incident["through_id"]]
+    acknowledged = (
+        len(prefix) == incident["row_count"]
+        and _audit_prefix_digest(prefix) == incident["prefix_sha256"]
+        and [rid for rid in bad_ids if rid <= incident["through_id"]] == incident["bad_ids"]
+    )
+    active = [rid for rid in bad_ids
+              if not acknowledged or rid > incident["through_id"]]
+    checkpoint_changed = bool(rows and rows[-1][0] >= incident["through_id"]
+                              and not acknowledged)
+    if checkpoint_changed and not active:
+        active = [incident["through_id"]]
+    return {"ok": not active, "bad_id": active[0] if active else None,
+            "raw_ok": not bad_ids, "acknowledged": acknowledged,
+            "checkpoint_changed": checkpoint_changed,
+            "through_id": incident["through_id"] if acknowledged else None,
+            "historical_bad_ids": incident["bad_ids"] if acknowledged else []}
 
 
 # ---------------------------------------------------------------------

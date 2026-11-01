@@ -18,12 +18,12 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "9.56"
+APP_VERSION = "9.58"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
-        "version": "9.56",
+        "version": "9.58",
         "date": "November 1, 2026",
         "summary": "Check documents and work summaries, and update tasks through private Telegram previews.",
         "changes": [
@@ -35,6 +35,25 @@ CHANGELOG = [
             "Separate read permissions show your travel filing, meal request and work-arrangement status.",
             "Private meeting and room-request forms now return previews and confirmations through incoming Telegram replies.",
             "A private summary combines overdue tasks, upcoming deadlines and work awaiting review."
+        ]
+    },
+    {
+        "version": "9.57",
+        "date": "November 1, 2026",
+        "summary": "Acknowledge the reviewed historical audit incident without changing records.",
+        "changes": [
+            "System health distinguishes the reviewed historical incident from new audit failures.",
+            "Original audit records stay unchanged and new failures still raise a warning."
+        ]
+    },
+    {
+        "version": "9.56",
+        "date": "November 1, 2026",
+        "summary": "Keep new audit entries consistent during simultaneous activity.",
+        "changes": [
+            "Audit entries now stay linked when several requests arrive together.",
+            "Actions with a zero target ID now pass the audit check.",
+            "Existing audit warnings remain visible and historical records are preserved."
         ]
     },
     {
