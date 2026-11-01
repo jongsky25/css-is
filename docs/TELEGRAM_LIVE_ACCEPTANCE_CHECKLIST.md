@@ -7,7 +7,7 @@ without the owner's later release/testing instruction.
 
 ## Before the later pilot
 
-1. Identify the reviewed PR/source commit and candidate version (currently 9.58).
+1. Identify the reviewed PR/source commit and candidate version (currently 9.59).
    Verify the actual candidate's required metadata/dependency/full normal/shuffled/
    aggregate CI, main freshness and synchronized versions. Old-head checks do not
    establish readiness. Follow existing release and verified-backup gates.

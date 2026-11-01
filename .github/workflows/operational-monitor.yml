@@ -1,0 +1,47 @@
+name: Office Connect operational monitor
+
+on:
+  schedule:
+    - cron: '2-59/5 * * * *'
+  workflow_dispatch:
+    inputs:
+      test_notification:
+        description: Send one clearly marked delivery test to the repository owner
+        type: boolean
+        default: false
+
+# Independent of the Hugging Face host. A GitHub outage/delayed schedule still
+# affects this checker; this is best-effort monitoring, not a five-minute SLA.
+permissions:
+  contents: read
+  actions: read
+  issues: write
+
+concurrency:
+  group: office-connect-operational-monitor
+  cancel-in-progress: false
+
+jobs:
+  check:
+    if: github.repository == 'jongsky25/css-is' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Confirm status and reconcile incidents
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CSS_ADMIN_USER: ${{ secrets.CSS_ADMIN_USER }}
+          CSS_ADMIN_PASS: ${{ secrets.CSS_ADMIN_PASS }}
+          MONITOR_TEST_NOTIFICATION: ${{ inputs.test_notification }}
+        run: |
+          args=()
+          if [[ "$MONITOR_TEST_NOTIFICATION" == "true" ]]; then
+            args+=(--test-notification)
+          fi
+          python scripts/operational_monitor.py "${args[@]}"

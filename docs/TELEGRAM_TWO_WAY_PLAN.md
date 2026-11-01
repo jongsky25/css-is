@@ -1,6 +1,6 @@
 # Office Connect ↔ Telegram delivery plan
 
-Status: T0–T4.3.2 merged; T4.4 hosted pilot incomplete. Draft PR #572 (candidate 9.58) adds private task/document/supplies/personal reads, confirmed task updates and private guided meeting/room webhook replies. Owner confirms hosted linking/calendar retrieval; new draft capabilities, group/automatic outgoing delivery and the complete pilot remain unverified live. Source switches remain default-off.
+Status: T0–T4.3.2 merged; T4.4 hosted pilot incomplete. Draft PR #572 (candidate 9.59) adds private task/document/supplies/personal reads, confirmed task updates and private guided meeting/room webhook replies. Owner confirms hosted linking/calendar retrieval; new draft capabilities, group/automatic outgoing delivery and the complete pilot remain unverified live. Source switches remain default-off.
 Last updated: 2026-11-01.
 Repository: jongsky25/css-is.
 Planning baseline inspected: abf3141 (merge of PR #458).
@@ -672,3 +672,9 @@ T2.2 merge reconciliation: preserved concurrent search release 8.60 and its runt
 - Owner approved a private personalized menu showing only enabled/consented commands, grouped Calendar/Tasks and work/Documents/Requests, with examples and missing-permission guidance; also a staged live-testing checklist. Same draft PR #572/candidate 9.58/branch. No deployment, activation or real messaging authorized.
 - `/menu` aliases the existing private `/help` projection and inherits its authentication, dedupe, destination/generation and transport fences. Menu readiness is recomputed from current account/link/bot, host switches, separate read/action grants, source module switches, prerequisites and private reply transport. It never queries source records or changes consent. `/status` explains unavailable features without publishing their commands. Pending two-channel linking status remains authoritative and unchanged.
 - Add record-bound detail/back commands to results, and only currently consented/available task next actions. Record ownership, source workflow/open-case/blocker checks and confirmation remain mandatory. Meeting/room guides/previews keep their explicit form/confirmation steps and URL positions; receipts name their own recovery command and menu. No bulk replay or new outbound provider call. Final tests and checklist evidence follow.
+
+### Menu candidate reconciled with monitoring main — 2026-11-01
+
+- Source main `c81b235` independently merged operational-monitoring PR #575, release 9.58. Preserved those changes on the Telegram review branch; no monitor run, incident test, live configuration, message or deployment was initiated by this task. Telegram menu implementation is saved at `97953e6`.
+- The unpublished Telegram batch is now candidate **9.59**, preserving main's actual 9.56/9.57/9.58 release histories. Current Telegram runbooks/checklist reflect 9.59. Earlier candidate entries remain historical.
+- Pre-merge menu checks: 310 broader cases, 84 shuffled cases, 10 final menu cases passed, zero failures/skips. Six actual no-script phone flows exercise current private menu/status after read consent and before disconnect. Fresh merged-candidate validation follows; no old-head CI result is transferred.

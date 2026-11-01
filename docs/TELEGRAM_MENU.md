@@ -1,6 +1,6 @@
 # Personalized private Telegram menu
 
-Draft PR #572, candidate 9.58. Deployment, activation and real-user testing remain
+Draft PR #572, candidate 9.59. Deployment, activation and real-user testing remain
 deferred. This addition changes discovery/guidance, not permissions or records.
 
 - `/menu` aliases the existing private `/help` path. Both show the same current

@@ -1,4 +1,4 @@
-## 9.58 — November 1, 2026
+## 9.59 — November 1, 2026
 
 - Add a private personalized /menu and /help, availability explanations in /status, and record-specific detail/back/allowed-action guidance.
 
@@ -14,6 +14,12 @@
 - Add optional private Telegram task and work-status lookups with separate consent and current record access checks.
 - Support bounded pages, overdue/upcoming/review filters, deadlines, task progress and signed-in source links through private webhook replies.
 - With separate consent, preview and confirm task acknowledgement or output submission for review; no automatic notifications.
+
+## 9.58 — November 1, 2026
+
+- Add independent five-minute GitHub checks for app/database availability, periodic durability, scheduled backups and unacknowledged audit failures.
+- Open one generic incident per confirmed problem, assign it to the repository owner, and close after confirmed recovery; preserve the acknowledged historical audit incident.
+- Add a private read-only monitoring status endpoint and a clearly marked GitHub notification test. GitHub schedules and phone delivery depend on provider/account settings.
 
 ## 9.57 — November 1, 2026
 
