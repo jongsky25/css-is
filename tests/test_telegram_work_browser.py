@@ -17,11 +17,14 @@ from tests.test_telegram_bot import TOKEN, SECRET, NOW, update, HEADERS
 @pytest.mark.parametrize('scope,label,command,empty',[
     ('work.read','Read my tasks and permitted work status in private','/my_summary','Overdue tasks: 0'),
     ('documents.read','Read permitted document metadata and status in private','/documents','No matching documents'),
-    ('supplies.read','Read my supply request approval and collection status in private','/my_supplies','No requests on this page')])
+    ('supplies.read','Read my supply request approval and collection status in private','/my_supplies','No requests on this page'),
+    ('travel.read','Read my travel filing checklist and status in private','/my_travel','No records on this page'),
+    ('meals.read','Read my meal request status in private','/my_meals','No records on this page'),
+    ('arrangements.read','Read my work-arrangement filing status in private','/my_arrangements','No records on this page')])
 def test_phone_can_consent_to_private_reads_without_outgoing(grid_browser, app_mod, monkeypatch,scope,label,command,empty):
     c = st.connect(app_mod.DB)
     user = st.get_admin_user(c, 'viewer@test.local')
-    for capability in ('INBOUND', 'DELIVERY', 'LINK', 'WORK_READ', 'DOCUMENTS_READ', 'SUPPLIES_READ'):
+    for capability in ('INBOUND', 'DELIVERY', 'LINK', 'WORK_READ', 'DOCUMENTS_READ', 'SUPPLIES_READ', 'TRAVEL_READ', 'MEALS_READ', 'ARRANGEMENTS_READ'):
         monkeypatch.setenv('CSS_TELEGRAM_' + capability + '_ENABLED', '1')
     for module in ('documents', 'work', 'supplies'):
         st.set_setting(c, module + '.enabled', '1')

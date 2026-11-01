@@ -32,6 +32,7 @@ CHANGELOG = [
             "Separate consent and confirmation let you acknowledge a task or submit an output for review.",
             "Find permitted document numbers, subjects and status with a separate document read permission.",
             "Check your supply request approval and collection status with separate consent.",
+            "Separate read permissions show your travel filing, meal request and work-arrangement status.",
             "A private summary combines overdue tasks, upcoming deadlines and work awaiting review."
         ]
     },

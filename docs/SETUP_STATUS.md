@@ -479,3 +479,28 @@ compile, links and diff checks passed. Fresh exact-head PR CI is required for
 this new child; prior head's green CI is historical evidence. Next: inspect
 that CI/review before further expansion. Draft remains unmerged and no hosting,
 preview, feature switch, real Telegram send or live acceptance was performed.
+
+## Travel, meals and arrangement lookup staged — 2026-11-01
+
+Owner approved this next read-only batch in draft PR #572, same branch/candidate
+9.56. Added travel list/detail with deadlines, filing/paper-review states and
+source completeness count; standalone and room-linked meal list/detail with
+order/delivery states; and work-arrangement list/detail with requested period/type
+and filing status. Eight commands are documented in the
+[personal lookup runbook](TELEGRAM_PERSONAL_LOOKUP.md). Each of the three source
+areas requires separate unchecked consent and its own default-off Telegram switch.
+Travel also honors its source module switch and excludes purged filings. All
+reads are private/webhook-only and owner-bound even for admins/managers.
+
+No amounts, file URLs, dietary/special requests, venues, people, arrangement
+reasons, review/decision notes or colleague data are projected. No filing,
+review/submission/approval, meal ordering or arrangement changes occur.
+
+426 broader regressions and 76 shuffled cases passed without failures/skips
+(overlapping groups). Six actual phone-width no-script read-consent flows now
+cover every private-read scope, with outgoing Telegram forbidden. Metadata,
+locks/vendor/compatibility/AI contract, compile, local links and diff checks pass.
+Full repository suites/container audit remain exact-head PR CI gates. Next:
+review those checks or continue bounded additions as directed. No merge,
+production/preview settings, real send, deployment or live acceptance; those
+remain explicitly deferred.

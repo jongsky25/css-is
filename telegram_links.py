@@ -14,7 +14,7 @@ import storage as st
 import telegram_storage as switches
 import telegram_transport as transport
 
-SCOPES = {'calendar.read': 'Read permitted calendar entries', 'rooms.read': 'Read room availability and own requests', 'calendar.create':'Create one meeting after an exact private preview and confirmation', 'rooms.request':'Request a room for my permitted meeting after private confirmation', 'supplies.read': 'Read my supply request approval and collection status in private', 'documents.read': 'Read permitted document metadata and status in private', 'work.read': 'Read my tasks and permitted work status in private', 'tasks.acknowledge': 'Acknowledge my task after private confirmation', 'tasks.submit': 'Submit my task for review after private confirmation'}
+SCOPES = {'calendar.read': 'Read permitted calendar entries', 'rooms.read': 'Read room availability and own requests', 'calendar.create':'Create one meeting after an exact private preview and confirmation', 'rooms.request':'Request a room for my permitted meeting after private confirmation', 'travel.read': 'Read my travel filing checklist and status in private', 'meals.read': 'Read my meal request status in private', 'arrangements.read': 'Read my work-arrangement filing status in private', 'supplies.read': 'Read my supply request approval and collection status in private', 'documents.read': 'Read permitted document metadata and status in private', 'work.read': 'Read my tasks and permitted work status in private', 'tasks.acknowledge': 'Acknowledge my task after private confirmation', 'tasks.submit': 'Submit my task for review after private confirmation'}
 
 
 def stamp(now):
