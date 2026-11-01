@@ -51,6 +51,22 @@ def test_only_allowlisted_typed_metadata_leaves_the_admin_page():
     assert not {'state', 'stage', 'error'} & result.keys()
 
 
+def test_audit_diagnostics_only_include_typed_status():
+    html = page().replace('"password": "private-password"', '"audit": ' + json.dumps({
+        'ok': True, 'raw_ok': False, 'acknowledged': True,
+        'checkpoint_changed': False, 'bad_id': None, 'through_id': 9452,
+        'actor': 'private-user', 'summary': 'private-text',
+        'row_hash': 'private-hash', 'historical_bad_ids': ['private-value'],
+    }))
+    result = deploy.telegram_ops_summary(html)['audit']
+    assert result == {'ok': True, 'raw_ok': False, 'acknowledged': True,
+                      'checkpoint_changed': False, 'bad_id': None, 'through_id': 9452}
+    invalid = html.replace('"ok": true', '"ok": "private-value"').replace(
+        '"through_id": 9452', '"through_id": true')
+    result = deploy.telegram_ops_summary(invalid)['audit']
+    assert 'ok' not in result and 'through_id' not in result
+
+
 def test_report_reads_only_ops_with_existing_credentials_and_bounded_samples(monkeypatch, capsys):
     monkeypatch.setenv('CSS_ADMIN_USER', 'private-user')
     monkeypatch.setenv('CSS_ADMIN_PASS', 'private-password')

@@ -106,11 +106,14 @@
 {% endif %}
 
 <div class="panel" style="display:flex; justify-content:space-between; align-items:center; gap:1rem; flex-wrap:wrap;">
-  {% if chain_ok %}
+  {% if chain_ok and audit_health.acknowledged %}
+    <span class="chain ok">No new audit failures detected</span>
+    <p class="muted small">Historical incident acknowledged on November 1, 2026: entries #8949, #9406 and #9452. Original records and hashes are preserved. The reviewed history through #{{ audit_health.through_id }} matches its recorded fingerprint, and later entries pass chain checks. The original full chain remains broken at #8949.</p>
+  {% elif chain_ok %}
     <span class="chain ok"><span aria-hidden="true">✔</span> Chain intact — no tampering detected ({{ entries|length }} shown)</span>
   {% else %}
-    <span class="chain bad"><span aria-hidden="true">⚠</span> CHAIN BROKEN at entry #{{ bad_id }} — history has been altered or rows deleted</span>
-    <span class="muted small" style="flex-basis:100%;">What to do: don't edit anything further; export the audit table, restore the most recent backup from <a href="/admin/backups">Backups</a>, and compare. Entries after #{{ bad_id }} can't be trusted.</span>
+    <span class="chain bad"><span aria-hidden="true">⚠</span> Audit review needed at entry #{{ bad_id }}</span>
+    <span class="muted small" style="flex-basis:100%;">A hash, link or reviewed-history fingerprint check failed. Preserve the current records and compare with existing <a href="/admin/backups">Backups</a>. Do not rewrite hashes or restore over live data just to clear this warning.</span>
   {% endif %}
   <form class="filters" method="get" action="/admin/audit" style="margin:0;">
     <label>Action

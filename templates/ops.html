@@ -71,7 +71,7 @@
 
 <div class="panel" id="telegram-health">
   <h2>Telegram</h2>
-  <script type="application/json" id="telegram-diagnostics">{{ {'version': build.version, 'commit': build.commit, 'worker': telegram}|tojson }}</script>
+  <script type="application/json" id="telegram-diagnostics">{{ {'version': build.version, 'commit': build.commit, 'worker': telegram, 'audit': audit_health}|tojson }}</script>
   {% if telegram.reply_transport == 'webhook' %}
   <p>Private linking, help, status, calendar and room lookup commands reply through Telegram's incoming connection. Responses handed to Telegram: {{ telegram.webhook_responses }}. Telegram provides no delivery confirmation for these responses; their delivery state remains uncertain.</p>
   <p>Scheduled messages and group commands still require the outgoing Telegram connection shown below.</p>

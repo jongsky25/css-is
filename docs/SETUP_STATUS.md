@@ -75,6 +75,30 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+November 1 follow-up: owner authorized merging PR #573 and then clearing the
+reviewed historical warning. PR #573 is ready for review, with metadata,
+dependency audit and avatar acceptance passing; both full suites are still
+running at this handoff. Auto-merge is disabled on the repository, so merge must
+be performed after observing the required aggregate gate pass.
+
+The acknowledgment candidate is on `fix/audit-incident-acknowledgment` (9.57).
+It pins the exact reviewed historical prefix, preserves the strict verifier and
+all original database records, and keeps future failures actionable. See the
+[incident acknowledgment design](operations/audit-2026-11-01.md).
+Local verification: 59 targeted audit/health/deploy-diagnostics checks passed,
+zero skips/failures (7.03 seconds); JUnit, release metadata and diff checks pass.
+Two independent read-only snapshots (`084815` and `085017` auto snapshots on
+November 1) matched the 9,411-row fingerprint through #9452. Candidate operational
+checks on the latter report acknowledged history with no active failure, while
+the raw full-chain failure remains. No app ran on the snapshot; temporary data
+was removed. Existing post-deploy diagnostics now expose only typed audit status
+alongside existing sanitized Operations observations for live verification.
+
+Next: finish the gated #573 merge, then merge/deploy the acknowledgment candidate
+after its checks, and confirm the live audit status. This owner request includes
+the releases necessary to clear the warning; no backup settings or automatic
+monitoring alerts are in scope. This is work in progress, not a claim of deployment.
+
 User resumed the audit warning on November 1 and reports backups fixed.
 Investigation and prospective write fixes are on `fix/audit-chain-investigation`;
 see [audit investigation](operations/audit-2026-11-01.md). The #8949 numeric-zero
