@@ -123,22 +123,23 @@ an established fix. Full release checks and production promotion are required
 before it can affect scheduling on main. Existing alert logic and credential
 scope are unchanged.
 
-Candidate saved as [PR #577](https://github.com/jongsky25/css-is/pull/577).
-All 37 isolated monitor tests passed without skips/failures; the release metadata,
-JUnit, documentation-link and diff checks passed. Full required CI is running.
-Production promotion requires owner approval because merging restarts the live
-app through the existing gated deployment; this investigation did not itself
-authorize a new production release. No workflow gates are bypassed.
+[PR #577](https://github.com/jongsky25/css-is/pull/577) merged with owner approval
+as `a7b9b38d473af15b87412717284bb17272fce518` at approximately 07:33 UTC.
+All five required CI jobs passed on exact candidate `9187b13`: normal and shuffled
+full suites, dependency audit, release metadata and aggregate gate. The 37 isolated
+monitor tests, JUnit, documentation links and diff checks also passed.
+No gates were bypassed. Source-based schedule registration is now refreshed;
+this is not yet proof of a scheduled execution. Production verification/deployment
+is pending and will use the existing backup/version gates.
 
-Next: obtain release approval, complete the candidate checks and promotion,
-then observe a real scheduled execution
+Next: verify the production release and observe a real scheduled execution
 with healthy/valid signals, and obtain phone receipt confirmation. Do not claim
 either step passed until evidence exists. No production outage, failed backup
 or audit corruption was induced. Only generic statuses were published; no private
 record contents or credential values were disclosed.
 
 This handoff is saved separately on
-`docs/monitoring-handoff-41273309243`; application code is merged/deployed.
+`docs/monitor-schedule-verification`; 9.58 is deployed and the 9.59 schedule repair is merged, with deployment verification pending.
 Automated sign-ins use the existing deployment account and consequently appear
 in its audit/usage views. Broader backup exposure/retention/recovery work remains
 outside this monitoring request.

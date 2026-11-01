@@ -18,9 +18,9 @@ Actual scheduled execution and phone receipt confirmation remain unverified.
 The November 1 investigation found no scheduled events despite the enabled state,
 valid cron on main and successful manual checks. GitHub Status reported no active
 incident; the cause remains unconfirmed. Candidate `fix/monitor-schedule-registration`
-(9.59) spells out the same minutes to prompt source-based registration. It requires
-the normal release gates and promotion; only an actual schedule-triggered run can
-establish success. Do not ask the owner to find another Enable button.
+(9.59) spells out the same minutes to prompt source-based registration. It passed the full required CI and merged in PR #577 with owner approval
+as a7b9b38. Production checks/deployment are pending; only an actual
+schedule-triggered run can establish automatic operation. Do not ask the owner to find another Enable button.
 
 
 See [current handoff](SETUP_STATUS.md) for exact evidence and next actions.
