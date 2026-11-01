@@ -7,7 +7,7 @@ without the owner's later release/testing instruction.
 
 ## Before the later pilot
 
-1. Identify the reviewed PR/source commit and candidate version (currently 9.65).
+1. Identify the reviewed PR/source commit and candidate version (currently 9.66).
    Verify the actual candidate's required metadata/dependency/full normal/shuffled/
    aggregate CI, main freshness and synchronized versions. Old-head checks do not
    establish readiness. Follow existing release and verified-backup gates.
@@ -45,6 +45,9 @@ without the owner's later release/testing instruction.
 | Proposal source rules | Hidden/completed work, linked official deadlines, changed work/unit/account, expired/revoked previews and source pauses prevent stale creation. Long/multiline/Unicode previews stay bounded and exact. Native assignment enforces linked-document access and review/completion rules; bot confirmation cannot replace that decision. | Pending |
 | Internal task deadline | With separate work-read/deadline consent, an authorized officer or confirmed work lead uses `/task_deadline`, the signed-in form and exact preview/confirmation to set/change or explicitly clear an internal deadline with a reason. Owner, progress, submission and official dates stay unchanged. | Pending |
 | Deadline authority and recovery | Task ownership alone grants no deadline authority. Changed source/official deadline, revoked rights, closed work, done/cancelled task or active formal consolidation review blocks confirmation. Retry/recover records one milestone; deleted-task recovery never touches a reused ID. Use synthetic fixtures for fault cases. | Pending |
+| Accept submitted task | Separately consent to work read and task acceptance. Authorized officer/confirmed work lead reviews the submission in Office Connect, prepares `/task_accept`, checks identified work/task, For review → Done and reason, then confirms exactly. Owner, submission and dates stay unchanged; work is not completed and official documents are not approved. | Pending |
+| Return for changes | Separately consent to task return. `/task_return` → signed-in reason → private preview/confirmation returns For review → In progress for the current owner, preserving the submission. Task ownership alone grants no review authority. Acceptance consent alone grants no return authority, and vice versa. | Pending |
+| Review blockers and recovery | Synthetic recorded blocker, unfinished prerequisite or unresolved changed-decision review blocks acceptance. A fresh permitted return can request changes without resolving these blockers. Changed submission/source/authority, formal consolidation review and revoked/expired contexts block stale confirmation. Retry/recover records one transition; opposite previews and deleted/reused IDs cannot change a confirmed result. | Pending |
 | Task recovery | Repeat an already consumed confirmation and request its receipt. One task transition/audit outcome is recorded; no second mutation or submission is created. | Pending |
 | Documents | Find a synthetic permitted number/subject and compare workflow/routing/paper status. Body/file/people/notes are absent. Unknown and another test account's restricted ID have the same denial. | Pending |
 | Supplies | Compare own approval, waiting-stock/pickup, handover and receipt-confirmation stages with the source UI. Reading changes no stock/request/receipt state; another person's request is denied even to an administrator through the bot. | Pending |

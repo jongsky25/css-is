@@ -1,4 +1,6 @@
-## 9.65 — November 1, 2026
+## 9.66 — November 1, 2026
+
+- Add separately consented private task acceptance and return for changes through current officer/work-lead authority, exact expiring previews and atomic native review/receipt writes; blockers and formal approvals retain source rules.
 
 - Add separately consented internal task deadline setting/explicit clearing through officer/work-lead authority, exact private previews and atomic native milestone/receipt writes; official dates and formal-review amendments remain in Office Connect.
 

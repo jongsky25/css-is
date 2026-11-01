@@ -1,0 +1,27 @@
+{% extends "dash_layout.html" %}
+{% block title %}Review a submitted task — Office Connect{% endblock %}
+{% block content %}
+<div style="max-width:720px;margin:auto;overflow-wrap:anywhere">
+<h1>{% if mode == 'accept' %}Accept a submitted task{% else %}Return a submitted task for changes{% endif %}</h1>
+<p><a href="/account/telegram">Telegram connection and permissions</a> · <a href="/work">Review work and submissions</a></p>
+<p>Start with <code>/task_{{ mode }}</code> in your linked private chat. The concerned officer or confirmed work lead must have the source review authority. Owning a task or consenting to Telegram alone does not grant that authority.</p>
+<p>Review the current submission in Office Connect before preparing this action. Submission contents stay in Office Connect. The private preview shows the identified task, current and resulting status and your reason.</p>
+<p>{% if mode == 'accept' %}Acceptance marks this submitted task Done when source blockers permit it.{% else %}Returning puts this submitted task back In progress for its current owner, preserving its submission for history and further work.{% endif %} This does not complete the work item or approve an official document. Owner, submission and deadlines stay unchanged. Amendments under active formal consolidation review stay in Office Connect.</p>
+{% if error %}<p role="alert">{{ error }}</p>{% endif %}
+{% if prepared %}
+<p role="status">{% if prepared.state == 'pending' %}Your preview is prepared. No task review has been applied. Send <code>/task{{ mode }}_preview {{ prepared.operation_id }}</code> in the original private Telegram chat, review the exact status change and confirm before expiry.{% else %}This operation already has a recorded outcome. Send <code>/task{{ mode }}_receipt {{ prepared.operation_id }}</code> in the original private chat. Recovery will not repeat the review.{% endif %}</p>
+{% endif %}
+{% if origins %}
+<form method="post" action="{{ action_path }}">
+<input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="key" value="{{ key }}">
+<p><label for="review-origin">Starting private conversation</label><br><select id="review-origin" name="origin" required>{% for item in origins %}<option value="{{ item }}" {% if selected == item %}selected{% endif %}>Private request {{ loop.index }}</option>{% endfor %}</select></p>
+<p><label for="review-work">Work item number</label><br><input id="review-work" name="case_id" type="number" min="1" value="{{ values.get('case_id','') }}" required></p>
+<p><label for="review-task">Task number</label><br><input id="review-task" name="task_id" type="number" min="1" value="{{ values.get('task_id','') }}" required></p>
+<p>Use IDs from your task results or signed-in work page. Check the exact work and task in the private preview.</p>
+<p><label for="review-reason">Review reason</label><br><textarea id="review-reason" name="reason" rows="4" maxlength="500" style="box-sizing:border-box;width:100%" required>{{ values.get('reason','') }}</textarea></p>
+<p>Your reason appears in Telegram and normal task history. The preview expires after five minutes; changed submissions, tasks or linked records require a fresh preview. Current source permissions and acceptance blockers are checked again at confirmation.</p>
+<button type="submit">Prepare exact private preview</button>
+</form>
+{% else %}<p>No current private review request is available. Start <code>/task_{{ mode }}</code> after enabling and consenting to its separate pilot and work read permission.</p>{% endif %}
+</div>
+{% endblock %}

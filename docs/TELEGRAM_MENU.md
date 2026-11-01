@@ -1,6 +1,6 @@
 # Personalized private Telegram menu
 
-Draft PR #572, candidate 9.65. Deployment, activation and real-user testing remain
+Draft PR #572, candidate 9.66. Deployment, activation and real-user testing remain
 deferred. This addition changes discovery/guidance, not permissions or records.
 
 - `/menu` aliases the existing private `/help` path. Both show the same current
@@ -79,3 +79,8 @@ synthetic and outgoing Telegram is forbidden. Later live acceptance uses the
 - `/task_deadline` requires separate deadline/work-read consent and the current
   pilot. [Internal deadline changes](TELEGRAM_TASK_DEADLINES.md) require native
   officer or confirmed work-lead authority and an exact private confirmation.
+
+- `/task_accept` and `/task_return` each require their separate review consent,
+  pilot and work read. [Submitted-task reviews](TELEGRAM_TASK_REVIEWS.md) require
+  current source officer or confirmed work-lead authority; acceptance preserves
+  prerequisite, recorded-blocker and changed-decision review rules.
