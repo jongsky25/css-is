@@ -1,6 +1,6 @@
 # Private travel, meal and work-arrangement lookup (T7.3a–T7.5a)
 
-These independent read children stay in draft PR #572, candidate 9.67. The owner
+These independent read children stay in draft PR #572, candidate 9.68. The owner
 approved building them together before deployment, activation and live testing.
 No production configuration or source business record is changed by lookup.
 

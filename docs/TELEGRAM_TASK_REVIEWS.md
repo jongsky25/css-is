@@ -1,6 +1,6 @@
 # Private submitted-task acceptance and return
 
-Draft PR #572, candidate 9.67. The owner approved adding review features before
+Draft PR #572, candidate 9.68. The owner approved adding review features before
 deployment, preview publication, activation and personal/live testing. Those steps
 remain deferred. Local verification uses synthetic accounts/records and blocked
 outgoing providers.

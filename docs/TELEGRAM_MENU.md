@@ -1,6 +1,6 @@
 # Personalized private Telegram menu
 
-Draft PR #572, candidate 9.67. Deployment, activation and real-user testing remain
+Draft PR #572, candidate 9.68. Deployment, activation and real-user testing remain
 deferred. This addition changes discovery/guidance, not permissions or records.
 
 - `/menu` aliases the existing private `/help` path. Both show the same current
@@ -89,3 +89,7 @@ synthetic and outgoing Telegram is forbidden. Later live acceptance uses the
   [Initial task assignment](TELEGRAM_TASK_ASSIGNMENT.md) uses current native
   contributing-unit officer authority; a work lead or suggested owner alone
   cannot assign. The selected person needs existing linked-document access.
+
+- `/task_reassign` has separate reassignment/work-read consent and its own pilot.
+  [Officer transfers](TELEGRAM_TASK_REASSIGNMENT.md) preview old/new owner, current
+  status and the reset to To do, preserving submission/deadline and native access.

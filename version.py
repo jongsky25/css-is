@@ -18,15 +18,16 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "9.67"
+APP_VERSION = "9.68"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
     {
-        "version": "9.67",
+        "version": "9.68",
         "date": "November 1, 2026",
         "summary": "Check documents and work summaries, and update tasks through private Telegram previews.",
         "changes": [
+            "Concerned officers can preview and confirm task reassignment in private Telegram, with the new owner returning to To do.",
             "Concerned officers can preview and confirm an initial task assignment in private Telegram, preserving contributor access checks.",
             "Authorized officers and work leads can preview and confirm task acceptance or return for changes in private Telegram.",
             "Authorized officers and work leads can preview and confirm internal task deadline changes in private Telegram.",

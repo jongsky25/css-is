@@ -39,6 +39,7 @@ import telegram_task_create as task_create
 import telegram_task_deadline as task_deadline
 import telegram_task_review as task_review
 import telegram_task_assign as task_assign
+import telegram_task_reassign as task_reassign
 import telegram_meeting_webhook as meeting_webhook
 import telegram_notices as notices
 import telegram_reminders as reminders
@@ -166,8 +167,8 @@ def normalize(value):
             clean['command'] = first
         if text in ('/meeting','/room_request'):
             clean['command']=text
-        if first in meeting_manage.COMMANDS + room_manage.COMMANDS + task_create.COMMANDS + task_deadline.COMMANDS + task_review.COMMANDS + task_assign.COMMANDS:
-            if text in ('/meeting_reschedule','/meeting_cancel','/room_withdraw','/room_move','/new_task','/task_deadline','/task_accept','/task_return','/task_assign'):
+        if first in meeting_manage.COMMANDS + room_manage.COMMANDS + task_create.COMMANDS + task_deadline.COMMANDS + task_review.COMMANDS + task_assign.COMMANDS + task_reassign.COMMANDS:
+            if text in ('/meeting_reschedule','/meeting_cancel','/room_withdraw','/room_move','/new_task','/task_deadline','/task_accept','/task_return','/task_assign','/task_reassign'):
                 clean['command']=text
             elif len(parts := text.split())==2:
                 if first.endswith('_confirm') and re.fullmatch('[A-Za-z0-9_-]{43}',parts[1]):
@@ -276,7 +277,7 @@ def receive(conn, clean, raw, bot, now, webhook_reply=None):
             groups.handle_event(conn, clean, bot)
         cid, generation, permitted = identity(conn, clean['sender_id'])
         inline_meeting=(webhook_reply is not None and meeting_webhook.accepts(conn,clean))
-        if inline_meeting or clean['command'] in task_actions.COMMANDS + document_reads.COMMANDS + supply_reads.COMMANDS + personal_reads.COMMANDS + brief_reads.COMMANDS + search_reads.COMMANDS + meeting_manage.COMMANDS + room_manage.COMMANDS + task_create.COMMANDS + task_deadline.COMMANDS + task_review.COMMANDS + task_assign.COMMANDS:
+        if inline_meeting or clean['command'] in task_actions.COMMANDS + document_reads.COMMANDS + supply_reads.COMMANDS + personal_reads.COMMANDS + brief_reads.COMMANDS + search_reads.COMMANDS + meeting_manage.COMMANDS + room_manage.COMMANDS + task_create.COMMANDS + task_deadline.COMMANDS + task_review.COMMANDS + task_assign.COMMANDS + task_reassign.COMMANDS:
             inline = (webhook_reply is not None and storage.enabled('delivery') and storage.enabled('link')
                       and transport.config()==bot and cid is not None and permitted)
             conn.execute("""INSERT INTO telegram_update

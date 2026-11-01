@@ -1,6 +1,6 @@
 # Private officer-confirmed initial task assignment
 
-Draft PR #572, candidate 9.67. The owner approved adding initial task assignment
+Draft PR #572, candidate 9.68. The owner approved adding initial task assignment
 before deployment, preview publication, activation and personal/live testing.
 Those steps remain deferred. Local checks use synthetic accounts/documents and
 blocked outgoing providers.
@@ -56,7 +56,8 @@ reminder effects. It preserves the task deadline, title, output, submission,
 contributing unit and required status. Native official-date validation is repeated
 for the existing deadline. Use the separate deadline workflow to change a date.
 It does not acknowledge, submit, accept, complete the work case or approve an
-official document. Reassignment/reopening/cancellation are separate source actions.
+official document. Reassignment has its own [private officer workflow](TELEGRAM_TASK_REASSIGNMENT.md);
+reopening/cancellation remain separate source actions.
 
 Completed/closed work, hidden linked documents, a task already assigned or no
 longer proposed, inactive/renamed/changed selected accounts, lost task-unit officer

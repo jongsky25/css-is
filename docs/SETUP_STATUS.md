@@ -77,9 +77,9 @@ access remains necessary in a fresh chat.
 
 **Current Telegram feature work — November 1, 2026:** continue draft
 [PR #572](https://github.com/jongsky25/css-is/pull/572), branch
-`feat/telegram-private-work-lookup`, candidate **9.67**. The latest addition is
-[officer-confirmed initial task assignment](TELEGRAM_TASK_ASSIGNMENT.md), following
-submitted-task review, deadline changes and guided proposals. Inspect exact-head CI and continue the next requested feature.
+`feat/telegram-private-work-lookup`, candidate **9.68**. The latest addition is
+[officer-confirmed task reassignment](TELEGRAM_TASK_REASSIGNMENT.md), following
+initial assignment, submitted-task review, deadline changes and guided proposals. Inspect exact-head CI and continue the next requested feature.
 Deployment, preview publication, activation and personal/live testing remain
 explicitly deferred. Monitoring follow-ups below remain separately tracked and
 are not the active Telegram task. See the latest evidence at the end of this file.
@@ -1311,6 +1311,87 @@ See [assignment behavior](TELEGRAM_TASK_ASSIGNMENT.md),
 remain Pending. No provider call, production data access, scheduler, monitor
 execution or pilot activation occurred. Reassignment/reopening/cancellation and
 formal-review amendments remain separate source actions.
+
+Next: inspect fresh exact-head full repository normal/shuffled/dependency/
+container/aggregate CI, then continue the next explicitly requested feature.
+Main merge, release, preview publication, activation and personal/live testing
+remain deferred until the owner's later instruction.
+
+
+## Private officer task reassignment — 2026-11-01
+
+Owner requested the next feature after initial assignment. Added `/task_reassign`,
+a signed-in no-script different-owner selector, `/taskreassign_preview`, exact
+`/taskreassign_confirm` and `/taskreassign_receipt` to review branch
+`feat/telegram-private-work-lookup`, draft PR #572, candidate **9.68**. Actual main
+remains `a7b9b38` (released 9.59), preserved on this branch. Deployment, preview
+publication, activation and personal/live testing remain explicitly deferred.
+Initial access inspection found prior-head functional/metadata/dependency checks
+passing and full normal/shuffled still running; those are not current acceptance.
+
+Separate default-off `CSS_TELEGRAM_TASKS_REASSIGN_ENABLED` / `tasks.reassign`
+consent requires work read, source modules and current private inbound/link/
+delivery/account/chat/bot proof. Initial assignment consent grants no transfer
+right. Native officer authority must cover the task's contributing unit; task
+ownership or work-lead status alone is insufficient. Only To do/In progress/For
+review tasks qualify, and the new active owner must differ from the current one
+and already read every linked document. The bot grants no document access.
+
+The form and exact private preview explicitly show the reset to To do, including
+In progress and For review tasks. Preview identifies old/new owner, current/new
+state, work/task/unit, unchanged deadline and bounded reason. Existing submission,
+output, original proposal, required status, deadline and blocker/follow-up/
+prerequisite/changed-decision information remain preserved. Source membership
+rules determine the old/new owners' access; stored submissions stay in Office
+Connect. Transfer does not resolve blockers, accept work or approve a document.
+
+Native reassignment remains authoritative. Initial assignment and reassignment
+share identity/access/snapshot/receipt routing, with separate native actions,
+result codes, scopes/pilots and command protocols. Source/account/submission/
+event changes, lost officer/new-owner rights, hidden documents, closed/completed
+work and revoked/expired/restored contexts prevent stale transfer. Active formal
+consolidation review starting before or after preview blocks bot amendments,
+preserving dependent approvals. No native work/task service was changed.
+
+Native source/event/audit/reminder effects, consumed preview, receipt and final
+private handoff share one transaction. Audit/receipt/handoff failure rolls back;
+duplicate/concurrent confirmations transfer once. Competing owner choices cannot
+transfer the updated source again. Deletion cancels previews/clears targets to
+fence ID reuse. Recovery checks current source view and reports recorded outcome
+plus current owner/status without replay, including later source transfer/progress.
+
+Isolated Python 3.11 verification: **1680 broad regressions passed** across
+`tests/test_telegram*.py`, `tests/test_work*.py`, audit-chain writers, deployment
+and release checks. **384 current shuffled checks** (seed 311) passed across
+reassignment/initial-assignment/review/deadline/proposal services and phone forms,
+menu/action engine, existing task actions and private meeting webhook handling.
+**4 final normal phone checks** passed for reassignment and initial assignment.
+Zero failures/errors/skips in all groups; groups overlap. Earlier focused transfer
+service sample: 56 passed; combined transfer/initial-assignment/phone sample:
+116 passed; initial wiring group: 104 passed.
+
+Broad/shuffled collection preceded one wording-only refinement to the initial
+assignment form: it now points to the separately consented reassignment flow
+rather than saying all reassignment stays in Office Connect. Final four normal
+phone cases cover both current forms after that refinement. All functional source
+and the final three service cases (changed submission, missing access before
+preview and contributing-unit officer positive) were present before broad/shuffled
+collection. No functional code edits followed these groups.
+
+Reports: `/tmp/telegram-task-reassign-regressions.xml`,
+`/tmp/telegram-task-reassign-shuffled.xml` and
+`/tmp/telegram-task-reassign-phone-final.xml`; all pass the JUnit no-skips gate.
+Candidate 9.68 metadata/increase over actual main 9.59, locks/vendor integrity,
+installed compatibility, AI contract, Python compilation, local Markdown links
+and whitespace pass. Existing Starlette/httpx deprecation warning remains.
+Full exact-head repository normal/shuffled/dependency/container/aggregate CI still
+requires inspection after push. Earlier-head results are not current acceptance.
+
+See [transfer behavior](TELEGRAM_TASK_REASSIGNMENT.md) and the expanded
+[pending live checklist](TELEGRAM_LIVE_ACCEPTANCE_CHECKLIST.md). All live cases
+remain Pending. No provider call, production data, scheduler, monitor execution,
+publication or activation occurred. Reopening/cancellation and formal-review
+amendments remain separate source actions.
 
 Next: inspect fresh exact-head full repository normal/shuffled/dependency/
 container/aggregate CI, then continue the next explicitly requested feature.

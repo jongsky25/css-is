@@ -1,4 +1,6 @@
-## 9.67 — November 1, 2026
+## 9.68 — November 1, 2026
+
+- Add separately consented officer task reassignment with exact old/new owner and status previews, current contributor-access checks and atomic native transfer/receipt writes; existing submissions and deadlines remain preserved.
 
 - Add separately consented initial task assignment through contributing-unit officer authority, exact private previews and atomic native assignment/receipt writes; contributor access, source deadlines and formal-review protections remain enforced.
 

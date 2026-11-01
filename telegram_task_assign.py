@@ -24,13 +24,17 @@ def choices(conn,user,mode):
 
 
 class Adapter:
+    native_action='confirm'
+    result_code='task_assigned'
+    authority_message='Only the concerned contributing-unit officer can confirm a proposed task assignment. Work-lead status alone is insufficient.'
+
     def prepare(self,conn,user,raw):
         if set(raw)!=set(FIELDS):
             raise actions.Unavailable('Complete only the supported task assignment fields.')
         item=shared.require_work(conn,user,proposals.number(raw['case_id']))
         task=work_reads.task(conn,user,item['id'],proposals.number(raw['task_id']))
-        if 'confirm' not in work_tasks.actions(conn,user,item,task):
-            raise actions.Unavailable('Only the concerned contributing-unit officer can confirm a proposed task assignment. Work-lead status alone is insufficient.')
+        if self.native_action not in work_tasks.actions(conn,user,item,task):
+            raise actions.Unavailable(self.authority_message)
         owner_id=work_tasks._owner(conn,item['id'],proposals.number(raw['owner_id']))
         account=work._account(conn,owner_id)
         owner={k:account[k] for k in ('id','username','role','active','rp_id')}
@@ -42,7 +46,8 @@ class Adapter:
                'reason':proposals.text(raw['reason'],'Assignment reason',500,multiline=True)}
         summary={**clean,'work_title':common.clip(item['title'],120),'title':common.clip(task['title'],160),
                  'owner_name':common.clip(owner['name'],160),'proposed_owner_id':task['proposed_owner_id'],
-                 'unit_id':task['unit_id'],'due_date':task['due_date'] or 'not set'}
+                 'unit_id':task['unit_id'],'due_date':task['due_date'] or 'not set',
+                 'status':task['status'],'current_owner_id':task['owner_id']}
         if common.units(self.text(summary))>3000:
             raise actions.Unavailable('This preview is too long. Shorten the reason or use Office Connect.')
         return clean,summary,{**shared.source_state(conn,item,task),'task_revision':task['revision'],'owner':owner}
@@ -54,9 +59,9 @@ class Adapter:
 
     def apply(self,conn,user,clean,operation_id):
         task=work_reads.task(conn,user,clean['case_id'],clean['task_id'])
-        work_tasks.mutate_in_transaction(conn,user,clean['case_id'],clean['task_id'],task['revision'],'confirm',
+        work_tasks.mutate_in_transaction(conn,user,clean['case_id'],clean['task_id'],task['revision'],self.native_action,
                                         {'owner_id':clean['owner_id'],'reason':clean['reason']})
-        return {'state':'committed','result_code':'task_assigned'}
+        return {'state':'committed','result_code':self.result_code}
 
     def queue_preview(self,conn,user,operation_id,context,now):
         preview=rows(conn,'SELECT fields_json FROM telegram_preview WHERE operation_id=?',(operation_id,))[0]
