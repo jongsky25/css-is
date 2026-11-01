@@ -1,5 +1,8 @@
 ## 9.56 — November 1, 2026
 
+- Add separately consented private document number/subject search and workflow/routing/review status lookup.
+- Add a private work summary combining overdue tasks, upcoming deadlines and work awaiting review.
+
 - Add optional private Telegram task and work-status lookups with separate consent and current record access checks.
 - Support bounded pages, overdue/upcoming/review filters, deadlines, task progress and signed-in source links through private webhook replies.
 - With separate consent, preview and confirm task acknowledgement or output submission for review; no automatic notifications.

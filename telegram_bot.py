@@ -23,6 +23,7 @@ import telegram_groups as groups
 import telegram_calendar as calendar_reads
 import telegram_rooms as room_reads
 import telegram_work as work_lookup
+import telegram_documents as document_reads
 import telegram_tasks as task_actions
 import telegram_group_reads as shared_reads
 import telegram_actions
@@ -142,7 +143,8 @@ def normalize(value):
     text = message.get('text', '')
     if not isinstance(text, str) or len(text) > 4096:
         raise ValueError('Invalid text')
-    # No arbitrary text, names, usernames or link arguments are retained.
+    # Only allowlisted command metadata is retained. Document search text stays
+    # ephemeral within the webhook transaction and is never queued.
     if (message['chat'].get('type') == 'private' and clean['chat_id'] == clean['sender_id']
             and message['from'].get('is_bot') is False and clean['topic_id'] is None):
         first = text.split(maxsplit=1)[0] if text.strip() else ''
@@ -173,6 +175,12 @@ def normalize(value):
                 clean['work_query'] = work_lookup.parse(text)
             except ValueError:
                 clean['work_query'] = {'error': 'usage'}
+        if first in document_reads.COMMANDS:
+            clean['command'] = first
+            try:
+                clean['document_query'] = document_reads.parse(text)
+            except ValueError:
+                clean['document_query'] = {'error': 'usage'}
         if first in task_actions.COMMANDS:
             clean['command'] = first
             try:
@@ -224,7 +232,7 @@ def receive(conn, clean, raw, bot, now, webhook_reply=None):
         if clean.get('group_event'):
             groups.handle_event(conn, clean, bot)
         cid, generation, permitted = identity(conn, clean['sender_id'])
-        if clean['command'] in task_actions.COMMANDS:
+        if clean['command'] in task_actions.COMMANDS + document_reads.COMMANDS:
             inline = (webhook_reply is not None and storage.enabled('delivery') and storage.enabled('link')
                       and transport.config()==bot and cid is not None and permitted)
             conn.execute("""INSERT INTO telegram_update
@@ -232,7 +240,16 @@ def receive(conn, clean, raw, bot, now, webhook_reply=None):
                 VALUES (?,?,?,?,?,?,?,?,?,?)""", (bot[0],clean['update_id'],clean['sender_id'],clean['chat_id'],None,
                     cid,generation,hashlib.sha256(raw).hexdigest(),stamp(now),'processed' if inline else 'ignored'))
             if inline:
-                text = task_actions.handle(conn,clean,bot,now)
+                text = (document_reads.render(conn,clean,bot,now) if clean['command'] in document_reads.COMMANDS
+                        else task_actions.handle(conn,clean,bot,now))
+                if clean['command'] in document_reads.COMMANDS:
+                    context={'connection_id':cid,'generation':generation,'chat_id':clean['chat_id'],
+                             'topic_id':None,'registration_id':None}
+                    if (transport.config()!=bot or not storage.enabled('inbound') or not storage.enabled('delivery')
+                            or document_reads.actor(conn,context,bot) is None):
+                        return 200
+                if not text:
+                    return 200
                 conn.execute("""INSERT INTO telegram_delivery
                     (dedupe_key,event_key,connection_id,generation,chat_id,projection_json,expires_at,created_at,updated_at,state,attempts,error_code)
                     VALUES (?,?,?,?,?,'{}',?,?,?,'uncertain',1,'webhook_response')""",
@@ -581,7 +598,8 @@ def render_delivery(conn, delivery, projection, bot, now, *, commit=True):
             'Office Connect private commands: /start to link, /status to check your connection, '
             '/disconnect to revoke it. Never send your Office Connect password here.'
             + (' Private calendar lookup: /calendar (Asia/Manila).' if storage.enabled('calendar_read') else '')
-            + (' Private work lookup: /my_tasks [overdue|upcoming|review], /task_status WORK_ID TASK_ID, /my_work, /work_status WORK_ID (separate work read consent).' if storage.enabled('work_read') else '')
+            + (' Private work lookup: /my_summary, /my_tasks [overdue|upcoming|review], /task_status WORK_ID TASK_ID, /my_work, /work_status WORK_ID (separate work read consent).' if storage.enabled('work_read') else '')
+            + (' Private document lookup: /documents, /find_documents WORDS, /document_status ID (separate document read consent).' if storage.enabled('documents_read') else '')
             + (' Private room lookup: /room_slots, /my_rooms, /room_status REFERENCE.' if storage.enabled('rooms_read') else '')
             + (' Task actions: /task_ack WORK_ID TASK_ID, /task_submit WORK_ID TASK_ID; preview and confirmation required.' if storage.enabled('tasks_acknowledge') or storage.enabled('tasks_submit') else '')
             + (' Guided meeting pilot: /meeting (separate read/create consent required).' if storage.enabled('calendar_create') else '')

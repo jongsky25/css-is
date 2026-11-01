@@ -25,11 +25,13 @@ CHANGELOG = [
     {
         "version": "9.56",
         "date": "November 1, 2026",
-        "summary": "Check and update your tasks through private Telegram previews.",
+        "summary": "Check documents and work summaries, and update tasks through private Telegram previews.",
         "changes": [
             "With your separate consent, Telegram can show your assigned tasks, deadlines and permitted work status.",
             "Filter your tasks by deadline or review status and open the current records.",
-            "Separate consent and confirmation let you acknowledge a task or submit an output for review."
+            "Separate consent and confirmation let you acknowledge a task or submit an output for review.",
+            "Find permitted document numbers, subjects and status with a separate document read permission.",
+            "A private summary combines overdue tasks, upcoming deadlines and work awaiting review."
         ]
     },
     {

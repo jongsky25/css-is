@@ -437,3 +437,22 @@ compile, local links and diff checks passed. Full repository suites and dependen
 audit remain PR CI gates. Next: keep reviewing/adding on the draft; release,
 activation and live testing are deferred by the owner's explicit instruction.
 No production/preview setting, real message, merge or deployment changed.
+
+## Document lookup and summary staged — 2026-11-01
+
+Owner approved the next additions on the same branch/draft PR #572 (candidate
+9.56): `/documents [BEFORE_ID]`, `/find_documents WORDS`, `/document_status ID`,
+and `/my_summary`. Document metadata/status requires separate unchecked
+`documents.read` consent and default-off `CSS_TELEGRAM_DOCUMENTS_READ_ENABLED`;
+it uses webhook-only replies independently of Collaborative work. Search covers
+number/subject only and retains no search text in Telegram queue payloads.
+Summary uses work-read access and current Manila-date authorized-set counts.
+See the [document/summary runbook](TELEGRAM_DOCUMENT_LOOKUP.md).
+
+Validation: 277 broader regressions and 55 shuffled cases passed without
+failures/skips (overlapping groups), including two actual phone-width no-script
+read-consent flows with outgoing sends forbidden. Metadata/locks/vendor/AI
+contract/compatibility, compilation, relative links and whitespace passed.
+Full repository suites/container audit remain PR CI gates. Next: review or
+continue building on the draft as directed; deployment, activation and live
+testing remain deferred. No real messages, production/preview changes or merge.

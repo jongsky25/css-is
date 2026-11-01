@@ -219,3 +219,36 @@ def test_overdue_uses_manila_date_across_utc_midnight(work_env,monkeypatch):
     reply=submit(work_env[3],update(10,text='/my_tasks overdue')).json()
     assert 'Task '+str(old['id'])+' ·' in reply['text']
     assert 'Task '+str(today['id'])+' ·' not in reply['text']
+
+
+def test_my_summary_counts_current_owned_tasks_and_visible_work(work_env):
+    c,*_=work_env
+    for due,status in [('2026-10-24','todo'),('2026-10-25','in_progress'),('2026-10-27','for_review'),('2026-10-01','done')]:
+        _,task=seed(work_env)
+        c.execute('UPDATE work_task SET due_date=?,status=? WHERE id=?',(due,status,task['id']));c.commit()
+    _,other=seed(work_env,owner=3)
+    c.execute("UPDATE work_task SET status='for_review',due_date='2026-10-01' WHERE id=?",(other['id'],));c.commit()
+    text=lookup(work_env,'/my_summary')
+    assert 'Overdue tasks: 1' in text
+    assert '2026-11-01: 2' in text
+    assert 'My tasks awaiting review: 1' in text
+    assert 'Accessible work awaiting review: 2' in text
+    assert 'Synthetic task' not in text
+
+
+def test_my_summary_has_empty_counts_and_refuses_extra_arguments(work_env):
+    assert 'Overdue tasks: 0' in lookup(work_env,'/my_summary')
+    assert lookup(work_env,'/my_summary 1',11)==reads.USAGE
+
+
+def test_summary_excludes_work_with_hidden_linked_document(work_env):
+    c,users,*_=work_env
+    item,task=seed(work_env)
+    c.execute("UPDATE work_task SET status='for_review',due_date='2026-10-24' WHERE id=?",(task['id'],));c.commit()
+    doc=document(c,users[0],item['unit_id'])
+    work.link_document(c,users[0],item['id'],item['revision'],doc['id'])
+    c.execute("UPDATE document SET visibility='restricted' WHERE id=?",(doc['id'],))
+    c.execute('DELETE FROM document_access WHERE document_id=?',(doc['id'],));c.commit()
+    text=lookup(work_env,'/my_summary')
+    assert 'Overdue tasks: 0' in text and 'My tasks awaiting review: 0' in text
+    assert 'Accessible work awaiting review: 0' in text

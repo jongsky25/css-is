@@ -2,6 +2,7 @@
 import re
 
 import httpx
+import pytest
 
 import auth
 import storage as st
@@ -13,10 +14,13 @@ from tests.test_work_channels_browser import live_app
 from tests.test_telegram_bot import TOKEN, SECRET, NOW, update, HEADERS
 
 
-def test_phone_can_consent_to_work_and_lookup_without_outgoing(grid_browser, app_mod, monkeypatch):
+@pytest.mark.parametrize('scope,label,command,empty',[
+    ('work.read','Read my tasks and permitted work status in private','/my_summary','Overdue tasks: 0'),
+    ('documents.read','Read permitted document metadata and status in private','/documents','No matching documents')])
+def test_phone_can_consent_to_private_reads_without_outgoing(grid_browser, app_mod, monkeypatch,scope,label,command,empty):
     c = st.connect(app_mod.DB)
     user = st.get_admin_user(c, 'viewer@test.local')
-    for capability in ('INBOUND', 'DELIVERY', 'LINK', 'WORK_READ'):
+    for capability in ('INBOUND', 'DELIVERY', 'LINK', 'WORK_READ', 'DOCUMENTS_READ'):
         monkeypatch.setenv('CSS_TELEGRAM_' + capability + '_ENABLED', '1')
     for module in ('documents', 'work'):
         st.set_setting(c, module + '.enabled', '1')
@@ -37,7 +41,7 @@ def test_phone_can_consent_to_work_and_lookup_without_outgoing(grid_browser, app
         page = context.new_page()
         try:
             page.goto(base + '/account/telegram')
-            checkbox = page.get_by_label('Read my tasks and permitted work status in private')
+            checkbox = page.get_by_label(label)
             assert not checkbox.is_checked()
             checkbox.check()
             page.get_by_label('Private linking code').fill(code)
@@ -49,12 +53,12 @@ def test_phone_can_consent_to_work_and_lookup_without_outgoing(grid_browser, app
             packet = httpx.post(base + bot.PATH, json=update(3,text=confirmation), headers=HEADERS).json()
             assert packet['method'] == 'sendMessage'
             page.reload()
-            assert '/my_tasks' in page.locator('body').inner_text()
-            assert c.execute('SELECT action FROM telegram_grant WHERE revoked_at IS NULL').fetchall() == [('work.read',)]
-            packet = httpx.post(base + bot.PATH, json=update(4,text='/my_tasks'), headers=HEADERS).json()
-            assert 'No items' in packet['text']
+            assert command in page.locator('body').inner_text()
+            assert c.execute('SELECT action FROM telegram_grant WHERE revoked_at IS NULL').fetchall() == [(scope,)]
+            packet = httpx.post(base + bot.PATH, json=update(4,text=command), headers=HEADERS).json()
+            assert empty in packet['text']
             page.get_by_role('button', name='Disconnect Telegram and cancel pending links').click()
-            packet = httpx.post(base + bot.PATH, json=update(5,text='/my_tasks'), headers=HEADERS).json()
+            packet = httpx.post(base + bot.PATH, json=update(5,text=command), headers=HEADERS).json()
             assert 'method' not in packet
         finally:
             context.close()

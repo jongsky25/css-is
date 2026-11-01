@@ -8,6 +8,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 import auth
 import ratelimit
 import work
+import documents
 import telegram_bot as bot
 import telegram_links as links
 
@@ -34,7 +35,8 @@ def make_router(templates, get_conn):
                  'pending': pending, 'ready': bool(links.available()), 'csrf': csrf(request),
                  'webhook_replies': bot.reply_transport() == 'webhook',
                  'work_ready': bool(execution_ready and work.enabled(conn) and links.origin() and len(links.origin()) <= 200 and links.authorized(conn,user['id'],'work.read')),
-                 'scopes': {k:v for k,v in links.SCOPES.items() if (k!='tasks.acknowledge' or bot.storage.enabled('tasks_acknowledge')) and (k!='tasks.submit' or bot.storage.enabled('tasks_submit')) and (k!='work.read' or bot.storage.enabled('work_read')) and (k!='calendar.create' or bot.storage.enabled('calendar_create')) and (k!='rooms.request' or bot.storage.enabled('rooms_request'))}, 'error': error,
+                 'documents_ready': bool(execution_ready and bot.reply_transport()=='webhook' and documents.enabled(conn) and links.authorized(conn,user['id'],'documents.read')),
+                 'scopes': {k:v for k,v in links.SCOPES.items() if (k!='documents.read' or bot.storage.enabled('documents_read')) and (k!='tasks.acknowledge' or bot.storage.enabled('tasks_acknowledge')) and (k!='tasks.submit' or bot.storage.enabled('tasks_submit')) and (k!='work.read' or bot.storage.enabled('work_read')) and (k!='calendar.create' or bot.storage.enabled('calendar_create')) and (k!='rooms.request' or bot.storage.enabled('rooms_request'))}, 'error': error,
                  'room_request_ready': bool(execution_ready and links.authorized(conn,user['id'],'rooms.request') and links.authorized(conn,user['id'],'rooms.read') and links.authorized(conn,user['id'],'calendar.read')),
                  'meeting_ready': bool(execution_ready and links.authorized(conn,user['id'],'calendar.create') and links.authorized(conn,user['id'],'calendar.read')),
                  'rooms_ready': bool(links.authorized(conn,user['id'],'rooms.read') and links.origin() and len(links.origin())<=200 and bot.storage.enabled('inbound') and bot.storage.enabled('delivery')),
@@ -55,7 +57,7 @@ def make_router(templates, get_conn):
             if len(body) > 4096:
                 raise ValueError('The form is too large.')
         request._body = bytes(body)
-        form = await request.form(max_fields=10, max_files=0)
+        form = await request.form(max_fields=11, max_files=0)
         if (set(form)-{'csrf','code','scopes','consent'} or
                 any(len(form.getlist(k)) != 1 for k in form if k != 'scopes') or
                 not hmac.compare_digest(str(form.get('csrf','')).encode(), csrf(request).encode())):

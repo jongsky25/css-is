@@ -11,8 +11,8 @@ import work
 import work_reads
 
 USAGE = ('Use /my_tasks [all|overdue|upcoming|review] [BEFORE_ID], /my_work [BEFORE_ID], '
-         '/task_status WORK_ID TASK_ID, or /work_status WORK_ID. Read only.')
-COMMANDS = ('/my_tasks', '/my_work', '/task_status', '/work_status')
+         '/task_status WORK_ID TASK_ID, or /work_status WORK_ID, or /my_summary. Read only.')
+COMMANDS = ('/my_tasks', '/my_work', '/task_status', '/work_status', '/my_summary')
 
 
 def parse(text):
@@ -25,7 +25,8 @@ def parse(text):
         filter_, args = args[0], args[1:]
     if not ((command in COMMANDS[:2] and len(args) <= 1)
             or (command == '/task_status' and len(args) == 2)
-            or (command == '/work_status' and len(args) == 1)):
+            or (command == '/work_status' and len(args) == 1)
+            or (command == '/my_summary' and not args)):
         raise ValueError(USAGE)
     if any(not re.fullmatch('[1-9][0-9]{0,18}', arg) or int(arg) > 9223372036854775807 for arg in args):
         raise ValueError(USAGE)
@@ -99,6 +100,8 @@ def render(conn, delivery, projection, bot, now, *, commit=True):
         if query == {'error': 'usage'}:
             return USAGE
         command, ids = query['command'], query['ids']
+        if command == '/my_summary':
+            return summary(conn,user,now)
         if command in ('/task_status', '/work_status'):
             try:
                 item = work.get(conn, user, ids[0])
@@ -143,3 +146,21 @@ def render(conn, delivery, projection, bot, now, *, commit=True):
         if shown and (more or len(shown) < len(records)):
             text += '\nNext page: ' + command + ' ' + (query['filter']+' ' if 'filter' in query else '') + str(shown[-1]['id'])
         return text + '\n\nOpen shared work: ' + links.origin() + '/work'
+
+
+def summary(conn,user,now):
+    today=now.astimezone(common.ZONE).date()
+    scope=permissions.RegistryScope(conn,user)
+    params={**scope.params,'today':today.isoformat(),'end':(today+timedelta(days=7)).isoformat()}
+    counts=rows(conn,f"""SELECT
+        COALESCE(sum(t.owner_id=:registry_actor AND t.status NOT IN ('done','cancelled') AND t.due_date<:today),0) AS overdue,
+        COALESCE(sum(t.owner_id=:registry_actor AND t.status NOT IN ('done','cancelled') AND t.due_date BETWEEN :today AND :end),0) AS upcoming,
+        COALESCE(sum(t.owner_id=:registry_actor AND t.status='for_review'),0) AS review,
+        count(DISTINCT CASE WHEN t.status='for_review' THEN wc.id END) AS work_review
+        FROM work_task t JOIN work_case wc ON wc.id=t.case_id WHERE {scope.work_view_sql('wc')}""",params)[0]
+    return ('My work summary · Asia/Manila · '+today.isoformat()
+            +'\nOverdue tasks: '+str(counts['overdue'])+' · /my_tasks overdue'
+            +'\nTask deadlines today through '+params['end']+': '+str(counts['upcoming'])+' · /my_tasks upcoming'
+            +'\nMy tasks awaiting review: '+str(counts['review'])+' · /my_tasks review'
+            +'\nAccessible work awaiting review: '+str(counts['work_review'])+' · /my_work'
+            +'\nCounts use current permitted records.\n'+links.origin()+'/work')

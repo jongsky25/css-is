@@ -154,3 +154,11 @@ Pause individual actions with their host switches; pause all task/work access
 with `CSS_TELEGRAM_WORK_READ_ENABLED=0`. No disabled action can confirm. Existing
 confirmed work records are preserved. Live activation/acceptance remains deferred
 by the owner's explicit request; all test users, records and providers are fake.
+
+## Personal summary and document lookup
+
+The same draft now includes `/my_summary`: current authorized-set counts for
+overdue tasks, deadlines today through seven days ahead, owned tasks awaiting
+review and accessible work with review tasks. Categories overlap; no scheduled
+push is created. It uses existing work-read consent. Document lookup has separate
+consent and controls; see the [document/summary runbook](TELEGRAM_DOCUMENT_LOOKUP.md).
