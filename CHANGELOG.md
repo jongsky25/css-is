@@ -23,6 +23,11 @@
 - Support bounded pages, overdue/upcoming/review filters, deadlines, task progress and signed-in source links through private webhook replies.
 - With separate consent, preview and confirm task acknowledgement or output submission for review; no automatic notifications.
 
+## 9.59 — November 1, 2026
+
+- Refresh the monitor schedule registration with explicit minutes, retaining the existing five-minute cadence and main-only credential guard.
+- Record that scheduled execution remains unverified until GitHub creates a schedule-triggered run; manual success alone does not establish automatic coverage.
+
 ## 9.58 — November 1, 2026
 
 - Add independent five-minute GitHub checks for app/database availability, periodic durability, scheduled backups and unacknowledged audit failures.

@@ -75,6 +75,76 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**Monitoring release deployed; automatic trigger and phone receipt pending — November 1, 2026.**
+
+[PR #575](https://github.com/jongsky25/css-is/pull/575) merged as
+`c81b235da0745dddf0e388c05b8496ea61532fb9`, release **9.58**.
+All PR checks and the production normal/shuffled suites, dependency audit,
+metadata and aggregate gate passed. The existing backup/version gates and
+deployment also passed in [run 41273309243](https://github.com/jongsky25/css-is/actions/runs/41273309243).
+
+Authenticated post-deploy observations confirm version 9.58/commit c81b235 and
+the unchanged acknowledged historical audit incident: operational audit ok,
+acknowledged=true, checkpoint_changed=false, raw_ok=false, through_id=9452.
+Live probes in [run 41273427503](https://github.com/jongsky25/css-is/actions/runs/41273427503)
+attempt 2 returned **uptime=true, backup=true, audit=true, monitor=true** in both
+observations. No extra notification was created on this retry.
+
+The initial marked delivery test succeeded: bot-created
+[issue #576](https://github.com/jongsky25/css-is/issues/576) is assigned to
+`jongsky25`. GitHub accepted the issue/assignment; phone receipt has not been
+confirmed. An asynchronous receipt question is pending.
+
+**Automatic coverage is not yet verified.** No event=schedule execution has
+been observed. The cron is saved on main, but source/manual runs alone do not
+prove continuous monitoring. A conditional owner check of the workflow's
+Enable workflow button is now resolved: the owner's screenshot shows Disable
+workflow, and the API confirms state=active. Command access has recovered.
+On November 1 at 06:15:58 UTC the agent refreshed scheduling registration by
+disabling and immediately re-enabling workflow 403282831; its final state is
+active. No application code, deployment or data was changed by that refresh.
+
+A normal manual [run 41280398437](https://github.com/jongsky25/css-is/actions/runs/41280398437)
+then passed with uptime, backup, audit and monitor all true in both observations,
+and no alert transitions. This is a workflow_dispatch run, not evidence of an
+automatic scheduled execution. The owner has no further Enable button to find.
+
+Investigation at 06:49–06:55 UTC confirmed the workflow is active, the repository
+is public/non-fork/non-archived with default branch main, and the exact cron source
+is on main. No schedule-triggered runs exist. GitHub Status reports no current
+incident. Reading repository-wide Actions policy is denied (403), although manual
+Actions execute successfully. The root cause remains unconfirmed; do not call the
+original valid range/step expression a syntax error.
+
+A review candidate on `fix/monitor-schedule-registration` (9.59) replaces the
+range/step expression with equivalent explicit minutes to prompt source-based
+schedule registration. This is a repair attempt, not proof of a GitHub defect or
+an established fix. Full release checks and production promotion are required
+before it can affect scheduling on main. Existing alert logic and credential
+scope are unchanged.
+
+Candidate saved as [PR #577](https://github.com/jongsky25/css-is/pull/577).
+All 37 isolated monitor tests passed without skips/failures; the release metadata,
+JUnit, documentation-link and diff checks passed. Full required CI is running.
+Production promotion requires owner approval because merging restarts the live
+app through the existing gated deployment; this investigation did not itself
+authorize a new production release. No workflow gates are bypassed.
+
+Next: obtain release approval, complete the candidate checks and promotion,
+then observe a real scheduled execution
+with healthy/valid signals, and obtain phone receipt confirmation. Do not claim
+either step passed until evidence exists. No production outage, failed backup
+or audit corruption was induced. Only generic statuses were published; no private
+record contents or credential values were disclosed.
+
+This handoff is saved separately on
+`docs/monitoring-handoff-41273309243`; application code is merged/deployed.
+Automated sign-ins use the existing deployment account and consequently appear
+in its audit/usage views. Broader backup exposure/retention/recovery work remains
+outside this monitoring request.
+
+### Historical implementation notes
+
 **Automatic monitoring requested — November 1, 2026.**
 Candidate 9.58 is on `feat/operational-monitoring`. The owner requested outage,
 backup and new-audit alerts plus a phone delivery test. GitHub owner-assignment

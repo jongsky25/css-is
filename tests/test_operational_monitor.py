@@ -276,7 +276,7 @@ def test_never_ticked_saver_only_has_bounded_startup_grace(app_mod, admin, monke
 def test_workflow_never_runs_production_credentials_on_pr_or_other_branch():
     value = yaml.load(Path('.github/workflows/operational-monitor.yml').read_text(), Loader=yaml.BaseLoader)
     assert set(value['on']) == {'schedule', 'workflow_dispatch'}
-    assert value['on']['schedule'][0]['cron'] == '2-59/5 * * * *'
+    assert value['on']['schedule'][0]['cron'] == '2,7,12,17,22,27,32,37,42,47,52,57 * * * *'
     job = value['jobs']['check']
     assert "github.ref == 'refs/heads/main'" in job['if']
     assert "github.repository == 'jongsky25/css-is'" in job['if']

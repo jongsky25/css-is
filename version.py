@@ -43,6 +43,15 @@ CHANGELOG = [
         ]
     },
     {
+        "version": "9.59",
+        "date": "November 1, 2026",
+        "summary": "Refresh registration of automatic monitoring checks.",
+        "changes": [
+            "Keep monitoring checks scheduled every five minutes using explicit run times.",
+            "Automatic operation is confirmed only after GitHub records a scheduled check."
+        ]
+    },
+    {
         "version": "9.58",
         "date": "November 1, 2026",
         "summary": "Add independent monitoring for outages, backups and new audit failures.",
