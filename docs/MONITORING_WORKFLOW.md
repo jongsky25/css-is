@@ -9,9 +9,11 @@ a retry reused that issue without sending an additional notification.
 
 The automatic cron is configured on main but has not yet produced an observed
 scheduled execution. Do not equate the successful manual test with verified
-automatic coverage. Workflow enablement inspection and phone receipt
-confirmation are pending with the owner after the command workspace disconnected.
-Hosted GitHub jobs and connected run/log access remain available.
+automatic coverage. The owner's screenshot and the API now confirm the workflow
+is enabled. Command access has recovered; scheduling registration was refreshed
+at 06:15:58 UTC on November 1 by disabling and immediately re-enabling it.
+Normal manual run 41280398437 passed all four signals twice with no alert changes.
+Actual scheduled execution and phone receipt confirmation remain unverified.
 
 See [current handoff](SETUP_STATUS.md) for exact evidence and next actions.
 Automated sign-in/out events appear under the deployment account in audit/usage

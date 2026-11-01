@@ -98,12 +98,18 @@ confirmed. An asynchronous receipt question is pending.
 **Automatic coverage is not yet verified.** No event=schedule execution has
 been observed. The cron is saved on main, but source/manual runs alone do not
 prove continuous monitoring. A conditional owner check of the workflow's
-Enable workflow button is pending. The command workspace disconnected after the
-merge; GitHub hosted jobs continued. The connected GitHub tools can read runs/logs
-and rerun jobs but cannot inspect/change workflow enablement. Source, tests and
-release are saved remotely; no implementation was lost.
+Enable workflow button is now resolved: the owner's screenshot shows Disable
+workflow, and the API confirms state=active. Command access has recovered.
+On November 1 at 06:15:58 UTC the agent refreshed scheduling registration by
+disabling and immediately re-enabling workflow 403282831; its final state is
+active. No application code, deployment or data was changed by that refresh.
 
-Next: confirm workflow enablement if needed, observe a real scheduled execution
+A normal manual [run 41280398437](https://github.com/jongsky25/css-is/actions/runs/41280398437)
+then passed with uptime, backup, audit and monitor all true in both observations,
+and no alert transitions. This is a workflow_dispatch run, not evidence of an
+automatic scheduled execution. The owner has no further Enable button to find.
+
+Next: observe a real scheduled execution
 with healthy/valid signals, and obtain phone receipt confirmation. Do not claim
 either step passed until evidence exists. No production outage, failed backup
 or audit corruption was induced. Only generic statuses were published; no private
