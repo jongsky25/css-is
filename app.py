@@ -3887,6 +3887,36 @@ def _fmt_load(ms):
     return f"about {ms / 1000:.1f} seconds"
 
 
+@app.get("/admin/monitoring-status")
+def operational_monitoring_status(request: Request):
+    """Read-only, admin-protected status for the independent scheduled checker.
+
+    No record contents, identities, paths, hashes or provider errors leave this
+    endpoint. /admin's existing current-session/capability checks still apply.
+    """
+    persist = _persist_health_view()
+    if persist is None:
+        durability = "unconfigured"
+    elif persist.get("down"):
+        durability = "failed"
+    elif persist["tone"] == "good":
+        durability = "ok"
+    elif mon.health(DB, db_ok=True)["uptime_s"] <= 300:
+        durability = "starting"
+    else:
+        durability = "stale"
+    conn = get_conn()
+    try:
+        scheduled = bk.monitoring_status(conn)
+        audit = "ok" if st.audit_health(conn)["ok"] else "failed"
+    finally:
+        conn.close()
+    return JSONResponse({"schema": 1, "version": ver.APP_VERSION,
+                         "checks": {"durability": durability,
+                                    "scheduled_backups": scheduled, "audit": audit}},
+                        headers={"Cache-Control": "private, no-store"})
+
+
 def _persist_health_view():
     """Plain-language durability status for /ops: is live data actually being saved
     to permanent storage right now? None when persistence isn't configured (so the

@@ -75,6 +75,36 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**Automatic monitoring requested — November 1, 2026.**
+Candidate 9.58 is on `feat/operational-monitoring`. The owner requested outage,
+backup and new-audit alerts plus a phone delivery test. GitHub owner-assignment
+notifications are the initial channel while the asynchronous channel choice is
+pending; no phone receipt is claimed. Independent five-minute GitHub checks use
+two observations twenty seconds apart, durable incident deduplication and automatic
+recovery closure. A private read-only status endpoint uses existing admin/session
+checks; the historical audit acknowledgment is preserved.
+
+See [monitoring procedure and limits](MONITORING_WORKFLOW.md). The repository is
+public, so incident metadata is generic and no private records/provider errors
+leave the app. No new paid service or secret is required. Existing deployment
+secret names are reused by trusted main only. The integration cannot access the
+GitHub secrets public-key endpoint; it did not retrieve any secret values.
+
+Local isolated Python 3.11 checks: **181 passed**, no failures/skips (13.95 seconds),
+including actual synthetic sign-in/status/sign-out, backup/auth and deployment
+regressions. The initial 67-check subset also passed. Hash-verified cloud setup
+and doctor completed. One existing Starlette/httpx deprecation warning remains.
+Release/full CI, activation and delivery test are pending; source alone does not
+establish automatic monitoring or phone delivery. The current request authorizes
+the gated release/configuration needed to activate this monitoring.
+
+Next: save/open the candidate, pass full release checks, merge/deploy, run a normal
+check, send one marked owner notification test, verify the schedule and obtain
+phone receipt confirmation. No app outage or data corruption will be induced to
+test alerts. Backup exposure review and other operational follow-ups stay separate.
+
+### Completed audit work
+
 **Audit warning resolved operationally — November 1, 2026.**
 The owner-requested writer fix [PR #573](https://github.com/jongsky25/css-is/pull/573)
 merged as `5f3d775` and deployed as 9.56. The historical incident acknowledgment

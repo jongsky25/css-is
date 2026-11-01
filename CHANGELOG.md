@@ -1,3 +1,9 @@
+## 9.58 — November 1, 2026
+
+- Add independent five-minute GitHub checks for app/database availability, periodic durability, scheduled backups and unacknowledged audit failures.
+- Open one generic incident per confirmed problem, assign it to the repository owner, and close after confirmed recovery; preserve the acknowledged historical audit incident.
+- Add a private read-only monitoring status endpoint and a clearly marked GitHub notification test. GitHub schedules and phone delivery depend on provider/account settings.
+
 ## 9.57 — November 1, 2026
 
 - Acknowledge the owner-reviewed historical audit incident with an exact fingerprint of all original fields through #9452; do not rewrite any records or hashes.
