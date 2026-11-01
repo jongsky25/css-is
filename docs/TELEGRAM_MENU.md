@@ -1,6 +1,6 @@
 # Personalized private Telegram menu
 
-Draft PR #572, candidate 9.73. Deployment, activation and real-user testing remain
+Draft PR #572, candidate 9.74. Deployment, activation and real-user testing remain
 deferred. This addition changes discovery/guidance, not permissions or records.
 
 - `/menu` aliases the existing private `/help` path. Both show the same current
@@ -120,3 +120,6 @@ synthetic and outgoing Telegram is forbidden. Later live acceptance uses the
   and an independent pilot. [Blocker management](TELEGRAM_BLOCKER_MANAGEMENT.md)
   uses native participant/coordinator authority, explicit follow-up selection and
   exact private confirmation. Blocker metadata consent alone grants no write.
+
+Dependency addition/removal use independent private workflows: see
+[task dependency management](TELEGRAM_DEPENDENCY_MANAGEMENT.md).

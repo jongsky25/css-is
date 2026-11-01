@@ -1,4 +1,6 @@
-## 9.73 — November 1, 2026
+## 9.74 — November 1, 2026
+
+- Add separately consented prerequisite addition and removal with current coordinator authority, exact dependency direction previews, cycle prevention and atomic native source/receipt writes; task progress, blockers, submissions and deadlines remain unchanged.
 
 - Add independently consented blocker recording and clearing with actor-entered reasons, eligible follow-up person/date, native participant/coordinator permissions and atomic source/receipt writes; deadlines, dependencies and formal-review protections remain preserved.
 

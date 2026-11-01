@@ -1,6 +1,6 @@
 # Private task blockers and prerequisites lookup
 
-Draft PR #572, candidate 9.73. The owner approved blocker/prerequisite lookup.
+Draft PR #572, candidate 9.74. The owner approved blocker/prerequisite lookup.
 Deployment, preview publication, activation and personal/live testing remain
 deferred. Local verification uses synthetic records and blocked outgoing providers.
 
@@ -92,3 +92,6 @@ No provider registration, real message, scheduler or activation was added.
 Recording or clearing has a separate [private confirmation workflow](TELEGRAM_BLOCKER_MANAGEMENT.md).
 This metadata lookup remains read only; it does not expose stored reasons or
 grant either write consent. Source resolution is still available in Office Connect.
+
+Same-work prerequisite addition/removal are separate confirmed writes; see
+[dependency management](TELEGRAM_DEPENDENCY_MANAGEMENT.md). Metadata lookup remains read-only.

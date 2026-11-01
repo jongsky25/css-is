@@ -7,7 +7,7 @@ without the owner's later release/testing instruction.
 
 ## Before the later pilot
 
-1. Identify the reviewed PR/source commit and candidate version (currently 9.73).
+1. Identify the reviewed PR/source commit and candidate version (currently 9.74).
    Verify the actual candidate's required metadata/dependency/full normal/shuffled/
    aggregate CI, main freshness and synchronized versions. Old-head checks do not
    establish readiness. Follow existing release and verified-backup gates.
@@ -30,6 +30,9 @@ without the owner's later release/testing instruction.
 
 | Case | Action / expected result | Status |
 | --- | --- | --- |
+| Task prerequisite addition | Separate consent/pilot, current lead/officer, exact direction and task statuses, confirm/retry once; same-work/self/duplicate/cycle/cancelled-prerequisite guards; no deadline/progress changes | Pending |
+| Task prerequisite removal | Separate consent/pilot, exact existing link including cancelled upstream, native remaining blocker/decision rules and no automatic submission | Pending |
+| Dependency protections/recovery | Both task changes/deletion/reused IDs, graph changes, lost source rights, revoke/pause/expiry/restore/formal review; atomic failure/concurrent confirmation, recovery without replay | Pending |
 | Link and discover | Complete `/start` → signed-in consent → private `/status` → exact confirmation. `/menu` and `/help` agree and expose only enabled/consented commands. | Pending |
 | Pending-link help | Before final confirmation, `/menu` directs the same sender to `/status`; it does not replace the pending challenge. | Pending |
 | Limited permissions | With calendar-read consent only, calendar commands appear; work/document/request/write commands do not. No additional grant is created. | Pending |

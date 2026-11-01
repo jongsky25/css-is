@@ -1,6 +1,6 @@
 # Office Connect ↔ Telegram delivery plan
 
-Status: T0–T4.3.2 merged; T4.4 hosted pilot incomplete. Draft PR #572 (candidate 9.73) adds private task/document/supplies/personal reads, confirmed task updates and private guided meeting/room webhook replies. Owner confirms hosted linking/calendar retrieval; new draft capabilities, group/automatic outgoing delivery and the complete pilot remain unverified live. Source switches remain default-off.
+Status: T0–T4.3.2 merged; T4.4 hosted pilot incomplete. Draft PR #572 (candidate 9.74) adds private task/document/supplies/personal reads, confirmed task updates and private guided meeting/room webhook replies. Owner confirms hosted linking/calendar retrieval; new draft capabilities, group/automatic outgoing delivery and the complete pilot remain unverified live. Source switches remain default-off.
 Last updated: 2026-11-01.
 Repository: jongsky25/css-is.
 Planning baseline inspected: abf3141 (merge of PR #458).
@@ -1644,3 +1644,92 @@ Next: inspect fresh exact-head full repository normal/shuffled/dependency/
 container/aggregate CI, then continue the next explicitly requested feature.
 Main merge, release, preview publication, activation and personal/live testing
 remain deferred until the owner's later instruction.
+
+
+## Private task dependency management — 2026-11-01
+
+Owner explicitly approved adding/removing task prerequisites. Implemented
+`/task_dependency_add` and `/task_dependency_remove`, signed-in no-script forms,
+exact private previews/confirmation and outcome recovery on review branch
+`feat/telegram-private-work-lookup`, draft PR #572, candidate **9.74**. Actual main
+remains `a7b9b38` (released 9.59), preserved on the review branch. Deployment,
+preview publication, activation and personal/live testing remain deferred.
+
+Independent default-off `CSS_TELEGRAM_TASKS_DEPENDENCY_ADD_ENABLED` /
+`tasks.dependency_add` and `CSS_TELEGRAM_TASKS_DEPENDENCY_REMOVE_ENABLED` /
+`tasks.dependency_remove` require work-read consent and current private inbound/
+link/delivery/account/bot/chat proof. Other task/blocker/metadata scopes grant
+neither action. Native current work-lead/concerned case/task-officer authority
+must permit the active dependent task; ownership or follow-up responsibility
+alone is insufficient. Both tasks must currently be readable in the same work.
+
+Exact preview shows dependent/prerequisite IDs, titles, states, dependency
+direction, consequences and mandatory actor-entered reason. It never projects
+stored submissions, output criteria, blocker reasons or discussion. Adding
+refuses self/duplicate/cross-work/cancelled-prerequisite links and cycles of any
+length. Done prerequisites are allowed and labelled already satisfied. Removing
+requires the exact existing link and can remove a cancelled prerequisite. Only
+one edge/dependent revision/native history changes; other task fields, upstream
+task, deadlines, blockers and changed-decision history stay unchanged. Removal
+does not auto-submit or bypass remaining native submission/acceptance guards.
+Done/Cancelled dependents, closed/completed work and active formal consolidation
+review before/after preview refuse bot amendments.
+
+Current task/work/document digest, full prerequisite record, source history and
+same-work edge graph fence stale previews, including graph changes without task
+revision/event changes. The adapter calls the existing native caller-owned
+mutation inside the generic transaction. Source/task/edge/event/audit, consumed
+preview, receipt and webhook reply handoff are atomic; failures roll back and
+concurrent retry changes once. No native mutation or permission rule changed.
+
+Additive nullable `telegram_operation.dependency_task_id` migrates idempotently
+before trigger creation, preserving older operations. Pending previews are
+cancelled/scrubbed if either task is deleted; target deletion clears both pointers,
+prerequisite deletion clears its pointer and marks recovery, fencing numeric-ID
+reuse. Retained-key cleanup clears both. Recovery reports original outcome and
+current link/status or deletion with current source view, without replay.
+
+Expanded menu status shortens repeated work-read prerequisite wording while
+retaining each feature and full missing action consent. The upgrade test now
+simulates the new trigger/column's absence and checks unchanged old operations.
+
+Isolated Python 3.11 verification: **2072 broad regressions passed**
+across Telegram, native work, audit-chain writers, deployment and release checks.
+**766 shuffled current task/action/menu/phone checks** (seed 311)
+passed. **318 combined dependency/phone/shared/native-work checks**
+also passed, with a separate **1 maximum-origin menu/status budget check**.
+All groups have zero failures/errors/skips; groups overlap. The final menu boundary
+case was added after broad/shuffled collection and passed separately. No application
+source edits followed the passing final combined/broad/shuffled groups.
+
+Both 390×844 JavaScript-disabled phone flows, independent consent/pilots, current
+coordinator-only/source rules, exact direction, self/cross-work/duplicate/cancelled/
+acyclic guards, Done prerequisites/cancelled-link removal, stale tasks/work/docs/
+graph/formal review/context, native remaining submission gates, audit/receipt/
+handoff rollback, concurrent retries, both task deletion/ID reuse, retention and
+later-current-state recovery pass. Initial checks caught the expanded missing-
+consent status budget and a schema-upgrade fixture missing the new trigger; the
+status was shortened and the upgrade fixture extended, then passing groups reran.
+No native rule, permission assertion or no-skips gate was weakened.
+
+Reports: `/tmp/telegram-dependency-regressions.xml`,
+`/tmp/telegram-dependency-shuffled.xml`,
+`/tmp/telegram-dependency-verified-final.xml` and
+`/tmp/telegram-dependency-menu-limit.xml`; all pass the JUnit no-skips gate.
+Candidate 9.74 metadata over actual main 9.59, dependency locks/vendor integrity,
+installed compatibility, AI contract 1.12.0, Python compilation, local Markdown
+links and whitespace pass. Existing Starlette/httpx deprecation warning remains.
+Full exact-head repository normal/shuffled/dependency/container/aggregate CI still
+requires inspection after push; prior-head evidence is not current acceptance.
+
+See [dependency behavior](TELEGRAM_DEPENDENCY_MANAGEMENT.md) and
+[pending live acceptance](TELEGRAM_LIVE_ACCEPTANCE_CHECKLIST.md). All live rows
+remain Pending. No real Telegram message/provider registration, production data,
+scheduler/monitor execution, deployment, publication or activation occurred.
+Initial prior-head `936b7ab` inspection found metadata/dependency audit passing
+and normal/shuffled/avatar checks running; those are not new-head acceptance.
+
+Next: inspect fresh exact-head full repository normal/shuffled/dependency/
+container/aggregate CI and continue only the next explicitly requested feature.
+Main merge/release, preview publication, activation and live testing remain
+deferred until the owner's later instruction.

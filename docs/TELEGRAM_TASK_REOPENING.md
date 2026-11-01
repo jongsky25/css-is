@@ -1,6 +1,6 @@
 # Private reopening of accepted tasks
 
-Draft PR #572, candidate 9.73. The owner requested the next feature after task
+Draft PR #572, candidate 9.74. The owner requested the next feature after task
 reassignment. Deployment, preview publication, activation and personal/live testing
 remain deferred. Local checks use synthetic records and blocked providers.
 
