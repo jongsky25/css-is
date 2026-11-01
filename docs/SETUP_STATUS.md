@@ -75,88 +75,44 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
-**Monitoring release deployed; automatic trigger and phone receipt pending — November 1, 2026.**
+**Release 9.59 deployed; automatic scheduling blocked; phone receipt pending.**
 
-[PR #575](https://github.com/jongsky25/css-is/pull/575) merged as
-`c81b235da0745dddf0e388c05b8496ea61532fb9`, release **9.58**.
-All PR checks and the production normal/shuffled suites, dependency audit,
-metadata and aggregate gate passed. The existing backup/version gates and
-deployment also passed in [run 41273309243](https://github.com/jongsky25/css-is/actions/runs/41273309243).
+[PR #577](https://github.com/jongsky25/css-is/pull/577) merged with explicit owner
+approval as `a7b9b38d473af15b87412717284bb17272fce518`. PR and production normal/
+shuffled suites each passed **8,431 tests per order** without failures/skips.
+Dependency, metadata, aggregate, backup/version, deployment and post-deploy gates
+passed in [production run 41285255695](https://github.com/jongsky25/css-is/actions/runs/41285255695).
+Three authenticated observations confirm live version 9.59/commit a7b9b38 and
+healthy operational audit with the exact historical incident still acknowledged.
+No audit rows/hashes were rewritten; raw_ok=false remains expected for history.
 
-Authenticated post-deploy observations confirm version 9.58/commit c81b235 and
-the unchanged acknowledged historical audit incident: operational audit ok,
-acknowledged=true, checkpoint_changed=false, raw_ok=false, through_id=9452.
-Live probes in [run 41273427503](https://github.com/jongsky25/css-is/actions/runs/41273427503)
-attempt 2 returned **uptime=true, backup=true, audit=true, monitor=true** in both
-observations. No extra notification was created on this retry.
+**Automatic coverage is not verified.** The owner has no Enable button left to
+find: screenshot/API confirm active. The source cron on main is valid. Its
+explicit-minute refresh merged in PR #577, and state was refreshed at 07:49:18
+UTC against the new source. GitHub still reports zero event=schedule runs.
+The cause is unconfirmed; the repair attempt has not established success.
 
-The initial marked delivery test succeeded: bot-created
-[issue #576](https://github.com/jongsky25/css-is/issues/576) is assigned to
-`jongsky25`. GitHub accepted the issue/assignment; phone receipt has not been
-confirmed. An asynchronous receipt question is pending.
+Normal manual [run 41285718156](https://github.com/jongsky25/css-is/actions/runs/41285718156)
+on the merged source passed all four signals twice, with no incident transitions,
+before the 9.59 app deployment. It is workflow_dispatch, not automatic evidence.
+Local monitor tests: 37 passed; JUnit, metadata, documentation links and diff
+checks passed. No outage, backup failure or audit corruption was induced.
 
-**Automatic coverage is not yet verified.** No event=schedule execution has
-been observed. The cron is saved on main, but source/manual runs alone do not
-prove continuous monitoring. A conditional owner check of the workflow's
-Enable workflow button is now resolved: the owner's screenshot shows Disable
-workflow, and the API confirms state=active. Command access has recovered.
-On November 1 at 06:15:58 UTC the agent refreshed scheduling registration by
-disabling and immediately re-enabling workflow 403282831; its final state is
-active. No application code, deployment or data was changed by that refresh.
+Next: recheck for a genuine schedule event and valid observations. If none appears,
+request GitHub account/provider investigation using the
+[saved evidence and support draft](operations/monitor-scheduler-2026-11-01.md).
+No support request has been submitted. Current tools expose no internal scheduler
+queue; repository-wide Actions policy read is denied (403). Further speculative
+application releases are not justified by current evidence.
 
-A normal manual [run 41280398437](https://github.com/jongsky25/css-is/actions/runs/41280398437)
-then passed with uptime, backup, audit and monitor all true in both observations,
-and no alert transitions. This is a workflow_dispatch run, not evidence of an
-automatic scheduled execution. The owner has no further Enable button to find.
+Phone receipt of bot-created owner-assigned [test issue #576](https://github.com/jongsky25/css-is/issues/576)
+remains unconfirmed. No new delivery test was sent during this investigation.
+The screenshot of an opened issue alone does not establish push delivery.
 
-Investigation at 06:49–06:55 UTC confirmed the workflow is active, the repository
-is public/non-fork/non-archived with default branch main, and the exact cron source
-is on main. No schedule-triggered runs exist. GitHub Status reports no current
-incident. Reading repository-wide Actions policy is denied (403), although manual
-Actions execute successfully. The root cause remains unconfirmed; do not call the
-original valid range/step expression a syntax error.
-
-A review candidate on `fix/monitor-schedule-registration` (9.59) replaces the
-range/step expression with equivalent explicit minutes to prompt source-based
-schedule registration. This is a repair attempt, not proof of a GitHub defect or
-an established fix. Full release checks and production promotion are required
-before it can affect scheduling on main. Existing alert logic and credential
-scope are unchanged.
-
-[PR #577](https://github.com/jongsky25/css-is/pull/577) merged with owner approval
-as `a7b9b38d473af15b87412717284bb17272fce518` at approximately 07:33 UTC.
-All five required CI jobs passed on exact candidate `9187b13`: normal and shuffled
-full suites (**8,431 passed in each order**, zero failures/skips), dependency audit, release metadata and aggregate gate. The 37 isolated
-monitor tests, JUnit, documentation links and diff checks also passed.
-No gates were bypassed. Source-based schedule registration is now refreshed;
-this is not yet proof of a scheduled execution. Production [run 41285255695](https://github.com/jongsky25/css-is/actions/runs/41285255695)
-is in progress: dependency audit/metadata passed, both full suites pending. It will
-use the existing backup/version gates. Post-merge normal manual
-[run 41285718156](https://github.com/jongsky25/css-is/actions/runs/41285718156)
-checked exact merge a7b9b38 successfully: uptime/backup/audit/monitor all true in
-both observations, transitions empty. This is workflow_dispatch, not a schedule
-execution. Owner actor jongsky25 is active; cron-source commit author/committer
-both map to that owner. No new notification test was sent.
-
-
-No scheduled event was observed through 07:49 UTC after the source edit and
-successful post-merge manual check. The enabled state was refreshed once against
-the new definition at 07:49:18 UTC; final state active. This does not restart the
-application. Do not claim this reset solved scheduling without a real event.
-If none appears through production verification, preserve the provider-side
-scheduling blocker rather than making further speculative application changes.
-
-Next: verify the production release and observe a real scheduled execution
-with healthy/valid signals, and obtain phone receipt confirmation. Do not claim
-either step passed until evidence exists. No production outage, failed backup
-or audit corruption was induced. Only generic statuses were published; no private
-record contents or credential values were disclosed.
-
-This handoff is saved separately on
-`docs/monitor-schedule-verification`; 9.58 is deployed and the 9.59 schedule repair is merged, with deployment verification pending.
-Automated sign-ins use the existing deployment account and consequently appear
-in its audit/usage views. Broader backup exposure/retention/recovery work remains
-outside this monitoring request.
+This completion/blocker handoff is saved on `docs/monitor-schedule-verification`;
+9.59 application/schedule source is merged/deployed. Automated sign-ins use the
+existing deployment account and appear in its audit/usage views. Broader backup
+exposure/retention/recovery work remains outside this monitoring request.
 
 ### Historical implementation notes
 

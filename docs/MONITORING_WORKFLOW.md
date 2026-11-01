@@ -1,6 +1,17 @@
 # Operational monitoring
 
-## Deployment and verification status — November 1, 2026
+## Current scheduling outcome — November 1, 2026
+
+Release 9.59 is merged/deployed through all required gates in PR #577. The cron
+now spells out the same twelve minutes per hour. Manual checks are healthy;
+post-deploy version/commit and operational audit are verified. **No scheduled
+execution has appeared**, despite active state and source/state refreshes.
+Automatic coverage is still unverified; the owner has no further Enable button
+to find. See [scheduler evidence and support draft](operations/monitor-scheduler-2026-11-01.md)
+for the unresolved blocker and read-only recheck. Phone receipt of test issue
+#576 also remains unconfirmed. No support request has been submitted.
+
+## Initial deployment 9.58 — November 1, 2026
 
 Release 9.58 is merged/deployed through PR #575 and production run 41273309243.
 The live private probes returned all four signals healthy in two observations.
@@ -15,25 +26,17 @@ at 06:15:58 UTC on November 1 by disabling and immediately re-enabling it.
 Normal manual run 41280398437 passed all four signals twice with no alert changes.
 Actual scheduled execution and phone receipt confirmation remain unverified.
 
-The November 1 investigation found no scheduled events despite the enabled state,
-valid cron on main and successful manual checks. GitHub Status reported no active
-incident; the cause remains unconfirmed. Candidate `fix/monitor-schedule-registration`
-(9.59) spells out the same minutes to prompt source-based registration. It passed the full required CI and merged in PR #577 with owner approval
-as a7b9b38. Production checks/deployment are pending; only an actual
-schedule-triggered run can establish automatic operation. Do not ask the owner to find another Enable button.
-
-
 See [current handoff](SETUP_STATUS.md) for exact evidence and next actions.
 Automated sign-in/out events appear under the deployment account in audit/usage
 views. Public issue metadata remains generic; private operational records stay
 inside the authenticated application.
 
 
-## Candidate 9.58 — November 1, 2026
+## Checker behavior — introduced in 9.58
 
 Owner requested automatic outage, backup and new-audit-failure alerts, including a
-phone delivery test. Implementation is on `feat/operational-monitoring`; deployment
-and delivery evidence belong in [setup status](SETUP_STATUS.md). Do not claim the
+phone delivery test. Implementation is merged on main; deployment and delivery
+evidence belong in [setup status](SETUP_STATUS.md). Do not claim the
 schedule or phone delivery is verified from source/tests alone.
 
 ### Independent checker
