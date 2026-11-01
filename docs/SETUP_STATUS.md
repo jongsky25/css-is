@@ -75,6 +75,17 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**Christmas theme planning — November 1, 2026.** Source assessment and proposed
+design direction are saved in [the Christmas theme plan](CHRISTMAS_THEME_PLAN.md)
+on `docs/christmas-theme-design-plan`, based on main `a7b9b38`.
+Christmas currently has accent colours and a floating emoji, without Halloween's
+full illustrated environment. Recommended direction: warm Filipino Christmas,
+parol lanterns, evergreen/cream/gold, a Home scene and restrained work-page details.
+Next for this request: review the direction and prepare visual mockups before
+implementation. No app changes, live visual review, preview or release performed.
+Documentation diff and plan-link checks passed; application tests were not run
+for this documentation-only work. Operational follow-ups below remain separate.
+
 **Monitoring release deployed; automatic trigger and phone receipt pending — November 1, 2026.**
 
 [PR #575](https://github.com/jongsky25/css-is/pull/575) merged as
