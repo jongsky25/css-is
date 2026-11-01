@@ -75,7 +75,7 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
-**Release 9.59 deployed; scheduler investigation deferred by owner; phone receipt pending.**
+**Release 9.59 deployed; remaining monitoring follow-ups deferred by owner.**
 
 [PR #577](https://github.com/jongsky25/css-is/pull/577) merged with explicit owner
 approval as `a7b9b38d473af15b87412717284bb17272fce518`. PR and production normal/
@@ -105,12 +105,15 @@ The [saved evidence and support draft](operations/monitor-scheduler-2026-11-01.m
 remain available. No Support ticket was created. Earlier authorization to submit
 is superseded by this deferral.
 
-Next remaining monitoring item: confirm whether the original marked test arrived
-as a phone notification. If the owner confirms receipt, close test issue #576.
-Do not send another test or infer notification delivery from an opened issue.
-This can also be deferred if the owner wants to move to feature work. The audit
-warning is operationally cleared and backup was owner-reported fixed; neither
-requires more work as part of this scheduler deferral.
+The owner also chose to move on without confirming phone delivery. Both
+scheduler/Support investigation and phone-notification confirmation are now
+**deferred**. Do not resume either, send a new test, or close test issue #576 as
+successfully delivered unless the owner asks or supplies confirmation.
+
+Next: take the owner's next Office Connect task through the normal mobile/cloud
+workflow. No new task has been specified yet. The audit warning is operationally
+cleared and backup was owner-reported fixed. Monitoring source remains deployed,
+but automatic scheduling and phone receipt must not be described as verified.
 
 Phone receipt of bot-created owner-assigned [test issue #576](https://github.com/jongsky25/css-is/issues/576)
 remains unconfirmed. No new delivery test was sent during this investigation.

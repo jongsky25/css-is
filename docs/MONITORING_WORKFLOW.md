@@ -2,10 +2,10 @@
 
 ## Current scheduling outcome — November 1, 2026
 
-The owner deferred further scheduler investigation/Support submission. Do not
-resume it automatically. The remaining optional monitoring item is confirmation
-of phone receipt of the original marked test issue #576; close it only after
-owner confirmation. No new test is needed merely because Support was deferred.
+The owner chose to move on and deferred both scheduler investigation/Support
+submission and phone receipt confirmation. Do not resume either automatically,
+send a new test, or close test issue #576 as successfully delivered without owner
+confirmation. Wait for the next requested Office Connect task.
 
 Release 9.59 is merged/deployed through all required gates in PR #577. The cron
 now spells out the same twelve minutes per hour. Manual checks are healthy;
