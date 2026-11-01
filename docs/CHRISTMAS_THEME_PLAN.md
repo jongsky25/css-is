@@ -100,6 +100,9 @@ against their actual backgrounds before finalizing tokens.
 
 ## Next action
 
-Review the proposed Filipino Christmas direction, then prepare visual mockups before
-implementing the theme. This plan does not claim that production currently uses
-Christmas or that a live visual/accessibility assessment has been completed.
+The user requested a combined Christmas/New Year build handoff for a later session.
+Follow [the seasonal build handoff](SEASONAL_THEME_BUILD_HANDOFF.md) for the firmed
+scope, silent New Year countdown, scheduling proposal and implementation sequence.
+Prepare visual mockups when the build is requested. This plan does not claim that
+production currently uses Christmas or that a live visual/accessibility assessment
+has been completed.

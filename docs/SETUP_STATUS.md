@@ -75,6 +75,16 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**Seasonal design handoff ready — November 1, 2026.** The user will start the build
+later. Follow [the Christmas/New Year handoff](SEASONAL_THEME_BUILD_HANDOFF.md) on
+`docs/christmas-theme-design-plan`: Paskong Office Connect plus midnight-blue/gold
+New Year, countdown to January 1, 2027 at midnight Asia/Manila, static post-midnight
+greeting, optional brief effects and no sound. Editable schedule dates are proposed,
+not published. Next when build is requested: refresh main and create visual mockups,
+then implement and verify in isolation. Planning only; no app changes, preview,
+PR, merge or deployment. Documentation diff/relative-link checks passed; app tests
+not run. Earlier Christmas assessment and operational history follow below.
+
 **Christmas theme planning — November 1, 2026.** Source assessment and proposed
 design direction are saved in [the Christmas theme plan](CHRISTMAS_THEME_PLAN.md)
 on `docs/christmas-theme-design-plan`, based on main `a7b9b38`.
