@@ -1,6 +1,6 @@
 # Private meeting rescheduling and cancellation
 
-Draft PR #572, candidate 9.62. The owner is adding features before personal/live
+Draft PR #572, candidate 9.63. The owner is adding features before personal/live
 testing. Deployment, preview publication, host activation and real messages remain
 deferred. Local automated verification uses synthetic records and blocked providers.
 

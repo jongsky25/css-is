@@ -18,11 +18,12 @@ import telegram_meetings as meetings
 from telegram_link_routes import PRIVATE, csrf
 
 
-def make_router(templates,get_conn):
+def make_router(templates,get_conn, *, manager=manage, template="telegram_meeting_manage.html",
+                target="entry_id", dated_mode="reschedule", date_fields=("day","start_time","end_time"), resource="Meeting"):
     router=APIRouter()
     def screen(request,mode,error='',status=200,values=None):
-        if mode not in manage.MODES:return HTMLResponse('Action unavailable.',status_code=404,headers=PRIVATE)
-        action=manage.MODES[mode];conn=get_conn()
+        if mode not in manager.MODES:return HTMLResponse('Action unavailable.',status_code=404,headers=PRIVATE)
+        action=manager.MODES[mode];conn=get_conn()
         try:
             user=links.current(conn,auth.parse_token(request.cookies.get(auth.COOKIE_NAME)))
             identifier=(values or {}).get('origin') or request.query_params.get('origin','')
@@ -42,20 +43,20 @@ def make_router(templates,get_conn):
                     ctx=json.loads(found[0]['context_json'])
                     current,_,_=actions.authority(conn,ctx,action)
                     if current['id']==user['id']:prepared=found[0]
-            return templates.TemplateResponse(request,'telegram_meeting_manage.html',
-                {'show_scope':False,'mode':mode,'action_path':manage.PATH+mode,'origins':origins,'selected':identifier,
+            return templates.TemplateResponse(request,template,
+                {'show_scope':False,'mode':mode,'action_path':manager.PATH+mode,'origins':origins,'selected':identifier,
                  'values':values or {},'key':secrets.token_hex(16),'csrf':csrf(request),'prepared':prepared,'error':error},
                 status_code=status,headers=PRIVATE)
         except ValueError:
-            return HTMLResponse('Meeting action unavailable. Sign in again and start the action in your private Telegram chat.',status_code=403,headers=PRIVATE)
+            return HTMLResponse(resource+' action unavailable. Sign in again and start the action in your private Telegram chat.',status_code=403,headers=PRIVATE)
         finally:conn.close()
 
-    @router.get(manage.PATH+'{mode}')
+    @router.get(manager.PATH+'{mode}')
     def page(request:Request,mode:str):return screen(request,mode)
 
-    @router.post(manage.PATH+'{mode}')
+    @router.post(manager.PATH+'{mode}')
     async def prepare(request:Request,mode:str):
-        if mode not in manage.MODES:return HTMLResponse('Action unavailable.',status_code=404,headers=PRIVATE)
+        if mode not in manager.MODES:return HTMLResponse('Action unavailable.',status_code=404,headers=PRIVATE)
         form=None
         try:
             body=bytearray()
@@ -63,7 +64,7 @@ def make_router(templates,get_conn):
                 body.extend(chunk)
                 if len(body)>4096:raise ValueError('The form is too large.')
             request._body=bytes(body);form=await request.form(max_fields=8,max_files=0)
-            fields=('entry_id','day','start_time','end_time') if mode=='reschedule' else ('entry_id',)
+            fields=(target,*date_fields) if mode==dated_mode else (target,)
             if (set(form)!={'csrf','origin','key',*fields} or any(len(form.getlist(k))!=1 for k in form)
                     or not hmac.compare_digest(str(form.get('csrf','')).encode(),csrf(request).encode())):
                 raise ValueError('The form expired or is invalid. Reload and try again.')
@@ -72,11 +73,11 @@ def make_router(templates,get_conn):
             conn=get_conn()
             try:
                 user=links.current(conn,auth.parse_token(request.cookies.get(auth.COOKIE_NAME)))
-                ctx=meetings.origin(conn,user,str(form['origin']),bot.now_utc(),manage.MODES[mode])
-                result=actions.issue(conn,ctx,manage.MODES[mode],str(form['key']),{k:str(form[k]) for k in fields},bot.now_utc())
+                ctx=meetings.origin(conn,user,str(form['origin']),bot.now_utc(),manager.MODES[mode])
+                result=actions.issue(conn,ctx,manager.MODES[mode],str(form['key']),{k:str(form[k]) for k in fields},bot.now_utc())
             finally:conn.close()
         except ValueError as error:
-            values={k:str(form.get(k,'')) for k in ('origin','entry_id','day','start_time','end_time')} if form else None
+            values={k:str(form.get(k,'')) for k in ('origin',target,*date_fields)} if form else None
             return screen(request,mode,str(error),400,values)
-        return RedirectResponse(manage.PATH+mode+'?operation='+result['operation_id'],status_code=303,headers=PRIVATE)
+        return RedirectResponse(manager.PATH+mode+'?operation='+result['operation_id'],status_code=303,headers=PRIVATE)
     return router

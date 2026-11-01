@@ -21,6 +21,8 @@ FEATURES=(
  ('calendar.cancel','Calendar','Meeting cancellation','/meeting_cancel — cancel your own meeting after preview and confirmation.',('calendar.read',),None,True),
  ('rooms.read','Calendar','Room lookup','/room_slots — today’s slots; /my_rooms; /room_status REFERENCE.',(),None,False),
  ('rooms.request','Calendar','Room requests','/room_request — an existing meeting; preview and confirmation; pending approval.',('calendar.read','rooms.read'),None,False),
+ ('rooms.withdraw','Calendar','Room withdrawal','/room_withdraw — withdraw your own room request after preview and confirmation.',('rooms.read',),None,True),
+ ('rooms.move','Calendar','Room date moves','/room_move — change your own request’s date; approved bookings require a new approval.',('rooms.read',),None,True),
  ('work.read','Tasks and work','Work lookup','/my_summary; /my_tasks; /my_work; /task_status WORK_ID TASK_ID; /work_status WORK_ID.\nExample: /my_tasks overdue (also upcoming or review).',(),work.enabled,False),
  ('tasks.acknowledge','Tasks and work','Task acknowledgement','/task_ack WORK_ID TASK_ID — preview taking your task into progress.',('work.read',),work.enabled,True),
  ('tasks.submit','Tasks and work','Task submission','/task_submit WORK_ID TASK_ID — prepare output, preview, then confirm review submission.',('work.read',),work.enabled,True),

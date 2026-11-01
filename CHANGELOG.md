@@ -1,4 +1,6 @@
-## 9.62 — November 1, 2026
+## 9.63 — November 1, 2026
+
+- Add separately consented private room withdrawal and date moves with exact previews, ownership/current-source checks and atomic source/notice/audit/receipt writes; approved moves retain the old booking until normal approval.
 
 - Add separately consented private meeting rescheduling/cancellation with signed-in forms, exact expiring previews, stale-source checks and atomic source/audit/receipt handling; linked room/managed video/recurring cases stay in Office Connect.
 

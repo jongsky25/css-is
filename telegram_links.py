@@ -17,6 +17,8 @@ import telegram_transport as transport
 SCOPES = {'calendar.read': 'Read permitted calendar entries', 'rooms.read': 'Read room availability and own requests', 'calendar.create':'Create one meeting after an exact private preview and confirmation', 'rooms.request':'Request a room for my permitted meeting after private confirmation', 'travel.read': 'Read my travel filing checklist and status in private', 'meals.read': 'Read my meal request status in private', 'arrangements.read': 'Read my work-arrangement filing status in private', 'supplies.read': 'Read my supply request approval and collection status in private', 'documents.read': 'Read permitted document metadata and status in private', 'work.read': 'Read my tasks and permitted work status in private', 'tasks.acknowledge': 'Acknowledge my task after private confirmation', 'tasks.submit': 'Submit my task for review after private confirmation'}
 SCOPES.update({'calendar.reschedule':'Reschedule my own meeting after private preview and confirmation',
                'calendar.cancel':'Cancel my own meeting after private preview and confirmation'})
+SCOPES.update({'rooms.withdraw':'Withdraw my own room request after private preview and confirmation',
+               'rooms.move':'Move my own room request date after private preview and confirmation'})
 
 
 def stamp(now):
@@ -94,6 +96,9 @@ def claim(conn, payload, raw_code, scopes, now):
     for action in ('calendar.reschedule','calendar.cancel'):
         if action in scopes and ('calendar.read' not in scopes or not switches.enabled(action.replace('.','_'))):
             raise ValueError('Meeting management requires its separate pilot and calendar read consent.')
+    for action in ('rooms.withdraw','rooms.move'):
+        if action in scopes and ('rooms.read' not in scopes or not switches.enabled(action.replace('.','_'))):
+            raise ValueError('Room management requires its separate pilot and room read consent.')
     if 'rooms.request' in scopes and (not {'calendar.read','rooms.read'}<=set(scopes) or not switches.enabled('rooms_request')):
         raise ValueError('Room requests require their pilot and separate calendar and room read consent.')
     for action in ('tasks.acknowledge','tasks.submit'):
@@ -139,7 +144,7 @@ def confirm(conn, sender, argument_hash, bot, now):
         return None
     if 'rooms.request' in json.loads(ch['scopes_json']) and not switches.enabled('rooms_request'):
         return None
-    if any(scope in json.loads(ch['scopes_json']) and not switches.enabled(scope.replace('.','_')) for scope in ('calendar.reschedule','calendar.cancel')):
+    if any(scope in json.loads(ch['scopes_json']) and not switches.enabled(scope.replace('.','_')) for scope in ('calendar.reschedule','calendar.cancel','rooms.withdraw','rooms.move')):
         return None
     cid, generation = conn.execute('''INSERT INTO telegram_connection
         (account_id,telegram_user_id,private_chat_id,bot_identity,bot_fingerprint,state,created_at,updated_at)

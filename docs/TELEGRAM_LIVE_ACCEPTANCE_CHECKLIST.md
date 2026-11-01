@@ -7,7 +7,7 @@ without the owner's later release/testing instruction.
 
 ## Before the later pilot
 
-1. Identify the reviewed PR/source commit and candidate version (currently 9.62).
+1. Identify the reviewed PR/source commit and candidate version (currently 9.63).
    Verify the actual candidate's required metadata/dependency/full normal/shuffled/
    aggregate CI, main freshness and synchronized versions. Old-head checks do not
    establish readiness. Follow existing release and verified-backup gates.
@@ -51,6 +51,9 @@ without the owner's later release/testing instruction.
 | Meeting reschedule | Consent separately to calendar read/reschedule; use `/meeting_reschedule` → signed-in exact form → private preview → confirmation. Only date/start/end change on an own plain meeting; repeat/recover produces no second edit. | Pending |
 | Meeting cancellation | Consent separately to calendar read/cancel; use `/meeting_cancel` and exact preview/confirmation. Source record is marked cancelled, kept for source recovery, with one revision/audit/outcome. Recovery reports current state without repeating a write. | Pending |
 | Management blockers | Another creator, stale/reverted source, recurrence/import/activity/video-managed entry, or newly linked active room booking is blocked. Read/create consent alone grants no management; missing read/write grant, disconnect or paused pilot prevents confirmation. Do not alter live data to induce faults; synthetic tests cover rollbacks. | Pending |
+| Room withdrawal | Consent separately to room read/withdraw; `/room_withdraw` → own reference/form → exact private preview → confirmation. Pending requests become withdrawn; approved hours release. The preview identifies pending move children also withdrawn; withdrawing only a move keeps the original booking. No calendar or meal action occurs. | Pending |
+| Room date move | Consent separately to room read/move; prepare a new date for the same hours. Pending requests change in place and remain pending. Approved bookings retain old hours while one new move awaits normal approval; only actual source approval releases the original booking. No implicit approval occurs. | Pending |
+| Linked room move and blockers | Linked date must match the current permitted meeting and needs calendar read. Changes/approval after preview, target conflicts, revoked scopes and special meal/series/standby/activity/guest/on-behalf-of cases deny stale action. Existing read/request permission grants neither new action. Fault/rollback/concurrency cases stay synthetic. | Pending |
 | Combined room request | Explicitly opt into one room block, review the exact preview and confirm. Meeting is saved and room request says pending approval/no booking held. Actual approval remains an Administrative Section action. | Pending |
 | Separate room request | `/room_request` → form → `/room_preview OPERATION_ID` → confirmation submits one request for a permitted meeting. No new meeting or automatic approval occurs. | Pending |
 | Partial/recovery behavior | If a genuine controlled conflict occurs, verify the actual recorded partial outcome and use its parent-bound room-only retry. Do not introduce a live outage or corrupt source records to simulate failure. Recovery must not recreate a meeting; automated tests cover forced faults. | Pending |

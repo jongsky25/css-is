@@ -1,6 +1,6 @@
 # Personalized private Telegram menu
 
-Draft PR #572, candidate 9.62. Deployment, activation and real-user testing remain
+Draft PR #572, candidate 9.63. Deployment, activation and real-user testing remain
 deferred. This addition changes discovery/guidance, not permissions or records.
 
 - `/menu` aliases the existing private `/help` path. Both show the same current
@@ -26,6 +26,9 @@ deferred. This addition changes discovery/guidance, not permissions or records.
   entries. Their [private guided actions](TELEGRAM_MEETING_MANAGEMENT.md) require
   a plain meeting created by the actor; linked room/video/recurring cases remain
   in Office Connect.
+- [Room withdrawal/date moves](TELEGRAM_ROOM_MANAGEMENT.md) also have separate
+  consent and host controls. Only the actual owner can act; a move of an approved
+  booking still requires normal approval and retains the original hours meanwhile.
 
 Menus read current account/link/bot/grant/settings state on every rendering.
 They query no source business records and cache no feature entitlement. A menu

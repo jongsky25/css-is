@@ -1,0 +1,31 @@
+{% extends "dash_layout.html" %}
+{% block title %}{{ mode|capitalize }} my room request — Office Connect{% endblock %}
+{% block content %}
+<div style="max-width:720px;margin:auto;overflow-wrap:anywhere">
+<h1>{{ mode|capitalize }} my room request</h1>
+<p><a href="/account/telegram">Telegram connection and permissions</a> · <a href="/rooms/mine">My room requests</a></p>
+<p>Start with <code>/room_{{ mode }}</code> in your original linked private Telegram chat. Use your own room reference or request number. Dates and times use <strong>Asia/Manila</strong>.</p>
+<p>Meals, repeating dates, standby, guests, activity-linked and on-behalf-of requests stay in Office Connect. This action cannot approve a booking or change your calendar meeting.</p>
+{% if error %}<p role="alert">{{ error }}</p>{% endif %}
+{% if prepared %}
+<p role="status">{% if prepared.state == 'pending' %}Your preview is prepared. No request has changed. Send <code>/{{ mode }}_preview {{ prepared.operation_id }}</code> in the original private Telegram chat, review the exact action and confirm before expiry.{% else %}This operation already has a recorded outcome. Send <code>/{{ mode }}_receipt {{ prepared.operation_id }}</code> in the original private chat. Recovery will not repeat the action.{% endif %}</p>
+{% endif %}
+{% if origins %}
+<form method="post" action="{{ action_path }}">
+<input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="key" value="{{ key }}">
+<p><label for="room-manage-origin">Starting private conversation</label><br><select id="room-manage-origin" name="origin" required>{% for item in origins %}<option value="{{ item }}" {% if selected == item %}selected{% endif %}>Private request {{ loop.index }}</option>{% endfor %}</select></p>
+<p><label for="room-manage-id">Room reference or request number</label><br><input id="room-manage-id" name="room_id" type="text" maxlength="40" value="{{ values.get('room_id','') }}" required></p>
+<p>Use the reference shown by <code>/my_rooms</code> or <code>/room_status</code>, such as CR-2610-0001. You can also use the numeric request ID.</p>
+{% if mode == 'move' %}
+<p><label for="room-manage-day">New room date</label><br><input id="room-manage-day" name="day" type="date" value="{{ values.get('day','') }}" required></p>
+<p>The hours stay the same. A pending request changes date in place and stays pending. An approved booking stays held while a new move request waits for normal approval; the new date is not booked now.</p>
+<p>For a calendar-linked request, the new room date must match its meeting's current date and calendar read consent is also required. Update the meeting in Office Connect first. Withdraw an existing pending move before preparing a different move.</p>
+{% else %}
+<p>Withdrawing releases any approved hours held by this request. Its pending move requests will also be withdrawn. Withdrawing only a pending move leaves the original approved booking held. Review the exact affected references in the private preview.</p>
+{% endif %}
+<p>The preview expires after five minutes. Changed requests, hours or linked records require a fresh preview. Nothing happens until you confirm. Normal room notices follow existing settings.</p>
+<button type="submit">Prepare exact private preview</button>
+</form>
+{% else %}<p>No current private action request is available. Send <code>/room_{{ mode }}</code> to the bot after enabling and consenting to this separate pilot.</p>{% endif %}
+</div>
+{% endblock %}

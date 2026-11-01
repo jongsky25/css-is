@@ -882,3 +882,67 @@ CI and review the draft. Production/preview publication, host activation, real
 messages and user/live testing remain deferred. Independent room management and
 managed provider/series editing remain future work; no operational monitor action
 or live data access occurred in this task.
+
+
+## Private room withdrawal and date moves — 2026-11-01
+
+Owner approved room-request management while publication/activation and live
+testing remain deferred. Draft PR #572 continues on
+`feat/telegram-private-work-lookup`, unpublished candidate **9.63**, preserving
+main c81b235 (9.58). Separate default-off `rooms.withdraw` / `rooms.move` pilots
+and explicit consent also require current room read; existing read/request
+consent cannot grant either new action.
+
+`/room_withdraw` and `/room_move` return script-free signed-in forms accepting
+an own room reference or ID. Exact five-minute private previews precede
+confirmation and action-specific recovery. Pending date moves change the request
+in place. Approved moves submit a new pending child while the old booking stays
+held until normal approval; no bot action grants approval. Withdrawing releases
+held hours and identifies pending move children also withdrawn. Withdrawing only
+a move leaves the original unchanged and reports its actual current status.
+
+Only the actual requester can act, including when an administrator can view other
+requests. Meals/meal forms, series, standby, guests, direct activity links and
+on-behalf-of cases stay in Office Connect. A calendar-linked move additionally
+requires calendar read and a new date matching the current permitted meeting.
+The calendar is never silently edited.
+
+Native room writes/notices now support strict caller-owned transactions while
+existing default behavior remains. Source rows/held slots, move child, notice
+outbox/audit, consumed preview and receipt share one transaction. Durable source
+heads and full room/slot/family hashes stop stale/edited-reverted previews; linked
+meeting revisions and current target conflicts are also checked. Shared signed-in
+form handling retains actor/session/CSRF, strict fields, body bounds and rate
+limits for both meeting and room paths.
+
+See [room-management behavior](TELEGRAM_ROOM_MANAGEMENT.md) and the expanded
+[pending live checklist](TELEGRAM_LIVE_ACCEPTANCE_CHECKLIST.md).
+
+Local Python 3.11 verification: **1,454 broad regressions passed** across
+Telegram, native room/approval/meal/series/guest/UI workflows, calendar links,
+existing MCP room tools, audit-chain writers, deployment and release checks.
+**142 final shuffled action/menu/phone checks** and **2 final normal parent-status/
+approval-race checks** passed, zero failures/errors/skips. Groups overlap. The
+broad run began before a final preview-only correction to show an original
+booking's actual status when cancelling a pending move; business writes were
+unchanged. The final shuffled/normal groups cover that correction and the
+additional race assertion. Initial expected old-booking status was corrected
+to native `withdrawn` after normal move approval, preserving the actual source
+semantics and held-slot assertions. Earlier focused run: 92 passed; initial
+native/shared-form subset: 90 passed.
+
+Reports: `/tmp/telegram-room-manage-regressions.xml`,
+`/tmp/telegram-room-manage-shuffled-final.xml`,
+`/tmp/telegram-room-manage-final-state.xml`; all JUnit gates pass. Candidate 9.63
+metadata/increase over main 9.58, locks/vendor integrity, installed compatibility,
+AI contract, compilation, local documentation file targets and whitespace checks
+pass. Existing Starlette/httpx deprecation warning remains. No app source edits
+followed the final passing groups. Fresh exact-head repository-wide normal/
+shuffled/dependency/container/aggregate CI still needs inspection; no hosted or
+user acceptance is claimed.
+
+Next: inspect fresh exact-head full normal/shuffled/dependency/container/aggregate
+CI and review the draft. Deployment, preview publication, host activation, real
+messages and user/live testing remain deferred. Meal/series/guest/on-behalf-of
+management, different-hour moves and combined calendar/room rescheduling remain
+separate future scope. No operational monitor action or live data access occurred.
