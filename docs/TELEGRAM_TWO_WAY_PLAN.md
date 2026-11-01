@@ -1,6 +1,6 @@
 # Office Connect ↔ Telegram delivery plan
 
-Status: T0–T4.3.2 merged; T4.4 hosted pilot incomplete. Draft PR #572 (candidate 9.74) adds private task/document/supplies/personal reads, confirmed task updates and private guided meeting/room webhook replies. Owner confirms hosted linking/calendar retrieval; new draft capabilities, group/automatic outgoing delivery and the complete pilot remain unverified live. Source switches remain default-off.
+Status: T0–T4.3.2 merged; T4.4 hosted pilot incomplete. Draft PR #572 (candidate 9.75) adds private task/document/supplies/personal reads, confirmed task updates and private guided meeting/room webhook replies. Owner confirms hosted linking/calendar retrieval; new draft capabilities, group/automatic outgoing delivery and the complete pilot remain unverified live. Source switches remain default-off.
 Last updated: 2026-11-01.
 Repository: jongsky25/css-is.
 Planning baseline inspected: abf3141 (merge of PR #458).
@@ -1733,3 +1733,105 @@ Next: inspect fresh exact-head full repository normal/shuffled/dependency/
 container/aggregate CI and continue only the next explicitly requested feature.
 Main merge/release, preview publication, activation and live testing remain
 deferred until the owner's later instruction.
+
+
+## Private work and task comments — 2026-11-01
+
+Owner explicitly approved work/task discussion posting. Implemented `/work_comment`
+and `/task_comment`, signed-in JavaScript-free preparation, exact private previews/
+confirmation and receipt recovery on branch `feat/telegram-private-work-lookup`,
+draft PR #572, candidate **9.75**. Actual main remains `a7b9b38` (released 9.59),
+preserved on the review branch. Deployment, preview publication, activation and
+personal/live testing remain explicitly deferred.
+
+Independent default-off `CSS_TELEGRAM_WORK_COMMENT_ENABLED` / `work.comment` and
+`CSS_TELEGRAM_TASKS_COMMENT_ENABLED` / `tasks.comment` require separate work-read
+consent and current private inbound/link/delivery/account/bot/chat proof. Neither
+another task scope nor one comment scope grants the other. Private webhook-only
+handling rejects group/topic/direct-worker paths. Consent grants no source access.
+
+Native current work visibility, including every linked document, permits informal
+discussion; task ownership/lead/officer status is not required simply to post.
+Work-level comments accept no task; task comments require an exact task in that
+work. Each form takes only target IDs and plain text, up to 1,000 characters with
+normalized line endings. Unsupported reply/mention/edit/status/approval fields and
+controls are refused. Literal @name creates no mention. The exact preview shows
+target titles/IDs/current states and complete actor-entered text with visibility
+notice; stored discussion, submissions, output and blocker reasons are not copied.
+
+A comment creates native immutable message/revision history, normal permitted
+follower notices and the author's observed-revision marker. Task/work/document
+state, revisions, deadlines, ownership, submission, blockers, dependencies, events
+and formal approvals remain unchanged. Native discussion stays available on
+completed work, Done/Cancelled tasks and under active formal review. Changed
+source after preview still requires a fresh preview; unrelated new comments do
+not invalidate each other. No reply, mentions, edits, follow preference, digest
+setting or access grant is added. Independently configured existing digests may
+later include normal source notices; no scheduler/digest/provider is executed here.
+
+Extracted strict caller-owned `work_discussion.post_in_transaction`; the public
+`post` wrapper keeps its transaction and native body. AST comparison after SQL
+indentation normalization confirms identical posting logic. The adapter uses that
+helper inside generic confirmation, so comment/revision/follower notices/author
+read marker, operation comment ID, preview consumption, receipt and reply handoff
+commit atomically. Notice/receipt/handoff failure rolls back; retries/concurrent
+confirmation post once. Native author-only edits and reply/mention rules remain
+available unchanged to existing source callers.
+
+Additive nullable `telegram_operation.comment_id` migrates before triggers and
+preserves old operations. Pending task deletion cancels/scrubs task previews;
+work deletion cancels/scrubs comment previews and clears routing/identifier fields,
+fencing numeric-ID reuse. Native immutable history/FKs protect committed source
+references. Retention clears comment/source routing IDs. Recovery checks current
+source/thread/original author and reports recorded outcome, link/current revision
+without stored text or replay. A later source edit changes only the reported
+revision. Pending deleted-source recovery stays cancelled without describing a
+replacement. Schema upgrade now simulates absence of the new column/trigger and
+checks older operations acquire no new comment identifier.
+
+Isolated Python 3.11 verification: **2229 broad regressions passed**
+across Telegram/native work, integration submission API/MCP submissions, audit-chain
+writers, deployment and release checks. **857 current shuffled
+comment/dependency/blocker/task/action/menu/phone checks** (seed 311) passed.
+**300 combined comment/phone/shared/native-work checks**
+and an earlier **49 phone/menu/action/budget group** passed.
+All groups have zero failures/errors/skips and overlap. All final comment/source-
+access/line-ending/deletion assertions preceded broad/shuffled collection; no
+application source edits followed these passing final groups.
+
+Ordinary-reader and every-linked-document/source access, separate scopes/pilots,
+strict thread/input boundaries, literal mentions, normalized text, native follower/
+author-read effects, unchanged business state/reviews, terminal/formal discussion,
+independent comments, current source/context/restore fences, native caller-owned
+contract, atomic notice/receipt/handoff rollback, retries/concurrency, deletion/ID
+reuse, retention and later edited-revision recovery pass. Both 390×844 JavaScript-
+disabled phone flows pass CSRF/allowlists, exact text/target previews, confirmation/
+retry, unchanged tasks/work and expired sessions with no outgoing calls. Expanded
+menu/status fit the maximum supported origin. Initial checks required extending
+the schema-upgrade fixture for the new column/trigger and respecting native lead
+linked-document eligibility and append-only events in synthetic fixtures. Pending
+work deletion now explicitly asserts the existing cancelled receipt and cleared
+routing, without describing a reused ID. No native constraint, permission or
+no-skips assertion was relaxed.
+
+Reports: `/tmp/telegram-comment-regressions.xml`,
+`/tmp/telegram-comment-shuffled.xml`, `/tmp/telegram-comment-verified-final.xml`
+and `/tmp/telegram-comment-phone-wiring.xml`; all pass the JUnit no-skips gate.
+Candidate 9.75 metadata over actual main 9.59, dependency locks/vendor integrity,
+installed compatibility, AI contract 1.12.0, Python compilation, local Markdown
+links and whitespace pass. Existing Starlette/httpx deprecation warning remains.
+Full exact-head repository normal/shuffled/dependency/container/aggregate CI still
+requires inspection after push; prior-head evidence is not current acceptance.
+
+See [comment behavior](TELEGRAM_COMMENT_MANAGEMENT.md) and
+[pending live acceptance](TELEGRAM_LIVE_ACCEPTANCE_CHECKLIST.md). All live rows
+remain Pending. No real Telegram message/provider registration, production data,
+scheduler/monitor execution, deployment, preview publication or activation occurred.
+Initial prior-head `1e1063e` inspection found metadata/dependency audit/avatar
+functional checks passing and normal/shuffled checks running. Those are not
+new-head acceptance.
+
+Next: inspect fresh exact-head full repository normal/shuffled/dependency/
+container/aggregate CI and continue only the next explicitly requested feature.
+Main merge/release, preview publication, activation and personal/live testing
+remain deferred until the owner's later instruction.

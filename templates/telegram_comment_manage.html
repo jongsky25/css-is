@@ -1,0 +1,25 @@
+{% extends "dash_layout.html" %}
+{% block title %}Post a {{ mode }} comment — Office Connect{% endblock %}
+{% block content %}
+<div style="max-width:720px;margin:auto;overflow-wrap:anywhere">
+<h1>Post a {{ mode }} comment</h1>
+<p><a href="/account/telegram">Telegram connection and permissions</a> · <a href="/work">Open source work and discussions</a></p>
+<p>Start <code>/{{ mode }}_comment</code> in your linked private chat. Current work and linked-document access are required. The saved comment is visible to people with current source access and remains in normal discussion history.</p>
+<p>This is an informal discussion post. Work/task progress, ownership, submissions, blockers, prerequisites, deadlines and formal approvals stay unchanged. Native discussion can remain available on completed work, Done/Cancelled tasks and work under formal review.</p>
+<p>Normal follower in-app notices apply. This form does not add mentions, a reply target or notification preferences. Replies, mentions and comment edits remain in Office Connect. Text such as <code>@name</code> is plain text here.</p>
+<p><strong>Your entered text appears in the exact private Telegram preview and the saved work discussion.</strong> Existing discussion contents and submissions are not copied into Telegram.</p>
+{% if error %}<p role="alert">{{ error }}</p>{% endif %}
+{% if prepared %}<p role="status">{% if prepared.state == 'pending' %}Your preview is prepared. No comment has been posted. Send <code>/{{ mode }}comment_preview {{ prepared.operation_id }}</code> in the original private chat, check the target and text, then confirm before expiry.{% else %}This operation already has a recorded outcome. Send <code>/{{ mode }}comment_receipt {{ prepared.operation_id }}</code> in the original private chat. Recovery will not post again.{% endif %}</p>{% endif %}
+{% if origins %}
+<form method="post" action="{{ action_path }}">
+<input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="key" value="{{ key }}">
+<p><label for="comment-origin">Starting private conversation</label><br><select id="comment-origin" name="origin" required>{% for item in origins %}<option value="{{ item }}" {% if selected == item %}selected{% endif %}>Private request {{ loop.index }}</option>{% endfor %}</select></p>
+<p><label for="comment-work">Work item number</label><br><input id="comment-work" name="case_id" type="number" min="1" value="{{ values.get('case_id','') }}" required></p>
+{% if mode == 'task' %}<p><label for="comment-task">Task number</label><br><input id="comment-task" name="task_id" type="number" min="1" value="{{ values.get('task_id','') }}" required></p>{% endif %}
+<p><label for="comment-body">Comment text</label><br><textarea id="comment-body" name="body" rows="6" maxlength="1000" style="box-sizing:border-box;width:100%" required>{{ values.get('body','') }}</textarea></p>
+<p>The preview expires after five minutes. Changed work, selected task or linked records require a fresh preview. Current source permissions are checked again at confirmation.</p>
+<button type="submit">Prepare exact private preview</button>
+</form>
+{% else %}<p>No current private request is available. Start <code>/{{ mode }}_comment</code> after enabling and consenting to its separate pilot and work read permission.</p>{% endif %}
+</div>
+{% endblock %}

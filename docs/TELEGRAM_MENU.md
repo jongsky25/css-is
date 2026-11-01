@@ -1,6 +1,6 @@
 # Personalized private Telegram menu
 
-Draft PR #572, candidate 9.74. Deployment, activation and real-user testing remain
+Draft PR #572, candidate 9.75. Deployment, activation and real-user testing remain
 deferred. This addition changes discovery/guidance, not permissions or records.
 
 - `/menu` aliases the existing private `/help` path. Both show the same current
@@ -123,3 +123,6 @@ synthetic and outgoing Telegram is forbidden. Later live acceptance uses the
 
 Dependency addition/removal use independent private workflows: see
 [task dependency management](TELEGRAM_DEPENDENCY_MANAGEMENT.md).
+
+Plain work/task posts use separate private confirmations and discussion visibility:
+[work and task comments](TELEGRAM_COMMENT_MANAGEMENT.md).

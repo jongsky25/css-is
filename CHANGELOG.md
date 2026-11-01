@@ -1,4 +1,6 @@
-## 9.74 — November 1, 2026
+## 9.75 — November 1, 2026
+
+- Add separately consented work/task discussion posts through exact private previews and atomic native comment/receipt writes; current discussion visibility, immutable history and normal follower notices are preserved without changing task progress or approvals.
 
 - Add separately consented prerequisite addition and removal with current coordinator authority, exact dependency direction previews, cycle prevention and atomic native source/receipt writes; task progress, blockers, submissions and deadlines remain unchanged.
 

@@ -58,19 +58,25 @@ def history(conn, user, case_id, task_id, comment_id, before=None):
 
 def post(conn, user, case_id, body, task_id=None, parent_id=None, mentions=None):
     with transaction(conn):
-        user, _, _ = scope(conn, user, case_id, task_id)
-        work.writable(conn)
-        body = work._text(body, 'Message', 4000)
-        if parent_id is not None:
-            message(conn, case_id, task_id, parent_id)
-        import work_updates
-        mentioned = work_updates.validate_mentions(conn, case_id, mentions or [])
-        now = tz.now_iso()
-        cid = conn.execute('''INSERT INTO work_comment(case_id,task_id,parent_id,author_id,created_at)
-                              VALUES (?,?,?,?,?)''', (case_id, task_id, parent_id, user['id'], now)).lastrowid
-        conn.execute('INSERT INTO work_comment_revision VALUES (?,1,?,?)', (cid, body, now))
-        work_updates.record(conn, cid, 1, mentioned, new=True)
-        return cid
+        return post_in_transaction(conn,user,case_id,body,task_id,parent_id,mentions)
+
+
+def post_in_transaction(conn,user,case_id,body,task_id=None,parent_id=None,mentions=None):
+    if not conn.in_transaction:
+        raise RuntimeError('Discussion posting requires its caller transaction')
+    user, _, _ = scope(conn, user, case_id, task_id)
+    work.writable(conn)
+    body = work._text(body, 'Message', 4000)
+    if parent_id is not None:
+        message(conn, case_id, task_id, parent_id)
+    import work_updates
+    mentioned = work_updates.validate_mentions(conn, case_id, mentions or [])
+    now = tz.now_iso()
+    cid = conn.execute('''INSERT INTO work_comment(case_id,task_id,parent_id,author_id,created_at)
+                          VALUES (?,?,?,?,?)''', (case_id, task_id, parent_id, user['id'], now)).lastrowid
+    conn.execute('INSERT INTO work_comment_revision VALUES (?,1,?,?)', (cid, body, now))
+    work_updates.record(conn, cid, 1, mentioned, new=True)
+    return cid
 
 
 def edit(conn, user, case_id, task_id, comment_id, revision, body, mentions=None):

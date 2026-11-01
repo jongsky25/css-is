@@ -25,6 +25,8 @@ FEATURES=(
  ('rooms.move','Calendar','Room date moves','/room_move — change your own request’s date; approved bookings require a new approval.',('rooms.read',),None,True),
  ('work.read','Tasks and work','Work lookup','/my_summary; /my_tasks; /my_work; /task_status WORK_ID TASK_ID; /work_status WORK_ID.\nExample: /my_tasks overdue (also upcoming or review).',(),work.enabled,False),
  ('tasks.create','Tasks and work','Task proposals','/new_task — propose a task in permitted work; officer confirmation remains required.',('work.read',),work.enabled,True),
+ ('work.comment','Tasks and work','Work comments','/work_comment — post a work comment after confirmation.',('work.read',),work.enabled,True),
+ ('tasks.comment','Tasks and work','Task comments','/task_comment — post a task comment after confirmation.',('work.read',),work.enabled,True),
  ('tasks.dependency_add','Tasks and work','Add task prerequisite','/task_dependency_add — add a same-work prerequisite after confirmation.',('work.read',),work.enabled,True),
  ('tasks.dependency_remove','Tasks and work','Remove task prerequisite','/task_dependency_remove — remove one prerequisite after confirmation.',('work.read',),work.enabled,True),
  ('tasks.block','Tasks and work','Record task blocker','/task_block — record a blocker, follow-up person and date after confirmation.',('work.read',),work.enabled,True),
@@ -112,7 +114,7 @@ def status(conn,delivery,bot,now):
     if not actor:return 'Office Connect Telegram connection: not linked or needs reconnection. Use /start to link your own account.'+account_link()
     features=availability(conn,delivery,bot)
     ready=[f['label'] for f in features if not f['reason']]
-    blocked=[f['label']+': '+f['reason'].replace(', '+links.SCOPES['work.read'],'; work read required')
+    blocked=[f['label']+': '+(f['reason'] if f['scope']=='work.read' else f['reason'].replace(links.SCOPES['work.read'],'work read'))
              for f in features if f['reason']]
     text='Office Connect Telegram connection: active.\nAvailable for you: '+(', '.join(ready) or 'no business features yet')
     if blocked:text+='\n\nOther features\n'+'\n'.join(blocked)

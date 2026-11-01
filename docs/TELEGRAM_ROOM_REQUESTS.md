@@ -1,6 +1,6 @@
 # Linked Telegram room requests (T3.3)
 
-Draft 9.74 adds a [private webhook guide/preview/confirmation/recovery flow](TELEGRAM_PRIVATE_MEETING_WEBHOOK.md). Direct/group worker behavior below remains available; deployment and live acceptance are separate.
+Draft 9.75 adds a [private webhook guide/preview/confirmation/recovery flow](TELEGRAM_PRIVATE_MEETING_WEBHOOK.md). Direct/group worker behavior below remains available; deployment and live acceptance are separate.
 
 The optional pilot submits one internal conference-room request for an existing
 calendar meeting. It creates no meeting, edits no meeting, and never approves or
