@@ -1,5 +1,24 @@
 # Operational monitoring
 
+## Deployment and verification status — November 1, 2026
+
+Release 9.58 is merged/deployed through PR #575 and production run 41273309243.
+The live private probes returned all four signals healthy in two observations.
+Marked test issue #576 was created by GitHub Actions and assigned to the owner;
+a retry reused that issue without sending an additional notification.
+
+The automatic cron is configured on main but has not yet produced an observed
+scheduled execution. Do not equate the successful manual test with verified
+automatic coverage. Workflow enablement inspection and phone receipt
+confirmation are pending with the owner after the command workspace disconnected.
+Hosted GitHub jobs and connected run/log access remain available.
+
+See [current handoff](SETUP_STATUS.md) for exact evidence and next actions.
+Automated sign-in/out events appear under the deployment account in audit/usage
+views. Public issue metadata remains generic; private operational records stay
+inside the authenticated application.
+
+
 ## Candidate 9.58 — November 1, 2026
 
 Owner requested automatic outage, backup and new-audit-failure alerts, including a
