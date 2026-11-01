@@ -94,7 +94,7 @@ class Adapter:
                 +'\nContributing unit: '+summary['unit_name']+' (unit '+str(summary['unit_id'])+')'
                 +'\nProposed owner: '+summary['owner_name']+(' (account '+str(summary['proposed_owner_id'])+')' if summary['proposed_owner_id'] else '')
                 +'\nTask deadline: '+(summary['due_date'] or 'not set')+' · Asia/Manila'
-                +'\nCreates one required contribution in proposed status. The concerned officer must confirm its assignment in Office Connect.'
+                +'\nCreates one required contribution in proposed status. The concerned officer must confirm its assignment separately.'
                 +'\nNo confirmed owner, progress, submission, acceptance or document approval is created. Existing work review may need to be done again.')
 
     def check_receipt(self,conn,user,operation):

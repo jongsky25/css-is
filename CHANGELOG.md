@@ -1,4 +1,6 @@
-## 9.66 — November 1, 2026
+## 9.67 — November 1, 2026
+
+- Add separately consented initial task assignment through contributing-unit officer authority, exact private previews and atomic native assignment/receipt writes; contributor access, source deadlines and formal-review protections remain enforced.
 
 - Add separately consented private task acceptance and return for changes through current officer/work-lead authority, exact expiring previews and atomic native review/receipt writes; blockers and formal approvals retain source rules.
 

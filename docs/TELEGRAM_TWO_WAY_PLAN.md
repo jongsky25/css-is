@@ -1,6 +1,6 @@
 # Office Connect ↔ Telegram delivery plan
 
-Status: T0–T4.3.2 merged; T4.4 hosted pilot incomplete. Draft PR #572 (candidate 9.66) adds private task/document/supplies/personal reads, confirmed task updates and private guided meeting/room webhook replies. Owner confirms hosted linking/calendar retrieval; new draft capabilities, group/automatic outgoing delivery and the complete pilot remain unverified live. Source switches remain default-off.
+Status: T0–T4.3.2 merged; T4.4 hosted pilot incomplete. Draft PR #572 (candidate 9.67) adds private task/document/supplies/personal reads, confirmed task updates and private guided meeting/room webhook replies. Owner confirms hosted linking/calendar retrieval; new draft capabilities, group/automatic outgoing delivery and the complete pilot remain unverified live. Source switches remain default-off.
 Last updated: 2026-11-01.
 Repository: jongsky25/css-is.
 Planning baseline inspected: abf3141 (merge of PR #458).
@@ -1084,3 +1084,84 @@ Next: inspect fresh exact-head full repository normal/shuffled/dependency/
 container/aggregate CI, then continue the next explicitly requested feature.
 Main merge, release, preview publication, pilot activation and personal/live
 acceptance remain deferred until the owner's later instruction.
+
+
+### Private initial task assignment — 2026-11-01
+
+Owner explicitly requested officer-confirmed initial task assignment after task
+review. Added `/task_assign`, a signed-in no-script owner selector, private
+`/taskassign_preview`, exact `/taskassign_confirm` and `/taskassign_receipt` to
+review branch `feat/telegram-private-work-lookup`, draft PR #572, candidate
+**9.67**. Actual main remains `a7b9b38` (released 9.59), preserved on this branch.
+Deployment, preview publication, activation and personal/live testing remain
+explicitly deferred. Initial access inspection found prior-head functional,
+metadata and dependency CI passing; full normal/shuffled were still running.
+Those results are not transferred to this candidate.
+
+Separate default-off `CSS_TELEGRAM_TASKS_ASSIGN_ENABLED` / `tasks.assign` consent
+requires work read, source modules and current private inbound/link/delivery/
+account/bot proof. The actor needs the native `confirm` action over the task's
+contributing unit; work-lead/proposer/suggested-owner status alone is insufficient.
+The form requires explicit owner selection and a bounded reason. No suggested
+owner is automatically selected. Preview identifies task/work/unit, suggestion,
+selected name/account, unchanged deadline and Proposed → To do before confirmation.
+
+The selected active person needs existing access to every linked document.
+Assignment grants no document permissions; confirmed ownership participates in
+normal work membership rules and keeps linked-document visibility intersections.
+Native source owner/document/date checks are repeated at preview and confirmation.
+Account/name/source changes, lost task-unit officer or contributor rights,
+completed/closed work, already-assigned/cancelled tasks and stale/revoked/expired/
+restored contexts block confirmation. Active formal consolidation review beginning
+before or after preview blocks amendments to preserve dependent approvals.
+
+Confirmation calls the existing native `confirm` transaction, setting the selected
+owner and To do state while preserving deadline, title/output/submission, required
+status, unit and original proposal. It does not acknowledge, submit, review,
+complete the case or approve an official document. Native source/event/audit/
+reminder effects, consumed preview, receipt and private handoff share one atomic
+transaction. Audit/receipt/handoff failure rolls back; duplicate/concurrent
+confirmation assigns once. A competing pending owner choice cannot reassign the
+confirmed task. Deletion fences numeric-ID reuse. Recovery reports current owner/
+status and recorded outcome without replaying the original assignment.
+
+Proposal wording now says officer assignment is separately confirmed, allowing
+this independent private officer flow without granting proposal scope any new
+authority. Native work/task services and source permissions remain unchanged.
+
+Isolated Python 3.11 verification: **1618 broad regressions passed** across
+`tests/test_telegram*.py`, `tests/test_work*.py`, audit-chain writers, deployment
+and release checks. **323 current shuffled checks** (seed 311) passed across
+assignment/review/deadline/proposal services and phone forms, menu/action engine,
+existing task actions and private meeting webhook handling. Zero failures/errors/
+skips in both groups; groups overlap. Both include the final positive contributing-
+unit officer case. Earlier focused assignment and phone/proposal-phone group:
+58 passed; existing menu/action/proposal wiring group: 83 passed. No application
+source changes followed these runs.
+
+The initial assignment sample caught one fixture assumption: changing an account's
+technical role also revokes its Telegram connection, so it cannot retrieve a guide.
+The corrected case tests native technical-admin authority directly and still
+requires source denial. Current groups cover connection revocation and source
+permissions without weakening either rule. A hidden-document case independently
+retains officer authority while removing explicit restricted-document visibility.
+
+Reports: `/tmp/telegram-task-assign-regressions.xml` and
+`/tmp/telegram-task-assign-shuffled.xml`; both pass the JUnit no-skips gate.
+Candidate 9.67 metadata/increase over actual main 9.59, locks/vendor integrity,
+installed compatibility, AI contract, Python compilation, local Markdown links
+and whitespace pass. Existing Starlette/httpx deprecation warning remains.
+Full exact-head repository normal/shuffled/dependency/container/aggregate CI still
+requires inspection after push. Earlier-head checks are not candidate acceptance.
+
+See [assignment behavior](TELEGRAM_TASK_ASSIGNMENT.md),
+[proposal boundary](TELEGRAM_TASK_PROPOSALS.md) and the extended
+[pending live checklist](TELEGRAM_LIVE_ACCEPTANCE_CHECKLIST.md). All live cases
+remain Pending. No provider call, production data access, scheduler, monitor
+execution or pilot activation occurred. Reassignment/reopening/cancellation and
+formal-review amendments remain separate source actions.
+
+Next: inspect fresh exact-head full repository normal/shuffled/dependency/
+container/aggregate CI, then continue the next explicitly requested feature.
+Main merge, release, preview publication, activation and personal/live testing
+remain deferred until the owner's later instruction.

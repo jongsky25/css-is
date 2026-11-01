@@ -1,6 +1,6 @@
 # Private guided task proposals
 
-Draft PR #572, candidate 9.66. The owner requested the next feature while keeping
+Draft PR #572, candidate 9.67. The owner requested the next feature while keeping
 deployment, preview publication, activation and personal/live testing deferred.
 Automated verification uses isolated synthetic work/documents/accounts and blocked
 outgoing Telegram providers.
@@ -39,7 +39,8 @@ the choices; unknown/inaccessible work receives the same denial without its titl
 Confirmation uses `work_tasks.create_in_transaction` to create one **required**
 contribution in **proposed** state, with `owner_id=NULL`. Choosing a proposed
 owner is a suggestion, not assignment or document access. The concerned officer
-must confirm assignment through the existing source workflow. Neither this
+must confirm assignment through the existing source workflow or the separately
+consented [private officer assignment flow](TELEGRAM_TASK_ASSIGNMENT.md). Neither this
 scope nor the confirmation token grants officer authority, acknowledgement,
 submission, acceptance or official document approval.
 

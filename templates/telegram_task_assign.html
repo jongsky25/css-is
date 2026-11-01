@@ -1,0 +1,29 @@
+{% extends "dash_layout.html" %}
+{% block title %}Confirm a task assignment — Office Connect{% endblock %}
+{% block content %}
+<div style="max-width:720px;margin:auto;overflow-wrap:anywhere">
+<h1>Confirm a proposed task assignment</h1>
+<p><a href="/account/telegram">Telegram connection and permissions</a> · <a href="/work">Review proposed tasks</a></p>
+<p>Start with <code>/task_assign</code> in your linked private chat. The concerned officer for the task's contributing unit must have the source assignment authority. Being the work lead, proposer or suggested owner alone does not grant that authority.</p>
+<p>Select the person explicitly. A proposed owner is a suggestion, not an assignment. The selected active person must already have access to every linked document. This action grants no document access; confirmed ownership participates in normal work membership rules.</p>
+<p>Confirmation moves a proposed task to To do for the selected person, preserving its deadline and output. Acknowledgement, submission and review remain separate actions. Reassignment, completed work and active formal consolidation review amendments stay in Office Connect.</p>
+{% if error %}<p role="alert">{{ error }}</p>{% endif %}
+{% if prepared %}
+<p role="status">{% if prepared.state == 'pending' %}Your preview is prepared. No task assignment has changed. Send <code>/taskassign_preview {{ prepared.operation_id }}</code> in the original private Telegram chat, review the task, selected account and unchanged deadline, and confirm before expiry.{% else %}This operation already has a recorded outcome. Send <code>/taskassign_receipt {{ prepared.operation_id }}</code> in the original private chat. Recovery will not repeat the assignment.{% endif %}</p>
+{% endif %}
+{% if origins %}
+<form method="post" action="{{ action_path }}">
+<input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="key" value="{{ key }}">
+<p><label for="assign-origin">Starting private conversation</label><br><select id="assign-origin" name="origin" required>{% for item in origins %}<option value="{{ item }}" {% if selected == item %}selected{% endif %}>Private request {{ loop.index }}</option>{% endfor %}</select></p>
+<p><label for="assign-work">Work item number</label><br><input id="assign-work" name="case_id" type="number" min="1" value="{{ values.get('case_id','') }}" required></p>
+<p><label for="assign-task">Task number</label><br><input id="assign-task" name="task_id" type="number" min="1" value="{{ values.get('task_id','') }}" required></p>
+<p>Use IDs from the work page or proposal receipt. Check the exact task in the private preview.</p>
+<p><label for="assign-owner">Confirm task owner</label><br><select id="assign-owner" name="owner_id" required style="max-width:100%"><option value="">Choose an active account</option>{% for person in people %}<option value="{{ person.id }}" {% if values.get('owner_id')|string == person.id|string %}selected{% endif %}>{{ person.name }} (account {{ person.id }})</option>{% endfor %}</select></p>
+<p>The directory lists active accounts. Eligibility for this task's linked documents is checked after selection and again at confirmation.</p>
+<p><label for="assign-reason">Assignment reason</label><br><textarea id="assign-reason" name="reason" rows="4" maxlength="500" style="box-sizing:border-box;width:100%" required>{{ values.get('reason','') }}</textarea></p>
+<p>Your reason and selected account appear in Telegram and normal task history. The preview expires after five minutes. Changed source records or account details require a fresh preview; current officer and contributor-access permissions are checked again.</p>
+<button type="submit">Prepare exact private preview</button>
+</form>
+{% else %}<p>No current private assignment request is available. Start <code>/task_assign</code> after enabling and consenting to its separate pilot and work read permission.</p>{% endif %}
+</div>
+{% endblock %}

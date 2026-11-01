@@ -1,6 +1,6 @@
 # Private room withdrawal and date moves
 
-Draft PR #572, candidate 9.66. Deployment, preview publication, activation and
+Draft PR #572, candidate 9.67. Deployment, preview publication, activation and
 live testing remain deferred. Automated checks use synthetic data and blocked
 outgoing providers.
 
