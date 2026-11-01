@@ -3208,7 +3208,8 @@ def admin_audit(request: Request, action: str = "", actor: str = ""):
         entries = st.list_audit(conn, action=action or None, actor=actor or None)
         actions = st.audit_actions(conn)
         actors = sorted({u["username"] for u in st.list_admin_users(conn)})
-        chain_ok, bad_id = st.verify_audit_chain(conn)
+        audit_health = st.audit_health(conn)
+        chain_ok, bad_id = audit_health["ok"], audit_health["bad_id"]
         insights = st.audit_insights(conn)
         breakdown = st.audit_breakdown(conn)
     finally:
@@ -3217,6 +3218,7 @@ def admin_audit(request: Request, action: str = "", actor: str = ""):
         "entries": entries, "actions": actions, "actors": actors,
         "sel_action": action, "sel_actor": actor,
         "chain_ok": chain_ok, "bad_id": bad_id, "insights": insights,
+        "audit_health": audit_health,
         "breakdown": breakdown,
         "show_scope": False, "nav_active": "",
     })
@@ -3921,7 +3923,7 @@ def _persist_health_view():
             "text": "Permanent storage is on; first save of this session is pending."}
 
 
-def _ops_plain(snap, chain_ok, bad_id, bkinfo, last_backup, persist=None):
+def _ops_plain(snap, chain_ok, bad_id, bkinfo, last_backup, persist=None, audit_history=None):
     """Translate the raw golden-signals snapshot into a layperson view: one overall
     verdict + four plain-language cards + a 'is the data safe?' list. The technical
     numbers (p95, 5xx, in-flight, per-route latency) are intentionally NOT surfaced
@@ -3934,7 +3936,7 @@ def _ops_plain(snap, chain_ok, bad_id, bkinfo, last_backup, persist=None):
     # Overall verdict — problems force red, soft concerns are watch-items.
     problems, watch = [], []
     if not chain_ok:
-        problems.append(f"the tamper-proof record has a gap (entry #{bad_id})")
+        problems.append(f"the audit record needs review (entry #{bad_id})")
     if persist and persist.get("down"):
         problems.append("live data isn't being saved to permanent storage")
     if snap["err5_5m"]:
@@ -3954,7 +3956,7 @@ def _ops_plain(snap, chain_ok, bad_id, bkinfo, last_backup, persist=None):
                    "sub": "Right now: " + "; ".join(watch) + "."}
     else:
         verdict = {"tone": "good", "icon": "✅", "head": "Everything's running normally",
-                   "sub": "No errors, pages are loading quickly, and your data is backed up and tamper-proof."}
+                   "sub": "No recent server errors, pages are loading quickly, and no unacknowledged audit failures were detected."}
 
     cards = [
         {"tone": "neutral", "label": "How busy", "big": snap["rpm_1m"], "unit": "pages/min",
@@ -3972,10 +3974,12 @@ def _ops_plain(snap, chain_ok, bad_id, bkinfo, last_backup, persist=None):
     safety = []
     if persist:
         safety.append({"tone": persist["tone"], "text": persist["text"]})
-    if chain_ok:
-        safety.append({"tone": "good", "text": "Records are tamper-proof — nothing has been altered"})
+    if chain_ok and audit_history and audit_history["acknowledged"]:
+        safety.append({"tone": "neutral", "text": "Historical audit incident acknowledged: entries #8949, #9406 and #9452. Original records are preserved; reviewed history and later entries pass monitoring checks."})
+    elif chain_ok:
+        safety.append({"tone": "good", "text": "Audit chain checks pass — no inconsistency detected"})
     else:
-        safety.append({"tone": "bad", "text": f"The tamper-proof record has a gap at entry #{bad_id}"})
+        safety.append({"tone": "bad", "text": f"Audit record needs review at entry #{bad_id}. Compare preserved evidence before making changes."})
     if bkinfo["cfg"]["enabled"]:
         nxt = bkinfo.get("next_due")
         nxt_txt = f" · next {nxt.replace('T', ' ')}" if nxt else ""
@@ -4022,7 +4026,8 @@ def ops(request: Request):
     conn = get_conn()
     try:
         bkinfo = bk.status(conn, DB)
-        chain_ok, bad_id = st.verify_audit_chain(conn)
+        audit_health = st.audit_health(conn)
+        chain_ok, bad_id = audit_health["ok"], audit_health["bad_id"]
         last_backup = bkinfo["cfg"]["last_backup_status"]
         inv = st.system_inventory(conn)
         pulse = st.usage_pulse(conn)
@@ -4031,7 +4036,7 @@ def ops(request: Request):
     finally:
         conn.close()
     plain = _ops_plain(snap, chain_ok, bad_id, bkinfo, last_backup,
-                       persist=_persist_health_view())
+                       persist=_persist_health_view(), audit_history=audit_health)
     inventory = [
         {"label": "Staff accounts", "big": inv["accounts_active"],
          "sub": f"signing in · {inv['accounts_total']} created in all"},
@@ -4070,6 +4075,7 @@ def ops(request: Request):
     ]
     return templates.TemplateResponse(request, "ops.html", {
         "plain": plain, "snap": snap, "inventory": inventory,
+        "audit_health": audit_health,
         "people": people, "last_login_line": last_login_line,
         "recent_logins": recent_logins, "lately": lately,
         "build": _load_build_info(),

@@ -111,6 +111,17 @@ def telegram_ops_summary(html):
     value = json.loads(''.join(parser.parts))
     worker = value['worker']
     result = {}
+    # Bounded, content-free audit evidence in the existing authenticated
+    # post-deploy diagnostics. Never log records, identities or original hashes.
+    audit = value.get('audit')
+    if isinstance(audit, dict):
+        result['audit'] = {key: audit[key] for key in
+            ('ok', 'raw_ok', 'acknowledged', 'checkpoint_changed')
+            if type(audit.get(key)) is bool}
+        for key in ('bad_id', 'through_id'):
+            if audit.get(key) is None or (type(audit.get(key)) is int
+                                         and 0 < audit[key] < 2**63):
+                result['audit'][key] = audit.get(key)
     for key, pattern in (('version', r'\d+\.\d{2}'), ('commit', r'[a-f0-9]{7,40}')):
         item = value.get(key)
         if isinstance(item, str) and re.fullmatch(pattern, item):
