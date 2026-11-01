@@ -75,6 +75,66 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**Automatic monitoring requested — November 1, 2026.**
+Candidate 9.58 is on `feat/operational-monitoring`. The owner requested outage,
+backup and new-audit alerts plus a phone delivery test. GitHub owner-assignment
+notifications are the initial channel while the asynchronous channel choice is
+pending; no phone receipt is claimed. Independent five-minute GitHub checks use
+two observations twenty seconds apart, durable incident deduplication and automatic
+recovery closure. A private read-only status endpoint uses existing admin/session
+checks; the historical audit acknowledgment is preserved.
+
+See [monitoring procedure and limits](MONITORING_WORKFLOW.md). The repository is
+public, so incident metadata is generic and no private records/provider errors
+leave the app. No new paid service or secret is required. Existing deployment
+secret names are reused by trusted main only. The integration cannot access the
+GitHub secrets public-key endpoint; it did not retrieve any secret values.
+
+Local isolated Python 3.11 checks: **183 passed**, no failures/skips (13.98 seconds),
+including actual synthetic sign-in/status/sign-out, backup/auth and deployment
+regressions. The initial 67-check subset also passed. Hash-verified cloud setup
+and doctor completed. The monitor waits for the public protocol marker before
+sending credentials and uses an existing-account-only sign-in guard, preventing
+first-admin creation against an empty database. These regression checks passed;
+full CI restarts on the corrected source. One existing Starlette/httpx deprecation warning remains.
+Release/full CI, activation and delivery test are pending; source alone does not
+establish automatic monitoring or phone delivery. The current request authorizes
+the gated release/configuration needed to activate this monitoring.
+
+Next: save/open the candidate, pass full release checks, merge/deploy, run a normal
+check, send one marked owner notification test, verify the schedule and obtain
+phone receipt confirmation. No app outage or data corruption will be induced to
+test alerts. Backup exposure review and other operational follow-ups stay separate.
+
+### Completed audit work
+
+**Audit warning resolved operationally — November 1, 2026.**
+The owner-requested writer fix [PR #573](https://github.com/jongsky25/css-is/pull/573)
+merged as `5f3d775` and deployed as 9.56. The historical incident acknowledgment
+[PR #574](https://github.com/jongsky25/css-is/pull/574) merged as `5a6338d` and
+deployed as **9.57**. Both PRs passed both full-suite orders, dependency audit,
+metadata, avatar acceptance and the required aggregate gate. Both production
+workflows passed their own verification, backup/version gates and deployment.
+
+Final [deployment run 41263751821](https://github.com/jongsky25/css-is/actions/runs/41263751821)
+completed successfully. Authenticated post-deploy Operations observations confirm
+version 9.57, commit `5a6338d`, `ok=true`, `acknowledged=true`, `bad_id=null`,
+`checkpoint_changed=false`, and `through_id=9452`. `raw_ok=false` is expected:
+original audit records/hashes remain unchanged and the historical chain failure
+is still documented. This clears the active audit warning without rewriting
+history. Changes to the reviewed prefix and new chain failures remain actionable.
+Only typed, sanitized status was read from the workflow archive; no private audit
+records or credential values were published. Temporary audit snapshot directories
+were checked absent after the read-only inspections.
+
+No further audit data repair is needed for this reviewed incident. Continue with
+the owner's next requested work. Automatic monitoring alerts remain a separate
+follow-up; the owner reports backups fixed. This final handoff is saved on
+`docs/audit-warning-resolved`; application changes are merged and deployed, while
+this documentation-only completion update is saved separately from main.
+
+### Historical action notes
+
 November 1 follow-up: owner authorized merging PR #573 and then clearing the
 reviewed historical warning. PR #573 is ready for review, with metadata,
 dependency audit and avatar acceptance passing; both full suites are still

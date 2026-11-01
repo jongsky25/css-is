@@ -1,4 +1,110 @@
-# Monitoring assessment and working procedure
+# Operational monitoring
+
+## Candidate 9.58 — November 1, 2026
+
+Owner requested automatic outage, backup and new-audit-failure alerts, including a
+phone delivery test. Implementation is on `feat/operational-monitoring`; deployment
+and delivery evidence belong in [setup status](SETUP_STATUS.md). Do not claim the
+schedule or phone delivery is verified from source/tests alone.
+
+### Independent checker
+
+`.github/workflows/operational-monitor.yml` schedules checks at minutes 2, 7, 12,
+and every five minutes thereafter. It runs on GitHub's infrastructure, independently
+of the Hugging Face app. Scheduling is **best effort**, can be delayed or dropped,
+and is not a five-minute availability guarantee. GitHub outages affect this checker.
+GitHub can disable public-repository schedules after 60 days without repository
+activity; check workflow state as part of ongoing ownership.
+
+`scripts/operational_monitor.py` uses only Python's standard library and fixed
+production/GitHub origins. It takes two observations twenty seconds apart.
+Matching failures open an incident; matching successes close it; mixed/unknown
+observations preserve the incident state. It never forces an outage, backup,
+restore, audit rewrite or real business notification to test detection.
+
+| Signal | What is checked |
+| --- | --- |
+| Uptime | Public `/health` must return valid app/database `ok` JSON. A down app never triggers an admin login attempt. |
+| Backup | Saver health must show recent successful durability, and the enabled scheduled-backup job must not report failure or exceed its next due time by 15 minutes. This does not verify backup integrity or recovery. |
+| Audit | `storage.audit_health()['ok']`: changed reviewed history or new inconsistencies fail; the exact acknowledged historical incident alone stays healthy. |
+| Monitor | A live app whose authenticated status cannot be read produces a separate monitoring-configuration incident. Unknown internal checks never resolve backup/audit incidents. |
+
+The private GET `/admin/monitoring-status` uses existing current-session/admin
+capability checks and returns only schema/version and closed status enums. It
+includes no record text, actors, IPs, paths, hashes or provider exception details.
+It performs no backup or repair. The saver gets at most five minutes of startup
+grace; a saver that never starts then becomes stale.
+
+The runner reuses existing deployment secret names `CSS_ADMIN_USER` and
+`CSS_ADMIN_PASS` without copying or reading their values through connectors. It
+signs in once, reuses that session for the two checks, and signs out afterward.
+The public health response advertises protocol support before any monitor
+credentials are sent. Monitor sign-ins explicitly require an existing account;
+an empty database cannot cause the monitor to create the first administrator.
+Older app deployments receive only public health probes until this guard exists.
+Normal sign-in/out audit events still occur. Missing/rejected credentials produce
+a monitoring incident; rejected credentials are not retried within the same run.
+Main-only repository/ref guards exist in both workflow and script. PRs and alternate
+branch dispatches do not receive/use production credentials for these checks.
+
+### Delivery and incident state
+
+GitHub is the initial channel, pending the owner's channel choice. Confirmed
+problems create issues labeled `office-connect-monitor`, assigned to `jongsky25`.
+Open bot-created incident issues are the durable deduplication state. No repeated
+comments or new issues are posted while the same incident stays open. Two healthy
+observations close it. Manually closing an unresolved issue allows a new alert on
+the next confirmed failure. A successful workflow run means checking/reconciliation
+completed, not necessarily that every application signal is healthy; open incident
+issues show active problems.
+
+**This repository is public.** Incident issues contain only generic operational
+status and fixed System health/run links. They never include backup names, private
+audit records, exception messages, credentials or personal data. The workflow logs
+only booleans/null and fixed signal names. The read-only app endpoint stays private.
+
+Phone/email notifications for assigned issues depend on the owner's GitHub account
+and mobile notification settings. GitHub accepting an issue/assignment does not
+prove a phone received a push. Configure GitHub mobile push/email for assignments,
+or choose a private provider as a separate configuration step. The checker itself
+failing produces a failed Actions run; Actions failure notifications also depend on
+account settings. No paid external service is provisioned.
+
+### Planned release grace
+
+An active `deploy` job gets at most ten minutes of outage grace; long verification
+suites do not suppress outages. The monitor-configuration signal gets at most
+90 minutes of grace while the **exact monitor source commit** is awaiting its
+initial app deployment. This allows the new private protocol to arrive without
+false configuration incidents. Backup/audit failures are never masked by this
+protocol rollout grace, and healthy observations can still resolve configuration
+incidents. Failed/completed releases and expired windows do not receive this grace.
+
+### Activate and verify
+
+Merge/deploy only through the existing required checks and backup/version gates.
+The schedule becomes available from main; alternate branch runs intentionally skip.
+Verify a successful normal run after the app endpoint is deployed, then send one
+explicitly marked delivery test:
+
+```bash
+gh workflow run operational-monitor.yml --ref main
+gh workflow run operational-monitor.yml --ref main -f test_notification=true
+```
+
+The test creates an owner-assigned **Monitoring test notification** issue, clearly
+marked as a test. It does not fabricate a production incident. An already-open test
+issue prevents repeated test notifications. Ask the owner to confirm receipt on
+their phone and close the test issue. Do not describe delivery as verified until
+receipt is confirmed. Existing GitHub credentials could read source/Actions but
+could not access the repository secrets public-key API; no new secret was required.
+
+Synthetic tests cover actual sign-in/check/sign-out, access control, safe schemas,
+backup deadlines, never-started savers, acknowledged/new audit states, no-login
+outages, deduplication, recovery, deployment grace, and test notification semantics.
+No production database was used as an application test fixture.
+
+## Historical assessment — October 31, 2026
 
 Assessed from source and existing setup evidence on 2026-10-31. This guide adds
 no production instrumentation, external service, scheduled automation or alert

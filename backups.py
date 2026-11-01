@@ -687,6 +687,25 @@ def run_scheduled_job(db_path="css_is.db", actor="(scheduler)", kind="auto"):
         conn.close()
 
 
+def monitoring_status(conn, now=None):
+    """Content-free scheduled-backup verdict, with a 15-minute job grace.
+
+    This checks recorded job results/deadlines, not backup integrity. Actual
+    periodic durability is checked independently by the app's saver health.
+    """
+    cfg = read_config(conn)
+    now = now or _now()
+    if not cfg["enabled"]:
+        return "disabled"
+    if cfg["last_backup_status"].startswith("FAILED"):
+        return "failed"
+    last = _parse_iso(cfg["last_backup_at"])
+    if last is None or last.tzinfo is not None or last > now + timedelta(minutes=5):
+        return "unknown"
+    due = next_due(cfg, cfg["last_backup_at"], now=now)
+    return "overdue" if now > due + timedelta(minutes=15) else "ok"
+
+
 def status(conn, db_path="css_is.db"):
     """Everything the admin page header needs."""
     cfg = read_config(conn)
