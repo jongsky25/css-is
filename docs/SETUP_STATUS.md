@@ -77,8 +77,8 @@ access remains necessary in a fresh chat.
 
 **Current Telegram feature work — November 1, 2026:** continue draft
 [PR #572](https://github.com/jongsky25/css-is/pull/572), branch
-`feat/telegram-private-work-lookup`, candidate **9.70**. The latest addition is
-[officer task cancellation](TELEGRAM_TASK_CANCELLATION.md), following task reopening/reassignment,
+`feat/telegram-private-work-lookup`, candidate **9.71**. The latest addition is
+[private task review queue](TELEGRAM_REVIEW_QUEUE.md), following cancellation, task reopening/reassignment,
 initial assignment, submitted-task review, deadline changes and guided proposals. Inspect exact-head CI and continue the next requested feature.
 Deployment, preview publication, activation and personal/live testing remain
 explicitly deferred. Monitoring follow-ups below remain separately tracked and
@@ -1551,6 +1551,82 @@ See [cancellation behavior](TELEGRAM_TASK_CANCELLATION.md) and the expanded
 remain Pending. No provider call, production data, scheduler, monitor execution,
 publication or activation occurred. Completed-work/document lifecycle and
 amendments under active formal review remain separate source workflows.
+
+Next: inspect fresh exact-head full repository normal/shuffled/dependency/
+container/aggregate CI, then continue the next explicitly requested feature.
+Main merge, release, preview publication, activation and personal/live testing
+remain deferred until the owner's later instruction.
+
+
+## Private current task review queue — 2026-11-01
+
+Owner explicitly approved a review queue after task actions. Added `/review_queue
+[BEFORE_ID]` and `/review_task WORK_ID TASK_ID` to review branch
+`feat/telegram-private-work-lookup`, draft PR #572, candidate **9.71**. Actual main
+remains `a7b9b38` (released 9.59), preserved on this branch. Deployment, preview
+publication, activation and personal/live testing remain explicitly deferred.
+Initial prior-head inspection at `74fe448` found functional/metadata/dependency
+passing and normal/shuffled still running; those are not new-head acceptance.
+
+Separate default-off `CSS_TELEGRAM_TASKS_REVIEW_READ_ENABLED` / `tasks.review.read`
+metadata consent requires work read, source modules and current private inbound/
+link/delivery/account/chat/bot proof. The consent explicitly covers task/work/
+owner/deadline metadata; it grants no accept/return authority. Existing own-task,
+search and brief projections are unchanged. Only submitted tasks with current
+native case-officer or confirmed-work-lead review authority, source visibility,
+open work, no active formal review and an eligible current owner are shown.
+Owner/task-unit officer status alone is insufficient; hidden/unknown/ineligible
+details share a neutral denial.
+
+Rows show bounded task/work titles, IDs, owner display name/account and deadline.
+Submission/output/blocker reasons stay in Office Connect. A source-blocked
+acceptance can still permit return; each command hint also requires its separate
+write scope/pilot. Queue-only consent gives source review guidance without write
+commands. Offered existing start commands lead to the signed-in ID/reason form,
+expiring private preview and exact confirmation; no read creates an operation,
+preview, origin or source mutation. Fresh reads remove tasks after acceptance or
+return and recheck source/host/scope/context changes.
+
+SQL applies visibility and case coordinator authority before native bounded scan.
+At most 200 permitted candidates are inspected in batches of 50; rows then pass
+canonical work/open/formal-review/owner/native-action checks. Five-row/message
+budgets and seek cursors avoid skips. An empty page can offer Continue when more
+permitted source candidates remain after many fail eligibility; it never claims
+global emptiness. A one-row lookahead verifies continuation. Hidden-source IDs
+are excluded before scan limits. Queries/names/bodies are never retained in
+projections, reads create no worker push, and duplicate updates are not replayed.
+Current context is checked again before private reply handoff.
+
+Isolated Python 3.11 verification: **1832 broad regressions passed** across
+`tests/test_telegram*.py`, `tests/test_work*.py`, audit-chain writers, deployment
+and release checks. **533 current shuffled checks** (seed 311) passed across
+review queue/services/phone cases and all current task actions, menu/action engine,
+existing task actions and private meeting webhook handling. Zero failures/errors/
+skips in both groups; groups overlap. Both include final write-pilot guidance and
+formal-review-after-earlier-list checks. Earlier focused queue services: 38 passed;
+combined queue/menu/three phone flows: 51 passed; bot/link/menu wiring: 56 passed.
+No application source edits followed the passing groups.
+
+Phone cases cover read-only metadata consent and separately consented queue →
+accept/return with the existing signed-in form, exact private preview, confirmation/
+retry, current queue removal and disconnection denial. Native source/permission/
+owner/blocker/formal-review guards, no source/prepared writes, private/direct/group/
+topic boundaries, duplicate intake, ephemeral query/metadata, Unicode paging,
+pre-limit visibility/authority filtering and bounded scan continuation pass.
+
+Reports: `/tmp/telegram-review-queue-regressions.xml`,
+`/tmp/telegram-review-queue-shuffled.xml` and
+`/tmp/telegram-review-queue-verified.xml`; all pass the JUnit no-skips gate.
+Candidate 9.71 metadata/increase over actual main 9.59, locks/vendor integrity,
+installed compatibility, AI contract, Python compilation, local Markdown links
+and whitespace pass. Existing Starlette/httpx deprecation warning remains.
+Full exact-head repository normal/shuffled/dependency/container/aggregate CI still
+requires inspection after push. Earlier-head results are not current acceptance.
+
+See [review queue behavior](TELEGRAM_REVIEW_QUEUE.md) and the expanded
+[pending live checklist](TELEGRAM_LIVE_ACCEPTANCE_CHECKLIST.md). All live cases
+remain Pending. No provider call, production data, scheduler, monitor execution,
+publication or activation occurred. Native review/task/work services are unchanged.
 
 Next: inspect fresh exact-head full repository normal/shuffled/dependency/
 container/aggregate CI, then continue the next explicitly requested feature.

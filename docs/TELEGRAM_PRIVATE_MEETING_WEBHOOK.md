@@ -1,6 +1,6 @@
 # Private guided meetings and room requests through webhook replies
 
-This draft repair is part of PR #572, candidate 9.70. It completes the private
+This draft repair is part of PR #572, candidate 9.71. It completes the private
 interactive transport without an outgoing Telegram connection. The owner still
 defers deployment, activation and actual hosted acceptance. Group/automatic
 outgoing delivery and the complete T4.4 live pilot remain separate open work.

@@ -1,4 +1,6 @@
-## 9.70 — November 1, 2026
+## 9.71 — November 1, 2026
+
+- Add a separately consented private task review queue with current officer/work-lead eligibility, bounded metadata paging, owner/deadline details and independently permitted accept/return guidance; stored submissions remain in Office Connect.
 
 - Add separately consented officer task cancellation with exact state/reason previews, visible contribution/dependency effects and atomic native cancellation/receipt writes; history, submissions and formal-review protections remain enforced.
 

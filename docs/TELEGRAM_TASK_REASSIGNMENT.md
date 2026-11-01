@@ -1,6 +1,6 @@
 # Private officer task reassignment
 
-Draft PR #572, candidate 9.70. The owner requested the next feature after initial
+Draft PR #572, candidate 9.71. The owner requested the next feature after initial
 assignment. Deployment, preview publication, activation and personal/live testing
 remain deferred. Local verification uses synthetic records and blocked providers.
 

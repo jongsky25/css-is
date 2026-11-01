@@ -1,6 +1,6 @@
 # Private submitted-task acceptance and return
 
-Draft PR #572, candidate 9.70. The owner approved adding review features before
+Draft PR #572, candidate 9.71. The owner approved adding review features before
 deployment, preview publication, activation and personal/live testing. Those steps
 remain deferred. Local verification uses synthetic accounts/records and blocked
 outgoing providers.
@@ -81,3 +81,7 @@ Exact current verification is in [SETUP_STATUS.md](SETUP_STATUS.md). All
 [live acceptance cases](TELEGRAM_LIVE_ACCEPTANCE_CHECKLIST.md) remain Pending.
 No scheduler, provider registration, real message or automatic delivery activation
 was added. Main is production-connected; this feature remains on the draft branch.
+
+Use the separately consented [private review queue](TELEGRAM_REVIEW_QUEUE.md) to
+find currently eligible submitted tasks and their work/task IDs. Reading the queue
+creates no preview or review decision and grants no accept/return authority.
