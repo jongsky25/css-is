@@ -605,3 +605,23 @@ mobile webhook cases passed without failures/skips; the final browser run also
 verifies nullable legacy routing contexts do not crash the signed-in page.
 Fresh merged-candidate checks follow; prior-head results are not transferred.
 Draft PR #572 remains unmerged; deployment, activation and live testing deferred.
+
+## Reconciled Telegram 9.58 checks complete locally — 2026-11-01
+
+After merging actual main `5a6338d`, source head `4ad1955` passed **766** all-
+Telegram plus audit/deployment/release tests and **45** shuffled private-webhook/
+legacy-worker browser/audit tests, with zero failures/skips (groups overlap).
+Reports: `/tmp/telegram-958-merged-regressions.xml` and
+`/tmp/telegram-958-merged-shuffled.xml`. Metadata/increase against main 9.57,
+locks/vendor/installed compatibility/AI contract, compile, relative links and
+PR whitespace checks pass. Final edits only save this evidence/handoff; no
+application changes followed the passing merged-source runs.
+
+Draft PR #572 remains the durable review location on
+`feat/telegram-private-work-lookup`, candidate **9.58**. Inspect fresh exact-head
+repository-wide normal/shuffled/dependency/aggregate CI before any readiness or
+release claim; prior-head results are historical. Next: review those checks or
+continue separately scoped work when directed. Production/preview release,
+feature activation, real messages and live acceptance remain explicitly deferred.
+The complete T4.4 group/calendar/room/reminder/revocation/rollback hosted pilot
+and outgoing scheduled/group delivery are still unverified.
