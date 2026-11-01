@@ -38,6 +38,10 @@ grace; a saver that never starts then becomes stale.
 The runner reuses existing deployment secret names `CSS_ADMIN_USER` and
 `CSS_ADMIN_PASS` without copying or reading their values through connectors. It
 signs in once, reuses that session for the two checks, and signs out afterward.
+The public health response advertises protocol support before any monitor
+credentials are sent. Monitor sign-ins explicitly require an existing account;
+an empty database cannot cause the monitor to create the first administrator.
+Older app deployments receive only public health probes until this guard exists.
 Normal sign-in/out audit events still occur. Missing/rejected credentials produce
 a monitoring incident; rejected credentials are not retried within the same run.
 Main-only repository/ref guards exist in both workflow and script. PRs and alternate

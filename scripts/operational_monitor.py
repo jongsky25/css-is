@@ -93,7 +93,8 @@ class Probe:
         self.login_attempted = True
         try:
             with self.request('/login', {'username': self.username, 'password': self.password,
-                                         'next': '/admin/monitoring-status'}) as response:
+                                         'next': '/admin/monitoring-status',
+                                         'existing_account_only': '1'}) as response:
                 status, location = response.status, response.headers.get('Location')
         except urllib.error.HTTPError as response:
             status, location = response.code, response.headers.get('Location')
@@ -110,6 +111,8 @@ class Probe:
                 raise CheckUnavailable()
         except Exception:
             return {'uptime': False, 'backup': None, 'audit': None, 'monitor': None}
+        if type(value.get('monitoring_protocol')) is not int or value['monitoring_protocol'] != 1:
+            return {'uptime': True, 'backup': None, 'audit': None, 'monitor': False}
         try:
             self.login()
             with self.request('/admin/monitoring-status') as response:

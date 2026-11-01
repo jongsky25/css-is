@@ -2575,6 +2575,8 @@ async def login_submit(request: Request):
     try:
         first_run = st.count_admin_users(conn) == 0
         if first_run:
+            if p.get("existing_account_only") == "1":
+                return Response("An existing account is required.", status_code=401)
             pw_bad = auth.password_problem(password)
             if not auth.valid_email(username) or pw_bad:
                 return templates.TemplateResponse(request, "login.html", {
@@ -3877,6 +3879,9 @@ def health(request: Request):
     except Exception:        # noqa: BLE001
         db_ok = False
     payload = mon.health(DB, db_ok=db_ok)
+    # Capability marker only, no account state. Older deployments do not enforce
+    # the monitor's no-bootstrap sign-in flag and must not receive its credentials.
+    payload["monitoring_protocol"] = 1
     return JSONResponse(payload, status_code=200 if db_ok else 503)
 
 

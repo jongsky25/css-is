@@ -139,7 +139,7 @@ def test_rejected_login_is_config_failure_and_never_retried(monkeypatch):
     def request(path, fields=None):
         calls.append(path)
         if path == '/health':
-            return Response({'status': 'ok', 'db': 'ok'})
+            return Response({'status': 'ok', 'db': 'ok', 'monitoring_protocol': 1})
         raise urllib.error.HTTPError(m.BASE + path, 401, 'private-error', {}, None)
     monkeypatch.setattr(probe, 'request', request)
     for _ in range(2):
@@ -153,8 +153,9 @@ def test_private_probe_reuses_then_revokes_session(monkeypatch):
     def request(path, fields=None):
         calls.append(path)
         if path == '/health':
-            return Response({'status': 'ok', 'db': 'ok'})
+            return Response({'status': 'ok', 'db': 'ok', 'monitoring_protocol': 1})
         if path == '/login':
+            assert fields['existing_account_only'] == '1'
             raise urllib.error.HTTPError(m.BASE + path, 303, 'redirect',
                                           {'Location': '/admin/monitoring-status'}, None)
         return Response(payload())
@@ -166,6 +167,32 @@ def test_private_probe_reuses_then_revokes_session(monkeypatch):
 
 def test_redirects_never_forward_credentials():
     assert m.NoRedirect().redirect_request(None, None, None, None, None, None) is None
+
+
+def test_legacy_app_never_receives_monitor_credentials(monkeypatch):
+    probe = m.Probe('private-user', 'private-password')
+    calls = []
+    def request(path, fields=None):
+        calls.append(path)
+        return Response({'status': 'ok', 'db': 'ok'})
+    monkeypatch.setattr(probe, 'request', request)
+    assert probe.sample() == dict(GOOD, backup=None, audit=None, monitor=False)
+    assert calls == ['/health']
+
+
+def test_existing_account_only_never_enters_first_admin_setup(app_mod, client, db_path, monkeypatch):
+    from tests.conftest import PW
+    conn = st.connect(db_path)
+    before = conn.execute('SELECT COUNT(*) FROM admin_user').fetchone()[0]
+    conn.close()
+    monkeypatch.setattr(st, 'count_admin_users', lambda conn: 0)
+    monkeypatch.setattr(st, 'create_admin_user', lambda *args, **kwargs: pytest.fail('must not create an account'))
+    response = client.post('/login', data={'username': 'synthetic@example.invalid',
+        'password': PW, 'existing_account_only': '1'}, follow_redirects=False)
+    assert response.status_code == 401
+    conn = st.connect(db_path)
+    assert conn.execute('SELECT COUNT(*) FROM admin_user').fetchone()[0] == before
+    conn.close()
 
 
 def test_maintenance_grace_is_bounded_and_excludes_verification(monkeypatch):

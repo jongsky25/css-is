@@ -90,10 +90,13 @@ leave the app. No new paid service or secret is required. Existing deployment
 secret names are reused by trusted main only. The integration cannot access the
 GitHub secrets public-key endpoint; it did not retrieve any secret values.
 
-Local isolated Python 3.11 checks: **181 passed**, no failures/skips (13.95 seconds),
+Local isolated Python 3.11 checks: **183 passed**, no failures/skips (13.98 seconds),
 including actual synthetic sign-in/status/sign-out, backup/auth and deployment
 regressions. The initial 67-check subset also passed. Hash-verified cloud setup
-and doctor completed. One existing Starlette/httpx deprecation warning remains.
+and doctor completed. The monitor waits for the public protocol marker before
+sending credentials and uses an existing-account-only sign-in guard, preventing
+first-admin creation against an empty database. These regression checks passed;
+full CI restarts on the corrected source. One existing Starlette/httpx deprecation warning remains.
 Release/full CI, activation and delivery test are pending; source alone does not
 establish automatic monitoring or phone delivery. The current request authorizes
 the gated release/configuration needed to activate this monitoring.
