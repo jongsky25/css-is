@@ -38,7 +38,7 @@ def actor(conn,delivery,bot):
     return user if user and supplies.enabled(conn) else None
 
 
-def line(record,stage):
+def line(record,stage,detail=False):
     # Requester stage is the source UI policy. Its submitted sentence can name
     # approvers, so use a fixed sentence in that one state.
     sentence='Awaiting approval in Office Connect.' if record['approval_status']=='submitted' else stage['sentence']
@@ -46,6 +46,7 @@ def line(record,stage):
             +'\nApproval: '+common.clip(record['approval_status'],30).replace('_',' ')
             +'\nCollection: '+common.clip(stage['label'],60)+'\n'+common.clip(sentence,220)
             +'\nNeeded: '+common.clip(record['date_needed'] or 'not set',32)
+            +('\nBack: /my_supplies' if detail else '\nDetails: /supply_status '+str(record['id']))
             +'\n'+links.origin()+'/supplies/requests/'+str(record['id']))
 
 
@@ -71,7 +72,7 @@ def render(conn,clean,bot,now):
         stage=dashboard.request_stage(conn,user,query['id'])
         if not stage:
             return 'Supply request unavailable to this account.'
-        return line(records[0],stage)+'\nRead only: approval, handover and receipt confirmation remain in Office Connect.'
+        return line(records[0],stage,detail=True)+'\nRead only: approval, handover and receipt confirmation remain in Office Connect.'
     result=dashboard.queue(conn,user,'requests',page=query['page'],limit=5,
                            state='' if query['filter']=='all' else query['filter'])
     text='My supply requests · '+query['filter']+' · Page '+str(query['page'])

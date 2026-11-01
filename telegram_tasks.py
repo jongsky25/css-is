@@ -7,6 +7,7 @@ from documents_storage import rows
 import telegram_actions as actions
 import telegram_calendar as common
 import telegram_links as links
+import telegram_menu as menu
 import telegram_storage as switches
 import telegram_transport as transport
 import telegram_work as reads
@@ -131,8 +132,11 @@ def receipt_text(conn, ctx, operation_id):
     op=found[0]
     receipt=actions.recover(conn,ctx,op['action'],operation_id,commit=False)
     target=json.loads(op['context_json'])
+    user=actions.authority(conn,ctx,op['action'])[0]
+    task=work_reads.task(conn,user,target['case_id'],target['task_id'])
     return ('Task operation '+operation_id+'\nRecorded outcome: '+receipt['state']+' · '+str(receipt['result_code'] or 'awaiting confirmation')
             +'\nCurrent status: '+work_reads.task(conn,actions.authority(conn,ctx,op['action'])[0],target['case_id'],target['task_id'])['status']
+            +menu.task_next(conn,user,work.get(conn,user,target['case_id']),task)
             +'\n'+links.origin()+'/work/'+str(target['case_id']))
 
 

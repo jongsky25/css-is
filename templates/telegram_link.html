@@ -8,6 +8,7 @@
 <p>Office Connect account: <strong>{{ account.username }}</strong></p>
 <p><a href="/account/integrations">Back to connected tools</a></p>
 {% if error %}<p role="alert">{{ error }}</p>{% endif %}
+<p>In your private bot chat, use <code>/menu</code> or <code>/help</code> for commands currently enabled and consented for your account. Use <code>/status</code> for missing-permission or paused-pilot guidance.</p>
 <p>Connection: <strong>{{ 'awaiting confirmation' if pending else (connection.state if connection else 'not linked') }}</strong>.</p>
 {% if pending %}<p role="status">Waiting for confirmation in your original private Telegram chat. {% if webhook_replies %}Send <code>/status</code> to the bot to get your confirmation command. {% endif %}Check the account and permissions shown there, then send that exact <code>/confirm</code> command and reload this page. Do not send /start again while this link is pending.</p>{% endif %}
 {% if grants %}<p>Permissions you consented to:</p><ul>{% for grant in grants %}<li>{{ scopes.get(grant, grant) }}</li>{% endfor %}</ul>{% endif %}

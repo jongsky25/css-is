@@ -41,6 +41,10 @@ class PersonalRead:
             return 'room_reservation q JOIN room_meal m ON m.reservation_id=q.id','q.requester_user_id','1'
         return 'meal_request q','q.requester_user_id','1'
 
+    def next_step(self,row,command,detail):
+        pair=(self.COMMANDS[2:4] if self.kind=='meals' and command in self.COMMANDS[2:4] else self.COMMANDS[:2])
+        return '\nBack: '+pair[0] if detail else '\nDetails: '+pair[1]+' '+str(row['id'])
+
     def project(self,conn,row,command,detail=False):
         if self.kind=='travel':
             text=('Travel '+str(row['id'])+' · '+common.clip(row['ref_code'],40)
@@ -56,12 +60,12 @@ class PersonalRead:
             # turn the source link into an arbitrary path/query.
             ref=row['ref_code'] or ''
             path='/travel/f/'+ref if re.fullmatch(r'TF-[0-9]{4}-[0-9]{4,}',ref) else '/travel'
-            return text+'\n'+links.origin()+path
+            return text+self.next_step(row,command,detail)+'\n'+links.origin()+path
         if self.kind=='arrangements':
             return ('Arrangement '+str(row['id'])+'\nPeriod: '+st.work_arrangement_period_label(row['period_start'])
                     +'\nRequested arrangement: '+common.clip(st.WORK_ARRANGEMENT_LABELS.get(row['arrangement'],row['arrangement']),60)
                     +'\nFiling status: '+common.clip(row['status'],40)
-                    +'\nOpen Office Connect for the schedule in force.\n'+links.origin()+'/work-arrangement')
+                    +'\nOpen Office Connect for the schedule in force.'+self.next_step(row,command,detail)+'\n'+links.origin()+'/work-arrangement')
         linked=command in ('/my_room_meals','/room_meal_status')
         if linked:
             # The existing pure helper decides which meal rows were requested.
@@ -81,7 +85,7 @@ class PersonalRead:
         for item in items:
             text+='\n'+rooms_meals.LABEL.get(item['meal'],item['meal'])+': '+labels.get(item['status'],item['status'])
         if not items:text+='\nNo meals currently selected.'
-        return text+'\n'+links.origin()+path
+        return text+self.next_step(row,command,detail)+'\n'+links.origin()+path
 
     def render(self,conn,clean,bot,now):
         if not conn.in_transaction:raise RuntimeError('Personal lookup requires intake transaction')

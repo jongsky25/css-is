@@ -74,7 +74,7 @@ def render(conn, clean, bot, now):
         text+='\nApproval: '+('current version approved' if doc['current_version'] and doc['approved_version']==doc['current_version'] else 'current version not recorded as approved')
         if doc['archived_at']:
             text+='\nArchived record'
-        return text+'\n'+links.origin()+'/documents/'+str(doc['id'])
+        return text+'\nBack: /documents\n'+links.origin()+'/documents/'+str(doc['id'])
     # Canonical, non-archived records match the default signed-in registry.
     # Search is literal metadata-only: no FTS, bodies, senders or references.
     params={**scope.params,'before':query.get('before',0),'term':query.get('query','').casefold()}
@@ -88,7 +88,7 @@ def render(conn, clean, bot, now):
         text+='\nNumber and subject search'
     shown=[]
     for row in records[:5]:
-        entry=line(row)+'\n'+links.origin()+'/documents/'+str(row['id'])
+        entry=line(row)+'\nDetails: /document_status '+str(row['id'])+'\n'+links.origin()+'/documents/'+str(row['id'])
         if common.units(text+'\n\n'+entry)>2900:
             break
         text+='\n\n'+entry;shown.append(row)

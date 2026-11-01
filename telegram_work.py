@@ -7,6 +7,7 @@ import documents_permissions as permissions
 from documents_storage import rows, transaction
 import telegram_calendar as common
 import telegram_links as links
+import telegram_menu as menu
 import work
 import work_reads
 
@@ -75,16 +76,18 @@ def owned_tasks(conn, user, before=0, filter_='all', today=None):
          'end': (today+timedelta(days=7)).isoformat() if today else None})
 
 
-def task_line(row):
+def task_line(row,detail=False):
     return ('Task ' + str(row['id']) + ' · Work ' + str(row['case_id']) + '\n'
             + common.clip(row['title'], 160) + '\nStatus: ' + row['status'].replace('_', ' ')
-            + ' · Due: ' + common.clip(row['due_date'] or 'not set', 32))
+            + ' · Due: ' + common.clip(row['due_date'] or 'not set', 32)
+            + ('' if detail else '\nDetails: /task_status '+str(row['case_id'])+' '+str(row['id'])))
 
 
-def work_line(row):
+def work_line(row,detail=False):
     # Work cases have no authoritative overall status column. Do not invent one.
     return ('Work ' + str(row['id']) + ' · ' + common.clip(row['title'], 160)
-            + '\nDue: ' + common.clip(row['due_date'] or 'not set', 32))
+            + '\nDue: ' + common.clip(row['due_date'] or 'not set', 32)
+            + ('' if detail else '\nDetails: /work_status '+str(row['id'])))
 
 
 def render(conn, delivery, projection, bot, now, *, commit=True):
@@ -109,14 +112,15 @@ def render(conn, delivery, projection, bot, now, *, commit=True):
                     task = work_reads.task(conn, user, ids[0], ids[1])
                     if task['owner_id'] != user['id']:
                         return 'Task or work item unavailable to this account.'
-                    text = task_line(task)
+                    text = task_line(task,detail=True)+menu.task_next(conn,user,item,task,detail=True)
                 else:
-                    text = work_line(item)
+                    text = work_line(item,detail=True)
                     counts = rows(conn, 'SELECT status,count(*) AS n FROM work_task WHERE case_id=? GROUP BY status ORDER BY status', (ids[0],))
                     total = sum(r['n'] for r in counts)
                     done = sum(r['n'] for r in counts if r['status']=='done')
                     text += '\nCompleted: ' + str(done) + '/' + str(total) + ' tasks'
                     text += '\nTasks: ' + (', '.join(str(r['n']) + ' ' + r['status'].replace('_', ' ') for r in counts) or 'none')
+                    text += '\nBack: /my_work'
                 return text + '\n' + links.origin() + '/work/' + str(ids[0])
             except permissions.Denied:
                 return 'Task or work item unavailable to this account.'

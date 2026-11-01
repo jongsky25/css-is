@@ -61,8 +61,14 @@ def test_phone_can_consent_to_private_reads_without_outgoing(grid_browser, app_m
             assert c.execute('SELECT action FROM telegram_grant WHERE revoked_at IS NULL').fetchall() == [(scope,)]
             packet = httpx.post(base + bot.PATH, json=update(4,text=command), headers=HEADERS).json()
             assert empty in packet['text']
+            packet = httpx.post(base + bot.PATH, json=update(5,text='/menu'), headers=HEADERS).json()
+            assert 'your private menu' in packet['text'] and command in packet['text']
+            other = '/documents' if scope != 'documents.read' else '/my_tasks'
+            assert other not in packet['text']
+            packet = httpx.post(base + bot.PATH, json=update(6,text='/status'), headers=HEADERS).json()
+            assert 'connection: active' in packet['text'] and 'missing consent' in packet['text']
             page.get_by_role('button', name='Disconnect Telegram and cancel pending links').click()
-            packet = httpx.post(base + bot.PATH, json=update(5,text=command), headers=HEADERS).json()
+            packet = httpx.post(base + bot.PATH, json=update(7,text=command), headers=HEADERS).json()
             assert 'method' not in packet
         finally:
             context.close()

@@ -1,5 +1,7 @@
 ## 9.58 — November 1, 2026
 
+- Add a private personalized /menu and /help, availability explanations in /status, and record-specific detail/back/allowed-action guidance.
+
 - Complete private guided meeting/room actions through webhook guide, preview, confirmation and recovery replies, including partial room failure without recreating the saved meeting.
 
 - Add separately consented private travel checklist/status, standalone and room-linked meal status, and work-arrangement filing lookup.

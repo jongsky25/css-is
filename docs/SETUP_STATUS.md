@@ -625,3 +625,15 @@ continue separately scoped work when directed. Production/preview release,
 feature activation, real messages and live acceptance remain explicitly deferred.
 The complete T4.4 group/calendar/room/reminder/revocation/rollback hosted pilot
 and outgoing scheduled/group delivery are still unverified.
+
+## Personalized menu and acceptance plan implemented — 2026-11-01
+
+Owner approved `/menu`/`/help` grouped discovery, availability explanations and
+record-specific next steps, plus a concrete later live-testing checklist.
+Implementation is staged on the existing Telegram branch/draft PR #572.
+Pre-main-reconciliation checks: 310 broader tests, 84 shuffled cases and 10 final
+menu cases passed without failures/skips (groups overlap), including six actual
+phone no-script consent/read/menu/status/disconnect flows with outgoing Telegram
+forbidden. All live acceptance checklist cases are explicitly Pending.
+Current main advanced to monitoring release 9.58; Telegram's unpublished candidate
+will be reconciled above it before fresh checks. No live action is authorized.

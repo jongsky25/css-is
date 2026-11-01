@@ -19,6 +19,7 @@ from documents_storage import transaction, rows
 import telegram_storage as storage
 import telegram_transport as transport
 import telegram_links as links
+import telegram_menu as private_menu
 import telegram_groups as groups
 import telegram_calendar as calendar_reads
 import telegram_rooms as room_reads
@@ -151,6 +152,8 @@ def normalize(value):
     if (message['chat'].get('type') == 'private' and clean['chat_id'] == clean['sender_id']
             and message['from'].get('is_bot') is False and clean['topic_id'] is None):
         first = text.split(maxsplit=1)[0] if text.strip() else ''
+        if first == '/menu':
+            clean['command'] = '/help'
         if first in ('/start', '/help', '/status', '/disconnect'):
             clean['command'] = first
         if text in ('/meeting','/room_request'):
@@ -615,20 +618,9 @@ def render_delivery(conn, delivery, projection, bot, now, *, commit=True):
     elif projection['kind'] == 'group_status':
         message = groups.STATUS
     elif projection['kind'] == 'help':
-        message = (HELP if not storage.enabled('link') else
-            'Office Connect private commands: /start to link, /status to check your connection, '
-            '/disconnect to revoke it. Never send your Office Connect password here.'
-            + (' Private calendar lookup: /calendar (Asia/Manila).' if storage.enabled('calendar_read') else '')
-            + (' Private work lookup: /my_summary, /my_tasks [overdue|upcoming|review], /task_status WORK_ID TASK_ID, /my_work, /work_status WORK_ID (separate work read consent).' if storage.enabled('work_read') else '')
-            + (' Private travel lookup: /my_travel, /travel_status ID (separate consent).' if storage.enabled('travel_read') else '')
-            + (' Private meal lookup: /my_meals, /meal_status ID, /my_room_meals, /room_meal_status ID (separate consent).' if storage.enabled('meals_read') else '')
-            + (' Private arrangement lookup: /my_arrangements, /arrangement_status ID (separate consent).' if storage.enabled('arrangements_read') else '')
-            + (' Private supplies lookup: /my_supplies, /supply_status ID (separate supply read consent).' if storage.enabled('supplies_read') else '')
-            + (' Private document lookup: /documents, /find_documents WORDS, /document_status ID (separate document read consent).' if storage.enabled('documents_read') else '')
-            + (' Private room lookup: /room_slots, /my_rooms, /room_status REFERENCE.' if storage.enabled('rooms_read') else '')
-            + (' Task actions: /task_ack WORK_ID TASK_ID, /task_submit WORK_ID TASK_ID; preview and confirmation required.' if storage.enabled('tasks_acknowledge') or storage.enabled('tasks_submit') else '')
-            + (' Guided meeting pilot: /meeting (separate read/create consent required).' if storage.enabled('calendar_create') else '')
-            + (' Linked room request pilot: /room_request (separate room request/read and calendar read consent).' if storage.enabled('rooms_request') else ''))
+        message = HELP if not storage.enabled('link') else private_menu.render(conn,delivery,bot,now)
+    elif projection['kind'] == 'status':
+        message = private_menu.status(conn,delivery,bot,now)
     else:
         message = links.render(conn, projection, delivery['chat_id'], bot, now)
     return message

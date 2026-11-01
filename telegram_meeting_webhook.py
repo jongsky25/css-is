@@ -62,6 +62,8 @@ def handle(conn,clean,bot,now):
         if (not text or transport.config()!=bot or not switches.enabled('inbound') or not switches.enabled('delivery')
                 or not links.available()):raise actions.Unavailable('Reply unavailable.')
         actions.authority(conn,ctx,action)
+        if kind.endswith('_receipt'):
+            text+='\nRecover: '+meetings.META[action]['receipt']+' '+identifier+'\nMore options: /menu'
     except ValueError:
         conn.execute('ROLLBACK TO private_meeting_webhook')
         text='Meeting or room action unavailable, expired or changed. Review Office Connect and your current permissions. Use the original operation receipt command to recover a confirmed result; otherwise prepare a fresh preview.'
