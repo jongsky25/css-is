@@ -7,7 +7,7 @@ without the owner's later release/testing instruction.
 
 ## Before the later pilot
 
-1. Identify the reviewed PR/source commit and candidate version (currently 9.63).
+1. Identify the reviewed PR/source commit and candidate version (currently 9.64).
    Verify the actual candidate's required metadata/dependency/full normal/shuffled/
    aggregate CI, main freshness and synchronized versions. Old-head checks do not
    establish readiness. Follow existing release and verified-backup gates.
@@ -41,6 +41,8 @@ without the owner's later release/testing instruction.
 | Daily work brief | Compare `/brief` with the permitted calendar, task summary and own request sources. Verify Manila date range, newest-two/all-status labels, empty sections, section preferences and detail commands; omit revoked/paused scopes. No record is changed. | Pending |
 | Staged brief reminder choices | Save section choices, a preferred Manila time and the future reminder preference from the phone form. Save confirms scheduled delivery is not active; no reminder or queued daily delivery appears. Existing calendar/room choices are unchanged. | Pending |
 | Task actions | With separate read/acknowledge/submit consent, preview then confirm own To do → In progress → For review. Output is entered in the signed-in form. Source blockers/open-work/revisions remain enforced; readonly users get no write hint. | Pending |
+| Task proposal | Consent separately to work read/task proposal. `/new_task` → signed-in fields → exact private preview/confirmation creates one required contribution in proposed state with no confirmed owner. Retry/recover creates no second task. The native officer must still confirm assignment; proposing an account grants no document access. | Pending |
+| Proposal source rules | Hidden/completed work, linked official deadlines, changed work/unit/account, expired/revoked previews and source pauses prevent stale creation. Long/multiline/Unicode previews stay bounded and exact. Native assignment enforces linked-document access and review/completion rules; bot confirmation cannot replace that decision. | Pending |
 | Task recovery | Repeat an already consumed confirmation and request its receipt. One task transition/audit outcome is recorded; no second mutation or submission is created. | Pending |
 | Documents | Find a synthetic permitted number/subject and compare workflow/routing/paper status. Body/file/people/notes are absent. Unknown and another test account's restricted ID have the same denial. | Pending |
 | Supplies | Compare own approval, waiting-stock/pickup, handover and receipt-confirmation stages with the source UI. Reading changes no stock/request/receipt state; another person's request is denied even to an administrator through the bot. | Pending |

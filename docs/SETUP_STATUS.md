@@ -1016,3 +1016,71 @@ CI and review the draft. Deployment, preview publication, host activation, real
 messages and user/live testing remain deferred. Meal/series/guest/on-behalf-of
 management, different-hour moves and combined calendar/room rescheduling remain
 separate future scope. No operational monitor action or live data access occurred.
+
+
+## Private guided task proposals — 2026-11-01
+
+Owner requested the next Telegram feature while deployment, preview publication,
+activation and personal/live testing remain deferred. Added `/new_task` guided
+proposals in draft PR #572 on `feat/telegram-private-work-lookup`, candidate
+**9.64**. Independent main monitoring registration repair `a7b9b38` (9.59,
+PR #577) was preserved by review-branch merge `6b064fc`; its released changelog
+entry remains below the unpublished Telegram batch. No monitor execution or
+configuration action was initiated by this task.
+
+Separate default-off `CSS_TELEGRAM_TASKS_CREATE_ENABLED` / `tasks.create` consent
+requires work read, available document/work modules and the original private
+webhook/account/bot context. The script-free signed-in form captures permitted
+work ID, task title, expected output, contributing unit, optional proposed owner
+and exact optional deadline. A five-minute private preview precedes confirmation;
+source deadline, visibility/intersection and open-work rules are checked again.
+
+Confirmation creates one native required contribution in proposed state, with no
+confirmed owner. Officer assignment remains a separate source decision and still
+requires linked-document access for the eventual owner; no access is granted by
+proposal. Native task/event/audit/review effects, consumed preview, receipt and
+final private reply share one transaction. Duplicate/concurrent confirmations
+produce one proposal. New receipt deletion fencing prevents numeric-ID reuse
+from displaying a replacement task. Legacy ack/submit preview endpoints reject
+proposal-shaped operations.
+
+Active latest, not-yet-invalidated consolidation review packets on nonterminal
+documents block bot creation. Native additions there can reset dependent formal
+approvals; those amendments stay in Office Connect, including when review starts
+after preview. Native services remain unchanged. Source module pause also blocks
+guides and directory forms.
+
+See [task proposal behavior](TELEGRAM_TASK_PROPOSALS.md) and the expanded
+[pending live checklist](TELEGRAM_LIVE_ACCEPTANCE_CHECKLIST.md).
+
+Isolated Python 3.11 verification: **1,408 broad regressions passed** across
+Telegram, native work/assignment/review/completion/legacy/UI behavior, audit-chain
+writers, deployment and release checks. **125 final shuffled checks** cover new
+proposals, current module/formal-review guards, task ack/submit separation, menus,
+action engine and existing meeting/room phone forms. **3 final normal guard
+cases** passed; zero failures/errors/skips in all groups. Groups overlap.
+
+The broad run started before final proposal-only refinements: source pause now
+blocks guides, preview wording identifies required contributions, and active
+formal-review amendments stay in Office Connect. The final shuffled and normal
+guard groups cover those refinements. Earlier dedicated proposal/phone run: 35
+passed; existing task/menu/shared-form subset: 73 passed. Initial synthetic
+officer-confirmation reason and long-source-label fixtures were corrected to
+actual native requirements before passing final groups. No permission assertion
+was weakened.
+
+Reports: `/tmp/telegram-task-create-regressions.xml`,
+`/tmp/telegram-task-create-shuffled-verified.xml`,
+`/tmp/telegram-task-create-final-guards.xml`; JUnit gates pass. Candidate 9.64
+metadata/increase over actual main 9.59, locks/vendor integrity, installed
+compatibility, AI contract, compile, local file links and whitespace checks pass.
+Existing Starlette/httpx deprecation warning remains. No app source edits followed
+the final passing groups. Fresh exact-head full repository normal/shuffled/
+dependency/container/aggregate CI still requires inspection; no hosted or user
+acceptance is claimed.
+
+Next: inspect fresh exact-head repository-wide normal/shuffled/dependency/
+container/aggregate CI and review the draft. Release, host activation, real
+messages and user/live acceptance remain deferred. Automatic assignment, task
+acceptance/cancellation/deadline changes and amendments to active formal reviews
+remain separate scope. No production data or external staff messaging was used.

@@ -103,7 +103,7 @@ for action in ('acknowledge','submit'):
 
 def preview_text(conn, ctx, operation_id, now):
     found = rows(conn,'SELECT * FROM telegram_preview WHERE operation_id=?',(operation_id,))
-    if not found or not found[0]['action'].startswith('tasks.'):
+    if not found or found[0]['action'] not in ('tasks.acknowledge','tasks.submit'):
         raise actions.Unavailable('Task preview unavailable.')
     p = found[0]
     user, adapter, bot = actions.authority(conn,ctx,p['action'])

@@ -17908,6 +17908,8 @@ import telegram_room_manage_routes
 app.include_router(telegram_room_manage_routes.make_router(templates, get_conn))
 import telegram_task_routes
 app.include_router(telegram_task_routes.make_router(templates, get_conn))
+import telegram_task_create_routes
+app.include_router(telegram_task_create_routes.make_router(templates, get_conn))
 import telegram_room_request_routes
 app.include_router(telegram_room_request_routes.make_router(templates, get_conn))
 app.include_router(work_routes.make_router(templates, get_conn))

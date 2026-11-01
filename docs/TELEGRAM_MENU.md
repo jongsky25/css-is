@@ -1,6 +1,6 @@
 # Personalized private Telegram menu
 
-Draft PR #572, candidate 9.63. Deployment, activation and real-user testing remain
+Draft PR #572, candidate 9.64. Deployment, activation and real-user testing remain
 deferred. This addition changes discovery/guidance, not permissions or records.
 
 - `/menu` aliases the existing private `/help` path. Both show the same current
@@ -29,6 +29,9 @@ deferred. This addition changes discovery/guidance, not permissions or records.
 - [Room withdrawal/date moves](TELEGRAM_ROOM_MANAGEMENT.md) also have separate
   consent and host controls. Only the actual owner can act; a move of an approved
   booking still requires normal approval and retains the original hours meanwhile.
+- `/new_task` appears only with separate task-proposal/work-read consent and an
+  available source module/pilot. [Task proposals](TELEGRAM_TASK_PROPOSALS.md) stay
+  proposed until native officer assignment; the bot does not assign anyone.
 
 Menus read current account/link/bot/grant/settings state on every rendering.
 They query no source business records and cache no feature entitlement. A menu

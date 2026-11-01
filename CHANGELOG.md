@@ -1,4 +1,6 @@
-## 9.63 — November 1, 2026
+## 9.64 — November 1, 2026
+
+- Add separately consented /new_task proposals through signed-in forms and exact private confirmation, preserving source deadlines/access/open-work rules and officer-only assignment; atomic task/event/audit/receipt and deletion recovery remain protected.
 
 - Add separately consented private room withdrawal and date moves with exact previews, ownership/current-source checks and atomic source/notice/audit/receipt writes; approved moves retain the old booking until normal approval.
 

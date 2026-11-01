@@ -27,6 +27,7 @@ ADAPTERS = {}
 ACTIONS = {'calendar.create':'calendar_create','rooms.request':'rooms_request', 'tasks.acknowledge':'tasks_acknowledge', 'tasks.submit':'tasks_submit'}
 ACTIONS.update({'calendar.reschedule':'calendar_reschedule','calendar.cancel':'calendar_cancel'})
 ACTIONS.update({'rooms.withdraw':'rooms_withdraw','rooms.move':'rooms_move'})
+ACTIONS['tasks.create']='tasks_create'
 TTL = 300
 CONTEXT = {'connection_id','generation','sender_id','chat_id','topic_id','registration_id','registration_generation'}
 
@@ -89,7 +90,7 @@ def authority(conn,context,action):
             raise Unavailable('Group context unavailable.')
     if action.startswith('tasks.') and context['chat_id'] < 0:
         raise Unavailable('Task actions are private only.')
-    if action in ('calendar.reschedule','calendar.cancel','rooms.withdraw','rooms.move') and (context['chat_id']<0 or not switches.enabled('delivery')
+    if action in ('calendar.reschedule','calendar.cancel','rooms.withdraw','rooms.move','tasks.create') and (context['chat_id']<0 or not switches.enabled('delivery')
             or len(links.origin() or '')>200 or os.environ.get('CSS_TELEGRAM_REPLY_TRANSPORT')=='direct'):
         raise Unavailable('Meeting management requires private webhook replies.')
     read_scope = 'work.read' if action.startswith('tasks.') else ('calendar.read' if action.startswith('calendar.') else 'rooms.read')
@@ -97,6 +98,9 @@ def authority(conn,context,action):
         raise Unavailable('Current read consent is required for this action.')
     if action=='rooms.request' and not links.authorized(conn,found[0]['id'],'calendar.read'):
         raise Unavailable('Calendar read consent is required for a linked room request.')
+    if action=='tasks.create':
+        import work
+        if not work.enabled(conn):raise Unavailable('Task proposals are paused with the source work module.')
     return found[0],adapter,bot
 
 

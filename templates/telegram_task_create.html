@@ -1,0 +1,31 @@
+{% extends "dash_layout.html" %}
+{% block title %}Propose a task — Office Connect{% endblock %}
+{% block content %}
+<div style="max-width:720px;margin:auto;overflow-wrap:anywhere">
+<h1>Propose a task through Telegram</h1>
+<p><a href="/account/telegram">Telegram connection and permissions</a> · <a href="/work">Open work</a></p>
+<p>Start with <code>/new_task</code> in your linked private chat. Choose an existing work item you can access and enter the task details. Dates use <strong>Asia/Manila</strong>.</p>
+<p>This creates a required contribution in proposed status. The concerned officer must confirm its assignment in Office Connect; choosing a proposed owner does not assign the task or grant document access. Completed work and linked official deadlines keep their existing rules.</p>
+<p>Work under active formal consolidation review must be amended in Office Connect, where dependent approvals can be reviewed together.</p>
+{% if error %}<p role="alert">{{ error }}</p>{% endif %}
+{% if prepared %}
+<p role="status">{% if prepared.state == 'pending' %}Your preview is prepared. No task has been created. Send <code>/newtask_preview {{ prepared.operation_id }}</code> in the original private Telegram chat, review the exact fields and confirm before expiry.{% else %}This operation already has a recorded outcome. Send <code>/newtask_receipt {{ prepared.operation_id }}</code> in the original private chat. Recovery will not create another task.{% endif %}</p>
+{% endif %}
+{% if origins %}
+<form method="post" action="{{ action_path }}">
+<input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="key" value="{{ key }}">
+<p><label for="newtask-origin">Starting private conversation</label><br><select id="newtask-origin" name="origin" required>{% for item in origins %}<option value="{{ item }}" {% if selected == item %}selected{% endif %}>Private request {{ loop.index }}</option>{% endfor %}</select></p>
+<p><label for="newtask-case">Work item number</label><br><input id="newtask-case" name="case_id" type="number" min="1" value="{{ values.get('case_id','') }}" required></p>
+<p>Use a work number from <code>/my_work</code> or <code>/find</code>. The private preview names the work item before you confirm.</p>
+<p><label for="newtask-title">Task title</label><br><input id="newtask-title" name="title" type="text" maxlength="160" value="{{ values.get('title','') }}" style="box-sizing:border-box;width:100%" required></p>
+<p><label for="newtask-output">Expected output</label><br><textarea id="newtask-output" name="expected_output" rows="5" maxlength="1000" style="box-sizing:border-box;width:100%" required>{{ values.get('expected_output','') }}</textarea></p>
+<p>These task details will appear in the exact private Telegram preview. Keep the output description concise enough to review there; use Office Connect for longer descriptions.</p>
+<p><label for="newtask-unit">Contributing unit</label><br><select id="newtask-unit" name="unit_id" style="box-sizing:border-box;max-width:100%"><option value="">Use the work item's unit</option>{% for unit in units %}<option value="{{ unit.id }}" {% if values.get('unit_id','') == unit.id|string %}selected{% endif %}>{{ unit.name }}</option>{% endfor %}</select></p>
+<p><label for="newtask-owner">Proposed owner (optional)</label><br><select id="newtask-owner" name="proposed_owner_id" style="box-sizing:border-box;max-width:100%"><option value="">No owner proposed</option>{% for person in people %}<option value="{{ person.id }}" {% if values.get('proposed_owner_id','') == person.id|string %}selected{% endif %}>{{ person.name }} ({{ person.id }})</option>{% endfor %}</select></p>
+<p><label for="newtask-due">Task deadline (optional)</label><br><input id="newtask-due" name="due_date" type="date" value="{{ values.get('due_date','') }}"></p>
+<p>Nothing is created until exact private confirmation. The preview expires after five minutes; changed work, linked records, unit or proposed account requires a fresh preview. A new contribution can require the work review to be done again.</p>
+<button type="submit">Prepare exact private preview</button>
+</form>
+{% else %}<p>No current task proposal request is available. Send <code>/new_task</code> after enabling and consenting to its separate pilot and work read permission.</p>{% endif %}
+</div>
+{% endblock %}

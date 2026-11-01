@@ -19,8 +19,10 @@ from telegram_link_routes import PRIVATE, csrf
 
 
 def make_router(templates,get_conn, *, manager=manage, template="telegram_meeting_manage.html",
-                target="entry_id", dated_mode="reschedule", date_fields=("day","start_time","end_time"), resource="Meeting"):
+                target="entry_id", dated_mode="reschedule", date_fields=("day","start_time","end_time"), resource="Meeting",
+                field_sets=None, form_context=None, max_body=4096, max_fields=8):
     router=APIRouter()
+    def fields_for(mode):return field_sets[mode] if field_sets else ((target,*date_fields) if mode==dated_mode else (target,))
     def screen(request,mode,error='',status=200,values=None):
         if mode not in manager.MODES:return HTMLResponse('Action unavailable.',status_code=404,headers=PRIVATE)
         action=manager.MODES[mode];conn=get_conn()
@@ -45,7 +47,8 @@ def make_router(templates,get_conn, *, manager=manage, template="telegram_meetin
                     if current['id']==user['id']:prepared=found[0]
             return templates.TemplateResponse(request,template,
                 {'show_scope':False,'mode':mode,'action_path':manager.PATH+mode,'origins':origins,'selected':identifier,
-                 'values':values or {},'key':secrets.token_hex(16),'csrf':csrf(request),'prepared':prepared,'error':error},
+                 'values':values or {},'key':secrets.token_hex(16),'csrf':csrf(request),'prepared':prepared,'error':error,
+                 **(form_context(conn,user,mode) if form_context and origins else {})},
                 status_code=status,headers=PRIVATE)
         except ValueError:
             return HTMLResponse(resource+' action unavailable. Sign in again and start the action in your private Telegram chat.',status_code=403,headers=PRIVATE)
@@ -62,9 +65,9 @@ def make_router(templates,get_conn, *, manager=manage, template="telegram_meetin
             body=bytearray()
             async for chunk in request.stream():
                 body.extend(chunk)
-                if len(body)>4096:raise ValueError('The form is too large.')
-            request._body=bytes(body);form=await request.form(max_fields=8,max_files=0)
-            fields=(target,*date_fields) if mode==dated_mode else (target,)
+                if len(body)>max_body:raise ValueError('The form is too large.')
+            request._body=bytes(body);form=await request.form(max_fields=max_fields,max_files=0)
+            fields=fields_for(mode)
             if (set(form)!={'csrf','origin','key',*fields} or any(len(form.getlist(k))!=1 for k in form)
                     or not hmac.compare_digest(str(form.get('csrf','')).encode(),csrf(request).encode())):
                 raise ValueError('The form expired or is invalid. Reload and try again.')
@@ -77,7 +80,7 @@ def make_router(templates,get_conn, *, manager=manage, template="telegram_meetin
                 result=actions.issue(conn,ctx,manager.MODES[mode],str(form['key']),{k:str(form[k]) for k in fields},bot.now_utc())
             finally:conn.close()
         except ValueError as error:
-            values={k:str(form.get(k,'')) for k in ('origin',target,*date_fields)} if form else None
+            values={k:str(form.get(k,'')) for k in ('origin',*fields_for(mode))} if form else None
             return screen(request,mode,str(error),400,values)
         return RedirectResponse(manager.PATH+mode+'?operation='+result['operation_id'],status_code=303,headers=PRIVATE)
     return router
