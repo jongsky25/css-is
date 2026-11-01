@@ -75,6 +75,18 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**Seasonal build started in isolation — November 1, 2026.**
+Branch `feat/seasonal-theme-design` starts from main `a7b9b38` in a separate
+worktree. [Interactive mockups, screenshots and merge-coordination notes](design/seasonal/README.md)
+cover Christmas/New Year Home, light/dark, a working form and simulated midnight.
+32 browser layout combinations, draft retention and countdown transition/reset
+passed. No application/runtime tests, integration, preview, release metadata,
+Telegram messages, merge or deployment. Open Telegram draft PR #572 remains
+independent; the current shared changed path is this status document only.
+Next: refresh both branches, then integrate dedicated seasonal assets/tokens and
+the configured server-synchronized countdown from
+[the build handoff](SEASONAL_THEME_BUILD_HANDOFF.md). Sound remains deferred.
+
 **Monitoring release deployed; automatic trigger and phone receipt pending — November 1, 2026.**
 
 [PR #575](https://github.com/jongsky25/css-is/pull/575) merged as
