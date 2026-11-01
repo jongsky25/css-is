@@ -48,6 +48,14 @@ Owner phone acceptance remains pending. See the existing iOS cookie guidance in
 
 ### Richer festive revision
 
+Published source `f4438aaf361e527bb73747f87fb3ed9b1084dae9` to the existing
+private preview. Space commit `62e72b31bec9cfa0c1d26c9a7e683278dab6b35f`
+reached RUNNING. Authorized health/login return 200 with readiness/PREVIEW banner;
+the running app now serves the richer CSS and both new garland/bunting SVGs (200).
+This supersedes the initial preview source below. Password unchanged; hosted
+signed-in phone acceptance remains pending. Reload and sign in again after reset,
+then enable artwork in Appearance and update the Christmas/New Year private view.
+
 The owner requested more festive designs after opening the initial preview.
 Christmas now has a fuller illustrated tree, hanging parols, ornaments, gifts,
 city silhouettes, evergreen/ribbon garlands and warm lights. New Year has static

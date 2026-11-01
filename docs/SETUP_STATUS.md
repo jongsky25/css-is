@@ -82,8 +82,12 @@ settings, gold Home card details and festive footers. Phone hero artwork now sta
 visible. Sound remains deferred; accessibility controls retained. Initial focused
 group 19 passed; final seasonal group after refinements 13 passed, no failures/skips,
 JUnit gate passed. [Screenshots and implementation notes](SEASONAL_THEME_IMPLEMENTATION.md).
-Save the source candidate before updating the shared preview, then verify remote
-source, private visibility, RUNNING and asset/health responses. No production release.
+Published source `f4438aaf361e527bb73747f87fb3ed9b1084dae9` to the existing
+private preview; Space commit `62e72b31bec9cfa0c1d26c9a7e683278dab6b35f`
+is RUNNING. Authorized health/login and new festive assets return 200; login has
+PREVIEW banner. This replaces our original seasonal preview. Password unchanged;
+phone review pending. Next: owner reloads/signs in, enables artwork and reviews
+both richer themes. No production release, merge or Telegram publication.
 
 **Seasonal private preview published — November 1, 2026.**
 Owner requested publication. Source `5f6a18c2f5171dc17e6ee7462db2a8e77fe9ac64`
