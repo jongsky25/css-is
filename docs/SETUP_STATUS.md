@@ -126,11 +126,18 @@ scope are unchanged.
 [PR #577](https://github.com/jongsky25/css-is/pull/577) merged with owner approval
 as `a7b9b38d473af15b87412717284bb17272fce518` at approximately 07:33 UTC.
 All five required CI jobs passed on exact candidate `9187b13`: normal and shuffled
-full suites, dependency audit, release metadata and aggregate gate. The 37 isolated
+full suites (**8,431 passed in each order**, zero failures/skips), dependency audit, release metadata and aggregate gate. The 37 isolated
 monitor tests, JUnit, documentation links and diff checks also passed.
 No gates were bypassed. Source-based schedule registration is now refreshed;
-this is not yet proof of a scheduled execution. Production verification/deployment
-is pending and will use the existing backup/version gates.
+this is not yet proof of a scheduled execution. Production [run 41285255695](https://github.com/jongsky25/css-is/actions/runs/41285255695)
+is in progress: dependency audit/metadata passed, both full suites pending. It will
+use the existing backup/version gates. Post-merge normal manual
+[run 41285718156](https://github.com/jongsky25/css-is/actions/runs/41285718156)
+checked exact merge a7b9b38 successfully: uptime/backup/audit/monitor all true in
+both observations, transitions empty. This is workflow_dispatch, not a schedule
+execution. Owner actor jongsky25 is active; cron-source commit author/committer
+both map to that owner. No new notification test was sent.
+
 
 Next: verify the production release and observe a real scheduled execution
 with healthy/valid signals, and obtain phone receipt confirmation. Do not claim
