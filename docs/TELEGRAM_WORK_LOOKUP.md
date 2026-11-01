@@ -80,7 +80,7 @@ third-party dependency is introduced.
 ## Draft batch: filters, acknowledgement and review submission
 
 The owner requested building the next batch before any live deployment/testing.
-These additions are held in the same draft PR and candidate release 9.69.
+These additions are held in the same draft PR and candidate release 9.70.
 They do not claim that the full Telegram hosted pilot is complete.
 
 - `/my_tasks overdue`: unfinished tasks with due date before today in Asia/Manila.

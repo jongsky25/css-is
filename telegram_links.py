@@ -24,6 +24,7 @@ SCOPES['tasks.deadline']='Change permitted task deadlines after private preview 
 SCOPES['tasks.assign']='Confirm proposed task ownership after private preview and confirmation'
 SCOPES['tasks.reassign']='Reassign active tasks after private preview and confirmation'
 SCOPES['tasks.reopen']='Reopen accepted tasks after private preview and confirmation'
+SCOPES['tasks.cancel']='Cancel unfinished tasks after private preview and confirmation'
 SCOPES.update({'tasks.accept':'Accept submitted tasks after private preview and confirmation',
                'tasks.return':'Return submitted tasks for changes after private preview and confirmation'})
 
@@ -108,7 +109,7 @@ def claim(conn, payload, raw_code, scopes, now):
             raise ValueError('Room management requires its separate pilot and room read consent.')
     if 'rooms.request' in scopes and (not {'calendar.read','rooms.read'}<=set(scopes) or not switches.enabled('rooms_request')):
         raise ValueError('Room requests require their pilot and separate calendar and room read consent.')
-    for action in ('tasks.acknowledge','tasks.submit','tasks.create','tasks.deadline','tasks.accept','tasks.return','tasks.assign','tasks.reassign','tasks.reopen'):
+    for action in ('tasks.acknowledge','tasks.submit','tasks.create','tasks.deadline','tasks.accept','tasks.return','tasks.assign','tasks.reassign','tasks.reopen','tasks.cancel'):
         if action in scopes and ('work.read' not in scopes or not switches.enabled(action.replace('.','_'))):
             raise ValueError('Task actions require their pilot and separate work read consent.')
     with transaction(conn):
@@ -151,7 +152,7 @@ def confirm(conn, sender, argument_hash, bot, now):
         return None
     if 'rooms.request' in json.loads(ch['scopes_json']) and not switches.enabled('rooms_request'):
         return None
-    if any(scope in json.loads(ch['scopes_json']) and not switches.enabled(scope.replace('.','_')) for scope in ('calendar.reschedule','calendar.cancel','rooms.withdraw','rooms.move','tasks.create','tasks.deadline','tasks.accept','tasks.return','tasks.assign','tasks.reassign','tasks.reopen')):
+    if any(scope in json.loads(ch['scopes_json']) and not switches.enabled(scope.replace('.','_')) for scope in ('calendar.reschedule','calendar.cancel','rooms.withdraw','rooms.move','tasks.create','tasks.deadline','tasks.accept','tasks.return','tasks.assign','tasks.reassign','tasks.reopen','tasks.cancel')):
         return None
     cid, generation = conn.execute('''INSERT INTO telegram_connection
         (account_id,telegram_user_id,private_chat_id,bot_identity,bot_fingerprint,state,created_at,updated_at)

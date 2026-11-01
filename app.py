@@ -17920,6 +17920,8 @@ import telegram_task_reassign_routes
 app.include_router(telegram_task_reassign_routes.make_router(templates, get_conn))
 import telegram_task_reopen_routes
 app.include_router(telegram_task_reopen_routes.make_router(templates, get_conn))
+import telegram_task_cancel_routes
+app.include_router(telegram_task_cancel_routes.make_router(templates, get_conn))
 import telegram_room_request_routes
 app.include_router(telegram_room_request_routes.make_router(templates, get_conn))
 app.include_router(work_routes.make_router(templates, get_conn))

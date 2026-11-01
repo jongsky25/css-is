@@ -32,7 +32,8 @@ class Adapter:
         clean={'case_id':item['id'],'task_id':task['id'],
                'reason':proposals.text(raw['reason'],'Review reason',500,multiline=True)}
         summary={**clean,'work_title':common.clip(item['title'],120),'title':common.clip(task['title'],160),
-                 'status':task['status'],'owner_id':task['owner_id'],'next_status':'done' if self.mode=='accept' else 'in_progress'}
+                 'status':task['status'],'owner_id':task['owner_id'],'unit_id':task['unit_id'],'mandatory':task['mandatory'],
+                 'next_status':{'accept':'done','cancel':'cancelled'}.get(self.mode,'in_progress')}
         if common.units(self.text(summary))>3000:
             raise actions.Unavailable('This preview is too long. Shorten the reason or use Office Connect.')
         return clean,summary,{**shared.source_state(conn,item,task),'task_revision':task['revision']}

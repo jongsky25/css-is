@@ -1,6 +1,6 @@
 # Personalized private Telegram menu
 
-Draft PR #572, candidate 9.69. Deployment, activation and real-user testing remain
+Draft PR #572, candidate 9.70. Deployment, activation and real-user testing remain
 deferred. This addition changes discovery/guidance, not permissions or records.
 
 - `/menu` aliases the existing private `/help` path. Both show the same current
@@ -100,3 +100,8 @@ synthetic and outgoing Telegram is forbidden. Later live acceptance uses the
 - Status lists each missing consent label, with relinking instructions once in
   the footer rather than after every feature. This keeps the expanded status
   within Telegram's message limit without dropping permission explanations.
+
+- `/task_cancel` requires independent cancellation/work-read consent and its pilot.
+  [Officer cancellation](TELEGRAM_TASK_CANCELLATION.md) previews current/Cancelled
+  state, required/optional contribution and completion/dependency effects before
+  exact confirmation. Work-lead or owner status alone is insufficient.

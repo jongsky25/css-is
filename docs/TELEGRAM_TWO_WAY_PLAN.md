@@ -1,6 +1,6 @@
 # Office Connect ↔ Telegram delivery plan
 
-Status: T0–T4.3.2 merged; T4.4 hosted pilot incomplete. Draft PR #572 (candidate 9.69) adds private task/document/supplies/personal reads, confirmed task updates and private guided meeting/room webhook replies. Owner confirms hosted linking/calendar retrieval; new draft capabilities, group/automatic outgoing delivery and the complete pilot remain unverified live. Source switches remain default-off.
+Status: T0–T4.3.2 merged; T4.4 hosted pilot incomplete. Draft PR #572 (candidate 9.70) adds private task/document/supplies/personal reads, confirmed task updates and private guided meeting/room webhook replies. Owner confirms hosted linking/calendar retrieval; new draft capabilities, group/automatic outgoing delivery and the complete pilot remain unverified live. Source switches remain default-off.
 Last updated: 2026-11-01.
 Repository: jongsky25/css-is.
 Planning baseline inspected: abf3141 (merge of PR #458).
@@ -1321,6 +1321,85 @@ See [reopening behavior](TELEGRAM_TASK_REOPENING.md) and the expanded
 remain Pending. No provider call, production data, scheduler, monitor execution,
 publication or activation occurred. Task cancellation, completed-work reopening
 and amendments under active formal review remain separate source actions.
+
+Next: inspect fresh exact-head full repository normal/shuffled/dependency/
+container/aggregate CI, then continue the next explicitly requested feature.
+Main merge, release, preview publication, activation and personal/live testing
+remain deferred until the owner's later instruction.
+
+
+### Private officer task cancellation — 2026-11-01
+
+Owner explicitly approved task cancellation. Added `/task_cancel`, a signed-in
+no-script reason form, `/taskcancel_preview`, exact `/taskcancel_confirm` and
+`/taskcancel_receipt` to review branch `feat/telegram-private-work-lookup`, draft
+PR #572, candidate **9.70**. Actual main remains `a7b9b38` (released 9.59), preserved
+on this branch. Deployment, preview publication, activation and personal/live
+testing remain explicitly deferred. Initial prior-head inspection at `535ef54`
+found metadata passing and the remaining checks still running; those are not
+this candidate's acceptance.
+
+Separate default-off `CSS_TELEGRAM_TASKS_CANCEL_ENABLED` / `tasks.cancel` consent
+requires work read, source modules and current private inbound/link/delivery/
+account/chat/bot proof. Native officer authority must cover the task's contributing
+unit; work-lead/task-owner status alone is insufficient. Proposed/To do/In progress/
+For review tasks qualify; Done/already-Cancelled tasks and completed/closed work
+refuse the action. Preview identifies work/task/unit, required/optional flag,
+retained owner, current → Cancelled, reason and completion/dependency effects.
+
+Cancelled tasks are excluded from outstanding-contribution checks, including
+required tasks. Cancellation does not accept output or satisfy dependencies
+requiring its acceptance. Work completion and official document decisions remain
+separate. Owner fields, previous submission/output, deadline, required status,
+original proposal, blocker/follow-up/decision history and dependency edges are
+preserved. Native cancellation can close unassigned tasks or tasks with ineligible
+owners without granting access; actor view/officer checks still apply. Normal
+membership can remove a former owner's work access without another source right.
+Cancelled tasks cannot use the Done-task reopening command. No task is deleted.
+
+The existing native `cancel` mutation remains authoritative; no native task/work
+service changed. Shared review snapshots/receipt routing use separate cancellation
+action/result/scope/protocol. Source/submission/work/history changes, lost officer
+rights, hidden documents, source pauses and revoked/expired/restored context block
+stale confirmation. Active formal consolidation review before or after preview
+blocks amendments, preserving dependent approvals. Source/event/audit/reminder
+effects, consumed preview, receipt and private handoff commit atomically. Audit/
+receipt/handoff failure rolls back. Duplicate/concurrent confirmation cancels
+once; deletion fences ID reuse. Recovery checks current source view and reports
+recorded outcome/current state without replay.
+
+Isolated Python 3.11 verification: **1788 broad regressions passed** across
+`tests/test_telegram*.py`, `tests/test_work*.py`, audit-chain writers, deployment
+and release checks. **490 current shuffled checks** (seed 311) passed across
+cancellation/reopening/reassignment/initial-assignment/review/deadline/proposal
+services and phone forms, menu/action engine, existing task actions and private
+meeting webhook handling. Zero failures/errors/skips in both groups; groups
+overlap. Earlier focused cancellation services: 46 passed; verified cancellation/
+phone/menu group: 63 passed; shared review/reopening/menu/action wiring: 193 passed.
+All functional source and final completion/dependency/blocker/optional/submission
+cases preceded broad/shuffled collection. No application source edits followed
+the passing groups.
+
+The first combined phone run had two fixture failures: a copied selector still
+pointed at the reopening form. Corrected it to the cancellation form without
+weakening any assertions. The verified 63-case group and current broad/shuffled
+runs use the corrected selector, exercise proposed and For review phone flows,
+and preserve all CSRF/allowlist/source/no-provider/no-skips assertions.
+
+Reports: `/tmp/telegram-task-cancel-regressions.xml`,
+`/tmp/telegram-task-cancel-shuffled.xml` and
+`/tmp/telegram-task-cancel-verified.xml`; all pass the JUnit no-skips gate.
+Candidate 9.70 metadata/increase over actual main 9.59, locks/vendor integrity,
+installed compatibility, AI contract, Python compilation, local Markdown links
+and whitespace pass. Existing Starlette/httpx deprecation warning remains.
+Full exact-head repository normal/shuffled/dependency/container/aggregate CI still
+requires inspection after push. Earlier-head results are not current acceptance.
+
+See [cancellation behavior](TELEGRAM_TASK_CANCELLATION.md) and the expanded
+[pending live checklist](TELEGRAM_LIVE_ACCEPTANCE_CHECKLIST.md). All live cases
+remain Pending. No provider call, production data, scheduler, monitor execution,
+publication or activation occurred. Completed-work/document lifecycle and
+amendments under active formal review remain separate source workflows.
 
 Next: inspect fresh exact-head full repository normal/shuffled/dependency/
 container/aggregate CI, then continue the next explicitly requested feature.

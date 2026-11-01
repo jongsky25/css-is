@@ -1,4 +1,6 @@
-## 9.69 — November 1, 2026
+## 9.70 — November 1, 2026
+
+- Add separately consented officer task cancellation with exact state/reason previews, visible contribution/dependency effects and atomic native cancellation/receipt writes; history, submissions and formal-review protections remain enforced.
 
 - Add separately consented task reopening through current case-officer/work-lead authority, exact Done-to-In-progress previews and atomic native task/receipt writes; ownership, submissions and deadlines remain preserved.
 

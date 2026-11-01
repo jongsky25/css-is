@@ -1,6 +1,6 @@
 # Guided Telegram meetings (T3.2)
 
-Draft 9.69 adds a [private webhook guide/preview/confirmation/recovery flow](TELEGRAM_PRIVATE_MEETING_WEBHOOK.md). Direct/group worker behavior below remains available; deployment and live acceptance are separate.
+Draft 9.70 adds a [private webhook guide/preview/confirmation/recovery flow](TELEGRAM_PRIVATE_MEETING_WEBHOOK.md). Direct/group worker behavior below remains available; deployment and live acceptance are separate.
 
 T3.4 update: the optional [combined room flow](TELEGRAM_MEETING_ROOMS.md) extends calendar-only creation below. Its separate room consent, explicit checkbox, partial outcomes and recovery rules apply only when selected.
 
