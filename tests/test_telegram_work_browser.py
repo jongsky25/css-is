@@ -67,8 +67,18 @@ def test_phone_can_consent_to_private_reads_without_outgoing(grid_browser, app_m
             assert other not in packet['text']
             packet = httpx.post(base + bot.PATH, json=update(6,text='/status'), headers=HEADERS).json()
             assert 'connection: active' in packet['text'] and 'missing consent' in packet['text']
+            packet = httpx.post(base + bot.PATH, json=update(8,text='/find synthetic'), headers=HEADERS).json()
+            if scope in ('work.read','documents.read'):
+                assert 'No matching permitted records' in packet['text']
+                assert ('My tasks ·' in packet['text']) == (scope=='work.read')
+                assert ('Documents ·' in packet['text']) == (scope=='documents.read')
+                assert 'Meetings ·' not in packet['text']
+            else:
+                assert 'No search sources' in packet['text']
             page.get_by_role('button', name='Disconnect Telegram and cancel pending links').click()
             packet = httpx.post(base + bot.PATH, json=update(7,text=command), headers=HEADERS).json()
+            assert 'method' not in packet
+            packet = httpx.post(base + bot.PATH, json=update(9,text='/find synthetic'), headers=HEADERS).json()
             assert 'method' not in packet
         finally:
             context.close()

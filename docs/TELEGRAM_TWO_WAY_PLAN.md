@@ -1,6 +1,6 @@
 # Office Connect ↔ Telegram delivery plan
 
-Status: T0–T4.3.2 merged; T4.4 hosted pilot incomplete. Draft PR #572 (candidate 9.60) adds private task/document/supplies/personal reads, confirmed task updates and private guided meeting/room webhook replies. Owner confirms hosted linking/calendar retrieval; new draft capabilities, group/automatic outgoing delivery and the complete pilot remain unverified live. Source switches remain default-off.
+Status: T0–T4.3.2 merged; T4.4 hosted pilot incomplete. Draft PR #572 (candidate 9.61) adds private task/document/supplies/personal reads, confirmed task updates and private guided meeting/room webhook replies. Owner confirms hosted linking/calendar retrieval; new draft capabilities, group/automatic outgoing delivery and the complete pilot remain unverified live. Source switches remain default-off.
 Last updated: 2026-11-01.
 Repository: jongsky25/css-is.
 Planning baseline inspected: abf3141 (merge of PR #458).
@@ -717,3 +717,41 @@ Daily-brief verification: **775** all-Telegram/deployment/release regressions an
 compatibility, AI contract, compile, documentation links and whitespace pass.
 No source edits followed these runs. Full exact-head normal/shuffled/container
 dependency/aggregate CI remains a release gate; live cases remain Pending.
+
+
+### Unified private search — candidate 9.61, 2026-11-01
+
+Owner approved `/find WORDS` across permitted task/work titles, document
+numbers/subjects and meeting titles. Existing independent read consent, source
+module/host controls, ownership and canonical visibility apply before limits.
+Meetings use the calendar blend scope, entries layer/meeting kind, and the
+explicit next-31-day Manila window with source recurrence/visibility rules.
+Grouped two-result sections show source status where available, due dates and
+detail commands; work has no invented overall status. No notes, outputs, file
+contents, people or meeting URLs are searched/projected.
+
+Search is private webhook only, read only, literal Unicode-casefold metadata
+matching. Query text stays ephemeral in intake and is never queued/cached;
+existing deduplication, rate limits and uncertain-response behavior apply.
+The menu shows the command only when a supported source is ready. Six real
+no-script phone consent/read flows now check search scope isolation and denial
+after disconnect. See [search behavior](TELEGRAM_PRIVATE_SEARCH.md) and the
+expanded [pending live checklist](TELEGRAM_LIVE_ACCEPTANCE_CHECKLIST.md).
+
+Current isolated Python 3.11 verification: **796 all-Telegram/deployment/release
+regressions passed**, plus **61 shuffled search/menu/phone/brief cases**, zero
+failures/errors/skips (groups overlap). Reports:
+`/tmp/telegram-search-regressions.xml` and `/tmp/telegram-search-shuffled.xml`;
+both JUnit gates pass. The earlier focused run passed 37 cases, including the six
+real no-script phone flows; it overlaps the final groups. The initial schema-
+fixture error was corrected before the final runs. Candidate 9.61 metadata/
+increase over actual main 9.58, locks/vendor integrity, installed compatibility,
+AI contract, compilation, documentation file targets and whitespace checks pass.
+The existing Starlette/httpx deprecation warning remains. No application source
+edits followed the passing runs. Exact-head repository-wide normal/shuffled/
+dependency/container/aggregate CI remains required and is not claimed passed.
+
+
+Deployment, host activation, real messages and live acceptance remain deferred.
+Fresh exact-head full CI remains a release gate; no monitoring/operations work
+or production data access is part of this request.

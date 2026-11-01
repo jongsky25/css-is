@@ -780,3 +780,49 @@ the draft. Deployment, preview publication, activation, real messages and live
 testing remain deferred. A future scheduled-brief delivery implementation needs
 separate consent/delivery/quiet-hour/deduplication/expiry/revocation design and
 verification; storing a preferred time does not authorize or activate it.
+
+
+## Unified private metadata search — 2026-11-01
+
+Owner approved `/find WORDS` across permitted tasks/work titles, document
+numbers/subjects and meeting titles. Draft PR #572 continues on
+`feat/telegram-private-work-lookup`, unpublished candidate **9.61**; main c81b235
+(9.58) is preserved. Private webhook replies use each existing source grant,
+module and pilot without any umbrella permission. Source visibility/ownership
+and literal casefold matching precede bounded result limits. Hidden linked
+documents suppress related work/tasks. Meetings use canonical calendar blend
+visibility, the meeting kind and explicit next-31-day Manila window, retaining
+source recurrence links.
+
+Grouped results show source status where available, deadlines and actual detail
+commands; work has no invented overall status. Only metadata fields are searched
+and projected. No outputs, file/OCR contents, sender/people/note/venue/meeting-URL
+fields are queried for matching. Source titles remain user-authored. Search text
+stays ephemeral inside the existing intake transaction and is never queued or
+cached. Existing deduplication, rate limits, private identity and restore/revoke
+fences apply. No schema, grant, dependency, scheduler or external service is added.
+
+See [search behavior](TELEGRAM_PRIVATE_SEARCH.md) and the expanded
+[pending live checklist](TELEGRAM_LIVE_ACCEPTANCE_CHECKLIST.md). Six real phone
+consent/read flows now exercise permitted search sources and deny search after
+disconnect with outgoing Telegram forbidden.
+
+Current isolated Python 3.11 verification: **796 all-Telegram/deployment/release
+regressions passed**, plus **61 shuffled search/menu/phone/brief cases**, zero
+failures/errors/skips (groups overlap). Reports:
+`/tmp/telegram-search-regressions.xml` and `/tmp/telegram-search-shuffled.xml`;
+both JUnit gates pass. The earlier focused run passed 37 cases, including the six
+real no-script phone flows; it overlaps the final groups. The initial schema-
+fixture error was corrected before the final runs. Candidate 9.61 metadata/
+increase over actual main 9.58, locks/vendor integrity, installed compatibility,
+AI contract, compilation, documentation file targets and whitespace checks pass.
+The existing Starlette/httpx deprecation warning remains. No application source
+edits followed the passing runs. Exact-head repository-wide normal/shuffled/
+dependency/container/aggregate CI remains required and is not claimed passed.
+
+
+Next: inspect fresh exact-head full normal/shuffled/dependency/aggregate CI and
+review the draft. Production/preview publication, feature activation, real
+messages and live testing remain deferred. Existing daily-brief reminder choices
+are still saved preferences only; search does not activate any delivery. No
+monitoring/operations action or live data access occurred for this task.

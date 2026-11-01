@@ -1,4 +1,6 @@
-## 9.60 — November 1, 2026
+## 9.61 — November 1, 2026
+
+- Add private /find metadata search across independently permitted tasks, work titles, document numbers/subjects and meetings within the next 31 days, with bounded detail commands and no retained search text.
 
 - Add an on-demand private /brief combining permitted calendar, task and request summaries, with per-account section choices and staged reminder preferences; scheduled delivery stays inactive.
 

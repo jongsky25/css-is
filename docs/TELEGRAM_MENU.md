@@ -1,6 +1,6 @@
 # Personalized private Telegram menu
 
-Draft PR #572, candidate 9.60. Deployment, activation and real-user testing remain
+Draft PR #572, candidate 9.61. Deployment, activation and real-user testing remain
 deferred. This addition changes discovery/guidance, not permissions or records.
 
 - `/menu` aliases the existing private `/help` path. Both show the same current
@@ -19,6 +19,9 @@ deferred. This addition changes discovery/guidance, not permissions or records.
   currently available. The [daily brief](TELEGRAM_DAILY_BRIEF.md) respects its own
   section choices as well as every underlying read scope; reminder choices are
   saved separately and do not activate scheduled delivery.
+- `/find WORDS` appears in webhook mode when work, document or calendar reads
+  are available. [Unified private search](TELEGRAM_PRIVATE_SEARCH.md) includes
+  only the independently permitted metadata sources; no new grant is created.
 
 Menus read current account/link/bot/grant/settings state on every rendering.
 They query no source business records and cache no feature entitlement. A menu

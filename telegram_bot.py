@@ -21,6 +21,7 @@ import telegram_transport as transport
 import telegram_links as links
 import telegram_menu as private_menu
 import telegram_brief as brief_reads
+import telegram_search as search_reads
 import telegram_groups as groups
 import telegram_calendar as calendar_reads
 import telegram_rooms as room_reads
@@ -191,6 +192,12 @@ def normalize(value):
         if first in brief_reads.COMMANDS:
             clean['command'] = first
             clean['brief_query'] = {} if text.split() == ['/brief'] else {'error': 'usage'}
+        if first in search_reads.COMMANDS:
+            clean['command'] = first
+            try:
+                clean['search_query'] = search_reads.parse(text)
+            except ValueError:
+                clean['search_query'] = {'error': 'usage'}
         if first in supply_reads.COMMANDS:
             clean['command'] = first
             try:
@@ -255,7 +262,7 @@ def receive(conn, clean, raw, bot, now, webhook_reply=None):
             groups.handle_event(conn, clean, bot)
         cid, generation, permitted = identity(conn, clean['sender_id'])
         inline_meeting=(webhook_reply is not None and meeting_webhook.accepts(conn,clean))
-        if inline_meeting or clean['command'] in task_actions.COMMANDS + document_reads.COMMANDS + supply_reads.COMMANDS + personal_reads.COMMANDS + brief_reads.COMMANDS:
+        if inline_meeting or clean['command'] in task_actions.COMMANDS + document_reads.COMMANDS + supply_reads.COMMANDS + personal_reads.COMMANDS + brief_reads.COMMANDS + search_reads.COMMANDS:
             inline = (webhook_reply is not None and storage.enabled('delivery') and storage.enabled('link')
                       and transport.config()==bot and cid is not None and permitted)
             conn.execute("""INSERT INTO telegram_update
@@ -263,7 +270,8 @@ def receive(conn, clean, raw, bot, now, webhook_reply=None):
                 VALUES (?,?,?,?,?,?,?,?,?,?)""", (bot[0],clean['update_id'],clean['sender_id'],clean['chat_id'],None,
                     cid,generation,hashlib.sha256(raw).hexdigest(),stamp(now),'processed' if inline else 'ignored'))
             if inline:
-                adapter=(brief_reads if clean['command'] in brief_reads.COMMANDS else
+                adapter=(search_reads if clean['command'] in search_reads.COMMANDS else
+                         brief_reads if clean['command'] in brief_reads.COMMANDS else
                          document_reads if clean['command'] in document_reads.COMMANDS else
                          supply_reads if clean['command'] in supply_reads.COMMANDS else personal_reads.ADAPTERS.get(clean['command']))
                 text=(meeting_webhook.handle(conn,clean,bot,now) if inline_meeting else
