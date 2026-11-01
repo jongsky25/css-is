@@ -3,7 +3,46 @@
 Branch: `feat/seasonal-theme-design`, based on main `a7b9b38` (9.59), with an
 isolated worktree at `/workspace/office-connect-seasonal`. Original planning branch
 and interactive study are preserved. This is an implementation candidate, not a
-release. No PR, shared-preview publication, merge or deployment yet.
+release. No PR, merge or production deployment. The private preview is now live
+as described below.
+
+## Hosted preview — November 1, 2026
+
+Owner explicitly requested preview publication. Before upload, remote metadata
+showed the old collaboration preview (`f03125c2`) on private CPU Basic; Telegram's
+current handoff explicitly deferred its preview/deployment. No Telegram candidate
+was replaced. Published seasonal source
+`5f6a18c2f5171dc17e6ee7462db2a8e77fe9ac64` to the existing fixed target:
+[private preview](https://huggingface.co/spaces/equityinhealth/office-connect-preview).
+Space commit `d5ed25c6bc88f4b7e194ca5c8ed8b463135b3071` is RUNNING, private, CPU Basic.
+The remote `preview-build.json` matches the source commit. This publication replaces
+the old disposable data; production was untouched and no hardware was upgraded.
+
+Authenticated hosted observations: `/preview-health` 200 with exact readiness text;
+`/login` 200 with PREVIEW banner, login form and `x-office-connect-environment:
+preview`. Anonymous health/login requests both 404. Seasonal CSS, countdown JS and
+both parol SVGs return 200. Code-only staging dry run passed (945 files). Isolated
+preview bundle tests: 3 passed in 9.12s; JUnit gate passed without failures/skips.
+
+The preview account password secret already existed remotely and was neither read
+nor changed. It is not available in this process, so no hosted app sign-in or
+signed-in hosted action is claimed. Local synthetic login/mobile/action checks
+passed in the preview-bundle group; they are not hosted phone acceptance.
+
+Phone review: open the Hub preview while signed into Hugging Face, then sign in
+as `preview@example.invalid` with the saved preview password. Open Appearance,
+choose Christmas, enable artwork and tap Update preview. Inspect the private
+Home frame in light/dark; then choose New Year with target year 2027 and update
+again. The preview selection does not publish. To inspect full-page work forms,
+Publish now changes only this disposable preview instance; no production settings
+are reachable through it. Check that an unsaved profile edit survives changing
+the theme from a second tab. Report cramped text, awkward scrolling or missing art.
+Midnight behaviour is locally clock-tested; no hosted clock override was installed.
+
+This is the shared preview's current candidate. Serialize further publications;
+recheck its manifest before collecting acceptance if another task has published.
+Owner phone acceptance remains pending. See the existing iOS cookie guidance in
+[preview setup](HF_PREVIEW_SETUP.md) if login does not persist.
 
 ## Implemented
 
@@ -81,7 +120,7 @@ scene. No Telegram/application service, dependency or release-version edits.
 Do not merge or publish over Telegram's work automatically. Path comparison does
 not establish behavioural compatibility or future mergeability.
 
-Next: arrange the shared preview slot for hosted phone review, resolve feedback,
+Next: collect hosted phone review of the current seasonal candidate, resolve feedback,
 refresh current main/Telegram diffs, and test the combined result after the first
 feature merges. Reconcile release versions only once order is known. Keep both
 status entries during reconciliation. Production release requires an explicit user

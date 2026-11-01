@@ -75,6 +75,21 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**Seasonal private preview published — November 1, 2026.**
+Owner requested publication. Source `5f6a18c2f5171dc17e6ee7462db2a8e77fe9ac64`
+is RUNNING on the existing private CPU Basic preview; Space commit
+`d5ed25c6bc88f4b7e194ca5c8ed8b463135b3071`. Remote manifest matches; authorized
+health/login and seasonal assets return 200, login has PREVIEW banner/header;
+anonymous health/login return 404. Isolated preview-bundle tests: 3 passed,
+JUnit gate passed with zero failures/skips. Existing password secret unchanged;
+no hosted app sign-in is claimed because the password is unavailable here.
+The replaced preview was old collaboration source `f03125c2`; Telegram's latest
+handoff explicitly defers preview publication. No Telegram build was overwritten.
+[Phone review instructions and evidence](SEASONAL_THEME_IMPLEMENTATION.md).
+Next: owner reviews Christmas/New Year on phone, then resolve feedback and reconcile
+release order with Telegram. Shared preview now holds the seasonal candidate;
+serialize future publishes. No production merge/deployment or version change.
+
 **Seasonal application integration candidate — November 1, 2026.**
 `feat/seasonal-theme-design` now implements Christmas/New Year palettes and parol
 scenes, Home countdown to a validated target year in Asia/Manila, static midnight
