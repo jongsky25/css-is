@@ -25,6 +25,8 @@ FEATURES=(
  ('rooms.move','Calendar','Room date moves','/room_move — change your own request’s date; approved bookings require a new approval.',('rooms.read',),None,True),
  ('work.read','Tasks and work','Work lookup','/my_summary; /my_tasks; /my_work; /task_status WORK_ID TASK_ID; /work_status WORK_ID.\nExample: /my_tasks overdue (also upcoming or review).',(),work.enabled,False),
  ('tasks.create','Tasks and work','Task proposals','/new_task — propose a task in permitted work; officer confirmation remains required.',('work.read',),work.enabled,True),
+ ('tasks.block','Tasks and work','Record task blocker','/task_block — record a blocker, follow-up person and date after confirmation.',('work.read',),work.enabled,True),
+ ('tasks.unblock','Tasks and work','Clear task blocker','/task_unblock — clear a recorded blocker with a resolution reason after confirmation.',('work.read',),work.enabled,True),
  ('tasks.blockers.read','Tasks and work','Task blockers','/task_blockers WORK_ID TASK_ID — prerequisite status and follow-up owner/date.',('work.read',),work.enabled,True),
  ('tasks.review.read','Tasks and work','Task review queue','/review_queue — tasks you can review; /review_task WORK_ID TASK_ID for permitted next actions.',('work.read',),work.enabled,True),
  ('tasks.cancel','Tasks and work','Task cancellation','/task_cancel — officer cancellation after preview and confirmation.',('work.read',),work.enabled,True),

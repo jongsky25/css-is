@@ -1,6 +1,6 @@
 # Office Connect ↔ Telegram delivery plan
 
-Status: T0–T4.3.2 merged; T4.4 hosted pilot incomplete. Draft PR #572 (candidate 9.72) adds private task/document/supplies/personal reads, confirmed task updates and private guided meeting/room webhook replies. Owner confirms hosted linking/calendar retrieval; new draft capabilities, group/automatic outgoing delivery and the complete pilot remain unverified live. Source switches remain default-off.
+Status: T0–T4.3.2 merged; T4.4 hosted pilot incomplete. Draft PR #572 (candidate 9.73) adds private task/document/supplies/personal reads, confirmed task updates and private guided meeting/room webhook replies. Owner confirms hosted linking/calendar retrieval; new draft capabilities, group/automatic outgoing delivery and the complete pilot remain unverified live. Source switches remain default-off.
 Last updated: 2026-11-01.
 Repository: jongsky25/css-is.
 Planning baseline inspected: abf3141 (merge of PR #458).
@@ -1555,6 +1555,90 @@ See [blocker lookup behavior](TELEGRAM_TASK_BLOCKERS.md) and the expanded
 [pending live checklist](TELEGRAM_LIVE_ACCEPTANCE_CHECKLIST.md). All live cases
 remain Pending. No provider call, production data, scheduler, monitor execution,
 publication or activation occurred.
+
+Next: inspect fresh exact-head full repository normal/shuffled/dependency/
+container/aggregate CI, then continue the next explicitly requested feature.
+Main merge, release, preview publication, activation and personal/live testing
+remain deferred until the owner's later instruction.
+
+
+### Private blocker recording and clearing — 2026-11-01
+
+Owner explicitly approved recording and clearing blockers. Added `/task_block` and
+`/task_unblock`, separate signed-in no-script forms, exact private previews/
+confirmation and receipts to review branch `feat/telegram-private-work-lookup`,
+draft PR #572, candidate **9.73**. Actual main remains `a7b9b38` (released 9.59),
+preserved on this branch. Deployment, preview publication, activation and personal/
+live testing remain explicitly deferred. Initial prior-head `a2be3ff` inspection
+found metadata passing and other checks running; those are not new-head acceptance.
+
+Independent default-off `CSS_TELEGRAM_TASKS_BLOCK_ENABLED` / `tasks.block` and
+`CSS_TELEGRAM_TASKS_UNBLOCK_ENABLED` / `tasks.unblock` require work read, source
+modules and original private inbound/link/delivery/account/chat/bot proof. Metadata
+lookup and other task grants grant neither write. Native task-owner/current-
+follow-up/lead/concerned-officer authority is rechecked; noncoordinator recording
+participants select only themselves. A coordinator may choose another active
+person who already reads the case and every linked document; no access is granted.
+
+Recording requires no existing blocker, an explicit follow-up person/exact date
+and bounded reason. It refuses silent overwrite; existing-blocker amendments stay
+in Office Connect or require a separate clearing first. Clearing requires a
+recorded blocker and resolution reason, removes its follow-up fields, and keeps
+native ability to clear despite an inactive former follow-up/task owner. Acting
+user/source rights remain required. The exact preview shows actor-entered reason
+and selected follow-up fields; old stored blocker details are hashed only and not
+copied into Telegram. Native history retains the old and resolution details.
+
+Task owner/state/submission/output, task deadline, dependency edges and pending
+changed-direction history stay unchanged. Clearing one blocker does not resolve
+prerequisites/decisions or bypass resubmission/acceptance checks. Done/Cancelled
+tasks, completed/closed work and active formal consolidation review before/after
+preview block amendments. Source/account/blocker changes, lost permissions,
+revocation/pause/expiry/restore and cross-protocol contexts refuse stale actions.
+
+Extracted `work_blockers.mutate_in_transaction` with strict caller-owned transaction
+requirement; public `mutate` keeps its existing transaction wrapper and identical
+native business rules. Telegram calls that helper so source/revision/event/audit,
+preview consumption, receipt and private handoff are atomic. Audit/receipt/handoff
+failure rolls back. Duplicate/concurrent confirmation changes once. Deletion
+fences numeric-ID reuse; recovery reports recorded outcome/current flag without
+replay or disclosure of stored blocker text, including later source changes.
+
+Isolated Python 3.11 verification: **1961 broad regressions passed** across
+`tests/test_telegram*.py`, `tests/test_work*.py`, audit-chain writers, deployment
+and release checks. **659 current shuffled checks** (seed 311) passed across
+blocker management/lookup, queue and all current task services/phone forms,
+menu/action engine, existing task actions and private meeting webhook handling.
+Zero failures/errors/skips in both groups; groups overlap. Earlier focused blocker
+management services: 77 passed; combined service/phone/menu group: 97 passed;
+native-work/menu/action wiring: 209 passed. All final changed-blocker and inactive-
+former-owner clearing cases preceded broad/shuffled collection. No application
+source edits followed these passing groups.
+
+Native participant/coordinator/self-selection/member/document rules, no overwrite/
+no-op, exact dates/strict fields, current source/context/terminal/formal-review
+fences, unchanged prerequisites/changed direction with blocked resubmission,
+strict caller-owned contract, audit/receipt/handoff rollback, concurrent retries,
+ID reuse and later-current-state receipts pass. Two JavaScript-disabled phone
+flows check separate scopes, prohibited other-person choice, CSRF/allowlists,
+exact private preview/confirmation/retry, retained state/deadline/submission,
+expired sessions and no outgoing provider calls. No native business rule or
+permission/no-skips assertion was weakened.
+
+Reports: `/tmp/telegram-blocker-manage-regressions.xml`,
+`/tmp/telegram-blocker-manage-shuffled.xml` and
+`/tmp/telegram-blocker-manage-verified.xml`; all pass the JUnit no-skips gate.
+Candidate 9.73 metadata/increase over actual main 9.59, locks/vendor integrity,
+installed compatibility, AI contract, Python compilation, local Markdown links
+and whitespace pass. Existing Starlette/httpx deprecation warning remains.
+Full exact-head repository normal/shuffled/dependency/container/aggregate CI still
+requires inspection after push. Earlier-head results are not current acceptance.
+
+See [blocker management behavior](TELEGRAM_BLOCKER_MANAGEMENT.md) and the expanded
+[pending live checklist](TELEGRAM_LIVE_ACCEPTANCE_CHECKLIST.md). All live cases
+remain Pending. No provider call, production data, scheduler, monitor execution,
+publication or activation occurred. Dependency amendments remain separate source
+workflows; this feature changes only recorded blocker/follow-up fields.
 
 Next: inspect fresh exact-head full repository normal/shuffled/dependency/
 container/aggregate CI, then continue the next explicitly requested feature.

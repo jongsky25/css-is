@@ -1,4 +1,6 @@
-## 9.72 — November 1, 2026
+## 9.73 — November 1, 2026
+
+- Add independently consented blocker recording and clearing with actor-entered reasons, eligible follow-up person/date, native participant/coordinator permissions and atomic source/receipt writes; deadlines, dependencies and formal-review protections remain preserved.
 
 - Add separately consented private blocker/prerequisite metadata lookup with current source visibility, permitted follow-up owner/date, bounded paging and source resolution links; notes, submissions and workflow changes remain in Office Connect.
 

@@ -1,6 +1,6 @@
 # Private daily work brief
 
-Draft PR #572, candidate 9.72. Deployment, activation and live acceptance remain
+Draft PR #572, candidate 9.73. Deployment, activation and live acceptance remain
 deferred. `/brief` is an on-demand private webhook reply, with no arguments.
 It creates no meeting, request, approval, task transition or scheduled delivery.
 
