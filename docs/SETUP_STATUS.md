@@ -101,7 +101,11 @@ checks passed. No outage, backup failure or audit corruption was induced.
 Next: recheck for a genuine schedule event and valid observations. If none appears,
 request GitHub account/provider investigation using the
 [saved evidence and support draft](operations/monitor-scheduler-2026-11-01.md).
-No support request has been submitted. Current tools expose no internal scheduler
+The owner authorized submitting the report, but submission is blocked by Support
+portal sign-in: the repository connection has no Support-ticket operation or
+signed-in browser session. The official contact URL leads to the sign-in landing
+page. The report now includes a short copy-ready message and owner submission
+steps. **No ticket was created and no ticket number exists.** Current tools expose no internal scheduler
 queue; repository-wide Actions policy read is denied (403). Further speculative
 application releases are not justified by current evidence.
 

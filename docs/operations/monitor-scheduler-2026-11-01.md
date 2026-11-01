@@ -66,6 +66,33 @@ signals and any incident transitions. Do not equate manual re-runs with scheduli
 If scheduling stays absent, request GitHub account/provider investigation before
 making more speculative application changes or claiming continuous coverage.
 
+## Submission access — owner action required
+
+The owner explicitly authorized submission after reviewing the report. Tool
+search found no GitHub Support ticket operation or authenticated browser control.
+The official contact URL redirects to the Support sign-in landing page. GitHub's
+[official ticket instructions](https://docs.github.com/en/support/contacting-github-support/creating-a-support-ticket)
+require signing into the Support portal before creating a technical ticket.
+The repository connection does not provide that browser session. No ticket has
+been submitted, no ticket number exists, and no alternative public discussion
+has been posted in place of a support ticket.
+
+Open [GitHub Support](https://support.github.com/contact), sign in with the owner
+account, choose GitHub Actions/technical support, and submit the text below.
+If technical support is unavailable for the account's plan, preserve that outcome
+and select an available official support option; do not claim a ticket exists.
+
+Subject: **Scheduled workflow never starts — jongsky25/css-is**
+
+Short message to copy:
+
+> Our active GitHub Actions workflow 403282831 on default branch main never
+> creates event=schedule runs. Manual dispatches and push workflows succeed.
+> Valid cron source revisions and disable/enable refreshes have not resolved it.
+> Please investigate scheduler registration or account/repository policy.
+> Evidence, reproduction commands and successful run links:
+> https://github.com/jongsky25/css-is/blob/docs/monitor-schedule-verification/docs/operations/monitor-scheduler-2026-11-01.md
+
 ## Support request draft — not submitted
 
 > The active scheduled workflow `403282831` in `jongsky25/css-is` has never created
