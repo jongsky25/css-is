@@ -7,7 +7,7 @@ without the owner's later release/testing instruction.
 
 ## Before the later pilot
 
-1. Identify the reviewed PR/source commit and candidate version (currently 9.68).
+1. Identify the reviewed PR/source commit and candidate version (currently 9.69).
    Verify the actual candidate's required metadata/dependency/full normal/shuffled/
    aggregate CI, main freshness and synchronized versions. Old-head checks do not
    establish readiness. Follow existing release and verified-backup gates.
@@ -43,6 +43,9 @@ without the owner's later release/testing instruction.
 | Task actions | With separate read/acknowledge/submit consent, preview then confirm own To do → In progress → For review. Output is entered in the signed-in form. Source blockers/open-work/revisions remain enforced; readonly users get no write hint. | Pending |
 | Task proposal | Consent separately to work read/task proposal. `/new_task` → signed-in fields → exact private preview/confirmation creates one required contribution in proposed state with no confirmed owner. Retry/recover creates no second task. The native officer must still confirm assignment; proposing an account grants no document access. | Pending |
 | Proposal source rules | Hidden/completed work, linked official deadlines, changed work/unit/account, expired/revoked previews and source pauses prevent stale creation. Long/multiline/Unicode previews stay bounded and exact. Native assignment enforces linked-document access and review/completion rules; proposal confirmation cannot replace that decision. | Pending |
+| Reopen accepted task | Separately consent to work read and reopening. The concerned case officer or confirmed work lead uses `/task_reopen`, reviews the source submission and gives a reason, checks task/current owner/Done → In progress in the private preview, then confirms exactly. Ownership alone grants no reopening authority. | Pending |
+| Reopening source boundaries | Owner, previous submission/output, deadline and pending direction/dependency information remain preserved. Owner must still be active and read every linked document. Completed work must be reopened separately in Office Connect first; active formal review, changed source, lost rights and expired/revoked context block the bot action. No official document is reopened/approved. | Pending |
+| Reopening recovery | Duplicate/concurrent confirmation records one task reopening. Normal resubmission/review still applies, including unresolved blockers. Receipt reports later current status without replay; deletion/ID reuse cannot expose or reopen a replacement task. | Pending |
 | Officer task reassignment | Separately consent to work read and reassignment. A concerned contributing-unit officer uses `/task_reassign`, explicitly chooses another eligible active person and gives a reason. Preview shows old/new owner, current state and the reset to To do, including In progress/For review tasks. Exact confirmation transfers once. | Pending |
 | Transfer source and history | New owner must already read every linked document. Initial-assignment consent, ownership or work-lead status alone cannot transfer. Existing submission/output, deadline, proposal, blockers/dependencies/changed-decision reviews and history remain preserved; no document access is granted. Proposed/done/cancelled tasks, completed work, active formal review and stale/revoked contexts refuse transfer. | Pending |
 | Transfer recovery | Duplicate/concurrent confirmation records one transfer. A competing owner preview cannot transfer the updated task again. Receipt reports later current owner/status without replay; deletion/ID reuse cannot expose or transfer a replacement. Use synthetic fixtures for failures and review transitions. | Pending |

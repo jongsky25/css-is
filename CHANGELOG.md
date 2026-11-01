@@ -1,4 +1,6 @@
-## 9.68 — November 1, 2026
+## 9.69 — November 1, 2026
+
+- Add separately consented task reopening through current case-officer/work-lead authority, exact Done-to-In-progress previews and atomic native task/receipt writes; ownership, submissions and deadlines remain preserved.
 
 - Add separately consented officer task reassignment with exact old/new owner and status previews, current contributor-access checks and atomic native transfer/receipt writes; existing submissions and deadlines remain preserved.
 

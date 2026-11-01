@@ -18,6 +18,8 @@ FIELDS=('case_id','task_id','reason')
 
 
 class Adapter:
+    authority_message='This submitted task review requires current officer or confirmed work-lead authority and source blockers must permit the action.'
+
     def __init__(self,mode):self.mode=mode
 
     def prepare(self,conn,user,raw):
@@ -26,11 +28,11 @@ class Adapter:
         item=shared.require_work(conn,user,proposals.number(raw['case_id']))
         task=work_reads.task(conn,user,item['id'],proposals.number(raw['task_id']))
         if self.mode not in work_tasks.actions(conn,user,item,task):
-            raise actions.Unavailable('This submitted task review requires current officer or confirmed work-lead authority and source blockers must permit the action.')
+            raise actions.Unavailable(self.authority_message)
         clean={'case_id':item['id'],'task_id':task['id'],
                'reason':proposals.text(raw['reason'],'Review reason',500,multiline=True)}
         summary={**clean,'work_title':common.clip(item['title'],120),'title':common.clip(task['title'],160),
-                 'status':task['status'],'next_status':'done' if self.mode=='accept' else 'in_progress'}
+                 'status':task['status'],'owner_id':task['owner_id'],'next_status':'done' if self.mode=='accept' else 'in_progress'}
         if common.units(self.text(summary))>3000:
             raise actions.Unavailable('This preview is too long. Shorten the reason or use Office Connect.')
         return clean,summary,{**shared.source_state(conn,item,task),'task_revision':task['revision']}

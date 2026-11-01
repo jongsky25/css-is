@@ -70,7 +70,7 @@ def handle(conn,clean,bot,now):
             text+='\nRecover: '+meetings.META[action]['receipt']+' '+identifier+'\nMore options: /menu'
     except ValueError:
         conn.execute('ROLLBACK TO private_meeting_webhook')
-        label={'tasks.create':'Task proposal','tasks.deadline':'Task deadline','tasks.accept':'Task acceptance','tasks.return':'Task return','tasks.assign':'Task assignment','tasks.reassign':'Task reassignment'}.get(ACTION.get(clean['command']),'Meeting or room')
+        label={'tasks.create':'Task proposal','tasks.deadline':'Task deadline','tasks.accept':'Task acceptance','tasks.return':'Task return','tasks.assign':'Task assignment','tasks.reassign':'Task reassignment','tasks.reopen':'Task reopening'}.get(ACTION.get(clean['command']),'Meeting or room')
         text=label+' action unavailable, expired or changed. Review Office Connect and your current permissions. Use the original operation receipt command to recover a confirmed result; otherwise prepare a fresh preview.'
     finally:
         conn.execute('RELEASE private_meeting_webhook')

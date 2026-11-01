@@ -1,6 +1,6 @@
 # Private unified metadata search
 
-Draft PR #572, candidate 9.68. Deployment, activation and live testing remain
+Draft PR #572, candidate 9.69. Deployment, activation and live testing remain
 deferred. `/find WORDS` searches independently permitted sources in the existing
 private webhook reply; it creates no records or scheduled deliveries.
 

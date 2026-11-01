@@ -63,6 +63,7 @@ def test_all_consented_menu_has_groups_examples_and_fits_budget(menu_env,monkeyp
     status_text=command(menu_env,'/status',11)['text']
     assert menu.common.units(status_text)<=4096
     assert '/documents' not in status_text and '/task_submit' not in status_text
+    assert links.SCOPES['tasks.reopen'] in status_text and links.SCOPES['work.read'] in status_text
 
 
 def test_status_explains_missing_consent_without_advertising_hidden_commands(menu_env,monkeypatch):

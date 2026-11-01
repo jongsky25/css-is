@@ -1,6 +1,6 @@
 # Personalized private Telegram menu
 
-Draft PR #572, candidate 9.68. Deployment, activation and real-user testing remain
+Draft PR #572, candidate 9.69. Deployment, activation and real-user testing remain
 deferred. This addition changes discovery/guidance, not permissions or records.
 
 - `/menu` aliases the existing private `/help` path. Both show the same current
@@ -93,3 +93,10 @@ synthetic and outgoing Telegram is forbidden. Later live acceptance uses the
 - `/task_reassign` has separate reassignment/work-read consent and its own pilot.
   [Officer transfers](TELEGRAM_TASK_REASSIGNMENT.md) preview old/new owner, current
   status and the reset to To do, preserving submission/deadline and native access.
+
+- `/task_reopen` requires separate reopening/work-read consent and its own pilot.
+  [Accepted-task reopening](TELEGRAM_TASK_REOPENING.md) uses current case-officer
+  or confirmed work-lead authority and preserves owner/submission/deadlines.
+- Status lists each missing consent label, with relinking instructions once in
+  the footer rather than after every feature. This keeps the expanded status
+  within Telegram's message limit without dropping permission explanations.

@@ -1,7 +1,7 @@
 # Private Telegram supplies-request lookup (T7.2a)
 
 The next independent read child adds your own supply-request approval and
-collection status. It remains in draft PR #572, candidate 9.68. Deployment,
+collection status. It remains in draft PR #572, candidate 9.69. Deployment,
 activation and real-user acceptance stay deferred by the owner.
 
 | Command | Result |

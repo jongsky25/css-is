@@ -1,6 +1,6 @@
 # Office Connect ↔ Telegram delivery plan
 
-Status: T0–T4.3.2 merged; T4.4 hosted pilot incomplete. Draft PR #572 (candidate 9.68) adds private task/document/supplies/personal reads, confirmed task updates and private guided meeting/room webhook replies. Owner confirms hosted linking/calendar retrieval; new draft capabilities, group/automatic outgoing delivery and the complete pilot remain unverified live. Source switches remain default-off.
+Status: T0–T4.3.2 merged; T4.4 hosted pilot incomplete. Draft PR #572 (candidate 9.69) adds private task/document/supplies/personal reads, confirmed task updates and private guided meeting/room webhook replies. Owner confirms hosted linking/calendar retrieval; new draft capabilities, group/automatic outgoing delivery and the complete pilot remain unverified live. Source switches remain default-off.
 Last updated: 2026-11-01.
 Repository: jongsky25/css-is.
 Planning baseline inspected: abf3141 (merge of PR #458).
@@ -1241,6 +1241,86 @@ See [transfer behavior](TELEGRAM_TASK_REASSIGNMENT.md) and the expanded
 remain Pending. No provider call, production data, scheduler, monitor execution,
 publication or activation occurred. Reopening/cancellation and formal-review
 amendments remain separate source actions.
+
+Next: inspect fresh exact-head full repository normal/shuffled/dependency/
+container/aggregate CI, then continue the next explicitly requested feature.
+Main merge, release, preview publication, activation and personal/live testing
+remain deferred until the owner's later instruction.
+
+
+### Private accepted-task reopening — 2026-11-01
+
+Owner requested the next feature after reassignment. Added `/task_reopen`, a
+signed-in no-script reason form, `/taskreopen_preview`, exact private
+`/taskreopen_confirm` and `/taskreopen_receipt` to review branch
+`feat/telegram-private-work-lookup`, draft PR #572, candidate **9.69**. Actual main
+remains `a7b9b38` (released 9.59), preserved on this branch. Deployment, preview
+publication, activation and personal/live testing remain explicitly deferred.
+Initial exact prior-head inspection found all functional/release metadata/
+dependency/full normal/full shuffled/aggregate CI checks passing at `3bea6d1`.
+Those checks establish the earlier candidate only, not this new head's acceptance.
+
+Separate default-off `CSS_TELEGRAM_TASKS_REOPEN_ENABLED` / `tasks.reopen` consent
+requires work read, work/document modules and original private inbound/link/
+delivery/account/chat/bot proof. Native concerned case-officer or confirmed
+work-lead authority is checked on every preparation/confirmation; task ownership
+alone is insufficient. Only Done tasks qualify. Existing owner must still be
+active and able to read every linked document. The bounded mandatory reason and
+identified task/current owner/Done → In progress are shown before confirmation.
+
+Confirmation uses the existing native `reopen` mutation. It preserves owner,
+submission/output, deadline, required status, unit, original proposal and history.
+Pending changed-decision reviews or unfinished prerequisites remain unresolved;
+normal resubmission/acceptance blockers still apply. Source changes/reversion,
+lost rights, missing/ineligible owner, hidden documents and revoked/expired/
+restored contexts prevent stale writes. Active formal consolidation review begun
+before or after preview blocks amendments to preserve dependent approvals.
+Completed work must be reopened separately in Office Connect first; this task
+action does not reopen the case or an official document.
+
+The shared review adapter supplies source snapshots and receipt routing, with a
+separate reopening action/result/scope/protocol. Native task/work services remain
+unchanged. Source/event/audit/reminder effects, consumed preview, receipt and
+private handoff commit atomically. Audit/receipt/handoff failure rolls back;
+duplicate/concurrent confirmation reopens once. Deletion fences numeric-ID reuse.
+Recovery checks current read/source view and reports later status without replay.
+
+Expanded status initially exceeded Telegram's limit by 13 UTF-16 units. Removed
+repeated per-feature relinking instructions while preserving every missing-consent
+label and the shared account/relink footer. Current menu assertions require the
+full reopening/work-read consent labels and the 4096-unit budget.
+
+Isolated Python 3.11 verification: **1734 broad regressions passed** across
+`tests/test_telegram*.py`, `tests/test_work*.py`, audit-chain writers, deployment
+and release checks. **437 current shuffled checks** (seed 311) passed across
+reopening/reassignment/initial-assignment/review/deadline/proposal services and
+phone forms, menu/action engine, existing task actions and private meeting webhook
+handling. Zero failures/errors/skips in both groups; groups overlap. Both include
+the final native pending-direction/unfinished-prerequisite cases and the current
+status budget fix. Earlier focused service sample: 49 passed; combined reopening/
+review/menu/phone sample: 159 passed. No application source edits followed these
+passing groups.
+
+The initial shared review/menu/action run had one failure: expanded status was
+4109 UTF-16 units, above Telegram's 4096 limit. The fix preserves each human consent
+label and states relinking instructions once in the footer. Current budget and
+visibility assertions remain; full reopening/work-read consent labels are also
+asserted. The final groups cover this correction and both officer/lead phone flows.
+No permission, workflow or no-skips assertion was weakened.
+
+Reports: `/tmp/telegram-task-reopen-regressions.xml` and
+`/tmp/telegram-task-reopen-shuffled.xml`; both pass the JUnit no-skips gate.
+Candidate 9.69 metadata/increase over actual main 9.59, dependency locks/vendor
+integrity, installed compatibility, AI contract, Python compilation, local Markdown
+links and whitespace pass. Existing Starlette/httpx deprecation warning remains.
+Full exact-head repository normal/shuffled/dependency/container/aggregate CI still
+requires inspection after push. Earlier-head results are not current acceptance.
+
+See [reopening behavior](TELEGRAM_TASK_REOPENING.md) and the expanded
+[pending live checklist](TELEGRAM_LIVE_ACCEPTANCE_CHECKLIST.md). All live cases
+remain Pending. No provider call, production data, scheduler, monitor execution,
+publication or activation occurred. Task cancellation, completed-work reopening
+and amendments under active formal review remain separate source actions.
 
 Next: inspect fresh exact-head full repository normal/shuffled/dependency/
 container/aggregate CI, then continue the next explicitly requested feature.

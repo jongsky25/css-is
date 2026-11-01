@@ -1,6 +1,6 @@
 # Private submitted-task acceptance and return
 
-Draft PR #572, candidate 9.68. The owner approved adding review features before
+Draft PR #572, candidate 9.69. The owner approved adding review features before
 deployment, preview publication, activation and personal/live testing. Those steps
 remain deferred. Local verification uses synthetic accounts/records and blocked
 outgoing providers.
@@ -50,8 +50,9 @@ starts after preparation, preserving dependent formal approvals.
 The existing native review mutation records status/revision and normal work
 event/audit/reminder effects. It preserves owner, submission, expected output,
 required status and deadlines. It does not complete the work case or approve,
-release, close or change dates on an official document. Assignment, reassignment,
-reopening and task cancellation remain separate work.
+release, close or change dates on an official document. Assignment, reassignment and
+[accepted-task reopening](TELEGRAM_TASK_REOPENING.md) have independent workflows;
+task cancellation remains separate work.
 
 Full task/work state, linked document metadata and append-only work-event history
 fence stale/reverted previews. Submission contents are hashed only. Current native

@@ -25,6 +25,7 @@ FEATURES=(
  ('rooms.move','Calendar','Room date moves','/room_move — change your own request’s date; approved bookings require a new approval.',('rooms.read',),None,True),
  ('work.read','Tasks and work','Work lookup','/my_summary; /my_tasks; /my_work; /task_status WORK_ID TASK_ID; /work_status WORK_ID.\nExample: /my_tasks overdue (also upcoming or review).',(),work.enabled,False),
  ('tasks.create','Tasks and work','Task proposals','/new_task — propose a task in permitted work; officer confirmation remains required.',('work.read',),work.enabled,True),
+ ('tasks.reopen','Tasks and work','Task reopening','/task_reopen — officer/work-lead return of a Done task to In progress.',('work.read',),work.enabled,True),
  ('tasks.reassign','Tasks and work','Task reassignment','/task_reassign — officer transfer to another owner; status returns to To do.',('work.read',),work.enabled,True),
  ('tasks.assign','Tasks and work','Task assignment','/task_assign — officer confirmation of proposed task ownership.',('work.read',),work.enabled,True),
  ('tasks.accept','Tasks and work','Task acceptance','/task_accept — review and accept a submitted task.',('work.read',),work.enabled,True),
@@ -65,7 +66,7 @@ def availability(conn,delivery,bot):
         elif pull_only and not webhook():reason='this delivery mode does not support the feature; contact your administrator'
         elif any(not links.authorized(conn,actor['id'],s) for s in (scope,*dependencies)):
             missing=[links.SCOPES[s] for s in (scope,*dependencies) if not links.authorized(conn,actor['id'],s)]
-            reason='missing consent: '+', '.join(missing)+'; review permissions and relink to add them'
+            reason='missing consent: '+', '.join(missing)
         else:reason=''
         result.append({'scope':scope,'group':group,'label':label,'commands':commands,'reason':reason})
     return result
