@@ -1,3 +1,9 @@
+## 9.56 — November 1, 2026
+
+- Serialize audit appends before reading the previous hash, preserving caller-owned transactions.
+- Hash target IDs in their stored text representation, including numeric zero.
+- Preserve existing audit history and warnings; document the read-only investigation of #8949 and later chain forks.
+
 ## 9.55 — October 31, 2026
 
 - Add a repeatable cloud development workflow, saved session handoffs and the repository-based “office connect” startup shorthand.

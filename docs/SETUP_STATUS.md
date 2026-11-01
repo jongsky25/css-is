@@ -1,6 +1,6 @@
 # Cloud/mobile setup status
 
-Updated: 2026-10-31. Repository: `jongsky25/css-is` (Office Connect BLHSD).
+Updated: 2026-11-01. Repository: `jongsky25/css-is` (Office Connect BLHSD).
 Integration branch: `setup/cloud-mobile-continuity`; default startup branch after
 merge: `main`.
 
@@ -74,6 +74,16 @@ access remains necessary in a fresh chat.
 - [x] 6. Monitoring gaps assessed and reusable workflow/templates documented; no external alerts configured.
 
 ## Next action
+
+User resumed the audit warning on November 1 and reports backups fixed.
+Investigation and prospective write fixes are on `fix/audit-chain-investigation`;
+see [audit investigation](operations/audit-2026-11-01.md). The #8949 numeric-zero
+hash mismatch is reproduced; two later forks match the concurrent-writer defect.
+Historical records and warnings are preserved. Validation and save results are
+recorded below. No production release is authorized by this request.
+Automatic monitoring remains separate. Earlier deferral statements below are
+historical and no longer defer this requested investigation.
+
 
 Use the [mobile/cloud workflow](MOBILE_CLOUD_WORKFLOW.md) for the user's next
 requested feature or fix. The collaboration setup is ready on this branch;
@@ -378,3 +388,25 @@ Synchronized version.py, Markdown changelog and service-worker version to 9.55.
 This entry records the candidate, not a claim that CI, merge or deployment has
 completed. The PR and GitHub checks provide the actual integration outcome.
 Deferred audit/exposure findings stay deferred. No release gates may be bypassed.
+
+## Audit warning candidate — November 1, 2026
+
+Branch `fix/audit-chain-investigation`, based on main `e0dde74` (merged 9.55).
+Saved as [draft PR #573](https://github.com/jongsky25/css-is/pull/573), initial
+implementation commit `360517c`. Release CI is not yet verified.
+Version 9.56 synchronizes release metadata for review; it is not deployed.
+Read-only snapshot investigation and production limits are in
+[the audit report](operations/audit-2026-11-01.md).
+
+Python 3.11 hashed test-lock installation and pip check passed. Isolated targeted
+audit, integration access/changes, travel transaction, appearance and monitoring
+checks: **125 passed**, zero skips/failures (27.47 seconds). JUnit gate, release
+metadata check, changed documentation links and git diff check passed. One
+existing Starlette/httpx deprecation warning was emitted. Full normal/shuffled
+suites and dependency/container audits remain release CI requirements; these
+targeted results do not replace them. No preview is needed for this storage-only
+change. No production data mutation, merge, restart or deployment occurred.
+
+Next: review the saved candidate and its CI before any explicitly requested
+release. The historical #8949 warning is intentionally preserved; incident
+acknowledgment/checkpoint design remains separate from the prospective writer fix.
