@@ -706,3 +706,32 @@ now **9.59**, with actual main release 9.58 preserved. Current runbooks and the
 Pending live-test checklist reflect 9.59. Fresh merged-source verification follows.
 No operational-monitor run/notification test, production data change, Telegram
 activation, merge to main or deployment was initiated by this task.
+
+## Personalized menu and checklist verified — current candidate 9.59
+
+Source/test head `cee7614`, with main `c81b235` preserved, passed **813** all-
+Telegram plus operational-monitor/audit/deployment/release cases and **69**
+shuffled menu/phone/guided/monitor cases, zero failures/skips. Final menu/worker
+run: **23 passed**. Groups overlap. Reports are
+`/tmp/telegram-959-merged-regressions-final.xml`,
+`/tmp/telegram-959-merged-shuffled.xml`, `/tmp/telegram-menu-worker-final.xml`.
+The earlier stale help-heading assertion is fixed and now explicitly verifies
+neutral unlinked help with no business commands. Six actual no-script phone
+consent/read/menu/status/disconnect cases pass with outgoing Telegram forbidden.
+
+`/menu` and `/help` show only currently available/consented commands, grouped with
+examples; `/status` explains exact missing consent or paused controls without
+listing unavailable commands. Task-specific next actions honor current owner,
+write consent, source state/open-work/blocker rules. List/detail/back/recovery
+guidance is added without granting permission or creating records.
+
+See the [menu guide](TELEGRAM_MENU.md) and the
+[concrete later live checklist](TELEGRAM_LIVE_ACCEPTANCE_CHECKLIST.md), whose
+live cases are all Pending. Metadata/locks/vendor/compatibility/AI contract,
+compile, links and PR whitespace checks pass. Final edits only record results;
+no app source changes follow those runs. Draft PR #572 remains unmerged on
+`feat/telegram-private-work-lookup`, candidate **9.59**. Next: inspect fresh
+exact-head full normal/shuffled/dependency/aggregate CI and review the draft;
+release, host activation, real messages and live acceptance remain deferred.
+No monitor run, notification test, production/preview deployment or live data
+mutation was initiated by this task. Group/scheduled/outgoing T4.4 work stays open.
