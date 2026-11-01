@@ -1,7 +1,8 @@
 ## 9.56 — November 1, 2026
 
 - Add optional private Telegram task and work-status lookups with separate consent and current record access checks.
-- Support bounded pages, deadlines, task status and signed-in source links through private webhook replies; no task updates or automatic notifications.
+- Support bounded pages, overdue/upcoming/review filters, deadlines, task progress and signed-in source links through private webhook replies.
+- With separate consent, preview and confirm task acknowledgement or output submission for review; no automatic notifications.
 
 ## 9.55 — October 31, 2026
 

@@ -25,10 +25,11 @@ CHANGELOG = [
     {
         "version": "9.56",
         "date": "November 1, 2026",
-        "summary": "Look up your tasks and work status in your private Telegram chat.",
+        "summary": "Check and update your tasks through private Telegram previews.",
         "changes": [
             "With your separate consent, Telegram can show your assigned tasks, deadlines and permitted work status.",
-            "Private lookup commands include links back to the current Office Connect records."
+            "Filter your tasks by deadline or review status and open the current records.",
+            "Separate consent and confirmation let you acknowledge a task or submit an output for review."
         ]
     },
     {

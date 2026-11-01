@@ -175,3 +175,47 @@ def test_paging_filters_unauthorized_work_before_limit(work_env):
     text = lookup(work_env, '/my_work')
     assert 'Synthetic work' in text and 'Hidden item' not in text
     assert 'Next page' not in text
+
+
+@pytest.mark.parametrize('filter_,expected',[('overdue','overdue'), ('upcoming','upcoming'), ('review','review')])
+def test_task_filters_before_limit_with_manila_dates(work_env,filter_,expected):
+    c,*_=work_env
+    dates={'overdue':('2026-10-24','todo'),'upcoming':('2026-10-25','in_progress'),'review':('2026-11-30','for_review')}
+    ids={}
+    for label,(due,status) in dates.items():
+        _,task=seed(work_env)
+        ids[label]=task['id']
+        c.execute('UPDATE work_task SET due_date=?,status=? WHERE id=?',(due,status,task['id']));c.commit()
+    _,finished=seed(work_env)
+    c.execute("UPDATE work_task SET due_date='2026-10-01',status='done' WHERE id=?",(finished['id'],));c.commit()
+    text=lookup(work_env,'/my_tasks '+filter_)
+    assert 'Task '+str(ids[expected])+' ·' in text
+    for label,id_ in ids.items():
+        if label!=expected:assert 'Task '+str(id_)+' ·' not in text
+    assert 'Task '+str(finished['id'])+' ·' not in text
+
+
+def test_filter_pagination_keeps_filter(work_env):
+    c,*_=work_env
+    for i in range(12):
+        _,task=seed(work_env)
+        c.execute("UPDATE work_task SET status='for_review' WHERE id=?",(task['id'],));c.commit()
+    text=lookup(work_env,'/my_tasks review')
+    assert 'Next page: /my_tasks review ' in text
+    assert 'Next page:' not in lookup(work_env,text.split('Next page: ')[1].splitlines()[0],11)
+
+
+def test_overdue_uses_manila_date_across_utc_midnight(work_env,monkeypatch):
+    from datetime import datetime,timezone
+    c,*_=work_env
+    _,old=seed(work_env)
+    _,today=seed(work_env)
+    c.execute("UPDATE work_task SET due_date='2026-10-24' WHERE id=?",(old['id'],))
+    c.execute("UPDATE work_task SET due_date='2026-10-25' WHERE id=?",(today['id'],));c.commit()
+    monkeypatch.setenv('CSS_TELEGRAM_REPLY_TRANSPORT','webhook')
+    monkeypatch.setattr(bot,'now_utc',lambda:datetime(2026,10,24,18,tzinfo=timezone.utc))
+    # The original link was established on October 25 UTC; only date filtering
+    # matters here, and delegated connections have no future-created cutoff.
+    reply=submit(work_env[3],update(10,text='/my_tasks overdue')).json()
+    assert 'Task '+str(old['id'])+' ·' in reply['text']
+    assert 'Task '+str(today['id'])+' ·' not in reply['text']

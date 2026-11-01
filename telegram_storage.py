@@ -5,7 +5,7 @@ import os
 # Deliberately independent of Apprise's private discussion digest switch.
 SWITCHES = (
     'inbound', 'delivery', 'link', 'groups', 'calendar_read', 'rooms_read',
-    'calendar_create', 'rooms_request', 'change_notices', 'reminders', 'work_read',
+    'calendar_create', 'rooms_request', 'change_notices', 'reminders', 'work_read', 'tasks_acknowledge', 'tasks_submit',
 )
 
 
@@ -229,13 +229,15 @@ def install(conn):
       UPDATE telegram_preview SET state='cancelled',fields_json=NULL,summary_json=NULL,expected_json=NULL
         WHERE registration_id=NEW.id AND state='pending';
     END;
-    CREATE TRIGGER IF NOT EXISTS telegram_preview_grant AFTER UPDATE OF revoked_at ON telegram_grant
+    DROP TRIGGER IF EXISTS telegram_preview_grant;
+    CREATE TRIGGER telegram_preview_grant AFTER UPDATE OF revoked_at ON telegram_grant
     WHEN NEW.revoked_at IS NOT NULL
     BEGIN
       UPDATE telegram_preview SET state='cancelled',fields_json=NULL,summary_json=NULL,expected_json=NULL
         WHERE connection_id=NEW.connection_id AND generation=NEW.generation AND state='pending'
         AND (action=NEW.action OR (NEW.action='calendar.read' AND action='calendar.create')
-          OR (NEW.action='rooms.read' AND action='rooms.request'));
+          OR (NEW.action='rooms.read' AND action='rooms.request')
+          OR (NEW.action='work.read' AND action IN ('tasks.acknowledge','tasks.submit')));
     END;
     CREATE TRIGGER IF NOT EXISTS telegram_account_revoked
     AFTER UPDATE OF active,must_change,role,username,pw_hash,salt ON admin_user

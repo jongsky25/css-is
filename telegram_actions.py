@@ -5,6 +5,7 @@ prepare/revalidate/apply/check_receipt, with domain authorization on every call.
 apply runs under BEGIN IMMEDIATE and MUST NOT commit or perform network I/O.
 """
 from datetime import timedelta
+from contextlib import nullcontext
 import base64
 import hmac
 import auth
@@ -22,7 +23,7 @@ import telegram_storage as switches
 import telegram_transport as transport
 
 ADAPTERS = {}
-ACTIONS = {'calendar.create':'calendar_create','rooms.request':'rooms_request'}
+ACTIONS = {'calendar.create':'calendar_create','rooms.request':'rooms_request', 'tasks.acknowledge':'tasks_acknowledge', 'tasks.submit':'tasks_submit'}
 TTL = 300
 CONTEXT = {'connection_id','generation','sender_id','chat_id','topic_id','registration_id','registration_generation'}
 
@@ -83,7 +84,10 @@ def authority(conn,context,action):
         group=groups.route(conn,context['chat_id'],context['topic_id'],bot)
         if not group or group['id']!=context['registration_id'] or group['generation']!=context['registration_generation']:
             raise Unavailable('Group context unavailable.')
-    if not links.authorized(conn,found[0]['id'],'calendar.read' if action=='calendar.create' else 'rooms.read'):
+    if action.startswith('tasks.') and context['chat_id'] < 0:
+        raise Unavailable('Task actions are private only.')
+    read_scope = 'work.read' if action.startswith('tasks.') else ('calendar.read' if action=='calendar.create' else 'rooms.read')
+    if not links.authorized(conn,found[0]['id'],read_scope):
         raise Unavailable('Current read consent is required for this action.')
     if action=='rooms.request' and not links.authorized(conn,found[0]['id'],'calendar.read'):
         raise Unavailable('Calendar read consent is required for a linked room request.')
@@ -94,13 +98,15 @@ def fingerprint(action,fields,expected,summary):
     return digest(packed([action,fields,expected,summary]))
 
 
-def issue(conn,context,action,client_key,fields,now):
+def issue(conn,context,action,client_key,fields,now, *, commit=True):
     if not isinstance(client_key,str) or not re.fullmatch('[A-Za-z0-9_-]{16,80}',client_key):
         raise Unavailable('Use a unique action key.')
     if not isinstance(fields,dict):
         raise Unavailable('Action fields must be structured.')
     packed(fields)
-    with transaction(conn):
+    if not commit and not conn.in_transaction:
+        raise RuntimeError('Caller-owned action requires a transaction')
+    with transaction(conn) if commit else nullcontext():
         user,adapter,bot=authority(conn,context,action)
         # Adapter supplies normalized fields, exact user-facing preview and expected revisions.
         clean,summary,expected=adapter.prepare(conn,user,fields)
@@ -141,8 +147,10 @@ def receipt(conn,user,adapter,operation):
     return {k:operation[k] for k in ('operation_id','action','state','result_entry_id','result_room_id','result_code')}
 
 
-def recover(conn,context,action,operation_id):
-    with transaction(conn):
+def recover(conn,context,action,operation_id, *, commit=True):
+    if not commit and not conn.in_transaction:
+        raise RuntimeError('Caller-owned recovery requires a transaction')
+    with transaction(conn) if commit else nullcontext():
         user,adapter,_=authority(conn,context,action)
         found=rows(conn,'SELECT * FROM telegram_operation WHERE actor_id=? AND operation_id=? AND action=? AND connection_id=? AND generation=? AND context_hash=?',
                    (user['id'],operation_id,action,context['connection_id'],context['generation'],digest(packed(context))))
@@ -162,12 +170,16 @@ def confirm(conn,context,token,now):
     return confirm_digest(conn,context,digest(token),now)
 
 
-def confirm_digest(conn,context,token_hash,now):
+def confirm_digest(conn,context,token_hash,now, *, commit=True):
     started=time.monotonic()
     clock=lambda:now+timedelta(seconds=time.monotonic()-started)
     binding(context)
     if not isinstance(token_hash,str) or not re.fullmatch('[a-f0-9]{64}',token_hash):
         raise Unavailable('Confirmation unavailable.')
+    if not commit and not conn.in_transaction:
+        raise RuntimeError('Caller-owned confirmation requires a transaction')
+    if not commit and context['chat_id'] < 0:
+        raise Unavailable('Inline actions are private only.')
     # Fresh membership proof outside the writer lock, followed by local generation rechecks.
     if context['chat_id']<0:
         pre=rows(conn,'SELECT action FROM telegram_preview WHERE token_hash=?',(token_hash,))
@@ -177,7 +189,7 @@ def confirm_digest(conn,context,token_hash,now):
         check={**context,'projection_json':packed({'kind':'group_status','bot':bot[0],'fingerprint':bot[2]})}
         if not groups.verify_delivery(conn,check,bot):
             raise Unavailable('Group membership could not be verified.')
-    with transaction(conn):
+    with transaction(conn) if commit else nullcontext():
         found=rows(conn,'SELECT * FROM telegram_preview WHERE token_hash=?',(token_hash,))
         if not found:
             raise Unavailable('Confirmation unavailable.')

@@ -1,5 +1,6 @@
 """Private, current-authority task/work metadata lookup; no business writes."""
 from contextlib import nullcontext
+from datetime import timedelta
 import re
 
 import documents_permissions as permissions
@@ -9,7 +10,7 @@ import telegram_links as links
 import work
 import work_reads
 
-USAGE = ('Use /my_tasks [BEFORE_ID], /my_work [BEFORE_ID], '
+USAGE = ('Use /my_tasks [all|overdue|upcoming|review] [BEFORE_ID], /my_work [BEFORE_ID], '
          '/task_status WORK_ID TASK_ID, or /work_status WORK_ID. Read only.')
 COMMANDS = ('/my_tasks', '/my_work', '/task_status', '/work_status')
 
@@ -19,24 +20,30 @@ def parse(text):
     if not parts or parts[0] not in COMMANDS:
         raise ValueError(USAGE)
     command, args = parts[0], parts[1:]
+    filter_ = None
+    if command == '/my_tasks' and args and args[0] in ('all', 'overdue', 'upcoming', 'review'):
+        filter_, args = args[0], args[1:]
     if not ((command in COMMANDS[:2] and len(args) <= 1)
             or (command == '/task_status' and len(args) == 2)
             or (command == '/work_status' and len(args) == 1)):
         raise ValueError(USAGE)
     if any(not re.fullmatch('[1-9][0-9]{0,18}', arg) or int(arg) > 9223372036854775807 for arg in args):
         raise ValueError(USAGE)
-    return {'command': command, 'ids': [int(arg) for arg in args]}
+    query = {'command': command, 'ids': [int(arg) for arg in args]}
+    if filter_:
+        query['filter'] = filter_
+    return query
 
 
 def validate(query):
     if query == {'error': 'usage'}:
         return True
-    if not isinstance(query, dict) or set(query) != {'command', 'ids'} or not isinstance(query['ids'], list):
+    if not isinstance(query, dict) or set(query) not in ({'command', 'ids'}, {'command', 'ids', 'filter'}) or not isinstance(query['ids'], list):
         return False
     if any(type(i) is not int for i in query['ids']):
         return False
     try:
-        return parse(str(query['command']) + ' ' + ' '.join(map(str, query['ids']))) == query
+        return parse(str(query['command']) + ' ' + (str(query['filter']) + ' ' if 'filter' in query else '') + ' '.join(map(str, query['ids']))) == query
     except ValueError:
         return False
 
@@ -52,14 +59,19 @@ def actor(conn, delivery, bot):
     return user if user and work.enabled(conn) else None
 
 
-def owned_tasks(conn, user, before=0):
+def owned_tasks(conn, user, before=0, filter_='all', today=None):
     # Apply both ownership and the canonical source-document visibility policy
     # before LIMIT, so a hidden linked document cannot leak through a task.
     scope = permissions.RegistryScope(conn, user)
+    policies = {'all': '1', 'review': "t.status='for_review'",
+                'overdue': "t.status NOT IN ('done','cancelled') AND t.due_date<:today",
+                'upcoming': "t.status NOT IN ('done','cancelled') AND t.due_date BETWEEN :today AND :end"}
+    condition = policies[filter_]
     return rows(conn, f'''SELECT t.* FROM work_task t JOIN work_case wc ON wc.id=t.case_id
         WHERE t.owner_id=:registry_actor AND {scope.work_view_sql('wc')}
-        AND (:before=0 OR t.id<:before) ORDER BY t.id DESC LIMIT 11''',
-        {**scope.params, 'before': before})
+        AND {condition} AND (:before=0 OR t.id<:before) ORDER BY t.id DESC LIMIT 11''',
+        {**scope.params, 'before': before, 'today': today.isoformat() if today else None,
+         'end': (today+timedelta(days=7)).isoformat() if today else None})
 
 
 def task_line(row):
@@ -98,17 +110,22 @@ def render(conn, delivery, projection, bot, now, *, commit=True):
                 else:
                     text = work_line(item)
                     counts = rows(conn, 'SELECT status,count(*) AS n FROM work_task WHERE case_id=? GROUP BY status ORDER BY status', (ids[0],))
+                    total = sum(r['n'] for r in counts)
+                    done = sum(r['n'] for r in counts if r['status']=='done')
+                    text += '\nCompleted: ' + str(done) + '/' + str(total) + ' tasks'
                     text += '\nTasks: ' + (', '.join(str(r['n']) + ' ' + r['status'].replace('_', ' ') for r in counts) or 'none')
                 return text + '\n' + links.origin() + '/work/' + str(ids[0])
             except permissions.Denied:
                 return 'Task or work item unavailable to this account.'
         before = ids[0] if ids else 0
         if command == '/my_tasks':
-            records = owned_tasks(conn, user, before)
+            records = owned_tasks(conn, user, before, query.get('filter', 'all'), now.astimezone(common.ZONE).date())
             more = len(records) > 10
             records = records[:10]
             line = task_line
-            text = 'My assigned tasks (newest first)'
+            text = 'My assigned tasks (newest first) · ' + query.get('filter', 'all')
+            if query.get('filter') == 'upcoming':
+                text += '\nDue today through the next 7 days · Asia/Manila'
         else:
             records, next_before = work_reads.page(conn, user, before=before, limit=10)
             more = next_before is not None
@@ -124,5 +141,5 @@ def render(conn, delivery, projection, bot, now, *, commit=True):
         if not records:
             text += '\nNo items on this page.'
         if shown and (more or len(shown) < len(records)):
-            text += '\nNext page: ' + command + ' ' + str(shown[-1]['id'])
+            text += '\nNext page: ' + command + ' ' + (query['filter']+' ' if 'filter' in query else '') + str(shown[-1]['id'])
         return text + '\n\nOpen shared work: ' + links.origin() + '/work'

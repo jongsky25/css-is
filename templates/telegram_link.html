@@ -14,10 +14,11 @@
 {% if calendar_ready %}
 <p>In your private chat, send <code>/calendar</code> for this week or <code>/calendar YYYY-MM-DD YYYY-MM-DD</code> for up to 31 days. Replies use Asia/Manila time. Use the next-page command in the reply to continue.</p>
 {% else %}<p>Private calendar lookup requires its optional pilot and your calendar read consent. Check with the hosting administrator if the pilot is paused.</p>{% endif %}
-<p>{% if work_ready %}Private work lookup: <code>/my_tasks</code>, <code>/task_status WORK_ID TASK_ID</code>, <code>/my_work</code> and <code>/work_status WORK_ID</code>. These commands only read current permitted records.{% else %}Private task and work lookup requires its optional pilot and separate work read consent. Disconnect and link again to change permissions.{% endif %}</p>
+<p>{% if work_ready %}Private work lookup: <code>/my_tasks</code>, <code>/task_status WORK_ID TASK_ID</code>, <code>/my_work</code> and <code>/work_status WORK_ID</code>. Use <code>/my_tasks overdue</code>, <code>/my_tasks upcoming</code> or <code>/my_tasks review</code> to filter. These commands only read current permitted records.{% else %}Private task and work lookup requires its optional pilot and separate work read consent. Disconnect and link again to change permissions.{% endif %}</p>
 {% if rooms_ready %}<p>Private room lookup: <code>/room_slots YYYY-MM-DD</code>, <code>/my_rooms</code>, or <code>/room_status CR-YYYY-NNNN</code>. Slot availability and your request status are read only; pending requests do not hold a booking.</p>
 {% else %}<p>Private room lookup requires its optional pilot and your room read consent.</p>{% endif %}
 <p>{% if meeting_ready %}Send <code>/meeting</code> privately or in a registered topic, fill the signed-in guided form and confirm the exact preview in your private bot chat.{% else %}Meeting creation requires its optional pilot and fresh explicit calendar read and meeting-create consent. Disconnect and link again to change permissions.{% endif %} {% if room_request_ready %}Send <code>/room_request</code> for one pending room request linked to an existing meeting you created or participate in. Confirm the exact hours privately; normal approval still applies.{% else %}Room requests require the optional pilot and fresh explicit calendar read, room read and room-request consent.{% endif %} Change or approve requests in Office Connect. Linking never grants access beyond your current Office Connect permissions.</p>
+<p>Task actions, when enabled and separately consented: <code>/task_ack WORK_ID TASK_ID</code> to preview acknowledgement, or <code>/task_submit WORK_ID TASK_ID</code> to prepare an output submission. Both require an exact private preview and confirmation. No action occurs from lookup alone.</p>
 <form method="post" action="/account/telegram/disconnect">
 <input type="hidden" name="csrf" value="{{ csrf }}">
 <button type="submit">Disconnect Telegram and cancel pending links</button>
@@ -35,7 +36,7 @@
 <fieldset><legend>Optional permissions</legend>
 {% for key,label in scopes.items() %}<p><label><input type="checkbox" name="scopes" value="{{ key }}"> {{ label }}</label></p>{% endfor %}
 </fieldset>
-<p>Meeting creation additionally requires the calendar read checkbox. A separate room-request checkbox requires both calendar and room read consent. Neither grants approval authority or group disclosure.</p>
+<p>Meeting creation additionally requires the calendar read checkbox. A separate room-request checkbox requires both calendar and room read consent. Neither grants approval authority or group disclosure. Task acknowledgement and submission each require their separate checkbox and the work read checkbox.</p>
 <p><label><input type="checkbox" name="consent" value="yes" required> Link this Office Connect account to my own private Telegram account.</label></p>
 <button type="submit">Request confirmation in Telegram</button>
 </form>

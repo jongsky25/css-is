@@ -76,3 +76,81 @@ ineligible. Disabling this switch does not alter calendar/room grants, existing
 business records or unrelated notification preferences. Restore retains the
 existing global integration revocation behavior. No schema migration or new
 third-party dependency is introduced.
+
+## Draft batch: filters, acknowledgement and review submission
+
+The owner requested building the next batch before any live deployment/testing.
+These additions are held in the same draft PR and candidate release 9.56.
+They do not claim that the full Telegram hosted pilot is complete.
+
+- `/my_tasks overdue`: unfinished tasks with due date before today in Asia/Manila.
+- `/my_tasks upcoming`: unfinished tasks due today through seven days ahead,
+  inclusive. Tasks without a due date are excluded.
+- `/my_tasks review`: tasks with status `for_review`.
+- `/my_tasks all`: all owned tasks, including completed/cancelled records.
+- Each filter accepts an optional `BEFORE_ID`; the supplied next-page command
+  retains the filter. Date filters apply before the page limit.
+- `/work_status WORK_ID` also reports completed/total tasks and counts by state;
+  the denominator includes all current task states. This is a task progress
+  summary, not an invented overall work-case status.
+
+### Acknowledge a task
+
+With separate `tasks.acknowledge` consent and
+`CSS_TELEGRAM_TASKS_ACKNOWLEDGE_ENABLED=1`, send
+`/task_ack WORK_ID TASK_ID` in your linked private chat. It returns the task,
+status transition, note, operation ID, five-minute expiry and exact
+`/task_confirm CODE` command. Nothing changes until you send that confirmation.
+The normal workflow moves an owned `todo` task to `in_progress`.
+
+### Submit output for review
+
+With separate `tasks.submit` consent and
+`CSS_TELEGRAM_TASKS_SUBMIT_ENABLED=1`, send
+`/task_submit WORK_ID TASK_ID`. Open the signed-in link, enter output/evidence
+(up to 1,800 characters) and a note (up to 500), then prepare the preview.
+This does not submit the task. Send the displayed `/task_preview OPERATION_ID`
+in the original private chat, review the exact normalized output, then send its
+`/task_confirm CODE`. A current owned `in_progress` task moves to `for_review`;
+this is not acceptance/completion. Existing blockers, prerequisite acceptance,
+open-work checks, current source-document access and review rules still apply.
+Long Unicode input can require shortening to fit Telegram's message limit.
+Line breaks are preserved; other control characters are replaced with spaces
+in the preview and saved output alike. Attachments are outside this increment.
+
+### Shared action rules
+
+Both actions require `work.read`, its host switch, active Documents/Collaborative
+work and current separate action consent. All new switches default off and
+consent checkboxes default unchecked. Existing links must explicitly relink;
+no grant is added by deployment. Task actions use webhook mode only; direct-mode
+commands are ignored and cannot mutate a task. Calendar/room workflows retain
+their existing transports and permissions. No group task action is exposed.
+
+The form is signed-in, CSRF protected, bounded, rate limited and revision bound.
+The private confirmation is actor/connection/bot/context bound. Current workflow
+and revisions are rechecked under the writer lock. The change, domain audit,
+consumed preview, operation receipt and uncertain webhook handoff commit
+atomically. Partial action failures roll back before a neutral error response.
+No network request occurs under that transaction. Duplicate update IDs do not
+repeat a command; repeated confirmation returns the recorded outcome without
+repeating the task mutation. Two confirmations racing serialize to one mutation.
+
+Use `/task_receipt OPERATION_ID` for the recorded outcome and current task status.
+Receipt access still requires current ownership/read/action grants; it cannot
+keep source access alive after reassignment or revocation. Telegram provides no
+webhook delivery result. A lost response can be recovered with an explicit fresh
+receipt command; uncertain sends are not replayed automatically.
+
+Submission text is entered only in the signed-in form. It is retained in the
+bounded expiring action preview, shown in the private Telegram preview with
+explicit consent, and saved to the ordinary work record/audit on confirmation.
+It is not stored in Telegram update/delivery payloads, logs, message links or
+URL arguments. Expiry, consumption, disconnect, restore and work-read/action
+grant revocation scrub pending preview fields with the existing retention rules.
+The new work-read revocation fence also applies on upgraded databases.
+
+Pause individual actions with their host switches; pause all task/work access
+with `CSS_TELEGRAM_WORK_READ_ENABLED=0`. No disabled action can confirm. Existing
+confirmed work records are preserved. Live activation/acceptance remains deferred
+by the owner's explicit request; all test users, records and providers are fake.

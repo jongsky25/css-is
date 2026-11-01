@@ -417,3 +417,23 @@ Deferred operations findings remain deferred.
 
 Saved remotely in [draft PR #572](https://github.com/jongsky25/css-is/pull/572),
 implementation commit `b31a6f2`; exact-head CI pending. No merge/deployment.
+
+## Private Telegram task batch staged — 2026-11-01
+
+Owner approved building more before deployment/live testing. Same draft PR #572
+and branch `feat/telegram-private-work-lookup`, still candidate 9.56, now include
+overdue/upcoming/review task filters, completed/total work progress, acknowledgement
+and output submission for review through exact private previews/confirmation.
+Separate default-off action switches and `tasks.acknowledge`/`tasks.submit` consent
+are required along with work-read access. Canonical ownership, workflow, blockers,
+revision checks, audit and atomic durable receipts apply. No group task actions
+or automatic notifications. See the [updated runbook](TELEGRAM_WORK_LOOKUP.md).
+
+Final local checks: 292 broader regressions, 88 shuffled cases and 43 final
+consent/link/browser cases passed with zero failures/skips (overlapping groups).
+Two actual mobile no-script workflows cover reading and task submission with
+outbound Telegram forbidden. Metadata/locks/vendor/compatibility/AI contract,
+compile, local links and diff checks passed. Full repository suites and dependency
+audit remain PR CI gates. Next: keep reviewing/adding on the draft; release,
+activation and live testing are deferred by the owner's explicit instruction.
+No production/preview setting, real message, merge or deployment changed.

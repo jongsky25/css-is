@@ -14,7 +14,7 @@ import storage as st
 import telegram_storage as switches
 import telegram_transport as transport
 
-SCOPES = {'calendar.read': 'Read permitted calendar entries', 'rooms.read': 'Read room availability and own requests', 'calendar.create':'Create one meeting after an exact private preview and confirmation', 'rooms.request':'Request a room for my permitted meeting after private confirmation', 'work.read': 'Read my tasks and permitted work status in private'}
+SCOPES = {'calendar.read': 'Read permitted calendar entries', 'rooms.read': 'Read room availability and own requests', 'calendar.create':'Create one meeting after an exact private preview and confirmation', 'rooms.request':'Request a room for my permitted meeting after private confirmation', 'work.read': 'Read my tasks and permitted work status in private', 'tasks.acknowledge': 'Acknowledge my task after private confirmation', 'tasks.submit': 'Submit my task for review after private confirmation'}
 
 
 def stamp(now):
@@ -91,6 +91,9 @@ def claim(conn, payload, raw_code, scopes, now):
         raise ValueError('Meeting creation requires its pilot and separate calendar read consent.')
     if 'rooms.request' in scopes and (not {'calendar.read','rooms.read'}<=set(scopes) or not switches.enabled('rooms_request')):
         raise ValueError('Room requests require their pilot and separate calendar and room read consent.')
+    for action in ('tasks.acknowledge','tasks.submit'):
+        if action in scopes and ('work.read' not in scopes or not switches.enabled(action.replace('.','_'))):
+            raise ValueError('Task actions require their pilot and separate work read consent.')
     with transaction(conn):
         user = current(conn, payload)
         found = rows(conn, 'SELECT * FROM telegram_link_challenge WHERE token_hash=?', (digest(raw_code),))

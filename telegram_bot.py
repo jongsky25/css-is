@@ -23,6 +23,7 @@ import telegram_groups as groups
 import telegram_calendar as calendar_reads
 import telegram_rooms as room_reads
 import telegram_work as work_lookup
+import telegram_tasks as task_actions
 import telegram_group_reads as shared_reads
 import telegram_actions
 import telegram_meetings as meetings
@@ -172,6 +173,12 @@ def normalize(value):
                 clean['work_query'] = work_lookup.parse(text)
             except ValueError:
                 clean['work_query'] = {'error': 'usage'}
+        if first in task_actions.COMMANDS:
+            clean['command'] = first
+            try:
+                clean['task_query'] = task_actions.parse(text)
+            except ValueError:
+                clean['task_query'] = {'error': 'usage'}
         if first == '/confirm' and len(parts) == 2 and re.fullmatch(r'[a-f0-9]{64}', parts[1]):
             clean['command'] = first
             clean['argument_hash'] = links.digest(parts[1])
@@ -217,6 +224,23 @@ def receive(conn, clean, raw, bot, now, webhook_reply=None):
         if clean.get('group_event'):
             groups.handle_event(conn, clean, bot)
         cid, generation, permitted = identity(conn, clean['sender_id'])
+        if clean['command'] in task_actions.COMMANDS:
+            inline = (webhook_reply is not None and storage.enabled('delivery') and storage.enabled('link')
+                      and transport.config()==bot and cid is not None and permitted)
+            conn.execute("""INSERT INTO telegram_update
+                (bot_identity,update_id,sender_id,chat_id,topic_id,connection_id,generation,payload_hash,received_at,state)
+                VALUES (?,?,?,?,?,?,?,?,?,?)""", (bot[0],clean['update_id'],clean['sender_id'],clean['chat_id'],None,
+                    cid,generation,hashlib.sha256(raw).hexdigest(),stamp(now),'processed' if inline else 'ignored'))
+            if inline:
+                text = task_actions.handle(conn,clean,bot,now)
+                conn.execute("""INSERT INTO telegram_delivery
+                    (dedupe_key,event_key,connection_id,generation,chat_id,projection_json,expires_at,created_at,updated_at,state,attempts,error_code)
+                    VALUES (?,?,?,?,?,'{}',?,?,?,'uncertain',1,'webhook_response')""",
+                    ('task-response:'+str(bot[0])+':'+str(clean['update_id']),str(bot[0]),cid,generation,
+                     clean['chat_id'],stamp(now+timedelta(minutes=5)),stamp(now),stamp(now)))
+                webhook_reply.append({'method':'sendMessage','chat_id':clean['chat_id'],'text':text,
+                                      'link_preview_options':{'is_disabled':True}})
+            return 200
         if clean['command'] in ('/meeting','/room_request','/meeting_confirm','/meeting_receipt','/room_confirm','/room_receipt'):
             projection=None;state='ignored'
             try:
@@ -557,8 +581,9 @@ def render_delivery(conn, delivery, projection, bot, now, *, commit=True):
             'Office Connect private commands: /start to link, /status to check your connection, '
             '/disconnect to revoke it. Never send your Office Connect password here.'
             + (' Private calendar lookup: /calendar (Asia/Manila).' if storage.enabled('calendar_read') else '')
-            + (' Private work lookup: /my_tasks, /task_status WORK_ID TASK_ID, /my_work, /work_status WORK_ID (separate work read consent).' if storage.enabled('work_read') else '')
+            + (' Private work lookup: /my_tasks [overdue|upcoming|review], /task_status WORK_ID TASK_ID, /my_work, /work_status WORK_ID (separate work read consent).' if storage.enabled('work_read') else '')
             + (' Private room lookup: /room_slots, /my_rooms, /room_status REFERENCE.' if storage.enabled('rooms_read') else '')
+            + (' Task actions: /task_ack WORK_ID TASK_ID, /task_submit WORK_ID TASK_ID; preview and confirmation required.' if storage.enabled('tasks_acknowledge') or storage.enabled('tasks_submit') else '')
             + (' Guided meeting pilot: /meeting (separate read/create consent required).' if storage.enabled('calendar_create') else '')
             + (' Linked room request pilot: /room_request (separate room request/read and calendar read consent).' if storage.enabled('rooms_request') else ''))
     else:
