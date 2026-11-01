@@ -2,7 +2,9 @@ name: Office Connect operational monitor
 
 on:
   schedule:
-    - cron: '2-59/5 * * * *'
+    # Explicit minutes retain the offset five-minute cadence and refresh
+    # GitHub's schedule registration after no scheduled events were created.
+    - cron: '2,7,12,17,22,27,32,37,42,47,52,57 * * * *'
   workflow_dispatch:
     inputs:
       test_notification:

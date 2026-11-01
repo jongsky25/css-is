@@ -1,5 +1,34 @@
 # Operational monitoring
 
+## Deployment and verification status — November 1, 2026
+
+Release 9.58 is merged/deployed through PR #575 and production run 41273309243.
+The live private probes returned all four signals healthy in two observations.
+Marked test issue #576 was created by GitHub Actions and assigned to the owner;
+a retry reused that issue without sending an additional notification.
+
+The automatic cron is configured on main but has not yet produced an observed
+scheduled execution. Do not equate the successful manual test with verified
+automatic coverage. The owner's screenshot and the API now confirm the workflow
+is enabled. Command access has recovered; scheduling registration was refreshed
+at 06:15:58 UTC on November 1 by disabling and immediately re-enabling it.
+Normal manual run 41280398437 passed all four signals twice with no alert changes.
+Actual scheduled execution and phone receipt confirmation remain unverified.
+
+The November 1 investigation found no scheduled events despite the enabled state,
+valid cron on main and successful manual checks. GitHub Status reported no active
+incident; the cause remains unconfirmed. Candidate `fix/monitor-schedule-registration`
+(9.59) spells out the same minutes to prompt source-based registration. It requires
+the normal release gates and promotion; only an actual schedule-triggered run can
+establish success. Do not ask the owner to find another Enable button.
+
+
+See [current handoff](SETUP_STATUS.md) for exact evidence and next actions.
+Automated sign-in/out events appear under the deployment account in audit/usage
+views. Public issue metadata remains generic; private operational records stay
+inside the authenticated application.
+
+
 ## Candidate 9.58 — November 1, 2026
 
 Owner requested automatic outage, backup and new-audit-failure alerts, including a
