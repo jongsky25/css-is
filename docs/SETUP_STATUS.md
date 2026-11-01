@@ -75,6 +75,24 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**Seasonal release PR opened — November 1, 2026.**
+[Draft PR #578](https://github.com/jongsky25/css-is/pull/578) prepares 9.60.
+Owner accepted the richer preview design and requested checks/release preparation;
+production approval remains pending. Local release/appearance/preview group:
+67 passed in 44.60s, no failures/skips. Metadata, lock-input and AI contract checks
+passed. Required CI is running on the PR; exact final-head status must be read
+from GitHub before claiming release readiness. Do not enable auto-merge.
+Post-metadata merge-tree simulation against Telegram `cb192da` confirms conflicts
+only in CHANGELOG.md, version.py, static/js/sw.js and docs/SETUP_STATUS.md.
+These are release history/cache/status reconciliation, with no seasonal/Telegram
+runtime source conflict observed. Proposed order remains seasonal first; if main
+advances, update/reconcile and rerun all required checks. Keep the accepted preview
+at `f4438aa` while CI runs; no republish or production change is needed.
+Next: inspect full exact-head normal/shuffled/dependency/metadata/aggregate results,
+resolve failures if any, and ask for explicit merge/deployment approval only once
+the candidate passes. Final CI evidence belongs in PR #578 to avoid restarting
+the verified source commit solely to record check results.
+
 **Seasonal release preparation authorized — November 1, 2026.** Owner accepted
 the richer design and requested release preparation/PR/checks, with merge and
 production deployment explicitly left for final approval. Candidate 9.60 on
