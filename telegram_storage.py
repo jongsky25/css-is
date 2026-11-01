@@ -5,7 +5,7 @@ import os
 # Deliberately independent of Apprise's private discussion digest switch.
 SWITCHES = (
     'inbound', 'delivery', 'link', 'groups', 'calendar_read', 'rooms_read',
-    'calendar_create', 'calendar_reschedule', 'calendar_cancel', 'rooms_request', 'rooms_withdraw', 'rooms_move', 'change_notices', 'reminders', 'work_read', 'tasks_acknowledge', 'tasks_submit', 'tasks_create', 'tasks_deadline', 'tasks_accept', 'tasks_return', 'tasks_assign', 'tasks_reassign', 'tasks_reopen', 'tasks_cancel', 'tasks_block', 'tasks_unblock', 'tasks_dependency_add', 'tasks_dependency_remove', 'work_comment', 'tasks_comment', 'work_reply', 'tasks_reply', 'tasks_review_read', 'tasks_blockers_read', 'documents_read', 'supplies_read', 'travel_read', 'meals_read', 'arrangements_read',
+    'calendar_create', 'calendar_reschedule', 'calendar_cancel', 'rooms_request', 'rooms_withdraw', 'rooms_move', 'change_notices', 'reminders', 'work_read', 'tasks_acknowledge', 'tasks_submit', 'tasks_create', 'tasks_deadline', 'tasks_accept', 'tasks_return', 'tasks_assign', 'tasks_reassign', 'tasks_reopen', 'tasks_cancel', 'tasks_block', 'tasks_unblock', 'tasks_dependency_add', 'tasks_dependency_remove', 'work_comment', 'tasks_comment', 'work_reply', 'tasks_reply', 'work_comment_edit', 'tasks_comment_edit', 'tasks_review_read', 'tasks_blockers_read', 'documents_read', 'supplies_read', 'travel_read', 'meals_read', 'arrangements_read',
 )
 
 
@@ -24,6 +24,9 @@ def install(conn):
     if conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='telegram_operation'").fetchone():
         if 'comment_id' not in {r[1] for r in conn.execute('PRAGMA table_info(telegram_operation)')}:
             conn.execute('ALTER TABLE telegram_operation ADD COLUMN comment_id INTEGER')
+    if conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='telegram_operation'").fetchone():
+        if 'comment_revision' not in {r[1] for r in conn.execute('PRAGMA table_info(telegram_operation)')}:
+            conn.execute('ALTER TABLE telegram_operation ADD COLUMN comment_revision INTEGER')
     conn.executescript('''
     CREATE TABLE IF NOT EXISTS telegram_connection (
       id INTEGER PRIMARY KEY,
@@ -63,7 +66,7 @@ def install(conn):
       actor_id INTEGER NOT NULL REFERENCES admin_user(id),
       connection_id INTEGER NOT NULL REFERENCES telegram_connection(id),
       generation TEXT NOT NULL, action TEXT NOT NULL, client_key TEXT NOT NULL,
-      input_hash TEXT NOT NULL, context_hash TEXT, context_json TEXT, target_id INTEGER, expected_revision TEXT, dependency_task_id INTEGER, comment_id INTEGER,
+      input_hash TEXT NOT NULL, context_hash TEXT, context_json TEXT, target_id INTEGER, expected_revision TEXT, dependency_task_id INTEGER, comment_id INTEGER, comment_revision INTEGER,
       state TEXT NOT NULL DEFAULT 'pending'
         CHECK(state IN ('pending','committed','partial','failed','cancelled')),
       result_entry_id INTEGER REFERENCES calendar_entry(id),
@@ -192,9 +195,9 @@ def install(conn):
     BEGIN
       UPDATE telegram_preview SET state='cancelled',fields_json=NULL,summary_json=NULL,expected_json=NULL
         WHERE state='pending' AND operation_id IN
-          (SELECT operation_id FROM telegram_operation WHERE action IN ('tasks.deadline','tasks.accept','tasks.return','tasks.assign','tasks.reassign','tasks.reopen','tasks.cancel','tasks.block','tasks.unblock','tasks.dependency_add','tasks.dependency_remove','work.comment','tasks.comment','work.reply','tasks.reply') AND target_id=OLD.id);
+          (SELECT operation_id FROM telegram_operation WHERE action IN ('tasks.deadline','tasks.accept','tasks.return','tasks.assign','tasks.reassign','tasks.reopen','tasks.cancel','tasks.block','tasks.unblock','tasks.dependency_add','tasks.dependency_remove','work.comment','tasks.comment','work.reply','tasks.reply','work.comment_edit','tasks.comment_edit') AND target_id=OLD.id);
       UPDATE telegram_operation SET target_id=NULL,dependency_task_id=NULL,result_code='task_deleted'
-        WHERE action IN ('tasks.create','tasks.deadline','tasks.accept','tasks.return','tasks.assign','tasks.reassign','tasks.reopen','tasks.cancel','tasks.block','tasks.unblock','tasks.dependency_add','tasks.dependency_remove','work.comment','tasks.comment','work.reply','tasks.reply') AND target_id=OLD.id;
+        WHERE action IN ('tasks.create','tasks.deadline','tasks.accept','tasks.return','tasks.assign','tasks.reassign','tasks.reopen','tasks.cancel','tasks.block','tasks.unblock','tasks.dependency_add','tasks.dependency_remove','work.comment','tasks.comment','work.reply','tasks.reply','work.comment_edit','tasks.comment_edit') AND target_id=OLD.id;
     END;
     DROP TRIGGER IF EXISTS telegram_dependency_prerequisite_delete;
     CREATE TRIGGER telegram_dependency_prerequisite_delete BEFORE DELETE ON work_task
@@ -210,9 +213,9 @@ def install(conn):
     BEGIN
       UPDATE telegram_preview SET state='cancelled',fields_json=NULL,summary_json=NULL,expected_json=NULL
         WHERE state='pending' AND operation_id IN
-          (SELECT operation_id FROM telegram_operation WHERE action IN ('work.comment','tasks.comment','work.reply','tasks.reply') AND expected_revision=CAST(OLD.id AS TEXT));
-      UPDATE telegram_operation SET target_id=NULL,comment_id=NULL,expected_revision=NULL,result_code='work_deleted'
-        WHERE action IN ('work.comment','tasks.comment','work.reply','tasks.reply') AND expected_revision=CAST(OLD.id AS TEXT);
+          (SELECT operation_id FROM telegram_operation WHERE action IN ('work.comment','tasks.comment','work.reply','tasks.reply','work.comment_edit','tasks.comment_edit') AND expected_revision=CAST(OLD.id AS TEXT));
+      UPDATE telegram_operation SET target_id=NULL,comment_id=NULL,comment_revision=NULL,expected_revision=NULL,result_code='work_deleted'
+        WHERE action IN ('work.comment','tasks.comment','work.reply','tasks.reply','work.comment_edit','tasks.comment_edit') AND expected_revision=CAST(OLD.id AS TEXT);
     END;
     CREATE TRIGGER IF NOT EXISTS telegram_calendar_receipt_delete BEFORE DELETE ON calendar_entry
     BEGIN
@@ -272,7 +275,7 @@ def install(conn):
           OR (NEW.action='rooms.read' AND action IN ('rooms.request','rooms.withdraw','rooms.move'))
           OR (NEW.action='calendar.read' AND action='rooms.move'
               AND json_extract(CASE WHEN json_valid(expected_json) THEN expected_json ELSE '{}' END,'$.entry_id') IS NOT NULL)
-          OR (NEW.action='work.read' AND action IN ('tasks.acknowledge','tasks.submit','tasks.create','tasks.deadline','tasks.accept','tasks.return','tasks.assign','tasks.reassign','tasks.reopen','tasks.cancel','tasks.block','tasks.unblock','tasks.dependency_add','tasks.dependency_remove','work.comment','tasks.comment','work.reply','tasks.reply')));
+          OR (NEW.action='work.read' AND action IN ('tasks.acknowledge','tasks.submit','tasks.create','tasks.deadline','tasks.accept','tasks.return','tasks.assign','tasks.reassign','tasks.reopen','tasks.cancel','tasks.block','tasks.unblock','tasks.dependency_add','tasks.dependency_remove','work.comment','tasks.comment','work.reply','tasks.reply','work.comment_edit','tasks.comment_edit')));
     END;
     CREATE TRIGGER IF NOT EXISTS telegram_account_revoked
     AFTER UPDATE OF active,must_change,role,username,pw_hash,salt ON admin_user

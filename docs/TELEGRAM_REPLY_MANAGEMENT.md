@@ -1,6 +1,6 @@
 # Private replies to work and task comments
 
-Draft PR #572, candidate 9.76. Work/task discussion replies are implemented for
+Draft PR #572, candidate 9.77. Work/task discussion replies are implemented for
 later activation. Deployment, preview publication, activation and personal/live
 testing remain deferred. Local verification uses synthetic data and blocked providers.
 
@@ -62,8 +62,9 @@ submissions, blockers, dependencies, deadlines, events and formal approval/revie
 records stay unchanged. Native discussion can remain available on completed work,
 Done/Cancelled tasks and work under active formal review. Changed source after
 preview still requires a fresh preview; discussion never submits, accepts, reopens,
-approves or resolves a changed-decision review. Mentions, edits and reading stored
-discussion remain in Office Connect.
+approves or resolves a changed-decision review. Your own text edits use
+[separate edit confirmation](TELEGRAM_COMMENT_EDITING.md); mentions and reading
+stored discussion remain in Office Connect.
 
 ## Stale parents, atomicity and recovery
 

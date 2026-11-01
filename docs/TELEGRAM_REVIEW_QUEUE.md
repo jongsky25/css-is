@@ -1,6 +1,6 @@
 # Private task review queue
 
-Draft PR #572, candidate 9.76. The owner requested a review queue after task action
+Draft PR #572, candidate 9.77. The owner requested a review queue after task action
 features. Deployment, preview publication, activation and personal/live testing
 remain deferred. Local verification uses synthetic records and blocked providers.
 

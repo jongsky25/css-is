@@ -17930,6 +17930,8 @@ import telegram_comment_manage_routes
 app.include_router(telegram_comment_manage_routes.make_router(templates, get_conn))
 import telegram_reply_manage_routes
 app.include_router(telegram_reply_manage_routes.make_router(templates, get_conn))
+import telegram_comment_edit_routes
+app.include_router(telegram_comment_edit_routes.make_router(templates, get_conn))
 import telegram_room_request_routes
 app.include_router(telegram_room_request_routes.make_router(templates, get_conn))
 app.include_router(work_routes.make_router(templates, get_conn))

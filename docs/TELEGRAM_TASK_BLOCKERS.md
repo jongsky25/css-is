@@ -1,6 +1,6 @@
 # Private task blockers and prerequisites lookup
 
-Draft PR #572, candidate 9.76. The owner approved blocker/prerequisite lookup.
+Draft PR #572, candidate 9.77. The owner approved blocker/prerequisite lookup.
 Deployment, preview publication, activation and personal/live testing remain
 deferred. Local verification uses synthetic records and blocked outgoing providers.
 

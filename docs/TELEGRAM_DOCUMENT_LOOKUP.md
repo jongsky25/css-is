@@ -1,7 +1,7 @@
 # Private Telegram document lookup
 
 This draft addition is held with the private-task batch in PR #572, candidate
-9.76. The owner requested building before live deployment/testing. Nothing in
+9.77. The owner requested building before live deployment/testing. Nothing in
 this change enables production delivery or document access automatically.
 
 | Command | Result |

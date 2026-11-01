@@ -1,6 +1,6 @@
 # Office Connect ↔ Telegram delivery plan
 
-Status: T0–T4.3.2 merged; T4.4 hosted pilot incomplete. Draft PR #572 (candidate 9.76) adds private task/document/supplies/personal reads, confirmed task updates and private guided meeting/room webhook replies. Owner confirms hosted linking/calendar retrieval; new draft capabilities, group/automatic outgoing delivery and the complete pilot remain unverified live. Source switches remain default-off.
+Status: T0–T4.3.2 merged; T4.4 hosted pilot incomplete. Draft PR #572 (candidate 9.77) adds private task/document/supplies/personal reads, confirmed task updates and private guided meeting/room webhook replies. Owner confirms hosted linking/calendar retrieval; new draft capabilities, group/automatic outgoing delivery and the complete pilot remain unverified live. Source switches remain default-off.
 Last updated: 2026-11-01.
 Repository: jongsky25/css-is.
 Planning baseline inspected: abf3141 (merge of PR #458).
@@ -1939,6 +1939,137 @@ See [reply behavior](TELEGRAM_REPLY_MANAGEMENT.md) and
 remain Pending. No real Telegram message/provider registration, production data,
 scheduler/monitor execution, deployment, preview publication or activation occurred.
 Initial prior-head `7c0e8a5` inspection found metadata/dependency audit/avatar
+functional checks passing and full normal/shuffled checks running; those are not
+new-head acceptance.
+
+Next: inspect fresh exact-head full repository normal/shuffled/dependency/
+container/aggregate CI and continue only the next explicitly requested feature.
+Main merge/release, preview publication, activation and personal/live testing
+remain deferred until the owner's later instruction.
+
+
+## Private author-owned comment editing — 2026-11-01
+
+Owner explicitly approved editing their own work/task comments. Implemented
+`/work_comment_edit` and `/task_comment_edit`, signed-in no-script forms, exact
+private previews/confirmation and recovery on branch
+`feat/telegram-private-work-lookup`, draft PR #572, candidate **9.77**. Actual main
+remains `a7b9b38` (released 9.59), preserved on the review branch. Deployment,
+preview publication, activation and personal/live testing remain deferred.
+
+Independent default-off `CSS_TELEGRAM_WORK_COMMENT_EDIT_ENABLED` /
+`work.comment_edit` and `CSS_TELEGRAM_TASKS_COMMENT_EDIT_ENABLED` /
+`tasks.comment_edit` require work-read consent and current private inbound/link/
+delivery/account/bot/original chat proof. Other comment/reply/task/read grants
+provide neither edit; one edit scope grants neither the other nor post/reply
+creation. Group/topic/direct-worker paths are refused. Consent grants no access.
+
+Only the original author with current work/every-linked-document access may edit,
+including their own replies. Reader/lead/officer/technical administrator status
+cannot override authorship. Exact comment must be in the selected work-level or
+same-task thread. Form takes exact source IDs/current comment revision and complete
+plain replacement text (up to 1,000 characters), normalizes line endings and refuses
+controls, unsupported parent/mention/progress fields, invalid/stale revisions and
+unchanged text. Visible source comment number/revision supports selection.
+
+Preview shows exact target, current → next revision, unchanged reply parent if any,
+source link and full replacement text with visibility notice. Old text/history
+and mentioned identities stay in Office Connect. The current comment/mention
+metadata is hashed only; older revision contents are not fetched. Existing
+structured mentions are preserved via native mentions=None and currently validated
+before preview/confirmation; inactive/no-access mentions block editing, including
+eligibility lost after preview without a source revision change. Their count alone
+is shown. Literal @name adds no mention. Amend mention selection in source if needed.
+
+One immutable revision is added; original comment, author, timestamp, parent and
+all old revisions remain intact. Native edit notice/author-read behavior applies,
+without new follower/reply notices or notification preferences. Work/task/document
+status, revisions, ownership, submissions, blockers, dependencies, deadlines, events
+and formal review/approvals remain unchanged. Native informal editing can remain
+available on completed work, terminal tasks and under active formal review. Unrelated
+comments remain independent. Newer edits before preview retrieval/confirmation
+require review of the latest revision and a fresh preview; no later text is overwritten.
+Current source/module/scope/pilot/context/expiry/revoke/account/disconnect/restore
+fences remain enforced.
+
+Extracted strict caller-owned `work_discussion.edit_in_transaction`; public `edit`
+retains its wrapper and identical native edit body (AST parity verified). Revision,
+retained mentions/native notice/read effects, recorded edit revision, consumed
+preview, receipt and private reply handoff commit atomically. Failures roll back;
+duplicate/concurrent confirmation adds one revision once. Native source constraints
+and authorship/history/mention behavior remain unchanged for existing callers.
+
+Additive nullable `telegram_operation.comment_revision` migrates before triggers
+and leaves older operations unchanged/null. Existing comment_id stores the selected
+comment; the recorded saved revision is retained separately from current source
+revision. Deletion/revocation fences include both edit scopes. Work deletion and
+retained-key cleanup clear identifier/revision/routing fields; native immutable
+history/FKs protect source references. Recovery checks current source/thread/author
+and reports original edit revision/current revision plus a link, without stored
+text/replay/overwrite. A later native edit to revision 3 leaves an earlier operation
+reported as recorded 2/current 3. Existing comment/reply forms now link to separate
+edit commands and keep their original field contracts.
+
+Shared status lists the repeated work-read prerequisite once when both action and
+read consent are missing, while retaining every feature/full missing action consent
+and the separate Work lookup consent. This fixes the maximum-origin message budget
+without hiding availability details. Schema-upgrade coverage simulates absence of
+the new column and checks that old pending operations receive no saved edit revision.
+
+Isolated Python 3.11 verification: **2466 broad regressions passed**
+across Telegram/native work, integration submission API/MCP submissions, audit-chain
+writers, deployment and release checks. **1090 current shuffled
+edit/reply/comment/task/action/menu/phone checks** (seed 311) passed.
+**337 combined edit/phone/shared/native-work checks** passed,
+including both final inactive-mention-after-preview cases. Earlier focused edits:
+**123 passed**; earlier phone/shared/menu/budget group:
+**49 passed**. All groups have zero failures/errors/skips and
+overlap. All final service/phone cases preceded broad/shuffled collection; no
+application source edits followed the passing final groups.
+
+Original-author authority against reader/lead/officer/technical-admin overrides,
+exact source/thread/revision selection, plain/no-op refusal, stale preview retrieval/
+confirmation and fresh revision, old immutable history/reply parent, retained
+mentions/current eligibility before/after preview, native notice/read effects,
+unchanged terminal/formal/business state, current source/context/revocation/restore
+fences, strict caller-owned contract, notice/receipt/handoff rollback, retries/
+concurrency, retention and recorded-versus-current revision recovery pass.
+Both 390×844 JavaScript-disabled phone flows verify source comment ID/revision,
+independent grants/menu/forms, CSRF/strict fields, other-author/stale revision
+refusal, full exact replacement preview, confirmation/retry, old history, unchanged
+work/tasks, no mentions/outgoing calls and expired sessions. Native discussion and
+submission API/MCP callers pass with the identical public edit body. Initial shared
+wiring exposed the expanded maximum-origin status budget; the repeated work-read
+prerequisite is now listed once without hiding any feature or missing action
+consent. Final combined/broad/shuffled groups include that passing budget case.
+No native constraint, author/permission assertion or no-skips gate was weakened.
+
+The initial broad attempt was interrupted after the 8.8 GiB temporary volume filled
+with retained synthetic test databases (browser crashes and SQLite disk-full setup
+errors; 1982 reported cases, 2 failures/229 errors). Its report is retained separately
+as `/tmp/telegram-comment-edit-regressions-disk-full-interrupted.xml` and is not
+acceptance evidence. Removed only completed/interrupted synthetic pytest directories,
+preserving XML reports, and reran the entire unchanged broad command with
+`--basetemp=/workspace/office-test-tmp/comment-edit-regressions` on the larger
+workspace volume. The passing broad count above is from that clean rerun.
+`docs/CLOUD_WORKSPACE.md` now records capacity checks, separate larger-volume
+pytest scratch paths for concurrent runs, report preservation and clean reruns.
+
+Reports: `/tmp/telegram-comment-edit-regressions.xml`,
+`/tmp/telegram-comment-edit-shuffled.xml`, `/tmp/telegram-comment-edit-verified.xml`,
+`/tmp/telegram-comment-edit-focused.xml` and
+`/tmp/telegram-comment-edit-phone-wiring.xml`; all pass the JUnit no-skips gate.
+Candidate 9.77 metadata over actual main 9.59, dependency locks/vendor integrity,
+installed compatibility, AI contract 1.12.0, Python compilation, local Markdown
+links and whitespace pass. Existing Starlette/httpx deprecation warning remains.
+Full exact-head repository normal/shuffled/dependency/container/aggregate CI still
+requires inspection after push; prior-head evidence is not current acceptance.
+
+See [editing behavior](TELEGRAM_COMMENT_EDITING.md) and
+[pending live acceptance](TELEGRAM_LIVE_ACCEPTANCE_CHECKLIST.md). All live rows
+remain Pending. No real Telegram message/provider registration, production data,
+scheduler/monitor execution, deployment, preview publication or activation occurred.
+Initial prior-head `6a83c07` inspection found metadata/dependency audit/avatar
 functional checks passing and full normal/shuffled checks running; those are not
 new-head acceptance.
 

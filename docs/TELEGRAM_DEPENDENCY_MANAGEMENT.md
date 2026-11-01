@@ -1,6 +1,6 @@
 # Private task dependency management
 
-Draft PR #572, candidate 9.76. Adding and removing prerequisites are implemented
+Draft PR #572, candidate 9.77. Adding and removing prerequisites are implemented
 for later activation. Deployment, preview publication, activation and personal/live
 testing remain deferred. Automated checks use synthetic data and blocked providers.
 

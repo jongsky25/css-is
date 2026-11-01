@@ -1,4 +1,6 @@
-## 9.76 — November 1, 2026
+## 9.77 — November 1, 2026
+
+- Add independently consented author-only work/task comment edits with exact revision/replacement previews, retained immutable history/mentions and atomic native edit/receipt writes; newer edits, source permissions and approvals remain protected.
 
 - Add separately consented work/task discussion replies with exact parent number/revision previews, current thread/source checks and atomic native reply/receipt writes; parent text stays in Office Connect and progress/approvals remain unchanged.
 
