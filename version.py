@@ -31,6 +31,7 @@ CHANGELOG = [
             "Filter your tasks by deadline or review status and open the current records.",
             "Separate consent and confirmation let you acknowledge a task or submit an output for review.",
             "Find permitted document numbers, subjects and status with a separate document read permission.",
+            "Check your supply request approval and collection status with separate consent.",
             "A private summary combines overdue tasks, upcoming deadlines and work awaiting review."
         ]
     },

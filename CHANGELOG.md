@@ -1,5 +1,7 @@
 ## 9.56 — November 1, 2026
 
+- Add separately consented private supplies-request lookup with source approval, collection and receipt-confirmation stages.
+
 - Add separately consented private document number/subject search and workflow/routing/review status lookup.
 - Add a private work summary combining overdue tasks, upcoming deadlines and work awaiting review.
 

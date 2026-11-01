@@ -5,7 +5,7 @@ import os
 # Deliberately independent of Apprise's private discussion digest switch.
 SWITCHES = (
     'inbound', 'delivery', 'link', 'groups', 'calendar_read', 'rooms_read',
-    'calendar_create', 'rooms_request', 'change_notices', 'reminders', 'work_read', 'tasks_acknowledge', 'tasks_submit', 'documents_read',
+    'calendar_create', 'rooms_request', 'change_notices', 'reminders', 'work_read', 'tasks_acknowledge', 'tasks_submit', 'documents_read', 'supplies_read',
 )
 
 

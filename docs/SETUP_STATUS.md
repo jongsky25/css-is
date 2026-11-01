@@ -456,3 +456,26 @@ contract/compatibility, compilation, relative links and whitespace passed.
 Full repository suites/container audit remain PR CI gates. Next: review or
 continue building on the draft as directed; deployment, activation and live
 testing remain deferred. No real messages, production/preview changes or merge.
+
+## Next increment: own supplies-request lookup staged — 2026-11-01
+
+User instructed continuation once ready. Verified all checks passed at draft head
+`8ec39b4`: functional, metadata, dependency audit, full Python 3.11 normal/shuffled
+suites and Required checks (CI run 41259502581). Continued to bounded T7.2a on the
+same draft PR #572/branch/candidate 9.56, preserving deferred deployment/live tests.
+
+Added `/my_supplies [all|active|needs_action|completed] [PAGE]` and
+`/supply_status REQUEST_ID`: only the owner's reference, approval/collection stage,
+needed date and source link. Separate default-off Supplies-read switch/consent;
+Supplies must be enabled, Documents/work need not be. No stock/item/people/notes
+projection, actions, receipt acknowledgement or notifications. Source requester
+stage defines pickup/handover/receipt semantics. [Runbook](TELEGRAM_SUPPLIES_LOOKUP.md).
+
+257 broader cases, 41 shuffled cases and 18 final focused cases passed with zero
+failures/skips (overlapping groups), including source-service approval→handover→
+receipt transitions, admin/business-role isolation and a third no-script mobile
+consent/read/disconnect case. Metadata/locks/vendor/compatibility/AI contract,
+compile, links and diff checks passed. Fresh exact-head PR CI is required for
+this new child; prior head's green CI is historical evidence. Next: inspect
+that CI/review before further expansion. Draft remains unmerged and no hosting,
+preview, feature switch, real Telegram send or live acceptance was performed.
