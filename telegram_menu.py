@@ -79,6 +79,8 @@ def render(conn,delivery,bot,now):
         entries=[f for f in ready if f['group']==group]
         if entries:text+='\n\n'+group+'\n'+'\n'.join(f['commands'] for f in entries)
     if not ready:text+='\nNo business commands are enabled and consented for this connection yet.'
+    if webhook() and any(f['scope'] in ('calendar.read','work.read','rooms.read','supplies.read','travel.read','meals.read','arrangements.read') for f in ready):
+        text+='\n\nDaily brief\n/brief — your calendar, task summary and request statuses; selected, permitted sections only.'
     return (text+'\n\nAccount\n/status — availability and missing permissions. /menu or /help — this menu.'
             +'\n/disconnect — revoke this connection.'+account_link()
             +'\nUse IDs/references shown in your own results. Current record permissions and workflow rules still apply.'

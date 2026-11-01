@@ -1,6 +1,6 @@
 # Office Connect ↔ Telegram delivery plan
 
-Status: T0–T4.3.2 merged; T4.4 hosted pilot incomplete. Draft PR #572 (candidate 9.59) adds private task/document/supplies/personal reads, confirmed task updates and private guided meeting/room webhook replies. Owner confirms hosted linking/calendar retrieval; new draft capabilities, group/automatic outgoing delivery and the complete pilot remain unverified live. Source switches remain default-off.
+Status: T0–T4.3.2 merged; T4.4 hosted pilot incomplete. Draft PR #572 (candidate 9.60) adds private task/document/supplies/personal reads, confirmed task updates and private guided meeting/room webhook replies. Owner confirms hosted linking/calendar retrieval; new draft capabilities, group/automatic outgoing delivery and the complete pilot remain unverified live. Source switches remain default-off.
 Last updated: 2026-11-01.
 Repository: jongsky25/css-is.
 Planning baseline inspected: abf3141 (merge of PR #458).
@@ -689,3 +689,31 @@ T2.2 merge reconciliation: preserved concurrent search release 8.60 and its runt
 - User/operator docs: [personalized menu](TELEGRAM_MENU.md). The [later private live checklist](TELEGRAM_LIVE_ACCEPTANCE_CHECKLIST.md) covers actual version/SHA/CI/backup prerequisites, low-privilege scope discovery, records/paging, task and guided meeting/room confirmations/recovery, all module statuses, privacy/revocation and pause/evidence. Every live case is explicitly Pending; no action is scheduled or authorized now.
 - Candidate 9.59 metadata/increase against main 9.58, runtime closure, lock/vendor/installed compatibility, AI contract, compilation, local relative links and full PR whitespace checks pass. No app source changes follow the final merged-candidate runs; final commit only records these outcomes. Fresh exact-head repository-wide normal/shuffled/dependency/aggregate CI still must be inspected before any release/readiness claim.
 - Same draft PR #572, `feat/telegram-private-work-lookup`. No new scope, schema, provider/service, BotFather registration, activation, Telegram message, monitor test, live data action, preview publication or deployment was performed by the menu task. Next: review fresh CI and the concrete draft/checklist, or continue separately scoped additions when requested. T4.4 group/scheduled/outgoing/live acceptance remains open.
+
+
+### Daily brief and staged reminder choices — candidate 9.60, 2026-11-01
+
+Owner approved an on-demand daily work brief and reminder preferences, with
+scheduled delivery, activation and live testing deferred. `/brief` combines
+current permitted personal calendar entries, existing work/task summary and
+own-only request statuses. Every source retains its independent read grant,
+module, pilot and ownership/visibility policy. Bounded sections provide full
+lookup/detail commands; no records are mutated or business text queued.
+
+The signed-in notification page saves own section choices and a future reminder
+preference/time. The reminder preference defaults off and has no scheduler,
+worker/enqueue hook or automatic activation. Existing reminders and quiet hours
+remain separate. See [daily brief behavior](TELEGRAM_DAILY_BRIEF.md) and the
+expanded [pending live checklist](TELEGRAM_LIVE_ACCEPTANCE_CHECKLIST.md).
+
+Verification is being completed on `feat/telegram-private-work-lookup`; no
+production or preview publish, real message, host activation or live test is
+authorized by this implementation request. Exact-head full CI is still required.
+
+
+Daily-brief verification: **775** all-Telegram/deployment/release regressions and
+**37** shuffled brief/menu/phone-form cases passed with zero failures/errors/skips
+(groups overlap). Both JUnit gates, 9.60 metadata/increase, locks/vendor, installed
+compatibility, AI contract, compile, documentation links and whitespace pass.
+No source edits followed these runs. Full exact-head normal/shuffled/container
+dependency/aggregate CI remains a release gate; live cases remain Pending.

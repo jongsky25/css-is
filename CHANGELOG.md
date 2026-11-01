@@ -1,4 +1,6 @@
-## 9.59 — November 1, 2026
+## 9.60 — November 1, 2026
+
+- Add an on-demand private /brief combining permitted calendar, task and request summaries, with per-account section choices and staged reminder preferences; scheduled delivery stays inactive.
 
 - Add a private personalized /menu and /help, availability explanations in /status, and record-specific detail/back/allowed-action guidance.
 

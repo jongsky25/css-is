@@ -735,3 +735,48 @@ exact-head full normal/shuffled/dependency/aggregate CI and review the draft;
 release, host activation, real messages and live acceptance remain deferred.
 No monitor run, notification test, production/preview deployment or live data
 mutation was initiated by this task. Group/scheduled/outgoing T4.4 work stays open.
+
+
+## Daily work brief and saved reminder choices — 2026-11-01
+
+Owner approved building an on-demand daily brief and reminder preferences before
+activation/live testing. Draft PR #572 continues on
+`feat/telegram-private-work-lookup`, unpublished candidate **9.60**. Main c81b235
+(9.58) is preserved; this task does not resume monitoring or operations work.
+
+`/brief` composes permitted personal calendar entries for today through six days
+ahead, the existing task/work summary and own room/supplies/personal-request
+statuses. Each source requires its existing consent/module/pilot. Sections have
+bounded current-source results and full lookup commands; no business record is
+changed and no business text is cached for replay. Calendar covers the full dated
+range, including earlier entries today. Recent personal filings include all
+statuses and are labeled accordingly.
+
+The signed-in, phone-width, JavaScript-free notification page saves separate
+section choices, an off-by-default future reminder preference and preferred
+Manila time. CSRF, current session/account, input bounds, stale revisions and
+atomic audit checks apply. There is no daily-brief scheduler, enqueue path or
+sending hook. Saved choices neither grant permissions nor change existing
+calendar/room reminders, email channels, quiet hours or host switches.
+
+See [daily brief details](TELEGRAM_DAILY_BRIEF.md) and the expanded
+[pending live checklist](TELEGRAM_LIVE_ACCEPTANCE_CHECKLIST.md).
+
+Current isolated Python 3.11 verification: **775 all-Telegram plus deployment/
+release regressions passed**, **37 shuffled brief/menu/phone-form cases passed**,
+zero failures/errors/skips (overlapping groups). Reports:
+`/tmp/telegram-brief-regressions.xml` and `/tmp/telegram-brief-shuffled.xml`;
+both JUnit gates pass. The earlier initial subset passed 33 cases and the three
+phone-form cases passed separately; these overlap the final groups. Metadata/
+version increase (9.60 over main 9.58), dependency locks/vendor integrity, installed
+compatibility, AI contract, compilation, documentation file links and whitespace
+checks passed. The existing Starlette/httpx deprecation warning remains. No
+application source changes followed the passing runs. Full repository-wide
+normal/shuffled suites and dependency/container audit are fresh exact-head CI
+gates, not claimed passed locally.
+
+Next: inspect exact-head full normal/shuffled/dependency/aggregate CI and review
+the draft. Deployment, preview publication, activation, real messages and live
+testing remain deferred. A future scheduled-brief delivery implementation needs
+separate consent/delivery/quiet-hour/deduplication/expiry/revocation design and
+verification; storing a preferred time does not authorize or activate it.

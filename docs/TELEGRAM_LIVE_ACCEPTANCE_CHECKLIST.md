@@ -7,7 +7,7 @@ without the owner's later release/testing instruction.
 
 ## Before the later pilot
 
-1. Identify the reviewed PR/source commit and candidate version (currently 9.59).
+1. Identify the reviewed PR/source commit and candidate version (currently 9.60).
    Verify the actual candidate's required metadata/dependency/full normal/shuffled/
    aggregate CI, main freshness and synchronized versions. Old-head checks do not
    establish readiness. Follow existing release and verified-backup gates.
@@ -37,6 +37,8 @@ without the owner's later release/testing instruction.
 | Menu examples and navigation | Use displayed task-filter/search examples with fake data. List detail commands contain the correct IDs; detail/back/paging/source links reach the same permitted records. | Pending |
 | Current-menu refresh | Revoke one scope or pause one pilot, then request a fresh menu. Removed commands disappear and the actual operation is denied too. An old menu never keeps authority alive. | Pending |
 | Tasks read | Compare overdue/upcoming/review filters, owner task status and work summary with Office Connect. Manila date boundaries, empty states and next pages agree; hidden linked documents suppress related work/tasks. | Pending |
+| Daily work brief | Compare `/brief` with the permitted calendar, task summary and own request sources. Verify Manila date range, newest-two/all-status labels, empty sections, section preferences and detail commands; omit revoked/paused scopes. No record is changed. | Pending |
+| Staged brief reminder choices | Save section choices, a preferred Manila time and the future reminder preference from the phone form. Save confirms scheduled delivery is not active; no reminder or queued daily delivery appears. Existing calendar/room choices are unchanged. | Pending |
 | Task actions | With separate read/acknowledge/submit consent, preview then confirm own To do → In progress → For review. Output is entered in the signed-in form. Source blockers/open-work/revisions remain enforced; readonly users get no write hint. | Pending |
 | Task recovery | Repeat an already consumed confirmation and request its receipt. One task transition/audit outcome is recorded; no second mutation or submission is created. | Pending |
 | Documents | Find a synthetic permitted number/subject and compare workflow/routing/paper status. Body/file/people/notes are absent. Unknown and another test account's restricted ID have the same denial. | Pending |
