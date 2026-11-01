@@ -75,7 +75,7 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
-**Release 9.59 deployed; automatic scheduling blocked; phone receipt pending.**
+**Release 9.59 deployed; scheduler investigation deferred by owner; phone receipt pending.**
 
 [PR #577](https://github.com/jongsky25/css-is/pull/577) merged with explicit owner
 approval as `a7b9b38d473af15b87412717284bb17272fce518`. PR and production normal/
@@ -98,16 +98,19 @@ before the 9.59 app deployment. It is workflow_dispatch, not automatic evidence.
 Local monitor tests: 37 passed; JUnit, metadata, documentation links and diff
 checks passed. No outage, backup failure or audit corruption was induced.
 
-Next: recheck for a genuine schedule event and valid observations. If none appears,
-request GitHub account/provider investigation using the
-[saved evidence and support draft](operations/monitor-scheduler-2026-11-01.md).
-The owner authorized submitting the report, but submission is blocked by Support
-portal sign-in: the repository connection has no Support-ticket operation or
-signed-in browser session. The official contact URL leads to the sign-in landing
-page. The report now includes a short copy-ready message and owner submission
-steps. **No ticket was created and no ticket number exists.** Current tools expose no internal scheduler
-queue; repository-wide Actions policy read is denied (403). Further speculative
-application releases are not justified by current evidence.
+The owner chose to **defer the scheduler/Support investigation**. Do not resume
+it automatically or make further schedule changes unless requested. The enabled
+workflow remains available for manual checks, but automatic coverage is unverified.
+The [saved evidence and support draft](operations/monitor-scheduler-2026-11-01.md)
+remain available. No Support ticket was created. Earlier authorization to submit
+is superseded by this deferral.
+
+Next remaining monitoring item: confirm whether the original marked test arrived
+as a phone notification. If the owner confirms receipt, close test issue #576.
+Do not send another test or infer notification delivery from an opened issue.
+This can also be deferred if the owner wants to move to feature work. The audit
+warning is operationally cleared and backup was owner-reported fixed; neither
+requires more work as part of this scheduler deferral.
 
 Phone receipt of bot-created owner-assigned [test issue #576](https://github.com/jongsky25/css-is/issues/576)
 remains unconfirmed. No new delivery test was sent during this investigation.

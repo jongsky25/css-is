@@ -2,6 +2,11 @@
 
 ## Outcome
 
+**Owner deferred this investigation and Support submission.** Preserve this
+report for later; do not resume or submit automatically. No ticket was created.
+The workflow remains enabled, but automatic coverage is unverified. Earlier
+submission authorization is superseded by this deferral.
+
 Release **9.59** is merged in [PR #577](https://github.com/jongsky25/css-is/pull/577)
 as `a7b9b38d473af15b87412717284bb17272fce518` and deployed. The owner explicitly
 approved merging after the required checks. All gates passed; none were bypassed.

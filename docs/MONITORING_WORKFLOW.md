@@ -2,6 +2,11 @@
 
 ## Current scheduling outcome — November 1, 2026
 
+The owner deferred further scheduler investigation/Support submission. Do not
+resume it automatically. The remaining optional monitoring item is confirmation
+of phone receipt of the original marked test issue #576; close it only after
+owner confirmation. No new test is needed merely because Support was deferred.
+
 Release 9.59 is merged/deployed through all required gates in PR #577. The cron
 now spells out the same twelve minutes per hour. Manual checks are healthy;
 post-deploy version/commit and operational audit are verified. **No scheduled
