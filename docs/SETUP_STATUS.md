@@ -75,6 +75,22 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**Seasonal release preparation authorized — November 1, 2026.** Owner accepted
+the richer design and requested release preparation/PR/checks, with merge and
+production deployment explicitly left for final approval. Candidate 9.60 on
+`feat/seasonal-theme-design`, based on current main `a7b9b38` (9.59).
+Proposed order: seasonal first while Telegram continues independently at candidate
+9.77/head `cb192da`. This is not a lock on the other thread: if main advances,
+refresh/reconcile versions and repeat required checks before release. Initial
+merge-tree simulation against Telegram found only the shared status-document
+conflict. Metadata/cache/changelog now synchronized for seasonal 9.60; final
+metadata adds the expected shared release-file reconciliation work.
+Phone design acceptance applies to preview source `f4438aa`; release metadata is
+the only subsequent application-facing preparation change. No feature activation,
+schedule installation, preview replacement, merge or production deployment.
+Next: open the release PR and observe complete normal/shuffled, dependency/container,
+metadata and aggregate CI on its exact candidate head; fix failures without bypass.
+
 **Richer seasonal design revision — November 1, 2026.** Owner requested stronger
 festivities after the first preview. Added fuller Christmas tree/parol/gift artwork,
 garlands, New Year fireworks/skyline/year display and bunting, decorated companion

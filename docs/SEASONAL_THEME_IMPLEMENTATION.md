@@ -1,5 +1,23 @@
 # Seasonal theme integration — November 1, 2026
 
+## Release preparation
+
+The owner accepted the richer preview design and authorized preparing the release
+PR and all checks. Merge/production deployment still require final approval.
+Candidate 9.60 is based on actual main `a7b9b38` (9.59). Proposed order is seasonal
+first, then Telegram (currently 9.77 at `cb192da`); if Telegram or any other work
+merges first, rebase/reconcile metadata and rerun required checks. This does not
+authorize or schedule a merge of either feature.
+
+The dry merge before metadata changes found only `docs/SETUP_STATUS.md` conflicting
+with Telegram. Release preparation additionally changes version.py, CHANGELOG.md
+and static/js/sw.js; preserve both features' release history when updating Telegram
+after seasonal, and retain both status entries. There is no source-code integration
+of Telegram into this seasonal release. Phone approval covers `f4438aa`; the later
+release preparation synchronizes version/cache/changelog and records that approval.
+Exact-head full CI evidence is authoritative; earlier focused checks alone are not
+a release pass. Current verification progress is recorded in the PR and status.
+
 Branch: `feat/seasonal-theme-design`, based on main `a7b9b38` (9.59), with an
 isolated worktree at `/workspace/office-connect-seasonal`. Original planning branch
 and interactive study are preserved. This is an implementation candidate, not a

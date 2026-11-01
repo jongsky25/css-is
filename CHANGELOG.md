@@ -1,3 +1,10 @@
+## 9.60 — November 1, 2026
+
+- Add full Christmas and New Year appearances with local parol/tree/firework artwork, garlands, phone-visible scenes, companion settings and festive footers.
+- Add a server-synchronized Home countdown to a validated January 1 target year in Asia/Manila, a static midnight greeting and optional brief confetti.
+- Generalize Appearance copy and preserve independent artwork, effects and outfits, with contrast, reduced-motion, print and no-script date support.
+- No sound or automatic seasonal schedule activation; existing saved choices remain intact.
+
 ## 9.59 — November 1, 2026
 
 - Refresh the monitor schedule registration with explicit minutes, retaining the existing five-minute cadence and main-only credential guard.
