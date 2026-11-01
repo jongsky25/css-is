@@ -1,3 +1,8 @@
+## 9.59 — November 1, 2026
+
+- Refresh the monitor schedule registration with explicit minutes, retaining the existing five-minute cadence and main-only credential guard.
+- Record that scheduled execution remains unverified until GitHub creates a schedule-triggered run; manual success alone does not establish automatic coverage.
+
 ## 9.58 — November 1, 2026
 
 - Add independent five-minute GitHub checks for app/database availability, periodic durability, scheduled backups and unacknowledged audit failures.

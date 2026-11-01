@@ -15,6 +15,14 @@ at 06:15:58 UTC on November 1 by disabling and immediately re-enabling it.
 Normal manual run 41280398437 passed all four signals twice with no alert changes.
 Actual scheduled execution and phone receipt confirmation remain unverified.
 
+The November 1 investigation found no scheduled events despite the enabled state,
+valid cron on main and successful manual checks. GitHub Status reported no active
+incident; the cause remains unconfirmed. Candidate `fix/monitor-schedule-registration`
+(9.59) spells out the same minutes to prompt source-based registration. It requires
+the normal release gates and promotion; only an actual schedule-triggered run can
+establish success. Do not ask the owner to find another Enable button.
+
+
 See [current handoff](SETUP_STATUS.md) for exact evidence and next actions.
 Automated sign-in/out events appear under the deployment account in audit/usage
 views. Public issue metadata remains generic; private operational records stay

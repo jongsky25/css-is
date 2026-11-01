@@ -109,7 +109,21 @@ then passed with uptime, backup, audit and monitor all true in both observations
 and no alert transitions. This is a workflow_dispatch run, not evidence of an
 automatic scheduled execution. The owner has no further Enable button to find.
 
-Next: observe a real scheduled execution
+Investigation at 06:49–06:55 UTC confirmed the workflow is active, the repository
+is public/non-fork/non-archived with default branch main, and the exact cron source
+is on main. No schedule-triggered runs exist. GitHub Status reports no current
+incident. Reading repository-wide Actions policy is denied (403), although manual
+Actions execute successfully. The root cause remains unconfirmed; do not call the
+original valid range/step expression a syntax error.
+
+A review candidate on `fix/monitor-schedule-registration` (9.59) replaces the
+range/step expression with equivalent explicit minutes to prompt source-based
+schedule registration. This is a repair attempt, not proof of a GitHub defect or
+an established fix. Full release checks and production promotion are required
+before it can affect scheduling on main. Existing alert logic and credential
+scope are unchanged.
+
+Next: complete the candidate checks and promotion, then observe a real scheduled execution
 with healthy/valid signals, and obtain phone receipt confirmation. Do not claim
 either step passed until evidence exists. No production outage, failed backup
 or audit corruption was induced. Only generic statuses were published; no private

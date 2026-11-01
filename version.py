@@ -18,10 +18,19 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "9.58"
+APP_VERSION = "9.59"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "9.59",
+        "date": "November 1, 2026",
+        "summary": "Refresh registration of automatic monitoring checks.",
+        "changes": [
+            "Keep monitoring checks scheduled every five minutes using explicit run times.",
+            "Automatic operation is confirmed only after GitHub records a scheduled check."
+        ]
+    },
     {
         "version": "9.58",
         "date": "November 1, 2026",
