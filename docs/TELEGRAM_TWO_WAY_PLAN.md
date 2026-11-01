@@ -1,6 +1,6 @@
 # Office Connect ↔ Telegram delivery plan
 
-Status: T0–T4.3.2 merged; T4.4 hosted pilot incomplete. Draft PR #572 (candidate 9.75) adds private task/document/supplies/personal reads, confirmed task updates and private guided meeting/room webhook replies. Owner confirms hosted linking/calendar retrieval; new draft capabilities, group/automatic outgoing delivery and the complete pilot remain unverified live. Source switches remain default-off.
+Status: T0–T4.3.2 merged; T4.4 hosted pilot incomplete. Draft PR #572 (candidate 9.76) adds private task/document/supplies/personal reads, confirmed task updates and private guided meeting/room webhook replies. Owner confirms hosted linking/calendar retrieval; new draft capabilities, group/automatic outgoing delivery and the complete pilot remain unverified live. Source switches remain default-off.
 Last updated: 2026-11-01.
 Repository: jongsky25/css-is.
 Planning baseline inspected: abf3141 (merge of PR #458).
@@ -1829,6 +1829,117 @@ remain Pending. No real Telegram message/provider registration, production data,
 scheduler/monitor execution, deployment, preview publication or activation occurred.
 Initial prior-head `1e1063e` inspection found metadata/dependency audit/avatar
 functional checks passing and normal/shuffled checks running. Those are not
+new-head acceptance.
+
+Next: inspect fresh exact-head full repository normal/shuffled/dependency/
+container/aggregate CI and continue only the next explicitly requested feature.
+Main merge/release, preview publication, activation and personal/live testing
+remain deferred until the owner's later instruction.
+
+
+## Private work and task replies — 2026-11-01
+
+Owner explicitly approved replying to existing work/task comments. Implemented
+`/work_reply` and `/task_reply`, signed-in no-script forms, exact private previews/
+confirmation and recovery on branch `feat/telegram-private-work-lookup`, draft
+PR #572, candidate **9.76**. Actual main remains `a7b9b38` (released 9.59), preserved
+on the review branch. Deployment, preview publication, activation and personal/live
+testing remain explicitly deferred.
+
+Independent default-off `CSS_TELEGRAM_WORK_REPLY_ENABLED` / `work.reply` and
+`CSS_TELEGRAM_TASKS_REPLY_ENABLED` / `tasks.reply` each require work-read consent
+and current private inbound/link/delivery/account/bot/chat proof. Other comment/
+task/read scopes enable neither reply, and one reply scope grants neither the
+other nor ordinary comment posting. Groups/topics/direct-worker paths are refused.
+
+Native current work visibility, including every linked document, permits informal
+replies; ordinary source readers need no task-owner/lead/officer role. Selecting
+work/task/parent grants no access. Exact parent ID must exist in the same selected
+work-level or same-task discussion; cross-work/work-vs-task/other-task/missing
+parents are refused. Same-thread replies to replies remain allowed. The form
+accepts exact target IDs, parent ID and plain text up to 1,000 characters, normalizes
+line endings and rejects controls/unsupported fields. Literal @name adds no mention.
+
+Preview shows work/task IDs/titles/current states, exact parent number/current
+revision/source link and complete actor-entered reply with visibility/notice
+effects. Parent text/author names and other stored discussion/submission/output/
+blocker contents stay in Office Connect. The full parent record is hashed only;
+parent edits before preview pull or confirmation refuse stale input. Fresh preview
+shows the new revision. Unrelated discussion remains independent. Current work/
+task/document digest/history, source rights, modules, scopes/pilots, expiry and
+original context are rechecked; revocation/account change/disconnect/restore/pause
+cannot revive stale replies.
+
+Uses the existing unchanged native `work_discussion.post_in_transaction` with
+exact parent and no mentions. One immutable reply/revision, normal permitted
+follower/eligible parent-author notices and author-read marker are created. Native
+notice deduplication applies; inactive/no-longer-permitted parent authors and
+self-replies create no parent-author notice. No follow/access/notification setting
+is added, and no digest/scheduler/provider is enabled/executed. Work/task/document
+state, revisions, ownership, submissions, blockers, dependencies, deadlines, events
+and formal review/approvals stay unchanged. Native informal discussion remains
+available on terminal work/tasks and under active formal review; changed source
+still requires a fresh preview. Mentions, edits and stored discussion reads remain
+source workflows.
+
+Reply/history/notices/read marker, saved comment identifier, preview consumption,
+receipt and private reply handoff are atomic; failures roll back and retries/
+concurrent confirmation post once. Existing comment receipt/retention metadata is
+reused; no source mutation logic, new table or identifier column was introduced.
+Deletion and work-read-revocation fences include both reply scopes. Native
+append-only parent history and FKs protect parent/thread deletion/ID reuse, with
+constraints intact. Recovery checks source/thread/original author/nonempty parent,
+reports original reply outcome/parent/link/current reply revision, and never
+projects saved parent/reply text or posts again. A later native author edit changes
+only the reported reply revision. Ordinary post forms now point to separate reply
+commands while retaining their strict no-parent contract.
+
+The native discussion page now displays comment numbers and current revisions
+so the reply target can be selected from visible source metadata without inspecting
+a URL. Both final phone flows verify that source label before preparing the reply.
+
+Isolated Python 3.11 verification: **2337 broad regressions passed**
+across Telegram/native work, integration submission API/MCP submissions, audit-chain
+writers, deployment and release checks. **963 current shuffled
+reply/comment/dependency/blocker/task/action/menu/phone checks** (seed 311) passed.
+Focused reply services: **104 passed**; earlier phone/shared/menu/
+maximum-origin group: **49 passed**, with **47
+earlier shared wiring checks**. All groups have zero failures/errors/skips and
+overlap. Core reply behavior and service cases were fixed before broad/shuffled
+collection. Visible source comment numbers/revisions and their phone assertions
+were added afterward and verified separately by **2 final
+390×844 JavaScript-disabled phone flows**. No source edits followed those final
+phone checks or the completed broad/shuffled groups.
+
+Exact thread/work/task/parent boundaries, ordinary-reader/current document access,
+independent scopes/pilots, strict plain fields/literal mentions/normalized text,
+hash-only parent storage, stale edited-parent pulls/confirmations and fresh revision
+previews, replies to replies, eligible/no-access/inactive/self parent notices,
+unchanged business/formal/terminal source state, independent comments, current
+context/revoke/restore fences, atomic notice/receipt/handoff rollback, retries/
+concurrency, immutable parent/FK protection, retention and edited-reply revision
+recovery pass. Both final phone cases verify native source ID/revision discovery,
+separate grants/menu/forms, CSRF/strict parent/thread fields, exact full text/parent
+preview, confirmation/retry, unchanged work/tasks, no mentions/outgoing calls and
+expired sessions. No native rule, source constraint, permission or no-skips gate
+was changed or weakened.
+
+Reports: `/tmp/telegram-reply-regressions.xml`,
+`/tmp/telegram-reply-shuffled.xml`, `/tmp/telegram-reply-focused.xml`,
+`/tmp/telegram-reply-phone-wiring.xml`, `/tmp/telegram-reply-phone-final.xml` and
+`/tmp/telegram-reply-wiring.xml`; all pass the JUnit no-skips gate.
+Candidate 9.76 metadata over actual main 9.59, dependency locks/vendor integrity,
+installed compatibility, AI contract 1.12.0, Python compilation, local Markdown
+links and whitespace pass. Existing Starlette/httpx deprecation warning remains.
+Full exact-head repository normal/shuffled/dependency/container/aggregate CI still
+requires inspection after push; prior-head evidence is not current acceptance.
+
+See [reply behavior](TELEGRAM_REPLY_MANAGEMENT.md) and
+[pending live acceptance](TELEGRAM_LIVE_ACCEPTANCE_CHECKLIST.md). All live rows
+remain Pending. No real Telegram message/provider registration, production data,
+scheduler/monitor execution, deployment, preview publication or activation occurred.
+Initial prior-head `7c0e8a5` inspection found metadata/dependency audit/avatar
+functional checks passing and full normal/shuffled checks running; those are not
 new-head acceptance.
 
 Next: inspect fresh exact-head full repository normal/shuffled/dependency/

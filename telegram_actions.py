@@ -34,7 +34,7 @@ ACTIONS['tasks.reassign']='tasks_reassign'
 ACTIONS['tasks.reopen']='tasks_reopen'
 ACTIONS['tasks.cancel']='tasks_cancel'
 ACTIONS.update({'tasks.block':'tasks_block','tasks.unblock':'tasks_unblock','tasks.dependency_add':'tasks_dependency_add','tasks.dependency_remove':'tasks_dependency_remove'})
-ACTIONS.update({'work.comment':'work_comment','tasks.comment':'tasks_comment'})
+ACTIONS.update({'work.comment':'work_comment','tasks.comment':'tasks_comment','work.reply':'work_reply','tasks.reply':'tasks_reply'})
 ACTIONS.update({'tasks.accept':'tasks_accept','tasks.return':'tasks_return'})
 TTL = 300
 CONTEXT = {'connection_id','generation','sender_id','chat_id','topic_id','registration_id','registration_generation'}
@@ -96,17 +96,17 @@ def authority(conn,context,action):
         group=groups.route(conn,context['chat_id'],context['topic_id'],bot)
         if not group or group['id']!=context['registration_id'] or group['generation']!=context['registration_generation']:
             raise Unavailable('Group context unavailable.')
-    if (action.startswith('tasks.') or action=='work.comment') and context['chat_id'] < 0:
+    if (action.startswith('tasks.') or action in ('work.comment','work.reply')) and context['chat_id'] < 0:
         raise Unavailable('Task actions are private only.')
-    if action in ('calendar.reschedule','calendar.cancel','rooms.withdraw','rooms.move','tasks.create','tasks.deadline','tasks.accept','tasks.return','tasks.assign','tasks.reassign','tasks.reopen','tasks.cancel','tasks.block','tasks.unblock','tasks.dependency_add','tasks.dependency_remove','work.comment','tasks.comment') and (context['chat_id']<0 or not switches.enabled('delivery')
+    if action in ('calendar.reschedule','calendar.cancel','rooms.withdraw','rooms.move','tasks.create','tasks.deadline','tasks.accept','tasks.return','tasks.assign','tasks.reassign','tasks.reopen','tasks.cancel','tasks.block','tasks.unblock','tasks.dependency_add','tasks.dependency_remove','work.comment','tasks.comment','work.reply','tasks.reply') and (context['chat_id']<0 or not switches.enabled('delivery')
             or len(links.origin() or '')>200 or os.environ.get('CSS_TELEGRAM_REPLY_TRANSPORT')=='direct'):
         raise Unavailable('Meeting management requires private webhook replies.')
-    read_scope = 'work.read' if (action.startswith('tasks.') or action=='work.comment') else ('calendar.read' if action.startswith('calendar.') else 'rooms.read')
+    read_scope = 'work.read' if (action.startswith('tasks.') or action in ('work.comment','work.reply')) else ('calendar.read' if action.startswith('calendar.') else 'rooms.read')
     if not links.authorized(conn,found[0]['id'],read_scope):
         raise Unavailable('Current read consent is required for this action.')
     if action=='rooms.request' and not links.authorized(conn,found[0]['id'],'calendar.read'):
         raise Unavailable('Calendar read consent is required for a linked room request.')
-    if action in ('tasks.create','tasks.deadline','tasks.accept','tasks.return','tasks.assign','tasks.reassign','tasks.reopen','tasks.cancel','tasks.block','tasks.unblock','tasks.dependency_add','tasks.dependency_remove','work.comment','tasks.comment'):
+    if action in ('tasks.create','tasks.deadline','tasks.accept','tasks.return','tasks.assign','tasks.reassign','tasks.reopen','tasks.cancel','tasks.block','tasks.unblock','tasks.dependency_add','tasks.dependency_remove','work.comment','tasks.comment','work.reply','tasks.reply'):
         import work
         if not work.enabled(conn):raise Unavailable('Task actions are paused with the source work module.')
     return found[0],adapter,bot

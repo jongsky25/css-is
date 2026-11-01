@@ -7,7 +7,7 @@ without the owner's later release/testing instruction.
 
 ## Before the later pilot
 
-1. Identify the reviewed PR/source commit and candidate version (currently 9.75).
+1. Identify the reviewed PR/source commit and candidate version (currently 9.76).
    Verify the actual candidate's required metadata/dependency/full normal/shuffled/
    aggregate CI, main freshness and synchronized versions. Old-head checks do not
    establish readiness. Follow existing release and verified-backup gates.
@@ -36,6 +36,9 @@ without the owner's later release/testing instruction.
 | Work/task comments | Separate work/task comment consent/pilots, current source visibility, exact target/text preview, confirmation/retry once; ordinary reader allowed and no task/approval changes | Pending |
 | Discussion boundaries | Work-level versus task thread, strict plain text, literal @name without mentions, no reply/edit fields, normal permitted follower notices; terminal/formal-review discussion stays informal | Pending |
 | Comment protection/recovery | Changed/lost source and original context, revoke/pause/expiry/restore, atomic notice/receipt/handoff failure, concurrent retries, deleted/reused targets, later edited revision recovery without replay/text disclosure | Pending |
+| Work/task replies | Independent reply scopes/pilots, source visibility and exact parent/thread selection; preview parent ID/revision/link plus entered text without stored parent content; confirm/retry once | Pending |
+| Reply boundaries/notices | Reject cross-work/work-vs-task/other-task parents; edit parent before pull/confirm then prepare fresh; nested reply allowed; normal eligible parent/follower notices without mentions/access grants | Pending |
+| Reply protection/recovery | Terminal/formal discussion stays informal, changed/lost source/context and revoke/pause/expiry/restore protections, immutable parent/FK references, rollback/concurrent retries, later reply-revision recovery without replay/text | Pending |
 | Link and discover | Complete `/start` → signed-in consent → private `/status` → exact confirmation. `/menu` and `/help` agree and expose only enabled/consented commands. | Pending |
 | Pending-link help | Before final confirmation, `/menu` directs the same sender to `/status`; it does not replace the pending challenge. | Pending |
 | Limited permissions | With calendar-read consent only, calendar commands appear; work/document/request/write commands do not. No additional grant is created. | Pending |

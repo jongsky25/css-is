@@ -1,4 +1,6 @@
-## 9.75 — November 1, 2026
+## 9.76 — November 1, 2026
+
+- Add separately consented work/task discussion replies with exact parent number/revision previews, current thread/source checks and atomic native reply/receipt writes; parent text stays in Office Connect and progress/approvals remain unchanged.
 
 - Add separately consented work/task discussion posts through exact private previews and atomic native comment/receipt writes; current discussion visibility, immutable history and normal follower notices are preserved without changing task progress or approvals.
 

@@ -1,6 +1,6 @@
 # Private work and task comments
 
-Draft PR #572, candidate 9.75. Work/task discussion posts are implemented for later
+Draft PR #572, candidate 9.76. Work/task discussion posts are implemented for later
 activation. Deployment, preview publication, activation and personal/live testing
 remain deferred. Automated verification uses synthetic data and blocked providers.
 
@@ -55,7 +55,8 @@ follower notices and the author's observed-revision marker apply. Mention rows,
 reply targets and notification preferences are not added. Existing independently
 configured digest policies may later include normal source notices; this feature
 does not configure, enable or execute any digest/scheduler/provider delivery.
-Replies, mentions, edits and reading stored discussion remain in Office Connect.
+Replies use the [separate reply workflow](TELEGRAM_REPLY_MANAGEMENT.md). Mentions,
+edits and reading stored discussion remain in Office Connect.
 
 ## Transaction, stale previews and recovery
 

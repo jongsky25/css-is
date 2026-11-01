@@ -25,6 +25,8 @@ FEATURES=(
  ('rooms.move','Calendar','Room date moves','/room_move — change your own request’s date; approved bookings require a new approval.',('rooms.read',),None,True),
  ('work.read','Tasks and work','Work lookup','/my_summary; /my_tasks; /my_work; /task_status WORK_ID TASK_ID; /work_status WORK_ID.\nExample: /my_tasks overdue (also upcoming or review).',(),work.enabled,False),
  ('tasks.create','Tasks and work','Task proposals','/new_task — propose a task in permitted work; officer confirmation remains required.',('work.read',),work.enabled,True),
+ ('work.reply','Tasks and work','Work replies','/work_reply — reply to a work comment after confirmation.',('work.read',),work.enabled,True),
+ ('tasks.reply','Tasks and work','Task replies','/task_reply — reply to a task comment after confirmation.',('work.read',),work.enabled,True),
  ('work.comment','Tasks and work','Work comments','/work_comment — post a work comment after confirmation.',('work.read',),work.enabled,True),
  ('tasks.comment','Tasks and work','Task comments','/task_comment — post a task comment after confirmation.',('work.read',),work.enabled,True),
  ('tasks.dependency_add','Tasks and work','Add task prerequisite','/task_dependency_add — add a same-work prerequisite after confirmation.',('work.read',),work.enabled,True),

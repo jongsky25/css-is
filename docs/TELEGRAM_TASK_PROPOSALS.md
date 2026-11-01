@@ -1,6 +1,6 @@
 # Private guided task proposals
 
-Draft PR #572, candidate 9.75. The owner requested the next feature while keeping
+Draft PR #572, candidate 9.76. The owner requested the next feature while keeping
 deployment, preview publication, activation and personal/live testing deferred.
 Automated verification uses isolated synthetic work/documents/accounts and blocked
 outgoing Telegram providers.
