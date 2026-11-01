@@ -33,7 +33,7 @@
     active=data.theme==='newyear';
     if(next!==target || !wasActive || !active)previous=null;
     target=next;stamp=server;base=performance.now();
-    clock.querySelector('[data-newyear-year]').textContent=String(data.target_year);
+    document.querySelectorAll('[data-newyear-year]').forEach(function(el){el.textContent=String(data.target_year);});
     if(!active){clock.classList.remove('celebrating');stop();return;}
     tick();
   }

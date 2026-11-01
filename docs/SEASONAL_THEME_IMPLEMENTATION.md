@@ -46,6 +46,30 @@ Owner phone acceptance remains pending. See the existing iOS cookie guidance in
 
 ## Implemented
 
+### Richer festive revision
+
+The owner requested more festive designs after opening the initial preview.
+Christmas now has a fuller illustrated tree, hanging parols, ornaments, gifts,
+city silhouettes, evergreen/ribbon garlands and warm lights. New Year has static
+illustrated fireworks, a city skyline, a prominent configured year, gold/lilac
+bunting and framed countdown tiles. Both have decorative Home ribbons, gold card
+edges, a companion setting and a matching festive footer. Phone layouts now retain
+150px of scene artwork rather than hiding it. Working-page greetings stay compact.
+Sound is still deferred; fireworks are illustration, not flashing animation.
+Artwork-off, reduced-motion, contrast and print controls remain in force.
+
+- [Richer Christmas phone](design/seasonal/festive-christmas-phone.png)
+- [Richer New Year desktop](design/seasonal/festive-newyear-desktop.png)
+
+Initial focused appearance/seasonal/preview-bundle run: 19 passed. After the year
+display, cache-key and mobile-visibility refinements, final seasonal group: 13
+passed in 24.63s, zero failures/skips; JUnit gate passed. The latter includes all
+32 enlarged-text layout combinations and checks artwork visibility on phones and
+desktop. Christmas phone and New Year desktop screenshots were visually inspected.
+SVG XML parsing, JavaScript syntax and diff checks passed. No dependencies added.
+Before revision publication the shared preview still contained our original source
+`5f6a18c`; Telegram's current handoff continued to defer preview publication.
+
 - Coordinated Christmas and New Year palettes for light/dark appearance, parol scene
   artwork, a fuller Home greeting and compact greetings on working pages. Existing
   brand, personal companions and outfit preferences are retained. Companion stages

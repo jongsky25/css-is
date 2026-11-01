@@ -75,6 +75,16 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**Richer seasonal design revision — November 1, 2026.** Owner requested stronger
+festivities after the first preview. Added fuller Christmas tree/parol/gift artwork,
+garlands, New Year fireworks/skyline/year display and bunting, decorated companion
+settings, gold Home card details and festive footers. Phone hero artwork now stays
+visible. Sound remains deferred; accessibility controls retained. Initial focused
+group 19 passed; final seasonal group after refinements 13 passed, no failures/skips,
+JUnit gate passed. [Screenshots and implementation notes](SEASONAL_THEME_IMPLEMENTATION.md).
+Save the source candidate before updating the shared preview, then verify remote
+source, private visibility, RUNNING and asset/health responses. No production release.
+
 **Seasonal private preview published — November 1, 2026.**
 Owner requested publication. Source `5f6a18c2f5171dc17e6ee7462db2a8e77fe9ac64`
 is RUNNING on the existing private CPU Basic preview; Space commit

@@ -1,6 +1,7 @@
 {% set celebration_home = request.url.path == '/' %}
 <section class="celebration {{ 'celebration-home' if celebration_home else 'celebration-compact' }}" aria-label="Seasonal greeting">
   <div class="celebration-copy">
+    {% if celebration_home %}<div class="celebration-ribbon" aria-hidden="true"><span class="celebration-christmas">Maligayang Pasko</span><span class="celebration-newyear">Let the celebrations begin</span></div>{% endif %}
     <span class="celebration-kicker celebration-christmas">Paskong Office Connect</span>
     <span class="celebration-kicker celebration-newyear">New Year at Office Connect</span>
     <h2 data-celebration-message>{{ seasonal.banner if seasonal else '' }}</h2>
@@ -18,5 +19,5 @@
     </div>
     {% endif %}
   </div>
-  <div class="celebration-art" aria-hidden="true"></div>
+  <div class="celebration-art" aria-hidden="true"><span class="celebration-year" data-newyear-year>{{ seasonal.target_year if seasonal else 2027 }}</span></div>
 </section>

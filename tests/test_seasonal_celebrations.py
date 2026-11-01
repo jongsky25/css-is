@@ -112,6 +112,7 @@ def test_real_seasonal_layouts_and_accessibility_modes(seasonal_browser, admin, 
                     if width in (390, 1440):
                         page.goto('http://testserver/?view=me')
                         page.evaluate('(mode)=>document.documentElement.dataset.theme=mode', mode)
+                        pw.expect(page.locator('.celebration-art')).to_be_visible()
                         page.screenshot(path=str(tmp_path / f'{theme}-{mode}-{width}.png'), full_page=True)
             assert page.locator('.celebration-art').evaluate('(el)=>getComputedStyle(el).animationName') == 'none'
             page.evaluate('document.documentElement.dataset.theme="contrast"')
