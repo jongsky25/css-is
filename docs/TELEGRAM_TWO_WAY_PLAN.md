@@ -1,6 +1,6 @@
 # Office Connect ↔ Telegram delivery plan
 
-Status: T0–T4.3.2 merged; T4.4 hosted pilot incomplete. Draft PR #572 (candidate 9.71) adds private task/document/supplies/personal reads, confirmed task updates and private guided meeting/room webhook replies. Owner confirms hosted linking/calendar retrieval; new draft capabilities, group/automatic outgoing delivery and the complete pilot remain unverified live. Source switches remain default-off.
+Status: T0–T4.3.2 merged; T4.4 hosted pilot incomplete. Draft PR #572 (candidate 9.72) adds private task/document/supplies/personal reads, confirmed task updates and private guided meeting/room webhook replies. Owner confirms hosted linking/calendar retrieval; new draft capabilities, group/automatic outgoing delivery and the complete pilot remain unverified live. Source switches remain default-off.
 Last updated: 2026-11-01.
 Repository: jongsky25/css-is.
 Planning baseline inspected: abf3141 (merge of PR #458).
@@ -1476,6 +1476,85 @@ See [review queue behavior](TELEGRAM_REVIEW_QUEUE.md) and the expanded
 [pending live checklist](TELEGRAM_LIVE_ACCEPTANCE_CHECKLIST.md). All live cases
 remain Pending. No provider call, production data, scheduler, monitor execution,
 publication or activation occurred. Native review/task/work services are unchanged.
+
+Next: inspect fresh exact-head full repository normal/shuffled/dependency/
+container/aggregate CI, then continue the next explicitly requested feature.
+Main merge, release, preview publication, activation and personal/live testing
+remain deferred until the owner's later instruction.
+
+
+### Private blocker and prerequisite lookup — 2026-11-01
+
+Owner explicitly approved blocker/prerequisite lookup. Added `/task_blockers
+WORK_ID TASK_ID [BEFORE_ID]` to review branch `feat/telegram-private-work-lookup`,
+draft PR #572, candidate **9.72**. Actual main remains `a7b9b38` (released 9.59),
+preserved on this branch. Deployment, preview publication, activation and personal/
+live testing remain explicitly deferred. Initial prior-head `5941882` inspection
+found metadata/dependency checks passing and functional/normal/shuffled still
+running; those checks are not new-head acceptance.
+
+Separate default-off `CSS_TELEGRAM_TASKS_BLOCKERS_READ_ENABLED` /
+`tasks.blockers.read` metadata consent requires work read, source modules and
+current private inbound/link/delivery/account/chat/bot proof. Existing own-task
+and review details offer the hint only with this independent grant/pilot. Source
+work/task visibility permits metadata reading; reviewer/officer authority is not
+required merely to read. Existing own-task/search/brief projections are unchanged.
+
+Reply shows native waiting/clear check, recorded-blocker and unresolved-direction
+flags, permitted follow-up display name/account/date, and unfinished same-case
+prerequisite IDs/titles/states/deadlines. Native decision/blocker checks supply
+flags. Blocker/dependency reasons, decision/resolution/discussion notes, outputs
+and submissions remain in Office Connect. Inactive or no-longer-permitted follow-up
+accounts are neutral, while the permitted task's date remains visible. Hidden/
+unknown/wrong-case targets and inconsistent foreign dependency edges share denial.
+
+Only Done satisfies a prerequisite; Cancelled remains waiting. Source unblocking,
+acceptance and changed-direction resolution update the next read. Completed work
+and terminal tasks can be read as history with a lifecycle warning; lookup enables
+no action, resolves nothing and changes no edge/deadline/task. Native source links
+point to exact task anchors. Five-row/UTF-16-budget pages filter same-case and
+non-Done state before seek/limit and avoid skips/duplicates. Empty cursor pages
+never imply global completion; other task state/permissions/review rules still apply.
+
+Reads remain in the incoming webhook transaction with context/grant/module recheck
+before handoff, retain no query/name/body projection, and never enqueue or replay
+worker pushes. No source mutation, operation, preview or origin is created. Native
+task/work/blocker/decision services remain unchanged. Group/topic/direct contexts,
+duplicate updates, revoked/restored links and changed bot proof remain fenced.
+
+Isolated Python 3.11 verification: **1869 broad regressions passed** across
+`tests/test_telegram*.py`, `tests/test_work*.py`, audit-chain writers, deployment
+and release checks. **569 current shuffled checks** (seed 311) passed across
+blocker/queue services and phone flows, all current task actions, menu/action
+engine, existing task actions and private meeting webhook handling. Zero failures/
+errors/skips in both groups; groups overlap. Earlier focused blocker services:
+32 passed; combined blockers/phone/queue/menu group: 86 passed; bot/link/menu/queue
+wiring: 96 passed. All final resolution freshness and independent hint cases were
+present before broad/shuffled collection. No application source edits followed
+these passing groups.
+
+Phone cases use ordinary owner and lead with read-only consent, open the exact
+source task anchor (detailed reason visible only there), verify no lookup mutation
+of task/edges or prepared actions, and observe a separate native resolution on
+fresh Telegram read before disconnect denial. Source/owner visibility, current
+modules/scopes/context, historical state, foreign-edge denial, body exclusion,
+accepted/cancelled prerequisites, direction resolution, Unicode seek paging and
+private/direct/group/topic/duplicate boundaries pass. No permission/no-skips
+assertion was weakened.
+
+Reports: `/tmp/telegram-task-blockers-regressions.xml`,
+`/tmp/telegram-task-blockers-shuffled.xml` and
+`/tmp/telegram-task-blockers-verified.xml`; all pass the JUnit no-skips gate.
+Candidate 9.72 metadata/increase over actual main 9.59, locks/vendor integrity,
+installed compatibility, AI contract, Python compilation, local Markdown links
+and whitespace pass. Existing Starlette/httpx deprecation warning remains.
+Full exact-head repository normal/shuffled/dependency/container/aggregate CI still
+requires inspection after push. Earlier-head results are not current acceptance.
+
+See [blocker lookup behavior](TELEGRAM_TASK_BLOCKERS.md) and the expanded
+[pending live checklist](TELEGRAM_LIVE_ACCEPTANCE_CHECKLIST.md). All live cases
+remain Pending. No provider call, production data, scheduler, monitor execution,
+publication or activation occurred.
 
 Next: inspect fresh exact-head full repository normal/shuffled/dependency/
 container/aggregate CI, then continue the next explicitly requested feature.

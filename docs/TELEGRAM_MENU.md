@@ -1,6 +1,6 @@
 # Personalized private Telegram menu
 
-Draft PR #572, candidate 9.71. Deployment, activation and real-user testing remain
+Draft PR #572, candidate 9.72. Deployment, activation and real-user testing remain
 deferred. This addition changes discovery/guidance, not permissions or records.
 
 - `/menu` aliases the existing private `/help` path. Both show the same current
@@ -110,3 +110,8 @@ synthetic and outgoing Telegram is forbidden. Later live acceptance uses the
   metadata/work-read consent and their pilot. The [queue](TELEGRAM_REVIEW_QUEUE.md)
   uses current source review authority and eligibility; accept/return hints each
   require their separate write consent, pilot and native action.
+
+- `/task_blockers WORK_ID TASK_ID [BEFORE_ID]` requires independent blocker-metadata
+  consent, work read and its own pilot. [Blocker lookup](TELEGRAM_TASK_BLOCKERS.md)
+  shows current flags, unfinished prerequisites and permitted follow-up owner/date.
+  Own-task and review details offer this hint only with that read grant/pilot.

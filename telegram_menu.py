@@ -25,6 +25,7 @@ FEATURES=(
  ('rooms.move','Calendar','Room date moves','/room_move — change your own request’s date; approved bookings require a new approval.',('rooms.read',),None,True),
  ('work.read','Tasks and work','Work lookup','/my_summary; /my_tasks; /my_work; /task_status WORK_ID TASK_ID; /work_status WORK_ID.\nExample: /my_tasks overdue (also upcoming or review).',(),work.enabled,False),
  ('tasks.create','Tasks and work','Task proposals','/new_task — propose a task in permitted work; officer confirmation remains required.',('work.read',),work.enabled,True),
+ ('tasks.blockers.read','Tasks and work','Task blockers','/task_blockers WORK_ID TASK_ID — prerequisite status and follow-up owner/date.',('work.read',),work.enabled,True),
  ('tasks.review.read','Tasks and work','Task review queue','/review_queue — tasks you can review; /review_task WORK_ID TASK_ID for permitted next actions.',('work.read',),work.enabled,True),
  ('tasks.cancel','Tasks and work','Task cancellation','/task_cancel — officer cancellation after preview and confirmation.',('work.read',),work.enabled,True),
  ('tasks.reopen','Tasks and work','Task reopening','/task_reopen — officer/work-lead return of a Done task to In progress.',('work.read',),work.enabled,True),
@@ -118,6 +119,8 @@ def task_next(conn,actor,item,task, *, detail=False):
     if not webhook() or not switches.enabled('inbound') or not switches.enabled('delivery') or not work.enabled(conn):return text
     try:work_compat.require_open(conn,item['id'])
     except ValueError:return text
+    if links.authorized(conn,actor['id'],'work.read') and links.authorized(conn,actor['id'],'tasks.blockers.read'):
+        text+='\nBlockers: /task_blockers '+str(task['case_id'])+' '+str(task['id'])
     allowed=work_tasks.actions(conn,actor,item,task)
     for action,command in (('acknowledge','/task_ack'),('submit','/task_submit')):
         if task['owner_id']==actor['id'] and action in allowed and links.authorized(conn,actor['id'],'work.read') and links.authorized(conn,actor['id'],'tasks.'+action):

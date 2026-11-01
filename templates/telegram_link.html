@@ -54,6 +54,7 @@
 {% elif not ready %}<p>New linking is paused or not configured. You can still review and disconnect this account.</p>
 {% else %}<p>Disconnect this connection before linking another private account.</p>{% endif %}
 </div>
+<p>Task blocker lookup has separate metadata-only consent and a pilot. Use <code>/task_blockers WORK_ID TASK_ID</code> to inspect prerequisite states and permitted follow-up responsibility. Blocker reasons, decision notes and submissions remain in Office Connect; this command resolves nothing.</p>
 <p>Task review queue has separate metadata-only consent and a pilot. Use <code>/review_queue</code> and <code>/review_task WORK_ID TASK_ID</code> for tasks you can currently review. Submission contents stay in Office Connect; accepting or returning a task still needs separate consent, preview and confirmation.</p>
 <p>Task cancellation has separate consent and a pilot. A concerned contributing-unit officer may cancel an unfinished task after preview. Cancelled tasks are excluded from outstanding-contribution checks; dependent tasks requiring acceptance remain blocked. This does not cancel work or official documents.</p>
 <p>Task reopening has separate consent and a pilot. A concerned case officer or confirmed work lead may return a Done task to In progress for its existing owner. This does not reopen a completed work case or an official document.</p>

@@ -89,6 +89,8 @@ def guidance(conn,user,item,task,allowed):
     if offered:text='\nUse work '+str(item['id'])+' and task '+str(task['id'])+' in the signed-in review form.'+text
     else:text+='\nTelegram review actions need their separate permissions; review this task in Office Connect.'
     if 'accept' not in allowed:text+='\nAcceptance is blocked by current source rules; review blockers in Office Connect.'
+    if links.authorized(conn,user['id'],'tasks.blockers.read'):
+        text+='\nBlockers: /task_blockers '+str(item['id'])+' '+str(task['id'])
     return text+'\nReview submission: '+links.origin()+'/work/'+str(item['id'])
 
 

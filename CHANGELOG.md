@@ -1,4 +1,6 @@
-## 9.71 — November 1, 2026
+## 9.72 — November 1, 2026
+
+- Add separately consented private blocker/prerequisite metadata lookup with current source visibility, permitted follow-up owner/date, bounded paging and source resolution links; notes, submissions and workflow changes remain in Office Connect.
 
 - Add a separately consented private task review queue with current officer/work-lead eligibility, bounded metadata paging, owner/deadline details and independently permitted accept/return guidance; stored submissions remain in Office Connect.
 

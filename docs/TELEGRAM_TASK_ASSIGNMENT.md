@@ -1,6 +1,6 @@
 # Private officer-confirmed initial task assignment
 
-Draft PR #572, candidate 9.71. The owner approved adding initial task assignment
+Draft PR #572, candidate 9.72. The owner approved adding initial task assignment
 before deployment, preview publication, activation and personal/live testing.
 Those steps remain deferred. Local checks use synthetic accounts/documents and
 blocked outgoing providers.

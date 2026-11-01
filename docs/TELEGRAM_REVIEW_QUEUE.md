@@ -1,6 +1,6 @@
 # Private task review queue
 
-Draft PR #572, candidate 9.71. The owner requested a review queue after task action
+Draft PR #572, candidate 9.72. The owner requested a review queue after task action
 features. Deployment, preview publication, activation and personal/live testing
 remain deferred. Local verification uses synthetic records and blocked providers.
 
@@ -86,3 +86,7 @@ confirmation, followed by removal from the queue and disconnection denial.
 Exact results are recorded in [SETUP_STATUS.md](SETUP_STATUS.md). All
 [live acceptance cases](TELEGRAM_LIVE_ACCEPTANCE_CHECKLIST.md) remain Pending.
 No provider registration, real message, scheduler or activation was added.
+
+With independent [blocker metadata consent](TELEGRAM_TASK_BLOCKERS.md), the review
+detail also offers `/task_blockers WORK_ID TASK_ID`. Queue consent alone does not
+reveal blocker reasons, notes or follow-up identity.
