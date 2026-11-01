@@ -11,13 +11,17 @@ import telegram_transport as transport
 COMMANDS=('/meeting','/room_request','/meeting_preview','/room_preview',
           '/meeting_confirm','/room_confirm','/meeting_receipt','/room_receipt')
 ACTION={command:('calendar.create' if command.startswith('/meeting') else 'rooms.request') for command in COMMANDS}
+for action,meta in meetings.META.items():
+    ACTION.update({command:action for command in (meta['start'],meta['confirm'],meta['receipt'],'/'+meta['prefix']+'_preview')})
+COMMANDS=tuple(ACTION)
+STARTS=tuple(meta['start'] for meta in meetings.META.values())
 
 
 def accepts(conn,clean):
     """Group-origin confirmations keep the existing asynchronous membership path."""
     if clean['chat_id']<=0 or clean['command'] not in COMMANDS:return False
     command=clean['command']
-    if command in ('/meeting','/room_request'):return True
+    if command in STARTS:return True
     key='token_hash' if command.endswith('_confirm') else 'operation_id'
     table='telegram_preview' if key=='token_hash' else 'telegram_operation'
     found=rows(conn,'SELECT * FROM '+table+' WHERE '+key+'=? AND action=?',
@@ -40,7 +44,7 @@ def handle(conn,clean,bot,now):
         ctx={'connection_id':connection['id'],'generation':connection['generation'],'sender_id':clean['sender_id'],
              'chat_id':clean['chat_id'],'topic_id':None,'registration_id':None,'registration_generation':None}
         user,_,_=actions.authority(conn,ctx,action)
-        if command in ('/meeting','/room_request'):
+        if command in STARTS:
             identifier=meetings.observe(conn,clean,connection,bot,now,action)
             kind=meetings.META[action]['prefix']+'_guide'
         else:

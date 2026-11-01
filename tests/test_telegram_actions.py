@@ -187,7 +187,7 @@ def test_expiry_scrubbing_and_key_tombstone(action_env):
 
 
 def test_unconsented_actions_remain_unavailable(linking,monkeypatch):
-    assert set(actions.ADAPTERS)=={'calendar.create','rooms.request','tasks.acknowledge','tasks.submit'}
+    assert set(actions.ADAPTERS)=={'calendar.create','rooms.request','tasks.acknowledge','tasks.submit','calendar.reschedule','calendar.cancel'}
     c,_,_,client,payload=linking
     activate(linking)
     monkeypatch.setenv('CSS_TELEGRAM_CALENDAR_CREATE_ENABLED','1')

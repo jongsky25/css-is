@@ -1,0 +1,30 @@
+{% extends "dash_layout.html" %}
+{% block title %}{{ mode|capitalize }} my meeting — Office Connect{% endblock %}
+{% block content %}
+<div style="max-width:720px;margin:auto;overflow-wrap:anywhere">
+<h1>{{ mode|capitalize }} my meeting</h1>
+<p><a href="/account/telegram">Telegram connection and permissions</a> · <a href="/calendar">Open calendar</a></p>
+<p>Start with <code>/meeting_{{ mode }}</code> in your linked private Telegram chat. Choose a one-day, non-recurring meeting you created. Dates and times use <strong>Asia/Manila</strong>.</p>
+<p>Meetings with active room requests, linked activities, imports, recurrence or managed video events must be handled in Office Connect. This action cannot change another person's meeting or a room booking.</p>
+{% if error %}<p role="alert">{{ error }}</p>{% endif %}
+{% if prepared %}
+<p role="status">{% if prepared.state == 'pending' %}Your preview is prepared. No meeting has changed. Send <code>/{{ mode }}_preview {{ prepared.operation_id }}</code> in the original private Telegram chat, review the exact change and confirm before expiry.{% else %}This operation already has a recorded outcome. Send <code>/{{ mode }}_receipt {{ prepared.operation_id }}</code> in the original private chat. Recovery will not repeat the change.{% endif %}</p>
+{% endif %}
+{% if origins %}
+<form method="post" action="{{ action_path }}">
+<input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="key" value="{{ key }}">
+<p><label for="manage-origin">Starting private conversation</label><br><select name="origin" id="manage-origin" required>{% for item in origins %}<option value="{{ item }}" {% if selected == item %}selected{% endif %}>Private request {{ loop.index }}</option>{% endfor %}</select></p>
+<p><label for="manage-entry">Meeting entry number</label><br><input id="manage-entry" name="entry_id" type="number" min="1" value="{{ values.get('entry_id','') }}" required></p>
+<p>Use the entry number from the meeting's signed-in calendar page. Search results link to that page.</p>
+{% if mode == 'reschedule' %}
+<p><label for="manage-day">New office date</label><br><input id="manage-day" name="day" type="date" value="{{ values.get('day','') }}" required></p>
+<p><label for="manage-start">New start time</label><br><input id="manage-start" name="start_time" type="time" step="60" value="{{ values.get('start_time','') }}" required></p>
+<p><label for="manage-end">New end time</label><br><input id="manage-end" name="end_time" type="time" step="60" value="{{ values.get('end_time','') }}" required></p>
+<p>Only the date and start/end times change. The meeting's status, participants, audience and other fields stay as stored.</p>
+{% else %}<p>The preview will show the exact meeting to mark cancelled. The record is kept in Office Connect.</p>{% endif %}
+<p>The preview expires after five minutes and becomes invalid if the meeting changes. Nothing happens until you confirm the exact private preview. Normal calendar notices follow existing notification settings.</p>
+<button type="submit">Prepare exact private preview</button>
+</form>
+{% else %}<p>No current private action request is available. Send <code>/meeting_{{ mode }}</code> to the bot after enabling and consenting to this separate pilot.</p>{% endif %}
+</div>
+{% endblock %}

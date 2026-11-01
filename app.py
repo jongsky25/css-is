@@ -17902,6 +17902,8 @@ import telegram_group_routes
 app.include_router(telegram_group_routes.make_router(templates, get_conn))
 import telegram_meeting_routes
 app.include_router(telegram_meeting_routes.make_router(templates, get_conn))
+import telegram_meeting_manage_routes
+app.include_router(telegram_meeting_manage_routes.make_router(templates, get_conn))
 import telegram_task_routes
 app.include_router(telegram_task_routes.make_router(templates, get_conn))
 import telegram_room_request_routes

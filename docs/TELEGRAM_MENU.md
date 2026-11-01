@@ -1,6 +1,6 @@
 # Personalized private Telegram menu
 
-Draft PR #572, candidate 9.61. Deployment, activation and real-user testing remain
+Draft PR #572, candidate 9.62. Deployment, activation and real-user testing remain
 deferred. This addition changes discovery/guidance, not permissions or records.
 
 - `/menu` aliases the existing private `/help` path. Both show the same current
@@ -22,6 +22,10 @@ deferred. This addition changes discovery/guidance, not permissions or records.
 - `/find WORDS` appears in webhook mode when work, document or calendar reads
   are available. [Unified private search](TELEGRAM_PRIVATE_SEARCH.md) includes
   only the independently permitted metadata sources; no new grant is created.
+- Meeting rescheduling and cancellation have separate current consent/pilot
+  entries. Their [private guided actions](TELEGRAM_MEETING_MANAGEMENT.md) require
+  a plain meeting created by the actor; linked room/video/recurring cases remain
+  in Office Connect.
 
 Menus read current account/link/bot/grant/settings state on every rendering.
 They query no source business records and cache no feature entitlement. A menu

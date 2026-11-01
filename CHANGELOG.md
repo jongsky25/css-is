@@ -1,4 +1,6 @@
-## 9.61 — November 1, 2026
+## 9.62 — November 1, 2026
+
+- Add separately consented private meeting rescheduling/cancellation with signed-in forms, exact expiring previews, stale-source checks and atomic source/audit/receipt handling; linked room/managed video/recurring cases stay in Office Connect.
 
 - Add private /find metadata search across independently permitted tasks, work titles, document numbers/subjects and meetings within the next 31 days, with bounded detail commands and no retained search text.
 

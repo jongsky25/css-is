@@ -23,6 +23,7 @@
 {% else %}<p>Private room lookup requires its optional pilot and your room read consent.</p>{% endif %}
 <p>{% if meeting_ready %}Send <code>/meeting</code> privately or in a registered topic, fill the signed-in guided form, then use its private preview command and confirm the exact result in your private bot chat.{% else %}Meeting creation requires its optional pilot and fresh explicit calendar read and meeting-create consent. Disconnect and link again to change permissions.{% endif %} {% if room_request_ready %}Send <code>/room_request</code> for one pending room request linked to an existing meeting you created or participate in. Use the form’s private preview command and confirm the exact hours; normal approval still applies.{% else %}Room requests require the optional pilot and fresh explicit calendar read, room read and room-request consent.{% endif %} Change or approve requests in Office Connect. Linking never grants access beyond your current Office Connect permissions.</p>
 <p>Task actions, when enabled and separately consented: <code>/task_ack WORK_ID TASK_ID</code> to preview acknowledgement, or <code>/task_submit WORK_ID TASK_ID</code> to prepare an output submission. Both require an exact private preview and confirmation. No action occurs from lookup alone.</p>
+<p>With separate meeting-management pilots and consent, use <code>/meeting_reschedule</code> or <code>/meeting_cancel</code> privately. Each uses a signed-in form, exact private preview and confirmation for a plain meeting you created. Active room bookings, recurrence, activity links and managed video events must be handled in Office Connect first.</p>
 <form method="post" action="/account/telegram/disconnect">
 <input type="hidden" name="csrf" value="{{ csrf }}">
 <button type="submit">Disconnect Telegram and cancel pending links</button>
@@ -41,6 +42,7 @@
 {% for key,label in scopes.items() %}<p><label><input type="checkbox" name="scopes" value="{{ key }}"> {{ label }}</label></p>{% endfor %}
 </fieldset>
 <p>Meeting creation additionally requires the calendar read checkbox. A separate room-request checkbox requires both calendar and room read consent. Neither grants approval authority or group disclosure. Task acknowledgement and submission each require their separate checkbox and the work read checkbox.</p>
+<p>Meeting rescheduling and cancellation each need their own checkbox and calendar read consent; meeting-create consent alone cannot edit or cancel meetings.</p>
 <p><label><input type="checkbox" name="consent" value="yes" required> Link this Office Connect account to my own private Telegram account.</label></p>
 <button type="submit">Request confirmation in Telegram</button>
 </form>

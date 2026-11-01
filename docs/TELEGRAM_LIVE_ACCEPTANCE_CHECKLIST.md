@@ -7,7 +7,7 @@ without the owner's later release/testing instruction.
 
 ## Before the later pilot
 
-1. Identify the reviewed PR/source commit and candidate version (currently 9.61).
+1. Identify the reviewed PR/source commit and candidate version (currently 9.62).
    Verify the actual candidate's required metadata/dependency/full normal/shuffled/
    aggregate CI, main freshness and synchronized versions. Old-head checks do not
    establish readiness. Follow existing release and verified-backup gates.
@@ -48,6 +48,9 @@ without the owner's later release/testing instruction.
 | Meals | Check standalone and room-linked requests separately. Only requested meal states/date/parent state appear; no quantities, dietary request, venue or notes. Room approval does not imply meal delivery. | Pending |
 | Arrangements | Compare filing period/requested type/state. Notes/approver remarks/colleagues are absent. The bot links to the actual schedule instead of asserting a pending/old filing is in force. | Pending |
 | Calendar-only creation | `/meeting` returns its signed-in guide. Prepare form → `/meeting_preview OPERATION_ID` → exact confirmation → receipt. One correct calendar entry exists; no room was requested implicitly. | Pending |
+| Meeting reschedule | Consent separately to calendar read/reschedule; use `/meeting_reschedule` → signed-in exact form → private preview → confirmation. Only date/start/end change on an own plain meeting; repeat/recover produces no second edit. | Pending |
+| Meeting cancellation | Consent separately to calendar read/cancel; use `/meeting_cancel` and exact preview/confirmation. Source record is marked cancelled, kept for source recovery, with one revision/audit/outcome. Recovery reports current state without repeating a write. | Pending |
+| Management blockers | Another creator, stale/reverted source, recurrence/import/activity/video-managed entry, or newly linked active room booking is blocked. Read/create consent alone grants no management; missing read/write grant, disconnect or paused pilot prevents confirmation. Do not alter live data to induce faults; synthetic tests cover rollbacks. | Pending |
 | Combined room request | Explicitly opt into one room block, review the exact preview and confirm. Meeting is saved and room request says pending approval/no booking held. Actual approval remains an Administrative Section action. | Pending |
 | Separate room request | `/room_request` → form → `/room_preview OPERATION_ID` → confirmation submits one request for a permitted meeting. No new meeting or automatic approval occurs. | Pending |
 | Partial/recovery behavior | If a genuine controlled conflict occurs, verify the actual recorded partial outcome and use its parent-bound room-only retry. Do not introduce a live outage or corrupt source records to simulate failure. Recovery must not recreate a meeting; automated tests cover forced faults. | Pending |

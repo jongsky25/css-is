@@ -27,6 +27,14 @@ COMMAND_ACTION={command:action for action,meta in META.items() for command in (m
 KINDS={meta['prefix']+'_'+suffix:action for action,meta in META.items() for suffix in ('guide','preview','receipt','error')}
 
 
+def register(action,meta,adapter):
+    """Register another guided action using the same private preview/receipt contract."""
+    META[action]=meta
+    COMMAND_ACTION.update({meta[key]:action for key in ('confirm','receipt')})
+    KINDS.update({meta['prefix']+'_'+suffix:action for suffix in ('guide','preview','receipt','error')})
+    actions.ADAPTERS[action]=adapter
+
+
 
 def context_from_preview(p):
     conn_sender=p.get('sender_id')

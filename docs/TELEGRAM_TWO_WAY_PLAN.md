@@ -1,6 +1,6 @@
 # Office Connect ↔ Telegram delivery plan
 
-Status: T0–T4.3.2 merged; T4.4 hosted pilot incomplete. Draft PR #572 (candidate 9.61) adds private task/document/supplies/personal reads, confirmed task updates and private guided meeting/room webhook replies. Owner confirms hosted linking/calendar retrieval; new draft capabilities, group/automatic outgoing delivery and the complete pilot remain unverified live. Source switches remain default-off.
+Status: T0–T4.3.2 merged; T4.4 hosted pilot incomplete. Draft PR #572 (candidate 9.62) adds private task/document/supplies/personal reads, confirmed task updates and private guided meeting/room webhook replies. Owner confirms hosted linking/calendar retrieval; new draft capabilities, group/automatic outgoing delivery and the complete pilot remain unverified live. Source switches remain default-off.
 Last updated: 2026-11-01.
 Repository: jongsky25/css-is.
 Planning baseline inspected: abf3141 (merge of PR #458).
@@ -755,3 +755,59 @@ dependency/container/aggregate CI remains required and is not claimed passed.
 Deployment, host activation, real messages and live acceptance remain deferred.
 Fresh exact-head full CI remains a release gate; no monitoring/operations work
 or production data access is part of this request.
+
+
+### Private meeting management implemented — 2026-11-01
+
+Owner approved continuing feature development while personal/live testing stays
+deferred. Draft PR #572 continues on `feat/telegram-private-work-lookup`,
+unpublished candidate **9.62**, preserving main c81b235 (9.58).
+
+Added separately consented, default-off `calendar.reschedule` and
+`calendar.cancel` actions. `/meeting_reschedule` and `/meeting_cancel` return
+signed-in, script-free forms; prepared operation IDs retrieve exact private
+previews with five-minute deadlines and action-specific confirmation/recovery
+commands. Existing create/read consent cannot grant either new write action.
+
+Only an actor's own plain native one-day meeting is eligible. Recurring, imported,
+activity-linked, already-cancelled and managed video cases stay in Office Connect.
+Active linked room requests/bookings block preparation and confirmation, including
+new links after preview; this increment does not move/cancel rooms or meals.
+Rescheduling changes date/start/end only, preserving remaining source fields.
+Cancellation uses native soft cancellation. Source notices follow current
+notification settings; no feature/notice/reminder delivery is activated now.
+
+Native calendar update/cancel now supports caller-owned transactions with existing
+default behavior preserved. Source revision/outbox/audit, consumed preview and
+operation receipt commit together. A full source hash plus latest revision ID
+blocks stale or edited/reverted previews. Atomic rollback, duplicate/concurrent
+confirmation, creator/current-authority/private transport fences and deletion
+recovery are covered by synthetic checks.
+
+See [meeting-management behavior](TELEGRAM_MEETING_MANAGEMENT.md) and the expanded
+[pending live checklist](TELEGRAM_LIVE_ACCEPTANCE_CHECKLIST.md).
+
+Current isolated Python 3.11 verification: **1789 regression cases** across
+Telegram, native calendar, audit-chain writers, deployment and release checks
+passed, plus **98 shuffled action/menu/phone cases**, **11 native Meet relay
+cases** and **4 final normal late-receipt/consent cases**, zero failures/errors/
+skips. Groups overlap; the four final cases were added after broad-run collection
+and also passed in the shuffled group. The earlier new-management/phone run
+passed 48 cases, overlapping these groups. Initial synthetic table/API/seen-marker
+assertions were corrected to the actual source schema/semantics before final
+runs; no permission or atomicity assertion was weakened. JUnit reports:
+`/tmp/telegram-manage-regressions.xml`, `/tmp/telegram-manage-shuffled.xml`,
+`/tmp/telegram-manage-relay.xml`, `/tmp/telegram-manage-extra.xml`. All gates pass.
+
+Candidate 9.62 metadata/increase over main 9.58, dependency locks/vendor integrity,
+installed compatibility, AI contract, compilation, documentation file targets
+and whitespace checks pass. Existing Starlette/httpx deprecation warning remains.
+No application source edits followed the passing runs. Fresh exact-head full
+repository normal/shuffled/dependency/container/aggregate CI remains required;
+no live acceptance or deployment is claimed.
+
+Next: inspect fresh exact-head repository-wide normal/shuffled/dependency/aggregate
+CI and review the draft. Production/preview publication, host activation, real
+messages and user/live testing remain deferred. Independent room management and
+managed provider/series editing remain future work; no operational monitor action
+or live data access occurred in this task.

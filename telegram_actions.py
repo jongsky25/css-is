@@ -11,6 +11,7 @@ import hmac
 import auth
 import hashlib
 import json
+import os
 import re
 import secrets
 import time
@@ -24,6 +25,7 @@ import telegram_transport as transport
 
 ADAPTERS = {}
 ACTIONS = {'calendar.create':'calendar_create','rooms.request':'rooms_request', 'tasks.acknowledge':'tasks_acknowledge', 'tasks.submit':'tasks_submit'}
+ACTIONS.update({'calendar.reschedule':'calendar_reschedule','calendar.cancel':'calendar_cancel'})
 TTL = 300
 CONTEXT = {'connection_id','generation','sender_id','chat_id','topic_id','registration_id','registration_generation'}
 
@@ -86,7 +88,10 @@ def authority(conn,context,action):
             raise Unavailable('Group context unavailable.')
     if action.startswith('tasks.') and context['chat_id'] < 0:
         raise Unavailable('Task actions are private only.')
-    read_scope = 'work.read' if action.startswith('tasks.') else ('calendar.read' if action=='calendar.create' else 'rooms.read')
+    if action in ('calendar.reschedule','calendar.cancel') and (context['chat_id']<0 or not switches.enabled('delivery')
+            or len(links.origin() or '')>200 or os.environ.get('CSS_TELEGRAM_REPLY_TRANSPORT')=='direct'):
+        raise Unavailable('Meeting management requires private webhook replies.')
+    read_scope = 'work.read' if action.startswith('tasks.') else ('calendar.read' if action.startswith('calendar.') else 'rooms.read')
     if not links.authorized(conn,found[0]['id'],read_scope):
         raise Unavailable('Current read consent is required for this action.')
     if action=='rooms.request' and not links.authorized(conn,found[0]['id'],'calendar.read'):

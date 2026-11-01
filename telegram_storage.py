@@ -5,7 +5,7 @@ import os
 # Deliberately independent of Apprise's private discussion digest switch.
 SWITCHES = (
     'inbound', 'delivery', 'link', 'groups', 'calendar_read', 'rooms_read',
-    'calendar_create', 'rooms_request', 'change_notices', 'reminders', 'work_read', 'tasks_acknowledge', 'tasks_submit', 'documents_read', 'supplies_read', 'travel_read', 'meals_read', 'arrangements_read',
+    'calendar_create', 'calendar_reschedule', 'calendar_cancel', 'rooms_request', 'change_notices', 'reminders', 'work_read', 'tasks_acknowledge', 'tasks_submit', 'documents_read', 'supplies_read', 'travel_read', 'meals_read', 'arrangements_read',
 )
 
 
@@ -235,7 +235,7 @@ def install(conn):
     BEGIN
       UPDATE telegram_preview SET state='cancelled',fields_json=NULL,summary_json=NULL,expected_json=NULL
         WHERE connection_id=NEW.connection_id AND generation=NEW.generation AND state='pending'
-        AND (action=NEW.action OR (NEW.action='calendar.read' AND action='calendar.create')
+        AND (action=NEW.action OR (NEW.action='calendar.read' AND action IN ('calendar.create','calendar.reschedule','calendar.cancel'))
           OR (NEW.action='rooms.read' AND action='rooms.request')
           OR (NEW.action='work.read' AND action IN ('tasks.acknowledge','tasks.submit')));
     END;

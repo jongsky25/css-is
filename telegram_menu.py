@@ -17,6 +17,8 @@ import work_tasks
 FEATURES=(
  ('calendar.read','Calendar','Calendar lookup','/calendar — next seven days; /calendar YYYY-MM-DD — one day.',(),None,False),
  ('calendar.create','Calendar','Meeting creation','/meeting — guided form, then exact private preview and confirmation.',('calendar.read',),None,False),
+ ('calendar.reschedule','Calendar','Meeting rescheduling','/meeting_reschedule — change your own meeting’s date/time after preview and confirmation.',('calendar.read',),None,True),
+ ('calendar.cancel','Calendar','Meeting cancellation','/meeting_cancel — cancel your own meeting after preview and confirmation.',('calendar.read',),None,True),
  ('rooms.read','Calendar','Room lookup','/room_slots — today’s slots; /my_rooms; /room_status REFERENCE.',(),None,False),
  ('rooms.request','Calendar','Room requests','/room_request — an existing meeting; preview and confirmation; pending approval.',('calendar.read','rooms.read'),None,False),
  ('work.read','Tasks and work','Work lookup','/my_summary; /my_tasks; /my_work; /task_status WORK_ID TASK_ID; /work_status WORK_ID.\nExample: /my_tasks overdue (also upcoming or review).',(),work.enabled,False),
