@@ -395,3 +395,22 @@ Owner subsequently confirms live Telegram linking and calendar retrieval. The
 next feature request is progressive Telegram expansion; recommended first scope
 is usable private guided meeting creation, then room requests. First-expansion
 preference is pending; see the Telegram ledger's owner acceptance entry.
+
+## Telegram task/work expansion — 2026-11-01
+
+Owner selected private task and work-status lookup. Implementation is saved on
+`feat/telegram-private-work-lookup`, candidate 9.56: `/my_tasks`, `/task_status`,
+`/my_work`, `/work_status`, bounded pages and source links; no writes or pushes.
+New `work.read` consent and default-off `CSS_TELEGRAM_WORK_READ_ENABLED` are
+required. Existing calendar permission does not grant this access. See the
+[runbook](TELEGRAM_WORK_LOOKUP.md) and
+[implementation evidence](TELEGRAM_TWO_WAY_PLAN.md#t61a-implementation-evidence--2026-11-01).
+
+Fresh setup/doctor passed. Local verification: 26 focused tests (including mobile
+no-script two-channel consent/lookup), 419 broader regressions and 46 targeted
+shuffled tests passed without skips/failures; counts overlap. Metadata, locks,
+vendor, AI contract, compatibility, compile, relative links and diff checks pass.
+Full repository suites/container audit remain CI gates. Next: review exact-head
+CI and the PR, then separately authorized release/activation and actual hosted
+acceptance. No live switch, real Telegram send, preview publish, merge or deploy.
+Deferred operations findings remain deferred.

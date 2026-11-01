@@ -7,6 +7,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 
 import auth
 import ratelimit
+import work
 import telegram_bot as bot
 import telegram_links as links
 
@@ -32,7 +33,8 @@ def make_router(templates, get_conn):
                 {'show_scope': False, 'account': user, 'connection': connection, 'grants': grants,
                  'pending': pending, 'ready': bool(links.available()), 'csrf': csrf(request),
                  'webhook_replies': bot.reply_transport() == 'webhook',
-                 'scopes': {k:v for k,v in links.SCOPES.items() if (k!='calendar.create' or bot.storage.enabled('calendar_create')) and (k!='rooms.request' or bot.storage.enabled('rooms_request'))}, 'error': error,
+                 'work_ready': bool(execution_ready and work.enabled(conn) and links.origin() and len(links.origin()) <= 200 and links.authorized(conn,user['id'],'work.read')),
+                 'scopes': {k:v for k,v in links.SCOPES.items() if (k!='work.read' or bot.storage.enabled('work_read')) and (k!='calendar.create' or bot.storage.enabled('calendar_create')) and (k!='rooms.request' or bot.storage.enabled('rooms_request'))}, 'error': error,
                  'room_request_ready': bool(execution_ready and links.authorized(conn,user['id'],'rooms.request') and links.authorized(conn,user['id'],'rooms.read') and links.authorized(conn,user['id'],'calendar.read')),
                  'meeting_ready': bool(execution_ready and links.authorized(conn,user['id'],'calendar.create') and links.authorized(conn,user['id'],'calendar.read')),
                  'rooms_ready': bool(links.authorized(conn,user['id'],'rooms.read') and links.origin() and len(links.origin())<=200 and bot.storage.enabled('inbound') and bot.storage.enabled('delivery')),

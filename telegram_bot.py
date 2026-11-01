@@ -22,6 +22,7 @@ import telegram_links as links
 import telegram_groups as groups
 import telegram_calendar as calendar_reads
 import telegram_rooms as room_reads
+import telegram_work as work_lookup
 import telegram_group_reads as shared_reads
 import telegram_actions
 import telegram_meetings as meetings
@@ -165,6 +166,12 @@ def normalize(value):
                 clean['room_query'] = room_reads.parse(text, now_utc())
             except ValueError:
                 clean['room_query'] = {'error': 'usage'}
+        if first in work_lookup.COMMANDS:
+            clean['command'] = first
+            try:
+                clean['work_query'] = work_lookup.parse(text)
+            except ValueError:
+                clean['work_query'] = {'error': 'usage'}
         if first == '/confirm' and len(parts) == 2 and re.fullmatch(r'[a-f0-9]{64}', parts[1]):
             clean['command'] = first
             clean['argument_hash'] = links.digest(parts[1])
@@ -253,6 +260,11 @@ def receive(conn, clean, raw, bot, now, webhook_reply=None):
                        'topic_id': clean['topic_id'], 'registration_id': None}
             supported = cid is not None and permitted and room_reads.actor(conn, context, bot) is not None
             projection = {'kind': 'rooms', 'bot': bot[0], 'fingerprint': bot[2], 'query': clean['room_query']}
+        if command in work_lookup.COMMANDS:
+            context = {'connection_id': cid, 'generation': generation, 'chat_id': clean['chat_id'],
+                       'topic_id': clean['topic_id'], 'registration_id': None}
+            supported = cid is not None and permitted and work_lookup.actor(conn, context, bot) is not None
+            projection = {'kind': 'work', 'bot': bot[0], 'fingerprint': bot[2], 'query': clean['work_query']}
         if group_route:
             projection = {'kind': 'group_status', 'bot': bot[0], 'fingerprint': bot[2]}
         immediate_disconnect = supported and command == '/disconnect'
@@ -340,7 +352,8 @@ def prepare_webhook_reply(conn, clean, bot, now):
             or transport.config() != bot or clean['chat_id'] != clean['sender_id']
             or not clean['chat_id'] or clean['chat_id'] < 0 or clean['topic_id'] is not None
             or clean['command'] not in ('/start', '/help', '/status', '/confirm',
-                '/calendar', '/calendar_next', '/room_slots', '/my_rooms', '/room_status')):
+                '/calendar', '/calendar_next', '/room_slots', '/my_rooms', '/room_status',
+                *work_lookup.COMMANDS)):
         return None
     found = rows(conn, 'SELECT * FROM telegram_update WHERE bot_identity=? AND update_id=?',
                  (bot[0], clean['update_id']))
@@ -467,6 +480,12 @@ def _process_update_in_transaction(conn, update, bot, now):
         valid = (cid is not None and cid == update['connection_id'] and generation == update['generation']
                  and update['received_at'] > stamp(now-timedelta(hours=24))
                  and room_reads.actor(conn, context, bot) is not None)
+    if work_lookup.descriptor(projection, bot):
+        context = {'connection_id': cid, 'generation': generation, 'chat_id': update['chat_id'],
+                   'topic_id': update['topic_id'], 'registration_id': None}
+        valid = (cid is not None and cid == update['connection_id'] and generation == update['generation']
+                 and update['received_at'] > stamp(now-timedelta(hours=24))
+                 and work_lookup.actor(conn, context, bot) is not None)
     if valid:
         conn.execute('''INSERT INTO telegram_delivery
             (dedupe_key,event_key,connection_id,generation,chat_id,projection_json,expires_at,created_at,updated_at)
@@ -495,6 +514,7 @@ def eligible(conn, delivery, bot, now=None):
     cid, generation, permitted = identity(conn, delivery['chat_id'])
     calendar_lookup = calendar_reads.descriptor(projection, bot) and calendar_reads.actor(conn, delivery, bot) is not None
     room_lookup = room_reads.descriptor(projection, bot) and room_reads.actor(conn, delivery, bot) is not None
+    work_read = work_lookup.descriptor(projection, bot) and work_lookup.actor(conn, delivery, bot) is not None
     meeting_lookup = meetings.delivery_context(conn,delivery,projection,now or now_utc()) is not None
     linking = projection.get('kind') in ('link_code','link_confirm') if isinstance(projection, dict) else False
     if linking:
@@ -505,7 +525,7 @@ def eligible(conn, delivery, bot, now=None):
         (delivery['chat_id'], delivery['created_at'])).fetchone()
     return (not rejected and delivery['chat_id'] > 0 and delivery['topic_id'] is None and delivery['registration_id'] is None
             and permitted and cid == delivery['connection_id'] and generation == delivery['generation']
-            and (meeting_lookup or room_lookup or calendar_lookup or linking or projection in ({'kind': 'help', 'bot': bot[0], 'fingerprint': bot[2]},
+            and (work_read or meeting_lookup or room_lookup or calendar_lookup or linking or projection in ({'kind': 'help', 'bot': bot[0], 'fingerprint': bot[2]},
                                           {'kind': 'status', 'bot': bot[0], 'fingerprint': bot[2]})))
 
 
@@ -523,6 +543,8 @@ def render_delivery(conn, delivery, projection, bot, now, *, commit=True):
     elif projection['kind'] == 'calendar':
         message = (calendar_reads.render(conn, delivery, projection, bot, now) if commit else
                    calendar_reads.render(conn, delivery, projection, bot, now, commit=False))
+    elif projection['kind'] == 'work':
+        message = work_lookup.render(conn, delivery, projection, bot, now, commit=commit)
     elif projection['kind'] == 'rooms':
         message = (room_reads.render(conn, delivery, projection, bot, now) if commit else
                    room_reads.render(conn, delivery, projection, bot, now, commit=False))
@@ -535,6 +557,7 @@ def render_delivery(conn, delivery, projection, bot, now, *, commit=True):
             'Office Connect private commands: /start to link, /status to check your connection, '
             '/disconnect to revoke it. Never send your Office Connect password here.'
             + (' Private calendar lookup: /calendar (Asia/Manila).' if storage.enabled('calendar_read') else '')
+            + (' Private work lookup: /my_tasks, /task_status WORK_ID TASK_ID, /my_work, /work_status WORK_ID (separate work read consent).' if storage.enabled('work_read') else '')
             + (' Private room lookup: /room_slots, /my_rooms, /room_status REFERENCE.' if storage.enabled('rooms_read') else '')
             + (' Guided meeting pilot: /meeting (separate read/create consent required).' if storage.enabled('calendar_create') else '')
             + (' Linked room request pilot: /room_request (separate room request/read and calendar read consent).' if storage.enabled('rooms_request') else ''))
