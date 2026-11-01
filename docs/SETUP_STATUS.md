@@ -392,6 +392,8 @@ Deferred audit/exposure findings stay deferred. No release gates may be bypassed
 ## Audit warning candidate — November 1, 2026
 
 Branch `fix/audit-chain-investigation`, based on main `e0dde74` (merged 9.55).
+Saved as [draft PR #573](https://github.com/jongsky25/css-is/pull/573), initial
+implementation commit `360517c`. Release CI is not yet verified.
 Version 9.56 synchronizes release metadata for review; it is not deployed.
 Read-only snapshot investigation and production limits are in
 [the audit report](operations/audit-2026-11-01.md).
