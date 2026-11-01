@@ -3,7 +3,7 @@
 {% block title %}Appearance{% endblock %}
 {% block head %}
 <link rel="stylesheet" href="/static/css/appearance-admin.css?v=1">
-<script src="/static/js/appearance-admin.js?v=2" defer></script>
+<script src="/static/js/appearance-admin.js?v=3" defer></script>
 {% endblock %}
 
 {% macro fields() %}
@@ -28,9 +28,11 @@
 </select>
 <button type="button" class="btn ghost" data-match-outfit>Use matching outfit</button>
 <input type="hidden" name="artwork_present" value="1">
-<label class="appearance-check"><input type="checkbox" name="artwork" value="1" {{ 'checked' if value.artwork }}> Illustrated scenery and seasonal banner (Halloween)</label>
-<label class="appearance-check"><input type="checkbox" name="effects" value="1" {{ 'checked' if value.effects }}> Ambient animation · drifting mist, bats, or snow</label>
-<label for="{{ prefix }}-banner">Halloween banner message</label>
+<label class="appearance-check"><input type="checkbox" name="artwork" value="1" {{ 'checked' if value.artwork }}> Illustrated scenery and seasonal banner</label>
+<label class="appearance-check"><input type="checkbox" name="effects" value="1" {{ 'checked' if value.effects }}> Ambient animation · mist, bats, lantern glow or New Year confetti</label>
+<label for="{{ prefix }}-year">New Year target year (midnight January 1, Asia/Manila)</label>
+<input id="{{ prefix }}-year" name="target_year" type="number" min="2027" max="2100" required value="{{ value.target_year }}">
+<label for="{{ prefix }}-banner">Seasonal banner message</label>
 <input id="{{ prefix }}-banner" name="banner" maxlength="100" value="{{ value.banner }}">
 {% endmacro %}
 
@@ -83,7 +85,7 @@
 <button type="button" class="btn ghost" data-preview-width="100%" aria-pressed="true">Desktop</button>
 <button type="button" class="btn ghost" data-preview-width="390px" aria-pressed="false">Mobile</button></div></div>
 <p class="muted">Your actual home page and companion. Changes update this private preview automatically.</p>
-<div class="appearance-preview-frame"><iframe id="appearance-preview" title="Private home page appearance preview" loading="lazy" sandbox="allow-scripts allow-same-origin" src="/?appearance_preview=1&amp;view=me&amp;theme={{ selected.theme }}&amp;outfit={{ selected.outfit }}&amp;effects={{ '1' if selected.effects else '0' }}&amp;artwork={{ '1' if selected.artwork else '0' }}&amp;banner={{ selected.banner|urlencode }}"></iframe></div>
+<div class="appearance-preview-frame"><iframe id="appearance-preview" title="Private home page appearance preview" loading="lazy" sandbox="allow-scripts allow-same-origin" src="/?appearance_preview=1&amp;view=me&amp;theme={{ selected.theme }}&amp;outfit={{ selected.outfit }}&amp;effects={{ '1' if selected.effects else '0' }}&amp;artwork={{ '1' if selected.artwork else '0' }}&amp;target_year={{ selected.target_year }}&amp;banner={{ selected.banner|urlencode }}"></iframe></div>
 </section>
 </div>
 

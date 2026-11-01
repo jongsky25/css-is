@@ -1,5 +1,10 @@
 # Seasonal design study — first build stage
 
+Application integration now exists on the same branch. See
+[the implementation handoff](../../SEASONAL_THEME_IMPLEMENTATION.md) for actual
+behaviour, real-page screenshots, verification and remaining release checks.
+The study below remains a separate simulated design artifact.
+
 Branch: `feat/seasonal-theme-design`, separate worktree
 `/workspace/office-connect-seasonal`, based on main `a7b9b38` (9.59).
 The user requested starting the seasonal work while avoiding conflict with ongoing

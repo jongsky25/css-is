@@ -6,7 +6,8 @@
   document.querySelectorAll('[data-match-outfit]').forEach(function(button){
     button.addEventListener('click',function(){
       var form=button.closest('form');
-      form.elements.outfit.value=form.querySelector('[name="theme"]:checked').value;
+      var theme=form.querySelector('[name="theme"]:checked').value;
+      form.elements.outfit.value=theme==='newyear'?'default':theme;
       form.elements.outfit.dispatchEvent(new Event('change',{bubbles:true}));
     });
   });
@@ -14,13 +15,15 @@
     var params=new URLSearchParams({appearance_preview:'1',view:'me',
       theme:editor.querySelector('[name="theme"]:checked').value,
       outfit:editor.elements.outfit.value,effects:editor.elements.effects.checked?'1':'0',
-      artwork:editor.elements.artwork.checked?'1':'0',banner:editor.elements.banner.value});
+      artwork:editor.elements.artwork.checked?'1':'0',banner:editor.elements.banner.value,target_year:editor.elements.target_year.value});
     document.getElementById('appearance-preview').src='/?'+params.toString();
   }
   var previewTimer;
   document.getElementById('appearance-preview-button').addEventListener('click',function(){clearTimeout(previewTimer);updatePreview();});
   document.querySelectorAll('[name="theme"]').forEach(function(radio){
-    radio.addEventListener('change',function(){radio.form.elements.artwork.checked=radio.value==='halloween';});
+    radio.addEventListener('change',function(){radio.form.elements.artwork.checked=radio.value!=='default';
+      var message=radio.form.elements.banner;
+      if(['','A little spooky. Still productive.','A season of gratitude. A little brighter together.','A brighter year, together.'].includes(message.value))message.value='';});
   });
   editor.addEventListener('change',function(event){
     if(event.target.name==='expires')return;

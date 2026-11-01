@@ -75,6 +75,22 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**Seasonal application integration candidate — November 1, 2026.**
+`feat/seasonal-theme-design` now implements Christmas/New Year palettes and parol
+scenes, Home countdown to a validated target year in Asia/Manila, static midnight
+greeting, optional bounded effects and generalized Appearance controls. No sound.
+[Implementation, real-page screenshots and coordination handoff](SEASONAL_THEME_IMPLEMENTATION.md).
+Existing appearance checks: 22 passed; combined checks: 34 passed; expanded seasonal
+checks: 13 passed (overlapping groups), zero failures/skips, JUnit gates pass.
+Final focused browser/new-season run after the admin-copy change: 16 passed,
+zero failures/skips; JUnit gate passed.
+No event published, Telegram message, preview overwrite, PR, merge or deployment.
+Version metadata is intentionally deferred until release order with Telegram is
+known; full required CI/release checks and hosted phone acceptance remain pending.
+Latest compared Telegram branch head: `6a83c07`; only this status file overlaps by
+changed path. Next: coordinate the shared preview slot and review on phone, then
+refresh both feature branches and validate the eventual combined release.
+
 **Seasonal build started in isolation — November 1, 2026.**
 Branch `feat/seasonal-theme-design` starts from main `a7b9b38` in a separate
 worktree. [Interactive mockups, screenshots and merge-coordination notes](design/seasonal/README.md)
