@@ -1,6 +1,6 @@
 # Personalized private Telegram menu
 
-Draft PR #572, candidate 9.77. Deployment, activation and real-user testing remain
+Draft PR #572, candidate 9.78. Deployment, activation and real-user testing remain
 deferred. This addition changes discovery/guidance, not permissions or records.
 
 - `/menu` aliases the existing private `/help` path. Both show the same current
@@ -132,3 +132,6 @@ Replies have independent consent and exact parent/thread checks:
 
 Author-owned text revisions use independent consent and exact revision previews:
 [work and task comment editing](TELEGRAM_COMMENT_EDITING.md).
+
+Optional colleague selection uses its own consent plus a permitted post/reply action:
+[colleague mentions](TELEGRAM_COLLEAGUE_MENTIONS.md).

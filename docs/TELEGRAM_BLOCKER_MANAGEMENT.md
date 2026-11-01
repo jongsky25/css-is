@@ -1,6 +1,6 @@
 # Private blocker recording and clearing
 
-Draft PR #572, candidate 9.77. The owner explicitly approved recording and clearing
+Draft PR #572, candidate 9.78. The owner explicitly approved recording and clearing
 task blockers. Deployment, preview publication, activation and personal/live testing
 remain deferred. Local checks use synthetic records and blocked outgoing providers.
 

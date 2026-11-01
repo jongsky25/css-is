@@ -1,6 +1,6 @@
 # Office Connect ↔ Telegram delivery plan
 
-Status: T0–T4.3.2 merged; T4.4 hosted pilot incomplete. Draft PR #572 (candidate 9.77) adds private task/document/supplies/personal reads, confirmed task updates and private guided meeting/room webhook replies. Owner confirms hosted linking/calendar retrieval; new draft capabilities, group/automatic outgoing delivery and the complete pilot remain unverified live. Source switches remain default-off.
+Status: T0–T4.3.2 merged; T4.4 hosted pilot incomplete. Draft PR #572 (candidate 9.78) adds private task/document/supplies/personal reads, confirmed task updates and private guided meeting/room webhook replies. Owner confirms hosted linking/calendar retrieval; new draft capabilities, group/automatic outgoing delivery and the complete pilot remain unverified live. Source switches remain default-off.
 Last updated: 2026-11-01.
 Repository: jongsky25/css-is.
 Planning baseline inspected: abf3141 (merge of PR #458).
@@ -2070,6 +2070,120 @@ See [editing behavior](TELEGRAM_COMMENT_EDITING.md) and
 remain Pending. No real Telegram message/provider registration, production data,
 scheduler/monitor execution, deployment, preview publication or activation occurred.
 Initial prior-head `6a83c07` inspection found metadata/dependency audit/avatar
+functional checks passing and full normal/shuffled checks running; those are not
+new-head acceptance.
+
+Next: inspect fresh exact-head full repository normal/shuffled/dependency/
+container/aggregate CI and continue only the next explicitly requested feature.
+Main merge/release, preview publication, activation and personal/live testing
+remain deferred until the owner's later instruction.
+
+
+## Colleague mentions in comments and replies — 2026-11-01
+
+Owner explicitly approved colleague mentions in work/task comments and replies.
+Added optional explicit selection to the existing `/work_comment`, `/task_comment`,
+`/work_reply` and `/task_reply` forms/preview/confirmation protocols on branch
+`feat/telegram-private-work-lookup`, draft PR #572, candidate **9.78**. Actual main
+remains `a7b9b38` (released 9.59), preserved on this branch. Deployment, preview
+publication, activation and personal/live testing remain explicitly deferred.
+
+Independent default-off `CSS_TELEGRAM_WORK_MENTIONS_ENABLED` / `work.mentions`
+requires work-read consent plus the applicable existing post/reply permission and
+pilot. Auxiliary consent alone cannot post/reply/edit or grant source access; one
+posting grant alone cannot select colleagues. Unmentioned posts remain available
+without auxiliary consent. Existing text edits retain their original strict fields
+and preserve existing mention metadata using native current eligibility checks.
+
+New source-only GET loader within the signed-in forms accepts original private
+request/source IDs, never draft text, CSRF/action keys or selected people in the
+URL. It prepares/posts nothing. Current work/task/optional-parent scope is verified
+before native `work_updates.candidates` returns only active current readers of
+that work and every linked document. No directory before selection, on unavailable
+source, or without mention consent/pilot. No person is preselected. Main POST fields,
+CSRF/key/origin checks remain separate. Optional repeated mentions are declared
+only for these comment/reply routes; other keys stay single-valued/allowlisted and
+unrelated shared forms retain their contracts. Body/field limits bound selection.
+
+Up to 20 distinct strict account IDs normalize in sorted order; malformed,
+duplicate, over-limit, inactive and nonreader selections are refused. Full selected
+account/role/active/resource/display-name snapshots bind the exact private preview.
+Message plus each selected name/account are displayed, with native notice/no-access
+effects. Any name/current source eligibility change before pull/confirmation
+requires a fresh preview, including document-access loss without revision change.
+Stored parent/discussion/submission contents remain in Office Connect. Oversized
+Unicode previews refuse rather than silently dropping people or message text.
+
+Existing unchanged native `work_discussion.post_in_transaction` receives validated
+IDs. Message/revision/structured mentions, normal permitted notices/author-read
+marker, consumed preview, receipt and private handoff commit atomically. Notice/
+receipt/handoff failure rolls back all; duplicate/concurrent confirmation posts
+once. Native parent/follower/mention priority deduplicates one person/message;
+self mention records metadata without a self-notice. No follow/notification setting,
+source membership/access, external destination or scheduler/digest/provider execution
+is added. Existing independent digest policies remain separate. Task/work/document
+state, revisions, ownership, submissions, blockers, dependencies, deadlines, events
+and formal review/approvals stay unchanged; native informal terminal/formal discussion
+behavior is preserved.
+
+Current auxiliary/base/read scopes and pilots, source rights/modules, recipient
+names/eligibility, expiry and original account/bot/chat/context are rechecked.
+Revoking auxiliary consent cancels/scrubs pending previews in all four posting flows
+conservatively, including unmentioned pending previews; fresh unmentioned posting
+remains available under its own grants. Existing edit previews/committed messages
+keep their own permissions. Pause, disconnect, restore and context loss cannot
+produce stale selected-mention creation. Core receipts remain source/thread/author
+bound, report original post/current revision without stored recipient names, and
+never replay notices. Existing deletion/retention rules remain intact. No new
+business action, source mutation rule/table or receipt identifier was introduced.
+
+Isolated Python 3.11 verification: **2604 broad regressions passed**
+across Telegram/native work, integration submission API/MCP submissions, audit-chain
+writers, deployment and release checks. **1227 current shuffled
+mention/edit/reply/comment/task/action/menu/phone checks** (seed 311) passed.
+**148 final mention/phone/menu/budget checks** passed,
+alongside **4 dedicated phone flows** and **239
+earlier shared action/menu/unmentioned comment/reply/budget checks**. All groups
+have zero failures/errors/skips and overlap. All final service/phone assertions
+preceded broad/shuffled collection; no application source edits followed these
+passing final groups.
+
+All four posting modes, independent auxiliary/base/read consent/pilots, empty/
+loaded/source-scoped/paused choices, strict/duplicate/20-person selection, current
+name/active/work/every-document eligibility (including permission loss without
+source revision), revoke/pause/expiry/disconnect/restore, native mention/follower/
+parent notice priority/deduplication and self behavior, unchanged source/access/
+preferences, atomic notice/receipt/handoff rollback and concurrent/repeated
+confirmation pass. Four 390×844 JavaScript-disabled phone cases verify exact consent,
+source-ID-only loader URLs with no prepared/posting effects, blank default choices,
+CSRF/allowlists, invalid recipients, full message/name/account preview, confirmation/
+retry, unchanged work/tasks, native mention/notice rows, no outgoing calls and
+expired sessions. Existing unmentioned posts/replies, mention-preserving text edits
+and unrelated shared-form defaults remain protected by regressions.
+
+Initial new-test assertions expected a text reply after disconnect/restore and
+used an ambiguous selector for the new GET+POST forms. They now explicitly assert
+no inline response/no source mutation after context loss, and select the POST form
+for its CSRF/origin/key; native no-response and strict field behavior were preserved.
+No native constraint, permission/eligibility assertion or no-skips gate was weakened.
+
+Reports: `/tmp/telegram-mentions-regressions.xml`,
+`/tmp/telegram-mentions-shuffled.xml`, `/tmp/telegram-mentions-verified-complete.xml`,
+`/tmp/telegram-mentions-phone-final.xml` and `/tmp/telegram-mentions-wiring.xml`;
+all pass the JUnit no-skips gate. Long concurrent suites use separate workspace
+`--basetemp` paths per CLOUD_WORKSPACE.md; completed synthetic databases are removed
+after keeping reports. No temporary-volume exhaustion occurred in these runs.
+Candidate 9.78 metadata over actual main 9.59, dependency locks/vendor integrity,
+installed compatibility, AI contract 1.12.0, Python compilation, local Markdown
+links and whitespace pass. Existing Starlette/httpx deprecation warning remains.
+Full exact-head repository normal/shuffled/dependency/container/aggregate CI still
+requires inspection after push; prior-head evidence is not current acceptance.
+
+See [mention behavior](TELEGRAM_COLLEAGUE_MENTIONS.md) and
+[pending live acceptance](TELEGRAM_LIVE_ACCEPTANCE_CHECKLIST.md). All live rows
+remain Pending. No real Telegram message/provider registration, production data,
+scheduler/monitor execution, deployment, preview publication or activation occurred.
+Initial prior-head `cb192da` inspection found metadata/dependency audit/avatar
 functional checks passing and full normal/shuffled checks running; those are not
 new-head acceptance.
 

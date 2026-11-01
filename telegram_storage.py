@@ -5,7 +5,7 @@ import os
 # Deliberately independent of Apprise's private discussion digest switch.
 SWITCHES = (
     'inbound', 'delivery', 'link', 'groups', 'calendar_read', 'rooms_read',
-    'calendar_create', 'calendar_reschedule', 'calendar_cancel', 'rooms_request', 'rooms_withdraw', 'rooms_move', 'change_notices', 'reminders', 'work_read', 'tasks_acknowledge', 'tasks_submit', 'tasks_create', 'tasks_deadline', 'tasks_accept', 'tasks_return', 'tasks_assign', 'tasks_reassign', 'tasks_reopen', 'tasks_cancel', 'tasks_block', 'tasks_unblock', 'tasks_dependency_add', 'tasks_dependency_remove', 'work_comment', 'tasks_comment', 'work_reply', 'tasks_reply', 'work_comment_edit', 'tasks_comment_edit', 'tasks_review_read', 'tasks_blockers_read', 'documents_read', 'supplies_read', 'travel_read', 'meals_read', 'arrangements_read',
+    'calendar_create', 'calendar_reschedule', 'calendar_cancel', 'rooms_request', 'rooms_withdraw', 'rooms_move', 'change_notices', 'reminders', 'work_read', 'tasks_acknowledge', 'tasks_submit', 'tasks_create', 'tasks_deadline', 'tasks_accept', 'tasks_return', 'tasks_assign', 'tasks_reassign', 'tasks_reopen', 'tasks_cancel', 'tasks_block', 'tasks_unblock', 'tasks_dependency_add', 'tasks_dependency_remove', 'work_comment', 'tasks_comment', 'work_reply', 'tasks_reply', 'work_comment_edit', 'tasks_comment_edit', 'work_mentions', 'tasks_review_read', 'tasks_blockers_read', 'documents_read', 'supplies_read', 'travel_read', 'meals_read', 'arrangements_read',
 )
 
 
@@ -275,6 +275,7 @@ def install(conn):
           OR (NEW.action='rooms.read' AND action IN ('rooms.request','rooms.withdraw','rooms.move'))
           OR (NEW.action='calendar.read' AND action='rooms.move'
               AND json_extract(CASE WHEN json_valid(expected_json) THEN expected_json ELSE '{}' END,'$.entry_id') IS NOT NULL)
+          OR (NEW.action='work.mentions' AND action IN ('work.comment','tasks.comment','work.reply','tasks.reply'))
           OR (NEW.action='work.read' AND action IN ('tasks.acknowledge','tasks.submit','tasks.create','tasks.deadline','tasks.accept','tasks.return','tasks.assign','tasks.reassign','tasks.reopen','tasks.cancel','tasks.block','tasks.unblock','tasks.dependency_add','tasks.dependency_remove','work.comment','tasks.comment','work.reply','tasks.reply','work.comment_edit','tasks.comment_edit')));
     END;
     CREATE TRIGGER IF NOT EXISTS telegram_account_revoked

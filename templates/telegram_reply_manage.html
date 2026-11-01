@@ -6,11 +6,12 @@
 <p><a href="/account/telegram">Telegram connection and permissions</a> · <a href="/work">Open source work and discussions</a></p>
 <p>Start <code>/{{ mode }}_reply</code> in your linked private chat. Current work and linked-document access are required. The saved reply is visible to people with current source access and remains in normal discussion history.</p>
 <p>This is an informal discussion post. Work/task progress, ownership, submissions, blockers, prerequisites, deadlines and formal approvals stay unchanged. Native discussion can remain available on completed work, Done/Cancelled tasks and work under formal review.</p>
-<p>Select an existing comment in this exact discussion. Review its text in Office Connect first. The private preview shows its number and revision, without copying its text. Normal permitted follower and parent-author notices apply. Your own text edits use separately consented <code>/work_comment_edit</code> or <code>/task_comment_edit</code>; mentions remain in Office Connect; no notification preferences are added. Text such as <code>@name</code> is plain text here.</p>
+<p>Select an existing comment in this exact discussion. Review its text in Office Connect first. The private preview shows its number and revision, without copying its text. Normal permitted follower and parent-author notices apply. Your own text edits use separately consented <code>/work_comment_edit</code> or <code>/task_comment_edit</code>; colleague selection requires the separate mentions permission; no notification preferences are added. Text such as <code>@name</code> is plain text here.</p>
 <p><strong>Your entered reply text appears in the exact private Telegram preview and the saved work discussion.</strong> Existing discussion contents and submissions are not copied into Telegram.</p>
 {% if error %}<p role="alert">{{ error }}</p>{% endif %}
 {% if prepared %}<p role="status">{% if prepared.state == 'pending' %}Your preview is prepared. No reply has been posted. Send <code>/{{ mode }}reply_preview {{ prepared.operation_id }}</code> in the original private chat, check the thread, parent comment and reply text, then confirm before expiry.{% else %}This operation already has a recorded outcome. Send <code>/{{ mode }}reply_receipt {{ prepared.operation_id }}</code> in the original private chat. Recovery will not post again.{% endif %}</p>{% endif %}
 {% if origins %}
+{% include "telegram_mention_loader.html" %}
 <form method="post" action="{{ action_path }}">
 <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="key" value="{{ key }}">
 <p><label for="comment-origin">Starting private conversation</label><br><select id="comment-origin" name="origin" required>{% for item in origins %}<option value="{{ item }}" {% if selected == item %}selected{% endif %}>Private request {{ loop.index }}</option>{% endfor %}</select></p>
@@ -19,6 +20,7 @@
 <p><label for="reply-parent">Reply to comment number</label><br><input id="reply-parent" name="parent_id" type="number" min="1" value="{{ values.get('parent_id','') }}" required></p>
 <p><label for="comment-body">Reply text</label><br><textarea id="comment-body" name="body" rows="6" maxlength="1000" style="box-sizing:border-box;width:100%" required>{{ values.get('body','') }}</textarea></p>
 <p>The preview expires after five minutes. Changed parent comment, work, selected task or linked records require a fresh preview. Current source permissions are checked again at confirmation.</p>
+{% include "telegram_mention_choices.html" %}
 <button type="submit">Prepare exact private preview</button>
 </form>
 {% else %}<p>No current private request is available. Start <code>/{{ mode }}_reply</code> after enabling and consenting to its separate pilot and work read permission.</p>{% endif %}

@@ -6,6 +6,7 @@ import telegram_actions as actions
 import telegram_calendar as common
 import telegram_links as links
 import telegram_meetings as dispatch
+import telegram_mentions as mentioning
 import telegram_task_create as proposals
 import telegram_task_review as review
 import telegram_work_actions as shared
@@ -20,7 +21,7 @@ FIELDS={'work':('case_id','body'),'task':('case_id','task_id','body')}
 
 class Adapter(review.Adapter):
     def prepare(self,conn,user,raw):
-        if set(raw)!=set(FIELDS[self.mode]):raise actions.Unavailable('Complete only the supported comment fields.')
+        if set(raw)-{'mentions'}!=set(FIELDS[self.mode]):raise actions.Unavailable('Complete only the supported comment fields.')
         work.writable(conn)
         case_id=proposals.number(raw['case_id'])
         task_id=proposals.number(raw['task_id']) if self.mode=='task' else None
@@ -30,8 +31,10 @@ class Adapter(review.Adapter):
         if task_id is not None:clean['task_id']=task_id
         summary={**clean,'work_title':common.clip(item['title'],120),'work_status':item['status']}
         if task:summary.update(title=common.clip(task['title'],160),status=task['status'])
+        expected=shared.source_state(conn,item,task)
+        mentioning.add(clean,summary,expected,mentioning.prepare(conn,user,item,raw.get('mentions',[])))
         if common.units(self.text(summary))>3000:raise actions.Unavailable('This preview is too long. Shorten the comment or use Office Connect.')
-        return clean,summary,shared.source_state(conn,item,task)
+        return clean,summary,expected
 
     def queue_preview(self,conn,user,operation_id,context,now):
         clean=json.loads(rows(conn,'SELECT fields_json FROM telegram_preview WHERE operation_id=?',(operation_id,))[0]['fields_json'])
@@ -39,7 +42,7 @@ class Adapter(review.Adapter):
                      (actions.packed(context),str(clean['case_id']),clean.get('task_id'),operation_id))
 
     def apply(self,conn,user,clean,operation_id):
-        comment_id=discussion.post_in_transaction(conn,user,clean['case_id'],clean['body'],task_id=clean.get('task_id'),mentions=[])
+        comment_id=discussion.post_in_transaction(conn,user,clean['case_id'],clean['body'],task_id=clean.get('task_id'),mentions=clean.get('mentions',[]))
         conn.execute('UPDATE telegram_operation SET comment_id=? WHERE operation_id=?',(comment_id,operation_id))
         return {'state':'committed','result_code':'comment_posted'}
 
@@ -48,7 +51,8 @@ class Adapter(review.Adapter):
         return ('Discussion comment preview\nWork '+str(summary['case_id'])+' · '+summary['work_title']
                 +'\nWork state: '+summary['work_status'].replace('_',' ')+target+'\nPost as your linked Office Connect account:\n'+summary['body']
                 +'\nYour entered text appears in Telegram and the work discussion/history, visible to people with current source access.'
-                +'\nNormal follower in-app notices apply. No mentions, reply target or notification preferences are added.'
+                +mentioning.text(summary)
+                +('\nNormal follower notices also apply. No reply target or notification preferences are added.' if summary.get('mentions') else '\nNormal follower in-app notices apply. No mentions, reply target or notification preferences are added.')
                 +'\nInformal comment only. Work/task progress, ownership, submissions, blockers, dependencies, deadlines and formal approvals stay unchanged.')
 
     def check_receipt(self,conn,user,operation):

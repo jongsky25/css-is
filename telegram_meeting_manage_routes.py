@@ -20,7 +20,8 @@ from telegram_link_routes import PRIVATE, csrf
 
 def make_router(templates,get_conn, *, manager=manage, template="telegram_meeting_manage.html",
                 target="entry_id", dated_mode="reschedule", date_fields=("day","start_time","end_time"), resource="Meeting",
-                field_sets=None, form_context=None, max_body=4096, max_fields=8):
+                field_sets=None, form_context=None, max_body=4096, max_fields=8,
+                multi_fields=(), query_fields=(), value_context=None):
     router=APIRouter()
     def fields_for(mode):return field_sets[mode] if field_sets else ((target,*date_fields) if mode==dated_mode else (target,))
     def screen(request,mode,error='',status=200,values=None):
@@ -28,6 +29,7 @@ def make_router(templates,get_conn, *, manager=manage, template="telegram_meetin
         action=manager.MODES[mode];conn=get_conn()
         try:
             user=links.current(conn,auth.parse_token(request.cookies.get(auth.COOKIE_NAME)))
+            if values is None:values={k:str(request.query_params.get(k,'')) for k in query_fields}
             identifier=(values or {}).get('origin') or request.query_params.get('origin','')
             if identifier:meetings.origin(conn,user,identifier,bot.now_utc(),action)
             origins=[]
@@ -48,7 +50,8 @@ def make_router(templates,get_conn, *, manager=manage, template="telegram_meetin
             return templates.TemplateResponse(request,template,
                 {'show_scope':False,'mode':mode,'action_path':manager.PATH+mode,'origins':origins,'selected':identifier,
                  'values':values or {},'key':secrets.token_hex(16),'csrf':csrf(request),'prepared':prepared,'error':error,
-                 **(form_context(conn,user,mode) if form_context and origins else {})},
+                 **(form_context(conn,user,mode) if form_context and origins else {}),
+                 **(value_context(conn,user,mode,values or {}) if value_context and origins else {})},
                 status_code=status,headers=PRIVATE)
         except ValueError:
             return HTMLResponse(resource+' action unavailable. Sign in again and start the action in your private Telegram chat.',status_code=403,headers=PRIVATE)
@@ -68,7 +71,9 @@ def make_router(templates,get_conn, *, manager=manage, template="telegram_meetin
                 if len(body)>max_body:raise ValueError('The form is too large.')
             request._body=bytes(body);form=await request.form(max_fields=max_fields,max_files=0)
             fields=fields_for(mode)
-            if (set(form)!={'csrf','origin','key',*fields} or any(len(form.getlist(k))!=1 for k in form)
+            required={'csrf','origin','key',*fields}
+            if (not required<=set(form)<=required|set(multi_fields)
+                    or any(len(form.getlist(k))!=1 for k in form if k not in multi_fields)
                     or not hmac.compare_digest(str(form.get('csrf','')).encode(),csrf(request).encode())):
                 raise ValueError('The form expired or is invalid. Reload and try again.')
             if not ratelimit.allow('integration_issue',str(request.state.user['id'])):
@@ -77,10 +82,13 @@ def make_router(templates,get_conn, *, manager=manage, template="telegram_meetin
             try:
                 user=links.current(conn,auth.parse_token(request.cookies.get(auth.COOKIE_NAME)))
                 ctx=meetings.origin(conn,user,str(form['origin']),bot.now_utc(),manager.MODES[mode])
-                result=actions.issue(conn,ctx,manager.MODES[mode],str(form['key']),{k:str(form[k]) for k in fields},bot.now_utc())
+                raw={k:str(form[k]) for k in fields}
+                raw.update({k:[str(v) for v in form.getlist(k)] for k in multi_fields if k in form})
+                result=actions.issue(conn,ctx,manager.MODES[mode],str(form['key']),raw,bot.now_utc())
             finally:conn.close()
         except ValueError as error:
             values={k:str(form.get(k,'')) for k in ('origin',*fields_for(mode))} if form else None
+            if values is not None:values.update({k:[str(v) for v in form.getlist(k)] for k in multi_fields if k in form})
             return screen(request,mode,str(error),400,values)
         return RedirectResponse(manager.PATH+mode+'?operation='+result['operation_id'],status_code=303,headers=PRIVATE)
     return router

@@ -1,6 +1,6 @@
 # Private editing of your own work and task comments
 
-Draft PR #572, candidate 9.77. Author-owned comment editing is implemented for
+Draft PR #572, candidate 9.78. Author-owned comment editing is implemented for
 later activation. Deployment, preview publication, activation and personal/live
 testing remain deferred. Local checks use synthetic records and blocked providers.
 

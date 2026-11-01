@@ -25,6 +25,7 @@ FEATURES=(
  ('rooms.move','Calendar','Room date moves','/room_move — change your own request’s date; approved bookings require a new approval.',('rooms.read',),None,True),
  ('work.read','Tasks and work','Work lookup','/my_summary; /my_tasks; /my_work; /task_status WORK_ID TASK_ID; /work_status WORK_ID.\nExample: /my_tasks overdue (also upcoming or review).',(),work.enabled,False),
  ('tasks.create','Tasks and work','Task proposals','/new_task — propose a task in permitted work; officer confirmation remains required.',('work.read',),work.enabled,True),
+ ('work.mentions','Tasks and work','Colleague mentions','Select colleagues in your separately enabled comment/reply forms.',('work.read',),work.enabled,True),
  ('work.comment_edit','Tasks and work','Work comment edits','/work_comment_edit — edit your own comment after confirmation.',('work.read',),work.enabled,True),
  ('tasks.comment_edit','Tasks and work','Task comment edits','/task_comment_edit — edit your own comment after confirmation.',('work.read',),work.enabled,True),
  ('work.reply','Tasks and work','Work replies','/work_reply — reply to a work comment after confirmation.',('work.read',),work.enabled,True),
@@ -80,6 +81,8 @@ def availability(conn,delivery,bot):
         elif any(not links.authorized(conn,actor['id'],s) for s in (scope,*dependencies)):
             missing=[links.SCOPES[s] for s in (scope,*dependencies) if not links.authorized(conn,actor['id'],s)]
             reason='missing consent: '+', '.join(missing)
+        elif scope=='work.mentions' and not any(links.authorized(conn,actor['id'],s) for s in ('work.comment','tasks.comment','work.reply','tasks.reply')):
+            reason='a separately enabled and consented comment or reply action is required'
         else:reason=''
         result.append({'scope':scope,'group':group,'label':label,'commands':commands,'reason':reason})
     return result

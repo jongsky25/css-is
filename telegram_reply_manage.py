@@ -8,6 +8,7 @@ import telegram_calendar as common
 import telegram_comment_manage as comments
 import telegram_links as links
 import telegram_meetings as dispatch
+import telegram_mentions as mentioning
 import telegram_task_create as proposals
 import telegram_work_actions as shared
 import work
@@ -21,7 +22,7 @@ FIELDS={'work':('case_id','parent_id','body'),'task':('case_id','task_id','paren
 
 class Adapter(comments.Adapter):
     def prepare(self,conn,user,raw):
-        if set(raw)!=set(FIELDS[self.mode]):raise actions.Unavailable('Complete only the supported reply fields.')
+        if set(raw)-{'mentions'}!=set(FIELDS[self.mode]):raise actions.Unavailable('Complete only the supported reply fields.')
         work.writable(conn)
         case_id=proposals.number(raw['case_id'])
         task_id=proposals.number(raw['task_id']) if self.mode=='task' else None
@@ -32,16 +33,18 @@ class Adapter(comments.Adapter):
         if task_id is not None:clean['task_id']=task_id
         summary={**clean,'work_title':common.clip(item['title'],120),'work_status':item['status'],'parent_revision':parent['revision']}
         if task:summary.update(title=common.clip(task['title'],160),status=task['status'])
-        if common.units(self.text(summary))>3000:raise actions.Unavailable('This preview is too long. Shorten the reply or use Office Connect.')
         digest=hashlib.sha256(json.dumps(parent,sort_keys=True,separators=(',',':')).encode()).hexdigest()
-        return clean,summary,{**shared.source_state(conn,item,task),'parent':digest}
+        expected={**shared.source_state(conn,item,task),'parent':digest}
+        mentioning.add(clean,summary,expected,mentioning.prepare(conn,user,item,raw.get('mentions',[])))
+        if common.units(self.text(summary))>3000:raise actions.Unavailable('This preview is too long. Shorten the reply or select fewer colleagues, or use Office Connect.')
+        return clean,summary,expected
 
     def revalidate(self,conn,user,clean,expected):
         current,_,fresh=self.prepare(conn,user,clean)
         if current!=clean or fresh!=expected:raise actions.Unavailable('The parent comment, work, selected task or linked records changed. Prepare a fresh reply preview.')
 
     def apply(self,conn,user,clean,operation_id):
-        comment_id=discussion.post_in_transaction(conn,user,clean['case_id'],clean['body'],task_id=clean.get('task_id'),parent_id=clean['parent_id'],mentions=[])
+        comment_id=discussion.post_in_transaction(conn,user,clean['case_id'],clean['body'],task_id=clean.get('task_id'),parent_id=clean['parent_id'],mentions=clean.get('mentions',[]))
         conn.execute('UPDATE telegram_operation SET comment_id=? WHERE operation_id=?',(comment_id,operation_id))
         return {'state':'committed','result_code':'comment_posted'}
 
@@ -54,7 +57,8 @@ class Adapter(comments.Adapter):
                 +'\nReply to comment '+str(summary['parent_id'])+' · Revision '+str(summary['parent_revision'])
                 +'\nReview the parent text in Office Connect:\n'+parent_url+'\nPost this reply as your linked account:\n'+summary['body']
                 +'\nYour entered reply appears in Telegram and normal discussion history for people with current source access.'
-                +'\nNormal follower and eligible parent-author notices apply. No mentions or notification preferences are added.'
+                +mentioning.text(summary)
+                +('\nNormal follower and eligible parent-author notices also apply, without duplicates. No notification preferences are added.' if summary.get('mentions') else '\nNormal follower and eligible parent-author notices apply. No mentions or notification preferences are added.')
                 +'\nInformal reply only. Work/task progress, submissions, blockers, dependencies, deadlines and formal approvals stay unchanged.')
 
     def check_receipt(self,conn,user,operation):

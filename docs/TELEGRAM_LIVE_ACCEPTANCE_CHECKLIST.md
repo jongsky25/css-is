@@ -7,7 +7,7 @@ without the owner's later release/testing instruction.
 
 ## Before the later pilot
 
-1. Identify the reviewed PR/source commit and candidate version (currently 9.77).
+1. Identify the reviewed PR/source commit and candidate version (currently 9.78).
    Verify the actual candidate's required metadata/dependency/full normal/shuffled/
    aggregate CI, main freshness and synchronized versions. Old-head checks do not
    establish readiness. Follow existing release and verified-backup gates.
@@ -42,6 +42,9 @@ without the owner's later release/testing instruction.
 | Edit own work/task comment | Independent edit consent/pilots; select visible comment/revision, exact replacement preview and confirmation; one retained new revision, no new comment or task/approval changes | Pending |
 | Author/thread/stale edit protection | Reader/lead/officer/technical admin cannot edit another author; cross-work/task targets refused; newer edit before preview/confirmation needs fresh current revision | Pending |
 | Edit mentions/history/recovery | Existing eligible mentions retained without new selection; inactive/lost-access mention blocks; earlier history/reply parent retained; rollback/concurrent retry and recorded-vs-current revision recovery without text/replay | Pending |
+| Colleague mentions in four posting flows | Independent auxiliary/base consent and pilots; load only current source readers, no default selection; preview complete message and each selected name/account; confirm once | Pending |
+| Mention eligibility/notices | Strict/duplicate/20-person selection, no source access grants; stale names/active/work/document access refuse; native follower/parent dedup and no self-notice | Pending |
+| Mention loader/protection/recovery | Loader URL contains source IDs only, no draft text/operation; revoke auxiliary consent scrubs pending posting previews; pause/restore/context/expiry and atomic failures/retries; unmentioned posts remain independent | Pending |
 | Link and discover | Complete `/start` → signed-in consent → private `/status` → exact confirmation. `/menu` and `/help` agree and expose only enabled/consented commands. | Pending |
 | Pending-link help | Before final confirmation, `/menu` directs the same sender to `/status`; it does not replace the pending challenge. | Pending |
 | Limited permissions | With calendar-read consent only, calendar commands appear; work/document/request/write commands do not. No additional grant is created. | Pending |

@@ -1,4 +1,6 @@
-## 9.77 — November 1, 2026
+## 9.78 — November 1, 2026
+
+- Add separately consented colleague mentions in existing work/task comment and reply flows, with current source-scoped choices, exact message/recipient previews and native atomic mention/notices; selection grants no access and changes no task or approval.
 
 - Add independently consented author-only work/task comment edits with exact revision/replacement previews, retained immutable history/mentions and atomic native edit/receipt writes; newer edits, source permissions and approvals remain protected.
 

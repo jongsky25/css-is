@@ -1,6 +1,6 @@
 # Private work and task comments
 
-Draft PR #572, candidate 9.77. Work/task discussion posts are implemented for later
+Draft PR #572, candidate 9.78. Work/task discussion posts are implemented for later
 activation. Deployment, preview publication, activation and personal/live testing
 remain deferred. Automated verification uses synthetic data and blocked providers.
 
@@ -22,7 +22,9 @@ action automatically. Groups, topics and direct-worker posting are refused.
 The signed-in JavaScript-free form takes an exact work number, task number for a
 task comment only, and plain comment text (1,000 characters maximum). CRLF/CR line
 endings normalize to LF; control characters and unsupported fields are refused.
-No reply target, mentions, edits, status or approval fields are accepted. A string
+The ordinary contract accepts no reply, edit, status or approval fields. Optional
+[separately consented colleague mentions](TELEGRAM_COLLEAGUE_MENTIONS.md) use
+explicit account selections; without that permission no structured selection is available. A string
 such as `@name` remains literal text; it creates no mention or extra recipient.
 
 Preparation writes no comment. Retrieve the five-minute private preview, inspect
@@ -51,13 +53,13 @@ approve a task/document, or resolve a changed-decision review.
 
 One native `work_comment` plus its first immutable `work_comment_revision` is
 created with the linked author and normal source timestamp. Normal permitted
-follower notices and the author's observed-revision marker apply. Mention rows,
-reply targets and notification preferences are not added. Existing independently
+follower notices and the author's observed-revision marker apply. Without optional selected mentions, mention rows are not added. Reply targets
+and notification preferences are not added by the comment flow. Existing independently
 configured digest policies may later include normal source notices; this feature
 does not configure, enable or execute any digest/scheduler/provider delivery.
 Replies use the [separate reply workflow](TELEGRAM_REPLY_MANAGEMENT.md). Your own text edits use
-[separate edit confirmation](TELEGRAM_COMMENT_EDITING.md). Mentions and reading
-stored discussion remain in Office Connect.
+[separate edit confirmation](TELEGRAM_COMMENT_EDITING.md). Explicit colleague selection uses the [separate mention permission](TELEGRAM_COLLEAGUE_MENTIONS.md);
+reading stored discussion remains in Office Connect.
 
 ## Transaction, stale previews and recovery
 
@@ -66,7 +68,8 @@ posting behavior. Extracted `post_in_transaction` requires the caller's active
 transaction; its body is unchanged apart from SQL indentation. Scope/access,
 source-write availability, plain text, native reply/mention rules, immutable
 history, follower notices and author-read recording remain native. The Telegram
-adapter calls the helper with no parent/mentions inside the generic confirmation
+adapter calls the helper with no parent and any separately consented eligible
+mention IDs inside the generic confirmation
 transaction. Comment/revision/notices/read marker, consumed preview, stored comment
 identifier, receipt and private reply handoff commit together. Notice, receipt or
 handoff failure rolls back all. Duplicate/concurrent confirmation posts once.

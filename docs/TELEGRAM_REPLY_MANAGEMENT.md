@@ -1,6 +1,6 @@
 # Private replies to work and task comments
 
-Draft PR #572, candidate 9.77. Work/task discussion replies are implemented for
+Draft PR #572, candidate 9.78. Work/task discussion replies are implemented for
 later activation. Deployment, preview publication, activation and personal/live
 testing remain deferred. Local verification uses synthetic data and blocked providers.
 
@@ -23,9 +23,8 @@ topic and direct-worker posting paths are refused.
 
 The signed-in JavaScript-free form takes exact work/parent-comment numbers, an
 exact task number for task replies only, and plain reply text (1,000 characters
-maximum). CRLF/CR normalize to LF; control characters and unsupported mention,
-edit, progress, approval or extra task fields are refused. Literal `@name` does
-not create a mention. Preparation changes no source discussion.
+maximum). CRLF/CR normalize to LF; control characters and unsupported edit, progress, approval or extra task fields are refused. Literal `@name` does
+not select anyone; structured mentions require the [separate mention permission](TELEGRAM_COLLEAGUE_MENTIONS.md). Preparation changes no source discussion.
 
 The source discussion displays each comment number and current revision so the
 parent can be selected without inspecting a URL. Review the selected parent in
@@ -48,7 +47,7 @@ Cross-work, work-versus-task and other-task parents are refused. A reply may tar
 another reply in the same thread; native immutable parent links remain authoritative.
 
 The adapter uses the existing `work_discussion.post_in_transaction` with the exact
-parent ID and no mentions. Native posting rechecks scope and parent thread at the
+parent ID and any separately consented eligible recipient selections. Native posting rechecks scope and parent thread at the
 write. One immutable comment plus its first revision is created with the linked
 author and normal timestamp. Normal permitted follower and eligible parent-author
 notices apply, deduplicated by native rules; authors receive no notice about their
@@ -63,8 +62,8 @@ records stay unchanged. Native discussion can remain available on completed work
 Done/Cancelled tasks and work under active formal review. Changed source after
 preview still requires a fresh preview; discussion never submits, accepts, reopens,
 approves or resolves a changed-decision review. Your own text edits use
-[separate edit confirmation](TELEGRAM_COMMENT_EDITING.md); mentions and reading
-stored discussion remain in Office Connect.
+[separate edit confirmation](TELEGRAM_COMMENT_EDITING.md); explicit colleague selection uses the [separate mention permission](TELEGRAM_COLLEAGUE_MENTIONS.md),
+and reading stored discussion remains in Office Connect.
 
 ## Stale parents, atomicity and recovery
 
