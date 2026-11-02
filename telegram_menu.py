@@ -25,6 +25,7 @@ FEATURES=(
  ('rooms.move','Calendar','Room date moves','/room_move — change your own request’s date; approved bookings require a new approval.',('rooms.read',),None,True),
  ('work.read','Tasks and work','Work lookup','/my_summary; /my_tasks; /my_work; /task_status WORK_ID TASK_ID; /work_status WORK_ID.\nExample: /my_tasks overdue (also upcoming or review).',(),work.enabled,False),
  ('tasks.create','Tasks and work','Task proposals','/new_task — propose a task in permitted work; officer confirmation remains required.',('work.read',),work.enabled,True),
+ ('work.discussion.read','Tasks and work','Discussion threads','/discussion_thread WORK_ID work|TASK_ID COMMENT_ID — comment and replies.',('work.read',),work.enabled,True),
  ('work.discussion.search','Tasks and work','Discussion search','/discussion_search WORK_ID work|TASK_ID WORDS — current text excerpts.',('work.read',),work.enabled,True),
  ('work.follows.read','Tasks and work','Followed discussions','/my_follows [all|work|tasks] — your saved discussion follows.',('work.read',),work.enabled,True),
  ('work.follow','Tasks and work','Discussion follows','/discussion_follow — follow or unfollow a work/task discussion after confirmation.',('work.read',),work.enabled,True),

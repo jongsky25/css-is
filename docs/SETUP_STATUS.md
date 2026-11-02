@@ -77,7 +77,8 @@ access remains necessary in a fresh chat.
 
 **Current Telegram feature work — November 2, 2026:** continue draft
 [PR #572](https://github.com/jongsky25/css-is/pull/572), branch
-`feat/telegram-private-work-lookup`, candidate **9.83**. The latest addition is
+`feat/telegram-private-work-lookup`, candidate **9.84**. The latest addition is
+[selected discussion thread/message reading](TELEGRAM_DISCUSSION_READING.md), following
 [exact-thread discussion text search](TELEGRAM_DISCUSSION_SEARCH.md), following
 [my followed discussions lookup](TELEGRAM_FOLLOWED_DISCUSSIONS.md), following
 [own discussion following](TELEGRAM_DISCUSSION_FOLLOWING.md), following
@@ -2870,3 +2871,74 @@ new exact-head complete repository normal/shuffled/dependency/container/metadata
 aggregate CI after remote save, keep current main and continue only the next requested
 feature. Publication, activation and personal/live testing remain deferred. Both
 new live acceptance rows remain Pending.
+
+
+## Private selected discussion thread and message reading — 2026-11-02
+
+Owner: Office Connect maintainers; implementation agent Codex. Status: in review
+on `feat/telegram-private-work-lookup`, draft PR #572, candidate **9.84**. User
+approved opening a selected comment and replies through private bounded pages.
+Independent work.discussion.read consent and default-off
+CSS_TELEGRAM_WORK_DISCUSSION_READ_ENABLED require work read. Current source/exact
+message metadata is checked before body SQL. Selected previews/direct replies,
+parent/nested navigation, full current messages in revision-bound 900-character
+parts and source links create no read/preference/source change or operation/origin.
+Search/inbox grants do not imply reading; search links appear only with a current
+independent read grant/pilot. Text/query processing is ephemeral in the app, while
+delivered text remains in Telegram. Deployment, preview publication, activation
+and personal/live testing remain deferred. Final verification and next action follow.
+
+
+Final isolated Python 3.11 verification: **1448 regressions passed** across thread/
+message reading, discussion search/followed lists/follow management/inbox/read
+acknowledgement, discussion writers/mentions, metadata search, action/link/menu/
+private meeting webhook/bot/task/dependency flows, native work/channels, submission
+API/MCP, audit-chain writes, deployment bundle and release checks. **1143 affected
+shuffled checks passed** (seed 311). Both reports have zero failures/errors/skips
+and pass the JUnit gate; groups overlap. Initial reader group **60 passed**, phone/
+existing-search/menu group **61 passed**, maximum-origin menu group **11 passed**,
+and combined Unicode/max-origin thread/part/search-link integration group **2 passed**.
+All pass the JUnit no-skips gate. All final application/test edits preceded the
+completed final groups; only documentation/PR evidence changed afterward.
+
+Exact selected/direct/nested/same-scope parent reading, no sibling/other-thread
+expansion, defensive legacy cross-work references, current-only root/reply refresh,
+complete five-part Unicode/newline/NUL/control text, stale revision refusal before
+body SQL, unavailable parts, strict IDs/seek/part grammar and SQLite bounds pass.
+Native source/selected-message denial is proved before body SQL. A real-renderer
+SQLite authorizer rejects comment-author ID, task submission/output and notice/
+read/follow table reads. Read-only snapshots show no source/read/preference writes,
+origin/draft/operation creation, queued pushes or retained body/query projections.
+Independent search/inbox/write scopes do not grant reading. Search View thread
+links require a current separate read grant/pilot, and max-origin Unicode thread/
+part/search-link budgets preserve continuation. Current work/every-document rights,
+private/grant/pilot/module/account/bot/restore/disconnect/context and duplicate
+webhook guards pass. Two 390×844 JavaScript-disabled phone flows cover work/task
+independent consent, selected/direct/nested/parent views, complete parts, a native
+intervening edit, refused old continuation/current reopen, full-source navigation
+and unchanged native read state. Source discussion pages retain normal read behavior;
+Telegram reading itself marks nothing read.
+
+Reports: `/tmp/telegram-discussion-read-regressions.xml`,
+`/tmp/telegram-discussion-read-shuffled.xml`,
+`/tmp/telegram-discussion-read-focus.xml`,
+`/tmp/telegram-discussion-read-phone.xml`,
+`/tmp/telegram-discussion-read-budget.xml` and
+`/tmp/telegram-discussion-read-integration-budget.xml`. Separate workspace scratch
+paths keep synthetic databases off small /tmp; completed data is removed after
+reports are preserved. No interrupted/disk-full run or skipped test occurred.
+Candidate 9.84 release metadata over actual main 25fe812/9.61, lock inputs, five
+vendor integrity groups, installed compatibility, AI contract 1.12.0, compilation,
+exact actual-main released-entry preservation, Markdown links and whitespace pass.
+Existing Starlette/httpx deprecation warning remains. At start, prior head d349e13
+functional/metadata/dependency checks were green and full normal/shuffled CI were
+running; those are not acceptance for this new head.
+
+See [discussion reading behavior](TELEGRAM_DISCUSSION_READING.md) and updated pending
+live acceptance. App body/query processing is ephemeral; already delivered Telegram
+text cannot be retracted by revoking future access. No real provider registration/
+message, production source/host/secret/configuration, scheduler, preview, activation,
+main push/merge or deployment changed. Next: inspect new exact-head complete repo
+normal/shuffled/dependency/container/metadata/aggregate CI after remote save, retain
+main freshness and continue only the next requested feature. Publication, activation
+and personal/live testing remain deferred. Both new live checklist rows stay Pending.

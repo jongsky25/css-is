@@ -94,6 +94,8 @@ def render(conn,clean,bot,now):
     for match in matches[:PAGE_SIZE]:
         block=(('Reply' if match['is_reply'] else 'Comment')+' '+str(match['id'])+' · Revision '+str(match['revision'])
                +'\nExcerpt: '+match['excerpt']+'\n'+source(item['id'],query['task_id'],match['id']))
+        if links.authorized(conn,user['id'],'work.discussion.read'):
+            block+='\nView thread: /discussion_thread '+str(item['id'])+' '+(str(task['id']) if task else 'work')+' '+str(match['id'])
         if common.units(text+'\n\n'+block)>3000:break
         text+='\n\n'+block;shown.append(match)
     if not shown:text+='\nNo current matching comments or replies in this permitted discussion.'

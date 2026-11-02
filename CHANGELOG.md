@@ -1,4 +1,6 @@
-## 9.83 — November 2, 2026
+## 9.84 — November 2, 2026
+
+- Add independently consented selected discussion comment/direct-reply views with bounded previews, nested/parent navigation, current-revision message parts and exact source links; reading changes no read state, follows or records.
 
 - Add independently consented exact-thread discussion text search with current native source checks, literal Unicode matching, bounded excerpts/current revisions and source links; queries/excerpts stay ephemeral and no read state or records change.
 
