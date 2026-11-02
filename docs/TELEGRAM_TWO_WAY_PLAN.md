@@ -1,6 +1,6 @@
 # Office Connect ↔ Telegram delivery plan
 
-Status: T0–T4.3.2 merged; T4.4 hosted pilot incomplete. Draft PR #572 (candidate 9.81) adds private task/document/supplies/personal reads, confirmed task updates and private guided meeting/room webhook replies. Owner confirms hosted linking/calendar retrieval; new draft capabilities, group/automatic outgoing delivery and the complete pilot remain unverified live. Source switches remain default-off.
+Status: T0–T4.3.2 merged; T4.4 hosted pilot incomplete. Draft PR #572 (candidate 9.82) adds private task/document/supplies/personal reads, confirmed task updates and private guided meeting/room webhook replies. Owner confirms hosted linking/calendar retrieval; new draft capabilities, group/automatic outgoing delivery and the complete pilot remain unverified live. Source switches remain default-off.
 Last updated: 2026-11-02.
 Repository: jongsky25/css-is.
 Planning baseline inspected: abf3141 (merge of PR #458).
@@ -2436,3 +2436,72 @@ Next: inspect new exact-head complete repository normal/shuffled/dependency/cont
 metadata/aggregate CI after remote save, retain current main, and continue only the
 next requested feature. Main push/merge/release, preview publication, activation
 and personal/live testing remain deferred. Both new live acceptance rows are Pending.
+
+
+## My followed discussions lookup — 2026-11-02
+
+Owner: Office Connect maintainers; implementation agent Codex. Status: in review
+on `feat/telegram-private-work-lookup`, draft PR #572, candidate **9.82**. User
+approved a private list of own saved work-wide/task-specific discussion follows,
+coverage explanation and source/control links. Independent work.follows.read consent
+and default-off CSS_TELEGRAM_WORK_FOLLOWS_READ_ENABLED require work read. Lookup
+changes no preferences, notices or read state, creates no origin/draft/operation,
+and enables no provider/scheduler. Existing follow controls require separate
+work.follow grant/pilot and original private origin; links prefill source IDs only.
+Deployment, preview publication, activation and personal/live testing remain deferred.
+Final verification and next action follow.
+
+
+Final isolated Python 3.11 verification: **1315 regressions passed** across followed
+lookup, follow/unfollow, inbox/read acknowledgement, discussion writers/mentions,
+action/link/menu/private meeting webhook/bot/task/dependency flows, native work/
+channels, submission API/MCP, audit-chain writes, deployment bundle and release
+checks. **1010 affected shuffled checks passed** (seed 311). Both reports have zero
+failures/errors/skips and pass the JUnit gate; groups overlap. Earlier current
+focused group **81 passed**, six new-list/existing-follow phone checks **6 passed**,
+and menu/maximum-origin group **11 passed**, each with no failures/errors/skips.
+All final application and test edits preceded collection of the final groups;
+only documentation/PR evidence changed afterward.
+
+Own saved rows/current every-document rights, explicit work-wide/task coverage,
+strict SQLite composite cursor bounds and filters, multi-work seek ordering,
+Unicode/max-origin/control-link budget continuation, SQL visibility before bounded
+native scan, no global-empty claim at scan bounds, legacy cross-work references,
+fresh titles/follow state, current private context/grants/pilots/modules, restore/
+disconnect/bot/direct/duplicate/no-push behavior and independent linking pass.
+A SQLite authorizer on the actual renderer connection rejects all discussion,
+notice/read-marker and mention table reads plus task submission/expected-output
+columns. Lookup snapshots show no preference/read/source changes or action/origin
+creation. Control links require separate work.follow consent/pilot and prefill
+only source IDs; two 390×844 JavaScript-disabled phone cases cover read-only links
+and explicit existing preview/confirmation with refreshed saved rows. Four existing
+work/task Follow/Unfollow phone flows also pass. Opening a source discussion retains
+its normal native read-management behavior; following-control GETs mutate nothing.
+
+The new callback test exposed a pre-existing numeric comparison of a missing chat
+ID in private action routing. The guard now checks supported command/context before
+comparison, so unsupported callbacks remain ignored. The visibility-fixture setup
+was corrected to commit synthetic inserts before native transaction-owning helpers;
+no source permission, paging, audit, atomicity or no-skips assertion was weakened.
+The initial exploratory report is not counted as passing evidence.
+
+Reports: `/tmp/telegram-followed-discussions-regressions.xml`,
+`/tmp/telegram-followed-discussions-shuffled.xml`,
+`/tmp/telegram-followed-discussions-current.xml`,
+`/tmp/telegram-followed-discussions-phone.xml` and
+`/tmp/telegram-followed-discussions-budget.xml`. Separate workspace scratch paths
+avoid small-/tmp exhaustion; completed synthetic databases are removed after reports
+are preserved. No disk-full interruption occurred. Candidate 9.82 release metadata
+over actual main 25fe812/9.61, lock inputs, five vendor integrity groups, installed
+compatibility, AI contract 1.12.0, compilation, exact actual-main released-entry
+preservation, Markdown links and whitespace pass. Existing Starlette/httpx deprecation
+warning remains. At start, prior head 50869d2 functional/metadata/dependency checks
+were green and full normal/shuffled CI were running; none is new-head acceptance.
+
+See [followed discussions behavior](TELEGRAM_FOLLOWED_DISCUSSIONS.md) and the updated
+pending live checklist. No real Telegram message/provider registration, production
+source/host configuration, secret, scheduler, preview, activation, main push/merge or
+deployment was changed. Next: inspect new exact-head complete repository normal/
+shuffled/dependency/container/metadata/aggregate CI after remote save, retain main
+freshness and continue only the next requested feature. Publication, activation and
+personal/live testing remain deferred; both new live checklist rows stay Pending.

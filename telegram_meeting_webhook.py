@@ -19,7 +19,7 @@ STARTS=tuple(meta['start'] for meta in meetings.META.values())
 
 def accepts(conn,clean):
     """Group-origin confirmations keep the existing asynchronous membership path."""
-    if clean['chat_id']<=0 or clean['command'] not in COMMANDS:return False
+    if clean['command'] not in COMMANDS or clean['chat_id'] is None or clean['chat_id']<=0:return False
     command=clean['command']
     if command in STARTS:return True
     key='token_hash' if command.endswith('_confirm') else 'operation_id'

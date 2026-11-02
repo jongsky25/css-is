@@ -1,4 +1,6 @@
-## 9.81 — November 2, 2026
+## 9.82 — November 2, 2026
+
+- Add independently consented saved discussion follow lookup with current own/source checks, explicit work-wide versus task coverage, bounded composite-key seek pages and conditional source-prefilled follow controls; listing and opening links change no follows or read markers.
 
 - Add independently consented own work-wide or task-specific discussion follow/unfollow changes with exact private previews, native future-notice coverage, atomic source/receipt writes and current-state recovery; existing notices, read markers, other accounts and delivery preferences stay unchanged.
 
