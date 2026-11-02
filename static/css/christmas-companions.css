@@ -1,0 +1,23 @@
+/* Dedicated companion section. Keep the existing avatar rigs, audio and drag hooks. */
+.oc-hero:has(.oc-pet-stage) .oc-pet-stage{flex:0 0 100%;width:100%;max-width:100%;order:2;box-sizing:border-box;position:relative;isolation:isolate}
+.oc-hero:has(.oc-pet-stage)>.grow{order:3}.oc-hero:has(.oc-pet-stage)>.oc-seg{order:4}
+:root[data-season="christmas"] .oc-hero .oc-pet-stage{display:flex;justify-content:center;align-items:flex-start;min-height:0;border:1px solid var(--line);border-radius:16px;padding:54px 12px 12px;background:var(--surface);overflow:hidden}
+:root[data-season="christmas"][data-season-artwork="1"] .oc-hero .oc-pet-stage::before{content:"";position:absolute;z-index:-1;inset:0 0 auto;height:220px;background:url('/static/img/seasonal/companion-courtyard.svg') center top/max(360px,min(420px,40vw)) auto repeat-x,linear-gradient(#143f36,#526e4d 80%,#ab915b);pointer-events:none}
+:root[data-season="christmas"] .oc-hero .oc-pet-stage .oc-pet{display:flex;flex-direction:column;align-items:center;position:relative;z-index:0;align-self:auto;padding:0;background:none;border-radius:0;max-width:100%;cursor:default}
+:root[data-season="christmas"] .oc-pet-stage .avwrap{background:none}
+:root[data-season="christmas"] .oc-pet-stage .av-sound-controls{display:flex;margin-top:30px;background:var(--surface);border:1px solid var(--line);padding:5px;border-radius:10px;box-sizing:border-box;gap:4px}
+:root[data-season="christmas"] .oc-pet-stage .av-bubble{color:var(--ink);background:var(--surface);border-radius:12px;padding:2px 8px;margin-top:6px;max-width:100%;overflow-wrap:anywhere}
+:root[data-season="christmas"] .oc-pet-stage .oc-pet-edit{margin-top:8px;min-height:44px;display:flex;align-items:center;justify-content:center;padding:5px 14px;border:1px solid var(--line);border-radius:30px;background:var(--surface);color:var(--accent)}
+:root[data-season="christmas"] .oc-hero .oc-pet-stage .oc-pet{width:min(100%,280px)}
+:root[data-season="christmas"] .oc-pet-stage .avwrap{width:100%!important}
+:root[data-season="christmas"] .oc-pet-stage .av-play-btn{width:150px;margin-inline:auto}
+:root[data-season="christmas"] .oc-pet-stage .av-sound-controls{margin-top:0;border:0;padding:0;background:none}
+:root[data-season="christmas"] .oc-pet-stage .av-audio-credits{flex-basis:auto}
+@media(max-width:650px){:root[data-season="christmas"] .oc-hero .oc-pet-stage{padding-top:46px}}
+@media(max-width:650px){:root[data-season="christmas"] .oc-pet-stage .av-play-btn{width:130px}}
+:root[data-season="christmas"][data-theme="contrast"] .oc-hero .oc-pet-stage::before{display:none}
+@media print{.oc-pet-stage{display:none!important}}
+
+:root[data-season="christmas"] .oc-pet-stage .av-bubble{position:absolute;left:50%;top:-24px;transform:translateX(-50%);margin:0;white-space:normal;min-width:100px}
+:root[data-season="christmas"] .oc-pet-stage .av-play-btn>.av-tiltstage{width:150px!important;height:174px!important}
+@media(max-width:650px){:root[data-season="christmas"] .oc-pet-stage .av-play-btn>.av-tiltstage{width:130px!important;height:151px!important}:root[data-season="christmas"] .oc-pet-stage .av-sound-controls{margin-top:24px}}

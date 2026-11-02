@@ -75,6 +75,20 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**Christmas companion refinement candidate — November 2, 2026.** Owner requested
+implementation of the plan while preserving ongoing Telegram work. Separate branch
+`feat/christmas-companion-refinements`, based on main `adb83b4` (9.60): five
+Christmas outfits, season-grouped actor-aware gallery/mismatch help, full-width
+centred companion panel, separate tree-free courtyard and controls below scenery.
+[Build handoff and synthetic review images](CHRISTMAS_COMPANION_BUILD.md).
+Broader targeted group 132 passed; final refinement group 4 passed; opt-in geometry/
+resize/chase 5 passed; staged preview bundle 3 passed. No failures/skips in final
+reports; JUnit gates passed. Release metadata/dependencies/Telegram runtime untouched.
+Compared Telegram `af51001`: no source-path overlap; only this shared status file
+overlaps after documentation. Save candidate, coordinate/verify shared preview,
+then collect phone review. No production merge/deploy or live settings change.
+Full release CI/version reconciliation remain required before promotion.
+
 **Seasonal release PR opened — November 1, 2026.**
 [Draft PR #578](https://github.com/jongsky25/css-is/pull/578) prepares 9.60.
 Owner accepted the richer preview design and requested checks/release preparation;

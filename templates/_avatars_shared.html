@@ -1,3 +1,4 @@
+{% from "_christmas_outfits.html" import head as christmas_head, front as christmas_front %}
 {% from "_avatar_wardrobe.html" import wear as _wear %}
 {# Shared SVG helpers. Species modules load only when their artwork is requested. #}
 
@@ -21,7 +22,9 @@
 {% set plant = kind in ['plant','cactus','bonsai','sunflower','fern','mushroom','succulent'] %}
 {% set scale = 1 if plant or scaled else (0.62 + (s - 1) * 0.076) %}
 <g class="av-costume-front" transform="translate(60 96) scale({{ scale }}) translate(-60 -96)">
-{% if costume == 'halloween_pumpkin' %}
+{% if costume in ['christmas','christmas_elf','christmas_reindeer','christmas_parol','christmas_knit'] %}
+  {{ christmas_front(kind, costume) }}
+{% elif costume == 'halloween_pumpkin' %}
   {% set y = 123 if plant else 107 %}
   <ellipse cx="60" cy="{{ y }}" rx="22" ry="11" fill="#f59a36"/>
   <path d="M45 {{ y - 1 }} 50 {{ y - 7 }} 54 {{ y - 1 }} M66 {{ y - 1 }} 70 {{ y - 7 }} 75 {{ y - 1 }} M47 {{ y + 3 }} 55 {{ y + 5 }} 60 {{ y + 2 }} 65 {{ y + 5 }} 73 {{ y + 3 }} Q60 {{ y + 17 }} 47 {{ y + 3 }}" fill="#41243d"/>
@@ -58,7 +61,8 @@
 
 {% macro accessory(m, x, y, k=1, costume="") %}
 <g class="av-acc" transform="translate({{ x }} {{ y }}) scale({{ k }})">
-  {% if costume == 'halloween' %}
+  {% if costume in ['christmas','christmas_elf','christmas_reindeer','christmas_parol','christmas_knit'] %}{{ christmas_head(costume) }}
+  {% elif costume == 'halloween' %}
     <path d="M-13 0 -3-28 8-22 5-18 12 0Z" fill="#482357" stroke="#281332" stroke-width="1.5"/>
     <path d="m-9-8 18-1 2 6-22 1Z" fill="#ee893c"/>
     <rect x="-3" y="-9" width="7" height="7" rx="1" fill="#ffc45e"/><rect x="-1" y="-7" width="3" height="3" fill="#54233e"/>

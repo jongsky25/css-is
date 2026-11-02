@@ -1,0 +1,46 @@
+{# Seasonal overlays use existing species/head/pot anchors; no new growth or rigs. #}
+{% macro star(x=0, y=0, r=1) %}<g transform="translate({{ x }} {{ y }}) scale({{ r }})"><path d="m0-10 3 6 7 1-5 5 1 7-6-4-6 4 1-7-5-5 7-1Z" fill="#f3cf76" stroke="#9b7238" stroke-width=".8"/></g>{% endmacro %}
+{% macro head(style) %}
+{% if style == 'christmas' %}
+<path d="M-15 0Q-13-27 4-24L20-8Q12-12 8-9L12 0Z" fill="#b9364c" stroke="#742d3b"/><path d="M-16-2Q0-7 15-2V3Q0-1-16 3Z" fill="#fff1d8" stroke="#b59b7f"/><circle cx="20" cy="-8" r="4" fill="#fff1d8"/>
+{% elif style == 'christmas_elf' %}
+<path d="M-15 0Q-10-19 0-25Q5-13 19-10L11 0Z" fill="#327453" stroke="#244e3d"/><path d="m-16-1 5 5 5-5 6 5 6-5 6 5 4-5" fill="#c64850" stroke="#e6bc6b"/>
+<circle cx="19" cy="-10" r="2.5" fill="#ebc66e"/>
+{% elif style == 'christmas_reindeer' %}
+<path d="M-13 1Q0-6 13 1" stroke="#ad3f4e" stroke-width="4" fill="none"/>
+<path d="M-9-2-14-13-13-23M-14-12-23-16M-14-16-6-20M9-2 14-13 13-23M14-12 23-16M14-16 6-20" stroke="#a16e43" stroke-width="3" stroke-linecap="round" fill="none"/>
+{% elif style == 'christmas_parol' %}
+<path d="M-13 0Q0-5 13 0" stroke="#c59e48" stroke-width="3" fill="none"/>{{ star(0,-7,0.65) }}
+{% elif style == 'christmas_knit' %}
+<path d="M-13-1Q-15-22 0-22Q15-22 13-1Z" fill="#f4e5c8" stroke="#a98d70"/><path d="M-14-4H14V2H-14Z" fill="#b23d4c"/>
+<path d="m-8-11 3-3 3 3 3-3 3 3 3-3" stroke="#b23d4c" stroke-width="2" fill="none"/><circle cy="-24" r="3" fill="#b23d4c"/>
+{% endif %}
+{% endmacro %}
+
+{% macro front(kind, style) %}
+{% set plant = kind in ['plant','cactus','bonsai','sunflower','fern','mushroom','succulent'] %}
+{% set tint = '#b9364c' if style == 'christmas' else ('#327453' if style == 'christmas_elf' else ('#9f3650' if style == 'christmas_reindeer' else ('#c5a25b' if style == 'christmas_parol' else '#f0dfbd'))) %}
+<g data-christmas-style="{{ style }}">
+{% if plant %}
+{% set y = 119 if kind == 'bonsai' else 120 %}{% set height = 6 if kind == 'bonsai' else 13 %}
+<path d="M40 {{ y }}Q60 {{ y+5 }} 80 {{ y }}L77 {{ y+height }}Q60 {{ y+height+5 }} 43 {{ y+height }}Z" fill="{{ tint }}" stroke="#886645" stroke-width=".8"/>
+{% if style in ['christmas','christmas_elf'] %}<path d="M40 {{ y }}Q60 {{ y+5 }} 80 {{ y }}" stroke="{{ '#fff1d8' if style == 'christmas' else '#e5c478' }}" stroke-width="3"/>{% endif %}
+{% if style == 'christmas_reindeer' %}<path d="M35 121V99m0 7-7-7m7 4 7-7" fill="none" stroke="#9b6b43" stroke-width="2"/><circle cx="35" cy="117" r="3" fill="#b23d4c"/>
+{% elif style == 'christmas_parol' %}<path d="M84 126V99" stroke="#ac8247" stroke-width="1.5"/>{{ star(84,99,0.65) }}<path d="m81 104-2 8m7-8 2 8" stroke="#c29e53"/>
+{% elif style == 'christmas_knit' %}<path d="m46 {{ y+5 }} 4 3 4-3 4 3 4-3 4 3 4-3 4 3" stroke="#ac3c4e" stroke-width="1.5" fill="none"/>
+{% elif style == 'christmas' %}<g transform="translate(36 117) scale(.48)">{{ head(style) }}</g>
+{% elif style == 'christmas_elf' %}<path d="m47 {{ y+3 }} 4 4 5-3 5 4 5-3 5 4" fill="none" stroke="#bd424f" stroke-width="2"/>{% endif %}
+{% else %}
+<g{% if kind in ['fish','dolphin'] %} transform="translate(60 98) scale(.8) translate(-60 -105)"{% endif %}>
+{% if style in ['christmas','christmas_elf'] %}
+<path d="M46 101Q60 106 74 101L77 116Q60 123 43 116Z" fill="{{ tint }}" stroke="#70513e" stroke-width=".8"/>
+<path d="M60 104V120M44 116Q60 121 76 116" stroke="{{ '#fff1d8' if style == 'christmas' else '#e8c978' }}" stroke-width="3"/>
+<path d="M44 112Q60 116 76 112" stroke="#453638" stroke-width="2.5"/><rect x="57" y="111" width="6" height="5" rx="1" fill="#edc66b"/>
+{% elif style == 'christmas_reindeer' %}<path d="M44 103Q60 111 76 103" fill="none" stroke="#a7394c" stroke-width="6"/><path d="M70 108V122" stroke="#a7394c" stroke-width="6"/><path d="M68 118h4" stroke="#f2d392" stroke-width="2"/>
+{% elif style == 'christmas_parol' %}<path d="m44 104 8 9 8-5 8 5 8-9Q60 109 44 104Z" fill="#d6b363" stroke="#947143"/>{{ star(60,112,0.65) }}
+{% elif style == 'christmas_knit' %}<path d="M45 102Q60 109 75 102L74 116Q60 123 46 116Z" fill="#f0dfbd" stroke="#9b7859"/><path d="m47 110 4 3 4-3 5 3 5-3 4 3 4-3M47 117h26" stroke="#af3d4f" stroke-width="2" fill="none"/>
+{% endif %}
+</g>
+{% endif %}
+</g>
+{% endmacro %}
