@@ -75,6 +75,19 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**Christmas companion follow-up — plan only, November 2, 2026.** Owner requested
+three refinements and explicitly said “plan first”: multiple Christmas outfit
+choices, a full-width companion stage across device sizes, and scenery that does
+not duplicate the header's Christmas tree. [Refinement plan](CHRISTMAS_COMPANION_REFINEMENTS.md)
+proposes Santa, elf, reindeer, parol keeper and festive knit styles; a dedicated
+centred full-width stage with controls below; and three tree-free scene mockups
+(recommended: parol courtyard). Save on `docs/christmas-companion-refinements`.
+No code, settings, sound, preview or production changes. Next: review the plan,
+then create outfit contact sheets and responsive scene mockups when requested.
+9.60 is already merged/deployed; [PR #578](https://github.com/jongsky25/css-is/pull/578)
+links the completed production evidence and separate release handoff. Historical
+release-preparation entries below are superseded by that completed release.
+
 **Seasonal release PR opened — November 1, 2026.**
 [Draft PR #578](https://github.com/jongsky25/css-is/pull/578) prepares 9.60.
 Owner accepted the richer preview design and requested checks/release preparation;
