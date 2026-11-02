@@ -1,4 +1,6 @@
-## 9.80 — November 2, 2026
+## 9.81 — November 2, 2026
+
+- Add independently consented own work-wide or task-specific discussion follow/unfollow changes with exact private previews, native future-notice coverage, atomic source/receipt writes and current-state recovery; existing notices, read markers, other accounts and delivery preferences stay unchanged.
 
 - Add independently consented own-notice read acknowledgement with exact notice/current revision previews, current source checks, atomic native monotonic read markers and replay-safe receipts; lookup itself remains read-only.
 

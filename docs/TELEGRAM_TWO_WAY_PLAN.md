@@ -1,6 +1,6 @@
 # Office Connect ↔ Telegram delivery plan
 
-Status: T0–T4.3.2 merged; T4.4 hosted pilot incomplete. Draft PR #572 (candidate 9.80) adds private task/document/supplies/personal reads, confirmed task updates and private guided meeting/room webhook replies. Owner confirms hosted linking/calendar retrieval; new draft capabilities, group/automatic outgoing delivery and the complete pilot remain unverified live. Source switches remain default-off.
+Status: T0–T4.3.2 merged; T4.4 hosted pilot incomplete. Draft PR #572 (candidate 9.81) adds private task/document/supplies/personal reads, confirmed task updates and private guided meeting/room webhook replies. Owner confirms hosted linking/calendar retrieval; new draft capabilities, group/automatic outgoing delivery and the complete pilot remain unverified live. Source switches remain default-off.
 Last updated: 2026-11-02.
 Repository: jongsky25/css-is.
 Planning baseline inspected: abf3141 (merge of PR #458).
@@ -2371,3 +2371,68 @@ metadata/aggregate CI after remote save, keep main freshness and continue only t
 next requested feature. Earlier af51001 checks are green but are not acceptance for
 this new head. Main push/merge/release, preview publication, activation and personal/
 live testing remain deferred. All new live checklist rows remain Pending.
+
+
+## Own discussion follow/unfollow management — 2026-11-02
+
+Owner: Office Connect maintainers; implementation agent Codex. Status: in review
+on `feat/telegram-private-work-lookup`, draft PR #572, candidate **9.81**.
+User approved follow/unfollow for work and task discussions. One independently
+consented `work.follow` capability and default-off CSS_TELEGRAM_WORK_FOLLOW_ENABLED
+pilot manage the linked account's own preference; separate work read is required.
+No inbox/read-acknowledgement grant is inferred or needed for this native preference.
+`/discussion_follow` opens a signed-in no-script form for exact work, optional task
+and Follow/Unfollow choice, followed by private preview, five-minute confirmation
+and non-replaying receipt. Work-wide follows include all task discussions; a task
+unfollow does not override work-wide coverage, and work unfollow retains task follows.
+Existing direct mention/reply notices, prior unread notices, read markers and delivery
+preferences stay unchanged. Native future notices require current source access.
+No transport is enabled. Deployment, preview publication, activation and personal/
+live testing remain deferred. Local checks use synthetic data and blocked providers.
+Final verification evidence and next action follow.
+
+
+Final isolated Python 3.11 verification: **1208 regressions passed** across follow/
+inbox/read acknowledgement, discussion writers/mentions, action/link/menu/private
+webhook/task/dependency flows, native work/channels, submission API/MCP, audit writers,
+deployment bundle and release checks. **903 affected shuffled checks passed**
+(seed 311). Both have zero failures/errors/skips and pass the JUnit gate; groups
+intentionally overlap. Earlier focused follow group: **72 passed**; four no-script
+phone cases plus menu/maximum-origin checks: **15 passed**; initial budget/adapter
+checks: **2 passed**. The corrected disconnect assertion explicitly checks one
+appended native `telegram_disconnect` audit record while preserving all business
+source/follow data; its isolated check passed before final groups. Exploratory
+interrupted runs are not counted as passing evidence. No application source edits
+followed completed final groups.
+
+All four exact work/task Follow/Unfollow paths, own-account isolation, strict scope/
+choice/no-op handling, work-wide/task overlap, future native notice behavior,
+unchanged old notices/read markers and direct mention/reply behavior pass. Current
+work/every-document access, grant/pilot/module/bot/account/generation/context,
+expiry/restore/disconnect/private protocol checks, actual-connection SQL authorizer,
+atomic native/receipt/handoff faults, concurrent confirmation, duplicate webhook,
+current-versus-recorded receipts, unrelated-account follows and retention pass.
+The native `follow` wrapper retains its behavior and delegates to a transaction-only
+helper; native work/channels and integration regressions pass. No permission,
+coverage, atomicity, audit-chain or no-skips assertion was bypassed.
+
+Reports: `/tmp/telegram-discussion-follow-regressions-final.xml`,
+`/tmp/telegram-discussion-follow-shuffled-final.xml`,
+`/tmp/telegram-discussion-follow-focus.xml`,
+`/tmp/telegram-discussion-follow-phone.xml`,
+`/tmp/telegram-discussion-follow-budget.xml` and
+`/tmp/telegram-discussion-follow-disconnect.xml`. Separate workspace scratch paths
+prevent small-/tmp exhaustion; completed synthetic data is removed after reports
+are preserved. No disk-full interruption occurred. Release metadata 9.81 over
+actual main 25fe812/9.61, lock inputs, five vendor integrity groups, installed
+compatibility, AI contract 1.12.0, compilation, released-entry preservation,
+Markdown links and whitespace pass. Existing Starlette/httpx deprecation warning
+remains. Previous exact-head 133d6f0 full CI is green; it is not new-head acceptance.
+
+See [following behavior](TELEGRAM_DISCUSSION_FOLLOWING.md) and the updated pending
+live checklist. No actual source/host data, real message/provider registration,
+configuration/secret, scheduler, preview, activation or main deployment was touched.
+Next: inspect new exact-head complete repository normal/shuffled/dependency/container/
+metadata/aggregate CI after remote save, retain current main, and continue only the
+next requested feature. Main push/merge/release, preview publication, activation
+and personal/live testing remain deferred. Both new live acceptance rows are Pending.

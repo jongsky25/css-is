@@ -70,12 +70,19 @@ def following(conn, user, case_id, task_id=None):
 
 def follow(conn, user, case_id, task_id=None, enabled=True):
     with transaction(conn):
-        user, _, _ = discussion.scope(conn, user, case_id, task_id)
-        work.writable(conn)
-        if enabled:
-            conn.execute('INSERT OR IGNORE INTO work_follow VALUES (?,?,?,?)', (case_id, user['id'], task_id, tz.now_iso()))
-        else:
-            conn.execute('DELETE FROM work_follow WHERE case_id=? AND user_id=? AND task_id IS ?', (case_id, user['id'], task_id))
+        follow_in_transaction(conn, user, case_id, task_id, enabled)
+
+
+def follow_in_transaction(conn, user, case_id, task_id=None, enabled=True):
+    """Shared own-follow mutation; caller owns the source change and receipt."""
+    if not conn.in_transaction:
+        raise RuntimeError('An active transaction is required')
+    user, _, _ = discussion.scope(conn, user, case_id, task_id)
+    work.writable(conn)
+    if enabled:
+        conn.execute('INSERT OR IGNORE INTO work_follow VALUES (?,?,?,?)', (case_id, user['id'], task_id, tz.now_iso()))
+    else:
+        conn.execute('DELETE FROM work_follow WHERE case_id=? AND user_id=? AND task_id IS ?', (case_id, user['id'], task_id))
 
 
 def read_revision(conn, user_id, comment_id):
