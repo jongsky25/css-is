@@ -1,6 +1,6 @@
 # Cloud/mobile setup status
 
-Updated: 2026-11-01. Repository: `jongsky25/css-is` (Office Connect BLHSD).
+Updated: 2026-11-02. Repository: `jongsky25/css-is` (Office Connect BLHSD).
 Integration branch: `setup/cloud-mobile-continuity`; default startup branch after
 merge: `main`.
 
@@ -74,6 +74,21 @@ access remains necessary in a fresh chat.
 - [x] 6. Monitoring gaps assessed and reusable workflow/templates documented; no external alerts configured.
 
 ## Next action
+
+**Seasonal 9.60 deployed and verified — November 2, 2026.**
+Owner-approved PR #578 merged as `adb83b4`. Production
+[run 41373109822](https://github.com/jongsky25/css-is/actions/runs/41373109822)
+passed both full test orders, audits, metadata, aggregate gate, deployment and
+read-only Operations/Telegram diagnostics. Fresh pre-deploy backup
+`css_is_20261102_101224_manual.db` verified OK (49.2 MB); no bypass used.
+Production is RUNNING at Space commit `f982f2786c48a0b97abfb86123ebafc47d0113a5`.
+Independent live login/build metadata confirms 9.60 / full source `adb83b4`;
+all six seasonal assets match source SHA-256. No live forms, settings or schedules
+were changed. [Full release record](SEASONAL_960_RELEASE.md) is saved on
+`docs/seasonal-960-release-handoff` to avoid another deployment for documentation.
+Next: use 9.60 normally; enable illustrated scenery in Appearance for the full
+design. Future Telegram release work must update from main and retain 9.60 release
+history. Deferred audit/storage/monitoring follow-ups remain separate.
 
 **Seasonal 9.60 merge/deployment approved — November 2, 2026.** Owner explicitly
 approved production release. PR #578 merged as `adb83b4` after all exact-head PR
