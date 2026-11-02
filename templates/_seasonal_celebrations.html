@@ -1,0 +1,23 @@
+{% set celebration_home = request.url.path == '/' %}
+<section class="celebration {{ 'celebration-home' if celebration_home else 'celebration-compact' }}" aria-label="Seasonal greeting">
+  <div class="celebration-copy">
+    {% if celebration_home %}<div class="celebration-ribbon" aria-hidden="true"><span class="celebration-christmas">Maligayang Pasko</span><span class="celebration-newyear">Let the celebrations begin</span></div>{% endif %}
+    <span class="celebration-kicker celebration-christmas">Paskong Office Connect</span>
+    <span class="celebration-kicker celebration-newyear">New Year at Office Connect</span>
+    <h2 data-celebration-message>{{ seasonal.banner if seasonal else '' }}</h2>
+    <p class="celebration-christmas">Small moments of kindness. A little light for everyone.</p>
+    <p class="celebration-newyear">Here’s to the people who make good work possible.</p>
+    {% if celebration_home %}
+    <div class="celebration-newyear" data-newyear-clock data-target="{{ seasonal.newyear_target if seasonal else '' }}" data-server-time="{{ seasonal.server_time if seasonal else '' }}" data-year="{{ seasonal.target_year if seasonal else 2027 }}" data-preview="{{ '1' if seasonal and seasonal.preview else '0' }}">
+      <div class="newyear-digits" data-countdown hidden role="group" aria-label="Time remaining until New Year">
+        {% for unit in ['days','hours','minutes','seconds'] %}<div><strong data-countdown-unit="{{ unit }}">00</strong><span>{{ unit }}</span></div>{% endfor %}
+      </div>
+      <p class="newyear-greeting" data-newyear-greeting {% if not seasonal or seasonal.server_time < seasonal.newyear_target %}hidden{% endif %}>Happy New Year, Office Connect!</p>
+      <p class="newyear-date">January 1, <span data-newyear-year>{{ seasonal.target_year if seasonal else 2027 }}</span> · 00:00 Philippine time (Asia/Manila)</p>
+      <span class="sr-only" data-newyear-announcement role="status"></span>
+      <div class="newyear-confetti" aria-hidden="true">✦ · ✧ · ✦ · ✧ · ✦</div>
+    </div>
+    {% endif %}
+  </div>
+  <div class="celebration-art" aria-hidden="true"><span class="celebration-year" data-newyear-year>{{ seasonal.target_year if seasonal else 2027 }}</span></div>
+</section>

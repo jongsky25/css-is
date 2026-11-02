@@ -15,7 +15,8 @@
       root.dataset.season=active.theme;
       root.dataset.seasonEffects=active.effects?'1':'0';
       root.dataset.seasonArtwork=active.artwork?'1':'0';
-      document.querySelectorAll('[data-season-banner-message]').forEach(function(message){message.textContent=active.banner;});
+      if(window.ocNewYear)window.ocNewYear.sync(active);
+      document.querySelectorAll('[data-season-banner-message], [data-celebration-message]').forEach(function(message){message.textContent=active.banner;});
       var statusFields={theme:active.theme_name,outfit:active.outfit_name,source:active.source.charAt(0).toUpperCase()+active.source.slice(1)};
       Object.keys(statusFields).forEach(function(key){
         var field=document.querySelector('[data-appearance-active-'+key+']');
@@ -54,7 +55,7 @@
         svg.dataset.avatarMonth=String(active.month);
         svg.dataset.avatarOutfit=active.outfit;
       });
-      var delay=active.next_transition ? active.next_transition*1000-Date.now()+250 : 60000;
+      var delay=active.next_transition ? (active.next_transition-active.server_time)*1000+250 : 60000;
       clearTimeout(timer);
       timer=setTimeout(refresh,Math.max(1000,Math.min(60000,delay)));
     }catch(error){/* A transient network failure leaves the last valid styling. */}
