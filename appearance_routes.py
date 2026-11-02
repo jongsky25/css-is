@@ -103,6 +103,7 @@ def make_router(templates, get_conn):
                        "upcoming": upcoming[0] if upcoming else None,
                        "events": sorted(config["events"], key=lambda e: e["start"]),
                        "themes": rules.THEMES, "outfits": rules.OUTFITS, "date_label": rules.date_label,
+                       "sample_kind": (wardrobe.current.get() or {}).get("kind", "cat"),
                        "history": store.history(conn), "csrf": csrf(request), "error": error,
                        "override_expires": submitted.get("expires", "") if submitted else "",
                        "saved": request.query_params.get("saved") == "1"}

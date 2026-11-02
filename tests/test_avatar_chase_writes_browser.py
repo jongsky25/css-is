@@ -20,8 +20,10 @@ def test_clamped_chase_avoids_redundant_style_writes(baseline_server):
         page.wait_for_timeout(500)
         play=page.locator('.av-play').first.bounding_box()
         wrap=page.locator('.avwrap[data-interactive]').first.bounding_box()
-        assert play['x']>80
-        page.mouse.move(play['x']-80,wrap['y']+wrap['height']*.6)
+        # The full-width Home stage now starts at the page gutter. Keep the
+        # pointer inside the viewport but just outside the stage's left edge.
+        assert play['x']>0
+        page.mouse.move(max(0,play['x']-12),wrap['y']+wrap['height']*.6)
         page.wait_for_timeout(400)
         page.evaluate('''()=>{const w=document.querySelector('.avwrap[data-interactive]'),m=w.querySelector('.avmove');
           window.chaseWrites=[];window.chaseObserver=new MutationObserver(rs=>chaseWrites.push(...rs.map(r=>({target:r.target===w?'wrap':'art',old:r.oldValue,value:r.target.getAttribute('style')}))));

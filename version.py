@@ -18,10 +18,21 @@ The login page reads APP_VERSION and the newest CHANGELOG entry, so once you
 edit this file the "What's new" note updates itself — nothing else to touch.
 """
 
-APP_VERSION = "9.60"
+APP_VERSION = "9.61"
 
 # Newest first. CHANGELOG[0] is what the login screen highlights.
 CHANGELOG = [
+    {
+        "version": "9.61",
+        "date": "November 2, 2026",
+        "summary": "Dress your companion for Christmas in a wider festive setting.",
+        "changes": [
+            "Choose Santa, elf, reindeer, parol keeper or festive knit outfits for your companion.",
+            "The companion scene now fills the available width on phones, tablets and computers.",
+            "A parol courtyard complements the header tree, with companion controls below the scenery.",
+            "Appearance groups seasonal outfits and explains when the page theme and outfit differ."
+        ]
+    },
     {
         "version": "9.60",
         "date": "November 1, 2026",

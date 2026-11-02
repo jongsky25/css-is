@@ -16,7 +16,11 @@ OUTFITS = {
     "halloween": {"name": "Halloween · witch hat & cape", "month": 10},
     "halloween_vampire": {"name": "Halloween · vampire cape & collar", "month": 10},
     "halloween_pumpkin": {"name": "Halloween · pumpkin costume", "month": 10},
-    "christmas": {"name": "Christmas · Santa hat / festive ribbon", "month": 12},
+    "christmas": {"name": "Christmas · Santa", "month": 12},
+    "christmas_elf": {"name": "Christmas · Elf helper", "month": 12},
+    "christmas_reindeer": {"name": "Christmas · Reindeer", "month": 12},
+    "christmas_parol": {"name": "Christmas · Parol keeper", "month": 12},
+    "christmas_knit": {"name": "Christmas · Festive knit", "month": 12},
 }
 current = ContextVar("seasonal_appearance", default=None)
 BANNER = "A little spooky. Still productive."

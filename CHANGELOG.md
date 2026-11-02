@@ -1,3 +1,11 @@
+## 9.61 — November 2, 2026
+
+- Add five Christmas companion outfits across existing species/growth stages, preserving personal accessory choices and the existing Santa outfit ID.
+- Make the Home companion panel fill available content width and centre the actual artwork across phone, tablet and desktop sizes.
+- Use a separate tree-free parol courtyard, remove the pale wash and place sound/edit controls below the scenery.
+- Group the outfit gallery by season with actor-aware samples, selection buttons and an explicit theme/outfit mismatch hint.
+- Preserve play, audio and drag behaviour; no automatic appearance publication or new sounds.
+
 ## 9.60 — November 1, 2026
 
 - Add full Christmas and New Year appearances with local parol/tree/firework artwork, garlands, phone-visible scenes, companion settings and festive footers.
