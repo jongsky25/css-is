@@ -1,5 +1,20 @@
 # Christmas companion build handoff — November 2, 2026
 
+## Release preparation requested
+
+The user requested release preparation and full checks after the merge-readiness
+assessment. Candidate 9.61 is based on current main `adb83b4` (9.60). Version,
+in-app/Markdown changelogs and service-worker cache are now synchronized. Proposed
+order: companion first, then update Telegram from main and preserve both 9.60 and
+9.61 history. Telegram remains independent at `af51001` (candidate 9.79); its branch
+has not been edited. If main advances first, reconcile the candidate and rerun
+required checks. Merge/production release remains pending final owner approval.
+
+The private preview retains feature source `a9441df`; subsequent application-facing
+changes here are release metadata/cache/changelog only. Full exact-head CI results
+will be recorded in the release PR so documentation updates do not restart an
+otherwise verified source. Earlier statements below describe the build phase.
+
 User requested implementation of the reviewed plan with isolation from ongoing
 Telegram work. Branch: `feat/christmas-companion-refinements`; worktree:
 `/workspace/office-connect-companion-build`; base main `adb83b4` (released 9.60).

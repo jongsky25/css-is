@@ -75,6 +75,21 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**Christmas companion release preparation — November 2, 2026.** Owner requested
+the next preparation/verification step. Candidate 9.61 on
+`feat/christmas-companion-refinements`, based on main `adb83b4` (9.60), with
+synchronized version/changelogs/cache. The accepted build scope is unchanged from
+preview source `a9441df`. Earlier focused appearance/wardrobe/care/audio checks
+passed (132), final refinement checks passed (4), opt-in geometry/resize/chase
+passed (5), preview bundle passed (3); groups overlap, not full release CI.
+Next: open a draft release PR, observe full normal/shuffled/dependency/metadata/
+avatar/aggregate checks on its exact final head and resolve failures without
+bypassing gates. Final evidence belongs in the PR to avoid a source-only status
+commit restarting the full run. No merge, auto-merge or production deployment is
+authorized by this preparation step. Telegram `af51001` (9.79) is untouched;
+coordinate companion-first release and then reconcile its shared release/status
+history. If main advances first, update/reconcile and rerun required checks.
+
 **Christmas companion candidate published for review — November 2, 2026.**
 Source `a9441df` on `feat/christmas-companion-refinements` is RUNNING on the
 existing private CPU Basic preview, Space commit `d98f59e4aa973dfba99c67e1a0a5b7c17eb90cb2`.
