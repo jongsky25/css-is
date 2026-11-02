@@ -1,6 +1,6 @@
 # Cloud/mobile setup status
 
-Updated: 2026-11-01. Repository: `jongsky25/css-is` (Office Connect BLHSD).
+Updated: 2026-11-02. Repository: `jongsky25/css-is` (Office Connect BLHSD).
 Integration branch: `setup/cloud-mobile-continuity`; default startup branch after
 merge: `main`.
 
@@ -75,15 +75,20 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
-**Companion 9.61 merge/deployment approved — November 2, 2026.** Owner explicitly
-approved production release. PR #579 merged cleanly as `25fe812` after all exact-head
-checks passed (8,448 tests in each full order, plus audits/metadata/avatar/aggregate).
-Production [run 41393018082](https://github.com/jongsky25/css-is/actions/runs/41393018082)
-is rerunning complete merge-commit checks before backup/deploy. No completion is
-claimed yet. [Release record](COMPANION_961_RELEASE.md) is saved separately on
-`docs/companion-961-release-handoff` to avoid another deployment for documentation.
-Next: observe all gates, then independently verify live version/source/assets.
-Live appearance settings and Telegram's branch remain unchanged by this operation.
+**Companion 9.61 deployed and independently verified — November 2, 2026.**
+Owner approved release; PR #579 merged as `25fe812`. Production
+[run 41393018082](https://github.com/jongsky25/css-is/actions/runs/41393018082)
+passed both complete 8,448-test orders, metadata, dependency and aggregate gates,
+then deployed with a fresh verified 49.3 MB backup. Live runtime RUNNING, login
+9.61, exact source commit and all 13 checked files match. Space commit `3d980139`.
+Final read-only Telegram diagnostics and the overall workflow succeeded.
+[Release evidence](COMPANION_961_RELEASE.md) is saved on the separate
+`docs/companion-961-release-handoff` branch; this documentation does not trigger
+another production deployment. Live appearance choices and Telegram's branch are
+untouched. To activate a Christmas outfit, use Appearance → select → Publish now;
+personal preferences may need Follow seasonal appearance.
+Next: owner may select/publish the desired Christmas outfit. Telegram integration
+remains separate and must preserve 9.60/9.61 history and rerun its own checks.
 
 **Christmas companion release preparation — November 2, 2026.** Owner requested
 the next preparation/verification step. Candidate 9.61 on
