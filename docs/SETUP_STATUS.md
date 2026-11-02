@@ -75,6 +75,16 @@ access remains necessary in a fresh chat.
 
 ## Next action
 
+**Seasonal 9.60 merge/deployment approved — November 2, 2026.** Owner explicitly
+approved production release. PR #578 merged as `adb83b4` after all exact-head PR
+checks passed and current main/clean merge state were reverified. Production
+[run 41373109822](https://github.com/jongsky25/css-is/actions/runs/41373109822)
+is rerunning full checks before backup/deploy. No production success is claimed
+until observed. [Release handoff](SEASONAL_960_RELEASE.md) is saved separately on
+`docs/seasonal-960-release-handoff` to avoid triggering another deployment just for
+documentation. Next: monitor all gates, then verify live version/source. Existing
+appearance defaults/schedules and Telegram work remain unchanged.
+
 **Seasonal release PR opened — November 1, 2026.**
 [Draft PR #578](https://github.com/jongsky25/css-is/pull/578) prepares 9.60.
 Owner accepted the richer preview design and requested checks/release preparation;
